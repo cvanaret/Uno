@@ -75,7 +75,6 @@ namespace uno {
       void evaluate_progress_measures(Iterate& iterate) const override;
       [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
 
-      void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
       void check_exact_relaxation(Iterate& iterate) const;
    };
 } // namespace

@@ -92,12 +92,11 @@ namespace uno {
       stream << "                        └ Upper bound: " << iterate.feasibility_multipliers.upper_bounds << '\n';
       stream << "Objective value: " << iterate.evaluations.objective << '\n';
 
-      stream << "          ┌ Stationarity: " << iterate.residuals.KKT_stationarity << '\n';
-      stream << "          │ FJ stationarity: " << iterate.residuals.FJ_stationarity << '\n';
-      stream << "Residuals │ Feasibility stationarity: " << iterate.residuals.feasibility_stationarity << '\n';
-      stream << "          │ Primal feasibility: " << iterate.residuals.primal_feasibility << '\n';
-      stream << "          │ Complementarity: " << iterate.residuals.complementarity << '\n';
-      stream << "          └ Feasibility complementarity: " << iterate.residuals.feasibility_complementarity << '\n';
+      // TODO print the norms used for progress and residuals
+      stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';
+      stream << "Residuals │ Primal feasibility: " << iterate.residuals.primal_feasibility << '\n';
+      stream << "          │ Dual feasibility: " << iterate.residuals.dual_feasibility << '\n';
+      stream << "          └ Complementarity: " << iterate.residuals.complementarity << '\n';
 
       stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';
       stream << "Progress measures │ Optimality: " << iterate.progress.objective(1.) << '\n';

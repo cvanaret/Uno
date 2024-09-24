@@ -58,7 +58,8 @@ namespace uno {
       this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
       this->evaluate_progress_measures(initial_iterate);
       this->compute_primal_dual_residuals(initial_iterate);
-      this->set_statistics(statistics, initial_iterate);
+      this->set_progress_statistics(statistics, initial_iterate);
+      this->set_dual_residuals_statistics(statistics, initial_iterate);
       this->globalization_strategy->initialize(statistics, initial_iterate, options);
    }
 
@@ -167,7 +168,7 @@ namespace uno {
    // measure that combines KKT error and complementarity error
    double l1Relaxation::compute_infeasible_dual_error(Iterate& current_iterate) {
       // stationarity error
-      this->evaluate_lagrangian_gradient(current_iterate, this->trial_multipliers);
+      this->l1_relaxed_problem.evaluate_lagrangian_gradient(current_iterate, this->trial_multipliers);
       double error = norm_1(current_iterate.lagrangian_gradient.constraints_contribution);
 
       // complementarity error
@@ -246,6 +247,8 @@ namespace uno {
       }
       if (accept_iterate) {
          this->check_exact_relaxation(trial_iterate);
+         this->compute_primal_dual_residuals(trial_iterate);
+         trial_iterate.status = this->check_termination(this->l1_relaxed_problem, trial_iterate);
          this->set_dual_residuals_statistics(statistics, trial_iterate);
       }
       this->set_progress_statistics(statistics, trial_iterate);
@@ -253,7 +256,8 @@ namespace uno {
    }
 
    void l1Relaxation::compute_primal_dual_residuals(Iterate& iterate) {
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->l1_relaxed_problem, this->feasibility_problem, iterate);
+      throw std::runtime_error("l1Relaxation::compute_primal_dual_residuals not implemented");
+      //ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->l1_relaxed_problem, this->feasibility_problem, iterate);
    }
 
    void l1Relaxation::evaluate_progress_measures(Iterate& iterate) const {
@@ -285,10 +289,5 @@ namespace uno {
       if (0. < norm_inf_multipliers && this->penalty_parameter <= 1./norm_inf_multipliers) {
          DEBUG << "The value of the penalty parameter is consistent with an exact relaxation\n\n";
       }
-   }
-
-   void l1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-      statistics.set("complementarity", iterate.residuals.complementarity);
-      statistics.set("stationarity", iterate.residuals.KKT_stationarity);
    }
 } // namespace

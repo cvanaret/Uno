@@ -9,14 +9,10 @@
 namespace uno {
    class PrimalDualResiduals {
    public:
-      double KKT_stationarity{INF<double>};
-      double FJ_stationarity{INF<double>};
-      double feasibility_stationarity{INF<double>};
-
+      double stationarity{INF<double>};
       double primal_feasibility{INF<double>};
-
+      double dual_feasibility{INF<double>};
       double complementarity{INF<double>};
-      double feasibility_complementarity{INF<double>};
 
       double stationarity_scaling{INF<double>};
       double complementarity_scaling{INF<double>};

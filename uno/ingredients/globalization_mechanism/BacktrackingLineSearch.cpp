@@ -71,7 +71,7 @@ namespace uno {
             this->set_statistics(statistics, trial_iterate, direction, step_length);
             if (is_acceptable) {
                if (Logger::level == INFO) statistics.print_current_line();
-               trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
+               //trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
                return;
             }
          }
@@ -100,7 +100,7 @@ namespace uno {
       }
       else {
          // check if we can terminate at a first-order point
-         trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
+         //trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
          if (trial_iterate.status != TerminationStatus::NOT_OPTIMAL) {
             statistics.set("status", "small step size");
             return;

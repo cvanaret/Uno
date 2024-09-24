@@ -47,7 +47,8 @@ namespace uno {
       this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
       this->evaluate_progress_measures(initial_iterate);
       this->compute_primal_dual_residuals(initial_iterate);
-      this->set_statistics(statistics, initial_iterate);
+      this->set_progress_statistics(statistics, initial_iterate);
+      this->set_dual_residuals_statistics(statistics, initial_iterate);
       this->globalization_strategy->initialize(statistics, initial_iterate, options);
    }
 
@@ -102,6 +103,7 @@ namespace uno {
 
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
       this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
+      this->compute_primal_dual_residuals(current_iterate);
       DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
       if (Logger::level == INFO) statistics.print_current_line();
@@ -139,6 +141,7 @@ namespace uno {
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
 
       this->subproblem->exit_feasibility_problem(this->optimality_problem, trial_iterate);
+      this->compute_primal_dual_residuals(current_iterate);
       this->switching_to_optimality_phase = true;
    }
 
@@ -167,14 +170,21 @@ namespace uno {
                predicted_reduction, this->current_problem().get_objective_multiplier());
       }
       if (accept_iterate) {
+         this->compute_primal_dual_residuals(trial_iterate);
+         trial_iterate.status = this->check_termination(this->current_problem(), trial_iterate);
          this->set_dual_residuals_statistics(statistics, trial_iterate);
       }
-      ConstraintRelaxationStrategy::set_progress_statistics(statistics, trial_iterate);
+      this->set_progress_statistics(statistics, trial_iterate);
       return accept_iterate;
    }
 
    void FeasibilityRestoration::compute_primal_dual_residuals(Iterate& iterate) {
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, this->feasibility_problem, iterate);
+      if (this->current_phase == Phase::OPTIMALITY) {
+         ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, iterate, iterate.multipliers);
+      }
+      else {
+         ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->feasibility_problem, iterate, iterate.feasibility_multipliers);
+      }
    }
 
    const OptimizationProblem& FeasibilityRestoration::current_problem() const {
@@ -209,14 +219,5 @@ namespace uno {
       return std::max(this->optimality_problem.number_constraints, this->feasibility_problem.number_constraints);
    }
 
-   void FeasibilityRestoration::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-      if (this->current_phase == Phase::OPTIMALITY) {
-         statistics.set("complementarity", iterate.residuals.complementarity);
-         statistics.set("stationarity", iterate.residuals.KKT_stationarity);
-      }
-      else {
-         statistics.set("complementarity", iterate.residuals.feasibility_complementarity);
-         statistics.set("stationarity", iterate.residuals.feasibility_stationarity);
-      }
-   }
+
 } // namespace

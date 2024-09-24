@@ -110,7 +110,7 @@ namespace uno {
       if (Logger::level == INFO) statistics.print_current_line();
             
       if (accept_iterate) {
-         trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
+         //trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
          // possibly increase the radius if trust region is active
          this->possibly_increase_radius(direction.norm);
       }

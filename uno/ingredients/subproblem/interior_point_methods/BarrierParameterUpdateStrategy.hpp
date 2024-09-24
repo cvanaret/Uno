@@ -7,6 +7,7 @@
 namespace uno {
    // forward declarations
    class Iterate;
+   class Multipliers;
    class OptimizationProblem;
    class Options;
 
@@ -22,7 +23,8 @@ namespace uno {
       explicit BarrierParameterUpdateStrategy(const Options& options);
       [[nodiscard]] double get_barrier_parameter() const;
       void set_barrier_parameter(double new_barrier_parameter);
-      [[nodiscard]] bool update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate);
+      [[nodiscard]] bool update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate,
+            const Multipliers& current_multipliers);
 
    protected:
       double barrier_parameter;

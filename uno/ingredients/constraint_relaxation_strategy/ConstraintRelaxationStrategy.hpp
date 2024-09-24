@@ -15,6 +15,8 @@ namespace uno {
    // forward declarations
    class Direction;
    class Iterate;
+   template <typename ElementType>
+   class LagrangianGradient;
    class Model;
    struct Multipliers;
    class OptimizationProblem;
@@ -49,7 +51,7 @@ namespace uno {
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
             double step_length) = 0;
-      [[nodiscard]] TerminationStatus check_termination(Iterate& iterate);
+      [[nodiscard]] TerminationStatus check_termination(const OptimizationProblem& problem, Iterate& iterate);
 
       // primal-dual residuals
       virtual void compute_primal_dual_residuals(Iterate& iterate) = 0;
@@ -83,17 +85,14 @@ namespace uno {
       void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate);
       virtual void evaluate_progress_measures(Iterate& iterate) const = 0;
 
-      void compute_primal_dual_residuals(const OptimizationProblem& optimality_problem, const OptimizationProblem& feasibility_problem, Iterate& iterate);
-      void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const;
+      void compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate, const Multipliers& multipliers);
+      static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier, Norm residual_norm);
 
       [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const;
 
-      [[nodiscard]] TerminationStatus check_first_order_convergence(Iterate& current_iterate, double tolerance) const;
-
-      void set_statistics(Statistics& statistics, const Iterate& iterate) const;
       void set_progress_statistics(Statistics& statistics, const Iterate& iterate) const;
-      virtual void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const = 0;
+      void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const;
    };
 } // namespace
 

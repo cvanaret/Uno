@@ -55,8 +55,6 @@ namespace uno {
       [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
       [[nodiscard]] bool can_switch_to_optimality_phase(const Iterate& current_iterate, const Iterate& trial_iterate, const Direction& direction,
             double step_length);
-
-      void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
    };
 } // namespace
 

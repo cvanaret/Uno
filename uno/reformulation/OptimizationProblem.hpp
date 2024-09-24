@@ -7,15 +7,14 @@
 #include <vector>
 #include "linear_algebra/Norm.hpp"
 #include "model/Model.hpp"
-#include "optimization/LagrangianGradient.hpp"
+#include "optimization/Iterate.hpp"
+#include "optimization/Multipliers.hpp"
 #include "symbolic/Expression.hpp"
 
 namespace uno {
    // forward declarations
    template <typename ElementType>
    class Collection;
-   class Iterate;
-   struct Multipliers;
    template <typename ElementType>
    class RectangularMatrix;
    template <typename ElementType>
@@ -56,10 +55,11 @@ namespace uno {
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;
       [[nodiscard]] virtual size_t number_hessian_nonzeros() const = 0;
 
-      [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
-            Norm residual_norm);
+      virtual void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const = 0;
+      [[nodiscard]] double dual_feasibility_error(const Multipliers& multipliers, Norm residual_norm) const;
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
             const Multipliers& multipliers, double shift_value, Norm residual_norm) const = 0;
+      [[nodiscard]] virtual TerminationStatus check_first_order_convergence(Iterate& current_iterate, double tolerance) const = 0;
    };
 
    inline OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
@@ -78,11 +78,42 @@ namespace uno {
       return this->model.number_variables;
    }
 
-   inline double OptimizationProblem::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
-         Norm residual_norm) {
-      // norm of the scaled Lagrangian gradient
-      const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
-      return norm(residual_norm, scaled_lagrangian);
+   // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
+   inline void OptimizationProblem::evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const {
+      iterate.lagrangian_gradient.objective_contribution.fill(0.);
+      iterate.lagrangian_gradient.constraints_contribution.fill(0.);
+
+      // objective gradient
+      for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
+         iterate.lagrangian_gradient.objective_contribution[variable_index] += derivative;
+      }
+
+      // constraints
+      for (size_t constraint_index: Range(iterate.number_constraints)) {
+         if (multipliers.constraints[constraint_index] != 0.) {
+            for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
+               iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
+            }
+         }
+      }
+
+      // bound constraints
+      for (size_t variable_index: Range(this->model.number_variables)) {
+         iterate.lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.lower_bounds[variable_index] + multipliers.upper_bounds[variable_index];
+      }
+   }
+
+   inline double OptimizationProblem::dual_feasibility_error(const Multipliers& multipliers, Norm residual_norm) const {
+      // lower bound constraints: dual should be >= 0
+      const VectorExpression lower_bounds(this->get_lower_bounded_variables(), [&](size_t variable_index) {
+         return std::max(0., -multipliers.lower_bounds[variable_index]);
+      });
+
+      // lower bound constraints: dual should be <= 0
+      const VectorExpression upper_bounds(this->get_upper_bounded_variables(), [&](size_t variable_index) {
+         return std::max(0., multipliers.upper_bounds[variable_index]);
+      });
+      return norm(residual_norm, lower_bounds, upper_bounds);
    }
 } // namespace
 
