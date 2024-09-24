@@ -158,7 +158,7 @@ namespace uno {
          DEBUG << "Zero step acceptable\n";
          trial_iterate.evaluate_objective(this->model);
          accept_iterate = true;
-         statistics.set("status", "accepted (0 primal step)");
+         statistics.set("status", "0 primal step");
       }
       else {
          // invoke the globalization strategy for acceptance
@@ -211,12 +211,12 @@ namespace uno {
 
    void FeasibilityRestoration::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
       if (this->current_phase == Phase::OPTIMALITY) {
-         statistics.set("complementarity", iterate.residuals.complementarity);
          statistics.set("stationarity", iterate.residuals.KKT_stationarity);
+         statistics.set("complementarity", iterate.residuals.complementarity);
       }
       else {
-         statistics.set("complementarity", iterate.residuals.feasibility_complementarity);
          statistics.set("stationarity", iterate.residuals.feasibility_stationarity);
+         statistics.set("complementarity", iterate.residuals.feasibility_complementarity);
       }
    }
 } // namespace

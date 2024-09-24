@@ -236,7 +236,7 @@ namespace uno {
          DEBUG << "Zero step acceptable\n";
          trial_iterate.evaluate_objective(this->model);
          accept_iterate = true;
-         statistics.set("status", "accepted (0 primal step)");
+         statistics.set("status", "0 primal step");
       }
       else {
          // invoke the globalization strategy for acceptance
@@ -288,7 +288,7 @@ namespace uno {
    }
 
    void l1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-      statistics.set("complementarity", iterate.residuals.complementarity);
       statistics.set("stationarity", iterate.residuals.KKT_stationarity);
+      statistics.set("complementarity", iterate.residuals.complementarity);
    }
 } // namespace

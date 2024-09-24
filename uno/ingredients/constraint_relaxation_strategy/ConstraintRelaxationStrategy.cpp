@@ -259,7 +259,7 @@ namespace uno {
    void ConstraintRelaxationStrategy::set_progress_statistics(Statistics& statistics, const Iterate& iterate) const {
       statistics.set("objective", iterate.evaluations.objective);
       if (this->model.is_constrained()) {
-         statistics.set("infeasibility", iterate.progress.infeasibility);
+         statistics.set("primal feas.", iterate.progress.infeasibility);
       }
    }
 
