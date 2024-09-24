@@ -11,6 +11,7 @@ namespace uno {
    int Statistics::int_width = 7;
    int Statistics::double_width = 17;
    int Statistics::string_width = 26;
+   int Statistics::numerical_format_size = 6;
 
    Statistics::Statistics(const Options& options): print_header_every_iterations(options.get_unsigned_int("statistics_print_header_every_iterations")) {
    }
@@ -34,7 +35,7 @@ namespace uno {
 
    void Statistics::set(std::string_view name, double value) {
       std::ostringstream stream;
-      stream << std::defaultfloat << std::setprecision(7) << value;
+      stream << std::defaultfloat << std::setprecision(Statistics::numerical_format_size) << value;
       this->set(name, stream.str());
    }
 
