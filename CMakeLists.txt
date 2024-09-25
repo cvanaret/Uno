@@ -98,9 +98,8 @@ else()
    
    list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
 
-   # TODO handle that in a clean way
-   set(MUMPS_MODE "SEQUENTIAL")
-   if(${MUMPS_MODE} STREQUAL "PARALLEL")
+   if(${MUMPS_MPISEQ_LIBRARY} STREQUAL "MUMPS_MPISEQ_LIBRARY-NOTFOUND")
+      # parallel
       add_definitions("-D MUMPS_PARALLEL")
       find_package(MPI REQUIRED)
       list(APPEND LIBRARIES MPI::MPI_CXX MPI::MPI_Fortran)
@@ -112,8 +111,8 @@ else()
       find_package(ScaLAPACK REQUIRED)
       list(APPEND LIBRARIES ${ScaLAPACK_LIBRARY})
       list(APPEND DIRECTORIES ${ScaLAPACK_INCLUDE_DIRS})
-   endif()
-   if(${MUMPS_MODE} STREQUAL "SEQUENTIAL")
+   else()
+      # sequential
       add_definitions("-D MUMPS_SEQUENTIAL")
       # link dummy parallel library (provided by MUMPS distribution)
       link_to_uno(MUMPS_MPISEQ_LIBRARY ${MUMPS_MPISEQ_LIBRARY})
