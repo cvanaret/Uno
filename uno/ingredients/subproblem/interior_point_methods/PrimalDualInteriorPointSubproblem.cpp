@@ -179,7 +179,8 @@ namespace uno {
       }
 
       // possibly update the barrier parameter
-      this->update_barrier_parameter(problem, current_iterate);
+      const auto residuals = this->solving_feasibility_problem ? current_iterate.feasibility_residuals : current_iterate.residuals;
+      this->update_barrier_parameter(problem, current_iterate, residuals);
       statistics.set("barrier param.", this->barrier_parameter());
 
       // evaluate the functions at the current iterate
@@ -315,8 +316,9 @@ namespace uno {
       return directional_derivative;
    }
 
-   void PrimalDualInteriorPointSubproblem::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate) {
-       const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(problem, current_iterate);
+   void PrimalDualInteriorPointSubproblem::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate,
+         const PrimalDualResiduals& residuals) {
+       const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(problem, current_iterate, residuals);
        // the barrier parameter may have been changed earlier when entering restoration
        this->subproblem_definition_changed = this->subproblem_definition_changed || barrier_parameter_updated;
    }

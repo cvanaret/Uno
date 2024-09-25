@@ -9,6 +9,7 @@ namespace uno {
    class Iterate;
    class OptimizationProblem;
    class Options;
+   class PrimalDualResiduals;
 
    struct UpdateParameters {
       double k_mu;
@@ -22,7 +23,8 @@ namespace uno {
       explicit BarrierParameterUpdateStrategy(const Options& options);
       [[nodiscard]] double get_barrier_parameter() const;
       void set_barrier_parameter(double new_barrier_parameter);
-      [[nodiscard]] bool update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate);
+      [[nodiscard]] bool update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate,
+            const PrimalDualResiduals& residuals);
 
    protected:
       double barrier_parameter;

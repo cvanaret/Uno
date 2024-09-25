@@ -167,8 +167,8 @@ namespace uno {
    // measure that combines KKT error and complementarity error
    double l1Relaxation::compute_infeasible_dual_error(Iterate& current_iterate) {
       // stationarity error
-      this->evaluate_lagrangian_gradient(current_iterate, this->trial_multipliers);
-      double error = norm_1(current_iterate.lagrangian_gradient.constraints_contribution);
+      this->evaluate_lagrangian_gradient(current_iterate.residuals.lagrangian_gradient, current_iterate, this->trial_multipliers);
+      double error = norm_1(current_iterate.residuals.lagrangian_gradient.constraints_contribution);
 
       // complementarity error
       const double shift_value = 0.;
@@ -246,7 +246,7 @@ namespace uno {
       }
       if (accept_iterate) {
          this->check_exact_relaxation(trial_iterate);
-         this->set_dual_residuals_statistics(statistics, trial_iterate);
+         // this->set_dual_residuals_statistics(statistics, trial_iterate);
       }
       this->set_progress_statistics(statistics, trial_iterate);
       return accept_iterate;
@@ -288,7 +288,7 @@ namespace uno {
    }
 
    void l1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-      statistics.set("stationarity", iterate.residuals.KKT_stationarity);
+      statistics.set("stationarity", iterate.residuals.stationarity);
       statistics.set("complementarity", iterate.residuals.complementarity);
    }
 } // namespace

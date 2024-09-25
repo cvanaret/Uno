@@ -38,7 +38,7 @@ namespace uno {
                else { // switching condition holds, but not Armijo condition
                   DEBUG << "Trial iterate (f-type) was rejected by violating the Armijo condition\n";
                }
-               scenario = "f-type Armijo";
+               scenario = "f-type";
             }
                // switching condition violated: predicted reduction is not promising (h-type)
             else {

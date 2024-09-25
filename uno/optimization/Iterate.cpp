@@ -17,8 +17,7 @@ namespace uno {
    Iterate::Iterate(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
          primals(number_variables), multipliers(number_variables, number_constraints), feasibility_multipliers(number_variables, number_constraints),
-         evaluations(number_variables, number_constraints),
-         lagrangian_gradient(number_variables) {
+         evaluations(number_variables, number_constraints), residuals(number_variables), feasibility_residuals(number_variables) {
    }
 
    void Iterate::evaluate_objective(const Model& model) {
@@ -79,7 +78,8 @@ namespace uno {
       this->feasibility_multipliers.lower_bounds.resize(new_number_variables);
       this->feasibility_multipliers.upper_bounds.resize(new_number_variables);
       this->evaluations.objective_gradient.reserve(new_number_variables);
-      this->lagrangian_gradient.resize(new_number_variables);
+      this->residuals.lagrangian_gradient.resize(new_number_variables);
+      this->feasibility_residuals.lagrangian_gradient.resize(new_number_variables);
    }
 
    std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
@@ -92,18 +92,19 @@ namespace uno {
       stream << "                        └ Upper bound: " << iterate.feasibility_multipliers.upper_bounds << '\n';
       stream << "Objective value: " << iterate.evaluations.objective << '\n';
 
-      stream << "          ┌ Stationarity: " << iterate.residuals.KKT_stationarity << '\n';
-      stream << "          │ FJ stationarity: " << iterate.residuals.FJ_stationarity << '\n';
-      stream << "Residuals │ Feasibility stationarity: " << iterate.residuals.feasibility_stationarity << '\n';
-      stream << "          │ Primal feasibility: " << iterate.residuals.primal_feasibility << '\n';
+      stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';
+      stream << "Residuals │ Primal feasibility: " << iterate.residuals.primal_feasibility << '\n';
       stream << "          │ Complementarity: " << iterate.residuals.complementarity << '\n';
-      stream << "          └ Feasibility complementarity: " << iterate.residuals.feasibility_complementarity << '\n';
+      stream << "          └ Lagrangian gradient: " << iterate.residuals.lagrangian_gradient;
+      stream << "Feasibility residuals ┌ Stationarity: " << iterate.feasibility_residuals.stationarity << '\n';
+      stream << "                      │ Complementarity: " << iterate.feasibility_residuals.complementarity << '\n';
+      stream << "                      └ Lagrangian gradient: " << iterate.feasibility_residuals.lagrangian_gradient;
 
       stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';
       stream << "Progress measures │ Optimality: " << iterate.progress.objective(1.) << '\n';
       stream << "                  └ Auxiliary terms: " << iterate.progress.auxiliary << '\n';
 
-      stream << "Lagrangian gradient: " << iterate.lagrangian_gradient;
+
       return stream;
    }
 } // namespace

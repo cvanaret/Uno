@@ -52,7 +52,7 @@ namespace uno {
             else {
                DEBUG << "Armijo condition not satisfied\n";
             }
-            scenario = "Armijo";
+            scenario = "f-type";
          }
          else {
             DEBUG << "Switching condition violated\n";

@@ -167,7 +167,7 @@ namespace uno {
                predicted_reduction, this->current_problem().get_objective_multiplier());
       }
       if (accept_iterate) {
-         this->set_dual_residuals_statistics(statistics, trial_iterate);
+         // this->set_dual_residuals_statistics(statistics, trial_iterate);
       }
       ConstraintRelaxationStrategy::set_progress_statistics(statistics, trial_iterate);
       return accept_iterate;
@@ -211,12 +211,12 @@ namespace uno {
 
    void FeasibilityRestoration::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
       if (this->current_phase == Phase::OPTIMALITY) {
-         statistics.set("stationarity", iterate.residuals.KKT_stationarity);
+         statistics.set("stationarity", iterate.residuals.stationarity);
          statistics.set("complementarity", iterate.residuals.complementarity);
       }
       else {
-         statistics.set("stationarity", iterate.residuals.feasibility_stationarity);
-         statistics.set("complementarity", iterate.residuals.feasibility_complementarity);
+         statistics.set("stationarity", iterate.feasibility_residuals.stationarity);
+         statistics.set("complementarity", iterate.feasibility_residuals.complementarity);
       }
    }
 } // namespace

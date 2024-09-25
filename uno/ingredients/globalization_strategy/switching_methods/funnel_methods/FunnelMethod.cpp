@@ -60,7 +60,7 @@ namespace uno {
                else { // switching condition holds, but not Armijo condition
                   DEBUG << "Trial iterate (f-type) was REJECTED by violating the Armijo condition\n";
                }
-               scenario = "f-type Armijo";
+               scenario = "f-type";
             }
                // h-type step
             else if (this->funnel.sufficient_decrease_condition(trial_progress.infeasibility)) {

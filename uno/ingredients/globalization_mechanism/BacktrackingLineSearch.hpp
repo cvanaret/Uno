@@ -21,7 +21,7 @@ namespace uno {
       size_t total_number_iterations{0}; /*!< Total number of iterations (optimality and feasibility) */
 
       void backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-            const Direction& direction, WarmstartInformation& warmstart_information);
+            WarmstartInformation& warmstart_information);
       [[nodiscard]] double decrease_step_length(double step_length) const;
       static void check_unboundedness(const Direction& direction);
       void set_statistics(Statistics& statistics) const;

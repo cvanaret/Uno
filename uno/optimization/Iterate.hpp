@@ -41,8 +41,8 @@ namespace uno {
       bool is_constraint_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
       // primal-dual residuals
-      PrimalDualResiduals residuals{};
-      LagrangianGradient<double> lagrangian_gradient;
+      PrimalDualResiduals residuals;
+      PrimalDualResiduals feasibility_residuals;
 
       // measures of progress (infeasibility, objective, auxiliary)
       ProgressMeasures progress{INF<double>, {}, INF<double>};

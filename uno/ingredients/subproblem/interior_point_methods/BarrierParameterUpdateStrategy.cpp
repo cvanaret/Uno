@@ -31,13 +31,14 @@ namespace uno {
       this->barrier_parameter = new_barrier_parameter;
    }
 
-   bool BarrierParameterUpdateStrategy::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate) {
+   bool BarrierParameterUpdateStrategy::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate,
+         const PrimalDualResiduals& residuals) {
       // primal-dual errors
-      const double scaled_stationarity = current_iterate.residuals.KKT_stationarity / current_iterate.residuals.stationarity_scaling;
+      const double scaled_stationarity = residuals.stationarity / residuals.stationarity_scaling;
       double primal_dual_error = std::max({
          scaled_stationarity,
-         current_iterate.residuals.primal_feasibility,
-            current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling
+         residuals.primal_feasibility,
+         residuals.complementarity / residuals.complementarity_scaling
       });
       DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
 
@@ -50,10 +51,10 @@ namespace uno {
          DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
          // update complementarity error
          double scaled_complementarity_error = BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(problem, current_iterate,
-               this->barrier_parameter) / current_iterate.residuals.complementarity_scaling;
+               this->barrier_parameter) / residuals.complementarity_scaling;
          primal_dual_error = std::max({
             scaled_stationarity,
-            current_iterate.residuals.primal_feasibility,
+            residuals.primal_feasibility,
             scaled_complementarity_error
          });
          DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';

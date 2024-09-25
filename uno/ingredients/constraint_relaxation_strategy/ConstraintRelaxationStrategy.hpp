@@ -15,6 +15,8 @@ namespace uno {
    // forward declarations
    class Direction;
    class Iterate;
+   template <typename ElementType>
+   class LagrangianGradient;
    class Model;
    struct Multipliers;
    class OptimizationProblem;
@@ -53,6 +55,7 @@ namespace uno {
 
       // primal-dual residuals
       virtual void compute_primal_dual_residuals(Iterate& iterate) = 0;
+      virtual void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const = 0;
 
       [[nodiscard]] size_t get_hessian_evaluation_count() const;
       [[nodiscard]] size_t get_number_subproblems_solved() const;
@@ -84,7 +87,7 @@ namespace uno {
       virtual void evaluate_progress_measures(Iterate& iterate) const = 0;
 
       void compute_primal_dual_residuals(const OptimizationProblem& optimality_problem, const OptimizationProblem& feasibility_problem, Iterate& iterate);
-      void evaluate_lagrangian_gradient(Iterate& iterate, const Multipliers& multipliers) const;
+      void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate, const Multipliers& multipliers) const;
 
       [[nodiscard]] double compute_stationarity_scaling(const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Multipliers& multipliers) const;
@@ -93,7 +96,6 @@ namespace uno {
 
       void set_statistics(Statistics& statistics, const Iterate& iterate) const;
       void set_progress_statistics(Statistics& statistics, const Iterate& iterate) const;
-      virtual void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const = 0;
    };
 } // namespace
 

@@ -41,12 +41,12 @@ namespace uno {
 
       // backtrack along the direction
       this->total_number_iterations = 0;
-      this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, this->direction, warmstart_information);
+      this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, warmstart_information);
    }
 
    // backtrack on the primal-dual step length computed by the subproblem
    void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, const Direction& direction, WarmstartInformation& warmstart_information) {
+         Iterate& trial_iterate, WarmstartInformation& warmstart_information) {
       // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
       double step_length = 1.;
       bool reached_small_step_length = false;
@@ -62,16 +62,18 @@ namespace uno {
 
          try {
             // assemble the trial iterate by going a fraction along the direction
-            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length,
+            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, step_length,
                   // scale or not the constraint dual direction with the LS step length
                   this->scale_duals_with_step_length ? step_length : 1.);
 
             // check whether the trial iterate is accepted
-            const bool is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, step_length);
-            this->set_statistics(statistics, trial_iterate, direction, step_length);
+            const bool is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate,
+                  this->direction, step_length);
+            this->set_statistics(statistics, trial_iterate, this->direction, step_length);
             if (is_acceptable) {
-               if (Logger::level == INFO) statistics.print_current_line();
                trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
+               this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
+               if (Logger::level == INFO) statistics.print_current_line();
                return;
             }
          }
@@ -103,6 +105,7 @@ namespace uno {
          trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
          if (trial_iterate.status != TerminationStatus::NOT_OPTIMAL) {
             statistics.set("status", "small step size");
+            this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
             return;
          }
 
@@ -114,7 +117,7 @@ namespace uno {
          this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, this->direction.primals,
                warmstart_information);
          BacktrackingLineSearch::check_unboundedness(this->direction);
-         this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, this->direction, warmstart_information);
+         this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, warmstart_information);
       }
    }
 
