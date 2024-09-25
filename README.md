@@ -36,17 +36,17 @@ The following hypergraph illustrates how some of the state-of-the-art solvers ca
    <img src="docs/figures/combination_hypergraph.png" alt="Combination hypergraph" width="75%" />
 </p>
 
-## Uno 1.0
+## Uno 1.0.0
 -->
 
-Uno 1.0 implements the following strategies:
+Uno 1.0.0 implements the following strategies:
 <p align="center">
-   <img src="docs/figures/hypergraph_uno.png" alt="Uno 1.0 hypergraph" width="65%" />
+   <img src="docs/figures/hypergraph_uno.png" alt="Uno 1.0.0 hypergraph" width="65%" />
 </p>
 
 **Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches. For more details, check out our [preprint](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization) or my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
 
-Uno 1.0 implements three **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
+Uno 1.0.0 implements three **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method);
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method);
 * `byrd` mimics Byrd's S $\ell_1$ QP (line-search $\ell_1$ merit S $\ell_1$ QP method).
@@ -57,7 +57,7 @@ Some of Uno combinations that correspond to existing solvers (called presets, se
 The figure below is a performance profile of Uno and state-of-the-art solvers filterSQP, IPOPT, SNOPT, MINOS, LANCELOT, LOQO and CONOPT; it shows how many problems are solved for a given budget of function evaluations (1 time, 2 times, 4 times, ..., $2^x$ times the number of objective evaluations of the best solver for each instance).
 
 <p align="center">
-   <img src="docs/figures/uno_performance_profile.png" alt="Performance profile of Uno 1.0" width="75%" />
+   <img src="docs/figures/uno_performance_profile.png" alt="Performance profile of Uno 1.0.0" width="75%" />
 </p>
 
 All log files can be found [here](https://github.com/cvanaret/nonconvex_solver_comparison).
@@ -100,7 +100,7 @@ To use Uno with Julia/JuMP, a solution in the short term is to use the package [
 
 To pick a globalization mechanism, use the argument (choose one of the possible options in brackets): ```-globalization_mechanism [LS|TR]```  
 To pick a constraint relaxation strategy, use the argument: ```-constraint_relaxation_strategy [feasibility_restoration|l1_relaxation]```  
-To pick a globalization strategy, use the argument: ```-globalization_strategy [l1_merit|fletcher_filter_strategy|waechter_filter_strategy]```  
+To pick a globalization strategy, use the argument: ```-globalization_strategy [l1_merit|fletcher_filter_method|waechter_filter_method|funnel_method]```  
 To pick a subproblem method, use the argument: ```-subproblem [QP|LP|primal_dual_interior_point]```  
 The options can be combined in the same command line.
 
