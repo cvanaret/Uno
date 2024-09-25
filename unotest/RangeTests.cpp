@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 #include "symbolic/Range.hpp"
 
+using namespace uno;
+
 TEST(Range, Size) {
    const size_t size = 5;
    const Range range(size);

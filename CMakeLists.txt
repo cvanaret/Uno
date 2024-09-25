@@ -33,8 +33,10 @@ file(GLOB UNO_SOURCE_FILES
     uno/Uno.cpp
     uno/ingredients/globalization_mechanism/*.cpp
     uno/ingredients/globalization_strategy/*.cpp
-    uno/ingredients/globalization_strategy/filter_method/*.cpp
-    uno/ingredients/globalization_strategy/filter_method/filter/*.cpp
+    uno/ingredients/globalization_strategy/switching_methods/*.cpp
+    uno/ingredients/globalization_strategy/switching_methods/filter_methods/*.cpp
+    uno/ingredients/globalization_strategy/switching_methods/filter_methods/filters/*.cpp
+    uno/ingredients/globalization_strategy/switching_methods/funnel_methods/*.cpp
     uno/ingredients/constraint_relaxation_strategy/*.cpp
     uno/ingredients/subproblem/*.cpp
     uno/ingredients/subproblem/inequality_constrained_methods/*.cpp
@@ -157,7 +159,7 @@ if(${amplsolver} STREQUAL "amplsolver-NOTFOUND")
    message(WARNING "Optional library amplsolver (ASL) was not found.")
 else()
    message(STATUS "Library amplsolver was found.")
-   add_executable(uno_ampl uno/interfaces/AMPL/AMPLModel.cpp uno/main.cpp)
+   add_executable(uno_ampl bindings/AMPL/AMPLModel.cpp bindings/AMPL/uno_ampl.cpp)
    
    target_link_libraries(uno_ampl PUBLIC uno ${amplsolver})
    add_definitions("-D HAS_AMPLSOLVER")

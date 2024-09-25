@@ -7,23 +7,25 @@
 #include <vector>
 #include <cstddef>
 
-// forward declarations
-template <typename ElementType>
-class RectangularMatrix;
-template <typename ElementType>
-class SparseVector;
+namespace uno {
+   // forward declarations
+   template <typename ElementType>
+   class RectangularMatrix;
+   template <typename ElementType>
+   class SparseVector;
 
-class Scaling {
-public:
-   Scaling(size_t number_constraints, double gradient_threshold);
-   void compute(const SparseVector<double>& objective_gradient, const RectangularMatrix<double>& constraint_jacobian);
-   [[nodiscard]] double get_objective_scaling() const;
-   [[nodiscard]] double get_constraint_scaling(size_t constraint_index) const;
+   class Scaling {
+   public:
+      Scaling(size_t number_constraints, double gradient_threshold);
+      void compute(const SparseVector<double>& objective_gradient, const RectangularMatrix<double>& constraint_jacobian);
+      [[nodiscard]] double get_objective_scaling() const;
+      [[nodiscard]] double get_constraint_scaling(size_t constraint_index) const;
 
-protected:
-   const double gradient_threshold;
-   double objective_scaling;
-   std::vector<double> constraint_scaling;
-};
+   protected:
+      const double gradient_threshold;
+      double objective_scaling;
+      std::vector<double> constraint_scaling;
+   };
+} // namespace
 
 #endif // UNO_SCALING_H

@@ -7,6 +7,8 @@
 #include "symbolic/Range.hpp"
 #include <vector>
 
+using namespace uno;
+
 TEST(Concatenation, Size) {
    const std::vector<int> x{1, 2, 3};
    const std::vector<int> y{4, 5, 6};

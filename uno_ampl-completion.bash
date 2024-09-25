@@ -16,7 +16,7 @@ _uno_ampl_completions()
             return 0
             ;;
         -globalization_strategy)
-			local globalization_strategies="l1_merit fletcher_filter_method waechter_filter_method"
+			local globalization_strategies="l1_merit fletcher_filter_method waechter_filter_method funnel_method"
             COMPREPLY=( $(compgen -W "${globalization_strategies}" -- ${cur}) )
             return 0
             ;;
@@ -31,7 +31,7 @@ _uno_ampl_completions()
             return 0
             ;;
         -preset)
-			local presets="filtersqp ipopt byrd"
+			local presets="filtersqp ipopt byrd funnelsqp"
             COMPREPLY=( $(compgen -W "${presets}" -- ${cur}) )
             return 0
             ;;

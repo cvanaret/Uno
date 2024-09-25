@@ -11,52 +11,54 @@
 #include "optimization/Multipliers.hpp"
 #include "optimization/PrimalDualResiduals.hpp"
 
-// forward declaration
-class Model;
+namespace uno {
+   // forward declaration
+   class Model;
 
-class Iterate {
-public:
-   Iterate(size_t number_variables, size_t number_constraints);
-   Iterate(Iterate&& other) noexcept = default;
-   Iterate& operator=(Iterate&& other) noexcept = default;
+   class Iterate {
+   public:
+      Iterate(size_t number_variables, size_t number_constraints);
+      Iterate(Iterate&& other) noexcept = default;
+      Iterate& operator=(Iterate&& other) noexcept = default;
 
-   size_t number_variables;
-   size_t number_constraints;
-   Vector<double> primals;
-   Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
-   Multipliers feasibility_multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
-   double objective_multiplier{1.};
+      size_t number_variables;
+      size_t number_constraints;
+      Vector<double> primals;
+      Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
+      Multipliers feasibility_multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
+      double objective_multiplier{1.};
 
-   // evaluations
-   Evaluations evaluations;
-   static size_t number_eval_objective;
-   static size_t number_eval_constraints;
-   static size_t number_eval_objective_gradient;
-   static size_t number_eval_jacobian;
-   // lazy evaluation flags
-   bool is_objective_computed{false};
-   bool are_constraints_computed{false};
-   bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the objective gradient has already been computed */
-   bool is_constraint_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
+      // evaluations
+      Evaluations evaluations;
+      static size_t number_eval_objective;
+      static size_t number_eval_constraints;
+      static size_t number_eval_objective_gradient;
+      static size_t number_eval_jacobian;
+      // lazy evaluation flags
+      bool is_objective_computed{false};
+      bool are_constraints_computed{false};
+      bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the objective gradient has already been computed */
+      bool is_constraint_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
-   // primal-dual residuals
-   PrimalDualResiduals residuals{};
-   LagrangianGradient<double> lagrangian_gradient;
+      // primal-dual residuals
+      PrimalDualResiduals residuals;
+      PrimalDualResiduals feasibility_residuals;
 
-   // measures of progress (infeasibility, objective, auxiliary)
-   ProgressMeasures progress{INF<double>, {}, INF<double>};
+      // measures of progress (infeasibility, objective, auxiliary)
+      ProgressMeasures progress{INF<double>, {}, INF<double>};
 
-   // status
-   TerminationStatus status{TerminationStatus::NOT_OPTIMAL};
+      // status
+      TerminationStatus status{TerminationStatus::NOT_OPTIMAL};
 
-   void evaluate_objective(const Model& model);
-   void evaluate_constraints(const Model& model);
-   void evaluate_objective_gradient(const Model& model);
-   void evaluate_constraint_jacobian(const Model& model);
+      void evaluate_objective(const Model& model);
+      void evaluate_constraints(const Model& model);
+      void evaluate_objective_gradient(const Model& model);
+      void evaluate_constraint_jacobian(const Model& model);
 
-   void set_number_variables(size_t number_variables);
+      void set_number_variables(size_t number_variables);
 
-   friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
-};
+      friend std::ostream& operator<<(std::ostream& stream, const Iterate& iterate);
+   };
+} // namespace
 
 #endif // UNO_ITERATE_H

@@ -5,6 +5,8 @@
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "solvers/linear/MUMPSSolver.hpp"
 
+using namespace uno;
+
 const size_t n = 5;
 const size_t nnz = 7;
 const std::array<double, n> reference{1., 2., 3., 4., 5.};

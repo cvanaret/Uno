@@ -9,34 +9,36 @@
 #include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "tools/Options.hpp"
 
-std::unique_ptr<Subproblem> SubproblemFactory::create(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
-      size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) {
-   const std::string subproblem_strategy = options.get_string("subproblem");
-   // active-set methods
-   if (subproblem_strategy == "QP") {
-      return std::make_unique<QPSubproblem>(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
-            number_hessian_nonzeros, options);
+namespace uno {
+   std::unique_ptr<Subproblem> SubproblemFactory::create(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
+         size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) {
+      const std::string subproblem_strategy = options.get_string("subproblem");
+      // active-set methods
+      if (subproblem_strategy == "QP") {
+         return std::make_unique<QPSubproblem>(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
+               number_hessian_nonzeros, options);
+      }
+      else if (subproblem_strategy == "LP") {
+         return std::make_unique<LPSubproblem>(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
+               options);
+      }
+      // interior-point method
+      else if (subproblem_strategy == "primal_dual_interior_point") {
+         return std::make_unique<PrimalDualInteriorPointSubproblem>(number_variables, number_constraints, number_jacobian_nonzeros,
+               number_hessian_nonzeros, options);
+      }
+      throw std::invalid_argument("Subproblem strategy " + subproblem_strategy + " is not supported");
    }
-   else if (subproblem_strategy == "LP") {
-      return std::make_unique<LPSubproblem>(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
-            options);
-   }
-   // interior-point method
-   else if (subproblem_strategy == "primal_dual_interior_point") {
-      return std::make_unique<PrimalDualInteriorPointSubproblem>(number_variables, number_constraints, number_jacobian_nonzeros,
-            number_hessian_nonzeros, options);
-   }
-   throw std::invalid_argument("Subproblem strategy " + subproblem_strategy + " is not supported");
-}
 
-std::vector<std::string> SubproblemFactory::available_strategies() {
-   std::vector<std::string> strategies{};
-   if (not QPSolverFactory::available_solvers().empty()) {
-      strategies.emplace_back("QP");
-      strategies.emplace_back("LP");
+   std::vector<std::string> SubproblemFactory::available_strategies() {
+      std::vector<std::string> strategies{};
+      if (not QPSolverFactory::available_solvers().empty()) {
+         strategies.emplace_back("QP");
+         strategies.emplace_back("LP");
+      }
+      if (not SymmetricIndefiniteLinearSolverFactory::available_solvers().empty()) {
+         strategies.emplace_back("primal_dual_interior_point");
+      }
+      return strategies;
    }
-   if (not SymmetricIndefiniteLinearSolverFactory::available_solvers().empty()) {
-      strategies.emplace_back("primal_dual_interior_point");
-   }
-   return strategies;
-}
+} // namespace

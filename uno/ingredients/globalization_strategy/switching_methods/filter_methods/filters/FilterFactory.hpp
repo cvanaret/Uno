@@ -6,9 +6,11 @@
 
 #include "Filter.hpp"
 
-class FilterFactory {
-public:
-   static std::unique_ptr<Filter> create(const Options& options);
-};
+namespace uno {
+   class FilterFactory {
+   public:
+      static std::unique_ptr<Filter> create(const Options& options);
+   };
+} // namespace
 
 #endif // UNO_FILTERFACTORY_H

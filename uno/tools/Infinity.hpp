@@ -7,12 +7,14 @@
 #include <cmath>
 #include <limits>
 
-template <typename NumericalType>
-const double INF = std::numeric_limits<NumericalType>::infinity();
+namespace uno {
+   template <typename NumericalType>
+   const double INF = std::numeric_limits<NumericalType>::infinity();
 
-template <typename NumericalType>
-inline bool is_finite(NumericalType value) {
-   return std::abs(value) < INF<NumericalType>;
-}
+   template <typename NumericalType>
+   inline bool is_finite(NumericalType value) {
+      return std::abs(value) < INF<NumericalType>;
+   }
+} // namespace
 
 #endif // UNO_INFINITY_H

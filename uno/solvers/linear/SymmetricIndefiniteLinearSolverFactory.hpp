@@ -15,31 +15,33 @@
 #include "MUMPSSolver.hpp"
 #endif
 
-class SymmetricIndefiniteLinearSolverFactory {
-public:
-   static std::unique_ptr<SymmetricIndefiniteLinearSolver<size_t, double>> create([[maybe_unused]] const std::string& linear_solver_name,
-         [[maybe_unused]] size_t dimension, [[maybe_unused]] size_t number_nonzeros) {
+namespace uno {
+   class SymmetricIndefiniteLinearSolverFactory {
+   public:
+      static std::unique_ptr<SymmetricIndefiniteLinearSolver<size_t, double>> create([[maybe_unused]] const std::string& linear_solver_name,
+            [[maybe_unused]] size_t dimension, [[maybe_unused]] size_t number_nonzeros) {
 #ifdef HAS_MA57
-      if (linear_solver_name == "MA57") {
-         return std::make_unique<MA57Solver>(dimension, number_nonzeros);
-      }
+         if (linear_solver_name == "MA57") {
+            return std::make_unique<MA57Solver>(dimension, number_nonzeros);
+         }
 #endif
 #ifdef HAS_MUMPS
-      if (linear_solver_name == "MUMPS") {
-         return std::make_unique<MUMPSSolver>(dimension, number_nonzeros);
-      }
+         if (linear_solver_name == "MUMPS") {
+            return std::make_unique<MUMPSSolver>(dimension, number_nonzeros);
+         }
 #endif
-      throw std::invalid_argument("Linear solver name is unknown");
-   }
+         throw std::invalid_argument("Linear solver name is unknown");
+      }
 
-   // return the list of available QP solvers
-   static std::vector<std::string> available_solvers() {
-      std::vector<std::string> solvers{};
-      #ifdef HAS_MA57
-      solvers.emplace_back("MA57");
-      #endif
-      return solvers;
-   }
-};
+      // return the list of available QP solvers
+      static std::vector<std::string> available_solvers() {
+         std::vector<std::string> solvers{};
+         #ifdef HAS_MA57
+         solvers.emplace_back("MA57");
+         #endif
+         return solvers;
+      }
+   };
+} // namespace
 
 #endif // UNO_LINEARSOLVERFACTORY_H

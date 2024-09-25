@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 #include "linear_algebra/Vector.hpp"
 
+using namespace uno;
+
 TEST(Vector, Empty) {
    Vector<double> x(0);
    // x is empty: its size (number of elements) is 0

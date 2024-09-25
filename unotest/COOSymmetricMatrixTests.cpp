@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 
+using namespace uno;
+
 const size_t n = 5;
 const size_t nnz = 7;
 

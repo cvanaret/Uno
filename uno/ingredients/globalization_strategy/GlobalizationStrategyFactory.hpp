@@ -8,13 +8,15 @@
 #include <vector>
 #include "GlobalizationStrategy.hpp"
 
-// forward declaration
-class Options;
+namespace uno {
+   // forward declaration
+   class Options;
 
-class GlobalizationStrategyFactory {
-public:
-   static std::unique_ptr<GlobalizationStrategy> create(const std::string& strategy_type, const Options& options);
-   static std::vector<std::string> available_strategies();
-};
+   class GlobalizationStrategyFactory {
+   public:
+      static std::unique_ptr<GlobalizationStrategy> create(const std::string& strategy_type, const Options& options);
+      static std::vector<std::string> available_strategies();
+   };
+} // namespace
 
 #endif // UNO_GLOBALIZATIONSTRATEGYFACTORY_H

@@ -6,19 +6,20 @@
 
 #include "tools/Infinity.hpp"
 
-class PrimalDualResiduals {
-public:
-   double KKT_stationarity{INF<double>};
-   double FJ_stationarity{INF<double>};
-   double feasibility_stationarity{INF<double>};
+namespace uno {
+   class PrimalDualResiduals {
+   public:
+      explicit PrimalDualResiduals(size_t number_variables): lagrangian_gradient(number_variables) { }
 
-   double primal_feasibility{INF<double>};
+      double stationarity{INF<double>};
+      double primal_feasibility{INF<double>};
+      double complementarity{INF<double>};
 
-   double complementarity{INF<double>};
-   double feasibility_complementarity{INF<double>};
+      double stationarity_scaling{INF<double>};
+      double complementarity_scaling{INF<double>};
 
-   double stationarity_scaling{INF<double>};
-   double complementarity_scaling{INF<double>};
-};
+      LagrangianGradient<double> lagrangian_gradient;
+   };
+} // namespace
 
 #endif // UNO_PRIMALDUALRESIDUALS_H
