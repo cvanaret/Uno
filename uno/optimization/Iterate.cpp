@@ -75,6 +75,7 @@ namespace uno {
       this->primals.resize(new_number_variables);
       this->multipliers.lower_bounds.resize(new_number_variables);
       this->multipliers.upper_bounds.resize(new_number_variables);
+      this->evaluations.objective_gradient.reserve(new_number_variables);
       this->residuals.lagrangian_gradient.resize(new_number_variables);
    }
 
@@ -87,10 +88,10 @@ namespace uno {
       stream << "Feasibility multipliers │ Lower bound: " << iterate.feasibility_multipliers.lower_bounds << '\n';
       stream << "                        └ Upper bound: " << iterate.feasibility_multipliers.upper_bounds << '\n';
       stream << "Objective value: " << iterate.evaluations.objective << '\n';
+      stream << "Primal feasibility: " << iterate.primal_feasibility << '\n';
 
       stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';
-      stream << "Residuals │ Primal feasibility: " << iterate.primal_feasibility << '\n';
-      stream << "          │ Complementarity: " << iterate.residuals.complementarity << '\n';
+      stream << "Residuals │ Complementarity: " << iterate.residuals.complementarity << '\n';
       stream << "          └ Lagrangian gradient: " << iterate.residuals.lagrangian_gradient;
       stream << "Feasibility residuals ┌ Stationarity: " << iterate.feasibility_residuals.stationarity << '\n';
       stream << "                      │ Complementarity: " << iterate.feasibility_residuals.complementarity << '\n';
