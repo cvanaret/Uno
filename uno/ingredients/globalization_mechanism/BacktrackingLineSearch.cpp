@@ -49,9 +49,9 @@ namespace uno {
          Iterate& trial_iterate, WarmstartInformation& warmstart_information) {
       // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
       double step_length = 1.;
-      bool reached_small_step_length = false;
+      bool termination = false;
       size_t number_iterations = 0;
-      while (not reached_small_step_length) {
+      while (not termination) {
          this->total_number_iterations++;
          number_iterations++;
          if (1 < number_iterations) {
@@ -60,6 +60,7 @@ namespace uno {
          BacktrackingLineSearch::print_iteration(number_iterations, step_length);
          statistics.set("step length", step_length);
 
+         bool is_acceptable = false;
          try {
             // assemble the trial iterate by going a fraction along the direction
             GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, step_length,
@@ -67,58 +68,51 @@ namespace uno {
                   this->scale_duals_with_step_length ? step_length : 1.);
 
             // check whether the trial iterate is accepted
-            const bool is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate,
+            is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate,
                   this->direction, step_length);
             this->set_statistics(statistics, trial_iterate, this->direction, step_length);
-            if (is_acceptable) {
-               trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
-               this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
-               if (Logger::level == INFO) statistics.print_current_line();
-               return;
-            }
          }
          catch (const EvaluationError& e) {
             this->set_statistics(statistics);
             statistics.set("status", "eval. error");
          }
 
-         // small step length
-         if (step_length < this->minimum_step_length) {
-            DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
-            reached_small_step_length = true;
+         if (is_acceptable) {
+            trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
+            this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
+            if (Logger::level == INFO) statistics.print_current_line();
+            termination = true;
          }
-         else {
+         else if (step_length >= this->minimum_step_length) {
             step_length = this->decrease_step_length(step_length);
+         }
+         else { // minimum_step_length reached
+            DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
+            // check if we can terminate at a first-order point
+            trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
+            if (trial_iterate.status != TerminationStatus::NOT_OPTIMAL) {
+               statistics.set("status", "accepted (small step length)");
+               this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
+               termination = true;
+            }
+            // test if we can switch to solving the feasibility problem
+            else if (this->constraint_relaxation_strategy.solving_feasibility_problem() || not model.is_constrained()) {
+               throw std::runtime_error("LS failed");
+            }
+            else {
+               // switch to solving the feasibility problem
+               statistics.set("status", "small LS step length");
+               this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate);
+               warmstart_information.set_cold_start();
+               this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, this->direction.primals,
+                     warmstart_information);
+               BacktrackingLineSearch::check_unboundedness(this->direction);
+               // restart backtracking
+               step_length = 1.;
+            }
          }
          if (Logger::level == INFO) statistics.print_current_line();
       } // end while loop
-
-      // reached a small step length: revert to solving the feasibility problem
-      if (this->constraint_relaxation_strategy.solving_feasibility_problem()) {
-         throw std::runtime_error("Feasibility LS failed");
-      }
-      else if (not model.is_constrained()) {
-         throw std::runtime_error("Regular LS failed");
-      }
-      else {
-         // check if we can terminate at a first-order point
-         trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
-         if (trial_iterate.status != TerminationStatus::NOT_OPTIMAL) {
-            statistics.set("status", "small step size");
-            this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
-            return;
-         }
-
-         // switch to solving the feasibility problem
-         warmstart_information.set_cold_start();
-         statistics.set("status", "LS failed");
-         this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate);
-         warmstart_information.set_cold_start();
-         this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, this->direction.primals,
-               warmstart_information);
-         BacktrackingLineSearch::check_unboundedness(this->direction);
-         this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, warmstart_information);
-      }
    }
 
    // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
