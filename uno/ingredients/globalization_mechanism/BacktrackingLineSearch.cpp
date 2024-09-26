@@ -35,71 +35,59 @@ namespace uno {
       warmstart_information.set_hot_start();
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
-      // compute the direction
       this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, warmstart_information);
       BacktrackingLineSearch::check_unboundedness(this->direction);
-
-      // backtrack along the direction
-      this->total_number_iterations = 0;
       this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, warmstart_information);
    }
 
-   // backtrack on the primal-dual step length computed by the subproblem
+   // go a fraction along the direction by finding an acceptable step length
    void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, WarmstartInformation& warmstart_information) {
-      // most subproblem methods return a step length of 1. Interior-point methods however apply the fraction-to-boundary condition
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
       while (not termination) {
-         this->total_number_iterations++;
          number_iterations++;
+         DEBUG << "\n\tLine-search iteration " << number_iterations << ", step_length " << step_length << '\n';
          if (1 < number_iterations) {
             statistics.start_new_line();
          }
-         BacktrackingLineSearch::print_iteration(number_iterations, step_length);
          statistics.set("step length", step_length);
 
          bool is_acceptable = false;
          try {
-            // assemble the trial iterate by going a fraction along the direction
+            // take a step as a fraction of the direction
             GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, step_length,
                   // scale or not the constraint dual direction with the LS step length
                   this->scale_duals_with_step_length ? step_length : 1.);
 
-            // check whether the trial iterate is accepted
-            is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate,
-                  this->direction, step_length);
-            this->set_statistics(statistics, trial_iterate, this->direction, step_length);
+            is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction, step_length);
+            this->set_statistics(statistics, trial_iterate, this->direction, step_length, number_iterations);
          }
          catch (const EvaluationError& e) {
-            this->set_statistics(statistics);
+            this->set_statistics(statistics, number_iterations);
             statistics.set("status", "eval. error");
          }
 
          if (is_acceptable) {
             trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
             this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
-            if (Logger::level == INFO) statistics.print_current_line();
             termination = true;
+            if (Logger::level == INFO) statistics.print_current_line();
          }
          else if (step_length >= this->minimum_step_length) {
             step_length = this->decrease_step_length(step_length);
+            if (Logger::level == INFO) statistics.print_current_line();
          }
          else { // minimum_step_length reached
             DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
             // check if we can terminate at a first-order point
-            trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
-            if (trial_iterate.status != TerminationStatus::NOT_OPTIMAL) {
-               statistics.set("status", "accepted (small step length)");
-               this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
-               termination = true;
-            }
-            // test if we can switch to solving the feasibility problem
-            else if (this->constraint_relaxation_strategy.solving_feasibility_problem() || not model.is_constrained()) {
-               throw std::runtime_error("LS failed");
-            }
-            else {
+            termination = this->terminate_with_small_step_length(statistics, trial_iterate);
+            if (not termination) {
+               // test if we can switch to solving the feasibility problem
+               if (this->constraint_relaxation_strategy.solving_feasibility_problem() || not model.is_constrained()) {
+                  throw std::runtime_error("LS failed");
+               }
                // switch to solving the feasibility problem
                statistics.set("status", "small LS step length");
                this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate);
@@ -109,10 +97,21 @@ namespace uno {
                BacktrackingLineSearch::check_unboundedness(this->direction);
                // restart backtracking
                step_length = 1.;
+               number_iterations = 0;
             }
          }
-         if (Logger::level == INFO) statistics.print_current_line();
       } // end while loop
+   }
+
+   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, Iterate& trial_iterate) {
+      bool termination = false;
+      trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
+      if (trial_iterate.status != TerminationStatus::NOT_OPTIMAL) {
+         statistics.set("status", "accepted (small step length)");
+         this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
+         termination = true;
+      }
+      return termination;
    }
 
    // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
@@ -129,20 +128,16 @@ namespace uno {
       }
    }
 
-   void BacktrackingLineSearch::set_statistics(Statistics& statistics) const {
-      statistics.set("LS iter", this->total_number_iterations);
+   void BacktrackingLineSearch::set_statistics(Statistics& statistics, size_t number_iterations) const {
+      statistics.set("LS iter", number_iterations);
    }
 
    void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction,
-         double primal_dual_step_length) const {
+         double primal_dual_step_length, size_t number_iterations) const {
       if (trial_iterate.is_objective_computed) {
          statistics.set("objective", trial_iterate.evaluations.objective);
       }
       statistics.set("step norm", primal_dual_step_length * direction.norm);
-      this->set_statistics(statistics);
-   }
-
-   void BacktrackingLineSearch::print_iteration(size_t number_iterations, double primal_dual_step_length) {
-      DEBUG << "\n\tLINE SEARCH iteration " << number_iterations << ", step_length " << primal_dual_step_length << '\n';
+      this->set_statistics(statistics, number_iterations);
    }
 } // namespace

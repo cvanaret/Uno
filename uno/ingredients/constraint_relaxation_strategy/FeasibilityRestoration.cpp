@@ -105,7 +105,6 @@ namespace uno {
       DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
       if (Logger::level == INFO) statistics.print_current_line();
-      statistics.start_new_line();
    }
 
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,

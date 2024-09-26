@@ -48,10 +48,12 @@ namespace uno {
       while (not termination) {
          try {
             number_iterations++;
-            this->print_iteration(number_iterations);
+            DEBUG << "\n\t### Trust-region inner iteration " << number_iterations << " with radius " << this->radius << "\n\n";
             if (1 < number_iterations) {
                statistics.start_new_line();
             }
+            this->set_trust_region_statistics(statistics, number_iterations);
+
             // compute the direction within the trust region
             this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
             this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, warmstart_information);
@@ -59,14 +61,14 @@ namespace uno {
             // deal with errors in the subproblem
             if (this->direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
                // the subproblem is always bounded, but the objective may exceed a very large negative value
-               this->set_statistics(statistics, this->direction, number_iterations);
+               this->set_statistics(statistics, this->direction);
                statistics.set("status", "unbounded subproblem");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius_aggressively();
                warmstart_information.set_cold_start();
             }
             else if (this->direction.status == SubproblemStatus::ERROR) {
-               this->set_statistics(statistics, this->direction, number_iterations);
+               this->set_statistics(statistics, this->direction);
                statistics.set("status", "solver error");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius(this->direction.norm);
@@ -77,8 +79,7 @@ namespace uno {
                GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, 1., 1.);
                this->reset_active_trust_region_multipliers(model, this->direction, trial_iterate);
 
-               // check whether the trial iterate (current iterate + full step) is acceptable
-               const bool is_acceptable = this->is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction, number_iterations);
+               const bool is_acceptable = this->is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction);
                if (is_acceptable) {
                   this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
                   this->reset_radius();
@@ -94,7 +95,6 @@ namespace uno {
          }
          // if an evaluation error occurs, decrease the radius
          catch (const EvaluationError& e) {
-            this->set_statistics(statistics, number_iterations);
             statistics.set("status", "eval. error");
             if (Logger::level == INFO) statistics.print_current_line();
             this->decrease_radius();
@@ -122,10 +122,10 @@ namespace uno {
 
    // the trial iterate is accepted by the constraint relaxation strategy or if the step is small and we cannot switch to solving the feasibility problem
    bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, size_t number_iterations) {
+         const Direction& direction) {
       // direction.primal_dual_step_length is usually 1, can be lower if reduced by fraction-to-boundary rule
       bool accept_iterate = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, 1.);
-      this->set_statistics(statistics, trial_iterate, direction, number_iterations);
+      this->set_statistics(statistics, trial_iterate, direction);
       if (accept_iterate) {
          trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
          // possibly increase the radius if trust region is active
@@ -182,24 +182,19 @@ namespace uno {
       this->radius = std::max(this->radius, this->radius_reset_threshold);
    }
 
-   void TrustRegionStrategy::set_statistics(Statistics& statistics, size_t number_iterations) const {
+   void TrustRegionStrategy::set_trust_region_statistics(Statistics& statistics, size_t number_iterations) const {
       statistics.set("TR iter", number_iterations);
       statistics.set("TR radius", this->radius);
    }
 
-   void TrustRegionStrategy::set_statistics(Statistics& statistics, const Direction& direction, size_t number_iterations) const {
+   void TrustRegionStrategy::set_statistics(Statistics& statistics, const Direction& direction) const {
       statistics.set("step norm", direction.norm);
-      this->set_statistics(statistics, number_iterations);
    }
 
-   void TrustRegionStrategy::set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction, size_t number_iterations) const {
+   void TrustRegionStrategy::set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction) const {
       if (trial_iterate.is_objective_computed) {
          statistics.set("objective", trial_iterate.evaluations.objective);
       }
-      this->set_statistics(statistics, direction, number_iterations);
-   }
-
-   void TrustRegionStrategy::print_iteration(size_t number_iterations) {
-      DEBUG << "\n\t### Trust-region inner iteration " << number_iterations << " with radius " << this->radius << "\n\n";
+      this->set_statistics(statistics, direction);
    }
 } // namespace

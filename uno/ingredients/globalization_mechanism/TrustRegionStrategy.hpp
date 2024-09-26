@@ -24,8 +24,7 @@ namespace uno {
       const double radius_reset_threshold;
       const double tolerance;
 
-      bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-            size_t number_iterations);
+      bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction);
       void possibly_increase_radius(double step_norm);
       void decrease_radius(double step_norm);
       void decrease_radius();
@@ -33,10 +32,9 @@ namespace uno {
       void reset_radius();
       void reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
       bool check_termination_with_small_step(Iterate& trial_iterate) const;
-      void set_statistics(Statistics& statistics, size_t number_iterations) const;
-      void set_statistics(Statistics& statistics, const Direction& direction, size_t number_iterations) const;
-      void set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction, size_t number_iterations) const;
-      void print_iteration(size_t number_iterations);
+      void set_trust_region_statistics(Statistics& statistics, size_t number_iterations) const;
+      void set_statistics(Statistics& statistics, const Direction& direction) const;
+      void set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction) const;
    };
 } // namespace
 
