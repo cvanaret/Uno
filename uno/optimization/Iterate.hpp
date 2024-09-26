@@ -9,7 +9,7 @@
 #include "ingredients/globalization_strategy/ProgressMeasures.hpp"
 #include "optimization/LagrangianGradient.hpp"
 #include "optimization/Multipliers.hpp"
-#include "optimization/PrimalDualResiduals.hpp"
+#include "optimization/DualResiduals.hpp"
 
 namespace uno {
    // forward declaration
@@ -18,6 +18,7 @@ namespace uno {
    class Iterate {
    public:
       Iterate(size_t number_variables, size_t number_constraints);
+      Iterate(const Iterate& other) noexcept = default;
       Iterate(Iterate&& other) noexcept = default;
       Iterate& operator=(Iterate&& other) noexcept = default;
 
@@ -41,8 +42,9 @@ namespace uno {
       bool is_constraint_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
       // primal-dual residuals
-      PrimalDualResiduals residuals;
-      PrimalDualResiduals feasibility_residuals;
+      double primal_feasibility{INF<double>};
+      DualResiduals residuals;
+      DualResiduals feasibility_residuals;
 
       // measures of progress (infeasibility, objective, auxiliary)
       ProgressMeasures progress{INF<double>, {}, INF<double>};

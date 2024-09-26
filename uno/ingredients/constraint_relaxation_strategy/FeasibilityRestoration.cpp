@@ -16,7 +16,7 @@ namespace uno {
          // call delegating constructor
          FeasibilityRestoration(model, OptimalityProblem(model),
                // create the (restoration phase) feasibility problem (objective multiplier = 0)
-               l1RelaxedProblem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
+               l1RelaxedProblem(model, 0., options.get_double("l1_constraint_violation_coefficient"), 0., nullptr),
                options) {
    }
 
@@ -34,7 +34,9 @@ namespace uno {
          optimality_problem(std::forward<OptimalityProblem>(optimality_problem)),
          feasibility_problem(std::forward<l1RelaxedProblem>(feasibility_problem)),
          linear_feasibility_tolerance(options.get_double("tolerance")),
-         switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
+         switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")),
+         reference_optimality_primals(optimality_problem.number_variables) {
+      this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
    }
 
    void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
@@ -45,6 +47,9 @@ namespace uno {
 
       // initial iterate
       this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
+      initial_iterate.feasibility_residuals.lagrangian_gradient.resize(this->feasibility_problem.number_variables);
+      initial_iterate.feasibility_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
+      initial_iterate.feasibility_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
       this->evaluate_progress_measures(initial_iterate);
       this->compute_primal_dual_residuals(initial_iterate);
       this->set_statistics(statistics, initial_iterate);
@@ -97,8 +102,10 @@ namespace uno {
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
       this->subproblem->initialize_feasibility_problem(this->feasibility_problem, current_iterate);
-      // save the progress of the current point upon switching
+      // save the current point (progress and primals) upon switching
       this->reference_optimality_progress = current_iterate.progress;
+      this->reference_optimality_primals = current_iterate.primals;
+      this->feasibility_problem.set_proximal_multiplier(this->subproblem->proximal_coefficient(current_iterate));
 
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
       this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
@@ -143,6 +150,7 @@ namespace uno {
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) {
+      // TODO pick right multipliers
       this->subproblem->postprocess_iterate(this->current_problem(), trial_iterate);
       this->compute_progress_measures(current_iterate, trial_iterate);
       trial_iterate.objective_multiplier = this->current_problem().get_objective_multiplier();
@@ -209,13 +217,8 @@ namespace uno {
    }
 
    void FeasibilityRestoration::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-      if (this->current_phase == Phase::OPTIMALITY) {
-         statistics.set("stationarity", iterate.residuals.stationarity);
-         statistics.set("complementarity", iterate.residuals.complementarity);
-      }
-      else {
-         statistics.set("stationarity", iterate.feasibility_residuals.stationarity);
-         statistics.set("complementarity", iterate.feasibility_residuals.complementarity);
-      }
+      const auto& residuals = (this->current_phase == Phase::OPTIMALITY) ? iterate.residuals : iterate.feasibility_residuals;
+      statistics.set("stationarity", residuals.stationarity);
+      statistics.set("complementarity", residuals.complementarity);
    }
 } // namespace

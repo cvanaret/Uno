@@ -75,11 +75,7 @@ namespace uno {
       this->primals.resize(new_number_variables);
       this->multipliers.lower_bounds.resize(new_number_variables);
       this->multipliers.upper_bounds.resize(new_number_variables);
-      this->feasibility_multipliers.lower_bounds.resize(new_number_variables);
-      this->feasibility_multipliers.upper_bounds.resize(new_number_variables);
-      this->evaluations.objective_gradient.reserve(new_number_variables);
       this->residuals.lagrangian_gradient.resize(new_number_variables);
-      this->feasibility_residuals.lagrangian_gradient.resize(new_number_variables);
    }
 
    std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
@@ -93,7 +89,7 @@ namespace uno {
       stream << "Objective value: " << iterate.evaluations.objective << '\n';
 
       stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';
-      stream << "Residuals │ Primal feasibility: " << iterate.residuals.primal_feasibility << '\n';
+      stream << "Residuals │ Primal feasibility: " << iterate.primal_feasibility << '\n';
       stream << "          │ Complementarity: " << iterate.residuals.complementarity << '\n';
       stream << "          └ Lagrangian gradient: " << iterate.residuals.lagrangian_gradient;
       stream << "Feasibility residuals ┌ Stationarity: " << iterate.feasibility_residuals.stationarity << '\n';

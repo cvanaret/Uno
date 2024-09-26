@@ -34,7 +34,7 @@ namespace uno {
       std::cout << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution.evaluations.objective << '\n';
 
       std::cout << "┌ Stationarity residual:\t\t" << this->solution.residuals.stationarity << '\n';
-      std::cout << "│ Primal feasibility residual:\t\t" << this->solution.residuals.primal_feasibility << '\n';
+      std::cout << "│ Primal feasibility residual:\t\t" << this->solution.primal_feasibility << '\n';
       std::cout << "└ Complementarity residual:\t\t" << this->solution.residuals.complementarity << '\n';
 
       std::cout << "┌ Feasibility stationarity residual:\t" << this->solution.residuals.stationarity << '\n';

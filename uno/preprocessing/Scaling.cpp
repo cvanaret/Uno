@@ -29,6 +29,7 @@ namespace uno {
    }
 
    double Scaling::get_constraint_scaling(size_t constraint_index) const {
+      assert(0 <= constraint_index && constraint_index < this->constraint_scaling.size() && "The constraint index is not valid.");
       return this->constraint_scaling[constraint_index];
    }
 } // namespace

@@ -36,8 +36,13 @@ namespace uno {
    void InequalityConstrainedMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
       problem.set_elastic_variable_values(current_iterate, [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
          iterate.primals[elastic_index] = 0.;
-         iterate.multipliers.lower_bounds[elastic_index] = 1.;
+         iterate.feasibility_multipliers.lower_bounds[elastic_index] = 1.;
+         iterate.feasibility_multipliers.upper_bounds[elastic_index] = 0.;
       });
+   }
+
+   double InequalityConstrainedMethod::proximal_coefficient(const Iterate& /*current_iterate*/) const {
+      return 0.;
    }
 
    void InequalityConstrainedMethod::exit_feasibility_problem(const OptimizationProblem& /*problem*/, Iterate& /*trial_iterate*/) {

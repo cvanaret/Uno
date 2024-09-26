@@ -41,6 +41,7 @@ namespace uno {
       void set_trust_region_radius(double new_trust_region_radius);
       virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
+      [[nodiscard]] virtual double proximal_coefficient(const Iterate& current_iterate) const = 0;
       virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
 
       // progress measures

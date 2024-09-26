@@ -32,12 +32,12 @@ namespace uno {
    }
 
    bool BarrierParameterUpdateStrategy::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate,
-         const PrimalDualResiduals& residuals) {
+         const Multipliers& current_multipliers, const DualResiduals& residuals) {
       // primal-dual errors
       const double scaled_stationarity = residuals.stationarity / residuals.stationarity_scaling;
       double primal_dual_error = std::max({
          scaled_stationarity,
-         residuals.primal_feasibility,
+         current_iterate.primal_feasibility,
          residuals.complementarity / residuals.complementarity_scaling
       });
       DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
@@ -50,11 +50,11 @@ namespace uno {
                std::pow(this->barrier_parameter, this->parameters.theta_mu)));
          DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
          // update complementarity error
-         double scaled_complementarity_error = BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(problem, current_iterate,
-               this->barrier_parameter) / residuals.complementarity_scaling;
+         double scaled_complementarity_error = BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(problem, current_iterate.primals,
+               current_multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
          primal_dual_error = std::max({
             scaled_stationarity,
-            residuals.primal_feasibility,
+            current_iterate.primal_feasibility,
             scaled_complementarity_error
          });
          DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
@@ -63,17 +63,17 @@ namespace uno {
       return parameter_updated;
    }
 
-   double BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(const OptimizationProblem& problem, const Iterate& iterate,
-         double shift_value) {
+   double BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(const OptimizationProblem& problem, const Vector<double>& primals,
+         const Multipliers& multipliers, double shift_value) {
       const VectorExpression shifted_bound_complementarity(Range(problem.number_variables), [&](size_t variable_index) {
          double result = 0.;
-         if (0. < iterate.multipliers.lower_bounds[variable_index]) { // lower bound
-            result = std::max(result, std::abs(iterate.multipliers.lower_bounds[variable_index] *
-               (iterate.primals[variable_index] - problem.variable_lower_bound(variable_index)) - shift_value));
+         if (0. < multipliers.lower_bounds[variable_index]) { // lower bound
+            result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
+               (primals[variable_index] - problem.variable_lower_bound(variable_index)) - shift_value));
          }
-         if (iterate.multipliers.upper_bounds[variable_index] < 0.) { // upper bound
-            result = std::max(result, std::abs(iterate.multipliers.upper_bounds[variable_index] *
-               (iterate.primals[variable_index] - problem.variable_upper_bound(variable_index)) - shift_value));
+         if (multipliers.upper_bounds[variable_index] < 0.) { // upper bound
+            result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
+               (primals[variable_index] - problem.variable_upper_bound(variable_index)) - shift_value));
          }
          return result;
       });

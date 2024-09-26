@@ -21,9 +21,10 @@ namespace uno {
          // call delegating constructor
          l1Relaxation(model,
                // create the l1 feasibility problem (objective multiplier = 0)
-               l1RelaxedProblem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
+               l1RelaxedProblem(model, 0., options.get_double("l1_constraint_violation_coefficient"), 0., nullptr),
                // create the l1 relaxed problem
-               l1RelaxedProblem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
+               l1RelaxedProblem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient"),
+                  0., nullptr),
                options) {
    }
 
@@ -56,6 +57,9 @@ namespace uno {
       // initial iterate
       this->subproblem->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
       this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
+      initial_iterate.feasibility_residuals.lagrangian_gradient.resize(this->feasibility_problem.number_variables);
+      initial_iterate.feasibility_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
+      initial_iterate.feasibility_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
       this->evaluate_progress_measures(initial_iterate);
       this->compute_primal_dual_residuals(initial_iterate);
       this->set_statistics(statistics, initial_iterate);
@@ -155,7 +159,7 @@ namespace uno {
          // compute the ideal error (with a zero penalty parameter)
          const double infeasible_dual_error = l1Relaxation::compute_infeasible_dual_error(current_iterate);
          DEBUG << "Ideal dual error: " << infeasible_dual_error << '\n';
-         const double scaled_error = infeasible_dual_error / std::max(1., current_iterate.residuals.primal_feasibility);
+         const double scaled_error = infeasible_dual_error / std::max(1., current_iterate.primal_feasibility);
          this->penalty_parameter = std::min(this->penalty_parameter, scaled_error * scaled_error);
          DEBUG << "Further aggressively decrease the penalty parameter to " << this->penalty_parameter << '\n';
       }
@@ -167,7 +171,7 @@ namespace uno {
    // measure that combines KKT error and complementarity error
    double l1Relaxation::compute_infeasible_dual_error(Iterate& current_iterate) {
       // stationarity error
-      this->evaluate_lagrangian_gradient(current_iterate.residuals.lagrangian_gradient, current_iterate, this->trial_multipliers);
+      this->feasibility_problem.evaluate_lagrangian_gradient(current_iterate.feasibility_residuals.lagrangian_gradient, current_iterate, this->trial_multipliers);
       double error = norm_1(current_iterate.residuals.lagrangian_gradient.constraints_contribution);
 
       // complementarity error
@@ -220,8 +224,8 @@ namespace uno {
 
    bool l1Relaxation::is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction,
          const Direction& feasibility_direction) const {
-      const double predicted_l1_merit_reduction = current_iterate.residuals.primal_feasibility - direction.subproblem_objective;
-      const double lowest_decrease_objective = current_iterate.residuals.primal_feasibility - feasibility_direction.subproblem_objective;
+      const double predicted_l1_merit_reduction = current_iterate.primal_feasibility - direction.subproblem_objective;
+      const double lowest_decrease_objective = current_iterate.primal_feasibility - feasibility_direction.subproblem_objective;
       return (predicted_l1_merit_reduction >= this->parameters.epsilon2 * lowest_decrease_objective);
    }
 

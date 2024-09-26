@@ -43,6 +43,7 @@ namespace uno {
       const bool switch_to_optimality_requires_linearized_feasibility;
       bool switching_to_optimality_phase{false};
       ProgressMeasures reference_optimality_progress{};
+      Vector<double> reference_optimality_primals{};
 
       // delegating constructor
       FeasibilityRestoration(const Model& model, OptimalityProblem&& optimality_problem, l1RelaxedProblem&& feasibility_problem, const Options& options);

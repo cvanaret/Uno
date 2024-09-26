@@ -8,7 +8,6 @@
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/LagrangianGradient.hpp"
 #include "optimization/Multipliers.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "symbolic/VectorView.hpp"
@@ -107,15 +106,15 @@ namespace uno {
       // - for KKT conditions: with standard multipliers and current objective multiplier
       // - for FJ conditions: with standard multipliers and 0 objective multiplier
       // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
-      this->evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, iterate, iterate.multipliers);
+      optimality_problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, iterate, iterate.multipliers);
       iterate.residuals.stationarity = OptimizationProblem::stationarity_error(iterate.residuals.lagrangian_gradient, iterate.objective_multiplier,
             this->residual_norm);
-      this->evaluate_lagrangian_gradient(iterate.feasibility_residuals.lagrangian_gradient, iterate, iterate.feasibility_multipliers);
+      feasibility_problem.evaluate_lagrangian_gradient(iterate.feasibility_residuals.lagrangian_gradient, iterate, iterate.feasibility_multipliers);
       iterate.feasibility_residuals.stationarity = OptimizationProblem::stationarity_error(iterate.feasibility_residuals.lagrangian_gradient, 0.,
             this->residual_norm);
 
       // constraint violation of the original problem
-      iterate.residuals.primal_feasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
+      iterate.primal_feasibility = this->model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
 
       // complementarity error
       const double shift_value = 0.;
@@ -129,32 +128,6 @@ namespace uno {
       iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(iterate.multipliers);
       iterate.feasibility_residuals.stationarity_scaling = this->compute_stationarity_scaling(iterate.feasibility_multipliers);
       iterate.feasibility_residuals.complementarity_scaling = this->compute_complementarity_scaling(iterate.feasibility_multipliers);
-   }
-
-   // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
-   void ConstraintRelaxationStrategy::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-         const Multipliers& multipliers) const {
-      lagrangian_gradient.objective_contribution.fill(0.);
-      lagrangian_gradient.constraints_contribution.fill(0.);
-
-      // objective gradient
-      for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
-         lagrangian_gradient.objective_contribution[variable_index] += derivative;
-      }
-
-      // constraints
-      for (size_t constraint_index: Range(iterate.number_constraints)) {
-         if (multipliers.constraints[constraint_index] != 0.) {
-            for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
-               lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
-            }
-         }
-      }
-
-      // bound constraints
-      for (size_t variable_index: Range(this->model.number_variables)) {
-         lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.lower_bounds[variable_index] + multipliers.upper_bounds[variable_index];
-      }
    }
 
    double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Multipliers& multipliers) const {
@@ -223,22 +196,24 @@ namespace uno {
 
    TerminationStatus ConstraintRelaxationStrategy::check_first_order_convergence(Iterate& current_iterate, double tolerance) const {
       // evaluate termination conditions based on optimality conditions
-      const bool KKT_stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
-      const bool feasibility_stationarity = (current_iterate.feasibility_residuals.stationarity <= tolerance);
+      const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
+      const bool primal_feasibility = (current_iterate.primal_feasibility <= tolerance);
       const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
+
+      const bool feasibility_stationarity = (current_iterate.feasibility_residuals.stationarity <= tolerance);
       const bool feasibility_complementarity = (current_iterate.feasibility_residuals.complementarity <= tolerance);
-      const bool primal_feasibility = (current_iterate.residuals.primal_feasibility <= tolerance);
       const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(this->model.number_variables, tolerance);
 
       DEBUG << "\nTermination criteria for tolerance = " << tolerance << ":\n";
-      DEBUG << "KKT stationarity: " << std::boolalpha << KKT_stationarity << '\n';
-      DEBUG << "Stationarity (feasibility): " << std::boolalpha << feasibility_stationarity << '\n';
-      DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
-      DEBUG << "Complementarity (feasibility): " << std::boolalpha << feasibility_complementarity << '\n';
+      DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
       DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
+      DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
+
+      DEBUG << "Feasibility stationarity: " << std::boolalpha << feasibility_stationarity << '\n';
+      DEBUG << "Feasibility complementarity: " << std::boolalpha << feasibility_complementarity << '\n';
       DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
 
-      if (KKT_stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
+      if (stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
          // feasible regular stationary point
          return TerminationStatus::FEASIBLE_KKT_POINT;
       }

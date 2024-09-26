@@ -25,15 +25,16 @@ namespace uno {
       
       Timer timer{};
       Statistics statistics = Uno::create_statistics(model, options);
+
       // use the initial primal-dual point to initialize the strategies and generate the initial iterate
       this->initialize(statistics, current_iterate, options);
-
-      bool termination = false;
       current_iterate.status = TerminationStatus::NOT_OPTIMAL;
       // allocate the trial iterate once and for all here
-      Iterate trial_iterate(current_iterate.number_variables, current_iterate.number_constraints);
+      Iterate trial_iterate(current_iterate);
+
       size_t major_iterations = 0;
       try {
+         bool termination = false;
          // check for termination
          while (not termination) {
             major_iterations++;
@@ -43,7 +44,6 @@ namespace uno {
 
             // compute an acceptable iterate by solving a subproblem at the current point
             this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate, trial_iterate);
-            // determine if Uno can terminate
             termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration());
             // the trial iterate becomes the current iterate for the next iteration
             std::swap(current_iterate, trial_iterate);

@@ -13,6 +13,7 @@ namespace uno {
       Vector<double> constraints{}; /*!< Multipliers of the general constraints */
 
       Multipliers(size_t number_variables, size_t number_constraints);
+      Multipliers(const Multipliers& other) noexcept = default;
       Multipliers(Multipliers&& other) noexcept = default;
       Multipliers& operator=(const Multipliers& other) noexcept = default;
       Multipliers& operator=(Multipliers&& other) noexcept = default;

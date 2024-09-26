@@ -12,7 +12,7 @@
 
 namespace uno {
    // forward reference
-   class PrimalDualResiduals;
+   class DualResiduals;
 
    struct InteriorPointParameters {
       double tau_min;
@@ -34,6 +34,7 @@ namespace uno {
 
       void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
+      [[nodiscard]] double proximal_coefficient(const Iterate& current_iterate) const override;
       void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
@@ -62,14 +63,17 @@ namespace uno {
       const InteriorPointParameters parameters;
       const double least_square_multiplier_max_norm;
       const double damping_factor; // (Section 3.7 in IPOPT paper)
+      const double l1_constraint_violation_coefficient; // (rho in Section 3.3.1 in IPOPT paper)
 
       bool solving_feasibility_problem{false};
+      bool first_feasibility_iteration{false};
 
       [[nodiscard]] double barrier_parameter() const;
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
       void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
             const WarmstartInformation& warmstart_information);
-      void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate, const PrimalDualResiduals& residuals);
+      void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate, const Multipliers& current_multipliers,
+            const DualResiduals& residuals);
       [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
       [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate,

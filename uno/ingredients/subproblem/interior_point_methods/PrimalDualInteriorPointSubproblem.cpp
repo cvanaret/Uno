@@ -45,7 +45,8 @@ namespace uno {
                options.get_double("barrier_push_variable_to_interior_k2")
          }),
          least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
-         damping_factor(options.get_double("barrier_damping_factor")) {
+         damping_factor(options.get_double("barrier_damping_factor")),
+         l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
    }
 
    inline void PrimalDualInteriorPointSubproblem::initialize_statistics(Statistics& statistics, const Options& options) {
@@ -180,7 +181,12 @@ namespace uno {
 
       // possibly update the barrier parameter
       const auto residuals = this->solving_feasibility_problem ? current_iterate.feasibility_residuals : current_iterate.residuals;
-      this->update_barrier_parameter(problem, current_iterate, residuals);
+      if (not this->first_feasibility_iteration) {
+         this->update_barrier_parameter(problem, current_iterate, current_multipliers, residuals);
+      }
+      else {
+         this->first_feasibility_iteration = false;
+      }
       statistics.set("barrier param.", this->barrier_parameter());
 
       // evaluate the functions at the current iterate
@@ -211,13 +217,14 @@ namespace uno {
       this->assemble_augmented_rhs(problem, current_multipliers);
    }
 
-   void PrimalDualInteriorPointSubproblem::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
+   void PrimalDualInteriorPointSubproblem::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& current_iterate) {
       this->solving_feasibility_problem = true;
+      this->first_feasibility_iteration = true;
       this->subproblem_definition_changed = true;
 
       // temporarily update the objective multiplier
       this->previous_barrier_parameter = this->barrier_parameter();
-      const double new_barrier_parameter = std::max(this->barrier_parameter(), norm_inf(this->constraints));
+      const double new_barrier_parameter = std::max(this->barrier_parameter(), current_iterate.primal_feasibility);
       this->barrier_parameter_update_strategy.set_barrier_parameter(new_barrier_parameter);
       DEBUG << "Barrier parameter mu temporarily updated to " << this->barrier_parameter() << '\n';
 
@@ -234,26 +241,32 @@ namespace uno {
 
    // set the elastic variables of the current iterate
    void PrimalDualInteriorPointSubproblem::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
-      DEBUG << "Setting the elastic variables\n";
+      DEBUG << "IPM: setting the elastic variables and their duals\n";
       // c(x) - p + n = 0
       // analytical expression for p and n:
       // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
       // where jacobian_coefficient = -1 for p, +1 for n
       // Note: IPOPT uses a '+' sign because they define the Lagrangian as f(x) + \lambda^T c(x)
-      const double barrier_parameter = this->barrier_parameter();
+      const double mu = this->barrier_parameter();
       const auto elastic_setting_function = [&](Iterate& iterate, size_t constraint_index, size_t elastic_index, double jacobian_coefficient) {
          // precomputations
          const double constraint_j = this->constraints[constraint_index];
-         const double mu_over_rho = barrier_parameter; // here, rho = 1
+         const double rho = this->l1_constraint_violation_coefficient;
+         const double mu_over_rho = mu / rho;
          const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
          const double sqrt_radical = std::sqrt(radical);
 
          iterate.primals[elastic_index] = (mu_over_rho - jacobian_coefficient * constraint_j + sqrt_radical) / 2.;
-         iterate.feasibility_multipliers.lower_bounds[elastic_index] = barrier_parameter / iterate.primals[elastic_index];
+         iterate.feasibility_multipliers.lower_bounds[elastic_index] = mu / iterate.primals[elastic_index];
+         iterate.feasibility_multipliers.upper_bounds[elastic_index] = 0.;
          assert(0. < iterate.primals[elastic_index] && "The elastic variable is not strictly positive.");
          assert(0. < iterate.feasibility_multipliers.lower_bounds[elastic_index] && "The elastic dual is not strictly positive.");
       };
       problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
+   }
+
+   double PrimalDualInteriorPointSubproblem::proximal_coefficient(const Iterate& /*current_iterate*/) const {
+      return std::sqrt(this->barrier_parameter());
    }
 
    void PrimalDualInteriorPointSubproblem::exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) {
@@ -317,8 +330,9 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointSubproblem::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate,
-         const PrimalDualResiduals& residuals) {
-      const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(problem, current_iterate, residuals);
+         const Multipliers& current_multipliers, const DualResiduals& residuals) {
+      const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(problem, current_iterate,
+            current_multipliers, residuals);
       // the barrier parameter may have been changed earlier when entering restoration
       this->subproblem_definition_changed = this->subproblem_definition_changed || barrier_parameter_updated;
    }
