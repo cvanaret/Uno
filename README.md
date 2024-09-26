@@ -51,13 +51,13 @@ Uno 1.0.0 implements three **presets**, that is strategy combinations that corre
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method);
 * `byrd` mimics Byrd's S $\ell_1$ QP (line-search $\ell_1$ merit S $\ell_1$ QP method).
 
-## Latest results (April 27, 2023)
+## Latest results (September 26, 2024)
 
 Some of Uno combinations that correspond to existing solvers (called presets, see below) have been tested against state-of-the-art solvers on 429 small problems of the [CUTEst benchmark](https://arnold-neumaier.at/glopt/coconut/Benchmark/Library2_new_v1.html).
 The figure below is a performance profile of Uno and state-of-the-art solvers filterSQP, IPOPT, SNOPT, MINOS, LANCELOT, LOQO and CONOPT; it shows how many problems are solved for a given budget of function evaluations (1 time, 2 times, 4 times, ..., $2^x$ times the number of objective evaluations of the best solver for each instance).
 
 <p align="center">
-   <img src="docs/figures/uno_performance_profile.png" alt="Performance profile of Uno 1.0.0" width="75%" />
+   <img src="docs/figures/uno_performance_profile.png" alt="Performance profile of Uno 1.1.0" width="75%" />
 </p>
 
 All log files can be found [here](https://github.com/cvanaret/nonconvex_solver_comparison).
