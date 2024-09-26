@@ -196,12 +196,12 @@ namespace uno {
 
       // elastic variables
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
-         lagrangian_gradient.constraints_contribution[elastic_index] += (this->constraint_violation_coefficient +
-            multipliers.constraints[constraint_index] - multipliers.lower_bounds[elastic_index]);
+         lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
+               multipliers.constraints[constraint_index] - multipliers.lower_bounds[elastic_index];
       }
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
-         lagrangian_gradient.constraints_contribution[elastic_index] += (this->constraint_violation_coefficient -
-            multipliers.constraints[constraint_index] - multipliers.lower_bounds[elastic_index]);
+         lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
+               multipliers.constraints[constraint_index] - multipliers.lower_bounds[elastic_index];
       }
 
       // proximal contribution

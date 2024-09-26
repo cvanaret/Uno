@@ -35,9 +35,10 @@ namespace uno {
          const Multipliers& current_multipliers, const DualResiduals& residuals) {
       // primal-dual errors
       const double scaled_stationarity = residuals.stationarity / residuals.stationarity_scaling;
+      const double primal_feasibility = (problem.get_objective_multiplier() == 0.) ? 0. : current_iterate.primal_feasibility;
       double primal_dual_error = std::max({
          scaled_stationarity,
-         current_iterate.primal_feasibility,
+         primal_feasibility,
          residuals.complementarity / residuals.complementarity_scaling
       });
       DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
@@ -54,7 +55,7 @@ namespace uno {
                current_multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
          primal_dual_error = std::max({
             scaled_stationarity,
-            current_iterate.primal_feasibility,
+            primal_feasibility,
             scaled_complementarity_error
          });
          DEBUG << "Max scaled primal-dual error for barrier subproblem is " << primal_dual_error << '\n';
