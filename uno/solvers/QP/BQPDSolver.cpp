@@ -4,7 +4,7 @@
 #include <cassert>
 #include <algorithm>
 #include "BQPDSolver.hpp"
-#include "ingredients/subproblem/Direction.hpp"
+#include "ingredients/subproblems/Direction.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"

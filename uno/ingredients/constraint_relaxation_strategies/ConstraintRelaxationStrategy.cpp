@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ConstraintRelaxationStrategy.hpp"
-#include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
-#include "ingredients/subproblem/Direction.hpp"
-#include "ingredients/subproblem/SubproblemFactory.hpp"
+#include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
+#include "ingredients/subproblems/Direction.hpp"
+#include "ingredients/subproblems/SubproblemFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"

@@ -6,7 +6,7 @@
 
 #include "Evaluations.hpp"
 #include "TerminationStatus.hpp"
-#include "ingredients/globalization_strategy/ProgressMeasures.hpp"
+#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "optimization/LagrangianGradient.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/DualResiduals.hpp"

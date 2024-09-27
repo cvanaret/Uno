@@ -4,7 +4,7 @@
 #ifndef UNO_INEQUALITYCONSTRAINEDMETHOD_H
 #define UNO_INEQUALITYCONSTRAINEDMETHOD_H
 
-#include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/subproblems/Subproblem.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {

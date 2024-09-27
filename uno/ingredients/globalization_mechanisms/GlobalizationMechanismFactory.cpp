@@ -2,8 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "GlobalizationMechanismFactory.hpp"
-#include "ingredients/globalization_mechanism/TrustRegionStrategy.hpp"
-#include "ingredients/globalization_mechanism/BacktrackingLineSearch.hpp"
+#include "ingredients/globalization_mechanisms/TrustRegionStrategy.hpp"
+#include "ingredients/globalization_mechanisms/BacktrackingLineSearch.hpp"
 
 namespace uno {
    std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(

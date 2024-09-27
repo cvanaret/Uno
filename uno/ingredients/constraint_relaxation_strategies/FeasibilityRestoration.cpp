@@ -3,7 +3,7 @@
 
 #include <functional>
 #include "FeasibilityRestoration.hpp"
-#include "ingredients/subproblem/Direction.hpp"
+#include "ingredients/subproblems/Direction.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"

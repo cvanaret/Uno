@@ -6,8 +6,8 @@
 
 #include <cstddef>
 #include <memory>
-#include "ingredients/globalization_strategy/GlobalizationStrategy.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
+#include "ingredients/subproblems/Subproblem.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "optimization/TerminationStatus.hpp"
 

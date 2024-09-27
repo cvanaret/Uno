@@ -6,7 +6,7 @@
 
 #include <memory>
 #include "GlobalizationMechanism.hpp"
-#include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "tools/Options.hpp"
 
 namespace uno {

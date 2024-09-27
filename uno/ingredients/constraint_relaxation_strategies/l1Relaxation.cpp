@@ -3,7 +3,7 @@
 
 #include <cassert>
 #include "l1Relaxation.hpp"
-#include "ingredients/subproblem/Direction.hpp"
+#include "ingredients/subproblems/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/VectorView.hpp"

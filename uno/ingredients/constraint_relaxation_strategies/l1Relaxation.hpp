@@ -6,7 +6,7 @@
 
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/subproblems/Subproblem.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
 
 namespace uno {

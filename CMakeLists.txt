@@ -30,21 +30,21 @@ set(DIRECTORIES uno)
 
 # source files
 file(GLOB UNO_SOURCE_FILES
-    uno/Uno.cpp
-    uno/ingredients/globalization_mechanism/*.cpp
-    uno/ingredients/globalization_strategy/*.cpp
-    uno/ingredients/globalization_strategy/switching_methods/*.cpp
-    uno/ingredients/globalization_strategy/switching_methods/filter_methods/*.cpp
-    uno/ingredients/globalization_strategy/switching_methods/filter_methods/filters/*.cpp
-    uno/ingredients/globalization_strategy/switching_methods/funnel_methods/*.cpp
-    uno/ingredients/constraint_relaxation_strategy/*.cpp
-    uno/ingredients/subproblem/*.cpp
-    uno/ingredients/subproblem/inequality_constrained_methods/*.cpp
-    uno/ingredients/subproblem/interior_point_methods/*.cpp
-    uno/model/*.cpp
-    uno/optimization/*.cpp
-    uno/preprocessing/*.cpp
-    uno/tools/*.cpp
+   uno/Uno.cpp
+   uno/ingredients/globalization_mechanisms/*.cpp
+   uno/ingredients/globalization_strategies/*.cpp
+   uno/ingredients/globalization_strategies/switching_methods/*.cpp
+   uno/ingredients/globalization_strategies/switching_methods/filter_methods/*.cpp
+   uno/ingredients/globalization_strategies/switching_methods/filter_methods/filters/*.cpp
+   uno/ingredients/globalization_strategies/switching_methods/funnel_methods/*.cpp
+   uno/ingredients/constraint_relaxation_strategies/*.cpp
+   uno/ingredients/subproblems/*.cpp
+   uno/ingredients/subproblems/inequality_constrained_methods/*.cpp
+   uno/ingredients/subproblems/interior_point_methods/*.cpp
+   uno/model/*.cpp
+   uno/optimization/*.cpp
+   uno/preprocessing/*.cpp
+   uno/tools/*.cpp
 )
 
 #########################

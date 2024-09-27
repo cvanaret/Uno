@@ -5,7 +5,7 @@
 #define UNO_QPSUBPROBLEM_H
 
 #include "InequalityConstrainedMethod.hpp"
-#include "ingredients/subproblem/HessianModel.hpp"
+#include "ingredients/subproblems/HessianModel.hpp"
 #include "solvers/QP/QPSolver.hpp"
 
 namespace uno {

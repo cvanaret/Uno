@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "LPSubproblem.hpp"
-#include "ingredients/subproblem/Direction.hpp"
+#include "ingredients/subproblems/Direction.hpp"
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "reformulation/OptimizationProblem.hpp"

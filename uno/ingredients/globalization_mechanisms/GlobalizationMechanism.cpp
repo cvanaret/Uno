@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "GlobalizationMechanism.hpp"
-#include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Expression.hpp"

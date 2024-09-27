@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include <cassert>
-#include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "TrustRegionStrategy.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
@@ -49,9 +49,7 @@ namespace uno {
          try {
             number_iterations++;
             DEBUG << "\n\t### Trust-region inner iteration " << number_iterations << " with radius " << this->radius << "\n\n";
-            if (1 < number_iterations) {
-               statistics.start_new_line();
-            }
+            if (1 < number_iterations) { statistics.start_new_line(); }
             this->set_trust_region_statistics(statistics, number_iterations);
 
             // compute the direction within the trust region

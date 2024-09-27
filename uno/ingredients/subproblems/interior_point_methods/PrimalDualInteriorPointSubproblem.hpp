@@ -4,10 +4,10 @@
 #ifndef UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H
 #define UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H
 
-#include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/subproblems/Subproblem.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
-#include "ingredients/subproblem/HessianModel.hpp"
+#include "ingredients/subproblems/HessianModel.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 
 namespace uno {

@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
-#include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategy.hpp"
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "BacktrackingLineSearch.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
@@ -49,9 +49,7 @@ namespace uno {
       while (not termination) {
          number_iterations++;
          DEBUG << "\n\tLine-search iteration " << number_iterations << ", step_length " << step_length << '\n';
-         if (1 < number_iterations) {
-            statistics.start_new_line();
-         }
+         if (1 < number_iterations) { statistics.start_new_line(); }
          statistics.set("step length", step_length);
 
          bool is_acceptable = false;

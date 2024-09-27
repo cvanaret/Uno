@@ -1,8 +1,8 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "ingredients/globalization_mechanism/GlobalizationMechanismFactory.hpp"
-#include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.hpp"
+#include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "AMPLModel.hpp"
 #include "Uno.hpp"
 #include "model/ModelFactory.hpp"

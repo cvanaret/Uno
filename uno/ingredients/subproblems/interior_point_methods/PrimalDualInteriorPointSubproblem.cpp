@@ -3,8 +3,8 @@
 
 #include <cmath>
 #include "PrimalDualInteriorPointSubproblem.hpp"
-#include "ingredients/subproblem/Direction.hpp"
-#include "ingredients/subproblem/HessianModelFactory.hpp"
+#include "ingredients/subproblems/Direction.hpp"
+#include "ingredients/subproblems/HessianModelFactory.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "optimization/WarmstartInformation.hpp"

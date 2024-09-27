@@ -3,10 +3,10 @@
 
 #include <cmath>
 #include "Uno.hpp"
-#include "ingredients/constraint_relaxation_strategy/ConstraintRelaxationStrategyFactory.hpp"
-#include "ingredients/globalization_mechanism/GlobalizationMechanismFactory.hpp"
-#include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
-#include "ingredients/subproblem/SubproblemFactory.hpp"
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
+#include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
+#include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
+#include "ingredients/subproblems/SubproblemFactory.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
