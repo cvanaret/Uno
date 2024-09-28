@@ -4,7 +4,7 @@
 #include <cmath>
 #include "PrimalDualInteriorPointSubproblem.hpp"
 #include "ingredients/subproblems/Direction.hpp"
-#include "ingredients/subproblems/HessianModelFactory.hpp"
+#include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "optimization/WarmstartInformation.hpp"

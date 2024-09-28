@@ -38,6 +38,7 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/globalization_strategies/switching_methods/filter_methods/filters/*.cpp
    uno/ingredients/globalization_strategies/switching_methods/funnel_methods/*.cpp
    uno/ingredients/constraint_relaxation_strategies/*.cpp
+   uno/ingredients/hessian_models/*.cpp
    uno/ingredients/subproblems/*.cpp
    uno/ingredients/subproblems/inequality_constrained_methods/*.cpp
    uno/ingredients/subproblems/interior_point_methods/*.cpp

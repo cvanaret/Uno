@@ -7,7 +7,7 @@
 #include "ingredients/subproblems/Subproblem.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
-#include "ingredients/subproblems/HessianModel.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 
 namespace uno {
