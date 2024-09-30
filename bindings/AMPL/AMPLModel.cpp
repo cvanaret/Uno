@@ -91,15 +91,15 @@ namespace uno {
       for (size_t variable_index: Range(this->number_variables)) {
          const BoundType status = this->get_variable_bound_type(variable_index);
          if (status == BOUNDED_LOWER || status == BOUNDED_BOTH_SIDES) {
-            this->lower_bounded_variables.push_back(variable_index);
+            this->lower_bounded_variables.emplace_back(variable_index);
             if (status == BOUNDED_LOWER) {
-               this->single_lower_bounded_variables.push_back(variable_index);
+               this->single_lower_bounded_variables.emplace_back(variable_index);
             }
          }
          if (status == BOUNDED_UPPER || status == BOUNDED_BOTH_SIDES) {
-            this->upper_bounded_variables.push_back(variable_index);
+            this->upper_bounded_variables.emplace_back(variable_index);
             if (status == BOUNDED_UPPER) {
-               this->single_upper_bounded_variables.push_back(variable_index);
+               this->single_upper_bounded_variables.emplace_back(variable_index);
             }
          }
       }
@@ -363,10 +363,10 @@ namespace uno {
       // partition equality and inequality constraints
       for (size_t constraint_index: Range(this->number_constraints)) {
          if (this->get_constraint_bound_type(constraint_index) == EQUAL_BOUNDS) {
-            this->equality_constraints.push_back(constraint_index);
+            this->equality_constraints.emplace_back(constraint_index);
          }
          else {
-            this->inequality_constraints.push_back(constraint_index);
+            this->inequality_constraints.emplace_back(constraint_index);
          }
       }
 
@@ -377,7 +377,7 @@ namespace uno {
       }
       for (size_t constraint_index: Range(number_nonlinear_constraints, this->number_constraints)) {
          this->constraint_type[constraint_index] = LINEAR;
-         this->linear_constraints.push_back(constraint_index);
+         this->linear_constraints.emplace_back(constraint_index);
       }
    }
 

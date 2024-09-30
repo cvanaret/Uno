@@ -63,8 +63,8 @@ namespace uno {
    void CSCSymmetricMatrix<IndexType, ElementType>::insert(ElementType term, IndexType row_index, IndexType column_index) {
       assert(column_index == this->current_column && "The previous columns should be finalized");
 
-      this->entries.push_back(term);
-      this->row_indices.push_back(row_index);
+      this->entries.emplace_back(term);
+      this->row_indices.emplace_back(row_index);
       this->column_starts[column_index + 1]++;
       this->number_nonzeros++;
    }

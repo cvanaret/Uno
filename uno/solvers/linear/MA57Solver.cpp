@@ -165,8 +165,8 @@ namespace uno {
       this->row_indices.clear();
       this->column_indices.clear();
       for (const auto [row_index, column_index, element]: matrix) {
-         this->row_indices.push_back(static_cast<int>(row_index + this->fortran_shift));
-         this->column_indices.push_back(static_cast<int>(column_index + this->fortran_shift));
+         this->row_indices.emplace_back(static_cast<int>(row_index + this->fortran_shift));
+         this->column_indices.emplace_back(static_cast<int>(column_index + this->fortran_shift));
       }
    }
 } // namespace
