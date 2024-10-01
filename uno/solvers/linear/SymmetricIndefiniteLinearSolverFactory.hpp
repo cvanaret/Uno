@@ -33,12 +33,12 @@ namespace uno {
          throw std::invalid_argument("Linear solver name is unknown");
       }
 
-      // return the list of available QP solvers
+      // return the list of available solvers
       static std::vector<std::string> available_solvers() {
          std::vector<std::string> solvers{};
-         #ifdef HAS_MA57
+#ifdef HAS_MA57
          solvers.emplace_back("MA57");
-         #endif
+#endif
          return solvers;
       }
    };
