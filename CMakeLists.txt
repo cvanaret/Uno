@@ -47,6 +47,22 @@ file(GLOB UNO_SOURCE_FILES
    uno/tools/*.cpp
 )
 
+# unit test source files
+file(GLOB TESTS_UNO_SOURCE_FILES
+   unotest/unotest.cpp
+   unotest/CollectionAdapterTests.cpp
+   unotest/ConcatenationTests.cpp
+   unotest/COOSymmetricMatrixTests.cpp
+   unotest/CSCSymmetricMatrixTests.cpp
+   unotest/MatrixVectorProductTests.cpp
+   unotest/RangeTests.cpp
+   unotest/ScalarMultipleTests.cpp
+   unotest/SparseVectorTests.cpp
+   unotest/SumTests.cpp
+   unotest/VectorTests.cpp
+   unotest/VectorViewTests.cpp
+)
+
 #########################
 # external dependencies #
 #########################
@@ -71,6 +87,7 @@ if(${ma57} STREQUAL "ma57-NOTFOUND")
    message(WARNING "Optional library MA57 was not found.")
 else()
    list(APPEND UNO_SOURCE_FILES uno/solvers/linear/direct/MA57Solver.cpp)
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/MA57SolverTests.cpp)
    link_to_uno(ma57 ${ma57})
 endif()
 
@@ -94,6 +111,7 @@ if(${MUMPS_LIBRARY} STREQUAL "MUMPS-NOTFOUND")
    message(WARNING "Optional library MUMPS was not found.")
 else()
    list(APPEND UNO_SOURCE_FILES uno/solvers/linear/direct/MUMPSSolver.cpp)
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/MUMPSSolverTests.cpp)
    list(APPEND LIBRARIES ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
    
    list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
@@ -173,9 +191,6 @@ endif()
 if(WITH_GTEST)
     find_package(GTest CONFIG REQUIRED)
     if(NOT ${GTest}_DIR STREQUAL "${GTest}-NOTFOUND")
-        file(GLOB TESTS_UNO_SOURCE_FILES
-            unotest/*.cpp
-        )
         add_executable(run_unotest ${TESTS_UNO_SOURCE_FILES})
         target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
     endif()
