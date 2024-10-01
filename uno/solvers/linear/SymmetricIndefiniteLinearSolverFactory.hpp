@@ -8,11 +8,11 @@
 #include "SymmetricIndefiniteLinearSolver.hpp"
 
 #ifdef HAS_MA57
-#include "MA57Solver.hpp"
+#include "solvers/linear/direct/MA57Solver.hpp"
 #endif
 
 #ifdef HAS_MUMPS
-#include "MUMPSSolver.hpp"
+#include "solvers/linear/direct/MUMPSSolver.hpp"
 #endif
 
 namespace uno {

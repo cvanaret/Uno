@@ -4,7 +4,7 @@
 #ifndef UNO_MUMPSSOLVER_H
 #define UNO_MUMPSSOLVER_H
 
-#include "SymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "dmumps_c.h"
 
