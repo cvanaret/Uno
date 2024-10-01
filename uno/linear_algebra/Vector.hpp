@@ -89,6 +89,14 @@ namespace uno {
          }
       }
 
+      ElementType dot(const Vector<ElementType>& other) const {
+         ElementType result{0};
+         for (size_t index = 0; index < this->size(); index++) {
+            result += this->operator[](index) * other[index];
+         }
+         return result;
+      }
+
       ElementType* data() { return this->vector.data(); }
       const ElementType* data() const { return this->vector.data(); }
 

@@ -55,6 +55,7 @@ file(GLOB TESTS_UNO_SOURCE_FILES
    unotest/COOSymmetricMatrixTests.cpp
    unotest/CSCSymmetricMatrixTests.cpp
    unotest/MatrixVectorProductTests.cpp
+   unotest/MINRESSolverTests.cpp
    unotest/RangeTests.cpp
    unotest/ScalarMultipleTests.cpp
    unotest/SparseVectorTests.cpp

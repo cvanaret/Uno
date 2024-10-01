@@ -6,6 +6,7 @@
 
 #include "ScalarMultiple.hpp"
 #include "Sum.hpp"
+#include "Subtraction.hpp"
 #include "UnaryNegation.hpp"
 #include "MatrixVectorProduct.hpp"
 
