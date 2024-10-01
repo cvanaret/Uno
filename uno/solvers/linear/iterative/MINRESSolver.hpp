@@ -39,7 +39,8 @@ namespace uno {
       void solve_indefinite_system(const LinearOperator& linear_operator, const Vector<NumericalType>& rhs, Vector<NumericalType>& result) override;
 
    private:
-      static constexpr NumericalType tolerance{1e-6};
+      // TODO move to option file
+      static constexpr NumericalType tolerance{NumericalType(1e-6)};
       size_t iteration{0};
       Vector<NumericalType> p_k;
       Vector<NumericalType> v_km1;
