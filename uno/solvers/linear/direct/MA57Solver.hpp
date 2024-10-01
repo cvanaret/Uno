@@ -6,7 +6,7 @@
 
 #include <array>
 #include <vector>
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    // forward declaration
@@ -28,7 +28,7 @@ namespace uno {
     *
     *  Interface to the symmetric indefinite linear solver MA57
     */
-   class MA57Solver : public SymmetricIndefiniteLinearSolver<size_t, double> {
+   class MA57Solver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
       MA57Solver(size_t dimension, size_t number_nonzeros);
       ~MA57Solver() override = default;

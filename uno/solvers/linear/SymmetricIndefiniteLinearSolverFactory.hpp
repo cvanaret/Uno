@@ -5,7 +5,7 @@
 #define UNO_LINEARSOLVERFACTORY_H
 
 #include <memory>
-#include "SymmetricIndefiniteLinearSolver.hpp"
+#include "direct/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 #ifdef HAS_MA57
 #include "solvers/linear/direct/MA57Solver.hpp"
@@ -18,7 +18,7 @@
 namespace uno {
    class SymmetricIndefiniteLinearSolverFactory {
    public:
-      static std::unique_ptr<SymmetricIndefiniteLinearSolver<size_t, double>> create([[maybe_unused]] const std::string& linear_solver_name,
+      static std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> create([[maybe_unused]] const std::string& linear_solver_name,
             [[maybe_unused]] size_t dimension, [[maybe_unused]] size_t number_nonzeros) {
 #ifdef HAS_MA57
          if (linear_solver_name == "MA57") {

@@ -6,7 +6,7 @@
 #define USE_COMM_WORLD -987654
 
 namespace uno {
-   MUMPSSolver::MUMPSSolver(size_t dimension, size_t number_nonzeros) : SymmetricIndefiniteLinearSolver<size_t, double>(dimension),
+   MUMPSSolver::MUMPSSolver(size_t dimension, size_t number_nonzeros) : DirectSymmetricIndefiniteLinearSolver<size_t, double>(dimension),
          COO_matrix(dimension, number_nonzeros, false) {
       this->mumps_structure.sym = MUMPSSolver::GENERAL_SYMMETRIC;
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)

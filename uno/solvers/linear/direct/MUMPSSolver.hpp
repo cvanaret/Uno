@@ -4,12 +4,12 @@
 #ifndef UNO_MUMPSSOLVER_H
 #define UNO_MUMPSSOLVER_H
 
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "dmumps_c.h"
 
 namespace uno {
-   class MUMPSSolver : public SymmetricIndefiniteLinearSolver<size_t, double> {
+   class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
       explicit MUMPSSolver(size_t dimension, size_t number_nonzeros);
       ~MUMPSSolver() override;

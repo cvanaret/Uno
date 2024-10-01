@@ -27,7 +27,7 @@ namespace uno {
          double cntl[], int info[], double rinfo[]);
    }
 
-   MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : SymmetricIndefiniteLinearSolver<size_t, double>(dimension),
+   MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : DirectSymmetricIndefiniteLinearSolver<size_t, double>(dimension),
          lkeep(static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42)),
          keep(static_cast<size_t>(lkeep)),
          iwork(5 * dimension),

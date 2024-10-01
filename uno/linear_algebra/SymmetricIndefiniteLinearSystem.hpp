@@ -9,7 +9,7 @@
 #include "SymmetricMatrixFactory.hpp"
 #include "RectangularMatrix.hpp"
 #include "model/Model.hpp"
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/linear/direct/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 
@@ -32,10 +32,10 @@ namespace uno {
             const Options& options);
       void assemble_matrix(const SymmetricMatrix<size_t, double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
             size_t number_variables, size_t number_constraints);
-      void factorize_matrix(const Model& model, SymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
-      void regularize_matrix(Statistics& statistics, const Model& model, SymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+      void factorize_matrix(const Model& model, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
+      void regularize_matrix(Statistics& statistics, const Model& model, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
             size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter);
-      void solve(SymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
+      void solve(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
       // [[nodiscard]] T get_primal_regularization() const;
 
    protected:
@@ -96,7 +96,7 @@ namespace uno {
 
    template <typename ElementType>
    void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(const Model& model,
-         SymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
+         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
       // compute the symbolic factorization only when:
       // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
       if (true || this->number_factorizations == 0 || not model.fixed_hessian_sparsity) {
@@ -108,7 +108,7 @@ namespace uno {
 
    template <typename ElementType>
    void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics, const Model& model,
-         SymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, size_t size_primal_block, size_t size_dual_block,
+         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, size_t size_primal_block, size_t size_dual_block,
          ElementType dual_regularization_parameter) {
       DEBUG2 << "Original matrix\n" << *this->matrix << '\n';
       this->primal_regularization = ElementType(0.);
@@ -158,7 +158,7 @@ namespace uno {
             this->previous_primal_regularization = this->primal_regularization;
          }
          else {
-            auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
+            auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
             DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
             DEBUG << "got (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
             DEBUG << "Number of attempts: " << number_attempts << "\n";
@@ -184,7 +184,7 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void SymmetricIndefiniteLinearSystem<ElementType>::solve(SymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
+   void SymmetricIndefiniteLinearSystem<ElementType>::solve(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
       linear_solver.solve_indefinite_system(*this->matrix, this->rhs, this->solution);
    }
 

@@ -6,7 +6,7 @@
 
 #include <memory>
 #include <vector>
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/linear/direct/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    // forward declarations
@@ -46,7 +46,7 @@ namespace uno {
             const Vector<double>& constraint_multipliers) override;
 
    protected:
-      std::unique_ptr<SymmetricIndefiniteLinearSolver<size_t, double>> linear_solver; /*!< Solver that computes the inertia */
+      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver; /*!< Solver that computes the inertia */
       const double regularization_initial_value{};
       const double regularization_increase_factor{};
 
