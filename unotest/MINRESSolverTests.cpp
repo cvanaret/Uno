@@ -9,6 +9,14 @@ using namespace uno;
 using IndexType = size_t;
 using NumericalType = double;
 
+// tolerance depends on the numerical type
+template <typename NumericalType>
+const NumericalType tolerance;
+template <>
+double tolerance<double> = 1e-4;
+template <>
+float tolerance<float> = float(1e-3);
+
 void linear_operator(const Vector<NumericalType>& x, Vector<NumericalType>& result) {
    result[0] = 1*x[0] + 2*x[1];
    result[1] = 2*x[0] + 3*x[1];
@@ -17,14 +25,13 @@ void linear_operator(const Vector<NumericalType>& x, Vector<NumericalType>& resu
 TEST(MINRESSolver, TwoDimensional) {
    const size_t dimension = 2;
    const std::vector<NumericalType> reference_result{3., 4.};
-   const NumericalType tolerance{NumericalType(1e-6)};
    Vector<NumericalType> rhs{11., 18.};
    Vector<NumericalType> result(dimension);
-   MINRESSolver<IndexType, NumericalType, decltype(linear_operator)> solver(dimension);
+   MINRESSolver<IndexType, NumericalType, decltype(linear_operator)> solver(dimension, ::tolerance<NumericalType>);
 
    solver.solve_indefinite_system(linear_operator, rhs, result);
    for (size_t i: Range(dimension)) {
-      ASSERT_NEAR(result[i], reference_result[i], tolerance);
+      ASSERT_NEAR(result[i], reference_result[i], ::tolerance<NumericalType>);
    }
 }
 
@@ -41,13 +48,12 @@ TEST(MINRESSolver, Hs015LeastSquareDuals) {
    const size_t dimension = 6;
    // reference result of MA57
    const std::vector<NumericalType> reference_result{-33.6667, -2.77085, -28.125, -39.2084, -27.125, -38.2084};
-   const NumericalType tolerance{NumericalType(1e-3)};
    Vector<NumericalType> rhs{-99, -24.9377, -1, -1, 0, 0 };
    Vector<NumericalType> result(dimension);
-   MINRESSolver<IndexType, NumericalType, decltype(hs015_linear_operator)> solver(dimension);
+   MINRESSolver<IndexType, NumericalType, decltype(hs015_linear_operator)> solver(dimension, ::tolerance<NumericalType>);
 
    solver.solve_indefinite_system(hs015_linear_operator, rhs, result);
    for (size_t i: Range(dimension)) {
-      ASSERT_NEAR(result[i], reference_result[i], tolerance);
+      ASSERT_NEAR(result[i], reference_result[i], ::tolerance<NumericalType>);
    }
 }

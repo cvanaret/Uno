@@ -33,14 +33,13 @@ namespace uno {
    template <typename IndexType, typename NumericalType, typename LinearOperator>
    class MINRESSolver : public IterativeSymmetricIndefiniteLinearSolver<IndexType, NumericalType, LinearOperator> {
    public:
-      explicit MINRESSolver(size_t dimension);
+      explicit MINRESSolver(size_t dimension, NumericalType tolerance);
       ~MINRESSolver() override = default;
 
       void solve_indefinite_system(const LinearOperator& linear_operator, const Vector<NumericalType>& rhs, Vector<NumericalType>& result) override;
 
    private:
-      // TODO move to option file
-      static constexpr NumericalType tolerance{NumericalType(1e-6)};
+      const NumericalType tolerance;
       size_t iteration{0};
       Vector<NumericalType> p_k;
       Vector<NumericalType> v_km1;
@@ -60,8 +59,9 @@ namespace uno {
    };
 
    template <typename IndexType, typename NumericalType, typename LinearOperator>
-   MINRESSolver<IndexType, NumericalType, LinearOperator>::MINRESSolver(size_t dimension):
+   MINRESSolver<IndexType, NumericalType, LinearOperator>::MINRESSolver(size_t dimension, NumericalType tolerance):
          IterativeSymmetricIndefiniteLinearSolver<IndexType, NumericalType, LinearOperator>(dimension),
+         tolerance(tolerance),
          p_k(dimension),
          v_km1(dimension), v_k(dimension),
          d_km2(dimension), d_km1(dimension), d_k(dimension),
@@ -77,51 +77,66 @@ namespace uno {
       this->v_km1.fill(NumericalType(0));
       // compute beta_1 and v_1
       NumericalType beta_k = std::sqrt(rhs.dot(rhs));
+      std::cout << "beta_0 = " << beta_k << '\n';
       // set phi_0 = tau_0 = beta_1
       this->phi_km1 = beta_k;
 
       this->v_k = rhs;
       this->v_k.scale(NumericalType(1) / beta_k);
+      std::cout << "v_0 = " << this->v_k << '\n';
 
       bool termination = false;
       while (not termination) {
          // compute the Lanczos step
-         const auto[alpha_k, beta_kp1] = this->compute_lanczos_step(linear_operator, beta_k);
+         const auto [alpha_k, beta_kp1] = this->compute_lanczos_step(linear_operator, beta_k);
+         std::cout << "alpha_" << this->iteration << " = " << alpha_k << '\n';
+         std::cout << "beta_" << this->iteration + 1 << " = " << beta_kp1 << '\n';
 
          // last left orthogonalization on middle two entries in last column of Tk
+         std::cout << "delta1_" << this->iteration << " = " << this->delta1_k << '\n';
          const NumericalType delta2_k = this->givens_rotation.cosine * this->delta1_k + this->givens_rotation.sine * alpha_k;
          const NumericalType gamma1_k = this->givens_rotation.sine * this->delta1_k - this->givens_rotation.cosine * alpha_k;
+         std::cout << "delta2_" << this->iteration << " = " << delta2_k << '\n';
+         std::cout << "gamma1_" << this->iteration << " = " << gamma1_k << '\n';
 
          // test for negative curvature descent
          if (this->givens_rotation.cosine * gamma1_k >= NumericalType(0)) {
-            // std::cout << "DIRECTION OF NEGATIVE CURVATURE\n";
+            std::cout << "DIRECTION OF NEGATIVE CURVATURE\n";
          }
 
          // last left orthogonalization to produce first two entries of T_k+1 e_k+1
          const NumericalType epsilon_kp1 = this->givens_rotation.sine * beta_kp1;
          const NumericalType delta1_kp1 = -this->givens_rotation.cosine * beta_kp1;
+         std::cout << "epsilon_" << this->iteration + 1 << " = " << epsilon_kp1 << '\n';
+         std::cout << "delta_" << this->iteration + 1 << " = " << delta1_kp1 << '\n';
 
          // current left orthogonalization to zero out beta_k+1
          const NumericalType gamma2_k = this->compute_symmetric_orthogonalization(gamma1_k, beta_kp1);
+         std::cout << "gamma2_" << this->iteration << " = " << gamma2_k << '\n';
 
          // TODO: right-hand side, residual norms, and matrix norm
          const NumericalType tau_k = this->givens_rotation.cosine * this->phi_km1; // step length
          const NumericalType phi_k = this->givens_rotation.sine * this->phi_km1;
+         std::cout << "tau_" << this->iteration << " = " << tau_k << '\n';
+         std::cout << "phi_" << this->iteration << " = " << phi_k << '\n';
 
          // update solution and matrix condition number
          if (std::abs(gamma2_k) >= this->tolerance) {
             // update d_k
             this->d_k = this->v_k - delta2_k * this->d_km1 - this->epsilon_k * this->d_km2;
             this->d_k.scale(NumericalType(1) / gamma2_k);
+            std::cout << "d_" << this->iteration << " = " << this->d_k << '\n';
 
             // update x_k
             this->x_k += tau_k * this->d_k;
+            std::cout << "x_" << this->iteration << " = " << this->x_k << '\n';
 
             // update v_k
             this->v_km1 = this->v_k;
             if (std::abs(beta_kp1) >= this->tolerance) {
                this->v_k = this->p_k;
                this->v_k.scale(NumericalType(1) / beta_kp1);
+               std::cout << "v_" << this->iteration << " = " << this->v_k << '\n';
             }
             else {
                break;
