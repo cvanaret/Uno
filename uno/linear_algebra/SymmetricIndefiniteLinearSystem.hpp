@@ -9,7 +9,7 @@
 #include "SymmetricMatrixFactory.hpp"
 #include "RectangularMatrix.hpp"
 #include "model/Model.hpp"
-#include "solvers/linear/direct/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 

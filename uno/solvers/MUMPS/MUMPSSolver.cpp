@@ -1,3 +1,6 @@
+// Copyright (c) 2024 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
 #include "MUMPSSolver.hpp"
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"
