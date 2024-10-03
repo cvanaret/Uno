@@ -4,11 +4,12 @@
 #ifndef UNO_FILTERMETHOD_H
 #define UNO_FILTERMETHOD_H
 
-#include "../SwitchingMethod.hpp"
-#include "filters/Filter.hpp"
+#include <memory>
+#include "ingredients/globalization_strategies/switching_methods/SwitchingMethod.hpp"
 
 namespace uno {
-   // forward declaration
+   // forward declarations
+   class Filter;
    class Options;
 
    /*! \class TwoPhaseConstants

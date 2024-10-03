@@ -6,7 +6,8 @@
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "reformulation/OptimizationProblem.hpp"
-#include "solvers/LP/LPSolverFactory.hpp"
+#include "solvers/LPSolver.hpp"
+#include "solvers/LPSolverFactory.hpp"
 #include "tools/Options.hpp"
 
 namespace uno {

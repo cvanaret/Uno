@@ -1,3 +1,6 @@
+// Copyright (c) 2024 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
 #include "MUMPSSolver.hpp"
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"
@@ -64,7 +67,7 @@ namespace uno {
    std::tuple<size_t, size_t, size_t> MUMPSSolver::get_inertia() const {
       const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
       const size_t number_zero_eigenvalues = this->number_zero_eigenvalues();
-      const size_t number_positive_eigenvalues = this->dimension - (number_negative_eigenvalues + number_zero_eigenvalues);
+      const size_t number_positive_eigenvalues = this->mumps_structure.n - (number_negative_eigenvalues + number_zero_eigenvalues);
       return std::make_tuple(number_positive_eigenvalues, number_negative_eigenvalues, number_zero_eigenvalues);
    }
 

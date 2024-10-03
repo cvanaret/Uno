@@ -7,7 +7,7 @@
 #include <vector>
 #include <cmath>
 #include "linear_algebra/Vector.hpp"
-#include "IterativeIndefiniteLinearSolver.hpp"
+#include "solvers/IterativeIndefiniteLinearSolver.hpp"
 #include "symbolic/Expression.hpp"
 
 namespace uno {

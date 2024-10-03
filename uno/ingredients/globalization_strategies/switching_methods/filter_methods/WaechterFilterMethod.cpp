@@ -2,7 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "WaechterFilterMethod.hpp"
-#include "../../ProgressMeasures.hpp"
+#include "filters/Filter.hpp"
+#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Options.hpp"
@@ -13,6 +14,8 @@ namespace uno {
          FilterMethod(options),
          sufficient_infeasibility_decrease_factor(options.get_double("filter_sufficient_infeasibility_decrease_factor")) {
    }
+
+   WaechterFilterMethod::~WaechterFilterMethod() { }
 
    void WaechterFilterMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) {
       this->initial_infeasibility = initial_iterate.progress.infeasibility;

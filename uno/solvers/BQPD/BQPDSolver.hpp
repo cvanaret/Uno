@@ -7,7 +7,7 @@
 #include <vector>
 #include "ingredients/subproblems/SubproblemStatus.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "QPSolver.hpp"
+#include "solvers/QPSolver.hpp"
 
 namespace uno {
    // forward declaration

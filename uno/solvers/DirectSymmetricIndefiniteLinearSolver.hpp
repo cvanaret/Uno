@@ -5,7 +5,7 @@
 #define UNO_DIRECTSYMMETRICINDEFINITELINEARSOLVER_H
 
 #include <stdexcept>
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/SymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    template <typename NumericalType>

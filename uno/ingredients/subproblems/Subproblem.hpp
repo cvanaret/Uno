@@ -4,8 +4,8 @@
 #ifndef UNO_SUBPROBLEM_H
 #define UNO_SUBPROBLEM_H
 
+#include <cassert>
 #include <vector>
-#include "optimization/Evaluations.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {

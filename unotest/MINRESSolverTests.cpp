@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
-#include "solvers/linear/iterative/MINRESSolver.hpp"
+#include "solvers/MINRES/MINRESSolver.hpp"
 
 using namespace uno;
 

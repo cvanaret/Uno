@@ -5,8 +5,9 @@
 #include "PrimalDualInteriorPointSubproblem.hpp"
 #include "ingredients/subproblems/Direction.hpp"
 #include "ingredients/subproblems/HessianModelFactory.hpp"
-#include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
+#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "preprocessing/Preprocessing.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
@@ -210,7 +211,9 @@ namespace uno {
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
       this->augmented_system.regularize_matrix(statistics, problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
             dual_regularization_parameter);
-      [[maybe_unused]] auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = this->linear_solver->get_inertia();
+
+      // check the inertia
+      [[maybe_unused]] auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = this->linear_solver->get_inertia();
       assert(number_pos_eigenvalues == problem.number_variables && number_neg_eigenvalues == problem.number_constraints && number_zero_eigenvalues == 0);
 
       // rhs

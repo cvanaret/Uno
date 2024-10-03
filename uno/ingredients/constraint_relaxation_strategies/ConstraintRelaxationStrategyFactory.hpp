@@ -5,10 +5,12 @@
 #define UNO_CONSTRAINTRELAXATIONSTRATEGYFACTORY_H
 
 #include <memory>
-#include "ConstraintRelaxationStrategy.hpp"
+#include <vector>
 
 namespace uno {
-   // forward declaration
+   // forward declarations
+   class ConstraintRelaxationStrategy;
+   class Model;
    class Options;
 
    class ConstraintRelaxationStrategyFactory {

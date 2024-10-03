@@ -4,11 +4,14 @@
 #ifndef UNO_QPSUBPROBLEM_H
 #define UNO_QPSUBPROBLEM_H
 
+#include <memory>
 #include "InequalityConstrainedMethod.hpp"
-#include "ingredients/subproblems/HessianModel.hpp"
-#include "solvers/QP/QPSolver.hpp"
 
 namespace uno {
+   // forward references
+   class HessianModel;
+   class QPSolver;
+
    class QPSubproblem : public InequalityConstrainedMethod {
    public:
       QPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,

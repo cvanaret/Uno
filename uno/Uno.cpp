@@ -4,12 +4,14 @@
 #include <cmath>
 #include "Uno.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
+#include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblems/SubproblemFactory.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Timer.hpp"
 

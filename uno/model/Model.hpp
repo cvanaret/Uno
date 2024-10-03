@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 #include "linear_algebra/Norm.hpp"
-#include "linear_algebra/Vector.hpp"
 #include "optimization/TerminationStatus.hpp"
 #include "symbolic/VectorExpression.hpp"
 
@@ -21,6 +20,8 @@ namespace uno {
    class SparseVector;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
+   template <typename ElementType>
+   class Vector;
 
    enum FunctionType {LINEAR, NONLINEAR};
    enum BoundType {EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED};

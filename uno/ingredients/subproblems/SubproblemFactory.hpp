@@ -5,11 +5,12 @@
 #define UNO_SUBPROBLEMFACTORY_H
 
 #include <memory>
-#include "Subproblem.hpp"
+#include <vector>
 
 namespace uno {
    // forward declaration
    class Options;
+   class Subproblem;
 
    class SubproblemFactory {
       public:

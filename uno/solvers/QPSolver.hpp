@@ -5,7 +5,7 @@
 #define UNO_QPSOLVER_H
 
 #include <vector>
-#include "solvers/LP/LPSolver.hpp"
+#include "solvers/LPSolver.hpp"
 
 namespace uno {
    // forward declarations

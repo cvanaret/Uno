@@ -8,8 +8,8 @@
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
-#include "solvers/linear/direct/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "solvers/QP/QPSolver.hpp"
+#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/QPSolver.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {

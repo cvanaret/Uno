@@ -7,6 +7,9 @@
 #include "GlobalizationMechanism.hpp"
 
 namespace uno {
+   // forward declaration
+   struct WarmstartInformation;
+
    class BacktrackingLineSearch : public GlobalizationMechanism {
    public:
       BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);

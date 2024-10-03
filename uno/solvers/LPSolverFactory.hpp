@@ -5,10 +5,10 @@
 #define UNO_LPSOLVERFACTORY_H
 
 #include <memory>
-#include "LPSolver.hpp"
+#include "solvers/LPSolver.hpp"
 
 #ifdef HAS_BQPD
-#include "solvers/QP/BQPDSolver.hpp"
+#include "solvers/BQPD/BQPDSolver.hpp"
 #endif
 
 namespace uno {
@@ -17,12 +17,12 @@ namespace uno {
       static std::unique_ptr<LPSolver> create([[maybe_unused]] const std::string& LP_solver_name, [[maybe_unused]] size_t number_variables,
             [[maybe_unused]] size_t number_constraints, [[maybe_unused]] size_t number_objective_gradient_nonzeros,
             [[maybe_unused]] size_t number_jacobian_nonzeros, [[maybe_unused]] const Options& options) {
-   #ifdef HAS_BQPD
+#ifdef HAS_BQPD
          if (LP_solver_name == "BQPD") {
             return std::make_unique<BQPDSolver>(number_variables, number_constraints, number_objective_gradient_nonzeros,
                   number_jacobian_nonzeros, 0, BQPDProblemType::LP, options);
          }
-   #endif
+#endif
          throw std::invalid_argument("LP solver not found");
       }
    };

@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 #include "linear_algebra/COOSymmetricMatrix.hpp"
-#include "solvers/linear/direct/MA57Solver.hpp"
+#include "solvers/MA57/MA57Solver.hpp"
 
 using namespace uno;
 

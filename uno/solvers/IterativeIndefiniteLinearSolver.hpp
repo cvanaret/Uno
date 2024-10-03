@@ -4,7 +4,7 @@
 #ifndef UNO_ITERATIVESYMMETRICINDEFINITELINEARSOLVER_H
 #define UNO_ITERATIVESYMMETRICINDEFINITELINEARSOLVER_H
 
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/SymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 
 namespace uno {

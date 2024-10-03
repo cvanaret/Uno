@@ -1,10 +1,10 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_MUMPSSOLVER_H
 #define UNO_MUMPSSOLVER_H
 
-#include "DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "dmumps_c.h"
 
