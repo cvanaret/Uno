@@ -6,10 +6,10 @@
 
 #include <memory>
 #include <vector>
-#include "GlobalizationStrategy.hpp"
 
 namespace uno {
-   // forward declaration
+   // forward declarations
+   class GlobalizationStrategy;
    class Options;
 
    class GlobalizationStrategyFactory {

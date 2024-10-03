@@ -8,14 +8,11 @@
 #include <optional>
 #include <ostream>
 #include "SubproblemStatus.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "optimization/Multipliers.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
-   // forward declaration
-   template <typename ElementType>
-   class Vector;
-
    /*! \struct ConstraintActivity
    * \brief Constraints at lower or upper bound at the optimum solution
    *

@@ -7,9 +7,11 @@
 #include <memory>
 #include "InequalityConstrainedMethod.hpp"
 #include "linear_algebra/COOSymmetricMatrix.hpp"
-#include "solvers/LP/LPSolver.hpp"
 
 namespace uno {
+   // forward reference
+   class LPSolver;
+
    class LPSubproblem : public InequalityConstrainedMethod {
    public:
       LPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,

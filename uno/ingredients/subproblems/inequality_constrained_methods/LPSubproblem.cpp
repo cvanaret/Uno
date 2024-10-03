@@ -6,6 +6,7 @@
 #include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "reformulation/OptimizationProblem.hpp"
+#include "solvers/LP/LPSolver.hpp"
 #include "solvers/LP/LPSolverFactory.hpp"
 #include "tools/Options.hpp"
 

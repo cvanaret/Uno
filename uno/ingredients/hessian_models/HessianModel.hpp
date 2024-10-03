@@ -6,13 +6,16 @@
 
 #include <memory>
 #include <vector>
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    // forward declarations
+   template <typename IndexType, typename NumericalType>
+   class DirectSymmetricIndefiniteLinearSolver;
    class OptimizationProblem;
    class Options;
    class Statistics;
+   template <typename IndexType, typename ElementType>
+   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
 
@@ -46,7 +49,7 @@ namespace uno {
             const Vector<double>& constraint_multipliers) override;
 
    protected:
-      std::unique_ptr<SymmetricIndefiniteLinearSolver<size_t, double>> linear_solver; /*!< Solver that computes the inertia */
+      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver; /*!< Solver that computes the inertia */
       const double regularization_initial_value{};
       const double regularization_increase_factor{};
 

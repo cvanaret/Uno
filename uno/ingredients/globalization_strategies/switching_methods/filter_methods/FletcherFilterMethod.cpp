@@ -2,14 +2,17 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "FletcherFilterMethod.hpp"
-#include "../../ProgressMeasures.hpp"
+#include "filters/Filter.hpp"
+#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
+#include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   FletcherFilterMethod::FletcherFilterMethod(const Options& options): FilterMethod(options) {
-   }
+   FletcherFilterMethod::FletcherFilterMethod(const Options& options): FilterMethod(options) { }
+
+   FletcherFilterMethod::~FletcherFilterMethod() { }
 
    bool FletcherFilterMethod::is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) {

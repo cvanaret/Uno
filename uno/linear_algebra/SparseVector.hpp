@@ -85,8 +85,8 @@ namespace uno {
 
    template <typename ElementType>
    void SparseVector<ElementType>::insert(size_t index, ElementType value) {
-      this->indices.push_back(index);
-      this->values.push_back(value);
+      this->indices.emplace_back(index);
+      this->values.emplace_back(value);
       this->number_nonzeros++;
    }
 

@@ -27,7 +27,7 @@ namespace uno {
          double cntl[], int info[], double rinfo[]);
    }
 
-   MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : SymmetricIndefiniteLinearSolver<size_t, double>(dimension),
+   MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : DirectSymmetricIndefiniteLinearSolver<size_t, double>(dimension),
          lkeep(static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42)),
          keep(static_cast<size_t>(lkeep)),
          iwork(5 * dimension),
@@ -165,8 +165,8 @@ namespace uno {
       this->row_indices.clear();
       this->column_indices.clear();
       for (const auto [row_index, column_index, element]: matrix) {
-         this->row_indices.push_back(static_cast<int>(row_index + this->fortran_shift));
-         this->column_indices.push_back(static_cast<int>(column_index + this->fortran_shift));
+         this->row_indices.emplace_back(static_cast<int>(row_index + this->fortran_shift));
+         this->column_indices.emplace_back(static_cast<int>(column_index + this->fortran_shift));
       }
    }
 } // namespace

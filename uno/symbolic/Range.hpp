@@ -19,7 +19,7 @@ namespace uno {
    public:
       using value_type = size_t;
 
-      explicit Range(size_t end_index);
+      explicit Range(size_t end_value);
       Range(size_t start_value, size_t end_value);
 
       // iterable functions
@@ -34,7 +34,7 @@ namespace uno {
    };
 
    template <RangeDirection direction>
-   inline Range<direction>::Range(size_t end_index): Range(0, end_index) {
+   inline Range<direction>::Range(size_t end_value): Range(0, end_value) {
       static_assert(direction == FORWARD);
    }
 

@@ -82,9 +82,9 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    void COOSymmetricMatrix<IndexType, ElementType>::insert(ElementType term, IndexType row_index, IndexType column_index) {
       assert(this->number_nonzeros <= this->row_indices.size() && "The COO matrix doesn't have a sufficient capacity");
-      this->entries.push_back(term);
-      this->row_indices.push_back(row_index);
-      this->column_indices.push_back(column_index);
+      this->entries.emplace_back(term);
+      this->row_indices.emplace_back(row_index);
+      this->column_indices.emplace_back(column_index);
       this->number_nonzeros++;
    }
 

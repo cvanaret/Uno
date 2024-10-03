@@ -5,7 +5,6 @@
 #include <iostream>
 #include <utility>
 #include "Model.hpp"
-#include "symbolic/VectorExpression.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {

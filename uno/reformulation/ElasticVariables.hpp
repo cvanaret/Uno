@@ -4,6 +4,8 @@
 #ifndef UNO_ELASTICVARIABLES_H
 #define UNO_ELASTICVARIABLES_H
 
+#include "tools/Infinity.hpp"
+
 namespace uno {
    struct ElasticVariablesSizes {
       size_t positive{0};

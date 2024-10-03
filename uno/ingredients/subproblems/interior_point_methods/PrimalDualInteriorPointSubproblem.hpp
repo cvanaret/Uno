@@ -6,13 +6,14 @@
 
 #include "ingredients/subproblems/Subproblem.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
-#include "ingredients/hessian_models/HessianModel.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 
 namespace uno {
-   // forward reference
+   // forward references
+   template <typename IndexType, typename NumericalType>
+   class DirectSymmetricIndefiniteLinearSolver;
    class DualResiduals;
+   class HessianModel;
 
    struct InteriorPointParameters {
       double tau_min;
@@ -55,7 +56,7 @@ namespace uno {
       const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
 
       SymmetricIndefiniteLinearSystem<double> augmented_system;
-      const std::unique_ptr<SymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;
+      const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;
 
       BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
       double previous_barrier_parameter;

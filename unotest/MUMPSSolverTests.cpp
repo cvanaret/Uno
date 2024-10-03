@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 #include "linear_algebra/COOSymmetricMatrix.hpp"
-#include "solvers/linear/MUMPSSolver.hpp"
+#include "solvers/linear/direct/MUMPSSolver.hpp"
 
 using namespace uno;
 

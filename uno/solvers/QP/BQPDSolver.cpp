@@ -248,11 +248,11 @@ namespace uno {
             // bound constraint
             if (0 <= this->active_set[active_constraint_index]) { // lower bound active
                direction.multipliers.lower_bounds[index] = this->residuals[index];
-               direction.active_bounds.at_lower_bound.push_back(index);
+               direction.active_bounds.at_lower_bound.emplace_back(index);
             }
             else { // upper bound active */
                direction.multipliers.upper_bounds[index] = -this->residuals[index];
-               direction.active_bounds.at_upper_bound.push_back(index);
+               direction.active_bounds.at_upper_bound.emplace_back(index);
             }
          }
          else {

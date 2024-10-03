@@ -6,14 +6,13 @@
 
 #include <cstddef>
 #include <memory>
-#include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
-#include "ingredients/subproblems/Subproblem.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "optimization/TerminationStatus.hpp"
 
 namespace uno {
    // forward declarations
    class Direction;
+   class GlobalizationStrategy;
    class Iterate;
    template <typename ElementType>
    class LagrangianGradient;
@@ -22,6 +21,7 @@ namespace uno {
    class OptimizationProblem;
    class Options;
    class Statistics;
+   class Subproblem;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
    template <typename ElementType>
@@ -32,7 +32,7 @@ namespace uno {
    public:
       ConstraintRelaxationStrategy(const Model& model, size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
             size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options);
-      virtual ~ConstraintRelaxationStrategy() = default;
+      virtual ~ConstraintRelaxationStrategy();
 
       virtual void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) = 0;
       void set_trust_region_radius(double trust_region_radius);

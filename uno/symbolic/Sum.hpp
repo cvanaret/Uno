@@ -20,8 +20,8 @@ namespace uno {
       [[nodiscard]] typename Sum::value_type operator[](size_t index) const { return this->expression1[index] + this->expression2[index]; }
 
    protected:
-      E1 expression1;
-      E2 expression2;
+      const E1 expression1;
+      const E2 expression2;
    };
 
    // free function

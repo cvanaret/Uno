@@ -8,14 +8,14 @@
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
-#include "solvers/linear/SymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/linear/direct/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/QP/QPSolver.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
    // compute a least-square approximation of the multipliers by solving a linear system
    void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<size_t, double>& matrix, Vector<double>& rhs,
-         SymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers,
+         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers,
          double multiplier_max_norm) {
       current_iterate.evaluate_objective_gradient(model);
       current_iterate.evaluate_constraint_jacobian(model);

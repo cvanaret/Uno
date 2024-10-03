@@ -1,9 +1,12 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include "GlobalizationMechanism.hpp"
 #include "GlobalizationMechanismFactory.hpp"
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_mechanisms/TrustRegionStrategy.hpp"
 #include "ingredients/globalization_mechanisms/BacktrackingLineSearch.hpp"
+#include "tools/Options.hpp"
 
 namespace uno {
    std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(

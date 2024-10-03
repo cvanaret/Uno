@@ -100,15 +100,15 @@ namespace uno {
          this->slack_index_of_constraint_index[constraint_index] = slack_variable_index;
          this->slacks.insert(constraint_index, slack_variable_index);
          if (is_finite(this->model->constraint_lower_bound(constraint_index))) {
-            this->lower_bounded_slacks.push_back(slack_variable_index);
+            this->lower_bounded_slacks.emplace_back(slack_variable_index);
             if (not is_finite(this->model->constraint_upper_bound(constraint_index))) {
-               this->single_lower_bounded_slacks.push_back(slack_variable_index);
+               this->single_lower_bounded_slacks.emplace_back(slack_variable_index);
             }
          }
          if (is_finite(this->model->constraint_upper_bound(constraint_index))) {
-            this->upper_bounded_slacks.push_back(slack_variable_index);
+            this->upper_bounded_slacks.emplace_back(slack_variable_index);
             if (not is_finite(this->model->constraint_lower_bound(constraint_index))) {
-               this->single_upper_bounded_slacks.push_back(slack_variable_index);
+               this->single_upper_bounded_slacks.emplace_back(slack_variable_index);
             }
          }
          inequality_index++;
