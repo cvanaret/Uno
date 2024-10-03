@@ -5,6 +5,8 @@
 #define UNO_INEQUALITYCONSTRAINEDMETHOD_H
 
 #include "ingredients/subproblems/Subproblem.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {

@@ -10,6 +10,7 @@ namespace uno {
    class FletcherFilterMethod : public FilterMethod {
    public:
       explicit FletcherFilterMethod(const Options& options);
+      ~FletcherFilterMethod();
 
       [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress, const ProgressMeasures& trial_progress) const override;
 

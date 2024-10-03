@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <stdexcept>
+#include "GlobalizationStrategy.hpp"
 #include "GlobalizationStrategyFactory.hpp"
 #include "l1MeritFunction.hpp"
 #include "switching_methods/filter_methods/FletcherFilterMethod.hpp"

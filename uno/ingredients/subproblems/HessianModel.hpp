@@ -6,13 +6,16 @@
 
 #include <memory>
 #include <vector>
-#include "solvers/linear/direct/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    // forward declarations
+   template <typename IndexType, typename NumericalType>
+   class DirectSymmetricIndefiniteLinearSolver;
    class OptimizationProblem;
    class Options;
    class Statistics;
+   template <typename IndexType, typename ElementType>
+   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
 

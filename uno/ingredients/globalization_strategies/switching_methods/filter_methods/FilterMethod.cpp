@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "FilterMethod.hpp"
+#include "filters/Filter.hpp"
 #include "filters/FilterFactory.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Options.hpp"

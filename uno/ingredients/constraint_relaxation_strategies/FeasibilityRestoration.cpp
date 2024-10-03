@@ -3,7 +3,9 @@
 
 #include <functional>
 #include "FeasibilityRestoration.hpp"
+#include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/subproblems/Direction.hpp"
+#include "ingredients/subproblems/Subproblem.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"

@@ -2,8 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ConstraintRelaxationStrategy.hpp"
+#include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblems/Direction.hpp"
+#include "ingredients/subproblems/Subproblem.hpp"
 #include "ingredients/subproblems/SubproblemFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
@@ -31,6 +33,8 @@ namespace uno {
          unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")),
          first_order_predicted_reduction(options.get_string("globalization_mechanism") == "LS") {
    }
+
+   ConstraintRelaxationStrategy::~ConstraintRelaxationStrategy() { }
 
    void ConstraintRelaxationStrategy::set_trust_region_radius(double trust_region_radius) {
       this->subproblem->set_trust_region_radius(trust_region_radius);

@@ -3,7 +3,6 @@
 
 #include "Direction.hpp"
 #include "tools/Logger.hpp"
-#include "linear_algebra/Vector.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {

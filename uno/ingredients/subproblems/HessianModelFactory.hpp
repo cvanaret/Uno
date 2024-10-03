@@ -4,6 +4,9 @@
 #ifndef UNO_HESSIANMODELFACTORY_H
 #define UNO_HESSIANMODELFACTORY_H
 
+#include <memory>
+#include "HessianModel.hpp"
+
 namespace uno {
    class HessianModelFactory {
    public:

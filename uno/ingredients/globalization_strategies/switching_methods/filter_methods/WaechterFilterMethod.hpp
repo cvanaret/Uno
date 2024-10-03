@@ -5,11 +5,13 @@
 #define UNO_WAECHTERFILTERMETHOD_H
 
 #include "FilterMethod.hpp"
+#include "tools/Infinity.hpp"
 
 namespace uno {
    class WaechterFilterMethod : public FilterMethod {
    public:
       explicit WaechterFilterMethod(const Options& options);
+      ~WaechterFilterMethod();
 
       void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
       [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress, const ProgressMeasures& trial_progress) const override;

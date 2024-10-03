@@ -4,6 +4,7 @@
 #ifndef UNO_DUALRESIDUALS_H
 #define UNO_DUALRESIDUALS_H
 
+#include "optimization/LagrangianGradient.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {

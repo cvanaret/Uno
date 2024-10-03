@@ -4,7 +4,7 @@
 #ifndef UNO_SWITCHINGMETHOD_H
 #define UNO_SWITCHINGMETHOD_H
 
-#include "../GlobalizationStrategy.hpp"
+#include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 
 namespace uno {
    class SwitchingMethod : public GlobalizationStrategy {
