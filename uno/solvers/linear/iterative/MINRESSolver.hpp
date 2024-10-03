@@ -29,7 +29,9 @@ namespace uno {
       NumericalType sine;
    };
 
-   // implementation of MINRES based on https://web.stanford.edu/group/SOL/dissertations/sou-cheng-choi-thesis.pdf, p26
+   // implementation of MINRES based on:
+   // - https://web.stanford.edu/group/SOL/dissertations/sou-cheng-choi-thesis.pdf, p26
+   // - https://epubs.siam.org/doi/pdf/10.1137/21M143666X, p2642
    template <typename IndexType, typename NumericalType, typename LinearOperator>
    class MINRESSolver : public IterativeSymmetricIndefiniteLinearSolver<IndexType, NumericalType, LinearOperator> {
    public:
@@ -109,7 +111,10 @@ namespace uno {
          const NumericalType phi_k = this->givens_rotation.sine * this->phi_km1;
 
          // update solution and matrix condition number
-         if (std::abs(gamma2_k) >= this->tolerance) {
+         if (std::abs(gamma2_k) < this->tolerance) {
+            termination = true;
+         }
+         else {
             // update d_k
             this->d_k = this->v_k - delta2_k * this->d_km1 - this->epsilon_k * this->d_km2;
             this->d_k.scale(NumericalType(1) / gamma2_k);
@@ -119,25 +124,23 @@ namespace uno {
 
             // update v_k
             this->v_km1 = this->v_k;
-            if (std::abs(beta_kp1) >= this->tolerance) {
-               this->v_k = this->p_k;
-               this->v_k.scale(NumericalType(1) / beta_kp1);
+            if (std::abs(beta_kp1) < this->tolerance) {
+               termination = true;
             }
             else {
-               break;
+               this->v_k = this->p_k;
+               this->v_k.scale(NumericalType(1) / beta_kp1);
+
+               // update the quantities for the next iteration
+               beta_k = beta_kp1; // NumericalType
+               this->delta1_k = delta1_kp1; // NumericalType
+               this->epsilon_k = epsilon_kp1; // NumericalType
+               this->phi_km1 = phi_k; // NumericalType
+               this->d_km2 = this->d_km1; // Vector<NumericalType>
+               this->d_km1 = this->d_k; // Vector<NumericalType>
+               this->iteration++;
             }
-            // update the quantities for the next iteration
-            beta_k = beta_kp1;
-            this->delta1_k = delta1_kp1; // NumericalType
-            this->epsilon_k = epsilon_kp1; // NumericalType
-            this->phi_km1 = phi_k; // NumericalType
-            this->d_km2 = this->d_km1; // Vector<NumericalType>
-            this->d_km1 = this->d_k; // Vector<NumericalType>
          }
-         else {
-            break;
-         }
-         this->iteration++;
       }
       result = this->x_k;
    }
@@ -145,7 +148,7 @@ namespace uno {
    template <typename IndexType, typename NumericalType, typename LinearOperator>
    std::pair<NumericalType, NumericalType> MINRESSolver<IndexType, NumericalType, LinearOperator>::compute_lanczos_step(const LinearOperator& linear_operator,
          NumericalType beta_k) {
-      // compute matrix-vector product in p_k
+      // compute matrix-vector product A v_k in p_k
       linear_operator(this->v_k, this->p_k);
 
       // compute alpha_k = v_k^T A v_k
