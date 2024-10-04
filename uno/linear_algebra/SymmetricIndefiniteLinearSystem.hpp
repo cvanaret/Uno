@@ -76,7 +76,7 @@ namespace uno {
       this->matrix->reset();
       // copy the Lagrangian Hessian in the top left block
       //size_t current_column = 0;
-      for (const auto[row_index, column_index, element]: hessian) {
+      for (const auto [row_index, column_index, element]: hessian) {
          // finalize all empty columns
          /*for (size_t column: Range(current_column, column_index)) {
             this->matrix->finalize_column(column);
@@ -87,7 +87,7 @@ namespace uno {
 
       // Jacobian of general constraints
       for (size_t column_index: Range(number_constraints)) {
-         for (const auto[row_index, derivative]: constraint_jacobian[column_index]) {
+         for (const auto [row_index, derivative]: constraint_jacobian[column_index]) {
             this->matrix->insert(derivative, row_index, number_variables + column_index);
          }
          this->matrix->finalize_column(column_index);
@@ -121,7 +121,7 @@ namespace uno {
          statistics.set("regularization", this->primal_regularization);
          return;
       }
-      auto[number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
+      auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
       DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
       DEBUG << "got (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";
