@@ -9,9 +9,9 @@
 #include "optimization/WarmstartInformation.hpp"
 #include "preprocessing/Preprocessing.hpp"
 #include "reformulation/OptimizationProblem.hpp"
-#include "solvers/linear/direct/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "solvers/QP/QPSolver.hpp"
-#include "solvers/QP/QPSolverFactory.hpp"
+#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/QPSolver.hpp"
+#include "solvers/QPSolverFactory.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 

@@ -101,7 +101,7 @@ namespace uno {
 
    template <typename IndexType, typename ElementType>
    void COOSymmetricMatrix<IndexType, ElementType>::print(std::ostream& stream) const {
-      for (const auto[row_index, column_index, element]: *this) {
+      for (const auto [row_index, column_index, element]: *this) {
          stream << "m(" << row_index << ", " << column_index << ") = " << element << '\n';
       }
    }

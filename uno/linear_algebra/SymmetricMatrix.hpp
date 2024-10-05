@@ -110,7 +110,7 @@ namespace uno {
    // TODO fix. We need to scan through all the columns
    ElementType SymmetricMatrix<IndexType, ElementType>::smallest_diagonal_entry(size_t max_dimension) const {
       ElementType smallest_entry = INF<ElementType>;
-      for (const auto[row_index, column_index, element]: *this) {
+      for (const auto [row_index, column_index, element]: *this) {
          if (row_index == column_index && row_index < max_dimension) {
             smallest_entry = std::min(smallest_entry, element);
          }
@@ -129,7 +129,7 @@ namespace uno {
       assert(x.size() == y.size() && "SymmetricMatrix::quadratic_product: the two vectors x and y do not have the same size");
 
       ElementType result = ElementType(0);
-      for (const auto[row_index, column_index, element]: *this) {
+      for (const auto [row_index, column_index, element]: *this) {
          if (row_index == column_index) {
             // diagonal term
             result += element * x[row_index] * y[row_index];

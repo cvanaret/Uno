@@ -4,8 +4,8 @@
 #include "HessianModel.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "reformulation/OptimizationProblem.hpp"
-#include "solvers/linear/direct/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "solvers/linear/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 

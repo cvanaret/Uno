@@ -5,14 +5,14 @@
 #define UNO_LINEARSOLVERFACTORY_H
 
 #include <memory>
-#include "direct/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "DirectSymmetricIndefiniteLinearSolver.hpp"
 
 #ifdef HAS_MA57
-#include "solvers/linear/direct/MA57Solver.hpp"
+#include "solvers/MA57/MA57Solver.hpp"
 #endif
 
 #ifdef HAS_MUMPS
-#include "solvers/linear/direct/MUMPSSolver.hpp"
+#include "solvers/MUMPS/MUMPSSolver.hpp"
 #endif
 
 namespace uno {

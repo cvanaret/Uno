@@ -1,3 +1,6 @@
+// Copyright (c) 2024 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
 #include "MUMPSSolver.hpp"
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"
@@ -89,7 +92,7 @@ namespace uno {
    void MUMPSSolver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
       // build the internal matrix representation
       this->COO_matrix.reset();
-      for (const auto[row_index, column_index, element]: matrix) {
+      for (const auto [row_index, column_index, element]: matrix) {
          this->COO_matrix.insert(element, static_cast<int>(row_index + this->fortran_shift), static_cast<int>(column_index + this->fortran_shift));
       }
    }
