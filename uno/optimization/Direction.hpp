@@ -7,7 +7,7 @@
 #include <vector>
 #include <optional>
 #include <ostream>
-#include "SubproblemStatus.hpp"
+#include "ingredients/inequality_handling_methods/SubproblemStatus.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Multipliers.hpp"
 #include "tools/Infinity.hpp"

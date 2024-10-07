@@ -3,9 +3,9 @@
 
 #include "Subproblem.hpp"
 #include "SubproblemFactory.hpp"
-#include "ingredients/subproblems/inequality_constrained_methods/QPSubproblem.hpp"
-#include "ingredients/subproblems/inequality_constrained_methods/LPSubproblem.hpp"
-#include "ingredients/subproblems/interior_point_methods/PrimalDualInteriorPointSubproblem.hpp"
+#include "ingredients/inequality_handling_methods/inequality_constrained_methods/QPSubproblem.hpp"
+#include "ingredients/inequality_handling_methods/inequality_constrained_methods/LPSubproblem.hpp"
+#include "ingredients/inequality_handling_methods/interior_point_methods/PrimalDualInteriorPointSubproblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "solvers/QPSolverFactory.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"

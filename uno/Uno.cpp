@@ -7,7 +7,7 @@
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
-#include "ingredients/subproblems/SubproblemFactory.hpp"
+#include "ingredients/inequality_handling_methods/SubproblemFactory.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"

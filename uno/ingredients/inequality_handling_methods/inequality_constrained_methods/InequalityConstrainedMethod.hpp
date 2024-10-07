@@ -4,7 +4,7 @@
 #ifndef UNO_INEQUALITYCONSTRAINEDMETHOD_H
 #define UNO_INEQUALITYCONSTRAINEDMETHOD_H
 
-#include "ingredients/subproblems/Subproblem.hpp"
+#include "ingredients/inequality_handling_methods/Subproblem.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"

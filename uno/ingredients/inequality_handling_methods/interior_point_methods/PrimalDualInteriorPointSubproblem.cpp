@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include "PrimalDualInteriorPointSubproblem.hpp"
-#include "ingredients/subproblems/Direction.hpp"
+#include "optimization/Direction.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"

@@ -4,7 +4,7 @@
 #ifndef UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H
 #define UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H
 
-#include "ingredients/subproblems/Subproblem.hpp"
+#include "ingredients/inequality_handling_methods/Subproblem.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 
