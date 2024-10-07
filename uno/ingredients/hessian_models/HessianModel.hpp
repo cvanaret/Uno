@@ -55,6 +55,15 @@ namespace uno {
 
       void regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables);
    };
+
+   // zero Hessian
+   class ZeroHessian : public HessianModel {
+   public:
+      ZeroHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
+
+      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
+            const Vector<double>& constraint_multipliers) override;
+   };
 } // namespace
 
 #endif // UNO_HESSIANMODEL_H

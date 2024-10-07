@@ -81,4 +81,14 @@ namespace uno {
       }
       statistics.set("regularization", regularization_factor);
    }
+
+   // zero Hessian
+   ZeroHessian::ZeroHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options) :
+         HessianModel(dimension, 0, options.get_string("sparse_format"), /* use_regularization = */false) {
+   }
+
+   void ZeroHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& /*primal_variables*/,
+         const Vector<double>& /*constraint_multipliers*/) {
+      this->hessian->dimension = problem.number_variables;
+   }
 } // namespace
