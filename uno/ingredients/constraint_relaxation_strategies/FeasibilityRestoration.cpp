@@ -48,10 +48,10 @@ namespace uno {
       statistics.set("phase", "OPT");
 
       // initial iterate
-      this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
       initial_iterate.feasibility_residuals.lagrangian_gradient.resize(this->feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
+      this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
       this->evaluate_progress_measures(initial_iterate);
       this->compute_primal_dual_residuals(initial_iterate);
       this->set_statistics(statistics, initial_iterate);

@@ -57,11 +57,11 @@ namespace uno {
       statistics.set("penalty param.", this->penalty_parameter);
 
       // initial iterate
-      this->subproblem->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
-      this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
       initial_iterate.feasibility_residuals.lagrangian_gradient.resize(this->feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
+      this->subproblem->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
+      this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
       this->evaluate_progress_measures(initial_iterate);
       this->compute_primal_dual_residuals(initial_iterate);
       this->set_statistics(statistics, initial_iterate);
