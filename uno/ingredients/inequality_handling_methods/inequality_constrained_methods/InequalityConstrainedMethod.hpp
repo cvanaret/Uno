@@ -4,13 +4,13 @@
 #ifndef UNO_INEQUALITYCONSTRAINEDMETHOD_H
 #define UNO_INEQUALITYCONSTRAINEDMETHOD_H
 
-#include "ingredients/inequality_handling_methods/Subproblem.hpp"
+#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
-   class InequalityConstrainedMethod : public Subproblem {
+   class InequalityConstrainedMethod : public InequalityHandlingMethod {
    public:
       InequalityConstrainedMethod(size_t number_variables, size_t number_constraints);
       ~InequalityConstrainedMethod() override = default;

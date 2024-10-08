@@ -10,7 +10,7 @@
 
 namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(size_t number_variables, size_t number_constraints):
-         Subproblem(),
+         InequalityHandlingMethod(),
          initial_point(number_variables),
          direction_lower_bounds(number_variables),
          direction_upper_bounds(number_variables),

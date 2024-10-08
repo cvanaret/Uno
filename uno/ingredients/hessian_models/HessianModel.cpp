@@ -14,6 +14,8 @@ namespace uno {
          hessian(SymmetricMatrixFactory<size_t, double>::create(sparse_format, dimension, maximum_number_nonzeros, use_regularization)) {
    }
 
+   HessianModel::~HessianModel() { }
+
    // Exact Hessian
    ExactHessian::ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options) :
          HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */false) {
@@ -83,7 +85,7 @@ namespace uno {
    }
 
    // zero Hessian
-   ZeroHessian::ZeroHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options) :
+   ZeroHessian::ZeroHessian(size_t dimension, size_t /*maximum_number_nonzeros*/, const Options& options) :
          HessianModel(dimension, 0, options.get_string("sparse_format"), /* use_regularization = */false) {
    }
 

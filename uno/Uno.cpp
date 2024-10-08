@@ -7,7 +7,9 @@
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
-#include "ingredients/inequality_handling_methods/SubproblemFactory.hpp"
+#include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
+#include "ingredients/subproblems/InequalityConstrainedSubproblem.hpp"
+#include "ingredients/subproblems/PrimalDualInteriorPointSystem.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
@@ -145,7 +147,7 @@ namespace uno {
       join(GlobalizationStrategyFactory::available_strategies(), ',');
       std::cout << '\n';
       std::cout << "Subproblems: ";
-      join(SubproblemFactory::available_strategies(), ',');
+      join(InequalityHandlingMethodFactory::available_strategies(), ',');
       std::cout << '\n';
    }
 

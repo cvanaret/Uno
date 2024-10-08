@@ -5,7 +5,7 @@
 #include "FeasibilityRestoration.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "optimization/Direction.hpp"
-#include "ingredients/inequality_handling_methods/Subproblem.hpp"
+#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
@@ -43,15 +43,15 @@ namespace uno {
 
    void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
       // statistics
-      this->subproblem->initialize_statistics(statistics, options);
+      this->inequality_handling_method->initialize_statistics(statistics, options);
       statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
       statistics.set("phase", "OPT");
 
       // initial iterate
-      this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
       initial_iterate.feasibility_residuals.lagrangian_gradient.resize(this->feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
+      this->inequality_handling_method->generate_initial_iterate(this->optimality_problem, initial_iterate);
       this->evaluate_progress_measures(initial_iterate);
       this->compute_primal_dual_residuals(initial_iterate);
       this->set_statistics(statistics, initial_iterate);
@@ -73,7 +73,7 @@ namespace uno {
                DEBUG << "/!\\ The subproblem is infeasible\n";
                this->switch_to_feasibility_problem(statistics, current_iterate);
                warmstart_information.set_cold_start();
-               this->subproblem->set_initial_point(direction.primals);
+               this->inequality_handling_method->set_initial_point(direction.primals);
             }
             else {
                return;
@@ -103,14 +103,14 @@ namespace uno {
       DEBUG << "Switching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
-      this->subproblem->initialize_feasibility_problem(this->feasibility_problem, current_iterate);
+      this->inequality_handling_method->initialize_feasibility_problem(this->feasibility_problem, current_iterate);
       // save the current point (progress and primals) upon switching
       this->reference_optimality_progress = current_iterate.progress;
       this->reference_optimality_primals = current_iterate.primals;
-      this->feasibility_problem.set_proximal_multiplier(this->subproblem->proximal_coefficient(current_iterate));
+      this->feasibility_problem.set_proximal_multiplier(this->inequality_handling_method->proximal_coefficient(current_iterate));
 
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
-      this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
+      this->inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate);
       DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
       if (Logger::level == INFO) statistics.print_current_line();
@@ -125,7 +125,7 @@ namespace uno {
       }
 
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      this->subproblem->solve(statistics, problem, current_iterate, current_multipliers, direction, warmstart_information);
+      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
       DEBUG3 << direction << '\n';
    }
@@ -146,14 +146,14 @@ namespace uno {
       trial_iterate.set_number_variables(this->optimality_problem.number_variables);
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
 
-      this->subproblem->exit_feasibility_problem(this->optimality_problem, trial_iterate);
+      this->inequality_handling_method->exit_feasibility_problem(this->optimality_problem, trial_iterate);
       this->switching_to_optimality_phase = true;
    }
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) {
       // TODO pick right multipliers
-      this->subproblem->postprocess_iterate(this->current_problem(), trial_iterate);
+      this->inequality_handling_method->postprocess_iterate(this->current_problem(), trial_iterate);
       this->compute_progress_measures(current_iterate, trial_iterate);
       trial_iterate.objective_multiplier = this->current_problem().get_objective_multiplier();
 
@@ -198,15 +198,15 @@ namespace uno {
    void FeasibilityRestoration::evaluate_progress_measures(Iterate& iterate) const {
       this->set_infeasibility_measure(iterate);
       this->set_objective_measure(iterate);
-      this->subproblem->set_auxiliary_measure(this->model, iterate);
+      this->inequality_handling_method->set_auxiliary_measure(this->model, iterate);
    }
 
    ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length) {
       return {
          this->compute_predicted_infeasibility_reduction_model(current_iterate, direction.primals, step_length),
          this->first_order_predicted_reduction ? this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length) :
-            this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length, this->subproblem->get_lagrangian_hessian()),
-         this->subproblem->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction.primals, step_length)
+            this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length, this->inequality_handling_method->get_lagrangian_hessian()),
+         this->inequality_handling_method->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction.primals, step_length)
       };
    }
 

@@ -6,11 +6,14 @@
 
 #include <memory>
 #include <vector>
+#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    // forward declarations
+   /*
    template <typename IndexType, typename NumericalType>
    class DirectSymmetricIndefiniteLinearSolver;
+    */
    class OptimizationProblem;
    class Options;
    class Statistics;
@@ -22,7 +25,7 @@ namespace uno {
    class HessianModel {
    public:
       HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization);
-      virtual ~HessianModel() = default;
+      virtual ~HessianModel();
 
       std::unique_ptr<SymmetricMatrix<size_t, double>> hessian;
       size_t evaluation_count{0};

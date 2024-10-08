@@ -5,8 +5,8 @@
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
 #include "optimization/Direction.hpp"
-#include "ingredients/inequality_handling_methods/Subproblem.hpp"
-#include "ingredients/inequality_handling_methods/SubproblemFactory.hpp"
+#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
+#include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
@@ -22,7 +22,7 @@ namespace uno {
          size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
          model(model),
          globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
-         subproblem(SubproblemFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
+         inequality_handling_method(InequalityHandlingMethodFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
                number_hessian_nonzeros, options)),
          progress_norm(norm_from_string(options.get_string("progress_norm"))),
          residual_norm(norm_from_string(options.get_string("residual_norm"))),
@@ -37,13 +37,13 @@ namespace uno {
    ConstraintRelaxationStrategy::~ConstraintRelaxationStrategy() { }
 
    void ConstraintRelaxationStrategy::set_trust_region_radius(double trust_region_radius) {
-      this->subproblem->set_trust_region_radius(trust_region_radius);
+      this->inequality_handling_method->set_trust_region_radius(trust_region_radius);
    }
 
    // with initial point
    void ConstraintRelaxationStrategy::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          const Vector<double>& initial_point, WarmstartInformation& warmstart_information) {
-      this->subproblem->set_initial_point(initial_point);
+      this->inequality_handling_method->set_initial_point(initial_point);
       this->compute_feasible_direction(statistics, current_iterate, direction, warmstart_information);
    }
 
@@ -91,11 +91,11 @@ namespace uno {
    }
 
    void ConstraintRelaxationStrategy::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate) {
-      if (this->subproblem->subproblem_definition_changed) {
+      if (this->inequality_handling_method->subproblem_definition_changed) {
          DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
          this->globalization_strategy->reset();
-         this->subproblem->set_auxiliary_measure(this->model, current_iterate);
-         this->subproblem->subproblem_definition_changed = false;
+         this->inequality_handling_method->set_auxiliary_measure(this->model, current_iterate);
+         this->inequality_handling_method->subproblem_definition_changed = false;
       }
       this->evaluate_progress_measures(trial_iterate);
    }
@@ -241,10 +241,10 @@ namespace uno {
    }
 
    size_t ConstraintRelaxationStrategy::get_hessian_evaluation_count() const {
-      return this->subproblem->get_hessian_evaluation_count();
+      return this->inequality_handling_method->get_hessian_evaluation_count();
    }
 
    size_t ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
-      return this->subproblem->number_subproblems_solved;
+      return this->inequality_handling_method->number_subproblems_solved;
    }
 } // namespace

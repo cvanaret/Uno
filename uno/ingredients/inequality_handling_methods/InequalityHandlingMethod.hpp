@@ -27,10 +27,10 @@ namespace uno {
    /*! \class Subproblem
     * \brief Subproblem
     */
-   class Subproblem {
+   class InequalityHandlingMethod {
    public:
-      explicit Subproblem() = default;
-      virtual ~Subproblem() = default;
+      explicit InequalityHandlingMethod() = default;
+      virtual ~InequalityHandlingMethod() = default;
 
       // virtual methods implemented by subclasses
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
@@ -63,7 +63,7 @@ namespace uno {
       double trust_region_radius{INF<double>};
    };
 
-   inline void Subproblem::set_trust_region_radius(double new_trust_region_radius) {
+   inline void InequalityHandlingMethod::set_trust_region_radius(double new_trust_region_radius) {
       assert(0. < new_trust_region_radius && "The trust-region radius should be positive.");
       this->trust_region_radius = new_trust_region_radius;
    }

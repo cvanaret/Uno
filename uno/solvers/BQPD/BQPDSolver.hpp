@@ -5,7 +5,7 @@
 #define UNO_BQPDSOLVER_H
 
 #include <vector>
-#include "ingredients/inequality_handling_methods/SubproblemStatus.hpp"
+#include "ingredients/subproblems/SubproblemStatus.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "solvers/QPSolver.hpp"
 
