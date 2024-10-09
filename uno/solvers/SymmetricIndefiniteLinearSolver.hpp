@@ -9,6 +9,7 @@
 
 namespace uno {
    // forward declarations
+   class PrimalDualInteriorPointSystem;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
 
@@ -23,6 +24,7 @@ namespace uno {
 
       virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
             Vector<ElementType>& result) = 0;
+      virtual void solve_indefinite_system(const PrimalDualInteriorPointSystem& linear_system) = 0;
 
    protected:
       const size_t dimension;

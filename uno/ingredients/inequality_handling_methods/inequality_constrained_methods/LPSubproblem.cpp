@@ -34,7 +34,7 @@ namespace uno {
       }
    }
 
-   void LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
+   void LPSubproblem::solve_subproblem(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
          Direction& direction, const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       this->evaluate_functions(problem, current_iterate, warmstart_information);

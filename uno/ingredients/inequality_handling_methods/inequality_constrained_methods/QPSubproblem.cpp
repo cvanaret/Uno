@@ -48,7 +48,8 @@ namespace uno {
          const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
       // Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_multipliers.constraints);
+         this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_multipliers.constraints, *this->hessian_model->hessian,
+               0, 0);
       }
       // objective gradient, constraints and constraint Jacobian
       if (warmstart_information.objective_changed) {
@@ -60,8 +61,8 @@ namespace uno {
       }
    }
 
-   void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-         Direction& direction, const WarmstartInformation& warmstart_information) {
+   void QPSubproblem::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, Direction& direction, const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       this->evaluate_functions(statistics, problem, current_iterate, current_multipliers, warmstart_information);
 

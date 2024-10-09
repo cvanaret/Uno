@@ -6,22 +6,22 @@
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/WarmstartInformation.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "tools/Options.hpp"
 
 namespace uno {
-   LagrangeNewtonSubproblem::LagrangeNewtonSubproblem(const OptimizationProblem& problem, const Iterate& current_iterate, size_t number_variables,
-         size_t number_hessian_nonzeros, bool use_regularization, double trust_region_radius, const Options& options):
-         problem(problem),
-         current_iterate(current_iterate),
-         hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), number_variables,
-               number_hessian_nonzeros + (use_regularization ? number_variables : 0), use_regularization, options)),
-         trust_region_radius(trust_region_radius) { }
+   LagrangeNewtonSubproblem::LagrangeNewtonSubproblem(const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, bool use_regularization, double trust_region_radius, const Options& options):
+      problem(problem),
+      current_iterate(current_iterate),
+      current_multipliers(current_multipliers),
+      hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), problem.number_variables,
+            problem.number_hessian_nonzeros() + (use_regularization ? problem.number_variables : 0), use_regularization, options)),
+      trust_region_radius(trust_region_radius) { }
 
    LagrangeNewtonSubproblem::~LagrangeNewtonSubproblem() { }
 
-   void LagrangeNewtonSubproblem::evaluate_functions(SymmetricMatrix<size_t, double>& hessian, const WarmstartInformation& warmstart_information) {
-      // TODO evaluate functions
+   const SymmetricMatrix<size_t, double>& LagrangeNewtonSubproblem::get_lagrangian_hessian() const {
+      return *this->hessian_model->hessian;
    }
 } // namespace

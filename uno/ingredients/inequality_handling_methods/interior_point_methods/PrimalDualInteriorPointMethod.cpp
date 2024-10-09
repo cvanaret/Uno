@@ -5,8 +5,9 @@
 #include "PrimalDualInteriorPointMethod.hpp"
 #include "optimization/Direction.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
+#include "ingredients/subproblems/PrimalDualInteriorPointSystem.hpp"
 #include "linear_algebra/SymmetricMatrixFactory.hpp"
-#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/SymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "preprocessing/Preprocessing.hpp"
@@ -121,7 +122,8 @@ namespace uno {
       // barrier Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // original Lagrangian Hessian
-         this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_multipliers.constraints);
+         this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_multipliers.constraints, *this->hessian_model->hessian,
+               0, 0);
 
          // diagonal barrier terms (grouped by variable)
          for (size_t variable_index: Range(problem.number_variables)) {
@@ -171,7 +173,7 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+   void PrimalDualInteriorPointMethod::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, Direction& direction, const WarmstartInformation& warmstart_information) {
       if (problem.has_inequality_constraints()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel.\n");
@@ -195,6 +197,18 @@ namespace uno {
 
       // compute the primal-dual solution
       this->assemble_augmented_system(statistics, problem, current_multipliers);
+
+      // test: create the subproblem
+      Options options;
+      options["hessian_model"] = "exact";
+      options["sparse_format"] = "COO";
+      options["linear_solver"] = "MA57";
+      options["regularization_initial_value"] = "1e-4";
+      options["regularization_increase_factor"] = "8.";
+      const PrimalDualInteriorPointSystem linear_system(problem, current_iterate, current_multipliers, this->barrier_parameter(), true,
+            this->trust_region_radius, options);
+      this->linear_solver->solve_indefinite_system(linear_system);
+
       this->augmented_system.solve(*this->linear_solver);
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
       this->number_subproblems_solved++;

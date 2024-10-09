@@ -20,7 +20,7 @@ namespace uno {
       void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
       void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-            SymmetricMatrix<size_t, double>& hessian) const override;
+            SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) const override;
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override { return this->model->variable_lower_bound(variable_index); }
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override { return this->model->variable_upper_bound(variable_index); }
@@ -107,7 +107,7 @@ namespace uno {
    }
 
    inline void ScaledModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
+         SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) const {
       // scale the objective and constraint multipliers
       const double scaled_objective_multiplier = objective_multiplier*this->scaling.get_objective_scaling();
       // TODO preallocate this vector
@@ -115,7 +115,7 @@ namespace uno {
       for (size_t constraint_index: Range(this->number_constraints)) {
          scaled_multipliers[constraint_index] = this->scaling.get_constraint_scaling(constraint_index) * multipliers[constraint_index];
       }
-      this->model->evaluate_lagrangian_hessian(x, scaled_objective_multiplier, scaled_multipliers, hessian);
+      this->model->evaluate_lagrangian_hessian(x, scaled_objective_multiplier, scaled_multipliers, hessian, row_offset, column_offset);
    }
 
    inline double ScaledModel::constraint_lower_bound(size_t constraint_index) const {

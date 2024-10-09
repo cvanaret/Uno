@@ -64,6 +64,10 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
    }
 
+   void MUMPSSolver::solve_indefinite_system(const PrimalDualInteriorPointSystem& linear_system) {
+
+   }
+
    std::tuple<size_t, size_t, size_t> MUMPSSolver::get_inertia() const {
       const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
       const size_t number_zero_eigenvalues = this->number_zero_eigenvalues();

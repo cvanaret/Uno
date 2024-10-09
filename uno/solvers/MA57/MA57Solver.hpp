@@ -6,6 +6,7 @@
 
 #include <array>
 #include <vector>
+#include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
@@ -37,6 +38,7 @@ namespace uno {
       void do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
       void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
+      void solve_indefinite_system(const PrimalDualInteriorPointSystem& linear_system) override;
 
       [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -48,6 +50,8 @@ namespace uno {
       // internal matrix representation
       std::vector<int> row_indices;
       std::vector<int> column_indices;
+      COOSymmetricMatrix<int, double> my_coo_matrix;
+      Vector<double> my_rhs;
 
       // factorization
       MA57Factorization factorization{};

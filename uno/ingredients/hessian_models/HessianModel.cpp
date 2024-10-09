@@ -6,6 +6,7 @@
 #include "reformulation/OptimizationProblem.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "symbolic/MatrixView.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 
@@ -21,11 +22,11 @@ namespace uno {
          HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */false) {
    }
 
-   void ExactHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-         const Vector<double>& constraint_multipliers) {
+   void ExactHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& primals,
+         const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) {
       // evaluate Lagrangian Hessian
-      this->hessian->dimension = problem.number_variables;
-      problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
+      // matrix.dimension = problem.number_variables;
+      problem.evaluate_lagrangian_hessian(primals, constraint_multipliers, hessian, row_offset, column_offset);
       this->evaluation_count++;
    }
 
@@ -38,11 +39,11 @@ namespace uno {
          regularization_increase_factor(options.get_double("regularization_increase_factor")) {
    }
 
-   void ConvexifiedHessian::evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-         const Vector<double>& constraint_multipliers) {
+   void ConvexifiedHessian::evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primals,
+         const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) {
       // evaluate Lagrangian Hessian
       this->hessian->dimension = problem.number_variables;
-      problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
+      problem.evaluate_lagrangian_hessian(primals, constraint_multipliers, hessian, row_offset, column_offset);
       this->evaluation_count++;
       // regularize (only on the original variables) to convexify the problem
       DEBUG2 << "hessian before convexification: " << *this->hessian;
@@ -89,8 +90,9 @@ namespace uno {
          HessianModel(dimension, 0, options.get_string("sparse_format"), /* use_regularization = */false) {
    }
 
-   void ZeroHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& /*primal_variables*/,
-         const Vector<double>& /*constraint_multipliers*/) {
-      this->hessian->dimension = problem.number_variables;
+   void ZeroHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& /*primals*/,
+         const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian, size_t /*row_offset*/,
+         size_t /*column_offset*/) {
+      hessian.dimension = problem.number_variables;
    }
 } // namespace

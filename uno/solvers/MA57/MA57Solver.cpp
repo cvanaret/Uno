@@ -4,8 +4,10 @@
 #include <iostream>
 #include <cassert>
 #include "MA57Solver.hpp"
+#include "ingredients/subproblems/PrimalDualInteriorPointSystem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "symbolic/MatrixView.hpp"
 
 namespace uno {
    extern "C" {
@@ -28,6 +30,8 @@ namespace uno {
    }
 
    MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : DirectSymmetricIndefiniteLinearSolver<size_t, double>(dimension),
+         my_coo_matrix(dimension, number_nonzeros, true),
+         my_rhs(dimension),
          lkeep(static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42)),
          keep(static_cast<size_t>(lkeep)),
          iwork(5 * dimension),
@@ -129,6 +133,31 @@ namespace uno {
                &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
                this->icntl.data(), this->info.data());
       }
+   }
+
+   void MA57Solver::solve_indefinite_system(const PrimalDualInteriorPointSystem& linear_system) {
+      // build the internal matrix representation
+      this->row_indices.clear();
+      this->column_indices.clear();
+      /*
+      for (const auto [row_index, column_index, element]: matrix) {
+         this->row_indices.emplace_back(static_cast<int>(row_index + this->fortran_shift));
+         this->column_indices.emplace_back(static_cast<int>(column_index + this->fortran_shift));
+      }
+       */
+      linear_system.evaluate_matrix(this->my_coo_matrix);
+      std::cout << "MA57: current COO matrix: " << this->my_coo_matrix << '\n';
+
+      linear_system.evaluate_right_hand_side(this->my_rhs);
+
+      // copy rhs into result (overwritten by MA57)
+      Vector<double> result(this->my_rhs);
+      int n = static_cast<int>(linear_system.number_variables);
+      const int lrhs = n; // integer, length of rhs
+
+      ma57cd_(&this->job, &n, this->fact.data(), &this->factorization.lfact, this->ifact.data(),
+            &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
+            this->icntl.data(), this->info.data());
    }
 
    std::tuple<size_t, size_t, size_t> MA57Solver::get_inertia() const {

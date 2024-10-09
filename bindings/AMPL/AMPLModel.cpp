@@ -263,7 +263,7 @@ namespace uno {
    }
 
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
+         SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) const {
       // register the vector of variables
       (*(this->asl)->p.Xknown)(this->asl, const_cast<double*>(x.data()), nullptr);
 
@@ -301,9 +301,9 @@ namespace uno {
          for (size_t k: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
             const size_t row_index = static_cast<size_t>(asl_row_index[k]);
             const double entry = this->asl_hessian[k];
-            hessian.insert(entry, row_index, column_index);
+            hessian.insert(entry, row_offset + row_index, column_offset + column_index);
          }
-         hessian.finalize_column(column_index);
+         hessian.finalize_column(column_offset + column_index);
       }
       // unregister the vector of variables
       this->asl->i.x_known = 0;

@@ -10,8 +10,10 @@ namespace uno {
    // forward declarations
    class HessianModel;
    class Iterate;
+   class Multipliers;
    class OptimizationProblem;
    class Options;
+   class Statistics;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
    class WarmstartInformation;
@@ -19,15 +21,16 @@ namespace uno {
    // this class generalizes QP, LP (depends on the Hessian model) and EQP (as in interior-point methods)
    class LagrangeNewtonSubproblem {
    public:
-      LagrangeNewtonSubproblem(const OptimizationProblem& problem, const Iterate& current_iterate, size_t number_variables,
-            size_t number_hessian_nonzeros, bool use_regularization, double trust_region_radius, const Options& options);
+      LagrangeNewtonSubproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+            bool use_regularization, double trust_region_radius, const Options& options);
       virtual ~LagrangeNewtonSubproblem();
 
-      void evaluate_functions(SymmetricMatrix<size_t, double>& hessian, const WarmstartInformation& warmstart_information);
+      [[nodiscard]] const SymmetricMatrix<size_t, double>& get_lagrangian_hessian() const;
 
    protected:
       const OptimizationProblem& problem;
-      const Iterate& current_iterate;
+      Iterate& current_iterate;
+      const Multipliers& current_multipliers;
       const std::unique_ptr<HessianModel> hessian_model;
       const double trust_region_radius;
    };

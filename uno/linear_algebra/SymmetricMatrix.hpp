@@ -41,6 +41,7 @@ namespace uno {
          size_t nonzero_index;
       };
 
+      using index_type = IndexType;
       using value_type = ElementType;
 
       size_t dimension;

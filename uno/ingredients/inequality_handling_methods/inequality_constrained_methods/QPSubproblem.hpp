@@ -19,7 +19,7 @@ namespace uno {
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
-      void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
+      void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
             Direction& direction, const WarmstartInformation& warmstart_information) override;
       [[nodiscard]] const SymmetricMatrix<size_t, double>& get_lagrangian_hessian() const override;
       [[nodiscard]] size_t get_hessian_evaluation_count() const override;

@@ -11,12 +11,10 @@ namespace uno {
    template <typename ElementType>
    class Vector;
 
-   class InequalityConstrainedSubproblem: LagrangeNewtonSubproblem {
+   class InequalityConstrainedSubproblem: public LagrangeNewtonSubproblem {
    public:
-      InequalityConstrainedSubproblem(const OptimizationProblem& problem, const Iterate& current_iterate, size_t number_variables,
-            size_t number_hessian_nonzeros, bool use_regularization, double trust_region_radius, const Options& options):
-            LagrangeNewtonSubproblem(problem, current_iterate, number_variables, number_hessian_nonzeros, use_regularization, trust_region_radius,
-                  options) { }
+      InequalityConstrainedSubproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+            bool use_regularization, double trust_region_radius, const Options& options);
 
       void variables_bounds(Vector<double>& variables_lower_bounds, Vector<double>& variables_upper_bounds) const;
       void linearized_constraint_bounds(const Vector<double>& constraints, Vector<double>& constraints_lower_bounds,

@@ -14,6 +14,7 @@ namespace uno {
    template <typename IndexType, typename NumericalType>
    class DirectSymmetricIndefiniteLinearSolver;
     */
+   class MatrixView;
    class OptimizationProblem;
    class Options;
    class Statistics;
@@ -30,8 +31,8 @@ namespace uno {
       std::unique_ptr<SymmetricMatrix<size_t, double>> hessian;
       size_t evaluation_count{0};
 
-      virtual void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-            const Vector<double>& constraint_multipliers) = 0;
+      virtual void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primals,
+            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) = 0;
    };
 
    // Exact Hessian
@@ -39,8 +40,8 @@ namespace uno {
    public:
       ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-            const Vector<double>& constraint_multipliers) override;
+      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primals,
+            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) override;
    };
 
    // Hessian with convexification (inertia correction)
@@ -48,8 +49,8 @@ namespace uno {
    public:
       ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-            const Vector<double>& constraint_multipliers) override;
+      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primals,
+            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) override;
 
    protected:
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver; /*!< Solver that computes the inertia */
@@ -64,8 +65,8 @@ namespace uno {
    public:
       ZeroHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-            const Vector<double>& constraint_multipliers) override;
+      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primals,
+            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) override;
    };
 } // namespace
 

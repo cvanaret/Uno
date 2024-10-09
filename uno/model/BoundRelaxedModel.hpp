@@ -27,8 +27,8 @@ namespace uno {
          this->model->evaluate_constraint_jacobian(x, constraint_jacobian);
       }
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-            SymmetricMatrix<size_t, double>& hessian) const override {
-         this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
+            SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) const override {
+         this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian, row_offset, column_offset);
       }
 
       // only these two functions are redefined

@@ -38,7 +38,7 @@ namespace uno {
       [[nodiscard]] double proximal_coefficient(const Iterate& current_iterate) const override;
       void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
-      void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
+      void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
             Direction& direction, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] const SymmetricMatrix<size_t, double>& get_lagrangian_hessian() const override;
