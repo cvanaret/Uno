@@ -273,7 +273,7 @@ namespace uno {
       // compute the number of nonzeros
       [[maybe_unused]] const size_t number_nonzeros = this->fixed_hessian_sparsity ? this->number_asl_hessian_nonzeros :
                                                       this->compute_hessian_number_nonzeros(objective_multiplier, multipliers);
-      assert(hessian.capacity >= number_nonzeros);
+      assert(hessian.capacity() >= number_nonzeros);
 
       // evaluate the Hessian: store the matrix in a preallocated array this->asl_hessian
       const int objective_number = -1;

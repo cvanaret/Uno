@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "MUMPSSolver.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"
 #endif
@@ -42,8 +43,8 @@ namespace uno {
 
    void MUMPSSolver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) {
       this->save_matrix_to_local_format(matrix);
-      this->mumps_structure.n = static_cast<int>(matrix.dimension);
-      this->mumps_structure.nnz = static_cast<int>(matrix.number_nonzeros);
+      this->mumps_structure.n = static_cast<int>(matrix.dimension());
+      this->mumps_structure.nnz = static_cast<int>(matrix.number_nonzeros());
       this->mumps_structure.job = MUMPSSolver::JOB_ANALYSIS;
       // connect the local COO matrix with the pointers in the structure
       this->mumps_structure.irn = this->COO_matrix.row_indices_pointer();

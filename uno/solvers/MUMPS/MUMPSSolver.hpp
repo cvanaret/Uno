@@ -5,7 +5,7 @@
 #define UNO_MUMPSSOLVER_H
 
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/COOSymmetricMatrix.hpp"
+#include "linear_algebra/COOSparseStorage.hpp"
 #include "dmumps_c.h"
 
 namespace uno {
@@ -29,7 +29,7 @@ namespace uno {
 
    protected:
       DMUMPS_STRUC_C mumps_structure{};
-      COOSymmetricMatrix<int, double> COO_matrix;
+      COOSparseStorage<int, double> COO_matrix;
 
       static const int JOB_INIT = -1;
       static const int JOB_END = -2;

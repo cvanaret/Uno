@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <vector>
+#include "linear_algebra/SymmetricMatrix.hpp"
 
 namespace uno {
    // forward declarations
@@ -14,8 +15,6 @@ namespace uno {
    class OptimizationProblem;
    class Options;
    class Statistics;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
 
@@ -24,7 +23,7 @@ namespace uno {
       HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization);
       virtual ~HessianModel() = default;
 
-      std::unique_ptr<SymmetricMatrix<size_t, double>> hessian;
+      SymmetricMatrix<size_t, double> hessian;
       size_t evaluation_count{0};
 
       virtual void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,

@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
-#include "linear_algebra/COOSymmetricMatrix.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "solvers/MUMPS/MUMPSSolver.hpp"
 
 using namespace uno;
@@ -12,8 +12,13 @@ const size_t nnz = 7;
 const std::array<double, n> reference{1., 2., 3., 4., 5.};
 const double tolerance = 1e-8;
 
-COOSymmetricMatrix<size_t, double> create_my_matrix() {
-   COOSymmetricMatrix<size_t, double> matrix(n, nnz, false);
+Vector<double> create_my_rhs() {
+   Vector<double> rhs{8., 45., 31., 15., 17.};
+   return rhs;
+}
+
+TEST(MUMPSSolver, SystemSize5) {
+   SymmetricMatrix<size_t, double> matrix(n, nnz, false, "COO");
    matrix.insert(2., 0, 0);
    matrix.insert(3., 0, 1);
    matrix.insert(4., 1, 2);
@@ -21,16 +26,6 @@ COOSymmetricMatrix<size_t, double> create_my_matrix() {
    matrix.insert(1., 2, 2);
    matrix.insert(5., 2, 3);
    matrix.insert(1., 4, 4);
-   return matrix;
-}
-
-Vector<double> create_my_rhs() {
-   Vector<double> rhs{8., 45., 31., 15., 17.};
-   return rhs;
-}
-
-TEST(MUMPSSolver, SystemSize5) {
-   const COOSymmetricMatrix<size_t, double> matrix = create_my_matrix();
    const Vector<double> rhs = create_my_rhs();
    Vector<double> result(n);
    result.fill(0.);
@@ -63,7 +58,14 @@ array([-7.83039207,  8.94059148, -3.50815575,  1.7888887 ,  4.60906763])
 */
 
 TEST(MUMPSSolver, Inertia) {
-   const COOSymmetricMatrix<size_t, double> matrix = create_my_matrix();
+   SymmetricMatrix<size_t, double> matrix(n, nnz, false, "COO");
+   matrix.insert(2., 0, 0);
+   matrix.insert(3., 0, 1);
+   matrix.insert(4., 1, 2);
+   matrix.insert(6., 1, 4);
+   matrix.insert(1., 2, 2);
+   matrix.insert(5., 2, 3);
+   matrix.insert(1., 4, 4);
    const Vector<double> rhs = create_my_rhs();
    Vector<double> result(n);
    result.fill(0.);

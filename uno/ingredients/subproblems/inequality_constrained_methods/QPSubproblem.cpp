@@ -28,7 +28,7 @@ namespace uno {
          solver(QPSolverFactory::create(options.get_string("QP_solver"), number_variables, number_constraints,
                number_objective_gradient_nonzeros, number_jacobian_nonzeros,
                // if the QP solver is used during preprocessing, we need to allocate the Hessian with at least number_variables elements
-               std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, hessian_model->hessian->capacity),
+               std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, hessian_model->hessian.capacity()),
                options)) {
    }
 
@@ -78,7 +78,7 @@ namespace uno {
       // solve the QP
       this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_lower_bounds, this->direction_upper_bounds,
             this->linearized_constraints_lower_bounds, this->linearized_constraints_upper_bounds, this->objective_gradient,
-            this->constraint_jacobian, *this->hessian_model->hessian, this->initial_point, direction, warmstart_information);
+            this->constraint_jacobian, this->hessian_model->hessian, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;
       // reset the initial point
@@ -86,7 +86,7 @@ namespace uno {
    }
 
    const SymmetricMatrix<size_t, double>& QPSubproblem::get_lagrangian_hessian() const {
-      return *this->hessian_model->hessian;
+      return this->hessian_model->hessian;
    }
 
    size_t QPSubproblem::get_hessian_evaluation_count() const {

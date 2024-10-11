@@ -6,6 +6,7 @@
 #include "MA57Solver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    extern "C" {
@@ -50,15 +51,15 @@ namespace uno {
    }
 
    void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) {
-      assert(matrix.dimension <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(matrix.number_nonzeros <= this->row_indices.capacity() &&
+      assert(matrix.dimension() <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
+      assert(matrix.number_nonzeros() <= this->row_indices.capacity() &&
              "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
 
       // build the internal matrix representation
       this->save_sparsity_pattern_internally(matrix);
 
-      const int n = static_cast<int>(matrix.dimension);
-      const int nnz = static_cast<int>(matrix.number_nonzeros);
+      const int n = static_cast<int>(matrix.dimension());
+      const int nnz = static_cast<int>(matrix.number_nonzeros());
 
       // symbolic factorization
       ma57ad_(/* const */ &n,
@@ -88,11 +89,11 @@ namespace uno {
    }
 
    void MA57Solver::do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) {
-      assert(matrix.dimension <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros) && "MA57Solver: the numbers of nonzeros do not match");
+      assert(matrix.dimension() <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
+      assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros()) && "MA57Solver: the numbers of nonzeros do not match");
 
-      const int n = static_cast<int>(matrix.dimension);
-      int nnz = static_cast<int>(matrix.number_nonzeros);
+      const int n = static_cast<int>(matrix.dimension());
+      int nnz = static_cast<int>(matrix.number_nonzeros());
 
       // numerical factorization
       ma57bd_(&n,
@@ -110,8 +111,8 @@ namespace uno {
 
    void MA57Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) {
       // solve
-      const int n = static_cast<int>(matrix.dimension);
-      int nnz = static_cast<int>(matrix.number_nonzeros);
+      const int n = static_cast<int>(matrix.dimension());
+      int nnz = static_cast<int>(matrix.number_nonzeros());
       const int lrhs = n; // integer, length of rhs
 
       // solve the linear system

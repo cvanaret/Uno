@@ -3,7 +3,8 @@
 
 #include "Preprocessing.hpp"
 #include "ingredients/subproblems/Direction.hpp"
-#include "linear_algebra/CSCSymmetricMatrix.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
+#include "linear_algebra/CSCSparseStorage.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
@@ -58,7 +59,7 @@ namespace uno {
       DEBUG2 << "Matrix for least-square multipliers:\n" << matrix << '\n';
 
       /* solve the system */
-      Vector<double> solution(matrix.dimension);
+      Vector<double> solution(matrix.dimension());
       linear_solver.factorize(matrix);
       linear_solver.solve_indefinite_system(matrix, rhs, solution);
 
@@ -96,7 +97,11 @@ namespace uno {
          INFO << "There are " << infeasible_linear_constraints << " infeasible linear constraints at the initial point\n";
          if (0 < infeasible_linear_constraints) {
             // Hessian
-            const CSCSymmetricMatrix<size_t, double> hessian = CSCSymmetricMatrix<size_t, double>::identity(model.number_variables);
+            SymmetricMatrix<size_t, double> hessian(model.number_variables, model.number_variables, false, "CSC");
+            for (size_t row_index: Range(model.number_variables)) {
+               hessian.insert(1., row_index, row_index);
+               hessian.finalize_column(row_index);
+            }
             // constraint Jacobian
             RectangularMatrix<double> constraint_jacobian(linear_constraints.size(), model.number_variables);
             for (size_t linear_constraint_index: Range(linear_constraints.size())) {

@@ -2,15 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
-#include "linear_algebra/CSCSymmetricMatrix.hpp"
+#include "linear_algebra/CSCSparseStorage.hpp"
 
 using namespace uno;
 
 const size_t n = 5;
 const size_t nnz = 4;
 
-CSCSymmetricMatrix<size_t, double> create_CSC_matrix() {
-   CSCSymmetricMatrix<size_t, double> matrix(n, nnz, false);
+CSCSparseStorage<size_t, double> create_CSC_matrix() {
+   CSCSparseStorage<size_t, double> matrix(n, nnz, false);
    matrix.insert(2., 0, 0);
    matrix.finalize_column(0);
    matrix.finalize_column(1);
@@ -26,7 +26,7 @@ CSCSymmetricMatrix<size_t, double> create_CSC_matrix() {
 }
 
 TEST(CSCSymmetricMatrix, NNZ) {
-   const CSCSymmetricMatrix<size_t, double> matrix = create_CSC_matrix();
+   const CSCSparseStorage<size_t, double> matrix = create_CSC_matrix();
    ASSERT_EQ(matrix.number_nonzeros, nnz);
 }
 

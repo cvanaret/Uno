@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "HessianModel.hpp"
-#include "linear_algebra/SymmetricMatrixFactory.hpp"
+#include "linear_algebra/SparseStorageFactory.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
@@ -11,7 +11,7 @@
 
 namespace uno {
    HessianModel::HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization) :
-         hessian(SymmetricMatrixFactory<size_t, double>::create(sparse_format, dimension, maximum_number_nonzeros, use_regularization)) {
+         hessian(dimension, maximum_number_nonzeros, use_regularization, sparse_format) {
    }
 
    // Exact Hessian
@@ -22,8 +22,8 @@ namespace uno {
    void ExactHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& primal_variables,
          const Vector<double>& constraint_multipliers) {
       // evaluate Lagrangian Hessian
-      this->hessian->dimension = problem.number_variables;
-      problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
+      this->hessian.set_dimension(problem.number_variables);
+      problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, this->hessian);
       this->evaluation_count++;
    }
 
@@ -39,12 +39,12 @@ namespace uno {
    void ConvexifiedHessian::evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
          const Vector<double>& constraint_multipliers) {
       // evaluate Lagrangian Hessian
-      this->hessian->dimension = problem.number_variables;
-      problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
+      this->hessian.set_dimension(problem.number_variables);
+      problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, this->hessian);
       this->evaluation_count++;
       // regularize (only on the original variables) to convexify the problem
-      DEBUG2 << "hessian before convexification: " << *this->hessian;
-      this->regularize(statistics, *this->hessian, problem.get_number_original_variables());
+      DEBUG2 << "hessian before convexification: " << this->hessian;
+      this->regularize(statistics, this->hessian, problem.get_number_original_variables());
    }
 
    // Nocedal and Wright, p51
