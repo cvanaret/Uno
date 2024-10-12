@@ -78,7 +78,7 @@ namespace uno {
 
       // possibly add regularization
       if (this->use_regularization) {
-         insert(ElementType(0), column_index, column_index);
+         this->insert(ElementType(0), column_index, column_index);
       }
       this->current_column++;
 
