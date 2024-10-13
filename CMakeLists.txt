@@ -107,7 +107,7 @@ else()
 endif()
 
 find_package(MUMPS)
-if(${MUMPS_LIBRARY} STREQUAL "MUMPS-NOTFOUND")
+if(${MUMPS_LIBRARY} STREQUAL "MUMPS_LIBRARY-NOTFOUND")
    message(WARNING "Optional library MUMPS was not found.")
 else()
    list(APPEND UNO_SOURCE_FILES uno/solvers/MUMPS/MUMPSSolver.cpp)
