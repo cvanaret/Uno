@@ -18,7 +18,7 @@ libfind_pkg_check_modules(ScaLAPACK_PKGCONF ScaLAPACK)
 
 # Only check for the library since this is a link dependency
 find_library(ScaLAPACK_LIBRARY
-  NAMES libscalapack.so libscalapack-openmpi.so
+  NAMES libscalapack libscalapack-openmpi
   PATHS ${ScaLAPACK_PKGCONF_LIBRARY_DIRS}
 )
 
