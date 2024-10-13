@@ -149,11 +149,8 @@ endif()
 find_library(dl dl REQUIRED)
 list(APPEND LIBRARIES ${dl})
 
-find_library(blas blas blastrampoline-5 blastrampoline REQUIRED)
-list(APPEND LIBRARIES ${blas})
-
-find_library(lapack lapack blastrampoline-5 blastrampoline REQUIRED)
-list(APPEND LIBRARIES ${lapack})
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
 
 find_package(OpenMP REQUIRED)
 list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
