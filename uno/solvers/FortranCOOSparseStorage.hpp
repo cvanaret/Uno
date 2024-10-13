@@ -1,49 +1,51 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_COOSYMMETRICMATRIX_H
-#define UNO_COOSYMMETRICMATRIX_H
+#ifndef UNO_FORTRANCOOSPARSESTORAGE_H
+#define UNO_FORTRANCOOSPARSESTORAGE_H
 
-#include <ostream>
 #include <cassert>
-#include "SymmetricMatrix.hpp"
-#include "tools/Infinity.hpp"
+#include "linear_algebra/SparseStorage.hpp"
+#include "symbolic/Range.hpp"
 
 namespace uno {
    /*
     * Coordinate list
     * https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)
+    * indices are integers (int) and start at 1 (Fortran convention)
     */
    template <typename IndexType, typename ElementType>
-   class COOSymmetricMatrix : public SymmetricMatrix<IndexType, ElementType> {
+   class FortranCOOSparseStorage : public SparseStorage<IndexType, ElementType> {
    public:
-      COOSymmetricMatrix(size_t dimension, size_t capacity, bool use_regularization);
+      FortranCOOSparseStorage(size_t dimension, size_t capacity, bool use_regularization);
 
       void reset() override;
       void insert(ElementType term, IndexType row_index, IndexType column_index) override;
       void finalize_column(IndexType /*column_index*/) override { /* do nothing */ }
-      void set_regularization(const std::function<ElementType(size_t index)>& regularization_function) override;
+      void set_regularization(const std::function<ElementType(IndexType index)>& regularization_function) override;
+      const ElementType* data_pointer() const noexcept override { return this->entries.data(); }
+      ElementType* data_pointer() noexcept override { return this->entries.data(); }
 
       void print(std::ostream& stream) const override;
 
-      const IndexType* row_indices_pointer() const {
+      [[nodiscard]] const int* row_indices_pointer() const {
          return this->row_indices.data();
       }
-      IndexType* row_indices_pointer() {
+      int* row_indices_pointer() {
          return this->row_indices.data();
       }
-      const IndexType* column_indices_pointer() const {
+      [[nodiscard]] const int* column_indices_pointer() const {
          return this->column_indices.data();
       }
-      IndexType* column_indices_pointer() {
+      int* column_indices_pointer() {
          return this->column_indices.data();
       }
-
-      static COOSymmetricMatrix<IndexType, ElementType> zero(size_t dimension);
 
    protected:
-      std::vector<IndexType> row_indices;
-      std::vector<IndexType> column_indices;
+      std::vector<ElementType> entries;
+      std::vector<int> row_indices;
+      std::vector<int> column_indices;
+      const int fortran_shift{1};
 
       void initialize_regularization();
 
@@ -55,8 +57,9 @@ namespace uno {
    // implementation
 
    template <typename IndexType, typename ElementType>
-   COOSymmetricMatrix<IndexType, ElementType>::COOSymmetricMatrix(size_t dimension, size_t capacity, bool use_regularization):
-         SymmetricMatrix<IndexType, ElementType>(dimension, capacity, use_regularization) {
+   FortranCOOSparseStorage<IndexType, ElementType>::FortranCOOSparseStorage(size_t dimension, size_t capacity, bool use_regularization):
+         SparseStorage<IndexType, ElementType>(dimension, capacity, use_regularization) {
+      this->entries.reserve(this->capacity);
       this->row_indices.reserve(this->capacity);
       this->column_indices.reserve(this->capacity);
 
@@ -67,9 +70,10 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSymmetricMatrix<IndexType, ElementType>::reset() {
+   void FortranCOOSparseStorage<IndexType, ElementType>::reset() {
       // empty the matrix
-      SymmetricMatrix<IndexType, ElementType>::reset();
+      this->number_nonzeros = 0;
+      this->entries.clear();
       this->row_indices.clear();
       this->column_indices.clear();
 
@@ -80,34 +84,35 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSymmetricMatrix<IndexType, ElementType>::insert(ElementType term, IndexType row_index, IndexType column_index) {
+   void FortranCOOSparseStorage<IndexType, ElementType>::insert(ElementType term, IndexType row_index, IndexType column_index) {
       assert(this->number_nonzeros <= this->row_indices.size() && "The COO matrix doesn't have a sufficient capacity");
+
       this->entries.emplace_back(term);
-      this->row_indices.emplace_back(row_index);
-      this->column_indices.emplace_back(column_index);
+      this->row_indices.emplace_back(static_cast<int>(row_index) + this->fortran_shift);
+      this->column_indices.emplace_back(static_cast<int>(column_index) + this->fortran_shift);
       this->number_nonzeros++;
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSymmetricMatrix<IndexType, ElementType>::set_regularization(const std::function<ElementType(size_t /*index*/)>& regularization_function) {
+   void FortranCOOSparseStorage<IndexType, ElementType>::set_regularization(const std::function<ElementType(IndexType /*index*/)>& regularization_function) {
       assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
 
       // the regularization terms (that lie at the start of the entries vector) can be directly modified
       for (size_t row_index: Range(this->dimension)) {
-         const ElementType element = regularization_function(row_index);
+         const ElementType element = regularization_function(static_cast<IndexType>(row_index));
          this->entries[row_index] = element;
       }
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSymmetricMatrix<IndexType, ElementType>::print(std::ostream& stream) const {
-      for (const auto [row_index, column_index, element]: *this) {
-         stream << "m(" << row_index << ", " << column_index << ") = " << element << '\n';
+   void FortranCOOSparseStorage<IndexType, ElementType>::print(std::ostream& stream) const {
+      for (size_t index = 0; index < this->number_nonzeros; index++) {
+         stream << "m(" << this->row_indices[index] << ", " << this->column_indices[index] << ") = " << this->entries[index] << '\n';
       }
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSymmetricMatrix<IndexType, ElementType>::initialize_regularization() {
+   void FortranCOOSparseStorage<IndexType, ElementType>::initialize_regularization() {
       // introduce elements at the start of the entries
       for (size_t row_index: Range(this->dimension)) {
          this->insert(ElementType(0), IndexType(row_index), IndexType(row_index));
@@ -115,24 +120,21 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   std::tuple<IndexType, IndexType, ElementType> COOSymmetricMatrix<IndexType, ElementType>::dereference_iterator(size_t /*column_index*/,
+   std::tuple<IndexType, IndexType, ElementType> FortranCOOSparseStorage<IndexType, ElementType>::dereference_iterator(size_t /*column_index*/,
          size_t nonzero_index) const {
-      return {this->row_indices[nonzero_index], this->column_indices[nonzero_index], this->entries[nonzero_index]};
+      return {static_cast<IndexType>(this->row_indices[nonzero_index] - this->fortran_shift),
+            static_cast<IndexType>(this->column_indices[nonzero_index] - this->fortran_shift),
+            this->entries[nonzero_index]};
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSymmetricMatrix<IndexType, ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
+   void FortranCOOSparseStorage<IndexType, ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
       nonzero_index++;
       // if end reached
       if (nonzero_index == this->number_nonzeros) {
          column_index = this->dimension;
       }
    }
-
-   template <typename IndexType, typename ElementType>
-   COOSymmetricMatrix<IndexType, ElementType> COOSymmetricMatrix<IndexType, ElementType>::zero(size_t dimension) {
-      return COOSymmetricMatrix<IndexType, ElementType>(dimension, 0, false);
-   }
 } // namespace
 
-#endif // UNO_COOSYMMETRICMATRIX_H
+#endif // UNO_FORTRANCOOSPARSESTORAGE_H

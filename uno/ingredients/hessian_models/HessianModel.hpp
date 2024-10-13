@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <vector>
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
@@ -14,12 +15,9 @@ namespace uno {
    template <typename IndexType, typename NumericalType>
    class DirectSymmetricIndefiniteLinearSolver;
     */
-   class MatrixView;
    class OptimizationProblem;
    class Options;
    class Statistics;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
 
@@ -28,11 +26,11 @@ namespace uno {
       HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization);
       virtual ~HessianModel();
 
-      std::unique_ptr<SymmetricMatrix<size_t, double>> hessian;
+      SymmetricMatrix<size_t, double> hessian;
       size_t evaluation_count{0};
 
-      virtual void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primals,
-            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) = 0;
+      virtual void evaluate(const OptimizationProblem& problem, const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+            SymmetricMatrix<size_t, double>& hessian) = 0;
    };
 
    // Exact Hessian
@@ -40,8 +38,8 @@ namespace uno {
    public:
       ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primals,
-            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) override;
+      void evaluate(const OptimizationProblem& problem, const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+            SymmetricMatrix<size_t, double>& hessian) override;
    };
 
    // Hessian with convexification (inertia correction)
@@ -49,15 +47,15 @@ namespace uno {
    public:
       ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primals,
-            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) override;
+      void evaluate(const OptimizationProblem& problem, const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+            SymmetricMatrix<size_t, double>& hessian) override;
 
    protected:
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver; /*!< Solver that computes the inertia */
       const double regularization_initial_value{};
       const double regularization_increase_factor{};
 
-      void regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables);
+      void regularize(SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables);
    };
 
    // zero Hessian
@@ -65,8 +63,8 @@ namespace uno {
    public:
       ZeroHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
-      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primals,
-            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) override;
+      void evaluate(const OptimizationProblem& problem, const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+            SymmetricMatrix<size_t, double>& hessian) override;
    };
 } // namespace
 

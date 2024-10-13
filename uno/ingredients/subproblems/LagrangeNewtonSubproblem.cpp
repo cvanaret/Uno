@@ -22,6 +22,6 @@ namespace uno {
    LagrangeNewtonSubproblem::~LagrangeNewtonSubproblem() { }
 
    const SymmetricMatrix<size_t, double>& LagrangeNewtonSubproblem::get_lagrangian_hessian() const {
-      return *this->hessian_model->hessian;
+      return this->hessian_model->hessian;
    }
 } // namespace

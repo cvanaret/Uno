@@ -28,7 +28,7 @@ namespace uno {
          solver(QPSolverFactory::create(options.get_string("QP_solver"), number_variables, number_constraints,
                number_objective_gradient_nonzeros, number_jacobian_nonzeros,
                // if the QP solver is used during preprocessing, we need to allocate the Hessian with at least number_variables elements
-               std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, hessian_model->hessian->capacity),
+               std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, hessian_model->hessian.capacity()),
                options)) {
    }
 
@@ -44,12 +44,11 @@ namespace uno {
       }
    }
 
-   void QPSubproblem::evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
+   void QPSubproblem::evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+         const WarmstartInformation& warmstart_information) {
       // Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_multipliers.constraints, *this->hessian_model->hessian,
-               0, 0);
+         this->hessian_model->evaluate(problem, current_iterate.primals, current_multipliers.constraints, this->hessian_model->hessian);
       }
       // objective gradient, constraints and constraint Jacobian
       if (warmstart_information.objective_changed) {
@@ -61,10 +60,10 @@ namespace uno {
       }
    }
 
-   void QPSubproblem::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+   void QPSubproblem::solve_subproblem(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, Direction& direction, const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
-      this->evaluate_functions(statistics, problem, current_iterate, current_multipliers, warmstart_information);
+      this->evaluate_functions(problem, current_iterate, current_multipliers, warmstart_information);
 
       // set bounds of the variable displacements
       if (warmstart_information.variable_bounds_changed) {
@@ -79,7 +78,7 @@ namespace uno {
       // solve the QP
       this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_lower_bounds, this->direction_upper_bounds,
             this->linearized_constraints_lower_bounds, this->linearized_constraints_upper_bounds, this->objective_gradient,
-            this->constraint_jacobian, *this->hessian_model->hessian, this->initial_point, direction, warmstart_information);
+            this->constraint_jacobian, this->hessian_model->hessian, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;
       // reset the initial point
@@ -87,7 +86,7 @@ namespace uno {
    }
 
    const SymmetricMatrix<size_t, double>& QPSubproblem::get_lagrangian_hessian() const {
-      return *this->hessian_model->hessian;
+      return this->hessian_model->hessian;
    }
 
    size_t QPSubproblem::get_hessian_evaluation_count() const {

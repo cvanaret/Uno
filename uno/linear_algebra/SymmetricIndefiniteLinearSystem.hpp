@@ -6,7 +6,6 @@
 
 #include <memory>
 #include "SymmetricMatrix.hpp"
-#include "SymmetricMatrixFactory.hpp"
 #include "RectangularMatrix.hpp"
 #include "model/Model.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
@@ -24,7 +23,7 @@ namespace uno {
    template <typename ElementType>
    class SymmetricIndefiniteLinearSystem {
    public:
-      std::unique_ptr<SymmetricMatrix<size_t, ElementType>> matrix;
+      SymmetricMatrix<size_t, ElementType> matrix;
       Vector<ElementType> rhs{};
       Vector<ElementType> solution{};
 
@@ -56,7 +55,7 @@ namespace uno {
    template <typename ElementType>
    SymmetricIndefiniteLinearSystem<ElementType>::SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension,
          size_t number_non_zeros, bool use_regularization, const Options& options):
-         matrix(SymmetricMatrixFactory<size_t, ElementType>::create(sparse_format, dimension, number_non_zeros, use_regularization)),
+         matrix(dimension, number_non_zeros, use_regularization, sparse_format),
          rhs(dimension),
          solution(dimension),
          regularization_failure_threshold(ElementType(options.get_double("regularization_failure_threshold"))),
@@ -72,25 +71,25 @@ namespace uno {
    template <typename ElementType>
    void SymmetricIndefiniteLinearSystem<ElementType>::assemble_matrix(const SymmetricMatrix<size_t, double>& hessian,
          const RectangularMatrix<double>& constraint_jacobian, size_t number_variables, size_t number_constraints) {
-      this->matrix->dimension = number_variables + number_constraints;
-      this->matrix->reset();
+      this->matrix.set_dimension(number_variables + number_constraints);
+      this->matrix.reset();
       // copy the Lagrangian Hessian in the top left block
       //size_t current_column = 0;
       for (const auto [row_index, column_index, element]: hessian) {
          // finalize all empty columns
          /*for (size_t column: Range(current_column, column_index)) {
-            this->matrix->finalize_column(column);
+            this->matrix.finalize_column(column);
             current_column++;
          }*/
-         this->matrix->insert(element, row_index, column_index);
+         this->matrix.insert(element, row_index, column_index);
       }
 
       // Jacobian of general constraints
       for (size_t column_index: Range(number_constraints)) {
          for (const auto [row_index, derivative]: constraint_jacobian[column_index]) {
-            this->matrix->insert(derivative, row_index, number_variables + column_index);
+            this->matrix.insert(derivative, row_index, number_variables + column_index);
          }
-         this->matrix->finalize_column(column_index);
+         this->matrix.finalize_column(column_index);
       }
    }
 
@@ -100,9 +99,9 @@ namespace uno {
       // compute the symbolic factorization only when:
       // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
       if (true || this->number_factorizations == 0 || not model.fixed_hessian_sparsity) {
-         linear_solver.do_symbolic_factorization(*this->matrix);
+         linear_solver.do_symbolic_factorization(this->matrix);
       }
-      linear_solver.do_numerical_factorization(*this->matrix);
+      linear_solver.do_numerical_factorization(this->matrix);
       this->number_factorizations++;
    }
 
@@ -110,7 +109,7 @@ namespace uno {
    void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics, const Model& model,
          DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, size_t size_primal_block, size_t size_dual_block,
          ElementType dual_regularization_parameter) {
-      DEBUG2 << "Original matrix\n" << *this->matrix << '\n';
+      DEBUG2 << "Original matrix\n" << this->matrix << '\n';
       this->primal_regularization = ElementType(0.);
       this->dual_regularization = ElementType(0.);
       size_t number_attempts = 1;
@@ -141,14 +140,14 @@ namespace uno {
       }
 
       // regularize the augmented matrix
-      this->matrix->set_regularization([=](size_t row_index) {
+      this->matrix.set_regularization([=](size_t row_index) {
          return (row_index < size_primal_block) ? this->primal_regularization : -this->dual_regularization;
       });
 
       bool good_inertia = false;
       while (not good_inertia) {
          DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
-         DEBUG2 << *this->matrix << '\n';
+         DEBUG2 << this->matrix << '\n';
          this->factorize_matrix(model, linear_solver);
          number_attempts++;
 
@@ -171,7 +170,7 @@ namespace uno {
 
             if (this->primal_regularization <= this->regularization_failure_threshold) {
                // regularize the augmented matrix
-               this->matrix->set_regularization([=](size_t row_index) {
+               this->matrix.set_regularization([=](size_t row_index) {
                   return (row_index < size_primal_block) ? this->primal_regularization : -this->dual_regularization;
                });
             }
@@ -185,7 +184,7 @@ namespace uno {
 
    template <typename ElementType>
    void SymmetricIndefiniteLinearSystem<ElementType>::solve(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
-      linear_solver.solve_indefinite_system(*this->matrix, this->rhs, this->solution);
+      linear_solver.solve_indefinite_system(this->matrix, this->rhs, this->solution);
    }
 
    /*

@@ -10,6 +10,8 @@ namespace uno {
          const Multipliers& current_multipliers, bool use_regularization, double trust_region_radius, const Options& options):
       LagrangeNewtonSubproblem(problem, current_iterate, current_multipliers, use_regularization, trust_region_radius, options) { }
 
+   // TODO handle regularization here
+
    void InequalityConstrainedSubproblem::variables_bounds(Vector<double>& variables_lower_bounds, Vector<double>& variables_upper_bounds) const {
       // bounds of original variables intersected with trust region
       for (size_t variable_index: Range(this->problem.get_number_original_variables())) {

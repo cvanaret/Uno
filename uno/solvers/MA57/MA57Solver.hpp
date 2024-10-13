@@ -6,14 +6,11 @@
 
 #include <array>
 #include <vector>
-#include "linear_algebra/COOSymmetricMatrix.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "solvers/FortranCOOSparseStorage.hpp"
 
 namespace uno {
-   // forward declaration
-   template <typename ElementType>
-   class Vector;
-
    struct MA57Factorization {
       int n{};
       int nnz{};
@@ -38,7 +35,7 @@ namespace uno {
       void do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
       void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
-      void solve_indefinite_system(const PrimalDualInteriorPointSystem& linear_system) override;
+      void solve_indefinite_system(const PrimalDualInteriorPointSystem& linear_system, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -50,7 +47,7 @@ namespace uno {
       // internal matrix representation
       std::vector<int> row_indices;
       std::vector<int> column_indices;
-      COOSymmetricMatrix<int, double> my_coo_matrix;
+      SymmetricMatrix<size_t, double> my_coo_matrix;
       Vector<double> my_rhs;
 
       // factorization

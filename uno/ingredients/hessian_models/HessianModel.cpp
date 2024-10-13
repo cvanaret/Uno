@@ -2,17 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "HessianModel.hpp"
-#include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
-#include "symbolic/MatrixView.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
    HessianModel::HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization) :
-         hessian(SymmetricMatrixFactory<size_t, double>::create(sparse_format, dimension, maximum_number_nonzeros, use_regularization)) {
+         hessian(dimension, maximum_number_nonzeros, use_regularization, sparse_format) {
    }
 
    HessianModel::~HessianModel() { }
@@ -22,11 +20,10 @@ namespace uno {
          HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */false) {
    }
 
-   void ExactHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& primals,
-         const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) {
+   void ExactHessian::evaluate(const OptimizationProblem& problem, const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+         SymmetricMatrix<size_t, double>& hessian) {
       // evaluate Lagrangian Hessian
-      // matrix.dimension = problem.number_variables;
-      problem.evaluate_lagrangian_hessian(primals, constraint_multipliers, hessian, row_offset, column_offset);
+      problem.evaluate_lagrangian_hessian(primals, constraint_multipliers, hessian);
       this->evaluation_count++;
    }
 
@@ -39,19 +36,18 @@ namespace uno {
          regularization_increase_factor(options.get_double("regularization_increase_factor")) {
    }
 
-   void ConvexifiedHessian::evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primals,
-         const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) {
+   void ConvexifiedHessian::evaluate(const OptimizationProblem& problem, const Vector<double>& primals, const Vector<double>& constraint_multipliers,
+         SymmetricMatrix<size_t, double>& hessian) {
       // evaluate Lagrangian Hessian
-      this->hessian->dimension = problem.number_variables;
-      problem.evaluate_lagrangian_hessian(primals, constraint_multipliers, hessian, row_offset, column_offset);
+      problem.evaluate_lagrangian_hessian(primals, constraint_multipliers, hessian);
       this->evaluation_count++;
       // regularize (only on the original variables) to convexify the problem
-      DEBUG2 << "hessian before convexification: " << *this->hessian;
-      this->regularize(statistics, *this->hessian, problem.get_number_original_variables());
+      DEBUG2 << "hessian before convexification: " << hessian;
+      this->regularize(hessian, problem.get_number_original_variables());
    }
 
    // Nocedal and Wright, p51
-   void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables) {
+   void ConvexifiedHessian::regularize(SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables) {
       const double smallest_diagonal_entry = hessian.smallest_diagonal_entry(number_original_variables);
       DEBUG << "The minimal diagonal entry of the matrix is " << smallest_diagonal_entry << '\n';
 
@@ -82,7 +78,7 @@ namespace uno {
             assert(is_finite(regularization_factor) && "The regularization coefficient diverged");
          }
       }
-      statistics.set("regularization", regularization_factor);
+      // statistics.set("regularization", regularization_factor); TODO move somewhere else
    }
 
    // zero Hessian
@@ -90,9 +86,7 @@ namespace uno {
          HessianModel(dimension, 0, options.get_string("sparse_format"), /* use_regularization = */false) {
    }
 
-   void ZeroHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& /*primals*/,
-         const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian, size_t /*row_offset*/,
-         size_t /*column_offset*/) {
-      hessian.dimension = problem.number_variables;
+   void ZeroHessian::evaluate(const OptimizationProblem& /*problem*/, const Vector<double>& /*primals*/,
+         const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& /*hessian*/) {
    }
 } // namespace

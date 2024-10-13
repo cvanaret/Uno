@@ -27,7 +27,7 @@ namespace uno {
       void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
       void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-            SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) const override;
+            SymmetricMatrix<size_t, double>& hessian) const override;
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
@@ -147,11 +147,11 @@ namespace uno {
    }
 
    inline void HomogeneousEqualityConstrainedModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier,
-         const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) const {
-      this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian, row_offset, column_offset);
+         const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
+      this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
       // extend the dimension of the Hessian by finalizing the remaining columns (note: the slacks do not enter the Hessian)
       for (size_t constraint_index: Range(this->model->number_variables, this->number_variables)) {
-         hessian.finalize_column(column_offset + constraint_index);
+         hessian.finalize_column(constraint_index);
       }
    }
 

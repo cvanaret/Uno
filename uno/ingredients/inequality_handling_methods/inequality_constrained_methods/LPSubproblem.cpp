@@ -3,7 +3,6 @@
 
 #include "LPSubproblem.hpp"
 #include "optimization/Direction.hpp"
-#include "linear_algebra/COOSymmetricMatrix.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "solvers/LPSolver.hpp"
@@ -16,7 +15,7 @@ namespace uno {
          InequalityConstrainedMethod(number_variables, number_constraints),
          solver(LPSolverFactory::create(options.get_string("LP_solver"), number_variables, number_constraints,
                number_objective_gradient_nonzeros, number_jacobian_nonzeros, options)),
-         zero_hessian(COOSymmetricMatrix<size_t, double>::zero(number_variables)) {
+         zero_hessian(SymmetricMatrix<size_t, double>::zero(number_variables)) {
    }
 
    void LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {

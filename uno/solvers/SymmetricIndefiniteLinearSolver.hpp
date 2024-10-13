@@ -12,9 +12,9 @@ namespace uno {
    class PrimalDualInteriorPointSystem;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
-
    template <typename ElementType>
    class Vector;
+   struct WarmstartInformation;
 
    template <typename IndexType, typename ElementType>
    class SymmetricIndefiniteLinearSolver {
@@ -24,7 +24,7 @@ namespace uno {
 
       virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
             Vector<ElementType>& result) = 0;
-      virtual void solve_indefinite_system(const PrimalDualInteriorPointSystem& linear_system) = 0;
+      virtual void solve_indefinite_system(const PrimalDualInteriorPointSystem& linear_system, const WarmstartInformation& warmstart_information) = 0;
 
    protected:
       const size_t dimension;

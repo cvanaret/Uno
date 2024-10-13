@@ -6,7 +6,6 @@
 #include "optimization/Direction.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/subproblems/PrimalDualInteriorPointSystem.hpp"
-#include "linear_algebra/SymmetricMatrixFactory.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -117,13 +116,12 @@ namespace uno {
       return variable_value;
    }
 
-   void PrimalDualInteriorPointMethod::evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+   void PrimalDualInteriorPointMethod::evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
       // barrier Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // original Lagrangian Hessian
-         this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_multipliers.constraints, *this->hessian_model->hessian,
-               0, 0);
+         this->hessian_model->evaluate(problem, current_iterate.primals, current_multipliers.constraints, this->hessian_model->hessian);
 
          // diagonal barrier terms (grouped by variable)
          for (size_t variable_index: Range(problem.number_variables)) {
@@ -136,7 +134,7 @@ namespace uno {
                const double distance_to_bound = current_iterate.primals[variable_index] - problem.variable_upper_bound(variable_index);
                diagonal_barrier_term += current_multipliers.upper_bounds[variable_index] / distance_to_bound;
             }
-            this->hessian_model->hessian->insert(diagonal_barrier_term, variable_index, variable_index);
+            this->hessian_model->hessian.insert(diagonal_barrier_term, variable_index, variable_index);
          }
       }
 
@@ -193,12 +191,13 @@ namespace uno {
       statistics.set("barrier param.", this->barrier_parameter());
 
       // evaluate the functions at the current iterate
-      this->evaluate_functions(statistics, problem, current_iterate, current_multipliers, warmstart_information);
+      this->evaluate_functions(problem, current_iterate, current_multipliers, warmstart_information);
 
       // compute the primal-dual solution
       this->assemble_augmented_system(statistics, problem, current_multipliers);
 
       // test: create the subproblem
+      ////
       Options options;
       options["hessian_model"] = "exact";
       options["sparse_format"] = "COO";
@@ -207,7 +206,8 @@ namespace uno {
       options["regularization_increase_factor"] = "8.";
       const PrimalDualInteriorPointSystem linear_system(problem, current_iterate, current_multipliers, this->barrier_parameter(), true,
             this->trust_region_radius, options);
-      this->linear_solver->solve_indefinite_system(linear_system);
+      this->linear_solver->solve_indefinite_system(linear_system, warmstart_information);
+      ////
 
       this->augmented_system.solve(*this->linear_solver);
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
@@ -220,7 +220,7 @@ namespace uno {
    void PrimalDualInteriorPointMethod::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
          const Multipliers& current_multipliers) {
       // assemble, factorize and regularize the augmented matrix
-      this->augmented_system.assemble_matrix(*this->hessian_model->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
+      this->augmented_system.assemble_matrix(this->hessian_model->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
       this->augmented_system.factorize_matrix(problem.model, *this->linear_solver);
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
       this->augmented_system.regularize_matrix(statistics, problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
@@ -294,7 +294,7 @@ namespace uno {
    }
 
    const SymmetricMatrix<size_t, double>& PrimalDualInteriorPointMethod::get_lagrangian_hessian() const {
-      return *this->hessian_model->hessian;
+      return this->hessian_model->hessian;
    }
 
    void PrimalDualInteriorPointMethod::set_auxiliary_measure(const Model& model, Iterate& iterate) {
@@ -366,7 +366,7 @@ namespace uno {
 
    double PrimalDualInteriorPointMethod::evaluate_subproblem_objective(const Direction& direction) const {
       const double linear_term = dot(direction.primals, this->objective_gradient);
-      const double quadratic_term = this->hessian_model->hessian->quadratic_product(direction.primals, direction.primals) / 2.;
+      const double quadratic_term = this->hessian_model->hessian.quadratic_product(direction.primals, direction.primals) / 2.;
       return linear_term + quadratic_term;
    }
 
@@ -489,9 +489,9 @@ namespace uno {
 
    void PrimalDualInteriorPointMethod::compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate,
          Vector<double>& constraint_multipliers) {
-      this->augmented_system.matrix->dimension = problem.number_variables + problem.number_constraints;
-      this->augmented_system.matrix->reset();
-      Preprocessing::compute_least_square_multipliers(problem.model, *this->augmented_system.matrix, this->augmented_system.rhs, *this->linear_solver,
+      this->augmented_system.matrix.set_dimension(problem.number_variables + problem.number_constraints);
+      this->augmented_system.matrix.reset();
+      Preprocessing::compute_least_square_multipliers(problem.model, this->augmented_system.matrix, this->augmented_system.rhs, *this->linear_solver,
             iterate, constraint_multipliers, this->least_square_multiplier_max_norm);
    }
 

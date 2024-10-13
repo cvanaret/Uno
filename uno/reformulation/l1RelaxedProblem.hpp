@@ -26,8 +26,7 @@ namespace uno {
       void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
       void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
       void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
-      void evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian,
-            size_t row_offset, size_t column_offset) const override;
+      void evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian) const override;
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
@@ -151,21 +150,21 @@ namespace uno {
    }
 
    inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian, size_t row_offset, size_t column_offset) const {
-      this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian, row_offset, column_offset);
+         SymmetricMatrix<size_t, double>& hessian) const {
+      this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
 
       // proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
             const double proximal_term = this->proximal_coefficient * scaling * scaling;
-            hessian.insert(proximal_term, row_offset + variable_index, column_offset + variable_index);
+            hessian.insert(proximal_term, variable_index, variable_index);
          }
       }
 
       // extend the dimension of the Hessian by finalizing the remaining columns (note: the elastics do not enter the Hessian)
       for (size_t constraint_index: Range(this->model.number_variables, this->number_variables)) {
-         hessian.finalize_column(column_offset + constraint_index);
+         hessian.finalize_column(constraint_index);
       }
    }
 

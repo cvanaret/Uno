@@ -5,7 +5,7 @@
 #define UNO_MUMPSSOLVER_H
 
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/COOSymmetricMatrix.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "dmumps_c.h"
 
 namespace uno {
@@ -18,7 +18,7 @@ namespace uno {
       void do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
       void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
-      void solve_indefinite_system(const PrimalDualInteriorPointSystem& linear_system) override;
+      void solve_indefinite_system(const PrimalDualInteriorPointSystem& linear_system, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -29,7 +29,7 @@ namespace uno {
 
    protected:
       DMUMPS_STRUC_C mumps_structure{};
-      COOSymmetricMatrix<int, double> COO_matrix;
+      SymmetricMatrix<int, double> COO_matrix;
 
       static const int JOB_INIT = -1;
       static const int JOB_END = -2;

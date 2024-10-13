@@ -30,7 +30,8 @@ namespace uno {
    }
 
    MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : DirectSymmetricIndefiniteLinearSolver<size_t, double>(dimension),
-         my_coo_matrix(dimension, number_nonzeros, true),
+         // use the custom FortranCOOSparseStorage to internally represent indices as integers >= 1
+         my_coo_matrix(std::make_unique<FortranCOOSparseStorage<size_t, double>>(dimension, number_nonzeros, true)),
          my_rhs(dimension),
          lkeep(static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42)),
          keep(static_cast<size_t>(lkeep)),
@@ -61,8 +62,8 @@ namespace uno {
       // build the internal matrix representation
       this->save_sparsity_pattern_internally(matrix);
 
-      const int n = static_cast<int>(matrix.dimension);
-      const int nnz = static_cast<int>(matrix.number_nonzeros);
+      const int n = static_cast<int>(matrix.dimension());
+      const int nnz = static_cast<int>(matrix.number_nonzeros());
 
       // symbolic factorization
       ma57ad_(/* const */ &n,
@@ -95,13 +96,13 @@ namespace uno {
       assert(matrix.dimension <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
       assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros) && "MA57Solver: the numbers of nonzeros do not match");
 
-      const int n = static_cast<int>(matrix.dimension);
-      int nnz = static_cast<int>(matrix.number_nonzeros);
+      const int n = static_cast<int>(matrix.dimension());
+      int nnz = static_cast<int>(matrix.number_nonzeros());
 
       // numerical factorization
       ma57bd_(&n,
             &nnz,
-            /* const */ matrix.data_pointer(),
+            /* const */ matrix.get_sparse_storage()->data_pointer(),
             /* out */ this->fact.data(),
             /* const */ &this->factorization.lfact,
             /* out */ this->ifact.data(),
@@ -114,13 +115,14 @@ namespace uno {
 
    void MA57Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) {
       // solve
-      const int n = static_cast<int>(matrix.dimension);
-      int nnz = static_cast<int>(matrix.number_nonzeros);
+      const int n = static_cast<int>(matrix.dimension());
+      int nnz = static_cast<int>(matrix.number_nonzeros());
       const int lrhs = n; // integer, length of rhs
+      // std::cout << "REAL USED KKT MATRIX:\n" << matrix << '\n';
 
       // solve the linear system
       if (this->use_iterative_refinement) {
-         ma57dd_(&this->job, &n, &nnz, matrix.data_pointer(), this->row_indices.data(), this->column_indices.data(),
+         ma57dd_(&this->job, &n, &nnz, matrix.get_sparse_storage()->data_pointer(), this->row_indices.data(), this->column_indices.data(),
                this->fact.data(), &this->factorization.lfact, this->ifact.data(), &this->factorization.lifact,
                rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
                this->cntl.data(), this->info.data(), this->rinfo.data());
@@ -135,20 +137,10 @@ namespace uno {
       }
    }
 
-   void MA57Solver::solve_indefinite_system(const PrimalDualInteriorPointSystem& linear_system) {
-      // build the internal matrix representation
-      this->row_indices.clear();
-      this->column_indices.clear();
-      /*
-      for (const auto [row_index, column_index, element]: matrix) {
-         this->row_indices.emplace_back(static_cast<int>(row_index + this->fortran_shift));
-         this->column_indices.emplace_back(static_cast<int>(column_index + this->fortran_shift));
-      }
-       */
-      linear_system.evaluate_matrix(this->my_coo_matrix);
-      std::cout << "MA57: current COO matrix: " << this->my_coo_matrix << '\n';
-
-      linear_system.evaluate_right_hand_side(this->my_rhs);
+   void MA57Solver::solve_indefinite_system(const PrimalDualInteriorPointSystem& linear_system, const WarmstartInformation& warmstart_information) {
+      linear_system.evaluate_matrix(this->my_coo_matrix, warmstart_information);
+      linear_system.evaluate_right_hand_side(this->my_rhs, warmstart_information);
+      // std::cout << "MA57 FortranCOO KKT MATRIX:\n" << this->my_coo_matrix << '\n';
 
       // copy rhs into result (overwritten by MA57)
       Vector<double> result(this->my_rhs);

@@ -177,22 +177,22 @@ namespace uno {
       const size_t header_size = 1;
       // pointers withing the single array
       int* row_indices = &this->hessian_sparsity[header_size];
-      int* column_starts = &this->hessian_sparsity[header_size + hessian.number_nonzeros];
+      int* column_starts = &this->hessian_sparsity[header_size + hessian.number_nonzeros()];
       // header
-      this->hessian_sparsity[0] = static_cast<int>(hessian.number_nonzeros + 1);
+      this->hessian_sparsity[0] = static_cast<int>(hessian.number_nonzeros() + 1);
       // count the elements in each column
-      for (size_t column_index: Range(hessian.dimension + 1)) {
+      for (size_t column_index: Range(hessian.dimension() + 1)) {
          column_starts[column_index] = 0;
       }
       for (const auto [row_index, column_index, element]: hessian) {
          column_starts[column_index + 1]++;
       }
       // carry over the column starts
-      for (size_t column_index: Range(1, hessian.dimension + 1)) {
+      for (size_t column_index: Range(1, hessian.dimension() + 1)) {
          column_starts[column_index] += column_starts[column_index - 1];
          column_starts[column_index - 1] += this->fortran_shift;
       }
-      column_starts[hessian.dimension] += this->fortran_shift;
+      column_starts[hessian.dimension()] += this->fortran_shift;
       // copy the entries
       //std::vector<int> current_indices(hessian.dimension);
       this->current_hessian_indices.fill(0);

@@ -71,7 +71,7 @@ namespace uno {
 
       [[nodiscard]] double barrier_parameter() const;
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
-      void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+      void evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
             const WarmstartInformation& warmstart_information);
       void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate, const Multipliers& current_multipliers,
             const DualResiduals& residuals);

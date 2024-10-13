@@ -31,7 +31,7 @@ namespace uno {
       const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
       const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
 
-      void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+      void evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
             const WarmstartInformation& warmstart_information);
    };
 } // namespace
