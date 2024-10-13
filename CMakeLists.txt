@@ -150,6 +150,8 @@ find_library(dl dl REQUIRED)
 list(APPEND LIBRARIES ${dl})
 
 find_package(BLAS REQUIRED)
+list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+
 find_package(LAPACK REQUIRED)
 
 find_package(OpenMP REQUIRED)
