@@ -16,22 +16,22 @@ libfind_pkg_check_modules(SCOTCH_PKGCONF SCOTCH)
 
 # Only check for the library since this is a link dependency
 find_library(SCOTCH_LIBRARY
-  NAMES libscotch.a
+  NAMES libscotch
   PATHS ${SCOTCH_PKGCONF_LIBRARY_DIRS}
 )
 
 find_library(SCOTCH_ERR_LIBRARY
-  NAMES libscotcherr.a
+  NAMES libscotcherr
   PATHS ${SCOTCH_PKGCONF_LIBRARY_DIRS}
 )
 
 find_library(SCOTCH_ERR_EXIT_LIBRARY
-  NAMES libscotcherrexit.a
+  NAMES libscotcherrexit
   PATHS ${SCOTCH_PKGCONF_LIBRARY_DIRS}
 )
 
 find_library(SCOTCH_METIS_LIBRARY
-  NAMES libscotchmetis.a
+  NAMES libscotchmetis
   PATHS ${SCOTCH_PKGCONF_LIBRARY_DIRS}
 )
 
