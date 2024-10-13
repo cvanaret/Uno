@@ -149,10 +149,10 @@ endif()
 find_library(dl dl REQUIRED)
 list(APPEND LIBRARIES ${dl})
 
-find_library(blas blas REQUIRED)
+find_library(blas blas blastrampoline-5 blastrampoline REQUIRED)
 list(APPEND LIBRARIES ${blas})
 
-find_library(lapack lapack REQUIRED)
+find_library(lapack lapack blastrampoline-5 blastrampoline REQUIRED)
 list(APPEND LIBRARIES ${lapack})
 
 find_package(OpenMP REQUIRED)
