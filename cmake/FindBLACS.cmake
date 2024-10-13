@@ -16,12 +16,12 @@ libfind_pkg_check_modules(BLACS_PKGCONF BLACS)
 
 # Only check for the library since this is a link dependency
 find_library(BLACS_LIBRARY
-  NAMES libblacs.a libblacs-openmpi.a
+  NAMES libblacs libblacs-openmpi
   PATHS ${BLACS_PKGCONF_LIBRARY_DIRS}
 )
 
 find_library(BLACS_INIT_LIBRARY
-  NAMES libblacsCinit.a libblacsCinit-openmpi.a
+  NAMES libblacsCinit libblacsCinit-openmpi
   PATHS ${BLACS_PKGCONF_LIBRARY_DIRS}
 )
 
