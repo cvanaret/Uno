@@ -40,7 +40,7 @@ find_library(MUMPS_PORD_LIBRARY
 set(MUMPS_MPISEQ_DIR ${MUMPS_INCLUDE_DIR}/../libseq)
 
 find_library(MUMPS_MPISEQ_LIBRARY
-  NAMES libmpiseq.a
+  NAMES libmpiseq.a libmpiseq.so libmpiseq.dylib libmpiseq.dll
   PATHS ${MUMPS_MPISEQ_DIR}
 )
 
