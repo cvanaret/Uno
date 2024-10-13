@@ -106,7 +106,7 @@ else()
    link_to_uno(bqpd ${bqpd})
 endif()
 
-find_package(MUMPS REQUIRED)
+find_package(MUMPS)
 if(${MUMPS_LIBRARY} STREQUAL "MUMPS-NOTFOUND")
    message(WARNING "Optional library MUMPS was not found.")
 else()
