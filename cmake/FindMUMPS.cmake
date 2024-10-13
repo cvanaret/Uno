@@ -22,17 +22,17 @@ find_path(MUMPS_INCLUDE_DIR
 
 # Finally the library itself
 find_library(MUMPS_LIBRARY
-  NAMES libdmumps.a
+  NAMES libdmumps
   PATHS ${MUMPS_PKGCONF_LIBRARY_DIRS}
 )
 
 find_library(MUMPS_COMMON_LIBRARY 
-  NAMES libmumps_common.a
+  NAMES libmumps_common
   PATHS ${MUMPS_PKGCONF_LIBRARY_DIRS}
 )
 
 find_library(MUMPS_PORD_LIBRARY
-  NAMES libpord.a
+  NAMES libpord
   PATHS ${MUMPS_PKGCONF_LIBRARY_DIRS}
 )
 
@@ -40,7 +40,7 @@ find_library(MUMPS_PORD_LIBRARY
 set(MUMPS_MPISEQ_DIR ${MUMPS_INCLUDE_DIR}/../libseq)
 
 find_library(MUMPS_MPISEQ_LIBRARY
-  NAMES libmpiseq.a libmpiseq.so libmpiseq.dylib libmpiseq.dll
+  NAMES libmpiseq
   PATHS ${MUMPS_MPISEQ_DIR}
 )
 
