@@ -89,6 +89,9 @@ else()
    list(APPEND UNO_SOURCE_FILES uno/solvers/MA57/MA57Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/MA57SolverTests.cpp)
    link_to_uno(ma57 ${ma57})
+   
+   find_package(BLAS REQUIRED)
+   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 endif()
 
 find_library(metis metis)
@@ -121,6 +124,7 @@ else()
       add_definitions("-D MUMPS_PARALLEL")
       find_package(MPI REQUIRED)
       list(APPEND LIBRARIES MPI::MPI_CXX MPI::MPI_Fortran)
+      add_definitions("-D HAS_MPI")
 
       find_package(BLACS REQUIRED)
       list(APPEND LIBRARIES ${BLACS_LIBRARY})
@@ -139,23 +143,15 @@ else()
    find_package(METIS REQUIRED)
    list(APPEND LIBRARIES ${METIS_LIBRARY})
    list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
-
    
-   add_definitions("-D HAS_MPI")
+   find_package(BLAS REQUIRED)
+   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+   
+   find_package(OpenMP REQUIRED)
+   list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
+   
    add_definitions("-D HAS_MUMPS")
 endif()
-
-# detection of required libraries
-find_library(dl dl REQUIRED)
-list(APPEND LIBRARIES ${dl})
-
-find_package(BLAS REQUIRED)
-list(APPEND LIBRARIES ${BLAS_LIBRARIES})
-
-find_package(LAPACK REQUIRED)
-
-find_package(OpenMP REQUIRED)
-list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
 
 ###############
 # Uno library #
@@ -177,7 +173,7 @@ else()
    message(STATUS "Library amplsolver was found.")
    add_executable(uno_ampl bindings/AMPL/AMPLModel.cpp bindings/AMPL/uno_ampl.cpp)
    
-   target_link_libraries(uno_ampl PUBLIC uno ${amplsolver})
+   target_link_libraries(uno_ampl PUBLIC uno ${amplsolver} ${CMAKE_DL_LIBS})
    add_definitions("-D HAS_AMPLSOLVER")
    # include the corresponding directory
    get_filename_component(directory ${amplsolver} DIRECTORY)
