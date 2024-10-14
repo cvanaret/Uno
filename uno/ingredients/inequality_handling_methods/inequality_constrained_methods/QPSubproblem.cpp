@@ -48,6 +48,7 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       // Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         this->hessian_model->hessian.set_dimension(problem.number_variables);
          this->hessian_model->evaluate(problem, current_iterate.primals, current_multipliers.constraints, this->hessian_model->hessian);
       }
       // objective gradient, constraints and constraint Jacobian

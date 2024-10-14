@@ -121,6 +121,7 @@ namespace uno {
       // barrier Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // original Lagrangian Hessian
+         this->hessian_model->hessian.set_dimension(problem.number_variables);
          this->hessian_model->evaluate(problem, current_iterate.primals, current_multipliers.constraints, this->hessian_model->hessian);
 
          // diagonal barrier terms (grouped by variable)
