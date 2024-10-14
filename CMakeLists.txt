@@ -157,6 +157,7 @@ endif()
 # Uno library #
 ###############
 add_library(uno STATIC ${UNO_SOURCE_FILES})
+set_property(TARGET uno PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(uno PUBLIC ${DIRECTORIES})
 target_link_libraries(uno PUBLIC ${LIBRARIES})
 
