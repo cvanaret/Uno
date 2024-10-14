@@ -31,7 +31,7 @@ namespace uno {
 
    MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : DirectSymmetricIndefiniteLinearSolver<size_t, double>(dimension),
          // use the custom FortranCOOSparseStorage to internally represent indices as integers >= 1
-         my_coo_matrix(std::make_unique<FortranCOOSparseStorage<size_t, double>>(dimension, number_nonzeros, true)),
+         my_coo_matrix(std::make_unique<FortranCOOSparseStorage<size_t, double>>(dimension, dimension, number_nonzeros, true)),
          my_rhs(dimension),
          lkeep(static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42)),
          keep(static_cast<size_t>(lkeep)),

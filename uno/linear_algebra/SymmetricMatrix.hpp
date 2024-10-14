@@ -22,10 +22,13 @@ namespace uno {
       ~SymmetricMatrix() = default;
 
       void reset() { this->sparse_storage->reset(); }
-      [[nodiscard]] size_t dimension() const { return this->sparse_storage->dimension; }
-      void set_dimension(size_t new_dimension) { this->sparse_storage->set_dimension(new_dimension); }
-      [[nodiscard]] size_t number_nonzeros() const { return this->sparse_storage->number_nonzeros; }
-      [[nodiscard]] size_t capacity() const { return this->sparse_storage->capacity; }
+      [[nodiscard]] size_t dimension() const { return this->sparse_storage->get_number_rows(); }
+      void set_dimension(size_t new_dimension) {
+         this->sparse_storage->set_number_rows(new_dimension);
+         this->sparse_storage->set_number_columns(new_dimension);
+      }
+      [[nodiscard]] size_t number_nonzeros() const { return this->sparse_storage->get_number_nonzeros(); }
+      [[nodiscard]] size_t capacity() const { return this->sparse_storage->get_capacity(); }
 
       template <typename Vector1, typename Vector2>
       ElementType quadratic_product(const Vector1& x, const Vector2& y) const;
@@ -68,7 +71,7 @@ namespace uno {
 
    template <typename IndexType, typename ElementType>
    SymmetricMatrix<IndexType, ElementType>::SymmetricMatrix(size_t dimension, size_t capacity, bool use_regularization, const std::string& sparse_format) :
-         sparse_storage(SparseStorageFactory<IndexType, ElementType>::create(sparse_format, dimension, capacity, use_regularization)) { }
+         sparse_storage(SparseStorageFactory<IndexType, ElementType>::create(sparse_format, dimension, dimension, capacity, use_regularization)) { }
 
    template <typename IndexType, typename ElementType>
    // TODO fix. We need to scan through all the columns

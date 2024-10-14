@@ -12,18 +12,18 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    class SparseStorageFactory {
    public:
-      static std::unique_ptr<SparseStorage<IndexType, ElementType>> create(const std::string& sparse_storage_type, size_t dimension,
-            size_t capacity, bool use_regularization);
+      static std::unique_ptr<SparseStorage<IndexType, ElementType>> create(const std::string& sparse_storage_type, size_t number_rows,
+            size_t number_columns, size_t capacity, bool use_regularization);
    };
 
    template <typename IndexType, typename ElementType>
    std::unique_ptr<SparseStorage<IndexType, ElementType>> SparseStorageFactory<IndexType, ElementType>::create(const std::string& sparse_storage_type,
-         size_t dimension, size_t capacity, bool use_regularization) {
+         size_t number_rows, size_t number_columns, size_t capacity, bool use_regularization) {
       if (sparse_storage_type == "COO") {
-         return std::make_unique<COOSparseStorage<IndexType, ElementType>>(dimension, capacity, use_regularization);
+         return std::make_unique<COOSparseStorage<IndexType, ElementType>>(number_rows, number_columns, capacity, use_regularization);
       }
       else if (sparse_storage_type == "CSC") {
-         return std::make_unique<CSCSparseStorage<IndexType, ElementType>>(dimension, capacity, use_regularization);
+         return std::make_unique<CSCSparseStorage<IndexType, ElementType>>(number_rows, number_columns, capacity, use_regularization);
       }
       throw std::invalid_argument("Sparse storage " + sparse_storage_type + " unknown");
    }

@@ -10,7 +10,7 @@ const size_t n = 5;
 const size_t nnz = 7;
 
 COOSparseStorage<size_t, double> create_COO_storage() {
-   COOSparseStorage<size_t, double> sparse_storage(n, nnz, false);
+   COOSparseStorage<size_t, double> sparse_storage(n, n, nnz, false);
    sparse_storage.insert(2., 0, 0);
    sparse_storage.insert(3., 0, 1);
    sparse_storage.insert(4., 1, 2);
@@ -23,5 +23,5 @@ COOSparseStorage<size_t, double> create_COO_storage() {
 
 TEST(COOSparseStorage, NNZ) {
    const COOSparseStorage<size_t, double> sparse_storage = create_COO_storage();
-   ASSERT_EQ(sparse_storage.number_nonzeros, nnz);
+   ASSERT_EQ(sparse_storage.get_number_nonzeros(), nnz);
 }

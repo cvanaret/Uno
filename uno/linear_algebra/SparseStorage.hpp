@@ -39,15 +39,16 @@ namespace uno {
 
       using value_type = ElementType;
 
-      size_t dimension;
-      size_t number_nonzeros{0};
-      size_t capacity;
-
-      SparseStorage(size_t dimension, size_t capacity, bool use_regularization);
+      SparseStorage(size_t number_rows, size_t number_columns, size_t capacity, bool use_regularization);
       virtual ~SparseStorage() = default;
 
       virtual void reset() = 0;
-      void set_dimension(size_t new_dimension) { this->dimension = new_dimension; }
+      void set_number_rows(size_t new_number_rows) { this->number_rows = new_number_rows; }
+      void set_number_columns(size_t new_number_columns) { this->number_columns = new_number_columns; }
+      [[nodiscard]] size_t get_number_rows() const { return this->number_rows; }
+      [[nodiscard]] size_t get_number_columns() const { return this->number_columns; }
+      [[nodiscard]] size_t get_number_nonzeros() const { return this->number_nonzeros; }
+      [[nodiscard]] size_t get_capacity() const { return this->capacity; }
 
       // build the matrix incrementally
       virtual void insert(ElementType term, IndexType row_index, IndexType column_index) = 0;
@@ -61,7 +62,7 @@ namespace uno {
          return iterator(*this, 0, 0);
       }
       [[nodiscard]] iterator end() const {
-         return iterator(*this, this->dimension, this->number_nonzeros);
+         return iterator(*this, this->number_columns, this->number_nonzeros);
       }
 
       virtual void print(std::ostream& stream) const = 0;
@@ -69,7 +70,9 @@ namespace uno {
       friend std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& matrix);
 
    protected:
-      // regularization
+      size_t number_rows, number_columns;
+      size_t number_nonzeros{0};
+      size_t capacity;
       const bool use_regularization;
 
       // virtual iterator functions
@@ -80,16 +83,17 @@ namespace uno {
    // implementation
 
    template <typename IndexType, typename ElementType>
-   SparseStorage<IndexType, ElementType>::SparseStorage(size_t dimension, size_t capacity, bool use_regularization) :
-         dimension(dimension),
+   SparseStorage<IndexType, ElementType>::SparseStorage(size_t number_rows, size_t number_columns, size_t capacity, bool use_regularization) :
+         number_rows(number_rows),
+         number_columns(number_columns),
          // if regularization is used, allocate the necessary space
-         capacity(capacity + (use_regularization ? dimension : 0)),
+         capacity(capacity + (use_regularization ? std::min(number_rows, number_columns) : 0)),
          use_regularization(use_regularization) {
    }
 
    template <typename Index, typename Element>
    std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& matrix) {
-      stream << "Dimension: " << matrix.dimension << ", number of nonzeros: " << matrix.number_nonzeros << '\n';
+      stream << "Dimensions: (" << matrix.number_rows << ", " << matrix.number_columns << "), number of nonzeros: " << matrix.number_nonzeros << '\n';
       matrix.print(stream);
       return stream;
    }

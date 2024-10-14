@@ -10,7 +10,7 @@ const size_t n = 5;
 const size_t nnz = 4;
 
 CSCSparseStorage<size_t, double> create_CSC_storage() {
-   CSCSparseStorage<size_t, double> sparse_storage(n, nnz, false);
+   CSCSparseStorage<size_t, double> sparse_storage(n, n, nnz, false);
    sparse_storage.insert(2., 0, 0);
    sparse_storage.finalize_column(0);
    sparse_storage.finalize_column(1);
@@ -27,5 +27,5 @@ CSCSparseStorage<size_t, double> create_CSC_storage() {
 
 TEST(CSCSparseStorage, NNZ) {
    const CSCSparseStorage<size_t, double> sparse_storage = create_CSC_storage();
-   ASSERT_EQ(sparse_storage.number_nonzeros, nnz);
+   ASSERT_EQ(sparse_storage.get_number_nonzeros(), nnz);
 }

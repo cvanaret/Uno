@@ -17,7 +17,7 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    class FortranCOOSparseStorage : public SparseStorage<IndexType, ElementType> {
    public:
-      FortranCOOSparseStorage(size_t dimension, size_t capacity, bool use_regularization);
+      FortranCOOSparseStorage(size_t number_rows, size_t number_columns, size_t capacity, bool use_regularization);
 
       void reset() override;
       void insert(ElementType term, IndexType row_index, IndexType column_index) override;
@@ -57,8 +57,8 @@ namespace uno {
    // implementation
 
    template <typename IndexType, typename ElementType>
-   FortranCOOSparseStorage<IndexType, ElementType>::FortranCOOSparseStorage(size_t dimension, size_t capacity, bool use_regularization):
-         SparseStorage<IndexType, ElementType>(dimension, capacity, use_regularization) {
+   FortranCOOSparseStorage<IndexType, ElementType>::FortranCOOSparseStorage(size_t number_rows, size_t number_columns, size_t capacity,
+         bool use_regularization): SparseStorage<IndexType, ElementType>(number_rows, number_columns, capacity, use_regularization) {
       this->entries.reserve(this->capacity);
       this->row_indices.reserve(this->capacity);
       this->column_indices.reserve(this->capacity);
@@ -98,7 +98,7 @@ namespace uno {
       assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
 
       // the regularization terms (that lie at the start of the entries vector) can be directly modified
-      for (size_t row_index: Range(this->dimension)) {
+      for (size_t row_index: Range(std::min(this->number_rows, this->number_columns))) {
          const ElementType element = regularization_function(static_cast<IndexType>(row_index));
          this->entries[row_index] = element;
       }
@@ -114,7 +114,7 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    void FortranCOOSparseStorage<IndexType, ElementType>::initialize_regularization() {
       // introduce elements at the start of the entries
-      for (size_t row_index: Range(this->dimension)) {
+      for (size_t row_index: Range(std::min(this->number_rows, this->number_columns))) {
          this->insert(ElementType(0), IndexType(row_index), IndexType(row_index));
       }
    }
@@ -132,7 +132,7 @@ namespace uno {
       nonzero_index++;
       // if end reached
       if (nonzero_index == this->number_nonzeros) {
-         column_index = this->dimension;
+         column_index = this->number_columns;
       }
    }
 } // namespace

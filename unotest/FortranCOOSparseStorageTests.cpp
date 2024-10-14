@@ -10,7 +10,7 @@ const size_t n = 2;
 const size_t nnz = 3;
 
 FortranCOOSparseStorage<size_t, double> create_Fortran_COO_storage() {
-   FortranCOOSparseStorage<size_t, double> sparse_storage(n, nnz, false);
+   FortranCOOSparseStorage<size_t, double> sparse_storage(n, n, nnz, false);
    sparse_storage.insert(4402., 0, 0);
    sparse_storage.insert(800., 0, 1);
    sparse_storage.insert(200., 1, 1);
