@@ -67,7 +67,7 @@ namespace uno {
 
       virtual void print(std::ostream& stream) const = 0;
       template <typename Index, typename Element>
-      friend std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& matrix);
+      friend std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& sparse_storage);
 
    protected:
       size_t number_rows, number_columns;
@@ -92,9 +92,9 @@ namespace uno {
    }
 
    template <typename Index, typename Element>
-   std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& matrix) {
-      stream << "Dimensions: (" << matrix.number_rows << ", " << matrix.number_columns << "), number of nonzeros: " << matrix.number_nonzeros << '\n';
-      matrix.print(stream);
+   std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& sparse_storage) {
+      stream << "Dimensions: (" << sparse_storage.number_rows << ", " << sparse_storage.number_columns << "), number of nonzeros: " << sparse_storage.number_nonzeros << '\n';
+      sparse_storage.print(stream);
       return stream;
    }
 } // namespace

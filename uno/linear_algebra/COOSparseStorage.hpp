@@ -57,6 +57,8 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    COOSparseStorage<IndexType, ElementType>::COOSparseStorage(size_t number_rows, size_t number_columns, size_t capacity, bool use_regularization):
          SparseStorage<IndexType, ElementType>(number_rows, number_columns, capacity, use_regularization) {
+      assert((not use_regularization || number_rows == number_columns) && "COOSparseStorage: a non-square matrix cannot be regularized.");
+
       this->entries.reserve(this->capacity);
       this->row_indices.reserve(this->capacity);
       this->column_indices.reserve(this->capacity);

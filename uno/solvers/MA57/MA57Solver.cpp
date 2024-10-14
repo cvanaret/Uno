@@ -55,8 +55,8 @@ namespace uno {
    }
 
    void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) {
-      assert(matrix.dimension <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(matrix.number_nonzeros <= this->row_indices.capacity() &&
+      assert(matrix.dimension() <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
+      assert(matrix.number_nonzeros() <= this->row_indices.capacity() &&
              "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
 
       // build the internal matrix representation
@@ -93,8 +93,8 @@ namespace uno {
    }
 
    void MA57Solver::do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) {
-      assert(matrix.dimension <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros) && "MA57Solver: the numbers of nonzeros do not match");
+      assert(matrix.dimension() <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
+      assert(this->factorization.nnz == static_cast<int>(matrix.number_nonzeros()) && "MA57Solver: the numbers of nonzeros do not match");
 
       const int n = static_cast<int>(matrix.dimension());
       int nnz = static_cast<int>(matrix.number_nonzeros());

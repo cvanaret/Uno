@@ -47,6 +47,8 @@ namespace uno {
    CSCSparseStorage<IndexType, ElementType>::CSCSparseStorage(size_t number_rows, size_t number_columns, size_t capacity, bool use_regularization):
          SparseStorage<IndexType, ElementType>(number_rows, number_columns, capacity, use_regularization),
          column_starts(number_columns + 1) {
+      assert((not use_regularization || number_rows == number_columns) && "CSCSparseStorage: a non-square matrix cannot be regularized.");
+
       this->entries.reserve(this->capacity);
       this->row_indices.reserve(this->capacity);
    }
@@ -74,7 +76,7 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    void CSCSparseStorage<IndexType, ElementType>::finalize_column(IndexType column_index) {
       assert(column_index == this->current_column && "You are not finalizing the current column");
-      assert(column_index < this->number_columns && "The dimension of the matrix was exceeded");
+      assert(column_index < static_cast<IndexType>(this->number_columns) && "The dimension of the matrix was exceeded");
 
       // possibly add regularization
       if (this->use_regularization) {
