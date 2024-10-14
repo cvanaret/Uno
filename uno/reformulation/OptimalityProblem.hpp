@@ -5,6 +5,7 @@
 #define UNO_OPTIMALITYPROBLEM_H
 
 #include "OptimizationProblem.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/LagrangianGradient.hpp"
 #include "symbolic/Expression.hpp"
@@ -61,6 +62,7 @@ namespace uno {
 
    inline void OptimalityProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
+      hessian.set_dimension(this->number_variables);
       this->model.evaluate_lagrangian_hessian(x, this->get_objective_multiplier(), multipliers, hessian);
    }
 

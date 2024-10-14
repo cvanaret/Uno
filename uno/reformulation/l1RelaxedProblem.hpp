@@ -151,6 +151,7 @@ namespace uno {
 
    inline void l1RelaxedProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
+      hessian.set_dimension(this->number_variables);
       this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
 
       // proximal contribution

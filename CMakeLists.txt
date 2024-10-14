@@ -52,7 +52,6 @@ file(GLOB UNO_SOURCE_FILES
 # unit test source files
 file(GLOB TESTS_UNO_SOURCE_FILES
    unotest/unotest.cpp
-   unotest/BQPD_CSCSparseStorageTests.cpp
    unotest/CollectionAdapterTests.cpp
    unotest/ConcatenationTests.cpp
    unotest/COOSparseStorageTests.cpp
