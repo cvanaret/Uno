@@ -198,7 +198,7 @@ namespace uno {
       this->asl_hessian.reserve(this->number_asl_hessian_nonzeros);
 
       // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
-      int error_flag{};
+      fint error_flag{};
       lagscale_ASL(this->asl, -1., &error_flag);
    }
 
@@ -289,8 +289,8 @@ namespace uno {
       }
 
       // generate the sparsity pattern in the right sparse format
-      const int* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
-      const int* asl_row_index = this->asl->i.sputinfo_->hrownos;
+      const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
+      const fint* asl_row_index = this->asl->i.sputinfo_->hrownos;
       // check that the column pointers are sorted in increasing order
       // TODO throw exception
       assert(in_increasing_order(asl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
