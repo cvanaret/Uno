@@ -106,7 +106,7 @@ namespace uno {
    }
 
    double AMPLModel::evaluate_objective(const Vector<double>& x) const {
-      int error_flag = 0;
+      fint error_flag = 0;
       double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
       if (0 < error_flag) {
          throw FunctionEvaluationError();
@@ -116,7 +116,7 @@ namespace uno {
 
    // sparse gradient
    void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const {
-      int error_flag = 0;
+      fint error_flag = 0;
       // prevent ASL to crash by catching all evaluation errors
       Jmp_buf err_jmp_uno;
       asl->i.err_jmp_ = &err_jmp_uno;
@@ -143,7 +143,7 @@ namespace uno {
 
    /*
    double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const {
-      int error_flag = 0;
+      fint error_flag = 0;
       double result = (*(this->asl)->p.Conival)(this->asl_, j, const_cast<double*>(x.data()), &error_flag);
       if (0 < error_flag) {
          throw FunctionNumericalError();
@@ -153,7 +153,7 @@ namespace uno {
    */
 
    void AMPLModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
-      int error_flag = 0;
+      fint error_flag = 0;
       (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &error_flag);
       if (0 < error_flag) {
          throw FunctionEvaluationError();
@@ -163,7 +163,7 @@ namespace uno {
    // sparse gradient
    void AMPLModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
       // compute the AMPL sparse gradient
-      int error_flag = 0;
+      fint error_flag = 0;
       (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(constraint_index), const_cast<double*>(x.data()), const_cast<double*>(this->asl_gradient.data()),
             &error_flag);
       if (0 < error_flag) {
