@@ -7,7 +7,7 @@
 namespace uno {
    // forward declarations
    class Iterate;
-   class Multipliers;
+   struct Multipliers;
    class OptimizationProblem;
    class Options;
    class DualResiduals;

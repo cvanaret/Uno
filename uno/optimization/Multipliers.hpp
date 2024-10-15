@@ -13,10 +13,10 @@ namespace uno {
       Vector<double> constraints{}; /*!< Multipliers of the general constraints */
 
       Multipliers(size_t number_variables, size_t number_constraints);
-      Multipliers(const Multipliers& other) noexcept = default;
-      Multipliers(Multipliers&& other) noexcept = default;
-      Multipliers& operator=(const Multipliers& other) noexcept = default;
-      Multipliers& operator=(Multipliers&& other) noexcept = default;
+      Multipliers(const Multipliers& other) = default;
+      Multipliers(Multipliers&& other) = default;
+      Multipliers& operator=(const Multipliers& other) = default;
+      Multipliers& operator=(Multipliers&& other) = default;
 
       void reset();
       [[nodiscard]] bool not_all_zero(size_t number_variables, double tolerance) const;

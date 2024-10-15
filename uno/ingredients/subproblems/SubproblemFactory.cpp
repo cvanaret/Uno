@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <string>
 #include "Subproblem.hpp"
 #include "SubproblemFactory.hpp"
 #include "ingredients/subproblems/inequality_constrained_methods/QPSubproblem.hpp"

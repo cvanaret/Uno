@@ -50,7 +50,7 @@ namespace uno {
    // free function
    template <typename Collection1, typename Collection2>
    Concatenation<Collection1, Collection2> concatenate(Collection1&& collection1, Collection2&& collection2) {
-      return Concatenation(std::forward<Collection1>(collection1), std::forward<Collection2>(collection2));
+      return {std::forward<Collection1>(collection1), std::forward<Collection2>(collection2)};
    }
 } // namespace
 

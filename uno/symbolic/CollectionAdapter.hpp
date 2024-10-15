@@ -18,7 +18,7 @@ namespace uno {
       void increment_iterator(size_t& index) const override;
 
    protected:
-      Array array;
+      const Array array;
    };
 
    template <typename Array>
@@ -39,12 +39,6 @@ namespace uno {
    template <typename Array>
    void CollectionAdapter<Array>::increment_iterator(size_t& index) const {
       index++;
-   }
-
-   // free function
-   template <typename Array>
-   CollectionAdapter<Array> adapt(Array&& array) {
-      return CollectionAdapter(std::forward<Array>(array));
    }
 } // namespace
 

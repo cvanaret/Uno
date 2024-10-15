@@ -94,7 +94,7 @@ namespace uno {
    inline double OptimalityProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
-      const VectorExpression variable_complementarity(Range(this->model.number_variables), [&](size_t variable_index) {
+      const VectorExpression variable_complementarity{Range(this->model.number_variables), [&](size_t variable_index) {
          if (0. < multipliers.lower_bounds[variable_index]) {
             return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index)) - shift_value;
          }
@@ -102,10 +102,10 @@ namespace uno {
             return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->model.variable_upper_bound(variable_index)) - shift_value;
          }
          return 0.;
-      });
+      }};
 
       // inequality constraints
-      const VectorExpression constraint_complementarity(this->model.get_inequality_constraints(), [&](size_t constraint_index) {
+      const VectorExpression constraint_complementarity{this->model.get_inequality_constraints(), [&](size_t constraint_index) {
          if (0. < multipliers.constraints[constraint_index]) { // lower bound
             return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_lower_bound(constraint_index)) -
                    shift_value;
@@ -115,7 +115,7 @@ namespace uno {
                    shift_value;
          }
          return 0.;
-      });
+      }};
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
    }
 } // namespace

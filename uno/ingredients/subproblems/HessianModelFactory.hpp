@@ -5,6 +5,7 @@
 #define UNO_HESSIANMODELFACTORY_H
 
 #include <memory>
+#include <string>
 #include "HessianModel.hpp"
 
 namespace uno {
