@@ -1,9 +1,7 @@
 # Uno
 
 <div align="center">
-
    *A modern, modular solver for nonlinearly constrained nonconvex optimization*
-
 </div>
 
 Uno (Unifying Nonlinear Optimization) is a C++ library that unifies methods for solving nonlinearly constrained optimization problems of the form:
@@ -21,6 +19,7 @@ The theoretical abstract framework for unifying nonlinearly constrained nonconve
 [David Kiessling](https://github.com/david0oo) implemented the funnel method.  
 [Silvio Traversaro](https://github.com/traversaro) and [Alexis Montoison](https://github.com/amontoison) contributed to the CMakeLists.
 
+![Unit tests on Ubuntu workflow](https://github.com/cvanaret/Uno/actions/workflows/unit-tests-ubuntu.yml/badge.svg)
 
 ## Unifying nonlinearly constrained nonconvex optimization
 
