@@ -343,9 +343,10 @@ namespace uno {
    // Section 3.9 in IPOPT paper
    bool PrimalDualInteriorPointSubproblem::is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals,
          const Vector<double>& direction_primals) const {
-      const VectorExpression relative_direction_size(Range(problem.number_variables), [&](size_t variable_index) {
+      const Range variables_range = Range(problem.number_variables);
+      const VectorExpression relative_direction_size{variables_range, [&](size_t variable_index) {
          return direction_primals[variable_index] / (1 + std::abs(current_primals[variable_index]));
-      });
+      }};
       static double machine_epsilon = std::numeric_limits<double>::epsilon();
       return (norm_inf(relative_direction_size) <= this->parameters.small_direction_factor * machine_epsilon);
    }
