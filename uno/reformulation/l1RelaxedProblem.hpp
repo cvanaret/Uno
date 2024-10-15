@@ -219,7 +219,8 @@ namespace uno {
    inline double l1RelaxedProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
-      const VectorExpression bounds_complementarity{Range(this->number_variables), [&](size_t variable_index) {
+      const Range variables_range = Range(this->number_variables);
+      const VectorExpression bounds_complementarity{variables_range, [&](size_t variable_index) {
          if (0. < multipliers.lower_bounds[variable_index]) {
             return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index)) - shift_value;
          }
@@ -231,7 +232,8 @@ namespace uno {
 
       // general constraints
       // TODO use the values of the relaxed constraints
-      const VectorExpression constraints_complementarity{Range(this->number_constraints), [&](size_t constraint_index) {
+      const Range constraints_range = Range(this->number_constraints);
+      const VectorExpression constraints_complementarity{constraints_range, [&](size_t constraint_index) {
          if (this->model.get_constraint_bound_type(constraint_index) != EQUAL_BOUNDS) {
             if (0. < multipliers.constraints[constraint_index]) { // lower bound
                return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_lower_bound(constraint_index)) - shift_value;

@@ -66,10 +66,10 @@ namespace uno {
       std::vector<size_t> upper_bounded_slacks;
       std::vector<size_t> single_lower_bounded_slacks;
       std::vector<size_t> single_upper_bounded_slacks;
-      Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> lower_bounded_variables;
-      Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> upper_bounded_variables;
-      Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> single_lower_bounded_variables;
-      Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>&>> single_upper_bounded_variables;
+      Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>>> lower_bounded_variables;
+      Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>>> upper_bounded_variables;
+      Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>>> single_lower_bounded_variables;
+      Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>>> single_upper_bounded_variables;
    };
 
    // Transform the problem into an equality-constrained problem with constraints c(x) = 0. This implies:
@@ -88,10 +88,10 @@ namespace uno {
          slacks(this->model->get_inequality_constraints().size()),
          lower_bounded_slacks(this->slacks.size()),
          upper_bounded_slacks(this->slacks.size()),
-         lower_bounded_variables(concatenate(this->model->get_lower_bounded_variables(), CollectionAdapter(this->lower_bounded_slacks))),
-         upper_bounded_variables(concatenate(this->model->get_upper_bounded_variables(), CollectionAdapter(this->upper_bounded_slacks))),
-         single_lower_bounded_variables(concatenate(this->model->get_single_lower_bounded_variables(), CollectionAdapter(this->single_lower_bounded_slacks))),
-         single_upper_bounded_variables(concatenate(this->model->get_single_upper_bounded_variables(), CollectionAdapter(this->single_upper_bounded_slacks))){
+         lower_bounded_variables(concatenate(this->model->get_lower_bounded_variables(), adapt(this->lower_bounded_slacks))),
+         upper_bounded_variables(concatenate(this->model->get_upper_bounded_variables(), adapt(this->upper_bounded_slacks))),
+         single_lower_bounded_variables(concatenate(this->model->get_single_lower_bounded_variables(), adapt(this->single_lower_bounded_slacks))),
+         single_upper_bounded_variables(concatenate(this->model->get_single_upper_bounded_variables(), adapt(this->single_upper_bounded_slacks))){
       // register the inequality constraint of each slack
       size_t inequality_index = 0;
       for (const size_t constraint_index: this->model->get_inequality_constraints()) {

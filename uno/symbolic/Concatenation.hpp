@@ -30,8 +30,8 @@ namespace uno {
       }
 
    protected:
-      Collection1 collection1;
-      Collection2 collection2;
+      const Collection1 collection1;
+      const Collection2 collection2;
    };
 
    template <typename Collection1, typename Collection2>

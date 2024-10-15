@@ -39,7 +39,7 @@ namespace uno {
       // compatible with algorithms that query the type of the elements
       using value_type = double;
 
-      VectorExpression(Indices&& indices, Callable&& component_function);
+      VectorExpression(const Indices& indices, Callable&& component_function);
       [[nodiscard]] size_t size() const { return this->indices.size(); }
       [[nodiscard]] double operator[](size_t index) const;
 
@@ -47,13 +47,13 @@ namespace uno {
       iterator end() const { return iterator(*this, this->size()); }
 
    protected:
-      const Indices indices; // store const reference or rvalue (temporary)
+      const Indices& indices; // store const reference or rvalue (temporary)
       const Callable component_function;
    };
 
    template <typename Indices, typename Callable>
-   VectorExpression<Indices, Callable>::VectorExpression(Indices&& indices, Callable&& component_function):
-         indices(std::forward<Indices>(indices)), component_function(std::forward<Callable>(component_function)) {
+   VectorExpression<Indices, Callable>::VectorExpression(const Indices& indices, Callable&& component_function):
+         indices(indices), component_function(std::forward<Callable>(component_function)) {
    }
 
    template <typename Indices, typename Callable>

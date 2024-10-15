@@ -11,19 +11,19 @@ namespace uno {
    template <typename Array>
    class CollectionAdapter: public Collection<typename std::remove_reference_t<Array>::value_type> {
    public:
-      explicit CollectionAdapter(Array&& array);
+      explicit CollectionAdapter(const Array& array);
       [[nodiscard]] size_t size() const override;
 
       [[nodiscard]] typename CollectionAdapter::value_type dereference_iterator(size_t index) const override;
       void increment_iterator(size_t& index) const override;
 
    protected:
-      const Array array;
+      const Array& array;
    };
 
    template <typename Array>
-   CollectionAdapter<Array>::CollectionAdapter(Array&& array):
-      Collection<typename std::remove_reference_t<Array>::value_type>(), array(std::forward<Array>(array)) {
+   CollectionAdapter<Array>::CollectionAdapter(const Array& array):
+      Collection<typename std::remove_reference_t<Array>::value_type>(), array(array) {
    }
 
    template <typename Array>
@@ -39,6 +39,11 @@ namespace uno {
    template <typename Array>
    void CollectionAdapter<Array>::increment_iterator(size_t& index) const {
       index++;
+   }
+
+   template <typename Array>
+   CollectionAdapter<Array> adapt(const Array& array) {
+      return CollectionAdapter<Array>{array};
    }
 } // namespace
 

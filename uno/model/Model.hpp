@@ -94,7 +94,8 @@ namespace uno {
    // compute ||c||
    template <typename Array>
    double Model::constraint_violation(const Array& constraints, Norm residual_norm) const {
-      const VectorExpression constraint_violation{Range(constraints.size()), [&](size_t constraint_index) {
+      const Range constraints_range = Range(constraints.size());
+      const VectorExpression constraint_violation{constraints_range, [&](size_t constraint_index) {
          return this->constraint_violation(constraints[constraint_index], constraint_index);
       }};
       return norm(residual_norm, constraint_violation);
