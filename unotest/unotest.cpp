@@ -7,10 +7,6 @@
 #include <gtest/gtest.h>
 #include "tools/Logger.hpp"
 
-namespace uno {
-   Level Logger::level = INFO;
-} // namespace
-
 // https://www.eriksmistad.no/getting-started-with-google-test-on-ubuntu/
 int main(int argc, char **argv) {
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)

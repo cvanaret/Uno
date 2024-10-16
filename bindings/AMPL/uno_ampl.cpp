@@ -46,8 +46,6 @@ namespace uno {
       Uno::print_optimization_summary(options, result);
       // std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
    }
-
-   Level Logger::level = INFO;
 } // namespace
 
 int main(int argc, char* argv[]) {

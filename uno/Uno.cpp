@@ -21,6 +21,8 @@ namespace uno {
          max_iterations(options.get_unsigned_int("max_iterations")),
          time_limit(options.get_double("time_limit")) {
    }
+   
+   Level Logger::level = INFO;
 
    Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
       std::cout << "Problem " << model.name << '\n' << model.number_variables << " variables, " << model.number_constraints << " constraints\n\n";
