@@ -5,6 +5,7 @@
 #define UNO_CSCSPARSESTORAGE_H
 
 #include <cassert>
+#include <vector>
 #include "SparseStorage.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "tools/Infinity.hpp"
