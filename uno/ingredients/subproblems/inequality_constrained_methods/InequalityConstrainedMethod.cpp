@@ -9,8 +9,9 @@
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
-   InequalityConstrainedMethod::InequalityConstrainedMethod(size_t number_variables, size_t number_constraints):
-         Subproblem(),
+   InequalityConstrainedMethod::InequalityConstrainedMethod(const std::string& hessian_model, size_t number_variables, size_t number_constraints,
+         size_t number_hessian_nonzeros, bool convexify, const Options& options):
+         Subproblem(hessian_model, number_variables, number_hessian_nonzeros, convexify, options),
          initial_point(number_variables),
          direction_lower_bounds(number_variables),
          direction_upper_bounds(number_variables),

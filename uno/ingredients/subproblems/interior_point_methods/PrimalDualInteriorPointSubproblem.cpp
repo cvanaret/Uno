@@ -17,12 +17,10 @@
 namespace uno {
    PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(size_t number_variables, size_t number_constraints,
          size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
-         Subproblem(),
+         Subproblem("exact", number_variables, number_hessian_nonzeros, false, options),
          objective_gradient(2 * number_variables), // original variables + barrier terms
          constraints(number_constraints),
          constraint_jacobian(number_constraints, number_variables),
-         // the Hessian is not convexified. Instead, the augmented system will be.
-         hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), number_variables, number_hessian_nonzeros, false, options)),
          augmented_system(options.get_string("sparse_format"), number_variables + number_constraints,
                number_hessian_nonzeros
                + number_variables /* diagonal barrier terms for bound constraints */
@@ -279,10 +277,6 @@ namespace uno {
       this->compute_least_square_multipliers(problem, trial_iterate, trial_iterate.multipliers.constraints);
    }
 
-   const SymmetricMatrix<size_t, double>& PrimalDualInteriorPointSubproblem::get_lagrangian_hessian() const {
-      return this->hessian_model->hessian;
-   }
-
    void PrimalDualInteriorPointSubproblem::set_auxiliary_measure(const Model& model, Iterate& iterate) {
       // auxiliary measure: barrier terms
       double barrier_terms = 0.;
@@ -519,10 +513,6 @@ namespace uno {
             }
          }
       }
-   }
-
-   size_t PrimalDualInteriorPointSubproblem::get_hessian_evaluation_count() const {
-      return this->hessian_model->evaluation_count;
    }
 
    void PrimalDualInteriorPointSubproblem::set_initial_point(const Vector<double>& /*point*/) {

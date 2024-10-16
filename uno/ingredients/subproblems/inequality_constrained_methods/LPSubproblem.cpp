@@ -13,7 +13,7 @@
 namespace uno {
    LPSubproblem::LPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
          size_t number_jacobian_nonzeros, const Options& options) :
-         InequalityConstrainedMethod(number_variables, number_constraints),
+         InequalityConstrainedMethod("zero", number_variables, number_constraints, 0, false, options),
          solver(LPSolverFactory::create(options.get_string("LP_solver"), number_variables, number_constraints,
                number_objective_gradient_nonzeros, number_jacobian_nonzeros, options)),
          zero_hessian(SymmetricMatrix<size_t, double>::zero(number_variables)) {
@@ -57,14 +57,5 @@ namespace uno {
       this->number_subproblems_solved++;
       // reset the initial point
       this->initial_point.fill(0.);
-   }
-
-   const SymmetricMatrix<size_t, double>& LPSubproblem::get_lagrangian_hessian() const {
-      return this->zero_hessian;
-   }
-
-   size_t LPSubproblem::get_hessian_evaluation_count() const {
-      // no second order evaluation is used
-      return 0;
    }
 } // namespace

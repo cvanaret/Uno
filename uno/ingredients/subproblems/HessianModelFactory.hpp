@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include "HessianModel.hpp"
+#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    class HessianModelFactory {
@@ -19,14 +20,17 @@ namespace uno {
          bool convexify, const Options& options) {
       if (hessian_model == "exact") {
          if (convexify) {
-            return std::make_unique<ConvexifiedHessian>(dimension, maximum_number_nonzeros, options);
+            return std::make_unique<ConvexifiedHessian>(dimension, maximum_number_nonzeros + dimension, options);
          }
          else {
             return std::make_unique<ExactHessian>(dimension, maximum_number_nonzeros, options);
          }
       }
+      else if (hessian_model == "zero") {
+         return std::make_unique<ZeroHessian>(dimension, options);
+      }
       throw std::invalid_argument("Hessian model " + hessian_model + " does not exist");
    }
 } // namespace
 
-#endif // UNO_HESSIANMODELFACTORY_H
+#endif // UNO_HESSIANMODELFACTORY_H,

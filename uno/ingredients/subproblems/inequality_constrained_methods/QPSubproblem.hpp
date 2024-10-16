@@ -8,8 +8,7 @@
 #include "InequalityConstrainedMethod.hpp"
 
 namespace uno {
-   // forward references
-   class HessianModel;
+   // forward reference
    class QPSolver;
 
    class QPSubproblem : public InequalityConstrainedMethod {
@@ -21,14 +20,11 @@ namespace uno {
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
             Direction& direction, const WarmstartInformation& warmstart_information) override;
-      [[nodiscard]] const SymmetricMatrix<size_t, double>& get_lagrangian_hessian() const override;
-      [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
    protected:
       const bool use_regularization;
       const bool enforce_linear_constraints_at_initial_iterate;
-      // pointers to allow polymorphism
-      const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
+      // pointer to allow polymorphism
       const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
 
       void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,

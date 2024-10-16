@@ -14,7 +14,7 @@ namespace uno {
          hessian(dimension, maximum_number_nonzeros, use_regularization, sparse_format) {
    }
 
-   // Exact Hessian
+   // exact Hessian
    ExactHessian::ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options) :
          HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */false) {
    }
@@ -27,7 +27,7 @@ namespace uno {
       this->evaluation_count++;
    }
 
-   // Convexified Hessian
+   // convexified Hessian
    ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options):
          HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */true),
          // inertia-based convexification needs a linear solver
@@ -80,5 +80,16 @@ namespace uno {
          }
       }
       statistics.set("regularization", regularization_factor);
+   }
+
+   // zero Hessian
+   ZeroHessian::ZeroHessian(size_t dimension, const Options& options) :
+         HessianModel(dimension, 0, options.get_string("sparse_format"), /* use_regularization = */false) {
+      std::cout << "Current zero Hessian:\n" << this->hessian << '\n';
+   }
+
+   void ZeroHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& /*primal_variables*/,
+         const Vector<double>& /*constraint_multipliers*/) {
+      this->hessian.set_dimension(problem.number_variables);
    }
 } // namespace

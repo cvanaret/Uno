@@ -6,11 +6,13 @@
 
 #include <cassert>
 #include <vector>
+#include "HessianModelFactory.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
    // forward declarations
    class Direction;
+   class HessianModel;
    class Iterate;
    class l1RelaxedProblem;
    class Model;
@@ -29,7 +31,7 @@ namespace uno {
     */
    class Subproblem {
    public:
-      explicit Subproblem() = default;
+      Subproblem(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros, bool convexify, const Options& options);
       virtual ~Subproblem() = default;
 
       // virtual methods implemented by subclasses
@@ -45,14 +47,14 @@ namespace uno {
       virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
 
       // progress measures
-      [[nodiscard]] virtual const SymmetricMatrix<size_t, double>& get_lagrangian_hessian() const = 0;
+      [[nodiscard]] const SymmetricMatrix<size_t, double>& get_lagrangian_hessian() const;
       virtual void set_auxiliary_measure(const Model& model, Iterate& iterate) = 0;
       [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
             const Vector<double>& primal_direction, double step_length) const = 0;
 
       virtual void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) = 0;
 
-      [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
+      [[nodiscard]] size_t get_hessian_evaluation_count() const;
       virtual void set_initial_point(const Vector<double>& initial_point) = 0;
 
       size_t number_subproblems_solved{0};
@@ -60,13 +62,9 @@ namespace uno {
       bool subproblem_definition_changed{false};
 
    protected:
+      const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
       double trust_region_radius{INF<double>};
    };
-
-   inline void Subproblem::set_trust_region_radius(double new_trust_region_radius) {
-      assert(0. < new_trust_region_radius && "The trust-region radius should be positive.");
-      this->trust_region_radius = new_trust_region_radius;
-   }
 } // namespace
 
 #endif // UNO_SUBPROBLEM_H

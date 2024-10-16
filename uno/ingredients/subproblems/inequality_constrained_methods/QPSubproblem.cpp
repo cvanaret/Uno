@@ -18,12 +18,10 @@
 namespace uno {
    QPSubproblem::QPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
          size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) :
-         InequalityConstrainedMethod(number_variables, number_constraints),
+         InequalityConstrainedMethod(options.get_string("hessian_model"), number_variables, number_constraints, number_hessian_nonzeros,
+               options.get_string("globalization_mechanism") == "LS", options),
          use_regularization(options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP")),
          enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")),
-         // if no trust region is used, the problem should be convexified to guarantee boundedness
-         hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), number_variables,
-               number_hessian_nonzeros + number_variables, this->use_regularization, options)),
          // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
          solver(QPSolverFactory::create(options.get_string("QP_solver"), number_variables, number_constraints,
                number_objective_gradient_nonzeros, number_jacobian_nonzeros,
@@ -83,13 +81,5 @@ namespace uno {
       this->number_subproblems_solved++;
       // reset the initial point
       this->initial_point.fill(0.);
-   }
-
-   const SymmetricMatrix<size_t, double>& QPSubproblem::get_lagrangian_hessian() const {
-      return this->hessian_model->hessian;
-   }
-
-   size_t QPSubproblem::get_hessian_evaluation_count() const {
-      return this->hessian_model->evaluation_count;
    }
 } // namespace

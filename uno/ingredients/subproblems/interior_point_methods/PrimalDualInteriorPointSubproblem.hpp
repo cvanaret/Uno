@@ -13,7 +13,6 @@ namespace uno {
    template <typename IndexType, typename NumericalType>
    class DirectSymmetricIndefiniteLinearSolver;
    class DualResiduals;
-   class HessianModel;
 
    struct InteriorPointParameters {
       double tau_min;
@@ -41,19 +40,16 @@ namespace uno {
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
             Direction& direction, const WarmstartInformation& warmstart_information) override;
 
-      [[nodiscard]] const SymmetricMatrix<size_t, double>& get_lagrangian_hessian() const override;
       void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
             const Vector<double>& primal_direction, double step_length) const override;
 
       void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) override;
-      [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
    protected:
       SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
-      const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
 
       SymmetricIndefiniteLinearSystem<double> augmented_system;
       const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;

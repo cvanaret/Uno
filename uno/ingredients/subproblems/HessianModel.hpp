@@ -30,7 +30,7 @@ namespace uno {
             const Vector<double>& constraint_multipliers) = 0;
    };
 
-   // Exact Hessian
+   // exact Hessian
    class ExactHessian : public HessianModel {
    public:
       ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
@@ -53,6 +53,15 @@ namespace uno {
       const double regularization_increase_factor{};
 
       void regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables);
+   };
+
+   // zero Hessian
+   class ZeroHessian : public HessianModel {
+   public:
+      ZeroHessian(size_t dimension, const Options& options);
+
+      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
+            const Vector<double>& constraint_multipliers) override;
    };
 } // namespace
 
