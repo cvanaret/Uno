@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <string>
 #include "Filter.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Logger.hpp"

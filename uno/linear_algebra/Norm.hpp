@@ -4,7 +4,9 @@
 #ifndef UNO_NORM_H
 #define UNO_NORM_H
 
+#include <algorithm>
 #include <cmath>
+#include <string>
 #include "symbolic/Range.hpp"
 
 namespace uno {
