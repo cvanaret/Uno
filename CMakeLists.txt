@@ -28,9 +28,12 @@ add_subdirectory(/home/manuel/repos/Uno/MUMPS_cmake /home/manuel/repos/Uno/MUMPS
 include(FortranCInterface)
 FortranCInterface_VERIFY(CXX)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion -Wmaybe-uninitialized")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
 set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmaybe-uninitialized")
+endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders)
 
