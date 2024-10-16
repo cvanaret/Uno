@@ -28,7 +28,7 @@ namespace uno {
          }
 
          friend bool operator!=(const iterator& a, const iterator& b) {
-            return &a.sparse_storage != &b.sparse_storage || a.column_index != b.column_index || a.nonzero_index != b.nonzero_index;
+            return a.nonzero_index != b.nonzero_index;
          }
 
       protected:
