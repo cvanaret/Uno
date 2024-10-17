@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
+#include <stdexcept>
 #include "AMPLModel.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
@@ -19,8 +20,8 @@ namespace uno {
 
       int n_discrete = asl->i.nbv_ + asl->i.niv_ + asl->i.nlvbi_ + asl->i.nlvci_ + asl->i.nlvoi_;
       if (0 < n_discrete) {
-         WARNING << "Ignoring integrality of " << n_discrete << " variables.\n";
-         asl->i.need_nl_ = 0;
+         throw std::runtime_error("Error: " + std::to_string(n_discrete) + " variables are discrete, which Uno cannot handle.");
+         // asl->i.need_nl_ = 0;
       }
 
       // preallocate initial primal and dual solutions
