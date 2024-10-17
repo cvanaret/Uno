@@ -12,7 +12,6 @@
 namespace uno {
    // forward declarations
    class Direction;
-   class HessianModel;
    class Iterate;
    class l1RelaxedProblem;
    class Model;

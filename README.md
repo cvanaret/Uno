@@ -93,18 +93,19 @@ See the [INSTALL](INSTALL.md) file.
 
 At the moment, Uno only reads models from [.nl files](https://en.wikipedia.org/wiki/Nl_(format)). A couple of CUTEst instances are available in the `/examples` directory.
 
-To solve an AMPL model, type in the `build` directory: ```./uno_ampl path_to_file/file.nl```
+To solve an AMPL model, type in the `build` directory: ```./uno_ampl model.nl -AMPL [key=value ...]```  
+where ```[key=value ...]``` is a list of options. 
 
 To use Uno with Julia/JuMP, a solution in the short term is to use the package [AmplNLWriter.jl](https://juliahub.com/ui/Packages/General/AmplNLWriter.jl) to dump JuMP models into .nl files.
 
 ### Combination of ingredients
 
-To pick a globalization mechanism, use the argument (choose one of the possible options in brackets): ```-globalization_mechanism [LS|TR]```  
-To pick a constraint relaxation strategy, use the argument: ```-constraint_relaxation_strategy [feasibility_restoration|l1_relaxation]```  
-To pick a globalization strategy, use the argument: ```-globalization_strategy [l1_merit|fletcher_filter_method|waechter_filter_method|funnel_method]```  
-To pick a subproblem method, use the argument: ```-subproblem [QP|LP|primal_dual_interior_point]```  
+To pick a globalization mechanism, use the argument (choose one of the possible options in brackets): ```globalization_mechanism=[LS|TR]```  
+To pick a constraint relaxation strategy, use the argument: ```constraint_relaxation_strategy=[feasibility_restoration|l1_relaxation]```  
+To pick a globalization strategy, use the argument: ```globalization_strategy=[l1_merit|fletcher_filter_method|waechter_filter_method|funnel_method]```  
+To pick a subproblem method, use the argument: ```subproblem=[QP|LP|primal_dual_interior_point]```  
 The options can be combined in the same command line.
 
 For an overview of the available strategies, type: ```./uno_ampl --strategies```
 
-To pick a preset, use the argument: ```-preset [filtersqp|ipopt|byrd]```
+To pick a preset, use the argument: ```preset=[filtersqp|ipopt|byrd]```
