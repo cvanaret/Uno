@@ -5,7 +5,6 @@
 #include <fstream>
 #include <sstream>
 #include "Options.hpp"
-#include "Logger.hpp"
 
 namespace uno {
    std::string& Options::operator[](const std::string& key) {
@@ -80,128 +79,104 @@ namespace uno {
       }
    }
 
-   void find_preset(const std::string& preset_name, Options& options) {
+   void Options::find_preset(const std::string& preset_name) {
       // shortcuts for state-of-the-art combinations
       if (preset_name == "ipopt") {
-         options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["subproblem"] = "primal_dual_interior_point";
-         options["globalization_mechanism"] = "LS";
-         options["globalization_strategy"] = "waechter_filter_method";
-         options["filter_type"] = "standard";
-         options["filter_beta"] = "0.99999";
-         options["filter_gamma"] = "1e-8";
-         options["switching_delta"] = "1";
-         options["filter_ubd"] = "1e4";
-         options["filter_fact"] = "1e4";
-         options["filter_switching_infeasibility_exponent"] = "1.1";
-         options["armijo_decrease_fraction"] = "1e-8";
-         options["LS_backtracking_ratio"] = "0.5";
-         options["LS_min_step_length"] = "5e-7";
-         options["barrier_tau_min"] = "0.99";
-         options["barrier_damping_factor"] = "1e-5";
-         options["l1_constraint_violation_coefficient"] = "1000.";
-         options["progress_norm"] = "L1";
-         options["residual_norm"] = "INF";
-         options["scale_functions"] = "yes";
-         options["sparse_format"] = "COO";
-         options["tolerance"] = "1e-8";
-         options["loose_tolerance"] = "1e-6";
-         options["loose_tolerance_consecutive_iteration_threshold"] = "15";
-         options["switch_to_optimality_requires_linearized_feasibility"] = "no";
-         options["LS_scale_duals_with_step_length"] = "yes";
-         options["protect_actual_reduction_against_roundoff"] = "yes";
+         (*this)["constraint_relaxation_strategy"] = "feasibility_restoration";
+         (*this)["subproblem"] = "primal_dual_interior_point";
+         (*this)["globalization_mechanism"] = "LS";
+         (*this)["globalization_strategy"] = "waechter_filter_method";
+         (*this)["filter_type"] = "standard";
+         (*this)["filter_beta"] = "0.99999";
+         (*this)["filter_gamma"] = "1e-8";
+         (*this)["switching_delta"] = "1";
+         (*this)["filter_ubd"] = "1e4";
+         (*this)["filter_fact"] = "1e4";
+         (*this)["filter_switching_infeasibility_exponent"] = "1.1";
+         (*this)["armijo_decrease_fraction"] = "1e-8";
+         (*this)["LS_backtracking_ratio"] = "0.5";
+         (*this)["LS_min_step_length"] = "5e-7";
+         (*this)["barrier_tau_min"] = "0.99";
+         (*this)["barrier_damping_factor"] = "1e-5";
+         (*this)["l1_constraint_violation_coefficient"] = "1000.";
+         (*this)["progress_norm"] = "L1";
+         (*this)["residual_norm"] = "INF";
+         (*this)["scale_functions"] = "yes";
+         (*this)["sparse_format"] = "COO";
+         (*this)["tolerance"] = "1e-8";
+         (*this)["loose_tolerance"] = "1e-6";
+         (*this)["loose_tolerance_consecutive_iteration_threshold"] = "15";
+         (*this)["switch_to_optimality_requires_linearized_feasibility"] = "no";
+         (*this)["LS_scale_duals_with_step_length"] = "yes";
+         (*this)["protect_actual_reduction_against_roundoff"] = "yes";
       }
       else if (preset_name == "filtersqp") {
-         options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["subproblem"] = "QP";
-         options["globalization_mechanism"] = "TR";
-         options["globalization_strategy"] = "fletcher_filter_method";
-         options["filter_type"] = "standard";
-         options["progress_norm"] = "L1";
-         options["residual_norm"] = "L2";
-         options["sparse_format"] = "CSC";
-         options["TR_radius"] = "10";
-         options["l1_constraint_violation_coefficient"] = "1.";
-         options["enforce_linear_constraints"] = "yes";
-         options["tolerance"] = "1e-6";
-         options["loose_tolerance"] = "1e-6";
-         options["TR_min_radius"] = "1e-8";
-         options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
-         options["protect_actual_reduction_against_roundoff"] = "no";
+         (*this)["constraint_relaxation_strategy"] = "feasibility_restoration";
+         (*this)["subproblem"] = "QP";
+         (*this)["globalization_mechanism"] = "TR";
+         (*this)["globalization_strategy"] = "fletcher_filter_method";
+         (*this)["filter_type"] = "standard";
+         (*this)["progress_norm"] = "L1";
+         (*this)["residual_norm"] = "L2";
+         (*this)["sparse_format"] = "CSC";
+         (*this)["TR_radius"] = "10";
+         (*this)["l1_constraint_violation_coefficient"] = "1.";
+         (*this)["enforce_linear_constraints"] = "yes";
+         (*this)["tolerance"] = "1e-6";
+         (*this)["loose_tolerance"] = "1e-6";
+         (*this)["TR_min_radius"] = "1e-8";
+         (*this)["switch_to_optimality_requires_linearized_feasibility"] = "yes";
+         (*this)["protect_actual_reduction_against_roundoff"] = "no";
       }
       else if (preset_name == "byrd") {
-         options["constraint_relaxation_strategy"] = "l1_relaxation";
-         options["subproblem"] = "QP";
-         options["globalization_mechanism"] = "LS";
-         options["globalization_strategy"] = "l1_merit";
-         options["l1_relaxation_initial_parameter"] = "1";
-         options["LS_backtracking_ratio"] = "0.5";
-         options["armijo_decrease_fraction"] = "1e-8";
-         options["l1_relaxation_epsilon1"] = "0.1";
-         options["l1_relaxation_epsilon2"] = "0.1";
-         options["l1_constraint_violation_coefficient"] = "1.";
-         options["tolerance"] = "1e-6";
-         options["loose_tolerance"] = "1e-6";
-         options["progress_norm"] = "L1";
-         options["residual_norm"] = "L1";
-         options["sparse_format"] = "CSC";
-         options["LS_scale_duals_with_step_length"] = "no";
-         options["protect_actual_reduction_against_roundoff"] = "no";
+         (*this)["constraint_relaxation_strategy"] = "l1_relaxation";
+         (*this)["subproblem"] = "QP";
+         (*this)["globalization_mechanism"] = "LS";
+         (*this)["globalization_strategy"] = "l1_merit";
+         (*this)["l1_relaxation_initial_parameter"] = "1";
+         (*this)["LS_backtracking_ratio"] = "0.5";
+         (*this)["armijo_decrease_fraction"] = "1e-8";
+         (*this)["l1_relaxation_epsilon1"] = "0.1";
+         (*this)["l1_relaxation_epsilon2"] = "0.1";
+         (*this)["l1_constraint_violation_coefficient"] = "1.";
+         (*this)["tolerance"] = "1e-6";
+         (*this)["loose_tolerance"] = "1e-6";
+         (*this)["progress_norm"] = "L1";
+         (*this)["residual_norm"] = "L1";
+         (*this)["sparse_format"] = "CSC";
+         (*this)["LS_scale_duals_with_step_length"] = "no";
+         (*this)["protect_actual_reduction_against_roundoff"] = "no";
       }
       else if (preset_name == "funnelsqp") {
-         options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["subproblem"] = "QP";
-         options["globalization_mechanism"] = "TR";
-         options["globalization_strategy"] = "funnel_method";
-         options["progress_norm"] = "L1";
-         options["residual_norm"] = "L2";
-         options["sparse_format"] = "CSC";
-         options["TR_radius"] = "10";
-         options["l1_constraint_violation_coefficient"] = "1.";
-         options["enforce_linear_constraints"] = "yes";
-         options["tolerance"] = "1e-6";
-         options["loose_tolerance"] = "1e-6";
-         options["TR_min_radius"] = "1e-8";
-         options["switch_to_optimality_requires_acceptance"] = "no";
-         options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
+         (*this)["constraint_relaxation_strategy"] = "feasibility_restoration";
+         (*this)["subproblem"] = "QP";
+         (*this)["globalization_mechanism"] = "TR";
+         (*this)["globalization_strategy"] = "funnel_method";
+         (*this)["progress_norm"] = "L1";
+         (*this)["residual_norm"] = "L2";
+         (*this)["sparse_format"] = "CSC";
+         (*this)["TR_radius"] = "10";
+         (*this)["l1_constraint_violation_coefficient"] = "1.";
+         (*this)["enforce_linear_constraints"] = "yes";
+         (*this)["tolerance"] = "1e-6";
+         (*this)["loose_tolerance"] = "1e-6";
+         (*this)["TR_min_radius"] = "1e-8";
+         (*this)["switch_to_optimality_requires_acceptance"] = "no";
+         (*this)["switch_to_optimality_requires_linearized_feasibility"] = "yes";
 
-         options["funnel_beta"] = "0.9999";
-         options["funnel_gamma"] = "0.001";
-         options["switching_delta"] = "0.999";
-         options["funnel_kappa"] = "0.5";
-         options["funnel_ubd"] = "1.0";
-         options["funnel_fact"] = "1.5";
-         options["funnel_switching_infeasibility_exponent"] = "2";
-         options["funnel_update_strategy"] = "2";
+         (*this)["funnel_beta"] = "0.9999";
+         (*this)["funnel_gamma"] = "0.001";
+         (*this)["switching_delta"] = "0.999";
+         (*this)["funnel_kappa"] = "0.5";
+         (*this)["funnel_ubd"] = "1.0";
+         (*this)["funnel_fact"] = "1.5";
+         (*this)["funnel_switching_infeasibility_exponent"] = "2";
+         (*this)["funnel_update_strategy"] = "2";
       }
       else {
          throw std::runtime_error("The preset " + preset_name + " is not known.");
       }
    }
 
-   void Options::get_command_line_arguments(int argc, char* argv[]) {
-      // build the (name, value) map
-      int i = 1;
-      while (i < argc - 1) {
-         std::string argument = std::string(argv[i]);
-         if (argument[0] == '-') {
-            if (i < argc - 1) {
-               // remove the '-'
-               const std::string name = argument.substr(1);
-               const std::string value = std::string(argv[i + 1]);
-               if (name == "preset") {
-                  find_preset(value, *this);
-               }
-               else {
-                  this->operator[](name) = value;
-               }
-               i += 2;
-            }
-         }
-         else {
-            WARNING << "Argument " << argument << " was ignored\n";
-            i++;
-         }
-      }
-   }
+
 } // namespace

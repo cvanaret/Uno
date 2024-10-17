@@ -20,11 +20,10 @@ namespace uno {
       [[nodiscard]] size_t get_unsigned_int(const std::string& key) const;
       [[nodiscard]] bool get_bool(const std::string& key) const;
 
-      void get_command_line_arguments(int argc, char* argv[]);
-
       void print(bool only_used) const;
 
       static Options get_default_options(const std::string& file_name);
+      void find_preset(const std::string& preset_name);
 
    private:
       std::map<std::string, std::string> options{};
