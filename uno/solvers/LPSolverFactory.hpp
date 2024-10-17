@@ -25,6 +25,15 @@ namespace uno {
 #endif
          throw std::invalid_argument("LP solver not found");
       }
+
+      // return the list of available LP solvers
+      static std::vector<std::string> available_solvers() {
+         std::vector<std::string> solvers{};
+#ifdef HAS_BQPD
+         solvers.emplace_back("BQPD");
+#endif
+         return solvers;
+      }
    };
 } // namespace
 

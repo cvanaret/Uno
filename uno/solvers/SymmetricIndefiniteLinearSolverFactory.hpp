@@ -39,6 +39,9 @@ namespace uno {
 #ifdef HAS_MA57
          solvers.emplace_back("MA57");
 #endif
+#ifdef HAS_MUMPS
+         solvers.emplace_back("MUMPS");
+#endif
          return solvers;
       }
    };
