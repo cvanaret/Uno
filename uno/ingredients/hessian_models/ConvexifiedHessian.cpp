@@ -1,33 +1,15 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "HessianModel.hpp"
-#include "linear_algebra/SparseStorageFactory.hpp"
+#include "ConvexifiedHessian.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   HessianModel::HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization) :
-         hessian(dimension, maximum_number_nonzeros, use_regularization, sparse_format) {
-   }
-
-   // exact Hessian
-   ExactHessian::ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options) :
-         HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */false) {
-   }
-
-   void ExactHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-         const Vector<double>& constraint_multipliers) {
-      // evaluate Lagrangian Hessian
-      this->hessian.set_dimension(problem.number_variables);
-      problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, this->hessian);
-      this->evaluation_count++;
-   }
-
-   // convexified Hessian
    ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options):
          HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */true),
          // inertia-based convexification needs a linear solver
@@ -80,16 +62,5 @@ namespace uno {
          }
       }
       statistics.set("regularization", regularization_factor);
-   }
-
-   // zero Hessian
-   ZeroHessian::ZeroHessian(size_t dimension, const Options& options) :
-         HessianModel(dimension, 0, options.get_string("sparse_format"), /* use_regularization = */false) {
-      std::cout << "Current zero Hessian:\n" << this->hessian << '\n';
-   }
-
-   void ZeroHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& /*primal_variables*/,
-         const Vector<double>& /*constraint_multipliers*/) {
-      this->hessian.set_dimension(problem.number_variables);
    }
 } // namespace

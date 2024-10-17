@@ -7,6 +7,9 @@
 #include <memory>
 #include <string>
 #include "HessianModel.hpp"
+#include "ConvexifiedHessian.hpp"
+#include "ExactHessian.hpp"
+#include "ZeroHessian.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {

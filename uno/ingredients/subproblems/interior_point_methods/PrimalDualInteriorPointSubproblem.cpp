@@ -4,7 +4,7 @@
 #include <cmath>
 #include "PrimalDualInteriorPointSubproblem.hpp"
 #include "ingredients/subproblems/Direction.hpp"
-#include "ingredients/subproblems/HessianModelFactory.hpp"
+#include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "linear_algebra/SparseStorageFactory.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
@@ -172,10 +172,10 @@ namespace uno {
    void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, Direction& direction, const WarmstartInformation& warmstart_information) {
       if (problem.has_inequality_constraints()) {
-         throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel.\n");
+         throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel.");
       }
       if (is_finite(this->trust_region_radius)) {
-         throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet.\n");
+         throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet.");
       }
 
       // possibly update the barrier parameter

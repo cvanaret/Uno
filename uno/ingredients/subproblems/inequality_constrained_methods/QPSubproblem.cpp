@@ -3,7 +3,7 @@
 
 #include "QPSubproblem.hpp"
 #include "ingredients/subproblems/Direction.hpp"
-#include "ingredients/subproblems/HessianModelFactory.hpp"
+#include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
