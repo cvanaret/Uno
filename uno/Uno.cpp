@@ -10,6 +10,9 @@
 #include "ingredients/subproblems/SubproblemFactory.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
+#include "solvers/QPSolverFactory.hpp"
+#include "solvers/LPSolverFactory.hpp"
+#include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Options.hpp"
 #include "tools/Statistics.hpp"
@@ -113,13 +116,15 @@ namespace uno {
             Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
    }
 
-   void join(const std::vector<std::string>& vector, char separator) {
+   std::string join(const std::vector<std::string>& vector, const std::string& separator) {
+      std::string result{};
       if (not vector.empty()) {
-         std::cout << vector[0];
+         result = vector[0];
          for (size_t variable_index: Range(1, vector.size())) {
-            std::cout << separator << ' ' << vector[variable_index];
+            result += separator + vector[variable_index];
          }
       }
+      return result;
    }
 
    void Uno::print_uno_version() {
@@ -137,18 +142,13 @@ namespace uno {
 
    void Uno::print_available_strategies() {
       std::cout << "Available strategies:\n";
-      std::cout << "Constraint relaxation strategies: ";
-      join(ConstraintRelaxationStrategyFactory::available_strategies(), ',');
-      std::cout << '\n';
-      std::cout << "Globalization mechanisms: ";
-      join(GlobalizationMechanismFactory::available_strategies(), ',');
-      std::cout << '\n';
-      std::cout << "Globalization strategies: ";
-      join(GlobalizationStrategyFactory::available_strategies(), ',');
-      std::cout << '\n';
-      std::cout << "Subproblems: ";
-      join(SubproblemFactory::available_strategies(), ',');
-      std::cout << '\n';
+      std::cout << "- Constraint relaxation strategies: " << join(ConstraintRelaxationStrategyFactory::available_strategies(), ", ") << '\n';
+      std::cout << "- Globalization mechanisms: " << join(GlobalizationMechanismFactory::available_strategies(), ", ") << '\n';
+      std::cout << "- Globalization strategies: " << join(GlobalizationStrategyFactory::available_strategies(), ", ") << '\n';
+      std::cout << "- Subproblems: " << join(SubproblemFactory::available_strategies(), ", ") << '\n';
+      std::cout << "- QP solvers: " << join(QPSolverFactory::available_solvers(), ", ") << '\n';
+      std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers(), ", ") << '\n';
+      std::cout << "- Linear solvers: " << join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", ") << '\n';
    }
 
    void Uno::print_strategy_combination(const Options& options) {
