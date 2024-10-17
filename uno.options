@@ -238,3 +238,6 @@ least_square_multiplier_max_norm 1e3
 ##### BQPD options #####
 BQPD_print_subproblem no
 BQPD_kmax 500
+
+##### AMPL options #####
+AMPL_write_solution_to_file yes
