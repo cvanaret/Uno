@@ -1,7 +1,9 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <cassert>
 #include "Subproblem.hpp"
+#include "ingredients/hessian_models/HessianModelFactory.hpp"
 
 namespace uno {
    Subproblem::Subproblem(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros, bool convexify,

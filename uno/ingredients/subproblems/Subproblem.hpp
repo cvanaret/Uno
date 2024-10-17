@@ -4,9 +4,9 @@
 #ifndef UNO_SUBPROBLEM_H
 #define UNO_SUBPROBLEM_H
 
-#include <cassert>
-#include <vector>
-#include "HessianModelFactory.hpp"
+#include <memory>
+#include <string>
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
