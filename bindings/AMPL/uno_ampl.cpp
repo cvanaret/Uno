@@ -25,7 +25,7 @@ namespace uno {
    void run_uno_ampl(const std::string& model_name, const Options& options) {
       try {
          // AMPL model
-         std::unique_ptr<Model> ampl_model = std::make_unique<AMPLModel>(model_name);
+         std::unique_ptr<Model> ampl_model = std::make_unique<AMPLModel>(model_name, options);
 
          // initialize initial primal and dual points
          Iterate initial_iterate(ampl_model->number_variables, ampl_model->number_constraints);

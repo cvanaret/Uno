@@ -16,6 +16,9 @@ extern "C" {
 }
 
 namespace uno {
+   // forward reference
+   class Options;
+
    /*! \class AMPLModel
     * \brief AMPL model
     *
@@ -23,7 +26,7 @@ namespace uno {
     */
    class AMPLModel: public Model {
    public:
-      explicit AMPLModel(const std::string& file_name);
+      AMPLModel(const std::string& file_name, const Options& options);
       ~AMPLModel() override;
 
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
@@ -61,10 +64,11 @@ namespace uno {
 
    private:
       // private constructor to pass the dimensions to the Model base constructor
-      AMPLModel(const std::string& file_name, ASL* asl);
+      AMPLModel(const std::string& file_name, ASL* asl, const Options& options);
 
       // mutable: can be modified by const methods (internal state not seen by user)
       mutable ASL* asl; /*!< Instance of the AMPL Solver Library class */
+      const bool write_solution_to_file;
       mutable std::vector<double> asl_gradient{};
       mutable std::vector<double> asl_hessian{};
       size_t number_asl_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */

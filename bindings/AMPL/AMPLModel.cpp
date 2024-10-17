@@ -7,8 +7,10 @@
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/EvaluationErrors.hpp"
+#include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
+#include "tools/Options.hpp"
 #include "symbolic/Concatenation.hpp"
 
 namespace uno {
@@ -34,12 +36,13 @@ namespace uno {
    }
 
    // generate the ASL object and call the private constructor
-   AMPLModel::AMPLModel(const std::string& file_name) : AMPLModel(file_name, generate_asl(file_name)) {
+   AMPLModel::AMPLModel(const std::string& file_name, const Options& options) : AMPLModel(file_name, generate_asl(file_name), options) {
    }
 
-   AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
+   AMPLModel::AMPLModel(const std::string& file_name, ASL* asl, const Options& options) :
          Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), (asl->i.objtype_[0] == 1) ? -1. : 1.),
          asl(asl),
+         write_solution_to_file(options.get_bool("AMPL_write_solution_to_file")),
          // allocate vectors
          asl_gradient(this->number_variables),
          variable_lower_bounds(this->number_variables),
@@ -350,8 +353,27 @@ namespace uno {
       std::copy(this->asl->i.pi0_, this->asl->i.pi0_ + this->number_constraints, multipliers.begin());
    }
 
-   void AMPLModel::postprocess_solution(Iterate& /*iterate*/, TerminationStatus /*termination_status*/) const {
-      // do nothing
+   void AMPLModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
+      if (this->write_solution_to_file) {
+         // write the primal-dual solution and status into a *.sol file
+         this->asl->p.solve_code_ = 400; // limit
+         if (termination_status == TerminationStatus::FEASIBLE_KKT_POINT) {
+            this->asl->p.solve_code_ = 0;
+         }
+         if (termination_status == TerminationStatus::FEASIBLE_SMALL_STEP) {
+            this->asl->p.solve_code_ = 100;
+         }
+         else if (termination_status == TerminationStatus::INFEASIBLE_STATIONARY_POINT) {
+            this->asl->p.solve_code_ = 200;
+         }
+         else if (termination_status == TerminationStatus::UNBOUNDED) {
+            this->asl->p.solve_code_ = 300;
+         }
+         else if (termination_status == TerminationStatus::INFEASIBLE_SMALL_STEP) {
+            this->asl->p.solve_code_ = 500;
+         }
+         write_sol_ASL(this->asl, "", iterate.primals.data(), iterate.multipliers.constraints.data(), nullptr);
+      }
    }
 
    void AMPLModel::generate_constraints() {
