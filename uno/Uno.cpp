@@ -74,7 +74,6 @@ namespace uno {
          statistics.set("iter", 0);
          statistics.set("status", "initial point");
          this->globalization_mechanism.initialize(statistics, current_iterate, options);
-         options.print(true);
          if (Logger::level == INFO) statistics.print_current_line();
       }
       catch (const std::exception& e) {
@@ -141,7 +140,7 @@ namespace uno {
    void Uno::print_strategy_combination(const Options& options) {
       std::string combination = options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
                                 options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
-      std::cout << "\nUno (" << combination << ")\n";
+      std::cout << "\nUno 1.1.0 (" << combination << ")\n";
    }
 
    void Uno::print_optimization_summary(const Options& options, const Result& result) {
