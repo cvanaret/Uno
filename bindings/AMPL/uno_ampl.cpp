@@ -54,35 +54,9 @@ namespace uno {
       }
    }
 
-   // argv[0] is ./uno_ampl
-   // argv[1] is the model name
-   // argv[2] should be -AMPL
-   // argv[i] for i = 3..argc-1 are options
-   void get_command_line_options(Options& options, int argc, char* argv[]) {
-      static const std::string delimiter = "=";
-
-      // build the (name, value) map
-      for (int i = 3; i < argc; i++) {
-         const std::string argument = std::string(argv[i]);
-         size_t position = argument.find_first_of(delimiter);
-         if (position == std::string::npos) {
-            throw std::runtime_error("The option " + argument + " does not contain the delimiter " + delimiter + ".");
-         }
-         const std::string key = argument.substr(0, position);
-         const std::string value = argument.substr(position + 1);
-         if (key == "preset") {
-            options.find_preset(value);
-         }
-         else {
-            options[key] = value;
-         }
-      }
-      options.print(false);
-   }
-
    void print_uno_instructions() {
       std::cout << "Welcome in Uno 1.1.0\n";
-      std::cout << "To solve an AMPL model, type ./uno_ampl model.nl -AMPL [key=value ...]\n";
+      std::cout << "To solve an AMPL model, type ./uno_ampl model.nl -AMPL [option_name=option_value ...]\n";
       std::cout << "To choose a constraint relaxation strategy, use the argument constraint_relaxation_strategy="
                    "[feasibility_restoration|l1_relaxation]\n";
       std::cout << "To choose a subproblem method, use the argument subproblem=[QP|LP|primal_dual_interior_point]\n";
@@ -91,7 +65,6 @@ namespace uno {
                    "[l1_merit|fletcher_filter_method|waechter_filter_method]\n";
       std::cout << "To choose a preset, use the argument preset=[filtersqp|ipopt|byrd]\n";
       std::cout << "The options can be combined in the same command line.\n";
-      //std::cout << "Autocompletion is possible (see README).\n";
    }
 } // namespace
 
@@ -113,21 +86,20 @@ int main(int argc, char* argv[]) {
       }
    }
    else if (argc >= 3) {
-      // get the default options
-      Options options = Options::get_default_options("uno.options");
+      Options options = Options::get_default();
 
-      // AMPL expects: ./uno_ampl model.nl -AMPL [key=value, ...]
+      // AMPL expects: ./uno_ampl model.nl -AMPL [option_name=option_value, ...]
       // model name
       std::string model_name = std::string(argv[1]);
-      std::cout << "Model " << model_name << '\n';
 
       // -AMPL
       if (std::string(argv[2]) != "-AMPL") {
          throw std::runtime_error("The second command line argument should be -AMPL.");
       }
 
-      // override them with the command line arguments
-      get_command_line_options(options, argc, argv);
+      // overwrite the default options with the command line arguments
+      Options overwriting_options = Options::get_command_line_options(argc, argv);
+      options.overwrite_with(overwriting_options);
 
       // solve the model
       Logger::set_logger(options.get_string("logger"));
