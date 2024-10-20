@@ -7,17 +7,23 @@
 #include "Options.hpp"
 
 namespace uno {
+   Options::Options(bool are_default_options): are_default_options(are_default_options) { }
+
    size_t Options::size() const {
       return this->options.size();
    }
 
+   // setter
    std::string& Options::operator[](const std::string& option_name) {
+      this->is_default[option_name] = this->are_default_options;
       return this->options[option_name];
    }
 
+   // getter
    const std::string& Options::at(const std::string& option_name) const {
       try {
          const std::string& option_value = this->options.at(option_name);
+         this->used[option_name] = true;
          return option_value;
       }
       catch(const std::out_of_range&) {
@@ -50,7 +56,7 @@ namespace uno {
    }
 
    Options Options::get_default() {
-      Options options{};
+      Options options(true);
       /** termination **/
       // (tight) tolerance
       options["tolerance"] = "1e-8";
@@ -251,7 +257,7 @@ namespace uno {
    // argv[i] for i = 3..argc-1 are overwriting options
    Options Options::get_command_line_options(int argc, char* argv[]) {
       static const std::string delimiter = "=";
-      Options overwriting_options{};
+      Options overwriting_options(false);
 
       // build the (name, value) map
       for (size_t i = 3; i < static_cast<size_t>(argc); i++) {
@@ -397,16 +403,24 @@ namespace uno {
    }
 
    void Options::overwrite_with(const Options& overwriting_options) {
-      std::string option_list{};
-
       for (const auto& [option_name, option_value]: overwriting_options) {
          (*this)[option_name] = option_value;
-         option_list.append("- ").append(option_name).append(" = ").append(option_value).append("\n");
+         this->is_default[option_name] = overwriting_options.is_default[option_name];
       }
+   }
 
+   void Options::print_used() const {
+      size_t number_used_options = 0;
+      std::string option_list{};
+      for (const auto& [option_name, option_value]: this->options) {
+         if (not this->is_default[option_name] && this->used[option_name]) {
+            number_used_options++;
+            option_list.append("- ").append(option_name).append(" = ").append(option_value).append("\n");
+         }
+      }
       // print the overwritten options
-      if (overwriting_options.size() > 0) {
-         std::cout << "Overwritten options:\n" << option_list << '\n';
+      if (number_used_options > 0) {
+         std::cout << "Used overwritten options:\n" << option_list << '\n';
       }
    }
 

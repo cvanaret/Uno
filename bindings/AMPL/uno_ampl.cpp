@@ -46,7 +46,7 @@ namespace uno {
 
          // solve the instance
          Result result = uno.solve(*model, initial_iterate, options);
-         Uno::print_optimization_summary(options, result);
+         uno.print_optimization_summary(result);
          // std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
       }
       catch (std::exception& exception) {

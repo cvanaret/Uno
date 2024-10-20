@@ -30,13 +30,15 @@ namespace uno {
       [[nodiscard]] Result solve(const Model& model, Iterate& initial_iterate, const Options& options);
 
       static void print_available_strategies();
-      static void print_strategy_combination(const Options& options);
-      static void print_optimization_summary(const Options& options, const Result& result);
+      static std::string get_strategy_combination(const Options& options);
+      void print_optimization_summary(const Result& result);
 
    private:
       GlobalizationMechanism& globalization_mechanism; /*!< Globalization mechanism */
       const size_t max_iterations; /*!< Maximum number of iterations */
       const double time_limit; /*!< CPU time limit (can be inf) */
+      const bool print_solution;
+      const std::string strategy_combination;
 
       void initialize(Statistics& statistics, Iterate& current_iterate, const Options& options);
       [[nodiscard]] static Statistics create_statistics(const Model& model, const Options& options);
