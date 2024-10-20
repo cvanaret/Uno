@@ -10,7 +10,7 @@
 namespace uno {
    class Options {
    public:
-      Options() = default;
+      explicit Options(bool are_default_options);
 
       [[nodiscard]] size_t size() const;
       std::string& operator[](const std::string& option_name);
@@ -26,12 +26,16 @@ namespace uno {
       static void overwrite_with_option_file(Options& options, const std::string& file_name);
       static void set_preset(Options& options, const std::string& preset_name);
       void overwrite_with(const Options& overwriting_options);
+      void print_used() const;
 
-      std::map<std::string, std::string>::const_iterator begin() const;
-      std::map<std::string, std::string>::const_iterator end() const;
+      [[nodiscard]] std::map<std::string, std::string>::const_iterator begin() const;
+      [[nodiscard]] std::map<std::string, std::string>::const_iterator end() const;
 
    private:
       std::map<std::string, std::string> options{};
+      mutable std::map<std::string, bool> used{};
+      mutable std::map<std::string, bool> is_default{};
+      const bool are_default_options;
 
       [[nodiscard]] const std::string& at(const std::string& option_name) const;
    };

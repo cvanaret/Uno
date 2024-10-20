@@ -7,9 +7,7 @@
 
 namespace uno {
    ZeroHessian::ZeroHessian(size_t dimension, const Options& options) :
-         HessianModel(dimension, 0, options.get_string("sparse_format"), /* use_regularization = */false) {
-      std::cout << "Current zero Hessian:\n" << this->hessian << '\n';
-   }
+         HessianModel(dimension, 0, options.get_string("sparse_format"), /* use_regularization = */false) { }
 
    void ZeroHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& /*primal_variables*/,
          const Vector<double>& /*constraint_multipliers*/) {

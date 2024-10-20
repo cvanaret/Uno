@@ -22,8 +22,9 @@ namespace uno {
    Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options) :
          globalization_mechanism(globalization_mechanism),
          max_iterations(options.get_unsigned_int("max_iterations")),
-         time_limit(options.get_double("time_limit")) {
-   }
+         time_limit(options.get_double("time_limit")),
+         print_solution(options.get_bool("print_solution")),
+         strategy_combination(this->get_strategy_combination(options)) { }
    
    Level Logger::level = INFO;
 
@@ -74,6 +75,7 @@ namespace uno {
          statistics.set("iter", 0);
          statistics.set("status", "initial point");
          this->globalization_mechanism.initialize(statistics, current_iterate, options);
+         options.print_used();
          if (Logger::level == INFO) statistics.print_current_line();
       }
       catch (const std::exception& e) {
@@ -137,17 +139,16 @@ namespace uno {
       std::cout << "- Linear solvers: " << join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", ") << '\n';
    }
 
-   void Uno::print_strategy_combination(const Options& options) {
-      std::string combination = options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
+   std::string Uno::get_strategy_combination(const Options& options) {
+      return options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
                                 options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
-      std::cout << "\nUno 1.1.0 (" << combination << ")\n";
+
    }
 
-   void Uno::print_optimization_summary(const Options& options, const Result& result) {
-      Uno::print_strategy_combination(options);
+   void Uno::print_optimization_summary(const Result& result) {
+      std::cout << "\nUno 1.1.0 (" << this->strategy_combination << ")\n";
       std::cout << Timer::get_current_date();
       std::cout << "────────────────────────────────────────\n";
-      const bool print_solution = options.get_bool("print_solution");
-      result.print(print_solution);
+      result.print(this->print_solution);
    }
 } // namespace
