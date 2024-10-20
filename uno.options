@@ -20,7 +20,7 @@ print_solution no
 # threshold on objective to declare unbounded NLP
 unbounded_objective_threshold -1e20
 
-# enforce linear constraints at the initial point
+# enforce linear constraints at the initial point (yes|no)
 enforce_linear_constraints no
 
 # statistics table
@@ -58,7 +58,7 @@ globalization_strategy fletcher_filter_method
 globalization_mechanism TR
 
 ##### main options #####
-# logging level (INFO|DEBUG)
+# logging level (ERROR|WARNING|INFO|DEBUG|DEBUG2|DEBUG3)
 logger INFO
 
 # Hessian model (exact|BFGS)
@@ -92,13 +92,13 @@ residual_scaling_threshold 100.
 protect_actual_reduction_against_roundoff no
 
 ##### solvers #####
-# default QP solver
+# default QP solver (BQPD)
 QP_solver BQPD
 
-# default LP solver
+# default LP solver (BQPD)
 LP_solver BQPD
 
-# default linear solver
+# default linear solver (MA57|MUMPS)
 linear_solver MA57
 
 ##### strategy options #####
