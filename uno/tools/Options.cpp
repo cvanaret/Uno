@@ -73,7 +73,7 @@ namespace uno {
       options["print_solution"] = "yes";
       // threshold on objective to declare unbounded NLP
       options["unbounded_objective_threshold"] = "-1e20";
-      // enforce linear constraints at the initial point
+      // enforce linear constraints at the initial point (yes|no)
       options["enforce_linear_constraints"] = "no";
 
       /** statistics table **/
@@ -107,7 +107,7 @@ namespace uno {
       options["globalization_mechanism"] = "TR";
 
       /** main options **/
-      // logging level (INFO|DEBUG)
+      // logging level (SILENT|DISCRETE|WARNING|INFO|DEBUG|DEBUG2|DEBUG3)
       options["logger"] = "INFO";
       // Hessian model (exact|zero)
       options["hessian_model"] = "exact";
@@ -128,11 +128,11 @@ namespace uno {
       options["protect_actual_reduction_against_roundoff"] = "no";
 
       /** solvers **/
-      // default QP solver
+      // default QP solver (BQPD)
       options["QP_solver"] = "BQPD";
-      // default LP solver
+      // default LP solver (BQPD)
       options["LP_solver"] = "BQPD";
-      // default linear solver
+      // default linear solver (MA57|MUMPS)
       options["linear_solver"] = "MA57";
 
       /** globalization strategy options **/
