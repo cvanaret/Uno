@@ -8,64 +8,64 @@
 
 namespace uno {
    void Result::print(bool print_primal_dual_solution) const {
-      std::cout << "Status:\t\t\t\t\t";
+      DISCRETE << "Status:\t\t\t\t\t";
       if (this->solution.status == TerminationStatus::FEASIBLE_KKT_POINT) {
-         std::cout << "Converged with feasible KKT point\n";
+         DISCRETE << "Converged with feasible KKT point\n";
       }
       else if (this->solution.status == TerminationStatus::FEASIBLE_FJ_POINT) {
-         std::cout << "Converged with feasible FJ point\n";
+         DISCRETE << "Converged with feasible FJ point\n";
       }
       else if (this->solution.status == TerminationStatus::INFEASIBLE_STATIONARY_POINT) {
-         std::cout << "Converged with infeasible stationary point\n";
+         DISCRETE << "Converged with infeasible stationary point\n";
       }
       else if (this->solution.status == TerminationStatus::FEASIBLE_SMALL_STEP) {
-         std::cout << "Terminated with feasible small step\n";
+         DISCRETE << "Terminated with feasible small step\n";
       }
       else if (this->solution.status == TerminationStatus::INFEASIBLE_SMALL_STEP) {
-         std::cout << "Failed with infeasible small step\n";
+         DISCRETE << "Failed with infeasible small step\n";
       }
       else if (this->solution.status == TerminationStatus::UNBOUNDED) {
-         std::cout << "Terminated with unbounded problem\n";
+         DISCRETE << "Terminated with unbounded problem\n";
       }
       else {
-         std::cout << "Failed with suboptimal point\n";
+         DISCRETE << "Failed with suboptimal point\n";
       }
 
-      std::cout << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution.evaluations.objective << '\n';
-      std::cout << "Primal feasibility:\t\t\t" << this->solution.primal_feasibility << '\n';
+      DISCRETE << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution.evaluations.objective << '\n';
+      DISCRETE << "Primal feasibility:\t\t\t" << this->solution.primal_feasibility << '\n';
 
-      std::cout << "┌ Stationarity residual:\t\t" << this->solution.residuals.stationarity << '\n';
-      std::cout << "└ Complementarity residual:\t\t" << this->solution.residuals.complementarity << '\n';
+      DISCRETE << "┌ Stationarity residual:\t\t" << this->solution.residuals.stationarity << '\n';
+      DISCRETE << "└ Complementarity residual:\t\t" << this->solution.residuals.complementarity << '\n';
 
-      std::cout << "┌ Feasibility stationarity residual:\t" << this->solution.residuals.stationarity << '\n';
-      std::cout << "└ Feasibility complementarity residual:\t" << this->solution.residuals.complementarity << '\n';
+      DISCRETE << "┌ Feasibility stationarity residual:\t" << this->solution.residuals.stationarity << '\n';
+      DISCRETE << "└ Feasibility complementarity residual:\t" << this->solution.residuals.complementarity << '\n';
 
-      std::cout << "┌ Infeasibility measure:\t\t" << this->solution.progress.infeasibility << '\n';
-      std::cout << "│ Objective measure:\t\t\t" << this->solution.progress.objective(1.) << '\n';
-      std::cout << "└ Auxiliary measure:\t\t\t" << this->solution.progress.auxiliary << '\n';
+      DISCRETE << "┌ Infeasibility measure:\t\t" << this->solution.progress.infeasibility << '\n';
+      DISCRETE << "│ Objective measure:\t\t\t" << this->solution.progress.objective(1.) << '\n';
+      DISCRETE << "└ Auxiliary measure:\t\t\t" << this->solution.progress.auxiliary << '\n';
 
       if (print_primal_dual_solution) {
-         std::cout << "Primal solution:\t\t\t"; print_vector(std::cout, view(this->solution.primals, 0, this->number_variables));
-         std::cout << "┌ Constraint multipliers:\t\t"; print_vector(std::cout, this->solution.multipliers.constraints);
-         std::cout << "│ Lower bound multipliers:\t\t"; print_vector(std::cout, view(this->solution.multipliers.lower_bounds, 0,
+         DISCRETE << "Primal solution:\t\t\t"; print_vector(DISCRETE, view(this->solution.primals, 0, this->number_variables));
+         DISCRETE << "┌ Constraint multipliers:\t\t"; print_vector(DISCRETE, this->solution.multipliers.constraints);
+         DISCRETE << "│ Lower bound multipliers:\t\t"; print_vector(DISCRETE, view(this->solution.multipliers.lower_bounds, 0,
                this->number_variables));
-         std::cout << "└ Upper bound multipliers:\t\t"; print_vector(std::cout, view(this->solution.multipliers.upper_bounds, 0,
+         DISCRETE << "└ Upper bound multipliers:\t\t"; print_vector(DISCRETE, view(this->solution.multipliers.upper_bounds, 0,
                this->number_variables));
-         std::cout << "┌ Constraint feasibility multipliers:\t"; print_vector(std::cout, this->solution.feasibility_multipliers.constraints);
-         std::cout << "│ Lower bound feasibility multipliers:\t"; print_vector(std::cout, view(this->solution.feasibility_multipliers.lower_bounds, 0,
+         DISCRETE << "┌ Constraint feasibility multipliers:\t"; print_vector(DISCRETE, this->solution.feasibility_multipliers.constraints);
+         DISCRETE << "│ Lower bound feasibility multipliers:\t"; print_vector(DISCRETE, view(this->solution.feasibility_multipliers.lower_bounds, 0,
                this->number_variables));
-         std::cout << "└ Upper bound feasibility multipliers:\t"; print_vector(std::cout, view(this->solution.feasibility_multipliers.upper_bounds, 0,
+         DISCRETE << "└ Upper bound feasibility multipliers:\t"; print_vector(DISCRETE, view(this->solution.feasibility_multipliers.upper_bounds, 0,
                this->number_variables));
-         std::cout << "Objective multiplier:\t\t\t" << this->solution.objective_multiplier << '\n';
+         DISCRETE << "Objective multiplier:\t\t\t" << this->solution.objective_multiplier << '\n';
       }
 
-      std::cout << "CPU time:\t\t\t\t" << this->cpu_time << "s\n";
-      std::cout << "Iterations:\t\t\t\t"	 << this->iteration << '\n';
-      std::cout << "Objective evaluations:\t\t\t" << this->objective_evaluations << '\n';
-      std::cout << "Constraints evaluations:\t\t" << this->constraint_evaluations << '\n';
-      std::cout << "Objective gradient evaluations:\t\t" << this->objective_gradient_evaluations << '\n';
-      std::cout << "Jacobian evaluations:\t\t\t" << this->jacobian_evaluations << '\n';
-      std::cout << "Hessian evaluations:\t\t\t" << this->hessian_evaluations << '\n';
-      std::cout << "Number of subproblems solved:\t\t" << this->number_subproblems_solved << '\n';
+      DISCRETE << "CPU time:\t\t\t\t" << this->cpu_time << "s\n";
+      DISCRETE << "Iterations:\t\t\t\t" << this->iteration << '\n';
+      DISCRETE << "Objective evaluations:\t\t\t" << this->objective_evaluations << '\n';
+      DISCRETE << "Constraints evaluations:\t\t" << this->constraint_evaluations << '\n';
+      DISCRETE << "Objective gradient evaluations:\t\t" << this->objective_gradient_evaluations << '\n';
+      DISCRETE << "Jacobian evaluations:\t\t\t" << this->jacobian_evaluations << '\n';
+      DISCRETE << "Hessian evaluations:\t\t\t" << this->hessian_evaluations << '\n';
+      DISCRETE << "Number of subproblems solved:\t\t" << this->number_subproblems_solved << '\n';
    }
 } // namespace

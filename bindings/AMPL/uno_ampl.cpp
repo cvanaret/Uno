@@ -50,7 +50,7 @@ namespace uno {
          // std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
       }
       catch (std::exception& exception) {
-         ERROR << exception.what() << '\n';
+         DISCRETE << exception.what() << '\n';
       }
    }
 
@@ -71,39 +71,44 @@ namespace uno {
 int main(int argc, char* argv[]) {
    using namespace uno;
 
-   if (argc == 1) {
-      print_uno_instructions();
-   }
-   else if (argc == 2) {
-      if (std::string(argv[1]) == "--v") {
+   try {
+      if (argc == 1) {
          print_uno_instructions();
       }
-      else if (std::string(argv[1]) == "--strategies") {
-         Uno::print_available_strategies();
+      else if (argc == 2) {
+         if (std::string(argv[1]) == "--v") {
+            print_uno_instructions();
+         }
+         else if (std::string(argv[1]) == "--strategies") {
+            Uno::print_available_strategies();
+         }
+         else {
+            throw std::runtime_error("The second command line argument should be -AMPL.");
+         }
       }
-      else {
-         throw std::runtime_error("The second command line argument should be -AMPL.");
+      else if (argc >= 3) {
+         Options options = Options::get_default();
+
+         // AMPL expects: ./uno_ampl model.nl -AMPL [option_name=option_value, ...]
+         // model name
+         std::string model_name = std::string(argv[1]);
+
+         // -AMPL
+         if (std::string(argv[2]) != "-AMPL") {
+            throw std::runtime_error("The second command line argument should be -AMPL.");
+         }
+
+         // overwrite the default options with the command line arguments
+         Options overwriting_options = Options::get_command_line_options(argc, argv);
+         options.overwrite_with(overwriting_options);
+
+         // solve the model
+         Logger::set_logger(options.get_string("logger"));
+         run_uno_ampl(model_name, options);
       }
    }
-   else if (argc >= 3) {
-      Options options = Options::get_default();
-
-      // AMPL expects: ./uno_ampl model.nl -AMPL [option_name=option_value, ...]
-      // model name
-      std::string model_name = std::string(argv[1]);
-
-      // -AMPL
-      if (std::string(argv[2]) != "-AMPL") {
-         throw std::runtime_error("The second command line argument should be -AMPL.");
-      }
-
-      // overwrite the default options with the command line arguments
-      Options overwriting_options = Options::get_command_line_options(argc, argv);
-      options.overwrite_with(overwriting_options);
-
-      // solve the model
-      Logger::set_logger(options.get_string("logger"));
-      run_uno_ampl(model_name, options);
+   catch (std::exception& exception) {
+      DISCRETE << exception.what() << '\n';
    }
    return EXIT_SUCCESS;
 }
