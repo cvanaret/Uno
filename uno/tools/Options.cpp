@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include "Options.hpp"
+#include "Logger.hpp"
 
 namespace uno {
    Options::Options(bool are_default_options): are_default_options(are_default_options) { }
@@ -420,7 +421,7 @@ namespace uno {
       }
       // print the overwritten options
       if (number_used_options > 0) {
-         std::cout << "Used overwritten options:\n" << option_list << '\n';
+         DISCRETE << "Used overwritten options:\n" << option_list << '\n';
       }
    }
 

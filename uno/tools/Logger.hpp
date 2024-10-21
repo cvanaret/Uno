@@ -17,7 +17,7 @@ namespace uno {
    #define RESET "\x1B[0m"
 
    enum Level {
-       ERROR = 0, WARNING, INFO, DEBUG, DEBUG2, DEBUG3
+       SILENT = 0, DISCRETE, WARNING, INFO, DEBUG, DEBUG2, DEBUG3
    };
 
    class Logger {
@@ -43,8 +43,11 @@ namespace uno {
    }
 
    inline void Logger::set_logger(const std::string& logger_level) {
-      if (logger_level == "ERROR") {
-         Logger::level = ERROR;
+      if (logger_level == "SILENT") {
+         Logger::level = SILENT;
+      }
+      else if (logger_level == "DISCRETE") {
+         Logger::level = DISCRETE;
       }
       else if (logger_level == "WARNING") {
          Logger::level = WARNING;

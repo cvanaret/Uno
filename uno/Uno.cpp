@@ -29,7 +29,7 @@ namespace uno {
    Level Logger::level = INFO;
 
    Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
-      std::cout << "Problem " << model.name << '\n' << model.number_variables << " variables, " << model.number_constraints << " constraints\n\n";
+      DISCRETE << "Problem " << model.name << '\n' << model.number_variables << " variables, " << model.number_constraints << " constraints\n";
       
       Timer timer{};
       Statistics statistics = Uno::create_statistics(model, options);
@@ -79,7 +79,7 @@ namespace uno {
          if (Logger::level == INFO) statistics.print_current_line();
       }
       catch (const std::exception& e) {
-         ERROR << RED << "An error occurred at the initial iterate: " << e.what() << RESET;
+         DISCRETE << RED << "An error occurred at the initial iterate: " << e.what() << RESET;
          throw;
       }
    }
@@ -146,9 +146,9 @@ namespace uno {
    }
 
    void Uno::print_optimization_summary(const Result& result) {
-      std::cout << "\nUno 1.1.0 (" << this->strategy_combination << ")\n";
-      std::cout << Timer::get_current_date();
-      std::cout << "────────────────────────────────────────\n";
+      DISCRETE << "\nUno 1.1.0 (" << this->strategy_combination << ")\n";
+      DISCRETE << Timer::get_current_date();
+      DISCRETE << "────────────────────────────────────────\n";
       result.print(this->print_solution);
    }
 } // namespace
