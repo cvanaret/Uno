@@ -372,7 +372,9 @@ namespace uno {
          else if (termination_status == TerminationStatus::INFEASIBLE_SMALL_STEP) {
             this->asl->p.solve_code_ = 500;
          }
-         write_sol_ASL(this->asl, "", iterate.primals.data(), iterate.multipliers.constraints.data(), nullptr);
+         Option_Info option_info{};
+         option_info.wantsol = 9; // write the solution without printing the message to stdout
+         write_sol_ASL(this->asl, "", iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
       }
    }
 
