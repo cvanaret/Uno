@@ -58,7 +58,7 @@ globalization_strategy fletcher_filter_method
 globalization_mechanism TR
 
 ##### main options #####
-# logging level (ERROR|WARNING|INFO|DEBUG|DEBUG2|DEBUG3)
+# logging level (SILENT|DISCRETE|WARNING|INFO|DEBUG|DEBUG2|DEBUG3)
 logger INFO
 
 # Hessian model (exact|BFGS)
