@@ -4,6 +4,9 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include "solvers/QPSolverFactory.hpp"
+#include "solvers/LPSolverFactory.hpp"
+#include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "Options.hpp"
 #include "Logger.hpp"
 
@@ -96,16 +99,6 @@ namespace uno {
       options["statistics_complementarity_column_order"] = "105";
       options["statistics_status_column_order"] = "200";
 
-      /** ingredients **/
-      // default constraint relaxation strategy (feasibility_restoration|l1_relaxation)
-      options["constraint_relaxation_strategy"] = "feasibility_restoration";
-      // default subproblem (QP|LP|primal_dual_interior_point)
-      options["subproblem"] = "QP";
-      // default globalization strategy (l1_merit|fletcher_filter_method|waechter_filter_method)
-      options["globalization_strategy"] = "fletcher_filter_method";
-      // default globalization mechanism (TR|LS)
-      options["globalization_mechanism"] = "TR";
-
       /** main options **/
       // logging level (SILENT|DISCRETE|WARNING|INFO|DEBUG|DEBUG2|DEBUG3)
       options["logger"] = "INFO";
@@ -126,14 +119,6 @@ namespace uno {
       options["residual_norm"] = "INF";
       options["residual_scaling_threshold"] = "100.";
       options["protect_actual_reduction_against_roundoff"] = "no";
-
-      /** solvers **/
-      // default QP solver (BQPD)
-      options["QP_solver"] = "BQPD";
-      // default LP solver (BQPD)
-      options["LP_solver"] = "BQPD";
-      // default linear solver (MA57|MUMPS)
-      options["linear_solver"] = "MA57";
 
       /** globalization strategy options **/
       options["armijo_decrease_fraction"] = "1e-4";
@@ -251,6 +236,36 @@ namespace uno {
 
       /** AMPL options **/
       options["AMPL_write_solution_to_file"] = "yes";
+
+      /** solvers: check the available solvers **/
+      // QP solver
+      const auto QP_solvers = QPSolverFactory::available_solvers();
+      if (not QP_solvers.empty()) {
+         options["QP_solver"] = QP_solvers[0];
+         options.is_default["QP_solver"] = false;
+      }
+      // LP solver
+      const auto LP_solvers = LPSolverFactory::available_solvers();
+      if (not LP_solvers.empty()) {
+         options["LP_solver"] = LP_solvers[0];
+         options.is_default["LP_solver"] = false;
+      }
+      // linear solver
+      const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
+      if (not linear_solvers.empty()) {
+         options["linear_solver"] = linear_solvers[0];
+         options.is_default["linear_solver"] = false;
+      }
+
+      /** ingredients **/
+      // default constraint relaxation strategy (feasibility_restoration|l1_relaxation)
+      options["constraint_relaxation_strategy"] = "feasibility_restoration";
+      // default subproblem (QP|LP|primal_dual_interior_point)
+      options["subproblem"] = "QP";
+      // default globalization strategy (l1_merit|fletcher_filter_method|waechter_filter_method)
+      options["globalization_strategy"] = "fletcher_filter_method";
+      // default globalization mechanism (TR|LS)
+      options["globalization_mechanism"] = "TR";
 
       return options;
    }
