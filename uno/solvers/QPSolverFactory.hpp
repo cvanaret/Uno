@@ -4,6 +4,7 @@
 #ifndef UNO_QPSOLVERFACTORY_H
 #define UNO_QPSOLVERFACTORY_H
 
+#include <array>
 #include <memory>
 #include "solvers/QPSolver.hpp"
 
@@ -12,6 +13,9 @@
 #endif
 
 namespace uno {
+   // forward declaration
+   class Options;
+
    class QPSolverFactory {
    public:
       // create a QP solver
