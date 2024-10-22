@@ -12,6 +12,9 @@
 #endif
 
 namespace uno {
+   // forward declaration
+   class Options;
+
    class LPSolverFactory {
    public:
       static std::unique_ptr<LPSolver> create([[maybe_unused]] const std::string& LP_solver_name, [[maybe_unused]] size_t number_variables,
