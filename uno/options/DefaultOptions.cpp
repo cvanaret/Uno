@@ -9,6 +9,7 @@
 namespace uno {
    Options DefaultOptions::load() {
       Options options(true);
+
       /** termination **/
       // (tight) tolerance
       options["tolerance"] = "1e-8";
@@ -185,24 +186,27 @@ namespace uno {
       /** AMPL options **/
       options["AMPL_write_solution_to_file"] = "yes";
 
+      return options;
+   }
+
+   Options DefaultOptions::determine_solvers() {
+      Options options(false);
+
       /** solvers: check the available solvers **/
       // QP solver
       const auto QP_solvers = QPSolverFactory::available_solvers();
       if (not QP_solvers.empty()) {
          options["QP_solver"] = QP_solvers[0];
-         //options.is_default["QP_solver"] = false;
       }
       // LP solver
       const auto LP_solvers = LPSolverFactory::available_solvers();
       if (not LP_solvers.empty()) {
          options["LP_solver"] = LP_solvers[0];
-         //options.is_default["LP_solver"] = false;
       }
       // linear solver
       const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
       if (not linear_solvers.empty()) {
          options["linear_solver"] = linear_solvers[0];
-         //options.is_default["linear_solver"] = false;
       }
 
       /** ingredients **/

@@ -100,9 +100,13 @@ int main(int argc, char* argv[]) {
             throw std::runtime_error("The second command line argument should be -AMPL");
          }
 
+         // determine the default solvers based on the available libraries
+         Options solvers_options = DefaultOptions::determine_solvers();
+         options.overwrite_with(solvers_options);
+
          // overwrite the default options with the command line arguments
-         Options overwriting_options = Options::get_command_line_options(argc, argv);
-         options.overwrite_with(overwriting_options);
+         Options command_line_options = Options::get_command_line_options(argc, argv);
+         options.overwrite_with(command_line_options);
 
          // solve the model
          Logger::set_logger(options.get_string("logger"));
