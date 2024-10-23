@@ -10,7 +10,7 @@
 #include "RectangularMatrix.hpp"
 #include "model/Model.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {

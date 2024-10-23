@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iomanip>
 #include "Statistics.hpp"
-#include "Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    // TODO move this to the option file

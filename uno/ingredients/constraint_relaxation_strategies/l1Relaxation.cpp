@@ -9,7 +9,7 @@
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/VectorView.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 
 /*
@@ -80,7 +80,7 @@ namespace uno {
    }
 
    void l1Relaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/) {
-      throw std::runtime_error("l1Relaxation::switch_to_feasibility_problem is not implemented\n");
+      throw std::runtime_error("l1Relaxation::switch_to_feasibility_problem is not implemented");
    }
 
    // use Byrd's steering rules to update the penalty parameter and compute a descent direction

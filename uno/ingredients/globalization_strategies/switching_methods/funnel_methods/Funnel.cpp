@@ -3,7 +3,7 @@
 
 #include "Funnel.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    Funnel::Funnel(const Options& options):
@@ -48,7 +48,7 @@ namespace uno {
          this->width = this->margin * this->width;
       }
       else {
-         throw std::runtime_error("Funnel update strategy " + std::to_string(this->update_strategy) + " is unknown.");
+         throw std::runtime_error("Funnel update strategy " + std::to_string(this->update_strategy) + " is unknown");
       }
       DEBUG << "\t\tNew funnel parameter is: " << this->width << '\n';
    }

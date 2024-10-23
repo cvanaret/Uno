@@ -6,7 +6,7 @@
 
 #include "Model.hpp"
 #include "optimization/Iterate.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    class BoundRelaxedModel: public Model {

@@ -4,7 +4,7 @@
 #include "FunnelMethod.hpp"
 #include "../../ProgressMeasures.hpp"
 #include "optimization/Iterate.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 

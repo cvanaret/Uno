@@ -14,7 +14,7 @@
 #include "reformulation/OptimizationProblem.hpp"
 #include "symbolic/VectorView.hpp"
 #include "symbolic/Expression.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {

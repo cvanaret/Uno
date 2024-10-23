@@ -5,7 +5,7 @@
 #include "ingredients/subproblems/Direction.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {

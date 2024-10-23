@@ -9,7 +9,7 @@
 #include "ingredients/subproblems/interior_point_methods/PrimalDualInteriorPointSubproblem.hpp"
 #include "solvers/QPSolverFactory.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    std::unique_ptr<Subproblem> SubproblemFactory::create(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,

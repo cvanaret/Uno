@@ -6,7 +6,7 @@
 #include "ScaledModel.hpp"
 #include "BoundRelaxedModel.hpp"
 #include "optimization/Iterate.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    // note: ownership of the pointer is transferred

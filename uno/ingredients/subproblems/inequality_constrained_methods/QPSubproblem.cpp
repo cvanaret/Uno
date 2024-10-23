@@ -12,7 +12,7 @@
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/QPSolver.hpp"
 #include "solvers/QPSolverFactory.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
@@ -23,8 +23,7 @@ namespace uno {
          use_regularization(options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP")),
          enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")),
          // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-         solver(QPSolverFactory::create(options.get_string("QP_solver"), number_variables, number_constraints,
-               number_objective_gradient_nonzeros, number_jacobian_nonzeros,
+         solver(QPSolverFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
                // if the QP solver is used during preprocessing, we need to allocate the Hessian with at least number_variables elements
                std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, hessian_model->hessian.capacity()),
                options)) {

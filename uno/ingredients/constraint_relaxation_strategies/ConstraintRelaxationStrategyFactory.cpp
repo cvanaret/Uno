@@ -5,7 +5,7 @@
 #include "ConstraintRelaxationStrategyFactory.hpp"
 #include "FeasibilityRestoration.hpp"
 #include "l1Relaxation.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(const Model& model, const Options& options) {

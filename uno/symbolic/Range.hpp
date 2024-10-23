@@ -41,10 +41,10 @@ namespace uno {
    template <RangeDirection direction>
    inline Range<direction>::Range(size_t start_value, size_t end_value): Collection<size_t>(), start_value(start_value), end_value(end_value) {
       if (direction == FORWARD && end_value < start_value) {
-         throw std::runtime_error("Forward range: end index is smaller than start index\n");
+         throw std::runtime_error("Forward range: end index is smaller than start index");
       }
       else if (direction == BACKWARD && end_value > start_value) {
-         throw std::runtime_error("Backward range: end index is larger than start index\n");
+         throw std::runtime_error("Backward range: end index is larger than start index");
       }
    }
 

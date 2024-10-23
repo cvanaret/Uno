@@ -35,7 +35,7 @@ namespace uno {
       VectorView(Expression&& expression, size_t start, size_t end):
             expression(std::forward<Expression>(expression)), start(start), end(std::min(end, expression.size())) {
          if (end < start) {
-            throw std::runtime_error("The view ends before its starting point.");
+            throw std::runtime_error("The view ends before its starting point");
          }
       }
 

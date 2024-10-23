@@ -132,7 +132,7 @@ namespace uno {
             qp_solver.solve_QP(model.number_variables, linear_constraints.size(), variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
                   constraints_upper_bounds, linear_objective, constraint_jacobian, hessian, d0, direction, warmstart_information);
             if (direction.status == SubproblemStatus::INFEASIBLE) {
-               throw std::runtime_error("Linear constraints cannot be satisfied at the initial point.");
+               throw std::runtime_error("Linear constraints cannot be satisfied at the initial point");
             }
 
             // take the step
@@ -143,8 +143,7 @@ namespace uno {
                const size_t constraint_index = linear_constraints[linear_constraint_index];
                multipliers.constraints[constraint_index] += direction.multipliers.constraints[linear_constraint_index];
             }
-            DEBUG3 << "Linear feasible initial point: "; print_vector(DEBUG3, x);
-            DEBUG3 << '\n';
+            DEBUG3 << "Linear feasible initial point: " << x << '\n';
          }
       }
    }

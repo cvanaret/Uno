@@ -8,7 +8,7 @@
 #include "Filter.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    Filter::Filter(const Options& options) :
