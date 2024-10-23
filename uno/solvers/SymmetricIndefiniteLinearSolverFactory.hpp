@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include "DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
 
