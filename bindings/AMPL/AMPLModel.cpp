@@ -374,7 +374,9 @@ namespace uno {
          }
          Option_Info option_info{};
          option_info.wantsol = 9; // write the solution without printing the message to stdout
-         write_sol_ASL(this->asl, "", iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
+         std::string message = "Uno 1.1.0: ";
+         message.append(status_to_message(termination_status));
+         write_sol_ASL(this->asl, message.data(), iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
       }
    }
 
