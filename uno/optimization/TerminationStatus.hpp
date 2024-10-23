@@ -14,6 +14,30 @@ namespace uno {
       INFEASIBLE_SMALL_STEP,
       UNBOUNDED
    };
+
+   inline std::string status_to_message(TerminationStatus status) {
+      if (status == TerminationStatus::FEASIBLE_KKT_POINT) {
+         return "Converged with feasible KKT point";
+      }
+      else if (status == TerminationStatus::FEASIBLE_FJ_POINT) {
+         return "Converged with feasible FJ point";
+      }
+      else if (status == TerminationStatus::INFEASIBLE_STATIONARY_POINT) {
+         return "Converged with infeasible stationary point";
+      }
+      else if (status == TerminationStatus::FEASIBLE_SMALL_STEP) {
+         return "Terminated with feasible small step";
+      }
+      else if (status == TerminationStatus::INFEASIBLE_SMALL_STEP) {
+         return "Failed with infeasible small step";
+      }
+      else if (status == TerminationStatus::UNBOUNDED) {
+         return "Terminated with unbounded problem";
+      }
+      else {
+         return "Failed with suboptimal point";
+      }
+   }
 } // namespace
 
 #endif // UNO_TERMINATIONSTATUS_H

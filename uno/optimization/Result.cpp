@@ -8,28 +8,7 @@
 
 namespace uno {
    void Result::print(bool print_primal_dual_solution) const {
-      DISCRETE << "Status:\t\t\t\t\t";
-      if (this->solution.status == TerminationStatus::FEASIBLE_KKT_POINT) {
-         DISCRETE << "Converged with feasible KKT point\n";
-      }
-      else if (this->solution.status == TerminationStatus::FEASIBLE_FJ_POINT) {
-         DISCRETE << "Converged with feasible FJ point\n";
-      }
-      else if (this->solution.status == TerminationStatus::INFEASIBLE_STATIONARY_POINT) {
-         DISCRETE << "Converged with infeasible stationary point\n";
-      }
-      else if (this->solution.status == TerminationStatus::FEASIBLE_SMALL_STEP) {
-         DISCRETE << "Terminated with feasible small step\n";
-      }
-      else if (this->solution.status == TerminationStatus::INFEASIBLE_SMALL_STEP) {
-         DISCRETE << "Failed with infeasible small step\n";
-      }
-      else if (this->solution.status == TerminationStatus::UNBOUNDED) {
-         DISCRETE << "Terminated with unbounded problem\n";
-      }
-      else {
-         DISCRETE << "Failed with suboptimal point\n";
-      }
+      DISCRETE << "Status:\t\t\t\t\t" << status_to_message(this->solution.status) << '\n';
 
       DISCRETE << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution.evaluations.objective << '\n';
       DISCRETE << "Primal feasibility:\t\t\t" << this->solution.primal_feasibility << '\n';
