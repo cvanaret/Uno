@@ -12,6 +12,7 @@
 #include "tools/Infinity.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Concatenation.hpp"
+#include "Uno.hpp"
 
 namespace uno {
    ASL* generate_asl(std::string file_name) {
@@ -374,8 +375,8 @@ namespace uno {
          }
          Option_Info option_info{};
          option_info.wantsol = 9; // write the solution without printing the message to stdout
-         std::string message = "Uno 1.1.0: ";
-         message.append(status_to_message(termination_status));
+         std::string message = "Uno ";
+         message.append(Uno::current_version()).append(": ").append(status_to_message(termination_status));
          write_sol_ASL(this->asl, message.data(), iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
       }
    }

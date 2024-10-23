@@ -29,6 +29,7 @@ namespace uno {
 
       [[nodiscard]] Result solve(const Model& model, Iterate& initial_iterate, const Options& options);
 
+      static std::string current_version();
       static void print_available_strategies();
       static std::string get_strategy_combination(const Options& options);
       void print_optimization_summary(const Result& result);

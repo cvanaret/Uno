@@ -118,6 +118,10 @@ namespace uno {
             Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
    }
 
+   std::string Uno::current_version() {
+      return "1.1.0";
+   }
+
    void Uno::print_available_strategies() {
       std::cout << "Available strategies:\n";
       std::cout << "- Constraint relaxation strategies: " << join(ConstraintRelaxationStrategyFactory::available_strategies(), ", ") << '\n';
@@ -136,7 +140,7 @@ namespace uno {
    }
 
    void Uno::print_optimization_summary(const Result& result) {
-      DISCRETE << "\nUno 1.1.0 (" << this->strategy_combination << ")\n";
+      DISCRETE << "\nUno " << Uno::current_version() << " (" << this->strategy_combination << ")\n";
       DISCRETE << Timer::get_current_date();
       DISCRETE << "────────────────────────────────────────\n";
       result.print(this->print_solution);
