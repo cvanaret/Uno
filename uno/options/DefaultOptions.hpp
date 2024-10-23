@@ -10,6 +10,7 @@ namespace uno {
    class DefaultOptions {
    public:
       [[nodiscard]] static Options load();
+      [[nodiscard]] static Options determine_solvers();
    };
 } // namespace
 
