@@ -13,6 +13,7 @@
 #include "options/Options.hpp"
 #include "options/DefaultOptions.hpp"
 #include "tools/Logger.hpp"
+#include "Uno.hpp"
 
 /*
 size_t memory_allocation_amount = 0;
@@ -56,7 +57,7 @@ namespace uno {
    }
 
    void print_uno_instructions() {
-      std::cout << "Welcome in Uno 1.1.0\n";
+      std::cout << "Welcome in Uno " << Uno::current_version() << '\n';
       std::cout << "To solve an AMPL model, type ./uno_ampl model.nl -AMPL [option_name=option_value ...]\n";
       std::cout << "To choose a constraint relaxation strategy, use the argument constraint_relaxation_strategy="
                    "[feasibility_restoration|l1_relaxation]\n";
