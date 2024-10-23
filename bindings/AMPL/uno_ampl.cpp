@@ -10,8 +10,9 @@
 #include "AMPLModel.hpp"
 #include "Uno.hpp"
 #include "model/ModelFactory.hpp"
+#include "options/Options.hpp"
+#include "options/DefaultOptions.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Options.hpp"
 
 /*
 size_t memory_allocation_amount = 0;
@@ -83,11 +84,11 @@ int main(int argc, char* argv[]) {
             Uno::print_available_strategies();
          }
          else {
-            throw std::runtime_error("The second command line argument should be -AMPL.");
+            throw std::runtime_error("The second command line argument should be -AMPL");
          }
       }
       else if (argc >= 3) {
-         Options options = Options::get_default();
+         Options options = DefaultOptions::load();
 
          // AMPL expects: ./uno_ampl model.nl -AMPL [option_name=option_value, ...]
          // model name
@@ -95,7 +96,7 @@ int main(int argc, char* argv[]) {
 
          // -AMPL
          if (std::string(argv[2]) != "-AMPL") {
-            throw std::runtime_error("The second command line argument should be -AMPL.");
+            throw std::runtime_error("The second command line argument should be -AMPL");
          }
 
          // overwrite the default options with the command line arguments

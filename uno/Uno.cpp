@@ -8,13 +8,14 @@
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblems/SubproblemFactory.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "solvers/QPSolverFactory.hpp"
 #include "solvers/LPSolverFactory.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Timer.hpp"
 
@@ -24,7 +25,7 @@ namespace uno {
          max_iterations(options.get_unsigned_int("max_iterations")),
          time_limit(options.get_double("time_limit")),
          print_solution(options.get_bool("print_solution")),
-         strategy_combination(this->get_strategy_combination(options)) { }
+         strategy_combination(Uno::get_strategy_combination(options)) { }
    
    Level Logger::level = INFO;
 
@@ -61,7 +62,7 @@ namespace uno {
          statistics.start_new_line();
          statistics.set("status", exception.what());
          if (Logger::level == INFO) statistics.print_current_line();
-         DEBUG << exception.what();
+         DEBUG << exception.what() << '\n';
       }
       if (Logger::level == INFO) statistics.print_footer();
 
@@ -79,7 +80,7 @@ namespace uno {
          if (Logger::level == INFO) statistics.print_current_line();
       }
       catch (const std::exception& e) {
-         DISCRETE << RED << "An error occurred at the initial iterate: " << e.what() << RESET;
+         DISCRETE << RED << "An error occurred at the initial iterate: " << e.what() << RESET << '\n';
          throw;
       }
    }
@@ -115,17 +116,6 @@ namespace uno {
       return {std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations, timer.get_duration(),
             Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
             Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
-   }
-
-   std::string join(const std::vector<std::string>& vector, const std::string& separator) {
-      std::string result{};
-      if (not vector.empty()) {
-         result = vector[0];
-         for (size_t variable_index: Range(1, vector.size())) {
-            result += separator + vector[variable_index];
-         }
-      }
-      return result;
    }
 
    void Uno::print_available_strategies() {

@@ -8,7 +8,7 @@
 #include "reformulation/OptimizationProblem.hpp"
 #include "symbolic/VectorExpression.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    BarrierParameterUpdateStrategy::BarrierParameterUpdateStrategy(const Options& options):

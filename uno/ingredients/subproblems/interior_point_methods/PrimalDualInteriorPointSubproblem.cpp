@@ -27,11 +27,12 @@ namespace uno {
                + number_jacobian_nonzeros /* Jacobian */,
                true, /* use regularization */
                options),
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"), number_variables + number_constraints,
+         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(number_variables + number_constraints,
                number_hessian_nonzeros
                + number_variables + number_constraints /* regularization */
                + 2 * number_variables /* diagonal barrier terms */
-               + number_jacobian_nonzeros /* Jacobian */)),
+               + number_jacobian_nonzeros, /* Jacobian */
+               options)),
          barrier_parameter_update_strategy(options),
          previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
          default_multiplier(options.get_double("barrier_default_multiplier")),
@@ -55,7 +56,7 @@ namespace uno {
 
    inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
       if (problem.has_inequality_constraints()) {
-         throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel.\n");
+         throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
 
       // TODO: enforce linear constraints at initial point
@@ -172,10 +173,10 @@ namespace uno {
    void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, Direction& direction, const WarmstartInformation& warmstart_information) {
       if (problem.has_inequality_constraints()) {
-         throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel.");
+         throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
       if (is_finite(this->trust_region_radius)) {
-         throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet.");
+         throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet");
       }
 
       // possibly update the barrier parameter

@@ -7,7 +7,7 @@
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_mechanisms/TrustRegionStrategy.hpp"
 #include "ingredients/globalization_mechanisms/BacktrackingLineSearch.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(

@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include "GlobalizationStrategy.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    GlobalizationStrategy::GlobalizationStrategy(const Options& options):

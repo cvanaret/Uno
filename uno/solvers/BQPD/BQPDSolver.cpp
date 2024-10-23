@@ -11,7 +11,7 @@
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
 #define BIG 1e30

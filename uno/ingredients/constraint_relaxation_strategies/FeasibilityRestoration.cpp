@@ -11,7 +11,7 @@
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/VectorView.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options& options) :

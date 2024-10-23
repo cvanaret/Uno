@@ -3,7 +3,7 @@
 
 #include "ZeroHessian.hpp"
 #include "reformulation/OptimizationProblem.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    ZeroHessian::ZeroHessian(size_t dimension, const Options& options) :

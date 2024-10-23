@@ -3,7 +3,7 @@
 
 #include "ExactHessian.hpp"
 #include "reformulation/OptimizationProblem.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    // exact Hessian

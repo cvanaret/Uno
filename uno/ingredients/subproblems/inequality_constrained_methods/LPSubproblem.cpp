@@ -3,18 +3,17 @@
 
 #include "LPSubproblem.hpp"
 #include "ingredients/subproblems/Direction.hpp"
-#include "linear_algebra/COOSparseStorage.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "solvers/LPSolver.hpp"
 #include "solvers/LPSolverFactory.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    LPSubproblem::LPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
          size_t number_jacobian_nonzeros, const Options& options) :
          InequalityConstrainedMethod("zero", number_variables, number_constraints, 0, false, options),
-         solver(LPSolverFactory::create(options.get_string("LP_solver"), number_variables, number_constraints,
+         solver(LPSolverFactory::create(number_variables, number_constraints,
                number_objective_gradient_nonzeros, number_jacobian_nonzeros, options)),
          zero_hessian(SymmetricMatrix<size_t, double>::zero(number_variables)) {
    }

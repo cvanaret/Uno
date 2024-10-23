@@ -6,7 +6,7 @@
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Expression.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy) :

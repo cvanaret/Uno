@@ -6,14 +6,14 @@
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
    ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options):
          HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */true),
          // inertia-based convexification needs a linear solver
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"), dimension, maximum_number_nonzeros)),
+         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(dimension, maximum_number_nonzeros, options)),
          regularization_initial_value(options.get_double("regularization_initial_value")),
          regularization_increase_factor(options.get_double("regularization_increase_factor")) {
    }
@@ -50,7 +50,6 @@ namespace uno {
             symbolic_factorization_performed = true;
          }
          this->linear_solver->do_numerical_factorization(hessian);
-
          if (this->linear_solver->rank() == number_original_variables && this->linear_solver->number_negative_eigenvalues() == 0) {
             good_inertia = true;
             DEBUG << "Factorization was a success\n";

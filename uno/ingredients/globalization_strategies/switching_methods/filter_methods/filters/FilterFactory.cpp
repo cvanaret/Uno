@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include "FilterFactory.hpp"
 #include "NonmonotoneFilter.hpp"
-#include "tools/Options.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
    // FilterFactory class
