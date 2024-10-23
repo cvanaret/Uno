@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <stdexcept>
+#include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
 #include "solvers/LPSolver.hpp"
 
