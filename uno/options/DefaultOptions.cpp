@@ -189,7 +189,7 @@ namespace uno {
       return options;
    }
 
-   Options DefaultOptions::determine_solvers() {
+   Options DefaultOptions::determine_solvers_and_preset() {
       Options options(false);
 
       /** solvers: check the available solvers **/
@@ -209,15 +209,14 @@ namespace uno {
          options["linear_solver"] = linear_solvers[0];
       }
 
-      /** ingredients **/
-      // default constraint relaxation strategy (feasibility_restoration|l1_relaxation)
-      options["constraint_relaxation_strategy"] = "feasibility_restoration";
-      // default subproblem (QP|LP|primal_dual_interior_point)
-      options["subproblem"] = "QP";
-      // default globalization strategy (l1_merit|fletcher_filter_method|waechter_filter_method)
-      options["globalization_strategy"] = "fletcher_filter_method";
-      // default globalization mechanism (TR|LS)
-      options["globalization_mechanism"] = "TR";
+      /** default preset **/
+      if (not QP_solvers.empty()) {
+         Options::set_preset(options, "filtersqp");
+      }
+      else if (not linear_solvers.empty()) {
+         Options::set_preset(options, "ipopt");
+      }
+      // note: byrd is not very robust and is not considered as a default preset
 
       return options;
    }

@@ -13,7 +13,6 @@
 #include "options/Options.hpp"
 #include "options/DefaultOptions.hpp"
 #include "tools/Logger.hpp"
-#include "Uno.hpp"
 
 /*
 size_t memory_allocation_amount = 0;
@@ -100,8 +99,8 @@ int main(int argc, char* argv[]) {
             throw std::runtime_error("The second command line argument should be -AMPL");
          }
 
-         // determine the default solvers based on the available libraries
-         Options solvers_options = DefaultOptions::determine_solvers();
+         // determine the default solvers based on the available libraries and possibly set a preset
+         Options solvers_options = DefaultOptions::determine_solvers_and_preset();
          options.overwrite_with(solvers_options);
 
          // overwrite the default options with the command line arguments
