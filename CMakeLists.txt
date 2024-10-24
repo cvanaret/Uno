@@ -86,19 +86,28 @@ function(link_to_uno library_name library_path)
    message(STATUS "Library ${library_name} was found.")
 endfunction()
 
-# detect optional libraries: ma57 metis bqpd
-find_library(MA57 ma57 NAMES ma57 hsl)
-if(NOT MA57)
-   message(WARNING "Optional library MA57 was not found.")
+# HSL or MA57
+find_library(HSL hsl)
+if(HSL)
+   link_to_uno(hsl ${HSL})
 else()
+   message(WARNING "Optional library HSL was not found.")
+   find_library(MA57 ma57)
+   if(MA57)
+      link_to_uno(ma57 ${MA57})
+   else()
+      message(WARNING "Optional library MA57 was not found.")
+   endif()
+endif()
+if(HSL OR MA57)
    list(APPEND UNO_SOURCE_FILES uno/solvers/MA57/MA57Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/MA57SolverTests.cpp)
-   link_to_uno(ma57 ${MA57})
    
    find_package(BLAS REQUIRED)
    list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 endif()
 
+# METIS
 find_library(METIS metis)
 if(NOT METIS)
    message(WARNING "Optional library METIS was not found.")
@@ -106,6 +115,7 @@ else()
    link_to_uno(metis ${METIS})
 endif()
 
+# BQPD
 find_library(BQPD bqpd)
 if(NOT BQPD)
    message(WARNING "Optional library BQPD was not found.")
@@ -114,6 +124,7 @@ else()
    link_to_uno(bqpd ${BQPD})
 endif()
 
+# MUMPS
 find_package(MUMPS)
 if(NOT MUMPS_LIBRARY)
    message(WARNING "Optional library MUMPS was not found.")

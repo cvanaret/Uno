@@ -12,8 +12,16 @@
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
 
-#ifdef HAS_MA57
+#if defined(HAS_MA57) || defined(HAS_HSL)
 #include "solvers/MA57/MA57Solver.hpp"
+#endif
+
+#ifdef HAS_HSL
+namespace uno {
+   extern "C" {
+   bool LIBHSL_isfunctional();
+   }
+}
 #endif
 
 #ifdef HAS_MUMPS
@@ -27,7 +35,11 @@ namespace uno {
             [[maybe_unused]] size_t number_nonzeros, const Options& options) {
          try {
             [[maybe_unused]] const std::string& linear_solver_name = options.get_string("linear_solver");
-#ifdef HAS_MA57
+#if defined(HAS_HSL)
+            if (linear_solver_name == "MA57" && LIBHSL_isfunctional()) {
+               return std::make_unique<MA57Solver>(dimension, number_nonzeros);
+            }
+#elif defined(HAS_MA57)
             if (linear_solver_name == "MA57") {
                return std::make_unique<MA57Solver>(dimension, number_nonzeros);
             }
@@ -53,7 +65,11 @@ namespace uno {
       // return the list of available solvers
       static std::vector<std::string> available_solvers() {
          std::vector<std::string> solvers{};
-#ifdef HAS_MA57
+#ifdef HAS_HSL
+         if (LIBHSL_isfunctional()) {
+            solvers.emplace_back("MA57");
+         }
+#elif defined(HAS_MA57)
          solvers.emplace_back("MA57");
 #endif
 #ifdef HAS_MUMPS

@@ -1,7 +1,6 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <iostream>
 #include <cassert>
 #include "MA57Solver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
