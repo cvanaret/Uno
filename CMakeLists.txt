@@ -87,35 +87,35 @@ function(link_to_uno library_name library_path)
 endfunction()
 
 # detect optional libraries: ma57 metis bqpd
-find_library(ma57 NAMES ma57 hsl)
-if(${ma57} STREQUAL "ma57-NOTFOUND")
+find_library(MA57 ma57 NAMES ma57 hsl)
+if(NOT MA57)
    message(WARNING "Optional library MA57 was not found.")
 else()
    list(APPEND UNO_SOURCE_FILES uno/solvers/MA57/MA57Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/MA57SolverTests.cpp)
-   link_to_uno(ma57 ${ma57})
+   link_to_uno(ma57 ${MA57})
    
    find_package(BLAS REQUIRED)
    list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 endif()
 
-find_library(metis metis)
-if(${metis} STREQUAL "metis-NOTFOUND")
+find_library(METIS metis)
+if(NOT METIS)
    message(WARNING "Optional library METIS was not found.")
 else()
-   link_to_uno(metis ${metis})
+   link_to_uno(metis ${METIS})
 endif()
 
-find_library(bqpd bqpd)
-if(${bqpd} STREQUAL "bqpd-NOTFOUND")
+find_library(BQPD bqpd)
+if(NOT BQPD)
    message(WARNING "Optional library BQPD was not found.")
 else()
    list(APPEND UNO_SOURCE_FILES uno/solvers/BQPD/BQPDSolver.cpp uno/solvers/BQPD/wdotd.f)
-   link_to_uno(bqpd ${bqpd})
+   link_to_uno(bqpd ${BQPD})
 endif()
 
 find_package(MUMPS)
-if(${MUMPS_LIBRARY} STREQUAL "MUMPS_LIBRARY-NOTFOUND")
+if(NOT MUMPS_LIBRARY)
    message(WARNING "Optional library MUMPS was not found.")
 else()
    list(APPEND UNO_SOURCE_FILES uno/solvers/MUMPS/MUMPSSolver.cpp)
@@ -124,7 +124,7 @@ else()
    
    list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
 
-   if(${MUMPS_MPISEQ_LIBRARY} STREQUAL "MUMPS_MPISEQ_LIBRARY-NOTFOUND")
+   if(NOT MUMPS_MPISEQ_LIBRARY)
       # parallel
       add_definitions("-D MUMPS_PARALLEL")
       find_package(MPI REQUIRED)
@@ -172,17 +172,17 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.options DESTINATION ${CMAKE_CURRENT_BI
 ######################
 # optional AMPL main #
 ######################
-find_library(amplsolver amplsolver)
-if(${amplsolver} STREQUAL "amplsolver-NOTFOUND")
+find_library(AMPLSOLVER amplsolver)
+if(NOT AMPLSOLVER)
    message(WARNING "Optional library amplsolver (ASL) was not found.")
 else()
    message(STATUS "Library amplsolver was found.")
    add_executable(uno_ampl bindings/AMPL/AMPLModel.cpp bindings/AMPL/uno_ampl.cpp)
    
-   target_link_libraries(uno_ampl PUBLIC uno ${amplsolver} ${CMAKE_DL_LIBS})
+   target_link_libraries(uno_ampl PUBLIC uno ${AMPLSOLVER} ${CMAKE_DL_LIBS})
    add_definitions("-D HAS_AMPLSOLVER")
    # include the corresponding directory
-   get_filename_component(directory ${amplsolver} DIRECTORY)
+   get_filename_component(directory ${AMPLSOLVER} DIRECTORY)
    include_directories(${directory})
 endif()
 
@@ -190,9 +190,11 @@ endif()
 # optional GoogleTest unit tests #
 ##################################
 if(WITH_GTEST)
-    find_package(GTest CONFIG REQUIRED)
-    if(NOT ${GTest}_DIR STREQUAL "${GTest}-NOTFOUND")
-        add_executable(run_unotest ${TESTS_UNO_SOURCE_FILES})
-        target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
-    endif()
+   find_package(GTest CONFIG REQUIRED)
+   if(NOT GTest_DIR)
+      message(WARNING "Optional library GTest was not found.")
+   else()
+      add_executable(run_unotest ${TESTS_UNO_SOURCE_FILES})
+      target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
+   endif()
 endif()
