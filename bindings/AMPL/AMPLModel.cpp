@@ -12,6 +12,7 @@
 #include "tools/Infinity.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Concatenation.hpp"
+#include "symbolic/UnaryNegation.hpp"
 #include "Uno.hpp"
 
 namespace uno {
@@ -53,6 +54,7 @@ namespace uno {
          variable_status(this->number_variables),
          constraint_type(this->number_constraints),
          constraint_status(this->number_constraints),
+         multipliers_with_flipped_sign(this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints),
          lower_bounded_variables_collection(this->lower_bounded_variables),
@@ -201,10 +203,6 @@ namespace uno {
       const int upper_triangular = 1;
       this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, 1, 1, upper_triangular));
       this->asl_hessian.reserve(this->number_asl_hessian_nonzeros);
-
-      // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
-      fint error_flag{};
-      lagscale_ASL(this->asl, -1., &error_flag);
    }
 
    size_t AMPLModel::number_objective_gradient_nonzeros() const {
@@ -282,15 +280,17 @@ namespace uno {
 
       // evaluate the Hessian: store the matrix in a preallocated array this->asl_hessian
       const int objective_number = -1;
+      // flip the signs of the multipliers: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
+      this->multipliers_with_flipped_sign = -multipliers;
       if (this->fixed_hessian_sparsity) {
          (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->asl_hessian.data()), objective_number, &objective_multiplier,
-               const_cast<double*>(multipliers.data()));
+               const_cast<double*>(this->multipliers_with_flipped_sign.data()));
       }
       else {
          double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
          const bool all_zeros_multipliers = are_all_zeros(multipliers);
          (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->asl_hessian.data()), objective_number, objective_multiplier_pointer,
-               all_zeros_multipliers ? nullptr : const_cast<double*>(multipliers.data()));
+               all_zeros_multipliers ? nullptr : const_cast<double*>(this->multipliers_with_flipped_sign.data()));
       }
 
       // generate the sparsity pattern in the right sparse format
