@@ -35,9 +35,9 @@ mkdir build
 ```console
 cd build/
 ```
-3. Execute cmake by providing the paths to the required and optional libraries ASL, BQPD and MA57:  
+3. Execute cmake (you may provide the paths to the libraries ASL, BQPD and MA57):  
 ```console
-cmake -Dbqpd=path -Dma57=path -Damplsolver=path -DCMAKE_BUILD_TYPE=[Release|Debug] ..
+cmake -DBQPD=path -DMA57=path -DAMPLSOLVER=path -DCMAKE_BUILD_TYPE=[Release|Debug] ..
 ```
 4. **(or)** Use ccmake to provide the paths to the required and optional libraries:
 ```console
