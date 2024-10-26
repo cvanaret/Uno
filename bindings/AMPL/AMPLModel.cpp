@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <array>
 #include <cassert>
 #include <stdexcept>
 #include "AMPLModel.hpp"
@@ -55,7 +56,7 @@ namespace uno {
          variable_status(this->number_variables),
          constraint_type(this->number_constraints),
          constraint_status(this->number_constraints),
-         multipliers_with_flipped_sign(this->number_constraints),
+         multipliers_with_flipped_sign(this->number_variables, this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints),
          lower_bounded_variables_collection(this->lower_bounded_variables),
@@ -282,16 +283,16 @@ namespace uno {
       // evaluate the Hessian: store the matrix in a preallocated array this->asl_hessian
       const int objective_number = -1;
       // flip the signs of the multipliers: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
-      this->multipliers_with_flipped_sign = -multipliers;
+      this->multipliers_with_flipped_sign.constraints = -multipliers;
       if (this->fixed_hessian_sparsity) {
          (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->asl_hessian.data()), objective_number, &objective_multiplier,
-               const_cast<double*>(this->multipliers_with_flipped_sign.data()));
+               const_cast<double*>(this->multipliers_with_flipped_sign.constraints.data()));
       }
       else {
          double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
          const bool all_zeros_multipliers = are_all_zeros(multipliers);
          (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->asl_hessian.data()), objective_number, objective_multiplier_pointer,
-               all_zeros_multipliers ? nullptr : const_cast<double*>(this->multipliers_with_flipped_sign.data()));
+               all_zeros_multipliers ? nullptr : const_cast<double*>(this->multipliers_with_flipped_sign.constraints.data()));
       }
 
       // generate the sparsity pattern in the right sparse format
@@ -379,20 +380,24 @@ namespace uno {
             this->asl->p.solve_code_ = 500;
          }
 
-         /*
-         SufDesc* tmp_lb = suf_get_ASL(this->asl, "uno_lower_bound_duals", ASL_Sufkind_var);
-         SufDesc* tmp_ub = suf_get_ASL(this->asl, "uno_upper_bound_duals", ASL_Sufkind_var);
-         suf_rput_ASL(this->asl, "uno_lower_bound_duals", ASL_Sufkind_var, iterate.multipliers.lower_bounds.data());
-         suf_rput_ASL(this->asl, "uno_upper_bound_duals", ASL_Sufkind_var, iterate.multipliers.upper_bounds.data());
-         */
+         // flip the signs of the multipliers if we maximize
+         this->multipliers_with_flipped_sign.constraints = this->objective_sign * iterate.multipliers.constraints;
+         this->multipliers_with_flipped_sign.lower_bounds = this->objective_sign * iterate.multipliers.lower_bounds;
+         this->multipliers_with_flipped_sign.upper_bounds = this->objective_sign * iterate.multipliers.upper_bounds;
+
+         // include the bound duals in the .sol file, using suffixes
+         SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
+         SufDecl upper_bound_suffix{const_cast<char*>("upper_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
+         std::array<SufDecl, 2> suffixes{lower_bound_suffix, upper_bound_suffix};
+         suf_declare_ASL(this->asl, suffixes.data(), static_cast<int>(this->number_variables));
+         suf_rput_ASL(this->asl, "lower_bound_duals", ASL_Sufkind_var, this->multipliers_with_flipped_sign.lower_bounds.data());
+         suf_rput_ASL(this->asl, "upper_bound_duals", ASL_Sufkind_var, this->multipliers_with_flipped_sign.upper_bounds.data());
 
          Option_Info option_info{};
          option_info.wantsol = 9; // write the solution without printing the message to stdout
          std::string message = "Uno ";
          message.append(Uno::current_version()).append(": ").append(status_to_message(termination_status));
-         // flip the signs of the multipliers if we maximize
-         this->multipliers_with_flipped_sign = this->objective_sign * iterate.multipliers.constraints;
-         write_sol_ASL(this->asl, message.data(), iterate.primals.data(), this->multipliers_with_flipped_sign.data(), &option_info);
+         write_sol_ASL(this->asl, message.data(), iterate.primals.data(), this->multipliers_with_flipped_sign.constraints.data(), &option_info);
       }
    }
 
