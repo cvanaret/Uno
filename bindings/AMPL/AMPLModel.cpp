@@ -356,11 +356,7 @@ namespace uno {
       std::copy(this->asl->i.pi0_, this->asl->i.pi0_ + this->number_constraints, multipliers.begin());
    }
 
-   void AMPLModel::postprocess_solution(Iterate& /*iterate*/, TerminationStatus /*termination_status*/) const {
-      // do nothing
-   }
-
-   void AMPLModel::terminate(Iterate& iterate, TerminationStatus termination_status) const {
+   void AMPLModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
       if (this->write_solution_to_file) {
          // write the primal-dual solution and status into a *.sol file
          this->asl->p.solve_code_ = 400; // limit
