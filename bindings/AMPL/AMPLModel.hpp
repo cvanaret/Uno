@@ -8,6 +8,7 @@
 #include "model/Model.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/Multipliers.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 
 // include AMPL Solver Library (ASL)
@@ -84,7 +85,7 @@ namespace uno {
       std::vector<BoundType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
     * UNBOUNDED) */
       std::vector<size_t> linear_constraints;
-      mutable Vector<double> multipliers_with_flipped_sign;
+      mutable Multipliers multipliers_with_flipped_sign;
 
       // lists of variables and constraints + corresponding collection objects
       std::vector<size_t> equality_constraints{};
