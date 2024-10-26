@@ -76,6 +76,7 @@ namespace uno {
       virtual void initial_primal_point(Vector<double>& x) const = 0;
       virtual void initial_dual_point(Vector<double>& multipliers) const = 0;
       virtual void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const = 0;
+      virtual void terminate(Iterate& iterate, TerminationStatus termination_status) const = 0;
 
       [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const = 0;
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;

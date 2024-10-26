@@ -49,6 +49,9 @@ namespace uno {
       void initial_primal_point(Vector<double>& x) const override;
       void initial_dual_point(Vector<double>& multipliers) const override { this->model->initial_dual_point(multipliers); }
       void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override;
+      void terminate(Iterate& iterate, TerminationStatus termination_status) const override {
+         this->model->terminate(iterate, termination_status);
+      }
 
       [[nodiscard]] size_t number_objective_gradient_nonzeros() const override { return this->model->number_objective_gradient_nonzeros(); }
       [[nodiscard]] size_t number_jacobian_nonzeros() const override { return this->model->number_jacobian_nonzeros() + this->slacks.size(); }

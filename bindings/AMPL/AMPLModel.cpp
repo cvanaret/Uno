@@ -12,6 +12,7 @@
 #include "tools/Infinity.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Concatenation.hpp"
+#include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/UnaryNegation.hpp"
 #include "Uno.hpp"
 
@@ -354,7 +355,11 @@ namespace uno {
       std::copy(this->asl->i.pi0_, this->asl->i.pi0_ + this->number_constraints, multipliers.begin());
    }
 
-   void AMPLModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
+   void AMPLModel::postprocess_solution(Iterate& /*iterate*/, TerminationStatus /*termination_status*/) const {
+      // do nothing
+   }
+
+   void AMPLModel::terminate(Iterate& iterate, TerminationStatus termination_status) const {
       if (this->write_solution_to_file) {
          // write the primal-dual solution and status into a *.sol file
          this->asl->p.solve_code_ = 400; // limit
@@ -373,11 +378,21 @@ namespace uno {
          else if (termination_status == TerminationStatus::INFEASIBLE_SMALL_STEP) {
             this->asl->p.solve_code_ = 500;
          }
+
+         /*
+         SufDesc* tmp_lb = suf_get_ASL(this->asl, "uno_lower_bound_duals", ASL_Sufkind_var);
+         SufDesc* tmp_ub = suf_get_ASL(this->asl, "uno_upper_bound_duals", ASL_Sufkind_var);
+         suf_rput_ASL(this->asl, "uno_lower_bound_duals", ASL_Sufkind_var, iterate.multipliers.lower_bounds.data());
+         suf_rput_ASL(this->asl, "uno_upper_bound_duals", ASL_Sufkind_var, iterate.multipliers.upper_bounds.data());
+         */
+
          Option_Info option_info{};
          option_info.wantsol = 9; // write the solution without printing the message to stdout
          std::string message = "Uno ";
          message.append(Uno::current_version()).append(": ").append(status_to_message(termination_status));
-         write_sol_ASL(this->asl, message.data(), iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
+         // flip the signs of the multipliers if we maximize
+         this->multipliers_with_flipped_sign = this->objective_sign * iterate.multipliers.constraints;
+         write_sol_ASL(this->asl, message.data(), iterate.primals.data(), this->multipliers_with_flipped_sign.data(), &option_info);
       }
    }
 

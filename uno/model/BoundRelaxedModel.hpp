@@ -54,6 +54,9 @@ namespace uno {
       void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override {
          this->model->postprocess_solution(iterate, termination_status);
       }
+      void terminate(Iterate& iterate, TerminationStatus termination_status) const override {
+         this->model->terminate(iterate, termination_status);
+      }
 
       [[nodiscard]] size_t number_objective_gradient_nonzeros() const override { return this->model->number_objective_gradient_nonzeros(); }
       [[nodiscard]] size_t number_jacobian_nonzeros() const override { return this->model->number_jacobian_nonzeros(); }
