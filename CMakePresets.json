@@ -37,9 +37,6 @@
                 "type": "equals",
                 "lhs": "${hostSystemName}",
                 "rhs": "Linux"
-            },
-            "cacheVariables": {
-                "bqpd": "/home/manuel/cmake_installed/lib/libbqpd.a"
             }
         },
         {

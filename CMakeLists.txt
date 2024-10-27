@@ -203,7 +203,7 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.options DESTINATION ${CMAKE_CURRENT_BI
 # if(${amplsolver} STREQUAL "amplsolver-NOTFOUND")
 #    message(WARNING "Optional library amplsolver (ASL) was not found.")
 # else()
-   message(STATUS "Library amplsolver was found.")
+   # message(STATUS "Library amplsolver was found.")
    add_executable(uno_ampl bindings/AMPL/AMPLModel.cpp bindings/AMPL/uno_ampl.cpp)
    
    target_link_libraries(uno_ampl PUBLIC uno ampl::ampl)
