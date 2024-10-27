@@ -220,7 +220,7 @@ namespace uno {
       }
       // print the overwritten options
       if (number_used_options > 0) {
-         DISCRETE << "Used overwritten options:\n" << option_list << '\n';
+         DISCRETE << "\nUsed overwritten options:\n" << option_list << '\n';
       }
    }
 

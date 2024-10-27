@@ -88,7 +88,7 @@ namespace uno {
 
    void Preprocessing::enforce_linear_constraints(const Model& model, Vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver) {
       const auto& linear_constraints = model.get_linear_constraints();
-      INFO << "Preprocessing phase: the problem has " << linear_constraints.size() << " linear constraints\n";
+      INFO << "\nPreprocessing phase: the problem has " << linear_constraints.size() << " linear constraints\n";
       if (not linear_constraints.empty()) {
          // evaluate the constraints
          std::vector<double> constraints(model.number_constraints);
