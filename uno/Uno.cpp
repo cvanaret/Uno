@@ -30,8 +30,6 @@ namespace uno {
    Level Logger::level = INFO;
 
    Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
-      DISCRETE << "Problem " << model.name << '\n' << model.number_variables << " variables, " << model.number_constraints << " constraints\n";
-      
       Timer timer{};
       Statistics statistics = Uno::create_statistics(model, options);
 

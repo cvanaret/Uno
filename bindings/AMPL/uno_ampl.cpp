@@ -29,6 +29,8 @@ namespace uno {
       try {
          // AMPL model
          std::unique_ptr<Model> ampl_model = std::make_unique<AMPLModel>(model_name, options);
+         DISCRETE << "Original model " << ampl_model->name << '\n' << ampl_model->number_variables << " variables, " <<
+            ampl_model->number_constraints << " constraints\n";
 
          // initialize initial primal and dual points
          Iterate initial_iterate(ampl_model->number_variables, ampl_model->number_constraints);
@@ -39,6 +41,8 @@ namespace uno {
 
          // reformulate (scale, add slacks, relax the bounds, ...) if necessary
          std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), initial_iterate, options);
+         DISCRETE << "Reformulated model " << model->name << '\n' << model->number_variables << " variables, " <<
+            model->number_constraints << " constraints\n";
 
          // create the constraint relaxation strategy, the globalization mechanism and the Uno solver
          auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(*model, options);
