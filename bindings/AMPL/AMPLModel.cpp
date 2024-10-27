@@ -385,7 +385,7 @@ namespace uno {
          SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
          SufDecl upper_bound_suffix{const_cast<char*>("upper_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
          std::array<SufDecl, 2> suffixes{lower_bound_suffix, upper_bound_suffix};
-         suf_declare_ASL(this->asl, suffixes.data(), static_cast<int>(this->number_variables));
+         suf_declare_ASL(this->asl, suffixes.data(), 2);
          suf_rput_ASL(this->asl, "lower_bound_duals", ASL_Sufkind_var, this->multipliers_with_flipped_sign.lower_bounds.data());
          suf_rput_ASL(this->asl, "upper_bound_duals", ASL_Sufkind_var, this->multipliers_with_flipped_sign.upper_bounds.data());
 
