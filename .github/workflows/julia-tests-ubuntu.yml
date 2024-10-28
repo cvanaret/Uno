@@ -1,4 +1,4 @@
-name: CI
+name: JuliaCI
 on:
   push:
     branches: [main]
@@ -19,17 +19,17 @@ jobs:
     name: Julia - ${{ github.event_name }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Uno
-        uses: actions/checkout@v4
-      - name: Install Julia 1.7
-        uses: julia-actions/setup-julia@v2
+      - uses: actions/checkout@v4
+      # Install Julia 1.7 for BinaryBuilder. Note that this is an old version of
+      # Julia, but it is required for compatibility with BinaryBuilder.
+      - uses: julia-actions/setup-julia@v2
         with:
           version: "1.7"
           arch: x64
-      - name: Set the environment variables BINARYBUILDER_AUTOMATIC_APPLE, UNO_RELEASE, UNO_COMMIT
-        shell: bash
+      # Set environment variables required by BinaryBuilder. The specific
+      # version of UNO_RELEASE is unimportant, since Uno_jll doesn't depend on it
+      - name: Set the environment variables
         run: |
-          echo "BINARYBUILDER_AUTOMATIC_APPLE=true" >> $GITHUB_ENV
           echo "UNO_RELEASE=1.1.1" >> $GITHUB_ENV
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "UNO_COMMIT=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
@@ -38,19 +38,21 @@ jobs:
             echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
             echo "UNO_URL=https://github.com/${{ github.repository }}.git" >> $GITHUB_ENV
           fi
-      - name: Generate Uno_jll.jl
+      - name: Compile Uno_jll
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
-          julia --color=yes .github/julia/build_tarballs_yggdrasil.jl x86_64-linux-gnu-libgfortran5 --verbose --deploy="local"
-      - name: Install Julia LTS
-        uses: julia-actions/setup-julia@v2
+          julia --color=yes .github/julia/build_tarballs_yggdrasil.jl x86_64-linux-gnu-cxx11 --verbose --deploy="local"
+      # Now install a newer version of Julia to actually test Uno_jll. We choose
+      # v1.10 because it is the current Long-Term Support (LTS).
+      - uses: julia-actions/setup-julia@v2
         with:
           version: "1.10"
           arch: x64
-
-      - name: Test AmplNLWriter.jl
-        shell: bash
+      - uses: julia-actions/cache@v1
+      - name: Test .github/julia/runtests.jl
+        shell: julia --color=yes --project=.github/julia {0}
         run: |
-          git clone https://github.com/jump-dev/AmplNLWriter.jl
-          cd AmplNLWriter.jl/test/MINLPTests/
-          julia --project --color=yes -e 'using Pkg; Pkg.develop(path="/home/runner/.julia/dev/Uno_jll"); Pkg.develop(path="../.."); Pkg.instantiate(); include("run_minlptests.jl")'
+          using Pkg
+          Pkg.instantiate()
+          Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
+          include("/home/runner/work/Uno/Uno/.github/julia/runtests.jl")
