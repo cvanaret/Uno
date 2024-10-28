@@ -21,6 +21,13 @@ namespace uno {
       this->columns[order] = name;
       this->widths[name] = width;
    }
+   
+   void Statistics::start_new_line() {
+      //this->current_line.clear();
+      for (const auto& column: this->columns) {
+         this->current_line[column.second] = "-";
+      }
+   }
 
    void Statistics::set(std::string_view name, std::string value) {
       this->current_line[name] = std::move(value);
@@ -39,25 +46,30 @@ namespace uno {
       stream << std::defaultfloat << std::setprecision(Statistics::numerical_format_size) << value;
       this->set(name, stream.str());
    }
-
-   void Statistics::print_header(bool first_occurrence) {
-      /* line above */
-      std::cout << (first_occurrence ? Statistics::symbol("top-left") : Statistics::symbol("left-mid"));
-      int k = 0;
+   
+   void Statistics::print_horizontal_line(bool top) {
+      std::cout << (top ? Statistics::symbol("top-left") : Statistics::symbol("left-mid"));
+      size_t k = 0;
       for (const auto& element: this->columns) {
          if (0 < k) {
-            std::cout << (first_occurrence ? Statistics::symbol("top-mid") : Statistics::symbol("mid-mid"));
+            std::cout << (top ? Statistics::symbol("top-mid") : Statistics::symbol("mid-mid"));
          }
-         const std::string& header = element.second;
+         std::string header = element.second;
          for (int j = 0; j < this->widths[header]; j++) {
+            //std::cout << Statistics::symbol("bottom");
             std::cout << Statistics::symbol("top");
          }
          k++;
       }
-      std::cout << (first_occurrence ? Statistics::symbol("top-right") : Statistics::symbol("right-mid")) << '\n';
+      std::cout << (top ? Statistics::symbol("top-right") : Statistics::symbol("right-mid")) << '\n';
+   }
+
+   void Statistics::print_header() {
+      /* line above */
+      this->print_horizontal_line(this->iteration == 0);
       /* headers */
       std::cout << Statistics::symbol("left");
-      k = 0;
+      size_t k = 0;
       for (const auto& element: this->columns) {
          if (0 < k) {
             std::cout << Statistics::symbol("middle");
@@ -70,28 +82,16 @@ namespace uno {
          k++;
       }
       std::cout << Statistics::symbol("right") << '\n';
+      /* line below */
+      this->print_horizontal_line(false);
    }
 
    void Statistics::print_current_line() {
       if (this->iteration % this->print_header_every_iterations == 0) {
-         this->print_header(this->iteration == 0);
+         this->print_header();
       }
-      std::cout << Statistics::symbol("left-mid");
-      int k = 0;
-      for (const auto& element: this->columns) {
-         if (0 < k) {
-            std::cout << Statistics::symbol("mid-mid");
-         }
-         std::string header = element.second;
-         for (int j = 0; j < this->widths[header]; j++) {
-            std::cout << Statistics::symbol("bottom");
-         }
-         k++;
-      }
-      std::cout << Statistics::symbol("right-mid") << '\n';
-      /* headers */
       std::cout << Statistics::symbol("left");
-      k = 0;
+      size_t k = 0;
       for (const auto& element: this->columns) {
          if (0 < k) {
             std::cout << Statistics::symbol("middle");
@@ -132,14 +132,7 @@ namespace uno {
       }
       std::cout << Statistics::symbol("bottom-right") << '\n';
    }
-
-   void Statistics::start_new_line() {
-      //this->current_line.clear();
-      for (const auto& column: this->columns) {
-         this->current_line[column.second] = "-";
-      }
-   }
-
+   
    std::string_view Statistics::symbol(std::string_view value) {
       static std::map<std::string_view, std::string_view> symbols = {
             {"top", "─"},
