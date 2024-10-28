@@ -6,23 +6,30 @@
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
+#include "fortran_interface.h"
+
+#define MA57ID FC_GLOBAL(ma57id, MA57ID)
+#define MA57AD FC_GLOBAL(ma57ad, MA57AD)
+#define MA57BD FC_GLOBAL(ma57bd, MA57BD)
+#define MA57CD FC_GLOBAL(ma57cd, MA57CD)
+#define MA57DD FC_GLOBAL(ma57dd, MA57DD)
 
 namespace uno {
    extern "C" {
    // MA57
    // default values of controlling parameters
-   void ma57id_(double cntl[], int icntl[]);
+   void MA57ID(double cntl[], int icntl[]);
    // symbolic factorization
-   void ma57ad_(const int* n, const int* ne, const int irn[], const int jcn[], const int* lkeep, int keep[], int iwork[], int icntl[], int info[], double
+   void MA57AD(const int* n, const int* ne, const int irn[], const int jcn[], const int* lkeep, int keep[], int iwork[], int icntl[], int info[], double
    rinfo[]);
    // numerical factorization
-   void ma57bd_(const int* n, int* ne, const double a[], /* out */ double fact[], const int* lfact, /* out */ int ifact[], const int* lifact,
+   void MA57BD(const int* n, int* ne, const double a[], /* out */ double fact[], const int* lfact, /* out */ int ifact[], const int* lifact,
          const int* lkeep, const int keep[], int iwork[], int icntl[], double cntl[], /* out */ int info[], /* out */ double rinfo[]);
    // linear system solve without iterative refinement
-   void ma57cd_(const int* job, const int* n, double fact[], int* lfact, int ifact[], int* lifact, const int* nrhs, double rhs[], const int* lrhs, double
+   void MA57CD(const int* job, const int* n, double fact[], int* lfact, int ifact[], int* lifact, const int* nrhs, double rhs[], const int* lrhs, double
    work[], int* lwork, int iwork[], int icntl[], int info[]);
    // linear system solve with iterative refinement
-   void ma57dd_(const int* job, const int* n, int* ne, const double a[], const int irn[], const int jcn[], double fact[], int* lfact, int ifact[], int*
+   void MA57DD(const int* job, const int* n, int* ne, const double a[], const int irn[], const int jcn[], double fact[], int* lfact, int ifact[], int*
    lifact, const double rhs[], double x[], double resid[], double work[], int iwork[], int icntl[],
          double cntl[], int info[], double rinfo[]);
    }
@@ -36,7 +43,7 @@ namespace uno {
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);
       // set the default values of the controlling parameters
-      ma57id_(this->cntl.data(), this->icntl.data());
+      MA57ID(this->cntl.data(), this->icntl.data());
       // suppress warning messages
       this->icntl[4] = 0;
       // iterative refinement enabled
@@ -61,7 +68,7 @@ namespace uno {
       const int nnz = static_cast<int>(matrix.number_nonzeros());
 
       // symbolic factorization
-      ma57ad_(/* const */ &n,
+      MA57AD(/* const */ &n,
             /* const */ &nnz,
             /* const */ this->row_indices.data(),
             /* const */ this->column_indices.data(),
@@ -95,7 +102,7 @@ namespace uno {
       int nnz = static_cast<int>(matrix.number_nonzeros());
 
       // numerical factorization
-      ma57bd_(&n,
+      MA57BD(&n,
             &nnz,
             /* const */ matrix.data_pointer(),
             /* out */ this->fact.data(),
@@ -116,7 +123,7 @@ namespace uno {
 
       // solve the linear system
       if (this->use_iterative_refinement) {
-         ma57dd_(&this->job, &n, &nnz, matrix.data_pointer(), this->row_indices.data(), this->column_indices.data(),
+         MA57DD(&this->job, &n, &nnz, matrix.data_pointer(), this->row_indices.data(), this->column_indices.data(),
                this->fact.data(), &this->factorization.lfact, this->ifact.data(), &this->factorization.lifact,
                rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
                this->cntl.data(), this->info.data(), this->rinfo.data());
@@ -125,7 +132,7 @@ namespace uno {
          // copy rhs into result (overwritten by MA57)
          result = rhs;
 
-         ma57cd_(&this->job, &n, this->fact.data(), &this->factorization.lfact, this->ifact.data(),
+         MA57CD(&this->job, &n, this->fact.data(), &this->factorization.lfact, this->ifact.data(),
                &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
                this->icntl.data(), this->info.data());
       }
