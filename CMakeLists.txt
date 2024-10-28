@@ -29,6 +29,15 @@ add_subdirectory(C:/repos/Uno/MUMPS C:/repos/Uno/MUMPS/out/build/windows-intel-r
 include(FortranCInterface)
 FortranCInterface_VERIFY(CXX)
 
+
+FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
+                            MACRO_NAMESPACE "FC_"
+                            SYMBOL_NAMESPACE "FC_")
+
+# directories
+set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
+
+
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
 set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
@@ -42,8 +51,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${C
 option(WITH_GTEST "Enable GoogleTest" OFF)
 message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
 
-# directories
-set(DIRECTORIES uno)
 
 # source files
 file(GLOB UNO_SOURCE_FILES

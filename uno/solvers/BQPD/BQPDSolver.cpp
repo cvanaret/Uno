@@ -12,8 +12,8 @@
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
+#include "fortran_interface.h"
 
-#define FC_GLOBAL(name,NAME) NAME
 #define WSC FC_GLOBAL(wsc,WSC)
 #define KKTALPHAC FC_GLOBAL(kktalphac,KKTALPHAC)
 #define BQPD FC_GLOBAL(bqpd,BQPD)
