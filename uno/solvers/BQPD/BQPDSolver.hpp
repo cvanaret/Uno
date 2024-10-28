@@ -4,6 +4,7 @@
 #ifndef UNO_BQPDSOLVER_H
 #define UNO_BQPDSOLVER_H
 
+#include <array>
 #include <vector>
 #include "ingredients/subproblems/SubproblemStatus.hpp"
 #include "linear_algebra/Vector.hpp"
