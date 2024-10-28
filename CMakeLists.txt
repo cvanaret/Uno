@@ -23,7 +23,7 @@ include($ENV{CMAKE_INSTALL_PREFIX}/cmake/metisTargets.cmake)
 include($ENV{CMAKE_INSTALL_PREFIX}/cmake/AMPLTargets.cmake)
 include($ENV{CMAKE_INSTALL_PREFIX}/cmake/bqpdTargets.cmake)
 # include($ENV{CMAKE_INSTALL_PREFIX}/cmake/mumpsTargets.cmake)
-add_subdirectory(/home/manuel/repos/Uno/MUMPS_cmake /home/manuel/repos/Uno/MUMPS_cmake/out/build/linux-gcc-release-config)
+add_subdirectory(C:/repos/Uno/MUMPS C:/repos/Uno/MUMPS/out/build/windows-intel-release-config)
 
 
 include(FortranCInterface)
@@ -208,7 +208,9 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.options DESTINATION ${CMAKE_CURRENT_BI
    
    target_link_libraries(uno_ampl PUBLIC uno ampl::ampl)
    add_definitions("-D HAS_AMPLSOLVER")
-   set_property(TARGET uno_ampl PROPERTY POSITION_INDEPENDENT_CODE ON)
+   set_target_properties(uno_ampl PROPERTIES 
+      POSITION_INDEPENDENT_CODE ON
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
    # include the corresponding directory
    # get_filename_component(directory ${amplsolver} DIRECTORY)
    # include_directories(${directory})
