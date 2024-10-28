@@ -45,6 +45,7 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override { return this->equality_constraints; }
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override { return this->inequality_constraints; }
       [[nodiscard]] const std::vector<size_t>& get_linear_constraints() const override { return this->model->get_linear_constraints(); }
+      [[nodiscard]] const Collection<size_t>& get_fixed_variables() const override { return this->model->get_fixed_variables(); }
 
       void initial_primal_point(Vector<double>& x) const override;
       void initial_dual_point(Vector<double>& multipliers) const override { this->model->initial_dual_point(multipliers); }

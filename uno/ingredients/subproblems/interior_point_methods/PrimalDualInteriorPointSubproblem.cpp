@@ -58,6 +58,9 @@ namespace uno {
       if (problem.has_inequality_constraints()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
+      if (problem.has_fixed_variables()) {
+         throw std::runtime_error("The problem has fixed variables. Move them to the set of general constraints.");
+      }
 
       // TODO: enforce linear constraints at initial point
       //if (options.get_bool("enforce_linear_constraints")) {
