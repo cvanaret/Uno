@@ -64,6 +64,7 @@ namespace uno {
       [[nodiscard]] virtual const SparseVector<size_t>& get_slacks() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_single_lower_bounded_variables() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_single_upper_bounded_variables() const = 0;
+      [[nodiscard]] virtual const Collection<size_t>& get_fixed_variables() const = 0;
 
       [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const = 0;
       [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const = 0;

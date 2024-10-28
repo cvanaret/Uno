@@ -89,6 +89,10 @@ namespace uno {
          }
       }
 
+      void operator*=(ElementType factor) {
+         this->scale(factor);
+      }
+
       ElementType* data() { return this->vector.data(); }
       const ElementType* data() const { return this->vector.data(); }
 

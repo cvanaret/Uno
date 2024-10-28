@@ -34,6 +34,7 @@ namespace uno {
 
       [[nodiscard]] bool is_constrained() const;
       [[nodiscard]] bool has_inequality_constraints() const;
+      [[nodiscard]] bool has_fixed_variables() const;
 
       // function evaluations
       [[nodiscard]] virtual double get_objective_multiplier() const = 0;
@@ -73,6 +74,10 @@ namespace uno {
 
    inline bool OptimizationProblem::has_inequality_constraints() const {
       return (not this->model.get_inequality_constraints().is_empty());
+   }
+
+   inline bool OptimizationProblem::has_fixed_variables() const {
+      return (not this->model.get_fixed_variables().is_empty());
    }
 
    inline size_t OptimizationProblem::get_number_original_variables() const {

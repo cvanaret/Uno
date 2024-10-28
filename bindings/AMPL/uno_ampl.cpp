@@ -50,8 +50,7 @@ namespace uno {
          Uno uno = Uno(*globalization_mechanism, options);
 
          // solve the instance
-         Result result = uno.solve(*model, initial_iterate, options);
-         uno.print_optimization_summary(result);
+         uno.solve(*model, initial_iterate, options);
          // std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
       }
       catch (std::exception& exception) {

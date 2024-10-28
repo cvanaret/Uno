@@ -47,6 +47,7 @@ namespace uno {
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
       [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
       [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
+      [[nodiscard]] const Collection<size_t>& get_fixed_variables() const override { return this->fixed_variables_collection; }
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
@@ -84,7 +85,7 @@ namespace uno {
       std::vector<BoundType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
     * UNBOUNDED) */
       std::vector<size_t> linear_constraints;
-      mutable Multipliers multipliers_with_flipped_sign;
+      mutable Vector<double> multipliers_with_flipped_sign;
 
       // lists of variables and constraints + corresponding collection objects
       std::vector<size_t> equality_constraints{};
@@ -100,6 +101,8 @@ namespace uno {
       CollectionAdapter<std::vector<size_t>&> single_lower_bounded_variables_collection;
       std::vector<size_t> single_upper_bounded_variables{}; // indices of the single upper-bounded variables
       CollectionAdapter<std::vector<size_t>&> single_upper_bounded_variables_collection;
+      std::vector<size_t> fixed_variables;
+      CollectionAdapter<std::vector<size_t>&> fixed_variables_collection;
 
       void generate_variables();
       void generate_constraints();

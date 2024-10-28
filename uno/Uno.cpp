@@ -29,58 +29,58 @@ namespace uno {
    
    Level Logger::level = INFO;
 
-   Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
+   void Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
       Timer timer{};
       Statistics statistics = Uno::create_statistics(model, options);
 
-      // use the initial primal-dual point to initialize the strategies and generate the initial iterate
-      this->initialize(statistics, current_iterate, options);
-      current_iterate.status = TerminationStatus::NOT_OPTIMAL;
-      // allocate the trial iterate once and for all here
-      Iterate trial_iterate(current_iterate);
-
-      size_t major_iterations = 0;
       try {
-         bool termination = false;
-         // check for termination
-         while (not termination) {
-            major_iterations++;
-            statistics.start_new_line();
-            statistics.set("iter", major_iterations);
-            DEBUG << "### Outer iteration " << major_iterations << '\n';
+         // use the initial primal-dual point to initialize the strategies and generate the initial iterate
+         this->initialize(statistics, current_iterate, options);
+         current_iterate.status = TerminationStatus::NOT_OPTIMAL;
+         // allocate the trial iterate once and for all here
+         Iterate trial_iterate(current_iterate);
 
-            // compute an acceptable iterate by solving a subproblem at the current point
-            this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate, trial_iterate);
-            termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration());
-            // the trial iterate becomes the current iterate for the next iteration
-            std::swap(current_iterate, trial_iterate);
+         size_t major_iterations = 0;
+         try {
+            bool termination = false;
+            // check for termination
+            while (not termination) {
+               major_iterations++;
+               statistics.start_new_line();
+               statistics.set("iter", major_iterations);
+               DEBUG << "### Outer iteration " << major_iterations << '\n';
+
+               // compute an acceptable iterate by solving a subproblem at the current point
+               this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate, trial_iterate);
+               termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration());
+               // the trial iterate becomes the current iterate for the next iteration
+               std::swap(current_iterate, trial_iterate);
+            }
          }
-      }
-      catch (std::exception& exception) {
-         statistics.start_new_line();
-         statistics.set("status", exception.what());
-         if (Logger::level == INFO) statistics.print_current_line();
-         DEBUG << exception.what() << '\n';
-      }
-      if (Logger::level == INFO) statistics.print_footer();
+         catch (std::exception& exception) {
+            statistics.start_new_line();
+            statistics.set("status", exception.what());
+            if (Logger::level == INFO) statistics.print_current_line();
+            DEBUG << exception.what() << '\n';
+         }
+         if (Logger::level == INFO) statistics.print_footer();
 
-      Uno::postprocess_iterate(model, current_iterate, current_iterate.status);
-      return this->create_result(model, current_iterate, major_iterations, timer);
+         Uno::postprocess_iterate(model, current_iterate, current_iterate.status);
+         Result result = this->create_result(model, current_iterate, major_iterations, timer);
+         this->print_optimization_summary(result);
+      }
+      catch (const std::exception& e) {
+         DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
+      }
    }
 
    void Uno::initialize(Statistics& statistics, Iterate& current_iterate, const Options& options) {
-      try {
-         statistics.start_new_line();
-         statistics.set("iter", 0);
-         statistics.set("status", "initial point");
-         this->globalization_mechanism.initialize(statistics, current_iterate, options);
-         options.print_used();
-         if (Logger::level == INFO) statistics.print_current_line();
-      }
-      catch (const std::exception& e) {
-         DISCRETE << RED << "An error occurred at the initial iterate: " << e.what() << RESET << '\n';
-         throw;
-      }
+      statistics.start_new_line();
+      statistics.set("iter", 0);
+      statistics.set("status", "initial point");
+      this->globalization_mechanism.initialize(statistics, current_iterate, options);
+      options.print_used();
+      if (Logger::level == INFO) statistics.print_current_line();
    }
 
    Statistics Uno::create_statistics(const Model& model, const Options& options) {
