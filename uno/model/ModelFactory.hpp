@@ -8,13 +8,12 @@
 #include "Model.hpp"
 
 namespace uno {
-   // forward declarations
-   class Iterate;
+   // forward declaration
    class Options;
 
    class ModelFactory {
    public:
-      static std::unique_ptr<Model> reformulate(std::unique_ptr<Model> model, Iterate& initial_iterate, const Options& options);
+      static std::unique_ptr<Model> reformulate(std::unique_ptr<Model> model, const Options& options);
    };
 } // namespace
 

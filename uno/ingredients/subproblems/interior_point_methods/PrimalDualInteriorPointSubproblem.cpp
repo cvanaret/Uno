@@ -67,6 +67,8 @@ namespace uno {
       //   Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, this->solver);
       //}
 
+      // add the slacks to the initial iterate
+      initial_iterate.set_number_variables(problem.number_variables);
       // make the initial point strictly feasible wrt the bounds
       for (size_t variable_index: Range(problem.number_variables)) {
          initial_iterate.primals[variable_index] = PrimalDualInteriorPointSubproblem::push_variable_to_interior(initial_iterate.primals[variable_index],

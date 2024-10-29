@@ -40,7 +40,7 @@ namespace uno {
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override { return this->model->get_slacks(); }
       [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override { return this->model->get_single_lower_bounded_variables(); }
       [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override { return this->model->get_single_upper_bounded_variables(); }
-      [[nodiscard]] const Collection<size_t>& get_fixed_variables() const override { return this->model->get_fixed_variables(); }
+      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override { return this->model->get_fixed_variables(); }
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override { return this->model->constraint_lower_bound(constraint_index); }
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override { return this->model->constraint_upper_bound(constraint_index); }
@@ -48,7 +48,7 @@ namespace uno {
       [[nodiscard]] BoundType get_constraint_bound_type(size_t constraint_index) const override { return this->model->get_constraint_bound_type(constraint_index); }
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override { return this->model->get_equality_constraints(); }
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override { return this->model->get_inequality_constraints(); }
-      [[nodiscard]] const std::vector<size_t>& get_linear_constraints() const override { return this->model->get_linear_constraints(); }
+      [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override { return this->model->get_linear_constraints(); }
 
       void initial_primal_point(Vector<double>& x) const override { this->model->initial_primal_point(x); }
       void initial_dual_point(Vector<double>& multipliers) const override { this->model->initial_dual_point(multipliers); }
@@ -61,7 +61,7 @@ namespace uno {
       [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model->number_hessian_nonzeros(); }
 
    private:
-      const std::unique_ptr<Model> model;
+      const std::unique_ptr<Model> model{};
       const double relaxation_factor;
    };
 

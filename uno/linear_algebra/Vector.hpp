@@ -69,6 +69,9 @@ namespace uno {
       // size
       [[nodiscard]] size_t size() const { return this->vector.size(); }
       [[nodiscard]] bool empty() const { return (this->size() == 0); }
+
+      // size and capacity
+      void reserve(size_t new_capacity) { this->vector.reserve(new_capacity); }
       void resize(size_t new_size) { this->vector.resize(new_size); }
 
       // iterators
@@ -76,6 +79,10 @@ namespace uno {
       iterator end() noexcept { return this->vector.end(); }
       const_iterator begin() const noexcept { return this->vector.cbegin(); }
       const_iterator end() const noexcept { return this->vector.cend(); }
+
+      // insertion
+      void push_back(ElementType element) { this->vector.push_back(element); }
+      void emplace_back(ElementType element) { this->vector.emplace_back(element); }
 
       void fill(ElementType value) {
          for (size_t index = 0; index < this->size(); index++) {

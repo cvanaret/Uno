@@ -32,17 +32,17 @@ namespace uno {
          DISCRETE << "Original model " << ampl_model->name << '\n' << ampl_model->number_variables << " variables, " <<
             ampl_model->number_constraints << " constraints\n";
 
-         // initialize initial primal and dual points
-         Iterate initial_iterate(ampl_model->number_variables, ampl_model->number_constraints);
-         ampl_model->initial_primal_point(initial_iterate.primals);
-         ampl_model->project_onto_variable_bounds(initial_iterate.primals);
-         ampl_model->initial_dual_point(initial_iterate.multipliers.constraints);
-         initial_iterate.feasibility_multipliers.reset();
-
          // reformulate (scale, add slacks, relax the bounds, ...) if necessary
-         std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), initial_iterate, options);
+         std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), options);
          DISCRETE << "Reformulated model " << model->name << '\n' << model->number_variables << " variables, " <<
-            model->number_constraints << " constraints\n";
+                  model->number_constraints << " constraints\n";
+
+         // initialize initial primal and dual points
+         Iterate initial_iterate(model->number_variables, model->number_constraints);
+         model->initial_primal_point(initial_iterate.primals);
+         model->project_onto_variable_bounds(initial_iterate.primals);
+         model->initial_dual_point(initial_iterate.multipliers.constraints);
+         initial_iterate.feasibility_multipliers.reset();
 
          // create the constraint relaxation strategy, the globalization mechanism and the Uno solver
          auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(*model, options);
