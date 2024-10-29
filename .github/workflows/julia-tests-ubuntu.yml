@@ -25,10 +25,11 @@ jobs:
         run: |
           echo "BINARYBUILDER_AUTOMATIC_APPLE=true" >> $GITHUB_ENV
           echo "UNO_RELEASE=1.1.1" >> $GITHUB_ENV
-          echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
           if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "UNO_COMMIT=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
             echo "UNO_URL=${{ github.event.pull_request.head.repo.clone_url }}" >> $GITHUB_ENV
           else
+            echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
             echo "UNO_URL=https://github.com/${{ github.repository }}.git" >> $GITHUB_ENV
           fi
       - name: Generate Uno_jll.jl
