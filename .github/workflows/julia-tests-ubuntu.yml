@@ -29,8 +29,7 @@ jobs:
       - name: Generate Uno_jll.jl
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
-          julia --color=yes .github/julia/build_tarballs.jl x86_64-linux-gnu-libgfortran5 --verbose --local
-          rm -r ~/.julia
+          julia --color=yes .github/julia/build_tarballs.jl x86_64-linux-gnu-libgfortran5 --verbose --deploy="local"
       - name: Install Julia LTS
         uses: julia-actions/setup-julia@v2
         with:
