@@ -60,7 +60,7 @@ install -v -m 755 "uno_ampl${exeext}" -t "${bindir}"
 # Currently, Uno does not provide a shared library. This may be useful in the future once it has a C API.
 # We just check that we can generate it, but we don't include it in the tarballs.
 ${CXX} -shared $(flagon -Wl,--whole-archive) libuno.a $(flagon -Wl,--no-whole-archive) -o libuno.${dlext} -L${libdir} -l${OMP} -l${LBT} -ldmumps -lmetis -lhsl
-# cp libuno.${dlext} "${libdir}/libuno.${dlext}
+# cp libuno.${dlext} ${libdir}/libuno.${dlext}
 """
 
 platforms = supported_platforms()
