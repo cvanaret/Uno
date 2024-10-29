@@ -47,4 +47,4 @@ jobs:
         run: |
           git clone https://github.com/jump-dev/AmplNLWriter.jl
           cd AmplNLWriter.jl/test/MINLPTests/
-          julia --project --color=yes -e 'using Pkg; Pkg.develop(path="/home/runner/.julia/dev/Uno_jll"); Pkg.instantiate(); include("run_minlptests.jl")'
+          julia --project --color=yes -e 'using Pkg; Pkg.develop(path="/home/runner/.julia/dev/Uno_jll"); Pkg.develop(path="../.."); Pkg.instantiate(); include("run_minlptests.jl")'
