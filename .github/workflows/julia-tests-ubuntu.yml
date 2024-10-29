@@ -26,6 +26,7 @@ jobs:
           echo "BINARYBUILDER_AUTOMATIC_APPLE=true" >> $GITHUB_ENV
           echo "UNO_RELEASE=1.1.1" >> $GITHUB_ENV
           echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
+          echo "UNO_URL=https://github.com/${{ github.repository }}.git" >> $GITHUB_ENV
       - name: Generate Uno_jll.jl
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'

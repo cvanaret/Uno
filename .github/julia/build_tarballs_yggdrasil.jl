@@ -4,14 +4,14 @@ using BinaryBuilder, Pkg
 
 haskey(ENV, "UNO_RELEASE") || error("The environment variable UNO_RELEASE is not defined.")
 haskey(ENV, "UNO_COMMIT") || error("The environment variable UNO_COMMIT is not defined.")
+haskey(ENV, "UNO_URL") || error("The environment variable UNO_URL is not defined.")
 
 name = "Uno"
 version = VersionNumber(ENV["UNO_RELEASE"])
 
 # Collection of sources required to complete build
 sources = [
-    GitSource("https://github.com/cvanaret/Uno.git",
-              ENV["UNO_COMMIT"])
+    GitSource(ENV["UNO_URL"], ENV["UNO_COMMIT"])
 ]
 
 script = raw"""
