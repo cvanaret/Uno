@@ -8,7 +8,8 @@ version = VersionNumber(ENV["UNO_RELEASE"])
 
 # Collection of sources required to complete build
 sources = [
-    GitSource("https://github.com/cvanaret/Uno.git", ENV["UNO_COMMIT"])
+    GitSource("https://github.com/cvanaret/Uno.git", ENV["UNO_COMMIT"]),
+    ArchiveSource("https://mumps-solver.org/MUMPS_5.7.3.tar.gz", "84a47f7c4231b9efdf4d4f631a2cae2bdd9adeaabc088261d15af040143ed112")
 ]
 
 # Bash recipe for building across all platforms
@@ -30,6 +31,52 @@ cp -rL share/licenses deps/licenses
 chmod -R u=rwx deps
 tar -czvf deps.tar.gz deps
 rm -r deps
+
+# Compile MUMPS
+mkdir -p ${libdir}
+cd $WORKSPACE/srcdir/MUMPS*
+
+makefile="Makefile.G95.SEQ"
+cp Make.inc/${makefile} Makefile.inc
+
+# Add `-fallow-argument-mismatch` if supported
+: >empty.f
+FFLAGS=()
+if gfortran -c -fallow-argument-mismatch empty.f >/dev/null 2>&1; then
+    FFLAGS+=("-fallow-argument-mismatch")
+fi
+rm -f empty.*
+
+if [[ "${target}" == *apple* ]]; then
+    SONAME="-install_name"
+else
+    SONAME="-soname"
+fi
+
+make_args+=(OPTF="-O3"
+            OPTL="-O3"
+            OPTC="-O3"
+            CDEFS=-DAdd_
+            LMETISDIR=${libdir}
+            IMETIS=-I${includedir}
+            LMETIS="-L${libdir} -lmetis"
+            ORDERINGSF="-Dpord -Dmetis"
+            LIBEXT_SHARED=".${dlext}"
+            SHARED_OPT="-shared"
+            SONAME="${SONAME}"
+            CC="$CC ${CFLAGS[@]}"
+            FC="gfortran ${FFLAGS[@]}"
+            FL="gfortran"
+            RANLIB="echo"
+            LIBBLAS="-L${libdir} -lopenblas"
+            LAPACK="-L${libdir} -lopenblas")
+
+make -j${nproc} dshared "${make_args[@]}"
+
+mkdir ${includedir}/libseq
+cp include/*.h ${includedir}
+cp libseq/*.h ${includedir}/libseq
+cp lib/*.${dlext} ${libdir}
 
 # Compile Uno
 cd $WORKSPACE/srcdir/Uno
@@ -71,7 +118,7 @@ install -v -m 755 "uno_ampl${exeext}" -t "${bindir}"
 # We just check that we can generate it, but we don't include it in the tarballs.
 ${CXX} -shared $(flagon -Wl,--whole-archive) libuno.a $(flagon -Wl,--no-whole-archive) -o libuno.${dlext} -L${libdir} -l${OMP} -lopenblas -ldmumps -lmetis -lhsl
 cp libuno.a ${prefix}/lib/libuno.a
-cp libuno.${dlext} "${libdir}/libuno.${dlext}
+cp libuno.${dlext} ${libdir}/libuno.${dlext}
 """
 
 # These are the platforms we will build for by default, unless further
@@ -81,6 +128,7 @@ platforms = expand_gfortran_versions(platforms)
 
 # The products that we will ensure are always built
 products = [
+   LibraryProduct("libdmumps", :libdmumps),
    ExecutableProduct("uno_ampl", :amplexe),
    LibraryProduct("libuno", :libuno),
    FileProduct("lib/libuno.a", :libuno_a),
@@ -91,8 +139,6 @@ dependencies = [
     Dependency(PackageSpec(name="HSL_jll", uuid="017b0a0e-03f4-516a-9b91-836bbd1904dd")),
     Dependency(PackageSpec(name="METIS_jll", uuid="d00139f3-1899-568f-a2f0-47f597d42d70")),
     Dependency(PackageSpec(name="ASL_jll", uuid="ae81ac8f-d209-56e5-92de-9978fef736f9"), compat="0.1.3"),
-    # Most recent version compiled with OpenBLAS and not LBT
-    Dependency(PackageSpec(name="MUMPS_seq_jll", uuid="d7ed1dd3-d0ae-5e8e-bfb4-87a502085b8d"), compat="=5.4.1"), 
     Dependency(PackageSpec(name="OpenBLAS32_jll", uuid="656ef2d0-ae68-5445-9ca0-591084a874a2")),
     # For OpenMP we use libomp from `LLVMOpenMP_jll` where we use LLVM as compiler (BSD systems),
     # and libgomp from `CompilerSupportLibraries_jll` everywhere else.
