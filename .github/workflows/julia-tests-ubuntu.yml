@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, ready_for_review, reopened]
 # needed to allow julia-actions/cache to delete old caches that it has created
 permissions:
   actions: write
