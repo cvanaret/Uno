@@ -1,0 +1,45 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+# needed to allow julia-actions/cache to delete old caches that it has created
+permissions:
+  actions: write
+  contents: read
+jobs:
+  test:
+    name: Julia - ${{ github.event_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Uno
+        uses: actions/checkout@v4
+      - name: Install Julia 1.7
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.7"
+          arch: x64
+      - name: Set the environment variables BINARYBUILDER_AUTOMATIC_APPLE, UNO_RELEASE, UNO_COMMIT
+        shell: bash
+        run: |
+          echo "BINARYBUILDER_AUTOMATIC_APPLE=true" >> $GITHUB_ENV
+          echo "UNO_RELEASE=1.1.1" >> $GITHUB_ENV
+          echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
+      - name: Generate Uno_jll.jl
+        run: |
+          julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
+          julia --color=yes .github/julia/build_tarballs.jl x86_64-linux-gnu-libgfortran5 --verbose --local
+          rm -r ~/.julia
+      - name: Install Julia LTS
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.10"
+          arch: x64
+
+      - name: Test AmplNLWriter.jl
+        shell: bash
+        run: |
+          git clone https://github.com/jump-dev/AmplNLWriter.jl
+          cd AmplNLWriter.jl/test/MINLPTests/
+          julia --project --color=yes -e 'using Pkg; Pkg.develop(path="~/home/.julia/dev/Uno_jll.jl"); include("run_minlptests.jl")'
