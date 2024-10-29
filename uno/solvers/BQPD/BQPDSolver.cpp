@@ -12,6 +12,11 @@
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
+#include "fortran_interface.h"
+
+#define WSC FC_GLOBAL(wsc,WSC)
+#define KKTALPHAC FC_GLOBAL(kktalphac,KKTALPHAC)
+#define BQPD FC_GLOBAL(bqpd,BQPD)
 
 namespace uno {
 #define BIG 1e30
@@ -20,15 +25,15 @@ namespace uno {
    // fortran common block used in bqpd/bqpd.f
    extern struct {
       int kk, ll, kkk, lll, mxws, mxlws;
-   } wsc_;
+   } WSC;
 
    // fortran common for inertia correction in wdotd
    extern struct {
       double alpha;
-   } kktalphac_;
+   } KKTALPHAC;
 
    extern void
-   bqpd_(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double* x, double* bl, double* bu, double* f, double* fmin, double* g,
+   BQPD(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double* x, double* bl, double* bu, double* f, double* fmin, double* g,
          double* r, double* w, double* e, int* ls, double* alp, int* lp, int* mlp, int* peq, double* ws, int* lws, const int* mode, int* ifail,
          int* info, int* iprint, int* nout);
    }
@@ -95,11 +100,11 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       // initialize wsc_ common block (Hessian & workspace for BQPD)
       // setting the common block here ensures that several instances of BQPD can run simultaneously
-      wsc_.kk = static_cast<int>(this->number_hessian_nonzeros);
-      wsc_.ll = static_cast<int>(this->size_hessian_sparsity);
-      wsc_.mxws = static_cast<int>(this->size_hessian_workspace);
-      wsc_.mxlws = static_cast<int>(this->size_hessian_sparsity_workspace);
-      kktalphac_.alpha = 0; // inertia control
+      WSC.kk = static_cast<int>(this->number_hessian_nonzeros);
+      WSC.ll = static_cast<int>(this->size_hessian_sparsity);
+      WSC.mxws = static_cast<int>(this->size_hessian_workspace);
+      WSC.mxlws = static_cast<int>(this->size_hessian_sparsity_workspace);
+      KKTALPHAC.alpha = 0; // inertia control
 
       if (this->print_subproblem) {
          DEBUG << "objective gradient: " << linear_objective;
@@ -142,7 +147,7 @@ namespace uno {
       const int mode_integer = static_cast<int>(mode);
 
       // solve the LP/QP
-      bqpd_(&n, &m, &this->k, &this->kmax, this->jacobian.data(), this->jacobian_sparsity.data(), direction.primals.data(), this->lb.data(),
+      BQPD(&n, &m, &this->k, &this->kmax, this->jacobian.data(), this->jacobian_sparsity.data(), direction.primals.data(), this->lb.data(),
             this->ub.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(), this->residuals.data(), this->w.data(),
             this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp, &this->peq_solution, this->hessian_values.data(),
             this->hessian_sparsity.data(), &mode_integer, &this->ifail, this->info.data(), &this->iprint, &this->nout);
