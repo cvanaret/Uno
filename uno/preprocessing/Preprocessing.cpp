@@ -104,9 +104,10 @@ namespace uno {
             }
             // constraint Jacobian
             RectangularMatrix<double> constraint_jacobian(linear_constraints.size(), model.number_variables);
-            for (size_t linear_constraint_index: Range(linear_constraints.size())) {
-               const size_t constraint_index = linear_constraints[linear_constraint_index];
+            size_t linear_constraint_index = 0;
+            for (size_t constraint_index: linear_constraints) {
                model.evaluate_constraint_gradient(x, constraint_index, constraint_jacobian[linear_constraint_index]);
+               linear_constraint_index++;
             }
             // variable bounds
             std::vector<double> variables_lower_bounds(model.number_variables);
@@ -118,10 +119,11 @@ namespace uno {
             // constraint bounds
             std::vector<double> constraints_lower_bounds(linear_constraints.size());
             std::vector<double> constraints_upper_bounds(linear_constraints.size());
-            for (size_t linear_constraint_index: Range(linear_constraints.size())) {
-               const size_t constraint_index = linear_constraints[linear_constraint_index];
+            linear_constraint_index = 0;
+            for (size_t constraint_index: linear_constraints) {
                constraints_lower_bounds[linear_constraint_index] = model.constraint_lower_bound(constraint_index) - constraints[constraint_index];
                constraints_upper_bounds[linear_constraint_index] = model.constraint_upper_bound(constraint_index) - constraints[constraint_index];
+               linear_constraint_index++;
             }
 
             // solve the strictly convex QP
@@ -139,9 +141,10 @@ namespace uno {
             x += direction.primals;
             multipliers.lower_bounds += direction.multipliers.lower_bounds;
             multipliers.upper_bounds += direction.multipliers.upper_bounds;
-            for (size_t linear_constraint_index: Range(linear_constraints.size())) {
-               const size_t constraint_index = linear_constraints[linear_constraint_index];
+            linear_constraint_index = 0;
+            for (size_t constraint_index: linear_constraints) {
                multipliers.constraints[constraint_index] += direction.multipliers.constraints[linear_constraint_index];
+               linear_constraint_index++;
             }
             DEBUG3 << "Linear feasible initial point: " << x << '\n';
          }

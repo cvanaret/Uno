@@ -55,13 +55,13 @@ namespace uno {
          constraint_type(this->number_constraints),
          constraint_status(this->number_constraints),
          multipliers_with_flipped_sign(this->number_constraints),
+         linear_constraints_collection(this->linear_constraints),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints),
          lower_bounded_variables_collection(this->lower_bounded_variables),
          upper_bounded_variables_collection(this->upper_bounded_variables),
          single_lower_bounded_variables_collection(this->single_lower_bounded_variables),
-         single_upper_bounded_variables_collection(this->single_upper_bounded_variables),
-         fixed_variables_collection(this->fixed_variables) {
+         single_upper_bounded_variables_collection(this->single_upper_bounded_variables) {
       // evaluate the constraint Jacobian in sparse mode
       this->asl->i.congrd_mode = 1;
 
@@ -228,8 +228,8 @@ namespace uno {
       return this->inequality_constraints_collection;
    }
 
-   const std::vector<size_t>& AMPLModel::get_linear_constraints() const {
-      return this->linear_constraints;
+   const Collection<size_t>& AMPLModel::get_linear_constraints() const {
+      return this->linear_constraints_collection;
    }
 
    const SparseVector<size_t>& AMPLModel::get_slacks() const {

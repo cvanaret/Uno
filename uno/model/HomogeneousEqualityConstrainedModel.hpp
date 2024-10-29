@@ -44,8 +44,8 @@ namespace uno {
       [[nodiscard]] BoundType get_constraint_bound_type(size_t /*constraint_index*/) const override { return EQUAL_BOUNDS; }
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override { return this->equality_constraints; }
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override { return this->inequality_constraints; }
-      [[nodiscard]] const std::vector<size_t>& get_linear_constraints() const override { return this->model->get_linear_constraints(); }
-      [[nodiscard]] const Collection<size_t>& get_fixed_variables() const override { return this->model->get_fixed_variables(); }
+      [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override { return this->model->get_linear_constraints(); }
+      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override { return this->model->get_fixed_variables(); }
 
       void initial_primal_point(Vector<double>& x) const override;
       void initial_dual_point(Vector<double>& multipliers) const override { this->model->initial_dual_point(multipliers); }
@@ -56,7 +56,7 @@ namespace uno {
       [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model->number_hessian_nonzeros(); }
 
    protected:
-      const std::unique_ptr<Model> model;
+      const std::unique_ptr<Model> model{};
       std::vector<size_t> constraint_index_of_inequality_index;
       std::vector<size_t> slack_index_of_constraint_index;
 

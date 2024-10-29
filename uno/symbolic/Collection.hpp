@@ -42,7 +42,7 @@ namespace uno {
       virtual ~Collection() = default;
 
       [[nodiscard]] virtual size_t size() const = 0;
-      [[nodiscard]] bool is_empty() const;
+      [[nodiscard]] bool empty() const { return (this->size() == 0); }
 
       [[nodiscard]] iterator begin() const { return iterator(*this, 0); }
       [[nodiscard]] iterator end() const { return iterator(*this, this->size()); }
@@ -50,11 +50,6 @@ namespace uno {
       [[nodiscard]] virtual ElementType dereference_iterator(size_t index) const = 0;
       virtual void increment_iterator(size_t& index) const = 0;
    };
-
-   template <typename ElementType>
-   inline bool Collection<ElementType>::is_empty() const {
-      return (this->size() == 0);
-   }
 } // namespace
 
 #endif // UNO_COLLECTION_H

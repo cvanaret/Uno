@@ -47,7 +47,7 @@ namespace uno {
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
       [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
       [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
-      [[nodiscard]] const Collection<size_t>& get_fixed_variables() const override { return this->fixed_variables_collection; }
+      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override { return this->fixed_variables; }
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
@@ -55,7 +55,7 @@ namespace uno {
       [[nodiscard]] BoundType get_constraint_bound_type(size_t constraint_index) const override;
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
-      [[nodiscard]] const std::vector<size_t>& get_linear_constraints() const override;
+      [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
 
       void initial_primal_point(Vector<double>& x) const override;
       void initial_dual_point(Vector<double>& multipliers) const override;
@@ -84,10 +84,11 @@ namespace uno {
       std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
       std::vector<BoundType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
     * UNBOUNDED) */
-      std::vector<size_t> linear_constraints;
       mutable Vector<double> multipliers_with_flipped_sign;
 
       // lists of variables and constraints + corresponding collection objects
+      std::vector<size_t> linear_constraints{};
+      CollectionAdapter<std::vector<size_t>&> linear_constraints_collection;
       std::vector<size_t> equality_constraints{};
       CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;
       std::vector<size_t> inequality_constraints{};
@@ -101,8 +102,7 @@ namespace uno {
       CollectionAdapter<std::vector<size_t>&> single_lower_bounded_variables_collection;
       std::vector<size_t> single_upper_bounded_variables{}; // indices of the single upper-bounded variables
       CollectionAdapter<std::vector<size_t>&> single_upper_bounded_variables_collection;
-      std::vector<size_t> fixed_variables;
-      CollectionAdapter<std::vector<size_t>&> fixed_variables_collection;
+      Vector<size_t> fixed_variables;
 
       void generate_variables();
       void generate_constraints();
