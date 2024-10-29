@@ -2,6 +2,12 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.options'
+      - 'uno_ampl-completion.bash'
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
 # needed to allow julia-actions/cache to delete old caches that it has created
