@@ -18,8 +18,8 @@ $$
 
 The theoretical abstract framework for unifying nonlinearly constrained nonconvex optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory). Uno was designed and implemented by Charlie Vanaret. It is released under the MIT license (see the [license file](LICENSE)).
 
-[David Kiessling](https://github.com/david0oo) implemented the funnel method.  
-[Silvio Traversaro](https://github.com/traversaro) and [Alexis Montoison](https://github.com/amontoison) contributed to the CMakeLists.
+The contributors are (in alphabetical order):
+Oscar Dowson @odow, David Kiessling @david0oo, Alexis Montoison @amontoison, Manuel Schaich @worc4021, Silvio Traversaro @traversaro.
 
 ![Unit tests on Ubuntu workflow](https://github.com/cvanaret/Uno/actions/workflows/unit-tests-ubuntu.yml/badge.svg)
 
