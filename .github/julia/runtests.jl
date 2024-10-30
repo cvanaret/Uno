@@ -19,7 +19,7 @@ Create a new `AmplNLWriter.Optimizer` object that uses Uno as the backing
 solver.
 """
 function Optimizer()
-    options = String["logger=SILENT"]
+    options = String["logger=INFO"]
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
@@ -86,14 +86,6 @@ end
             # The following tests are bugs.
             #
             # We should fix issues in Uno, and then try removing these lines.
-            #
-            # Variable duals aren't written to .sol
-            r"^test_conic_linear_VectorOfVariables_2$",
-            r"^test_linear_integration$",
-            r"^test_quadratic_constraint_GreaterThan$",
-            r"^test_quadratic_constraint_LessThan$",
-            r"^test_solve_VariableIndex_ConstraintDual_MAX_SENSE$",
-            r"^test_solve_VariableIndex_ConstraintDual_MIN_SENSE$",
             # These tests return OTHER_LIMIT instead of LOCALLY_SOLVED.
             r"^test_linear_transform$",
             # These tests return OTHER_LIMIT instead of DUAL_INFEASIBLE. It
