@@ -1,0 +1,2 @@
+# Don't check Julia's Manifest.toml file into Git
+Manifest.toml
