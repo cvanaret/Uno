@@ -22,7 +22,7 @@ namespace uno {
       // CPU time limit (in seconds)
       options["time_limit"] = "inf";
       // print optimal solution (yes|no)
-      options["print_solution"] = "yes";
+      options["print_solution"] = "no";
       // threshold on objective to declare unbounded NLP
       options["unbounded_objective_threshold"] = "-1e20";
       // enforce linear constraints at the initial point (yes|no)
