@@ -159,15 +159,31 @@ namespace uno {
             x[variable_index] = this->model->variable_lower_bound(variable_index);
          }
       }
+
       void initial_dual_point(Vector<double>& multipliers) const override { this->model->initial_dual_point(multipliers); }
+
       void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override {
+         // move the multipliers back from the general constraints to the bound constraints
+         size_t current_constraint = this->model->number_constraints;
+         for (size_t variable_index: this->model->get_fixed_variables()) {
+            const double constraint_multiplier = iterate.multipliers.constraints[current_constraint];
+            if (0. < constraint_multiplier) {
+               iterate.multipliers.lower_bounds[variable_index] = constraint_multiplier;
+            }
+            else {
+               iterate.multipliers.upper_bounds[variable_index] = constraint_multiplier;
+            }
+            current_constraint++;;
+         }
          this->model->postprocess_solution(iterate, termination_status);
       }
 
       [[nodiscard]] size_t number_objective_gradient_nonzeros() const override { return this->model->number_objective_gradient_nonzeros(); }
+
       [[nodiscard]] size_t number_jacobian_nonzeros() const override {
          return this->model->number_jacobian_nonzeros() + this->model->get_fixed_variables().size();
       }
+
       [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model->number_hessian_nonzeros(); }
 
    private:
