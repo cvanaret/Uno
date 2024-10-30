@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2024 Charlie Vanaret
+﻿# Copyright (c) 2018-2024 Charlie Vanaret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 cmake_minimum_required(VERSION 3.7)
@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 include(GNUInstallDirs)
 set(MKL_LINK static)
-set(MKL_THREADING intel_thread)
+set(MKL_THREADING sequential)
 set(MKL_INTERFACE lp64)
 find_package(MKL REQUIRED)
 
@@ -22,9 +22,7 @@ include($ENV{CMAKE_INSTALL_PREFIX}/cmake/GKlibTargets.cmake)
 include($ENV{CMAKE_INSTALL_PREFIX}/cmake/metisTargets.cmake)
 include($ENV{CMAKE_INSTALL_PREFIX}/cmake/AMPLTargets.cmake)
 include($ENV{CMAKE_INSTALL_PREFIX}/cmake/bqpdTargets.cmake)
-# include($ENV{CMAKE_INSTALL_PREFIX}/cmake/mumpsTargets.cmake)
-add_subdirectory(C:/repos/Uno/MUMPS C:/repos/Uno/MUMPS/out/build/windows-intel-release-config)
-
+include($ENV{CMAKE_INSTALL_PREFIX}/cmake/mumpsTargets.cmake)
 
 include(FortranCInterface)
 FortranCInterface_VERIFY(CXX)
@@ -37,13 +35,6 @@ FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
 # directories
 set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
 
-
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
-set(CMAKE_CXX_FLAGS_DEBUG "-pg")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmaybe-uninitialized")
-endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders)
 
@@ -153,7 +144,7 @@ endif()
 # else()
    list(APPEND UNO_SOURCE_FILES uno/solvers/MUMPS/MUMPSSolver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/MUMPSSolverTests.cpp)
-   list(APPEND LIBRARIES libdmumps)
+   list(APPEND LIBRARIES mumps::libdmumps)
    
    # list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
    
@@ -183,12 +174,17 @@ endif()
    list(APPEND LIBRARIES metis::metis)
    # list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
    
-   find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+   # find_package(BLAS REQUIRED)
+   # list(APPEND LIBRARIES ${BLAS_LIBRARIES})
    
-   find_package(OpenMP REQUIRED)
-   list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
-   
+   # include(FindOpenMP)
+   # if (WIN32)
+   # find_package(OpenMP REQUIRED)
+   # else()
+   # find_package(OpenMP REQUIRED C)
+   # list(APPEND LIBRARIES OpenMP::OpenMP_C)
+   # endif()
+
    add_definitions("-D HAS_MUMPS")
 # endif()
 
@@ -196,9 +192,30 @@ endif()
 # Uno library #
 ###############
 add_library(uno STATIC ${UNO_SOURCE_FILES})
-set_property(TARGET uno PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_target_properties(uno PROPERTIES 
+      POSITION_INDEPENDENT_CODE ON
+      MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 target_include_directories(uno PUBLIC ${DIRECTORIES})
 target_link_libraries(uno PUBLIC ${LIBRARIES})
+
+if (MSVC)
+   target_compile_options(uno PUBLIC /utf-8)
+endif(MSVC)
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    target_compile_options(uno PUBLIC 
+                              $<$<COMPILE_LANGUAGE:CXX>:/W4>
+                              $<$<COMPILE_LANGUAGE:Fortran>:-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion>)
+else()
+   target_compile_options(uno PUBLIC -Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion /source-charset:utf-8)
+   if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmaybe-uninitialized")
+   endif()
+   # set(CMAKE_CXX_FLAGS_DEBUG "-pg")
+   # set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
+endif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+
+
 
 # copy the option file
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.options DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
