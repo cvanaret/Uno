@@ -105,9 +105,9 @@
             "inherits": "config-base",
             "displayName": "linux GCC base",
             "cacheVariables": {
-                "CMAKE_C_COMPILER": "gcc-13",
-                "CMAKE_CXX_COMPILER": "g++-13",
-                "CMAKE_Fortran_COMPILER": "gfortran-13"
+                "CMAKE_C_COMPILER": "gcc-14",
+                "CMAKE_CXX_COMPILER": "g++-14",
+                "CMAKE_Fortran_COMPILER": "gfortran-14"
             },
             "hidden": true
         },
