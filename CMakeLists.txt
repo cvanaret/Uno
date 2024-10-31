@@ -207,7 +207,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
                               $<$<COMPILE_LANGUAGE:CXX>:/W4>
                               $<$<COMPILE_LANGUAGE:Fortran>:-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion>)
 else()
-   target_compile_options(uno PUBLIC -Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion /source-charset:utf-8)
+   target_compile_options(uno PUBLIC -Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion)
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmaybe-uninitialized")
    endif()
@@ -215,6 +215,10 @@ else()
    # set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
 endif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+   add_compile_options(-fsanitize=address)
+   add_link_options(-fsanitize=address -static-libasan)
+endif()
 
 
 # copy the option file
@@ -252,3 +256,5 @@ if(WITH_GTEST)
       target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
    endif()
 endif()
+
+add_subdirectory(localtest)
