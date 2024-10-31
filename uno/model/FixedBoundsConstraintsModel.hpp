@@ -173,7 +173,7 @@ namespace uno {
             else {
                iterate.multipliers.upper_bounds[variable_index] = constraint_multiplier;
             }
-            current_constraint++;;
+            current_constraint++;
          }
          this->model->postprocess_solution(iterate, termination_status);
       }
