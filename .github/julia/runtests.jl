@@ -95,13 +95,13 @@ end
             # These tests return OTHER_LIMIT instead of LOCALLY_INFEASIBLE. It
             # might be acceptable to leave this as-is, but it would be better to
             # fix.
-            r"^test_conic_NormInfinityCone_INFEASIBLE$",
-            r"^test_conic_NormOneCone_INFEASIBLE$",
-            r"^test_conic_linear_INFEASIBLE$",
-            r"^test_conic_linear_INFEASIBLE_2$",
-            r"^test_linear_INFEASIBLE$",
-            r"^test_linear_INFEASIBLE_2$",
-            r"^test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_",
+            # r"^test_conic_NormInfinityCone_INFEASIBLE$",
+            # r"^test_conic_NormOneCone_INFEASIBLE$",
+            # r"^test_conic_linear_INFEASIBLE$",
+            # r"^test_conic_linear_INFEASIBLE_2$",
+            # r"^test_linear_INFEASIBLE$",
+            # r"^test_linear_INFEASIBLE_2$",
+            # r"^test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_",
             # ==================================================================
             # The following tests are okay to exclude forever.
             #
