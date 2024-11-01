@@ -26,6 +26,7 @@ jobs:
         with:
           version: "1.7"
           arch: x64
+      - uses: julia-actions/cache@v1
       # Set environment variables required by BinaryBuilder. The specific
       # version of UNO_RELEASE is unimportant, since Uno_jll doesn't depend on it
       - name: Set the environment variables
@@ -48,7 +49,6 @@ jobs:
         with:
           version: "1.10"
           arch: x64
-      - uses: julia-actions/cache@v1
       - name: Test .github/julia/runtests.jl
         shell: julia --color=yes --project=.github/julia {0}
         run: |
