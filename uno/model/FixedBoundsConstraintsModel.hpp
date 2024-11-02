@@ -198,7 +198,7 @@ namespace uno {
    };
 
    inline FixedBoundsConstraintsModel::FixedBoundsConstraintsModel(std::unique_ptr<Model> original_model, const Options& /*options*/):
-         Model(original_model->name + "_fixedbounds", original_model->number_variables,
+         Model(original_model->name + " -> no fixed bounds", original_model->number_variables,
                // move the fixed variables to the set of general constraints
                original_model->number_constraints + original_model->get_fixed_variables().size(),
                original_model->objective_sign),
