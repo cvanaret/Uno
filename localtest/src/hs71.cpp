@@ -18,7 +18,7 @@ int main() {
 
    uno::Options options = uno::DefaultOptions::load();
    uno::Options solvers_options = uno::DefaultOptions::determine_solvers_and_preset();
-   uno::Options::set_preset(solvers_options, "ipopt");
+   // uno::Options::set_preset(solvers_options, "ipopt");
    options.overwrite_with(solvers_options);
 
    std::unique_ptr<uno::Model> hs_model = std::make_unique<local::HS71>();
