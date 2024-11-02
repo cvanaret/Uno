@@ -54,7 +54,8 @@ namespace uno {
    };
 
    inline ScaledModel::ScaledModel(std::unique_ptr<Model> original_model, Iterate& initial_iterate, const Options& options):
-         Model(original_model->name + "_scaled", original_model->number_variables, original_model->number_constraints, original_model->objective_sign),
+         Model(original_model->name + " -> scaled", original_model->number_variables, original_model->number_constraints,
+               original_model->objective_sign),
          model(std::move(original_model)),
          scaling(this->model->number_constraints, options.get_double("function_scaling_threshold")) {
       if (options.get_bool("scale_functions")) {
