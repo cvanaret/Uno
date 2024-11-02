@@ -86,12 +86,7 @@ end
             # The following tests are bugs.
             #
             # We should fix issues in Uno, and then try removing these lines.
-            # These tests return OTHER_LIMIT instead of LOCALLY_SOLVED.
-            r"^test_linear_transform$",
-            # These tests return OTHER_LIMIT instead of DUAL_INFEASIBLE. It
-            # might be acceptable to leave this as-is, but it would be better to
-            # fix.
-            r"^test_solve_TerminationStatus_DUAL_INFEASIBLE$",
+            #
             # These tests return OTHER_LIMIT instead of LOCALLY_INFEASIBLE. It
             # might be acceptable to leave this as-is, but it would be better to
             # fix.
