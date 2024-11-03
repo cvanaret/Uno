@@ -29,15 +29,14 @@ int main() {
    hs_model->initial_dual_point(initial_iterate.multipliers.constraints);
    initial_iterate.feasibility_multipliers.reset();
 
-   std::unique_ptr<uno::Model> model = uno::ModelFactory::reformulate(std::move(hs_model), initial_iterate, options);
+   std::unique_ptr<uno::Model> model = uno::ModelFactory::reformulate(std::move(hs_model), options);
 
    auto constraint_relaxation_strategy = uno::ConstraintRelaxationStrategyFactory::create(*model, options);
    auto globalization_mechanism = uno::GlobalizationMechanismFactory::create(*constraint_relaxation_strategy, options);
    uno::Uno uno = uno::Uno(*globalization_mechanism, options);
 
    // solve the instance
-   uno::Result result = uno.solve(*model, initial_iterate, options);
-   uno.print_optimization_summary(result);
-
+   uno.solve(*model, initial_iterate, options);
+   
    return EXIT_SUCCESS;
 }

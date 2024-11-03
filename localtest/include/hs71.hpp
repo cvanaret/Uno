@@ -42,7 +42,10 @@ namespace local
         std::vector<size_t> _single_lower_bounded_variables; // indices of the single lower-bounded variables
         uno::CollectionAdapter<std::vector<size_t> &> _single_lower_bounded_variables_collection;
         std::vector<size_t> _single_upper_bounded_variables; // indices of the single upper-bounded variables
+        uno::Vector<size_t> _fixed_variables;
         uno::CollectionAdapter<std::vector<size_t> &> _single_upper_bounded_variables_collection;
+        uno::CollectionAdapter<std::vector<size_t> &> _linear_constraints_collection;
+
 
     public:
         DataModel(size_t number_variables, size_t number_constraints, const std::string &name = "DataModel")
@@ -67,7 +70,9 @@ namespace local
               _single_lower_bounded_variables(0),
               _single_lower_bounded_variables_collection(_single_lower_bounded_variables),
               _single_upper_bounded_variables(0),
-              _single_upper_bounded_variables_collection(_single_upper_bounded_variables) {}
+              _fixed_variables(0),
+              _single_upper_bounded_variables_collection(_single_upper_bounded_variables),
+              _linear_constraints_collection(_linear_constraints) {}
 
         virtual ~DataModel() override = default;
 
@@ -81,9 +86,9 @@ namespace local
             return _inequality_constraints_collection;
         }
 
-        const std::vector<size_t> &get_linear_constraints() const override
+        const uno::Collection<size_t> &get_linear_constraints() const override
         {
-            return _linear_constraints;
+            return _linear_constraints_collection;
         }
 
         const uno::SparseVector<size_t> &get_slacks() const override
@@ -110,6 +115,11 @@ namespace local
         {
             return _upper_bounded_variables_collection;
         }
+
+        const uno::Vector<size_t>& get_fixed_variables() const override {
+            return _fixed_variables;
+        }
+
         double variable_lower_bound(size_t variable_index) const override { 
             return _variable_lower_bounds[variable_index]; 
             }
@@ -146,6 +156,7 @@ namespace local
                     _variable_status[i] = uno::BoundType::EQUAL_BOUNDS;
                     _lower_bounded_variables.emplace_back(i);
                     _upper_bounded_variables.emplace_back(i);
+                    _fixed_variables.emplace_back(i);
                 }
                 else if (std::isfinite(_variable_lower_bounds[i]) && std::isfinite(_variable_upper_bounds[i]))
                 {
