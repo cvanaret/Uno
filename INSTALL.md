@@ -95,4 +95,4 @@ export LD_LIBRARY_PATH=/path/to/extracted/Uno/lib:$LD_LIBRARY_PATH
 export PATH=/path/to/extracted/Uno/bin:$PATH
 ```
 
-Note: The provided shared library `libhsl.so` / `libhsl.dylib` / `libhsl.dll` in the precompiled archive doesn't contain the HSL solvers like MA57 but can be replaced with the official version without the need to recompile anything.
+Note: The provided shared library `libhsl.so` / `libhsl.dylib` / `libhsl.dll` in the precompiled archive does not contain the HSL solvers like MA57 but can be replaced with the official version without the need to recompile anything.
