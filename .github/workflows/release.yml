@@ -25,22 +25,22 @@ jobs:
       - name: Cross-compilation of Uno -- x86_64-linux-gnu-libgfortran5
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
-          julia --color=yes .github/julia/build_tarballs.jl x86_64-linux-gnu-libgfortran5 --verbose
+          julia --color=yes .github/julia/build_tarballs_release.jl x86_64-linux-gnu-libgfortran5 --verbose
           rm -r ~/.julia
       - name: Cross-compilation of Uno -- x86_64-w64-mingw32-libgfortran5
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
-          julia --color=yes .github/julia/build_tarballs.jl x86_64-w64-mingw32-libgfortran5 --verbose
+          julia --color=yes .github/julia/build_tarballs_release.jl x86_64-w64-mingw32-libgfortran5 --verbose
           rm -r ~/.julia
       - name: Cross-compilation of Uno -- x86_64-apple-darwin-libgfortran5
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
-          julia --color=yes .github/julia/build_tarballs.jl x86_64-apple-darwin-libgfortran5 --verbose
+          julia --color=yes .github/julia/build_tarballs_release.jl x86_64-apple-darwin-libgfortran5 --verbose
           rm -r ~/.julia
       - name: Cross-compilation of Uno -- aarch64-apple-darwin-libgfortran5
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
-          julia --color=yes .github/julia/build_tarballs.jl aarch64-apple-darwin-libgfortran5 --verbose
+          julia --color=yes .github/julia/build_tarballs_release.jl aarch64-apple-darwin-libgfortran5 --verbose
           rm -r ~/.julia
       - name: Generate the binaries
         run: julia --color=yes .github/julia/generate_binaries.jl
