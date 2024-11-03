@@ -7,6 +7,7 @@
 * download **optional** solvers:
     * BQPD (indefinite null-space QP solver): https://www.mcs.anl.gov/~leyffer/solvers.html
     * MA57 (sparse indefinite symmetric linear solver): http://www.hsl.rl.ac.uk/catalogue/ma57.html
+    * LIBHSL (collection of libraries for sparse linear systems): https://licences.stfc.ac.uk/product/libhsl
     * MUMPS (sparse indefinite symmetric linear solver): https://mumps-solver.org/index.php?page=dwnld
 
 * to compile MUMPS in sequential mode, set the following variables at the end of your Makefile.inc:
@@ -72,3 +73,26 @@ To benefit from autocompletion, install the file `uno_ampl-completion.bash`:
 sudo cp uno_ampl-completion.bash /etc/bash_completion.d/
 ```
 and open a new terminal.
+
+### Precompiled libraries and executables
+
+We provide precompiled Uno libraries and executables in the [releases tab](https://github.com/cvanaret/Uno/releases/latest/) for Linux, macOS (Intel & Silicon), and Windows.
+
+On some platforms, the dynamic linker needs to know where to look for libraries at runtime.
+You might need to set the following environment variables:
+
+- `LD_LIBRARY_PATH` on Linux
+- `DYLD_LIBRARY_PATH` or `DYLD_FALLBACK_LIBRARY_PATH` on macOS
+- `PATH` on Windows
+
+These variables should include the directory where you extracted the library files.
+For all platforms, the environment variable `PATH` is needed to locate the binary `uno_ampl` / `uno_ampl.exe`.
+
+**Example for Linux**:
+```console
+tar -xzf Uno.vX.Y.Z.linux.tar.gz
+export LD_LIBRARY_PATH=/path/to/extracted/Uno/lib:$LD_LIBRARY_PATH
+export PATH=/path/to/extracted/Uno/bin:$PATH
+```
+
+Note: The provided shared library `libhsl.so` / `libhsl.dylib` / `libhsl.dll` in the precompiled archive doesn't contain the HSL solvers like MA57 but can be replaced with the official version without the need to recompile anything.

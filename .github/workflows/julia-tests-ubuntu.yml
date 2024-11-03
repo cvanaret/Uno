@@ -27,11 +27,11 @@ jobs:
           version: "1.7"
           arch: x64
       - uses: julia-actions/cache@v1
-      # Set environment variables required by BinaryBuilder. The specific
-      # version of UNO_RELEASE is unimportant, since Uno_jll doesn't depend on it
+      # Set environment variables required by BinaryBuilder.
       - name: Set the environment variables
         run: |
-          echo "UNO_RELEASE=1.1.1" >> $GITHUB_ENV
+          git fetch --tags
+          echo "UNO_RELEASE=$(git describe --tags $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_ENV
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "UNO_COMMIT=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
             echo "UNO_URL=${{ github.event.pull_request.head.repo.clone_url }}" >> $GITHUB_ENV

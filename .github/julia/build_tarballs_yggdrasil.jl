@@ -14,6 +14,8 @@ sources = [
     GitSource(ENV["UNO_URL"], ENV["UNO_COMMIT"])
 ]
 
+# The remainder of the file is similar to the content found at the following link:
+# https://raw.githubusercontent.com/JuliaPackaging/Yggdrasil/refs/heads/master/U/Uno/build_tarballs.jl
 script = raw"""
 cd $WORKSPACE/srcdir/Uno
 mkdir -p build
