@@ -14,8 +14,7 @@ namespace uno {
    int Statistics::string_width = 26;
    int Statistics::numerical_format_size = 6;
 
-   Statistics::Statistics(const Options& options): print_header_every_iterations(options.get_unsigned_int("statistics_print_header_every_iterations")) {
-   }
+   Statistics::Statistics(const Options& options): print_header_frequency(options.get_unsigned_int("statistics_print_header_frequency")) { }
 
    void Statistics::add_column(std::string_view name, int width, int order) {
       this->columns[order] = name;
@@ -66,7 +65,7 @@ namespace uno {
 
    void Statistics::print_header() {
       /* line above */
-      this->print_horizontal_line(this->iteration == 0);
+      this->print_horizontal_line(this->line_number == 0);
       /* headers */
       std::cout << Statistics::symbol("left");
       size_t k = 0;
@@ -87,7 +86,7 @@ namespace uno {
    }
 
    void Statistics::print_current_line() {
-      if (this->iteration % this->print_header_every_iterations == 0) {
+      if (this->line_number % this->print_header_frequency == 0) {
          this->print_header();
       }
       std::cout << Statistics::symbol("left");
@@ -114,7 +113,7 @@ namespace uno {
          k++;
       }
       std::cout << Statistics::symbol("right") << '\n';
-      this->iteration++;
+      this->line_number++;
    }
 
    void Statistics::print_footer() {
