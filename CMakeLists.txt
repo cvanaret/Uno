@@ -184,9 +184,6 @@ set_property(TARGET uno PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(uno PUBLIC ${DIRECTORIES})
 target_link_libraries(uno PUBLIC ${LIBRARIES})
 
-# copy the option file
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.options DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
 ######################
 # optional AMPL main #
 ######################
