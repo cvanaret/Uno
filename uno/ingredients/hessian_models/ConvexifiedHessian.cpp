@@ -1,12 +1,15 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <stdexcept>
 #include "ConvexifiedHessian.hpp"
+#include "ingredients/hessian_models/UnstableRegularization.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
+#include "tools/Infinity.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
@@ -15,7 +18,8 @@ namespace uno {
          // inertia-based convexification needs a linear solver
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(dimension, maximum_number_nonzeros, options)),
          regularization_initial_value(options.get_double("regularization_initial_value")),
-         regularization_increase_factor(options.get_double("regularization_increase_factor")) {
+         regularization_increase_factor(options.get_double("regularization_increase_factor")),
+         regularization_failure_threshold(options.get_double("regularization_failure_threshold")) {
    }
 
    void ConvexifiedHessian::evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
@@ -57,7 +61,9 @@ namespace uno {
          else {
             DEBUG << "rank: " << this->linear_solver->rank() << ", negative eigenvalues: " << this->linear_solver->number_negative_eigenvalues() << '\n';
             regularization_factor = (regularization_factor == 0.) ? this->regularization_initial_value : this->regularization_increase_factor * regularization_factor;
-            assert(is_finite(regularization_factor) && "The regularization coefficient diverged");
+            if (regularization_factor > this->regularization_failure_threshold) {
+               throw UnstableRegularization();
+            }
          }
       }
       statistics.set("regularization", regularization_factor);
