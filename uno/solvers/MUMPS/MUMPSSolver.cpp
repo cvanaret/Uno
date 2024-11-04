@@ -54,9 +54,9 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
    }
 
-   void MUMPSSolver::do_numerical_factorization(const SymmetricMatrix<size_t, double>& /*matrix*/) {
+   void MUMPSSolver::do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) {
       this->mumps_structure.job = MUMPSSolver::JOB_FACTORIZATION;
-      this->mumps_structure.a = this->COO_matrix.data_pointer();
+      this->mumps_structure.a = const_cast<double*>(matrix.data_pointer());
       dmumps_c(&this->mumps_structure);
    }
 
