@@ -8,19 +8,13 @@
 #include "SymmetricMatrix.hpp"
 #include "SparseStorageFactory.hpp"
 #include "RectangularMatrix.hpp"
+#include "ingredients/hessian_models/UnstableRegularization.hpp"
 #include "model/Model.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   struct UnstableRegularization : public std::exception {
-
-      [[nodiscard]] const char* what() const noexcept override {
-         return "The inertia correction got unstable (delta_w > threshold)";
-      }
-   };
-
    template <typename ElementType>
    class SymmetricIndefiniteLinearSystem {
    public:
@@ -158,7 +152,7 @@ namespace uno {
             this->previous_primal_regularization = this->primal_regularization;
          }
          else {
-            auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
+            std::tie(number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues) = linear_solver.get_inertia();
             DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
             DEBUG << "got (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
             DEBUG << "Number of attempts: " << number_attempts << "\n";

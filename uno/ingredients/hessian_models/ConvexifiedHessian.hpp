@@ -22,6 +22,7 @@ namespace uno {
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver; /*!< Solver that computes the inertia */
       const double regularization_initial_value{};
       const double regularization_increase_factor{};
+      const double regularization_failure_threshold{};
 
       void regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables);
    };
