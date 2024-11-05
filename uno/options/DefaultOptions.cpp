@@ -68,6 +68,7 @@ namespace uno {
       options["residual_norm"] = "INF";
       options["residual_scaling_threshold"] = "100.";
       options["protect_actual_reduction_against_roundoff"] = "no";
+      options["print_subproblem"] = "no";
 
       /** globalization strategy options **/
       options["armijo_decrease_fraction"] = "1e-4";
@@ -180,7 +181,6 @@ namespace uno {
       options["least_square_multiplier_max_norm"] = "1e3";
 
       /** BQPD options **/
-      options["BQPD_print_subproblem"] = "no";
       options["BQPD_kmax"] = "500";
 
       /** AMPL options **/

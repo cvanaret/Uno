@@ -58,7 +58,7 @@ namespace uno {
          hessian_values(this->size_hessian_workspace),
          hessian_sparsity(this->size_hessian_sparsity_workspace),
          current_hessian_indices(number_variables),
-         print_subproblem(options.get_bool("BQPD_print_subproblem")) {
+         print_subproblem(options.get_bool("print_subproblem")) {
       // default active set
       for (size_t variable_index: Range(number_variables + number_constraints)) {
          this->active_set[variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
@@ -112,7 +112,7 @@ namespace uno {
             DEBUG << "gradient c" << constraint_index << ": " << constraint_jacobian[constraint_index];
          }
          for (size_t variable_index: Range(number_variables)) {
-            DEBUG << "d_x" << variable_index << " in [" << variables_lower_bounds[variable_index] << ", " << variables_upper_bounds[variable_index] << "]\n";
+            DEBUG << "d" << variable_index << " in [" << variables_lower_bounds[variable_index] << ", " << variables_upper_bounds[variable_index] << "]\n";
          }
          for (size_t constraint_index: Range(number_constraints)) {
             DEBUG << "linearized c" << constraint_index << " in [" << constraints_lower_bounds[constraint_index] << ", " << constraints_upper_bounds[constraint_index] << "]\n";

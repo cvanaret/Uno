@@ -15,14 +15,6 @@ namespace uno {
    class Statistics;
    class Timer;
 
-   /*
-   struct TimeOut : public std::exception {
-      [[nodiscard]] const char* what() const noexcept override {
-         return "The time limit was exceeded.\n";
-      }
-   };
-   */
-
    class Uno {
    public:
       Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
