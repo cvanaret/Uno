@@ -13,6 +13,9 @@
 #ifdef HAS_BQPD
 #include "solvers/BQPD/BQPDSolver.hpp"
 #endif
+#ifdef HAS_HIGHS
+#include "solvers/HiGHS/HiGHSSolver.hpp"
+#endif
 
 namespace uno {
    class LPSolverFactory {
@@ -26,6 +29,11 @@ namespace uno {
             if (LP_solver_name == "BQPD") {
                return std::make_unique<BQPDSolver>(number_variables, number_constraints, number_objective_gradient_nonzeros,
                      number_jacobian_nonzeros, 0, BQPDProblemType::LP, options);
+            }
+#endif
+#ifdef HAS_HIGHS
+            if (LP_solver_name == "HiGHS") {
+               return std::make_unique<HiGHSSolver>(number_variables, number_constraints, number_jacobian_nonzeros, 0, options);
             }
 #endif
             std::string message = "The LP solver ";
@@ -45,6 +53,9 @@ namespace uno {
          std::vector<std::string> solvers{};
 #ifdef HAS_BQPD
          solvers.emplace_back("BQPD");
+#endif
+#ifdef HAS_HIGHS
+         solvers.emplace_back("HiGHS");
 #endif
          return solvers;
       }

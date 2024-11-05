@@ -131,6 +131,17 @@ else()
    link_to_uno(bqpd ${BQPD})
 endif()
 
+# HiGHS
+find_package(HIGHS)
+if(NOT HIGHS)
+   message(WARNING "Optional library HiGHS was not found.")
+else()
+   list(APPEND UNO_SOURCE_FILES uno/solvers/HiGHS/HiGHSSolver.cpp)
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/HiGHSSolverTests.cpp)
+   link_to_uno(highs ${HIGHS})
+   list(APPEND LIBRARIES highs::highs)
+endif()
+
 # MUMPS
 find_package(MUMPS)
 if(NOT MUMPS_LIBRARY)
