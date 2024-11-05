@@ -28,7 +28,7 @@ namespace uno {
    std::string status_to_string(SubproblemStatus status) {
       switch (status) {
          case SubproblemStatus::OPTIMAL:
-            return "optimal subproblem";
+            return "optimal";
          case SubproblemStatus::UNBOUNDED_PROBLEM:
             return "unbounded subproblem";
          case SubproblemStatus::INFEASIBLE:
