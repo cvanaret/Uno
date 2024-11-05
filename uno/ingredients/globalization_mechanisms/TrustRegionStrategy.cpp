@@ -46,6 +46,7 @@ namespace uno {
       size_t number_iterations = 0;
       bool termination = false;
       while (not termination) {
+         bool is_acceptable = false;
          try {
             number_iterations++;
             DEBUG << "\n\t### Trust-region inner iteration " << number_iterations << " with radius " << this->radius << "\n\n";
@@ -69,7 +70,7 @@ namespace uno {
                this->set_statistics(statistics, this->direction);
                statistics.set("status", "solver error");
                if (Logger::level == INFO) statistics.print_current_line();
-               this->decrease_radius(this->direction.norm);
+               this->decrease_radius();
                warmstart_information.set_cold_start();
             }
             else {
@@ -77,7 +78,7 @@ namespace uno {
                GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, 1., 1.);
                this->reset_active_trust_region_multipliers(model, this->direction, trial_iterate);
 
-               const bool is_acceptable = this->is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction);
+               is_acceptable = this->is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction);
                if (is_acceptable) {
                   this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
                   this->reset_radius();
@@ -97,6 +98,9 @@ namespace uno {
             if (Logger::level == INFO) statistics.print_current_line();
             this->decrease_radius();
             warmstart_information.set_cold_start();
+         }
+         if (not is_acceptable && this->radius < this->minimum_radius) {
+            throw std::runtime_error("Small trust-region radius");
          }
       }
    }
