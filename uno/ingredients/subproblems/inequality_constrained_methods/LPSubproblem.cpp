@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "LPSubproblem.hpp"
-#include "ingredients/subproblems/Direction.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "reformulation/OptimizationProblem.hpp"
 #include "solvers/LPSolver.hpp"
@@ -17,6 +17,8 @@ namespace uno {
                number_objective_gradient_nonzeros, number_jacobian_nonzeros, options)),
          zero_hessian(SymmetricMatrix<size_t, double>::zero(number_variables)) {
    }
+
+   LPSubproblem::~LPSubproblem() { }
 
    void LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
    }

@@ -30,7 +30,7 @@ namespace uno {
       double constrained_predicted_reduction = l1MeritFunction::constrained_merit_function(predicted_reduction, objective_multiplier);
       DEBUG << "Constrained predicted reduction: " << constrained_predicted_reduction << '\n';
       if (constrained_predicted_reduction <= 0.) {
-         WARNING << YELLOW << "The direction is not a descent direction for the merit function. You should decrease the penalty parameter.\n" << RESET;
+         WARNING  << "The direction is not a descent direction for the merit function. You should decrease the penalty parameter.\n";
       }
       // compute current exact penalty
       const double current_merit_value = l1MeritFunction::constrained_merit_function(current_progress, objective_multiplier);

@@ -7,17 +7,12 @@
 #include <vector>
 #include <optional>
 #include <ostream>
-#include "SubproblemStatus.hpp"
+#include "ingredients/subproblems/SubproblemStatus.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Multipliers.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
-   /*! \struct ConstraintActivity
-   * \brief Constraints at lower or upper bound at the optimum solution
-   *
-   *  Description of the active or infeasible constraints: at lower or upper bound at the optimum solution
-   */
    struct ActiveConstraints {
       std::vector<size_t> at_lower_bound; /*!< List of constraint indices at their lower bound */
       std::vector<size_t> at_upper_bound; /*!< List of constraint indices at their upper bound */

@@ -4,11 +4,13 @@
 #ifndef UNO_BOUNDRELAXEDMODEL_H
 #define UNO_BOUNDRELAXEDMODEL_H
 
+#include <memory>
 #include "Model.hpp"
-#include "optimization/Iterate.hpp"
-#include "options/Options.hpp"
 
 namespace uno {
+   // forward declaration
+   class Options;
+
    class BoundRelaxedModel: public Model {
    public:
       BoundRelaxedModel(std::unique_ptr<Model> original_model, const Options& options);
@@ -64,23 +66,6 @@ namespace uno {
       const std::unique_ptr<Model> model{};
       const double relaxation_factor;
    };
-
-   inline BoundRelaxedModel::BoundRelaxedModel(std::unique_ptr<Model> original_model, const Options& options):
-         Model(original_model->name + " -> bounds relaxed", original_model->number_variables, original_model->number_constraints,
-               original_model->objective_sign),
-         model(std::move(original_model)),
-         relaxation_factor(options.get_double("tolerance")) {
-   }
-
-   inline double BoundRelaxedModel::variable_lower_bound(size_t variable_index) const {
-      const double lower_bound = this->model->variable_lower_bound(variable_index);
-      return lower_bound - this->relaxation_factor * std::max(1., std::abs(lower_bound));
-   }
-
-   inline double BoundRelaxedModel::variable_upper_bound(size_t variable_index) const {
-      const double upper_bound = this->model->variable_upper_bound(variable_index);
-      return upper_bound + this->relaxation_factor * std::max(1., std::abs(upper_bound));
-   }
 } // namespace
 
 #endif // UNO_BOUNDRELAXEDMODEL_H

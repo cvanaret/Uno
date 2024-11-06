@@ -4,7 +4,7 @@
 #include <cassert>
 #include <algorithm>
 #include "BQPDSolver.hpp"
-#include "ingredients/subproblems/Direction.hpp"
+#include "optimization/Direction.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -285,28 +285,28 @@ namespace uno {
          case BQPDStatus::UNBOUNDED_PROBLEM:
             return SubproblemStatus::UNBOUNDED_PROBLEM;
          case BQPDStatus::BOUND_INCONSISTENCY:
-            DEBUG << YELLOW << "BQPD error: bound inconsistency\n" << RESET;
+            DEBUG << "BQPD error: bound inconsistency\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::INFEASIBLE:
             return SubproblemStatus::INFEASIBLE;
             // errors
          case BQPDStatus::INCORRECT_PARAMETER:
-            DEBUG << YELLOW << "BQPD error: incorrect parameter\n" << RESET;
+            DEBUG << "BQPD error: incorrect parameter\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::LP_INSUFFICIENT_SPACE:
-            DEBUG << YELLOW << "BQPD error: LP insufficient space\n" << RESET;
+            DEBUG << "BQPD error: LP insufficient space\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::HESSIAN_INSUFFICIENT_SPACE:
-            DEBUG << YELLOW << "BQPD kmax too small, continue anyway\n" << RESET;
+            DEBUG << "BQPD kmax too small, continue anyway\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::SPARSE_INSUFFICIENT_SPACE:
-            DEBUG << YELLOW << "BQPD error: sparse insufficient space\n" << RESET;
+            DEBUG << "BQPD error: sparse insufficient space\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::MAX_RESTARTS_REACHED:
-            DEBUG << YELLOW << "BQPD max restarts reached\n" << RESET;
+            DEBUG << "BQPD max restarts reached\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::UNDEFINED:
-            DEBUG << YELLOW << "BQPD error: undefined\n" << RESET;
+            DEBUG << "BQPD error: undefined\n";
             return SubproblemStatus::ERROR;
       }
       throw std::invalid_argument("The BQPD ifail is not consistent with the Uno status values");
