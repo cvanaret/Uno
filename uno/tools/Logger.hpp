@@ -4,18 +4,10 @@
 #ifndef UNO_LOGGER_H
 #define UNO_LOGGER_H
 
+#include <string>
 #include <iostream>
 
 namespace uno {
-   #define RED    "\x1B[31m"
-   // #define GREEN   "\x1B[32m"
-   #define YELLOW  "\x1B[33m"
-   // #define BLUE    "\x1B[34m"
-   // #define MAGENTA "\x1B[35m"
-   // #define CYAN    "\x1B[36m"
-   // #define WHITE   "\x1B[37m"
-   #define RESET "\x1B[0m"
-
    enum Level {
        SILENT = 0, DISCRETE, WARNING, INFO, DEBUG, DEBUG2, DEBUG3
    };
@@ -28,45 +20,18 @@ namespace uno {
 
    template <typename T>
    const Level& operator<<(const Level& level, T& element) {
-       if (level <= Logger::level) {
-           std::cout << element;
-       }
-       return level;
+      if (level <= Logger::level) {
+         std::cout << element;
+      }
+      return level;
    }
 
    template <typename T>
    const Level& operator<<(const Level& level, const T& element) {
-       if (level <= Logger::level) {
-           std::cout << element;
-       }
-       return level;
-   }
-
-   inline void Logger::set_logger(const std::string& logger_level) {
-      if (logger_level == "SILENT") {
-         Logger::level = SILENT;
+      if (level <= Logger::level) {
+         std::cout << element;
       }
-      else if (logger_level == "DISCRETE") {
-         Logger::level = DISCRETE;
-      }
-      else if (logger_level == "WARNING") {
-         Logger::level = WARNING;
-      }
-      else if (logger_level == "INFO") {
-         Logger::level = INFO;
-      }
-      else if (logger_level == "DEBUG") {
-         Logger::level = DEBUG;
-      }
-      else if (logger_level == "DEBUG2") {
-         Logger::level = DEBUG2;
-      }
-      else if (logger_level == "DEBUG3") {
-         Logger::level = DEBUG3;
-      }
-      else {
-         throw std::out_of_range("The logger level " + logger_level + " was not found");
-      }
+      return level;
    }
 } // namespace
 

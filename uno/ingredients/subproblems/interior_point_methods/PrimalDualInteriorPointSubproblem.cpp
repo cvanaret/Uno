@@ -3,7 +3,8 @@
 
 #include <cmath>
 #include "PrimalDualInteriorPointSubproblem.hpp"
-#include "ingredients/subproblems/Direction.hpp"
+#include "optimization/Direction.hpp"
+#include "optimization/Iterate.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "linear_algebra/SparseStorageFactory.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
@@ -49,12 +50,12 @@ namespace uno {
          l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
    }
 
-   inline void PrimalDualInteriorPointSubproblem::initialize_statistics(Statistics& statistics, const Options& options) {
+   void PrimalDualInteriorPointSubproblem::initialize_statistics(Statistics& statistics, const Options& options) {
       statistics.add_column("regularization", Statistics::double_width - 1, options.get_int("statistics_regularization_column_order"));
       statistics.add_column("barrier param.", Statistics::double_width - 1, options.get_int("statistics_barrier_parameter_column_order"));
    }
 
-   inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
+   void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
       if (problem.has_inequality_constraints()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
@@ -497,7 +498,7 @@ namespace uno {
                }
             }
             else {
-               WARNING << YELLOW << "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset" << RESET << '\n';
+               WARNING << "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset\n";
             }
          }
 
@@ -515,7 +516,7 @@ namespace uno {
                }
             }
             else {
-               WARNING << YELLOW << "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset" << RESET << '\n';
+               WARNING << "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset\n";
             }
          }
       }

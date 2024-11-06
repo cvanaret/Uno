@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "QPSubproblem.hpp"
-#include "ingredients/subproblems/Direction.hpp"
+#include "optimization/Direction.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
@@ -28,6 +28,8 @@ namespace uno {
                std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, hessian_model->hessian.capacity()),
                options)) {
    }
+
+   QPSubproblem::~QPSubproblem() { }
 
    void QPSubproblem::initialize_statistics(Statistics& statistics, const Options& options) {
       if (this->use_regularization) {

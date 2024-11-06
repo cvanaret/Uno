@@ -4,7 +4,7 @@
 #include <cassert>
 #include "l1Relaxation.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
-#include "ingredients/subproblems/Direction.hpp"
+#include "optimization/Direction.hpp"
 #include "ingredients/subproblems/Subproblem.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -166,7 +166,7 @@ namespace uno {
          DEBUG << "Further aggressively decrease the penalty parameter to " << this->penalty_parameter << '\n';
       }
       else {
-         DEBUG << RED << "l1Relaxation: all multipliers are almost 0. The penalty parameter won't be decreased" << RESET << '\n';
+         DEBUG << "l1Relaxation: all multipliers are almost 0. The penalty parameter won't be decreased\n";
       }
    }
 

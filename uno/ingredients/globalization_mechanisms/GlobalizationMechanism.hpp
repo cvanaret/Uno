@@ -4,7 +4,7 @@
 #ifndef UNO_GLOBALIZATIONMECHANISM_H
 #define UNO_GLOBALIZATIONMECHANISM_H
 
-#include "ingredients/subproblems/Direction.hpp"
+#include "optimization/Direction.hpp"
 
 namespace uno {
    // forward declarations

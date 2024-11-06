@@ -4,7 +4,7 @@
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
-#include "ingredients/subproblems/Direction.hpp"
+#include "optimization/Direction.hpp"
 #include "ingredients/subproblems/Subproblem.hpp"
 #include "ingredients/subproblems/SubproblemFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"

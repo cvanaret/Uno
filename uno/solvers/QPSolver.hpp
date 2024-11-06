@@ -24,7 +24,7 @@ namespace uno {
     */
    class QPSolver : public LPSolver {
    public:
-      QPSolver();
+      QPSolver(): LPSolver() { }
       ~QPSolver() override = default;
 
       void solve_LP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
@@ -39,9 +39,6 @@ namespace uno {
             const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<size_t, double>& hessian, const Vector<double>& initial_point,
             Direction& direction, const WarmstartInformation& warmstart_information) = 0;
    };
-
-   inline QPSolver::QPSolver(): LPSolver() {
-   }
 } // namespace
 
 #endif // UNO_QPSOLVER_H
