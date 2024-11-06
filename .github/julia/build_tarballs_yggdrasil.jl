@@ -42,6 +42,7 @@ cmake \
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
     -DCMAKE_BUILD_TYPE=Release \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
+    -DHIGHS=${libdir}/libhighs.${dlext} \
     -DHSL=${libdir}/libhsl.${dlext} \
     -DBLA_VENDOR="libblastrampoline" \
     -DMUMPS_INCLUDE_DIR=${includedir} \
@@ -77,6 +78,7 @@ products = [
 ]
 
 dependencies = [
+    Dependency(PackageSpec(name="HiGHS_jll", uuid="8fd58aa0-07eb-5a78-9b36-339c94fd15ea")),
     Dependency(PackageSpec(name="HSL_jll", uuid="017b0a0e-03f4-516a-9b91-836bbd1904dd")),
     Dependency(PackageSpec(name="METIS_jll", uuid="d00139f3-1899-568f-a2f0-47f597d42d70")),
     Dependency(PackageSpec(name="ASL_jll", uuid="ae81ac8f-d209-56e5-92de-9978fef736f9"), compat="0.1.3"),
