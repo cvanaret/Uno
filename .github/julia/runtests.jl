@@ -18,10 +18,11 @@ import Uno_jll
 Create a new `AmplNLWriter.Optimizer` object that uses Uno as the backing
 solver.
 """
-function Optimizer()
-    options = String["logger=INFO"]
+function Optimizer(options = String["logger=INFO"])
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
+
+Optimizer_LP() = Optimizer(["logger=INFO", "subproblem=LP"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
@@ -34,23 +35,22 @@ end
     # This function tests (potentially) non-convex nonlinear programs. The tests
     # are meant to be "easy" in the sense that most NLP solvers can find the
     # same global minimum, but a test failure can sometimes be allowed.
-    MINLPTests.test_nlp_expr(
-        Optimizer;
-        exclude = [
-            # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
-            "005_010",
-            # Okay to exclude forever: AmplNLWriter does not support
-            # user-defined functions.
-            "006_010",
-            # Remove once https://github.com/cvanaret/Uno/issues/38 is fixed
-            "007_010",
-        ],
-        primal_target = primal_target,
-    )
+    exclude = [
+        # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
+        "005_010",
+        # Okay to exclude forever: AmplNLWriter does not support
+        # user-defined functions.
+        "006_010",
+        # Remove once https://github.com/cvanaret/Uno/issues/38 is fixed
+        "007_010",
+    ]
+    MINLPTests.test_nlp_expr(Optimizer; exclude, primal_target)
+    MINLPTests.test_nlp_expr(Optimizer_LP; exclude, primal_target)
     # This function tests convex nonlinear programs. Test failures here should
     # never be allowed, because even local NLP solvers should find the global
     # optimum.
     MINLPTests.test_nlp_cvx_expr(Optimizer; primal_target)
+    MINLPTests.test_nlp_cvx_expr(Optimizer_LP; primal_target)
 end
 
 # This testset runs the full gamut of MOI.Test.runtests. There are a number of
