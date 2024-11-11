@@ -50,7 +50,7 @@ namespace uno {
 
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-            double step_length) = 0;
+            double step_length, WarmstartInformation& warmstart_information) = 0;
       [[nodiscard]] TerminationStatus check_termination(Iterate& iterate);
 
       // primal-dual residuals

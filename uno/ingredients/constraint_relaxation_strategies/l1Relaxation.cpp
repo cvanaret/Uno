@@ -232,7 +232,7 @@ namespace uno {
    }
 
    bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         double step_length) {
+         double step_length, WarmstartInformation& /*warmstart_information*/) {
       this->subproblem->postprocess_iterate(this->l1_relaxed_problem, trial_iterate);
       this->compute_progress_measures(current_iterate, trial_iterate);
       trial_iterate.objective_multiplier = this->l1_relaxed_problem.get_objective_multiplier();

@@ -78,7 +78,7 @@ namespace uno {
                GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, 1., 1.);
                this->reset_active_trust_region_multipliers(model, this->direction, trial_iterate);
 
-               is_acceptable = this->is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction);
+               is_acceptable = this->is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction, warmstart_information);
                if (is_acceptable) {
                   this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
                   this->reset_radius();
@@ -124,9 +124,10 @@ namespace uno {
 
    // the trial iterate is accepted by the constraint relaxation strategy or if the step is small and we cannot switch to solving the feasibility problem
    bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction) {
+         const Direction& direction, WarmstartInformation& warmstart_information) {
       // direction.primal_dual_step_length is usually 1, can be lower if reduced by fraction-to-boundary rule
-      bool accept_iterate = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, 1.);
+      bool accept_iterate = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, 1.,
+            warmstart_information);
       this->set_statistics(statistics, trial_iterate, direction);
       if (accept_iterate) {
          trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);

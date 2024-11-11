@@ -118,12 +118,6 @@ namespace uno {
 
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, Direction& direction, WarmstartInformation& warmstart_information) {
-      // upon switching to the optimality phase, set a cold start in the subproblem solver
-      if (this->switching_to_optimality_phase) {
-         this->switching_to_optimality_phase = false;
-         warmstart_information.set_cold_start();
-      }
-
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
       this->subproblem->solve(statistics, problem, current_iterate, current_multipliers, direction, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
@@ -138,7 +132,7 @@ namespace uno {
          direction.primals), this->residual_norm) <= this->linear_feasibility_tolerance);
    }
 
-   void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate) {
+   void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate, WarmstartInformation& warmstart_information) {
       DEBUG << "Switching from restoration to optimality phase\n";
       this->current_phase = Phase::OPTIMALITY;
       this->globalization_strategy->notify_switch_to_optimality(current_iterate.progress);
@@ -147,11 +141,12 @@ namespace uno {
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
 
       this->subproblem->exit_feasibility_problem(this->optimality_problem, trial_iterate);
-      this->switching_to_optimality_phase = true;
+      // set a cold start in the subproblem solver
+      warmstart_information.set_cold_start();
    }
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         double step_length) {
+         double step_length, WarmstartInformation& warmstart_information) {
       // TODO pick right multipliers
       this->subproblem->postprocess_iterate(this->current_problem(), trial_iterate);
       this->compute_progress_measures(current_iterate, trial_iterate);
@@ -159,7 +154,7 @@ namespace uno {
 
       // possibly go from restoration phase to optimality phase
       if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(current_iterate, trial_iterate, direction, step_length)) {
-         this->switch_to_optimality_phase(current_iterate, trial_iterate);
+         this->switch_to_optimality_phase(current_iterate, trial_iterate, warmstart_information);
       }
 
       bool accept_iterate = false;
