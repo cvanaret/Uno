@@ -84,7 +84,7 @@ namespace uno {
 
    double FixedBoundsConstraintsModel::variable_upper_bound(size_t variable_index) const {
       if (this->model->variable_lower_bound(variable_index) == this->model->variable_upper_bound(variable_index)) {
-// remove bounds of fixed variables
+      // remove bounds of fixed variables
          return INF<double>;
       }
       return this->model->variable_upper_bound(variable_index);
@@ -92,7 +92,7 @@ namespace uno {
 
    BoundType FixedBoundsConstraintsModel::get_variable_bound_type(size_t variable_index) const {
       if (this->model->variable_lower_bound(variable_index) == this->model->variable_upper_bound(variable_index)) {
-// fixed variable: remove the bounds
+      // fixed variable: remove the bounds
          return BoundType::UNBOUNDED;
       }
       else {
@@ -111,12 +111,15 @@ namespace uno {
    const SparseVector<size_t>& FixedBoundsConstraintsModel::get_slacks() const {
       return this->model->get_slacks();
    }
+
    const Collection<size_t>& FixedBoundsConstraintsModel::get_single_lower_bounded_variables() const {
       return this->model->get_single_lower_bounded_variables();
    }
+
    const Collection<size_t>& FixedBoundsConstraintsModel::get_single_upper_bounded_variables() const {
       return this->model->get_single_upper_bounded_variables();
    }
+
    const Vector<size_t>& FixedBoundsConstraintsModel::get_fixed_variables() const {
       return this->fixed_variables;
    }

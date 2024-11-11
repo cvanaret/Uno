@@ -4,7 +4,6 @@
 #include "Preprocessing.hpp"
 #include "optimization/Direction.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
-#include "linear_algebra/CSCSparseStorage.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"

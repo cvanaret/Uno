@@ -22,10 +22,10 @@ namespace uno {
       ~SymmetricMatrix() = default;
 
       void reset() { this->sparse_storage->reset(); }
-      size_t dimension() const { return this->sparse_storage->dimension; }
+      [[nodiscard]] size_t dimension() const { return this->sparse_storage->dimension; }
       void set_dimension(size_t new_dimension) { this->sparse_storage->set_dimension(new_dimension); }
-      size_t number_nonzeros() const { return this->sparse_storage->number_nonzeros; }
-      size_t capacity() const { return this->sparse_storage->capacity; }
+      [[nodiscard]] size_t number_nonzeros() const { return this->sparse_storage->number_nonzeros; }
+      [[nodiscard]] size_t capacity() const { return this->sparse_storage->capacity; }
       template <typename Vector1, typename Vector2>
       ElementType quadratic_product(const Vector1& x, const Vector2& y) const;
 
