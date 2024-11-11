@@ -88,12 +88,11 @@ namespace uno {
       }
    }
 
-
-
    void HiGHSSolver::solve_subproblem(Direction& direction, size_t number_variables, size_t number_constraints) {
       // solve the LP
       HighsStatus return_status = this->highs_solver.passModel(this->model);
       assert(return_status == HighsStatus::kOk);
+
       return_status = this->highs_solver.run(); // solve
       DEBUG << "HiGHS status: " << static_cast<int>(return_status) << '\n';
 
@@ -102,8 +101,18 @@ namespace uno {
          direction.status = SubproblemStatus::ERROR;
          return;
       }
+      HighsModelStatus model_status = highs_solver.getModelStatus();
+      DEBUG << "HiGHS model status: " << static_cast<int>(model_status) << '\n';
 
-      // TODO check unbounded problems
+      if (model_status == HighsModelStatus::kInfeasible) {
+         direction.status = SubproblemStatus::INFEASIBLE;
+         return;
+      }
+      else if (model_status == HighsModelStatus::kUnbounded) {
+         direction.status = SubproblemStatus::UNBOUNDED_PROBLEM;
+         return;
+      }
+      
       direction.status = SubproblemStatus::OPTIMAL;
       const HighsSolution& solution = this->highs_solver.getSolution();
       // read the primal solution and bound dual solution
