@@ -13,6 +13,14 @@ namespace uno {
       std::cout << "Problem: " << std::boolalpha << this->problem_changed << '\n';
    }
 
+   void WarmstartInformation::reset() {
+      this->objective_changed = true;
+      this->constraints_changed = true;
+      this->constraint_bounds_changed = true;
+      this->variable_bounds_changed = true;
+      this->problem_changed = true;
+   }
+
    void WarmstartInformation::set_cold_start() {
       this->objective_changed = true;
       this->constraints_changed = true;

@@ -13,6 +13,7 @@ namespace uno {
       bool problem_changed{false};
 
       void display() const;
+      void reset();
       void set_cold_start();
       void set_hot_start();
       void only_objective_changed();
