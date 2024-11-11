@@ -59,7 +59,8 @@ namespace uno {
                   // scale or not the constraint dual direction with the LS step length
                   this->scale_duals_with_step_length ? step_length : 1.);
 
-            is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction, step_length);
+            is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction,
+                  step_length, warmstart_information);
             this->set_statistics(statistics, trial_iterate, this->direction, step_length, number_iterations);
          }
          catch (const EvaluationError& e) {

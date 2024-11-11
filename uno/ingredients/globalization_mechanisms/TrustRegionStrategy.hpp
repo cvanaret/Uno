@@ -24,7 +24,8 @@ namespace uno {
       const double radius_reset_threshold;
       const double tolerance;
 
-      bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction);
+      bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+            WarmstartInformation& warmstart_information);
       void possibly_increase_radius(double step_norm);
       void decrease_radius(double step_norm);
       void decrease_radius();
