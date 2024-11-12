@@ -11,6 +11,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "solvers/QPSolverFactory.hpp"
 #include "solvers/LPSolverFactory.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
@@ -32,11 +33,12 @@ namespace uno {
    void Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
       Timer timer{};
       Statistics statistics = Uno::create_statistics(model, options);
+      WarmstartInformation warmstart_information{};
+      warmstart_information.whole_problem_changed();
 
       try {
          // use the initial primal-dual point to initialize the strategies and generate the initial iterate
          this->initialize(statistics, current_iterate, options);
-         current_iterate.status = TerminationStatus::NOT_OPTIMAL;
          // allocate the trial iterate once and for all here
          Iterate trial_iterate(current_iterate);
 
@@ -51,7 +53,8 @@ namespace uno {
                DEBUG << "### Outer iteration " << major_iterations << '\n';
 
                // compute an acceptable iterate by solving a subproblem at the current point
-               this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate, trial_iterate);
+               warmstart_information.iterate_changed();
+               this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate, trial_iterate, warmstart_information);
                termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration());
                // the trial iterate becomes the current iterate for the next iteration
                std::swap(current_iterate, trial_iterate);
@@ -81,6 +84,7 @@ namespace uno {
       this->globalization_mechanism.initialize(statistics, current_iterate, options);
       options.print_used();
       if (Logger::level == INFO) statistics.print_current_line();
+      current_iterate.status = TerminationStatus::NOT_OPTIMAL;
    }
 
    Statistics Uno::create_statistics(const Model& model, const Options& options) {
