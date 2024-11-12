@@ -38,9 +38,8 @@ namespace uno {
       this->constraint_relaxation_strategy.initialize(statistics, initial_iterate, options);
    }
 
-   void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
-      WarmstartInformation warmstart_information{};
-      warmstart_information.set_hot_start();
+   void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         WarmstartInformation& warmstart_information) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
       size_t number_iterations = 0;
@@ -64,14 +63,14 @@ namespace uno {
                statistics.set("status", "unbounded subproblem");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius_aggressively();
-               warmstart_information.set_cold_start();
+               warmstart_information.whole_problem_changed();
             }
             else if (this->direction.status == SubproblemStatus::ERROR) {
                this->set_statistics(statistics, this->direction);
                statistics.set("status", "solver error");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius();
-               warmstart_information.set_cold_start();
+               warmstart_information.whole_problem_changed();
             }
             else {
                // take full primal-dual step
@@ -79,7 +78,7 @@ namespace uno {
                this->reset_active_trust_region_multipliers(model, this->direction, trial_iterate);
 
                // let the constraint relaxation strategy and the radius update rule determine which quantities change
-               warmstart_information.reset();
+               warmstart_information.no_changes();
 
                is_acceptable = this->is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction, warmstart_information);
                if (is_acceptable) {
@@ -99,7 +98,7 @@ namespace uno {
             statistics.set("status", "eval. error");
             if (Logger::level == INFO) statistics.print_current_line();
             this->decrease_radius();
-            warmstart_information.set_cold_start();
+            warmstart_information.whole_problem_changed();
          }
          if (not is_acceptable && this->radius < this->minimum_radius) {
             throw std::runtime_error("Small trust-region radius");
@@ -127,7 +126,6 @@ namespace uno {
    // the trial iterate is accepted by the constraint relaxation strategy or if the step is small and we cannot switch to solving the feasibility problem
    bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, WarmstartInformation& warmstart_information) {
-      // direction.primal_dual_step_length is usually 1, can be lower if reduced by fraction-to-boundary rule
       bool accept_iterate = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction, 1.,
             warmstart_information);
       this->set_statistics(statistics, trial_iterate, direction);

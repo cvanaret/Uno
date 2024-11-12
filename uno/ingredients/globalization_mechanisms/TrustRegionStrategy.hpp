@@ -12,7 +12,8 @@ namespace uno {
       TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
 
       void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
-      void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate) override;
+      void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+            WarmstartInformation& warmstart_information) override;
 
    private:
       double radius; /*!< Current trust region radius */

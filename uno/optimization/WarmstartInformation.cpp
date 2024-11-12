@@ -13,28 +13,28 @@ namespace uno {
       std::cout << "Problem: " << std::boolalpha << this->problem_changed << '\n';
    }
 
-   void WarmstartInformation::reset() {
-      this->objective_changed = true;
-      this->constraints_changed = true;
-      this->constraint_bounds_changed = true;
-      this->variable_bounds_changed = true;
-      this->problem_changed = true;
+   void WarmstartInformation::no_changes() {
+      this->objective_changed = false;
+      this->constraints_changed = false;
+      this->constraint_bounds_changed = false;
+      this->variable_bounds_changed = false;
+      this->problem_changed = false;
    }
 
-   void WarmstartInformation::set_cold_start() {
-      this->objective_changed = true;
-      this->constraints_changed = true;
-      this->constraint_bounds_changed = true;
-      this->variable_bounds_changed = true;
-      this->problem_changed = true;
-   }
-
-   void WarmstartInformation::set_hot_start() {
+   void WarmstartInformation::iterate_changed() {
       this->objective_changed = true;
       this->constraints_changed = true;
       this->constraint_bounds_changed = true;
       this->variable_bounds_changed = true;
       this->problem_changed = false;
+   }
+
+   void WarmstartInformation::whole_problem_changed() {
+      this->objective_changed = true;
+      this->constraints_changed = true;
+      this->constraint_bounds_changed = true;
+      this->variable_bounds_changed = true;
+      this->problem_changed = true;
    }
 
    void WarmstartInformation::only_objective_changed() {
@@ -42,14 +42,6 @@ namespace uno {
       this->constraints_changed = false;
       this->constraint_bounds_changed = false;
       this->variable_bounds_changed = false;
-      this->problem_changed = false;
-   }
-
-   void WarmstartInformation::only_variable_bounds_changed() {
-      this->objective_changed = false;
-      this->constraints_changed = false;
-      this->constraint_bounds_changed = false;
-      this->variable_bounds_changed = true;
       this->problem_changed = false;
    }
 } // namespace
