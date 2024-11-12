@@ -58,6 +58,15 @@ namespace uno {
    VectorView<Expression> view(Expression&& expression, size_t start, size_t end) {
       return {std::forward<Expression>(expression), start, end};
    }
+
+   template <typename Expression>
+   std::ostream& operator<<(std::ostream& stream, const VectorView<Expression>& view) {
+      for (size_t index: Range(view.size())) {
+         stream << view[index] << " ";
+      }
+      stream << '\n';
+      return stream;
+   }
 } // namespace
 
 #endif //UNO_VECTORVIEW_H

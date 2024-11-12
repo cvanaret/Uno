@@ -169,7 +169,7 @@ namespace uno {
       if (warmstart_information.problem_changed) {
          mode = BQPDMode::ACTIVE_SET_EQUALITIES;
       }
-         // if only the variable bounds changed, reuse the active set estimate and the Jacobian information
+      // if only the variable bounds changed, reuse the active set estimate and the Jacobian information
       else if (warmstart_information.variable_bounds_changed && not warmstart_information.objective_changed &&
                not warmstart_information.constraints_changed && not warmstart_information.constraint_bounds_changed) {
          mode = BQPDMode::UNCHANGED_ACTIVE_SET_AND_JACOBIAN;
