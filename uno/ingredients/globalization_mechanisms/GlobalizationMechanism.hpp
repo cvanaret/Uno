@@ -13,7 +13,7 @@ namespace uno {
    class Model;
    class Options;
    class Statistics;
-   class WarmstartInformation;
+   struct WarmstartInformation;
 
    class GlobalizationMechanism {
    public:
