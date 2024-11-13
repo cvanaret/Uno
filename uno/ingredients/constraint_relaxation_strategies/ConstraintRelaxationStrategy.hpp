@@ -46,7 +46,7 @@ namespace uno {
       void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
             const Vector<double>& initial_point, WarmstartInformation& warmstart_information);
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
-      virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) = 0;
+      virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) = 0;
 
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,

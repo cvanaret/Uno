@@ -71,17 +71,16 @@ namespace uno {
                // switch to the feasibility problem, starting from the current direction
                statistics.set("status", "infeas. subproblem");
                DEBUG << "/!\\ The subproblem is infeasible\n";
-               this->switch_to_feasibility_problem(statistics, current_iterate);
-               warmstart_information.set_cold_start();
+               this->switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
                this->subproblem->set_initial_point(direction.primals);
             }
             else {
+               warmstart_information.no_changes();
                return;
             }
          }
          catch (const UnstableRegularization&) {
-            this->switch_to_feasibility_problem(statistics, current_iterate);
-            warmstart_information.set_cold_start();
+            this->switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
          }
       }
 
@@ -99,7 +98,8 @@ namespace uno {
    }
 
    // precondition: this->current_phase == Phase::OPTIMALITY
-   void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate) {
+   void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
+         WarmstartInformation& warmstart_information) {
       DEBUG << "Switching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
@@ -114,6 +114,7 @@ namespace uno {
       DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
       if (Logger::level == INFO) statistics.print_current_line();
+      warmstart_information.whole_problem_changed();
    }
 
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
@@ -142,7 +143,7 @@ namespace uno {
 
       this->subproblem->exit_feasibility_problem(this->optimality_problem, trial_iterate);
       // set a cold start in the subproblem solver
-      warmstart_information.set_cold_start();
+      warmstart_information.whole_problem_changed();
    }
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
@@ -155,6 +156,9 @@ namespace uno {
       // possibly go from restoration phase to optimality phase
       if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(current_iterate, trial_iterate, direction, step_length)) {
          this->switch_to_optimality_phase(current_iterate, trial_iterate, warmstart_information);
+      }
+      else {
+         warmstart_information.no_changes();
       }
 
       bool accept_iterate = false;
@@ -169,9 +173,6 @@ namespace uno {
          const ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(current_iterate, direction, step_length);
          accept_iterate = this->globalization_strategy->is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
                predicted_reduction, this->current_problem().get_objective_multiplier());
-      }
-      if (accept_iterate) {
-         // this->set_dual_residuals_statistics(statistics, trial_iterate);
       }
       ConstraintRelaxationStrategy::set_progress_statistics(statistics, trial_iterate);
       return accept_iterate;

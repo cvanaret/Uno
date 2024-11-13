@@ -13,6 +13,7 @@ namespace uno {
    class Model;
    class Options;
    class Statistics;
+   struct WarmstartInformation;
 
    class GlobalizationMechanism {
    public:
@@ -20,7 +21,8 @@ namespace uno {
       virtual ~GlobalizationMechanism() = default;
 
       virtual void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) = 0;
-      virtual void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate) = 0;
+      virtual void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+            WarmstartInformation& warmstart_information) = 0;
 
       [[nodiscard]] size_t get_hessian_evaluation_count() const;
       [[nodiscard]] size_t get_number_subproblems_solved() const;

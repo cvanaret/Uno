@@ -85,13 +85,13 @@ namespace uno {
       return infeasible_linear_constraints;
    }
 
-   void Preprocessing::enforce_linear_constraints(const Model& model, Vector<double>& x, Multipliers& multipliers, QPSolver& qp_solver) {
+   void Preprocessing::enforce_linear_constraints(const Model& model, Vector<double>& primals, Multipliers& multipliers, QPSolver& qp_solver) {
       const auto& linear_constraints = model.get_linear_constraints();
       INFO << "\nPreprocessing phase: the problem has " << linear_constraints.size() << " linear constraints\n";
       if (not linear_constraints.empty()) {
          // evaluate the constraints
          std::vector<double> constraints(model.number_constraints);
-         model.evaluate_constraints(x, constraints);
+         model.evaluate_constraints(primals, constraints);
          const size_t infeasible_linear_constraints = count_infeasible_linear_constraints(model, constraints);
          INFO << "There are " << infeasible_linear_constraints << " infeasible linear constraints at the initial point\n";
          if (0 < infeasible_linear_constraints) {
@@ -105,15 +105,15 @@ namespace uno {
             RectangularMatrix<double> constraint_jacobian(linear_constraints.size(), model.number_variables);
             size_t linear_constraint_index = 0;
             for (size_t constraint_index: linear_constraints) {
-               model.evaluate_constraint_gradient(x, constraint_index, constraint_jacobian[linear_constraint_index]);
+               model.evaluate_constraint_gradient(primals, constraint_index, constraint_jacobian[linear_constraint_index]);
                linear_constraint_index++;
             }
             // variable bounds
             std::vector<double> variables_lower_bounds(model.number_variables);
             std::vector<double> variables_upper_bounds(model.number_variables);
             for (size_t variable_index: Range(model.number_variables)) {
-               variables_lower_bounds[variable_index] = model.variable_lower_bound(variable_index) - x[variable_index];
-               variables_upper_bounds[variable_index] = model.variable_upper_bound(variable_index) - x[variable_index];
+               variables_lower_bounds[variable_index] = model.variable_lower_bound(variable_index) - primals[variable_index];
+               variables_upper_bounds[variable_index] = model.variable_upper_bound(variable_index) - primals[variable_index];
             }
             // constraint bounds
             std::vector<double> constraints_lower_bounds(linear_constraints.size());
@@ -137,15 +137,17 @@ namespace uno {
             }
 
             // take the step
-            x += direction.primals;
-            multipliers.lower_bounds += direction.multipliers.lower_bounds;
-            multipliers.upper_bounds += direction.multipliers.upper_bounds;
+            for (size_t variable_index: Range(model.number_variables)) {
+               primals[variable_index] += direction.primals[variable_index];
+               multipliers.lower_bounds[variable_index] += direction.multipliers.lower_bounds[variable_index];
+               multipliers.upper_bounds[variable_index] += direction.multipliers.upper_bounds[variable_index];
+            }
             linear_constraint_index = 0;
             for (size_t constraint_index: linear_constraints) {
                multipliers.constraints[constraint_index] += direction.multipliers.constraints[linear_constraint_index];
                linear_constraint_index++;
             }
-            DEBUG3 << "Linear feasible initial point: " << x << '\n';
+            DEBUG3 << "Linear feasible initial point: " << view(primals, 0, model.number_variables) << '\n';
          }
       }
    }

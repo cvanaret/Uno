@@ -79,7 +79,8 @@ namespace uno {
       return (this->penalty_parameter == 0.);
    }
 
-   void l1Relaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/) {
+   void l1Relaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/,
+         WarmstartInformation& /*warmstart_information*/) {
       throw std::runtime_error("l1Relaxation::switch_to_feasibility_problem is not implemented");
    }
 

@@ -13,10 +13,10 @@ namespace uno {
       bool problem_changed{false};
 
       void display() const;
-      void set_cold_start();
-      void set_hot_start();
+      void no_changes();
+      void iterate_changed();
+      void whole_problem_changed();
       void only_objective_changed();
-      void only_variable_bounds_changed();
    };
 } // namespace
 

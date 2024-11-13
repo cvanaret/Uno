@@ -30,9 +30,8 @@ namespace uno {
       this->constraint_relaxation_strategy.initialize(statistics, initial_iterate, options);
    }
 
-   void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
-      WarmstartInformation warmstart_information{};
-      warmstart_information.set_hot_start();
+   void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         WarmstartInformation& warmstart_information) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
       this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, warmstart_information);
@@ -58,6 +57,9 @@ namespace uno {
             GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, step_length,
                   // scale or not the constraint dual direction with the LS step length
                   this->scale_duals_with_step_length ? step_length : 1.);
+
+            // let the constraint relaxation strategy determine which quantities change
+            warmstart_information.no_changes();
 
             is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction,
                   step_length, warmstart_information);
@@ -89,8 +91,7 @@ namespace uno {
                }
                // switch to solving the feasibility problem
                statistics.set("status", "small LS step length");
-               this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate);
-               warmstart_information.set_cold_start();
+               this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
                this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, this->direction.primals,
                      warmstart_information);
                BacktrackingLineSearch::check_unboundedness(this->direction);
