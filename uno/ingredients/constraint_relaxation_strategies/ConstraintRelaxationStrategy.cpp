@@ -206,7 +206,7 @@ namespace uno {
 
       const bool feasibility_stationarity = (current_iterate.feasibility_residuals.stationarity <= tolerance);
       const bool feasibility_complementarity = (current_iterate.feasibility_residuals.complementarity <= tolerance);
-      const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(this->model.number_variables, tolerance);
+      const bool no_trivial_duals = current_iterate.feasibility_multipliers.not_all_zero(this->model.number_variables, tolerance);
 
       DEBUG << "\nTermination criteria for tolerance = " << tolerance << ":\n";
       DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
@@ -221,7 +221,7 @@ namespace uno {
          // feasible regular stationary point
          return TerminationStatus::FEASIBLE_KKT_POINT;
       }
-      else if (this->model.is_constrained() && feasibility_stationarity && not primal_feasibility && feasibility_complementarity) {
+      else if (this->model.is_constrained() && feasibility_stationarity && not primal_feasibility && feasibility_complementarity && no_trivial_duals) {
          // no primal feasibility, stationary point of constraint violation
          return TerminationStatus::INFEASIBLE_STATIONARY_POINT;
       }

@@ -77,9 +77,6 @@ namespace uno {
                GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, 1., 1.);
                this->reset_active_trust_region_multipliers(model, this->direction, trial_iterate);
 
-               // let the constraint relaxation strategy and the radius update rule determine which quantities change
-               warmstart_information.no_changes();
-
                is_acceptable = this->is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction, warmstart_information);
                if (is_acceptable) {
                   this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
