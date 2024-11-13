@@ -6,11 +6,11 @@
 
 namespace uno {
    struct WarmstartInformation {
-      bool objective_changed{false};
-      bool constraints_changed{false};
-      bool constraint_bounds_changed{false};
-      bool variable_bounds_changed{false};
-      bool problem_changed{false};
+      bool objective_changed{true};
+      bool constraints_changed{true};
+      bool constraint_bounds_changed{true};
+      bool variable_bounds_changed{true};
+      bool problem_changed{true};
 
       void display() const;
       void no_changes();

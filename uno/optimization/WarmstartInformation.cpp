@@ -26,7 +26,6 @@ namespace uno {
       this->constraints_changed = true;
       this->constraint_bounds_changed = true;
       this->variable_bounds_changed = true;
-      this->problem_changed = false;
    }
 
    void WarmstartInformation::whole_problem_changed() {
