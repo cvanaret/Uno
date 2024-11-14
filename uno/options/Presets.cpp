@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include "Presets.hpp"
 #include "Options.hpp"
+#include "solvers/LPSolverFactory.hpp"
 #include "solvers/QPSolverFactory.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 
@@ -19,12 +20,16 @@ namespace uno {
          /** default preset **/
          const auto QP_solvers = QPSolverFactory::available_solvers();
          const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
+         const auto LP_solvers = LPSolverFactory::available_solvers();
 
          if (not QP_solvers.empty()) {
             Presets::set(options, "filtersqp");
          }
          else if (not linear_solvers.empty()) {
             Presets::set(options, "ipopt");
+         }
+         else if (not LP_solvers.empty()) {
+            Presets::set(options, "filterslp");
          }
          // note: byrd is not very robust and is not considered as a default preset
       }
@@ -124,6 +129,24 @@ namespace uno {
          options["funnel_fact"] = "1.5";
          options["funnel_switching_infeasibility_exponent"] = "2";
          options["funnel_update_strategy"] = "2";
+      }
+      else if (preset_name == "filterslp") {
+         options["constraint_relaxation_strategy"] = "feasibility_restoration";
+         options["subproblem"] = "LP";
+         options["globalization_mechanism"] = "TR";
+         options["globalization_strategy"] = "fletcher_filter_method";
+         options["filter_type"] = "standard";
+         options["progress_norm"] = "L1";
+         options["residual_norm"] = "L2";
+         options["sparse_format"] = "CSC";
+         options["TR_radius"] = "10";
+         options["l1_constraint_violation_coefficient"] = "1.";
+         options["enforce_linear_constraints"] = "yes";
+         options["tolerance"] = "1e-5";
+         options["loose_tolerance"] = "1e-4";
+         options["TR_min_radius"] = "1e-8";
+         options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
+         options["protect_actual_reduction_against_roundoff"] = "no";
       }
       else {
          throw std::runtime_error("The preset " + preset_name + " is not known");
