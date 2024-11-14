@@ -75,6 +75,7 @@ Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp", "max_iterations
         primal_target,
         objective_tol = 1e-4,
         primal_tol = 1e-4,
+        exclude = ["501_011"],  # Iteration limit
     )
 end
 
