@@ -18,11 +18,11 @@ import Uno_jll
 Create a new `AmplNLWriter.Optimizer` object that uses Uno as the backing
 solver.
 """
-function Optimizer(options = String["logger=INFO"])
+function Optimizer(options = String["logger=SILENT"])
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_LP() = Optimizer(["logger=INFO", "preset=filterslp"])
+Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
