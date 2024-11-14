@@ -22,7 +22,7 @@ function Optimizer(options = String["logger=INFO"])
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_LP() = Optimizer(["logger=INFO", "subproblem=LP"])
+Optimizer_LP() = Optimizer(["logger=INFO", "preset=filterslp"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
