@@ -4,13 +4,15 @@
 #ifndef UNO_DEFAULTOPTIONS_H
 #define UNO_DEFAULTOPTIONS_H
 
+#include <optional>
+#include <string>
 #include "Options.hpp"
 
 namespace uno {
    class DefaultOptions {
    public:
       [[nodiscard]] static Options load();
-      [[nodiscard]] static Options determine_solvers_and_preset();
+      [[nodiscard]] static Options determine_solvers();
    };
 } // namespace
 
