@@ -47,7 +47,7 @@ Uno implements the following strategies:
 
 **Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches. For more details, check out our [preprint](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization) or my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
 
-Uno implements three **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
+Uno implements **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method);
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method);
 * `byrd` mimics Byrd's S $\ell_1$ QP (line-search $\ell_1$ merit S $\ell_1$ QP method).
