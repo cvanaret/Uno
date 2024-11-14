@@ -63,18 +63,18 @@ file(GLOB UNO_SOURCE_FILES
 
 # unit test source files
 file(GLOB TESTS_UNO_SOURCE_FILES
-   unotest/unotest.cpp
-   unotest/CollectionAdapterTests.cpp
-   unotest/ConcatenationTests.cpp
-   unotest/COOSparseStorageTests.cpp
-   unotest/CSCSparseStorageTests.cpp
-   unotest/MatrixVectorProductTests.cpp
-   unotest/RangeTests.cpp
-   unotest/ScalarMultipleTests.cpp
-   unotest/SparseVectorTests.cpp
-   unotest/SumTests.cpp
-   unotest/VectorTests.cpp
-   unotest/VectorViewTests.cpp
+   unotest/unit_tests/unotest.cpp
+   unotest/unit_tests/CollectionAdapterTests.cpp
+   unotest/unit_tests/ConcatenationTests.cpp
+   unotest/unit_tests/COOSparseStorageTests.cpp
+   unotest/unit_tests/CSCSparseStorageTests.cpp
+   unotest/unit_tests/MatrixVectorProductTests.cpp
+   unotest/unit_tests/RangeTests.cpp
+   unotest/unit_tests/ScalarMultipleTests.cpp
+   unotest/unit_tests/SparseVectorTests.cpp
+   unotest/unit_tests/SumTests.cpp
+   unotest/unit_tests/VectorTests.cpp
+   unotest/unit_tests/VectorViewTests.cpp
 )
 
 #########################
@@ -110,7 +110,7 @@ else()
 endif()
 if(HSL OR MA57)
    list(APPEND UNO_SOURCE_FILES uno/solvers/MA57/MA57Solver.cpp)
-   list(APPEND TESTS_UNO_SOURCE_FILES unotest/MA57SolverTests.cpp)
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
    
    find_package(BLAS REQUIRED)
    list(APPEND LIBRARIES ${BLAS_LIBRARIES})
@@ -139,7 +139,7 @@ if(NOT HIGHS)
    message(WARNING "Optional library HiGHS was not found.")
 else()
    list(APPEND UNO_SOURCE_FILES uno/solvers/HiGHS/HiGHSSolver.cpp)
-   list(APPEND TESTS_UNO_SOURCE_FILES unotest/HiGHSSolverTests.cpp)
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
    link_to_uno(highs ${HIGHS})
    list(APPEND LIBRARIES highs::highs)
 endif()
@@ -150,7 +150,7 @@ if(NOT MUMPS_LIBRARY)
    message(WARNING "Optional library MUMPS was not found.")
 else()
    list(APPEND UNO_SOURCE_FILES uno/solvers/MUMPS/MUMPSSolver.cpp)
-   list(APPEND TESTS_UNO_SOURCE_FILES unotest/MUMPSSolverTests.cpp)
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MUMPSSolverTests.cpp)
    list(APPEND LIBRARIES ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
    
    list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
