@@ -6,6 +6,7 @@
 
 #include <map>
 #include <string>
+#include <optional>
 
 namespace uno {
    class Options {
@@ -16,14 +17,14 @@ namespace uno {
       std::string& operator[](const std::string& option_name);
 
       [[nodiscard]] const std::string& get_string(const std::string& option_name) const;
+      [[nodiscard]] std::optional<std::string> get_string_optional(const std::string& option_name) const;
       [[nodiscard]] double get_double(const std::string& option_name) const;
       [[nodiscard]] int get_int(const std::string& option_name) const;
       [[nodiscard]] size_t get_unsigned_int(const std::string& option_name) const;
       [[nodiscard]] bool get_bool(const std::string& option_name) const;
 
-      [[nodiscard]] static Options get_command_line_options(int argc, char* argv[]);
-      static void overwrite_with_option_file(Options& options, const std::string& file_name);
-      static void set_preset(Options& options, const std::string& preset_name);
+      [[nodiscard]] static Options get_command_line_options(int argc, char* argv[], size_t offset);
+      [[nodiscard]] static Options load_option_file(const std::string& file_name);
       void overwrite_with(const Options& overwriting_options);
       void print_used() const;
 
@@ -37,6 +38,7 @@ namespace uno {
       const bool are_default_options;
 
       [[nodiscard]] const std::string& at(const std::string& option_name) const;
+      [[nodiscard]] std::optional<std::string> at_optional(const std::string& option_name) const;
    };
 } // namespace
 

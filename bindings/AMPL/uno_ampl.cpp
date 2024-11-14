@@ -10,8 +10,9 @@
 #include "AMPLModel.hpp"
 #include "Uno.hpp"
 #include "model/ModelFactory.hpp"
-#include "options/Options.hpp"
 #include "options/DefaultOptions.hpp"
+#include "options/Options.hpp"
+#include "options/Presets.hpp"
 #include "tools/Logger.hpp"
 
 /*
@@ -91,8 +92,6 @@ int main(int argc, char* argv[]) {
          }
       }
       else if (argc >= 3) {
-         Options options = DefaultOptions::load();
-
          // AMPL expects: ./uno_ampl model.nl -AMPL [option_name=option_value, ...]
          // model name
          std::string model_name = std::string(argv[1]);
@@ -102,12 +101,28 @@ int main(int argc, char* argv[]) {
             throw std::runtime_error("The second command line argument should be -AMPL");
          }
 
-         // determine the default solvers based on the available libraries and possibly set a preset
-         Options solvers_options = DefaultOptions::determine_solvers_and_preset();
+         Options options = DefaultOptions::load();
+
+         // determine the default solvers based on the available libraries
+         Options solvers_options = DefaultOptions::determine_solvers();
          options.overwrite_with(solvers_options);
 
-         // overwrite the default options with the command line arguments
-         Options command_line_options = Options::get_command_line_options(argc, argv);
+         // get the command line arguments (options start at index 3)
+         Options command_line_options = Options::get_command_line_options(argc, argv, 3);
+
+         // possibly set options from an option file
+         const auto optional_option_file = command_line_options.get_string_optional("option_file");
+         if (optional_option_file.has_value()) {
+            Options file_options = Options::load_option_file(optional_option_file.value());
+            options.overwrite_with(file_options);
+         }
+
+         // possibly set a preset
+         const auto optional_preset = command_line_options.get_string_optional("preset");
+         Options preset_options = Presets::get_preset_options(optional_preset);
+         options.overwrite_with(preset_options);
+
+         // overwrite the options with the command line arguments
          options.overwrite_with(command_line_options);
 
          // solve the model

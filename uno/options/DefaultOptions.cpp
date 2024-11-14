@@ -189,7 +189,7 @@ namespace uno {
       return options;
    }
 
-   Options DefaultOptions::determine_solvers_and_preset() {
+   Options DefaultOptions::determine_solvers() {
       Options options(false);
 
       /** solvers: check the available solvers **/
@@ -208,16 +208,6 @@ namespace uno {
       if (not linear_solvers.empty()) {
          options["linear_solver"] = linear_solvers[0];
       }
-
-      /** default preset **/
-      if (not QP_solvers.empty()) {
-         Options::set_preset(options, "filtersqp");
-      }
-      else if (not linear_solvers.empty()) {
-         Options::set_preset(options, "ipopt");
-      }
-      // note: byrd is not very robust and is not considered as a default preset
-
       return options;
    }
 } // namespace
