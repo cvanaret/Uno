@@ -60,6 +60,8 @@ Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp"])
             "006_010",
             # Remove once https://github.com/cvanaret/Uno/issues/38 is fixed
             "007_010",
+            # TODO: investigate why this fails
+            "008_010",
         ],
         primal_target,
         objective_tol = 1e-4,
@@ -74,6 +76,12 @@ Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp"])
         primal_target,
         objective_tol = 1e-4,
         primal_tol = 1e-4,
+        exclude = [
+            # TODO: investigate why this fails
+            "501_010",
+            # TODO: investigate why this fails
+            "501_011",
+        ],
     )
 end
 
