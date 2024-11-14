@@ -22,7 +22,7 @@ function Optimizer(options = String["logger=SILENT"])
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp"])
+Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp", "max_iterations=10000"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
@@ -53,6 +53,7 @@ Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp"])
         exclude = [
             "001_010",  # Local solution
             "003_014",  # Local solution
+            "008_010",  # Local solution
             # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
             "005_010",
             # Okay to exclude forever: AmplNLWriter does not support
@@ -60,8 +61,6 @@ Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp"])
             "006_010",
             # Remove once https://github.com/cvanaret/Uno/issues/38 is fixed
             "007_010",
-            # TODO: investigate why this fails
-            "008_010",
         ],
         primal_target,
         objective_tol = 1e-4,
@@ -76,12 +75,6 @@ Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp"])
         primal_target,
         objective_tol = 1e-4,
         primal_tol = 1e-4,
-        exclude = [
-            # TODO: investigate why this fails
-            "501_010",
-            # TODO: investigate why this fails
-            "501_011",
-        ],
     )
 end
 
