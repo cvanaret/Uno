@@ -87,7 +87,7 @@ namespace uno {
                   throw std::runtime_error("LS failed");
                }
                // switch to solving the feasibility problem
-               statistics.set("status", "small LS step length");
+               statistics.set("status", "small step length");
                this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
                this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, this->direction.primals,
                      warmstart_information);

@@ -60,7 +60,7 @@ namespace uno {
          DEBUG << "Trial iterate (h-type) was rejected by violating the Armijo condition\n";
       }
       Iterate::number_eval_objective--;
-      statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (restoration)");
+      statistics.set("status", std::string(accept ? "✔" : "✘") + " (restoration)");
       return accept;
    }
 } // namespace

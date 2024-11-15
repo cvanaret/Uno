@@ -12,7 +12,7 @@ namespace uno {
    int Statistics::int_width = 7;
    int Statistics::double_width = 17;
    int Statistics::string_width = 26;
-   int Statistics::numerical_format_size = 6;
+   int Statistics::numerical_format_size = 4;
 
    Statistics::Statistics(const Options& options): print_header_frequency(options.get_unsigned_int("statistics_print_header_frequency")) { }
 
@@ -22,7 +22,6 @@ namespace uno {
    }
    
    void Statistics::start_new_line() {
-      //this->current_line.clear();
       for (const auto& column: this->columns) {
          this->current_line[column.second] = "-";
       }
@@ -42,94 +41,80 @@ namespace uno {
 
    void Statistics::set(std::string_view name, double value) {
       std::ostringstream stream;
-      stream << std::defaultfloat << std::setprecision(Statistics::numerical_format_size) << value;
+      stream << std::scientific << std::setprecision(Statistics::numerical_format_size) << value;
       this->set(name, stream.str());
    }
    
-   void Statistics::print_horizontal_line(bool top) {
-      std::cout << (top ? Statistics::symbol("top-left") : Statistics::symbol("left-mid"));
-      size_t k = 0;
+   void Statistics::print_horizontal_line() {
       for (const auto& element: this->columns) {
-         if (0 < k) {
-            std::cout << (top ? Statistics::symbol("top-mid") : Statistics::symbol("mid-mid"));
-         }
          std::string header = element.second;
          for (int j = 0; j < this->widths[header]; j++) {
-            //std::cout << Statistics::symbol("bottom");
             std::cout << Statistics::symbol("top");
          }
-         k++;
       }
-      std::cout << (top ? Statistics::symbol("top-right") : Statistics::symbol("right-mid")) << '\n';
+      std::cout << '\n';
    }
 
    void Statistics::print_header() {
       /* line above */
-      this->print_horizontal_line(this->line_number == 0);
+      this->print_horizontal_line();
       /* headers */
-      std::cout << Statistics::symbol("left");
-      size_t k = 0;
       for (const auto& element: this->columns) {
-         if (0 < k) {
-            std::cout << Statistics::symbol("middle");
-         }
          const std::string& header = element.second;
          std::cout << " " << header;
          for (int j = 0; j < this->widths[header] - static_cast<int>(header.size()) - 1; j++) {
             std::cout << " ";
          }
-         k++;
       }
-      std::cout << Statistics::symbol("right") << '\n';
+      std::cout << '\n';
       /* line below */
-      this->print_horizontal_line(false);
+      this->print_horizontal_line();
+   }
+
+   // https://cplusplus.com/forum/beginner/192031/
+   std::size_t length_utf8(const std::string& str) {
+      size_t length = 0;
+      for (char c: str) {
+         if ((c & 0xC0) != 0x80) {
+            ++length;
+         }
+      }
+      return length;
    }
 
    void Statistics::print_current_line() {
       if (this->line_number % this->print_header_frequency == 0) {
          this->print_header();
       }
-      std::cout << Statistics::symbol("left");
-      size_t k = 0;
       for (const auto& element: this->columns) {
-         if (0 < k) {
-            std::cout << Statistics::symbol("middle");
-         }
-         const std::string& header = element.second;
-         int size;
+         const auto& header = element.second;
+         int length;
          try {
-            std::string value = this->current_line.at(header);
+            const auto& value = this->current_line.at(header);
             std::cout << " " << value;
-            size = 1 + static_cast<int>(value.size());
+            length = 1 + static_cast<int>(length_utf8(value));
          }
          catch (const std::out_of_range&) {
             std::cout << " -";
-            size = 2;
+            length = 2;
          }
-         int number_spaces = (size <= this->widths[header]) ? this->widths[header] - size : 0;
+         int number_spaces = (length <= this->widths[header]) ? this->widths[header] - length : 0;
          for (int j = 0; j < number_spaces; j++) {
             std::cout << " ";
          }
-         k++;
       }
-      std::cout << Statistics::symbol("right") << '\n';
+      std::cout << '\n';
       this->line_number++;
    }
 
    void Statistics::print_footer() {
-      std::cout << Statistics::symbol("bottom-left");
-      int k = 0;
       for (const auto& element: this->columns) {
-         if (0 < k) {
-            std::cout << Statistics::symbol("bottom-mid");
-         }
-         std::string header = element.second;
+         const auto& header = element.second;
          for (int j = 0; j < this->widths[header]; j++) {
             std::cout << Statistics::symbol("bottom");
          }
-         k++;
       }
-      std::cout << Statistics::symbol("bottom-right") << '\n';
+      std::cout << '\n';
    }
    
    std::string_view Statistics::symbol(std::string_view value) {

@@ -54,14 +54,14 @@ namespace uno {
          }
          else {
             DEBUG << "Trial iterate not acceptable with respect to current point\n";
-            scenario = "current point";
+            scenario = "current";
          }
       }
       else {
          DEBUG << "Trial iterate not filter acceptable\n";
          scenario = "filter";
       }
-      statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (" + scenario + ")");
+      statistics.set("status", std::string(accept ? "✔" : "✘") + " (" + scenario + ")");
       return accept;
    }
 

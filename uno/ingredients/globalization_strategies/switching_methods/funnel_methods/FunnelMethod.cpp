@@ -62,7 +62,7 @@ namespace uno {
                }
                scenario = "f-type";
             }
-               // h-type step
+            // h-type step
             else if (this->funnel.sufficient_decrease_condition(trial_progress.infeasibility)) {
                DEBUG << "\t\tTrial iterate  (h-type) ACCEPTED by violating the switching condition ...\n";
                accept = true;
@@ -74,20 +74,20 @@ namespace uno {
             }
             else {
                DEBUG << "\t\tTrial iterate REJECTED by violating switching and funnel sufficient decrease condition\n";
-               scenario = "none of f/h-type";
+               scenario = "funnel";
             }
          }
          else {
             DEBUG << "Trial iterate not acceptable with respect to current point\n";
-            scenario = "current point";
+            scenario = "current";
          }
       }
       else {
          DEBUG << "\t\tTrial iterate REJECTED. Not in funnel\n";
-         scenario = "not in funnel";
+         scenario = "funnel";
       }
 
-      statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (" + scenario + ")");
+      statistics.set("status", std::string(accept ? "✔" : "✘") + " (" + scenario + ")");
       if (accept) {
          this->funnel.print();
       }

@@ -116,5 +116,3 @@ For an overview of the available strategies, type: ```./uno_ampl --strategies```
 - to pick a constraint relaxation strategy, use the argument: ```constraint_relaxation_strategy=[feasibility_restoration|l1_relaxation]```  
 - to pick a globalization strategy, use the argument: ```globalization_strategy=[l1_merit|fletcher_filter_method|waechter_filter_method|funnel_method]```  
 - to pick a subproblem method, use the argument: ```subproblem=[QP|LP|primal_dual_interior_point]```  
-
-

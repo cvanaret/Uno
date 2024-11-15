@@ -66,6 +66,6 @@ namespace uno {
             }
          }
       }
-      statistics.set("regularization", regularization_factor);
+      statistics.set("regulariz", regularization_factor);
    }
 } // namespace

@@ -76,10 +76,9 @@ namespace uno {
       }
       else {
          DEBUG << "Trial iterate not filter acceptable\n";
-         statistics.set("status", "rejected (filter)");
          scenario = "filter";
       }
-      statistics.set("status", std::string(accept ? "accepted" : "rejected") + " (" + scenario + ")");
+      statistics.set("status", std::string(accept ? "✔" : "✘") + " (" + scenario + ")");
       return accept;
    }
 

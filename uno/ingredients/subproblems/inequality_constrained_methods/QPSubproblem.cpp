@@ -33,7 +33,7 @@ namespace uno {
 
    void QPSubproblem::initialize_statistics(Statistics& statistics, const Options& options) {
       if (this->use_regularization) {
-         statistics.add_column("regularization", Statistics::double_width, options.get_int("statistics_regularization_column_order"));
+         statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
       }
    }
 

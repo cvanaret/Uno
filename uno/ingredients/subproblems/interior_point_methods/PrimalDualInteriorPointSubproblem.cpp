@@ -51,8 +51,8 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointSubproblem::initialize_statistics(Statistics& statistics, const Options& options) {
-      statistics.add_column("regularization", Statistics::double_width - 1, options.get_int("statistics_regularization_column_order"));
-      statistics.add_column("barrier param.", Statistics::double_width - 1, options.get_int("statistics_barrier_parameter_column_order"));
+      statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
+      statistics.add_column("barrier", Statistics::double_width - 5, options.get_int("statistics_barrier_parameter_column_order"));
    }
 
    void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
@@ -193,7 +193,7 @@ namespace uno {
       else {
          this->first_feasibility_iteration = false;
       }
-      statistics.set("barrier param.", this->barrier_parameter());
+      statistics.set("barrier", this->barrier_parameter());
 
       // evaluate the functions at the current iterate
       this->evaluate_functions(statistics, problem, current_iterate, current_multipliers, warmstart_information);

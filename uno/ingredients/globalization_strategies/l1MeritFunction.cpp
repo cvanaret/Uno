@@ -12,7 +12,7 @@ namespace uno {
    }
 
    void l1MeritFunction::initialize(Statistics& statistics, const Iterate& /*initial_iterate*/, const Options& options) {
-      statistics.add_column("penalty param.", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
+      statistics.add_column("penalty", Statistics::double_width - 5, options.get_int("statistics_penalty_parameter_column_order"));
    }
 
    void l1MeritFunction::reset() {
@@ -39,17 +39,17 @@ namespace uno {
       DEBUG << "Current merit: " << current_merit_value << '\n';
       DEBUG << "Trial merit:   " << trial_merit_value << '\n';
       DEBUG << "Actual reduction: " << current_merit_value << " - " << trial_merit_value << " = " << actual_reduction << '\n';
-      statistics.set("penalty param.", objective_multiplier);
+      statistics.set("penalty", objective_multiplier);
 
       // Armijo sufficient decrease condition
       const bool accept = this->armijo_sufficient_decrease(constrained_predicted_reduction, actual_reduction);
       if (accept) {
          DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
          this->smallest_known_infeasibility = std::min(this->smallest_known_infeasibility, trial_progress.infeasibility);
-         statistics.set("status", "accepted (Armijo)");
+         statistics.set("status", "✔ (Armijo)");
       }
       else {
-         statistics.set("status", "rejected (Armijo)");
+         statistics.set("status", "✘ (Armijo)");
       }
       return accept;
    }

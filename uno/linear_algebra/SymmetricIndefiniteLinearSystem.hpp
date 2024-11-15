@@ -112,7 +112,7 @@ namespace uno {
 
       if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
          DEBUG << "Inertia is good\n";
-         statistics.set("regularization", this->primal_regularization);
+         statistics.set("regulariz", this->primal_regularization);
          return;
       }
       auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
@@ -174,7 +174,7 @@ namespace uno {
             }
          }
       }
-      statistics.set("regularization", this->primal_regularization);
+      statistics.set("regulariz", this->primal_regularization);
    }
 
    template <typename ElementType>

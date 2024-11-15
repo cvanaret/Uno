@@ -27,7 +27,7 @@ namespace uno {
       void set(std::string_view name, size_t value);
       void set(std::string_view name, double value);
       
-      void print_horizontal_line(bool top);
+      void print_horizontal_line();
       void print_header();
       void print_current_line();
       void print_footer();

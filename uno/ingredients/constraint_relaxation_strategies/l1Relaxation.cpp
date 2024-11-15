@@ -53,8 +53,8 @@ namespace uno {
    void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
       // statistics
       this->subproblem->initialize_statistics(statistics, options);
-      statistics.add_column("penalty param.", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
-      statistics.set("penalty param.", this->penalty_parameter);
+      statistics.add_column("penalty", Statistics::double_width - 5, options.get_int("statistics_penalty_parameter_column_order"));
+      statistics.set("penalty", this->penalty_parameter);
 
       // initial iterate
       initial_iterate.feasibility_residuals.lagrangian_gradient.resize(this->feasibility_problem.number_variables);
@@ -70,11 +70,11 @@ namespace uno {
 
    void l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          WarmstartInformation& warmstart_information) {
-      statistics.set("penalty param.", this->penalty_parameter);
+      statistics.set("penalty", this->penalty_parameter);
       direction.reset();
       this->solve_sequence_of_relaxed_subproblems(statistics, current_iterate, direction, warmstart_information);
    }
-
+   
    bool l1Relaxation::solving_feasibility_problem() const {
       return (this->penalty_parameter == 0.);
    }
