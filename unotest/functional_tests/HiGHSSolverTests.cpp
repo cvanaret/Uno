@@ -12,7 +12,7 @@
 
 using namespace uno;
 
-TEST(HiGHSSolver, DocumentationLP) {
+TEST(HiGHSSolver, LP) {
    // https://ergo-code.github.io/HiGHS/stable/interfaces/cpp/library/
    // Min    f  =  x_0 +  x_1 + 3
    // s.t.                x_1 <= 7
