@@ -22,25 +22,25 @@ jobs:
           echo "BINARYBUILDER_AUTOMATIC_APPLE=true" >> $GITHUB_ENV
           echo "UNO_RELEASE=${{ github.ref_name }}" >> $GITHUB_ENV
           echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
-      - name: Cross-compilation of Uno -- x86_64-linux-gnu-libgfortran5
+      - name: Cross-compilation of Uno -- x86_64-linux-gnu-cxx11
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
-          julia --color=yes .github/julia/build_tarballs_release.jl x86_64-linux-gnu-libgfortran5 --verbose
+          julia --color=yes .github/julia/build_tarballs_release.jl x86_64-linux-gnu-cxx11 --verbose
           rm -r ~/.julia
-      - name: Cross-compilation of Uno -- x86_64-w64-mingw32-libgfortran5
+      - name: Cross-compilation of Uno -- x86_64-w64-mingw32-cxx11
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
-          julia --color=yes .github/julia/build_tarballs_release.jl x86_64-w64-mingw32-libgfortran5 --verbose
+          julia --color=yes .github/julia/build_tarballs_release.jl x86_64-w64-mingw32-cxx11 --verbose
           rm -r ~/.julia
-      - name: Cross-compilation of Uno -- x86_64-apple-darwin-libgfortran5
+      - name: Cross-compilation of Uno -- x86_64-apple-darwin-cxx11
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
-          julia --color=yes .github/julia/build_tarballs_release.jl x86_64-apple-darwin-libgfortran5 --verbose
+          julia --color=yes .github/julia/build_tarballs_release.jl x86_64-apple-darwin-cxx11 --verbose
           rm -r ~/.julia
-      - name: Cross-compilation of Uno -- aarch64-apple-darwin-libgfortran5
+      - name: Cross-compilation of Uno -- aarch64-apple-darwin-cxx11
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
-          julia --color=yes .github/julia/build_tarballs_release.jl aarch64-apple-darwin-libgfortran5 --verbose
+          julia --color=yes .github/julia/build_tarballs_release.jl aarch64-apple-darwin-cxx11 --verbose
           rm -r ~/.julia
       - name: Generate the binaries
         run: julia --color=yes .github/julia/generate_binaries.jl
@@ -61,7 +61,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./Uno_binaries.${{ github.ref_name }}.x86_64-linux-gnu-libgfortran5.tar.gz
+          asset_path: ./Uno_binaries.${{ github.ref_name }}.x86_64-linux-gnu-cxx11.tar.gz
           asset_name: Uno.${{ github.ref_name }}.linux.tar.gz
           asset_content_type: application/gzip
       - name: upload Mac (Intel) artifact
@@ -70,7 +70,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./Uno_binaries.${{ github.ref_name }}.x86_64-apple-darwin-libgfortran5.tar.gz
+          asset_path: ./Uno_binaries.${{ github.ref_name }}.x86_64-apple-darwin-cxx11.tar.gz
           asset_name: Uno.${{ github.ref_name }}.mac-intel.tar.gz
           asset_content_type: application/gzip
       - name: upload Mac (ARM) artifact
@@ -79,7 +79,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./Uno_binaries.${{ github.ref_name }}.aarch64-apple-darwin-libgfortran5.tar.gz
+          asset_path: ./Uno_binaries.${{ github.ref_name }}.aarch64-apple-darwin-cxx11.tar.gz
           asset_name: Uno.${{ github.ref_name }}.mac-arm.tar.gz
           asset_content_type: application/gzip
       - name: upload Windows artifact
@@ -88,6 +88,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./Uno_binaries.${{ github.ref_name }}.x86_64-w64-mingw32-libgfortran5.zip
+          asset_path: ./Uno_binaries.${{ github.ref_name }}.x86_64-w64-mingw32-cxx11.zip
           asset_name: Uno.${{ github.ref_name }}.windows.zip
           asset_content_type: application/zip
