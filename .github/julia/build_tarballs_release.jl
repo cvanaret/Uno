@@ -98,7 +98,9 @@ if [[ "${target}" == x86_64-apple-darwin* ]]; then
     export MACOSX_DEPLOYMENT_TARGET=10.15
     # ...and install a newer SDK which supports `std::filesystem`
     pushd $WORKSPACE/srcdir/MacOSX10.*.sdk
-    rm -rf /opt/${target}/${target}/sys-root/System
+    # CV: replacing rm -rf with mv
+    # rm -rf /opt/${target}/${target}/sys-root/System
+    mv /opt/${target}/${target}/sys-root/System /opt/${target}/${target}/sys-root/System_old
     cp -ra usr/* "/opt/${target}/${target}/sys-root/usr/."
     cp -ra System "/opt/${target}/${target}/sys-root/."
     popd
