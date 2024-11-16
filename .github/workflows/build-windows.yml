@@ -32,9 +32,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install gfortran
-      run: sudo apt install gfortran
-    
     - name: Clean up FortranCInterface_VERIFY
       # FortranCInterface_VERIFY fails on macOS, but it's not actually needed for the current build
       run: sed -i 's/FortranCInterface_VERIFY(CXX)/# FortranCInterface_VERIFY(CXX)/g' ${{github.workspace}}/CMakeLists.txt
