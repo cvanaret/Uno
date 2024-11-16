@@ -2,14 +2,18 @@ using BinaryBuilder, Pkg
 
 haskey(ENV, "UNO_RELEASE") || error("The environment variable UNO_RELEASE is not defined.")
 haskey(ENV, "UNO_COMMIT") || error("The environment variable UNO_COMMIT is not defined.")
+haskey(ENV, "UNO_URL") || error("The environment variable UNO_URL is not defined.")
 
 name = "Uno"
 version = VersionNumber(ENV["UNO_RELEASE"])
 
 # Collection of sources required to complete build
 sources = [
-    GitSource("https://github.com/cvanaret/Uno.git", ENV["UNO_COMMIT"]),
-    ArchiveSource("https://mumps-solver.org/MUMPS_5.7.3.tar.gz", "84a47f7c4231b9efdf4d4f631a2cae2bdd9adeaabc088261d15af040143ed112")
+    GitSource(ENV["UNO_URL"], ENV["UNO_COMMIT"]),
+    ArchiveSource("https://mumps-solver.org/MUMPS_5.7.3.tar.gz",
+                  "84a47f7c4231b9efdf4d4f631a2cae2bdd9adeaabc088261d15af040143ed112"),
+    ArchiveSource("https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.15.sdk.tar.xz",
+                  "2408d07df7f324d3beea818585a6d990ba99587c218a3969f924dfcc4de93b62"),
 ]
 
 # Bash recipe for building across all platforms
@@ -82,6 +86,23 @@ cp lib/*.${dlext} ${libdir}
 cd $WORKSPACE/srcdir/Uno
 mkdir -p build
 cd build
+
+if [[ "${target}" == x86_64-apple-darwin* ]]; then
+    # Work around the issue
+    #     /workspace/srcdir/Uno/uno/options/Presets.cpp:17:48: error: 'value' is unavailable: introduced in macOS 10.14
+    #           Presets::set(options, optional_preset.value());
+    #                               ^
+    #     /opt/x86_64-apple-darwin14/x86_64-apple-darwin14/sys-root/usr/include/c++/v1/optional:938:33: note: 'value' has been explicitly marked unavailable here
+    #           constexpr value_type const& value() const&
+    #                               ^
+    export MACOSX_DEPLOYMENT_TARGET=10.15
+    # ...and install a newer SDK which supports `std::filesystem`
+    pushd $WORKSPACE/srcdir/MacOSX10.*.sdk
+    rm -rf /opt/${target}/${target}/sys-root/System
+    cp -ra usr/* "/opt/${target}/${target}/sys-root/usr/."
+    cp -ra System "/opt/${target}/${target}/sys-root/."
+    popd
+fi
 
 if [[ "${target}" == *mingw* ]]; then
     LIBHIGHS=${prefix}/lib/libhighs.dll.a
