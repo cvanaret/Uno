@@ -9,7 +9,6 @@ haskey(ENV, "UNO_URL") || error("The environment variable UNO_URL is not defined
 name = "Uno"
 version = VersionNumber(ENV["UNO_RELEASE"])
 
-
 # Collection of sources required to complete build
 sources = [
     GitSource(ENV["UNO_URL"], ENV["UNO_COMMIT"]),
