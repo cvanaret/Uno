@@ -5,33 +5,16 @@ version2 = ENV["UNO_RELEASE"]
 package = "Uno"
 
 platforms = [
-   ("aarch64-apple-darwin-libgfortran5"  , "lib", "dylib"),
-#  ("aarch64-linux-gnu-libgfortran3"     , "lib", "so"   ),
-#  ("aarch64-linux-gnu-libgfortran4"     , "lib", "so"   ),
-#  ("aarch64-linux-gnu-libgfortran5"     , "lib", "so"   ),
-#  ("aarch64-linux-musl-libgfortran3"    , "lib", "so"   ),
-#  ("aarch64-linux-musl-libgfortran4"    , "lib", "so"   ),
-#  ("aarch64-linux-musl-libgfortran5"    , "lib", "so"   ),
-#  ("powerpc64le-linux-gnu-libgfortran3" , "lib", "so"   ),
-#  ("powerpc64le-linux-gnu-libgfortran4" , "lib", "so"   ),
-#  ("powerpc64le-linux-gnu-libgfortran5" , "lib", "so"   ),
-#  ("x86_64-apple-darwin-libgfortran3"   , "lib", "dylib"),
-#  ("x86_64-apple-darwin-libgfortran4"   , "lib", "dylib"),
-   ("x86_64-apple-darwin-libgfortran5"   , "lib", "dylib"),
-#  ("x86_64-linux-gnu-libgfortran3"      , "lib", "so"   ),
-#  ("x86_64-linux-gnu-libgfortran4"      , "lib", "so"   ),
-   ("x86_64-linux-gnu-libgfortran5"      , "lib", "so"   ),
-#  ("x86_64-linux-musl-libgfortran3"     , "lib", "so"   ),
-#  ("x86_64-linux-musl-libgfortran4"     , "lib", "so"   ),
-#  ("x86_64-linux-musl-libgfortran5"     , "lib", "so"   ),
-#  ("x86_64-unknown-freebsd-libgfortran3", "lib", "so"   ),
-#  ("x86_64-unknown-freebsd-libgfortran4", "lib", "so"   ),
-#  ("x86_64-unknown-freebsd-libgfortran5", "lib", "so"   ),
-#  ("x86_64-w64-mingw32-libgfortran3"    , "bin", "dll"  ),
-#  ("x86_64-w64-mingw32-libgfortran4"    , "bin", "dll"  ),
-   ("x86_64-w64-mingw32-libgfortran5"    , "bin", "dll"  ),
+   ("aarch64-apple-darwin-cxx11"  , "lib", "dylib"),
+#  ("aarch64-linux-gnu-cxx11"     , "lib", "so"   ),
+#  ("aarch64-linux-musl-cxx11"    , "lib", "so"   ),
+#  ("powerpc64le-linux-gnu-cxx11" , "lib", "so"   ),
+   ("x86_64-apple-darwin-cxx11"   , "lib", "dylib"),
+   ("x86_64-linux-gnu-cxx11"      , "lib", "so"   ),
+#  ("x86_64-linux-musl-cxx11"     , "lib", "so"   ),
+#  ("x86_64-unknown-freebsd-cxx11", "lib", "so"   ),
+   ("x86_64-w64-mingw32-cxx11"    , "bin", "dll"  ),
 ]
-
 
 for (platform, libdir, ext) in platforms
 
@@ -46,6 +29,12 @@ for (platform, libdir, ext) in platforms
     if isfile("products/$platform/deps.tar.gz")
       # Unzip the tarball of the dependencies
       run(`tar -xzf products/$platform/deps.tar.gz -C products/$platform`)
+
+      # Copy the license of each dependency
+      for folder in readdir("products/$platform/deps/licenses")
+        cp("products/$platform/deps/licenses/$folder", "products/$platform/share/licenses/$folder")
+      end
+      rm("products/$platform/deps/licenses", recursive=true)
 
       # Copy the shared library of each dependency
       for file in readdir("products/$platform/deps")
@@ -63,7 +52,7 @@ for (platform, libdir, ext) in platforms
 
       # Create a folder with the version number of the package
       mkdir("$(package)_binaries.$version2")
-      for folder in ("lib", "bin")
+      for folder in ("lib", "bin", "share")
         cp(folder, "$(package)_binaries.$version2/$folder")
       end
 
