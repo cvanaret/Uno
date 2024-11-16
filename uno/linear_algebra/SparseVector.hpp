@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <functional>
+#include <vector>
 #include "tools/Logger.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/Collection.hpp"
