@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
          // possibly set options from an option file
          const auto optional_option_file = command_line_options.get_string_optional("option_file");
          if (optional_option_file.has_value()) {
-            Options file_options = Options::load_option_file(optional_option_file.value());
+            Options file_options = Options::load_option_file(*optional_option_file);
             options.overwrite_with(file_options);
          }
 
