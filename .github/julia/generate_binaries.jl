@@ -53,7 +53,7 @@ for (platform, libdir, ext) in platforms
 
       # Create a folder with the version number of the package
       mkdir("$(package)_binaries.$version2")
-      for folder in ("lib", "bin", "share")
+      for folder in ("lib", "bin")
         cp(folder, "$(package)_binaries.$version2/$folder")
       end
 
