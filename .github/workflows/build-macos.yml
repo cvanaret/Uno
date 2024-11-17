@@ -27,7 +27,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest]
-        architecture: [x86, x64]
+        architecture: [x64, arm64]
 
     steps:
     - uses: actions/checkout@v4
