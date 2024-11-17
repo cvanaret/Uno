@@ -31,8 +31,13 @@ jobs:
         compiler: [gcc]
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: fortran-lang/setup-fortran@v1
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Install Fortran compiler
+      uses: fortran-lang/setup-fortran@v1
+      with:
+          compiler: ${{matrix.compiler}}
     
     - name: Clean up FortranCInterface_VERIFY
       # FortranCInterface_VERIFY fails on macOS, but it's not actually needed for the current build
