@@ -28,7 +28,7 @@ jobs:
       matrix:
         os: [macos-latest]
         architecture: [x64, arm64]
-        toolchain: {compiler: gcc, version: 12}
+        compiler: [gcc]
 
     steps:
     - uses: fortran-lang/setup-fortran@v1
