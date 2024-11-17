@@ -28,7 +28,6 @@ jobs:
       matrix:
         os: [windows-latest]
         architecture: [x64, x86]
-        compiler: [gcc]
 
     steps:
     - name: Checkout repository
@@ -37,7 +36,8 @@ jobs:
     - name: Install Fortran compiler
       uses: fortran-lang/setup-fortran@v1
       with:
-          compiler: ${{matrix.compiler}}
+          compiler: gcc
+          version: 13
     
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
