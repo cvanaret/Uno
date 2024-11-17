@@ -14,7 +14,7 @@ namespace uno {
 
       /** optional user preset **/
       if (optional_preset.has_value()) {
-         Presets::set(options, optional_preset.value());
+         Presets::set(options, *optional_preset);
       }
       else {
          /** default preset **/

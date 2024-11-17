@@ -23,23 +23,6 @@ cd $WORKSPACE/srcdir/Uno
 mkdir -p build
 cd build
 
-if [[ "${target}" == x86_64-apple-darwin* ]]; then
-    # Work around the issue
-    #     /workspace/srcdir/Uno/uno/options/Presets.cpp:17:48: error: 'value' is unavailable: introduced in macOS 10.14
-    #           Presets::set(options, optional_preset.value());
-    #                               ^
-    #     /opt/x86_64-apple-darwin14/x86_64-apple-darwin14/sys-root/usr/include/c++/v1/optional:938:33: note: 'value' has been explicitly marked unavailable here
-    #           constexpr value_type const& value() const&
-    #                               ^
-    export MACOSX_DEPLOYMENT_TARGET=10.15
-    # ...and install a newer SDK which supports `std::filesystem`
-    pushd $WORKSPACE/srcdir/MacOSX10.*.sdk
-    rm -rf /opt/${target}/${target}/sys-root/System
-    cp -ra usr/* "/opt/${target}/${target}/sys-root/usr/."
-    cp -ra System "/opt/${target}/${target}/sys-root/."
-    popd
-fi
-
 if [[ "${target}" == *mingw* ]]; then
     LBT=blastrampoline-5
     LIBHIGHS=${prefix}/lib/libhighs.dll.a

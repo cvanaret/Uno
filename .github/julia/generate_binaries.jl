@@ -31,11 +31,10 @@ for (platform, libdir, ext) in platforms
       run(`tar -xzf products/$platform/deps.tar.gz -C products/$platform`)
 
       # Copy the license of each dependency
-      # CV: comment out temporarily
-      #for folder in readdir("products/$platform/deps/licenses")
-      #  cp("products/$platform/deps/licenses/$folder", "products/$platform/share/licenses/$folder")
-      #end
-      #rm("products/$platform/deps/licenses", recursive=true)
+      for folder in readdir("products/$platform/deps/licenses")
+        cp("products/$platform/deps/licenses/$folder", "products/$platform/share/licenses/$folder")
+      end
+      rm("products/$platform/deps/licenses", recursive=true)
 
       # Copy the shared library of each dependency
       for file in readdir("products/$platform/deps")
