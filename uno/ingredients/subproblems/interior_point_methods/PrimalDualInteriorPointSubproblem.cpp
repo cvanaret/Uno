@@ -95,11 +95,11 @@ namespace uno {
       // set the bound multipliers
       for (const size_t variable_index: problem.get_lower_bounded_variables()) {
          initial_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
-         initial_iterate.feasibility_multipliers.lower_bounds[variable_index] = this->default_multiplier;
+         //initial_iterate.feasibility_multipliers.lower_bounds[variable_index] = this->default_multiplier;
       }
       for (const size_t variable_index: problem.get_upper_bounded_variables()) {
          initial_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
-         initial_iterate.feasibility_multipliers.upper_bounds[variable_index] = -this->default_multiplier;
+         //initial_iterate.feasibility_multipliers.upper_bounds[variable_index] = -this->default_multiplier;
       }
 
       // compute least-square multipliers
