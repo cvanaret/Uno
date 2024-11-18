@@ -16,8 +16,7 @@ namespace uno {
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
       // TODO load number of processes from option file
       this->mumps_structure.par = 1;
-#endif
-#ifdef MUMPS_SEQUENTIAL
+#else
       this->mumps_structure.par = 1;
 #endif
       this->mumps_structure.job = MUMPSSolver::JOB_INIT;

@@ -110,12 +110,13 @@ namespace uno {
       size_t number_attempts = 1;
       DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
 
+      auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
+      DEBUG << "Inertia (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
       if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
-         DEBUG << "Inertia is good\n";
+         DEBUG << "Inertia is correct\n";
          statistics.set("regulariz", this->primal_regularization);
          return;
       }
-      auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
       DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
       DEBUG << "got (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";
