@@ -18,10 +18,15 @@ import Uno_jll
 Create a new `AmplNLWriter.Optimizer` object that uses Uno as the backing
 solver.
 """
+
 function Optimizer(options = String["logger=SILENT"])
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
+# by default, ipopt preset
+Optimizer_barrier() = Optimizer(["logger=INFO", "max_iterations=10000"])
+
+# filterslp preset
 Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp", "max_iterations=10000"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
@@ -36,7 +41,7 @@ Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp", "max_iterations
     # are meant to be "easy" in the sense that most NLP solvers can find the
     # same global minimum, but a test failure can sometimes be allowed.
     MINLPTests.test_nlp_expr(
-        Optimizer;
+        Optimizer_barrier;
         exclude = [
             # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
             "005_010",
@@ -69,7 +74,7 @@ Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp", "max_iterations
     # This function tests convex nonlinear programs. Test failures here should
     # never be allowed, because even local NLP solvers should find the global
     # optimum.
-    MINLPTests.test_nlp_cvx_expr(Optimizer; primal_target)
+    MINLPTests.test_nlp_cvx_expr(Optimizer_barrier; primal_target)
     MINLPTests.test_nlp_cvx_expr(
         Optimizer_LP; 
         primal_target,
@@ -83,7 +88,7 @@ end
 # tests in here with weird edge cases, so a variety of exclusions are expected.
 @testset "MathOptInterface.test" begin
     optimizer = MOI.instantiate(
-        Optimizer;
+        Optimizer_barrier;
         with_cache_type = Float64,
         with_bridge_type = Float64,
     )
