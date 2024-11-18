@@ -24,7 +24,7 @@ function Optimizer(options = String["logger=SILENT"])
 end
 
 # by default, ipopt preset
-Optimizer_barrier() = Optimizer(["logger=INFO", "max_iterations=10000"])
+Optimizer_barrier() = Optimizer(["logger=DEBUG3", "max_iterations=10000"])
 
 # filterslp preset
 Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp", "max_iterations=10000"])

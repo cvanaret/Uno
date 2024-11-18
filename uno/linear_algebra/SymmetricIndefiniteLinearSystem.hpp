@@ -93,8 +93,10 @@ namespace uno {
       // compute the symbolic factorization only when:
       // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
       if (warmstart_information.problem_changed) {
+         DEBUG << "Symbolic factorization of the indefinite linear system\n";
          linear_solver.do_symbolic_factorization(this->matrix);
       }
+      DEBUG << "Numerical factorization of the indefinite linear system\n";
       linear_solver.do_numerical_factorization(this->matrix);
       this->number_factorizations++;
    }
