@@ -95,9 +95,11 @@ namespace uno {
       // set the bound multipliers
       for (const size_t variable_index: problem.get_lower_bounded_variables()) {
          initial_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
+         initial_iterate.feasibility_multipliers.lower_bounds[variable_index] = this->default_multiplier;
       }
       for (const size_t variable_index: problem.get_upper_bounded_variables()) {
          initial_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
+         initial_iterate.feasibility_multipliers.upper_bounds[variable_index] = -this->default_multiplier;
       }
 
       // compute least-square multipliers
@@ -199,7 +201,7 @@ namespace uno {
       this->evaluate_functions(statistics, problem, current_iterate, current_multipliers, warmstart_information);
 
       // compute the primal-dual solution
-      this->assemble_augmented_system(statistics, problem, current_multipliers);
+      this->assemble_augmented_system(statistics, problem, current_multipliers, warmstart_information);
       this->augmented_system.solve(*this->linear_solver);
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
       this->number_subproblems_solved++;
@@ -209,12 +211,12 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
-         const Multipliers& current_multipliers) {
+         const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
       // assemble, factorize and regularize the augmented matrix
       this->augmented_system.assemble_matrix(this->hessian_model->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
-      this->augmented_system.factorize_matrix(problem.model, *this->linear_solver);
+      this->augmented_system.factorize_matrix(*this->linear_solver, warmstart_information);
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
-      this->augmented_system.regularize_matrix(statistics, problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
+      this->augmented_system.regularize_matrix(statistics, *this->linear_solver, problem.number_variables, problem.number_constraints,
             dual_regularization_parameter);
 
       // check the inertia
