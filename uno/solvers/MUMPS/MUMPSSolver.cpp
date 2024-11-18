@@ -96,6 +96,8 @@ namespace uno {
       this->COO_matrix.reset();
       for (const auto [row_index, column_index, element]: matrix) {
          this->COO_matrix.insert(element, static_cast<int>(row_index + this->fortran_shift), static_cast<int>(column_index + this->fortran_shift));
+         std::cout << "MUMPS: INSERTING " << element << " at indices (" << static_cast<int>(row_index + this->fortran_shift) << ", " <<
+            static_cast<int>(column_index + this->fortran_shift) << ")\n";
       }
    }
 } // namespace
