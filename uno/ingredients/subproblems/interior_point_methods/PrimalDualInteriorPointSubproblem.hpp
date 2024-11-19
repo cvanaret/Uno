@@ -79,7 +79,8 @@ namespace uno {
             const Vector<double>& primal_direction, double tau);
       [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
             Multipliers& direction_multipliers, double tau);
-      void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Multipliers& current_multipliers);
+      void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Multipliers& current_multipliers,
+            const WarmstartInformation& warmstart_information);
       void assemble_augmented_rhs(const OptimizationProblem& problem, const Multipliers& current_multipliers);
       void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
             Vector<double>& direction_primals, Multipliers& direction_multipliers);

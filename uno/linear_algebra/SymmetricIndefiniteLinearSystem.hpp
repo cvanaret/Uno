@@ -10,8 +10,9 @@
 #include "RectangularMatrix.hpp"
 #include "ingredients/hessian_models/UnstableRegularization.hpp"
 #include "model/Model.hpp"
-#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
@@ -26,9 +27,9 @@ namespace uno {
             const Options& options);
       void assemble_matrix(const SymmetricMatrix<size_t, double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
             size_t number_variables, size_t number_constraints);
-      void factorize_matrix(const Model& model, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
-      void regularize_matrix(Statistics& statistics, const Model& model, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
-            size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter);
+      void factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, const WarmstartInformation& warmstart_information);
+      void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+            size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter, const WarmstartInformation& warmstart_information);
       void solve(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
       // [[nodiscard]] T get_primal_regularization() const;
 
@@ -89,9 +90,9 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(const Model& /*model*/,
-         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
-      if (true || this->number_factorizations == 0) {
+   void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+         const WarmstartInformation& warmstart_information) {
+      if (warmstart_information.problem_changed) {
          linear_solver.do_symbolic_analysis(this->matrix);
       }
       linear_solver.do_numerical_factorization(this->matrix);
@@ -99,9 +100,9 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics, const Model& model,
+   void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics,
          DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, size_t size_primal_block, size_t size_dual_block,
-         ElementType dual_regularization_parameter) {
+         ElementType dual_regularization_parameter, const WarmstartInformation& warmstart_information) {
       DEBUG2 << "Original matrix\n" << this->matrix << '\n';
       this->primal_regularization = ElementType(0.);
       this->dual_regularization = ElementType(0.);
@@ -141,7 +142,7 @@ namespace uno {
       while (not good_inertia) {
          DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
          DEBUG2 << this->matrix << '\n';
-         this->factorize_matrix(model, linear_solver);
+         this->factorize_matrix(linear_solver, warmstart_information);
          number_attempts++;
 
          if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
