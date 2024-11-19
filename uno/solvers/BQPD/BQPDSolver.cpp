@@ -165,8 +165,8 @@ namespace uno {
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) const {
       BQPDMode mode = (this->number_calls == 0) ? BQPDMode::ACTIVE_SET_EQUALITIES : BQPDMode::USER_DEFINED;
-      // if problem changed, use cold start
-      if (warmstart_information.problem_changed) {
+      // if problem structure changed, use cold start
+      if (warmstart_information.problem_structure_changed) {
          mode = BQPDMode::ACTIVE_SET_EQUALITIES;
       }
       // if only the variable bounds changed, reuse the active set estimate and the Jacobian information

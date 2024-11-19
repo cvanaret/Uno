@@ -34,7 +34,6 @@ namespace uno {
       // [[nodiscard]] T get_primal_regularization() const;
 
    protected:
-      size_t number_factorizations{0};
       ElementType primal_regularization{0.};
       ElementType dual_regularization{0.};
       ElementType previous_primal_regularization{0.};
@@ -92,11 +91,12 @@ namespace uno {
    template <typename ElementType>
    void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
          const WarmstartInformation& warmstart_information) {
-      if (warmstart_information.problem_changed) {
+      if (warmstart_information.problem_structure_changed) {
+         DEBUG << "Performing symbolic analysis of the indefinite system\n";
          linear_solver.do_symbolic_analysis(this->matrix);
       }
+      DEBUG << "Performing numerical factorization of the indefinite system\n";
       linear_solver.do_numerical_factorization(this->matrix);
-      this->number_factorizations++;
    }
 
    // the matrix has been factorized prior to calling this function

@@ -10,7 +10,7 @@ namespace uno {
       std::cout << "Constraints: " << std::boolalpha << this->constraints_changed << '\n';
       std::cout << "Constraint bounds: " << std::boolalpha << this->constraint_bounds_changed << '\n';
       std::cout << "Variable bounds: " << std::boolalpha << this->variable_bounds_changed << '\n';
-      std::cout << "Problem: " << std::boolalpha << this->problem_changed << '\n';
+      std::cout << "Problem structure: " << std::boolalpha << this->problem_structure_changed << '\n';
    }
 
    void WarmstartInformation::no_changes() {
@@ -18,7 +18,7 @@ namespace uno {
       this->constraints_changed = false;
       this->constraint_bounds_changed = false;
       this->variable_bounds_changed = false;
-      this->problem_changed = false;
+      this->problem_structure_changed = false;
    }
 
    void WarmstartInformation::iterate_changed() {
@@ -33,7 +33,7 @@ namespace uno {
       this->constraints_changed = true;
       this->constraint_bounds_changed = true;
       this->variable_bounds_changed = true;
-      this->problem_changed = true;
+      this->problem_structure_changed = true;
    }
 
    void WarmstartInformation::only_objective_changed() {
@@ -41,6 +41,6 @@ namespace uno {
       this->constraints_changed = false;
       this->constraint_bounds_changed = false;
       this->variable_bounds_changed = false;
-      this->problem_changed = false;
+      this->problem_structure_changed = false;
    }
 } // namespace
