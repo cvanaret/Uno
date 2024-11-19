@@ -213,6 +213,7 @@ namespace uno {
          const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
       // assemble, factorize and regularize the augmented matrix
       this->augmented_system.assemble_matrix(this->hessian_model->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
+      DEBUG << "Testing factorization with regularization factors (0, 0)\n";
       this->augmented_system.factorize_matrix(*this->linear_solver, warmstart_information);
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
       this->augmented_system.regularize_matrix(statistics, *this->linear_solver, problem.number_variables, problem.number_constraints,

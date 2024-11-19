@@ -99,6 +99,7 @@ namespace uno {
       this->number_factorizations++;
    }
 
+   // the matrix has been factorized prior to calling this function
    template <typename ElementType>
    void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics,
          DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, size_t size_primal_block, size_t size_dual_block,
@@ -107,17 +108,17 @@ namespace uno {
       this->primal_regularization = ElementType(0.);
       this->dual_regularization = ElementType(0.);
       size_t number_attempts = 1;
-      DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
+      DEBUG << "Number of attempts: " << number_attempts << "\n\n";
 
-      if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
-         DEBUG << "Inertia is good\n";
+      auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
+      DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
+      DEBUG << "Estimated inertia (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
+
+      if (number_pos_eigenvalues == size_primal_block && number_neg_eigenvalues == size_dual_block && number_zero_eigenvalues == 0) {
+         DEBUG << "The inertia is correct\n";
          statistics.set("regulariz", this->primal_regularization);
          return;
       }
-      auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
-      DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
-      DEBUG << "got (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
-      DEBUG << "Number of attempts: " << number_attempts << "\n\n";
 
       // set the constraint regularization coefficient
       if (linear_solver.matrix_is_singular()) {
@@ -144,17 +145,18 @@ namespace uno {
          DEBUG2 << this->matrix << '\n';
          this->factorize_matrix(linear_solver, warmstart_information);
          number_attempts++;
+         DEBUG << "Number of attempts: " << number_attempts << "\n";
 
-         if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
+         std::tie(number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues) = linear_solver.get_inertia();
+         DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
+         DEBUG << "Estimated inertia (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
+
+         if (number_pos_eigenvalues == size_primal_block && number_neg_eigenvalues == size_dual_block && number_zero_eigenvalues == 0) {
             good_inertia = true;
-            DEBUG << "Factorization was a success\n";
+            DEBUG << "The inertia is correct\n";
             this->previous_primal_regularization = this->primal_regularization;
          }
          else {
-            std::tie(number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues) = linear_solver.get_inertia();
-            DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
-            DEBUG << "got (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
-            DEBUG << "Number of attempts: " << number_attempts << "\n";
             if (this->previous_primal_regularization == 0. || this->threshold_unsuccessful_attempts < number_attempts) {
                this->primal_regularization *= this->primal_regularization_fast_increase_factor;
             }
