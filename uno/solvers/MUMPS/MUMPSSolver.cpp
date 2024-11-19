@@ -26,9 +26,12 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
       // control parameters
       this->mumps_structure.icntl[0] = -1;
-      this->mumps_structure.icntl[1] = -1;
-      this->mumps_structure.icntl[2] = -1;
+      this->mumps_structure.icntl[1] = 0;
+      this->mumps_structure.icntl[2] = 0;
       this->mumps_structure.icntl[3] = 0;
+      this->mumps_structure.icntl[6] = 7; // pivot order
+      this->mumps_structure.icntl[7] = 6; // scaling
+      this->mumps_structure.icntl[9] = 0; // no iterative refinement
       this->mumps_structure.icntl[12] = 1;
       this->mumps_structure.icntl[23] = 1; // ICNTL(24) controls the detection of “null pivot rows”
    }
@@ -37,12 +40,12 @@ namespace uno {
       this->mumps_structure.job = MUMPSSolver::JOB_END;
       dmumps_c(&this->mumps_structure);
    }
-
+   
    void MUMPSSolver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
+      this->mumps_structure.job = MUMPSSolver::JOB_ANALYSIS;
       this->save_sparsity_to_local_format(matrix);
       this->mumps_structure.n = static_cast<int>(matrix.dimension());
       this->mumps_structure.nnz = static_cast<int>(matrix.number_nonzeros());
-      this->mumps_structure.job = MUMPSSolver::JOB_ANALYSIS;
       this->mumps_structure.a = nullptr;
       // connect the local COO matrix with the pointers in the structure
       this->mumps_structure.irn = this->row_indices.data();

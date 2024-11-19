@@ -111,7 +111,7 @@ namespace uno {
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";
 
       auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
-      DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
+      DEBUG << "Expected inertia  (" << size_primal_block << ", " << size_dual_block << ", 0)\n";
       DEBUG << "Estimated inertia (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
 
       if (number_pos_eigenvalues == size_primal_block && number_neg_eigenvalues == size_dual_block && number_zero_eigenvalues == 0) {
@@ -148,7 +148,7 @@ namespace uno {
          DEBUG << "Number of attempts: " << number_attempts << "\n";
 
          std::tie(number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues) = linear_solver.get_inertia();
-         DEBUG << "Expected inertia (" << size_primal_block << ", " << size_dual_block << ", 0), ";
+         DEBUG << "Expected inertia  (" << size_primal_block << ", " << size_dual_block << ", 0)\n";
          DEBUG << "Estimated inertia (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
 
          if (number_pos_eigenvalues == size_primal_block && number_neg_eigenvalues == size_dual_block && number_zero_eigenvalues == 0) {
