@@ -26,12 +26,9 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
       // control parameters
       this->mumps_structure.icntl[0] = -1;
-      this->mumps_structure.icntl[1] = 0;
-      this->mumps_structure.icntl[2] = 0;
+      this->mumps_structure.icntl[1] = -1;
+      this->mumps_structure.icntl[2] = -1;
       this->mumps_structure.icntl[3] = 0;
-      this->mumps_structure.icntl[6] = 7; // pivot order
-      this->mumps_structure.icntl[7] = 6; // scaling
-      this->mumps_structure.icntl[9] = 0; // no iterative refinement
       this->mumps_structure.icntl[12] = 1;
       this->mumps_structure.icntl[23] = 1; // ICNTL(24) controls the detection of “null pivot rows”
    }
