@@ -24,6 +24,7 @@ namespace uno {
    class Subproblem;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
+   class UserCallbacks;
    template <typename ElementType>
    class Vector;
    struct WarmstartInformation;
@@ -50,7 +51,7 @@ namespace uno {
 
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-            double step_length, WarmstartInformation& warmstart_information) = 0;
+            double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
       [[nodiscard]] TerminationStatus check_termination(Iterate& iterate);
 
       // primal-dual residuals

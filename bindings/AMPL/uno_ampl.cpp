@@ -8,6 +8,7 @@
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "AMPLModel.hpp"
+#include "AMPLUserCallbacks.hpp"
 #include "Uno.hpp"
 #include "model/ModelFactory.hpp"
 #include "options/DefaultOptions.hpp"
@@ -50,8 +51,11 @@ namespace uno {
          auto globalization_mechanism = GlobalizationMechanismFactory::create(*constraint_relaxation_strategy, options);
          Uno uno = Uno(*globalization_mechanism, options);
 
+         // create the user callbacks
+         AMPLUserCallbacks user_callbacks{};
+
          // solve the instance
-         uno.solve(*model, initial_iterate, options);
+         uno.solve(*model, initial_iterate, options, user_callbacks);
          // std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
       }
       catch (std::exception& exception) {

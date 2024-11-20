@@ -16,7 +16,7 @@ namespace uno {
 
       void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
       void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-            WarmstartInformation& warmstart_information) override;
+            WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
    private:
       const double backtracking_ratio;
@@ -24,7 +24,7 @@ namespace uno {
       const bool scale_duals_with_step_length;
 
       void backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-            WarmstartInformation& warmstart_information);
+            WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
       [[nodiscard]] bool terminate_with_small_step_length(Statistics& statistics, Iterate& trial_iterate);
       [[nodiscard]] double decrease_step_length(double step_length) const;
       static void check_unboundedness(const Direction& direction);

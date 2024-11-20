@@ -10,8 +10,9 @@
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
-#include "symbolic/VectorView.hpp"
 #include "options/Options.hpp"
+#include "symbolic/VectorView.hpp"
+#include "tools/UserCallbacks.hpp"
 
 namespace uno {
    FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options& options) :
@@ -148,7 +149,7 @@ namespace uno {
    }
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         double step_length, WarmstartInformation& warmstart_information) {
+         double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       // TODO pick right multipliers
       this->subproblem->postprocess_iterate(this->current_problem(), trial_iterate);
       this->compute_progress_measures(current_iterate, trial_iterate);
@@ -176,6 +177,11 @@ namespace uno {
                predicted_reduction, this->current_problem().get_objective_multiplier());
       }
       ConstraintRelaxationStrategy::set_progress_statistics(statistics, trial_iterate);
+      if (accept_iterate) {
+         user_callbacks.notify_acceptable_iterate(trial_iterate.primals,
+               this->current_phase == Phase::OPTIMALITY ? trial_iterate.multipliers : trial_iterate.feasibility_multipliers,
+               this->current_problem().get_objective_multiplier());
+      }
       return accept_iterate;
    }
 

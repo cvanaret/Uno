@@ -19,6 +19,7 @@
 #include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Timer.hpp"
+#include "tools/UserCallbacks.hpp"
 
 namespace uno {
    Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options) :
@@ -30,7 +31,7 @@ namespace uno {
    
    Level Logger::level = INFO;
 
-   void Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
+   void Uno::solve(const Model& model, Iterate& current_iterate, const Options& options, UserCallbacks& user_callbacks) {
       Timer timer{};
       Statistics statistics = Uno::create_statistics(model, options);
       WarmstartInformation warmstart_information{};
@@ -54,8 +55,11 @@ namespace uno {
 
                // compute an acceptable iterate by solving a subproblem at the current point
                warmstart_information.iterate_changed();
-               this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate, trial_iterate, warmstart_information);
+               this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate, trial_iterate, warmstart_information, user_callbacks);
                termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration());
+               user_callbacks.notify_new_primals(trial_iterate.primals);
+               user_callbacks.notify_new_multipliers(trial_iterate.multipliers);
+
                // the trial iterate becomes the current iterate for the next iteration
                std::swap(current_iterate, trial_iterate);
             }
