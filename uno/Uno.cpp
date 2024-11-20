@@ -30,7 +30,7 @@ namespace uno {
    
    Level Logger::level = INFO;
 
-   void Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
+   std::optional<Result> Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
       Timer timer{};
       Statistics statistics = Uno::create_statistics(model, options);
       WarmstartInformation warmstart_information{};
@@ -71,9 +71,11 @@ namespace uno {
          Uno::postprocess_iterate(model, current_iterate, current_iterate.status);
          Result result = this->create_result(model, current_iterate, major_iterations, timer);
          this->print_optimization_summary(result);
+         return result;
       }
       catch (const std::exception& e) {
          DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
+         return std::nullopt;
       }
    }
 

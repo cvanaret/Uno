@@ -4,6 +4,7 @@
 #ifndef UNO_H
 #define UNO_H
 
+#include <optional>
 #include "optimization/Result.hpp"
 #include "optimization/TerminationStatus.hpp"
 
@@ -19,7 +20,7 @@ namespace uno {
    public:
       Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
 
-      void solve(const Model& model, Iterate& initial_iterate, const Options& options);
+      std::optional<Result> solve(const Model& model, Iterate& initial_iterate, const Options& options);
 
       static std::string current_version();
       static void print_available_strategies();
