@@ -19,6 +19,15 @@ namespace uno {
       virtual void notify_new_primals(const Vector<double>& primals) = 0;
       virtual void notify_new_multipliers(const Multipliers& multipliers) = 0;
    };
+
+   class NoUserCallbacks: public UserCallbacks {
+   public:
+      NoUserCallbacks(): UserCallbacks() { }
+
+      void notify_acceptable_iterate(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/) override { }
+      void notify_new_primals(const Vector<double>& /*primals*/) override { }
+      void notify_new_multipliers(const Multipliers& /*multipliers*/) override { }
+   };
 } // namespace
 
 #endif //UNO_USERCALLBACKS_H

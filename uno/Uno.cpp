@@ -31,6 +31,14 @@ namespace uno {
    
    Level Logger::level = INFO;
 
+   // solve without user callbacks
+   void Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
+      // pass user callbacks that do nothing
+      NoUserCallbacks user_callbacks{};
+      this->solve(model, current_iterate, options, user_callbacks);
+   }
+
+   // solve with user callbacks
    void Uno::solve(const Model& model, Iterate& current_iterate, const Options& options, UserCallbacks& user_callbacks) {
       Timer timer{};
       Statistics statistics = Uno::create_statistics(model, options);
