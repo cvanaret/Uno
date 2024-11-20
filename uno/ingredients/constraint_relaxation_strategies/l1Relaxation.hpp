@@ -36,7 +36,7 @@ namespace uno {
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-            double step_length, WarmstartInformation& warmstart_information) override;
+            double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       // primal-dual residuals
       void compute_primal_dual_residuals(Iterate& iterate) override;

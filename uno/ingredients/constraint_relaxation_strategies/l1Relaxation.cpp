@@ -11,6 +11,7 @@
 #include "symbolic/VectorView.hpp"
 #include "options/Options.hpp"
 #include "tools/Statistics.hpp"
+#include "tools/UserCallbacks.hpp"
 
 /*
  * Infeasibility detection and SQP methods for nonlinear optimization
@@ -233,7 +234,7 @@ namespace uno {
    }
 
    bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         double step_length, WarmstartInformation& /*warmstart_information*/) {
+         double step_length, WarmstartInformation& /*warmstart_information*/, UserCallbacks& user_callbacks) {
       this->subproblem->postprocess_iterate(this->l1_relaxed_problem, trial_iterate);
       this->compute_progress_measures(current_iterate, trial_iterate);
       trial_iterate.objective_multiplier = this->l1_relaxed_problem.get_objective_multiplier();
@@ -254,6 +255,7 @@ namespace uno {
       if (accept_iterate) {
          this->check_exact_relaxation(trial_iterate);
          // this->set_dual_residuals_statistics(statistics, trial_iterate);
+         user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, this->penalty_parameter);
       }
       this->set_progress_statistics(statistics, trial_iterate);
       return accept_iterate;

@@ -206,7 +206,7 @@ if(NOT AMPLSOLVER)
    message(WARNING "Optional library amplsolver (ASL) was not found.")
 else()
    message(STATUS "Library amplsolver was found.")
-   add_executable(uno_ampl bindings/AMPL/AMPLModel.cpp bindings/AMPL/uno_ampl.cpp)
+   add_executable(uno_ampl bindings/AMPL/AMPLModel.cpp bindings/AMPL/AMPLUserCallbacks.cpp bindings/AMPL/uno_ampl.cpp)
    
    target_link_libraries(uno_ampl PUBLIC uno ${AMPLSOLVER} ${CMAKE_DL_LIBS})
    add_definitions("-D HAS_AMPLSOLVER")

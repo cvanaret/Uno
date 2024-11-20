@@ -31,17 +31,17 @@ namespace uno {
    }
 
    void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         WarmstartInformation& warmstart_information) {
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
       this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, warmstart_information);
       BacktrackingLineSearch::check_unboundedness(this->direction);
-      this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, warmstart_information);
+      this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, warmstart_information, user_callbacks);
    }
 
    // go a fraction along the direction by finding an acceptable step length
    void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, WarmstartInformation& warmstart_information) {
+         Iterate& trial_iterate, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
@@ -59,7 +59,7 @@ namespace uno {
                   this->scale_duals_with_step_length ? step_length : 1.);
 
             is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction,
-                  step_length, warmstart_information);
+                  step_length, warmstart_information, user_callbacks);
             this->set_statistics(statistics, trial_iterate, this->direction, step_length, number_iterations);
          }
          catch (const EvaluationError& e) {

@@ -13,7 +13,7 @@ namespace uno {
 
       void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
       void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-            WarmstartInformation& warmstart_information) override;
+            WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
    private:
       double radius; /*!< Current trust region radius */
@@ -26,7 +26,7 @@ namespace uno {
       const double tolerance;
 
       bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-            WarmstartInformation& warmstart_information);
+            WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
       void possibly_increase_radius(double step_norm);
       void decrease_radius(double step_norm);
       void decrease_radius();
