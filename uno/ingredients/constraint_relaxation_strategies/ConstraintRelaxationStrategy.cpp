@@ -165,40 +165,40 @@ namespace uno {
       }
    }
 
-   TerminationStatus ConstraintRelaxationStrategy::check_termination(Iterate& iterate) {
+   IterateStatus ConstraintRelaxationStrategy::check_termination(Iterate& iterate) {
       if (iterate.is_objective_computed && iterate.evaluations.objective < this->unbounded_objective_threshold) {
-         return TerminationStatus::UNBOUNDED;
+         return IterateStatus::UNBOUNDED;
       }
 
       // compute the residuals
       this->compute_primal_dual_residuals(iterate);
 
       // test convergence wrt the tight tolerance
-      const TerminationStatus status_tight_tolerance = this->check_first_order_convergence(iterate, this->tight_tolerance);
-      if (status_tight_tolerance != TerminationStatus::NOT_OPTIMAL || this->loose_tolerance <= this->tight_tolerance) {
+      const IterateStatus status_tight_tolerance = this->check_first_order_convergence(iterate, this->tight_tolerance);
+      if (status_tight_tolerance != IterateStatus::NOT_OPTIMAL || this->loose_tolerance <= this->tight_tolerance) {
          return status_tight_tolerance;
       }
 
       // if not converged, check convergence wrt loose tolerance (provided it is strictly looser than the tight tolerance)
-      const TerminationStatus status_loose_tolerance = this->check_first_order_convergence(iterate, this->loose_tolerance);
+      const IterateStatus status_loose_tolerance = this->check_first_order_convergence(iterate, this->loose_tolerance);
       // if converged, keep track of the number of consecutive iterations
-      if (status_loose_tolerance != TerminationStatus::NOT_OPTIMAL) {
+      if (status_loose_tolerance != IterateStatus::NOT_OPTIMAL) {
          this->loose_tolerance_consecutive_iterations++;
       }
       else {
          this->loose_tolerance_consecutive_iterations = 0;
-         return TerminationStatus::NOT_OPTIMAL;
+         return IterateStatus::NOT_OPTIMAL;
       }
       // check if loose tolerance achieved for enough consecutive iterations
       if (this->loose_tolerance_consecutive_iteration_threshold <= this->loose_tolerance_consecutive_iterations) {
          return status_loose_tolerance;
       }
       else {
-         return TerminationStatus::NOT_OPTIMAL;
+         return IterateStatus::NOT_OPTIMAL;
       }
    }
 
-   TerminationStatus ConstraintRelaxationStrategy::check_first_order_convergence(Iterate& current_iterate, double tolerance) const {
+   IterateStatus ConstraintRelaxationStrategy::check_first_order_convergence(Iterate& current_iterate, double tolerance) const {
       // evaluate termination conditions based on optimality conditions
       const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
       const bool primal_feasibility = (current_iterate.primal_feasibility <= tolerance);
@@ -219,13 +219,13 @@ namespace uno {
 
       if (stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
          // feasible regular stationary point
-         return TerminationStatus::FEASIBLE_KKT_POINT;
+         return IterateStatus::FEASIBLE_KKT_POINT;
       }
       else if (this->model.is_constrained() && feasibility_stationarity && not primal_feasibility && feasibility_complementarity && no_trivial_duals) {
          // no primal feasibility, stationary point of constraint violation
-         return TerminationStatus::INFEASIBLE_STATIONARY_POINT;
+         return IterateStatus::INFEASIBLE_STATIONARY_POINT;
       }
-      return TerminationStatus::NOT_OPTIMAL;
+      return IterateStatus::NOT_OPTIMAL;
    }
 
    void ConstraintRelaxationStrategy::set_statistics(Statistics& statistics, const Iterate& iterate) const {

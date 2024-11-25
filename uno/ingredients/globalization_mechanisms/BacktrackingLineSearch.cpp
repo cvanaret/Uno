@@ -103,7 +103,7 @@ namespace uno {
    bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, Iterate& trial_iterate) {
       bool termination = false;
       trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
-      if (trial_iterate.status != TerminationStatus::NOT_OPTIMAL) {
+      if (trial_iterate.status != IterateStatus::NOT_OPTIMAL) {
          statistics.set("status", "accepted (small step length)");
          this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
          termination = true;

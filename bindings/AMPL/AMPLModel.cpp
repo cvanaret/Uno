@@ -357,23 +357,23 @@ namespace uno {
       std::copy(this->asl->i.pi0_, this->asl->i.pi0_ + this->number_constraints, multipliers.begin());
    }
 
-   void AMPLModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
+   void AMPLModel::postprocess_solution(Iterate& iterate, IterateStatus iterate_status) const {
       if (this->write_solution_to_file) {
          // write the primal-dual solution and status into a *.sol file
          this->asl->p.solve_code_ = 400; // limit
-         if (termination_status == TerminationStatus::FEASIBLE_KKT_POINT) {
+         if (iterate_status == IterateStatus::FEASIBLE_KKT_POINT) {
             this->asl->p.solve_code_ = 0;
          }
-         if (termination_status == TerminationStatus::FEASIBLE_SMALL_STEP) {
+         if (iterate_status == IterateStatus::FEASIBLE_SMALL_STEP) {
             this->asl->p.solve_code_ = 100;
          }
-         else if (termination_status == TerminationStatus::INFEASIBLE_STATIONARY_POINT) {
+         else if (iterate_status == IterateStatus::INFEASIBLE_STATIONARY_POINT) {
             this->asl->p.solve_code_ = 200;
          }
-         else if (termination_status == TerminationStatus::UNBOUNDED) {
+         else if (iterate_status == IterateStatus::UNBOUNDED) {
             this->asl->p.solve_code_ = 300;
          }
-         else if (termination_status == TerminationStatus::INFEASIBLE_SMALL_STEP) {
+         else if (iterate_status == IterateStatus::INFEASIBLE_SMALL_STEP) {
             this->asl->p.solve_code_ = 500;
          }
 
@@ -394,7 +394,7 @@ namespace uno {
          Option_Info option_info{};
          option_info.wantsol = 9; // write the solution without printing the message to stdout
          std::string message = "Uno ";
-         message.append(Uno::current_version()).append(": ").append(status_to_message(termination_status));
+         message.append(Uno::current_version()).append(": ").append(iterate_status_to_message(iterate_status));
          write_sol_ASL(this->asl, message.data(), iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
       }
    }

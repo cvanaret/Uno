@@ -51,7 +51,7 @@ namespace uno {
       void initial_primal_point(Vector<double>& x) const override;
       void initial_dual_point(Vector<double>& multipliers) const override;
 
-      void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const override;
+      void postprocess_solution(Iterate& iterate, IterateStatus termination_status) const override;
 
       [[nodiscard]] size_t number_objective_gradient_nonzeros() const override;
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;

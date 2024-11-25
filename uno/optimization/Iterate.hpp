@@ -5,7 +5,7 @@
 #define UNO_ITERATE_H
 
 #include "Evaluations.hpp"
-#include "TerminationStatus.hpp"
+#include "IterateStatus.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/DualResiduals.hpp"
@@ -49,7 +49,7 @@ namespace uno {
       ProgressMeasures progress{INF<double>, {}, INF<double>};
 
       // status
-      TerminationStatus status{TerminationStatus::NOT_OPTIMAL};
+      IterateStatus status{IterateStatus::NOT_OPTIMAL};
 
       void evaluate_objective(const Model& model);
       void evaluate_constraints(const Model& model);

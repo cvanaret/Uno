@@ -33,7 +33,7 @@ namespace uno {
       trial_iterate.is_objective_gradient_computed = false;
       trial_iterate.are_constraints_computed = false;
       trial_iterate.is_constraint_jacobian_computed = false;
-      trial_iterate.status = TerminationStatus::NOT_OPTIMAL;
+      trial_iterate.status = IterateStatus::NOT_OPTIMAL;
    }
 
    size_t GlobalizationMechanism::get_hessian_evaluation_count() const {

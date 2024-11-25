@@ -3,12 +3,13 @@
 
 #include <iomanip>
 #include "Result.hpp"
-#include "TerminationStatus.hpp"
+#include "IterateStatus.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
    void Result::print(bool print_primal_dual_solution) const {
-      DISCRETE << "Status:\t\t\t\t\t" << status_to_message(this->solution.status) << '\n';
+      DISCRETE << "Optimization status:\t\t\t" << optimization_status_to_message(this->optimization_status) << '\n';
+      DISCRETE << "Iterate status:\t\t\t\t" << iterate_status_to_message(this->solution.status) << '\n';
 
       DISCRETE << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution.evaluations.objective << '\n';
       DISCRETE << "Primal feasibility:\t\t\t" << this->solution.primal_feasibility << '\n';

@@ -16,6 +16,7 @@
 #include "solvers/LPSolverFactory.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "tools/Logger.hpp"
+#include "optimization/OptimizationStatus.hpp"
 #include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Timer.hpp"
@@ -44,6 +45,7 @@ namespace uno {
       Statistics statistics = Uno::create_statistics(model, options);
       WarmstartInformation warmstart_information{};
       warmstart_information.whole_problem_changed();
+      OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
 
       try {
          // use the initial primal-dual point to initialize the strategies and generate the initial iterate
@@ -64,7 +66,7 @@ namespace uno {
                // compute an acceptable iterate by solving a subproblem at the current point
                warmstart_information.iterate_changed();
                this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate, trial_iterate, warmstart_information, user_callbacks);
-               termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration());
+               termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration(), optimization_status);
                user_callbacks.notify_new_primals(trial_iterate.primals);
                user_callbacks.notify_new_multipliers(trial_iterate.multipliers);
 
@@ -77,15 +79,17 @@ namespace uno {
             statistics.set("status", exception.what());
             if (Logger::level == INFO) statistics.print_current_line();
             DEBUG << exception.what() << '\n';
+            optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
          }
          if (Logger::level == INFO) statistics.print_footer();
 
          Uno::postprocess_iterate(model, current_iterate, current_iterate.status);
-         Result result = this->create_result(model, current_iterate, major_iterations, timer);
+         Result result = this->create_result(model, optimization_status, current_iterate, major_iterations, timer);
          this->print_optimization_summary(result);
       }
       catch (const std::exception& e) {
          DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
+         optimization_status = OptimizationStatus::EVALUATION_ERROR;
       }
    }
 
@@ -96,7 +100,7 @@ namespace uno {
       this->globalization_mechanism.initialize(statistics, current_iterate, options);
       options.print_used();
       if (Logger::level == INFO) statistics.print_current_line();
-      current_iterate.status = TerminationStatus::NOT_OPTIMAL;
+      current_iterate.status = IterateStatus::NOT_OPTIMAL;
    }
 
    Statistics Uno::create_statistics(const Model& model, const Options& options) {
@@ -113,22 +117,34 @@ namespace uno {
       return statistics;
    }
 
-   bool Uno::termination_criteria(TerminationStatus current_status, size_t iteration, double current_time) const {
-      return current_status != TerminationStatus::NOT_OPTIMAL || this->max_iterations <= iteration || this->time_limit <= current_time;
+   bool Uno::termination_criteria(IterateStatus current_status, size_t iteration, double current_time, OptimizationStatus& optimization_status) const {
+      if (current_status != IterateStatus::NOT_OPTIMAL) {
+         return true;
+      }
+      else if (this->max_iterations <= iteration) {
+         optimization_status = OptimizationStatus::ITERATION_LIMIT;
+         return true;
+      }
+      else if (this->time_limit <= current_time) {
+         optimization_status = OptimizationStatus::TIME_LIMIT;
+         return true;
+      }
+      return false;
    }
 
-   void Uno::postprocess_iterate(const Model& model, Iterate& iterate, TerminationStatus termination_status) {
+   void Uno::postprocess_iterate(const Model& model, Iterate& iterate, IterateStatus termination_status) {
       // in case the objective was not yet evaluated, evaluate it
       iterate.evaluate_objective(model);
       model.postprocess_solution(iterate, termination_status);
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 
-   Result Uno::create_result(const Model& model, Iterate& current_iterate, size_t major_iterations, const Timer& timer) {
+   Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate, size_t major_iterations,
+         const Timer& timer) {
       const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
       const size_t number_hessian_evaluations = this->globalization_mechanism.get_hessian_evaluation_count();
-      return {std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations, timer.get_duration(),
-            Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
+      return {optimization_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,
+            timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
             Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
    }
 

@@ -146,7 +146,7 @@ namespace uno {
       this->model->initial_dual_point(multipliers);
    }
 
-   void ScaledModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
+   void ScaledModel::postprocess_solution(Iterate& iterate, IterateStatus termination_status) const {
       // unscale the objective value
       if (iterate.is_objective_computed) {
          iterate.evaluations.objective /= this->scaling.get_objective_scaling();
