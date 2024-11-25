@@ -29,6 +29,8 @@ namespace uno {
       this->mumps_structure.icntl[1] = -1;
       this->mumps_structure.icntl[2] = -1;
       this->mumps_structure.icntl[3] = 0;
+      this->mumps_structure.icntl[5] = 0; // no scaling
+      this->mumps_structure.icntl[7] = 0; // no scaling
 
       this->mumps_structure.icntl[12] = 1;
       this->mumps_structure.icntl[23] = 1; // ICNTL(24) controls the detection of “null pivot rows”
@@ -51,6 +53,7 @@ namespace uno {
       // connect the local sparsity with the pointers in the structure
       this->mumps_structure.irn = this->row_indices.data();
       this->mumps_structure.jcn = this->column_indices.data();
+      this->mumps_structure.a = nullptr;
       dmumps_c(&this->mumps_structure);
    }
 
