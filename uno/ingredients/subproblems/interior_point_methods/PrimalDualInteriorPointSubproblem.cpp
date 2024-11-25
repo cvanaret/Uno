@@ -124,26 +124,6 @@ namespace uno {
 
    void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
-      // barrier Lagrangian Hessian
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         // original Lagrangian Hessian
-         this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_multipliers.constraints);
-
-         // diagonal barrier terms (grouped by variable)
-         for (size_t variable_index: Range(problem.number_variables)) {
-            double diagonal_barrier_term = 0.;
-            if (is_finite(problem.variable_lower_bound(variable_index))) { // lower bounded
-               const double distance_to_bound = current_iterate.primals[variable_index] - problem.variable_lower_bound(variable_index);
-               diagonal_barrier_term += current_multipliers.lower_bounds[variable_index] / distance_to_bound;
-            }
-            if (is_finite(problem.variable_upper_bound(variable_index))) { // upper bounded
-               const double distance_to_bound = current_iterate.primals[variable_index] - problem.variable_upper_bound(variable_index);
-               diagonal_barrier_term += current_multipliers.upper_bounds[variable_index] / distance_to_bound;
-            }
-            this->hessian_model->hessian.insert(diagonal_barrier_term, variable_index, variable_index);
-         }
-      }
-
       // barrier objective gradient
       if (warmstart_information.objective_changed) {
          // original objective gradient
@@ -174,6 +154,26 @@ namespace uno {
       if (warmstart_information.constraints_changed) {
          problem.evaluate_constraints(current_iterate, this->constraints);
          problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
+      }
+
+      // barrier Lagrangian Hessian
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         // original Lagrangian Hessian
+         this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_multipliers.constraints);
+
+         // diagonal barrier terms (grouped by variable)
+         for (size_t variable_index: Range(problem.number_variables)) {
+            double diagonal_barrier_term = 0.;
+            if (is_finite(problem.variable_lower_bound(variable_index))) { // lower bounded
+               const double distance_to_bound = current_iterate.primals[variable_index] - problem.variable_lower_bound(variable_index);
+               diagonal_barrier_term += current_multipliers.lower_bounds[variable_index] / distance_to_bound;
+            }
+            if (is_finite(problem.variable_upper_bound(variable_index))) { // upper bounded
+               const double distance_to_bound = current_iterate.primals[variable_index] - problem.variable_upper_bound(variable_index);
+               diagonal_barrier_term += current_multipliers.upper_bounds[variable_index] / distance_to_bound;
+            }
+            this->hessian_model->hessian.insert(diagonal_barrier_term, variable_index, variable_index);
+         }
       }
    }
 
