@@ -27,6 +27,7 @@ namespace uno {
 
    protected:
       DMUMPS_STRUC_C mumps_structure{};
+
       // matrix sparsity
       std::vector<int> row_indices{};
       std::vector<int> column_indices{};

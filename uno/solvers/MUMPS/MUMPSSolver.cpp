@@ -29,8 +29,12 @@ namespace uno {
       this->mumps_structure.icntl[1] = -1;
       this->mumps_structure.icntl[2] = -1;
       this->mumps_structure.icntl[3] = 0;
+
       this->mumps_structure.icntl[12] = 1;
       this->mumps_structure.icntl[23] = 1; // ICNTL(24) controls the detection of “null pivot rows”
+
+      this->row_indices.reserve(number_nonzeros);
+      this->column_indices.reserve(number_nonzeros);
    }
 
    MUMPSSolver::~MUMPSSolver() {
@@ -40,11 +44,11 @@ namespace uno {
    
    void MUMPSSolver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
       this->mumps_structure.job = MUMPSSolver::JOB_ANALYSIS;
-      this->save_sparsity_to_local_format(matrix);
       this->mumps_structure.n = static_cast<int>(matrix.dimension());
       this->mumps_structure.nnz = static_cast<int>(matrix.number_nonzeros());
       this->mumps_structure.a = nullptr;
-      // connect the local COO matrix with the pointers in the structure
+      this->save_sparsity_to_local_format(matrix);
+      // connect the local sparsity with the pointers in the structure
       this->mumps_structure.irn = this->row_indices.data();
       this->mumps_structure.jcn = this->column_indices.data();
       dmumps_c(&this->mumps_structure);
@@ -93,8 +97,8 @@ namespace uno {
       this->row_indices.clear();
       this->column_indices.clear();
       for (const auto [row_index, column_index, _]: matrix) {
-         this->row_indices.emplace_back(row_index + this->fortran_shift);
-         this->column_indices.emplace_back(column_index + this->fortran_shift);
+         this->row_indices.emplace_back(static_cast<int>(row_index + this->fortran_shift));
+         this->column_indices.emplace_back(static_cast<int>(column_index + this->fortran_shift));
       }
    }
 } // namespace
