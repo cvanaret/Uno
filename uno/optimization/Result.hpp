@@ -5,11 +5,13 @@
 #define UNO_RESULT_H
 
 #include "Iterate.hpp"
+#include "OptimizationStatus.hpp"
 
 namespace uno {
    struct Result {
       Result() = delete;
 
+      OptimizationStatus optimization_status;
       Iterate solution;
       size_t number_variables;
       size_t number_constraints;

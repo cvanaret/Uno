@@ -192,7 +192,7 @@ namespace uno {
       this->model->initial_dual_point(multipliers);
    }
 
-   void FixedBoundsConstraintsModel::postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const {
+   void FixedBoundsConstraintsModel::postprocess_solution(Iterate& iterate, IterateStatus termination_status) const {
 // move the multipliers back from the general constraints to the bound constraints
       size_t current_constraint = this->model->number_constraints;
       for (size_t variable_index: this->model->get_fixed_variables()) {

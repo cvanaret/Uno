@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 #include "linear_algebra/Norm.hpp"
-#include "optimization/TerminationStatus.hpp"
+#include "optimization/IterateStatus.hpp"
 #include "symbolic/VectorExpression.hpp"
 
 namespace uno {
@@ -76,7 +76,7 @@ namespace uno {
 
       virtual void initial_primal_point(Vector<double>& x) const = 0;
       virtual void initial_dual_point(Vector<double>& multipliers) const = 0;
-      virtual void postprocess_solution(Iterate& iterate, TerminationStatus termination_status) const = 0;
+      virtual void postprocess_solution(Iterate& iterate, IterateStatus termination_status) const = 0;
 
       [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const = 0;
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;
