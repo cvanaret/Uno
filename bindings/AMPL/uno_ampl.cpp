@@ -55,7 +55,13 @@ namespace uno {
          AMPLUserCallbacks user_callbacks{};
 
          // solve the instance
-         uno.solve(*model, initial_iterate, options, user_callbacks);
+         Result result = uno.solve(*model, initial_iterate, options, user_callbacks);
+         if (result.optimization_status == OptimizationStatus::SUCCESS) {
+            // check result.solution.status
+         }
+         else {
+            // ...
+         }
          // std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
       }
       catch (std::exception& exception) {

@@ -33,27 +33,27 @@ namespace uno {
    Level Logger::level = INFO;
 
    // solve without user callbacks
-   void Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
+   Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
       // pass user callbacks that do nothing
       NoUserCallbacks user_callbacks{};
-      this->solve(model, current_iterate, options, user_callbacks);
+      return this->solve(model, current_iterate, options, user_callbacks);
    }
 
    // solve with user callbacks
-   void Uno::solve(const Model& model, Iterate& current_iterate, const Options& options, UserCallbacks& user_callbacks) {
+   Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options, UserCallbacks& user_callbacks) {
       Timer timer{};
       Statistics statistics = Uno::create_statistics(model, options);
       WarmstartInformation warmstart_information{};
       warmstart_information.whole_problem_changed();
-      OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
 
+      size_t major_iterations = 0;
+      OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
       try {
          // use the initial primal-dual point to initialize the strategies and generate the initial iterate
          this->initialize(statistics, current_iterate, options);
          // allocate the trial iterate once and for all here
          Iterate trial_iterate(current_iterate);
 
-         size_t major_iterations = 0;
          try {
             bool termination = false;
             // check for termination
@@ -84,13 +84,14 @@ namespace uno {
          if (Logger::level == INFO) statistics.print_footer();
 
          Uno::postprocess_iterate(model, current_iterate, current_iterate.status);
-         Result result = this->create_result(model, optimization_status, current_iterate, major_iterations, timer);
-         this->print_optimization_summary(result);
       }
       catch (const std::exception& e) {
          DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
          optimization_status = OptimizationStatus::EVALUATION_ERROR;
       }
+      Result result = this->create_result(model, optimization_status, current_iterate, major_iterations, timer);
+      this->print_optimization_summary(result);
+      return result;
    }
 
    void Uno::initialize(Statistics& statistics, Iterate& current_iterate, const Options& options) {

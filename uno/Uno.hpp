@@ -21,8 +21,8 @@ namespace uno {
       Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
 
       // solve with or without user callbacks
-      void solve(const Model& model, Iterate& initial_iterate, const Options& options);
-      void solve(const Model& model, Iterate& initial_iterate, const Options& options, UserCallbacks& user_callbacks);
+      Result solve(const Model& model, Iterate& initial_iterate, const Options& options);
+      Result solve(const Model& model, Iterate& initial_iterate, const Options& options, UserCallbacks& user_callbacks);
 
       static std::string current_version();
       static void print_available_strategies();
