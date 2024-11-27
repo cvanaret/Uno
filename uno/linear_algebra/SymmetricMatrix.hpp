@@ -4,6 +4,7 @@
 #ifndef UNO_SYMMETRICMATRIX_H
 #define UNO_SYMMETRICMATRIX_H
 
+#include <algorithm>
 #include <memory>
 #include <functional>
 #include <cassert>
@@ -63,20 +64,19 @@ namespace uno {
    SymmetricMatrix<IndexType, ElementType>::SymmetricMatrix(size_t dimension, size_t capacity, bool use_regularization, const std::string& sparse_format) :
          sparse_storage(SparseStorageFactory<IndexType, ElementType>::create(sparse_format, dimension, capacity, use_regularization)) {
    }
-   
+
    template <typename IndexType, typename ElementType>
-   // TODO fix. We need to scan through all the columns
    inline ElementType SymmetricMatrix<IndexType, ElementType>::smallest_diagonal_entry(size_t max_dimension) const {
-      ElementType smallest_entry = INF<ElementType>;
+      // diagonal entries might be at several locations and must be accumulated
+      // TODO preallocate this vector somewhere
+      std::vector<ElementType> diagonal_entries(max_dimension, ElementType(0));
+
       for (const auto [row_index, column_index, element]: *this->sparse_storage) {
          if (row_index == column_index && row_index < max_dimension) {
-            smallest_entry = std::min(smallest_entry, element);
+            diagonal_entries[row_index] += element;
          }
       }
-      if (smallest_entry == INF<ElementType>) {
-         smallest_entry = ElementType(0);
-      }
-      return smallest_entry;
+      return *std::min_element(diagonal_entries.begin(), diagonal_entries.end());
    }
    
    template <typename IndexType, typename ElementType>

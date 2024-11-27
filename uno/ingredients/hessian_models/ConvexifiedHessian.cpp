@@ -29,16 +29,16 @@ namespace uno {
       problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, this->hessian);
       this->evaluation_count++;
       // regularize (only on the original variables) to convexify the problem
-      DEBUG2 << "hessian before convexification: " << this->hessian;
       this->regularize(statistics, this->hessian, problem.get_number_original_variables());
    }
 
    // Nocedal and Wright, p51
    void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables) {
+      DEBUG << "Current Hessian:\n" << hessian << '\n';
       const double smallest_diagonal_entry = hessian.smallest_diagonal_entry(number_original_variables);
       DEBUG << "The minimal diagonal entry of the matrix is " << smallest_diagonal_entry << '\n';
 
-      double regularization_factor = (smallest_diagonal_entry <= 0.) ? this->regularization_initial_value - smallest_diagonal_entry : 0.;
+      double regularization_factor = (smallest_diagonal_entry > 0.) ? 0. : this->regularization_initial_value - smallest_diagonal_entry;
       bool good_inertia = false;
       bool symbolic_factorization_performed = false;
       while (not good_inertia) {
@@ -48,6 +48,8 @@ namespace uno {
                return (variable_index < number_original_variables) ? regularization_factor : 0.;
             });
          }
+         DEBUG << "Current Hessian:\n" << hessian << '\n';
+
          // perform the symbolic factorization only once
          if (not symbolic_factorization_performed) {
             this->linear_solver->do_symbolic_factorization(hessian);

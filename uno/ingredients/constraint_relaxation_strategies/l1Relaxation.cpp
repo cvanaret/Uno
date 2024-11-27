@@ -210,7 +210,8 @@ namespace uno {
       const double linearized_residual_reduction = current_iterate.progress.infeasibility - linearized_residual;
       const double lowest_linearized_residual_reduction = current_iterate.progress.infeasibility - residual_lowest_violation;
       if (lowest_linearized_residual_reduction < 0.) {
-         WARNING << "The lowest_linearized_residual_reduction quantity is negative. Negative curvature in your problem\n";
+         WARNING << "lowest_linearized_residual_reduction = " << lowest_linearized_residual_reduction <<
+         " is negative. Negative curvature in your problem\n";
       }
       return (linearized_residual_reduction >= this->parameters.epsilon1 * lowest_linearized_residual_reduction);
    }
