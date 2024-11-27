@@ -15,13 +15,10 @@
 #include "fortran_interface.h"
 
 #define WSC FC_GLOBAL(wsc,WSC)
-#define KKTALPHAC FC_GLOBAL(kktalphac,KKTALPHAC)
+#define ALPHAC FC_GLOBAL(alphac,ALPHAC)
 #define BQPD FC_GLOBAL(bqpd,BQPD)
 
-namespace uno {
-#define BIG 1e30
-
-   extern "C" {
+extern "C" {
    // fortran common block used in bqpd/bqpd.f
    extern struct {
       int kk, ll, kkk, lll, mxws, mxlws;
@@ -30,13 +27,16 @@ namespace uno {
    // fortran common for inertia correction in wdotd
    extern struct {
       double alpha;
-   } KKTALPHAC;
+   } ALPHAC;
 
    extern void
    BQPD(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double* x, double* bl, double* bu, double* f, double* fmin, double* g,
          double* r, double* w, double* e, int* ls, double* alp, int* lp, int* mlp, int* peq, double* ws, int* lws, const int* mode, int* ifail,
          int* info, int* iprint, int* nout);
-   }
+}
+
+namespace uno {
+   #define BIG 1e30
 
    // preallocate a bunch of stuff
    BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
@@ -104,7 +104,7 @@ namespace uno {
       WSC.ll = static_cast<int>(this->size_hessian_sparsity);
       WSC.mxws = static_cast<int>(this->size_hessian_workspace);
       WSC.mxlws = static_cast<int>(this->size_hessian_sparsity_workspace);
-      KKTALPHAC.alpha = 0; // inertia control
+      ALPHAC.alpha = 0; // inertia control
 
       if (this->print_subproblem) {
          DEBUG << "objective gradient: " << linear_objective;

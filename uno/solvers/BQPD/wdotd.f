@@ -21,7 +21,7 @@ c     ... declaration of internal variables
 
 c     inertia control for diagonal terms
       double precision alpha
-      common /kktalphac/ alpha
+      common /alphac/ alpha
 
 c     ========================  procedure body  =========================
 
@@ -85,34 +85,5 @@ c     ... allow for scaling of variables
          enddo
       endif
 
-      return
-      end
-c     ******************************************************************
-      subroutine saipy2(s,a,la,i,y,n)
-      implicit double precision (a-h,o-z)
-      dimension a(*),la(0:*),y(*)
-c     ========================  procedure body  =========================
-c     saxpy with column i of A: y + s*A_{i, :}
-      if(s.eq.0.D0) return
-      j_column_start = la(0) + i
-      do j = la(j_column_start), la(j_column_start+1)-1
-         i_variable = la(j)
-         y(i_variable) = y(i_variable) + s*a(j)
-      enddo
-      return
-      end
-
-c     **************************** E N D *********************************
-      function daiscpr2(n,a,la,i,x,b)
-      implicit double precision (a-h,o-z)
-      dimension a(*),la(0:*),x(*)
-      DOUBLE PRECISION daiscpr2
-c     dot product of x and row i of A
-      daiscpr2 = dble(b)
-      j_column_start = la(0) + i
-      do j = la(j_column_start), la(j_column_start+1)-1
-         i_variable = la(j)
-         daiscpr2 = daiscpr2 + dble(x(i_variable))*dble(a(j))
-      enddo
       return
       end
