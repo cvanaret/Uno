@@ -17,8 +17,11 @@
 #define WSC FC_GLOBAL(wsc,WSC)
 #define ALPHAC FC_GLOBAL(alphac,ALPHAC)
 #define BQPD FC_GLOBAL(bqpd,BQPD)
+#define hessian_vector_product FC_GLOBAL(gdotx,GDOTX)
 
 extern "C" {
+   void hessian_vector_product(int *n, const double x[], const double ws[], const int lws[], double v[]);
+
    // fortran common block used in bqpd/bqpd.f
    extern struct {
       int kk, ll, kkk, lll, mxws, mxlws;
@@ -312,3 +315,21 @@ namespace uno {
       throw std::invalid_argument("The BQPD ifail is not consistent with the Uno status values");
    }
 } // namespace
+
+void hessian_vector_product(int *n, const double x[], const double ws[], const int lws[], double v[]) {
+   for (int i = 0; i < *n; i++) {
+      v[i] = 0.;
+   }
+
+   int footer_start = lws[0];
+   for (int i = 0; i < *n; i++) {
+      for (int k = lws[footer_start + i]; k < lws[footer_start + i + 1]; k++) {
+         int j = lws[k] - 1;
+         v[i] += ws[k-1]*x[j];
+         if (j != i) {
+            // off-diagonal term
+            v[j] += ws[k-1]*x[i];
+         }
+      }
+   }
+}
