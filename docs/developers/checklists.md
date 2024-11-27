@@ -13,6 +13,7 @@ In preparation for a release, use the following checklist. These steps can be do
 
  - [ ] Change the version number in `Uno::current_version()` in `uno/Uno.cpp`
  - [ ] Change the version number in `CITATION.cff`
+ - [ ] Change the version number in `CMakeLists.txt`
  - [ ] The commit messages in this PR do not contain `[ci skip]`
 
 ````

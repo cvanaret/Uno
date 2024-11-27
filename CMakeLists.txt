@@ -7,7 +7,7 @@ if(${CMAKE_VERSION} VERSION_LESS 3.12)
 endif()
 
 # define the project name
-project(Uno VERSION 1.0
+project(Uno VERSION 1.3.0
         DESCRIPTION "Uno (Unifying Nonconvex Optimization)"
         LANGUAGES CXX C Fortran)
 set(CMAKE_CXX_STANDARD 17)
