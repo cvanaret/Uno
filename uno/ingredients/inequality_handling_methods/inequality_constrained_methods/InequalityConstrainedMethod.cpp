@@ -66,7 +66,7 @@ namespace uno {
       }
    }
 
-   void InequalityConstrainedMethod::set_linearized_constraint_bounds(const OptimizationProblem& problem, const std::vector<double>& current_constraints) {
+   void InequalityConstrainedMethod::set_linearized_constraint_bounds(const OptimizationProblem& problem, const Vector<double>& current_constraints) {
       for (size_t constraint_index: Range(problem.number_constraints)) {
          this->linearized_constraints_lower_bounds[constraint_index] = problem.constraint_lower_bound(constraint_index) -
                current_constraints[constraint_index];
