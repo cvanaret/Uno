@@ -27,9 +27,6 @@ namespace uno {
       const bool enforce_linear_constraints_at_initial_iterate;
       // pointer to allow polymorphism
       const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
-
-      void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            const WarmstartInformation& warmstart_information);
    };
 } // namespace
 

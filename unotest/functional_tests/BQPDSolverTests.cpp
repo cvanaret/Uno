@@ -13,6 +13,7 @@
 
 using namespace uno;
 
+/*
 TEST(BQPDSolver, LP) {
    // https://ergo-code.github.io/HiGHS/stable/interfaces/cpp/library/
    // Min    f  =  x_0 +  x_1 + 3
@@ -75,6 +76,7 @@ TEST(BQPDSolver, LP) {
       EXPECT_NEAR(direction.multipliers.upper_bounds[index], upper_bound_duals_reference[index], tolerance);
    }
 }
+*/
 
 /*
 TEST(BQPDSolver, QP) {

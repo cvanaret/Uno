@@ -2,17 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "QPSubproblem.hpp"
+#include "ingredients/local_models/LagrangeNewtonSubproblem.hpp"
 #include "optimization/Direction.hpp"
-#include "ingredients/hessian_models/HessianModelFactory.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "options/Options.hpp"
 #include "preprocessing/Preprocessing.hpp"
 #include "reformulation/OptimizationProblem.hpp"
-#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/QPSolver.hpp"
 #include "solvers/QPSolverFactory.hpp"
-#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
@@ -43,41 +41,10 @@ namespace uno {
       }
    }
 
-   void QPSubproblem::evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
-      // Lagrangian Hessian
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_multipliers.constraints);
-      }
-      // objective gradient, constraints and constraint Jacobian
-      if (warmstart_information.objective_changed) {
-         problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
-      }
-      if (warmstart_information.constraints_changed) {
-         problem.evaluate_constraints(current_iterate, this->constraints);
-         problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
-      }
-   }
-
-   void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-         Direction& direction, const WarmstartInformation& warmstart_information) {
-      // evaluate the functions at the current iterate
-      this->evaluate_functions(statistics, problem, current_iterate, current_multipliers, warmstart_information);
-
-      // set bounds of the variable displacements
-      if (warmstart_information.variable_bounds_changed) {
-         this->set_direction_bounds(problem, current_iterate);
-      }
-
-      // set bounds of the linearized constraints
-      if (warmstart_information.constraint_bounds_changed) {
-         this->set_linearized_constraint_bounds(problem, this->constraints);
-      }
-
-      // solve the QP
-      this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_lower_bounds, this->direction_upper_bounds,
-            this->linearized_constraints_lower_bounds, this->linearized_constraints_upper_bounds, this->objective_gradient,
-            this->constraint_jacobian, this->hessian_model->hessian, this->initial_point, direction, warmstart_information);
+   void QPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, Direction& direction, const WarmstartInformation& warmstart_information) {
+      const LagrangeNewtonSubproblem subproblem(problem, current_iterate, current_multipliers.constraints, *this->hessian_model, this->trust_region_radius);
+      this->solver->solve_QP(subproblem, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;
       // reset the initial point
