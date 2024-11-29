@@ -4,7 +4,6 @@
 #ifndef UNO_OPTIMIZATIONPROBLEM_H
 #define UNO_OPTIMIZATIONPROBLEM_H
 
-#include <vector>
 #include "linear_algebra/Norm.hpp"
 #include "model/Model.hpp"
 #include "optimization/LagrangianGradient.hpp"
@@ -39,7 +38,7 @@ namespace uno {
       // function evaluations
       [[nodiscard]] virtual double get_objective_multiplier() const = 0;
       virtual void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const = 0;
-      virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const = 0;
+      virtual void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const = 0;
       virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const = 0;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian) const = 0;
       virtual void compute_hessian_vector_product(const Vector<double>& x, const Vector<double>& multipliers, Vector<double>& result) const = 0;
@@ -61,7 +60,7 @@ namespace uno {
       [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
             Norm residual_norm);
       virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate, const Multipliers& multipliers) const = 0;
-      [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
+      [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
             const Multipliers& multipliers, double shift_value, Norm residual_norm) const = 0;
    };
 } // namespace

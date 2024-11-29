@@ -1,8 +1,8 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_SUBPROBLEM_H
-#define UNO_SUBPROBLEM_H
+#ifndef UNO_INEQUALITYHANDLINGMETHOD_H
+#define UNO_INEQUALITYHANDLINGMETHOD_H
 
 #include <memory>
 #include <string>
@@ -24,14 +24,11 @@ namespace uno {
    template <typename ElementType>
    class Vector;
    struct WarmstartInformation;
-
-   /*! \class Subproblem
-    * \brief Subproblem
-    */
-   class Subproblem {
+   
+   class InequalityHandlingMethod {
    public:
-      Subproblem(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros, bool convexify, const Options& options);
-      virtual ~Subproblem() = default;
+      InequalityHandlingMethod(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros, bool convexify, const Options& options);
+      virtual ~InequalityHandlingMethod() = default;
 
       // virtual methods implemented by subclasses
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
@@ -66,4 +63,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_SUBPROBLEM_H
+#endif // UNO_INEQUALITYHANDLINGMETHOD_H

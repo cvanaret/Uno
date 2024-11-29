@@ -69,7 +69,7 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
       constraints = iterate.evaluations.constraints;
       // add the contribution of the elastics
@@ -174,7 +174,7 @@ namespace uno {
    }
 
    // complementary slackness error: expression for violated constraints depends on the definition of the relaxed problem
-   double l1RelaxedProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
+   double l1RelaxedProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
       const Range variables_range = Range(this->number_variables);

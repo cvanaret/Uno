@@ -16,7 +16,7 @@
 namespace uno {
    QPSubproblem::QPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
          size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) :
-         InequalityConstrainedMethod(options.get_string("hessian_model"), number_variables, number_constraints, number_hessian_nonzeros,
+         InequalityConstrainedMethod(options.get_string("hessian_model"), number_variables, number_hessian_nonzeros,
                options.get_string("globalization_mechanism") == "LS", options),
          use_regularization(options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP")),
          enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")),

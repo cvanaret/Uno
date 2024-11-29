@@ -8,6 +8,7 @@
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "reformulation/OptimalityProblem.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/QPSolver.hpp"
 #include "symbolic/VectorView.hpp"
@@ -86,7 +87,10 @@ namespace uno {
       return infeasible_linear_constraints;
    }
 
-   void Preprocessing::enforce_linear_constraints(const Model& model, Vector<double>& primals, Multipliers& multipliers, QPSolver& qp_solver) {
+   void Preprocessing::enforce_linear_constraints(const Model& /*model*/, Vector<double>& /*primals*/, Multipliers& /*multipliers*/,
+         QPSolver& /*qp_solver*/) {
+      WARNING << "enforce_linear_constraints not implemented yet";
+      /*
       const auto& linear_constraints = model.get_linear_constraints();
       INFO << "\nPreprocessing phase: the problem has " << linear_constraints.size() << " linear constraints\n";
       if (not linear_constraints.empty()) {
@@ -127,12 +131,16 @@ namespace uno {
             }
 
             // solve the strictly convex QP
-            Vector<double> d0(model.number_variables); // = 0
+            Vector<double> d0(model.number_variables, 0.);
             SparseVector<double> linear_objective; // empty
             WarmstartInformation warmstart_information{true, true, true, true};
             Direction direction(model.number_variables, model.number_constraints);
+            OptimalityProblem problem(model);
+            Vector<double> constraint_multipliers(model.number_variables, 0.);
+
             qp_solver.solve_QP(model.number_variables, linear_constraints.size(), variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
-                  constraints_upper_bounds, linear_objective, constraint_jacobian, hessian, d0, direction, warmstart_information);
+                  constraints_upper_bounds, linear_objective, constraint_jacobian, hessian, d0, direction, warmstart_information, problem,
+                  constraint_multipliers, subproblem);
             if (direction.status == SubproblemStatus::INFEASIBLE) {
                throw std::runtime_error("Linear constraints cannot be satisfied at the initial point");
             }
@@ -151,5 +159,6 @@ namespace uno {
             DEBUG3 << "Linear feasible initial point: " << view(primals, 0, model.number_variables) << '\n';
          }
       }
+      */
    }
 } // namespace

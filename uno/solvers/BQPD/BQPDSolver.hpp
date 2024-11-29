@@ -6,9 +6,11 @@
 
 #include <array>
 #include <vector>
-#include "ingredients/subproblems/SubproblemStatus.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "solvers/QPSolver.hpp"
+#include "solvers/SubproblemStatus.hpp"
 
 namespace uno {
    // forward declaration
@@ -45,21 +47,15 @@ namespace uno {
       BQPDSolver(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
             size_t number_hessian_nonzeros, BQPDProblemType problem_type, const Options& options);
 
-      void solve_LP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
-            const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
-            const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-            const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
+      void solve_LP(const LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
             const WarmstartInformation& warmstart_information) override;
 
-      void solve_QP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
-            const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
-            const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-            const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<size_t, double>& hessian, const Vector<double>& initial_point,
-            Direction& direction, const WarmstartInformation& warmstart_information) override;
+      void solve_QP(const LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
+            const WarmstartInformation& warmstart_information) override;
 
    private:
       const size_t number_hessian_nonzeros;
-      std::vector<double> lb{}, ub{}; // lower and upper bounds of variables and constraints
+      Vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
 
       std::vector<double> jacobian{};
       std::vector<int> jacobian_sparsity{};
@@ -72,25 +68,26 @@ namespace uno {
       size_t size_hessian_sparsity{};
       size_t size_hessian_workspace{};
       size_t size_hessian_sparsity_workspace{};
-      std::vector<double> hessian_values{};
-      std::vector<int> hessian_sparsity{};
+      std::vector<double> workspace{};
+      std::vector<int> workspace_sparsity{};
       int k{0};
       int iprint{0}, nout{6};
       double fmin{-1e20};
       int peq_solution{0}, ifail{0};
       const int fortran_shift{1};
-      Vector<int> current_hessian_indices{};
 
       size_t number_calls{0};
       const bool print_subproblem;
 
-      void solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
-            const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
-            const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-            const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
-            const WarmstartInformation& warmstart_information);
+      SparseVector<double> linear_objective; /*!< Sparse Jacobian of the objective */
+      Vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+      RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
+
+      void set_up_subproblem(const WarmstartInformation& warmstart_information, const LagrangeNewtonSubproblem& subproblem);
+      void solve_subproblem(const Vector<double>& initial_point, Direction& direction, const WarmstartInformation& warmstart_information,
+            const LagrangeNewtonSubproblem& subproblem);
       void categorize_constraints(size_t number_variables, Direction& direction);
-      void save_hessian_to_local_format(const SymmetricMatrix<size_t, double>& hessian);
+      void save_hessian(const LagrangeNewtonSubproblem& subproblem);
       void save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
             const RectangularMatrix<double>& constraint_jacobian);
       [[nodiscard]] BQPDMode determine_mode(const WarmstartInformation& warmstart_information) const;
