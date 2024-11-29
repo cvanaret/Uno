@@ -3,16 +3,16 @@
 
 #include <string>
 #include "InequalityHandlingMethod.hpp"
-#include "SubproblemFactory.hpp"
-#include "ingredients/subproblems/inequality_constrained_methods/QPSubproblem.hpp"
-#include "ingredients/subproblems/inequality_constrained_methods/LPSubproblem.hpp"
-#include "ingredients/subproblems/interior_point_methods/PrimalDualInteriorPointSubproblem.hpp"
+#include "InequalityHandlingMethodFactory.hpp"
+#include "ingredients/inequality_handling_methods/inequality_constrained_methods/QPSubproblem.hpp"
+#include "ingredients/inequality_handling_methods/inequality_constrained_methods/LPSubproblem.hpp"
+#include "ingredients/inequality_handling_methods/interior_point_methods/PrimalDualInteriorPointSubproblem.hpp"
 #include "solvers/QPSolverFactory.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<InequalityHandlingMethod> SubproblemFactory::create(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
+   std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
          size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) {
       const std::string subproblem_strategy = options.get_string("subproblem");
       // active-set methods
@@ -32,7 +32,7 @@ namespace uno {
       throw std::invalid_argument("Subproblem strategy " + subproblem_strategy + " is not supported");
    }
 
-   std::vector<std::string> SubproblemFactory::available_strategies() {
+   std::vector<std::string> InequalityHandlingMethodFactory::available_strategies() {
       std::vector<std::string> strategies{};
       if (not QPSolverFactory::available_solvers().empty()) {
          strategies.emplace_back("QP");

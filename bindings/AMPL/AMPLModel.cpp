@@ -87,34 +87,6 @@ namespace uno {
       ASL_free(&this->asl);
    }
 
-   void AMPLModel::generate_variables() {
-      for (size_t variable_index: Range(this->number_variables)) {
-         this->variable_lower_bounds[variable_index] = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index] : -INF<double>;
-         this->variable_upper_bounds[variable_index] = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index + 1] : INF<double>;
-         if (this->variable_lower_bounds[variable_index] == this->variable_upper_bounds[variable_index]) {
-            WARNING << "Variable x" << variable_index << " has identical bounds\n";
-            this->fixed_variables.emplace_back(variable_index);
-         }
-      }
-      AMPLModel::determine_bounds_types(this->variable_lower_bounds, this->variable_upper_bounds, this->variable_status);
-      // figure out the bounded variables
-      for (size_t variable_index: Range(this->number_variables)) {
-         const BoundType status = this->get_variable_bound_type(variable_index);
-         if (status == BOUNDED_LOWER || status == BOUNDED_BOTH_SIDES) {
-            this->lower_bounded_variables.emplace_back(variable_index);
-            if (status == BOUNDED_LOWER) {
-               this->single_lower_bounded_variables.emplace_back(variable_index);
-            }
-         }
-         if (status == BOUNDED_UPPER || status == BOUNDED_BOTH_SIDES) {
-            this->upper_bounded_variables.emplace_back(variable_index);
-            if (status == BOUNDED_UPPER) {
-               this->single_upper_bounded_variables.emplace_back(variable_index);
-            }
-         }
-      }
-   }
-
    double AMPLModel::evaluate_objective(const Vector<double>& x) const {
       fint error_flag = 0;
       double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
@@ -140,14 +112,15 @@ namespace uno {
          throw GradientEvaluationError();
       }
 
-      // create the Uno sparse vector
-      ograd* asl_variables_tmp = this->asl->i.Ograd_[0];
-      while (asl_variables_tmp != nullptr) {
-         const size_t variable_index = static_cast<size_t>(asl_variables_tmp->varno);
+      // fill the result
+      gradient.clear();
+      ograd* sparse_vector = this->asl->i.Ograd_[0];
+      while (sparse_vector != nullptr) {
+         const size_t variable_index = static_cast<size_t>(sparse_vector->varno);
          // scale by the objective sign
          const double partial_derivative = this->objective_sign*this->asl_gradient[variable_index];
          gradient.insert(variable_index, partial_derivative);
-         asl_variables_tmp = asl_variables_tmp->next;
+         sparse_vector = sparse_vector->next;
       }
    }
 
@@ -162,7 +135,7 @@ namespace uno {
    }
    */
 
-   void AMPLModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
+   void AMPLModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       fint error_flag = 0;
       (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &error_flag);
       if (0 < error_flag) {
@@ -180,14 +153,14 @@ namespace uno {
          throw GradientEvaluationError();
       }
 
-      // construct the Uno sparse vector
+      // fill the result
       gradient.clear();
-      cgrad* asl_variables_tmp = this->asl->i.Cgrad_[constraint_index];
+      cgrad* sparse_vector = this->asl->i.Cgrad_[constraint_index];
       size_t sparse_asl_index = 0;
-      while (asl_variables_tmp != nullptr) {
-         const size_t variable_index = static_cast<size_t>(asl_variables_tmp->varno);
+      while (sparse_vector != nullptr) {
+         const size_t variable_index = static_cast<size_t>(sparse_vector->varno);
          gradient.insert(variable_index, this->asl_gradient[sparse_asl_index]);
-         asl_variables_tmp = asl_variables_tmp->next;
+         sparse_vector = sparse_vector->next;
          sparse_asl_index++;
       }
    }
@@ -199,73 +172,10 @@ namespace uno {
       }
    }
 
-   void AMPLModel::set_number_hessian_nonzeros() {
-      // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
-      // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
-      const int objective_number = -1;
-      const int upper_triangular = 1;
-      this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, 1, 1, upper_triangular));
-      this->asl_hessian.reserve(this->number_asl_hessian_nonzeros);
-   }
-
-   size_t AMPLModel::number_objective_gradient_nonzeros() const {
-      return static_cast<size_t>(this->asl->i.nzo_);
-   }
-
-   size_t AMPLModel::number_jacobian_nonzeros() const {
-      return static_cast<size_t>(this->asl->i.nzc_);
-   }
-
-   size_t AMPLModel::number_hessian_nonzeros() const {
-      return this->number_asl_hessian_nonzeros;
-   }
-
-   const Collection<size_t>& AMPLModel::get_equality_constraints() const {
-      return this->equality_constraints_collection;
-   }
-
-   const Collection<size_t>& AMPLModel::get_inequality_constraints() const {
-      return this->inequality_constraints_collection;
-   }
-
-   const Collection<size_t>& AMPLModel::get_linear_constraints() const {
-      return this->linear_constraints_collection;
-   }
-
-   const SparseVector<size_t>& AMPLModel::get_slacks() const {
-      return this->slacks;
-   }
-
-   const Collection<size_t>& AMPLModel::get_single_lower_bounded_variables() const {
-      return this->single_lower_bounded_variables_collection;
-   }
-
-   const Collection<size_t>& AMPLModel::get_single_upper_bounded_variables() const {
-      return this->single_upper_bounded_variables_collection;
-   }
-
-   const Collection<size_t>& AMPLModel::get_lower_bounded_variables() const {
-      return this->lower_bounded_variables_collection;
-   }
-
-   const Collection<size_t>& AMPLModel::get_upper_bounded_variables() const {
-      return this->upper_bounded_variables_collection;
-   }
-
    bool are_all_zeros(const Vector<double>& multipliers) {
       return std::all_of(multipliers.begin(), multipliers.end(), [](double xj) {
          return xj == 0.;
       });
-   }
-
-   size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, const Vector<double>& multipliers) const {
-      // compute the sparsity
-      const int objective_number = -1;
-      const int upper_triangular = 1;
-      const bool all_zeros_multipliers = are_all_zeros(multipliers);
-      int number_nonzeros = (*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, (objective_multiplier != 0.),
-            not all_zeros_multipliers, upper_triangular);
-      return static_cast<size_t>(number_nonzeros);
    }
 
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
@@ -354,6 +264,30 @@ namespace uno {
       return this->variable_status[variable_index];
    }
 
+   const Collection<size_t>& AMPLModel::get_lower_bounded_variables() const {
+      return this->lower_bounded_variables_collection;
+   }
+
+   const Collection<size_t>& AMPLModel::get_upper_bounded_variables() const {
+      return this->upper_bounded_variables_collection;
+   }
+
+   const SparseVector<size_t>& AMPLModel::get_slacks() const {
+      return this->slacks;
+   }
+
+   const Collection<size_t>& AMPLModel::get_single_lower_bounded_variables() const {
+      return this->single_lower_bounded_variables_collection;
+   }
+
+   const Collection<size_t>& AMPLModel::get_single_upper_bounded_variables() const {
+      return this->single_upper_bounded_variables_collection;
+   }
+
+   const Vector<size_t>& AMPLModel::get_fixed_variables() const {
+      return this->fixed_variables;
+   }
+
    double AMPLModel::constraint_lower_bound(size_t constraint_index) const {
       return this->constraint_lower_bounds[constraint_index];
    }
@@ -368,6 +302,18 @@ namespace uno {
 
    BoundType AMPLModel::get_constraint_bound_type(size_t constraint_index) const {
       return this->constraint_status[constraint_index];
+   }
+
+   const Collection<size_t>& AMPLModel::get_equality_constraints() const {
+      return this->equality_constraints_collection;
+   }
+
+   const Collection<size_t>& AMPLModel::get_inequality_constraints() const {
+      return this->inequality_constraints_collection;
+   }
+
+   const Collection<size_t>& AMPLModel::get_linear_constraints() const {
+      return this->linear_constraints_collection;
    }
 
    // initial primal point
@@ -424,6 +370,46 @@ namespace uno {
       }
    }
 
+   size_t AMPLModel::number_objective_gradient_nonzeros() const {
+      return static_cast<size_t>(this->asl->i.nzo_);
+   }
+
+   size_t AMPLModel::number_jacobian_nonzeros() const {
+      return static_cast<size_t>(this->asl->i.nzc_);
+   }
+
+   size_t AMPLModel::number_hessian_nonzeros() const {
+      return this->number_asl_hessian_nonzeros;
+   }
+
+   void AMPLModel::generate_variables() {
+      for (size_t variable_index: Range(this->number_variables)) {
+         this->variable_lower_bounds[variable_index] = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index] : -INF<double>;
+         this->variable_upper_bounds[variable_index] = (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index + 1] : INF<double>;
+         if (this->variable_lower_bounds[variable_index] == this->variable_upper_bounds[variable_index]) {
+            WARNING << "Variable x" << variable_index << " has identical bounds\n";
+            this->fixed_variables.emplace_back(variable_index);
+         }
+      }
+      AMPLModel::determine_bounds_types(this->variable_lower_bounds, this->variable_upper_bounds, this->variable_status);
+      // figure out the bounded variables
+      for (size_t variable_index: Range(this->number_variables)) {
+         const BoundType status = this->get_variable_bound_type(variable_index);
+         if (status == BOUNDED_LOWER || status == BOUNDED_BOTH_SIDES) {
+            this->lower_bounded_variables.emplace_back(variable_index);
+            if (status == BOUNDED_LOWER) {
+               this->single_lower_bounded_variables.emplace_back(variable_index);
+            }
+         }
+         if (status == BOUNDED_UPPER || status == BOUNDED_BOTH_SIDES) {
+            this->upper_bounded_variables.emplace_back(variable_index);
+            if (status == BOUNDED_UPPER) {
+               this->single_upper_bounded_variables.emplace_back(variable_index);
+            }
+         }
+      }
+   }
+
    void AMPLModel::generate_constraints() {
       for (size_t constraint_index: Range(this->number_constraints)) {
          this->constraint_lower_bounds[constraint_index] = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2*constraint_index] : -INF<double>;
@@ -450,6 +436,25 @@ namespace uno {
          this->constraint_type[constraint_index] = LINEAR;
          this->linear_constraints.emplace_back(constraint_index);
       }
+   }
+
+   void AMPLModel::set_number_hessian_nonzeros() {
+      // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
+      // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
+      const int objective_number = -1;
+      const int upper_triangular = 1;
+      this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, 1, 1, upper_triangular));
+      this->asl_hessian.reserve(this->number_asl_hessian_nonzeros);
+   }
+
+   size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, const Vector<double>& multipliers) const {
+      // compute the sparsity
+      const int objective_number = -1;
+      const int upper_triangular = 1;
+      const bool all_zeros_multipliers = are_all_zeros(multipliers);
+      int number_nonzeros = (*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, (objective_multiplier != 0.),
+            not all_zeros_multipliers, upper_triangular);
+      return static_cast<size_t>(number_nonzeros);
    }
 
    void AMPLModel::determine_bounds_types(const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds, std::vector<BoundType>& status) {

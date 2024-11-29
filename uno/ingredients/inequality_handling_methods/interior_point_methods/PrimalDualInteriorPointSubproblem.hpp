@@ -4,7 +4,7 @@
 #ifndef UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H
 #define UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H
 
-#include "ingredients/subproblems/Subproblem.hpp"
+#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 
@@ -23,7 +23,7 @@ namespace uno {
       double push_variable_to_interior_k2;
    };
 
-   class PrimalDualInteriorPointSubproblem : public Subproblem {
+   class PrimalDualInteriorPointSubproblem : public InequalityHandlingMethod {
    public:
       PrimalDualInteriorPointSubproblem(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
             size_t number_hessian_nonzeros, const Options& options);

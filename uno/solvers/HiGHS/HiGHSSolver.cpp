@@ -138,7 +138,7 @@ namespace uno {
          const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
          const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
          const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& /*initial_point*/, Direction& direction,
-         const WarmstartInformation& /*warmstart_information*/) {
+         const WarmstartInformation& /*warmstart_information*/, const OptimizationProblem& problem) {
       // build the LP in the HiGHS format
       this->build_linear_subproblem(number_variables, number_constraints, variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
             constraints_upper_bounds, linear_objective, constraint_jacobian);

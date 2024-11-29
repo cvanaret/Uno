@@ -2,13 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
-#include <algorithm>
 #include "BQPDSolver.hpp"
-#include "optimization/Direction.hpp"
+#include "ingredients/local_models/LagrangeNewtonSubproblem.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "reformulation/OptimizationProblem.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
@@ -45,8 +46,8 @@ namespace uno {
    BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
          size_t number_hessian_nonzeros, BQPDProblemType problem_type, const Options& options):
          QPSolver(), number_hessian_nonzeros(number_hessian_nonzeros),
-         lb(number_variables + number_constraints),
-         ub(number_variables + number_constraints),
+         lower_bounds(number_variables + number_constraints),
+         upper_bounds(number_variables + number_constraints),
          jacobian(number_jacobian_nonzeros + number_objective_gradient_nonzeros), // Jacobian + objective gradient
          jacobian_sparsity(number_jacobian_nonzeros + number_objective_gradient_nonzeros + number_constraints + 3),
          kmax(problem_type == BQPDProblemType::QP ? options.get_int("BQPD_kmax") : 0), alp(static_cast<size_t>(this->mlp)),
@@ -58,112 +59,122 @@ namespace uno {
          size_hessian_workspace(number_hessian_nonzeros + static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * number_variables +
                                 number_constraints + this->mxwk0),
          size_hessian_sparsity_workspace(this->size_hessian_sparsity + static_cast<size_t>(this->kmax) + this->mxiwk0),
-         hessian_values(this->size_hessian_workspace),
-         hessian_sparsity(this->size_hessian_sparsity_workspace),
-         current_hessian_indices(number_variables),
-         print_subproblem(options.get_bool("print_subproblem")) {
+         workspace(this->size_hessian_workspace),
+         workspace_sparsity(this->size_hessian_sparsity_workspace),
+         print_subproblem(options.get_bool("print_subproblem")),
+         linear_objective(number_variables),
+         constraints(number_constraints),
+         constraint_jacobian(number_constraints, number_variables) {
       // default active set
       for (size_t variable_index: Range(number_variables + number_constraints)) {
          this->active_set[variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
       }
    }
 
-   void BQPDSolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
-         const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
-         const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<size_t, double>& hessian, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) {
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->save_hessian_to_local_format(hessian);
-      }
+   void BQPDSolver::solve_QP(const LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
+         const WarmstartInformation& warmstart_information) {
       if (this->print_subproblem) {
          DEBUG << "QP:\n";
-         DEBUG << "Hessian: " << hessian;
       }
-      this->solve_subproblem(number_variables, number_constraints, variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
-            constraints_upper_bounds, linear_objective, constraint_jacobian, initial_point, direction, warmstart_information);
+      this->set_up_subproblem(warmstart_information, subproblem);
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed || warmstart_information.problem_changed) {
+         this->save_hessian(subproblem);
+      }
+      this->solve_subproblem(initial_point, direction, warmstart_information, subproblem);
    }
 
-   void BQPDSolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
-         const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
-         const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
+   void BQPDSolver::solve_LP(const LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) {
       if (this->print_subproblem) {
          DEBUG << "LP:\n";
       }
-      this->solve_subproblem(number_variables, number_constraints, variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
-            constraints_upper_bounds, linear_objective, constraint_jacobian, initial_point, direction, warmstart_information);
+      this->set_up_subproblem(warmstart_information, subproblem);
+      this->solve_subproblem(initial_point, direction, warmstart_information, subproblem);
    }
 
-   void BQPDSolver::solve_subproblem(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
-         const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
-         const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
-         const WarmstartInformation& warmstart_information) {
-      // initialize wsc_ common block (Hessian & workspace for BQPD)
+   void BQPDSolver::set_up_subproblem(const WarmstartInformation& warmstart_information, const LagrangeNewtonSubproblem& subproblem) {
+      // initialize WSC common block (Hessian & workspace for BQPD)
       // setting the common block here ensures that several instances of BQPD can run simultaneously
-      WSC.kk = static_cast<int>(this->number_hessian_nonzeros);
-      WSC.ll = static_cast<int>(this->size_hessian_sparsity);
+      WSC.kk = 0;
+      WSC.ll = 0;
       WSC.mxws = static_cast<int>(this->size_hessian_workspace);
       WSC.mxlws = static_cast<int>(this->size_hessian_sparsity_workspace);
       ALPHAC.alpha = 0; // inertia control
 
+      // objective gradient, constraints and constraint Jacobian
+      if (warmstart_information.objective_changed) {
+         subproblem.evaluate_objective_gradient(this->linear_objective);
+      }
+      if (warmstart_information.constraints_changed) {
+         subproblem.evaluate_constraints(this->constraints);
+         subproblem.evaluate_constraint_jacobian(this->constraint_jacobian);
+      }
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         this->save_gradients_to_local_format(subproblem.number_constraints, this->linear_objective, this->constraint_jacobian);
+      }
+
+      // set bounds of the variable displacements
+      if (warmstart_information.variable_bounds_changed) {
+         subproblem.set_direction_bounds(this->lower_bounds, this->upper_bounds);
+      }
+
+      // set bounds of the linearized constraints
+      if (warmstart_information.constraint_bounds_changed) {
+         auto constraint_lower_bounds = view(this->lower_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
+         auto constraint_upper_bounds = view(this->upper_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
+         subproblem.set_constraint_bounds(this->constraints, constraint_lower_bounds, constraint_upper_bounds);
+      }
+
       if (this->print_subproblem) {
          DEBUG << "objective gradient: " << linear_objective;
-         for (size_t constraint_index: Range(number_constraints)) {
+         for (size_t constraint_index: Range(subproblem.number_constraints)) {
             DEBUG << "gradient c" << constraint_index << ": " << constraint_jacobian[constraint_index];
          }
-         for (size_t variable_index: Range(number_variables)) {
-            DEBUG << "d" << variable_index << " in [" << variables_lower_bounds[variable_index] << ", " << variables_upper_bounds[variable_index] << "]\n";
-         }
-         for (size_t constraint_index: Range(number_constraints)) {
-            DEBUG << "linearized c" << constraint_index << " in [" << constraints_lower_bounds[constraint_index] << ", " << constraints_upper_bounds[constraint_index] << "]\n";
-         }
-      }
 
-      // Jacobian (objective and constraints)
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->save_gradients_to_local_format(number_constraints, linear_objective, constraint_jacobian);
-      }
+         for (size_t variable_index: Range(subproblem.number_variables)) {
+            DEBUG << "d" << variable_index << " in [" << this->lower_bounds[variable_index] << ", " << this->upper_bounds[variable_index] << "]\n";
+         }
 
-      // set variable bounds
-      if (warmstart_information.variable_bounds_changed) {
-         for (size_t variable_index: Range(number_variables)) {
-            this->lb[variable_index] = (variables_lower_bounds[variable_index] == -INF<double>) ? -BIG : variables_lower_bounds[variable_index];
-            this->ub[variable_index] = (variables_upper_bounds[variable_index] == INF<double>) ? BIG : variables_upper_bounds[variable_index];
+         auto constraint_lower_bounds = view(this->lower_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
+         auto constraint_upper_bounds = view(this->upper_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
+         for (size_t constraint_index: Range(subproblem.number_constraints)) {
+            DEBUG << "linearized c" << constraint_index << " in [" << constraint_lower_bounds[constraint_index] << ", " << constraint_upper_bounds[constraint_index] << "]\n";
          }
       }
-      // set constraint bounds
-      if (warmstart_information.constraint_bounds_changed) {
-         for (size_t constraint_index: Range(number_constraints)) {
-            this->lb[number_variables + constraint_index] = (constraints_lower_bounds[constraint_index] == -INF<double>) ? -BIG : constraints_lower_bounds[constraint_index];
-            this->ub[number_variables + constraint_index] = (constraints_upper_bounds[constraint_index] == INF<double>) ? BIG : constraints_upper_bounds[constraint_index];
-         }
-      }
+   }
 
+   void BQPDSolver::save_hessian(const LagrangeNewtonSubproblem& subproblem) {
+      // hide subproblem in lws
+      intptr_t pointer_to_subproblem = reinterpret_cast<intptr_t>(&subproblem);
+      std::copy(reinterpret_cast<const char *>(&pointer_to_subproblem), reinterpret_cast<const char *>(&pointer_to_subproblem) + sizeof(intptr_t),
+            reinterpret_cast<char *>(this->workspace_sparsity.data()));
+      WSC.ll += sizeof(intptr_t);
+   }
+
+   void BQPDSolver::solve_subproblem(const Vector<double>& initial_point, Direction& direction,
+         const WarmstartInformation& warmstart_information, const LagrangeNewtonSubproblem& subproblem) {
       direction.primals = initial_point;
-      const int n = static_cast<int>(number_variables);
-      const int m = static_cast<int>(number_constraints);
+      const int n = static_cast<int>(subproblem.number_variables);
+      const int m = static_cast<int>(subproblem.number_constraints);
 
       const BQPDMode mode = this->determine_mode(warmstart_information);
       const int mode_integer = static_cast<int>(mode);
 
       // solve the LP/QP
-      BQPD(&n, &m, &this->k, &this->kmax, this->jacobian.data(), this->jacobian_sparsity.data(), direction.primals.data(), this->lb.data(),
-            this->ub.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(), this->residuals.data(), this->w.data(),
-            this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp, &this->peq_solution, this->hessian_values.data(),
-            this->hessian_sparsity.data(), &mode_integer, &this->ifail, this->info.data(), &this->iprint, &this->nout);
+      BQPD(&n, &m, &this->k, &this->kmax, this->jacobian.data(), this->jacobian_sparsity.data(), direction.primals.data(), this->lower_bounds.data(),
+            this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(), this->residuals.data(), this->w.data(),
+            this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp, &this->peq_solution, this->workspace.data(),
+            this->workspace_sparsity.data(), &mode_integer, &this->ifail, this->info.data(), &this->iprint, &this->nout);
       const BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
       direction.status = BQPDSolver::status_from_bqpd_status(bqpd_status);
       this->number_calls++;
 
       // project solution into bounds
-      for (size_t variable_index: Range(number_variables)) {
-         direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], variables_lower_bounds[variable_index]),
-               variables_upper_bounds[variable_index]);
+      for (size_t variable_index: Range(subproblem.number_variables)) {
+         direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], this->lower_bounds[variable_index]),
+               this->upper_bounds[variable_index]);
       }
-      this->categorize_constraints(number_variables, direction);
+      this->categorize_constraints(subproblem.number_variables, direction);
    }
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) const {
@@ -178,40 +189,6 @@ namespace uno {
          mode = BQPDMode::UNCHANGED_ACTIVE_SET_AND_JACOBIAN;
       }
       return mode;
-   }
-
-   // save Hessian (in arbitrary format) to a "weak" CSC format: compressed columns but row indices are not sorted, nor unique
-   void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix<size_t, double>& hessian) {
-      const size_t header_size = 1;
-      // pointers withing the single array
-      int* row_indices = &this->hessian_sparsity[header_size];
-      int* column_starts = &this->hessian_sparsity[header_size + hessian.number_nonzeros()];
-      // header
-      this->hessian_sparsity[0] = static_cast<int>(hessian.number_nonzeros() + 1);
-      // count the elements in each column
-      for (size_t column_index: Range(hessian.dimension() + 1)) {
-         column_starts[column_index] = 0;
-      }
-      for (const auto [row_index, column_index, element]: hessian) {
-         column_starts[column_index + 1]++;
-      }
-      // carry over the column starts
-      for (size_t column_index: Range(1, hessian.dimension() + 1)) {
-         column_starts[column_index] += column_starts[column_index - 1];
-         column_starts[column_index - 1] += this->fortran_shift;
-      }
-      column_starts[hessian.dimension()] += this->fortran_shift;
-      // copy the entries
-      //std::vector<int> current_indices(hessian.dimension());
-      this->current_hessian_indices.fill(0);
-      for (const auto [row_index, column_index, element]: hessian) {
-         const size_t index = static_cast<size_t>(column_starts[column_index] + this->current_hessian_indices[column_index] - this->fortran_shift);
-         assert(index <= static_cast<size_t>(column_starts[column_index + 1]) &&
-                "BQPD: error in converting the Hessian matrix to the local format. Try setting the sparse format to CSC");
-         this->hessian_values[index] = element;
-         row_indices[index] = static_cast<int>(row_index) + this->fortran_shift;
-         this->current_hessian_indices[column_index]++;
-      }
    }
 
    void BQPDSolver::save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
@@ -316,11 +293,12 @@ namespace uno {
    }
 } // namespace
 
-void hessian_vector_product(int *n, const double x[], const double ws[], const int lws[], double v[]) {
+void hessian_vector_product(int *n, const double x[], const double /*ws*/[], const int lws[], double v[]) {
    for (int i = 0; i < *n; i++) {
       v[i] = 0.;
    }
 
+   /*
    int footer_start = lws[0];
    for (int i = 0; i < *n; i++) {
       for (int k = lws[footer_start + i]; k < lws[footer_start + i + 1]; k++) {
@@ -331,5 +309,21 @@ void hessian_vector_product(int *n, const double x[], const double ws[], const i
             v[j] += ws[k-1]*x[i];
          }
       }
+   }
+    */
+
+   // retrieve subproblem
+   intptr_t pointer_to_subproblem;
+   std::copy(reinterpret_cast<const char *>(lws), reinterpret_cast<const char *>(lws) + sizeof(intptr_t), reinterpret_cast<char *>(&pointer_to_subproblem));
+   const uno::LagrangeNewtonSubproblem* subproblem = reinterpret_cast<const uno::LagrangeNewtonSubproblem*>(pointer_to_subproblem);
+
+   uno::Vector<double> my_x(*n);
+   for (size_t variable_index: uno::Range(*n)) {
+      my_x[variable_index] = x[variable_index];
+   }
+   uno::Vector<double> result(*n);
+   subproblem->compute_hessian_vector_product(my_x, result);
+   for (size_t variable_index: uno::Range(*n)) {
+      v[variable_index] = result[variable_index];
    }
 }

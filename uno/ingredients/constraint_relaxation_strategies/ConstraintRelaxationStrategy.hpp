@@ -21,7 +21,7 @@ namespace uno {
    class OptimizationProblem;
    class Options;
    class Statistics;
-   class Subproblem;
+   class InequalityHandlingMethod;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
    class UserCallbacks;
@@ -64,7 +64,7 @@ namespace uno {
    protected:
       const Model& model;
       const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
-      const std::unique_ptr<Subproblem> subproblem;
+      const std::unique_ptr<InequalityHandlingMethod> subproblem;
       const Norm progress_norm;
       const Norm residual_norm;
       const double residual_scaling_threshold;

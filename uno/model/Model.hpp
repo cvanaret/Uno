@@ -49,7 +49,7 @@ namespace uno {
 
       [[nodiscard]] virtual double evaluate_objective(const Vector<double>& x) const = 0;
       virtual void evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const = 0;
-      virtual void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const = 0;
+      virtual void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const = 0;
       virtual void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const = 0;
       virtual void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const = 0;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,

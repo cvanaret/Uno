@@ -49,9 +49,10 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/globalization_strategies/switching_methods/filter_methods/filters/*.cpp
    uno/ingredients/globalization_strategies/switching_methods/funnel_methods/*.cpp
    uno/ingredients/hessian_models/*.cpp
-   uno/ingredients/subproblems/*.cpp
-   uno/ingredients/subproblems/inequality_constrained_methods/*.cpp
-   uno/ingredients/subproblems/interior_point_methods/*.cpp
+   uno/ingredients/local_models/*.cpp
+        uno/ingredients/inequality_handling_methods/*.cpp
+        uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
+        uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
    uno/model/*.cpp
    uno/optimization/*.cpp
    uno/options/*.cpp

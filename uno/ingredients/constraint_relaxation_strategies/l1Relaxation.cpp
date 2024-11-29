@@ -5,7 +5,7 @@
 #include "l1Relaxation.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "optimization/Direction.hpp"
-#include "ingredients/subproblems/Subproblem.hpp"
+#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/VectorView.hpp"

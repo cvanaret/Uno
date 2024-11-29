@@ -18,7 +18,7 @@
 namespace uno {
    PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(size_t number_variables, size_t number_constraints,
          size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
-         Subproblem("exact", number_variables, number_hessian_nonzeros, false, options),
+         InequalityHandlingMethod("exact", number_variables, number_hessian_nonzeros, false, options),
          objective_gradient(2 * number_variables), // original variables + barrier terms
          constraints(number_constraints),
          constraint_jacobian(number_constraints, number_variables),

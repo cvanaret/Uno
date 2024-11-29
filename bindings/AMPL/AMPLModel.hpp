@@ -33,7 +33,7 @@ namespace uno {
 
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
       void evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const override;
-      void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override;
+      void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override;
       void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
       void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
@@ -49,7 +49,7 @@ namespace uno {
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
       [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
       [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
-      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override { return this->fixed_variables; }
+      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;

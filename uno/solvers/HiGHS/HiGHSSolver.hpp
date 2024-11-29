@@ -17,7 +17,7 @@ namespace uno {
             const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
             const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
             const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
-            const WarmstartInformation& warmstart_information) override;
+            const WarmstartInformation& warmstart_information, const OptimizationProblem& problem) override;
 
    protected:
       HighsModel model;
@@ -27,7 +27,7 @@ namespace uno {
       void build_linear_subproblem(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
             const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
             const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-            const RectangularMatrix<double>& constraint_jacobian);
+            const RectangularMatrix<double>& constraint_jacobian, const OptimizationProblem& problem);
       void solve_subproblem(Direction& direction, size_t number_variables, size_t number_constraints);
    };
 } // namespace
