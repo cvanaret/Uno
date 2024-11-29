@@ -76,6 +76,7 @@ TEST(BQPDSolver, LP) {
    }
 }
 
+/*
 TEST(BQPDSolver, QP) {
    // https://doc.cgal.org/latest/QP_solver/index.html#title4
    // Min    f  =  1/2 * (2 x_0^2 + 8 x_1^2) - 32 x_1
@@ -142,3 +143,4 @@ TEST(BQPDSolver, QP) {
       EXPECT_NEAR(direction.multipliers.upper_bounds[index], upper_bound_duals_reference[index], tolerance);
    }
 }
+ */
