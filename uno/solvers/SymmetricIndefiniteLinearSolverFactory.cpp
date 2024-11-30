@@ -35,9 +35,9 @@ namespace uno {
          [[maybe_unused]] const std::string& linear_solver_name = options.get_string("linear_solver");
 #if defined(HAS_HSL) || defined(HAS_MA57)
          if (linear_solver_name == "MA57"
-#ifdef HAS_HSL
+   #ifdef HAS_HSL
             && LIBHSL_isfunctional()
-#endif
+   #endif
                ) {
             return std::make_unique<MA57Solver>(dimension, number_nonzeros);
          }
@@ -45,9 +45,9 @@ namespace uno {
 
 #if defined(HAS_HSL) || defined(HAS_MA27)
          if (linear_solver_name == "MA27"
-# ifdef HAS_HSL
+   # ifdef HAS_HSL
             && LIBHSL_isfunctional()         
-# endif
+   # endif
          ) {
             return std::make_unique<MA27Solver>(dimension, number_nonzeros);
          }
@@ -79,12 +79,14 @@ namespace uno {
             solvers.emplace_back("MA57");
             solvers.emplace_back("MA27");
          }
-#elif defined(HAS_MA57)
+#else
+   #ifdef HAS_MA57
       solvers.emplace_back("MA57");
-#elif defined(HAS_MA27)
+   #endif
+   #ifdef HAS_MA27
       solvers.emplace_back("MA27");
+   #endif
 #endif
-
 
 #ifdef HAS_MUMPS
       solvers.emplace_back("MUMPS");
