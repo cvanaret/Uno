@@ -12,6 +12,10 @@
 #include "solvers/MA57/MA57Solver.hpp"
 #endif
 
+#if defined(HAS_HSL) || defined(HAS_MA27)
+#include "solvers/MA27/MA27Solver.hpp"
+#endif
+
 #ifdef HAS_HSL
 namespace uno {
    extern "C" {
@@ -38,6 +42,17 @@ namespace uno {
             return std::make_unique<MA57Solver>(dimension, number_nonzeros);
          }
 #endif
+
+#if defined(HAS_HSL) || defined(HAS_MA27)
+         if (linear_solver_name == "MA27"
+# ifdef HAS_HSL
+            && LIBHSL_isfunctional()         
+# endif
+         ) {
+            return std::make_unique<MA27Solver>(dimension, number_nonzeros);
+         }
+#endif // HAS_HSL || HAS_MA27
+
 #ifdef HAS_MUMPS
          if (linear_solver_name == "MUMPS") {
             return std::make_unique<MUMPSSolver>(dimension, number_nonzeros);
@@ -62,10 +77,15 @@ namespace uno {
 #ifdef HAS_HSL
       if (LIBHSL_isfunctional()) {
             solvers.emplace_back("MA57");
+            solvers.emplace_back("MA27");
          }
 #elif defined(HAS_MA57)
       solvers.emplace_back("MA57");
+#elif defined(HAS_MA27)
+      solvers.emplace_back("MA27");
 #endif
+
+
 #ifdef HAS_MUMPS
       solvers.emplace_back("MUMPS");
 #endif
