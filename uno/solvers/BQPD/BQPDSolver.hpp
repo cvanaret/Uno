@@ -84,8 +84,8 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 
       void set_up_subproblem(const WarmstartInformation& warmstart_information, const LagrangeNewtonSubproblem& subproblem);
-      void solve_subproblem(const Vector<double>& initial_point, Direction& direction, const WarmstartInformation& warmstart_information,
-            const LagrangeNewtonSubproblem& subproblem);
+      void solve_subproblem(const LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
+            const WarmstartInformation& warmstart_information);
       void categorize_constraints(size_t number_variables, Direction& direction);
       void save_hessian(const LagrangeNewtonSubproblem& subproblem);
       void save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,

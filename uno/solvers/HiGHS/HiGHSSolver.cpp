@@ -5,12 +5,14 @@
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
    HiGHSSolver::HiGHSSolver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t /*number_hessian_nonzeros*/,
-         const Options& options): LPSolver(), print_subproblem(options.get_bool("print_subproblem")) {
+         const Options& options): LPSolver(), print_subproblem(options.get_bool("print_subproblem")),
+         linear_objective(number_variables), constraints(number_constraints), constraint_jacobian(number_constraints, number_variables) {
       this->model.lp_.sense_ = ObjSense::kMinimize;
       this->model.lp_.offset_ = 0.;
       // the linear part of the objective is a dense vector
@@ -37,8 +39,6 @@ namespace uno {
    }
 
    void HiGHSSolver::solve_subproblem(const LagrangeNewtonSubproblem& subproblem, Direction& direction) {
-
-
 /*
       HighsStatus passModel(const HighsInt num_col, const HighsInt num_row,
             const HighsInt num_nz, const HighsInt a_format,
@@ -95,61 +95,67 @@ namespace uno {
       direction.subproblem_objective = info.objective_function_value;
    }
 
+   // build the LP in the HiGHS format
    void HiGHSSolver::build_linear_subproblem(const LagrangeNewtonSubproblem& subproblem, const WarmstartInformation& warmstart_information) {
-      /*
       this->model.lp_.num_col_ = static_cast<HighsInt>(subproblem.number_variables);
       this->model.lp_.num_row_ = static_cast<HighsInt>(subproblem.number_constraints);
 
-      // variable bounds
-      for (size_t variable_index = 0; variable_index < subproblem.number_variables; variable_index++) {
-         this->model.lp_.col_lower_[variable_index] = variables_lower_bounds[variable_index];
-         this->model.lp_.col_upper_[variable_index] = variables_upper_bounds[variable_index];
-         // reset the linear part of the objective
-         this->model.lp_.col_cost_[variable_index] = 0.;
+      if (warmstart_information.variable_bounds_changed) {
+         subproblem.set_direction_bounds(this->model.lp_.col_lower_, this->model.lp_.col_upper_);
       }
 
       // linear part of the objective
-      for (const auto [variable_index, value]: linear_objective) {
-         this->model.lp_.col_cost_[variable_index] = value;
+      if (warmstart_information.objective_changed) {
+         for (size_t variable_index: Range(subproblem.number_variables)) {
+            this->model.lp_.col_cost_[variable_index] = 0.;
+         }
+         subproblem.evaluate_objective_gradient(this->linear_objective);
+         for (const auto [variable_index, value]: this->linear_objective) {
+            this->model.lp_.col_cost_[variable_index] = value;
+         }
       }
 
       // constraint bounds
-      for (size_t constraint_index = 0; constraint_index < number_constraints; constraint_index++) {
-         this->model.lp_.row_lower_[constraint_index] = constraints_lower_bounds[constraint_index];
-         this->model.lp_.row_upper_[constraint_index] = constraints_upper_bounds[constraint_index];
+      if (warmstart_information.constraints_changed) {
+         subproblem.evaluate_constraints(this->constraints);
+      }
+      if (warmstart_information.constraint_bounds_changed) {
+         subproblem.set_constraint_bounds(this->constraints, this->model.lp_.row_lower_, this->model.lp_.row_upper_);
       }
 
       // constraint matrix
-      this->model.lp_.a_matrix_.value_.clear();
-      this->model.lp_.a_matrix_.index_.clear();
-      this->model.lp_.a_matrix_.start_.clear();
-
-      size_t number_nonzeros = 0;
-      this->model.lp_.a_matrix_.start_.emplace_back(number_nonzeros);
-      for (size_t constraint_index = 0; constraint_index < number_constraints; constraint_index++) {
-         for (const auto [variable_index, value]: constraint_jacobian[constraint_index]) {
-            this->model.lp_.a_matrix_.value_.emplace_back(value);
-            this->model.lp_.a_matrix_.index_.emplace_back(variable_index);
-            number_nonzeros++;
-         }
+      if (warmstart_information.constraints_changed) {
+         // TODO evaluate directly into this->model.lp_.a_matrix_
+         subproblem.evaluate_constraint_jacobian(this->constraint_jacobian);
+         this->model.lp_.a_matrix_.value_.clear();
+         this->model.lp_.a_matrix_.index_.clear();
+         this->model.lp_.a_matrix_.start_.clear();
+         size_t number_nonzeros = 0;
          this->model.lp_.a_matrix_.start_.emplace_back(number_nonzeros);
+         for (size_t constraint_index = 0; constraint_index < subproblem.number_constraints; constraint_index++) {
+            for (const auto [variable_index, value]: this->constraint_jacobian[constraint_index]) {
+               this->model.lp_.a_matrix_.value_.emplace_back(value);
+               this->model.lp_.a_matrix_.index_.emplace_back(variable_index);
+               number_nonzeros++;
+            }
+            this->model.lp_.a_matrix_.start_.emplace_back(number_nonzeros);
+         }
       }
 
       if (this->print_subproblem) {
-         DEBUG << "Linear objective part: "; print_vector(DEBUG, view(this->model.lp_.col_cost_, 0, number_variables));
+         DEBUG << "Linear objective part: "; print_vector(DEBUG, view(this->model.lp_.col_cost_, 0, subproblem.number_variables));
          DEBUG << "Jacobian:\n";
          DEBUG << "J = "; print_vector(DEBUG, this->model.lp_.a_matrix_.value_);
          DEBUG << "with column start: "; print_vector(DEBUG, this->model.lp_.a_matrix_.start_);
          DEBUG << "and row index: "; print_vector(DEBUG, this->model.lp_.a_matrix_.index_);
-         for (size_t variable_index = 0; variable_index < number_variables; variable_index++) {
+         for (size_t variable_index = 0; variable_index < subproblem.number_variables; variable_index++) {
             DEBUG << "d" << variable_index << " in [" << this->model.lp_.col_lower_[variable_index] << ", " <<
                this->model.lp_.col_upper_[variable_index] << "]\n";
          }
-         for (size_t constraint_index = 0; constraint_index < number_constraints; constraint_index++) {
+         for (size_t constraint_index = 0; constraint_index < subproblem.number_constraints; constraint_index++) {
             DEBUG << "linearized c" << constraint_index << " in [" << this->model.lp_.row_lower_[constraint_index] << ", " <<
                this->model.lp_.row_upper_[constraint_index]<< "]\n";
          }
       }
-       */
    }
 } // namespace

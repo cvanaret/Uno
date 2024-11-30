@@ -80,7 +80,7 @@ namespace uno {
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed || warmstart_information.problem_changed) {
          this->save_hessian(subproblem);
       }
-      this->solve_subproblem(initial_point, direction, warmstart_information, subproblem);
+      this->solve_subproblem(subproblem, initial_point, direction, warmstart_information);
    }
 
    void BQPDSolver::solve_LP(const LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
@@ -89,7 +89,7 @@ namespace uno {
          DEBUG << "LP:\n";
       }
       this->set_up_subproblem(warmstart_information, subproblem);
-      this->solve_subproblem(initial_point, direction, warmstart_information, subproblem);
+      this->solve_subproblem(subproblem, initial_point, direction, warmstart_information);
    }
 
    void BQPDSolver::set_up_subproblem(const WarmstartInformation& warmstart_information, const LagrangeNewtonSubproblem& subproblem) {
@@ -151,8 +151,8 @@ namespace uno {
       WSC.ll += sizeof(intptr_t);
    }
 
-   void BQPDSolver::solve_subproblem(const Vector<double>& initial_point, Direction& direction,
-         const WarmstartInformation& warmstart_information, const LagrangeNewtonSubproblem& subproblem) {
+   void BQPDSolver::solve_subproblem(const LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
+         const WarmstartInformation& warmstart_information) {
       direction.primals = initial_point;
       const int n = static_cast<int>(subproblem.number_variables);
       const int m = static_cast<int>(subproblem.number_constraints);
@@ -293,11 +293,7 @@ namespace uno {
    }
 } // namespace
 
-void hessian_vector_product(int *n, const double x[], const double /*ws*/[], const int lws[], double v[]) {
-   for (int i = 0; i < *n; i++) {
-      v[i] = 0.;
-   }
-
+void hessian_vector_product([[maybe_unused]] int *n, const double x[], const double /*ws*/[], const int lws[], double v[]) {
    /*
    int footer_start = lws[0];
    for (int i = 0; i < *n; i++) {
@@ -317,13 +313,19 @@ void hessian_vector_product(int *n, const double x[], const double /*ws*/[], con
    std::copy(reinterpret_cast<const char *>(lws), reinterpret_cast<const char *>(lws) + sizeof(intptr_t), reinterpret_cast<char *>(&pointer_to_subproblem));
    const uno::LagrangeNewtonSubproblem* subproblem = reinterpret_cast<const uno::LagrangeNewtonSubproblem*>(pointer_to_subproblem);
 
-   uno::Vector<double> my_x(*n);
-   for (size_t variable_index: uno::Range(*n)) {
-      my_x[variable_index] = x[variable_index];
+   assert(static_cast<size_t>(*n) == subproblem->number_variables && "BQPD and the subproblem do not have the same number of variables");
+   for (size_t i = 0; i < subproblem->number_variables; i++) {
+      v[i] = 0.;
    }
-   uno::Vector<double> result(*n);
-   subproblem->compute_hessian_vector_product(my_x, result);
-   for (size_t variable_index: uno::Range(*n)) {
+   // convert x[] and v[] into Vector<double>
+   // TODO improve that
+   uno::Vector<double> primals(subproblem->number_variables);
+   for (size_t variable_index: uno::Range(subproblem->number_variables)) {
+      primals[variable_index] = x[variable_index];
+   }
+   uno::Vector<double> result(subproblem->number_variables);
+   subproblem->compute_hessian_vector_product(primals, result);
+   for (size_t variable_index: uno::Range(subproblem->number_variables)) {
       v[variable_index] = result[variable_index];
    }
 }

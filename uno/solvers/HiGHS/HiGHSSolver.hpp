@@ -3,6 +3,9 @@
 
 #include "solvers/LPSolver.hpp"
 #include "Highs.h"
+#include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/Vector.hpp"
 
 namespace uno {
    // forward declaration
@@ -20,6 +23,10 @@ namespace uno {
       HighsModel model;
       Highs highs_solver;
       const bool print_subproblem;
+
+      SparseVector<double> linear_objective;
+      Vector<double> constraints;
+      RectangularMatrix<double> constraint_jacobian;
 
       void build_linear_subproblem(const LagrangeNewtonSubproblem& subproblem, const WarmstartInformation& warmstart_information);
       void solve_subproblem(const LagrangeNewtonSubproblem& subproblem, Direction& direction);
