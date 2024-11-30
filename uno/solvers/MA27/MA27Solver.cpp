@@ -290,7 +290,7 @@ enum eIFLAG {
 
     bool MA27Solver::matrix_is_singular() const
     {
-        return (info[eINFO::IFLAG] == eIFLAG::SINGULAR);
+        return (info[eINFO::IFLAG] == eIFLAG::SINGULAR || info[eINFO::IFLAG] == eIFLAG::RANKDEFECT);
     }
 
     size_t MA27Solver::rank() const
