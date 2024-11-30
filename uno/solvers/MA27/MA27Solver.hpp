@@ -1,3 +1,6 @@
+// Copyright (c) 2024 Manuel Schaich
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
 #ifndef UNO_MA27SOLVER_H
 #define UNO_MA27SOLVER_H
 
