@@ -27,9 +27,9 @@ extern "C"
 
 namespace uno
 {
-constexpr auto fortran_shift = 1;
 
-enum ICNTL {
+
+enum eICNTL {
     LP = 0, // sed by the subroutines as the output stream for error messages. If it is set to zero these messages will be suppressed. The default value is 6.
     MP, //used by the subroutines as the output stream for diagnostic printing and for warning messages. If it is set to zero then messages are suppressed. The default value is 6.
     LDIAG, // used by the subroutines to control diagnostic printing. If ICNTL(3) is equal to zero (the default), no diagnostic printing will be produced, a value of 1 will print scalar parameters (both in argument lists and in the control and information arrays) and a few entries of array parameters on entry and successful exit from each subroutine while ICNTL(3) equal to 2 will print all parameter values on entry and successful exit.
@@ -64,7 +64,7 @@ enum ICNTL {
     UNUSED_ICNTL5,
 };
 
-enum CNTL {
+enum eCNTL {
     U = 0, // used by the subroutine to control numerical pivoting. Values greater than 0.5 are treated as 0.5 and less than –0.5 as –0.5. Its default value is 0.1. If U is positive, numerical pivoting will be performed. If U is non-positive, no pivoting will be performed, the subroutine will fail if a zero pivot is encountered, and a flag (see section 2.3) will be set if not all pivots are of the same sign; the factorization will continue after a sign change is detected if U is zero but will exit immediately if U is less than zero. If the system is definite, then setting U to zero will decrease the factorization time while still providing a stable decomposition. For problems requiring greater than average numerical care a higher value than the default would be advisable.
     FRATIO, // given the default value of 1.0 by MA27I/ID. If MA27A/AD encounters a row of the reduced matrix with a proportion of entries greater than FRATIO, the row is treated as full. FRATIO is not altered by MA27.
     PIVTOL, // given the default value of 0.0 by MA27I/ID. MA27B/BD will not accept an entry with absolute value less than PIVTOL as a 1×1 pivot or the off-diagonal entry of a 2×2 pivot. PIVTOL is not altered by MA27.
@@ -72,7 +72,7 @@ enum CNTL {
     UNUSED_CNTL2,
 };
 
-enum INFO {
+enum eINFO {
     IFLAG = 0, // is an error flag. A value of zero indicates that the subroutine has performed successfully.
     IERROR, // provides supplementary information when there is an error.
     NRLTOT, // gives the total amount of REAL words required for a successful completion of MA27B/BD without the need for data compression provided no numerical pivoting is performed. The actual amount required may be higher because of numerical pivoting, but probably not by more than 3%. 
@@ -95,7 +95,7 @@ enum INFO {
     UNUSED_INFO5,
 };
 
-enum IFLAG {
+enum eIFLAG {
     NSTEPS = -7, // Value of NSTEPS outside the range 1 ≤ NSTEPS ≤ N (MA27B/BD entry).
     PIVOTSIGN = -6, // A change of sign of pivots has been detected when U was negative. INFO(2) is set to the pivot step at which the change was detected. (MA27B/BD entry only)
     SINGULAR = -5, // Matrix is singular (MA27B/BD entry only). INFO(2) is set to the pivot step at which singularity was detected
@@ -126,9 +126,9 @@ enum IFLAG {
         // set the default values of the controlling parameters
         MA27ID(icntl.data(), cntl.data());
         // suppress warning messages
-        icntl[ICNTL::LP] = 0;
-        icntl[ICNTL::MP] = 0;
-        icntl[ICNTL::LDIAG] = 0;
+        icntl[eICNTL::LP] = 0;
+        icntl[eICNTL::MP] = 0;
+        icntl[eICNTL::LDIAG] = 0;
     }
 
     void MA27Solver::factorize(const SymmetricMatrix<size_t, double> &matrix)
@@ -159,30 +159,30 @@ enum IFLAG {
                 icntl.data(), cntl.data(), 
                 info.data(), &ops);
 
-        factor.resize(static_cast<std::size_t>(3 * info[INFO::NRLNEC] / 2));
+        factor.resize(static_cast<std::size_t>(3 * info[eINFO::NRLNEC] / 2));
 
         std::copy(matrix.data_pointer(), matrix.data_pointer() + matrix.number_nonzeros(), factor.begin());
 
-        assert(IFLAG::SUCCESS == info[INFO::IFLAG] && "MA27: the symbolic factorization failed");
-        if (IFLAG::SUCCESS != info[INFO::IFLAG] )
+        assert(eIFLAG::SUCCESS == info[eINFO::IFLAG] && "MA27: the symbolic factorization failed");
+        if (eIFLAG::SUCCESS != info[eINFO::IFLAG] )
         {
-            WARNING << "MA27 has issued a warning: IFLAG = " << info[INFO::IFLAG] << " additional info, IERROR = " << info[INFO::IERROR] << '\n';
+            WARNING << "MA27 has issued a warning: IFLAG = " << info[eINFO::IFLAG] << " additional info, IERROR = " << info[eINFO::IERROR] << '\n';
         }
     }
 
     void MA27Solver::repeat_factorization_after_resizing() {
-        if (IFLAG::INSUFFICIENTINTEGER == info[INFO::IFLAG])
+        if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG])
         {
             INFO << "MA27: insufficient integer workspace, resizing and retrying. \n";
             // increase the size of iw
-            iw.resize(static_cast<std::size_t>(info[INFO::IERROR]));
+            iw.resize(static_cast<std::size_t>(info[eINFO::IERROR]));
         }
 
-        if (IFLAG::INSUFFICIENTREAL == info[INFO::IFLAG])
+        if (eIFLAG::INSUFFICIENTREAL == info[eINFO::IFLAG])
         {
             INFO << "MA27: insufficient real workspace, resizing and retrying. \n";
             // increase the size of factor
-            factor.resize(static_cast<std::size_t>(info[INFO::IERROR]));
+            factor.resize(static_cast<std::size_t>(info[eINFO::IERROR]));
         }
 
         int la = static_cast<int>(factor.size());
@@ -191,7 +191,7 @@ enum IFLAG {
         MA27BD(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw,
                    ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(), cntl.data(), info.data());
 
-        if (IFLAG::INSUFFICIENTINTEGER == info[INFO::IFLAG] || IFLAG::INSUFFICIENTREAL == info[INFO::IFLAG])
+        if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG] || eIFLAG::INSUFFICIENTREAL == info[eINFO::IFLAG])
         {
             repeat_factorization_after_resizing();
         }
@@ -208,16 +208,39 @@ enum IFLAG {
         MA27BD(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw,
                ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(), cntl.data(), info.data());
 
-        if (IFLAG::INSUFFICIENTINTEGER == info[INFO::IFLAG] || IFLAG::INSUFFICIENTREAL == info[INFO::IFLAG])
+        if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG] || eIFLAG::INSUFFICIENTREAL == info[eINFO::IFLAG])
         {
             repeat_factorization_after_resizing();
         }
 
-        assert(IFLAG::SUCCESS == info[INFO::IFLAG] && "MA27: the numerical factorization failed");
-        if (IFLAG::SUCCESS != info[INFO::IFLAG] )
+        switch (info[eINFO::IFLAG])
         {
-            WARNING << "MA27 has issued a warning: IFLAG = " << info[INFO::IFLAG] << " additional info, IERROR = " << info[INFO::IERROR] << '\n';
-        }              
+            case NSTEPS: 
+                WARNING << "MA27BD: Value of NSTEPS outside the range 1 ≤ NSTEPS ≤ N" << '\n';
+                break;
+            case PIVOTSIGN: 
+                WARNING << "MA27BD: A change of sign of pivots has been detected when U was negative. Detected at pivot step " << info[eINFO::IERROR] << '\n';
+                break;
+            case SINGULAR: 
+                WARNING << "MA27BD: Matrix is singular. Singularity detected during pivot step "<< info[eINFO::IERROR] << '\n';
+                break;
+            case NZOUTOFRANGE: 
+                WARNING << "MA27BD: Value of NZ out of range. NZ < 0." << '\n';
+                break;
+            case NOUTOFRANGE: 
+                WARNING << "MA27BD: Value of N out of range. N < 1." << '\n';
+                break;
+            case IDXOUTOFRANGE: 
+                WARNING << "MA27BD: Index (in IRN or ICN) out of range. " << info[eINFO::IERROR] << " indices affected." << '\n';
+                break;
+            case FALSEDEFINITENESS:  
+                WARNING << "MA27BD: Matrix was supposed to be definite, but pivots have different signs when factorizing. Detected " << info[eINFO::IERROR] << " sign changes." << '\n';
+                break;
+            case RANKDEFECT: 
+                WARNING << "MA27BD: Matrix is rank deficient. Rank: " << info[eINFO::IERROR] << " whereas dimension " << n << '\n';
+                break;
+        }
+
     }
 
     void MA27Solver::solve_indefinite_system([[maybe_unused]]const SymmetricMatrix<size_t, double> &matrix, const Vector<double> &rhs, Vector<double> &result)
@@ -242,10 +265,10 @@ enum IFLAG {
                 icntl.data(), 
                 info.data());
 
-        assert(info[INFO::IFLAG] == IFLAG::SUCCESS && "MA27: the solution failed");
-        if (IFLAG::SUCCESS != info[INFO::IFLAG] )
+        assert(info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the solution failed");
+        if (eIFLAG::SUCCESS != info[eINFO::IFLAG] )
         {
-            WARNING << "MA27 has issued a warning: IFLAG = " << info[INFO::IFLAG] << " additional info, IERROR = " << info[INFO::IERROR] << '\n';
+            WARNING << "MA27 has issued a warning: IFLAG = " << info[eINFO::IFLAG] << " additional info, IERROR = " << info[eINFO::IERROR] << '\n';
         }   
     }
 
@@ -262,17 +285,17 @@ enum IFLAG {
 
     size_t MA27Solver::number_negative_eigenvalues() const
     {
-        return static_cast<size_t>(info[INFO::NEIG]);
+        return static_cast<size_t>(info[eINFO::NEIG]);
     }
 
     bool MA27Solver::matrix_is_singular() const
     {
-        return (info[INFO::IFLAG] == IFLAG::SINGULAR);
+        return (info[eINFO::IFLAG] == eIFLAG::SINGULAR);
     }
 
     size_t MA27Solver::rank() const
     {
-        return info[INFO::IFLAG] == IFLAG::RANKDEFECT ? static_cast<size_t>(info[INFO::IERROR]) : static_cast<size_t>(n);
+        return info[eINFO::IFLAG] == eIFLAG::RANKDEFECT ? static_cast<size_t>(info[eINFO::IERROR]) : static_cast<size_t>(n);
     }
 
     void MA27Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double> &matrix)
@@ -280,7 +303,7 @@ enum IFLAG {
         // build the internal matrix representation
         irn.clear();
         icn.clear();
-
+        constexpr auto fortran_shift = 1;
         for (const auto [row_index, column_index, element] : matrix)
         {
             irn.emplace_back(static_cast<int>(row_index + fortran_shift));
