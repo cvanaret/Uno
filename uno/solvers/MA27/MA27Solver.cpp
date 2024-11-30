@@ -1,3 +1,5 @@
+// Copyright (c) 2024 Manuel Schaich
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
 #include "MA27Solver.hpp"
