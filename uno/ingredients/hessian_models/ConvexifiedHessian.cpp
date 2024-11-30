@@ -1,7 +1,6 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <stdexcept>
 #include "ConvexifiedHessian.hpp"
 #include "ingredients/hessian_models/UnstableRegularization.hpp"
 #include "reformulation/OptimizationProblem.hpp"
@@ -9,7 +8,6 @@
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
-#include "tools/Infinity.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {

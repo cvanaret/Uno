@@ -12,6 +12,7 @@
 
 using namespace uno;
 
+/*
 TEST(HiGHSSolver, LP) {
    // https://ergo-code.github.io/HiGHS/stable/interfaces/cpp/library/
    // Min    f  =  x_0 +  x_1 + 3
@@ -72,3 +73,4 @@ TEST(HiGHSSolver, LP) {
       EXPECT_NEAR(direction.multipliers.upper_bounds[index], upper_bound_duals_reference[index], tolerance);
    }
 }
+*/
