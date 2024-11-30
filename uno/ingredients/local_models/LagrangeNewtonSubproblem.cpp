@@ -15,6 +15,7 @@ namespace uno {
          trust_region_radius(trust_region_radius) { }
 
    void LagrangeNewtonSubproblem::evaluate_objective_gradient(SparseVector<double>& gradient) const {
+      gradient.clear();
       this->problem.evaluate_objective_gradient(this->current_iterate, gradient);
    }
 
