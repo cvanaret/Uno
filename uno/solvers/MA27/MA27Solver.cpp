@@ -170,6 +170,33 @@ enum IFLAG {
         }
     }
 
+    void MA27Solver::repeat_factorization_after_resizing() {
+        if (IFLAG::INSUFFICIENTINTEGER == info[INFO::IFLAG])
+        {
+            INFO << "MA27: insufficient integer workspace, resizing and retrying. \n";
+            // increase the size of iw
+            iw.resize(static_cast<std::size_t>(info[INFO::IERROR]));
+        }
+
+        if (IFLAG::INSUFFICIENTREAL == info[INFO::IFLAG])
+        {
+            INFO << "MA27: insufficient real workspace, resizing and retrying. \n";
+            // increase the size of factor
+            factor.resize(static_cast<std::size_t>(info[INFO::IERROR]));
+        }
+
+        int la = static_cast<int>(factor.size());
+        int liw = static_cast<int>(iw.size());
+
+        MA27BD(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw,
+                   ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(), cntl.data(), info.data());
+
+        if (IFLAG::INSUFFICIENTINTEGER == info[INFO::IFLAG] || IFLAG::INSUFFICIENTREAL == info[INFO::IFLAG])
+        {
+            repeat_factorization_after_resizing();
+        }
+    }
+
     void MA27Solver::do_numerical_factorization([[maybe_unused]]const SymmetricMatrix<size_t, double> &matrix)
     {
         assert(matrix.dimension() <= iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
@@ -180,6 +207,11 @@ enum IFLAG {
         int liw = static_cast<int>(iw.size());
         MA27BD(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw,
                ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(), cntl.data(), info.data());
+
+        if (IFLAG::INSUFFICIENTINTEGER == info[INFO::IFLAG] || IFLAG::INSUFFICIENTREAL == info[INFO::IFLAG])
+        {
+            repeat_factorization_after_resizing();
+        }
 
         assert(IFLAG::SUCCESS == info[INFO::IFLAG] && "MA27: the numerical factorization failed");
         if (IFLAG::SUCCESS != info[INFO::IFLAG] )
