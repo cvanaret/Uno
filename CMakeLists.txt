@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2024 Charlie Vanaret
+﻿# Copyright (c) 2018-2024 Charlie Vanaret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 cmake_minimum_required(VERSION 3.7)
@@ -107,11 +107,32 @@ else()
    else()
       message(WARNING "Optional library MA57 was not found.")
    endif()
+   find_library(MA27 ma27)
+   if(MA27)
+      link_to_uno(ma27 ${MA27})
+   else()
+      message(WARNING "Optional library MA27 was not found.")
+   endif()
 endif()
-if(HSL OR MA57)
+if(HSL)
+   list(APPEND UNO_SOURCE_FILES uno/solvers/MA57/MA57Solver.cpp)
+   list(APPEND UNO_SOURCE_FILES uno/solvers/MA27/MA27Solver.cpp)
+   
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA27SolverTests.cpp)
+   
+   find_package(BLAS REQUIRED)
+   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+elseif(MA57)
    list(APPEND UNO_SOURCE_FILES uno/solvers/MA57/MA57Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
    
+   find_package(BLAS REQUIRED)
+   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+elseif(MA27)
+   list(APPEND UNO_SOURCE_FILES uno/solvers/MA27/MA27Solver.cpp)
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA27SolverTests.cpp)
+
    find_package(BLAS REQUIRED)
    list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 endif()
