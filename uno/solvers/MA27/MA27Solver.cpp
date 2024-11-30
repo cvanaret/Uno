@@ -170,7 +170,7 @@ enum eIFLAG {
         }
     }
 
-    void MA27Solver::repeat_factorization_after_resizing() {
+    void MA27Solver::repeat_factorization_after_resizing([[maybe_unused]]const SymmetricMatrix<size_t, double> &matrix) {
         if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG])
         {
             INFO << "MA27: insufficient integer workspace, resizing and retrying. \n";
@@ -193,7 +193,7 @@ enum eIFLAG {
 
         if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG] || eIFLAG::INSUFFICIENTREAL == info[eINFO::IFLAG])
         {
-            repeat_factorization_after_resizing();
+            repeat_factorization_after_resizing(matrix);
         }
     }
 
@@ -210,7 +210,7 @@ enum eIFLAG {
 
         if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG] || eIFLAG::INSUFFICIENTREAL == info[eINFO::IFLAG])
         {
-            repeat_factorization_after_resizing();
+            repeat_factorization_after_resizing(matrix);
         }
 
         switch (info[eINFO::IFLAG])
@@ -303,11 +303,13 @@ enum eIFLAG {
         // build the internal matrix representation
         irn.clear();
         icn.clear();
+        factor.clear();
         constexpr auto fortran_shift = 1;
         for (const auto [row_index, column_index, element] : matrix)
         {
             irn.emplace_back(static_cast<int>(row_index + fortran_shift));
             icn.emplace_back(static_cast<int>(column_index + fortran_shift));
+            factor.emplace_back(element);
         }
     }
 
