@@ -1,7 +1,6 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <cstdint>
 #include <gtest/gtest.h>
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "solvers/MA27/MA27Solver.hpp"
@@ -61,7 +60,7 @@ TEST(MA27Solver, SingularMatrix) {
    const size_t nnz = 7;
    // comes from hs015 solved with byrd preset
    SymmetricMatrix<size_t, double> matrix(n, nnz, false, "COO");
-   matrix.insert( -0.0198, 0, 0);
+   matrix.insert(-0.0198, 0, 0);
    matrix.insert(0.625075, 0, 0);
    matrix.insert(-0.277512, 0, 1);
    matrix.insert(-0.624975, 1, 1);
