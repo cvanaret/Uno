@@ -249,6 +249,10 @@ namespace uno {
       return this->single_upper_bounded_variables_collection;
    }
 
+   const Vector<size_t>& AMPLModel::get_fixed_variables() const {
+      return this->fixed_variables;
+   }
+
    const Collection<size_t>& AMPLModel::get_lower_bounded_variables() const {
       return this->lower_bounded_variables_collection;
    }

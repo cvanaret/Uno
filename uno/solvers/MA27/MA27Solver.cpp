@@ -104,18 +104,20 @@ namespace uno {
       SUCCESS = 0, // Successful completion.
       IDXOUTOFRANGE = 1, // ndex (in IRN or ICN) out of range. Action taken by subroutine is to ignore any such entries and continue (MA27A/AD and MA27B/BD entries). INFO(2) is set to the number of faulty entries. Details of the first ten are printed on unit ICNTL(2).
       FALSEDEFINITENESS, // Pivots have different signs when factorizing a supposedly definite matrix (when the value of U in CNTL(1) is zero) (MA27B/BD entry only). INFO(2) is set to the number of sign changes. Note that this warning will overwrite an INFO(1)=1 warning. Details of the first ten are printed on unit ICNTL(2).
-      RANKDEFECT, // Matrix is rank deficient. In this case, a decomposition will still have been produced which will enable the subsequent solution of consistent equations (MA27B/BD entry only). INFO(2) will be set to the rank of the matrix. Note that this warning will overwrite an INFO(1)=1 or INFO(1)=2 warning.
+      RANK_DEFICIENT, // Matrix is rank deficient. In this case, a decomposition will still have been produced which will enable the subsequent solution of consistent equations (MA27B/BD entry only). INFO(2) will be set to the rank of the matrix. Note that this warning will overwrite an INFO(1)=1 or INFO(1)=2 warning.
    };
 
 
    MA27Solver::MA27Solver(size_t max_dimension, size_t max_number_nonzeros):
          DirectSymmetricIndefiniteLinearSolver<size_t, double>(max_dimension),
          nz_max(static_cast<int>(max_number_nonzeros)), n(static_cast<int>(max_dimension)), nnz(static_cast<int>(max_number_nonzeros)),
-         irn(max_number_nonzeros), icn(max_number_nonzeros), iw((2 * max_number_nonzeros + 3 * max_dimension + 1) * 6 / 5),
-         ikeep(3 * max_number_nonzeros), iw1(2 * max_dimension) {
-      iflag = 0;
-      // set the default values of the controlling parameters
+         irn(max_number_nonzeros), icn(max_number_nonzeros),
+         iw((2 * max_number_nonzeros + 3 * max_dimension + 1) * 6 / 5), // 20% more than 2*nnz + 3*n + 1
+         ikeep(3 * max_dimension), iw1(2 * max_dimension) {
+      // initialization: set the default values of the controlling parameters
       MA27ID(icntl.data(), cntl.data());
+      // a suitable pivot order is to be chosen automatically
+      iflag = 0;
       // suppress warning messages
       icntl[eICNTL::LP] = 0;
       icntl[eICNTL::MP] = 0;
@@ -123,7 +125,7 @@ namespace uno {
    }
 
    void MA27Solver::factorize(const SymmetricMatrix<size_t, double>& matrix) {
-      // // general factorization method: symbolic factorization and numerical factorization
+      // general factorization method: symbolic factorization and numerical factorization
       do_symbolic_factorization(matrix);
       do_numerical_factorization(matrix);
    }
@@ -144,41 +146,14 @@ namespace uno {
       MA27AD(&n, &nnz,                                   /* size info */
             irn.data(), icn.data(),                     /* matrix indices */
             iw.data(), &liw, ikeep.data(), iw1.data(),  /* solver workspace */
-            &nsteps, &iflag,
-            icntl.data(), cntl.data(),
-            info.data(), &ops);
+            &nsteps, &iflag, icntl.data(), cntl.data(), info.data(), &ops);
 
+      // resize the factor by at least INFO(5) (here, 50% more)
       factor.resize(static_cast<size_t>(3 * info[eINFO::NRLNEC] / 2));
 
-      std::copy(matrix.data_pointer(), matrix.data_pointer() + matrix.number_nonzeros(), factor.begin());
-
-      assert(eIFLAG::SUCCESS == info[eINFO::IFLAG] && "MA27: the symbolic factorization failed");
-      if (eIFLAG::SUCCESS != info[eINFO::IFLAG]) {
+      assert(info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the symbolic factorization failed");
+      if (info[eINFO::IFLAG] != eIFLAG::SUCCESS) {
          WARNING << "MA27 has issued a warning: IFLAG = " << info[eINFO::IFLAG] << " additional info, IERROR = " << info[eINFO::IERROR] << '\n';
-      }
-   }
-
-   void MA27Solver::repeat_factorization_after_resizing([[maybe_unused]]const SymmetricMatrix<size_t, double>& matrix) {
-      if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG]) {
-         INFO << "MA27: insufficient integer workspace, resizing and retrying. \n";
-         // increase the size of iw
-         iw.resize(static_cast<size_t>(info[eINFO::IERROR]));
-      }
-
-      if (eIFLAG::INSUFFICIENTREAL == info[eINFO::IFLAG]) {
-         INFO << "MA27: insufficient real workspace, resizing and retrying. \n";
-         // increase the size of factor
-         factor.resize(static_cast<size_t>(info[eINFO::IERROR]));
-      }
-
-      int la = static_cast<int>(factor.size());
-      int liw = static_cast<int>(iw.size());
-
-      MA27BD(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw,
-            ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(), cntl.data(), info.data());
-
-      if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG] || eIFLAG::INSUFFICIENTREAL == info[eINFO::IFLAG]) {
-         repeat_factorization_after_resizing(matrix);
       }
    }
 
@@ -186,16 +161,86 @@ namespace uno {
       assert(matrix.dimension() <= iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
       assert(nnz == static_cast<int>(matrix.number_nonzeros()) && "MA27Solver: the numbers of nonzeros do not match");
 
+      // initialize factor with the entries of the matrix. It will be modified by MA27BD
+      std::copy(matrix.data_pointer(), matrix.data_pointer() + matrix.number_nonzeros(), factor.begin());
+
       // numerical factorization
+      // may fail because of insufficient space. In this case, more memory is allocated and the factorization tried again
+      bool factorization_done = false;
+      while (not factorization_done) {
+         int la = static_cast<int>(factor.size());
+         int liw = static_cast<int>(iw.size());
+         MA27BD(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw, ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(),
+               cntl.data(), info.data());
+         factorization_done = true;
+
+         if (info[eINFO::IFLAG] == eIFLAG::INSUFFICIENTINTEGER) {
+            INFO << "MA27: insufficient integer workspace, resizing and retrying. \n";
+            // increase the size of iw
+            iw.resize(static_cast<size_t>(info[eINFO::IERROR]));
+            factorization_done = false;
+         }
+         if (info[eINFO::IFLAG] == eIFLAG::INSUFFICIENTREAL) {
+            INFO << "MA27: insufficient real workspace, resizing and retrying. \n";
+            // increase the size of factor
+            factor.resize(static_cast<size_t>(info[eINFO::IERROR]));
+            factorization_done = false;
+         }
+      }
+      this->w.resize(static_cast<size_t>(maxfrt));
+      this->check_factorization_status();
+   }
+
+   void MA27Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& /*matrix*/, const Vector<double>& rhs, Vector<double>& result) {
       int la = static_cast<int>(factor.size());
       int liw = static_cast<int>(iw.size());
-      MA27BD(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw,
-            ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(), cntl.data(), info.data());
 
-      if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG] || eIFLAG::INSUFFICIENTREAL == info[eINFO::IFLAG]) {
-         repeat_factorization_after_resizing(matrix);
+      result = rhs;
+
+      MA27CD(&n, factor.data(), &la, iw.data(), &liw, w.data(), &maxfrt, result.data(), iw1.data(), &nsteps, icntl.data(), info.data());
+
+      assert(info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the linear solve failed");
+      if (info[eINFO::IFLAG] != eIFLAG::SUCCESS) {
+         WARNING << "MA27 has issued a warning: IFLAG = " << info[eINFO::IFLAG] << " additional info, IERROR = " << info[eINFO::IERROR] << '\n';
       }
+   }
 
+   std::tuple<size_t, size_t, size_t> MA27Solver::get_inertia() const {
+      // rank = number_positive_eigenvalues + number_negative_eigenvalues
+      // n = rank + number_zero_eigenvalues
+      const size_t rankA = rank();
+      const size_t num_negative_eigenvalues = number_negative_eigenvalues();
+      const size_t num_positive_eigenvalues = rankA - num_negative_eigenvalues;
+      const size_t num_zero_eigenvalues = static_cast<size_t>(n) - rankA;
+      return std::make_tuple(num_positive_eigenvalues, num_negative_eigenvalues, num_zero_eigenvalues);
+   }
+
+   size_t MA27Solver::number_negative_eigenvalues() const {
+      return static_cast<size_t>(info[eINFO::NEIG]);
+   }
+
+   bool MA27Solver::matrix_is_singular() const {
+      return (info[eINFO::IFLAG] == eIFLAG::SINGULAR || info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT);
+   }
+
+   size_t MA27Solver::rank() const {
+      return (info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT) ? static_cast<size_t>(info[eINFO::IERROR]) : static_cast<size_t>(n);
+   }
+
+   void MA27Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
+      // build the internal matrix representation
+      irn.clear();
+      icn.clear();
+      factor.clear();
+      constexpr auto fortran_shift = 1;
+      for (const auto [row_index, column_index, element]: matrix) {
+         irn.emplace_back(static_cast<int>(row_index + fortran_shift));
+         icn.emplace_back(static_cast<int>(column_index + fortran_shift));
+         factor.emplace_back(element);
+      }
+   }
+
+   void MA27Solver::check_factorization_status() {
       switch (info[eINFO::IFLAG]) {
          case NSTEPS:
             WARNING << "MA27BD: Value of NSTEPS outside the range 1 ≤ NSTEPS ≤ N" << '\n';
@@ -220,62 +265,9 @@ namespace uno {
             WARNING << "MA27BD: Matrix was supposed to be definite, but pivots have different signs when factorizing. Detected "
                     << info[eINFO::IERROR] << " sign changes." << '\n';
             break;
-         case RANKDEFECT:
+         case RANK_DEFICIENT:
             DEBUG << "MA27BD: Matrix is rank deficient. Rank: " << info[eINFO::IERROR] << " whereas dimension " << n << '\n';
             break;
-      }
-
-   }
-
-   void MA27Solver::solve_indefinite_system([[maybe_unused]]const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs,
-         Vector<double>& result) {
-      // solve
-      std::vector<double> w(maxfrt); // double workspace
-      int la = static_cast<int>(factor.size());
-      int liw = static_cast<int>(iw.size());
-
-      result = rhs;
-
-      MA27CD(&n, factor.data(), &la, iw.data(), &liw, w.data(), &maxfrt, result.data(), iw1.data(), &nsteps, icntl.data(), info.data());
-
-      assert(info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the solution failed");
-      if (eIFLAG::SUCCESS != info[eINFO::IFLAG]) {
-         WARNING << "MA27 has issued a warning: IFLAG = " << info[eINFO::IFLAG] << " additional info, IERROR = " << info[eINFO::IERROR] << '\n';
-      }
-   }
-
-   std::tuple<size_t, size_t, size_t> MA27Solver::get_inertia() const {
-      // rank = number_positive_eigenvalues + number_negative_eigenvalues
-      // n = rank + number_zero_eigenvalues
-      const size_t rankA = rank();
-      const size_t num_negative_eigenvalues = number_negative_eigenvalues();
-      const size_t num_positive_eigenvalues = rankA - num_negative_eigenvalues;
-      const size_t num_zero_eigenvalues = static_cast<size_t>(n) - rankA;
-      return std::make_tuple(num_positive_eigenvalues, num_negative_eigenvalues, num_zero_eigenvalues);
-   }
-
-   size_t MA27Solver::number_negative_eigenvalues() const {
-      return static_cast<size_t>(info[eINFO::NEIG]);
-   }
-
-   bool MA27Solver::matrix_is_singular() const {
-      return (info[eINFO::IFLAG] == eIFLAG::SINGULAR || info[eINFO::IFLAG] == eIFLAG::RANKDEFECT);
-   }
-
-   size_t MA27Solver::rank() const {
-      return info[eINFO::IFLAG] == eIFLAG::RANKDEFECT ? static_cast<size_t>(info[eINFO::IERROR]) : static_cast<size_t>(n);
-   }
-
-   void MA27Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
-      // build the internal matrix representation
-      irn.clear();
-      icn.clear();
-      factor.clear();
-      constexpr auto fortran_shift = 1;
-      for (const auto[row_index, column_index, element]: matrix) {
-         irn.emplace_back(static_cast<int>(row_index + fortran_shift));
-         icn.emplace_back(static_cast<int>(column_index + fortran_shift));
-         factor.emplace_back(element);
       }
    }
 } // namespace

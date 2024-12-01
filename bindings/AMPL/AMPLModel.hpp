@@ -47,7 +47,7 @@ namespace uno {
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
       [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
       [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
-      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override { return this->fixed_variables; }
+      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;

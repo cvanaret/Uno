@@ -37,8 +37,8 @@ private:
    int nz_max{};                    // maximal number of nonzeros entries
    int n{};			                // dimension of current factorisation (maximal value here is <= max_dimension)
    int nnz{};			            // number of nonzeros of current factorisation
-   std::array<int,30> icntl{};      // integer array of length 30; integer control values
-   std::array<double,5> cntl{};     // double array of length 5; double control values
+   std::array<int, 30> icntl{};      // integer array of length 30; integer control values
+   std::array<double, 5> cntl{};     // double array of length 5; double control values
 
    std::vector<int> irn{};          // row index of input
    std::vector<int> icn{};          // col index of input
@@ -48,16 +48,17 @@ private:
    std::vector<int> iw1{};          // integer workspace array of length n
    int nsteps{};                    // integer, to be set by ma27
    int iflag{};                     // integer; 0 if pivot order chosen automatically; 1 if the pivot order set by ikeep
-   std::array<int,20> info{};       // integer array of length 20
+   std::array<int, 20> info{};       // integer array of length 20
    double ops{};                    // double, operations count
 
    std::vector<double> factor{};    // data array of length la;
    int maxfrt{};                    // integer, to be set by ma27
+   std::vector<double> w{};         // double workspace
 
 
    // bool use_iterative_refinement{false}; // Not sure how to do this with ma27
    void save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix);
-   void repeat_factorization_after_resizing(const SymmetricMatrix<size_t, double> &matrix);
+   void check_factorization_status();
 };
 
 } // namespace uno
