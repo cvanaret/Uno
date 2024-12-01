@@ -151,7 +151,7 @@ namespace uno {
       // resize the factor by at least INFO(5) (here, 50% more)
       factor.resize(static_cast<size_t>(3 * info[eINFO::NRLNEC] / 2));
 
-      assert(info[eINFO::IFLAG] && eIFLAG::SUCCESS && "MA27: the symbolic factorization failed");
+      assert(info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the symbolic factorization failed");
       if (info[eINFO::IFLAG] != eIFLAG::SUCCESS) {
          WARNING << "MA27 has issued a warning: IFLAG = " << info[eINFO::IFLAG] << " additional info, IERROR = " << info[eINFO::IERROR] << '\n';
       }
