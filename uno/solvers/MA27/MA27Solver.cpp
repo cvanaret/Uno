@@ -111,11 +111,13 @@ namespace uno {
    MA27Solver::MA27Solver(size_t max_dimension, size_t max_number_nonzeros):
          DirectSymmetricIndefiniteLinearSolver<size_t, double>(max_dimension),
          nz_max(static_cast<int>(max_number_nonzeros)), n(static_cast<int>(max_dimension)), nnz(static_cast<int>(max_number_nonzeros)),
-         irn(max_number_nonzeros), icn(max_number_nonzeros), iw((2 * max_number_nonzeros + 3 * max_dimension + 1) * 6 / 5),
-         ikeep(3 * max_number_nonzeros), iw1(2 * max_dimension) {
-      iflag = 0;
-      // set the default values of the controlling parameters
+         irn(max_number_nonzeros), icn(max_number_nonzeros),
+         iw((2 * max_number_nonzeros + 3 * max_dimension + 1) * 6 / 5), // 20% more than 2*nnz + 3*n + 1
+         ikeep(3 * max_dimension), iw1(2 * max_dimension) {
+      // initialization: set the default values of the controlling parameters
       MA27ID(icntl.data(), cntl.data());
+      // a suitable pivot order is to be chosen automatically
+      iflag = 0;
       // suppress warning messages
       icntl[eICNTL::LP] = 0;
       icntl[eICNTL::MP] = 0;
@@ -144,13 +146,10 @@ namespace uno {
       MA27AD(&n, &nnz,                                   /* size info */
             irn.data(), icn.data(),                     /* matrix indices */
             iw.data(), &liw, ikeep.data(), iw1.data(),  /* solver workspace */
-            &nsteps, &iflag,
-            icntl.data(), cntl.data(),
-            info.data(), &ops);
+            &nsteps, &iflag, icntl.data(), cntl.data(), info.data(), &ops);
 
+      // resize the factor by at least INFO(5) (here, 50% more)
       factor.resize(static_cast<size_t>(3 * info[eINFO::NRLNEC] / 2));
-
-      std::copy(matrix.data_pointer(), matrix.data_pointer() + matrix.number_nonzeros(), factor.begin());
 
       assert(eIFLAG::SUCCESS == info[eINFO::IFLAG] && "MA27: the symbolic factorization failed");
       if (eIFLAG::SUCCESS != info[eINFO::IFLAG]) {
@@ -185,6 +184,9 @@ namespace uno {
    void MA27Solver::do_numerical_factorization([[maybe_unused]]const SymmetricMatrix<size_t, double>& matrix) {
       assert(matrix.dimension() <= iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
       assert(nnz == static_cast<int>(matrix.number_nonzeros()) && "MA27Solver: the numbers of nonzeros do not match");
+
+      // initialize factor with the entries of the matrix. It will be modified by MA27BD
+      std::copy(matrix.data_pointer(), matrix.data_pointer() + matrix.number_nonzeros(), factor.begin());
 
       // numerical factorization
       int la = static_cast<int>(factor.size());
