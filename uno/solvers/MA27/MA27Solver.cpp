@@ -125,7 +125,7 @@ namespace uno {
    }
 
    void MA27Solver::factorize(const SymmetricMatrix<size_t, double>& matrix) {
-      // // general factorization method: symbolic factorization and numerical factorization
+      // general factorization method: symbolic factorization and numerical factorization
       do_symbolic_factorization(matrix);
       do_numerical_factorization(matrix);
    }
@@ -151,33 +151,9 @@ namespace uno {
       // resize the factor by at least INFO(5) (here, 50% more)
       factor.resize(static_cast<size_t>(3 * info[eINFO::NRLNEC] / 2));
 
-      assert(eIFLAG::SUCCESS == info[eINFO::IFLAG] && "MA27: the symbolic factorization failed");
-      if (eIFLAG::SUCCESS != info[eINFO::IFLAG]) {
+      assert(info[eINFO::IFLAG] && eIFLAG::SUCCESS && "MA27: the symbolic factorization failed");
+      if (info[eINFO::IFLAG] != eIFLAG::SUCCESS) {
          WARNING << "MA27 has issued a warning: IFLAG = " << info[eINFO::IFLAG] << " additional info, IERROR = " << info[eINFO::IERROR] << '\n';
-      }
-   }
-
-   void MA27Solver::repeat_factorization_after_resizing([[maybe_unused]]const SymmetricMatrix<size_t, double>& matrix) {
-      if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG]) {
-         INFO << "MA27: insufficient integer workspace, resizing and retrying. \n";
-         // increase the size of iw
-         iw.resize(static_cast<size_t>(info[eINFO::IERROR]));
-      }
-
-      if (eIFLAG::INSUFFICIENTREAL == info[eINFO::IFLAG]) {
-         INFO << "MA27: insufficient real workspace, resizing and retrying. \n";
-         // increase the size of factor
-         factor.resize(static_cast<size_t>(info[eINFO::IERROR]));
-      }
-
-      int la = static_cast<int>(factor.size());
-      int liw = static_cast<int>(iw.size());
-
-      MA27BD(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw,
-            ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(), cntl.data(), info.data());
-
-      if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG] || eIFLAG::INSUFFICIENTREAL == info[eINFO::IFLAG]) {
-         repeat_factorization_after_resizing(matrix);
       }
    }
 
@@ -197,6 +173,8 @@ namespace uno {
       if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG] || eIFLAG::INSUFFICIENTREAL == info[eINFO::IFLAG]) {
          repeat_factorization_after_resizing(matrix);
       }
+
+      this->w.resize(static_cast<size_t>(maxfrt));
 
       switch (info[eINFO::IFLAG]) {
          case NSTEPS:
@@ -226,13 +204,11 @@ namespace uno {
             DEBUG << "MA27BD: Matrix is rank deficient. Rank: " << info[eINFO::IERROR] << " whereas dimension " << n << '\n';
             break;
       }
-
    }
 
    void MA27Solver::solve_indefinite_system([[maybe_unused]]const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs,
          Vector<double>& result) {
       // solve
-      std::vector<double> w(maxfrt); // double workspace
       int la = static_cast<int>(factor.size());
       int liw = static_cast<int>(iw.size());
 
@@ -241,7 +217,7 @@ namespace uno {
       MA27CD(&n, factor.data(), &la, iw.data(), &liw, w.data(), &maxfrt, result.data(), iw1.data(), &nsteps, icntl.data(), info.data());
 
       assert(info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the solution failed");
-      if (eIFLAG::SUCCESS != info[eINFO::IFLAG]) {
+      if (info[eINFO::IFLAG] != eIFLAG::SUCCESS) {
          WARNING << "MA27 has issued a warning: IFLAG = " << info[eINFO::IFLAG] << " additional info, IERROR = " << info[eINFO::IERROR] << '\n';
       }
    }
@@ -278,6 +254,30 @@ namespace uno {
          irn.emplace_back(static_cast<int>(row_index + fortran_shift));
          icn.emplace_back(static_cast<int>(column_index + fortran_shift));
          factor.emplace_back(element);
+      }
+   }
+
+   void MA27Solver::repeat_factorization_after_resizing([[maybe_unused]] const SymmetricMatrix<size_t, double>& matrix) {
+      if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG]) {
+         INFO << "MA27: insufficient integer workspace, resizing and retrying. \n";
+         // increase the size of iw
+         iw.resize(static_cast<size_t>(info[eINFO::IERROR]));
+      }
+
+      if (eIFLAG::INSUFFICIENTREAL == info[eINFO::IFLAG]) {
+         INFO << "MA27: insufficient real workspace, resizing and retrying. \n";
+         // increase the size of factor
+         factor.resize(static_cast<size_t>(info[eINFO::IERROR]));
+      }
+
+      int la = static_cast<int>(factor.size());
+      int liw = static_cast<int>(iw.size());
+
+      MA27BD(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw,
+            ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(), cntl.data(), info.data());
+
+      if (eIFLAG::INSUFFICIENTINTEGER == info[eINFO::IFLAG] || eIFLAG::INSUFFICIENTREAL == info[eINFO::IFLAG]) {
+         repeat_factorization_after_resizing(matrix);
       }
    }
 } // namespace

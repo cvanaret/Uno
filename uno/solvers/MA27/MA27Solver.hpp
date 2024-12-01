@@ -53,6 +53,7 @@ private:
 
    std::vector<double> factor{};    // data array of length la;
    int maxfrt{};                    // integer, to be set by ma27
+   std::vector<double> w{};         // double workspace
 
 
    // bool use_iterative_refinement{false}; // Not sure how to do this with ma27
