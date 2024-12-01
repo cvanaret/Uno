@@ -92,7 +92,7 @@ namespace uno {
    void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(const Model& /*model*/,
          DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
       if (true || this->number_factorizations == 0) {
-         linear_solver.do_symbolic_factorization(this->matrix);
+         linear_solver.do_symbolic_analysis(this->matrix);
       }
       linear_solver.do_numerical_factorization(this->matrix);
       this->number_factorizations++;
