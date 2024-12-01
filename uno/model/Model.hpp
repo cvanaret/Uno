@@ -44,9 +44,6 @@ namespace uno {
       const size_t number_constraints; /*!< Number of constraints */
       const double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
 
-      // Hessian
-      const bool fixed_hessian_sparsity{true};
-
       [[nodiscard]] virtual double evaluate_objective(const Vector<double>& x) const = 0;
       virtual void evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const = 0;
       virtual void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const = 0;

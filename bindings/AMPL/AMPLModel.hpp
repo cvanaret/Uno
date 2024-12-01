@@ -47,7 +47,7 @@ namespace uno {
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
       [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
       [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
-      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override { return this->fixed_variables; }
+      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
@@ -108,7 +108,6 @@ namespace uno {
       void generate_constraints();
 
       void set_number_hessian_nonzeros();
-      [[nodiscard]] size_t compute_hessian_number_nonzeros(double objective_multiplier, const Vector<double>& multipliers) const;
       static void determine_bounds_types(const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds, std::vector<BoundType>& status);
    };
 

@@ -89,11 +89,9 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(const Model& model,
+   void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(const Model& /*model*/,
          DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
-      // compute the symbolic factorization only when:
-      // the problem has a non-constant augmented system (ie is not an LP or a QP) or it is the first factorization
-      if (true || this->number_factorizations == 0 || not model.fixed_hessian_sparsity) {
+      if (true || this->number_factorizations == 0) {
          linear_solver.do_symbolic_factorization(this->matrix);
       }
       linear_solver.do_numerical_factorization(this->matrix);
