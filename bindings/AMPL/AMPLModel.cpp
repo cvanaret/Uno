@@ -260,7 +260,7 @@ namespace uno {
    const Collection<size_t>& AMPLModel::get_upper_bounded_variables() const {
       return this->upper_bounded_variables_collection;
    }
-   
+
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
       assert(hessian.capacity() >= this->number_asl_hessian_nonzeros);

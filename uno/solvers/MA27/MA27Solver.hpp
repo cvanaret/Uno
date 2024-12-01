@@ -58,7 +58,7 @@ private:
 
    // bool use_iterative_refinement{false}; // Not sure how to do this with ma27
    void save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix);
-   void repeat_factorization_after_resizing(const SymmetricMatrix<size_t, double> &matrix);
+   void check_factorization_status();
 };
 
 } // namespace uno
