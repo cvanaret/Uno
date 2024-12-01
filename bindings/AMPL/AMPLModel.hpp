@@ -107,8 +107,7 @@ namespace uno {
       void generate_variables();
       void generate_constraints();
 
-      void set_number_hessian_nonzeros();
-      [[nodiscard]] size_t compute_hessian_number_nonzeros(double objective_multiplier, const Vector<double>& multipliers) const;
+      void compute_lagrangian_hessian_sparsity();
       static void determine_bounds_types(const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds, std::vector<BoundType>& status);
    };
 

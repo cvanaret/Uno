@@ -79,8 +79,8 @@ namespace uno {
       this->linear_constraints.reserve(this->number_constraints);
       this->generate_constraints();
 
-      // compute number of nonzeros in the Lagrangian Hessian
-      this->set_number_hessian_nonzeros();
+      // compute sparsity pattern and number of nonzeros of Lagrangian Hessian
+      this->compute_lagrangian_hessian_sparsity();
    }
 
    AMPLModel::~AMPLModel() {
@@ -199,13 +199,18 @@ namespace uno {
       }
    }
 
-   void AMPLModel::set_number_hessian_nonzeros() {
+   void AMPLModel::compute_lagrangian_hessian_sparsity() {
       // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
       // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
       const int objective_number = -1;
       const int upper_triangular = 1;
       this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, 1, 1, upper_triangular));
       this->asl_hessian.reserve(this->number_asl_hessian_nonzeros);
+
+      // sparsity pattern
+      [[maybe_unused]] const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
+      // check that the column pointers are sorted in increasing order
+      assert(in_increasing_order(asl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
    }
 
    size_t AMPLModel::number_objective_gradient_nonzeros() const {
@@ -252,49 +257,20 @@ namespace uno {
       return this->upper_bounded_variables_collection;
    }
 
-   bool are_all_zeros(const Vector<double>& multipliers) {
-      return std::all_of(multipliers.begin(), multipliers.end(), [](double xj) {
-         return xj == 0.;
-      });
-   }
-
-   size_t AMPLModel::compute_hessian_number_nonzeros(double objective_multiplier, const Vector<double>& multipliers) const {
-      // compute the sparsity
-      const int objective_number = -1;
-      const int upper_triangular = 1;
-      const bool all_zeros_multipliers = are_all_zeros(multipliers);
-      int number_nonzeros = (*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, (objective_multiplier != 0.),
-            not all_zeros_multipliers, upper_triangular);
-      return static_cast<size_t>(number_nonzeros);
-   }
-
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
+      assert(hessian.capacity() >= this->number_asl_hessian_nonzeros);
+
       // register the vector of variables
       (*(this->asl)->p.Xknown)(this->asl, const_cast<double*>(x.data()), nullptr);
 
-      // scale by the objective sign
-      objective_multiplier *= this->objective_sign;
-
-      // compute the number of nonzeros
-      [[maybe_unused]] const size_t number_nonzeros = this->fixed_hessian_sparsity ? this->number_asl_hessian_nonzeros :
-                                                      this->compute_hessian_number_nonzeros(objective_multiplier, multipliers);
-      assert(hessian.capacity() >= number_nonzeros);
-
       // evaluate the Hessian: store the matrix in a preallocated array this->asl_hessian
       const int objective_number = -1;
+      objective_multiplier *= this->objective_sign;
       // flip the signs of the multipliers: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
       this->multipliers_with_flipped_sign = -multipliers;
-      if (this->fixed_hessian_sparsity) {
-         (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->asl_hessian.data()), objective_number, &objective_multiplier,
-               const_cast<double*>(this->multipliers_with_flipped_sign.data()));
-      }
-      else {
-         double* objective_multiplier_pointer = (objective_multiplier != 0.) ? &objective_multiplier : nullptr;
-         const bool all_zeros_multipliers = are_all_zeros(multipliers);
-         (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->asl_hessian.data()), objective_number, objective_multiplier_pointer,
-               all_zeros_multipliers ? nullptr : const_cast<double*>(this->multipliers_with_flipped_sign.data()));
-      }
+      (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->asl_hessian.data()), objective_number, &objective_multiplier,
+            const_cast<double*>(this->multipliers_with_flipped_sign.data()));
 
       // generate the sparsity pattern in the right sparse format
       const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
