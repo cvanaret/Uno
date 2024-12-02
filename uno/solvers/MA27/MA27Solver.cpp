@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
+#include <stdexcept>
 #include "MA27Solver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -151,7 +152,7 @@ namespace uno {
       }
    }
 
-   void MA27Solver::do_numerical_factorization([[maybe_unused]]const SymmetricMatrix<size_t, double>& matrix) {
+   void MA27Solver::do_numerical_factorization([[maybe_unused]] const SymmetricMatrix<size_t, double>& matrix) {
       assert(matrix.dimension() <= iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
       assert(nnz == static_cast<int>(matrix.number_nonzeros()) && "MA27Solver: the numbers of nonzeros do not match");
 
@@ -161,7 +162,13 @@ namespace uno {
       // numerical factorization
       // may fail because of insufficient space. In this case, more memory is allocated and the factorization tried again
       bool factorization_done = false;
+      size_t attempt = 0;
       while (not factorization_done) {
+         attempt++;
+         if (this->number_factorization_attempts < attempt) {
+            throw std::runtime_error("MA27 reached the maximum number of factorization attempts");
+         }
+
          int la = static_cast<int>(factor.size());
          int liw = static_cast<int>(iw.size());
          MA27BD(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw, ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(),
