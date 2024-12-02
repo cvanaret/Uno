@@ -317,7 +317,9 @@ namespace uno {
 } // namespace
 
 void hessian_vector_product(int *n, const double x[], const double ws[], const int lws[], double v[]) {
-   for (size_t i = 0; i < *n; i++) {
+   assert(n != nullptr && "BQPDSolver::hessian_vector_product: the dimension n passed by pointer is NULL");
+
+   for (size_t i = 0; i < static_cast<size_t>(*n); i++) {
       v[i] = 0.;
    }
 

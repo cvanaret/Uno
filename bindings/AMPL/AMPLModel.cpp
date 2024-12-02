@@ -129,8 +129,8 @@ namespace uno {
       fint error_flag = 0;
       // prevent ASL to crash by catching all evaluation errors
       Jmp_buf err_jmp_uno;
-      asl->i.err_jmp_ = &err_jmp_uno;
-      asl->i.err_jmp1_ = &err_jmp_uno;
+      this->asl->i.err_jmp_ = &err_jmp_uno;
+      this->asl->i.err_jmp1_ = &err_jmp_uno;
       if (setjmp(err_jmp_uno.jb)) {
          error_flag = 1;
       }
@@ -199,68 +199,6 @@ namespace uno {
       }
    }
 
-   void AMPLModel::compute_lagrangian_hessian_sparsity() {
-      // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
-      // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
-      const int objective_number = -1;
-      const int upper_triangular = 1;
-      this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, 1, 1, upper_triangular));
-      this->asl_hessian.reserve(this->number_asl_hessian_nonzeros);
-
-      // sparsity pattern
-      [[maybe_unused]] const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
-      // check that the column pointers are sorted in increasing order
-      assert(in_increasing_order(asl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
-   }
-
-   size_t AMPLModel::number_objective_gradient_nonzeros() const {
-      return static_cast<size_t>(this->asl->i.nzo_);
-   }
-
-   size_t AMPLModel::number_jacobian_nonzeros() const {
-      return static_cast<size_t>(this->asl->i.nzc_);
-   }
-
-   size_t AMPLModel::number_hessian_nonzeros() const {
-      return this->number_asl_hessian_nonzeros;
-   }
-
-   const Collection<size_t>& AMPLModel::get_equality_constraints() const {
-      return this->equality_constraints_collection;
-   }
-
-   const Collection<size_t>& AMPLModel::get_inequality_constraints() const {
-      return this->inequality_constraints_collection;
-   }
-
-   const Collection<size_t>& AMPLModel::get_linear_constraints() const {
-      return this->linear_constraints_collection;
-   }
-
-   const SparseVector<size_t>& AMPLModel::get_slacks() const {
-      return this->slacks;
-   }
-
-   const Collection<size_t>& AMPLModel::get_single_lower_bounded_variables() const {
-      return this->single_lower_bounded_variables_collection;
-   }
-
-   const Collection<size_t>& AMPLModel::get_single_upper_bounded_variables() const {
-      return this->single_upper_bounded_variables_collection;
-   }
-
-   const Vector<size_t>& AMPLModel::get_fixed_variables() const {
-      return this->fixed_variables;
-   }
-
-   const Collection<size_t>& AMPLModel::get_lower_bounded_variables() const {
-      return this->lower_bounded_variables_collection;
-   }
-
-   const Collection<size_t>& AMPLModel::get_upper_bounded_variables() const {
-      return this->upper_bounded_variables_collection;
-   }
-
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
       assert(hessian.capacity() >= this->number_asl_hessian_nonzeros);
@@ -297,6 +235,31 @@ namespace uno {
       this->asl->i.x_known = 0;
    }
 
+   void AMPLModel::compute_hessian_vector_product(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
+         Vector<double>& result) const {
+      fint error_flag = 0;
+      // prevent ASL to crash by catching all evaluation errors
+      Jmp_buf err_jmp_uno;
+      this->asl->i.err_jmp_ = &err_jmp_uno;
+      this->asl->i.err_jmp1_ = &err_jmp_uno;
+      if (setjmp(err_jmp_uno.jb)) {
+         error_flag = 1;
+      }
+
+      // scale by the objective sign
+      objective_multiplier *= this->objective_sign;
+      const int objective_number = -1;
+      // flip the signs of the multipliers: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
+      this->multipliers_with_flipped_sign = -multipliers;
+
+      // compute the Hessian-vector product
+      (this->asl->p.Hvcomp)(this->asl, result.data(), const_cast<double*>(x.data()), objective_number, &objective_multiplier,
+            const_cast<double*>(this->multipliers_with_flipped_sign.data()));
+      if (error_flag) {
+         throw HessianEvaluationError();
+      }
+   }
+
    double AMPLModel::variable_lower_bound(size_t variable_index) const {
       return this->variable_lower_bounds[variable_index];
    }
@@ -307,6 +270,30 @@ namespace uno {
 
    BoundType AMPLModel::get_variable_bound_type(size_t variable_index) const {
       return this->variable_status[variable_index];
+   }
+
+   const Collection<size_t>& AMPLModel::get_lower_bounded_variables() const {
+      return this->lower_bounded_variables_collection;
+   }
+
+   const Collection<size_t>& AMPLModel::get_upper_bounded_variables() const {
+      return this->upper_bounded_variables_collection;
+   }
+
+   const SparseVector<size_t>& AMPLModel::get_slacks() const {
+      return this->slacks;
+   }
+
+   const Collection<size_t>& AMPLModel::get_single_lower_bounded_variables() const {
+      return this->single_lower_bounded_variables_collection;
+   }
+
+   const Collection<size_t>& AMPLModel::get_single_upper_bounded_variables() const {
+      return this->single_upper_bounded_variables_collection;
+   }
+
+   const Vector<size_t>& AMPLModel::get_fixed_variables() const {
+      return this->fixed_variables;
    }
 
    double AMPLModel::constraint_lower_bound(size_t constraint_index) const {
@@ -323,6 +310,18 @@ namespace uno {
 
    BoundType AMPLModel::get_constraint_bound_type(size_t constraint_index) const {
       return this->constraint_status[constraint_index];
+   }
+
+   const Collection<size_t>& AMPLModel::get_equality_constraints() const {
+      return this->equality_constraints_collection;
+   }
+
+   const Collection<size_t>& AMPLModel::get_inequality_constraints() const {
+      return this->inequality_constraints_collection;
+   }
+
+   const Collection<size_t>& AMPLModel::get_linear_constraints() const {
+      return this->linear_constraints_collection;
    }
 
    // initial primal point
@@ -379,6 +378,18 @@ namespace uno {
       }
    }
 
+   size_t AMPLModel::number_objective_gradient_nonzeros() const {
+      return static_cast<size_t>(this->asl->i.nzo_);
+   }
+
+   size_t AMPLModel::number_jacobian_nonzeros() const {
+      return static_cast<size_t>(this->asl->i.nzc_);
+   }
+
+   size_t AMPLModel::number_hessian_nonzeros() const {
+      return this->number_asl_hessian_nonzeros;
+   }
+
    void AMPLModel::generate_constraints() {
       for (size_t constraint_index: Range(this->number_constraints)) {
          this->constraint_lower_bounds[constraint_index] = (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2*constraint_index] : -INF<double>;
@@ -405,6 +416,20 @@ namespace uno {
          this->constraint_type[constraint_index] = LINEAR;
          this->linear_constraints.emplace_back(constraint_index);
       }
+   }
+
+   void AMPLModel::compute_lagrangian_hessian_sparsity() {
+      // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
+      // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
+      const int objective_number = -1;
+      const int upper_triangular = 1;
+      this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, objective_number, 1, 1, upper_triangular));
+      this->asl_hessian.reserve(this->number_asl_hessian_nonzeros);
+
+      // sparsity pattern
+      [[maybe_unused]] const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
+      // check that the column pointers are sorted in increasing order
+      assert(in_increasing_order(asl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
    }
 
    void AMPLModel::determine_bounds_types(const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds, std::vector<BoundType>& status) {
