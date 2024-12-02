@@ -6,7 +6,6 @@
 
 #include <vector>
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/COOSparseStorage.hpp"
 #include "dmumps_c.h"
 
 namespace uno {
