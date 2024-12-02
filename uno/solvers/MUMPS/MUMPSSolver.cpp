@@ -42,6 +42,7 @@ namespace uno {
       this->mumps_structure.n = static_cast<int>(matrix.dimension());
       this->mumps_structure.nnz = static_cast<int>(matrix.number_nonzeros());
       this->mumps_structure.job = MUMPSSolver::JOB_ANALYSIS;
+      this->mumps_structure.a = nullptr;
       // connect the local COO matrix with the pointers in the structure
       this->mumps_structure.irn = this->COO_matrix.row_indices_pointer();
       this->mumps_structure.jcn = this->COO_matrix.column_indices_pointer();
