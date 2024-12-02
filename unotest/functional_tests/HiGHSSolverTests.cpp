@@ -73,5 +73,4 @@ TEST(HiGHSSolver, LP) {
       EXPECT_NEAR(direction.multipliers.upper_bounds[index], upper_bound_duals_reference[index], tolerance);
    }
 }
-<<<<<<< HEAD
 */

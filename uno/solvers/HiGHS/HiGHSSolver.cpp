@@ -38,68 +38,12 @@ namespace uno {
       this->solve_subproblem(subproblem, direction);
    }
 
-   void HiGHSSolver::solve_subproblem(const LagrangeNewtonSubproblem& subproblem, Direction& direction) {
-/*
-      HighsStatus passModel(const HighsInt num_col, const HighsInt num_row,
-            const HighsInt num_nz, const HighsInt a_format,
-            const HighsInt sense, const double offset,
-            const double* col_cost, const double* col_lower,
-            const double* col_upper, const double* row_lower,
-            const double* row_upper, const HighsInt* a_start,
-            const HighsInt* a_index, const double* a_value,
-            const HighsInt* integrality = nullptr);
-*/
-
-      // solve the LP
-      HighsStatus return_status = this->highs_solver.passModel(this->model);
-      assert(return_status == HighsStatus::kOk);
-
-      return_status = this->highs_solver.run(); // solve
-      DEBUG << "HiGHS status: " << static_cast<int>(return_status) << '\n';
-
-      // if HiGHS could not optimize (e.g. because of indefinite Hessian), return an error
-      if (return_status == HighsStatus::kError) {
-         direction.status = SubproblemStatus::ERROR;
-         return;
-      }
-      HighsModelStatus model_status = highs_solver.getModelStatus();
-      DEBUG << "HiGHS model status: " << static_cast<int>(model_status) << '\n';
-
-      if (model_status == HighsModelStatus::kInfeasible) {
-         direction.status = SubproblemStatus::INFEASIBLE;
-         return;
-      }
-      else if (model_status == HighsModelStatus::kUnbounded) {
-         direction.status = SubproblemStatus::UNBOUNDED_PROBLEM;
-         return;
-      }
-
-      direction.status = SubproblemStatus::OPTIMAL;
-      const HighsSolution& solution = this->highs_solver.getSolution();
-      // read the primal solution and bound dual solution
-      for (size_t variable_index = 0; variable_index < subproblem.number_variables; variable_index++) {
-         direction.primals[variable_index] = solution.col_value[variable_index];
-         const double bound_multiplier = solution.col_dual[variable_index];
-         if (0. < bound_multiplier) {
-            direction.multipliers.lower_bounds[variable_index] = bound_multiplier;
-         }
-         else {
-            direction.multipliers.upper_bounds[variable_index] = bound_multiplier;
-         }
-      }
-      // read the dual solution
-      for (size_t constraint_index = 0; constraint_index < subproblem.number_constraints; constraint_index++) {
-         direction.multipliers.constraints[constraint_index] = solution.row_dual[constraint_index];
-      }
-      const HighsInfo& info = this->highs_solver.getInfo();
-      direction.subproblem_objective = info.objective_function_value;
-   }
-
    // build the LP in the HiGHS format
    void HiGHSSolver::build_linear_subproblem(const LagrangeNewtonSubproblem& subproblem, const WarmstartInformation& warmstart_information) {
       this->model.lp_.num_col_ = static_cast<HighsInt>(subproblem.number_variables);
       this->model.lp_.num_row_ = static_cast<HighsInt>(subproblem.number_constraints);
 
+      // variable bounds
       if (warmstart_information.variable_bounds_changed) {
          subproblem.set_direction_bounds(this->model.lp_.col_lower_, this->model.lp_.col_upper_);
       }
@@ -150,12 +94,58 @@ namespace uno {
          DEBUG << "and row index: "; print_vector(DEBUG, this->model.lp_.a_matrix_.index_);
          for (size_t variable_index = 0; variable_index < subproblem.number_variables; variable_index++) {
             DEBUG << "d" << variable_index << " in [" << this->model.lp_.col_lower_[variable_index] << ", " <<
-               this->model.lp_.col_upper_[variable_index] << "]\n";
+                  this->model.lp_.col_upper_[variable_index] << "]\n";
          }
          for (size_t constraint_index = 0; constraint_index < subproblem.number_constraints; constraint_index++) {
             DEBUG << "linearized c" << constraint_index << " in [" << this->model.lp_.row_lower_[constraint_index] << ", " <<
-               this->model.lp_.row_upper_[constraint_index]<< "]\n";
+                  this->model.lp_.row_upper_[constraint_index]<< "]\n";
          }
       }
+   }
+
+   void HiGHSSolver::solve_subproblem(const LagrangeNewtonSubproblem& subproblem, Direction& direction) {
+      // solve the LP
+      HighsStatus return_status = this->highs_solver.passModel(this->model);
+      assert(return_status == HighsStatus::kOk);
+
+      return_status = this->highs_solver.run(); // solve
+      DEBUG << "HiGHS status: " << static_cast<int>(return_status) << '\n';
+
+      // if HiGHS could not optimize (e.g. because of indefinite Hessian), return an error
+      if (return_status == HighsStatus::kError) {
+         direction.status = SubproblemStatus::ERROR;
+         return;
+      }
+      HighsModelStatus model_status = highs_solver.getModelStatus();
+      DEBUG << "HiGHS model status: " << static_cast<int>(model_status) << '\n';
+
+      if (model_status == HighsModelStatus::kInfeasible) {
+         direction.status = SubproblemStatus::INFEASIBLE;
+         return;
+      }
+      else if (model_status == HighsModelStatus::kUnbounded) {
+         direction.status = SubproblemStatus::UNBOUNDED_PROBLEM;
+         return;
+      }
+
+      direction.status = SubproblemStatus::OPTIMAL;
+      const HighsSolution& solution = this->highs_solver.getSolution();
+      // read the primal solution and bound dual solution
+      for (size_t variable_index: Range(subproblem.number_variables)) {
+         direction.primals[variable_index] = solution.col_value[variable_index];
+         const double bound_multiplier = solution.col_dual[variable_index];
+         if (0. < bound_multiplier) {
+            direction.multipliers.lower_bounds[variable_index] = bound_multiplier;
+         }
+         else {
+            direction.multipliers.upper_bounds[variable_index] = bound_multiplier;
+         }
+      }
+      // read the dual solution
+      for (size_t constraint_index: Range(subproblem.number_constraints)) {
+         direction.multipliers.constraints[constraint_index] = solution.row_dual[constraint_index];
+      }
+      const HighsInfo& info = this->highs_solver.getInfo();
+      direction.subproblem_objective = info.objective_function_value;
    }
 } // namespace
