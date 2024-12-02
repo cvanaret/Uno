@@ -50,9 +50,9 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/globalization_strategies/switching_methods/funnel_methods/*.cpp
    uno/ingredients/hessian_models/*.cpp
    uno/ingredients/local_models/*.cpp
-        uno/ingredients/inequality_handling_methods/*.cpp
-        uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
-        uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
+   uno/ingredients/inequality_handling_methods/*.cpp
+   uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
+   uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
    uno/model/*.cpp
    uno/optimization/*.cpp
    uno/options/*.cpp
@@ -208,7 +208,7 @@ endif()
 add_library(uno STATIC ${UNO_SOURCE_FILES})
 set_property(TARGET uno PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(uno PUBLIC ${DIRECTORIES})
-target_link_libraries(uno PUBLIC ${LIBRARIES})
+target_link_libraries(uno PUBLIC ${LIBRARIES} ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
 
 ######################
 # optional AMPL main #
