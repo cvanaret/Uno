@@ -21,7 +21,7 @@
 #define hessian_vector_product FC_GLOBAL(gdotx, GDOTX)
 
 extern "C" {
-   void hessian_vector_product(int *n, const double x[], const double ws[], const int lws[], double v[]);
+   void hessian_vector_product([[maybe_unused]] int *n, const double x[], const double ws[], const int lws[], double v[]);
 
    // fortran common block used in bqpd/bqpd.f
    extern struct {
@@ -108,7 +108,7 @@ namespace uno {
       // setting the common block here ensures that several instances of BQPD can run simultaneously
       WSC.mxws = static_cast<int>(this->size_hessian_workspace);
       WSC.mxlws = static_cast<int>(this->size_hessian_sparsity_workspace);
-      ALPHAC.alpha = 0; // inertia control
+      ALPHAC.alpha = 0.; // inertia control
 
       // function evaluations
       if (warmstart_information.objective_changed) {
