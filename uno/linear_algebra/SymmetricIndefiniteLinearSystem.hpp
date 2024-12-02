@@ -26,8 +26,8 @@ namespace uno {
             const Options& options);
       void assemble_matrix(const SymmetricMatrix<size_t, double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
             size_t number_variables, size_t number_constraints);
-      void factorize_matrix(const Model& model, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
-      void regularize_matrix(Statistics& statistics, const Model& model, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+      void factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
+      void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
             size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter);
       void solve(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
       // [[nodiscard]] T get_primal_regularization() const;
@@ -89,8 +89,7 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(const Model& /*model*/,
-         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
+   void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
       if (true || this->number_factorizations == 0) {
          linear_solver.do_symbolic_analysis(this->matrix);
       }
@@ -99,7 +98,7 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics, const Model& model,
+   void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics,
          DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, size_t size_primal_block, size_t size_dual_block,
          ElementType dual_regularization_parameter) {
       DEBUG2 << "Original matrix\n" << this->matrix << '\n';
@@ -141,7 +140,7 @@ namespace uno {
       while (not good_inertia) {
          DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
          DEBUG2 << this->matrix << '\n';
-         this->factorize_matrix(model, linear_solver);
+         this->factorize_matrix(linear_solver);
          number_attempts++;
 
          if (not linear_solver.matrix_is_singular() && linear_solver.number_negative_eigenvalues() == size_dual_block) {
