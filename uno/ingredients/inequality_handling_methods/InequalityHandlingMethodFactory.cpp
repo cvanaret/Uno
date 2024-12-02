@@ -7,8 +7,8 @@
 #include "inequality_constrained_methods/QPSubproblem.hpp"
 #include "inequality_constrained_methods/LPSubproblem.hpp"
 #include "interior_point_methods/PrimalDualInteriorPointMethod.hpp"
-#include "solvers/QPSolverFactory.hpp"
-#include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "options/Options.hpp"
 
 namespace uno {

@@ -4,7 +4,7 @@
 #ifndef UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 #define UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 
-#include "reformulation/OptimizationProblem.hpp"
+#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 
 namespace uno {
    class PrimalDualInteriorPointProblem : public OptimizationProblem {

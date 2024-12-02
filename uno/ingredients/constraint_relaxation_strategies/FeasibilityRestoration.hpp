@@ -7,8 +7,8 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
-#include "reformulation/OptimalityProblem.hpp"
-#include "reformulation/l1RelaxedProblem.hpp"
+#include "OptimalityProblem.hpp"
+#include "l1RelaxedProblem.hpp"
 
 namespace uno {
    enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};

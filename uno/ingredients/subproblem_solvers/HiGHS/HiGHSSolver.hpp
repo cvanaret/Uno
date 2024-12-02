@@ -1,7 +1,7 @@
 #ifndef UNO_HIGHSSOLVER_H
 #define UNO_HIGHSSOLVER_H
 
-#include "solvers/LPSolver.hpp"
+#include "ingredients/subproblem_solvers/LPSolver.hpp"
 #include "Highs.h"
 
 namespace uno {

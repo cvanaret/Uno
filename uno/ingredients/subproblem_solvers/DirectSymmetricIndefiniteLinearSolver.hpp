@@ -4,7 +4,7 @@
 #ifndef UNO_DIRECTSYMMETRICINDEFINITELINEARSOLVER_H
 #define UNO_DIRECTSYMMETRICINDEFINITELINEARSOLVER_H
 
-#include "solvers/SymmetricIndefiniteLinearSolver.hpp"
+#include "SymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    template <typename IndexType, typename ElementType>

@@ -4,9 +4,9 @@
 #include <stdexcept>
 #include "Presets.hpp"
 #include "Options.hpp"
-#include "solvers/LPSolverFactory.hpp"
-#include "solvers/QPSolverFactory.hpp"
-#include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 
 namespace uno {
    Options Presets::get_preset_options(const std::optional<std::string>& optional_preset) {

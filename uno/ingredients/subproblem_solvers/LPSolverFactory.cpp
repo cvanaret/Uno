@@ -5,13 +5,13 @@
 #include "LPSolverFactory.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
-#include "solvers/LPSolver.hpp"
+#include "LPSolver.hpp"
 
 #ifdef HAS_BQPD
-#include "solvers/BQPD/BQPDSolver.hpp"
+#include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"
 #endif
 #ifdef HAS_HIGHS
-#include "solvers/HiGHS/HiGHSSolver.hpp"
+#include "ingredients/subproblem_solvers/HiGHS/HiGHSSolver.hpp"
 #endif
 
 namespace uno {

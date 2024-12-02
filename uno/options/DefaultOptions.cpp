@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "DefaultOptions.hpp"
-#include "solvers/QPSolverFactory.hpp"
-#include "solvers/LPSolverFactory.hpp"
-#include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 
 namespace uno {
    Options DefaultOptions::load() {
