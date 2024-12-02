@@ -33,8 +33,7 @@ namespace uno {
       MA57Solver(size_t dimension, size_t number_nonzeros);
       ~MA57Solver() override = default;
 
-      void factorize(const SymmetricMatrix<size_t, double>& matrix) override;
-      void do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
+      void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
       void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
 

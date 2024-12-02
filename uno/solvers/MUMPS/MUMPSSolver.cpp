@@ -37,13 +37,7 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
    }
 
-   void MUMPSSolver::factorize(const SymmetricMatrix<size_t, double>& matrix) {
-      // general factorization method: symbolic factorization and numerical factorization
-      this->do_symbolic_factorization(matrix);
-      this->do_numerical_factorization(matrix);
-   }
-
-   void MUMPSSolver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) {
+   void MUMPSSolver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
       this->save_matrix_to_local_format(matrix);
       this->mumps_structure.n = static_cast<int>(matrix.dimension());
       this->mumps_structure.nnz = static_cast<int>(matrix.number_nonzeros());

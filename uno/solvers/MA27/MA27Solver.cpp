@@ -110,7 +110,7 @@ namespace uno {
 
    MA27Solver::MA27Solver(size_t max_dimension, size_t max_number_nonzeros):
          DirectSymmetricIndefiniteLinearSolver<size_t, double>(max_dimension),
-         nz_max(static_cast<int>(max_number_nonzeros)), n(static_cast<int>(max_dimension)), nnz(static_cast<int>(max_number_nonzeros)),
+         n(static_cast<int>(max_dimension)), nnz(static_cast<int>(max_number_nonzeros)),
          irn(max_number_nonzeros), icn(max_number_nonzeros),
          iw((2 * max_number_nonzeros + 3 * max_dimension + 1) * 6 / 5), // 20% more than 2*nnz + 3*n + 1
          ikeep(3 * max_dimension), iw1(2 * max_dimension) {
@@ -124,13 +124,7 @@ namespace uno {
       icntl[eICNTL::LDIAG] = 0;
    }
 
-   void MA27Solver::factorize(const SymmetricMatrix<size_t, double>& matrix) {
-      // general factorization method: symbolic factorization and numerical factorization
-      do_symbolic_factorization(matrix);
-      do_numerical_factorization(matrix);
-   }
-
-   void MA27Solver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) {
+   void MA27Solver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
       assert(matrix.dimension() <= iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
       assert(matrix.number_nonzeros() <= irn.capacity() &&
              "MA27Solver: the number of nonzeros of the matrix is larger than the preallocated size");
@@ -141,7 +135,7 @@ namespace uno {
       n = static_cast<int>(matrix.dimension());
       nnz = static_cast<int>(matrix.number_nonzeros());
 
-      // symbolic factorization
+      // symbolic analysis
       int liw = static_cast<int>(iw.size());
       MA27AD(&n, &nnz,                                   /* size info */
             irn.data(), icn.data(),                     /* matrix indices */
@@ -151,7 +145,7 @@ namespace uno {
       // resize the factor by at least INFO(5) (here, 50% more)
       factor.resize(static_cast<size_t>(3 * info[eINFO::NRLNEC] / 2));
 
-      assert(info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the symbolic factorization failed");
+      assert(info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the symbolic analysis failed");
       if (info[eINFO::IFLAG] != eIFLAG::SUCCESS) {
          WARNING << "MA27 has issued a warning: IFLAG = " << info[eINFO::IFLAG] << " additional info, IERROR = " << info[eINFO::IERROR] << '\n';
       }

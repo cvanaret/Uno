@@ -13,8 +13,7 @@ namespace uno {
       explicit DirectSymmetricIndefiniteLinearSolver(size_t dimension) : SymmetricIndefiniteLinearSolver<IndexType, ElementType>(dimension) { };
       virtual ~DirectSymmetricIndefiniteLinearSolver() = default;
 
-      virtual void factorize(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
-      virtual void do_symbolic_factorization(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
+      virtual void do_symbolic_analysis(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
       virtual void do_numerical_factorization(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
 
       [[nodiscard]] virtual std::tuple<size_t, size_t, size_t> get_inertia() const = 0;

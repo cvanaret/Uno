@@ -19,7 +19,7 @@ namespace uno {
    // MA57
    // default values of controlling parameters
    void MA57ID(double cntl[], int icntl[]);
-   // symbolic factorization
+   // symbolic analysis
    void MA57AD(const int* n, const int* ne, const int irn[], const int jcn[], const int* lkeep, int keep[], int iwork[], int icntl[], int info[], double
    rinfo[]);
    // numerical factorization
@@ -50,13 +50,7 @@ namespace uno {
       this->icntl[8] = 1;
    }
 
-   // general factorization method: symbolic factorization and numerical factorization
-   void MA57Solver::factorize(const SymmetricMatrix<size_t, double>& matrix) {
-      this->do_symbolic_factorization(matrix);
-      this->do_numerical_factorization(matrix);
-   }
-
-   void MA57Solver::do_symbolic_factorization(const SymmetricMatrix<size_t, double>& matrix) {
+   void MA57Solver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
       assert(matrix.dimension() <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
       assert(matrix.number_nonzeros() <= this->row_indices.capacity() &&
              "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
@@ -67,7 +61,7 @@ namespace uno {
       const int n = static_cast<int>(matrix.dimension());
       const int nnz = static_cast<int>(matrix.number_nonzeros());
 
-      // symbolic factorization
+      // symbolic analysis
       MA57AD(/* const */ &n,
             /* const */ &nnz,
             /* const */ this->row_indices.data(),
@@ -79,7 +73,7 @@ namespace uno {
             /* out */ this->info.data(),
             /* out */ this->rinfo.data());
 
-      assert(0 <= info[0] && "MA57: the symbolic factorization failed");
+      assert(0 <= info[0] && "MA57: the symbolic analysis failed");
       if (0 < info[0]) {
          WARNING << "MA57 has issued a warning: info(1) = " << info[0] << '\n';
       }
@@ -90,7 +84,7 @@ namespace uno {
       this->fact.resize(static_cast<size_t>(lfact));
       this->ifact.resize(static_cast<size_t>(lifact));
 
-      // store the sizes of the symbolic factorization
+      // store the sizes of the symbolic analysis
       this->factorization = {n, nnz, lfact, lifact};
    }
 

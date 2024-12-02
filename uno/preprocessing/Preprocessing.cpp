@@ -59,7 +59,8 @@ namespace uno {
 
       /* solve the system */
       Vector<double> solution(matrix.dimension());
-      linear_solver.factorize(matrix);
+      linear_solver.do_symbolic_analysis(matrix);
+      linear_solver.do_numerical_factorization(matrix);
       linear_solver.solve_indefinite_system(matrix, rhs, solution);
 
       // if least-square multipliers too big, discard them. Otherwise, keep them
