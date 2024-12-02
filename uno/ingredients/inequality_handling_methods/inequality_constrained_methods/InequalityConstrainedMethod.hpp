@@ -4,13 +4,13 @@
 #ifndef UNO_INEQUALITYCONSTRAINEDMETHOD_H
 #define UNO_INEQUALITYCONSTRAINEDMETHOD_H
 
-#include "ingredients/subproblems/Subproblem.hpp"
+#include "../InequalityHandlingMethod.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
-   class InequalityConstrainedMethod : public Subproblem {
+   class InequalityConstrainedMethod : public InequalityHandlingMethod {
    public:
       InequalityConstrainedMethod(const std::string& hessian_model, size_t number_variables, size_t number_constraints,
             size_t number_hessian_nonzeros, bool convexify, const Options& options);
