@@ -184,8 +184,6 @@ else()
       list(APPEND LIBRARIES ${ScaLAPACK_LIBRARY})
       list(APPEND DIRECTORIES ${ScaLAPACK_INCLUDE_DIRS})
    else()
-      # sequential
-      add_definitions("-D MUMPS_SEQUENTIAL")
       # link dummy parallel library (provided by MUMPS distribution)
       link_to_uno(MUMPS_MPISEQ_LIBRARY ${MUMPS_MPISEQ_LIBRARY})
    endif()

@@ -4,6 +4,7 @@
 #ifndef UNO_MUMPSSOLVER_H
 #define UNO_MUMPSSOLVER_H
 
+#include <vector>
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/COOSparseStorage.hpp"
 #include "dmumps_c.h"
@@ -16,8 +17,7 @@ namespace uno {
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
-      void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs,
-            Vector<double>& result) override;
+      void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
 
       [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -28,7 +28,9 @@ namespace uno {
 
    protected:
       DMUMPS_STRUC_C mumps_structure{};
-      COOSparseStorage<int, double> COO_matrix;
+      // matrix sparsity
+      std::vector<int> row_indices{};
+      std::vector<int> column_indices{};
 
       static const int JOB_INIT = -1;
       static const int JOB_END = -2;
@@ -39,7 +41,7 @@ namespace uno {
       static const int GENERAL_SYMMETRIC = 2;
 
       const size_t fortran_shift{1};
-      void save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& row_index);
+      void save_sparsity_to_local_format(const SymmetricMatrix<size_t, double>& matrix);
    };
 } // namespace
 
