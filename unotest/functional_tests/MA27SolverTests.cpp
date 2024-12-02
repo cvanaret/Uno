@@ -2,8 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
+#include "ingredients/subproblem_solvers/MA27/MA27Solver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
-#include "solvers/MA27/MA27Solver.hpp"
 
 using namespace uno;
 

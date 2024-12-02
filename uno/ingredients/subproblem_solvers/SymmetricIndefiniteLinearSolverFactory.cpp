@@ -9,11 +9,11 @@
 #include "options/Options.hpp"
 
 #if defined(HAS_HSL) || defined(HAS_MA57)
-#include "solvers/MA57/MA57Solver.hpp"
+#include "ingredients/subproblem_solvers/MA57/MA57Solver.hpp"
 #endif
 
 #if defined(HAS_HSL) || defined(HAS_MA27)
-#include "solvers/MA27/MA27Solver.hpp"
+#include "ingredients/subproblem_solvers/MA27/MA27Solver.hpp"
 #endif
 
 #ifdef HAS_HSL
@@ -25,7 +25,7 @@ namespace uno {
 #endif
 
 #ifdef HAS_MUMPS
-#include "solvers/MUMPS/MUMPSSolver.hpp"
+#include "ingredients/subproblem_solvers/MUMPS/MUMPSSolver.hpp"
 #endif
 
 namespace uno {

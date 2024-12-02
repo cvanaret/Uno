@@ -5,7 +5,7 @@
 #define UNO_MUMPSSOLVER_H
 
 #include <vector>
-#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "dmumps_c.h"
 
 namespace uno {

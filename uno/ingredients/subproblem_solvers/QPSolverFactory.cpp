@@ -5,10 +5,10 @@
 #include "QPSolverFactory.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
-#include "solvers/QPSolver.hpp"
+#include "QPSolver.hpp"
 
 #ifdef HAS_BQPD
-#include "solvers/BQPD/BQPDSolver.hpp"
+#include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"
 #endif
 
 namespace uno {

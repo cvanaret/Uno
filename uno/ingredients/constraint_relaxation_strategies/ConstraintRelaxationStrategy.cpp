@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ConstraintRelaxationStrategy.hpp"
+#include "OptimizationProblem.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
 #include "optimization/Direction.hpp"
@@ -11,7 +12,6 @@
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Multipliers.hpp"
-#include "reformulation/OptimizationProblem.hpp"
 #include "symbolic/VectorView.hpp"
 #include "symbolic/Expression.hpp"
 #include "options/Options.hpp"

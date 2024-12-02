@@ -4,15 +4,14 @@
 #include <cmath>
 #include "PrimalDualInteriorPointMethod.hpp"
 #include "PrimalDualInteriorPointProblem.hpp"
+#include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
+#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "linear_algebra/SparseStorageFactory.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
-#include "ingredients/hessian_models/HessianModelFactory.hpp"
-#include "linear_algebra/SparseStorageFactory.hpp"
-#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "preprocessing/Preprocessing.hpp"
-#include "reformulation/l1RelaxedProblem.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Infinity.hpp"
 
@@ -187,7 +186,7 @@ namespace uno {
 
       // check the inertia
       [[maybe_unused]] auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = this->linear_solver->get_inertia();
-      assert(number_pos_eigenvalues == problem.number_variables && number_neg_eigenvalues == problem.number_constraints && number_zero_eigenvalues == 0);
+      assert(number_pos_eigenvalues == number_variables && number_neg_eigenvalues == number_constraints && number_zero_eigenvalues == 0);
 
       // rhs
       this->assemble_augmented_rhs(current_multipliers, number_variables, number_constraints);

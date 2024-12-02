@@ -52,12 +52,12 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/inequality_handling_methods/*.cpp
    uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
    uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
+   uno/ingredients/subproblem_solvers/*.cpp
+   uno/ingredients/subproblems/*.cpp
    uno/model/*.cpp
    uno/optimization/*.cpp
    uno/options/*.cpp
    uno/preprocessing/*.cpp
-   uno/reformulation/*.cpp
-   uno/solvers/*.cpp
    uno/tools/*.cpp
 )
 
@@ -115,14 +115,14 @@ else()
    endif()
 endif()
 if(HSL OR MA57)
-   list(APPEND UNO_SOURCE_FILES uno/solvers/MA57/MA57Solver.cpp)
+   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA57/MA57Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
    
    find_package(BLAS REQUIRED)
    list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 endif()
 if(HSL OR MA27)
-   list(APPEND UNO_SOURCE_FILES uno/solvers/MA27/MA27Solver.cpp)
+   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA27/MA27Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA27SolverTests.cpp)
 
    find_package(BLAS REQUIRED)
@@ -142,7 +142,7 @@ find_library(BQPD bqpd)
 if(NOT BQPD)
    message(WARNING "Optional library BQPD was not found.")
 else()
-   list(APPEND UNO_SOURCE_FILES uno/solvers/BQPD/BQPDSolver.cpp)
+   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/BQPDSolverTests.cpp)
    link_to_uno(bqpd ${BQPD})
 endif()
@@ -152,7 +152,7 @@ find_package(HIGHS)
 if(NOT HIGHS)
    message(WARNING "Optional library HiGHS was not found.")
 else()
-   list(APPEND UNO_SOURCE_FILES uno/solvers/HiGHS/HiGHSSolver.cpp)
+   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
    link_to_uno(highs ${HIGHS})
    list(APPEND LIBRARIES highs::highs)
@@ -163,7 +163,7 @@ find_package(MUMPS)
 if(NOT MUMPS_LIBRARY)
    message(WARNING "Optional library MUMPS was not found.")
 else()
-   list(APPEND UNO_SOURCE_FILES uno/solvers/MUMPS/MUMPSSolver.cpp)
+   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MUMPS/MUMPSSolver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MUMPSSolverTests.cpp)
    list(APPEND LIBRARIES ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
    

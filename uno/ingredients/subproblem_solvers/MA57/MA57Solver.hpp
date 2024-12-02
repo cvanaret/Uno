@@ -6,7 +6,7 @@
 
 #include <array>
 #include <vector>
-#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    // forward declaration

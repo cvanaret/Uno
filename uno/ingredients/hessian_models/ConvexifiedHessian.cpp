@@ -4,12 +4,11 @@
 #include <stdexcept>
 #include "ConvexifiedHessian.hpp"
 #include "ingredients/hessian_models/UnstableRegularization.hpp"
-#include "reformulation/OptimizationProblem.hpp"
-#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
+#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
-#include "tools/Infinity.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
