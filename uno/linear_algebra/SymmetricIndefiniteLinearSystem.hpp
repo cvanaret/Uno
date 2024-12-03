@@ -91,7 +91,7 @@ namespace uno {
    template <typename ElementType>
    void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
          const WarmstartInformation& warmstart_information) {
-      if (warmstart_information.problem_structure_changed) {
+      if (true) {
          DEBUG << "Performing symbolic analysis of the indefinite system\n";
          linear_solver.do_symbolic_analysis(this->matrix);
       }

@@ -35,6 +35,13 @@ namespace uno {
       this->mumps_structure.icntl[12] = 1;
       this->mumps_structure.icntl[23] = 1; // ICNTL(24) controls the detection of “null pivot rows”
 
+      /*
+      // debug for MUMPS team
+      this->mumps_structure.icntl[1] = 6; // ICNTL(2)=6
+      this->mumps_structure.icntl[2] = 6; // ICNTL(3)=6
+      this->mumps_structure.icntl[3] = 6; // ICNTL(4)=2
+       */
+
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);
    }
