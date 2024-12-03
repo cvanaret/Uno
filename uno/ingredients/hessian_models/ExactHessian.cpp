@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ExactHessian.hpp"
-#include "reformulation/OptimizationProblem.hpp"
+#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "options/Options.hpp"
 
 namespace uno {

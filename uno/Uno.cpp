@@ -7,14 +7,14 @@
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
-#include "ingredients/subproblems/SubproblemFactory.hpp"
+#include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
+#include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
-#include "solvers/QPSolverFactory.hpp"
-#include "solvers/LPSolverFactory.hpp"
-#include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "tools/Logger.hpp"
 #include "optimization/OptimizationStatus.hpp"
 #include "options/Options.hpp"
@@ -158,7 +158,7 @@ namespace uno {
       std::cout << "- Constraint relaxation strategies: " << join(ConstraintRelaxationStrategyFactory::available_strategies(), ", ") << '\n';
       std::cout << "- Globalization mechanisms: " << join(GlobalizationMechanismFactory::available_strategies(), ", ") << '\n';
       std::cout << "- Globalization strategies: " << join(GlobalizationStrategyFactory::available_strategies(), ", ") << '\n';
-      std::cout << "- Subproblems: " << join(SubproblemFactory::available_strategies(), ", ") << '\n';
+      std::cout << "- Subproblems: " << join(InequalityHandlingMethodFactory::available_strategies(), ", ") << '\n';
       std::cout << "- QP solvers: " << join(QPSolverFactory::available_solvers(), ", ") << '\n';
       std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers(), ", ") << '\n';
       std::cout << "- Linear solvers: " << join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", ") << '\n';
