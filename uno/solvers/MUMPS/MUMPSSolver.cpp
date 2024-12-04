@@ -62,6 +62,7 @@ namespace uno {
       this->mumps_structure.jcn = this->column_indices.data();
       this->mumps_structure.a = nullptr;
       dmumps_c(&this->mumps_structure);
+      this->mumps_structure.icntl[7] = 8; // ICNTL(8) = 8: recompute scaling before factorization
    }
 
    void MUMPSSolver::do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) {
