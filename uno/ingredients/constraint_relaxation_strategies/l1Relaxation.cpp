@@ -99,7 +99,7 @@ namespace uno {
                current_iterate.evaluations.constraint_jacobian * direction.primals, Norm::L1);
          DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
 
-         // if the current direction is already feasible, terminate
+         // terminate if the current direction is already feasible, otherwise adjust the penalty parameter
          if (this->tolerance < linearized_residual) {
             const double current_penalty_parameter = this->penalty_parameter;
 
@@ -204,6 +204,8 @@ namespace uno {
 
    bool l1Relaxation::linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual,
          double residual_lowest_violation) const {
+      // if the feasibility problem is feasible wrt the original variables, look for a penalty parameter for which the l1 relaxed problem
+      // also achieves feasibility
       if (residual_lowest_violation <= this->parameters.residual_small_threshold) {
          return (linearized_residual <= this->parameters.residual_small_threshold);
       }
