@@ -186,7 +186,7 @@ namespace uno {
       }
 
       // possibly update the barrier parameter
-      const auto residuals = this->solving_feasibility_problem ? current_iterate.feasibility_residuals : current_iterate.residuals;
+      const auto& residuals = this->solving_feasibility_problem ? current_iterate.feasibility_residuals : current_iterate.residuals;
       if (not this->first_feasibility_iteration) {
          this->update_barrier_parameter(problem, current_iterate, current_multipliers, residuals);
       }
