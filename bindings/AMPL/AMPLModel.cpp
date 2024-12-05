@@ -171,7 +171,7 @@ namespace uno {
       }
    }
 
-   void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
+   void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& /*x*/, double objective_multiplier, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
       assert(hessian.capacity() >= this->number_asl_hessian_nonzeros);
 
