@@ -3,12 +3,13 @@
 
 #include <cmath>
 #include "PrimalDualInteriorPointSubproblem.hpp"
-#include "optimization/Direction.hpp"
-#include "optimization/Iterate.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "linear_algebra/SparseStorageFactory.hpp"
+#include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "optimization/Direction.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "preprocessing/Preprocessing.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
@@ -123,26 +124,6 @@ namespace uno {
 
    void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
-      // barrier Lagrangian Hessian
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         // original Lagrangian Hessian
-         this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_multipliers.constraints);
-
-         // diagonal barrier terms (grouped by variable)
-         for (size_t variable_index: Range(problem.number_variables)) {
-            double diagonal_barrier_term = 0.;
-            if (is_finite(problem.variable_lower_bound(variable_index))) { // lower bounded
-               const double distance_to_bound = current_iterate.primals[variable_index] - problem.variable_lower_bound(variable_index);
-               diagonal_barrier_term += current_multipliers.lower_bounds[variable_index] / distance_to_bound;
-            }
-            if (is_finite(problem.variable_upper_bound(variable_index))) { // upper bounded
-               const double distance_to_bound = current_iterate.primals[variable_index] - problem.variable_upper_bound(variable_index);
-               diagonal_barrier_term += current_multipliers.upper_bounds[variable_index] / distance_to_bound;
-            }
-            this->hessian_model->hessian.insert(diagonal_barrier_term, variable_index, variable_index);
-         }
-      }
-
       // barrier objective gradient
       if (warmstart_information.objective_changed) {
          // original objective gradient
@@ -174,6 +155,26 @@ namespace uno {
          problem.evaluate_constraints(current_iterate, this->constraints);
          problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
       }
+
+      // barrier Lagrangian Hessian
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         // original Lagrangian Hessian
+         this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_multipliers.constraints);
+
+         // diagonal barrier terms (grouped by variable)
+         for (size_t variable_index: Range(problem.number_variables)) {
+            double diagonal_barrier_term = 0.;
+            if (is_finite(problem.variable_lower_bound(variable_index))) { // lower bounded
+               const double distance_to_bound = current_iterate.primals[variable_index] - problem.variable_lower_bound(variable_index);
+               diagonal_barrier_term += current_multipliers.lower_bounds[variable_index] / distance_to_bound;
+            }
+            if (is_finite(problem.variable_upper_bound(variable_index))) { // upper bounded
+               const double distance_to_bound = current_iterate.primals[variable_index] - problem.variable_upper_bound(variable_index);
+               diagonal_barrier_term += current_multipliers.upper_bounds[variable_index] / distance_to_bound;
+            }
+            this->hessian_model->hessian.insert(diagonal_barrier_term, variable_index, variable_index);
+         }
+      }
    }
 
    void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
@@ -199,7 +200,7 @@ namespace uno {
       this->evaluate_functions(statistics, problem, current_iterate, current_multipliers, warmstart_information);
 
       // compute the primal-dual solution
-      this->assemble_augmented_system(statistics, problem, current_multipliers);
+      this->assemble_augmented_system(statistics, problem, current_multipliers, warmstart_information);
       this->augmented_system.solve(*this->linear_solver);
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
       this->number_subproblems_solved++;
@@ -209,13 +210,14 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
-         const Multipliers& current_multipliers) {
+         const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
       // assemble, factorize and regularize the augmented matrix
       this->augmented_system.assemble_matrix(this->hessian_model->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
-      this->augmented_system.factorize_matrix(problem.model, *this->linear_solver);
+      DEBUG << "Testing factorization with regularization factors (0, 0)\n";
+      this->augmented_system.factorize_matrix(*this->linear_solver, warmstart_information);
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
-      this->augmented_system.regularize_matrix(statistics, problem.model, *this->linear_solver, problem.number_variables, problem.number_constraints,
-            dual_regularization_parameter);
+      this->augmented_system.regularize_matrix(statistics, *this->linear_solver, problem.number_variables, problem.number_constraints,
+            dual_regularization_parameter, warmstart_information);
 
       // check the inertia
       [[maybe_unused]] auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = this->linear_solver->get_inertia();
