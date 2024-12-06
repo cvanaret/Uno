@@ -6,7 +6,6 @@
 
 #include <memory>
 #include "InequalityConstrainedMethod.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 
 namespace uno {
    // forward reference
@@ -24,10 +23,7 @@ namespace uno {
 
    private:
       // pointer to allow polymorphism
-      const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
-      const SymmetricMatrix<size_t, double> zero_hessian;
-
-      void evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information);
+      const std::unique_ptr<LPSolver> solver;
    };
 } // namespace
 

@@ -9,6 +9,8 @@ namespace uno {
    ZeroHessian::ZeroHessian(size_t dimension, const Options& options) :
          HessianModel(dimension, 0, options.get_string("sparse_format"), /* use_regularization = */false) { }
 
+   void ZeroHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const { }
+
    void ZeroHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& /*primal_variables*/,
          const Vector<double>& /*constraint_multipliers*/) {
       this->hessian.set_dimension(problem.number_variables);

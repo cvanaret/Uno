@@ -11,6 +11,7 @@
 namespace uno {
    // forward declarations
    class OptimizationProblem;
+   class Options;
    class Statistics;
    template <typename ElementType>
    class Vector;
@@ -23,6 +24,7 @@ namespace uno {
       SymmetricMatrix<size_t, double> hessian;
       size_t evaluation_count{0};
 
+      virtual void initialize_statistics(Statistics& statistics, const Options& options) const = 0;
       virtual void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
             const Vector<double>& constraint_multipliers) = 0;
    };
