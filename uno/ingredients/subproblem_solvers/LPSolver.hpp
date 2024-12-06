@@ -9,6 +9,8 @@
 namespace uno {
    // forward declarations
    class Direction;
+   class Iterate;
+   class OptimizationProblem;
    template <typename ElementType>
    class RectangularMatrix;
    template <typename ElementType>
@@ -26,11 +28,8 @@ namespace uno {
       LPSolver() = default;
       virtual ~LPSolver() = default;
 
-      virtual void solve_LP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
-            const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
-            const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-            const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
-            const WarmstartInformation& warmstart_information) = 0;
+      virtual void solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point, Direction& direction,
+            double trust_region_radius, const WarmstartInformation& warmstart_information) = 0;
    };
 } // namespace
 

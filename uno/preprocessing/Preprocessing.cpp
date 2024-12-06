@@ -86,7 +86,10 @@ namespace uno {
       return infeasible_linear_constraints;
    }
 
-   void Preprocessing::enforce_linear_constraints(const Model& model, Vector<double>& primals, Multipliers& multipliers, QPSolver& qp_solver) {
+   void Preprocessing::enforce_linear_constraints(const Model& /*model*/, Vector<double>& /*primals*/, Multipliers& /*multipliers*/,
+         QPSolver& /*qp_solver*/) {
+      WARNING << "Preprocessing::enforce_linear_constraints not implemented yet\n";
+      /*
       const auto& linear_constraints = model.get_linear_constraints();
       INFO << "\nPreprocessing phase: the problem has " << linear_constraints.size() << " linear constraints\n";
       if (not linear_constraints.empty()) {
@@ -129,7 +132,7 @@ namespace uno {
             // solve the strictly convex QP
             Vector<double> d0(model.number_variables); // = 0
             SparseVector<double> linear_objective; // empty
-            WarmstartInformation warmstart_information{true, true, true, true};
+            WarmstartInformation warmstart_information{};
             Direction direction(model.number_variables, model.number_constraints);
             qp_solver.solve_QP(model.number_variables, linear_constraints.size(), variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
                   constraints_upper_bounds, linear_objective, constraint_jacobian, hessian, d0, direction, warmstart_information);
@@ -151,5 +154,6 @@ namespace uno {
             DEBUG3 << "Linear feasible initial point: " << view(primals, 0, model.number_variables) << '\n';
          }
       }
+       */
    }
 } // namespace
