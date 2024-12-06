@@ -88,11 +88,11 @@ namespace uno {
          DEBUG << "QP:\n";
          DEBUG << "Hessian: " << hessian_model.hessian;
       }
+      this->set_up_subproblem(problem, current_iterate, initial_point, trust_region_radius, warmstart_information);
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          hessian_model.evaluate(statistics, problem, current_iterate.primals, current_multipliers);
          this->save_hessian_to_local_format(hessian_model.hessian);
       }
-      this->set_up_subproblem(problem, current_iterate, initial_point, trust_region_radius, warmstart_information);
       this->solve_subproblem(problem, initial_point, direction, warmstart_information);
    }
 
