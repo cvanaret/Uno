@@ -23,7 +23,8 @@ namespace uno {
          constraint_jacobian(number_constraints, number_variables) {
    }
 
-   void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
+   void InequalityConstrainedMethod::initialize_statistics(Statistics& statistics, const Options& options) {
+      this->hessian_model->initialize_statistics(statistics, options);
    }
 
    void InequalityConstrainedMethod::set_initial_point(const Vector<double>& point) {
