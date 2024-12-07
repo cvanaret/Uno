@@ -115,12 +115,12 @@ namespace uno {
          problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
       }
 
-      // build Jacobian (objective and constraints)
+      // Jacobian (objective and constraints)
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->save_gradients_to_local_format(problem.number_constraints);
       }
 
-      // set variable bounds
+      // variable bounds
       if (warmstart_information.variable_bounds_changed) {
          // bounds of original variables intersected with trust region
          for (size_t variable_index: Range(problem.get_number_original_variables())) {
@@ -136,8 +136,8 @@ namespace uno {
          }
       }
 
-      // set constraint bounds
-      if (warmstart_information.constraint_bounds_changed) {
+      // constraint bounds
+      if (warmstart_information.constraint_bounds_changed || warmstart_information.constraints_changed) {
          for (size_t constraint_index: Range(problem.number_constraints)) {
             this->lower_bounds[problem.number_variables + constraint_index] = problem.constraint_lower_bound(constraint_index) -
                                                                               this->constraints[constraint_index];

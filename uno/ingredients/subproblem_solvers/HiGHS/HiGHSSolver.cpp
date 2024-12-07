@@ -105,7 +105,7 @@ namespace uno {
       }
 
       // constraint bounds
-      if (warmstart_information.constraint_bounds_changed) {
+      if (warmstart_information.constraint_bounds_changed || warmstart_information.constraints_changed) {
          for (size_t constraint_index: Range(problem.number_constraints)) {
             this->model.lp_.row_lower_[constraint_index] = problem.constraint_lower_bound(constraint_index) - this->constraints[constraint_index];
             this->model.lp_.row_upper_[constraint_index] = problem.constraint_upper_bound(constraint_index) - this->constraints[constraint_index];
