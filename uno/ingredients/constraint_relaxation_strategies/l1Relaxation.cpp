@@ -136,7 +136,7 @@ namespace uno {
    }
 
    void l1Relaxation::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, const WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, Direction& direction, WarmstartInformation& warmstart_information) {
       DEBUG << "Solving the subproblem with penalty parameter " << problem.get_objective_multiplier() << "\n\n";
 
       // solve the subproblem
@@ -148,7 +148,7 @@ namespace uno {
    }
 
    void l1Relaxation::solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double current_penalty_parameter, const WarmstartInformation& warmstart_information) {
+         double current_penalty_parameter, WarmstartInformation& warmstart_information) {
       this->l1_relaxed_problem.set_objective_multiplier(current_penalty_parameter);
       this->solve_subproblem(statistics, this->l1_relaxed_problem, current_iterate, current_iterate.multipliers, direction, warmstart_information);
    }

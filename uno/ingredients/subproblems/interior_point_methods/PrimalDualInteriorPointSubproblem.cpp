@@ -179,7 +179,7 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, const WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, Direction& direction, WarmstartInformation& warmstart_information) {
       if (problem.has_inequality_constraints()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
@@ -211,7 +211,7 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
-         const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, WarmstartInformation& warmstart_information) {
       // assemble, factorize and regularize the augmented matrix
       this->augmented_system.assemble_matrix(this->hessian_model->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
       DEBUG << "Testing factorization with regularization factors (0, 0)\n";

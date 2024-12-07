@@ -38,7 +38,7 @@ namespace uno {
       void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-            Direction& direction, const WarmstartInformation& warmstart_information) override;
+            Direction& direction, WarmstartInformation& warmstart_information) override;
 
       void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
@@ -80,7 +80,7 @@ namespace uno {
       [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
             Multipliers& direction_multipliers, double tau);
       void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Multipliers& current_multipliers,
-            const WarmstartInformation& warmstart_information);
+            WarmstartInformation& warmstart_information);
       void assemble_augmented_rhs(const OptimizationProblem& problem, const Multipliers& current_multipliers);
       void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
             Vector<double>& direction_primals, Multipliers& direction_multipliers);

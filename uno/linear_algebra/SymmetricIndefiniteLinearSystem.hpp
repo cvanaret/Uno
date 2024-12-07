@@ -27,9 +27,9 @@ namespace uno {
             const Options& options);
       void assemble_matrix(const SymmetricMatrix<size_t, double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
             size_t number_variables, size_t number_constraints);
-      void factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, const WarmstartInformation& warmstart_information);
+      void factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, WarmstartInformation& warmstart_information);
       void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
-            size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter, const WarmstartInformation& warmstart_information);
+            size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter, WarmstartInformation& warmstart_information);
       void solve(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
       // [[nodiscard]] T get_primal_regularization() const;
 
@@ -90,10 +90,11 @@ namespace uno {
 
    template <typename ElementType>
    void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
-         const WarmstartInformation& warmstart_information) {
+         WarmstartInformation& warmstart_information) {
       if (warmstart_information.problem_structure_changed) {
          DEBUG << "Performing symbolic analysis of the indefinite system\n";
          linear_solver.do_symbolic_analysis(this->matrix);
+         warmstart_information.problem_structure_changed = false;
       }
       DEBUG << "Performing numerical factorization of the indefinite system\n";
       linear_solver.do_numerical_factorization(this->matrix);
@@ -103,7 +104,7 @@ namespace uno {
    template <typename ElementType>
    void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics,
          DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, size_t size_primal_block, size_t size_dual_block,
-         ElementType dual_regularization_parameter, const WarmstartInformation& warmstart_information) {
+         ElementType dual_regularization_parameter, WarmstartInformation& warmstart_information) {
       DEBUG2 << "Original matrix\n" << this->matrix << '\n';
       this->primal_regularization = ElementType(0.);
       this->dual_regularization = ElementType(0.);

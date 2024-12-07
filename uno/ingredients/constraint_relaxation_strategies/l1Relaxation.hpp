@@ -58,9 +58,9 @@ namespace uno {
       void solve_sequence_of_relaxed_subproblems(Statistics& statistics, Iterate& current_iterate, Direction& direction,
             WarmstartInformation& warmstart_information);
       void solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction, double current_penalty_parameter,
-            const WarmstartInformation& warmstart_information);
+            WarmstartInformation& warmstart_information);
       void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            Direction& direction, const WarmstartInformation& warmstart_information);
+            Direction& direction, WarmstartInformation& warmstart_information);
 
       // functions that decrease the penalty parameter to enforce particular conditions
       void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction);
