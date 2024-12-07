@@ -1,8 +1,8 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H
-#define UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H
+#ifndef UNO_PRIMALDUALINTERIORPOINTSUBPROBLEM_H
+#define UNO_PRIMALDUALINTERIORPOINTSUBPROBLEM_H
 
 #include "ingredients/subproblems/Subproblem.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
@@ -90,4 +90,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_INFEASIBLEINTERIORPOINTSUBPROBLEM_H
+#endif // UNO_PRIMALDUALINTERIORPOINTSUBPROBLEM_H

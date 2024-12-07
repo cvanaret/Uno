@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include "PrimalDualInteriorPointSubproblem.hpp"
-#include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "linear_algebra/SparseStorageFactory.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
@@ -26,14 +25,16 @@ namespace uno {
          augmented_system(options.get_string("sparse_format"), number_variables + number_constraints,
                number_hessian_nonzeros
                + number_variables /* diagonal barrier terms for bound constraints */
-               + number_jacobian_nonzeros /* Jacobian */,
+               + number_jacobian_nonzeros /* Jacobian */
+               + number_variables + number_constraints, /* regularization */
                true, /* use regularization */
                options),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(number_variables + number_constraints,
                number_hessian_nonzeros
                + number_variables + number_constraints /* regularization */
                + 2 * number_variables /* diagonal barrier terms */
-               + number_jacobian_nonzeros, /* Jacobian */
+               + number_jacobian_nonzeros /* Jacobian */
+               + number_variables + number_constraints, /* regularization */
                options)),
          barrier_parameter_update_strategy(options),
          previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
