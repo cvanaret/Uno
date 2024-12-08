@@ -60,7 +60,7 @@ namespace uno {
    }
 
    void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-         Direction& direction, const WarmstartInformation& warmstart_information) {
+         Direction& direction, WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       this->evaluate_functions(statistics, problem, current_iterate, current_multipliers, warmstart_information);
 

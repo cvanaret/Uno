@@ -20,7 +20,7 @@ namespace uno {
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-            Direction& direction, const WarmstartInformation& warmstart_information) override;
+            Direction& direction, WarmstartInformation& warmstart_information) override;
 
    protected:
       const bool use_regularization;

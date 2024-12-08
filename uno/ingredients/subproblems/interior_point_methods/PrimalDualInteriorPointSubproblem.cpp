@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include "PrimalDualInteriorPointSubproblem.hpp"
-#include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "linear_algebra/SparseStorageFactory.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
@@ -26,14 +25,16 @@ namespace uno {
          augmented_system(options.get_string("sparse_format"), number_variables + number_constraints,
                number_hessian_nonzeros
                + number_variables /* diagonal barrier terms for bound constraints */
-               + number_jacobian_nonzeros /* Jacobian */,
+               + number_jacobian_nonzeros /* Jacobian */
+               + number_variables + number_constraints, /* regularization */
                true, /* use regularization */
                options),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(number_variables + number_constraints,
                number_hessian_nonzeros
                + number_variables + number_constraints /* regularization */
                + 2 * number_variables /* diagonal barrier terms */
-               + number_jacobian_nonzeros, /* Jacobian */
+               + number_jacobian_nonzeros /* Jacobian */
+               + number_variables + number_constraints, /* regularization */
                options)),
          barrier_parameter_update_strategy(options),
          previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
@@ -178,7 +179,7 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, const WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, Direction& direction, WarmstartInformation& warmstart_information) {
       if (problem.has_inequality_constraints()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
@@ -210,7 +211,7 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointSubproblem::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
-         const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, WarmstartInformation& warmstart_information) {
       // assemble, factorize and regularize the augmented matrix
       this->augmented_system.assemble_matrix(this->hessian_model->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
       DEBUG << "Testing factorization with regularization factors (0, 0)\n";
