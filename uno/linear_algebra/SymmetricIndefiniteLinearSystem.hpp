@@ -11,6 +11,7 @@
 #include "ingredients/hessian_models/UnstableRegularization.hpp"
 #include "model/Model.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "options/Options.hpp"
 #include "solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "tools/Statistics.hpp"

@@ -13,6 +13,7 @@ namespace uno {
    template <typename IndexType, typename NumericalType>
    class DirectSymmetricIndefiniteLinearSolver;
    class DualResiduals;
+   class PrimalDualInteriorPointProblem;
 
    struct InteriorPointParameters {
       double tau_min;
@@ -23,9 +24,9 @@ namespace uno {
       double push_variable_to_interior_k2;
    };
 
-   class PrimalDualInteriorPointSubproblem : public Subproblem {
+   class PrimalDualInteriorPointMethod : public Subproblem {
    public:
-      PrimalDualInteriorPointSubproblem(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
+      PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
             size_t number_hessian_nonzeros, const Options& options);
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
@@ -67,8 +68,8 @@ namespace uno {
 
       [[nodiscard]] double barrier_parameter() const;
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
-      void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            const WarmstartInformation& warmstart_information);
+      void evaluate_functions(Statistics& statistics, const PrimalDualInteriorPointProblem& barrier_problem, Iterate& current_iterate,
+            const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information);
       void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate, const Multipliers& current_multipliers,
             const DualResiduals& residuals);
       [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
