@@ -11,6 +11,8 @@ namespace uno {
          HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */false) {
    }
 
+   void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const { }
+
    void ExactHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& primal_variables,
          const Vector<double>& constraint_multipliers) {
       // evaluate Lagrangian Hessian
