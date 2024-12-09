@@ -10,7 +10,9 @@ namespace uno {
       bool constraints_changed{true};
       bool constraint_bounds_changed{true};
       bool variable_bounds_changed{true};
-      bool problem_structure_changed{true};
+      // bool problem_structure_changed{true};
+      bool hessian_sparsity_changed{true};
+      bool jacobian_sparsity_changed{true};
 
       void display() const;
       void no_changes();

@@ -92,10 +92,10 @@ namespace uno {
    template <typename ElementType>
    void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
          WarmstartInformation& warmstart_information) {
-      if (warmstart_information.problem_structure_changed) {
+      if (warmstart_information.hessian_sparsity_changed || warmstart_information.jacobian_sparsity_changed) {
          DEBUG << "Performing symbolic analysis of the indefinite system\n";
          linear_solver.do_symbolic_analysis(this->matrix);
-         warmstart_information.problem_structure_changed = false;
+         warmstart_information.hessian_sparsity_changed = warmstart_information.jacobian_sparsity_changed = false;
       }
       DEBUG << "Performing numerical factorization of the indefinite system\n";
       linear_solver.do_numerical_factorization(this->matrix);
