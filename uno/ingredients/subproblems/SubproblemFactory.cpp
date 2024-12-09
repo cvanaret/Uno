@@ -6,7 +6,7 @@
 #include "SubproblemFactory.hpp"
 #include "ingredients/subproblems/inequality_constrained_methods/QPSubproblem.hpp"
 #include "ingredients/subproblems/inequality_constrained_methods/LPSubproblem.hpp"
-#include "ingredients/subproblems/interior_point_methods/PrimalDualInteriorPointSubproblem.hpp"
+#include "ingredients/subproblems/interior_point_methods/PrimalDualInteriorPointMethod.hpp"
 #include "solvers/QPSolverFactory.hpp"
 #include "solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "options/Options.hpp"
@@ -26,7 +26,7 @@ namespace uno {
       }
       // interior-point method
       else if (subproblem_strategy == "primal_dual_interior_point") {
-         return std::make_unique<PrimalDualInteriorPointSubproblem>(number_variables, number_constraints, number_jacobian_nonzeros,
+         return std::make_unique<PrimalDualInteriorPointMethod>(number_variables, number_constraints, number_jacobian_nonzeros,
                number_hessian_nonzeros, options);
       }
       throw std::invalid_argument("Subproblem strategy " + subproblem_strategy + " is not supported");
