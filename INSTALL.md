@@ -7,7 +7,7 @@
 * download **optional** solvers:
     * BQPD (indefinite null-space QP solver): https://www.mcs.anl.gov/~leyffer/solvers.html
     * MA57 (sparse indefinite symmetric linear solver): http://www.hsl.rl.ac.uk/catalogue/ma57.html
-    * LIBHSL (collection of libraries for sparse linear systems): https://licences.stfc.ac.uk/product/libhsl
+    * LIBHSL (collection of libraries for sparse linear systems): https://licences.stfc.ac.uk/products/Software/HSL/LibHSL
     * MUMPS (sparse indefinite symmetric linear solver): https://mumps-solver.org/index.php?page=dwnld
     * HiGHS (linear programming solver): https://highs.dev
 
