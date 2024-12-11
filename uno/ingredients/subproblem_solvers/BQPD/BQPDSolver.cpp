@@ -79,20 +79,20 @@ namespace uno {
       if (this->print_subproblem) {
          DEBUG << "LP:\n";
       }
-      this->set_up_subproblem(problem, current_iterate, initial_point, trust_region_radius, warmstart_information);
+      this->set_up_subproblem(problem, current_iterate, trust_region_radius, warmstart_information);
       this->solve_subproblem(problem, initial_point, direction, warmstart_information);
    }
 
    void BQPDSolver::solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Vector<double>& current_multipliers, const Vector<double>& initial_point, Direction& direction, HessianModel& hessian_model,
          double trust_region_radius, const WarmstartInformation& warmstart_information) {
-      if (this->print_subproblem) {
-         DEBUG << "QP:\n";
-      }
-      this->set_up_subproblem(problem, current_iterate, initial_point, trust_region_radius, warmstart_information);
+      this->set_up_subproblem(problem, current_iterate, trust_region_radius, warmstart_information);
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          hessian_model.evaluate(statistics, problem, current_iterate.primals, current_multipliers, this->hessian);
          this->save_hessian_to_local_format(this->hessian);
+      }
+      if (this->print_subproblem) {
+         DEBUG << "QP:\n";
       }
       DEBUG << "Hessian: " << this->hessian;
       this->solve_subproblem(problem, initial_point, direction, warmstart_information);
@@ -102,8 +102,8 @@ namespace uno {
       return this->hessian.quadratic_product(primal_direction, primal_direction);
    }
 
-   void BQPDSolver::set_up_subproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point,
-         double trust_region_radius, const WarmstartInformation& warmstart_information) {
+   void BQPDSolver::set_up_subproblem(const OptimizationProblem& problem, Iterate& current_iterate, double trust_region_radius,
+         const WarmstartInformation& warmstart_information) {
       // initialize wsc_ common block (Hessian & workspace for BQPD)
       // setting the common block here ensures that several instances of BQPD can run simultaneously
       WSC.kk = static_cast<int>(this->number_hessian_nonzeros);
@@ -155,7 +155,10 @@ namespace uno {
          this->lower_bounds[variable_index] = std::max(-BIG, this->lower_bounds[variable_index]);
          this->upper_bounds[variable_index] = std::min(BIG, this->upper_bounds[variable_index]);
       }
+   }
 
+   void BQPDSolver::solve_subproblem(const OptimizationProblem& problem, const Vector<double>& initial_point, Direction& direction,
+         const WarmstartInformation& warmstart_information) {
       if (this->print_subproblem) {
          DEBUG << "objective gradient: " << this->linear_objective;
          for (size_t constraint_index: Range(problem.number_constraints)) {
@@ -170,10 +173,7 @@ namespace uno {
          }
          DEBUG << "Initial point: " << initial_point << '\n';
       }
-   }
 
-   void BQPDSolver::solve_subproblem(const OptimizationProblem& problem, const Vector<double>& initial_point, Direction& direction,
-         const WarmstartInformation& warmstart_information) {
       direction.primals = initial_point;
       const int n = static_cast<int>(problem.number_variables);
       const int m = static_cast<int>(problem.number_constraints);

@@ -91,8 +91,8 @@ namespace uno {
 
       const bool print_subproblem;
 
-      void set_up_subproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point,
-            double trust_region_radius, const WarmstartInformation& warmstart_information);
+      void set_up_subproblem(const OptimizationProblem& problem, Iterate& current_iterate, double trust_region_radius,
+            const WarmstartInformation& warmstart_information);
       void solve_subproblem(const OptimizationProblem& problem, const Vector<double>& initial_point, Direction& direction,
             const WarmstartInformation& warmstart_information);
       void set_multipliers(size_t number_variables, Multipliers& direction_multipliers);

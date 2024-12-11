@@ -151,6 +151,10 @@ namespace uno {
          double current_penalty_parameter, WarmstartInformation& warmstart_information) {
       this->l1_relaxed_problem.set_objective_multiplier(current_penalty_parameter);
       this->solve_subproblem(statistics, this->l1_relaxed_problem, current_iterate, current_iterate.multipliers, direction, warmstart_information);
+      if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
+         throw std::runtime_error("l1Relaxation::solve_l1_relaxed_problem: the subproblem is unbounded, this should not happen. If the subproblem "
+            "has curvature, use regularization. If not, use a trust-region method.\n");
+      }
    }
 
    void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction) {
