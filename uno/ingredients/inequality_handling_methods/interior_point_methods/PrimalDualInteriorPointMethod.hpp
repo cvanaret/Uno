@@ -40,6 +40,7 @@ namespace uno {
 
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
             Direction& direction, WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
 
       void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
@@ -51,6 +52,7 @@ namespace uno {
       SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
+      SymmetricMatrix<size_t, double> hessian;
 
       SymmetricIndefiniteLinearSystem<double> augmented_system;
       const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;
@@ -80,8 +82,8 @@ namespace uno {
             const Vector<double>& primal_direction, double tau);
       [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
             Multipliers& direction_multipliers, double tau);
-      void assemble_augmented_system(Statistics& statistics, const Multipliers& current_multipliers, size_t number_variables,
-            size_t number_constraints, WarmstartInformation& warmstart_information);
+      void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Multipliers& current_multipliers,
+            WarmstartInformation& warmstart_information);
       void assemble_augmented_rhs(const Multipliers& current_multipliers, size_t number_variables, size_t number_constraints);
       void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
             Vector<double>& direction_primals, Multipliers& direction_multipliers);

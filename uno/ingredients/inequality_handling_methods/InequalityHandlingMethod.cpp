@@ -16,10 +16,6 @@ namespace uno {
       this->trust_region_radius = new_trust_region_radius;
    }
 
-   const SymmetricMatrix<size_t, double>& InequalityHandlingMethod::get_lagrangian_hessian() const {
-      return this->hessian_model->hessian;
-   }
-
    size_t InequalityHandlingMethod::get_hessian_evaluation_count() const {
       return this->hessian_model->evaluation_count;
    }

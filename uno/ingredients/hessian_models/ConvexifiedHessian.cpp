@@ -1,19 +1,20 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <stdexcept>
 #include "ConvexifiedHessian.hpp"
+#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/hessian_models/UnstableRegularization.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
-#include "tools/Logger.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "options/Options.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
    ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options):
-         HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */true),
+         HessianModel(),
          // inertia-based convexification needs a linear solver
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(dimension, maximum_number_nonzeros, options)),
          regularization_initial_value(options.get_double("regularization_initial_value")),
@@ -26,13 +27,13 @@ namespace uno {
    }
 
    void ConvexifiedHessian::evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-         const Vector<double>& constraint_multipliers) {
+         const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
       // evaluate Lagrangian Hessian
-      this->hessian.set_dimension(problem.number_variables);
-      problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, this->hessian);
+      hessian.set_dimension(problem.number_variables);
+      problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, hessian);
       this->evaluation_count++;
       // regularize (only on the original variables) to convexify the problem
-      this->regularize(statistics, this->hessian, problem.get_number_original_variables());
+      this->regularize(statistics, hessian, problem.get_number_original_variables());
    }
 
    // Nocedal and Wright, p51

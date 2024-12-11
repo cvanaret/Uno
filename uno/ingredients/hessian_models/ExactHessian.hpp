@@ -4,16 +4,13 @@
 #include "HessianModel.hpp"
 
 namespace uno {
-   // forward declaration
-   class Options;
-
    // exact Hessian
    class ExactHessian : public HessianModel {
    public:
-      ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
+      ExactHessian();
 
       void initialize_statistics(Statistics& statistics, const Options& options) const override;
       void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-            const Vector<double>& constraint_multipliers) override;
+            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
    };
 } // namespace

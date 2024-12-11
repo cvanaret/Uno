@@ -17,7 +17,7 @@ namespace uno {
 
       void initialize_statistics(Statistics& statistics, const Options& options) const override;
       void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-            const Vector<double>& constraint_multipliers) override;
+            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
 
    protected:
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver; /*!< Solver that computes the inertia */

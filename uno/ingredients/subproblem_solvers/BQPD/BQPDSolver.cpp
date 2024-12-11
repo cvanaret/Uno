@@ -53,6 +53,8 @@ namespace uno {
          constraint_jacobian(number_constraints, number_variables),
          bqpd_jacobian(number_jacobian_nonzeros + number_objective_gradient_nonzeros), // Jacobian + objective gradient
          bqpd_jacobian_sparsity(number_jacobian_nonzeros + number_objective_gradient_nonzeros + number_constraints + 3),
+         hessian(number_variables, number_hessian_nonzeros, options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"),
+               "CSC"),
          kmax(problem_type == BQPDProblemType::QP ? options.get_int("BQPD_kmax") : 0), alp(static_cast<size_t>(this->mlp)),
          lp(static_cast<size_t>(this->mlp)),
          active_set(number_variables + number_constraints),
@@ -86,14 +88,18 @@ namespace uno {
          double trust_region_radius, const WarmstartInformation& warmstart_information) {
       if (this->print_subproblem) {
          DEBUG << "QP:\n";
-         DEBUG << "Hessian: " << hessian_model.hessian;
       }
       this->set_up_subproblem(problem, current_iterate, initial_point, trust_region_radius, warmstart_information);
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         hessian_model.evaluate(statistics, problem, current_iterate.primals, current_multipliers);
-         this->save_hessian_to_local_format(hessian_model.hessian);
+         hessian_model.evaluate(statistics, problem, current_iterate.primals, current_multipliers, this->hessian);
+         this->save_hessian_to_local_format(this->hessian);
       }
+      DEBUG << "Hessian: " << this->hessian;
       this->solve_subproblem(problem, initial_point, direction, warmstart_information);
+   }
+
+   double BQPDSolver::hessian_quadratic_product(const Vector<double>& primal_direction) const {
+      return this->hessian.quadratic_product(primal_direction, primal_direction);
    }
 
    void BQPDSolver::set_up_subproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point,
@@ -176,11 +182,13 @@ namespace uno {
       const int mode_integer = static_cast<int>(mode);
 
       // solve the LP/QP
+      DEBUG2 << "Running BQPD\n";
       BQPD(&n, &m, &this->k, &this->kmax, this->bqpd_jacobian.data(), this->bqpd_jacobian_sparsity.data(), direction.primals.data(),
             this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
             this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp,
             &this->peq_solution, this->workspace.data(), this->workspace_sparsity.data(), &mode_integer, &this->ifail, this->info.data(),
             &this->iprint, &this->nout);
+      DEBUG2 << "Ran BQPD\n";
       const BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
       direction.status = BQPDSolver::status_from_bqpd_status(bqpd_status);
 

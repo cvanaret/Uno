@@ -43,7 +43,7 @@ namespace uno {
       virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
 
       // progress measures
-      [[nodiscard]] const SymmetricMatrix<size_t, double>& get_lagrangian_hessian() const;
+      [[nodiscard]] virtual double hessian_quadratic_product(const Vector<double>& primal_direction) const = 0;
       virtual void set_auxiliary_measure(const Model& model, Iterate& iterate) = 0;
       [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
             const Vector<double>& primal_direction, double step_length) const = 0;
