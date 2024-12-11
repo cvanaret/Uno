@@ -4,27 +4,28 @@
 #ifndef UNO_HESSIANMODEL_H
 #define UNO_HESSIANMODEL_H
 
-#include <memory>
-#include <vector>
-#include "linear_algebra/SymmetricMatrix.hpp"
+#include <cstddef>
 
 namespace uno {
    // forward declarations
    class OptimizationProblem;
+   class Options;
    class Statistics;
+   template <typename IndexType, typename ElementType>
+   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
 
    class HessianModel {
    public:
-      HessianModel(size_t dimension, size_t maximum_number_nonzeros, const std::string& sparse_format, bool use_regularization);
+      HessianModel() = default;
       virtual ~HessianModel();
 
-      SymmetricMatrix<size_t, double> hessian;
       size_t evaluation_count{0};
 
+      virtual void initialize_statistics(Statistics& statistics, const Options& options) const = 0;
       virtual void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-            const Vector<double>& constraint_multipliers) = 0;
+            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) = 0;
    };
 } // namespace
 

@@ -17,19 +17,15 @@ namespace uno {
             size_t number_hessian_nonzeros, const Options& options);
       ~QPSubproblem();
 
-      void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
             Direction& direction, WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
 
    protected:
-      const bool use_regularization;
       const bool enforce_linear_constraints_at_initial_iterate;
       // pointer to allow polymorphism
-      const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
-
-      void evaluate_functions(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            const WarmstartInformation& warmstart_information);
+      const std::unique_ptr<QPSolver> solver;
    };
 } // namespace
 

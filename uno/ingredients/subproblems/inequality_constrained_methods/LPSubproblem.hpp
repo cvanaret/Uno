@@ -6,7 +6,6 @@
 
 #include <memory>
 #include "InequalityConstrainedMethod.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 
 namespace uno {
    // forward reference
@@ -21,13 +20,11 @@ namespace uno {
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
             Direction& direction, WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
 
    private:
       // pointer to allow polymorphism
-      const std::unique_ptr<LPSolver> solver; /*!< Solver that solves the subproblem */
-      const SymmetricMatrix<size_t, double> zero_hessian;
-
-      void evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information);
+      const std::unique_ptr<LPSolver> solver;
    };
 } // namespace
 

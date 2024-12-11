@@ -10,34 +10,30 @@
 namespace uno {
    // forward declarations
    class Direction;
+   class Iterate;
+   class HessianModel;
+   class OptimizationProblem;
+   class Options;
    template <typename ElementType>
    class RectangularMatrix;
    template <typename ElementType>
    class SparseVector;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
+   class Statistics;
    struct WarmstartInformation;
 
-   /*! \class QPSolver
-    * \brief QP solver
-    *
-    */
    class QPSolver : public LPSolver {
    public:
       QPSolver(): LPSolver() { }
       ~QPSolver() override = default;
 
-      void solve_LP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
-            const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
-            const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-            const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
-            const WarmstartInformation& warmstart_information) override = 0;
+      void solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point, Direction& direction,
+            double trust_region_radius, const WarmstartInformation& warmstart_information) override = 0;
 
-      virtual void solve_QP(size_t number_variables, size_t number_constraints, const std::vector<double>& variables_lower_bounds,
-            const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
-            const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
-            const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<size_t, double>& hessian, const Vector<double>& initial_point,
-            Direction& direction, const WarmstartInformation& warmstart_information) = 0;
+      virtual void solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& current_multipliers,
+            const Vector<double>& initial_point, Direction& direction, HessianModel& hessian_model, double trust_region_radius,
+            const WarmstartInformation& warmstart_information) = 0;
+
+      [[nodiscard]] virtual double hessian_quadratic_product(const Vector<double>& primal_direction) const = 0;
    };
 } // namespace
 
