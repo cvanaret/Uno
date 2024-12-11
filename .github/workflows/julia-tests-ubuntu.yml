@@ -9,7 +9,14 @@ on:
       - '*.options'
       - 'uno_ampl-completion.bash'
   pull_request:
-    types: [opened, synchronize, ready_for_review, reopened]
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.options'
+      - 'uno_ampl-completion.bash'
+    
 # needed to allow julia-actions/cache to delete old caches that it has created
 permissions:
   actions: write
