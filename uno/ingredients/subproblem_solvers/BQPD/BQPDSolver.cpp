@@ -89,7 +89,7 @@ namespace uno {
       this->set_up_subproblem(problem, current_iterate, trust_region_radius, warmstart_information);
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          hessian_model.evaluate(statistics, problem, current_iterate.primals, current_multipliers, this->hessian);
-         this->save_hessian_to_local_format(this->hessian);
+         this->save_hessian_to_local_format();
       }
       if (this->print_subproblem) {
          DEBUG << "QP:\n";
@@ -213,22 +213,22 @@ namespace uno {
    }
 
    // save Hessian (in arbitrary format) to a "weak" CSC format: compressed columns but row indices are not sorted, nor unique
-   void BQPDSolver::save_hessian_to_local_format(const SymmetricMatrix<size_t, double>& hessian) {
+   void BQPDSolver::save_hessian_to_local_format() {
       const size_t header_size = 1;
       // pointers withing the single array
       int* row_indices = &this->workspace_sparsity[header_size];
-      int* column_starts = &this->workspace_sparsity[header_size + hessian.number_nonzeros()];
+      int* column_starts = &this->workspace_sparsity[header_size + this->hessian.number_nonzeros()];
       // header
-      this->workspace_sparsity[0] = static_cast<int>(hessian.number_nonzeros() + 1);
+      this->workspace_sparsity[0] = static_cast<int>(this->hessian.number_nonzeros() + 1);
       // count the elements in each column
-      for (size_t column_index: Range(hessian.dimension() + 1)) {
+      for (size_t column_index: Range(this->hessian.dimension() + 1)) {
          column_starts[column_index] = 0;
       }
-      for (const auto [row_index, column_index, element]: hessian) {
+      for (const auto [row_index, column_index, element]: this->hessian) {
          column_starts[column_index + 1]++;
       }
       // carry over the column starts
-      for (size_t column_index: Range(1, hessian.dimension() + 1)) {
+      for (size_t column_index: Range(1, this->hessian.dimension() + 1)) {
          column_starts[column_index] += column_starts[column_index - 1];
          column_starts[column_index - 1] += this->fortran_shift;
       }
@@ -236,7 +236,7 @@ namespace uno {
       // copy the entries
       //std::vector<int> current_indices(hessian.dimension());
       this->current_hessian_indices.fill(0);
-      for (const auto [row_index, column_index, element]: hessian) {
+      for (const auto [row_index, column_index, element]: this->hessian) {
          const size_t index = static_cast<size_t>(column_starts[column_index] + this->current_hessian_indices[column_index] - this->fortran_shift);
          assert(index <= static_cast<size_t>(column_starts[column_index + 1]) &&
                 "BQPD: error in converting the Hessian matrix to the local format. Try setting the sparse format to CSC");
@@ -268,11 +268,11 @@ namespace uno {
       size_t size = 1;
       this->bqpd_jacobian_sparsity[current_index] = static_cast<int>(size);
       current_index++;
-      size += linear_objective.size();
+      size += this->linear_objective.size();
       this->bqpd_jacobian_sparsity[current_index] = static_cast<int>(size);
       current_index++;
       for (size_t constraint_index: Range(number_constraints)) {
-         size += constraint_jacobian[constraint_index].size();
+         size += this->constraint_jacobian[constraint_index].size();
          this->bqpd_jacobian_sparsity[current_index] = static_cast<int>(size);
          current_index++;
       }

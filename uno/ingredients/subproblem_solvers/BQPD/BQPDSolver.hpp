@@ -95,10 +95,10 @@ namespace uno {
             const WarmstartInformation& warmstart_information);
       void solve_subproblem(const OptimizationProblem& problem, const Vector<double>& initial_point, Direction& direction,
             const WarmstartInformation& warmstart_information);
-      void set_multipliers(size_t number_variables, Multipliers& direction_multipliers);
-      void save_hessian_to_local_format(const SymmetricMatrix<size_t, double>& hessian);
-      void save_gradients_to_local_format(size_t number_constraints);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
+      void save_hessian_to_local_format();
+      void save_gradients_to_local_format(size_t number_constraints);
+      void set_multipliers(size_t number_variables, Multipliers& direction_multipliers);
       static BQPDStatus bqpd_status_from_int(int ifail);
       static SubproblemStatus status_from_bqpd_status(BQPDStatus bqpd_status);
    };
