@@ -106,8 +106,6 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       // initialize wsc_ common block (Hessian & workspace for BQPD)
       // setting the common block here ensures that several instances of BQPD can run simultaneously
-      WSC.kk = static_cast<int>(this->number_hessian_nonzeros);
-      WSC.ll = static_cast<int>(this->size_hessian_sparsity);
       WSC.mxws = static_cast<int>(this->size_hessian_workspace);
       WSC.mxlws = static_cast<int>(this->size_hessian_sparsity_workspace);
       ALPHAC.alpha = 0; // inertia control
@@ -246,6 +244,8 @@ namespace uno {
          row_indices[index] = static_cast<int>(row_index) + this->fortran_shift;
          this->current_hessian_indices[column_index]++;
       }
+      WSC.kk = static_cast<int>(this->hessian.number_nonzeros()); // length of ws that is used by gdotx
+      WSC.ll = static_cast<int>(this->hessian.number_nonzeros() + this->hessian.dimension() + 2); // length of lws that is used by gdotx
    }
 
    void BQPDSolver::save_gradients_to_local_format(size_t number_constraints) {
