@@ -24,6 +24,7 @@ namespace uno {
          objective_gradient(2 * number_variables), // original variables + barrier terms
          constraints(number_constraints),
          constraint_jacobian(number_constraints, number_variables),
+         hessian(number_variables, number_hessian_nonzeros, false, "COO"),
          augmented_system(options.get_string("sparse_format"), number_variables + number_constraints,
                number_hessian_nonzeros
                + number_variables /* diagonal barrier terms for bound constraints */
@@ -138,13 +139,13 @@ namespace uno {
       }
       // barrier Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->hessian_model->evaluate(statistics, barrier_problem, current_iterate.primals, current_multipliers.constraints);
+         this->hessian_model->evaluate(statistics, barrier_problem, current_iterate.primals, current_multipliers.constraints, this->hessian);
       }
 
       // barrier Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // original Lagrangian Hessian
-         this->hessian_model->evaluate(statistics, barrier_problem, current_iterate.primals, current_multipliers.constraints);
+         this->hessian_model->evaluate(statistics, barrier_problem, current_iterate.primals, current_multipliers.constraints, this->hessian);
 
          // diagonal barrier terms (grouped by variable)
          for (size_t variable_index: Range(barrier_problem.number_variables)) {
@@ -157,7 +158,7 @@ namespace uno {
                const double distance_to_bound = current_iterate.primals[variable_index] - barrier_problem.variable_upper_bound(variable_index);
                diagonal_barrier_term += current_multipliers.upper_bounds[variable_index] / distance_to_bound;
             }
-            this->hessian_model->hessian.insert(diagonal_barrier_term, variable_index, variable_index);
+            this->hessian.insert(diagonal_barrier_term, variable_index, variable_index);
          }
       }
    }
@@ -197,10 +198,14 @@ namespace uno {
       direction.subproblem_objective = this->evaluate_subproblem_objective(direction);
    }
 
+   double PrimalDualInteriorPointMethod::hessian_quadratic_product(const Vector<double>& /*primal_direction*/) const {
+      throw std::runtime_error("PrimalDualInteriorPointMethod::hessian_quadratic_product not implemented");
+   }
+
    void PrimalDualInteriorPointMethod::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
          const Multipliers& current_multipliers, WarmstartInformation& warmstart_information) {
       // assemble, factorize and regularize the augmented matrix
-      this->augmented_system.assemble_matrix(this->hessian_model->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
+      this->augmented_system.assemble_matrix(this->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
       DEBUG << "Testing factorization with regularization factors (0, 0)\n";
       this->augmented_system.factorize_matrix(*this->linear_solver, warmstart_information);
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
@@ -345,7 +350,7 @@ namespace uno {
 
    double PrimalDualInteriorPointMethod::evaluate_subproblem_objective(const Direction& direction) const {
       const double linear_term = dot(direction.primals, this->objective_gradient);
-      const double quadratic_term = this->hessian_model->hessian.quadratic_product(direction.primals, direction.primals) / 2.;
+      const double quadratic_term = 0.; // TODO this->sol->hessian.quadratic_product(direction.primals, direction.primals) / 2.;
       return linear_term + quadratic_term;
    }
 

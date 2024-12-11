@@ -20,6 +20,7 @@ namespace uno {
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
             Direction& direction, WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
 
    protected:
       const bool enforce_linear_constraints_at_initial_iterate;

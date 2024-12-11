@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <stdexcept>
 #include "HessianModelFactory.hpp"
 #include "HessianModel.hpp"
 #include "ConvexifiedHessian.hpp"
@@ -16,11 +17,11 @@ namespace uno {
             return std::make_unique<ConvexifiedHessian>(dimension, maximum_number_nonzeros + dimension, options);
          }
          else {
-            return std::make_unique<ExactHessian>(dimension, maximum_number_nonzeros, options);
+            return std::make_unique<ExactHessian>();
          }
       }
       else if (hessian_model == "zero") {
-         return std::make_unique<ZeroHessian>(dimension, options);
+         return std::make_unique<ZeroHessian>();
       }
       throw std::invalid_argument("Hessian model " + hessian_model + " does not exist");
    }

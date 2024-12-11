@@ -30,4 +30,8 @@ namespace uno {
       // reset the initial point
       this->initial_point.fill(0.);
    }
+
+   double LPSubproblem::hessian_quadratic_product(const Vector<double>& /*primal_direction*/) const {
+      return 0.;
+   }
 } // namespace

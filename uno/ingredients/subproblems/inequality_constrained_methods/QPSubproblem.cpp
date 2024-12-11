@@ -22,7 +22,7 @@ namespace uno {
          // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
          solver(QPSolverFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
                // if the QP solver is used during preprocessing, we need to allocate the Hessian with at least number_variables elements
-               std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, hessian_model->hessian.capacity()),
+               std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, number_hessian_nonzeros),
                options)) {
    }
 
@@ -42,5 +42,9 @@ namespace uno {
       this->number_subproblems_solved++;
       // reset the initial point
       this->initial_point.fill(0.);
+   }
+
+   double QPSubproblem::hessian_quadratic_product(const Vector<double>& primal_direction) const {
+      return this->solver->hessian_quadratic_product(primal_direction);
    }
 } // namespace

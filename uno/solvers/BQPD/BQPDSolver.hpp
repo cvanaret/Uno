@@ -9,14 +9,11 @@
 #include "ingredients/subproblems/SubproblemStatus.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "solvers/QPSolver.hpp"
 
 namespace uno {
-   // forward declarations
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
-
    // see bqpd.f
    enum class BQPDStatus {
       OPTIMAL = 0,
@@ -55,6 +52,8 @@ namespace uno {
             const Vector<double>& initial_point, Direction& direction, HessianModel& hessian_model, double trust_region_radius,
             const WarmstartInformation& warmstart_information) override;
 
+      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
+
    private:
       const size_t number_hessian_nonzeros;
 
@@ -64,6 +63,7 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian;
       std::vector<double> bqpd_jacobian{};
       std::vector<int> bqpd_jacobian_sparsity{};
+      SymmetricMatrix<size_t, double> hessian;
 
       int kmax{0}, mlp{1000};
       size_t mxwk0{2000000}, mxiwk0{500000};

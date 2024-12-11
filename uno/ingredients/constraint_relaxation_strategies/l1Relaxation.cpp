@@ -109,7 +109,7 @@ namespace uno {
             Direction feasibility_direction(direction.number_variables, direction.number_constraints);
             this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, current_iterate.feasibility_multipliers, feasibility_direction,
                   warmstart_information);
-            std::swap(direction.multipliers, direction.feasibility_multipliers);
+            std::swap(feasibility_direction.multipliers, feasibility_direction.feasibility_multipliers);
             const double residual_lowest_violation = this->model.constraint_violation(current_iterate.evaluations.constraints +
                   current_iterate.evaluations.constraint_jacobian * feasibility_direction.primals, Norm::L1);
             DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
@@ -277,8 +277,7 @@ namespace uno {
    ProgressMeasures l1Relaxation::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length) {
       return {
          this->compute_predicted_infeasibility_reduction_model(current_iterate, direction.primals, step_length),
-         this->first_order_predicted_reduction ? this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length) :
-            this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length, this->subproblem->get_lagrangian_hessian()),
+         this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length),
          this->subproblem->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction.primals, step_length)
       };
    }
