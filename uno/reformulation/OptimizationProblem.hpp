@@ -15,7 +15,7 @@ namespace uno {
    template <typename ElementType>
    class Collection;
    class Iterate;
-   struct Multipliers;
+   class Multipliers;
    template <typename ElementType>
    class RectangularMatrix;
    template <typename ElementType>

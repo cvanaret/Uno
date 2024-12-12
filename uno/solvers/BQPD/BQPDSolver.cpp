@@ -163,7 +163,7 @@ namespace uno {
          direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], variables_lower_bounds[variable_index]),
                variables_upper_bounds[variable_index]);
       }
-      this->categorize_constraints(number_variables, direction);
+      this->set_multipliers(number_variables, direction.multipliers);
    }
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) const {
@@ -245,8 +245,8 @@ namespace uno {
       }
    }
 
-   void BQPDSolver::categorize_constraints(size_t number_variables, Direction& direction) {
-      direction.multipliers.reset();
+   void BQPDSolver::set_multipliers(size_t number_variables, Multipliers& direction_multipliers) {
+      direction_multipliers.reset();
 
       // active constraints
       for (size_t active_constraint_index: Range(number_variables - static_cast<size_t>(this->k))) {
@@ -255,22 +255,20 @@ namespace uno {
          if (index < number_variables) {
             // bound constraint
             if (0 <= this->active_set[active_constraint_index]) { // lower bound active
-               direction.multipliers.lower_bounds[index] = this->residuals[index];
-               direction.active_bounds.at_lower_bound.emplace_back(index);
+               direction_multipliers.lower_bounds[index] = this->residuals[index];
             }
             else { // upper bound active */
-               direction.multipliers.upper_bounds[index] = -this->residuals[index];
-               direction.active_bounds.at_upper_bound.emplace_back(index);
+               direction_multipliers.upper_bounds[index] = -this->residuals[index];
             }
          }
          else {
             // general constraint
             size_t constraint_index = index - number_variables;
             if (0 <= this->active_set[active_constraint_index]) { // lower bound active
-               direction.multipliers.constraints[constraint_index] = this->residuals[index];
+               direction_multipliers.constraints[constraint_index] = this->residuals[index];
             }
             else { // upper bound active
-               direction.multipliers.constraints[constraint_index] = -this->residuals[index];
+               direction_multipliers.constraints[constraint_index] = -this->residuals[index];
             }
          }
       }
