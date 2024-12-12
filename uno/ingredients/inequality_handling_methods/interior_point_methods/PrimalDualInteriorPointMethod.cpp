@@ -348,7 +348,7 @@ namespace uno {
 
    double PrimalDualInteriorPointMethod::evaluate_subproblem_objective(const Direction& direction) const {
       const double linear_term = dot(direction.primals, this->objective_gradient);
-      const double quadratic_term = 0.; // TODO this->sol->hessian.quadratic_product(direction.primals, direction.primals) / 2.;
+      const double quadratic_term = this->hessian.quadratic_product(direction.primals, direction.primals) / 2.;
       return linear_term + quadratic_term;
    }
 
