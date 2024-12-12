@@ -45,7 +45,7 @@ namespace uno {
    // preallocate a bunch of stuff
    BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
          size_t number_hessian_nonzeros, BQPDProblemType problem_type, const Options& options):
-         QPSolver(), number_hessian_nonzeros(number_hessian_nonzeros),
+         QPSolver(),
          lower_bounds(number_variables + number_constraints),
          upper_bounds(number_variables + number_constraints),
          constraints(number_constraints),
