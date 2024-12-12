@@ -12,6 +12,7 @@
 
 namespace uno {
    // forward declaration
+   class Multipliers;
    class Options;
 
    // see bqpd.f
@@ -89,7 +90,7 @@ namespace uno {
             const std::vector<double>& constraints_upper_bounds, const SparseVector<double>& linear_objective,
             const RectangularMatrix<double>& constraint_jacobian, const Vector<double>& initial_point, Direction& direction,
             const WarmstartInformation& warmstart_information);
-      void categorize_constraints(size_t number_variables, Direction& direction);
+      void set_multipliers(size_t number_variables, Multipliers& direction_multipliers);
       void save_hessian_to_local_format(const SymmetricMatrix<size_t, double>& hessian);
       void save_gradients_to_local_format(size_t number_constraints, const SparseVector<double>& linear_objective,
             const RectangularMatrix<double>& constraint_jacobian);

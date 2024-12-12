@@ -6,7 +6,7 @@
 
 namespace uno {
    // forward declarations
-   struct Multipliers;
+   class Multipliers;
    template <class ElementType>
    class Vector;
 

@@ -8,8 +8,8 @@
 namespace uno {
    Direction::Direction(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
-         primals(number_variables), multipliers(number_variables, number_constraints), feasibility_multipliers(number_variables, number_constraints),
-         active_bounds(number_variables) {
+         primals(number_variables), multipliers(number_variables, number_constraints),
+         feasibility_multipliers(number_variables, number_constraints)  {
    }
 
    void Direction::set_dimensions(size_t new_number_variables, size_t new_number_constraints) {
@@ -21,8 +21,6 @@ namespace uno {
       this->primals.fill(0.);
       this->multipliers.reset();
       this->feasibility_multipliers.reset();
-      this->active_bounds.at_lower_bound.clear();
-      this->active_bounds.at_upper_bound.clear();
    }
 
    std::string status_to_string(SubproblemStatus status) {
@@ -59,17 +57,6 @@ namespace uno {
 
       stream << "│ objective = " << direction.subproblem_objective << '\n';
       stream << "│ norm = " << direction.norm << '\n';
-
-      stream << "│ bound constraints active at lower bound =";
-      for (size_t variable_index: direction.active_bounds.at_lower_bound) {
-         stream << " x" << variable_index;
-      }
-      stream << '\n';
-      stream << "│ bound constraints active at upper bound =";
-      for (size_t variable_index: direction.active_bounds.at_upper_bound) {
-         stream << " x" << variable_index;
-      }
-      stream << '\n';
       return stream;
    }
 } // namespace

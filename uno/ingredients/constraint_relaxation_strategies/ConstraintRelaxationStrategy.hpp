@@ -17,7 +17,7 @@ namespace uno {
    template <typename ElementType>
    class LagrangianGradient;
    class Model;
-   struct Multipliers;
+   class Multipliers;
    class OptimizationProblem;
    class Options;
    class Statistics;

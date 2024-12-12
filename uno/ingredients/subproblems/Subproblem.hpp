@@ -15,7 +15,7 @@ namespace uno {
    class Iterate;
    class l1RelaxedProblem;
    class Model;
-   struct Multipliers;
+   class Multipliers;
    class OptimizationProblem;
    class Options;
    class Statistics;

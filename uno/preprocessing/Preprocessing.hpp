@@ -11,7 +11,7 @@ namespace uno {
    // forward declarations
    class Iterate;
    class Model;
-   struct Multipliers;
+   class Multipliers;
    class QPSolver;
    template <typename IndexType, typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
