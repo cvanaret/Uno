@@ -6,7 +6,7 @@
 
 #include <array>
 #include <vector>
-#include "ingredients/subproblems/SubproblemStatus.hpp"
+#include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "ingredients/subproblem_solvers/QPSolver.hpp"
 
