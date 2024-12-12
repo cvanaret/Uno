@@ -2,13 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
-#include "optimization/Direction.hpp"
+#include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
-#include "solvers/BQPD/BQPDSolver.hpp"
 #include "tools/Infinity.hpp"
 
 using namespace uno;

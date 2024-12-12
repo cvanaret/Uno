@@ -4,12 +4,12 @@
 #include <cassert>
 #include "l1Relaxation.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
+#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "optimization/Direction.hpp"
-#include "ingredients/subproblems/Subproblem.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
-#include "symbolic/VectorView.hpp"
 #include "options/Options.hpp"
+#include "symbolic/VectorView.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/UserCallbacks.hpp"
 
@@ -53,7 +53,7 @@ namespace uno {
 
    void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
       // statistics
-      this->subproblem->initialize_statistics(statistics, options);
+      this->inequality_handling_method->initialize_statistics(statistics, options);
       statistics.add_column("penalty", Statistics::double_width - 5, options.get_int("statistics_penalty_parameter_column_order"));
       statistics.set("penalty", this->penalty_parameter);
 
@@ -61,8 +61,8 @@ namespace uno {
       initial_iterate.feasibility_residuals.lagrangian_gradient.resize(this->feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
-      this->subproblem->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
-      this->subproblem->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
+      this->inequality_handling_method->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
+      this->inequality_handling_method->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
       this->evaluate_progress_measures(initial_iterate);
       this->compute_primal_dual_residuals(initial_iterate);
       this->set_statistics(statistics, initial_iterate);
@@ -105,7 +105,7 @@ namespace uno {
 
             // stage c: compute the lowest possible constraint violation (penalty parameter = 0)
             DEBUG << "Compute ideal solution by solving the feasibility problem:\n";
-            this->subproblem->initialize_feasibility_problem(this->feasibility_problem, current_iterate);
+            this->inequality_handling_method->initialize_feasibility_problem(this->feasibility_problem, current_iterate);
             Direction feasibility_direction(direction.number_variables, direction.number_constraints);
             this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, current_iterate.feasibility_multipliers, feasibility_direction,
                   warmstart_information);
@@ -113,7 +113,7 @@ namespace uno {
             const double residual_lowest_violation = this->model.constraint_violation(current_iterate.evaluations.constraints +
                   current_iterate.evaluations.constraint_jacobian * feasibility_direction.primals, Norm::L1);
             DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
-            this->subproblem->exit_feasibility_problem(this->feasibility_problem, current_iterate);
+            this->inequality_handling_method->exit_feasibility_problem(this->feasibility_problem, current_iterate);
 
             // stage f: update the penalty parameter based on the current dual error
             this->decrease_parameter_aggressively(current_iterate, feasibility_direction);
@@ -141,7 +141,7 @@ namespace uno {
 
       // solve the subproblem
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      this->subproblem->solve(statistics, problem, current_iterate, current_multipliers, direction, warmstart_information);
+      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
       DEBUG3 << direction << '\n';
       assert(direction.status == SubproblemStatus::OPTIMAL && "The subproblem was not solved to optimality");
@@ -238,7 +238,7 @@ namespace uno {
 
    bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length, WarmstartInformation& /*warmstart_information*/, UserCallbacks& user_callbacks) {
-      this->subproblem->postprocess_iterate(this->l1_relaxed_problem, trial_iterate);
+      this->inequality_handling_method->postprocess_iterate(this->l1_relaxed_problem, trial_iterate);
       this->compute_progress_measures(current_iterate, trial_iterate);
       trial_iterate.objective_multiplier = this->l1_relaxed_problem.get_objective_multiplier();
 
@@ -271,15 +271,15 @@ namespace uno {
    void l1Relaxation::evaluate_progress_measures(Iterate& iterate) const {
       this->set_infeasibility_measure(iterate);
       this->set_objective_measure(iterate);
-      this->subproblem->set_auxiliary_measure(this->model, iterate);
+      this->inequality_handling_method->set_auxiliary_measure(this->model, iterate);
    }
 
    ProgressMeasures l1Relaxation::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length) {
       return {
          this->compute_predicted_infeasibility_reduction_model(current_iterate, direction.primals, step_length),
          this->first_order_predicted_reduction ? this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length) :
-            this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length, this->subproblem->get_lagrangian_hessian()),
-         this->subproblem->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction.primals, step_length)
+            this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length, this->inequality_handling_method->get_lagrangian_hessian()),
+         this->inequality_handling_method->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction.primals, step_length)
       };
    }
 

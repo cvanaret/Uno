@@ -8,7 +8,7 @@
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "optimization/Multipliers.hpp"
-#include "reformulation/l1RelaxedProblem.hpp"
+#include "l1RelaxedProblem.hpp"
 
 namespace uno {
    struct l1RelaxationParameters {

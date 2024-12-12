@@ -5,7 +5,7 @@
 #define UNO_DIRECTION_H
 
 #include <ostream>
-#include "ingredients/subproblems/SubproblemStatus.hpp"
+#include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Multipliers.hpp"
 #include "tools/Infinity.hpp"
