@@ -28,7 +28,8 @@ namespace uno {
 #endif
 #ifdef HAS_HIGHS
          if (LP_solver_name == "HiGHS") {
-            return std::make_unique<HiGHSSolver>(number_variables, number_constraints, number_jacobian_nonzeros, 0, options);
+            return std::make_unique<HiGHSSolver>(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
+                  0, options);
          }
 #endif
          std::string message = "The LP solver ";

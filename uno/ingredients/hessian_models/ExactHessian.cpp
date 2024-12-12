@@ -3,19 +3,21 @@
 
 #include "ExactHessian.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "options/Options.hpp"
 
 namespace uno {
    // exact Hessian
-   ExactHessian::ExactHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options) :
-         HessianModel(dimension, maximum_number_nonzeros, options.get_string("sparse_format"), /* use_regularization = */false) {
+   ExactHessian::ExactHessian(): HessianModel() {
    }
 
+   void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const { }
+
    void ExactHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-         const Vector<double>& constraint_multipliers) {
+         const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
       // evaluate Lagrangian Hessian
-      this->hessian.set_dimension(problem.number_variables);
-      problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, this->hessian);
+      hessian.set_dimension(problem.number_variables);
+      problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, hessian);
       this->evaluation_count++;
    }
 } // namespace

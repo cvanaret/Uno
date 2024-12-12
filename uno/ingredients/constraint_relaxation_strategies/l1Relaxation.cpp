@@ -151,6 +151,10 @@ namespace uno {
          double current_penalty_parameter, WarmstartInformation& warmstart_information) {
       this->l1_relaxed_problem.set_objective_multiplier(current_penalty_parameter);
       this->solve_subproblem(statistics, this->l1_relaxed_problem, current_iterate, current_iterate.multipliers, direction, warmstart_information);
+      if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
+         throw std::runtime_error("l1Relaxation::solve_l1_relaxed_problem: the subproblem is unbounded, this should not happen. If the subproblem "
+            "has curvature, use regularization. If not, use a trust-region method.\n");
+      }
    }
 
    void l1Relaxation::decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction) {
@@ -277,8 +281,7 @@ namespace uno {
    ProgressMeasures l1Relaxation::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length) {
       return {
          this->compute_predicted_infeasibility_reduction_model(current_iterate, direction.primals, step_length),
-         this->first_order_predicted_reduction ? this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length) :
-            this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length, this->inequality_handling_method->get_lagrangian_hessian()),
+         this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length),
          this->inequality_handling_method->compute_predicted_auxiliary_reduction_model(this->model, current_iterate, direction.primals, step_length)
       };
    }
