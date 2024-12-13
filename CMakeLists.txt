@@ -67,6 +67,7 @@ file(GLOB UNO_SOURCE_FILES
    uno/optimization/*.cpp
    uno/options/*.cpp
    uno/preprocessing/*.cpp
+   uno/reformulation/*.cpp
    uno/tools/*.cpp
 )
 
