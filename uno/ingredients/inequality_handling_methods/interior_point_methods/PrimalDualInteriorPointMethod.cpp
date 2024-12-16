@@ -139,26 +139,6 @@ namespace uno {
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->hessian_model->evaluate(statistics, barrier_problem, current_iterate.primals, current_multipliers.constraints, this->hessian);
       }
-
-      // barrier Lagrangian Hessian
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         // original Lagrangian Hessian
-         this->hessian_model->evaluate(statistics, barrier_problem, current_iterate.primals, current_multipliers.constraints, this->hessian);
-
-         // diagonal barrier terms (grouped by variable)
-         for (size_t variable_index: Range(barrier_problem.number_variables)) {
-            double diagonal_barrier_term = 0.;
-            if (is_finite(barrier_problem.variable_lower_bound(variable_index))) { // lower bounded
-               const double distance_to_bound = current_iterate.primals[variable_index] - barrier_problem.variable_lower_bound(variable_index);
-               diagonal_barrier_term += current_multipliers.lower_bounds[variable_index] / distance_to_bound;
-            }
-            if (is_finite(barrier_problem.variable_upper_bound(variable_index))) { // upper bounded
-               const double distance_to_bound = current_iterate.primals[variable_index] - barrier_problem.variable_upper_bound(variable_index);
-               diagonal_barrier_term += current_multipliers.upper_bounds[variable_index] / distance_to_bound;
-            }
-            this->hessian.insert(diagonal_barrier_term, variable_index, variable_index);
-         }
-      }
    }
 
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
