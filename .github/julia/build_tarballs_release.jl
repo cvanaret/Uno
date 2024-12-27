@@ -12,8 +12,6 @@ sources = [
     GitSource(ENV["UNO_URL"], ENV["UNO_COMMIT"]),
     ArchiveSource("https://mumps-solver.org/MUMPS_5.7.3.tar.gz",
                   "84a47f7c4231b9efdf4d4f631a2cae2bdd9adeaabc088261d15af040143ed112"),
-    ArchiveSource("https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.15.sdk.tar.xz",
-                  "2408d07df7f324d3beea818585a6d990ba99587c218a3969f924dfcc4de93b62"),
 ]
 
 # Bash recipe for building across all platforms
@@ -32,6 +30,8 @@ for file in $(ls .); do
 done
 cd ${prefix}
 cp -rL share/licenses deps/licenses
+mkdir deps/licenses/MUMPS
+cp $WORKSPACE/srcdir/MUMPS_5.7.3/LICENSE deps/licenses/MUMPS/LICENSE
 chmod -R u=rwx deps
 tar -czvf deps.tar.gz deps
 rm -r deps
@@ -130,6 +130,8 @@ install -v -m 755 "uno_ampl${exeext}" -t "${bindir}"
 ${CXX} -shared $(flagon -Wl,--whole-archive) libuno.a $(flagon -Wl,--no-whole-archive) -o libuno.${dlext} -L${libdir} -l${OMP} -lopenblas -ldmumps -lmetis -lhsl -lhighs
 cp libuno.a ${prefix}/lib/libuno.a
 cp libuno.${dlext} ${libdir}/libuno.${dlext}
+
+install_license ${WORKSPACE}/srcdir/Uno/LICENSE
 """
 
 # These are the platforms we will build for by default, unless further

@@ -12,8 +12,6 @@ version = VersionNumber(ENV["UNO_RELEASE"])
 # Collection of sources required to complete build
 sources = [
     GitSource(ENV["UNO_URL"], ENV["UNO_COMMIT"]),
-    ArchiveSource("https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.15.sdk.tar.xz",
-                  "2408d07df7f324d3beea818585a6d990ba99587c218a3969f924dfcc4de93b62"),
 ]
 
 # The remainder of the file is similar to the content found at the following link:

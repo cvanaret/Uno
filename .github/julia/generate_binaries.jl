@@ -31,11 +31,10 @@ for (platform, libdir, ext) in platforms
       run(`tar -xzf products/$platform/deps.tar.gz -C products/$platform`)
 
       # Copy the license of each dependency
-      # CV: temporarily comment this out
-      #for folder in readdir("products/$platform/deps/licenses")
-      #  cp("products/$platform/deps/licenses/$folder", "products/$platform/share/licenses/$folder")
-      #end
-      #rm("products/$platform/deps/licenses", recursive=true)
+      for folder in readdir("products/$platform/deps/licenses")
+       cp("products/$platform/deps/licenses/$folder", "products/$platform/share/licenses/$folder")
+      end
+      rm("products/$platform/deps/licenses", recursive=true)
 
       # Copy the shared library of each dependency
       for file in readdir("products/$platform/deps")
@@ -53,15 +52,15 @@ for (platform, libdir, ext) in platforms
 
       # Create a folder with the version number of the package
       mkdir("$(package)_binaries.$version2")
-      for folder in ("lib", "bin")
+      for folder in ("lib", "bin", "share")
         cp(folder, "$(package)_binaries.$version2/$folder")
       end
 
       cd("$(package)_binaries.$version2")
       if ext == "dll"
-        run(`zip -r --symlinks ../../../$(package)_binaries.$version2.$platform.zip lib bin`)
+        run(`zip -r --symlinks ../../../$(package)_binaries.$version2.$platform.zip lib bin share`)
       else
-        run(`tar -czf ../../../$(package)_binaries.$version2.$platform.tar.gz lib bin`)
+        run(`tar -czf ../../../$(package)_binaries.$version2.$platform.tar.gz lib bin share`)
       end
       cd("../../..")
 
