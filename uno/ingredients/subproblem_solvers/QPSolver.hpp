@@ -13,7 +13,7 @@ namespace uno {
    //class HessianModel;
    class LagrangeNewtonSubproblem;
    class Statistics;
-   struct WarmstartInformation;
+   class WarmstartInformation;
 
    class QPSolver : public LPSolver {
    public:

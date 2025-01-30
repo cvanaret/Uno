@@ -37,11 +37,13 @@ namespace uno {
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints, const Multipliers& multipliers,
          double shift_value, Norm residual_norm) const override;
 
+      [[nodiscard]] double dual_regularization_parameter() const override;
+
    protected:
       const OptimizationProblem& problem;
       const Multipliers& current_multipliers;
       const double barrier_parameter;
-      const double damping_factor{1e-5};
+      const double damping_factor{1e-5}; // TODO load option
    };
 } // namespace
 

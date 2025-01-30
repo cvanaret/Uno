@@ -6,7 +6,6 @@
 
 #include "../InequalityHandlingMethod.hpp"
 #include "PrimalDualInteriorPointProblem.hpp"
-#include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 
 namespace uno {
@@ -28,6 +27,7 @@ namespace uno {
    public:
       PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
             size_t number_hessian_nonzeros, const Options& options);
+      ~PrimalDualInteriorPointMethod() override;
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
@@ -49,19 +49,16 @@ namespace uno {
       void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) override;
 
    protected:
-      SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
       Vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-      RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
-      SymmetricMatrix<size_t, double> hessian;
 
-      SymmetricIndefiniteLinearSystem<double> augmented_system;
       const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;
+      Vector<double> solution;
 
       BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
       double previous_barrier_parameter;
       const double default_multiplier;
       const InteriorPointParameters parameters;
-      const double least_square_multiplier_max_norm;
+      // const double least_square_multiplier_max_norm;
       const double damping_factor; // (Section 3.7 in IPOPT paper)
       const double l1_constraint_violation_coefficient; // (rho in Section 3.3.1 in IPOPT paper)
 
@@ -70,8 +67,6 @@ namespace uno {
 
       [[nodiscard]] double barrier_parameter() const;
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
-      void evaluate_functions(Statistics& statistics, const PrimalDualInteriorPointProblem& barrier_problem, Iterate& current_iterate,
-            const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information);
       void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate, const Multipliers& current_multipliers,
             const DualResiduals& residuals);
       [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
@@ -82,9 +77,6 @@ namespace uno {
             const Vector<double>& primal_direction, double tau);
       [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
             Multipliers& direction_multipliers, double tau);
-      void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Multipliers& current_multipliers,
-            WarmstartInformation& warmstart_information);
-      void assemble_augmented_rhs(const Multipliers& current_multipliers, size_t number_variables, size_t number_constraints);
       void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
             Vector<double>& direction_primals, Multipliers& direction_multipliers);
       void compute_bound_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,

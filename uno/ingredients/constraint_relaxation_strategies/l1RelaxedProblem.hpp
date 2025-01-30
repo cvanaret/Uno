@@ -38,6 +38,8 @@ namespace uno {
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints, const Multipliers& multipliers,
             double shift_value, Norm residual_norm) const override;
 
+      [[nodiscard]] double dual_regularization_parameter() const override;
+
       // parameterization
       void set_objective_multiplier(double new_objective_multiplier);
 
