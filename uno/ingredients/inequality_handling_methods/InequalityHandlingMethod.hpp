@@ -23,7 +23,7 @@ namespace uno {
    class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
-   struct WarmstartInformation;
+   class WarmstartInformation;
    
    class InequalityHandlingMethod {
    public:

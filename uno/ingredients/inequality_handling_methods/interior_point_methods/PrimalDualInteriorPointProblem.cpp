@@ -156,4 +156,8 @@ namespace uno {
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       return this->problem.complementarity_error(primals, constraints, multipliers, shift_value, residual_norm);
    }
+
+   double PrimalDualInteriorPointProblem::dual_regularization_parameter() const {
+      return std::pow(this->barrier_parameter, 0.25);
+   }
 } // namespace

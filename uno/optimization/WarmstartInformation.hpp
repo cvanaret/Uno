@@ -5,7 +5,14 @@
 #define UNO_WARMSTARTINFORMATION_H
 
 namespace uno {
-   struct WarmstartInformation {
+   class WarmstartInformation {
+   public:
+      void display() const;
+      void no_changes();
+      void iterate_changed();
+      void whole_problem_changed();
+      void only_objective_changed();
+
       bool objective_changed{true};
       bool constraints_changed{true};
       bool constraint_bounds_changed{true};
@@ -13,12 +20,6 @@ namespace uno {
       // bool problem_structure_changed{true};
       bool hessian_sparsity_changed{true};
       bool jacobian_sparsity_changed{true};
-
-      void display() const;
-      void no_changes();
-      void iterate_changed();
-      void whole_problem_changed();
-      void only_objective_changed();
    };
 } // namespace
 
