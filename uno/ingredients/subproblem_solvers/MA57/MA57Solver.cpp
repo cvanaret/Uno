@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include "MA57Solver.hpp"
+#include "ingredients/subproblems/LagrangeNewtonSubproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
@@ -16,32 +17,42 @@
 
 namespace uno {
    extern "C" {
-   // MA57
-   // default values of controlling parameters
-   void MA57ID(double cntl[], int icntl[]);
-   // symbolic analysis
-   void MA57AD(const int* n, const int* ne, const int irn[], const int jcn[], const int* lkeep, int keep[], int iwork[], int icntl[], int info[], double
-   rinfo[]);
-   // numerical factorization
-   void MA57BD(const int* n, int* ne, const double a[], /* out */ double fact[], const int* lfact, /* out */ int ifact[], const int* lifact,
-         const int* lkeep, const int keep[], int iwork[], int icntl[], double cntl[], /* out */ int info[], /* out */ double rinfo[]);
-   // linear system solve without iterative refinement
-   void MA57CD(const int* job, const int* n, double fact[], int* lfact, int ifact[], int* lifact, const int* nrhs, double rhs[], const int* lrhs, double
-   work[], int* lwork, int iwork[], int icntl[], int info[]);
-   // linear system solve with iterative refinement
-   void MA57DD(const int* job, const int* n, int* ne, const double a[], const int irn[], const int jcn[], double fact[], int* lfact, int ifact[], int*
-   lifact, const double rhs[], double x[], double resid[], double work[], int iwork[], int icntl[],
-         double cntl[], int info[], double rinfo[]);
+      // default values of controlling parameters
+      void MA57ID(double cntl[], int icntl[]);
+      // symbolic analysis
+      void MA57AD(const int* n, const int* ne, const int irn[], const int jcn[], const int* lkeep, int keep[], int iwork[], int icntl[], int info[],
+            double rinfo[]);
+      // numerical factorization
+      void MA57BD(const int* n, int* ne, const double a[], /* out */ double fact[], const int* lfact, /* out */ int ifact[], const int* lifact,
+            const int* lkeep, const int keep[], int iwork[], int icntl[], double cntl[], /* out */ int info[], /* out */ double rinfo[]);
+      // linear system solve without iterative refinement
+      void MA57CD(const int* job, const int* n, double fact[], int* lfact, int ifact[], int* lifact, const int* nrhs, double rhs[], const int* lrhs,
+            double work[], int* lwork, int iwork[], int icntl[], int info[]);
+      // linear system solve with iterative refinement
+      void MA57DD(const int* job, const int* n, int* ne, const double a[], const int irn[], const int jcn[], double fact[], int* lfact, int ifact[],
+            int* lifact, const double rhs[], double x[], double resid[], double work[], int iwork[], int icntl[], double cntl[], int info[],
+            double rinfo[]);
    }
 
-   MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : DirectSymmetricIndefiniteLinearSolver<size_t, double>(dimension),
-         lkeep(static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42)),
-         keep(static_cast<size_t>(lkeep)),
-         iwork(5 * dimension),
-         lwork(static_cast<int>(1.2 * static_cast<double>(dimension))),
-         work(static_cast<size_t>(this->lwork)), residuals(dimension) {
-      this->row_indices.reserve(number_nonzeros);
-      this->column_indices.reserve(number_nonzeros);
+   MA57Solver::MA57Solver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros,
+         const Options& options):
+            DirectSymmetricIndefiniteLinearSolver<size_t, double>(number_variables + number_constraints),
+            objective_gradient(number_variables),
+            constraints(number_constraints),
+            constraint_jacobian(number_constraints, number_variables), // TODO construct better
+            hessian(number_variables, number_hessian_nonzeros, false, "COO"),
+            dimension(number_variables + number_constraints),
+            number_nonzeros(number_hessian_nonzeros + number_jacobian_nonzeros),
+            augmented_matrix(this->dimension, this->number_nonzeros, true, "COO"),
+            rhs(this->dimension),
+            primal_dual_convexification_strategy(options),
+            lkeep(static_cast<int>(5 * this->dimension + this->number_nonzeros + std::max(this->dimension, this->number_nonzeros) + 42)),
+            keep(static_cast<size_t>(lkeep)),
+            iwork(5 * this->dimension),
+            lwork(static_cast<int>(1.2 * static_cast<double>(this->dimension))),
+            work(static_cast<size_t>(this->lwork)), residuals(this->dimension) {
+      this->row_indices.reserve(this->number_nonzeros);
+      this->column_indices.reserve(this->number_nonzeros);
       // set the default values of the controlling parameters
       MA57ID(this->cntl.data(), this->icntl.data());
       // suppress warning messages
@@ -110,7 +121,6 @@ namespace uno {
    }
 
    void MA57Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) {
-      // solve
       const int n = static_cast<int>(matrix.dimension());
       int nnz = static_cast<int>(matrix.number_nonzeros());
       const int lrhs = n; // integer, length of rhs
@@ -130,6 +140,81 @@ namespace uno {
                &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
                this->icntl.data(), this->info.data());
       }
+   }
+
+   void MA57Solver::set_up_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, WarmstartInformation& warmstart_information) {
+      // objective gradient
+      if (warmstart_information.objective_changed) {
+         subproblem.evaluate_objective_gradient(this->objective_gradient);
+      }
+
+      // constraints and Jacobian
+      if (warmstart_information.constraints_changed) {
+         subproblem.evaluate_constraints(this->constraints);
+         subproblem.evaluate_constraint_jacobian(this->constraint_jacobian);
+      }
+
+      // Lagrangian Hessian
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         DEBUG << "Evaluating problem Hessian\n";
+         subproblem.evaluate_hessian(statistics, this->hessian);
+      }
+
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         // form the KKT matrix
+         this->augmented_matrix.set_dimension(subproblem.number_variables + subproblem.number_constraints);
+         this->augmented_matrix.reset();
+         // copy the Lagrangian Hessian in the top left block
+         for (const auto [row_index, column_index, element]: this->hessian) {
+            this->augmented_matrix.insert(element, row_index, column_index);
+         }
+
+         // Jacobian of general constraints
+         for (size_t column_index: Range(subproblem.number_constraints)) {
+            for (const auto [row_index, derivative]: this->constraint_jacobian[column_index]) {
+               this->augmented_matrix.insert(derivative, row_index, subproblem.number_variables + column_index);
+            }
+            this->augmented_matrix.finalize_column(column_index);
+         }
+      }
+
+      // possibly assemble augmented system and perform analysis
+      if (warmstart_information.hessian_sparsity_changed || warmstart_information.jacobian_sparsity_changed) {
+         DEBUG << "Augmented matrix:\n" << this->augmented_matrix;
+         DEBUG << "Performing symbolic analysis of the augmented matrix\n";
+         this->do_symbolic_analysis(this->augmented_matrix);
+         warmstart_information.hessian_sparsity_changed = warmstart_information.jacobian_sparsity_changed = false;
+      }
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         DEBUG << "Performing numerical factorization of the augmented matrix\n";
+         this->do_numerical_factorization(this->augmented_matrix);
+         // regularize
+         const double dual_regularization_parameter = subproblem.dual_regularization_parameter();
+         this->primal_dual_convexification_strategy.regularize_matrix(statistics, *this, this->augmented_matrix, subproblem.number_variables,
+               subproblem.number_constraints, dual_regularization_parameter);
+      }
+      this->assemble_augmented_rhs(subproblem); // TODO add conditions
+   }
+
+   void MA57Solver::assemble_augmented_rhs(LagrangeNewtonSubproblem& subproblem) {
+      // Lagrangian gradient
+      subproblem.compute_lagrangian_gradient(this->objective_gradient, this->constraint_jacobian, this->rhs);
+      for (size_t variable_index: Range(subproblem.number_variables)) {
+         this->rhs[variable_index] = -this->rhs[variable_index];
+      }
+
+      // constraints
+      for (size_t constraint_index: Range(subproblem.number_constraints)) {
+         this->rhs[subproblem.number_variables + constraint_index] = -this->constraints[constraint_index];
+      }
+      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(this->rhs, 0, subproblem.number_variables + subproblem.number_constraints));
+      DEBUG << '\n';
+   }
+
+   void MA57Solver::solve_indefinite_system(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
+         WarmstartInformation& warmstart_information) {
+      this->set_up_subproblem(statistics, subproblem, warmstart_information);
+      this->solve_indefinite_system(this->augmented_matrix, this->rhs, result);
    }
 
    std::tuple<size_t, size_t, size_t> MA57Solver::get_inertia() const {

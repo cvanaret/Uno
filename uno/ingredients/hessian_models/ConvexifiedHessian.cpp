@@ -16,7 +16,9 @@ namespace uno {
    ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options):
          HessianModel(),
          // inertia-based convexification needs a linear solver
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(dimension, maximum_number_nonzeros, options)),
+         // create(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros,
+         // const Options& options)
+         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(dimension, 0, 0, maximum_number_nonzeros, options)),
          regularization_initial_value(options.get_double("regularization_initial_value")),
          regularization_increase_factor(options.get_double("regularization_increase_factor")),
          regularization_failure_threshold(options.get_double("regularization_failure_threshold")) {

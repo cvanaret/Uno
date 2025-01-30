@@ -1,37 +1,29 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_SYMMETRICINDEFINITELINEARSYSTEM_H
-#define UNO_SYMMETRICINDEFINITELINEARSYSTEM_H
+#ifndef UNO_PRIMALDUALCONVEXIFICATIONSTRATEGY_H
+#define UNO_PRIMALDUALCONVEXIFICATIONSTRATEGY_H
 
 #include <memory>
-#include "SymmetricMatrix.hpp"
-#include "SparseStorageFactory.hpp"
-#include "RectangularMatrix.hpp"
 #include "ingredients/hessian_models/UnstableRegularization.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "model/Model.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   template <typename ElementType>
-   class SymmetricIndefiniteLinearSystem {
-   public:
-      SymmetricMatrix<size_t, ElementType> matrix;
-      Vector<ElementType> rhs{};
-      Vector<ElementType> solution{};
+   // forward declarations
+   template <typename IndexType, typename ElementType>
+   class SymmetricMatrix;
+   class WarmstartInformation;
 
-      SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension, size_t number_non_zeros, bool use_regularization,
-            const Options& options);
-      void assemble_matrix(const SymmetricMatrix<size_t, double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
-            size_t number_variables, size_t number_constraints);
-      void factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, WarmstartInformation& warmstart_information);
+   template <typename ElementType>
+   class PrimalDualConvexificationStrategy {
+   public:
+      explicit PrimalDualConvexificationStrategy(const Options& options);
       void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
-            size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter, WarmstartInformation& warmstart_information);
-      void solve(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
-      // [[nodiscard]] T get_primal_regularization() const;
+            SymmetricMatrix<size_t, ElementType>& matrix, size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter);
 
    protected:
       ElementType primal_regularization{0.};
@@ -48,11 +40,7 @@ namespace uno {
    };
 
    template <typename ElementType>
-   SymmetricIndefiniteLinearSystem<ElementType>::SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension,
-         size_t number_non_zeros, bool use_regularization, const Options& options):
-         matrix(dimension, number_non_zeros, use_regularization, sparse_format),
-         rhs(dimension),
-         solution(dimension),
+   PrimalDualConvexificationStrategy<ElementType>::PrimalDualConvexificationStrategy(const Options& options):
          regularization_failure_threshold(ElementType(options.get_double("regularization_failure_threshold"))),
          primal_regularization_initial_factor(ElementType(options.get_double("primal_regularization_initial_factor"))),
          dual_regularization_fraction(ElementType(options.get_double("dual_regularization_fraction"))),
@@ -63,51 +51,15 @@ namespace uno {
          threshold_unsuccessful_attempts(options.get_unsigned_int("threshold_unsuccessful_attempts")) {
    }
 
-   template <typename ElementType>
-   void SymmetricIndefiniteLinearSystem<ElementType>::assemble_matrix(const SymmetricMatrix<size_t, double>& hessian,
-         const RectangularMatrix<double>& constraint_jacobian, size_t number_variables, size_t number_constraints) {
-      this->matrix.set_dimension(number_variables + number_constraints);
-      this->matrix.reset();
-      // copy the Lagrangian Hessian in the top left block
-      //size_t current_column = 0;
-      for (const auto [row_index, column_index, element]: hessian) {
-         // finalize all empty columns
-         /*for (size_t column: Range(current_column, column_index)) {
-            this->matrix.finalize_column(column);
-            current_column++;
-         }*/
-         this->matrix.insert(element, row_index, column_index);
-      }
-
-      // Jacobian of general constraints
-      for (size_t column_index: Range(number_constraints)) {
-         for (const auto [row_index, derivative]: constraint_jacobian[column_index]) {
-            this->matrix.insert(derivative, row_index, number_variables + column_index);
-         }
-         this->matrix.finalize_column(column_index);
-      }
-   }
-
-   template <typename ElementType>
-   void SymmetricIndefiniteLinearSystem<ElementType>::factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
-         WarmstartInformation& warmstart_information) {
-      if (warmstart_information.hessian_sparsity_changed || warmstart_information.jacobian_sparsity_changed) {
-         DEBUG << "Performing symbolic analysis of the indefinite system\n";
-         linear_solver.do_symbolic_analysis(this->matrix);
-         warmstart_information.hessian_sparsity_changed = warmstart_information.jacobian_sparsity_changed = false;
-      }
-      DEBUG << "Performing numerical factorization of the indefinite system\n";
-      linear_solver.do_numerical_factorization(this->matrix);
-   }
-
    // the matrix has been factorized prior to calling this function
    template <typename ElementType>
-   void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics,
-         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, size_t size_primal_block, size_t size_dual_block,
-         ElementType dual_regularization_parameter, WarmstartInformation& warmstart_information) {
-      DEBUG2 << "Original matrix\n" << this->matrix << '\n';
+   void PrimalDualConvexificationStrategy<ElementType>::regularize_matrix(Statistics& statistics,
+         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, SymmetricMatrix<size_t, ElementType>& matrix,
+         size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter) {
+      DEBUG2 << "Original matrix\n" << matrix << '\n';
       this->primal_regularization = ElementType(0.);
       this->dual_regularization = ElementType(0.);
+      DEBUG << "Testing factorization with regularization factors (0, 0)\n";
       size_t number_attempts = 1;
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";
 
@@ -136,15 +88,16 @@ namespace uno {
       }
 
       // regularize the augmented matrix
-      this->matrix.set_regularization([=](size_t row_index) {
+      matrix.set_regularization([=](size_t row_index) {
          return (row_index < size_primal_block) ? this->primal_regularization : -this->dual_regularization;
       });
 
       bool good_inertia = false;
       while (!good_inertia) {
          DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
-         DEBUG2 << this->matrix << '\n';
-         this->factorize_matrix(linear_solver, warmstart_information);
+         DEBUG2 << matrix << '\n';
+         DEBUG << "Performing numerical factorization of the indefinite system\n";
+         linear_solver.do_numerical_factorization(matrix);
          number_attempts++;
          DEBUG << "Number of attempts: " << number_attempts << "\n";
 
@@ -167,7 +120,7 @@ namespace uno {
 
             if (this->primal_regularization <= this->regularization_failure_threshold) {
                // regularize the augmented matrix
-               this->matrix.set_regularization([=](size_t row_index) {
+               matrix.set_regularization([=](size_t row_index) {
                   return (row_index < size_primal_block) ? this->primal_regularization : -this->dual_regularization;
                });
             }
@@ -176,20 +129,11 @@ namespace uno {
             }
          }
       }
+      // check the inertia
+      std::tie(number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues) = linear_solver.get_inertia();
+      assert(number_pos_eigenvalues == size_primal_block && number_neg_eigenvalues == size_dual_block && number_zero_eigenvalues == 0);
       statistics.set("regulariz", this->primal_regularization);
    }
-
-   template <typename ElementType>
-   void SymmetricIndefiniteLinearSystem<ElementType>::solve(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
-      linear_solver.solve_indefinite_system(this->matrix, this->rhs, this->solution);
-   }
-
-   /*
-   template <typename ElementType>
-   ElementType SymmetricIndefiniteLinearSystem<ElementType>::get_primal_regularization() const {
-      return this->primal_regularization;
-   }
-   */
 } // namespace
 
-#endif // UNO_SYMMETRICINDEFINITELINEARSYSTEM_H
+#endif // UNO_PRIMALDUALCONVEXIFICATIONSTRATEGY_H

@@ -87,4 +87,8 @@ namespace uno {
       }};
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
    }
+
+   double OptimalityProblem::dual_regularization_parameter() const {
+      return 0.;
+   }
 } // namespace

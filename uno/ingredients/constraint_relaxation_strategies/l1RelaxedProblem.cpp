@@ -196,6 +196,10 @@ namespace uno {
       return norm(residual_norm, bounds_complementarity);
    }
 
+   double l1RelaxedProblem::dual_regularization_parameter() const {
+      return 0.;
+   }
+
    double l1RelaxedProblem::variable_lower_bound(size_t variable_index) const {
       if (variable_index < this->model.number_variables) { // model variable
          return this->model.variable_lower_bound(variable_index);

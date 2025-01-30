@@ -14,7 +14,7 @@ namespace uno {
    class Options;
    class Statistics;
    class UserCallbacks;
-   struct WarmstartInformation;
+   class WarmstartInformation;
 
    class GlobalizationMechanism {
    public:

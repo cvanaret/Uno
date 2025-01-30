@@ -6,7 +6,12 @@
 
 #include <array>
 #include <vector>
+#include "ingredients/convexification_strategies/PrimalDualConvexificationStrategy.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
+#include "linear_algebra/Vector.hpp"
 
 namespace uno {
    // forward declaration
@@ -22,20 +27,17 @@ namespace uno {
       MA57Factorization() = default;
    };
 
-   /*! \class MA57Solver
-    * \brief Interface for MA57
-    * see https://github.com/YimingYAN/linSolve
-    *
-    *  Interface to the symmetric indefinite linear solver MA57
-    */
    class MA57Solver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
-      MA57Solver(size_t dimension, size_t number_nonzeros);
+      MA57Solver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros,
+            const Options& options);
       ~MA57Solver() override = default;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
       void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
+      void solve_indefinite_system(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
+            WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -44,9 +46,20 @@ namespace uno {
       [[nodiscard]] size_t rank() const override;
 
    private:
+      SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
+      Vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+      RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
+      SymmetricMatrix<size_t, double> hessian;
+
+      const size_t dimension;
+      const size_t number_nonzeros;
+
       // internal matrix representation
       std::vector<int> row_indices;
       std::vector<int> column_indices;
+      SymmetricMatrix<size_t, double> augmented_matrix;
+      Vector<double> rhs;
+      PrimalDualConvexificationStrategy<double> primal_dual_convexification_strategy;
 
       // factorization
       MA57Factorization factorization{};
@@ -70,6 +83,8 @@ namespace uno {
       const size_t fortran_shift{1};
 
       bool use_iterative_refinement{false};
+      void set_up_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, WarmstartInformation& warmstart_information);
+      void assemble_augmented_rhs(LagrangeNewtonSubproblem& subproblem);
       void save_sparsity_pattern_internally(const SymmetricMatrix<size_t, double>& matrix);
    };
 } // namespace

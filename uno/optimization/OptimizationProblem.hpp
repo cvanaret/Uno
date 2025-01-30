@@ -63,6 +63,8 @@ namespace uno {
       virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate, const Multipliers& multipliers) const = 0;
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
             const Multipliers& multipliers, double shift_value, Norm residual_norm) const = 0;
+
+      [[nodiscard]] virtual double dual_regularization_parameter() const = 0;
    };
 } // namespace
 

@@ -29,8 +29,8 @@ namespace uno {
 #endif
 
 namespace uno {
-   std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> SymmetricIndefiniteLinearSolverFactory::create([[maybe_unused]] size_t dimension,
-         [[maybe_unused]] size_t number_nonzeros, const Options& options) {
+   std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> SymmetricIndefiniteLinearSolverFactory::create(size_t number_variables,
+         size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) {
       try {
          [[maybe_unused]] const std::string& linear_solver_name = options.get_string("linear_solver");
 #if defined(HAS_HSL) || defined(HAS_MA57)
@@ -39,7 +39,7 @@ namespace uno {
             && LIBHSL_isfunctional()
    #endif
                ) {
-            return std::make_unique<MA57Solver>(dimension, number_nonzeros);
+            return std::make_unique<MA57Solver>(number_variables, number_constraints, number_jacobian_nonzeros, number_hessian_nonzeros, options);
          }
 #endif
 

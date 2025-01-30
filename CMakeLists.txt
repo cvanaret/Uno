@@ -116,24 +116,11 @@ else()
    else()
       message(WARNING "Optional library MA57 was not found.")
    endif()
-   find_library(MA27 ma27)
-   if(MA27)
-      link_to_uno(ma27 ${MA27})
-   else()
-      message(WARNING "Optional library MA27 was not found.")
-   endif()
 endif()
 if(HSL OR MA57)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA57/MA57Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
    
-   find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
-endif()
-if(HSL OR MA27)
-   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA27/MA27Solver.cpp)
-   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA27SolverTests.cpp)
-
    find_package(BLAS REQUIRED)
    list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 endif()
@@ -165,49 +152,6 @@ else()
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
    list(APPEND LIBRARIES highs::highs)
    add_definitions("-D HAS_HIGHS")
-endif()
-
-# MUMPS
-find_package(MUMPS)
-if(NOT MUMPS_LIBRARY)
-   message(WARNING "Optional library MUMPS was not found.")
-else()
-   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MUMPS/MUMPSSolver.cpp)
-   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MUMPSSolverTests.cpp)
-   list(APPEND LIBRARIES ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
-   
-   list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
-
-   if(NOT MUMPS_MPISEQ_LIBRARY)
-      # parallel
-      add_definitions("-D MUMPS_PARALLEL")
-      find_package(MPI REQUIRED)
-      list(APPEND LIBRARIES MPI::MPI_CXX MPI::MPI_Fortran)
-      add_definitions("-D HAS_MPI")
-
-      find_package(BLACS REQUIRED)
-      list(APPEND LIBRARIES ${BLACS_LIBRARY})
-      list(APPEND DIRECTORIES ${BLACS_INCLUDE_DIRS})
-
-      find_package(ScaLAPACK REQUIRED)
-      list(APPEND LIBRARIES ${ScaLAPACK_LIBRARY})
-      list(APPEND DIRECTORIES ${ScaLAPACK_INCLUDE_DIRS})
-   else()
-      # link dummy parallel library (provided by MUMPS distribution)
-      link_to_uno(MUMPS_MPISEQ_LIBRARY ${MUMPS_MPISEQ_LIBRARY})
-   endif()
-   
-   find_package(METIS REQUIRED)
-   list(APPEND LIBRARIES ${METIS_LIBRARY})
-   list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
-   
-   find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
-   
-   find_package(OpenMP REQUIRED)
-   list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
-   
-   add_definitions("-D HAS_MUMPS")
 endif()
 
 ###############
