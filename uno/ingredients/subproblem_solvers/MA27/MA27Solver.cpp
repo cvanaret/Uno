@@ -261,16 +261,18 @@ namespace uno {
       // constraints and Jacobian
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
+      }
+      if (warmstart_information.constraint_jacobian_changed) {
          subproblem.evaluate_constraint_jacobian(this->constraint_jacobian);
       }
 
       // Lagrangian Hessian
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed || warmstart_information.constraint_jacobian_changed) {
          DEBUG << "Evaluating problem Hessian\n";
          subproblem.evaluate_hessian(statistics, this->hessian);
       }
 
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+      if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
          // form the KKT matrix
          this->augmented_matrix.set_dimension(subproblem.number_variables + subproblem.number_constraints);
          this->augmented_matrix.reset();
@@ -295,7 +297,7 @@ namespace uno {
          this->do_symbolic_analysis(this->augmented_matrix);
          warmstart_information.hessian_sparsity_changed = warmstart_information.jacobian_sparsity_changed = false;
       }
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+      if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
          DEBUG << "Performing numerical factorization of the augmented matrix\n";
          this->do_numerical_factorization(this->augmented_matrix);
          // regularize
