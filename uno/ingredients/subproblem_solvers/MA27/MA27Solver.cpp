@@ -4,8 +4,11 @@
 #include <cassert>
 #include <stdexcept>
 #include "MA27Solver.hpp"
+#include "ingredients/subproblems/LagrangeNewtonSubproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/WarmstartInformation.hpp"
+#include "options/Options.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 
@@ -108,102 +111,123 @@ namespace uno {
       RANK_DEFICIENT, // Matrix is rank deficient. In this case, a decomposition will still have been produced which will enable the subsequent solution of consistent equations (MA27B/BD entry only). INFO(2) will be set to the rank of the matrix. Note that this warning will overwrite an INFO(1)=1 or INFO(1)=2 warning.
    };
 
-
-   MA27Solver::MA27Solver(size_t max_dimension, size_t max_number_nonzeros):
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>(max_dimension),
-         n(static_cast<int>(max_dimension)), nnz(static_cast<int>(max_number_nonzeros)),
-         irn(max_number_nonzeros), icn(max_number_nonzeros),
-         iw((2 * max_number_nonzeros + 3 * max_dimension + 1) * 6 / 5), // 20% more than 2*nnz + 3*n + 1
-         ikeep(3 * max_dimension), iw1(2 * max_dimension) {
+   MA27Solver::MA27Solver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros,
+            const Options& options):
+         DirectSymmetricIndefiniteLinearSolver<size_t, double>(number_variables + number_constraints),
+         objective_gradient(number_variables),
+         constraints(number_constraints),
+         constraint_jacobian(number_constraints, number_variables), // TODO construct better
+         hessian(number_variables, number_hessian_nonzeros, false, "COO"),
+         dimension(number_variables + number_constraints), number_nonzeros(number_hessian_nonzeros + number_jacobian_nonzeros),
+         augmented_matrix(this->dimension, this->number_nonzeros, true, "COO"),
+         rhs(this->dimension),
+         primal_dual_convexification_strategy(options),
+         iw((2 * this->number_nonzeros + 3 * this->dimension + 1) * 6 / 5), // 20% more than 2*nnz + 3*n + 1
+         ikeep(3 * this->dimension), iw1(2 * this->dimension) {
+      this->row_indices.reserve(this->number_nonzeros);
+      this->column_indices.reserve(this->number_nonzeros);
       // initialization: set the default values of the controlling parameters
-      MA27ID(icntl.data(), cntl.data());
+      MA27ID(this->icntl.data(), this->cntl.data());
       // a suitable pivot order is to be chosen automatically
-      iflag = 0;
+      this->iflag = 0;
       // suppress warning messages
-      icntl[eICNTL::LP] = 0;
-      icntl[eICNTL::MP] = 0;
-      icntl[eICNTL::LDIAG] = 0;
+      this->icntl[eICNTL::LP] = 0;
+      this->icntl[eICNTL::MP] = 0;
+      this->icntl[eICNTL::LDIAG] = 0;
    }
 
    void MA27Solver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
-      assert(matrix.dimension() <= iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(matrix.number_nonzeros() <= irn.capacity() &&
+      assert(matrix.dimension() <= this->iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
+      assert(matrix.number_nonzeros() <= this->row_indices.capacity() &&
              "MA27Solver: the number of nonzeros of the matrix is larger than the preallocated size");
 
       // build the internal matrix representation
       save_matrix_to_local_format(matrix);
 
-      n = static_cast<int>(matrix.dimension());
-      nnz = static_cast<int>(matrix.number_nonzeros());
+      int n = static_cast<int>(matrix.dimension());
+      int nnz = static_cast<int>(matrix.number_nonzeros());
+      this->dimension = matrix.dimension();
+      this->number_nonzeros = matrix.number_nonzeros();
 
       // symbolic analysis
-      int liw = static_cast<int>(iw.size());
+      int liw = static_cast<int>(this->iw.size());
       MA27AD(&n, &nnz,                                   /* size info */
-            irn.data(), icn.data(),                     /* matrix indices */
-            iw.data(), &liw, ikeep.data(), iw1.data(),  /* solver workspace */
-            &nsteps, &iflag, icntl.data(), cntl.data(), info.data(), &ops);
+            this->row_indices.data(), this->column_indices.data(),                     /* matrix indices */
+            this->iw.data(), &liw, this->ikeep.data(), this->iw1.data(),  /* solver workspace */
+            &this->nsteps, &this->iflag, this->icntl.data(), this->cntl.data(), this->info.data(), &this->ops);
 
       // resize the factor by at least INFO(5) (here, 50% more)
-      factor.resize(static_cast<size_t>(3 * info[eINFO::NRLNEC] / 2));
+      this->factor.resize(static_cast<size_t>(3 * this->info[eINFO::NRLNEC] / 2));
 
-      assert(info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the symbolic analysis failed");
-      if (info[eINFO::IFLAG] != eIFLAG::SUCCESS) {
-         WARNING << "MA27 has issued a warning: IFLAG = " << info[eINFO::IFLAG] << " additional info, IERROR = " << info[eINFO::IERROR] << '\n';
+      assert(this->info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the symbolic analysis failed");
+      if (this->info[eINFO::IFLAG] != eIFLAG::SUCCESS) {
+         WARNING << "MA27 has issued a warning: IFLAG = " << this->info[eINFO::IFLAG] << " additional info, IERROR = " << this->info[eINFO::IERROR] << '\n';
       }
    }
 
    void MA27Solver::do_numerical_factorization([[maybe_unused]] const SymmetricMatrix<size_t, double>& matrix) {
-      assert(matrix.dimension() <= iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(nnz == static_cast<int>(matrix.number_nonzeros()) && "MA27Solver: the numbers of nonzeros do not match");
+      assert(matrix.dimension() <= this->iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
+      assert(this->number_nonzeros == static_cast<int>(matrix.number_nonzeros()) && "MA27Solver: the numbers of nonzeros do not match");
 
       // initialize factor with the entries of the matrix. It will be modified by MA27BD
-      std::copy(matrix.data_pointer(), matrix.data_pointer() + matrix.number_nonzeros(), factor.begin());
+      std::copy(matrix.data_pointer(), matrix.data_pointer() + matrix.number_nonzeros(), this->factor.begin());
+
+      int n = static_cast<int>(matrix.dimension());
+      int nnz = static_cast<int>(matrix.number_nonzeros());
 
       // numerical factorization
       // may fail because of insufficient space. In this case, more memory is allocated and the factorization tried again
-      bool factorization_done = false;
+      bool successful_factorization = false;
       size_t attempt = 0;
-      while (not factorization_done) {
+      while (not successful_factorization) {
          attempt++;
          if (this->number_factorization_attempts < attempt) {
             throw std::runtime_error("MA27 reached the maximum number of factorization attempts");
          }
 
-         int la = static_cast<int>(factor.size());
-         int liw = static_cast<int>(iw.size());
-         MA27BD(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw, ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(),
-               cntl.data(), info.data());
-         factorization_done = true;
+         int la = static_cast<int>(this->factor.size());
+         int liw = static_cast<int>(this->iw.size());
+         MA27BD(&n, &nnz, this->row_indices.data(), this->column_indices.data(), this->factor.data(), &la, this->iw.data(), &liw, this->ikeep.data(),
+               &this->nsteps, &this->maxfrt, this->iw1.data(), this->icntl.data(), this->cntl.data(), this->info.data());
+         successful_factorization = true;
 
-         if (info[eINFO::IFLAG] == eIFLAG::INSUFFICIENTINTEGER) {
+         if (this->info[eINFO::IFLAG] == eIFLAG::INSUFFICIENTINTEGER) {
             INFO << "MA27: insufficient integer workspace, resizing and retrying. \n";
             // increase the size of iw
-            iw.resize(static_cast<size_t>(info[eINFO::IERROR]));
-            factorization_done = false;
+            this->iw.resize(static_cast<size_t>(this->info[eINFO::IERROR]));
+            successful_factorization = false;
          }
-         if (info[eINFO::IFLAG] == eIFLAG::INSUFFICIENTREAL) {
+         if (this->info[eINFO::IFLAG] == eIFLAG::INSUFFICIENTREAL) {
             INFO << "MA27: insufficient real workspace, resizing and retrying. \n";
             // increase the size of factor
-            factor.resize(static_cast<size_t>(info[eINFO::IERROR]));
-            factorization_done = false;
+            this->factor.resize(static_cast<size_t>(this->info[eINFO::IERROR]));
+            successful_factorization = false;
          }
       }
-      this->w.resize(static_cast<size_t>(maxfrt));
+      this->w.resize(static_cast<size_t>(this->maxfrt));
       this->check_factorization_status();
    }
 
-   void MA27Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& /*matrix*/, const Vector<double>& rhs, Vector<double>& result) {
-      int la = static_cast<int>(factor.size());
-      int liw = static_cast<int>(iw.size());
+   void MA27Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) {
+      int la = static_cast<int>(this->factor.size());
+      int liw = static_cast<int>(this->iw.size());
 
       result = rhs;
+      int n = static_cast<int>(matrix.dimension());
 
-      MA27CD(&n, factor.data(), &la, iw.data(), &liw, w.data(), &maxfrt, result.data(), iw1.data(), &nsteps, icntl.data(), info.data());
+      MA27CD(&n, this->factor.data(), &la, this->iw.data(), &liw, this->w.data(), &this->maxfrt, result.data(), this->iw1.data(), &this->nsteps,
+            this->icntl.data(), this->info.data());
 
-      assert(info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the linear solve failed");
-      if (info[eINFO::IFLAG] != eIFLAG::SUCCESS) {
-         WARNING << "MA27 has issued a warning: IFLAG = " << info[eINFO::IFLAG] << " additional info, IERROR = " << info[eINFO::IERROR] << '\n';
+      assert(this->info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the linear solve failed");
+      if (this->info[eINFO::IFLAG] != eIFLAG::SUCCESS) {
+         WARNING << "MA27 has issued a warning: IFLAG = " << this->info[eINFO::IFLAG] << " additional info, IERROR = " << this->info[eINFO::IERROR] << '\n';
       }
+   }
+
+   void MA27Solver::solve_indefinite_system(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
+         WarmstartInformation& warmstart_information) {
+      this->set_up_subproblem(statistics, subproblem, warmstart_information);
+      this->solve_indefinite_system(this->augmented_matrix, this->rhs, result);
    }
 
    std::tuple<size_t, size_t, size_t> MA27Solver::get_inertia() const {
@@ -212,46 +236,115 @@ namespace uno {
       const size_t rankA = rank();
       const size_t num_negative_eigenvalues = number_negative_eigenvalues();
       const size_t num_positive_eigenvalues = rankA - num_negative_eigenvalues;
-      const size_t num_zero_eigenvalues = static_cast<size_t>(n) - rankA;
+      const size_t num_zero_eigenvalues = this->dimension - rankA;
       return std::make_tuple(num_positive_eigenvalues, num_negative_eigenvalues, num_zero_eigenvalues);
    }
 
    size_t MA27Solver::number_negative_eigenvalues() const {
-      return static_cast<size_t>(info[eINFO::NEIG]);
+      return static_cast<size_t>(this->info[eINFO::NEIG]);
    }
 
    bool MA27Solver::matrix_is_singular() const {
-      return (info[eINFO::IFLAG] == eIFLAG::SINGULAR || info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT);
+      return (this->info[eINFO::IFLAG] == eIFLAG::SINGULAR || this->info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT);
    }
 
    size_t MA27Solver::rank() const {
-      return (info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT) ? static_cast<size_t>(info[eINFO::IERROR]) : static_cast<size_t>(n);
+      return (this->info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT) ? static_cast<size_t>(this->info[eINFO::IERROR]) : this->dimension;
+   }
+
+   void MA27Solver::set_up_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, WarmstartInformation& warmstart_information) {
+      // objective gradient
+      if (warmstart_information.objective_changed) {
+         subproblem.evaluate_objective_gradient(this->objective_gradient);
+      }
+
+      // constraints and Jacobian
+      if (warmstart_information.constraints_changed) {
+         subproblem.evaluate_constraints(this->constraints);
+         subproblem.evaluate_constraint_jacobian(this->constraint_jacobian);
+      }
+
+      // Lagrangian Hessian
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         DEBUG << "Evaluating problem Hessian\n";
+         subproblem.evaluate_hessian(statistics, this->hessian);
+      }
+
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         // form the KKT matrix
+         this->augmented_matrix.set_dimension(subproblem.number_variables + subproblem.number_constraints);
+         this->augmented_matrix.reset();
+         // copy the Lagrangian Hessian in the top left block
+         for (const auto [row_index, column_index, element]: this->hessian) {
+            this->augmented_matrix.insert(element, row_index, column_index);
+         }
+
+         // Jacobian of general constraints
+         for (size_t column_index: Range(subproblem.number_constraints)) {
+            for (const auto [row_index, derivative]: this->constraint_jacobian[column_index]) {
+               this->augmented_matrix.insert(derivative, row_index, subproblem.number_variables + column_index);
+            }
+            this->augmented_matrix.finalize_column(column_index);
+         }
+      }
+
+      // possibly assemble augmented system and perform analysis
+      if (warmstart_information.hessian_sparsity_changed || warmstart_information.jacobian_sparsity_changed) {
+         DEBUG << "Augmented matrix:\n" << this->augmented_matrix;
+         DEBUG << "Performing symbolic analysis of the augmented matrix\n";
+         this->do_symbolic_analysis(this->augmented_matrix);
+         warmstart_information.hessian_sparsity_changed = warmstart_information.jacobian_sparsity_changed = false;
+      }
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         DEBUG << "Performing numerical factorization of the augmented matrix\n";
+         this->do_numerical_factorization(this->augmented_matrix);
+         // regularize
+         const double dual_regularization_parameter = subproblem.dual_regularization_parameter();
+         this->primal_dual_convexification_strategy.regularize_matrix(statistics, *this, this->augmented_matrix, subproblem.number_variables,
+               subproblem.number_constraints, dual_regularization_parameter);
+      }
+      this->assemble_augmented_rhs(subproblem); // TODO add conditions
+   }
+
+   void MA27Solver::assemble_augmented_rhs(LagrangeNewtonSubproblem& subproblem) {
+      // Lagrangian gradient
+      subproblem.compute_lagrangian_gradient(this->objective_gradient, this->constraint_jacobian, this->rhs);
+      for (size_t variable_index: Range(subproblem.number_variables)) {
+         this->rhs[variable_index] = -this->rhs[variable_index];
+      }
+
+      // constraints
+      for (size_t constraint_index: Range(subproblem.number_constraints)) {
+         this->rhs[subproblem.number_variables + constraint_index] = -this->constraints[constraint_index];
+      }
+      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(this->rhs, 0, subproblem.number_variables + subproblem.number_constraints));
+      DEBUG << '\n';
    }
 
    void MA27Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
       // build the internal matrix representation
-      irn.clear();
-      icn.clear();
-      factor.clear();
+      this->row_indices.clear();
+      this->column_indices.clear();
+      this->factor.clear();
       constexpr auto fortran_shift = 1;
       for (const auto [row_index, column_index, element]: matrix) {
-         irn.emplace_back(static_cast<int>(row_index + fortran_shift));
-         icn.emplace_back(static_cast<int>(column_index + fortran_shift));
-         factor.emplace_back(element);
+         this->row_indices.emplace_back(static_cast<int>(row_index + fortran_shift));
+         this->column_indices.emplace_back(static_cast<int>(column_index + fortran_shift));
+         this->factor.emplace_back(element);
       }
    }
 
    void MA27Solver::check_factorization_status() {
-      switch (info[eINFO::IFLAG]) {
+      switch (this->info[eINFO::IFLAG]) {
          case NSTEPS:
             WARNING << "MA27BD: Value of NSTEPS outside the range 1 ≤ NSTEPS ≤ N" << '\n';
             break;
          case PIVOTSIGN:
-            WARNING << "MA27BD: A change of sign of pivots has been detected when U was negative. Detected at pivot step " << info[eINFO::IERROR]
+            WARNING << "MA27BD: A change of sign of pivots has been detected when U was negative. Detected at pivot step " << this->info[eINFO::IERROR]
                     << '\n';
             break;
          case SINGULAR:
-            DEBUG << "MA27BD: Matrix is singular. Singularity detected during pivot step " << info[eINFO::IERROR] << '\n';
+            DEBUG << "MA27BD: Matrix is singular. Singularity detected during pivot step " << this->info[eINFO::IERROR] << '\n';
             break;
          case NZOUTOFRANGE:
             WARNING << "MA27BD: Value of NZ out of range. NZ < 0." << '\n';
@@ -260,14 +353,14 @@ namespace uno {
             WARNING << "MA27BD: Value of N out of range. N < 1." << '\n';
             break;
          case IDXOUTOFRANGE:
-            WARNING << "MA27BD: Index (in IRN or ICN) out of range. " << info[eINFO::IERROR] << " indices affected." << '\n';
+            WARNING << "MA27BD: Index (in IRN or ICN) out of range. " << this->info[eINFO::IERROR] << " indices affected." << '\n';
             break;
          case FALSEDEFINITENESS:
             WARNING << "MA27BD: Matrix was supposed to be definite, but pivots have different signs when factorizing. Detected "
-                    << info[eINFO::IERROR] << " sign changes." << '\n';
+                    << this->info[eINFO::IERROR] << " sign changes." << '\n';
             break;
          case RANK_DEFICIENT:
-            DEBUG << "MA27BD: Matrix is rank deficient. Rank: " << info[eINFO::IERROR] << " whereas dimension " << n << '\n';
+            DEBUG << "MA27BD: Matrix is rank deficient. Rank: " << this->info[eINFO::IERROR] << " whereas dimension " << this->dimension << '\n';
             break;
       }
    }
