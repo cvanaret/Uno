@@ -167,7 +167,7 @@ namespace uno {
 
    void MA27Solver::do_numerical_factorization([[maybe_unused]] const SymmetricMatrix<size_t, double>& matrix) {
       assert(matrix.dimension() <= this->iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(this->number_nonzeros == static_cast<int>(matrix.number_nonzeros()) && "MA27Solver: the numbers of nonzeros do not match");
+      assert(this->number_nonzeros == matrix.number_nonzeros() && "MA27Solver: the numbers of nonzeros do not match");
 
       // initialize factor with the entries of the matrix. It will be modified by MA27BD
       std::copy(matrix.data_pointer(), matrix.data_pointer() + matrix.number_nonzeros(), this->factor.begin());
