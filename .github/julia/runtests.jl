@@ -18,7 +18,7 @@ import Uno_jll
 Create a new `AmplNLWriter.Optimizer` object that uses Uno as the backing
 solver.
 """
-function Optimizer(options = String["logger=INFO", "unbounded_objective_threshold=-1e15"])
+function Optimizer(options = String["logger=SILENT", "preset=ipopt", "unbounded_objective_threshold=-1e15"])
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
