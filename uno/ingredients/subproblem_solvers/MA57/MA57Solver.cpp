@@ -84,9 +84,9 @@ namespace uno {
             /* out */ this->info.data(),
             /* out */ this->rinfo.data());
 
-      assert(0 <= info[0] && "MA57: the symbolic analysis failed");
-      if (0 < info[0]) {
-         WARNING << "MA57 has issued a warning: info(1) = " << info[0] << '\n';
+      assert(0 <= this->info[0] && "MA57: the symbolic analysis failed");
+      if (0 < this->info[0]) {
+         WARNING << "MA57 has issued a warning: info(1) = " << this->info[0] << '\n';
       }
 
       // get LFACT and LIFACT and resize FACT and IFACT (no effect if resized to <= size)

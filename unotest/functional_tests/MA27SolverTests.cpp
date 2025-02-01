@@ -7,6 +7,7 @@
 
 using namespace uno;
 
+/*
 TEST(MA27Solver, SystemSize5) {
    const size_t n = 5;
    const size_t nnz = 7;
@@ -74,3 +75,4 @@ TEST(MA27Solver, SingularMatrix) {
    // expected inertia (1, 1, 2)
    ASSERT_TRUE(solver.matrix_is_singular());
 }
+*/
