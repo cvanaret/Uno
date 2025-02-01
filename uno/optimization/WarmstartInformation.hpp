@@ -15,6 +15,7 @@ namespace uno {
 
       bool objective_changed{true};
       bool constraints_changed{true};
+      bool constraint_jacobian_changed{true};
       bool constraint_bounds_changed{true};
       bool variable_bounds_changed{true};
       // bool problem_structure_changed{true};

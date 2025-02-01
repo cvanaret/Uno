@@ -8,7 +8,7 @@
 
 namespace uno {
    LagrangeNewtonSubproblem::LagrangeNewtonSubproblem(const OptimizationProblem& problem, Iterate& current_iterate,
-      const Vector<double>& current_multipliers, HessianModel& hessian_model, double trust_region_radius):
+      const Multipliers& current_multipliers, HessianModel& hessian_model, double trust_region_radius):
             number_variables(problem.number_variables), number_constraints(problem.number_constraints),
             problem(problem), current_iterate(current_iterate), current_multipliers(current_multipliers), hessian_model(hessian_model),
             trust_region_radius(trust_region_radius) { }
@@ -26,7 +26,7 @@ namespace uno {
    }
 
    void LagrangeNewtonSubproblem::evaluate_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian) {
-      this->hessian_model.evaluate(statistics, this->problem, this->current_iterate.primals, this->current_multipliers, hessian);
+      this->hessian_model.evaluate(statistics, this->problem, this->current_iterate.primals, this->current_multipliers.constraints, hessian);
    }
 
    void LagrangeNewtonSubproblem::compute_lagrangian_gradient(SparseVector<double>& objective_gradient, RectangularMatrix<double>& jacobian,
@@ -40,12 +40,19 @@ namespace uno {
 
       // constraints
       for (size_t constraint_index: Range(this->number_constraints)) {
-         if (this->current_multipliers[constraint_index] != 0.) {
+         if (this->current_multipliers.constraints[constraint_index] != 0.) {
             for (const auto [variable_index, derivative]: jacobian[constraint_index]) {
-               gradient[variable_index] -= this->current_multipliers[constraint_index] * derivative;
+               gradient[variable_index] -= this->current_multipliers.constraints[constraint_index] * derivative;
             }
          }
       }
+
+      /*
+      // bound multipliers
+      for (size_t variable_index: Range(this->number_variables)) {
+         gradient[variable_index] -= (this->current_multipliers.lower_bounds[variable_index] + this->current_multipliers.upper_bounds[variable_index]);
+      }
+       */
    }
 
    double LagrangeNewtonSubproblem::dual_regularization_parameter() const {

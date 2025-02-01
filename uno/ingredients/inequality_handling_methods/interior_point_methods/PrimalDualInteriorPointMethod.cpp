@@ -41,7 +41,7 @@ namespace uno {
                options.get_double("barrier_push_variable_to_interior_k1"),
                options.get_double("barrier_push_variable_to_interior_k2")
          }),
-         // least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
+         least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
          damping_factor(options.get_double("barrier_damping_factor")),
          l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
    }
@@ -100,7 +100,8 @@ namespace uno {
 
       // compute least-square multipliers
       if (problem.is_constrained()) {
-         this->compute_least_square_multipliers(problem, initial_iterate, initial_iterate.multipliers.constraints);
+         Preprocessing::compute_least_square_multipliers(problem, *this->linear_solver, initial_iterate, initial_iterate.multipliers,
+               this->least_square_multiplier_max_norm);
       }
    }
 
@@ -140,8 +141,7 @@ namespace uno {
 
       // create the barrier reformulation and the subproblem
       PrimalDualInteriorPointProblem barrier_problem(problem, current_multipliers, this->barrier_parameter());
-      LagrangeNewtonSubproblem subproblem(barrier_problem, current_iterate, current_multipliers.constraints, *this->hessian_model,
-            this->trust_region_radius);
+      LagrangeNewtonSubproblem subproblem(barrier_problem, current_iterate, current_multipliers, *this->hessian_model, this->trust_region_radius);
       this->linear_solver->solve_indefinite_system(statistics, subproblem, this->solution, warmstart_information);
 
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
@@ -211,7 +211,8 @@ namespace uno {
       assert(this->solving_feasibility_problem && "The barrier subproblem did not know it was solving the feasibility problem.");
       this->barrier_parameter_update_strategy.set_barrier_parameter(this->previous_barrier_parameter);
       this->solving_feasibility_problem = false;
-      this->compute_least_square_multipliers(problem, trial_iterate, trial_iterate.multipliers.constraints);
+      Preprocessing::compute_least_square_multipliers(problem, *this->linear_solver, trial_iterate, trial_iterate.multipliers,
+            this->least_square_multiplier_max_norm);
    }
 
    void PrimalDualInteriorPointMethod::set_auxiliary_measure(const Model& model, Iterate& iterate) {
@@ -382,16 +383,6 @@ namespace uno {
                                                               distance_to_bound - current_multipliers.upper_bounds[variable_index];
          assert(is_finite(direction_multipliers.upper_bounds[variable_index]) && "The upper bound dual is infinite");
       }
-   }
-
-   void PrimalDualInteriorPointMethod::compute_least_square_multipliers(const OptimizationProblem& /*problem*/, Iterate& /*iterate*/,
-         Vector<double>& /*constraint_multipliers*/) {
-      /*
-      this->augmented_system.matrix.set_dimension(problem.number_variables + problem.number_constraints);
-      this->augmented_system.matrix.reset();
-      Preprocessing::compute_least_square_multipliers(problem.model, this->augmented_system.matrix, this->augmented_system.rhs, *this->linear_solver,
-            iterate, constraint_multipliers, this->least_square_multiplier_max_norm);
-            */
    }
 
    void PrimalDualInteriorPointMethod::postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) {

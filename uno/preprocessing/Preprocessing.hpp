@@ -12,6 +12,7 @@ namespace uno {
    class Iterate;
    class Model;
    class Multipliers;
+   class OptimizationProblem;
    class QPSolver;
    template <typename IndexType, typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
@@ -22,9 +23,8 @@ namespace uno {
 
    class Preprocessing {
    public:
-      static void compute_least_square_multipliers(const Model& model, SymmetricMatrix<size_t, double>& matrix, Vector<double>& rhs,
-            DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers,
-            double multiplier_max_norm);
+      static void compute_least_square_multipliers(const OptimizationProblem& problem, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+            Iterate& current_iterate, Multipliers& multipliers, double multiplier_max_norm);
       static void enforce_linear_constraints(const Model& model, Vector<double>& primals, Multipliers& multipliers, QPSolver& qp_solver);
    };
 } // namespace

@@ -1,6 +1,9 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#ifndef UNO_CONVEXIFIEDHESSIAN_H
+#define UNO_CONVEXIFIEDHESSIAN_H
+
 #include <memory>
 #include "HessianModel.hpp"
 
@@ -28,3 +31,5 @@ namespace uno {
       void regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables);
    };
 } // namespace
+
+#endif // UNO_CONVEXIFIEDHESSIAN_H

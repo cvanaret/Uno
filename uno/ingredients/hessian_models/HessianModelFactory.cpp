@@ -6,6 +6,7 @@
 #include "HessianModel.hpp"
 #include "ConvexifiedHessian.hpp"
 #include "ExactHessian.hpp"
+#include "IdentityHessian.hpp"
 #include "ZeroHessian.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
@@ -22,6 +23,9 @@ namespace uno {
       }
       else if (hessian_model == "zero") {
          return std::make_unique<ZeroHessian>();
+      }
+      else if (hessian_model == "identity") {
+         return std::make_unique<IdentityHessian>();
       }
       throw std::invalid_argument("Hessian model " + hessian_model + " does not exist");
    }

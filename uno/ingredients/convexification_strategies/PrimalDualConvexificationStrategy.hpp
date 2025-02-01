@@ -56,7 +56,6 @@ namespace uno {
    void PrimalDualConvexificationStrategy<ElementType>::regularize_matrix(Statistics& statistics,
          DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, SymmetricMatrix<size_t, ElementType>& matrix,
          size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter) {
-      DEBUG2 << "Original matrix\n" << matrix << '\n';
       this->primal_regularization = ElementType(0.);
       this->dual_regularization = ElementType(0.);
       DEBUG << "Testing factorization with regularization factors (0, 0)\n";
