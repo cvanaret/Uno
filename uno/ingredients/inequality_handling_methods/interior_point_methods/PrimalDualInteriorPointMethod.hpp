@@ -58,7 +58,7 @@ namespace uno {
       double previous_barrier_parameter;
       const double default_multiplier;
       const InteriorPointParameters parameters;
-      // const double least_square_multiplier_max_norm;
+      const double least_square_multiplier_max_norm;
       const double damping_factor; // (Section 3.7 in IPOPT paper)
       const double l1_constraint_violation_coefficient; // (rho in Section 3.3.1 in IPOPT paper)
 
@@ -81,7 +81,6 @@ namespace uno {
             Vector<double>& direction_primals, Multipliers& direction_multipliers);
       void compute_bound_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
             const Vector<double>& primal_direction, Multipliers& direction_multipliers);
-      void compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate, Vector<double>& constraint_multipliers);
    };
 } // namespace
 

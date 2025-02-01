@@ -17,6 +17,7 @@ namespace uno {
    void WarmstartInformation::no_changes() {
       this->objective_changed = false;
       this->constraints_changed = false;
+      this->constraint_jacobian_changed = false;
       this->constraint_bounds_changed = false;
       this->variable_bounds_changed = false;
       this->hessian_sparsity_changed = false;
@@ -26,6 +27,7 @@ namespace uno {
    void WarmstartInformation::iterate_changed() {
       this->objective_changed = true;
       this->constraints_changed = true;
+      this->constraint_jacobian_changed = true;
       this->constraint_bounds_changed = true;
       this->variable_bounds_changed = true;
    }
@@ -33,6 +35,7 @@ namespace uno {
    void WarmstartInformation::whole_problem_changed() {
       this->objective_changed = true;
       this->constraints_changed = true;
+      this->constraint_jacobian_changed = true;
       this->constraint_bounds_changed = true;
       this->variable_bounds_changed = true;
       this->hessian_sparsity_changed = true;
@@ -42,6 +45,7 @@ namespace uno {
    void WarmstartInformation::only_objective_changed() {
       this->objective_changed = true;
       this->constraints_changed = false;
+      this->constraint_jacobian_changed = false;
       this->constraint_bounds_changed = false;
       this->variable_bounds_changed = false;
       this->hessian_sparsity_changed = false;
