@@ -5,6 +5,7 @@
 #define UNO_PRIMALDUALCONVEXIFICATIONSTRATEGY_H
 
 #include <memory>
+#include <cassert>
 #include "ingredients/hessian_models/UnstableRegularization.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "optimization/WarmstartInformation.hpp"

@@ -35,6 +35,9 @@ namespace uno {
       warmstart_information.constraints_changed = false;
       linear_solver.solve_indefinite_system(statistics, subproblem, solution, warmstart_information);
 
+      // note: we solve with -RHS instead of RHS (this is what LagrangeNewtonSubproblem does intrinsically).
+      // Therefore, we get our multipliers from -solution.
+
       // if least-square multipliers too big, discard them. Otherwise, keep them
       const auto trial_multipliers = view(-solution, problem.number_variables, problem.number_variables + problem.number_constraints);
       DEBUG2 << "Trial multipliers: "; print_vector(DEBUG2, trial_multipliers);
