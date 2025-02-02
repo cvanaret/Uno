@@ -66,20 +66,17 @@ namespace uno {
       //   Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, this->solver);
       //}
 
-      // add the slacks to the initial iterate
+      // add the slacks to the initial iterate and make the initial point strictly feasible wrt the bounds
       initial_iterate.set_number_variables(problem.number_variables);
-      // make the initial point strictly feasible wrt the bounds
       for (size_t variable_index: Range(problem.number_variables)) {
          initial_iterate.primals[variable_index] = PrimalDualInteriorPointMethod::push_variable_to_interior(initial_iterate.primals[variable_index],
                problem.variable_lower_bound(variable_index), problem.variable_upper_bound(variable_index));
       }
-
-      // set the slack variables (if any)
+      
+      // set the slack variables (if any) using the current constraint values
       if (!problem.model.get_slacks().is_empty()) {
          // evaluate the constraints at the original point
          initial_iterate.evaluate_constraints(problem.model);
-
-         // set the slacks to the constraint values
          for (const auto [constraint_index, slack_index]: problem.model.get_slacks()) {
             initial_iterate.primals[slack_index] = PrimalDualInteriorPointMethod::push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index],
                   problem.variable_lower_bound(slack_index), problem.variable_upper_bound(slack_index));
