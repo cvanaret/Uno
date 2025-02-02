@@ -55,7 +55,7 @@ namespace uno {
 
 #ifdef HAS_MUMPS
          if (linear_solver_name == "MUMPS") {
-            return std::make_unique<MUMPSSolver>(dimension, number_nonzeros);
+            return std::make_unique<MUMPSSolver>(number_variables, number_constraints, number_jacobian_nonzeros, number_hessian_nonzeros, options);
          }
 #endif
          std::string message = "The linear solver ";
