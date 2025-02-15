@@ -13,8 +13,8 @@ namespace uno {
 
    class LPMethod : public InequalityConstrainedMethod {
    public:
-      LPMethod(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
-            const Options& options);
+      LPMethod(const std::string& regularization_strategy, size_t number_variables, size_t number_constraints,
+            size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, const Options& options);
       ~LPMethod() override;
 
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;

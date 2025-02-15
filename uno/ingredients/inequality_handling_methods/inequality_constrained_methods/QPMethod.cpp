@@ -15,9 +15,9 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   QPMethod::QPMethod(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
-         size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) :
-         InequalityConstrainedMethod(options.get_string("hessian_model"), number_variables, number_hessian_nonzeros,
+   QPMethod::QPMethod(const std::string& regularization_strategy, size_t number_variables, size_t number_constraints,
+         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) :
+         InequalityConstrainedMethod(options.get_string("hessian_model"), regularization_strategy, number_variables, number_hessian_nonzeros,
                options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"), options),
          enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")),
          // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
@@ -37,7 +37,8 @@ namespace uno {
 
    void QPMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
          Direction& direction, WarmstartInformation& warmstart_information) {
-      LagrangeNewtonSubproblem subproblem(problem, current_iterate, current_multipliers, *this->hessian_model, this->trust_region_radius);
+      LagrangeNewtonSubproblem subproblem(problem, current_iterate, current_multipliers, *this->hessian_model, *this->regularization_strategy,
+            this->trust_region_radius);
       this->solver->solve_QP(statistics, subproblem, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;

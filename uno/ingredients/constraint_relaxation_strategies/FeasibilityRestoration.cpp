@@ -3,8 +3,8 @@
 
 #include "FeasibilityRestoration.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
-#include "ingredients/hessian_models/UnstableRegularization.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
+#include "ingredients/regularization_strategies/UnstableRegularization.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"

@@ -11,6 +11,8 @@
 
 namespace uno {
    // forward declarations
+   template <typename ElementType>
+   class RegularizationStrategy;
    class HessianModel;
    class Iterate;
    class Multipliers;
@@ -31,7 +33,7 @@ namespace uno {
       const size_t number_constraints;
 
       LagrangeNewtonSubproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            HessianModel& hessian_model, double trust_region_radius);
+            HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
 
       void evaluate_objective_gradient(SparseVector<double>& objective_gradient);
       void evaluate_constraints(Vector<double>& constraints);
@@ -51,7 +53,7 @@ namespace uno {
       Iterate& current_iterate;
       const Multipliers& current_multipliers;
       HessianModel& hessian_model;
-      // TODO convexification model
+      RegularizationStrategy<double>& regularization_strategy;
       double trust_region_radius;
    };
 
