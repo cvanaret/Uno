@@ -8,10 +8,11 @@
 
 namespace uno {
    LagrangeNewtonSubproblem::LagrangeNewtonSubproblem(const OptimizationProblem& problem, Iterate& current_iterate,
-      const Multipliers& current_multipliers, HessianModel& hessian_model, double trust_region_radius):
+      const Multipliers& current_multipliers, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
+      double trust_region_radius):
             number_variables(problem.number_variables), number_constraints(problem.number_constraints),
             problem(problem), current_iterate(current_iterate), current_multipliers(current_multipliers), hessian_model(hessian_model),
-            trust_region_radius(trust_region_radius) { }
+            regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius) { }
 
    void LagrangeNewtonSubproblem::evaluate_objective_gradient(SparseVector<double>& objective_gradient) {
       this->problem.evaluate_objective_gradient(this->current_iterate, objective_gradient);
@@ -27,6 +28,7 @@ namespace uno {
 
    void LagrangeNewtonSubproblem::evaluate_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian) {
       this->hessian_model.evaluate(statistics, this->problem, this->current_iterate.primals, this->current_multipliers.constraints, hessian);
+      // TODO use this->regularization_strategy
    }
 
    void LagrangeNewtonSubproblem::compute_lagrangian_gradient(SparseVector<double>& objective_gradient, RectangularMatrix<double>& jacobian,

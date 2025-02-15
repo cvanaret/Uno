@@ -3,8 +3,7 @@
 
 #include "ConvexifiedHessian.hpp"
 #include "optimization/OptimizationProblem.hpp"
-#include "ingredients/hessian_models/UnstableRegularization.hpp"
-#include "optimization/OptimizationProblem.hpp"
+#include "ingredients/regularization_strategies/UnstableRegularization.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"

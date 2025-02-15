@@ -40,10 +40,6 @@ namespace uno {
          this->sparse_storage->set_regularization(regularization_function);
       }
 
-      static SymmetricMatrix<IndexType, ElementType> zero(size_t dimension) {
-         return {dimension, 0, false, "COO"}; // TODO change
-      }
-
       typename SparseStorage<IndexType, ElementType>::iterator begin() const { return this->sparse_storage->begin(); }
       typename SparseStorage<IndexType, ElementType>::iterator end() const { return this->sparse_storage->end(); }
 

@@ -6,7 +6,7 @@
 
 #include <array>
 #include <vector>
-#include "ingredients/convexification_strategies/PrimalDualConvexificationStrategy.hpp"
+#include "ingredients/regularization_strategies/PrimalDualRegularization.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -59,7 +59,7 @@ namespace uno {
       std::vector<int> column_indices;
       SymmetricMatrix<size_t, double> augmented_matrix;
       Vector<double> rhs;
-      PrimalDualConvexificationStrategy<double> primal_dual_convexification_strategy;
+      PrimalDualRegularization<double> regularization_strategy;
 
       // factorization
       MA57Factorization factorization{};

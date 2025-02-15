@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "MUMPSSolver.hpp"
-#include "ingredients/convexification_strategies/PrimalDualConvexificationStrategy.hpp"
 #include "ingredients/subproblems/LagrangeNewtonSubproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 
@@ -24,7 +23,7 @@ namespace uno {
          number_nonzeros(number_hessian_nonzeros + number_jacobian_nonzeros),
          augmented_matrix(this->dimension, this->number_nonzeros, true, "COO"),
          rhs(this->dimension),
-         primal_dual_convexification_strategy(options) {
+         regularization_strategy(options) {
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);
 
@@ -174,7 +173,7 @@ namespace uno {
          this->do_numerical_factorization(this->augmented_matrix);
          // regularize
          const double dual_regularization_parameter = subproblem.dual_regularization_parameter();
-         this->primal_dual_convexification_strategy.regularize_matrix(statistics, *this, this->augmented_matrix, subproblem.number_variables,
+         this->regularization_strategy.regularize_matrix(statistics, *this, this->augmented_matrix, subproblem.number_variables,
                subproblem.number_constraints, dual_regularization_parameter);
       }
       this->assemble_augmented_rhs(subproblem); // TODO add conditions
