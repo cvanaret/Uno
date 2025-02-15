@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
@@ -27,7 +28,8 @@ namespace uno {
    
    class InequalityHandlingMethod {
    public:
-      InequalityHandlingMethod(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros, bool convexify, const Options& options);
+      InequalityHandlingMethod(const std::string& hessian_model, const std::string& regularization_strategy, size_t dimension,
+            size_t number_hessian_nonzeros, bool convexify, const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
       // virtual methods implemented by subclasses
@@ -59,6 +61,7 @@ namespace uno {
 
    protected:
       const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
+      const std::unique_ptr<RegularizationStrategy<double>> regularization_strategy;
       double trust_region_radius{INF<double>};
    };
 } // namespace

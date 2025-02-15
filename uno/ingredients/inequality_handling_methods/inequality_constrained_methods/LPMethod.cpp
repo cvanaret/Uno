@@ -11,9 +11,9 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   LPMethod::LPMethod(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
-         size_t number_jacobian_nonzeros, const Options& options) :
-         InequalityConstrainedMethod("zero", number_variables, 0, false, options),
+   LPMethod::LPMethod(const std::string& regularization_strategy, size_t number_variables, size_t number_constraints,
+         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, const Options& options) :
+         InequalityConstrainedMethod("zero", regularization_strategy, number_variables, 0, false, options),
          solver(LPSolverFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros, options)) {
    }
 
@@ -24,7 +24,8 @@ namespace uno {
 
    void LPMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, Direction& direction, WarmstartInformation& warmstart_information) {
-      LagrangeNewtonSubproblem subproblem(problem, current_iterate, current_multipliers, *this->hessian_model, this->trust_region_radius);
+      LagrangeNewtonSubproblem subproblem(problem, current_iterate, current_multipliers, *this->hessian_model, *this->regularization_strategy,
+            this->trust_region_radius);
       this->solver->solve_LP(statistics, subproblem, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;

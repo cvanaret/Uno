@@ -3,6 +3,7 @@
 
 #include "Preprocessing.hpp"
 #include "ingredients/hessian_models/IdentityHessian.hpp"
+#include "ingredients/regularization_strategies/NoRegularization.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/QPSolver.hpp"
 #include "ingredients/subproblems/LagrangeNewtonSubproblem.hpp"
@@ -25,7 +26,8 @@ namespace uno {
 
       // solve the system
       IdentityHessian hessian_model{};
-      LagrangeNewtonSubproblem subproblem(problem, current_iterate, multipliers, hessian_model, INF<double>);
+      NoRegularization<double> regularization_strategy{};
+      LagrangeNewtonSubproblem subproblem(problem, current_iterate, multipliers, hessian_model, regularization_strategy, INF<double>);
       Vector<double> solution(problem.number_variables + problem.number_constraints);
       Options options(false);
       options["statistics_print_header_frequency"] = "15";

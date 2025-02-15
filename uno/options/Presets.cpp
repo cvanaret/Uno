@@ -42,6 +42,7 @@ namespace uno {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
          options["inequality_handling_method"] = "primal_dual_interior_point";
          options["globalization_mechanism"] = "LS";
+         options["regularization_strategy"] = "primal_dual";
          options["globalization_strategy"] = "waechter_filter_method";
          options["filter_type"] = "standard";
          options["filter_beta"] = "0.99999";
@@ -71,6 +72,7 @@ namespace uno {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
          options["inequality_handling_method"] = "QP";
          options["globalization_mechanism"] = "TR";
+         options["regularization_strategy"] = "none";
          options["globalization_strategy"] = "fletcher_filter_method";
          options["filter_type"] = "standard";
          options["progress_norm"] = "L1";
@@ -89,6 +91,7 @@ namespace uno {
          options["constraint_relaxation_strategy"] = "l1_relaxation";
          options["inequality_handling_method"] = "QP";
          options["globalization_mechanism"] = "LS";
+         options["regularization_strategy"] = "primal";
          options["globalization_strategy"] = "l1_merit";
          options["l1_relaxation_initial_parameter"] = "1";
          options["LS_backtracking_ratio"] = "0.5";

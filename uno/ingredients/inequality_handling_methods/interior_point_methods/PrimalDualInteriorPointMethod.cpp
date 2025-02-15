@@ -17,16 +17,16 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints,
-         size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
-         InequalityHandlingMethod("exact", number_variables,
+   PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(const std::string& hessian_model, const std::string& regularization_strategy,
+         size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
+         InequalityHandlingMethod(hessian_model, regularization_strategy, number_variables,
                number_hessian_nonzeros + number_variables + number_constraints + number_variables,
                false, options),
          constraints(number_constraints),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(
                number_variables, number_constraints, number_jacobian_nonzeros,
                number_hessian_nonzeros
-                  + number_variables + number_constraints /* regularization */ // TODO depends on convexification strategy
+                  + number_variables + number_constraints /* regularization */ // TODO depends on regularization strategy
                   + number_variables, /* diagonal barrier terms */
                options)),
          solution(number_variables + number_constraints),
@@ -138,7 +138,8 @@ namespace uno {
 
       // create the barrier reformulation and the subproblem
       PrimalDualInteriorPointProblem barrier_problem(problem, current_multipliers, this->barrier_parameter());
-      LagrangeNewtonSubproblem subproblem(barrier_problem, current_iterate, current_multipliers, *this->hessian_model, this->trust_region_radius);
+      LagrangeNewtonSubproblem subproblem(barrier_problem, current_iterate, current_multipliers, *this->hessian_model,
+            *this->regularization_strategy, this->trust_region_radius);
       this->linear_solver->solve_indefinite_system(statistics, subproblem, this->solution, warmstart_information);
 
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");

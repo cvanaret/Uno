@@ -1,12 +1,12 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_PRIMALDUALCONVEXIFICATIONSTRATEGY_H
-#define UNO_PRIMALDUALCONVEXIFICATIONSTRATEGY_H
+#ifndef UNO_PRIMALDUALREGULARIZATION_H
+#define UNO_PRIMALDUALREGULARIZATION_H
 
-#include <memory>
 #include <cassert>
-#include "ingredients/hessian_models/UnstableRegularization.hpp"
+#include "RegularizationStrategy.hpp"
+#include "UnstableRegularization.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
@@ -20,11 +20,12 @@ namespace uno {
    class WarmstartInformation;
 
    template <typename ElementType>
-   class PrimalDualConvexificationStrategy {
+   class PrimalDualRegularization: public RegularizationStrategy<ElementType> {
    public:
-      explicit PrimalDualConvexificationStrategy(const Options& options);
+      explicit PrimalDualRegularization(const Options& options);
       void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
-            SymmetricMatrix<size_t, ElementType>& matrix, size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter);
+            SymmetricMatrix<size_t, ElementType>& matrix, size_t size_primal_block, size_t size_dual_block,
+            ElementType dual_regularization_parameter) override;
 
    protected:
       ElementType primal_regularization{0.};
@@ -41,7 +42,8 @@ namespace uno {
    };
 
    template <typename ElementType>
-   PrimalDualConvexificationStrategy<ElementType>::PrimalDualConvexificationStrategy(const Options& options):
+   PrimalDualRegularization<ElementType>::PrimalDualRegularization(const Options& options):
+         RegularizationStrategy<ElementType>(),
          regularization_failure_threshold(ElementType(options.get_double("regularization_failure_threshold"))),
          primal_regularization_initial_factor(ElementType(options.get_double("primal_regularization_initial_factor"))),
          dual_regularization_fraction(ElementType(options.get_double("dual_regularization_fraction"))),
@@ -54,7 +56,7 @@ namespace uno {
 
    // the matrix has been factorized prior to calling this function
    template <typename ElementType>
-   void PrimalDualConvexificationStrategy<ElementType>::regularize_matrix(Statistics& statistics,
+   void PrimalDualRegularization<ElementType>::regularize_matrix(Statistics& statistics,
          DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, SymmetricMatrix<size_t, ElementType>& matrix,
          size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter) {
       this->primal_regularization = ElementType(0.);
@@ -136,4 +138,4 @@ namespace uno {
    }
 } // namespace
 
-#endif // UNO_PRIMALDUALCONVEXIFICATIONSTRATEGY_H
+#endif // UNO_PRIMALDUALREGULARIZATION_H

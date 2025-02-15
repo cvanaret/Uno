@@ -3,12 +3,14 @@
 
 #include <cassert>
 #include "InequalityHandlingMethod.hpp"
+#include "ingredients/regularization_strategies/RegularizationStrategyFactory.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 
 namespace uno {
-   InequalityHandlingMethod::InequalityHandlingMethod(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros, bool convexify,
-         const Options& options) :
-         hessian_model(HessianModelFactory::create(hessian_model, dimension, number_hessian_nonzeros, convexify, options)) {
+   InequalityHandlingMethod::InequalityHandlingMethod(const std::string& hessian_model, const std::string& regularization_strategy, size_t dimension,
+         size_t number_hessian_nonzeros, bool convexify, const Options& options) :
+         hessian_model(HessianModelFactory::create(hessian_model, dimension, number_hessian_nonzeros, convexify, options)),
+         regularization_strategy(RegularizationStrategyFactory::create(regularization_strategy, options)) {
    }
 
    void InequalityHandlingMethod::set_trust_region_radius(double new_trust_region_radius) {
