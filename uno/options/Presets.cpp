@@ -111,6 +111,7 @@ namespace uno {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
          options["inequality_handling_method"] = "QP";
          options["globalization_mechanism"] = "TR";
+         options["regularization_strategy"] = "none";
          options["globalization_strategy"] = "funnel_method";
          options["progress_norm"] = "L1";
          options["residual_norm"] = "L2";
@@ -137,6 +138,7 @@ namespace uno {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
          options["inequality_handling_method"] = "LP";
          options["globalization_mechanism"] = "TR";
+         options["regularization_strategy"] = "none";
          options["globalization_strategy"] = "fletcher_filter_method";
          options["filter_type"] = "standard";
          options["progress_norm"] = "L1";
