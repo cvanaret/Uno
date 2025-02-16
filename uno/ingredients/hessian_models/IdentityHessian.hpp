@@ -1,16 +1,16 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_EXACTHESSIAN_H
-#define UNO_EXACTHESSIAN_H
+#ifndef UNO_IDENTITYHESSIAN_H
+#define UNO_IDENTITYHESSIAN_H
 
 #include "HessianModel.hpp"
 
 namespace uno {
    // exact Hessian
-   class ExactHessian : public HessianModel {
+   class IdentityHessian : public HessianModel {
    public:
-      ExactHessian();
+      IdentityHessian();
 
       void initialize_statistics(Statistics& statistics, const Options& options) const override;
       void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
@@ -18,4 +18,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_EXACTHESSIAN_H
+#endif // UNO_IDENTITYHESSIAN_H

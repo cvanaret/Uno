@@ -16,7 +16,7 @@ namespace uno {
       objective_gradient = iterate.evaluations.objective_gradient;
    }
 
-   void OptimalityProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+   void OptimalityProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
       constraints = iterate.evaluations.constraints;
    }
@@ -59,7 +59,7 @@ namespace uno {
       }
    }
 
-   double OptimalityProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
+   double OptimalityProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
       const Range variables_range = Range(this->model.number_variables);
@@ -86,5 +86,9 @@ namespace uno {
          return 0.;
       }};
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
+   }
+
+   double OptimalityProblem::dual_regularization_parameter() const {
+      return 0.;
    }
 } // namespace
