@@ -148,13 +148,13 @@ endif()
 
 # HiGHS
 find_package(HIGHS)
-if(NOT HIGHS)
+if(NOT HIGHS_FOUND)
    message(WARNING "Optional library HiGHS was not found.")
 else()
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
-   link_to_uno(highs ${HIGHS})
    list(APPEND LIBRARIES highs::highs)
+   add_definitions("-D HAS_HIGHS")
 endif()
 
 # MUMPS
