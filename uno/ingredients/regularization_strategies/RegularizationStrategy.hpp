@@ -16,15 +16,12 @@ namespace uno {
    class RegularizationStrategy {
    public:
       RegularizationStrategy() = default;
-      virtual ~RegularizationStrategy();
+      virtual ~RegularizationStrategy() = default;
 
       virtual void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
             SymmetricMatrix<size_t, ElementType>& matrix, size_t size_primal_block, size_t size_dual_block,
             ElementType dual_regularization_parameter) = 0;
    };
-
-   template <typename ElementType>
-   RegularizationStrategy<ElementType>::~RegularizationStrategy<ElementType>() { }
 } // namespace
 
 #endif // UNO_REGULARIZATIONSTRATEGY_H
