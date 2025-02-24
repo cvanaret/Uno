@@ -25,7 +25,7 @@ namespace uno {
 
       int n_discrete = asl->i.nbv_ + asl->i.niv_ + asl->i.nlvbi_ + asl->i.nlvci_ + asl->i.nlvoi_;
       if (0 < n_discrete) {
-         throw std::runtime_error("Error: " + std::to_string(n_discrete) + " variables are discrete, which Uno cannot handle");
+         //throw std::runtime_error("Error: " + std::to_string(n_discrete) + " variables are discrete, which Uno cannot handle");
       }
 
       // preallocate initial primal and dual solutions
@@ -101,8 +101,8 @@ namespace uno {
       fint error_flag = 0;
       // prevent ASL to crash by catching all evaluation errors
       Jmp_buf err_jmp_uno;
-      asl->i.err_jmp_ = &err_jmp_uno;
-      asl->i.err_jmp1_ = &err_jmp_uno;
+      this->asl->i.err_jmp_ = &err_jmp_uno;
+      this->asl->i.err_jmp1_ = &err_jmp_uno;
       if (setjmp(err_jmp_uno.jb)) {
          error_flag = 1;
       }
@@ -134,7 +134,7 @@ namespace uno {
    }
    */
 
-   void AMPLModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
+   void AMPLModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       fint error_flag = 0;
       (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &error_flag);
       if (0 < error_flag) {

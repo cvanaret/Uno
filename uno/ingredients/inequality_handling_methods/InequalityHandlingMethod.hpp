@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
@@ -23,20 +24,20 @@ namespace uno {
    class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
-   struct WarmstartInformation;
+   class WarmstartInformation;
    
    class InequalityHandlingMethod {
    public:
-      InequalityHandlingMethod(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros, bool convexify, const Options& options);
+      InequalityHandlingMethod(const std::string& hessian_model, const std::string& regularization_strategy, size_t dimension,
+            size_t number_hessian_nonzeros, bool regularize, const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
       // virtual methods implemented by subclasses
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
       virtual void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
       virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            Direction& direction, WarmstartInformation& warmstart_information) = 0;
+            Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
 
-      void set_trust_region_radius(double new_trust_region_radius);
       virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
       [[nodiscard]] virtual double proximal_coefficient(const Iterate& current_iterate) const = 0;
@@ -59,7 +60,7 @@ namespace uno {
 
    protected:
       const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
-      double trust_region_radius{INF<double>};
+      const std::unique_ptr<RegularizationStrategy<double>> regularization_strategy;
    };
 } // namespace
 
