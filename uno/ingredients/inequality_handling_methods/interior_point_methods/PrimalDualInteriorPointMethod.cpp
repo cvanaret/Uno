@@ -17,11 +17,9 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(const std::string& hessian_model, const std::string& regularization_strategy,
-         size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
-         InequalityHandlingMethod(hessian_model, regularization_strategy, number_variables,
-               number_hessian_nonzeros + number_variables + number_constraints + number_variables,
-               false, options),
+   PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
+      size_t number_hessian_nonzeros, const Options& options):
+         InequalityHandlingMethod(options.get_string("hessian_model"), options.get_string("regularization_strategy"), options),
          constraints(number_constraints),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(
                number_variables, number_constraints, number_jacobian_nonzeros,

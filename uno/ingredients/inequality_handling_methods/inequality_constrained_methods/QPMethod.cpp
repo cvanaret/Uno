@@ -15,10 +15,9 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   QPMethod::QPMethod(const std::string& regularization_strategy, size_t number_variables, size_t number_constraints,
-         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) :
-         InequalityConstrainedMethod(options.get_string("hessian_model"), regularization_strategy, number_variables, number_hessian_nonzeros,
-               options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"), options),
+   QPMethod::QPMethod(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
+      size_t number_hessian_nonzeros, const Options& options) :
+         InequalityConstrainedMethod(options.get_string("hessian_model"), options.get_string("regularization_strategy"), number_variables, options),
          enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")),
          // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
          solver(QPSolverFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,

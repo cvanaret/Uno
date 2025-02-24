@@ -7,9 +7,9 @@
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 
 namespace uno {
-   InequalityHandlingMethod::InequalityHandlingMethod(const std::string& hessian_model, const std::string& regularization_strategy, size_t dimension,
-         size_t number_hessian_nonzeros, bool regularize, const Options& options) :
-         hessian_model(HessianModelFactory::create(hessian_model, dimension, number_hessian_nonzeros, regularize, options)),
+   InequalityHandlingMethod::InequalityHandlingMethod(const std::string& hessian_model, const std::string& regularization_strategy,
+      const Options& options) :
+         hessian_model(HessianModelFactory::create(hessian_model)),
          regularization_strategy(RegularizationStrategyFactory::create(regularization_strategy, options)) {
    }
 

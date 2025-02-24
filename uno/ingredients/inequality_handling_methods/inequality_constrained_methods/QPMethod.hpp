@@ -13,8 +13,8 @@ namespace uno {
 
    class QPMethod : public InequalityConstrainedMethod {
    public:
-      QPMethod(const std::string& regularization_strategy, size_t number_variables, size_t number_constraints,
-            size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options);
+      QPMethod(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
+         size_t number_hessian_nonzeros, const Options& options);
       ~QPMethod() override;
 
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;

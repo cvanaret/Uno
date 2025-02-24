@@ -54,7 +54,7 @@ namespace uno {
       const Multipliers& current_multipliers;
       HessianModel& hessian_model;
       RegularizationStrategy<double>& regularization_strategy;
-      double trust_region_radius;
+      const double trust_region_radius;
    };
 
    template <typename Array>

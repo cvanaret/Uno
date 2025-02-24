@@ -11,10 +11,12 @@
 
 namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(const std::string& hessian_model, const std::string& regularization_strategy,
-         size_t number_variables, size_t number_hessian_nonzeros, bool convexify, const Options& options):
-         InequalityHandlingMethod(hessian_model, regularization_strategy, number_variables, number_hessian_nonzeros, convexify, options),
+         size_t number_variables, const Options& options):
+         InequalityHandlingMethod(hessian_model, regularization_strategy, options),
          initial_point(number_variables) {
    }
+
+    InequalityConstrainedMethod::~InequalityConstrainedMethod() { }
 
    void InequalityConstrainedMethod::initialize_statistics(Statistics& statistics, const Options& options) {
       this->hessian_model->initialize_statistics(statistics, options);

@@ -7,9 +7,7 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   // exact Hessian
-   ExactHessian::ExactHessian(): HessianModel() {
-   }
+   ExactHessian::ExactHessian(): HessianModel() { }
 
    void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const { }
 

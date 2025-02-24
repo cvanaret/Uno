@@ -11,9 +11,9 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   LPMethod::LPMethod(const std::string& regularization_strategy, size_t number_variables, size_t number_constraints,
-         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, const Options& options) :
-         InequalityConstrainedMethod("zero", regularization_strategy, number_variables, 0, false, options),
+   LPMethod::LPMethod(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
+      const Options& options) :
+         InequalityConstrainedMethod("zero", options.get_string("regularization_strategy"), number_variables, options),
          solver(LPSolverFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros, options)) {
    }
 

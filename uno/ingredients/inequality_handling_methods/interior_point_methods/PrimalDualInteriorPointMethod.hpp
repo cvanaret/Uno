@@ -25,8 +25,8 @@ namespace uno {
 
    class PrimalDualInteriorPointMethod : public InequalityHandlingMethod {
    public:
-      PrimalDualInteriorPointMethod(const std::string& hessian_model, const std::string& regularization_strategy, size_t number_variables,
-            size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options);
+      PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
+         size_t number_hessian_nonzeros, const Options& options);
       ~PrimalDualInteriorPointMethod() override;
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;

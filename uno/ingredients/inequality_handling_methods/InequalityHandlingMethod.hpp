@@ -28,8 +28,7 @@ namespace uno {
    
    class InequalityHandlingMethod {
    public:
-      InequalityHandlingMethod(const std::string& hessian_model, const std::string& regularization_strategy, size_t dimension,
-            size_t number_hessian_nonzeros, bool regularize, const Options& options);
+      InequalityHandlingMethod(const std::string& hessian_model, const std::string& regularization_strategy, const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
       // virtual methods implemented by subclasses

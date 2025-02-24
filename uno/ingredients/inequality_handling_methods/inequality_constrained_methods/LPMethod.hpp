@@ -13,12 +13,12 @@ namespace uno {
 
    class LPMethod : public InequalityConstrainedMethod {
    public:
-      LPMethod(const std::string& regularization_strategy, size_t number_variables, size_t number_constraints,
-            size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, const Options& options);
+      LPMethod(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
+         const Options& options);
       ~LPMethod() override;
 
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
-      void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
+      void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
             Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
 
