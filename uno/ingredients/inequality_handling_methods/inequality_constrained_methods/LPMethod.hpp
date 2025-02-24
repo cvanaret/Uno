@@ -19,7 +19,7 @@ namespace uno {
 
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-            Direction& direction, WarmstartInformation& warmstart_information) override;
+            Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
 
    private:

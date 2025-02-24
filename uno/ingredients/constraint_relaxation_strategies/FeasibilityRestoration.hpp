@@ -23,7 +23,8 @@ namespace uno {
       [[nodiscard]] size_t maximum_number_constraints() const override;
 
       // direction computation
-      void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, WarmstartInformation& warmstart_information) override;
+      void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
+        WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
 
@@ -50,7 +51,7 @@ namespace uno {
 
       [[nodiscard]] const OptimizationProblem& current_problem() const;
       void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            Direction& direction, WarmstartInformation& warmstart_information);
+            Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information);
       void switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate, WarmstartInformation& warmstart_information);
 
       void evaluate_progress_measures(Iterate& iterate) const override;

@@ -29,7 +29,7 @@ namespace uno {
       [[nodiscard]] size_t maximum_number_constraints() const override;
 
       // direction computation
-      void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+      void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
             WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
@@ -55,22 +55,22 @@ namespace uno {
       // delegating constructor
       l1Relaxation(const Model& model, l1RelaxedProblem&& feasibility_problem, l1RelaxedProblem&& l1_relaxed_problem, const Options& options);
 
-      void solve_sequence_of_relaxed_subproblems(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+      void solve_sequence_of_relaxed_subproblems(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
             WarmstartInformation& warmstart_information);
-      void solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction, double current_penalty_parameter,
-            WarmstartInformation& warmstart_information);
+      void solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
+         double current_penalty_parameter, WarmstartInformation& warmstart_information);
       void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            Direction& direction, WarmstartInformation& warmstart_information);
+            Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information);
 
       // functions that decrease the penalty parameter to enforce particular conditions
       void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction);
       double compute_infeasible_dual_error(Iterate& current_iterate);
       void enforce_linearized_residual_sufficient_decrease(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-            double linearized_residual, double residual_lowest_violation, WarmstartInformation& warmstart_information);
+            double trust_region_radius, double linearized_residual, double residual_lowest_violation, WarmstartInformation& warmstart_information);
       [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual,
             double residual_lowest_violation) const;
       void enforce_descent_direction_for_l1_merit(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-            const Direction& feasibility_direction, WarmstartInformation& warmstart_information);
+            const Direction& feasibility_direction, double trust_region_radius, WarmstartInformation& warmstart_information);
       [[nodiscard]] bool is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction,
             const Direction& feasibility_direction) const;
 

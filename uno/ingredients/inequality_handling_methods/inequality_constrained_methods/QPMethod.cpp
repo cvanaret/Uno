@@ -36,9 +36,9 @@ namespace uno {
    }
 
    void QPMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-         Direction& direction, WarmstartInformation& warmstart_information) {
+         Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
       LagrangeNewtonSubproblem subproblem(problem, current_iterate, current_multipliers, *this->hessian_model, *this->regularization_strategy,
-            this->trust_region_radius);
+            trust_region_radius);
       this->solver->solve_QP(statistics, subproblem, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;
