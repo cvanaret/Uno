@@ -35,15 +35,11 @@ namespace uno {
 
    ConstraintRelaxationStrategy::~ConstraintRelaxationStrategy() { }
 
-   void ConstraintRelaxationStrategy::set_trust_region_radius(double trust_region_radius) {
-      this->inequality_handling_method->set_trust_region_radius(trust_region_radius);
-   }
-
    // with initial point
    void ConstraintRelaxationStrategy::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         const Vector<double>& initial_point, WarmstartInformation& warmstart_information) {
+         double trust_region_radius, const Vector<double>& initial_point, WarmstartInformation& warmstart_information) {
       this->inequality_handling_method->set_initial_point(initial_point);
-      this->compute_feasible_direction(statistics, current_iterate, direction, warmstart_information);
+      this->compute_feasible_direction(statistics, current_iterate, direction, trust_region_radius, warmstart_information);
    }
 
    // infeasibility measure: constraint violation

@@ -39,7 +39,7 @@ namespace uno {
       void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-            Direction& direction, WarmstartInformation& warmstart_information) override;
+            Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
 
       void set_auxiliary_measure(const Model& model, Iterate& iterate) override;

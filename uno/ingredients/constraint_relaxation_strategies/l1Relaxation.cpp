@@ -69,11 +69,11 @@ namespace uno {
       this->globalization_strategy->initialize(statistics, initial_iterate, options);
    }
 
-   void l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+   void l1Relaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) {
       statistics.set("penalty", this->penalty_parameter);
       direction.reset();
-      this->solve_sequence_of_relaxed_subproblems(statistics, current_iterate, direction, warmstart_information);
+      this->solve_sequence_of_relaxed_subproblems(statistics, current_iterate, direction, trust_region_radius, warmstart_information);
    }
    
    bool l1Relaxation::solving_feasibility_problem() const {
@@ -87,9 +87,9 @@ namespace uno {
 
    // use Byrd's steering rules to update the penalty parameter and compute a descent direction
    void l1Relaxation::solve_sequence_of_relaxed_subproblems(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         WarmstartInformation& warmstart_information) {
+         double trust_region_radius, WarmstartInformation& warmstart_information) {
       // stage a: compute a direction for the current penalty parameter
-      this->solve_l1_relaxed_problem(statistics, current_iterate, direction, this->penalty_parameter, warmstart_information);
+      this->solve_l1_relaxed_problem(statistics, current_iterate, direction, trust_region_radius, this->penalty_parameter, warmstart_information);
       // from now on, only the penalty parameter, therefore the objective, changes
       warmstart_information.only_objective_changed();
 
@@ -108,7 +108,7 @@ namespace uno {
             this->inequality_handling_method->initialize_feasibility_problem(this->feasibility_problem, current_iterate);
             Direction feasibility_direction(direction.number_variables, direction.number_constraints);
             this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, current_iterate.feasibility_multipliers, feasibility_direction,
-                  warmstart_information);
+               trust_region_radius, warmstart_information);
             std::swap(direction.multipliers, direction.feasibility_multipliers);
             const double residual_lowest_violation = this->model.constraint_violation(current_iterate.evaluations.constraints +
                   current_iterate.evaluations.constraint_jacobian * feasibility_direction.primals, Norm::L1);
@@ -118,16 +118,17 @@ namespace uno {
             // stage f: update the penalty parameter based on the current dual error
             this->decrease_parameter_aggressively(current_iterate, feasibility_direction);
             if (this->penalty_parameter < current_penalty_parameter) {
-               this->solve_l1_relaxed_problem(statistics, current_iterate, direction, this->penalty_parameter, warmstart_information);
+               this->solve_l1_relaxed_problem(statistics, current_iterate, direction, trust_region_radius, this->penalty_parameter, warmstart_information);
                linearized_residual = this->model.constraint_violation(current_iterate.evaluations.constraints +
                      current_iterate.evaluations.constraint_jacobian * direction.primals, Norm::L1);
             }
 
             // stage d: further decrease penalty parameter to reach a fraction of the ideal decrease
-            this->enforce_linearized_residual_sufficient_decrease(statistics, current_iterate, direction, linearized_residual,
+            this->enforce_linearized_residual_sufficient_decrease(statistics, current_iterate, direction, trust_region_radius, linearized_residual,
                   residual_lowest_violation, warmstart_information);
             // stage e: further decrease penalty parameter to guarantee a descent direction for the l1 merit function
-            this->enforce_descent_direction_for_l1_merit(statistics, current_iterate, direction, feasibility_direction, warmstart_information);
+            this->enforce_descent_direction_for_l1_merit(statistics, current_iterate, direction, feasibility_direction, trust_region_radius,
+               warmstart_information);
 
             // save the dual feasibility direction
             direction.feasibility_multipliers = feasibility_direction.multipliers;
@@ -136,21 +137,23 @@ namespace uno {
    }
 
    void l1Relaxation::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
       DEBUG << "Solving the subproblem with penalty parameter " << problem.get_objective_multiplier() << "\n\n";
 
       // solve the subproblem
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction, warmstart_information);
+      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction, trust_region_radius,
+         warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
       DEBUG3 << direction << '\n';
       assert(direction.status == SubproblemStatus::OPTIMAL && "The subproblem was not solved to optimality");
    }
 
-   void l1Relaxation::solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+   void l1Relaxation::solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          double current_penalty_parameter, WarmstartInformation& warmstart_information) {
       this->l1_relaxed_problem.set_objective_multiplier(current_penalty_parameter);
-      this->solve_subproblem(statistics, this->l1_relaxed_problem, current_iterate, current_iterate.multipliers, direction, warmstart_information);
+      this->solve_subproblem(statistics, this->l1_relaxed_problem, current_iterate, current_iterate.multipliers, direction, trust_region_radius,
+         warmstart_information);
       if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
          throw std::runtime_error("l1Relaxation::solve_l1_relaxed_problem: the subproblem is unbounded, this should not happen. If the subproblem "
             "has curvature, use regularization. If not, use a trust-region method.\n");
@@ -190,13 +193,13 @@ namespace uno {
    }
 
    void l1Relaxation::enforce_linearized_residual_sufficient_decrease(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double linearized_residual, double residual_lowest_violation, WarmstartInformation& warmstart_information) {
+         double trust_region_radius, double linearized_residual, double residual_lowest_violation, WarmstartInformation& warmstart_information) {
       while (0. < this->penalty_parameter && !this->linearized_residual_sufficient_decrease(current_iterate, linearized_residual,
             residual_lowest_violation)) {
          // decrease the penalty parameter and re-solve the problem
          this->penalty_parameter /= this->parameters.decrease_factor;
          DEBUG << "Further decrease the penalty parameter to " << this->penalty_parameter << '\n';
-         this->solve_l1_relaxed_problem(statistics, current_iterate, direction, this->penalty_parameter, warmstart_information);
+         this->solve_l1_relaxed_problem(statistics, current_iterate, direction, trust_region_radius, this->penalty_parameter, warmstart_information);
 
          // recompute the linearized residual
          linearized_residual = this->model.constraint_violation(current_iterate.evaluations.constraints +
@@ -223,12 +226,12 @@ namespace uno {
    }
 
    void l1Relaxation::enforce_descent_direction_for_l1_merit(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         const Direction& feasibility_direction, WarmstartInformation& warmstart_information) {
+         const Direction& feasibility_direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
       while (0. < this->penalty_parameter && !this->is_descent_direction_for_l1_merit_function(current_iterate, direction, feasibility_direction)) {
          // decrease the penalty parameter and re-solve the problem
          this->penalty_parameter /= this->parameters.decrease_factor;
          DEBUG << "Further decrease the penalty parameter to " << this->penalty_parameter << '\n';
-         this->solve_l1_relaxed_problem(statistics, current_iterate, direction, this->penalty_parameter, warmstart_information);
+         this->solve_l1_relaxed_problem(statistics, current_iterate, direction, trust_region_radius, this->penalty_parameter, warmstart_information);
       }
       DEBUG << "Condition enforce_descent_direction_for_l1_merit is true\n\n";
    }

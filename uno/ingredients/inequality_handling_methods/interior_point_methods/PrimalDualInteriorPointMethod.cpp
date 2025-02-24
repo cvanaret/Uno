@@ -118,11 +118,11 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
       if (problem.has_inequality_constraints()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
-      if (is_finite(this->trust_region_radius)) {
+      if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet");
       }
 
@@ -139,7 +139,7 @@ namespace uno {
       // create the barrier reformulation and the subproblem
       PrimalDualInteriorPointProblem barrier_problem(problem, current_multipliers, this->barrier_parameter());
       LagrangeNewtonSubproblem subproblem(barrier_problem, current_iterate, current_multipliers, *this->hessian_model,
-            *this->regularization_strategy, this->trust_region_radius);
+            *this->regularization_strategy, trust_region_radius);
       this->linear_solver->solve_indefinite_system(statistics, subproblem, this->solution, warmstart_information);
 
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");

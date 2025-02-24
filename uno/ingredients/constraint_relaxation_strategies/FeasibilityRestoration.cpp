@@ -61,14 +61,15 @@ namespace uno {
    }
 
    void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         WarmstartInformation& warmstart_information) {
+         double trust_region_radius, WarmstartInformation& warmstart_information) {
       direction.reset();
       // if we are in the optimality phase, solve the optimality problem
       if (this->current_phase == Phase::OPTIMALITY) {
          statistics.set("phase", "OPT");
          try {
             DEBUG << "Solving the optimality subproblem\n";
-            this->solve_subproblem(statistics, this->optimality_problem, current_iterate, current_iterate.multipliers, direction, warmstart_information);
+            this->solve_subproblem(statistics, this->optimality_problem, current_iterate, current_iterate.multipliers, direction, trust_region_radius,
+               warmstart_information);
             if (direction.status == SubproblemStatus::INFEASIBLE) {
                // switch to the feasibility problem, starting from the current direction
                statistics.set("status", std::string("infeasible " + this->inequality_handling_method_name));
@@ -91,7 +92,7 @@ namespace uno {
       statistics.set("phase", "FEAS");
       // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
       this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, current_iterate.feasibility_multipliers, direction,
-            warmstart_information);
+         trust_region_radius, warmstart_information);
       std::swap(direction.multipliers, direction.feasibility_multipliers);
    }
 
@@ -120,9 +121,10 @@ namespace uno {
    }
 
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction, warmstart_information);
+      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction, trust_region_radius,
+         warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
       DEBUG3 << direction << '\n';
    }
