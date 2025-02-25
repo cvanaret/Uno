@@ -12,6 +12,9 @@ namespace uno {
    class NoRegularization: public RegularizationStrategy<ElementType> {
    public:
       explicit NoRegularization();
+
+      void initialize_statistics(Statistics& statistics, const Options& options) override;
+
       void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
             SymmetricMatrix<size_t, ElementType>& matrix, size_t size_primal_block, size_t size_dual_block,
             ElementType dual_regularization_parameter) override;
@@ -21,6 +24,9 @@ namespace uno {
    NoRegularization<ElementType>::NoRegularization():
          RegularizationStrategy<ElementType>() {
    }
+
+   template <typename ElementType>
+   void NoRegularization<ElementType>::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) { }
 
    template <typename ElementType>
    void NoRegularization<ElementType>::regularize_matrix(Statistics& /*statistics*/,

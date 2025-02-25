@@ -23,9 +23,8 @@ namespace uno {
 
       size_t evaluation_count{0};
 
-      virtual void initialize_statistics(Statistics& statistics, const Options& options) const = 0;
-      virtual void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) = 0;
+      virtual void evaluate(const OptimizationProblem& problem, const Vector<double>& primal_variables, const Vector<double>& constraint_multipliers,
+         SymmetricMatrix<size_t, double>& hessian) = 0;
    };
 } // namespace
 

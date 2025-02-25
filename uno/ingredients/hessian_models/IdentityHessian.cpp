@@ -11,9 +11,7 @@ namespace uno {
    IdentityHessian::IdentityHessian(): HessianModel() {
    }
 
-   void IdentityHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const { }
-
-   void IdentityHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& /*primal_variables*/,
+   void IdentityHessian::evaluate(const OptimizationProblem& problem, const Vector<double>& /*primal_variables*/,
          const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
       // evaluate Lagrangian Hessian
       hessian.set_dimension(problem.number_variables);

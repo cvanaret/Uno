@@ -7,9 +7,7 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   void ZeroHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const { }
-
-   void ZeroHessian::evaluate(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& /*primal_variables*/,
+   void ZeroHessian::evaluate(const OptimizationProblem& problem, const Vector<double>& /*primal_variables*/,
          const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
       hessian.set_dimension(problem.number_variables);
       hessian.reset();

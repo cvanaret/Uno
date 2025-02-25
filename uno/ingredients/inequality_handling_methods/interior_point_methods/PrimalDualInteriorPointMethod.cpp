@@ -47,7 +47,7 @@ namespace uno {
    PrimalDualInteriorPointMethod::~PrimalDualInteriorPointMethod() { }
 
    void PrimalDualInteriorPointMethod::initialize_statistics(Statistics& statistics, const Options& options) {
-      statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
+      this->regularization_strategy->initialize_statistics(statistics, options);
       statistics.add_column("barrier", Statistics::double_width - 5, options.get_int("statistics_barrier_parameter_column_order"));
    }
 

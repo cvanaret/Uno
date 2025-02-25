@@ -26,8 +26,8 @@ namespace uno {
       this->problem.evaluate_constraint_jacobian(this->current_iterate, jacobian);
    }
 
-   void LagrangeNewtonSubproblem::evaluate_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian) {
-      this->hessian_model.evaluate(statistics, this->problem, this->current_iterate.primals, this->current_multipliers.constraints, hessian);
+   void LagrangeNewtonSubproblem::evaluate_hessian(Statistics& /*statistics*/, SymmetricMatrix<size_t, double>& hessian) {
+      this->hessian_model.evaluate(this->problem, this->current_iterate.primals, this->current_multipliers.constraints, hessian);
       // TODO use this->regularization_strategy
    }
 

@@ -19,7 +19,7 @@ namespace uno {
     InequalityConstrainedMethod::~InequalityConstrainedMethod() { }
 
    void InequalityConstrainedMethod::initialize_statistics(Statistics& statistics, const Options& options) {
-      this->hessian_model->initialize_statistics(statistics, options);
+      this->regularization_strategy->initialize_statistics(statistics, options);
    }
 
    void InequalityConstrainedMethod::set_initial_point(const Vector<double>& point) {

@@ -8,6 +8,7 @@ namespace uno {
    // forward declarations
    template <typename IndexType, typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
+   class Options;
    class Statistics;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
@@ -17,6 +18,8 @@ namespace uno {
    public:
       RegularizationStrategy() = default;
       virtual ~RegularizationStrategy() = default;
+
+      virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
 
       virtual void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
             SymmetricMatrix<size_t, ElementType>& matrix, size_t size_primal_block, size_t size_dual_block,

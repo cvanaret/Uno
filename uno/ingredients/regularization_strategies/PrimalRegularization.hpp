@@ -14,6 +14,9 @@ namespace uno {
    class PrimalRegularization: public RegularizationStrategy<ElementType> {
    public:
       explicit PrimalRegularization(const Options& options);
+
+       void initialize_statistics(Statistics& statistics, const Options& options) override;
+
       void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
             SymmetricMatrix<size_t, ElementType>& matrix, size_t size_primal_block, size_t size_dual_block,
             ElementType dual_regularization_parameter) override;
@@ -32,7 +35,10 @@ namespace uno {
          regularization_failure_threshold(options.get_double("regularization_failure_threshold")) {
    }
 
-   // TODO initialize the statistics
+   template <typename ElementType>
+   void PrimalRegularization<ElementType>::initialize_statistics(Statistics& statistics, const Options& options) {
+      statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
+   }
 
    // Nocedal and Wright, p51
    template <typename ElementType>

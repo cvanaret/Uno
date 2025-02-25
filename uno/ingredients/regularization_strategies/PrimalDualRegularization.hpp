@@ -23,6 +23,9 @@ namespace uno {
    class PrimalDualRegularization: public RegularizationStrategy<ElementType> {
    public:
       explicit PrimalDualRegularization(const Options& options);
+
+      void initialize_statistics(Statistics& statistics, const Options& options) override;
+
       void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
             SymmetricMatrix<size_t, ElementType>& matrix, size_t size_primal_block, size_t size_dual_block,
             ElementType dual_regularization_parameter) override;
@@ -52,6 +55,11 @@ namespace uno {
          primal_regularization_fast_increase_factor(ElementType(options.get_double("primal_regularization_fast_increase_factor"))),
          primal_regularization_slow_increase_factor(ElementType(options.get_double("primal_regularization_slow_increase_factor"))),
          threshold_unsuccessful_attempts(options.get_unsigned_int("threshold_unsuccessful_attempts")) {
+   }
+
+   template <typename ElementType>
+   void PrimalDualRegularization<ElementType>::initialize_statistics(Statistics& statistics, const Options& options) {
+      statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
    }
 
    // the matrix has been factorized prior to calling this function

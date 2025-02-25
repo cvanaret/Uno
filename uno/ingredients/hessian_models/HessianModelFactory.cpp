@@ -8,18 +8,15 @@
 #include "ZeroHessian.hpp"
 
 namespace uno {
-   // forward declaration
-   class HessianModel;
-
    std::unique_ptr<HessianModel> HessianModelFactory::create(const std::string& hessian_model) {
       if (hessian_model == "exact") {
          return std::make_unique<ExactHessian>();
       }
-      else if (hessian_model == "zero") {
-         return std::make_unique<ZeroHessian>();
-      }
       else if (hessian_model == "identity") {
          return std::make_unique<IdentityHessian>();
+      }
+      else if (hessian_model == "zero") {
+         return std::make_unique<ZeroHessian>();
       }
       throw std::invalid_argument("Hessian model " + hessian_model + " does not exist");
    }
