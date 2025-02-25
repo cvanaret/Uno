@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Iterate.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"

@@ -42,6 +42,7 @@ namespace uno {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
          options["inequality_handling_method"] = "primal_dual_interior_point";
          options["globalization_mechanism"] = "LS";
+         options["hessian_model"] = "exact";
          options["regularization_strategy"] = "primal_dual";
          options["globalization_strategy"] = "waechter_filter_method";
          options["filter_type"] = "standard";
@@ -72,6 +73,7 @@ namespace uno {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
          options["inequality_handling_method"] = "QP";
          options["globalization_mechanism"] = "TR";
+         options["hessian_model"] = "exact";
          options["regularization_strategy"] = "none";
          options["globalization_strategy"] = "fletcher_filter_method";
          options["filter_type"] = "standard";
@@ -91,6 +93,7 @@ namespace uno {
          options["constraint_relaxation_strategy"] = "l1_relaxation";
          options["inequality_handling_method"] = "QP";
          options["globalization_mechanism"] = "LS";
+         options["hessian_model"] = "exact";
          options["regularization_strategy"] = "primal";
          options["globalization_strategy"] = "l1_merit";
          options["l1_relaxation_initial_parameter"] = "1";
@@ -111,6 +114,7 @@ namespace uno {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
          options["inequality_handling_method"] = "QP";
          options["globalization_mechanism"] = "TR";
+         options["hessian_model"] = "exact";
          options["regularization_strategy"] = "none";
          options["globalization_strategy"] = "funnel_method";
          options["progress_norm"] = "L1";
@@ -138,6 +142,7 @@ namespace uno {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
          options["inequality_handling_method"] = "LP";
          options["globalization_mechanism"] = "TR";
+         options["hessian_model"] = "none";
          options["regularization_strategy"] = "none";
          options["globalization_strategy"] = "fletcher_filter_method";
          options["filter_type"] = "standard";
