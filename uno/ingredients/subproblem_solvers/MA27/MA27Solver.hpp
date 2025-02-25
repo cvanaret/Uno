@@ -7,21 +7,18 @@
 #include <array>
 #include <vector>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "ingredients/regularization_strategies/PrimalDualRegularization.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 
 namespace uno {
-   // forward declarations
-   class Options;
+   // forward declaration
    template <typename ElementType>
    class Vector;
 
    class MA27Solver: public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
-      explicit MA27Solver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros,
-            const Options& options);
+      explicit MA27Solver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros);
       ~MA27Solver() override = default;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
@@ -50,7 +47,6 @@ namespace uno {
       std::vector<int> column_indices{};          // col index of input
       SymmetricMatrix<size_t, double> augmented_matrix;
       Vector<double> rhs;
-      PrimalDualRegularization<double> regularization_strategy;
 
       std::array<int, 30> icntl{};      // integer array of length 30; integer control values
       std::array<double, 5> cntl{};     // double array of length 5; double control values

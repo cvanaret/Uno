@@ -4,6 +4,7 @@
 #include "LagrangeNewtonSubproblem.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "optimization/Iterate.hpp"
 
 namespace uno {
@@ -26,9 +27,16 @@ namespace uno {
       this->problem.evaluate_constraint_jacobian(this->current_iterate, jacobian);
    }
 
-   void LagrangeNewtonSubproblem::evaluate_hessian(Statistics& /*statistics*/, SymmetricMatrix<size_t, double>& hessian) {
+   void LagrangeNewtonSubproblem::evaluate_hessian(SymmetricMatrix<size_t, double>& hessian) {
       this->hessian_model.evaluate(this->problem, this->current_iterate.primals, this->current_multipliers.constraints, hessian);
-      // TODO use this->regularization_strategy
+      // TODO evaluate with the following dependency:
+      // Regularization(
+      //	  InequalityHandlingMethod( # this possibly adds structured terms (diag barrier)
+      //		HessianModel(
+      //			ConstraintRelaxationStrategy(model)
+      //		)
+      //	)
+      //)
    }
 
    void LagrangeNewtonSubproblem::compute_lagrangian_gradient(SparseVector<double>& objective_gradient, RectangularMatrix<double>& jacobian,
@@ -57,7 +65,9 @@ namespace uno {
        */
    }
 
-   double LagrangeNewtonSubproblem::dual_regularization_parameter() const {
-      return this->problem.dual_regularization_parameter();
+   void LagrangeNewtonSubproblem::regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+         SymmetricMatrix<size_t, double>& matrix) {
+      this->regularization_strategy.regularize_matrix(statistics, linear_solver, matrix, this->number_variables, this->number_constraints,
+         this->problem.dual_regularization_parameter());
    }
 } // namespace

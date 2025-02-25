@@ -82,11 +82,13 @@ namespace uno {
       this->solve_subproblem(subproblem, initial_point, direction, warmstart_information);
    }
 
-   void BQPDSolver::solve_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
+   void BQPDSolver::solve_QP(Statistics& /*statistics*/, LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) {
       this->set_up_subproblem(subproblem, warmstart_information);
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         subproblem.evaluate_hessian(statistics, this->hessian);
+         subproblem.evaluate_hessian(this->hessian);
+         // TODO regularize the Hessian
+         // subproblem.regularize_matrix(statistics, *this, this->hessian);
          this->save_hessian_to_local_format();
       }
       if (this->print_subproblem) {

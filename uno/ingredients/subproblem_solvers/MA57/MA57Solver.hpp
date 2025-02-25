@@ -6,7 +6,6 @@
 
 #include <array>
 #include <vector>
-#include "ingredients/regularization_strategies/PrimalDualRegularization.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -29,8 +28,7 @@ namespace uno {
 
    class MA57Solver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
-      MA57Solver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros,
-            const Options& options);
+      MA57Solver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros);
       ~MA57Solver() override = default;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
@@ -59,7 +57,6 @@ namespace uno {
       std::vector<int> column_indices;
       SymmetricMatrix<size_t, double> augmented_matrix;
       Vector<double> rhs;
-      PrimalDualRegularization<double> regularization_strategy;
 
       // factorization
       MA57Factorization factorization{};

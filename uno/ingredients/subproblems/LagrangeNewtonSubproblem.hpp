@@ -11,14 +11,16 @@
 
 namespace uno {
    // forward declarations
-   template <typename ElementType>
-   class RegularizationStrategy;
+   template <typename IndexType, typename ElementType>
+   class DirectSymmetricIndefiniteLinearSolver;
    class HessianModel;
    class Iterate;
    class Multipliers;
    class OptimizationProblem;
    template <typename ElementType>
    class RectangularMatrix;
+    template <typename ElementType>
+    class RegularizationStrategy;
    template <typename ElementType>
    class SparseVector;
    class Statistics;
@@ -38,15 +40,15 @@ namespace uno {
       void evaluate_objective_gradient(SparseVector<double>& objective_gradient);
       void evaluate_constraints(Vector<double>& constraints);
       void evaluate_constraint_jacobian(RectangularMatrix<double>& jacobian);
-      void evaluate_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian);
+      void evaluate_hessian(SymmetricMatrix<size_t, double>& hessian);
       void compute_lagrangian_gradient(SparseVector<double>& objective_gradient, RectangularMatrix<double>& jacobian, Vector<double>& gradient) const;
+      void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+         SymmetricMatrix<size_t, double>& matrix);
 
       template <typename Array>
       void set_variable_bounds(Array& lower_bounds, Array& upper_bounds);
       template <typename Array>
       void set_constraint_bounds(const Vector<double>& constraints, Array& lower_bounds, Array& upper_bounds);
-
-      [[nodiscard]] double dual_regularization_parameter() const;
 
    protected:
       const OptimizationProblem& problem;

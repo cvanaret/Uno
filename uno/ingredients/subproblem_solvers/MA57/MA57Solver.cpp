@@ -6,6 +6,7 @@
 #include "ingredients/subproblems/LagrangeNewtonSubproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 
@@ -34,8 +35,7 @@ namespace uno {
             double rinfo[]);
    }
 
-   MA57Solver::MA57Solver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros,
-         const Options& options):
+   MA57Solver::MA57Solver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros):
             DirectSymmetricIndefiniteLinearSolver<size_t, double>(number_variables + number_constraints),
             objective_gradient(number_variables),
             constraints(number_constraints),
@@ -45,7 +45,6 @@ namespace uno {
             number_nonzeros(number_hessian_nonzeros + number_jacobian_nonzeros),
             augmented_matrix(this->dimension, this->number_nonzeros, true, "COO"),
             rhs(this->dimension),
-            regularization_strategy(options),
             lkeep(static_cast<int>(5 * this->dimension + this->number_nonzeros + std::max(this->dimension, this->number_nonzeros) + 42)),
             keep(static_cast<size_t>(lkeep)),
             iwork(5 * this->dimension),
@@ -159,7 +158,7 @@ namespace uno {
       // Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed || warmstart_information.constraint_jacobian_changed) {
          DEBUG << "Evaluating problem Hessian\n";
-         subproblem.evaluate_hessian(statistics, this->hessian);
+         subproblem.evaluate_hessian(this->hessian);
       }
 
       if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
@@ -191,9 +190,7 @@ namespace uno {
          DEBUG << "Performing numerical factorization of the augmented matrix\n";
          this->do_numerical_factorization(this->augmented_matrix);
          // regularize
-         const double dual_regularization_parameter = subproblem.dual_regularization_parameter();
-         this->regularization_strategy.regularize_matrix(statistics, *this, this->augmented_matrix, subproblem.number_variables,
-               subproblem.number_constraints, dual_regularization_parameter);
+         subproblem.regularize_matrix(statistics, *this, this->augmented_matrix);
       }
       this->assemble_augmented_rhs(subproblem); // TODO add conditions
    }

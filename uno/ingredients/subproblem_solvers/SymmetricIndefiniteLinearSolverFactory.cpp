@@ -39,7 +39,7 @@ namespace uno {
             && LIBHSL_isfunctional()
    #endif
                ) {
-            return std::make_unique<MA57Solver>(number_variables, number_constraints, number_jacobian_nonzeros, number_hessian_nonzeros, options);
+            return std::make_unique<MA57Solver>(number_variables, number_constraints, number_jacobian_nonzeros, number_hessian_nonzeros);
          }
 #endif
 
@@ -49,13 +49,13 @@ namespace uno {
             && LIBHSL_isfunctional()         
    # endif
          ) {
-            return std::make_unique<MA27Solver>(number_variables, number_constraints, number_jacobian_nonzeros, number_hessian_nonzeros, options);
+            return std::make_unique<MA27Solver>(number_variables, number_constraints, number_jacobian_nonzeros, number_hessian_nonzeros);
          }
 #endif // HAS_HSL || HAS_MA27
 
 #ifdef HAS_MUMPS
          if (linear_solver_name == "MUMPS") {
-            return std::make_unique<MUMPSSolver>(number_variables, number_constraints, number_jacobian_nonzeros, number_hessian_nonzeros, options);
+            return std::make_unique<MUMPSSolver>(number_variables, number_constraints, number_jacobian_nonzeros, number_hessian_nonzeros);
          }
 #endif
          std::string message = "The linear solver ";

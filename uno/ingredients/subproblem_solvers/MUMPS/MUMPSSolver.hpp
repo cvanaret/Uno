@@ -7,20 +7,15 @@
 #include <vector>
 #include "dmumps_c.h"
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "ingredients/regularization_strategies/PrimalDualRegularization.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
-   // forward declaration
-   class Options;
-
    class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
-      explicit MUMPSSolver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros,
-            const Options& options);
+      explicit MUMPSSolver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros);
       ~MUMPSSolver() override;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
@@ -52,7 +47,6 @@ namespace uno {
       std::vector<int> column_indices{};
       SymmetricMatrix<size_t, double> augmented_matrix;
       Vector<double> rhs;
-      PrimalDualRegularization<double> regularization_strategy;
 
       static const int JOB_INIT = -1;
       static const int JOB_END = -2;
