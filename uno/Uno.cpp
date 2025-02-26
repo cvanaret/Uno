@@ -33,18 +33,17 @@ namespace uno {
    Level Logger::level = INFO;
 
    // solve without user callbacks
-   Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
+   Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options, WarmstartInformation& warmstart_information) {
       // pass user callbacks that do nothing
       NoUserCallbacks user_callbacks{};
-      return this->solve(model, current_iterate, options, user_callbacks);
+      return this->solve(model, current_iterate, options, user_callbacks, warmstart_information);
    }
 
    // solve with user callbacks
-   Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options, UserCallbacks& user_callbacks) {
+   Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options, UserCallbacks& user_callbacks,
+         WarmstartInformation& warmstart_information) {
       Timer timer{};
       Statistics statistics = Uno::create_statistics(model, options);
-      WarmstartInformation warmstart_information{};
-      warmstart_information.whole_problem_changed();
 
       size_t major_iterations = 0;
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
@@ -64,7 +63,6 @@ namespace uno {
                DEBUG << "### Outer iteration " << major_iterations << '\n';
 
                // compute an acceptable iterate by solving a subproblem at the current point
-               warmstart_information.iterate_changed();
                this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate, trial_iterate, warmstart_information, user_callbacks);
                termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration(), optimization_status);
                user_callbacks.notify_new_primals(trial_iterate.primals);
@@ -72,6 +70,7 @@ namespace uno {
 
                // the trial iterate becomes the current iterate for the next iteration
                std::swap(current_iterate, trial_iterate);
+               warmstart_information.new_iterate();
             }
          }
          catch (std::exception& exception) {

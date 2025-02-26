@@ -16,7 +16,7 @@ namespace uno {
 
       void display() const;
       void no_changes();
-      void iterate_changed();
+      void new_iterate();
       void whole_problem_changed();
       void only_objective_changed();
    };

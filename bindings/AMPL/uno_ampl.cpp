@@ -11,6 +11,7 @@
 #include "AMPLUserCallbacks.hpp"
 #include "Uno.hpp"
 #include "model/ModelFactory.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Options.hpp"
 #include "options/Presets.hpp"
@@ -55,7 +56,8 @@ namespace uno {
          AMPLUserCallbacks user_callbacks{};
 
          // solve the instance
-         Result result = uno.solve(*model, initial_iterate, options, user_callbacks);
+         WarmstartInformation warmstart_information{};
+         Result result = uno.solve(*model, initial_iterate, options, user_callbacks, warmstart_information);
          if (result.optimization_status == OptimizationStatus::SUCCESS) {
             // check result.solution.status
          }
