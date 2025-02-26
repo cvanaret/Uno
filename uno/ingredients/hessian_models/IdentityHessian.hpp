@@ -7,10 +7,9 @@
 #include "HessianModel.hpp"
 
 namespace uno {
-   // exact Hessian
    class IdentityHessian : public HessianModel {
    public:
-      IdentityHessian();
+      IdentityHessian() = default;
 
       void evaluate(const OptimizationProblem& problem, const Vector<double>& primal_variables, const Vector<double>& constraint_multipliers,
          SymmetricMatrix<size_t, double>& hessian) override;

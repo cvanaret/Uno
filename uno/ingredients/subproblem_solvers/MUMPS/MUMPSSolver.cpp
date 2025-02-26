@@ -170,7 +170,6 @@ namespace uno {
       if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
          DEBUG << "Performing numerical factorization of the augmented matrix\n";
          this->do_numerical_factorization(this->augmented_matrix);
-         // regularize
          subproblem.regularize_matrix(statistics, *this, this->augmented_matrix);
       }
       this->assemble_augmented_rhs(subproblem); // TODO add conditions

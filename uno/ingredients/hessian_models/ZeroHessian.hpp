@@ -7,7 +7,6 @@
 #include "HessianModel.hpp"
 
 namespace uno {
-   // zero Hessian
    class ZeroHessian : public HessianModel {
    public:
       ZeroHessian() = default;

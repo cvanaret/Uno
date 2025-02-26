@@ -7,11 +7,8 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   ExactHessian::ExactHessian(): HessianModel() { }
-
    void ExactHessian::evaluate(const OptimizationProblem& problem, const Vector<double>& primal_variables,
          const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
-      // evaluate Lagrangian Hessian
       hessian.set_dimension(problem.number_variables);
       problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, hessian);
       this->evaluation_count++;

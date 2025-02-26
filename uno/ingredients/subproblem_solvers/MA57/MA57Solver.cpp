@@ -141,6 +141,12 @@ namespace uno {
       }
    }
 
+    void MA57Solver::solve_indefinite_system(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
+         WarmstartInformation& warmstart_information) {
+       this->set_up_subproblem(statistics, subproblem, warmstart_information);
+       this->solve_indefinite_system(this->augmented_matrix, this->rhs, result);
+    }
+
    void MA57Solver::set_up_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, WarmstartInformation& warmstart_information) {
       // objective gradient
       if (warmstart_information.objective_changed) {
@@ -189,7 +195,6 @@ namespace uno {
       if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
          DEBUG << "Performing numerical factorization of the augmented matrix\n";
          this->do_numerical_factorization(this->augmented_matrix);
-         // regularize
          subproblem.regularize_matrix(statistics, *this, this->augmented_matrix);
       }
       this->assemble_augmented_rhs(subproblem); // TODO add conditions
@@ -208,12 +213,6 @@ namespace uno {
       }
       DEBUG2 << "RHS: "; print_vector(DEBUG2, view(this->rhs, 0, subproblem.number_variables + subproblem.number_constraints));
       DEBUG << '\n';
-   }
-
-   void MA57Solver::solve_indefinite_system(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
-         WarmstartInformation& warmstart_information) {
-      this->set_up_subproblem(statistics, subproblem, warmstart_information);
-      this->solve_indefinite_system(this->augmented_matrix, this->rhs, result);
    }
 
    std::tuple<size_t, size_t, size_t> MA57Solver::get_inertia() const {
