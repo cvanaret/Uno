@@ -58,6 +58,15 @@ namespace uno {
          // solve the instance
          WarmstartInformation warmstart_information{};
          Result result = uno.solve(*model, initial_iterate, options, user_callbacks, warmstart_information);
+
+
+         auto modified_model = AMPLModel("/media/data/AMPL/CUTEst/hs015_different_bounds", options);
+         WarmstartInformation warmstart_information2{};
+         warmstart_information2.no_changes();
+         warmstart_information2.variable_bounds_changed = true;
+         result = uno.solve(modified_model, result.solution, options, user_callbacks, warmstart_information2);
+
+
          if (result.optimization_status == OptimizationStatus::SUCCESS) {
             // check result.solution.status
          }

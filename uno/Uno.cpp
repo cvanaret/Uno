@@ -97,6 +97,7 @@ namespace uno {
       statistics.start_new_line();
       statistics.set("iter", 0);
       statistics.set("status", "initial point");
+
       this->globalization_mechanism.initialize(statistics, current_iterate, options);
       options.print_used();
       if (Logger::level == INFO) statistics.print_current_line();
