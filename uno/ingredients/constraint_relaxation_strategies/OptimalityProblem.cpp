@@ -3,6 +3,7 @@
 
 #include "OptimalityProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/LagrangianGradient.hpp"
 #include "symbolic/Expression.hpp"
@@ -31,6 +32,7 @@ namespace uno {
    void OptimalityProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
       hessian_model.evaluate(this->model, x, this->get_objective_multiplier(), multipliers, hessian);
+      hessian.set_dimension(this->number_variables);
    }
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution

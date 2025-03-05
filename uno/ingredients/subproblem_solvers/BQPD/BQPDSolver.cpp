@@ -71,6 +71,7 @@ namespace uno {
       for (size_t variable_index: Range(number_variables + number_constraints)) {
          this->active_set[variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
       }
+      std::cout << "BQPD Hessian allocated with dimension " << number_variables << '\n';
    }
 
    void BQPDSolver::solve_LP(Statistics& /*statistics*/, LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point,

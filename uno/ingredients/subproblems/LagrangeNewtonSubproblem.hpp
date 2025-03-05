@@ -40,8 +40,8 @@ namespace uno {
       void evaluate_objective_gradient(SparseVector<double>& objective_gradient);
       void evaluate_constraints(Vector<double>& constraints);
       void evaluate_constraint_jacobian(RectangularMatrix<double>& jacobian);
-      void evaluate_hessian(SymmetricMatrix<size_t, double>& hessian);
       void compute_lagrangian_gradient(SparseVector<double>& objective_gradient, RectangularMatrix<double>& jacobian, Vector<double>& gradient) const;
+       void evaluate_hessian(SymmetricMatrix<size_t, double>& hessian);
       void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
          SymmetricMatrix<size_t, double>& matrix);
 

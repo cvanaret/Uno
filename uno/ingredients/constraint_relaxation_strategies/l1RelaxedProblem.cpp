@@ -99,6 +99,7 @@ namespace uno {
    void l1RelaxedProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
       hessian_model.evaluate(this->model, x, this->objective_multiplier, multipliers, hessian);
+      hessian.set_dimension(this->number_variables);
 
       // proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {

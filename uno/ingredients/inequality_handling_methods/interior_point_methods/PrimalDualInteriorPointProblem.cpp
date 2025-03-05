@@ -51,6 +51,7 @@ namespace uno {
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x,
          const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
       this->problem.evaluate_lagrangian_hessian(hessian_model, x, multipliers, hessian);
+      hessian.set_dimension(this->number_variables);
 
       // barrier terms
       for (size_t variable_index: Range(this->problem.number_variables)) {

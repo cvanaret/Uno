@@ -6,9 +6,8 @@
 #include "model/Model.hpp"
 
 namespace uno {
-   void ZeroHessian::evaluate(const Model& model, const Vector<double>& /*primal_variables*/, double /*objective_multiplier*/,
+   void ZeroHessian::evaluate(const Model& /*model*/, const Vector<double>& /*primal_variables*/, double /*objective_multiplier*/,
          const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
-      hessian.set_dimension(model.number_variables);
       hessian.reset();
    }
 }
