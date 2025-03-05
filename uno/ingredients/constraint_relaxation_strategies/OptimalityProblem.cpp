@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "OptimalityProblem.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/LagrangianGradient.hpp"
 #include "symbolic/Expression.hpp"
@@ -27,9 +28,9 @@ namespace uno {
       constraint_jacobian = iterate.evaluations.constraint_jacobian;
    }
 
-   void OptimalityProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
+   void OptimalityProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
-      this->model.evaluate_lagrangian_hessian(x, this->get_objective_multiplier(), multipliers, hessian);
+      hessian_model.evaluate(this->model, x, this->get_objective_multiplier(), multipliers, hessian);
    }
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution

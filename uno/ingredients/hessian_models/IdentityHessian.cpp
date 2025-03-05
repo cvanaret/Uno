@@ -2,15 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "IdentityHessian.hpp"
-#include "optimization/OptimizationProblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
-#include "options/Options.hpp"
+#include "model/Model.hpp"
 
 namespace uno {
-   void IdentityHessian::evaluate(const OptimizationProblem& problem, const Vector<double>& /*primal_variables*/,
+   void IdentityHessian::evaluate(const Model& model, const Vector<double>& /*primal_variables*/, double /*objective_multiplier*/,
          const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
-      hessian.set_dimension(problem.number_variables);
-      for (size_t variable_index: Range(problem.number_variables)) {
+      hessian.set_dimension(model.number_variables);
+      for (size_t variable_index: Range(model.number_variables)) {
          hessian.insert(1., variable_index, variable_index);
       }
    }

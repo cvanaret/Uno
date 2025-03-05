@@ -11,8 +11,8 @@ namespace uno {
    public:
       ZeroHessian() = default;
 
-      void evaluate(const OptimizationProblem& problem, const Vector<double>& primal_variables, const Vector<double>& constraint_multipliers,
-         SymmetricMatrix<size_t, double>& hessian) override;
+      void evaluate(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
    };
 } // namespace
 

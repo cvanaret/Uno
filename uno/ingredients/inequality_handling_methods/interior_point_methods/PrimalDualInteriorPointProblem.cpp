@@ -48,10 +48,9 @@ namespace uno {
       problem.evaluate_constraint_jacobian(iterate, constraint_jacobian);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
-      // original Lagrangian Hessian
-      this->problem.evaluate_lagrangian_hessian(x, multipliers, hessian);
+   void PrimalDualInteriorPointProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x,
+         const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
+      this->problem.evaluate_lagrangian_hessian(hessian_model, x, multipliers, hessian);
 
       // barrier terms
       for (size_t variable_index: Range(this->problem.number_variables)) {

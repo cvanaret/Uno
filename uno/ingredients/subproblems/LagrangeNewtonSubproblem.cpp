@@ -28,12 +28,12 @@ namespace uno {
    }
 
    void LagrangeNewtonSubproblem::evaluate_hessian(SymmetricMatrix<size_t, double>& hessian) {
-      this->hessian_model.evaluate(this->problem, this->current_iterate.primals, this->current_multipliers.constraints, hessian);
+      this->problem.evaluate_lagrangian_hessian(this->hessian_model, this->current_iterate.primals, this->current_multipliers.constraints, hessian);
       // TODO evaluate with the following dependency:
       // Regularization(
       //	  InequalityHandlingMethod( # this possibly adds structured terms (diag barrier)
-      //		HessianModel(
-      //			ConstraintRelaxationStrategy(model)
+      //		ConstraintRelaxationStrategy(
+      //			HessianModel(model)
       //		)
       //	)
       //)

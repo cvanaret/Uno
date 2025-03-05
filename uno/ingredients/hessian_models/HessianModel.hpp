@@ -8,7 +8,7 @@
 
 namespace uno {
    // forward declarations
-   class OptimizationProblem;
+   class Model;
    class Options;
    class Statistics;
    template <typename IndexType, typename ElementType>
@@ -23,8 +23,8 @@ namespace uno {
 
       size_t evaluation_count{0};
 
-      virtual void evaluate(const OptimizationProblem& problem, const Vector<double>& primal_variables, const Vector<double>& constraint_multipliers,
-         SymmetricMatrix<size_t, double>& hessian) = 0;
+      virtual void evaluate(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) = 0;
    };
 } // namespace
 

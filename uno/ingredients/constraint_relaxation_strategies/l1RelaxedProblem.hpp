@@ -18,7 +18,8 @@ namespace uno {
       void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
       void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
       void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
-      void evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian) const override;
+      void evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Vector<double>& multipliers,
+         SymmetricMatrix<size_t, double>& hessian) const override;
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;

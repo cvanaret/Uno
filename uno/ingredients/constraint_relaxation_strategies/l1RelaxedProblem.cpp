@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include "l1RelaxedProblem.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
@@ -95,9 +96,9 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
+   void l1RelaxedProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
-      this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
+      hessian_model.evaluate(this->model, x, this->objective_multiplier, multipliers, hessian);
 
       // proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
