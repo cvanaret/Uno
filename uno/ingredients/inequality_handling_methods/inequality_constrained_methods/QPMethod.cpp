@@ -28,7 +28,7 @@ namespace uno {
 
    QPMethod::~QPMethod() { }
 
-   void QPMethod::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
+   void QPMethod::generate_initial_iterate(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& initial_iterate) {
       if (this->enforce_linear_constraints_at_initial_iterate) {
          Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, *this->solver);
       }

@@ -62,7 +62,7 @@ namespace uno {
       initial_iterate.feasibility_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
       this->inequality_handling_method->set_elastic_variable_values(this->l1_relaxed_problem, initial_iterate);
-      this->inequality_handling_method->generate_initial_iterate(this->l1_relaxed_problem, initial_iterate);
+      this->inequality_handling_method->generate_initial_iterate(statistics, this->l1_relaxed_problem, initial_iterate);
       this->evaluate_progress_measures(initial_iterate);
       this->compute_primal_dual_residuals(initial_iterate);
       this->set_statistics(statistics, initial_iterate);
@@ -113,7 +113,7 @@ namespace uno {
             const double residual_lowest_violation = this->model.constraint_violation(current_iterate.evaluations.constraints +
                   current_iterate.evaluations.constraint_jacobian * feasibility_direction.primals, Norm::L1);
             DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
-            this->inequality_handling_method->exit_feasibility_problem(this->feasibility_problem, current_iterate);
+            this->inequality_handling_method->exit_feasibility_problem(statistics, this->feasibility_problem, current_iterate);
 
             // stage f: update the penalty parameter based on the current dual error
             this->decrease_parameter_aggressively(current_iterate, feasibility_direction);

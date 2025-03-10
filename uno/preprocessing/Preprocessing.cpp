@@ -19,30 +19,26 @@
 
 namespace uno {
    // compute a least-square approximation of the multipliers by solving a linear system
-   void Preprocessing::compute_least_square_multipliers(const OptimizationProblem& problem, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
-         Iterate& current_iterate, Multipliers& multipliers, double multiplier_max_norm) {
+   void Preprocessing::compute_least_square_multipliers(Statistics& statistics, const OptimizationProblem& problem,
+         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, Multipliers& multipliers,
+         double multiplier_max_norm) {
       DEBUG << "Computing least-square multipliers\n";
       DEBUG2 << "Current primals: " << current_iterate.primals << '\n';
 
-      // solve the system
+      // solve the system (do not evaluate the constraints)
       IdentityHessian hessian_model{};
       NoRegularization<double> regularization_strategy{};
       LagrangeNewtonSubproblem subproblem(problem, current_iterate, multipliers, hessian_model, regularization_strategy, INF<double>);
       Vector<double> solution(problem.number_variables + problem.number_constraints);
-      Options options(false);
-      options["statistics_print_header_frequency"] = "15";
-      Statistics statistics(options);
-      // do not evaluate the constraints
       WarmstartInformation warmstart_information{};
       warmstart_information.constraints_changed = false;
       linear_solver.solve_indefinite_system(statistics, subproblem, solution, warmstart_information);
 
       // note: we solve with -RHS instead of RHS (this is what LagrangeNewtonSubproblem does intrinsically).
       // Therefore, we get our multipliers from -solution.
-
-      // if least-square multipliers too big, discard them. Otherwise, keep them
       const auto trial_multipliers = view(-solution, problem.number_variables, problem.number_variables + problem.number_constraints);
       DEBUG2 << "Trial multipliers: "; print_vector(DEBUG2, trial_multipliers);
+      // if least-square multipliers too big, discard them. Otherwise, keep them
       if (norm_inf(trial_multipliers) <= multiplier_max_norm) {
          multipliers.constraints = trial_multipliers;
       }

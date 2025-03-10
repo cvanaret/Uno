@@ -30,13 +30,13 @@ namespace uno {
       ~PrimalDualInteriorPointMethod() override;
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
-      void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
+      void generate_initial_iterate(Statistics& statistics, const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void set_initial_point(const Vector<double>& point) override;
 
       void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
       [[nodiscard]] double proximal_coefficient(const Iterate& current_iterate) const override;
-      void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
+      void exit_feasibility_problem(Statistics& statistics, const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
             Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) override;

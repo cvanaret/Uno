@@ -19,7 +19,7 @@ namespace uno {
 
    LPMethod::~LPMethod() { }
 
-   void LPMethod::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
+   void LPMethod::generate_initial_iterate(Statistics& /*statistics*/, const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
    }
 
    void LPMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,

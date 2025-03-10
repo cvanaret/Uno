@@ -51,7 +51,7 @@ namespace uno {
       statistics.add_column("barrier", Statistics::double_width - 5, options.get_int("statistics_barrier_parameter_column_order"));
    }
 
-   void PrimalDualInteriorPointMethod::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
+   void PrimalDualInteriorPointMethod::generate_initial_iterate(Statistics& statistics, const OptimizationProblem& problem, Iterate& initial_iterate) {
       if (problem.has_inequality_constraints()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
@@ -95,7 +95,7 @@ namespace uno {
 
       // compute least-square multipliers
       if (problem.is_constrained()) {
-         Preprocessing::compute_least_square_multipliers(problem, *this->linear_solver, initial_iterate, initial_iterate.multipliers,
+         Preprocessing::compute_least_square_multipliers(statistics, problem, *this->linear_solver, initial_iterate, initial_iterate.multipliers,
                this->least_square_multiplier_max_norm);
       }
    }
@@ -203,11 +203,11 @@ namespace uno {
       return std::sqrt(this->barrier_parameter());
    }
 
-   void PrimalDualInteriorPointMethod::exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) {
+   void PrimalDualInteriorPointMethod::exit_feasibility_problem(Statistics& statistics, const OptimizationProblem& problem, Iterate& trial_iterate) {
       assert(this->solving_feasibility_problem && "The barrier subproblem did not know it was solving the feasibility problem.");
       this->barrier_parameter_update_strategy.set_barrier_parameter(this->previous_barrier_parameter);
       this->solving_feasibility_problem = false;
-      Preprocessing::compute_least_square_multipliers(problem, *this->linear_solver, trial_iterate, trial_iterate.multipliers,
+      Preprocessing::compute_least_square_multipliers(statistics, problem, *this->linear_solver, trial_iterate, trial_iterate.multipliers,
             this->least_square_multiplier_max_norm);
    }
 

@@ -43,7 +43,8 @@ namespace uno {
       return 0.;
    }
 
-   void InequalityConstrainedMethod::exit_feasibility_problem(const OptimizationProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+   void InequalityConstrainedMethod::exit_feasibility_problem(Statistics& /*statistics*/, const OptimizationProblem& /*problem*/,
+         Iterate& /*trial_iterate*/) {
       // do nothing
    }
 

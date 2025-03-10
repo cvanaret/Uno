@@ -52,7 +52,8 @@ namespace uno {
       [[nodiscard]] const OptimizationProblem& current_problem() const;
       void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
             Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information);
-      void switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate, WarmstartInformation& warmstart_information);
+      void switch_to_optimality_phase(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate,
+         WarmstartInformation& warmstart_information);
 
       void evaluate_progress_measures(Iterate& iterate) const override;
       [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);

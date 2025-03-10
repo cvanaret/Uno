@@ -53,7 +53,7 @@ namespace uno {
       initial_iterate.feasibility_residuals.lagrangian_gradient.resize(this->feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
-      this->inequality_handling_method->generate_initial_iterate(this->optimality_problem, initial_iterate);
+      this->inequality_handling_method->generate_initial_iterate(statistics, this->optimality_problem, initial_iterate);
       this->evaluate_progress_measures(initial_iterate);
       this->compute_primal_dual_residuals(initial_iterate);
       this->set_statistics(statistics, initial_iterate);
@@ -137,7 +137,8 @@ namespace uno {
          direction.primals), this->residual_norm) <= this->linear_feasibility_tolerance);
    }
 
-   void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate, WarmstartInformation& warmstart_information) {
+   void FeasibilityRestoration::switch_to_optimality_phase(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate,
+         WarmstartInformation& warmstart_information) {
       DEBUG << "Switching from restoration to optimality phase\n";
       this->current_phase = Phase::OPTIMALITY;
       this->globalization_strategy->notify_switch_to_optimality(current_iterate.progress);
@@ -145,7 +146,7 @@ namespace uno {
       trial_iterate.set_number_variables(this->optimality_problem.number_variables);
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
 
-      this->inequality_handling_method->exit_feasibility_problem(this->optimality_problem, trial_iterate);
+      this->inequality_handling_method->exit_feasibility_problem(statistics, this->optimality_problem, trial_iterate);
       // set a cold start in the subproblem solver
       warmstart_information.whole_problem_changed();
    }
@@ -159,7 +160,7 @@ namespace uno {
 
       // possibly go from restoration phase to optimality phase
       if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(current_iterate, trial_iterate, direction, step_length)) {
-         this->switch_to_optimality_phase(current_iterate, trial_iterate, warmstart_information);
+         this->switch_to_optimality_phase(statistics, current_iterate, trial_iterate, warmstart_information);
       }
       else {
          warmstart_information.no_changes();
