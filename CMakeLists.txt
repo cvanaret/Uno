@@ -6,24 +6,15 @@ if(${CMAKE_VERSION} VERSION_LESS 3.12)
 	cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 endif()
 
+######################
+# project definition #
+######################
+
 # define the project name
 project(Uno VERSION 1.3.0
         DESCRIPTION "Uno (Unifying Nonconvex Optimization)"
-        LANGUAGES CXX C Fortran)
+        LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
-
-include(FortranCInterface)
-FortranCInterface_VERIFY(CXX)
-
-
-FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
-                            MACRO_NAMESPACE "FC_"
-                            SYMBOL_NAMESPACE "FC_")
-
-# directories
-set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
-
-
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
 set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
@@ -33,10 +24,23 @@ endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders)
 
-# optional Gtest
-option(WITH_GTEST "Enable GoogleTest" OFF)
-message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
+# determine whether a Fortran compiler is required, based on the available optional dependencies
+find_library(HSL hsl)
+find_library(MA57 ma57)
+find_library(MA27 ma27)
+find_library(BQPD bqpd)
+if(HSL OR MA57 OR MA27 OR BQPD)
+   message(STATUS "Fortran compiler required")
+   enable_language(Fortran)
+   include(FortranCInterface)
+   FortranCInterface_VERIFY(CXX)
+   FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
+                               MACRO_NAMESPACE "FC_"
+                               SYMBOL_NAMESPACE "FC_")
+endif()
 
+# directories
+set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
 
 # source files
 file(GLOB UNO_SOURCE_FILES
@@ -231,6 +235,8 @@ endif()
 ##################################
 # optional GoogleTest unit tests #
 ##################################
+option(WITH_GTEST "Enable GoogleTest" OFF)
+message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
 if(WITH_GTEST)
    find_package(GTest CONFIG REQUIRED)
    if(NOT GTest_DIR)
