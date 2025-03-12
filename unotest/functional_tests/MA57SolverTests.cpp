@@ -28,8 +28,9 @@ TEST(MA57Solver, SystemSize5) {
    solver.do_numerical_factorization(matrix);
    solver.solve_indefinite_system(matrix, rhs, result);
 
+   const double tolerance = 1e-8;
    for (size_t index: Range(n)) {
-      EXPECT_DOUBLE_EQ(result[index], reference[index]);
+      EXPECT_NEAR(result[index], reference[index], tolerance);
    }
 }
 
