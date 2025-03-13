@@ -93,7 +93,7 @@ namespace uno {
    }
 
    void HomogeneousEqualityConstrainedModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier,
-         const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
+         const Vector<double>& multipliers, Matrix<size_t, double>& hessian) const {
       this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
       // extend the dimension of the Hessian by finalizing the remaining columns (note: the slacks do not enter the Hessian)
       for (size_t constraint_index: Range(this->model->number_variables, this->number_variables)) {

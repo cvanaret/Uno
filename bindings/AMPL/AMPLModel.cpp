@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include "AMPLModel.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
+#include "linear_algebra/Matrix.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
@@ -172,8 +172,8 @@ namespace uno {
    }
 
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& /*x*/, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
-      assert(hessian.capacity() >= this->number_asl_hessian_nonzeros);
+         Matrix<size_t, double>& hessian) const {
+      assert(hessian.get_number_nonzeros() >= this->number_asl_hessian_nonzeros);
 
       // register the vector of variables
       //(*(this->asl)->p.Xknown)(this->asl, const_cast<double*>(x.data()), nullptr);
@@ -194,7 +194,6 @@ namespace uno {
       assert(in_increasing_order(asl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
 
       // copy the nonzeros in the Hessian
-      hessian.reset();
       for (size_t column_index: Range(this->number_variables)) {
          for (size_t k: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
             const size_t row_index = static_cast<size_t>(asl_row_index[k]);

@@ -164,6 +164,7 @@ namespace uno {
       // Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed || warmstart_information.constraint_jacobian_changed) {
          DEBUG << "Evaluating problem Hessian\n";
+         this->hessian.reset();
          subproblem.evaluate_hessian(this->hessian);
       }
 

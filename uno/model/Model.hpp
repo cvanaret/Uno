@@ -19,7 +19,7 @@ namespace uno {
    template <typename ElementType>
    class SparseVector;
    template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
+   class Matrix;
    template <typename ElementType>
    class Vector;
 
@@ -42,7 +42,7 @@ namespace uno {
       virtual void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const = 0;
       virtual void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const = 0;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-            SymmetricMatrix<size_t, double>& hessian) const = 0;
+            Matrix<size_t, double>& hessian) const = 0;
 
       // purely virtual functions
       [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;

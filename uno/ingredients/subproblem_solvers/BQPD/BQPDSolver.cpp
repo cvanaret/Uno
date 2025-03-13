@@ -52,8 +52,7 @@ namespace uno {
          constraint_jacobian(number_constraints, number_variables),
          bqpd_jacobian(number_jacobian_nonzeros + number_objective_gradient_nonzeros), // Jacobian + objective gradient
          bqpd_jacobian_sparsity(number_jacobian_nonzeros + number_objective_gradient_nonzeros + number_constraints + 3),
-         hessian(number_variables, number_hessian_nonzeros, options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"),
-               "CSC"),
+         hessian(number_variables, number_hessian_nonzeros, false, "CSC"),
          kmax(problem_type == BQPDProblemType::QP ? options.get_int("BQPD_kmax") : 0), alp(static_cast<size_t>(this->mlp)),
          lp(static_cast<size_t>(this->mlp)),
          active_set(number_variables + number_constraints),
@@ -71,7 +70,7 @@ namespace uno {
       for (size_t variable_index: Range(number_variables + number_constraints)) {
          this->active_set[variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
       }
-      std::cout << "BQPD Hessian allocated with dimension " << number_variables << '\n';
+      INFO << "BQPDSolver::solve_QP does not regularize!\n";
    }
 
    void BQPDSolver::solve_LP(Statistics& /*statistics*/, LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point,
@@ -87,6 +86,7 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       this->set_up_subproblem(subproblem, warmstart_information);
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         this->hessian.reset();
          subproblem.evaluate_hessian(this->hessian);
          // TODO regularize the Hessian
          // subproblem.regularize_matrix(statistics, *this, this->hessian);

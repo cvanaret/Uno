@@ -8,14 +8,14 @@
 #include <memory>
 #include <functional>
 #include <cassert>
+#include "Matrix.hpp"
 #include "SparseStorage.hpp"
 #include "SparseStorageFactory.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
-   // abstract class
    template <typename IndexType, typename ElementType>
-   class SymmetricMatrix {
+   class SymmetricMatrix: public Matrix<IndexType, ElementType> {
    public:
       using value_type = ElementType;
       
@@ -31,8 +31,8 @@ namespace uno {
       ElementType quadratic_product(const Vector1& x, const Vector2& y) const;
 
       // build the matrix incrementally
-      void insert(ElementType term, IndexType row_index, IndexType column_index);
-      void finalize_column(IndexType column_index) { this->sparse_storage->finalize_column(column_index); }
+      void insert(ElementType term, IndexType row_index, IndexType column_index) override;
+      void finalize_column(IndexType column_index) override { this->sparse_storage->finalize_column(column_index); }
       
       [[nodiscard]] ElementType smallest_diagonal_entry(size_t max_dimension) const;
       
@@ -58,7 +58,8 @@ namespace uno {
 
    template <typename IndexType, typename ElementType>
    SymmetricMatrix<IndexType, ElementType>::SymmetricMatrix(size_t dimension, size_t capacity, bool use_regularization, const std::string& sparse_format) :
-         sparse_storage(SparseStorageFactory<IndexType, ElementType>::create(sparse_format, dimension, capacity, use_regularization)) {
+      Matrix<IndexType, ElementType>(dimension, dimension, capacity),
+      sparse_storage(SparseStorageFactory<IndexType, ElementType>::create(sparse_format, dimension, capacity, use_regularization)) {
    }
 
    template <typename IndexType, typename ElementType>
