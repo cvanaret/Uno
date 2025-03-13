@@ -233,7 +233,7 @@ namespace uno {
    /*
    bool MA57Solver::matrix_is_positive_definite() const {
       // positive definite = non-singular and no negative eigenvalues
-      return not this->matrix_is_singular() && this->number_negative_eigenvalues() == 0;
+      return !this->matrix_is_singular() && this->number_negative_eigenvalues() == 0;
    }
    */
 

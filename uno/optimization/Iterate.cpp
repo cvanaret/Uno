@@ -39,7 +39,7 @@ namespace uno {
             Iterate::number_eval_constraints++;
             // check finiteness
             if (std::any_of(this->evaluations.constraints.begin(), this->evaluations.constraints.end(), [](double constraint_j) {
-               return not is_finite(constraint_j);
+               return !is_finite(constraint_j);
             })) {
                throw FunctionEvaluationError();
             }

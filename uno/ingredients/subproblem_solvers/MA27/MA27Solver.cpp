@@ -177,7 +177,7 @@ namespace uno {
       // may fail because of insufficient space. In this case, more memory is allocated and the factorization tried again
       bool successful_factorization = false;
       size_t attempt = 0;
-      while (not successful_factorization) {
+      while (!successful_factorization) {
          attempt++;
          if (this->number_factorization_attempts < attempt) {
             throw std::runtime_error("MA27 reached the maximum number of factorization attempts");
