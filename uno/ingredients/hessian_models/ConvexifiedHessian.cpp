@@ -45,7 +45,7 @@ namespace uno {
       double regularization_factor = (smallest_diagonal_entry > 0.) ? 0. : this->regularization_initial_value - smallest_diagonal_entry;
       bool good_inertia = false;
       bool symbolic_analysis_performed = false;
-      while (not good_inertia) {
+      while (!good_inertia) {
          DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
          if (0. < regularization_factor) {
             hessian.set_regularization([=](size_t variable_index) {
@@ -55,7 +55,7 @@ namespace uno {
          DEBUG << "Current Hessian:\n" << hessian << '\n';
 
          // perform the symbolic analysis only once
-         if (not symbolic_analysis_performed) {
+         if (!symbolic_analysis_performed) {
             this->linear_solver->do_symbolic_analysis(hessian);
             symbolic_analysis_performed = true;
          }

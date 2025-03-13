@@ -34,11 +34,11 @@ namespace uno {
 
    std::vector<std::string> InequalityHandlingMethodFactory::available_strategies() {
       std::vector<std::string> strategies{};
-      if (not QPSolverFactory::available_solvers().empty()) {
+      if (!QPSolverFactory::available_solvers().empty()) {
          strategies.emplace_back("QP");
          strategies.emplace_back("LP");
       }
-      if (not SymmetricIndefiniteLinearSolverFactory::available_solvers().empty()) {
+      if (!SymmetricIndefiniteLinearSolverFactory::available_solvers().empty()) {
          strategies.emplace_back("primal_dual_interior_point");
       }
       return strategies;

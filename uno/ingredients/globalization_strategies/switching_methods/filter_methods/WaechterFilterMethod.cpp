@@ -69,7 +69,7 @@ namespace uno {
             scenario = "h-type";
          }
          // possibly augment the filter
-         if (accept && (not switching || not sufficient_decrease)) {
+         if (accept && (!switching || !sufficient_decrease)) {
             DEBUG << "Adding current iterate to the filter\n";
             this->filter->add(current_progress.infeasibility, current_merit);
          }

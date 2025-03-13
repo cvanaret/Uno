@@ -27,7 +27,7 @@ namespace uno {
    }
 
    double Filter::get_smallest_infeasibility() const {
-      if (not this->is_empty()) {
+      if (!this->is_empty()) {
          // left-most entry has the lowest infeasibility
          return this->infeasibility[0];
       }
@@ -86,7 +86,7 @@ namespace uno {
 
       // add new entry to the filter at position
       start_position = 0;
-      while (start_position < this->number_entries && not this->infeasibility_sufficient_reduction(this->infeasibility[start_position], current_infeasibility)) {
+      while (start_position < this->number_entries && !this->infeasibility_sufficient_reduction(this->infeasibility[start_position], current_infeasibility)) {
          start_position++;
       }
       // shift entries by one to right to make room for new entry
@@ -106,14 +106,14 @@ namespace uno {
    // return true if (infeasibility, objective) acceptable, false otherwise
    bool Filter::acceptable(double trial_infeasibility, double trial_objective) {
       // check upper bound first
-      if (not this->acceptable_wrt_upper_bound(trial_infeasibility)) {
+      if (!this->acceptable_wrt_upper_bound(trial_infeasibility)) {
          DEBUG << "Rejected because of filter upper bound\n";
          return false;
       }
 
       // TODO: use binary search
       size_t position = 0;
-      while (position < this->number_entries && not this->infeasibility_sufficient_reduction(this->infeasibility[position], trial_infeasibility)) {
+      while (position < this->number_entries && !this->infeasibility_sufficient_reduction(this->infeasibility[position], trial_infeasibility)) {
          position++;
       }
 

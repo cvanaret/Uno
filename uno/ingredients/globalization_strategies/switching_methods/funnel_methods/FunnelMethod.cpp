@@ -45,7 +45,7 @@ namespace uno {
 
          // IF require_acceptance_wrt_current_iterate == false, then condition always fulfilled, we never check
          // If true, then first part is false, and we always check wrt current iterate
-         if (not this->require_acceptance_wrt_current_iterate ||
+         if (!this->require_acceptance_wrt_current_iterate ||
              this->acceptable_wrt_current_iterate(current_progress.infeasibility, current_merit, trial_progress.infeasibility, trial_merit)) {
             // f-type step
             if (this->switching_condition(merit_predicted_reduction, current_progress.infeasibility)) {

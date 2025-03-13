@@ -49,8 +49,8 @@ namespace uno {
    size_t NonmonotoneFilter::compute_number_dominated_entries(double trial_infeasibility, double trial_objective) const {
       size_t number_dominated_entries = 0;
       for (size_t entry_index: Range(this->number_entries)) {
-         if (not this->objective_sufficient_reduction(this->objective[entry_index], trial_objective, trial_infeasibility) &&
-               not this->infeasibility_sufficient_reduction(this->infeasibility[entry_index], trial_infeasibility)) {
+         if (!this->objective_sufficient_reduction(this->objective[entry_index], trial_objective, trial_infeasibility) &&
+               !this->infeasibility_sufficient_reduction(this->infeasibility[entry_index], trial_infeasibility)) {
             number_dominated_entries++;
          }
          else if ((trial_objective >= this->objective[entry_index] - this->parameters.gamma * trial_infeasibility) &&
@@ -64,7 +64,7 @@ namespace uno {
    //! accept: check if (infeasibility_measure, objective_measure) acceptable
    bool NonmonotoneFilter::acceptable(double trial_infeasibility, double trial_objective) {
       // check upper bound first
-      if (not this->acceptable_wrt_upper_bound(trial_infeasibility)) {
+      if (!this->acceptable_wrt_upper_bound(trial_infeasibility)) {
          DEBUG << "Rejected because of filter upper bound\n";
          return false;
       }
@@ -80,7 +80,7 @@ namespace uno {
          double trial_infeasibility, double trial_objective) const {
       // check acceptability wrt current point (non-monotone)
       size_t number_dominated_entries = this->compute_number_dominated_entries(trial_infeasibility, trial_objective);
-      if (not this->objective_sufficient_reduction(current_objective, trial_objective, trial_infeasibility) &&
+      if (!this->objective_sufficient_reduction(current_objective, trial_objective, trial_infeasibility) &&
           (trial_infeasibility > this->parameters.beta * current_infeasibility)) {
          number_dominated_entries++;
       }

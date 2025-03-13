@@ -195,17 +195,17 @@ namespace uno {
       /** solvers: check the available solvers **/
       // QP solver
       const auto QP_solvers = QPSolverFactory::available_solvers();
-      if (not QP_solvers.empty()) {
+      if (!QP_solvers.empty()) {
          options["QP_solver"] = QP_solvers[0];
       }
       // LP solver
       const auto LP_solvers = LPSolverFactory::available_solvers();
-      if (not LP_solvers.empty()) {
+      if (!LP_solvers.empty()) {
          options["LP_solver"] = LP_solvers[0];
       }
       // linear solver
       const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
-      if (not linear_solvers.empty()) {
+      if (!linear_solvers.empty()) {
          options["linear_solver"] = linear_solvers[0];
       }
       return options;

@@ -100,7 +100,7 @@ namespace uno {
          std::string option_name, option_value;
          std::string line;
          while (std::getline(file, line)) {
-            if (not line.empty() && line.find('#') != 0) {
+            if (!line.empty() && line.find('#') != 0) {
                std::istringstream iss;
                iss.str(line);
                iss >> option_name >> option_value;
@@ -123,7 +123,7 @@ namespace uno {
       size_t number_used_options = 0;
       std::string option_list{};
       for (const auto& [option_name, option_value]: this->options) {
-         if (not this->is_default[option_name] && this->used[option_name]) {
+         if (!this->is_default[option_name] && this->used[option_name]) {
             number_used_options++;
             option_list.append("- ").append(option_name).append(" = ").append(option_value).append("\n");
          }

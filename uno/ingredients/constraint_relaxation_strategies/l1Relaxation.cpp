@@ -94,7 +94,7 @@ namespace uno {
       warmstart_information.only_objective_changed();
 
       // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
-      if (0. < this->penalty_parameter && not this->parameters.fixed_parameter) {
+      if (0. < this->penalty_parameter && !this->parameters.fixed_parameter) {
          double linearized_residual = this->model.constraint_violation(current_iterate.evaluations.constraints +
                current_iterate.evaluations.constraint_jacobian * direction.primals, Norm::L1);
          DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
@@ -191,7 +191,7 @@ namespace uno {
 
    void l1Relaxation::enforce_linearized_residual_sufficient_decrease(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          double linearized_residual, double residual_lowest_violation, WarmstartInformation& warmstart_information) {
-      while (0. < this->penalty_parameter && not this->linearized_residual_sufficient_decrease(current_iterate, linearized_residual,
+      while (0. < this->penalty_parameter && !this->linearized_residual_sufficient_decrease(current_iterate, linearized_residual,
             residual_lowest_violation)) {
          // decrease the penalty parameter and re-solve the problem
          this->penalty_parameter /= this->parameters.decrease_factor;
@@ -224,7 +224,7 @@ namespace uno {
 
    void l1Relaxation::enforce_descent_direction_for_l1_merit(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          const Direction& feasibility_direction, WarmstartInformation& warmstart_information) {
-      while (0. < this->penalty_parameter && not this->is_descent_direction_for_l1_merit_function(current_iterate, direction, feasibility_direction)) {
+      while (0. < this->penalty_parameter && !this->is_descent_direction_for_l1_merit_function(current_iterate, direction, feasibility_direction)) {
          // decrease the penalty parameter and re-solve the problem
          this->penalty_parameter /= this->parameters.decrease_factor;
          DEBUG << "Further decrease the penalty parameter to " << this->penalty_parameter << '\n';

@@ -141,7 +141,7 @@ namespace uno {
       });
 
       bool good_inertia = false;
-      while (not good_inertia) {
+      while (!good_inertia) {
          DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
          DEBUG2 << this->matrix << '\n';
          this->factorize_matrix(linear_solver, warmstart_information);

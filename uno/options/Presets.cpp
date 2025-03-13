@@ -22,13 +22,13 @@ namespace uno {
          const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
          const auto LP_solvers = LPSolverFactory::available_solvers();
 
-         if (not QP_solvers.empty()) {
+         if (!QP_solvers.empty()) {
             Presets::set(options, "filtersqp");
          }
-         else if (not linear_solvers.empty()) {
+         else if (!linear_solvers.empty()) {
             Presets::set(options, "ipopt");
          }
-         else if (not LP_solvers.empty()) {
+         else if (!LP_solvers.empty()) {
             Presets::set(options, "filterslp");
          }
          // note: byrd is not very robust and is not considered as a default preset
