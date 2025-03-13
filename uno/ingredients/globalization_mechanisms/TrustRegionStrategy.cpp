@@ -44,7 +44,7 @@ namespace uno {
 
       size_t number_iterations = 0;
       bool termination = false;
-      while (not termination) {
+      while (!termination) {
          bool is_acceptable = false;
          try {
             number_iterations++;
@@ -98,7 +98,7 @@ namespace uno {
             this->decrease_radius();
             warmstart_information.whole_problem_changed();
          }
-         if (not is_acceptable && this->radius < this->minimum_radius) {
+         if (!is_acceptable && this->radius < this->minimum_radius) {
             throw std::runtime_error("Small radius");
          }
       }

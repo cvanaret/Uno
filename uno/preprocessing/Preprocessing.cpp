@@ -92,7 +92,7 @@ namespace uno {
       /*
       const auto& linear_constraints = model.get_linear_constraints();
       INFO << "\nPreprocessing phase: the problem has " << linear_constraints.size() << " linear constraints\n";
-      if (not linear_constraints.empty()) {
+      if (!linear_constraints.empty()) {
          // evaluate the constraints
          std::vector<double> constraints(model.number_constraints);
          model.evaluate_constraints(primals, constraints);

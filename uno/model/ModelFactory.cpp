@@ -12,7 +12,7 @@ namespace uno {
    std::unique_ptr<Model> ModelFactory::reformulate(std::unique_ptr<Model> model, const Options& options) {
       if (options.get_string("subproblem") == "primal_dual_interior_point") {
          // move the fixed variables to the set of general constraints
-         if (not model->get_fixed_variables().empty()) {
+         if (!model->get_fixed_variables().empty()) {
             model = std::make_unique<FixedBoundsConstraintsModel>(std::move(model), options);
          }
          // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks

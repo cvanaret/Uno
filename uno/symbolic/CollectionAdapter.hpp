@@ -14,7 +14,7 @@ namespace uno {
       explicit CollectionAdapter(const Array& array);
       [[nodiscard]] size_t size() const override;
 
-      [[nodiscard]] typename CollectionAdapter::value_type dereference_iterator(size_t index) const override;
+      [[nodiscard]] typename CollectionAdapter<Array>::value_type dereference_iterator(size_t index) const override;
       void increment_iterator(size_t& index) const override;
 
    protected:

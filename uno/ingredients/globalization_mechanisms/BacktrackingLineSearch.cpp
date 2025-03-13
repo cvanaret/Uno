@@ -45,7 +45,7 @@ namespace uno {
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
-      while (not termination) {
+      while (!termination) {
          number_iterations++;
          DEBUG << "\n\tLine-search iteration " << number_iterations << ", step_length " << step_length << '\n';
          if (1 < number_iterations) { statistics.start_new_line(); }
@@ -81,9 +81,9 @@ namespace uno {
             DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
             // check if we can terminate at a first-order point
             termination = this->terminate_with_small_step_length(statistics, trial_iterate);
-            if (not termination) {
+            if (!termination) {
                // test if we can switch to solving the feasibility problem
-               if (this->constraint_relaxation_strategy.solving_feasibility_problem() || not model.is_constrained()) {
+               if (this->constraint_relaxation_strategy.solving_feasibility_problem() || !model.is_constrained()) {
                   throw std::runtime_error("LS failed");
                }
                // switch to solving the feasibility problem

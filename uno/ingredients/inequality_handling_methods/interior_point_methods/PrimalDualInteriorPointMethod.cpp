@@ -78,7 +78,7 @@ namespace uno {
       }
 
       // set the slack variables (if any)
-      if (not problem.model.get_slacks().is_empty()) {
+      if (!problem.model.get_slacks().is_empty()) {
          // evaluate the constraints at the original point
          initial_iterate.evaluate_constraints(problem.model);
 
@@ -152,7 +152,7 @@ namespace uno {
 
       // possibly update the barrier parameter
       const auto& residuals = this->solving_feasibility_problem ? current_iterate.feasibility_residuals : current_iterate.residuals;
-      if (not this->first_feasibility_iteration) {
+      if (!this->first_feasibility_iteration) {
          this->update_barrier_parameter(problem, current_iterate, current_multipliers, residuals);
       }
       else {
@@ -275,7 +275,7 @@ namespace uno {
          barrier_terms += this->damping_factor*(model.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
       }
       barrier_terms *= this->barrier_parameter();
-      assert(not std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
+      assert(!std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
       iterate.progress.auxiliary = barrier_terms;
    }
 

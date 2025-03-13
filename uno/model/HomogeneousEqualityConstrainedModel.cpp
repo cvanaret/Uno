@@ -39,13 +39,13 @@ namespace uno {
          this->slacks.insert(constraint_index, slack_variable_index);
          if (is_finite(this->model->constraint_lower_bound(constraint_index))) {
             this->lower_bounded_slacks.emplace_back(slack_variable_index);
-            if (not is_finite(this->model->constraint_upper_bound(constraint_index))) {
+            if (!is_finite(this->model->constraint_upper_bound(constraint_index))) {
                this->single_lower_bounded_slacks.emplace_back(slack_variable_index);
             }
          }
          if (is_finite(this->model->constraint_upper_bound(constraint_index))) {
             this->upper_bounded_slacks.emplace_back(slack_variable_index);
-            if (not is_finite(this->model->constraint_lower_bound(constraint_index))) {
+            if (!is_finite(this->model->constraint_lower_bound(constraint_index))) {
                this->single_upper_bounded_slacks.emplace_back(slack_variable_index);
             }
          }

@@ -15,9 +15,14 @@ project(Uno VERSION 1.3.0
         DESCRIPTION "Uno (Unifying Nonconvex Optimization)"
         LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
-set(CMAKE_CXX_FLAGS_DEBUG "-pg")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
+if (MSVC)
+   add_compile_options("$<$<COMPILE_LANGUAGE:C>:/utf-8>")
+   add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
+else()
+   set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
+   set(CMAKE_CXX_FLAGS_DEBUG "-pg")
+   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
+endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmaybe-uninitialized")
 endif()

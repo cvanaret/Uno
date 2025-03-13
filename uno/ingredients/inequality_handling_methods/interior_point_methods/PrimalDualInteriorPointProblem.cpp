@@ -25,14 +25,14 @@ namespace uno {
          if (is_finite(problem.variable_lower_bound(variable_index))) { // lower bounded
             barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - problem.variable_lower_bound(variable_index));
             // damping
-            if (not is_finite(problem.variable_upper_bound(variable_index))) {
+            if (!is_finite(problem.variable_upper_bound(variable_index))) {
                barrier_term += this->damping_factor * this->barrier_parameter;
             }
          }
          if (is_finite(problem.variable_upper_bound(variable_index))) { // upper bounded
             barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - problem.variable_upper_bound(variable_index));
             // damping
-            if (not is_finite(problem.variable_lower_bound(variable_index))) {
+            if (!is_finite(problem.variable_lower_bound(variable_index))) {
                barrier_term -= this->damping_factor * this->barrier_parameter;
             }
          }
@@ -136,14 +136,14 @@ namespace uno {
          if (is_finite(problem.variable_lower_bound(variable_index))) { // lower bounded
             barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - problem.variable_lower_bound(variable_index));
             // damping
-            if (not is_finite(problem.variable_upper_bound(variable_index))) {
+            if (!is_finite(problem.variable_upper_bound(variable_index))) {
                barrier_term += this->damping_factor * this->barrier_parameter;
             }
          }
          if (is_finite(problem.variable_upper_bound(variable_index))) { // upper bounded
             barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - problem.variable_upper_bound(variable_index));
             // damping
-            if (not is_finite(problem.variable_lower_bound(variable_index))) {
+            if (!is_finite(problem.variable_lower_bound(variable_index))) {
                barrier_term -= this->damping_factor * this->barrier_parameter;
             }
          }

@@ -13,11 +13,11 @@ namespace uno {
    }
 
    bool OptimizationProblem::has_inequality_constraints() const {
-      return (not this->model.get_inequality_constraints().empty());
+      return (!this->model.get_inequality_constraints().empty());
    }
 
    bool OptimizationProblem::has_fixed_variables() const {
-      return (not this->model.get_fixed_variables().empty());
+      return (!this->model.get_fixed_variables().empty());
    }
 
    size_t OptimizationProblem::get_number_original_variables() const {

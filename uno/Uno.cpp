@@ -57,7 +57,7 @@ namespace uno {
          try {
             bool termination = false;
             // check for termination
-            while (not termination) {
+            while (!termination) {
                major_iterations++;
                statistics.start_new_line();
                statistics.set("iter", major_iterations);

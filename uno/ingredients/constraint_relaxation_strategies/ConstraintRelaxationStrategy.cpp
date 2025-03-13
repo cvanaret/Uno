@@ -212,7 +212,7 @@ namespace uno {
          // feasible regular stationary point
          return IterateStatus::FEASIBLE_KKT_POINT;
       }
-      else if (this->model.is_constrained() && feasibility_stationarity && not primal_feasibility && feasibility_complementarity && no_trivial_duals) {
+      else if (this->model.is_constrained() && feasibility_stationarity && !primal_feasibility && feasibility_complementarity && no_trivial_duals) {
          // no primal feasibility, stationary point of constraint violation
          return IterateStatus::INFEASIBLE_STATIONARY_POINT;
       }
