@@ -157,7 +157,8 @@ namespace uno {
    }
 
    IterateStatus ConstraintRelaxationStrategy::check_termination(Iterate& iterate) {
-      if (iterate.is_objective_computed && iterate.evaluations.objective < this->unbounded_objective_threshold) {
+      if (iterate.primal_feasibility <= this->tight_tolerance && iterate.is_objective_computed &&
+            iterate.evaluations.objective < this->unbounded_objective_threshold) {
          return IterateStatus::UNBOUNDED;
       }
 
