@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <cassert>
 #include "l1RelaxedProblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
@@ -164,8 +165,11 @@ namespace uno {
    double l1RelaxedProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
-      const Range variables_range = Range(this->number_variables);
+      // safeguard in case we have never solved the feasibility problem, in which case there are no elastic variables
+      const Range variables_range = Range(std::min(this->number_variables, primals.size()));
       const VectorExpression bounds_complementarity{variables_range, [&](size_t variable_index) {
+         assert(variable_index < primals.size() && "The index exceeds the size of the primals variable");
+         
          if (0. < multipliers.lower_bounds[variable_index]) {
             return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index)) - shift_value;
          }
