@@ -5,7 +5,10 @@
 #include "optimization/OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
+#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/WarmstartInformation.hpp"
 
 namespace uno {
    LagrangeNewtonSubproblem::LagrangeNewtonSubproblem(const OptimizationProblem& problem, Iterate& current_iterate,
@@ -53,13 +56,61 @@ namespace uno {
        */
    }
 
-    void LagrangeNewtonSubproblem::evaluate_hessian(SymmetricMatrix<size_t, double>& hessian) {
-       this->problem.evaluate_lagrangian_hessian(this->hessian_model, this->current_iterate.primals, this->current_multipliers.constraints, hessian);
-    }
+   void LagrangeNewtonSubproblem::evaluate_hessian(SymmetricMatrix<size_t, double>& hessian) {
+      this->problem.evaluate_lagrangian_hessian(this->hessian_model, this->current_iterate.primals, this->current_multipliers.constraints, hessian);
+   }
 
-   void LagrangeNewtonSubproblem::regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
-         SymmetricMatrix<size_t, double>& matrix) {
-      this->regularization_strategy.regularize_matrix(statistics, linear_solver, matrix, this->number_variables, this->number_constraints,
-         this->problem.dual_regularization_parameter());
+   void LagrangeNewtonSubproblem::evaluate_functions(SparseVector<double>& objective_gradient, Vector<double>& constraints,
+         RectangularMatrix<double>& jacobian, SymmetricMatrix<size_t, double>& hessian, WarmstartInformation& warmstart_information) {
+      // objective gradient
+      if (warmstart_information.objective_changed) {
+         this->evaluate_objective_gradient(objective_gradient);
+      }
+      // constraints and Jacobian
+      if (warmstart_information.constraints_changed) {
+         this->evaluate_constraints(constraints);
+      }
+      if (warmstart_information.constraint_jacobian_changed) {
+         this->evaluate_constraint_jacobian(jacobian);
+      }
+      // Lagrangian Hessian
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed || warmstart_information.constraint_jacobian_changed) {
+         DEBUG << "Evaluating problem Hessian\n";
+         hessian.reset();
+         this->evaluate_hessian(hessian);
+      }
+   }
+
+   void LagrangeNewtonSubproblem::assemble_augmented_rhs(SparseVector<double>& objective_gradient, Vector<double>& constraints,
+         RectangularMatrix<double>& jacobian, Vector<double>& rhs) const {
+      // TODO use WarmstartInformation
+      // Lagrangian gradient
+      this->compute_lagrangian_gradient(objective_gradient, jacobian, rhs);
+      for (size_t variable_index: Range(this->number_variables)) {
+         rhs[variable_index] = -rhs[variable_index];
+      }
+
+      // constraints
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         rhs[this->number_variables + constraint_index] = -constraints[constraint_index];
+      }
+      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints));
+      DEBUG << '\n';
+   }
+
+   void LagrangeNewtonSubproblem::finalize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
+         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, WarmstartInformation& warmstart_information) {
+      if (warmstart_information.hessian_sparsity_changed || warmstart_information.jacobian_sparsity_changed) {
+         DEBUG << "Augmented matrix:\n" << augmented_matrix;
+         DEBUG << "Performing symbolic analysis of the augmented matrix\n";
+         linear_solver.do_symbolic_analysis(augmented_matrix);
+         warmstart_information.hessian_sparsity_changed = warmstart_information.jacobian_sparsity_changed = false;
+      }
+      if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
+         DEBUG << "Performing numerical factorization of the augmented matrix\n";
+         linear_solver.do_numerical_factorization(augmented_matrix);
+         this->regularization_strategy.regularize_matrix(statistics, linear_solver, augmented_matrix, this->number_variables, this->number_constraints,
+            this->problem.dual_regularization_parameter());
+      }
    }
 } // namespace

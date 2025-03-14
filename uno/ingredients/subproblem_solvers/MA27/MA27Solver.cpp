@@ -8,7 +8,6 @@
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/WarmstartInformation.hpp"
-#include "options/Options.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 
@@ -206,12 +205,13 @@ namespace uno {
       this->check_factorization_status();
    }
 
-   void MA27Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) {
+   void MA27Solver::solve_indefinite_linear_system(Vector<double>& result) {
       int la = static_cast<int>(this->factor.size());
       int liw = static_cast<int>(this->iw.size());
 
-      result = rhs;
-      int n = static_cast<int>(matrix.dimension());
+      // copy rhs into result (overwritten by MA27)
+      result = this->rhs;
+      int n = static_cast<int>(this->augmented_matrix.dimension());
 
       MA27CD(&n, this->factor.data(), &la, this->iw.data(), &liw, this->w.data(), &this->maxfrt, result.data(), this->iw1.data(), &this->nsteps,
             this->icntl.data(), this->info.data());
@@ -222,10 +222,10 @@ namespace uno {
       }
    }
 
-   void MA27Solver::solve_indefinite_system(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
+   void MA27Solver::solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
          WarmstartInformation& warmstart_information) {
       this->set_up_subproblem(statistics, subproblem, warmstart_information);
-      this->solve_indefinite_system(this->augmented_matrix, this->rhs, result);
+      this->solve_indefinite_linear_system(result);
    }
 
    std::tuple<size_t, size_t, size_t> MA27Solver::get_inertia() const {
@@ -251,26 +251,9 @@ namespace uno {
    }
 
    void MA27Solver::set_up_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, WarmstartInformation& warmstart_information) {
-      // objective gradient
-      if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->objective_gradient);
-      }
+      subproblem.evaluate_functions(this->objective_gradient, this->constraints, this->constraint_jacobian, this->hessian, warmstart_information);
 
-      // constraints and Jacobian
-      if (warmstart_information.constraints_changed) {
-         subproblem.evaluate_constraints(this->constraints);
-      }
-      if (warmstart_information.constraint_jacobian_changed) {
-         subproblem.evaluate_constraint_jacobian(this->constraint_jacobian);
-      }
-
-      // Lagrangian Hessian
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed || warmstart_information.constraint_jacobian_changed) {
-         DEBUG << "Evaluating problem Hessian\n";
-         this->hessian.reset();
-         subproblem.evaluate_hessian(this->hessian);
-      }
-
+      // TODO use matrix views
       if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
          // form the KKT matrix
          this->augmented_matrix.set_dimension(subproblem.number_variables + subproblem.number_constraints);
@@ -289,34 +272,9 @@ namespace uno {
          }
       }
 
-      // possibly assemble augmented system and perform analysis
-      if (warmstart_information.hessian_sparsity_changed || warmstart_information.jacobian_sparsity_changed) {
-         DEBUG << "Augmented matrix:\n" << this->augmented_matrix;
-         DEBUG << "Performing symbolic analysis of the augmented matrix\n";
-         this->do_symbolic_analysis(this->augmented_matrix);
-         warmstart_information.hessian_sparsity_changed = warmstart_information.jacobian_sparsity_changed = false;
-      }
-      if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
-         DEBUG << "Performing numerical factorization of the augmented matrix\n";
-         this->do_numerical_factorization(this->augmented_matrix);
-         subproblem.regularize_matrix(statistics, *this, this->augmented_matrix);
-      }
-      this->assemble_augmented_rhs(subproblem); // TODO add conditions
-   }
-
-   void MA27Solver::assemble_augmented_rhs(LagrangeNewtonSubproblem& subproblem) {
-      // Lagrangian gradient
-      subproblem.compute_lagrangian_gradient(this->objective_gradient, this->constraint_jacobian, this->rhs);
-      for (size_t variable_index: Range(subproblem.number_variables)) {
-         this->rhs[variable_index] = -this->rhs[variable_index];
-      }
-
-      // constraints
-      for (size_t constraint_index: Range(subproblem.number_constraints)) {
-         this->rhs[subproblem.number_variables + constraint_index] = -this->constraints[constraint_index];
-      }
-      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(this->rhs, 0, subproblem.number_variables + subproblem.number_constraints));
-      DEBUG << '\n';
+      // possibly perform symbolic analysis and factorize
+      subproblem.finalize_augmented_matrix(statistics, this->augmented_matrix, *this, warmstart_information);
+      subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);
    }
 
    void MA27Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {

@@ -43,17 +43,3 @@ TEST(MatrixView, WrongColumn) {
    auto submatrix = MatrixView<size_t, double>(matrix, 0, 0, 2, 2, submatrix_nnz);
    EXPECT_DEBUG_DEATH(submatrix.insert(3., 0, 2), "The column index exceeds the size of the matrix view");
 }
-
-TEST(MatrixView, Insertion) {
-   // create matrix
-   const size_t dimension = 3;
-   const size_t nnz = 6;
-   SymmetricMatrix<size_t, double> matrix(dimension, nnz, false, "COO");
-
-   // create 2x2 submatrix with 3 nonzeros
-   const size_t submatrix_nnz = 3;
-   auto submatrix = MatrixView<size_t, double>(matrix, 0, 0, 2, 2, submatrix_nnz);
-   submatrix.insert(1., 0, 0);
-   submatrix.insert(2., 0, 1);
-   //std::cout << "Complete matrix:\n" << matrix << '\n';
-}

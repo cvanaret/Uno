@@ -33,8 +33,7 @@ namespace uno {
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
-      void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
-      void solve_indefinite_system(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
+      void solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
             WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
@@ -81,8 +80,8 @@ namespace uno {
 
       bool use_iterative_refinement{false};
       void set_up_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, WarmstartInformation& warmstart_information);
-      void assemble_augmented_rhs(LagrangeNewtonSubproblem& subproblem);
       void save_sparsity_pattern_internally(const SymmetricMatrix<size_t, double>& matrix);
+      void solve_indefinite_linear_system(Vector<double>& result);
    };
 } // namespace
 

@@ -32,7 +32,7 @@ namespace uno {
       Vector<double> solution(problem.number_variables + problem.number_constraints);
       WarmstartInformation warmstart_information{};
       warmstart_information.constraints_changed = false;
-      linear_solver.solve_indefinite_system(statistics, subproblem, solution, warmstart_information);
+      linear_solver.solve_EQP(statistics, subproblem, solution, warmstart_information);
 
       // note: we solve with -RHS instead of RHS (this is what LagrangeNewtonSubproblem does intrinsically).
       // Therefore, we get our multipliers from -solution.

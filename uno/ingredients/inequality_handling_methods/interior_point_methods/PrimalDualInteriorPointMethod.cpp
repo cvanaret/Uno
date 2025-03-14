@@ -138,7 +138,7 @@ namespace uno {
       PrimalDualInteriorPointProblem barrier_problem(problem, current_multipliers, this->barrier_parameter());
       LagrangeNewtonSubproblem subproblem(barrier_problem, current_iterate, current_multipliers, *this->hessian_model,
             *this->regularization_strategy, trust_region_radius);
-      this->linear_solver->solve_indefinite_system(statistics, subproblem, this->solution, warmstart_information);
+      this->linear_solver->solve_EQP(statistics, subproblem, this->solution, warmstart_information);
 
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
       this->number_subproblems_solved++;

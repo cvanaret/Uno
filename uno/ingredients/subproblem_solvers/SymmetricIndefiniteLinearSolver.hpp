@@ -23,9 +23,7 @@ namespace uno {
       explicit SymmetricIndefiniteLinearSolver(size_t dimension) : dimension(dimension) { };
       virtual ~SymmetricIndefiniteLinearSolver() = default;
 
-      virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
-            Vector<ElementType>& result) = 0;
-      virtual void solve_indefinite_system(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<ElementType>& result,
+      virtual void solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<ElementType>& result,
             WarmstartInformation& warmstart_information) = 0;
 
    protected:

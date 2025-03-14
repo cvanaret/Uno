@@ -43,6 +43,7 @@ namespace uno {
             hessian(number_variables, number_hessian_nonzeros, false, "COO"),
             dimension(number_variables + number_constraints),
             number_nonzeros(number_hessian_nonzeros + number_jacobian_nonzeros),
+            // augmented matrix
             augmented_matrix(this->dimension, this->number_nonzeros, true, "COO"),
             rhs(this->dimension),
             lkeep(static_cast<int>(5 * this->dimension + this->number_nonzeros + std::max(this->dimension, this->number_nonzeros) + 42)),
@@ -119,21 +120,21 @@ namespace uno {
             /* out */ this->rinfo.data());
    }
 
-   void MA57Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) {
-      const int n = static_cast<int>(matrix.dimension());
-      int nnz = static_cast<int>(matrix.number_nonzeros());
+   void MA57Solver::solve_indefinite_linear_system(Vector<double>& result) {
+      const int n = static_cast<int>(this->augmented_matrix.dimension());
+      int nnz = static_cast<int>(this->augmented_matrix.number_nonzeros());
       const int lrhs = n; // integer, length of rhs
 
       // solve the linear system
       if (this->use_iterative_refinement) {
-         MA57DD(&this->job, &n, &nnz, matrix.data_pointer(), this->row_indices.data(), this->column_indices.data(),
+         MA57DD(&this->job, &n, &nnz, this->augmented_matrix.data_pointer(), this->row_indices.data(), this->column_indices.data(),
                this->fact.data(), &this->factorization.lfact, this->ifact.data(), &this->factorization.lifact,
-               rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
+               this->rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
                this->cntl.data(), this->info.data(), this->rinfo.data());
       }
       else {
          // copy rhs into result (overwritten by MA57)
-         result = rhs;
+         result = this->rhs;
 
          MA57CD(&this->job, &n, this->fact.data(), &this->factorization.lfact, this->ifact.data(),
                &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
@@ -141,33 +142,16 @@ namespace uno {
       }
    }
 
-    void MA57Solver::solve_indefinite_system(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
+    void MA57Solver::solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
          WarmstartInformation& warmstart_information) {
        this->set_up_subproblem(statistics, subproblem, warmstart_information);
-       this->solve_indefinite_system(this->augmented_matrix, this->rhs, result);
+       this->solve_indefinite_linear_system(result);
     }
 
    void MA57Solver::set_up_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, WarmstartInformation& warmstart_information) {
-      // objective gradient
-      if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->objective_gradient);
-      }
+      subproblem.evaluate_functions(this->objective_gradient, this->constraints, this->constraint_jacobian, this->hessian, warmstart_information);
 
-      // constraints and Jacobian
-      if (warmstart_information.constraints_changed) {
-         subproblem.evaluate_constraints(this->constraints);
-      }
-      if (warmstart_information.constraint_jacobian_changed) {
-         subproblem.evaluate_constraint_jacobian(this->constraint_jacobian);
-      }
-
-      // Lagrangian Hessian
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed || warmstart_information.constraint_jacobian_changed) {
-         DEBUG << "Evaluating problem Hessian\n";
-         this->hessian.reset();
-         subproblem.evaluate_hessian(this->hessian);
-      }
-
+      // TODO use matrix views
       if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
          // form the KKT matrix
          this->augmented_matrix.set_dimension(subproblem.number_variables + subproblem.number_constraints);
@@ -186,34 +170,9 @@ namespace uno {
          }
       }
 
-      // possibly assemble augmented system and perform analysis
-      if (warmstart_information.hessian_sparsity_changed || warmstart_information.jacobian_sparsity_changed) {
-         DEBUG << "Augmented matrix:\n" << this->augmented_matrix;
-         DEBUG << "Performing symbolic analysis of the augmented matrix\n";
-         this->do_symbolic_analysis(this->augmented_matrix);
-         warmstart_information.hessian_sparsity_changed = warmstart_information.jacobian_sparsity_changed = false;
-      }
-      if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
-         DEBUG << "Performing numerical factorization of the augmented matrix\n";
-         this->do_numerical_factorization(this->augmented_matrix);
-         subproblem.regularize_matrix(statistics, *this, this->augmented_matrix);
-      }
-      this->assemble_augmented_rhs(subproblem); // TODO add conditions
-   }
-
-   void MA57Solver::assemble_augmented_rhs(LagrangeNewtonSubproblem& subproblem) {
-      // Lagrangian gradient
-      subproblem.compute_lagrangian_gradient(this->objective_gradient, this->constraint_jacobian, this->rhs);
-      for (size_t variable_index: Range(subproblem.number_variables)) {
-         this->rhs[variable_index] = -this->rhs[variable_index];
-      }
-
-      // constraints
-      for (size_t constraint_index: Range(subproblem.number_constraints)) {
-         this->rhs[subproblem.number_variables + constraint_index] = -this->constraints[constraint_index];
-      }
-      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(this->rhs, 0, subproblem.number_variables + subproblem.number_constraints));
-      DEBUG << '\n';
+      // possibly perform symbolic analysis and factorize
+      subproblem.finalize_augmented_matrix(statistics, this->augmented_matrix, *this, warmstart_information);
+      subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);
    }
 
    std::tuple<size_t, size_t, size_t> MA57Solver::get_inertia() const {

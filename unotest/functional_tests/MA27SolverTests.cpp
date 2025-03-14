@@ -27,7 +27,7 @@ TEST(MA27Solver, SystemSize5) {
    MA27Solver solver(n, nnz);
    solver.do_symbolic_analysis(matrix);
    solver.do_numerical_factorization(matrix);
-   solver.solve_indefinite_system(matrix, rhs, result);
+   solver.solve_EQP(matrix, rhs, result);
 
    for (size_t index: Range(n)) {
       EXPECT_DOUBLE_EQ(result[index], reference[index]);
