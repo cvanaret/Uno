@@ -6,8 +6,7 @@
 #include <ctime>
 
 namespace uno {
-   Timer::Timer(): start_time(std::clock()) {
-   }
+   Timer::Timer(): start_time(std::clock()) { }
 
    double Timer::get_duration() const {
       return static_cast<double>(std::clock() - this->start_time) / static_cast<double>(CLOCKS_PER_SEC);

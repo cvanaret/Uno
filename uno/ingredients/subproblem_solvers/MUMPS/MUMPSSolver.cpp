@@ -83,18 +83,22 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
    }
 
+   void MUMPSSolver::solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
+         WarmstartInformation& warmstart_information) {
+      // set up the augmented system
+      subproblem.assemble_augmented_matrix(statistics, this->objective_gradient, this->constraints, this->constraint_jacobian, this->hessian,
+         this->augmented_matrix, *this, warmstart_information);
+      subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs, warmstart_information);
+      // solve the augmented system
+      this->solve_indefinite_linear_system(result);
+   }
+
    void MUMPSSolver::solve_indefinite_linear_system(Vector<double>& result) {
       // copy rhs into result (overwritten by MUMPS)
       result = this->rhs;
       this->mumps_structure.rhs = result.data();
       this->mumps_structure.job = MUMPSSolver::JOB_SOLVE;
       dmumps_c(&this->mumps_structure);
-   }
-
-   void MUMPSSolver::solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
-         WarmstartInformation& warmstart_information) {
-      this->set_up_subproblem(statistics, subproblem, warmstart_information);
-      this->solve_indefinite_linear_system(result);
    }
 
    std::tuple<size_t, size_t, size_t> MUMPSSolver::get_inertia() const {
@@ -121,34 +125,6 @@ namespace uno {
 
    size_t MUMPSSolver::rank() const {
       return this->dimension - this->number_zero_eigenvalues();
-   }
-
-   void MUMPSSolver::set_up_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, WarmstartInformation& warmstart_information) {
-      subproblem.evaluate_functions(this->objective_gradient, this->constraints, this->constraint_jacobian, this->hessian, warmstart_information);
-
-      // assemble augmented system
-      // TODO use matrix views
-      if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
-         // form the KKT matrix
-         this->augmented_matrix.set_dimension(subproblem.number_variables + subproblem.number_constraints);
-         this->augmented_matrix.reset();
-         // copy the Lagrangian Hessian in the top left block
-         for (const auto [row_index, column_index, element]: this->hessian) {
-            this->augmented_matrix.insert(element, row_index, column_index);
-         }
-
-         // Jacobian of general constraints
-         for (size_t column_index: Range(subproblem.number_constraints)) {
-            for (const auto [row_index, derivative]: this->constraint_jacobian[column_index]) {
-               this->augmented_matrix.insert(derivative, row_index, subproblem.number_variables + column_index);
-            }
-            this->augmented_matrix.finalize_column(column_index);
-         }
-      }
-
-      // possibly perform symbolic analysis and factorize
-      subproblem.finalize_augmented_matrix(statistics, this->augmented_matrix, *this, warmstart_information);
-      subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);
    }
 
    void MUMPSSolver::save_sparsity_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {

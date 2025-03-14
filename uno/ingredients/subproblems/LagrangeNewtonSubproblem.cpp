@@ -81,8 +81,46 @@ namespace uno {
       }
    }
 
+   void LagrangeNewtonSubproblem::assemble_augmented_matrix(Statistics& statistics, SparseVector<double>& objective_gradient, Vector<double>& constraints,
+         RectangularMatrix<double>& jacobian, SymmetricMatrix<size_t, double>& hessian, SymmetricMatrix<size_t, double>& augmented_matrix,
+      DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, WarmstartInformation& warmstart_information) {
+      this->evaluate_functions(objective_gradient, constraints, jacobian, hessian, warmstart_information);
+
+      // TODO use matrix views
+      if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
+         // form the KKT matrix
+         augmented_matrix.set_dimension(this->number_variables + this->number_constraints);
+         augmented_matrix.reset();
+         // copy the Lagrangian Hessian in the top left block
+         for (const auto [row_index, column_index, element]: hessian) {
+            augmented_matrix.insert(element, row_index, column_index);
+         }
+
+         // Jacobian of general constraints
+         for (size_t column_index: Range(this->number_constraints)) {
+            for (const auto [row_index, derivative]: jacobian[column_index]) {
+               augmented_matrix.insert(derivative, row_index, this->number_variables + column_index);
+            }
+            augmented_matrix.finalize_column(column_index);
+         }
+      }
+
+      if (warmstart_information.hessian_sparsity_changed || warmstart_information.jacobian_sparsity_changed) {
+         DEBUG << "Augmented matrix:\n" << augmented_matrix;
+         DEBUG << "Performing symbolic analysis of the augmented matrix\n";
+         linear_solver.do_symbolic_analysis(augmented_matrix);
+         warmstart_information.hessian_sparsity_changed = warmstart_information.jacobian_sparsity_changed = false;
+      }
+      if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
+         DEBUG << "Performing numerical factorization of the augmented matrix\n";
+         linear_solver.do_numerical_factorization(augmented_matrix);
+         this->regularization_strategy.regularize_matrix(statistics, linear_solver, augmented_matrix, this->number_variables, this->number_constraints,
+            this->problem.dual_regularization_parameter());
+      }
+   }
+
    void LagrangeNewtonSubproblem::assemble_augmented_rhs(SparseVector<double>& objective_gradient, Vector<double>& constraints,
-         RectangularMatrix<double>& jacobian, Vector<double>& rhs) const {
+         RectangularMatrix<double>& jacobian, Vector<double>& rhs, WarmstartInformation& /*warmstart_information*/) const {
       // TODO use WarmstartInformation
       // Lagrangian gradient
       this->compute_lagrangian_gradient(objective_gradient, jacobian, rhs);
@@ -96,21 +134,5 @@ namespace uno {
       }
       DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints));
       DEBUG << '\n';
-   }
-
-   void LagrangeNewtonSubproblem::finalize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, WarmstartInformation& warmstart_information) {
-      if (warmstart_information.hessian_sparsity_changed || warmstart_information.jacobian_sparsity_changed) {
-         DEBUG << "Augmented matrix:\n" << augmented_matrix;
-         DEBUG << "Performing symbolic analysis of the augmented matrix\n";
-         linear_solver.do_symbolic_analysis(augmented_matrix);
-         warmstart_information.hessian_sparsity_changed = warmstart_information.jacobian_sparsity_changed = false;
-      }
-      if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
-         DEBUG << "Performing numerical factorization of the augmented matrix\n";
-         linear_solver.do_numerical_factorization(augmented_matrix);
-         this->regularization_strategy.regularize_matrix(statistics, linear_solver, augmented_matrix, this->number_variables, this->number_constraints,
-            this->problem.dual_regularization_parameter());
-      }
    }
 } // namespace

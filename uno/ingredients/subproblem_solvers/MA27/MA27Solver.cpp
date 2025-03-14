@@ -11,21 +11,18 @@
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 
-#define MA27ID FC_GLOBAL(ma27id, MA27ID)
-#define MA27AD FC_GLOBAL(ma27ad, MA27AD)
-#define MA27BD FC_GLOBAL(ma27bd, MA27BD)
-#define MA27CD FC_GLOBAL(ma27cd, MA27CD)
+#define ma27_set_parameters FC_GLOBAL(ma27id, MA27ID)
+#define ma27_symbolic_analysis FC_GLOBAL(ma27ad, MA27AD)
+#define ma27_numerical_factorization FC_GLOBAL(ma27bd, MA27BD)
+#define ma27_solve_linear_system FC_GLOBAL(ma27cd, MA27CD)
 
 extern "C" {
-   void MA27ID(int ICNTL[], double CNTL[]);
-
-   void MA27AD(int* N, int* NZ, int IRN[], int ICN[], int IW[], int* LIW, int IKEEP[], int IW1[],
+   void ma27_set_parameters(int ICNTL[], double CNTL[]);
+   void ma27_symbolic_analysis(int* N, int* NZ, int IRN[], int ICN[], int IW[], int* LIW, int IKEEP[], int IW1[],
          int* NSTEPS, int* IFLAG, int ICNTL[], double CNTL[], int INFO[], double* OPS);
-
-   void MA27BD(int* N, int* NZ, int IRN[], int ICN[], double A[], int* LA, int IW[], int* LIW,
+   void ma27_numerical_factorization(int* N, int* NZ, int IRN[], int ICN[], double A[], int* LA, int IW[], int* LIW,
          int IKEEP[], int* NSTEPS, int* MAXFRT, int IW1[], int ICNTL[], double CNTL[], int INFO[]);
-
-   void MA27CD(int* N, double A[], int* LA, int IW[], int* LIW, double W[], int* MAXFRT, double RHS[],
+   void ma27_solve_linear_system(int* N, double A[], int* LA, int IW[], int* LIW, double W[], int* MAXFRT, double RHS[],
          int IW1[], int* NSTEPS, int ICNTL[], int INFO[]);
 }
 
@@ -124,7 +121,7 @@ namespace uno {
       this->row_indices.reserve(this->number_nonzeros);
       this->column_indices.reserve(this->number_nonzeros);
       // initialization: set the default values of the controlling parameters
-      MA27ID(this->icntl.data(), this->cntl.data());
+      ma27_set_parameters(this->icntl.data(), this->cntl.data());
       // a suitable pivot order is to be chosen automatically
       this->iflag = 0;
       // suppress warning messages
@@ -148,7 +145,7 @@ namespace uno {
 
       // symbolic analysis
       int liw = static_cast<int>(this->iw.size());
-      MA27AD(&n, &nnz,                                   /* size info */
+      ma27_symbolic_analysis(&n, &nnz,                                   /* size info */
             this->row_indices.data(), this->column_indices.data(),                     /* matrix indices */
             this->iw.data(), &liw, this->ikeep.data(), this->iw1.data(),  /* solver workspace */
             &this->nsteps, &this->iflag, this->icntl.data(), this->cntl.data(), this->info.data(), &this->ops);
@@ -184,8 +181,8 @@ namespace uno {
 
          int la = static_cast<int>(this->factor.size());
          int liw = static_cast<int>(this->iw.size());
-         MA27BD(&n, &nnz, this->row_indices.data(), this->column_indices.data(), this->factor.data(), &la, this->iw.data(), &liw, this->ikeep.data(),
-               &this->nsteps, &this->maxfrt, this->iw1.data(), this->icntl.data(), this->cntl.data(), this->info.data());
+         ma27_numerical_factorization(&n, &nnz, this->row_indices.data(), this->column_indices.data(), this->factor.data(), &la, this->iw.data(), &liw,
+            this->ikeep.data(), &this->nsteps, &this->maxfrt, this->iw1.data(), this->icntl.data(), this->cntl.data(), this->info.data());
          successful_factorization = true;
 
          if (this->info[eINFO::IFLAG] == eIFLAG::INSUFFICIENTINTEGER) {
@@ -205,6 +202,16 @@ namespace uno {
       this->check_factorization_status();
    }
 
+   void MA27Solver::solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
+         WarmstartInformation& warmstart_information) {
+      // set up the augmented system
+      subproblem.assemble_augmented_matrix(statistics, this->objective_gradient, this->constraints, this->constraint_jacobian, this->hessian,
+         this->augmented_matrix, *this, warmstart_information);
+      subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs, warmstart_information);
+      // solve the augmented system
+      this->solve_indefinite_linear_system(result);
+   }
+
    void MA27Solver::solve_indefinite_linear_system(Vector<double>& result) {
       int la = static_cast<int>(this->factor.size());
       int liw = static_cast<int>(this->iw.size());
@@ -213,19 +220,13 @@ namespace uno {
       result = this->rhs;
       int n = static_cast<int>(this->augmented_matrix.dimension());
 
-      MA27CD(&n, this->factor.data(), &la, this->iw.data(), &liw, this->w.data(), &this->maxfrt, result.data(), this->iw1.data(), &this->nsteps,
-            this->icntl.data(), this->info.data());
+      ma27_solve_linear_system(&n, this->factor.data(), &la, this->iw.data(), &liw, this->w.data(), &this->maxfrt, result.data(), this->iw1.data(), &this->nsteps,
+         this->icntl.data(), this->info.data());
 
       assert(this->info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the linear solve failed");
       if (this->info[eINFO::IFLAG] != eIFLAG::SUCCESS) {
          WARNING << "MA27 has issued a warning: IFLAG = " << this->info[eINFO::IFLAG] << " additional info, IERROR = " << this->info[eINFO::IERROR] << '\n';
       }
-   }
-
-   void MA27Solver::solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
-         WarmstartInformation& warmstart_information) {
-      this->set_up_subproblem(statistics, subproblem, warmstart_information);
-      this->solve_indefinite_linear_system(result);
    }
 
    std::tuple<size_t, size_t, size_t> MA27Solver::get_inertia() const {
@@ -248,33 +249,6 @@ namespace uno {
 
    size_t MA27Solver::rank() const {
       return (this->info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT) ? static_cast<size_t>(this->info[eINFO::IERROR]) : this->dimension;
-   }
-
-   void MA27Solver::set_up_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, WarmstartInformation& warmstart_information) {
-      subproblem.evaluate_functions(this->objective_gradient, this->constraints, this->constraint_jacobian, this->hessian, warmstart_information);
-
-      // TODO use matrix views
-      if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
-         // form the KKT matrix
-         this->augmented_matrix.set_dimension(subproblem.number_variables + subproblem.number_constraints);
-         this->augmented_matrix.reset();
-         // copy the Lagrangian Hessian in the top left block
-         for (const auto [row_index, column_index, element]: this->hessian) {
-            this->augmented_matrix.insert(element, row_index, column_index);
-         }
-
-         // Jacobian of general constraints
-         for (size_t column_index: Range(subproblem.number_constraints)) {
-            for (const auto [row_index, derivative]: this->constraint_jacobian[column_index]) {
-               this->augmented_matrix.insert(derivative, row_index, subproblem.number_variables + column_index);
-            }
-            this->augmented_matrix.finalize_column(column_index);
-         }
-      }
-
-      // possibly perform symbolic analysis and factorize
-      subproblem.finalize_augmented_matrix(statistics, this->augmented_matrix, *this, warmstart_information);
-      subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);
    }
 
    void MA27Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {

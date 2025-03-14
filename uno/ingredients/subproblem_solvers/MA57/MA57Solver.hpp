@@ -79,7 +79,6 @@ namespace uno {
       const size_t fortran_shift{1};
 
       bool use_iterative_refinement{false};
-      void set_up_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, WarmstartInformation& warmstart_information);
       void save_sparsity_pattern_internally(const SymmetricMatrix<size_t, double>& matrix);
       void solve_indefinite_linear_system(Vector<double>& result);
    };

@@ -46,11 +46,11 @@ namespace uno {
       void evaluate_functions(SparseVector<double>& objective_gradient, Vector<double>& constraints, RectangularMatrix<double>& jacobian,
          SymmetricMatrix<size_t, double>& hessian, WarmstartInformation& warmstart_information);
 
-      void assemble_augmented_rhs(SparseVector<double>& objective_gradient, Vector<double>& constraints, RectangularMatrix<double>& jacobian,
-         Vector<double>& rhs) const;
-
-      void finalize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
+      void assemble_augmented_matrix(Statistics& statistics, SparseVector<double>& objective_gradient, Vector<double>& constraints,
+         RectangularMatrix<double>& jacobian, SymmetricMatrix<size_t, double>& hessian, SymmetricMatrix<size_t, double>& augmented_matrix,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, WarmstartInformation& warmstart_information);
+      void assemble_augmented_rhs(SparseVector<double>& objective_gradient, Vector<double>& constraints, RectangularMatrix<double>& jacobian,
+         Vector<double>& rhs, WarmstartInformation& warmstart_information) const;
 
       template <typename Array>
       void set_variable_bounds(Array& lower_bounds, Array& upper_bounds);

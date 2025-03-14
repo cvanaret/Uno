@@ -63,7 +63,6 @@ namespace uno {
       const size_t number_factorization_attempts{5};
 
       // bool use_iterative_refinement{false}; // Not sure how to do this with ma27
-      void set_up_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, WarmstartInformation& warmstart_information);
       void save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix);
       void check_factorization_status();
       void solve_indefinite_linear_system(Vector<double>& result);

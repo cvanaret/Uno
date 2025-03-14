@@ -56,7 +56,6 @@ namespace uno {
       static const int GENERAL_SYMMETRIC = 2;
 
       const size_t fortran_shift{1};
-      void set_up_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, WarmstartInformation& warmstart_information);
       void save_sparsity_to_local_format(const SymmetricMatrix<size_t, double>& matrix);
       void solve_indefinite_linear_system(Vector<double>& result);
    };
