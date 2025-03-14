@@ -4,7 +4,7 @@
 #ifndef UNO_OPTIMALITYPROBLEM_H
 #define UNO_OPTIMALITYPROBLEM_H
 
-#include "OptimizationProblem.hpp"
+#include "optimization/OptimizationProblem.hpp"
 
 namespace uno {
    class OptimalityProblem: public OptimizationProblem {
@@ -13,9 +13,10 @@ namespace uno {
 
       [[nodiscard]] double get_objective_multiplier() const override { return 1.; }
       void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
-      void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
+      void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
       void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
-      void evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian) const override;
+      void evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Vector<double>& multipliers,
+         SymmetricMatrix<size_t, double>& hessian) const override;
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override { return this->model.variable_lower_bound(variable_index); }
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override { return this->model.variable_upper_bound(variable_index); }
@@ -32,8 +33,10 @@ namespace uno {
       [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model.number_hessian_nonzeros(); }
 
       void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate, const Multipliers& multipliers) const override;
-      [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
-            const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
+      [[nodiscard]] double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints, const Multipliers& multipliers,
+            double shift_value, Norm residual_norm) const override;
+
+      [[nodiscard]] double dual_regularization_parameter() const override;
    };
 } // namespace
 

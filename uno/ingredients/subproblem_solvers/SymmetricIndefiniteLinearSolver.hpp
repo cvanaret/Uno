@@ -9,11 +9,13 @@
 
 namespace uno {
    // forward declarations
+   class LagrangeNewtonSubproblem;
+   class Statistics;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
-
    template <typename ElementType>
    class Vector;
+   class WarmstartInformation;
 
    template <typename IndexType, typename ElementType>
    class SymmetricIndefiniteLinearSolver {
@@ -21,8 +23,8 @@ namespace uno {
       explicit SymmetricIndefiniteLinearSolver(size_t dimension) : dimension(dimension) { };
       virtual ~SymmetricIndefiniteLinearSolver() = default;
 
-      virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
-            Vector<ElementType>& result) = 0;
+      virtual void solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<ElementType>& result,
+            WarmstartInformation& warmstart_information) = 0;
 
    protected:
       const size_t dimension;

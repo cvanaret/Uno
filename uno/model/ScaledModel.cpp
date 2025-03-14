@@ -43,7 +43,7 @@ namespace uno {
       scale(gradient, this->scaling.get_objective_scaling());
    }
 
-   void ScaledModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
+   void ScaledModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       this->model->evaluate_constraints(x, constraints);
       for (size_t constraint_index: Range(this->number_constraints)) {
          constraints[constraint_index] *= this->scaling.get_constraint_scaling(constraint_index);
@@ -63,7 +63,7 @@ namespace uno {
    }
 
    void ScaledModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
+         Matrix<size_t, double>& hessian) const {
       // scale the objective and constraint multipliers
       const double scaled_objective_multiplier = objective_multiplier*this->scaling.get_objective_scaling();
       // TODO preallocate this vector

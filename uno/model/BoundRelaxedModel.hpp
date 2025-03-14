@@ -19,7 +19,7 @@ namespace uno {
       void evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const override {
          this->model->evaluate_objective_gradient(x, gradient);
       }
-      void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override {
+      void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override {
          this->model->evaluate_constraints(x, constraints);
       }
       void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override {
@@ -29,7 +29,7 @@ namespace uno {
          this->model->evaluate_constraint_jacobian(x, constraint_jacobian);
       }
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-            SymmetricMatrix<size_t, double>& hessian) const override {
+            Matrix<size_t, double>& hessian) const override {
          this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
       }
 

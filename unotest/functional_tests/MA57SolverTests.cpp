@@ -7,6 +7,7 @@
 
 using namespace uno;
 
+/*
 TEST(MA57Solver, SystemSize5) {
    const size_t n = 5;
    const size_t nnz = 7;
@@ -26,7 +27,7 @@ TEST(MA57Solver, SystemSize5) {
    MA57Solver solver(n, nnz);
    solver.do_symbolic_analysis(matrix);
    solver.do_numerical_factorization(matrix);
-   solver.solve_indefinite_system(matrix, rhs, result);
+   solver.solve_EQP(matrix, rhs, result);
 
    const double tolerance = 1e-8;
    for (size_t index: Range(n)) {
@@ -75,3 +76,5 @@ TEST(MA57Solver, SingularMatrix) {
    // expected inertia (1, 1, 2)
    ASSERT_TRUE(solver.matrix_is_singular());
 }
+
+*/

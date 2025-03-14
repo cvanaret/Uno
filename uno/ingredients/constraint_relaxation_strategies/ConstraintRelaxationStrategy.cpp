@@ -2,16 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ConstraintRelaxationStrategy.hpp"
-#include "OptimizationProblem.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
 #include "optimization/Direction.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Multipliers.hpp"
+#include "optimization/OptimizationProblem.hpp"
 #include "symbolic/VectorView.hpp"
 #include "symbolic/Expression.hpp"
 #include "options/Options.hpp"
@@ -22,8 +21,8 @@ namespace uno {
          size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
          model(model),
          globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
-         inequality_handling_method(InequalityHandlingMethodFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
-               number_hessian_nonzeros, options)),
+         inequality_handling_method(InequalityHandlingMethodFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros,
+               number_jacobian_nonzeros, number_hessian_nonzeros, options)),
          progress_norm(norm_from_string(options.get_string("progress_norm"))),
          residual_norm(norm_from_string(options.get_string("residual_norm"))),
          residual_scaling_threshold(options.get_double("residual_scaling_threshold")),
@@ -36,15 +35,11 @@ namespace uno {
 
    ConstraintRelaxationStrategy::~ConstraintRelaxationStrategy() { }
 
-   void ConstraintRelaxationStrategy::set_trust_region_radius(double trust_region_radius) {
-      this->inequality_handling_method->set_trust_region_radius(trust_region_radius);
-   }
-
    // with initial point
    void ConstraintRelaxationStrategy::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         const Vector<double>& initial_point, WarmstartInformation& warmstart_information) {
+         double trust_region_radius, const Vector<double>& initial_point, WarmstartInformation& warmstart_information) {
       this->inequality_handling_method->set_initial_point(initial_point);
-      this->compute_feasible_direction(statistics, current_iterate, direction, warmstart_information);
+      this->compute_feasible_direction(statistics, current_iterate, direction, trust_region_radius, warmstart_information);
    }
 
    // infeasibility measure: constraint violation
@@ -67,7 +62,7 @@ namespace uno {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
       const double current_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints, this->progress_norm);
       const double trial_linearized_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints + step_length *
-                                                                                                                                      (current_iterate.evaluations.constraint_jacobian * primal_direction), this->progress_norm);
+         (current_iterate.evaluations.constraint_jacobian * primal_direction), this->progress_norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
    }
 

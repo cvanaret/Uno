@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "OptimalityProblem.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/LagrangianGradient.hpp"
 #include "symbolic/Expression.hpp"
@@ -16,7 +18,7 @@ namespace uno {
       objective_gradient = iterate.evaluations.objective_gradient;
    }
 
-   void OptimalityProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+   void OptimalityProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
       constraints = iterate.evaluations.constraints;
    }
@@ -27,9 +29,10 @@ namespace uno {
       constraint_jacobian = iterate.evaluations.constraint_jacobian;
    }
 
-   void OptimalityProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
+   void OptimalityProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Vector<double>& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
-      this->model.evaluate_lagrangian_hessian(x, this->get_objective_multiplier(), multipliers, hessian);
+      hessian_model.evaluate(this->model, x, this->get_objective_multiplier(), multipliers, hessian);
+      hessian.set_dimension(this->number_variables);
    }
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
@@ -59,7 +62,7 @@ namespace uno {
       }
    }
 
-   double OptimalityProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
+   double OptimalityProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
       const Range variables_range = Range(this->model.number_variables);
@@ -86,5 +89,9 @@ namespace uno {
          return 0.;
       }};
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
+   }
+
+   double OptimalityProblem::dual_regularization_parameter() const {
+      return 0.;
    }
 } // namespace

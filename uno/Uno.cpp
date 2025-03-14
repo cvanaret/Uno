@@ -1,7 +1,6 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <cmath>
 #include "Uno.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
@@ -166,7 +165,7 @@ namespace uno {
 
    std::string Uno::get_strategy_combination(const Options& options) {
       return options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
-                                options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
+                                options.get_string("globalization_strategy") + " " + options.get_string("inequality_handling_method");
 
    }
 

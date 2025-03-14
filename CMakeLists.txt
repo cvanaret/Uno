@@ -61,7 +61,9 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/inequality_handling_methods/*.cpp
    uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
    uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
+   uno/ingredients/regularization_strategies/*.cpp
    uno/ingredients/subproblem_solvers/*.cpp
+   uno/ingredients/subproblems/*.cpp
    uno/model/*.cpp
    uno/optimization/*.cpp
    uno/options/*.cpp
@@ -77,6 +79,7 @@ file(GLOB TESTS_UNO_SOURCE_FILES
    unotest/unit_tests/COOSparseStorageTests.cpp
    unotest/unit_tests/CSCSparseStorageTests.cpp
    unotest/unit_tests/MatrixVectorProductTests.cpp
+   unotest/unit_tests/MatrixViewTests.cpp
    unotest/unit_tests/RangeTests.cpp
    unotest/unit_tests/ScalarMultipleTests.cpp
    unotest/unit_tests/SparseVectorTests.cpp

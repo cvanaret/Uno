@@ -40,7 +40,7 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
       problem.evaluate_constraints(iterate, constraints);
    }
 
@@ -48,10 +48,10 @@ namespace uno {
       problem.evaluate_constraint_jacobian(iterate, constraint_jacobian);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
-      // original Lagrangian Hessian
-      this->problem.evaluate_lagrangian_hessian(x, multipliers, hessian);
+   void PrimalDualInteriorPointProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x,
+         const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
+      this->problem.evaluate_lagrangian_hessian(hessian_model, x, multipliers, hessian);
+      hessian.set_dimension(this->number_variables);
 
       // barrier terms
       for (size_t variable_index: Range(this->problem.number_variables)) {
@@ -152,8 +152,12 @@ namespace uno {
       }
    }
 
-   double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
+   double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       return this->problem.complementarity_error(primals, constraints, multipliers, shift_value, residual_norm);
+   }
+
+   double PrimalDualInteriorPointProblem::dual_regularization_parameter() const {
+      return std::pow(this->barrier_parameter, 0.25);
    }
 } // namespace

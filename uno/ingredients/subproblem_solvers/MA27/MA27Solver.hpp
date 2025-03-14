@@ -7,6 +7,9 @@
 #include <array>
 #include <vector>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 
 namespace uno {
    // forward declaration
@@ -15,13 +18,13 @@ namespace uno {
 
    class MA27Solver: public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
-      explicit MA27Solver(size_t max_dimension, size_t max_number_nonzeros);
+      explicit MA27Solver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros);
       ~MA27Solver() override = default;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
-      void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
-
+      void solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
+            WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -30,14 +33,22 @@ namespace uno {
       [[nodiscard]] size_t rank() const override;
 
    private:
-      int n{};                         // dimension of current factorisation (maximal value here is <= max_dimension)
-      int nnz{};                     // number of nonzeros of current factorisation
+      SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
+      Vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+      RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
+      SymmetricMatrix<size_t, double> hessian;
+
+      size_t dimension;
+      size_t number_nonzeros;
+
+      // internal matrix representation
+      std::vector<int> row_indices{};          // row index of input
+      std::vector<int> column_indices{};          // col index of input
+      SymmetricMatrix<size_t, double> augmented_matrix;
+      Vector<double> rhs;
+
       std::array<int, 30> icntl{};      // integer array of length 30; integer control values
       std::array<double, 5> cntl{};     // double array of length 5; double control values
-
-      std::vector<int> irn{};          // row index of input
-      std::vector<int> icn{};          // col index of input
-
       std::vector<int> iw{};           // integer workspace of length liw
       std::vector<int> ikeep{};        // integer array of 3*n; pivot sequence
       std::vector<int> iw1{};          // integer workspace array of length n
@@ -51,10 +62,10 @@ namespace uno {
       std::vector<double> w{};         // double workspace
       const size_t number_factorization_attempts{5};
 
-
       // bool use_iterative_refinement{false}; // Not sure how to do this with ma27
       void save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix);
       void check_factorization_status();
+      void solve_indefinite_linear_system(Vector<double>& result);
    };
 } // namespace
 
