@@ -8,7 +8,6 @@
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/WarmstartInformation.hpp"
 
 namespace uno {
    LagrangeNewtonSubproblem::LagrangeNewtonSubproblem(const OptimizationProblem& problem, Iterate& current_iterate,
@@ -61,7 +60,7 @@ namespace uno {
    }
 
    void LagrangeNewtonSubproblem::evaluate_functions(SparseVector<double>& objective_gradient, Vector<double>& constraints,
-         RectangularMatrix<double>& jacobian, SymmetricMatrix<size_t, double>& hessian, WarmstartInformation& warmstart_information) {
+         RectangularMatrix<double>& jacobian, SymmetricMatrix<size_t, double>& hessian, const WarmstartInformation& warmstart_information) {
       // objective gradient
       if (warmstart_information.objective_changed) {
          this->evaluate_objective_gradient(objective_gradient);
@@ -75,15 +74,14 @@ namespace uno {
       }
       // Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed || warmstart_information.constraint_jacobian_changed) {
-         DEBUG << "Evaluating problem Hessian\n";
          hessian.reset();
          this->evaluate_hessian(hessian);
       }
    }
 
    void LagrangeNewtonSubproblem::assemble_augmented_matrix(Statistics& statistics, SparseVector<double>& objective_gradient, Vector<double>& constraints,
-         RectangularMatrix<double>& jacobian, SymmetricMatrix<size_t, double>& hessian, SymmetricMatrix<size_t, double>& augmented_matrix,
-      DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, WarmstartInformation& warmstart_information) {
+         RectangularMatrix<double>& jacobian, SymmetricMatrix<size_t, double>& hessian, /* TODO remove */ SymmetricMatrix<size_t, double>& augmented_matrix,
+         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, WarmstartInformation& warmstart_information) {
       this->evaluate_functions(objective_gradient, constraints, jacobian, hessian, warmstart_information);
 
       // TODO use matrix views
@@ -114,13 +112,13 @@ namespace uno {
       if (warmstart_information.objective_changed || warmstart_information.constraint_jacobian_changed) {
          DEBUG << "Performing numerical factorization of the augmented matrix\n";
          linear_solver.do_numerical_factorization(augmented_matrix);
-         this->regularization_strategy.regularize_matrix(statistics, linear_solver, augmented_matrix, this->number_variables, this->number_constraints,
-            this->problem.dual_regularization_parameter());
+         this->regularization_strategy.regularize_augmented_matrix(statistics, linear_solver, augmented_matrix, this->number_variables,
+            this->number_constraints, this->problem.dual_regularization_parameter());
       }
    }
 
    void LagrangeNewtonSubproblem::assemble_augmented_rhs(SparseVector<double>& objective_gradient, Vector<double>& constraints,
-         RectangularMatrix<double>& jacobian, Vector<double>& rhs, WarmstartInformation& /*warmstart_information*/) const {
+         RectangularMatrix<double>& jacobian, Vector<double>& rhs, const WarmstartInformation& /*warmstart_information*/) const {
       // TODO use WarmstartInformation
       // Lagrangian gradient
       this->compute_lagrangian_gradient(objective_gradient, jacobian, rhs);

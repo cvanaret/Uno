@@ -15,17 +15,25 @@ namespace uno {
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
-      void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
-            SymmetricMatrix<size_t, ElementType>& matrix, size_t size_primal_block, size_t size_dual_block,
-            ElementType dual_regularization_parameter) override;
+      void regularize_hessian(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+         SymmetricMatrix<size_t, ElementType>& hessian) override;
+      void regularize_augmented_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+         SymmetricMatrix<size_t, ElementType>& augmented_matrix, size_t size_primal_block, size_t size_dual_block,
+         ElementType dual_regularization_parameter) override;
    };
 
    template <typename ElementType>
    void NoRegularization<ElementType>::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) { }
 
    template <typename ElementType>
-   void NoRegularization<ElementType>::regularize_matrix(Statistics& /*statistics*/,
-         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& /*linear_solver*/, SymmetricMatrix<size_t, ElementType>& /*matrix*/,
+   void NoRegularization<ElementType>::regularize_hessian(Statistics& /*statistics*/,
+         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& /*linear_solver*/, SymmetricMatrix<size_t, ElementType>& /*hessian*/) {
+      // do nothing
+   }
+
+   template <typename ElementType>
+   void NoRegularization<ElementType>::regularize_augmented_matrix(Statistics& /*statistics*/,
+         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& /*linear_solver*/, SymmetricMatrix<size_t, ElementType>& /*augmented_matrix*/,
          size_t /*size_primal_block*/, size_t /*size_dual_block*/, ElementType /*dual_regularization_parameter*/) {
       // do nothing
    }

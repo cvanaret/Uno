@@ -7,8 +7,7 @@
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
-#include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/InequalityQPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
@@ -158,8 +157,8 @@ namespace uno {
       std::cout << "- Globalization mechanisms: " << join(GlobalizationMechanismFactory::available_strategies(), ", ") << '\n';
       std::cout << "- Globalization strategies: " << join(GlobalizationStrategyFactory::available_strategies(), ", ") << '\n';
       std::cout << "- Subproblems: " << join(InequalityHandlingMethodFactory::available_strategies(), ", ") << '\n';
-      std::cout << "- QP solvers: " << join(QPSolverFactory::available_solvers(), ", ") << '\n';
-      std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers(), ", ") << '\n';
+      std::cout << "- Inequality QP solvers: " << join(InequalityQPSolverFactory::available_solvers(), ", ") << '\n';
+      // std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers(), ", ") << '\n';
       std::cout << "- Linear solvers: " << join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", ") << '\n';
    }
 

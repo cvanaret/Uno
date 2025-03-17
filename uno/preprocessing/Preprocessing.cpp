@@ -5,7 +5,6 @@
 #include "ingredients/hessian_models/IdentityHessian.hpp"
 #include "ingredients/regularization_strategies/NoRegularization.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "ingredients/subproblem_solvers/QPSolver.hpp"
 #include "ingredients/subproblems/LagrangeNewtonSubproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"

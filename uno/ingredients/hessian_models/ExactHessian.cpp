@@ -4,10 +4,12 @@
 #include "ExactHessian.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    void ExactHessian::evaluate(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
          const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
+      DEBUG << "Evaluating model Hessian\n";
       model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, hessian);
       this->evaluation_count++;
    }

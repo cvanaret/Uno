@@ -4,8 +4,7 @@
 #include <stdexcept>
 #include "Presets.hpp"
 #include "Options.hpp"
-#include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/InequalityQPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 
 namespace uno {
@@ -18,19 +17,21 @@ namespace uno {
       }
       else {
          /** default preset **/
-         const auto QP_solvers = QPSolverFactory::available_solvers();
+         const auto inequality_QP_solvers = InequalityQPSolverFactory::available_solvers();
          const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
-         const auto LP_solvers = LPSolverFactory::available_solvers();
+         //const auto LP_solvers = LPSolverFactory::available_solvers();
 
-         if (!QP_solvers.empty()) {
+         if (!inequality_QP_solvers.empty()) {
             Presets::set(options, "filtersqp");
          }
          else if (!linear_solvers.empty()) {
             Presets::set(options, "ipopt");
          }
+         /*
          else if (!LP_solvers.empty()) {
             Presets::set(options, "filterslp");
          }
+          */
          // note: byrd is not very robust and is not considered as a default preset
       }
       return options;
@@ -71,7 +72,7 @@ namespace uno {
       }
       else if (preset_name == "filtersqp") {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["inequality_handling_method"] = "QP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["globalization_mechanism"] = "TR";
          options["hessian_model"] = "exact";
          options["regularization_strategy"] = "none";
@@ -91,7 +92,7 @@ namespace uno {
       }
       else if (preset_name == "byrd") {
          options["constraint_relaxation_strategy"] = "l1_relaxation";
-         options["inequality_handling_method"] = "QP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["globalization_mechanism"] = "LS";
          options["hessian_model"] = "exact";
          options["regularization_strategy"] = "primal";
@@ -112,7 +113,7 @@ namespace uno {
       }
       else if (preset_name == "funnelsqp") {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["inequality_handling_method"] = "QP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["globalization_mechanism"] = "TR";
          options["hessian_model"] = "exact";
          options["regularization_strategy"] = "none";
@@ -140,9 +141,9 @@ namespace uno {
       }
       else if (preset_name == "filterslp") {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["inequality_handling_method"] = "LP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["globalization_mechanism"] = "TR";
-         options["hessian_model"] = "none";
+         options["hessian_model"] = "zero";
          options["regularization_strategy"] = "none";
          options["globalization_strategy"] = "fletcher_filter_method";
          options["filter_type"] = "standard";

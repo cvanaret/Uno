@@ -5,6 +5,7 @@
 #define UNO_PRIMALREGULARIZATION_H
 
 #include "UnstableRegularization.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
@@ -15,11 +16,13 @@ namespace uno {
    public:
       explicit PrimalRegularization(const Options& options);
 
-       void initialize_statistics(Statistics& statistics, const Options& options) override;
+      void initialize_statistics(Statistics& statistics, const Options& options) override;
 
-      void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
-            SymmetricMatrix<size_t, ElementType>& matrix, size_t size_primal_block, size_t size_dual_block,
-            ElementType dual_regularization_parameter) override;
+      void regularize_hessian(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+         SymmetricMatrix<size_t, ElementType>& hessian) override;
+      void regularize_augmented_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+         SymmetricMatrix<size_t, ElementType>& augmented_matrix, size_t size_primal_block, size_t size_dual_block,
+         ElementType dual_regularization_parameter) override;
 
    protected:
       const double regularization_initial_value{};
@@ -42,11 +45,11 @@ namespace uno {
 
    // Nocedal and Wright, p51
    template <typename ElementType>
-   void PrimalRegularization<ElementType>::regularize_matrix(Statistics& statistics,
-         DirectSymmetricIndefiniteLinearSolver <size_t, ElementType>& linear_solver, SymmetricMatrix <size_t, ElementType>& matrix,
-         size_t size_primal_block, size_t /*size_dual_block*/, ElementType /*dual_regularization_parameter*/) {
-      DEBUG << "Current matrix:\n" << matrix << '\n';
-      const double smallest_diagonal_entry = matrix.smallest_diagonal_entry(size_primal_block); // TODO check that
+   void PrimalRegularization<ElementType>::regularize_hessian(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+      SymmetricMatrix<size_t, ElementType>& hessian) {
+      DEBUG << "Current matrix:\n" << hessian << '\n';
+      const size_t hessian_dimension = hessian.dimension();
+      const double smallest_diagonal_entry = hessian.smallest_diagonal_entry(hessian_dimension);
       DEBUG << "The minimal diagonal entry of the matrix is " << smallest_diagonal_entry << '\n';
 
       double regularization_factor = (smallest_diagonal_entry > 0.) ? 0. : this->regularization_initial_value - smallest_diagonal_entry;
@@ -55,19 +58,19 @@ namespace uno {
       while (!good_inertia) {
          DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
          if (0. < regularization_factor) {
-            matrix.set_regularization([=](size_t variable_index) {
-               return (variable_index < size_primal_block) ? regularization_factor : 0.;
+            hessian.set_regularization([=](size_t variable_index) {
+               return (variable_index < hessian_dimension) ? regularization_factor : 0.;
             });
          }
-         DEBUG << "Current matrix:\n" << matrix << '\n';
+         DEBUG << "Current matrix:\n" << hessian << '\n';
 
          // perform the symbolic analysis only once
          if (!symbolic_analysis_performed) {
-            linear_solver.do_symbolic_analysis(matrix);
+            linear_solver.do_symbolic_analysis(hessian);
             symbolic_analysis_performed = true;
          }
-         linear_solver.do_numerical_factorization(matrix);
-         if (linear_solver.rank() == size_primal_block && linear_solver.number_negative_eigenvalues() == 0) {
+         linear_solver.do_numerical_factorization(hessian);
+         if (linear_solver.rank() == hessian_dimension) {
             good_inertia = true;
             DEBUG << "Factorization was a success\n";
          }
@@ -80,6 +83,13 @@ namespace uno {
          }
       }
       statistics.set("regulariz", regularization_factor);
+   }
+
+   template <typename ElementType>
+   void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& /*statistics*/,
+         DirectSymmetricIndefiniteLinearSolver <size_t, ElementType>& /*linear_solver*/, SymmetricMatrix <size_t, ElementType>& /*augmented_matrix*/,
+         size_t /*size_primal_block*/, size_t /*size_dual_block*/, ElementType /*dual_regularization_parameter*/) {
+      throw std::runtime_error("PrimalRegularization<ElementType>::regularize_augmented_matrix not implemented yet");
    }
 
 } // namespace

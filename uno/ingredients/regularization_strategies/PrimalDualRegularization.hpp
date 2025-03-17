@@ -8,6 +8,7 @@
 #include "RegularizationStrategy.hpp"
 #include "UnstableRegularization.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -26,9 +27,11 @@ namespace uno {
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
-      void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
-            SymmetricMatrix<size_t, ElementType>& matrix, size_t size_primal_block, size_t size_dual_block,
-            ElementType dual_regularization_parameter) override;
+      void regularize_hessian(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+         SymmetricMatrix<size_t, ElementType>& hessian) override;
+      void regularize_augmented_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+         SymmetricMatrix<size_t, ElementType>& augmented_matrix, size_t size_primal_block, size_t size_dual_block,
+         ElementType dual_regularization_parameter) override;
 
    protected:
       ElementType primal_regularization{0.};
@@ -62,13 +65,20 @@ namespace uno {
       statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
    }
 
-   // the matrix has been factorized prior to calling this function
    template <typename ElementType>
-   void PrimalDualRegularization<ElementType>::regularize_matrix(Statistics& statistics,
-         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, SymmetricMatrix<size_t, ElementType>& matrix,
+   void PrimalDualRegularization<ElementType>::regularize_hessian(Statistics& statistics,
+         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, SymmetricMatrix<size_t, ElementType>& hessian) {
+      // to regularize the Hessian only, call the function for the augmented matrix with no dual part
+      this->regularize_augmented_matrix(statistics, linear_solver, hessian, hessian.dimension(), 0, ElementType(0));
+   }
+
+   // the augmented matrix has been factorized prior to calling this function
+   template <typename ElementType>
+   void PrimalDualRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics,
+         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
          size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter) {
-      this->primal_regularization = ElementType(0.);
-      this->dual_regularization = ElementType(0.);
+      this->primal_regularization = ElementType(0);
+      this->dual_regularization = ElementType(0);
       DEBUG << "Testing factorization with regularization factors (0, 0)\n";
       size_t number_attempts = 1;
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";
@@ -98,16 +108,16 @@ namespace uno {
       }
 
       // regularize the augmented matrix
-      matrix.set_regularization([=](size_t row_index) {
+      augmented_matrix.set_regularization([=](size_t row_index) {
          return (row_index < size_primal_block) ? this->primal_regularization : -this->dual_regularization;
       });
 
       bool good_inertia = false;
       while (!good_inertia) {
          DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
-         DEBUG2 << matrix << '\n';
+         DEBUG2 << augmented_matrix << '\n';
          DEBUG << "Performing numerical factorization of the indefinite system\n";
-         linear_solver.do_numerical_factorization(matrix);
+         linear_solver.do_numerical_factorization(augmented_matrix);
          number_attempts++;
          DEBUG << "Number of attempts: " << number_attempts << "\n";
 
@@ -130,7 +140,7 @@ namespace uno {
 
             if (this->primal_regularization <= this->regularization_failure_threshold) {
                // regularize the augmented matrix
-               matrix.set_regularization([=](size_t row_index) {
+               augmented_matrix.set_regularization([=](size_t row_index) {
                   return (row_index < size_primal_block) ? this->primal_regularization : -this->dual_regularization;
                });
             }

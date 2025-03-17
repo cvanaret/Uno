@@ -6,7 +6,6 @@
 #include "PrimalRegularization.hpp"
 #include "PrimalDualRegularization.hpp"
 #include "NoRegularization.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 
 namespace uno {
    std::unique_ptr<RegularizationStrategy<double>> RegularizationStrategyFactory::create(const std::string& strategy_name, const Options& options) {

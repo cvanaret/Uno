@@ -50,7 +50,7 @@ TEST(HiGHSSolver, LP) {
    WarmstartInformation warmstart_information{};
    Vector<double> initial_point{0., 0.};
 
-   highs_solver.solve_LP(number_variables, number_constraints, variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
+   highs_solver.solve_inequality_constrained_QP(number_variables, number_constraints, variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
       constraints_upper_bounds, linear_objective, constraint_jacobian, initial_point, direction, warmstart_information);
 
    ASSERT_EQ(direction.status, SubproblemStatus::OPTIMAL);
