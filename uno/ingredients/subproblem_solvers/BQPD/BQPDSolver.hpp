@@ -59,7 +59,8 @@ namespace uno {
       [[nodiscard]] SubproblemStatus solve_equality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
          const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
          WarmstartInformation& warmstart_information) override;
-      void solve_LP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
+      [[nodiscard]] SubproblemStatus solve_LP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point,
+         Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
          const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;

@@ -35,13 +35,14 @@ namespace uno {
       this->highs_solver.setOptionValue("output_flag", "false");
    }
 
-   void HiGHSSolver::solve_LP(Statistics& /*statistics*/, LagrangeNewtonSubproblem& subproblem, const Vector<double>& /*initial_point*/,
-         Direction& direction, const WarmstartInformation& warmstart_information) {
+   SubproblemStatus HiGHSSolver::solve_LP(Statistics& /*statistics*/, LagrangeNewtonSubproblem& subproblem, const Vector<double>& /*initial_point*/,
+         Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         const WarmstartInformation& warmstart_information) {
       if (this->print_subproblem) {
          DEBUG << "LP:\n";
       }
       this->set_up_subproblem(subproblem, warmstart_information);
-      this->solve_subproblem(subproblem, direction);
+      return this->solve_subproblem(subproblem, direction_primals, direction_multipliers, subproblem_objective);
    }
 
    void HiGHSSolver::set_up_subproblem(LagrangeNewtonSubproblem& subproblem, const WarmstartInformation& warmstart_information) {
@@ -109,7 +110,8 @@ namespace uno {
       }
    }
 
-   void HiGHSSolver::solve_subproblem(LagrangeNewtonSubproblem& subproblem, Direction& direction) {
+   SubproblemStatus HiGHSSolver::solve_subproblem(LagrangeNewtonSubproblem& subproblem, Vector<double>& direction_primals, Multipliers& direction_multipliers,
+         double& subproblem_objective) {
       // solve the LP
       HighsStatus return_status = this->highs_solver.passModel(this->model);
       assert(return_status == HighsStatus::kOk);
@@ -119,39 +121,36 @@ namespace uno {
 
       // if HiGHS could not optimize (e.g. because of indefinite Hessian), return an error
       if (return_status == HighsStatus::kError) {
-         direction.status = SubproblemStatus::ERROR;
-         return;
+         return SubproblemStatus::ERROR;
       }
       HighsModelStatus model_status = highs_solver.getModelStatus();
       DEBUG << "HiGHS model status: " << static_cast<int>(model_status) << '\n';
 
       if (model_status == HighsModelStatus::kInfeasible) {
-         direction.status = SubproblemStatus::INFEASIBLE;
-         return;
+         return SubproblemStatus::INFEASIBLE;
       }
       else if (model_status == HighsModelStatus::kUnbounded) {
-         direction.status = SubproblemStatus::UNBOUNDED_PROBLEM;
-         return;
+         return SubproblemStatus::UNBOUNDED_PROBLEM;
       }
-      
-      direction.status = SubproblemStatus::OPTIMAL;
+
       const HighsSolution& solution = this->highs_solver.getSolution();
       // read the primal solution and bound dual solution
       for (size_t variable_index = 0; variable_index < subproblem.number_variables; variable_index++) {
-         direction.primals[variable_index] = solution.col_value[variable_index];
+         direction_primals[variable_index] = solution.col_value[variable_index];
          const double bound_multiplier = solution.col_dual[variable_index];
          if (0. < bound_multiplier) {
-            direction.multipliers.lower_bounds[variable_index] = bound_multiplier;
+            direction_multipliers.lower_bounds[variable_index] = bound_multiplier;
          }
          else {
-            direction.multipliers.upper_bounds[variable_index] = bound_multiplier;
+            direction_multipliers.upper_bounds[variable_index] = bound_multiplier;
          }
       }
       // read the dual solution
       for (size_t constraint_index = 0; constraint_index < subproblem.number_constraints; constraint_index++) {
-         direction.multipliers.constraints[constraint_index] = solution.row_dual[constraint_index];
+         direction_multipliers.constraints[constraint_index] = solution.row_dual[constraint_index];
       }
       const HighsInfo& info = this->highs_solver.getInfo();
-      direction.subproblem_objective = info.objective_function_value;
+      subproblem_objective = info.objective_function_value;
+      return SubproblemStatus::OPTIMAL;
    }
 } // namespace

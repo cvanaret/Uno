@@ -4,26 +4,27 @@
 #ifndef UNO_LPSOLVER_H
 #define UNO_LPSOLVER_H
 
+#include "SubproblemStatus.hpp"
+
 namespace uno {
    // forward declarations
-   class Direction;
    class LagrangeNewtonSubproblem;
+   class Multipliers;
    class Statistics;
    template <typename ElementType>
    class Vector;
    class WarmstartInformation;
 
-   /*! \class LPSolver
-    * \brief LP solver
-    *
-    */
    class LPSolver {
    public:
       LPSolver() = default;
       virtual ~LPSolver() = default;
 
-      virtual void solve_LP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
-            const WarmstartInformation& warmstart_information) = 0;
+      [[nodiscard]] virtual SubproblemStatus solve_LP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         const WarmstartInformation& warmstart_information) = 0;
+
+      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& /*primal_direction*/) const { return 0.; }
    };
 } // namespace
 

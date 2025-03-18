@@ -142,10 +142,12 @@ namespace uno {
          warmstart_information);
    }
 
-   void BQPDSolver::solve_LP(Statistics& /*statistics*/, LagrangeNewtonSubproblem& /*subproblem*/, const Vector<double>& /*initial_point*/,
-         Direction& /*direction*/, const WarmstartInformation& /*warmstart_information*/) {
+   SubproblemStatus BQPDSolver::solve_LP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point,
+         Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         const WarmstartInformation& warmstart_information) {
       // BQPD solves inequality-constrained QPs, EQPs and LPs with the same algorithm
-      // return this->solve_inequality_constrained_QP(statistics, subproblem, initial_point, direction, warmstart_information);
+      return this->solve_inequality_constrained_QP(statistics, subproblem, initial_point, direction_primals, direction_multipliers, subproblem_objective,
+         warmstart_information);
    }
 
    double BQPDSolver::hessian_quadratic_product(const Vector<double>& primal_direction) const {

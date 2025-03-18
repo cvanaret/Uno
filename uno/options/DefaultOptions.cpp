@@ -4,6 +4,7 @@
 #include "DefaultOptions.hpp"
 #include "ingredients/subproblem_solvers/EqualityQPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/InequalityQPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 
 namespace uno {
    Options DefaultOptions::load() {
@@ -202,13 +203,11 @@ namespace uno {
       if (!equality_QP_solvers.empty()) {
          options["equality_QP_solver"] = equality_QP_solvers[0];
       }
-      /*
       // LP solver
       const auto LP_solvers = LPSolverFactory::available_solvers();
       if (!LP_solvers.empty()) {
          options["LP_solver"] = LP_solvers[0];
       }
-       */
       return options;
    }
 } // namespace
