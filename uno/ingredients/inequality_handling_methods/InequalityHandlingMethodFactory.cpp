@@ -18,12 +18,12 @@ namespace uno {
       const std::string inequality_handling_method = options.get_string("inequality_handling_method");
       // inequality-constrained methods
       if (inequality_handling_method == "inequality_constrained") {
-         if (true || number_hessian_nonzeros == 0) {
-            return std::make_unique<InequalityConstrainedMethod<SubproblemCurvature::LP>>(number_variables, number_constraints,
+         if (number_hessian_nonzeros == 0) {
+            return std::make_unique<InequalityConstrainedMethod<InequalitySubproblem::LP>>(number_variables, number_constraints,
                number_objective_gradient_nonzeros, number_jacobian_nonzeros, number_hessian_nonzeros, options);
          }
          else {
-            return std::make_unique<InequalityConstrainedMethod<SubproblemCurvature::QP>>(number_variables, number_constraints,
+            return std::make_unique<InequalityConstrainedMethod<InequalitySubproblem::QP>>(number_variables, number_constraints,
                number_objective_gradient_nonzeros, number_jacobian_nonzeros, number_hessian_nonzeros, options);
          }
       }

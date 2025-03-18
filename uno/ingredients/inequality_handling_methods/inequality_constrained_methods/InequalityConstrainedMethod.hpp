@@ -20,14 +20,14 @@
 #include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
 
-enum class SubproblemCurvature { LP, QP };
+enum class InequalitySubproblem { LP, QP };
 
 namespace uno {
-   template <SubproblemCurvature subproblem_type>
+   template <InequalitySubproblem inequality_subproblem>
    class InequalityConstrainedMethod : public InequalityHandlingMethod {
    public:
-      using SubproblemType = std::conditional_t<subproblem_type == SubproblemCurvature::QP, InequalityQPSolver, LPSolver>;
-      using SubproblemFactory = std::conditional_t<subproblem_type == SubproblemCurvature::QP, InequalityQPSolverFactory, LPSolverFactory>;
+      using SubproblemType = std::conditional_t<inequality_subproblem == InequalitySubproblem::QP, InequalityQPSolver, LPSolver>;
+      using SubproblemFactory = std::conditional_t<inequality_subproblem == InequalitySubproblem::QP, InequalityQPSolverFactory, LPSolverFactory>;
 
       InequalityConstrainedMethod(size_t number_variables, size_t number_constraints,
          size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
@@ -57,7 +57,7 @@ namespace uno {
 
       SubproblemStatus solve_inequality_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& direction_primals,
             Multipliers& direction_multipliers, double& subproblem_objective, WarmstartInformation& warmstart_information) {
-         if constexpr (subproblem_type == SubproblemCurvature::QP) {
+         if constexpr (inequality_subproblem == InequalitySubproblem::QP) {
             return this->subproblem_solver->solve_inequality_constrained_QP(statistics, subproblem, this->initial_point, direction_primals,
                direction_multipliers, subproblem_objective, warmstart_information);
          }

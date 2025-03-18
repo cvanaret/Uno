@@ -16,8 +16,8 @@
 
 namespace uno {
    std::unique_ptr<LPSolver> LPSolverFactory::create([[maybe_unused]] size_t number_variables, [[maybe_unused]] size_t number_constraints,
-         [[maybe_unused]] size_t number_objective_gradient_nonzeros, [[maybe_unused]] size_t number_jacobian_nonzeros, size_t /* */,
-         [[maybe_unused]] const Options& options) {
+         [[maybe_unused]] size_t number_objective_gradient_nonzeros, [[maybe_unused]] size_t number_jacobian_nonzeros,
+         size_t /* number_hessian_nonzeros */, [[maybe_unused]] const Options& options) {
       try {
          [[maybe_unused]] const std::string& LP_solver_name = options.get_string("LP_solver");
 #ifdef HAS_BQPD
