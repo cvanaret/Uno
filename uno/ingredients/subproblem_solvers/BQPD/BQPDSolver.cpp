@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include "BQPDSolver.hpp"
+#include "../EqualityQPSolver.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/subproblems/LagrangeNewtonSubproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
@@ -44,6 +45,8 @@ namespace uno {
    BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
          size_t number_hessian_nonzeros, const Options& options):
          InequalityQPSolver(),
+         EqualityQPSolver<size_t, double>(),
+         LPSolver(),
          lower_bounds(number_variables + number_constraints),
          upper_bounds(number_variables + number_constraints),
          constraints(number_constraints),
@@ -81,6 +84,11 @@ namespace uno {
 
       subproblem.assemble_QP(statistics, this->linear_objective, this->constraints, this->constraint_jacobian, this->hessian, this->lower_bounds,
          this->upper_bounds, warmstart_information);
+      // make sure that infinite bounds take a large finite value
+      for (size_t variable_index: Range(subproblem.number_variables + subproblem.number_constraints)) {
+         this->lower_bounds[variable_index] = std::max(-BIG, this->lower_bounds[variable_index]);
+         this->upper_bounds[variable_index] = std::min(BIG, this->upper_bounds[variable_index]);
+      }
 
       // TODO use views
       // save Hessian and Jacobian in BQPD format
@@ -92,44 +100,52 @@ namespace uno {
       this->save_hessian_to_local_format();
    }
 
-   void BQPDSolver::solve_inequality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
-      const WarmstartInformation& warmstart_information) {
+   SubproblemStatus BQPDSolver::solve_inequality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         const WarmstartInformation& warmstart_information) {
       this->set_up_subproblem(statistics, subproblem, warmstart_information);
 
       if (this->print_subproblem) {
          this->display_subproblem(subproblem, initial_point);
       }
 
-      direction.primals = initial_point;
+      direction_primals = initial_point;
       const int n = static_cast<int>(subproblem.number_variables);
       const int m = static_cast<int>(subproblem.number_constraints);
-
       const BQPDMode mode = BQPDSolver::determine_mode(warmstart_information);
       const int mode_integer = static_cast<int>(mode);
 
       // solve the LP/QP
       DEBUG2 << "Running BQPD\n";
-      BQPD(&n, &m, &this->k, &this->kmax, this->bqpd_jacobian.data(), this->bqpd_jacobian_sparsity.data(), direction.primals.data(),
-         this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
+      BQPD(&n, &m, &this->k, &this->kmax, this->bqpd_jacobian.data(), this->bqpd_jacobian_sparsity.data(), direction_primals.data(),
+         this->lower_bounds.data(), this->upper_bounds.data(), &subproblem_objective, &this->fmin, this->gradient_solution.data(),
          this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp,
          &this->peq_solution, this->workspace.data(), this->workspace_sparsity.data(), &mode_integer, &this->ifail, this->info.data(),
          &this->iprint, &this->nout);
       DEBUG2 << "Ran BQPD\n";
-      const BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
-      direction.status = BQPDSolver::status_from_bqpd_status(bqpd_status);
 
       // project solution into bounds
       for (size_t variable_index: Range(subproblem.number_variables)) {
-         direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], this->lower_bounds[variable_index]),
+         direction_primals[variable_index] = std::min(std::max(direction_primals[variable_index], this->lower_bounds[variable_index]),
             this->upper_bounds[variable_index]);
       }
-      this->set_multipliers(subproblem.number_variables, direction.multipliers);
+      this->set_multipliers(subproblem.number_variables, direction_multipliers);
+      const BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
+      return BQPDSolver::status_from_bqpd_status(bqpd_status);
    }
 
-   void BQPDSolver::solve_LP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
-      const WarmstartInformation& warmstart_information) {
-      // BQPD solves inequality-constrained QPs and LPs with the same function
-      this->solve_inequality_constrained_QP(statistics, subproblem, initial_point, direction, warmstart_information);
+   SubproblemStatus BQPDSolver::solve_equality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         WarmstartInformation& warmstart_information) {
+      // BQPD solves inequality-constrained QPs, EQPs and LPs with the same algorithm
+      return this->solve_inequality_constrained_QP(statistics, subproblem, initial_point, direction_primals, direction_multipliers, subproblem_objective,
+         warmstart_information);
+   }
+
+   void BQPDSolver::solve_LP(Statistics& /*statistics*/, LagrangeNewtonSubproblem& /*subproblem*/, const Vector<double>& /*initial_point*/,
+         Direction& /*direction*/, const WarmstartInformation& /*warmstart_information*/) {
+      // BQPD solves inequality-constrained QPs, EQPs and LPs with the same algorithm
+      // return this->solve_inequality_constrained_QP(statistics, subproblem, initial_point, direction, warmstart_information);
    }
 
    double BQPDSolver::hessian_quadratic_product(const Vector<double>& primal_direction) const {

@@ -7,6 +7,7 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
+#include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "optimization/Multipliers.hpp"
 #include "l1RelaxedProblem.hpp"
 
@@ -57,10 +58,13 @@ namespace uno {
 
       void solve_sequence_of_relaxed_subproblems(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
             WarmstartInformation& warmstart_information);
-      void solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
+      void solve_l1_relaxed_subproblem(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          double current_penalty_parameter, WarmstartInformation& warmstart_information);
-      void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information);
+      void solve_feasibility_subproblem(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
+         WarmstartInformation& warmstart_information);
+      [[nodiscard]] SubproblemStatus solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, Vector<double>& direction_primals, Multipliers& direction_multipliers, double trust_region_radius,
+         WarmstartInformation& warmstart_information);
 
       // functions that decrease the penalty parameter to enforce particular conditions
       void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction);

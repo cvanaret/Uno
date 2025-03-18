@@ -108,15 +108,16 @@ namespace uno {
    };
 
    MA27Solver::MA27Solver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros):
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>(number_variables + number_constraints),
-         objective_gradient(number_variables),
-         constraints(number_constraints),
-         constraint_jacobian(number_constraints, number_variables), // TODO construct better
+      DirectEqualityQPSolver<size_t, double>(),
+      objective_gradient(number_variables),
+      constraints(number_constraints),
+      constraint_jacobian(number_constraints, number_variables), // TODO construct better
          hessian(number_variables, number_hessian_nonzeros, false, "COO"),
-         dimension(number_variables + number_constraints), number_nonzeros(number_hessian_nonzeros + number_jacobian_nonzeros),
-         augmented_matrix(this->dimension, this->number_nonzeros, true, "COO"),
-         rhs(this->dimension),
-         iw((2 * this->number_nonzeros + 3 * this->dimension + 1) * 6 / 5), // 20% more than 2*nnz + 3*n + 1
+      dimension(number_variables + number_constraints), number_nonzeros(number_hessian_nonzeros + number_jacobian_nonzeros),
+      augmented_matrix(this->dimension, this->number_nonzeros, true, "COO"),
+      rhs(this->dimension),
+      solution(this->dimension),
+      iw((2 * this->number_nonzeros + 3 * this->dimension + 1) * 6 / 5), // 20% more than 2*nnz + 3*n + 1
          ikeep(3 * this->dimension), iw1(2 * this->dimension) {
       this->row_indices.reserve(this->number_nonzeros);
       this->column_indices.reserve(this->number_nonzeros);
@@ -202,26 +203,31 @@ namespace uno {
       this->check_factorization_status();
    }
 
-   void MA27Solver::solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
+   SubproblemStatus MA27Solver::solve_equality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         const Vector<double>& /*initial_point*/, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& /*subproblem_objective*/,
          WarmstartInformation& warmstart_information) {
       // set up the augmented system
       subproblem.assemble_augmented_matrix(statistics, this->objective_gradient, this->constraints, this->constraint_jacobian, this->hessian,
          this->augmented_matrix, *this, warmstart_information);
       subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs, warmstart_information);
       // solve the augmented system
-      this->solve_indefinite_linear_system(result);
+      this->solve_indefinite_linear_system();
+      // form the primal-dual direction (note the minus sign for the multipliers)
+      direction_primals = view(this->solution, 0, subproblem.number_variables);
+      direction_multipliers.constraints = view(-this->solution, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
+      return SubproblemStatus::OPTIMAL; // TODO
    }
 
-   void MA27Solver::solve_indefinite_linear_system(Vector<double>& result) {
+   void MA27Solver::solve_indefinite_linear_system() {
       int la = static_cast<int>(this->factor.size());
       int liw = static_cast<int>(this->iw.size());
 
-      // copy rhs into result (overwritten by MA27)
-      result = this->rhs;
+      // copy rhs into solution (overwritten by MA27)
+      this->solution = this->rhs;
       int n = static_cast<int>(this->augmented_matrix.dimension());
 
-      ma27_solve_linear_system(&n, this->factor.data(), &la, this->iw.data(), &liw, this->w.data(), &this->maxfrt, result.data(), this->iw1.data(), &this->nsteps,
-         this->icntl.data(), this->info.data());
+      ma27_solve_linear_system(&n, this->factor.data(), &la, this->iw.data(), &liw, this->w.data(), &this->maxfrt, this->solution.data(),
+         this->iw1.data(), &this->nsteps, this->icntl.data(), this->info.data());
 
       assert(this->info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the linear solve failed");
       if (this->info[eINFO::IFLAG] != eIFLAG::SUCCESS) {

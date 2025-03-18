@@ -4,7 +4,7 @@
 #include "Preprocessing.hpp"
 #include "ingredients/hessian_models/IdentityHessian.hpp"
 #include "ingredients/regularization_strategies/NoRegularization.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "ingredients/subproblem_solvers/EqualityQPSolver.hpp"
 #include "ingredients/subproblems/LagrangeNewtonSubproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
@@ -19,7 +19,7 @@
 namespace uno {
    // compute a least-square approximation of the multipliers by solving a linear system
    void Preprocessing::compute_least_square_multipliers(Statistics& statistics, const OptimizationProblem& problem,
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, Multipliers& multipliers,
+         EqualityQPSolver<size_t, double>& equality_QP_solver, Iterate& current_iterate, Multipliers& multipliers,
          double multiplier_max_norm) {
       DEBUG << "Computing least-square multipliers\n";
       DEBUG2 << "Current primals: " << current_iterate.primals << '\n';
@@ -28,18 +28,22 @@ namespace uno {
       IdentityHessian hessian_model{};
       NoRegularization<double> regularization_strategy{};
       LagrangeNewtonSubproblem subproblem(problem, current_iterate, multipliers, hessian_model, regularization_strategy, INF<double>);
-      Vector<double> solution(problem.number_variables + problem.number_constraints);
+      // solution
+      Vector<double> waste(problem.number_variables);
+      Multipliers trial_multipliers(problem.number_variables, problem.number_constraints);
+      double subproblem_objective;
+
       WarmstartInformation warmstart_information{};
       warmstart_information.constraints_changed = false;
-      linear_solver.solve_EQP(statistics, subproblem, solution, warmstart_information);
+      equality_QP_solver.solve_equality_constrained_QP(statistics, subproblem, current_iterate.primals, waste, trial_multipliers, subproblem_objective,
+         warmstart_information);
 
       // note: we solve with -RHS instead of RHS (this is what LagrangeNewtonSubproblem does intrinsically).
       // Therefore, we get our multipliers from -solution.
-      const auto trial_multipliers = view(-solution, problem.number_variables, problem.number_variables + problem.number_constraints);
-      DEBUG2 << "Trial multipliers: "; print_vector(DEBUG2, trial_multipliers);
+      DEBUG2 << "Trial multipliers: "; print_vector(DEBUG2, trial_multipliers.constraints);
       // if least-square multipliers too big, discard them. Otherwise, keep them
-      if (norm_inf(trial_multipliers) <= multiplier_max_norm) {
-         multipliers.constraints = trial_multipliers;
+      if (norm_inf(trial_multipliers.constraints) <= multiplier_max_norm) {
+         multipliers.constraints = trial_multipliers.constraints;
       }
       else {
          DEBUG << "Ignoring the least-square multipliers\n";

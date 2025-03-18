@@ -5,7 +5,7 @@
 #include "Presets.hpp"
 #include "Options.hpp"
 #include "ingredients/subproblem_solvers/InequalityQPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/EqualityQPSolverFactory.hpp"
 
 namespace uno {
    Options Presets::get_preset_options(const std::optional<std::string>& optional_preset) {
@@ -18,7 +18,7 @@ namespace uno {
       else {
          /** default preset **/
          const auto inequality_QP_solvers = InequalityQPSolverFactory::available_solvers();
-         const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
+         const auto linear_solvers = EqualityQPSolverFactory::available_solvers();
          //const auto LP_solvers = LPSolverFactory::available_solvers();
 
          if (!inequality_QP_solvers.empty()) {

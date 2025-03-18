@@ -14,7 +14,7 @@
 namespace uno {
    // forward declarations
    template <typename IndexType, typename ElementType>
-   class DirectSymmetricIndefiniteLinearSolver;
+   class DirectEqualityQPSolver;
    class HessianModel;
    class Iterate;
    class Multipliers;
@@ -54,7 +54,7 @@ namespace uno {
       // augmented system: Lagrangian Hessian + Jacobian + regularization
       void assemble_augmented_matrix(Statistics& statistics, SparseVector<double>& objective_gradient, Vector<double>& constraints,
          RectangularMatrix<double>& jacobian, SymmetricMatrix<size_t, double>& hessian, SymmetricMatrix<size_t, double>& augmented_matrix,
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, WarmstartInformation& warmstart_information);
+         DirectEqualityQPSolver<size_t, double>& linear_solver, WarmstartInformation& warmstart_information);
       void assemble_augmented_rhs(SparseVector<double>& objective_gradient, Vector<double>& constraints, RectangularMatrix<double>& jacobian,
          Vector<double>& rhs, const WarmstartInformation& warmstart_information) const;
 
@@ -90,14 +90,6 @@ namespace uno {
          auto constraint_upper_bounds = view(upper_bounds, this->number_variables, this->number_variables + this->number_constraints);
          this->set_constraint_bounds(constraints, constraint_lower_bounds, constraint_upper_bounds);
       }
-
-      /*
-      // postprocessing: make sure that infinite bounds take a large finite value
-      for (size_t variable_index: Range(this->number_variables + this->number_constraints)) {
-         this->lower_bounds[variable_index] = std::max(-BIG, this->lower_bounds[variable_index]);
-         this->upper_bounds[variable_index] = std::min(BIG, this->upper_bounds[variable_index]);
-      }
-       */
    }
 
    template <typename Array>

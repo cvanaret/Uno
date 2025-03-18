@@ -7,7 +7,7 @@
 #include <cassert>
 #include "RegularizationStrategy.hpp"
 #include "UnstableRegularization.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "ingredients/subproblem_solvers/DirectEqualityQPSolver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
@@ -27,9 +27,9 @@ namespace uno {
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
-      void regularize_hessian(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+      void regularize_hessian(Statistics& statistics, DirectEqualityQPSolver<size_t, ElementType>& linear_solver,
          SymmetricMatrix<size_t, ElementType>& hessian) override;
-      void regularize_augmented_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+      void regularize_augmented_matrix(Statistics& statistics, DirectEqualityQPSolver<size_t, ElementType>& linear_solver,
          SymmetricMatrix<size_t, ElementType>& augmented_matrix, size_t size_primal_block, size_t size_dual_block,
          ElementType dual_regularization_parameter) override;
 
@@ -67,7 +67,7 @@ namespace uno {
 
    template <typename ElementType>
    void PrimalDualRegularization<ElementType>::regularize_hessian(Statistics& statistics,
-         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, SymmetricMatrix<size_t, ElementType>& hessian) {
+         DirectEqualityQPSolver<size_t, ElementType>& linear_solver, SymmetricMatrix<size_t, ElementType>& hessian) {
       // to regularize the Hessian only, call the function for the augmented matrix with no dual part
       this->regularize_augmented_matrix(statistics, linear_solver, hessian, hessian.dimension(), 0, ElementType(0));
    }
@@ -75,7 +75,7 @@ namespace uno {
    // the augmented matrix has been factorized prior to calling this function
    template <typename ElementType>
    void PrimalDualRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics,
-         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
+         DirectEqualityQPSolver<size_t, ElementType>& linear_solver, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
          size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter) {
       this->primal_regularization = ElementType(0);
       this->dual_regularization = ElementType(0);

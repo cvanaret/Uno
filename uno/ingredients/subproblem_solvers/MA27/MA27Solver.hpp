@@ -6,7 +6,7 @@
 
 #include <array>
 #include <vector>
-#include "../DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "../DirectEqualityQPSolver.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
@@ -16,15 +16,16 @@ namespace uno {
    template <typename ElementType>
    class Vector;
 
-   class MA27Solver: public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
+   class MA27Solver: public DirectEqualityQPSolver<size_t, double> {
    public:
       explicit MA27Solver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros);
       ~MA27Solver() override = default;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
-      void solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
-            WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] SubproblemStatus solve_equality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -46,6 +47,7 @@ namespace uno {
       std::vector<int> column_indices{};          // col index of input
       SymmetricMatrix<size_t, double> augmented_matrix;
       Vector<double> rhs;
+      Vector<double> solution;
 
       std::array<int, 30> icntl{};      // integer array of length 30; integer control values
       std::array<double, 5> cntl{};     // double array of length 5; double control values
@@ -65,7 +67,7 @@ namespace uno {
       // bool use_iterative_refinement{false}; // Not sure how to do this with ma27
       void save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix);
       void check_factorization_status();
-      void solve_indefinite_linear_system(Vector<double>& result);
+      void solve_indefinite_linear_system();
    };
 } // namespace
 

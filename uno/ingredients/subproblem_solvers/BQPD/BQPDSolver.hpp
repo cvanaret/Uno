@@ -6,6 +6,7 @@
 
 #include <array>
 #include <vector>
+#include "../EqualityQPSolver.hpp"
 #include "../InequalityQPSolver.hpp"
 #include "../LPSolver.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
@@ -46,13 +47,18 @@ namespace uno {
       UNCHANGED_ACTIVE_SET_AND_JACOBIAN_AND_REDUCED_HESSIAN = 6, // warm start
    };
 
-   class BQPDSolver : public InequalityQPSolver, LPSolver {
+   class BQPDSolver : public InequalityQPSolver, public EqualityQPSolver<size_t, double>, public LPSolver {
    public:
       BQPDSolver(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
          size_t number_hessian_nonzeros, const Options& options);
+      ~BQPDSolver() override = default;
 
-      void solve_inequality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] SubproblemStatus solve_inequality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         const WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] SubproblemStatus solve_equality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         WarmstartInformation& warmstart_information) override;
       void solve_LP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) override;
 

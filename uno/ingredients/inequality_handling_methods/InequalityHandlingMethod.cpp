@@ -7,9 +7,10 @@
 
 namespace uno {
    InequalityHandlingMethod::InequalityHandlingMethod(const std::string& hessian_model, const std::string& regularization_strategy,
-      const Options& options) :
+      size_t number_variables, const Options& options) :
          hessian_model(HessianModelFactory::create(hessian_model)),
-         regularization_strategy(RegularizationStrategyFactory::create(regularization_strategy, options)) {
+         regularization_strategy(RegularizationStrategyFactory::create(regularization_strategy, options)),
+         initial_point(number_variables) {
    }
 
    size_t InequalityHandlingMethod::get_hessian_evaluation_count() const {

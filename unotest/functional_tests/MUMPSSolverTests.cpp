@@ -29,7 +29,7 @@ TEST(MUMPSSolver, SystemSize5) {
    MUMPSSolver solver(n, nnz);
    solver.do_symbolic_analysis(matrix);
    solver.do_numerical_factorization(matrix);
-   solver.solve_EQP(matrix, rhs, result);
+   solver.solve_equality_constrained_QP(matrix, rhs, result);
 
    for (size_t index: Range(n)) {
       EXPECT_NEAR(result[index], reference[index], tolerance);

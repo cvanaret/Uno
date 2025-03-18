@@ -27,7 +27,7 @@ TEST(MA57Solver, SystemSize5) {
    MA57Solver solver(n, nnz);
    solver.do_symbolic_analysis(matrix);
    solver.do_numerical_factorization(matrix);
-   solver.solve_EQP(matrix, rhs, result);
+   solver.solve_equality_constrained_QP(matrix, rhs, result);
 
    const double tolerance = 1e-8;
    for (size_t index: Range(n)) {

@@ -14,14 +14,13 @@
 namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(size_t number_variables, size_t number_constraints,
       size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
-         InequalityHandlingMethod(options.get_string("hessian_model"), options.get_string("regularization_strategy"), options),
-         initial_point(number_variables),
-         enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")),
-         // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-         solver(InequalityQPSolverFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
-            // if the QP solver is used during preprocessing, we need to allocate the Hessian with at least number_variables elements
-            std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, number_hessian_nonzeros),
-            options)) {
+      InequalityHandlingMethod(options.get_string("hessian_model"), options.get_string("regularization_strategy"), number_variables, options),
+      enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")),
+      // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
+      subproblem_solver(InequalityQPSolverFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
+         // if the QP solver is used during preprocessing, we need to allocate the Hessian with at least number_variables elements
+         std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, number_hessian_nonzeros),
+         options)) {
       // TODO fix number of Hessian nnz
    }
 
@@ -38,15 +37,18 @@ namespace uno {
       }
    }
 
-   void InequalityConstrainedMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
+   SubproblemStatus InequalityConstrainedMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         double trust_region_radius, WarmstartInformation& warmstart_information) {
       LagrangeNewtonSubproblem subproblem(problem, current_iterate, current_multipliers, *this->hessian_model, *this->regularization_strategy,
          trust_region_radius);
-      this->solver->solve_inequality_constrained_QP(statistics, subproblem, this->initial_point, direction, warmstart_information);
-      InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
+      SubproblemStatus status = this->subproblem_solver->solve_inequality_constrained_QP(statistics, subproblem, this->initial_point,
+         direction_primals, direction_multipliers, subproblem_objective, warmstart_information);
+      InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction_multipliers);
       this->number_subproblems_solved++;
       // reset the initial point
       this->initial_point.fill(0.);
+      return status;
    }
 
    void InequalityConstrainedMethod::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
@@ -71,7 +73,7 @@ namespace uno {
    }
 
    double InequalityConstrainedMethod::hessian_quadratic_product(const Vector<double>& primal_direction) const {
-      return this->solver->hessian_quadratic_product(primal_direction);
+      return this->subproblem_solver->hessian_quadratic_product(primal_direction);
    }
 
    // auxiliary measure is 0 in inequality-constrained methods

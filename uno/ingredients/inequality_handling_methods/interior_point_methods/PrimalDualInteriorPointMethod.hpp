@@ -11,7 +11,7 @@
 namespace uno {
    // forward references
    template <typename IndexType, typename NumericalType>
-   class DirectSymmetricIndefiniteLinearSolver;
+   class EqualityQPSolver;
    class DualResiduals;
 
    struct InteriorPointParameters {
@@ -38,20 +38,21 @@ namespace uno {
       [[nodiscard]] double proximal_coefficient(const Iterate& current_iterate) const override;
       void exit_feasibility_problem(Statistics& statistics, const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
-      void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-            Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] SubproblemStatus solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
 
       void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
-            const Vector<double>& primal_direction, double step_length) const override;
+         const Vector<double>& primal_direction, double step_length) const override;
 
       void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) override;
 
    protected:
       Vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
 
-      const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;
+      const std::unique_ptr<EqualityQPSolver<size_t, double>> subproblem_solver;
       Vector<double> solution;
 
       BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
@@ -70,7 +71,7 @@ namespace uno {
       void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate, const Multipliers& current_multipliers,
             const DualResiduals& residuals);
       [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
-      [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
+      [[nodiscard]] double evaluate_subproblem_objective(const Vector<double>& direction_primals) const;
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate,
             const Vector<double>& primal_direction) const;
       [[nodiscard]] static double primal_fraction_to_boundary(const OptimizationProblem& problem, const Vector<double>& current_primals,

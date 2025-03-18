@@ -2,8 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "DefaultOptions.hpp"
+#include "ingredients/subproblem_solvers/EqualityQPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/InequalityQPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 
 namespace uno {
    Options DefaultOptions::load() {
@@ -197,6 +197,11 @@ namespace uno {
       if (!inequality_QP_solvers.empty()) {
          options["inequality_QP_solver"] = inequality_QP_solvers[0];
       }
+      // equality QP solver
+      const auto equality_QP_solvers = EqualityQPSolverFactory::available_solvers();
+      if (!equality_QP_solvers.empty()) {
+         options["equality_QP_solver"] = equality_QP_solvers[0];
+      }
       /*
       // LP solver
       const auto LP_solvers = LPSolverFactory::available_solvers();
@@ -204,11 +209,6 @@ namespace uno {
          options["LP_solver"] = LP_solvers[0];
       }
        */
-      // linear solver
-      const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
-      if (!linear_solvers.empty()) {
-         options["linear_solver"] = linear_solvers[0];
-      }
       return options;
    }
 } // namespace

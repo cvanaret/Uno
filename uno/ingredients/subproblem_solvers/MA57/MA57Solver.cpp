@@ -31,21 +31,22 @@ namespace uno {
    }
 
    MA57Solver::MA57Solver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros):
-            DirectSymmetricIndefiniteLinearSolver<size_t, double>(number_variables + number_constraints),
-            objective_gradient(number_variables),
-            constraints(number_constraints),
-            constraint_jacobian(number_constraints, number_variables), // TODO construct better
+      DirectEqualityQPSolver<size_t, double>(),
+      objective_gradient(number_variables),
+      constraints(number_constraints),
+      constraint_jacobian(number_constraints, number_variables), // TODO construct better
             hessian(number_variables, number_hessian_nonzeros, false, "COO"),
-            dimension(number_variables + number_constraints),
-            number_nonzeros(number_hessian_nonzeros + number_jacobian_nonzeros),
+      dimension(number_variables + number_constraints),
+      number_nonzeros(number_hessian_nonzeros + number_jacobian_nonzeros),
             // augmented matrix
             augmented_matrix(this->dimension, this->number_nonzeros, true, "COO"),
-            rhs(this->dimension),
-            lkeep(static_cast<int>(5 * this->dimension + this->number_nonzeros + std::max(this->dimension, this->number_nonzeros) + 42)),
-            keep(static_cast<size_t>(lkeep)),
-            iwork(5 * this->dimension),
-            lwork(static_cast<int>(1.2 * static_cast<double>(this->dimension))),
-            work(static_cast<size_t>(this->lwork)), residuals(this->dimension) {
+      rhs(this->dimension),
+      solution(this->dimension),
+      lkeep(static_cast<int>(5 * this->dimension + this->number_nonzeros + std::max(this->dimension, this->number_nonzeros) + 42)),
+      keep(static_cast<size_t>(lkeep)),
+      iwork(5 * this->dimension),
+      lwork(static_cast<int>(1.2 * static_cast<double>(this->dimension))),
+      work(static_cast<size_t>(this->lwork)), residuals(this->dimension) {
       this->row_indices.reserve(this->number_nonzeros);
       this->column_indices.reserve(this->number_nonzeros);
       // set the default values of the controlling parameters
@@ -98,17 +99,22 @@ namespace uno {
          this->iwork.data(), this->icntl.data(), this->cntl.data(), /* out */ this->info.data(), /* out */ this->rinfo.data());
    }
 
-    void MA57Solver::solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
+   SubproblemStatus MA57Solver::solve_equality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         const Vector<double>& /*initial_point*/, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& /*subproblem_objective*/,
          WarmstartInformation& warmstart_information) {
-       // set up the augmented system
-       subproblem.assemble_augmented_matrix(statistics, this->objective_gradient, this->constraints, this->constraint_jacobian, this->hessian,
-          this->augmented_matrix, *this, warmstart_information);
-       subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs, warmstart_information);
-       // solve the augmented system
-       this->solve_indefinite_linear_system(result);
+      // set up the augmented system
+      subproblem.assemble_augmented_matrix(statistics, this->objective_gradient, this->constraints, this->constraint_jacobian, this->hessian,
+      this->augmented_matrix, *this, warmstart_information);
+      subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs, warmstart_information);
+      // solve the augmented system
+      this->solve_indefinite_linear_system();
+      // form the primal-dual direction (note the minus sign for the multipliers)
+      direction_primals = view(this->solution, 0, subproblem.number_variables);
+      direction_multipliers.constraints = view(-this->solution, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
+      return SubproblemStatus::OPTIMAL; // TODO
     }
 
-   void MA57Solver::solve_indefinite_linear_system(Vector<double>& result) {
+   void MA57Solver::solve_indefinite_linear_system() {
       const int n = static_cast<int>(this->augmented_matrix.dimension());
       int nnz = static_cast<int>(this->augmented_matrix.number_nonzeros());
       const int lrhs = n; // integer, length of rhs
@@ -117,14 +123,14 @@ namespace uno {
       if (this->use_iterative_refinement) {
          ma57_solve_linear_system_with_iterative_refinement(&this->job, &n, &nnz, this->augmented_matrix.data_pointer(), this->row_indices.data(),
             this->column_indices.data(), this->fact.data(), &this->factorization.lfact, this->ifact.data(), &this->factorization.lifact,
-            this->rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
+            this->rhs.data(), this->solution.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
             this->cntl.data(), this->info.data(), this->rinfo.data());
       }
       else {
-         // copy rhs into result (overwritten by MA57)
-         result = this->rhs;
+         // copy rhs into solution (overwritten by MA57)
+         this->solution = this->rhs;
          ma57_solve_linear_system_without_iterative_refinement(&this->job, &n, this->fact.data(), &this->factorization.lfact, this->ifact.data(),
-            &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
+            &this->factorization.lifact, &this->nrhs, this->solution.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
             this->icntl.data(), this->info.data());
       }
    }

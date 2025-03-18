@@ -6,10 +6,12 @@
 
 #include <cstddef>
 #include <tuple>
+#include "SubproblemStatus.hpp"
 
 namespace uno {
    // forward declarations
    class LagrangeNewtonSubproblem;
+   class Multipliers;
    class Statistics;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
@@ -18,16 +20,14 @@ namespace uno {
    class WarmstartInformation;
 
    template <typename IndexType, typename ElementType>
-   class SymmetricIndefiniteLinearSolver {
+   class EqualityQPSolver {
    public:
-      explicit SymmetricIndefiniteLinearSolver(size_t dimension) : dimension(dimension) { };
-      virtual ~SymmetricIndefiniteLinearSolver() = default;
+      EqualityQPSolver() = default;
+      virtual ~EqualityQPSolver() = default;
 
-      virtual void solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<ElementType>& result,
-            WarmstartInformation& warmstart_information) = 0;
-
-   protected:
-      const size_t dimension;
+      virtual SubproblemStatus solve_equality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         WarmstartInformation& warmstart_information) = 0;
    };
 } // namespace
 

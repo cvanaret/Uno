@@ -66,9 +66,7 @@ namespace uno {
       if (this->current_phase == Phase::OPTIMALITY) {
          statistics.set("phase", "OPT");
          try {
-            DEBUG << "Solving the optimality subproblem\n";
-            this->solve_subproblem(statistics, this->optimality_problem, current_iterate, current_iterate.multipliers, direction, trust_region_radius,
-               warmstart_information);
+            this->solve_optimality_subproblem(statistics, current_iterate, direction, trust_region_radius, warmstart_information);
             if (direction.status == SubproblemStatus::INFEASIBLE) {
                // switch to the feasibility problem, starting from the current direction
                statistics.set("status", std::string("infeasible subproblem"));
@@ -87,12 +85,9 @@ namespace uno {
       }
 
       // solve the feasibility problem (minimize the constraint violation)
-      DEBUG << "Solving the feasibility subproblem\n";
       statistics.set("phase", "FEAS");
       // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
-      this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, current_iterate.feasibility_multipliers, direction,
-         trust_region_radius, warmstart_information);
-      std::swap(direction.multipliers, direction.feasibility_multipliers);
+      this->solve_feasibility_subproblem(statistics, current_iterate, direction, trust_region_radius, warmstart_information);
    }
 
    bool FeasibilityRestoration::solving_feasibility_problem() const {
@@ -119,11 +114,23 @@ namespace uno {
       warmstart_information.whole_problem_changed();
    }
 
-   void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
-      direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction, trust_region_radius,
-         warmstart_information);
+   void FeasibilityRestoration::solve_optimality_subproblem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+         double trust_region_radius, WarmstartInformation& warmstart_information) {
+      direction.set_dimensions(this->optimality_problem.number_variables, this->optimality_problem.number_constraints);
+      DEBUG << "Solving the optimality subproblem\n";
+      direction.status = this->inequality_handling_method->solve(statistics, this->optimality_problem, current_iterate, current_iterate.multipliers,
+         direction.primals, direction.multipliers, direction.subproblem_objective, trust_region_radius, warmstart_information);
+      direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
+      DEBUG3 << direction << '\n';
+   }
+
+   void FeasibilityRestoration::solve_feasibility_subproblem(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+         double trust_region_radius, WarmstartInformation& warmstart_information) {
+      direction.set_dimensions(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints);
+      DEBUG << "Solving the feasibility subproblem\n";
+      direction.status = this->inequality_handling_method->solve(statistics, this->feasibility_problem, current_iterate,
+         current_iterate.feasibility_multipliers, direction.primals, direction.feasibility_multipliers, direction.subproblem_objective,
+         trust_region_radius, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
       DEBUG3 << direction << '\n';
    }

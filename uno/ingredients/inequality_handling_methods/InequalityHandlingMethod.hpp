@@ -8,6 +8,8 @@
 #include <string>
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
+#include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
@@ -28,14 +30,16 @@ namespace uno {
    
    class InequalityHandlingMethod {
    public:
-      InequalityHandlingMethod(const std::string& hessian_model, const std::string& regularization_strategy, const Options& options);
+      InequalityHandlingMethod(const std::string& hessian_model, const std::string& regularization_strategy, size_t number_variables,
+         const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
       // virtual methods implemented by subclasses
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
       virtual void generate_initial_iterate(Statistics& statistics, const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
-      virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
+      [[nodiscard]] virtual SubproblemStatus solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
 
       virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
@@ -60,6 +64,7 @@ namespace uno {
    protected:
       const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
       const std::unique_ptr<RegularizationStrategy<double>> regularization_strategy;
+      Vector<double> initial_point{};
    };
 } // namespace
 

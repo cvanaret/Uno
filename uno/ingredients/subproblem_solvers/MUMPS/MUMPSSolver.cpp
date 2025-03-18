@@ -14,15 +14,16 @@
 
 namespace uno {
    MUMPSSolver::MUMPSSolver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros) :
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>(number_variables + number_constraints),
-         objective_gradient(number_variables),
-         constraints(number_constraints),
-         constraint_jacobian(number_constraints, number_variables), // TODO construct better
+      DirectEqualityQPSolver<size_t, double>(),
+      objective_gradient(number_variables),
+      constraints(number_constraints),
+      constraint_jacobian(number_constraints, number_variables), // TODO construct better
          hessian(number_variables, number_hessian_nonzeros, false, "COO"),
-         dimension(number_variables + number_constraints),
-         number_nonzeros(number_hessian_nonzeros + number_jacobian_nonzeros),
-         augmented_matrix(this->dimension, this->number_nonzeros, true, "COO"),
-         rhs(this->dimension) {
+      dimension(number_variables + number_constraints),
+      number_nonzeros(number_hessian_nonzeros + number_jacobian_nonzeros),
+      augmented_matrix(this->dimension, this->number_nonzeros, true, "COO"),
+      rhs(this->dimension),
+      solution(this->dimension) {
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);
 
@@ -83,20 +84,25 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
    }
 
-   void MUMPSSolver::solve_EQP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, Vector<double>& result,
+   SubproblemStatus MUMPSSolver::solve_equality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         const Vector<double>& /*initial_point*/, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& /*subproblem_objective*/,
          WarmstartInformation& warmstart_information) {
       // set up the augmented system
       subproblem.assemble_augmented_matrix(statistics, this->objective_gradient, this->constraints, this->constraint_jacobian, this->hessian,
          this->augmented_matrix, *this, warmstart_information);
       subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs, warmstart_information);
       // solve the augmented system
-      this->solve_indefinite_linear_system(result);
+      this->solve_indefinite_linear_system();
+      // form the primal-dual direction (note the minus sign for the multipliers)
+      direction_primals = view(this->solution, 0, subproblem.number_variables);
+      direction_multipliers.constraints = view(-this->solution, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
+      return SubproblemStatus::OPTIMAL; // TODO
    }
 
-   void MUMPSSolver::solve_indefinite_linear_system(Vector<double>& result) {
-      // copy rhs into result (overwritten by MUMPS)
-      result = this->rhs;
-      this->mumps_structure.rhs = result.data();
+   void MUMPSSolver::solve_indefinite_linear_system() {
+      // copy rhs into solution (overwritten by MUMPS)
+      this->solution = this->rhs;
+      this->mumps_structure.rhs = this->solution.data();
       this->mumps_structure.job = MUMPSSolver::JOB_SOLVE;
       dmumps_c(&this->mumps_structure);
    }

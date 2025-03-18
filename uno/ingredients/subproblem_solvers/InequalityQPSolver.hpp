@@ -4,25 +4,28 @@
 #ifndef UNO_INEQUALITYQPSOLVER_H
 #define UNO_INEQUALITYQPSOLVER_H
 
-#include <vector>
+#include "LagrangeNewtonSolver.hpp"
+#include "SubproblemStatus.hpp"
 
 namespace uno {
    // forward declarations
    class Direction;
    //class HessianModel;
    class LagrangeNewtonSubproblem;
+   class Multipliers;
    class Statistics;
    template <typename ElementType>
    class Vector;
    class WarmstartInformation;
 
-   class InequalityQPSolver {
+   class InequalityQPSolver: public LagrangeNewtonSolver {
    public:
       InequalityQPSolver() = default;
       virtual ~InequalityQPSolver() = default;
 
-      virtual void solve_inequality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) = 0;
+      virtual SubproblemStatus solve_inequality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         const WarmstartInformation& warmstart_information) = 0;
 
       [[nodiscard]] virtual double hessian_quadratic_product(const Vector<double>& primal_direction) const = 0;
    };

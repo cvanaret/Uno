@@ -6,7 +6,7 @@
 #include "inequality_constrained_methods/InequalityConstrainedMethod.hpp"
 #include "interior_point_methods/PrimalDualInteriorPointMethod.hpp"
 #include "ingredients/subproblem_solvers/InequalityQPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/EqualityQPSolverFactory.hpp"
 #include "options/Options.hpp"
 
 namespace uno {
@@ -40,7 +40,7 @@ namespace uno {
          strategies.emplace_back("LP");
       }
        */
-      if (!SymmetricIndefiniteLinearSolverFactory::available_solvers().empty()) {
+      if (!EqualityQPSolverFactory::available_solvers().empty()) {
          strategies.emplace_back("primal_dual_interior_point");
       }
       return strategies;

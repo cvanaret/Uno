@@ -19,8 +19,9 @@ namespace uno {
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(Statistics& statistics, const OptimizationProblem& problem, Iterate& initial_iterate) override;
-      void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-         Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] SubproblemStatus solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         double trust_region_radius, WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
@@ -36,10 +37,9 @@ namespace uno {
       void set_initial_point(const Vector<double>& point) override;
 
    protected:
-      Vector<double> initial_point{};
       const bool enforce_linear_constraints_at_initial_iterate;
       // pointer to allow polymorphism
-      const std::unique_ptr<InequalityQPSolver> solver;
+      const std::unique_ptr<InequalityQPSolver> subproblem_solver;
 
       static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
    };

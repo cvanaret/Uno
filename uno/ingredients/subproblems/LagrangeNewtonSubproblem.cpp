@@ -5,7 +5,7 @@
 #include "optimization/OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "ingredients/subproblem_solvers/DirectEqualityQPSolver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
 
@@ -81,7 +81,7 @@ namespace uno {
 
    void LagrangeNewtonSubproblem::assemble_augmented_matrix(Statistics& statistics, SparseVector<double>& objective_gradient, Vector<double>& constraints,
          RectangularMatrix<double>& jacobian, SymmetricMatrix<size_t, double>& hessian, /* TODO remove */ SymmetricMatrix<size_t, double>& augmented_matrix,
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, WarmstartInformation& warmstart_information) {
+         DirectEqualityQPSolver<size_t, double>& linear_solver, WarmstartInformation& warmstart_information) {
       this->evaluate_functions(objective_gradient, constraints, jacobian, hessian, warmstart_information);
 
       // TODO use matrix views

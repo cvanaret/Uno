@@ -18,9 +18,9 @@ namespace uno {
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
-      void regularize_hessian(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+      void regularize_hessian(Statistics& statistics, DirectEqualityQPSolver<size_t, ElementType>& linear_solver,
          SymmetricMatrix<size_t, ElementType>& hessian) override;
-      void regularize_augmented_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+      void regularize_augmented_matrix(Statistics& statistics, DirectEqualityQPSolver<size_t, ElementType>& linear_solver,
          SymmetricMatrix<size_t, ElementType>& augmented_matrix, size_t size_primal_block, size_t size_dual_block,
          ElementType dual_regularization_parameter) override;
 
@@ -45,7 +45,7 @@ namespace uno {
 
    // Nocedal and Wright, p51
    template <typename ElementType>
-   void PrimalRegularization<ElementType>::regularize_hessian(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
+   void PrimalRegularization<ElementType>::regularize_hessian(Statistics& statistics, DirectEqualityQPSolver<size_t, ElementType>& linear_solver,
       SymmetricMatrix<size_t, ElementType>& hessian) {
       DEBUG << "Current matrix:\n" << hessian << '\n';
       const size_t hessian_dimension = hessian.dimension();
@@ -87,7 +87,7 @@ namespace uno {
 
    template <typename ElementType>
    void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& /*statistics*/,
-         DirectSymmetricIndefiniteLinearSolver <size_t, ElementType>& /*linear_solver*/, SymmetricMatrix <size_t, ElementType>& /*augmented_matrix*/,
+         DirectEqualityQPSolver <size_t, ElementType>& /*linear_solver*/, SymmetricMatrix <size_t, ElementType>& /*augmented_matrix*/,
          size_t /*size_primal_block*/, size_t /*size_dual_block*/, ElementType /*dual_regularization_parameter*/) {
       throw std::runtime_error("PrimalRegularization<ElementType>::regularize_augmented_matrix not implemented yet");
    }

@@ -8,7 +8,7 @@
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/subproblem_solvers/InequalityQPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/EqualityQPSolverFactory.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
@@ -159,7 +159,7 @@ namespace uno {
       std::cout << "- Subproblems: " << join(InequalityHandlingMethodFactory::available_strategies(), ", ") << '\n';
       std::cout << "- Inequality QP solvers: " << join(InequalityQPSolverFactory::available_solvers(), ", ") << '\n';
       // std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers(), ", ") << '\n';
-      std::cout << "- Linear solvers: " << join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", ") << '\n';
+      std::cout << "- Linear solvers: " << join(EqualityQPSolverFactory::available_solvers(), ", ") << '\n';
    }
 
    std::string Uno::get_strategy_combination(const Options& options) {

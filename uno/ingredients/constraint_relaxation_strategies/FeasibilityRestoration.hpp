@@ -49,8 +49,10 @@ namespace uno {
       FeasibilityRestoration(const Model& model, OptimalityProblem&& optimality_problem, l1RelaxedProblem&& feasibility_problem, const Options& options);
 
       [[nodiscard]] const OptimizationProblem& current_problem() const;
-      void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information);
+      void solve_optimality_subproblem(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
+         WarmstartInformation& warmstart_information);
+      void solve_feasibility_subproblem(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
+         WarmstartInformation& warmstart_information);
       void switch_to_optimality_phase(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate,
          WarmstartInformation& warmstart_information);
 
