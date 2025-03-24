@@ -4,6 +4,7 @@
 #ifndef UNO_INEQUALITYQPSOLVER_H
 #define UNO_INEQUALITYQPSOLVER_H
 
+#include "LagrangeNewtonSolver.hpp"
 #include "SubproblemStatus.hpp"
 
 namespace uno {
@@ -17,7 +18,7 @@ namespace uno {
    class Vector;
    class WarmstartInformation;
 
-   class InequalityQPSolver {
+   class InequalityQPSolver: public LagrangeNewtonSolver {
    public:
       InequalityQPSolver() = default;
       virtual ~InequalityQPSolver() = default;

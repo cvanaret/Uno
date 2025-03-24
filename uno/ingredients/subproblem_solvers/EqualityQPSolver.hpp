@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <tuple>
+#include "LagrangeNewtonSolver.hpp"
 #include "SubproblemStatus.hpp"
 
 namespace uno {
@@ -20,7 +21,7 @@ namespace uno {
    class WarmstartInformation;
 
    template <typename IndexType, typename ElementType>
-   class EqualityQPSolver {
+   class EqualityQPSolver: public LagrangeNewtonSolver {
    public:
       EqualityQPSolver() = default;
       virtual ~EqualityQPSolver() = default;
