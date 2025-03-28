@@ -38,12 +38,14 @@ namespace uno {
       [[nodiscard]] bool has_inequality_constraints() const;
       [[nodiscard]] bool has_fixed_variables() const;
 
+      [[nodiscard]] virtual size_t compute_number_hessian_nonzeros(const HessianModel& hessian_model) const = 0;
+
       // function evaluations
       [[nodiscard]] virtual double get_objective_multiplier() const = 0;
       virtual void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const = 0;
       virtual void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const = 0;
       virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const = 0;
-      virtual void evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Vector<double>& multipliers,
+      virtual void evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Multipliers& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const = 0;
 
       [[nodiscard]] size_t get_number_original_variables() const;

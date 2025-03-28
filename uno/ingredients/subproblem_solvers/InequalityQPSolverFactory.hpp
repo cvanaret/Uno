@@ -6,11 +6,11 @@
 
 #include <memory>
 #include <vector>
+#include "ingredients/subproblem_solvers/InequalityQPSolver.hpp"
 
 namespace uno {
    // forward declarations
    class Options;
-   class InequalityQPSolver;
 
    class InequalityQPSolverFactory {
    public:

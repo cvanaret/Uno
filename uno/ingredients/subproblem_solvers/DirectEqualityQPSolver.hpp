@@ -11,7 +11,7 @@ namespace uno {
    class DirectEqualityQPSolver: public EqualityQPSolver<IndexType, ElementType> {
    public:
       explicit DirectEqualityQPSolver() : EqualityQPSolver<IndexType, ElementType>() { };
-      virtual ~DirectEqualityQPSolver() = default;
+      ~DirectEqualityQPSolver() override = default;
 
       virtual void do_symbolic_analysis(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
       virtual void do_numerical_factorization(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;

@@ -11,6 +11,8 @@ namespace uno {
    class LagrangeNewtonSubproblem;
    class Multipliers;
    class Statistics;
+   template <typename IndexType, typename ElementType>
+   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
    class WarmstartInformation;
@@ -24,7 +26,9 @@ namespace uno {
          const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
          const WarmstartInformation& warmstart_information) = 0;
 
-      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& /*primal_direction*/) const { return 0.; }
+      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& /*primal_direction*/) const {
+         return 0.;
+      }
    };
 } // namespace
 

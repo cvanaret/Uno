@@ -6,11 +6,10 @@
 
 #include <memory>
 #include <vector>
+#include "ingredients/subproblem_solvers/EqualityQPSolver.hpp"
 
 namespace uno {
    // forward declarations
-   template <class IndexType, class ElementType>
-   class EqualityQPSolver;
    class Options;
 
    class EqualityQPSolverFactory {

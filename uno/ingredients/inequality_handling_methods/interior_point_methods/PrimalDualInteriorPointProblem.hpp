@@ -9,14 +9,16 @@
 namespace uno {
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
-      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const Multipliers& current_multipliers, double barrier_parameter);
+      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter);
+
+      [[nodiscard]] size_t compute_number_hessian_nonzeros(const HessianModel& hessian_model) const override;
 
       // function evaluations
       [[nodiscard]] double get_objective_multiplier() const override;
       void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
       void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
       void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
-      void evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Vector<double>& multipliers,
+      void evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Multipliers& multipliers,
             SymmetricMatrix<size_t, double>& hessian) const override;
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
@@ -41,7 +43,6 @@ namespace uno {
 
    protected:
       const OptimizationProblem& problem;
-      const Multipliers& current_multipliers;
       const double barrier_parameter;
       const double damping_factor{1e-5}; // TODO load option
    };

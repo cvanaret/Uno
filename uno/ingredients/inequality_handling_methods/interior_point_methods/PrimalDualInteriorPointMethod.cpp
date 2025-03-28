@@ -46,6 +46,13 @@ namespace uno {
 
    PrimalDualInteriorPointMethod::~PrimalDualInteriorPointMethod() { }
 
+   size_t PrimalDualInteriorPointMethod::compute_number_hessian_nonzeros(const OptimizationProblem& problem,
+         const HessianModel& hessian_model) const {
+      // create the barrier reformulation
+      PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
+      return barrier_problem.compute_number_hessian_nonzeros(hessian_model);
+   }
+
    void PrimalDualInteriorPointMethod::initialize_statistics(Statistics& statistics, const Options& options) {
       this->regularization_strategy->initialize_statistics(statistics, options);
       statistics.add_column("barrier", Statistics::double_width - 5, options.get_int("statistics_barrier_parameter_column_order"));
@@ -136,7 +143,7 @@ namespace uno {
       statistics.set("barrier", this->barrier_parameter());
 
       // create the barrier reformulation and the subproblem
-      PrimalDualInteriorPointProblem barrier_problem(problem, current_multipliers, this->barrier_parameter());
+      PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
       LagrangeNewtonSubproblem subproblem(barrier_problem, current_iterate, current_multipliers, *this->hessian_model,
             *this->regularization_strategy, trust_region_radius);
       SubproblemStatus status = this->subproblem_solver->solve_equality_constrained_QP(statistics, subproblem, this->initial_point, direction_primals,

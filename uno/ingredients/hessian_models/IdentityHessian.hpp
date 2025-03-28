@@ -11,6 +11,7 @@ namespace uno {
    public:
       IdentityHessian() = default;
 
+      [[nodiscard]] size_t compute_number_hessian_nonzeros(const Model& model) const override;
       void evaluate(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
          const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
    };

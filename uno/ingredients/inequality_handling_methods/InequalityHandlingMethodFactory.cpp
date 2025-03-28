@@ -10,22 +10,13 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   // forward declaration
-   class InequalityHandlingMethod;
-
    std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(size_t number_variables, size_t number_constraints,
          size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) {
       const std::string inequality_handling_method = options.get_string("inequality_handling_method");
       // inequality-constrained methods
       if (inequality_handling_method == "inequality_constrained") {
-         if (number_hessian_nonzeros == 0) {
-            return std::make_unique<InequalityConstrainedMethod<InequalitySubproblem::LP>>(number_variables, number_constraints,
-               number_objective_gradient_nonzeros, number_jacobian_nonzeros, number_hessian_nonzeros, options);
-         }
-         else {
-            return std::make_unique<InequalityConstrainedMethod<InequalitySubproblem::QP>>(number_variables, number_constraints,
-               number_objective_gradient_nonzeros, number_jacobian_nonzeros, number_hessian_nonzeros, options);
-         }
+         return std::make_unique<InequalityConstrainedMethod>(number_variables, number_constraints,
+            number_objective_gradient_nonzeros, number_jacobian_nonzeros, number_hessian_nonzeros, options);
       }
       // interior-point method
       else if (inequality_handling_method == "primal_dual_interior_point") {

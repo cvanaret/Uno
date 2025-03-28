@@ -7,6 +7,10 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
+   size_t IdentityHessian::compute_number_hessian_nonzeros(const Model& model) const {
+      return model.number_variables;
+   }
+
    void IdentityHessian::evaluate(const Model& model, const Vector<double>& /*primal_variables*/, double /*objective_multiplier*/,
          const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
       DEBUG << "Setting identity Hessian\n";

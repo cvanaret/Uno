@@ -37,6 +37,11 @@ namespace uno {
                Range(model.number_variables, model.number_variables + this->elastic_variables.size()))) {
    }
 
+   size_t l1RelaxedProblem::compute_number_hessian_nonzeros(const HessianModel& hessian_model) const {
+      // the l1 relaxed problem does not introduce any element
+      return hessian_model.compute_number_hessian_nonzeros(this->model);
+   }
+
    double l1RelaxedProblem::get_objective_multiplier() const {
       return this->objective_multiplier;
    }
@@ -96,9 +101,9 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Vector<double>& multipliers,
+   void l1RelaxedProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Multipliers& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
-      hessian_model.evaluate(this->model, x, this->objective_multiplier, multipliers, hessian);
+      hessian_model.evaluate(this->model, x, this->objective_multiplier, multipliers.constraints, hessian);
       hessian.set_dimension(this->number_variables);
 
       // proximal contribution

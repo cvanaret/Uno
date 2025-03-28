@@ -4,7 +4,6 @@
 #include <stdexcept>
 #include <string>
 #include "EqualityQPSolverFactory.hpp"
-#include "DirectEqualityQPSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
 

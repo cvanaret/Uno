@@ -4,9 +4,6 @@
 #ifndef UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 #define UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 
-#include <cstddef>
-#include <tuple>
-#include "LagrangeNewtonSolver.hpp"
 #include "SubproblemStatus.hpp"
 
 namespace uno {
@@ -21,14 +18,19 @@ namespace uno {
    class WarmstartInformation;
 
    template <typename IndexType, typename ElementType>
-   class EqualityQPSolver: public LagrangeNewtonSolver {
+   class EqualityQPSolver {
    public:
       EqualityQPSolver() = default;
+
       virtual ~EqualityQPSolver() = default;
 
-      virtual SubproblemStatus solve_equality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+      [[nodiscard]] virtual SubproblemStatus solve_equality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
          const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
          WarmstartInformation& warmstart_information) = 0;
+
+      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& /*primal_direction*/) const {
+         return 0.;
+      }
    };
 } // namespace
 

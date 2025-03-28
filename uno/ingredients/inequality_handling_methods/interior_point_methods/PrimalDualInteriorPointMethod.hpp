@@ -29,6 +29,10 @@ namespace uno {
          size_t number_hessian_nonzeros, const Options& options);
       ~PrimalDualInteriorPointMethod() override;
 
+      // number of nonzeros
+      [[nodiscard]] size_t compute_number_hessian_nonzeros(const OptimizationProblem& problem,
+         const HessianModel& hessian_model) const override;
+
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(Statistics& statistics, const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void set_initial_point(const Vector<double>& point) override;

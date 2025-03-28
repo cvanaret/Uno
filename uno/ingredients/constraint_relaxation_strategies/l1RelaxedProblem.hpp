@@ -14,11 +14,13 @@ namespace uno {
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient, double proximal_coefficient,
             double const* proximal_center);
 
+      [[nodiscard]] size_t compute_number_hessian_nonzeros(const HessianModel& hessian_model) const override;
+
       [[nodiscard]] double get_objective_multiplier() const override;
       void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
       void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
       void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
-      void evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Vector<double>& multipliers,
+      void evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Multipliers& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const override;
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;

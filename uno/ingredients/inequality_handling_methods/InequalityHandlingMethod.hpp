@@ -34,6 +34,10 @@ namespace uno {
          const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
+      // number of nonzeros
+      [[nodiscard]] virtual size_t compute_number_hessian_nonzeros(const OptimizationProblem& problem,
+         const HessianModel& hessian_model) const = 0;
+
       // virtual methods implemented by subclasses
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
       virtual void generate_initial_iterate(Statistics& statistics, const OptimizationProblem& problem, Iterate& initial_iterate) = 0;

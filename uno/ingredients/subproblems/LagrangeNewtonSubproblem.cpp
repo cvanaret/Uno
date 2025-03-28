@@ -56,7 +56,7 @@ namespace uno {
    }
 
    void LagrangeNewtonSubproblem::evaluate_hessian(SymmetricMatrix<size_t, double>& hessian) {
-      this->problem.evaluate_lagrangian_hessian(this->hessian_model, this->current_iterate.primals, this->current_multipliers.constraints, hessian);
+      this->problem.evaluate_lagrangian_hessian(this->hessian_model, this->current_iterate.primals, this->current_multipliers, hessian);
    }
 
    void LagrangeNewtonSubproblem::evaluate_functions(SparseVector<double>& objective_gradient, Vector<double>& constraints,

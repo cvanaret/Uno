@@ -12,6 +12,10 @@ namespace uno {
    OptimalityProblem::OptimalityProblem(const Model& model): OptimizationProblem(model, model.number_variables, model.number_constraints) {
    }
 
+   size_t OptimalityProblem::compute_number_hessian_nonzeros(const HessianModel& hessian_model) const {
+      return hessian_model.compute_number_hessian_nonzeros(this->model);
+   }
+
    void OptimalityProblem::evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const {
       iterate.evaluate_objective_gradient(this->model);
       // TODO change this
@@ -29,9 +33,9 @@ namespace uno {
       constraint_jacobian = iterate.evaluations.constraint_jacobian;
    }
 
-   void OptimalityProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Vector<double>& multipliers,
+   void OptimalityProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Multipliers& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
-      hessian_model.evaluate(this->model, x, this->get_objective_multiplier(), multipliers, hessian);
+      hessian_model.evaluate(this->model, x, this->get_objective_multiplier(), multipliers.constraints, hessian);
       hessian.set_dimension(this->number_variables);
    }
 
