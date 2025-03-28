@@ -35,8 +35,9 @@ namespace uno {
 
       WarmstartInformation warmstart_information{};
       warmstart_information.constraints_changed = false;
-      equality_QP_solver.solve_equality_constrained_QP(statistics, subproblem, current_iterate.primals, waste, trial_multipliers, subproblem_objective,
-         warmstart_information);
+      [[maybe_unused]] SubproblemStatus status = equality_QP_solver.solve_equality_constrained_QP(statistics, subproblem,
+         current_iterate.primals, waste, trial_multipliers, subproblem_objective, warmstart_information);
+      assert(status == SubproblemStatus::OPTIMAL && "Something went wrong in compute_least_square_multipliers");
 
       // note: we solve with -RHS instead of RHS (this is what LagrangeNewtonSubproblem does intrinsically).
       // Therefore, we get our multipliers from -solution.
