@@ -23,10 +23,10 @@ cd build
 
 if [[ "${target}" == *mingw* ]]; then
     LBT=blastrampoline-5
-    HIGHS_DIR=${prefix}/lib
+    LIBHIGHS=${prefix}/lib/libhighs.dll.a
 else
     LBT=blastrampoline
-    HIGHS_DIR=${libdir}
+    LIBHIGHS=${libdir}/libhighs.${dlext}
 fi
 
 if [[ "${target}" == *apple* ]] || [[ "${target}" == *freebsd* ]]; then
@@ -44,7 +44,7 @@ cmake \
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
     -DCMAKE_BUILD_TYPE=Release \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
-    -DHIGHS_DIR=${HIGHS_DIR} \
+    -DHIGHS=${LIBHIGHS} \
     -DHSL=${libdir}/libhsl.${dlext} \
     -DBLA_VENDOR="libblastrampoline" \
     -DMUMPS_INCLUDE_DIR=${includedir} \
