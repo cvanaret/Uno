@@ -10,7 +10,6 @@
 #include "../InequalityQPSolver.hpp"
 #include "../LPSolver.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
-#include "linear_algebra/MatrixView.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
