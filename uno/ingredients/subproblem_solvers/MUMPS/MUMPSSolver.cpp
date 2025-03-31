@@ -2,7 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "MUMPSSolver.hpp"
+#include "ingredients/subproblems/LagrangeNewtonSubproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
+#include "optimization/WarmstartInformation.hpp"
+
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"
 #endif
@@ -10,7 +13,17 @@
 #define USE_COMM_WORLD (-987654)
 
 namespace uno {
-   MUMPSSolver::MUMPSSolver(size_t dimension, size_t number_nonzeros) : DirectSymmetricIndefiniteLinearSolver<size_t, double>(dimension) {
+   MUMPSSolver::MUMPSSolver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros) :
+      DirectEqualityQPSolver<size_t, double>(),
+      objective_gradient(number_variables),
+      constraints(number_constraints),
+      constraint_jacobian(number_constraints, number_variables), // TODO construct better
+         hessian(number_variables, number_hessian_nonzeros, false, "COO"),
+      dimension(number_variables + number_constraints),
+      number_nonzeros(number_hessian_nonzeros + number_jacobian_nonzeros),
+      augmented_matrix(this->dimension, this->number_nonzeros, true, "COO"),
+      rhs(this->dimension),
+      solution(this->dimension) {
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);
 
@@ -50,7 +63,7 @@ namespace uno {
       this->mumps_structure.job = MUMPSSolver::JOB_END;
       dmumps_c(&this->mumps_structure);
    }
-   
+
    void MUMPSSolver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
       this->mumps_structure.job = MUMPSSolver::JOB_ANALYSIS;
       this->mumps_structure.n = static_cast<int>(matrix.dimension());
@@ -71,17 +84,38 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
    }
 
-   void MUMPSSolver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& /*matrix*/, const Vector<double>& rhs, Vector<double>& result) {
-      result = rhs;
-      this->mumps_structure.rhs = result.data();
+   SubproblemStatus MUMPSSolver::solve_equality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         const Vector<double>& /*initial_point*/, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& /*subproblem_objective*/,
+         WarmstartInformation& warmstart_information) {
+      // set up the augmented system
+      subproblem.assemble_augmented_matrix(statistics, this->objective_gradient, this->constraints, this->constraint_jacobian, this->hessian,
+         this->augmented_matrix, *this, warmstart_information);
+      subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs, warmstart_information);
+      // solve the augmented system
+      this->solve_indefinite_linear_system();
+      // form the primal-dual direction (note the minus sign for the multipliers)
+      direction_primals = view(this->solution, 0, subproblem.number_variables);
+      direction_multipliers.constraints = view(-this->solution, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
+      return SubproblemStatus::OPTIMAL; // TODO
+   }
+
+   void MUMPSSolver::solve_indefinite_linear_system() {
+      // copy rhs into solution (overwritten by MUMPS)
+      this->solution = this->rhs;
+      this->mumps_structure.rhs = this->solution.data();
       this->mumps_structure.job = MUMPSSolver::JOB_SOLVE;
       dmumps_c(&this->mumps_structure);
+   }
+
+   double MUMPSSolver::hessian_quadratic_product(const Vector<double>& primal_direction) const {
+      return this->hessian.quadratic_product(primal_direction, primal_direction);
    }
 
    std::tuple<size_t, size_t, size_t> MUMPSSolver::get_inertia() const {
       const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
       const size_t number_zero_eigenvalues = this->number_zero_eigenvalues();
-      const size_t number_positive_eigenvalues = static_cast<size_t>(this->mumps_structure.n) - (number_negative_eigenvalues + number_zero_eigenvalues);
+      const size_t number_positive_eigenvalues =
+            static_cast<size_t>(this->mumps_structure.n) - (number_negative_eigenvalues + number_zero_eigenvalues);
       return std::make_tuple(number_positive_eigenvalues, number_negative_eigenvalues, number_zero_eigenvalues);
    }
 
@@ -107,7 +141,7 @@ namespace uno {
       // build the internal matrix representation
       this->row_indices.clear();
       this->column_indices.clear();
-      for (const auto [row_index, column_index, _]: matrix) {
+      for (const auto[row_index, column_index, _]: matrix) {
          this->row_indices.emplace_back(static_cast<int>(row_index + this->fortran_shift));
          this->column_indices.emplace_back(static_cast<int>(column_index + this->fortran_shift));
       }

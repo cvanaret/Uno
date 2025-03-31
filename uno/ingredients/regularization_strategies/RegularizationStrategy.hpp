@@ -1,0 +1,32 @@
+// Copyright (c) 2025 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+#ifndef UNO_REGULARIZATIONSTRATEGY_H
+#define UNO_REGULARIZATIONSTRATEGY_H
+
+namespace uno {
+   // forward declarations
+   template <typename IndexType, typename ElementType>
+   class DirectEqualityQPSolver;
+   class Options;
+   class Statistics;
+   template <typename IndexType, typename ElementType>
+   class SymmetricMatrix;
+
+   template <typename ElementType>
+   class RegularizationStrategy {
+   public:
+      RegularizationStrategy() = default;
+      virtual ~RegularizationStrategy() = default;
+
+      virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
+
+      virtual void regularize_hessian(Statistics& statistics, DirectEqualityQPSolver<size_t, ElementType>& linear_solver,
+         SymmetricMatrix<size_t, ElementType>& hessian) = 0;
+      virtual void regularize_augmented_matrix(Statistics& statistics, DirectEqualityQPSolver<size_t, ElementType>& linear_solver,
+            SymmetricMatrix<size_t, ElementType>& augmented_matrix, size_t size_primal_block, size_t size_dual_block,
+            ElementType dual_regularization_parameter) = 0;
+   };
+} // namespace
+
+#endif // UNO_REGULARIZATIONSTRATEGY_H

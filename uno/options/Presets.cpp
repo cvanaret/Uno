@@ -4,9 +4,9 @@
 #include <stdexcept>
 #include "Presets.hpp"
 #include "Options.hpp"
+#include "ingredients/subproblem_solvers/EqualityQPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/InequalityQPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 
 namespace uno {
    Options Presets::get_preset_options(const std::optional<std::string>& optional_preset) {
@@ -18,11 +18,11 @@ namespace uno {
       }
       else {
          /** default preset **/
-         const auto QP_solvers = QPSolverFactory::available_solvers();
-         const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
+         const auto inequality_QP_solvers = InequalityQPSolverFactory::available_solvers();
+         const auto linear_solvers = EqualityQPSolverFactory::available_solvers();
          const auto LP_solvers = LPSolverFactory::available_solvers();
 
-         if (!QP_solvers.empty()) {
+         if (!inequality_QP_solvers.empty()) {
             Presets::set(options, "filtersqp");
          }
          else if (!linear_solvers.empty()) {
@@ -40,8 +40,10 @@ namespace uno {
       // shortcuts for state-of-the-art combinations
       if (preset_name == "ipopt") {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["subproblem"] = "primal_dual_interior_point";
+         options["inequality_handling_method"] = "primal_dual_interior_point";
          options["globalization_mechanism"] = "LS";
+         options["hessian_model"] = "exact";
+         options["regularization_strategy"] = "primal_dual";
          options["globalization_strategy"] = "waechter_filter_method";
          options["filter_type"] = "standard";
          options["filter_beta"] = "0.99999";
@@ -69,8 +71,10 @@ namespace uno {
       }
       else if (preset_name == "filtersqp") {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["subproblem"] = "QP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["globalization_mechanism"] = "TR";
+         options["hessian_model"] = "exact";
+         options["regularization_strategy"] = "none";
          options["globalization_strategy"] = "fletcher_filter_method";
          options["filter_type"] = "standard";
          options["progress_norm"] = "L1";
@@ -87,8 +91,10 @@ namespace uno {
       }
       else if (preset_name == "byrd") {
          options["constraint_relaxation_strategy"] = "l1_relaxation";
-         options["subproblem"] = "QP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["globalization_mechanism"] = "LS";
+         options["hessian_model"] = "exact";
+         options["regularization_strategy"] = "primal";
          options["globalization_strategy"] = "l1_merit";
          options["l1_relaxation_initial_parameter"] = "1";
          options["LS_backtracking_ratio"] = "0.5";
@@ -106,8 +112,10 @@ namespace uno {
       }
       else if (preset_name == "funnelsqp") {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["subproblem"] = "QP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["globalization_mechanism"] = "TR";
+         options["hessian_model"] = "exact";
+         options["regularization_strategy"] = "none";
          options["globalization_strategy"] = "funnel_method";
          options["progress_norm"] = "L1";
          options["residual_norm"] = "L2";
@@ -132,8 +140,10 @@ namespace uno {
       }
       else if (preset_name == "filterslp") {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["subproblem"] = "LP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["globalization_mechanism"] = "TR";
+         options["hessian_model"] = "zero";
+         options["regularization_strategy"] = "none";
          options["globalization_strategy"] = "fletcher_filter_method";
          options["filter_type"] = "standard";
          options["progress_norm"] = "L1";

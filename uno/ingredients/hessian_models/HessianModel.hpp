@@ -8,7 +8,7 @@
 
 namespace uno {
    // forward declarations
-   class OptimizationProblem;
+   class Model;
    class Options;
    class Statistics;
    template <typename IndexType, typename ElementType>
@@ -19,13 +19,13 @@ namespace uno {
    class HessianModel {
    public:
       HessianModel() = default;
-      virtual ~HessianModel();
+      virtual ~HessianModel() = default;
 
       size_t evaluation_count{0};
 
-      virtual void initialize_statistics(Statistics& statistics, const Options& options) const = 0;
-      virtual void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) = 0;
+      [[nodiscard]] virtual size_t compute_number_hessian_nonzeros(const Model& model) const = 0;
+      virtual void evaluate(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) = 0;
    };
 } // namespace
 

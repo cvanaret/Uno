@@ -27,24 +27,23 @@ namespace uno {
    class UserCallbacks;
    template <typename ElementType>
    class Vector;
-   struct WarmstartInformation;
+   class WarmstartInformation;
 
    class ConstraintRelaxationStrategy {
    public:
       ConstraintRelaxationStrategy(const Model& model, size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
-            size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options);
+            size_t number_jacobian_nonzeros, const OptimizationProblem& first_reformulation, const Options& options);
       virtual ~ConstraintRelaxationStrategy();
 
       virtual void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) = 0;
-      void set_trust_region_radius(double trust_region_radius);
 
       [[nodiscard]] virtual size_t maximum_number_variables() const = 0;
       [[nodiscard]] virtual size_t maximum_number_constraints() const = 0;
 
       // direction computation
-      virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+      virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
             WarmstartInformation& warmstart_information) = 0;
-      void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+      void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
             const Vector<double>& initial_point, WarmstartInformation& warmstart_information);
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
       virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information) = 0;

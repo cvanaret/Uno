@@ -5,18 +5,26 @@
 #define UNO_MUMPSSOLVER_H
 
 #include <vector>
-#include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "dmumps_c.h"
+#include "../DirectEqualityQPSolver.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
+#include "linear_algebra/Vector.hpp"
 
 namespace uno {
-   class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
+   class MUMPSSolver : public DirectEqualityQPSolver<size_t, double> {
    public:
-      explicit MUMPSSolver(size_t dimension, size_t number_nonzeros);
+      explicit MUMPSSolver(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros);
       ~MUMPSSolver() override;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
-      void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
+      [[nodiscard]] SubproblemStatus solve_equality_constrained_QP(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         WarmstartInformation& warmstart_information) override;
+
+      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
 
       [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -26,11 +34,22 @@ namespace uno {
       [[nodiscard]] size_t rank() const override;
 
    protected:
+      SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
+      Vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+      RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
+      SymmetricMatrix<size_t, double> hessian;
+
+      const size_t dimension;
+      const size_t number_nonzeros;
+
       DMUMPS_STRUC_C mumps_structure{};
 
       // matrix sparsity
       std::vector<int> row_indices{};
       std::vector<int> column_indices{};
+      SymmetricMatrix<size_t, double> augmented_matrix;
+      Vector<double> rhs;
+      Vector<double> solution;
 
       static const int JOB_INIT = -1;
       static const int JOB_END = -2;
@@ -42,6 +61,7 @@ namespace uno {
 
       const size_t fortran_shift{1};
       void save_sparsity_to_local_format(const SymmetricMatrix<size_t, double>& matrix);
+      void solve_indefinite_linear_system();
    };
 } // namespace
 

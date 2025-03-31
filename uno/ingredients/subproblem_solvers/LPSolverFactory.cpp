@@ -17,13 +17,13 @@
 namespace uno {
    std::unique_ptr<LPSolver> LPSolverFactory::create([[maybe_unused]] size_t number_variables, [[maybe_unused]] size_t number_constraints,
          [[maybe_unused]] size_t number_objective_gradient_nonzeros, [[maybe_unused]] size_t number_jacobian_nonzeros,
-         [[maybe_unused]] const Options& options) {
+         size_t /* number_hessian_nonzeros */, [[maybe_unused]] const Options& options) {
       try {
          [[maybe_unused]] const std::string& LP_solver_name = options.get_string("LP_solver");
 #ifdef HAS_BQPD
          if (LP_solver_name == "BQPD") {
             return std::make_unique<BQPDSolver>(number_variables, number_constraints, number_objective_gradient_nonzeros,
-                  number_jacobian_nonzeros, 0, BQPDProblemType::LP, options);
+                  number_jacobian_nonzeros, 0, options);
          }
 #endif
 #ifdef HAS_HIGHS

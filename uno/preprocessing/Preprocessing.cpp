@@ -2,80 +2,56 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Preprocessing.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "ingredients/subproblem_solvers/QPSolver.hpp"
+#include "ingredients/hessian_models/IdentityHessian.hpp"
+#include "ingredients/regularization_strategies/NoRegularization.hpp"
+#include "ingredients/subproblem_solvers/EqualityQPSolver.hpp"
+#include "ingredients/subproblems/LagrangeNewtonSubproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Statistics.hpp"
 
 namespace uno {
    // compute a least-square approximation of the multipliers by solving a linear system
-   void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<size_t, double>& matrix, Vector<double>& rhs,
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers,
+   void Preprocessing::compute_least_square_multipliers(Statistics& statistics, const OptimizationProblem& problem,
+         EqualityQPSolver<size_t, double>& equality_QP_solver, Iterate& current_iterate, Multipliers& multipliers,
          double multiplier_max_norm) {
-      current_iterate.evaluate_objective_gradient(model);
-      current_iterate.evaluate_constraint_jacobian(model);
       DEBUG << "Computing least-square multipliers\n";
       DEBUG2 << "Current primals: " << current_iterate.primals << '\n';
 
-      /* generate the right-hand side */
-      rhs.fill(0.);
-      // objective gradient
-      for (const auto [variable_index, derivative]: current_iterate.evaluations.objective_gradient) {
-         rhs[variable_index] += model.objective_sign * derivative;
-      }
-      // variable bound constraints
-      for (size_t variable_index: Range(model.number_variables)) {
-         rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];
-      }
-      DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, view(rhs, 0, model.number_variables + model.number_constraints));
+      // solve the system (do not evaluate the constraints)
+      IdentityHessian hessian_model{};
+      NoRegularization<double> regularization_strategy{};
+      LagrangeNewtonSubproblem subproblem(problem, current_iterate, multipliers, hessian_model, regularization_strategy, INF<double>);
+      // solution
+      Vector<double> waste(problem.number_variables);
+      Multipliers trial_multipliers(problem.number_variables, problem.number_constraints);
+      double subproblem_objective;
 
-      // if the residuals on the RHS are all 0, the least-square multipliers are all 0
-      if (norm_inf(view(rhs, 0, model.number_variables + model.number_constraints)) == 0.) {
-         multipliers.fill(0.);
-         DEBUG << "Least-square multipliers are all 0.\n";
-         return;
-      }
+      WarmstartInformation warmstart_information{};
+      warmstart_information.constraints_changed = false;
+      [[maybe_unused]] SubproblemStatus status = equality_QP_solver.solve_equality_constrained_QP(statistics, subproblem,
+         current_iterate.primals, waste, trial_multipliers, subproblem_objective, warmstart_information);
+      assert(status == SubproblemStatus::OPTIMAL && "Something went wrong in compute_least_square_multipliers");
 
-      /* build the symmetric matrix */
-      matrix.reset();
-      // identity block
-      for (size_t variable_index: Range(model.number_variables)) {
-         matrix.insert(1., variable_index, variable_index);
-         matrix.finalize_column(variable_index);
-      }
-      // Jacobian of general constraints
-      for (size_t constraint_index: Range(model.number_constraints)) {
-         for (const auto [variable_index, derivative]: current_iterate.evaluations.constraint_jacobian[constraint_index]) {
-            matrix.insert(derivative, variable_index, model.number_variables + constraint_index);
-         }
-         matrix.finalize_column(model.number_variables + constraint_index);
-      }
-      DEBUG2 << "Matrix for least-square multipliers:\n" << matrix << '\n';
-
-      /* solve the system */
-      Vector<double> solution(matrix.dimension());
-      linear_solver.do_symbolic_analysis(matrix);
-      linear_solver.do_numerical_factorization(matrix);
-      linear_solver.solve_indefinite_system(matrix, rhs, solution);
-
+      // note: we solve with -RHS instead of RHS (this is what LagrangeNewtonSubproblem does intrinsically).
+      // Therefore, we get our multipliers from -solution.
+      DEBUG2 << "Trial multipliers: "; print_vector(DEBUG2, trial_multipliers.constraints);
       // if least-square multipliers too big, discard them. Otherwise, keep them
-      const auto trial_multipliers = view(solution, model.number_variables, model.number_variables + model.number_constraints);
-      DEBUG2 << "Trial multipliers: "; print_vector(DEBUG2, trial_multipliers);
-      if (norm_inf(trial_multipliers) <= multiplier_max_norm) {
-         multipliers = trial_multipliers;
+      if (norm_inf(trial_multipliers.constraints) <= multiplier_max_norm) {
+         multipliers.constraints = trial_multipliers.constraints;
       }
       else {
          DEBUG << "Ignoring the least-square multipliers\n";
       }
-      DEBUG << '\n';
    }
 
-   size_t count_infeasible_linear_constraints(const Model& model, const std::vector<double>& constraint_values) {
+   size_t count_infeasible_linear_constraints(const Model& model, const Vector<double>& constraint_values) {
       size_t infeasible_linear_constraints = 0;
       for (size_t constraint_index: model.get_linear_constraints()) {
          if (constraint_values[constraint_index] < model.constraint_lower_bound(constraint_index) ||
@@ -88,13 +64,13 @@ namespace uno {
 
    void Preprocessing::enforce_linear_constraints(const Model& /*model*/, Vector<double>& /*primals*/, Multipliers& /*multipliers*/,
          QPSolver& /*qp_solver*/) {
-      WARNING << "Preprocessing::enforce_linear_constraints not implemented yet\n";
       /*
+      WARNING << "Preprocessing::enforce_linear_constraints not implemented yet\n";
       const auto& linear_constraints = model.get_linear_constraints();
       INFO << "\nPreprocessing phase: the problem has " << linear_constraints.size() << " linear constraints\n";
       if (!linear_constraints.empty()) {
          // evaluate the constraints
-         std::vector<double> constraints(model.number_constraints);
+         Vector<double> constraints(model.number_constraints);
          model.evaluate_constraints(primals, constraints);
          const size_t infeasible_linear_constraints = count_infeasible_linear_constraints(model, constraints);
          INFO << "There are " << infeasible_linear_constraints << " infeasible linear constraints at the initial point\n";

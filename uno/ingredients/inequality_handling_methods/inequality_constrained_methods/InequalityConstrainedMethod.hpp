@@ -5,42 +5,52 @@
 #define UNO_INEQUALITYCONSTRAINEDMETHOD_H
 
 #include "../InequalityHandlingMethod.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/Vector.hpp"
+#include "ingredients/subproblem_solvers/InequalityQPSolver.hpp"
 
 namespace uno {
    class InequalityConstrainedMethod : public InequalityHandlingMethod {
    public:
-      InequalityConstrainedMethod(const std::string& hessian_model, size_t number_variables, size_t number_constraints,
-            size_t number_hessian_nonzeros, bool convexify, const Options& options);
-      ~InequalityConstrainedMethod() override = default;
-      
+      InequalityConstrainedMethod(size_t number_variables, size_t number_constraints,
+         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, const OptimizationProblem& first_reformulation,
+         const Options& options);
+
+      ~InequalityConstrainedMethod() override;
+
+      // number of nonzeros
+      [[nodiscard]] size_t compute_number_hessian_nonzeros(const OptimizationProblem& first_reformulation,
+         const HessianModel& hessian_model) const override;
+
       void initialize_statistics(Statistics& statistics, const Options& options) override;
-      void set_initial_point(const Vector<double>& point) override;
-      void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
+      void generate_initial_iterate(Statistics& /*statistics*/, const OptimizationProblem& /*problem*/,
+         Iterate& /*initial_iterate*/) override;
+      [[nodiscard]] SubproblemStatus solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         double trust_region_radius, WarmstartInformation& warmstart_information) override;
+
+      void initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
-      [[nodiscard]] double proximal_coefficient(const Iterate& current_iterate) const override;
-      void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
+      [[nodiscard]] double proximal_coefficient(const Iterate& /*current_iterate*/) const override;
+      void exit_feasibility_problem(Statistics& /*statistics*/, const OptimizationProblem& /*problem*/,
+         Iterate& /*trial_iterate*/) override;
 
-      void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
-      [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate&, const Vector<double>&, double) const override;
+      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
+      // auxiliary measure is 0 in inequality-constrained methods
+      void set_auxiliary_measure(const Model& /*model*/, Iterate& iterate) override;
+      [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& /*model*/, const Iterate& /*current_iterate*/,
+         const Vector<double>& /*primal_direction*/, double /*step_length*/) const override;
 
-      void postprocess_iterate(const OptimizationProblem& model, Iterate& iterate) override;
+      void postprocess_iterate(const OptimizationProblem& /*problem*/, Iterate& /*iterate*/) override;
+
+      void set_initial_point(const Vector<double>& point) override;
 
    protected:
-      Vector<double> initial_point{};
-      std::vector<double> direction_lower_bounds{};
-      std::vector<double> direction_upper_bounds{};
-      std::vector<double> linearized_constraints_lower_bounds{};
-      std::vector<double> linearized_constraints_upper_bounds{};
+      const bool enforce_linear_constraints_at_initial_iterate;
+      // pointer to allow polymorphism
+      const std::unique_ptr<InequalityQPSolver> subproblem_solver;
 
-      SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
-      std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-      RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
-
-      void set_direction_bounds(const OptimizationProblem& problem, const Iterate& current_iterate);
-      void set_linearized_constraint_bounds(const OptimizationProblem& problem, const std::vector<double>& current_constraints);
+      [[nodiscard]] SubproblemStatus solve_inequality_subproblem(Statistics& statistics, LagrangeNewtonSubproblem& subproblem,
+         Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         WarmstartInformation& warmstart_information);
       static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
    };
 } // namespace

@@ -1,16 +1,14 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <cmath>
 #include "Uno.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
-#include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/InequalityQPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/EqualityQPSolverFactory.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
@@ -159,14 +157,14 @@ namespace uno {
       std::cout << "- Globalization mechanisms: " << join(GlobalizationMechanismFactory::available_strategies(), ", ") << '\n';
       std::cout << "- Globalization strategies: " << join(GlobalizationStrategyFactory::available_strategies(), ", ") << '\n';
       std::cout << "- Subproblems: " << join(InequalityHandlingMethodFactory::available_strategies(), ", ") << '\n';
-      std::cout << "- QP solvers: " << join(QPSolverFactory::available_solvers(), ", ") << '\n';
-      std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers(), ", ") << '\n';
-      std::cout << "- Linear solvers: " << join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", ") << '\n';
+      std::cout << "- Inequality QP solvers: " << join(InequalityQPSolverFactory::available_solvers(), ", ") << '\n';
+      // std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers(), ", ") << '\n';
+      std::cout << "- Linear solvers: " << join(EqualityQPSolverFactory::available_solvers(), ", ") << '\n';
    }
 
    std::string Uno::get_strategy_combination(const Options& options) {
       return options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
-                                options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
+                                options.get_string("globalization_strategy") + " " + options.get_string("inequality_handling_method");
 
    }
 

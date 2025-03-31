@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include "l1RelaxedProblem.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
@@ -34,6 +35,11 @@ namespace uno {
                model.number_variables + this->elastic_variables.size()))),
          single_lower_bounded_variables(concatenate(this->model.get_single_lower_bounded_variables(),
                Range(model.number_variables, model.number_variables + this->elastic_variables.size()))) {
+   }
+
+   size_t l1RelaxedProblem::compute_number_hessian_nonzeros(const HessianModel& hessian_model) const {
+      // the l1 relaxed problem does not introduce any element
+      return hessian_model.compute_number_hessian_nonzeros(this->model);
    }
 
    double l1RelaxedProblem::get_objective_multiplier() const {
@@ -70,7 +76,7 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
       constraints = iterate.evaluations.constraints;
       // add the contribution of the elastics
@@ -95,9 +101,10 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
+   void l1RelaxedProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& x, const Multipliers& multipliers,
          SymmetricMatrix<size_t, double>& hessian) const {
-      this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
+      hessian_model.evaluate(this->model, x, this->objective_multiplier, multipliers.constraints, hessian);
+      hessian.set_dimension(this->number_variables);
 
       // proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
@@ -162,8 +169,8 @@ namespace uno {
    }
 
    // complementary slackness error: expression for violated constraints depends on the definition of the relaxed problem
-   double l1RelaxedProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
-         const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
+   double l1RelaxedProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints, const Multipliers& multipliers,
+         double shift_value, Norm residual_norm) const {
       // bound constraints
       // safeguard in case we have never solved the feasibility problem, in which case there are no elastic variables
       const Range variables_range = Range(std::min(this->number_variables, primals.size()));
@@ -194,6 +201,10 @@ namespace uno {
          return 0.;
       }};
       return norm(residual_norm, bounds_complementarity);
+   }
+
+   double l1RelaxedProblem::dual_regularization_parameter() const {
+      return 0.;
    }
 
    double l1RelaxedProblem::variable_lower_bound(size_t variable_index) const {

@@ -7,6 +7,9 @@
 #include <memory>
 #include <string>
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
+#include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
@@ -23,24 +26,29 @@ namespace uno {
    class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
-   struct WarmstartInformation;
+   class WarmstartInformation;
    
    class InequalityHandlingMethod {
    public:
-      InequalityHandlingMethod(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros, bool convexify, const Options& options);
+      InequalityHandlingMethod(const std::string& hessian_model, const std::string& regularization_strategy, size_t number_variables,
+         const Options& options);
       virtual ~InequalityHandlingMethod() = default;
+
+      // number of nonzeros
+      [[nodiscard]] virtual size_t compute_number_hessian_nonzeros(const OptimizationProblem& problem,
+         const HessianModel& hessian_model) const = 0;
 
       // virtual methods implemented by subclasses
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
-      virtual void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
-      virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            Direction& direction, WarmstartInformation& warmstart_information) = 0;
+      virtual void generate_initial_iterate(Statistics& statistics, const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
+      [[nodiscard]] virtual SubproblemStatus solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
+         double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
 
-      void set_trust_region_radius(double new_trust_region_radius);
       virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
       [[nodiscard]] virtual double proximal_coefficient(const Iterate& current_iterate) const = 0;
-      virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
+      virtual void exit_feasibility_problem(Statistics& statistics, const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
 
       // progress measures
       [[nodiscard]] virtual double hessian_quadratic_product(const Vector<double>& primal_direction) const = 0;
@@ -59,7 +67,8 @@ namespace uno {
 
    protected:
       const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
-      double trust_region_radius{INF<double>};
+      const std::unique_ptr<RegularizationStrategy<double>> regularization_strategy;
+      Vector<double> initial_point{};
    };
 } // namespace
 

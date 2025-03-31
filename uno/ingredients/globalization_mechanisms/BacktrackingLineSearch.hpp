@@ -8,7 +8,7 @@
 
 namespace uno {
    // forward declaration
-   struct WarmstartInformation;
+   class WarmstartInformation;
 
    class BacktrackingLineSearch : public GlobalizationMechanism {
    public:

@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Iterate.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
@@ -39,7 +38,7 @@ namespace uno {
             model.evaluate_constraints(this->primals, this->evaluations.constraints);
             Iterate::number_eval_constraints++;
             // check finiteness
-            if (std::any_of(this->evaluations.constraints.cbegin(), this->evaluations.constraints.cend(), [](double constraint_j) {
+            if (std::any_of(this->evaluations.constraints.begin(), this->evaluations.constraints.end(), [](double constraint_j) {
                return !is_finite(constraint_j);
             })) {
                throw FunctionEvaluationError();

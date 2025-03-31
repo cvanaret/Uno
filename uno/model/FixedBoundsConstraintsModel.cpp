@@ -37,7 +37,7 @@ namespace uno {
       this->model->evaluate_objective_gradient(x, gradient);
    }
 
-   void FixedBoundsConstraintsModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
+   void FixedBoundsConstraintsModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       this->model->evaluate_constraints(x, constraints);
       // add the fixed variables
       size_t current_constraint = this->model->number_constraints;
@@ -70,7 +70,7 @@ namespace uno {
    }
 
    void FixedBoundsConstraintsModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
+         Matrix<size_t, double>& hessian) const {
       this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
    }
 
