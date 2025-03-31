@@ -32,7 +32,7 @@ namespace uno {
                std::max(optimality_problem.number_constraints, feasibility_problem.number_constraints),
                std::max(optimality_problem.number_objective_gradient_nonzeros(), feasibility_problem.number_objective_gradient_nonzeros()),
                std::max(optimality_problem.number_jacobian_nonzeros(), feasibility_problem.number_jacobian_nonzeros()),
-               std::max(optimality_problem.number_hessian_nonzeros(), feasibility_problem.number_hessian_nonzeros()),
+               optimality_problem,
                options),
          optimality_problem(std::forward<OptimalityProblem>(optimality_problem)),
          feasibility_problem(std::forward<l1RelaxedProblem>(feasibility_problem)),

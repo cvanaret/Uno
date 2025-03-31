@@ -42,7 +42,7 @@ namespace uno {
       [[nodiscard]] double dual_regularization_parameter() const override;
 
    protected:
-      const OptimizationProblem& problem;
+      const OptimizationProblem& first_reformulation;
       const double barrier_parameter;
       const double damping_factor{1e-5}; // TODO load option
    };

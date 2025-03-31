@@ -18,11 +18,11 @@
 
 namespace uno {
    ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, size_t number_variables, size_t number_constraints,
-         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
+         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, const OptimizationProblem& first_reformulation, const Options& options):
          model(model),
          globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
          inequality_handling_method(InequalityHandlingMethodFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros,
-               number_jacobian_nonzeros, number_hessian_nonzeros, options)),
+               number_jacobian_nonzeros, first_reformulation, options)),
          progress_norm(norm_from_string(options.get_string("progress_norm"))),
          residual_norm(norm_from_string(options.get_string("residual_norm"))),
          residual_scaling_threshold(options.get_double("residual_scaling_threshold")),

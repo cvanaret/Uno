@@ -235,6 +235,10 @@ namespace uno {
       }
    }
 
+   double MA27Solver::hessian_quadratic_product(const Vector<double>& primal_direction) const {
+      return this->hessian.quadratic_product(primal_direction, primal_direction);
+   }
+
    std::tuple<size_t, size_t, size_t> MA27Solver::get_inertia() const {
       // rank = number_positive_eigenvalues + number_negative_eigenvalues
       // n = rank + number_zero_eigenvalues

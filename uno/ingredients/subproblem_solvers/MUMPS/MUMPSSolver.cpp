@@ -107,6 +107,10 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
    }
 
+   double MUMPSSolver::hessian_quadratic_product(const Vector<double>& primal_direction) const {
+      return this->hessian.quadratic_product(primal_direction, primal_direction);
+   }
+
    std::tuple<size_t, size_t, size_t> MUMPSSolver::get_inertia() const {
       const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
       const size_t number_zero_eigenvalues = this->number_zero_eigenvalues();

@@ -35,7 +35,7 @@ namespace uno {
    l1Relaxation::l1Relaxation(const Model& model, l1RelaxedProblem&& feasibility_problem, l1RelaxedProblem&& l1_relaxed_problem, const Options& options) :
          ConstraintRelaxationStrategy(model, l1_relaxed_problem.number_variables, l1_relaxed_problem.number_constraints,
                l1_relaxed_problem.number_objective_gradient_nonzeros(), l1_relaxed_problem.number_jacobian_nonzeros(),
-               l1_relaxed_problem.number_hessian_nonzeros(), options),
+               l1_relaxed_problem, options),
          feasibility_problem(std::forward<l1RelaxedProblem>(feasibility_problem)),
          l1_relaxed_problem(std::forward<l1RelaxedProblem>(l1_relaxed_problem)),
          penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),

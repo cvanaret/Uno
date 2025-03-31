@@ -32,7 +32,7 @@ namespace uno {
    class ConstraintRelaxationStrategy {
    public:
       ConstraintRelaxationStrategy(const Model& model, size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
-            size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options);
+            size_t number_jacobian_nonzeros, const OptimizationProblem& first_reformulation, const Options& options);
       virtual ~ConstraintRelaxationStrategy();
 
       virtual void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) = 0;

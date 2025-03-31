@@ -11,13 +11,13 @@ namespace uno {
    class InequalityConstrainedMethod : public InequalityHandlingMethod {
    public:
       InequalityConstrainedMethod(size_t number_variables, size_t number_constraints,
-         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros,
+         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, const OptimizationProblem& first_reformulation,
          const Options& options);
 
       ~InequalityConstrainedMethod() override;
 
       // number of nonzeros
-      [[nodiscard]] size_t compute_number_hessian_nonzeros(const OptimizationProblem& problem,
+      [[nodiscard]] size_t compute_number_hessian_nonzeros(const OptimizationProblem& first_reformulation,
          const HessianModel& hessian_model) const override;
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;

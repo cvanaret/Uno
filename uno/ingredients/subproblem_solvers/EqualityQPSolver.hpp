@@ -28,9 +28,7 @@ namespace uno {
          const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
          WarmstartInformation& warmstart_information) = 0;
 
-      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& /*primal_direction*/) const {
-         return 0.;
-      }
+      [[nodiscard]] virtual double hessian_quadratic_product(const Vector<double>& primal_direction) const = 0;
    };
 } // namespace
 

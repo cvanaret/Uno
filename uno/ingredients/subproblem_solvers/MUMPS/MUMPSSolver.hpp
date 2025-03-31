@@ -24,6 +24,8 @@ namespace uno {
          const Vector<double>& initial_point, Vector<double>& direction_primals, Multipliers& direction_multipliers, double& subproblem_objective,
          WarmstartInformation& warmstart_information) override;
 
+      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
+
       [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
       [[nodiscard]] size_t number_zero_eigenvalues() const;

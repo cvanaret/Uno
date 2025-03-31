@@ -14,23 +14,24 @@
 
 namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(size_t number_variables, size_t number_constraints,
-      size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
+         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, const OptimizationProblem& first_reformulation,
+         const Options& options):
       InequalityHandlingMethod(options.get_string("hessian_model"), options.get_string("regularization_strategy"), number_variables, options),
       enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       subproblem_solver(InequalityQPSolverFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
          // if the QP solver is used during preprocessing, we need to allocate the Hessian with at least number_variables elements
-         std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, number_hessian_nonzeros),
+         std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0,
+         InequalityConstrainedMethod::compute_number_hessian_nonzeros(first_reformulation, *this->hessian_model)),
          options)
          ) {
-      // TODO fix number of Hessian nnz
    }
 
    InequalityConstrainedMethod::~InequalityConstrainedMethod() { }
 
-   size_t InequalityConstrainedMethod::compute_number_hessian_nonzeros(const OptimizationProblem& problem,
+   size_t InequalityConstrainedMethod::compute_number_hessian_nonzeros(const OptimizationProblem& first_reformulation,
          const HessianModel& hessian_model) const {
-      return problem.compute_number_hessian_nonzeros(hessian_model);
+      return first_reformulation.compute_number_hessian_nonzeros(hessian_model);
    }
 
    void InequalityConstrainedMethod::initialize_statistics(Statistics& statistics, const Options& options) {

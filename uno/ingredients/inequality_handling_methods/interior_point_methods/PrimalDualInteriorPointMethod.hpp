@@ -26,11 +26,11 @@ namespace uno {
    class PrimalDualInteriorPointMethod : public InequalityHandlingMethod {
    public:
       PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
-         size_t number_hessian_nonzeros, const Options& options);
+         const OptimizationProblem& first_reformulation, const Options& options);
       ~PrimalDualInteriorPointMethod() override;
 
       // number of nonzeros
-      [[nodiscard]] size_t compute_number_hessian_nonzeros(const OptimizationProblem& problem,
+      [[nodiscard]] size_t compute_number_hessian_nonzeros(const OptimizationProblem& first_reformulation,
          const HessianModel& hessian_model) const override;
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
@@ -83,9 +83,9 @@ namespace uno {
       [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
             Multipliers& direction_multipliers, double tau);
       void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
-            Vector<double>& direction_primals, Multipliers& direction_multipliers);
+            Vector<double>& direction_primals, Multipliers& direction_multipliers) const;
       void compute_bound_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
-            const Vector<double>& primal_direction, Multipliers& direction_multipliers);
+            const Vector<double>& primal_direction, Multipliers& direction_multipliers) const;
    };
 } // namespace
 

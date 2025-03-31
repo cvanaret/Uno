@@ -104,8 +104,9 @@ namespace uno {
          WarmstartInformation& warmstart_information) {
       // set up the augmented system
       subproblem.assemble_augmented_matrix(statistics, this->objective_gradient, this->constraints, this->constraint_jacobian, this->hessian,
-      this->augmented_matrix, *this, warmstart_information);
+         this->augmented_matrix, *this, warmstart_information);
       subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs, warmstart_information);
+      // TODO print subproblem
       // solve the augmented system
       this->solve_indefinite_linear_system();
       // form the primal-dual direction (note the minus sign for the multipliers)
@@ -133,6 +134,10 @@ namespace uno {
             &this->factorization.lifact, &this->nrhs, this->solution.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
             this->icntl.data(), this->info.data());
       }
+   }
+
+   double MA57Solver::hessian_quadratic_product(const Vector<double>& primal_direction) const {
+      return this->hessian.quadratic_product(primal_direction, primal_direction);
    }
 
    std::tuple<size_t, size_t, size_t> MA57Solver::get_inertia() const {

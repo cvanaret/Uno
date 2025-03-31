@@ -11,17 +11,17 @@
 
 namespace uno {
    std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(size_t number_variables, size_t number_constraints,
-         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) {
+         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, const OptimizationProblem& first_reformulation, const Options& options) {
       const std::string inequality_handling_method = options.get_string("inequality_handling_method");
       // inequality-constrained methods
       if (inequality_handling_method == "inequality_constrained") {
          return std::make_unique<InequalityConstrainedMethod>(number_variables, number_constraints,
-            number_objective_gradient_nonzeros, number_jacobian_nonzeros, number_hessian_nonzeros, options);
+            number_objective_gradient_nonzeros, number_jacobian_nonzeros, first_reformulation, options);
       }
       // interior-point method
       else if (inequality_handling_method == "primal_dual_interior_point") {
          return std::make_unique<PrimalDualInteriorPointMethod>(number_variables, number_constraints, number_jacobian_nonzeros,
-            number_hessian_nonzeros, options);
+            first_reformulation, options);
       }
       throw std::invalid_argument("Subproblem strategy " + inequality_handling_method + " is not supported");
    }

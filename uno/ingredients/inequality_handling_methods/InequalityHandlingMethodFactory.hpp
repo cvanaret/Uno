@@ -11,11 +11,12 @@ namespace uno {
    // forward declaration
    class Options;
    class InequalityHandlingMethod;
+   class OptimizationProblem;
 
    class InequalityHandlingMethodFactory {
       public:
          static std::unique_ptr<InequalityHandlingMethod> create(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
-               size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options);
+               size_t number_jacobian_nonzeros, const OptimizationProblem& first_reformulation, const Options& options);
 
          static std::vector<std::string> available_strategies();
    };

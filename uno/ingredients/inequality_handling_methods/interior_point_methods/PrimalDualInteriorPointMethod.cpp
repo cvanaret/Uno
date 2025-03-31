@@ -4,28 +4,23 @@
 #include "PrimalDualInteriorPointMethod.hpp"
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
-#include "ingredients/subproblem_solvers/DirectEqualityQPSolver.hpp"
 #include "ingredients/subproblem_solvers/EqualityQPSolverFactory.hpp"
 #include "ingredients/subproblems/LagrangeNewtonSubproblem.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "preprocessing/Preprocessing.hpp"
-#include "symbolic/VectorView.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
    PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
-      size_t number_hessian_nonzeros, const Options& options):
+         const OptimizationProblem& first_reformulation, const Options& options):
       InequalityHandlingMethod(options.get_string("hessian_model"), options.get_string("regularization_strategy"), number_variables, options),
       constraints(number_constraints),
       subproblem_solver(EqualityQPSolverFactory::create(
                number_variables, number_constraints, number_jacobian_nonzeros,
-               number_hessian_nonzeros
-                  + number_variables + number_constraints /* regularization */ // TODO depends on regularization strategy
-                  + number_variables, /* diagonal barrier terms */
+               PrimalDualInteriorPointMethod::compute_number_hessian_nonzeros(first_reformulation, *this->hessian_model),
                options)),
       solution(number_variables + number_constraints),
       barrier_parameter_update_strategy(options),
@@ -46,11 +41,12 @@ namespace uno {
 
    PrimalDualInteriorPointMethod::~PrimalDualInteriorPointMethod() { }
 
-   size_t PrimalDualInteriorPointMethod::compute_number_hessian_nonzeros(const OptimizationProblem& problem,
+   size_t PrimalDualInteriorPointMethod::compute_number_hessian_nonzeros(const OptimizationProblem& first_reformulation,
          const HessianModel& hessian_model) const {
       // create the barrier reformulation
-      PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
-      return barrier_problem.compute_number_hessian_nonzeros(hessian_model);
+      const PrimalDualInteriorPointProblem barrier_problem(first_reformulation, this->barrier_parameter());
+      return barrier_problem.compute_number_hessian_nonzeros(hessian_model) +
+         barrier_problem.number_variables + barrier_problem.number_constraints; /* regularization TODO: depends on the strategy */
    }
 
    void PrimalDualInteriorPointMethod::initialize_statistics(Statistics& statistics, const Options& options) {
@@ -346,12 +342,11 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals,
-         const Multipliers& current_multipliers, Vector<double>& direction_primals, Multipliers& direction_multipliers) {
+         const Multipliers& current_multipliers, Vector<double>& direction_primals, Multipliers& direction_multipliers) const {
       this->compute_bound_dual_direction(problem, current_primals, current_multipliers, direction_primals, direction_multipliers);
 
       // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
-      const bool is_small_step = PrimalDualInteriorPointMethod::is_small_step(problem, current_primals, direction_primals);
-      if (is_small_step) {
+      if (PrimalDualInteriorPointMethod::is_small_step(problem, current_primals, direction_primals)) {
          DEBUG << "This is a small step\n";
       }
 
@@ -370,7 +365,7 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::compute_bound_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals,
-         const Multipliers& current_multipliers, const Vector<double>& primal_direction, Multipliers& direction_multipliers) {
+         const Multipliers& current_multipliers, const Vector<double>& primal_direction, Multipliers& direction_multipliers) const {
       direction_multipliers.lower_bounds.fill(0.);
       direction_multipliers.upper_bounds.fill(0.);
       for (const size_t variable_index: problem.get_lower_bounded_variables()) {

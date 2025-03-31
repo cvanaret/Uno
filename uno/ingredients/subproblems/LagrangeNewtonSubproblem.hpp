@@ -46,10 +46,9 @@ namespace uno {
          SymmetricMatrix<size_t, double>& hessian, const WarmstartInformation& warmstart_information);
 
       // QP: Lagrangian Hessian + regularization + Jacobian + bounds
-      template <typename Array>
       void assemble_QP(Statistics& statistics, SparseVector<double>& objective_gradient, Vector<double>& constraints,
-         RectangularMatrix<double>& jacobian, SymmetricMatrix<size_t, double>& hessian, Array& lower_bounds, Array& upper_bounds,
-         const WarmstartInformation& warmstart_information);
+         RectangularMatrix<double>& jacobian, SymmetricMatrix<size_t, double>& hessian, std::vector<double>& lower_bounds,
+         std::vector<double>& upper_bounds, const WarmstartInformation& warmstart_information);
 
       // augmented system: Lagrangian Hessian + Jacobian + regularization
       void assemble_augmented_matrix(Statistics& statistics, SparseVector<double>& objective_gradient, Vector<double>& constraints,
@@ -71,26 +70,6 @@ namespace uno {
       RegularizationStrategy<double>& regularization_strategy;
       const double trust_region_radius;
    };
-
-   template <typename Array>
-   void LagrangeNewtonSubproblem::assemble_QP(Statistics& /*statistics*/, SparseVector<double>& objective_gradient, Vector<double>& constraints,
-         RectangularMatrix<double>& jacobian, SymmetricMatrix<size_t, double>& hessian, Array& lower_bounds, Array& upper_bounds,
-         const WarmstartInformation& warmstart_information) {
-      this->evaluate_functions(objective_gradient, constraints, jacobian, hessian, warmstart_information);
-      // this->regularization_strategy.regularize_hessian(statistics, linear_solver, this->hessian_model);
-
-      // variable bounds
-      if (warmstart_information.variable_bounds_changed) {
-         this->set_variable_bounds(lower_bounds, upper_bounds);
-      }
-
-      // constraint bounds
-      if (warmstart_information.constraint_bounds_changed || warmstart_information.constraints_changed) {
-         auto constraint_lower_bounds = view(lower_bounds, this->number_variables, this->number_variables + this->number_constraints);
-         auto constraint_upper_bounds = view(upper_bounds, this->number_variables, this->number_variables + this->number_constraints);
-         this->set_constraint_bounds(constraints, constraint_lower_bounds, constraint_upper_bounds);
-      }
-   }
 
    template <typename Array>
    void LagrangeNewtonSubproblem::set_variable_bounds(Array& lower_bounds, Array& upper_bounds) {
