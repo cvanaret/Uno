@@ -16,11 +16,14 @@ namespace uno {
       ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options);
 
       void initialize_statistics(Statistics& statistics, const Options& options) const override;
-      void evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
+      void evaluate_hessian(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
             const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
+      void compute_hessian_vector_product(const OptimizationProblem& problem, const Vector<double>& vector,
+         const Vector<double>& constraint_multipliers, Vector<double>& result) override;
 
    protected:
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver; /*!< Solver that computes the inertia */
+      double regularization_factor{0.};
       const double regularization_initial_value{};
       const double regularization_increase_factor{};
       const double regularization_failure_threshold{};

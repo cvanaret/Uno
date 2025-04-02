@@ -61,6 +61,7 @@ namespace uno {
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
 
    private:
+      const bool subproblem_is_regularized;
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
       std::vector<double> constraints;
       SparseVector<double> linear_objective;
@@ -79,7 +80,7 @@ namespace uno {
       size_t size_hessian_workspace{};
       size_t size_hessian_sparsity_workspace{};
       std::vector<double> workspace{};
-      std::vector<int> workspace_sparsity{};
+      std::vector<int> workspace_sparsity{}; // lws
       int k{0};
       int iprint{0}, nout{6};
       double fmin{-1e20};
@@ -94,7 +95,8 @@ namespace uno {
       void solve_subproblem(const OptimizationProblem& problem, const Vector<double>& initial_point, Direction& direction,
             const WarmstartInformation& warmstart_information);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
-      void save_hessian_to_local_format();
+      void save_hessian_operator(const OptimizationProblem& problem, HessianModel& hessian_model,
+         const Vector<double>& current_multipliers);
       void save_gradients_to_local_format(size_t number_constraints);
       void set_multipliers(size_t number_variables, Multipliers& direction_multipliers);
       static BQPDStatus bqpd_status_from_int(int ifail);

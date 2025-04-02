@@ -152,6 +152,8 @@ namespace uno {
          double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       // TODO pick right multipliers
       this->inequality_handling_method->postprocess_iterate(this->current_problem(), trial_iterate);
+      // compute the predicted reduction before the progress measures to make sure second-order information is valid
+      const ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(current_iterate, direction, step_length);
       this->compute_progress_measures(current_iterate, trial_iterate);
       trial_iterate.objective_multiplier = this->current_problem().get_objective_multiplier();
 
@@ -171,8 +173,6 @@ namespace uno {
          statistics.set("status", "0 primal step");
       }
       else {
-         // invoke the globalization strategy for acceptance
-         const ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(current_iterate, direction, step_length);
          accept_iterate = this->globalization_strategy->is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
                predicted_reduction, this->current_problem().get_objective_multiplier());
       }
