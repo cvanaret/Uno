@@ -73,14 +73,14 @@ namespace uno {
       this->model->evaluate_lagrangian_hessian(x, scaled_objective_multiplier, this->scaled_multipliers, hessian);
    }
 
-   void ScaledModel::compute_hessian_vector_product(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
+   void ScaledModel::compute_hessian_vector_product(const Vector<double>& vector, double objective_multiplier, const Vector<double>& multipliers,
          Vector<double>& result) const {
       // scale the objective and constraint multipliers
       const double scaled_objective_multiplier = objective_multiplier*this->scaling.get_objective_scaling();
       for (size_t constraint_index: Range(this->number_constraints)) {
          this->scaled_multipliers[constraint_index] = this->scaling.get_constraint_scaling(constraint_index) * multipliers[constraint_index];
       }
-      this->model->compute_hessian_vector_product(x, scaled_objective_multiplier, this->scaled_multipliers, result);
+      this->model->compute_hessian_vector_product(vector, scaled_objective_multiplier, this->scaled_multipliers, result);
    }
 
    double ScaledModel::variable_lower_bound(size_t variable_index) const {

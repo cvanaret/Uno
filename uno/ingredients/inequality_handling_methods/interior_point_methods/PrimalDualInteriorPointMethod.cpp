@@ -137,7 +137,7 @@ namespace uno {
 
       // barrier Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->hessian_model->evaluate(statistics, barrier_problem, current_iterate.primals, current_multipliers.constraints, this->hessian);
+         this->hessian_model->evaluate_hessian(statistics, barrier_problem, current_iterate.primals, current_multipliers.constraints, this->hessian);
       }
    }
 

@@ -4,7 +4,6 @@
 #include "ConvexifiedHessian.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/hessian_models/UnstableRegularization.hpp"
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
@@ -26,7 +25,7 @@ namespace uno {
       statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
    }
 
-   void ConvexifiedHessian::evaluate(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
+   void ConvexifiedHessian::evaluate_hessian(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
          const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
       // evaluate Lagrangian Hessian
       hessian.set_dimension(problem.number_variables);
@@ -36,20 +35,32 @@ namespace uno {
       this->regularize(statistics, hessian, problem.get_number_original_variables());
    }
 
+   // evaluate_hessian() should have been called prior to calling compute_hessian_vector_product()
+   // this->regularization_factor was set
+   void ConvexifiedHessian::compute_hessian_vector_product(const OptimizationProblem& problem,
+         const Vector<double>& vector, const Vector<double>& constraint_multipliers, Vector<double>& result) {
+      // (H + lambda I)*x = H*x + lambda*x
+      problem.compute_hessian_vector_product(vector, constraint_multipliers, result);
+      // add regularization contribution
+      for (size_t variable_index: Range(problem.get_number_original_variables())) {
+         result[variable_index] += this->regularization_factor * vector[variable_index];
+      }
+   }
+
    // Nocedal and Wright, p51
    void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables) {
       DEBUG << "Current Hessian:\n" << hessian << '\n';
       const double smallest_diagonal_entry = hessian.smallest_diagonal_entry(number_original_variables);
       DEBUG << "The minimal diagonal entry of the matrix is " << smallest_diagonal_entry << '\n';
 
-      double regularization_factor = (smallest_diagonal_entry > 0.) ? 0. : this->regularization_initial_value - smallest_diagonal_entry;
+      this->regularization_factor = (smallest_diagonal_entry > 0.) ? 0. : this->regularization_initial_value - smallest_diagonal_entry;
       bool good_inertia = false;
       bool symbolic_analysis_performed = false;
       while (!good_inertia) {
-         DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
-         if (0. < regularization_factor) {
+         DEBUG << "Testing factorization with regularization factor " << this->regularization_factor << '\n';
+         if (0. < this->regularization_factor) {
             hessian.set_regularization([=](size_t variable_index) {
-               return (variable_index < number_original_variables) ? regularization_factor : 0.;
+               return (variable_index < number_original_variables) ? this->regularization_factor : 0.;
             });
          }
          DEBUG << "Current Hessian:\n" << hessian << '\n';
@@ -66,12 +77,13 @@ namespace uno {
          }
          else {
             DEBUG << "rank: " << this->linear_solver->rank() << ", negative eigenvalues: " << this->linear_solver->number_negative_eigenvalues() << '\n';
-            regularization_factor = (regularization_factor == 0.) ? this->regularization_initial_value : this->regularization_increase_factor * regularization_factor;
-            if (regularization_factor > this->regularization_failure_threshold) {
+            this->regularization_factor = (this->regularization_factor == 0.) ? this->regularization_initial_value :
+               this->regularization_increase_factor * this->regularization_factor;
+            if (this->regularization_factor > this->regularization_failure_threshold) {
                throw UnstableRegularization();
             }
          }
       }
-      statistics.set("regulariz", regularization_factor);
+      statistics.set("regulariz", this->regularization_factor);
    }
 } // namespace

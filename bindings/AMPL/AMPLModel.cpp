@@ -207,10 +207,10 @@ namespace uno {
       //this->asl->i.x_known = 0;
    }
 
-   void AMPLModel::compute_hessian_vector_product(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
+   void AMPLModel::compute_hessian_vector_product(const Vector<double>& vector, double objective_multiplier, const Vector<double>& multipliers,
          Vector<double>& result) const {
       fint error_flag = 0;
-      // prevent ASL to crash by catching all evaluation errors
+      // prevent ASL from crashing by catching all evaluation errors
       Jmp_buf err_jmp_uno;
       this->asl->i.err_jmp_ = &err_jmp_uno;
       this->asl->i.err_jmp1_ = &err_jmp_uno;
@@ -225,7 +225,7 @@ namespace uno {
       this->multipliers_with_flipped_sign = -multipliers;
 
       // compute the Hessian-vector product
-      (this->asl->p.Hvcomp)(this->asl, result.data(), const_cast<double*>(x.data()), objective_number, &objective_multiplier,
+      (this->asl->p.Hvcomp)(this->asl, result.data(), const_cast<double*>(vector.data()), objective_number, &objective_multiplier,
             const_cast<double*>(this->multipliers_with_flipped_sign.data()));
       if (error_flag) {
          throw HessianEvaluationError();

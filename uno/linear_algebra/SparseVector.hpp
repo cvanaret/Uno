@@ -130,6 +130,15 @@ namespace uno {
       return norm;
    }
 
+   template <typename Vector>
+   typename Vector::value_type dot(const Vector& x, const Vector& y) {
+      typename Vector::value_type dot_product = 0;
+      for (size_t index: Range(x.size())) {
+         dot_product += x[index] * y[index];
+      }
+      return dot_product;
+   }
+
    template <typename Vector, typename ElementType>
    ElementType dot(const Vector& x, const SparseVector<ElementType>& y) {
       static_assert(std::is_same_v<typename Vector::value_type, ElementType>);

@@ -32,9 +32,9 @@ namespace uno {
             SymmetricMatrix<size_t, double>& hessian) const override {
          this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
       }
-      void compute_hessian_vector_product(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
+      void compute_hessian_vector_product(const Vector<double>& vector, double objective_multiplier, const Vector<double>& multipliers,
             Vector<double>& result) const override {
-         this->model->compute_hessian_vector_product(x, objective_multiplier, multipliers, result);
+         this->model->compute_hessian_vector_product(vector, objective_multiplier, multipliers, result);
       }
 
       // only these two functions are redefined
