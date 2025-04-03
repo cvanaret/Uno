@@ -44,7 +44,8 @@ find_library(HSL hsl)
 find_library(MA57 ma57)
 find_library(MA27 ma27)
 find_library(BQPD bqpd)
-if(HSL OR MA57 OR MA27 OR BQPD)
+find_package(LAPACK)
+if(HSL OR MA57 OR MA27 OR BQPD OR LAPACK_FOUND)
    message(STATUS "Fortran compiler required")
    enable_language(Fortran)
    include(FortranCInterface)
@@ -140,6 +141,15 @@ if(HSL OR MA27)
 
    find_package(BLAS REQUIRED)
    list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+endif()
+
+# LAPACK
+find_package(LAPACK)
+if(NOT LAPACK_FOUND)
+   message(WARNING "Optional library LAPACK was not found.")
+else()
+	link_to_uno(LAPACK ${LAPACK_LIBRARIES})
+	list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/LAPACKTests.cpp)
 endif()
 
 # METIS
