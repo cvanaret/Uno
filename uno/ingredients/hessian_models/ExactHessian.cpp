@@ -33,6 +33,12 @@ namespace uno {
       return false;
    }
 
+   void ExactHessian::initialize(const Model& /*model*/) {
+   }
+
+   void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+   }
+
    void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) {
       this->model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, hessian_values);

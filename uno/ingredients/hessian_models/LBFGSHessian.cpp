@@ -12,22 +12,22 @@ extern "C" {
 }
 
 namespace uno {
-   LBFGSHessian::LBFGSHessian(): HessianModel() {
+   LBFGSHessian::LBFGSHessian(const Model& model): HessianModel("L-BFGS"), model(model) {
    }
 
-   bool LBFGSHessian::has_implicit_representation() const {
+   bool LBFGSHessian::has_hessian_operator() const {
       return true;
    }
 
-   bool LBFGSHessian::has_explicit_representation() const {
+   bool LBFGSHessian::has_hessian_matrix() const {
       return false;
    }
 
-   void LBFGSHessian::initialize(const Model& /*model*/) {
-      // do nothing
+   bool LBFGSHessian::has_curvature() const {
+      return true;
    }
 
-   size_t LBFGSHessian::number_nonzeros(const Model& /*model*/) const {
+   size_t LBFGSHessian::number_nonzeros() const {
       throw std::runtime_error("LBFGSHessian::number_nonzeros should not be called");
    }
 
@@ -35,17 +35,19 @@ namespace uno {
       return true;
    }
 
-   void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& /*model*/, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& /*hessian*/) {
+   void LBFGSHessian::initialize(const Model& /*model*/) {
+   }
+
+   void LBFGSHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+   }
+
+   void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
       throw std::runtime_error("LBFGSHessian::evaluate_hessian should not be called");
    }
 
-   void LBFGSHessian::compute_hessian_vector_product(const Model& /*model*/, const double* /*vector*/, double /*objective_multiplier*/,
-         const Vector<double>& /*constraint_multipliers*/, double* /*result*/) {
+   void LBFGSHessian::compute_hessian_vector_product(const double* /*x*/, const double* /*vector*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*result*/) {
       throw std::runtime_error("LBFGSHessian::compute_hessian_vector_product not implemented");
-   }
-
-   std::string LBFGSHessian::get_name() const {
-      return "L-BFGS";
    }
 } // namespace

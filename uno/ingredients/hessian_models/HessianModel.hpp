@@ -11,6 +11,8 @@
 
 namespace uno {
    // forward declarations
+   class Model;
+   class Options;
    class Statistics;
    template <typename ElementType>
    class Vector;
@@ -31,6 +33,8 @@ namespace uno {
       virtual void compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const = 0;
       [[nodiscard]] virtual bool is_positive_definite() const = 0;
 
+      virtual void initialize(const Model& model) = 0;
+      virtual void initialize_statistics(Statistics& statistics, const Options& options) const = 0;
       virtual void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) = 0;
       virtual void compute_hessian_vector_product(const double* x, const double* vector,

@@ -37,6 +37,12 @@ namespace uno {
       return true;
    }
 
+   void IdentityHessian::initialize(const Model& /*model*/) {
+   }
+
+   void IdentityHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+   }
+
    void IdentityHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* hessian_values) {
       DEBUG << "Setting identity Hessian\n";

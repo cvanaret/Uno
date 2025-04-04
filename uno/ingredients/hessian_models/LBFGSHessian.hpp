@@ -9,20 +9,25 @@
 namespace uno {
    class LBFGSHessian : public HessianModel {
    public:
-      LBFGSHessian();
+      explicit LBFGSHessian(const Model& model);
       ~LBFGSHessian() override = default;
 
-      [[nodiscard]] bool has_implicit_representation() const override;
-      [[nodiscard]] bool has_explicit_representation() const override;
-
-      void initialize(const Model& model);
-      [[nodiscard]] size_t number_nonzeros(const Model& model) const override;
+      [[nodiscard]] bool has_hessian_operator() const override;
+      [[nodiscard]] bool has_hessian_matrix() const override;
+      [[nodiscard]] bool has_curvature() const override;
+      [[nodiscard]] size_t number_nonzeros() const override;
+      void compute_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override;
       [[nodiscard]] bool is_positive_definite() const override;
-      void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
-      void compute_hessian_vector_product(const Model& model, const double* vector, double objective_multiplier,
-         const Vector<double>& constraint_multipliers, double* result) override;
-      [[nodiscard]] std::string get_name() const override;
+
+      void initialize(const Model& model) override;
+      void initialize_statistics(Statistics& statistics, const Options& options) const override;
+      void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
+         double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) override;
+      void compute_hessian_vector_product(const double* x, const double* vector,
+         double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) override;
+
+   protected:
+      const Model& model;
    };
 } // namespace
 
