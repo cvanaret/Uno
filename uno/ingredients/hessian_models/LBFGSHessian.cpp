@@ -5,6 +5,8 @@
 #include "fortran_interface.h"
 #include "LBFGSHessian.hpp"
 
+#include "model/Model.hpp"
+
 #define LAPACK_cholesky_factorization FC_GLOBAL_(dpotrf, DPOTRF)
 
 extern "C" {
@@ -12,9 +14,6 @@ extern "C" {
 }
 
 namespace uno {
-   LBFGSHessian::LBFGSHessian(): HessianModel() {
-   }
-
    bool LBFGSHessian::has_implicit_representation() const {
       return true;
    }
@@ -23,8 +22,8 @@ namespace uno {
       return false;
    }
 
-   void LBFGSHessian::initialize(const Model& /*model*/) {
-      // do nothing
+   bool LBFGSHessian::has_curvature(const Model& /*model*/) const {
+      return true;
    }
 
    size_t LBFGSHessian::number_nonzeros(const Model& /*model*/) const {
@@ -33,6 +32,14 @@ namespace uno {
 
    bool LBFGSHessian::is_positive_definite() const {
       return true;
+   }
+
+   void LBFGSHessian::initialize(const Model& model) {
+      this->dimension = model.number_variables;
+   }
+
+   void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
+
    }
 
    void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& /*model*/, const Vector<double>& /*primal_variables*/,

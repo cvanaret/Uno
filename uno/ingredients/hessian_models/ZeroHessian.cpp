@@ -33,9 +33,11 @@ namespace uno {
    void ZeroHessian::initialize(const Model& /*model*/) {
    }
 
+   void ZeroHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+   }
+
    void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& /*model*/, const Vector<double>& /*primal_variables*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
-      // do nothing
    }
 
    void ZeroHessian::compute_hessian_vector_product(const Model& model, const double* /*x*/, const double* /*vector*/,
