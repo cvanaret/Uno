@@ -1,15 +1,19 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "HessianModel.hpp"
-
 #ifndef UNO_LBFGSHESSIAN_H
 #define UNO_LBFGSHESSIAN_H
 
+#include "HessianModel.hpp"
+#include "linear_algebra/DenseMatrix.hpp"
+
 namespace uno {
+   // forward declaration
+   class Options;
+
    class LBFGSHessian : public HessianModel {
    public:
-      LBFGSHessian() = default;
+      explicit LBFGSHessian(const Options& options);
       ~LBFGSHessian() override = default;
 
       void initialize(const Model& model) override;
@@ -23,6 +27,10 @@ namespace uno {
 
    protected:
       size_t dimension{};
+      const size_t memory_size;
+      DenseMatrix<double> S_matrix{};
+      DenseMatrix<double> Y_matrix{};
+      DenseMatrix<double> M_matrix{};
    };
 } // namespace
 
