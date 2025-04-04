@@ -5,11 +5,15 @@
 #define UNO_LBFGSHESSIAN_H
 
 #include "HessianModel.hpp"
+#include "linear_algebra/DenseMatrix.hpp"
 
 namespace uno {
+   // forward declaration
+   class Options;
+
    class LBFGSHessian : public HessianModel {
    public:
-      explicit LBFGSHessian(const Model& model);
+      LBFGSHessian(const Model& model, const Options& options);
       ~LBFGSHessian() override = default;
 
       [[nodiscard]] bool has_hessian_operator() const override;
@@ -28,6 +32,10 @@ namespace uno {
 
    protected:
       const Model& model;
+      const size_t memory_size;
+      DenseMatrix<double> S_matrix{};
+      DenseMatrix<double> Y_matrix{};
+      DenseMatrix<double> M_matrix{};
    };
 } // namespace
 
