@@ -7,6 +7,9 @@
 #include "HessianModel.hpp"
 #include "ExactHessian.hpp"
 #include "IdentityHessian.hpp"
+#ifdef HAS_LAPACK
+#include "LBFGSHessian.hpp"
+#endif
 #include "ZeroHessian.hpp"
 #include "model/Model.hpp"
 #include "options/Options.hpp"
@@ -28,6 +31,11 @@ namespace uno {
       else if (hessian_model == "identity") {
          return std::make_unique<IdentityHessian>(model.number_variables);
       }
+#ifdef HAS_LAPACK
+      else if (hessian_model == "L-BFGS") {
+         return std::make_unique<LBFGSHessian>();
+      }
+#endif
       else if (hessian_model == "zero") {
          return std::make_unique<ZeroHessian>(model.number_variables);
       }
