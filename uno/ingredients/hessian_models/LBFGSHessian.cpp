@@ -3,6 +3,9 @@
 
 #include <stdexcept>
 #include "LBFGSHessian.hpp"
+#include "model/Model.hpp"
+#include "options/Options.hpp"
+
 #ifdef WITH_LAPACK
 #include "fortran_interface.h"
 #define LAPACK_cholesky_factorization FC_GLOBAL_(dpotrf, DPOTRF)
@@ -12,7 +15,8 @@ extern "C" {
 #endif
 
 namespace uno {
-   LBFGSHessian::LBFGSHessian(const Model& model): HessianModel("L-BFGS"), model(model) {
+   LBFGSHessian::LBFGSHessian(const Model& model, const Options& options): HessianModel("L-BFGS"), model(model),
+      memory_size(options.get_unsigned_int("quasi_newton_memory_size")) {
    }
 
    bool LBFGSHessian::has_hessian_operator() const {
@@ -36,6 +40,9 @@ namespace uno {
    }
 
    void LBFGSHessian::initialize(const Model& /*model*/) {
+      //this->S_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
+      //this->Y_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
+      //this->M_matrix = DenseMatrix<double>(this->memory_size, this->memory_size);
    }
 
    void LBFGSHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
