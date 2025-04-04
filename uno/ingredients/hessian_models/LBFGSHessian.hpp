@@ -9,14 +9,20 @@
 namespace uno {
    class LBFGSHessian : public HessianModel {
    public:
-      LBFGSHessian();
+      LBFGSHessian() = default;
       ~LBFGSHessian() override = default;
 
+      void initialize(const Model& model) override;
       void initialize_statistics(Statistics& statistics, const Options& options) const override;
-      void evaluate_hessian(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
-      void compute_hessian_vector_product(const OptimizationProblem& problem, const Vector<double>& vector,
+      [[nodiscard]] size_t number_nonzeros(const Model& model) const override;
+      void notify_accepted_iterate(const Iterate& iterate) override;
+      void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,
+         double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
+      void compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double objective_multiplier,
          const Vector<double>& constraint_multipliers, Vector<double>& result) override;
+
+   protected:
+      size_t dimension{};
    };
 } // namespace
 
