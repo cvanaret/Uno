@@ -89,4 +89,3 @@ jobs:
       working-directory: ${{github.workspace}}/build
       # Execute unit tests
       run: ./run_unotest
-
