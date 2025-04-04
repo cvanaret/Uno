@@ -20,12 +20,18 @@ namespace uno {
       // do nothing
    }
 
+   void IdentityHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+   }
+
    size_t IdentityHessian::number_nonzeros(const Model& model) const {
       return model.number_variables;
    }
 
    bool IdentityHessian::is_positive_definite() const {
       return true;
+   }
+
+   void IdentityHessian::notify_accepted_iterate(const Iterate& /*iterate*/) {
    }
 
    void IdentityHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
