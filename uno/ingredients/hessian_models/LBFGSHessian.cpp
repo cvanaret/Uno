@@ -13,7 +13,13 @@ extern "C" {
 #endif
 
 namespace uno {
-   LBFGSHessian::LBFGSHessian(size_t dimension): HessianModel(), dimension(dimension) {
+   LBFGSHessian::LBFGSHessian(size_t dimension, size_t memory_size):
+         HessianModel(),
+         dimension(dimension),
+         memory_size(memory_size),
+         S_matrix(dimension, memory_size),
+         Y_matrix(dimension, memory_size),
+         M_matrix(memory_size, memory_size) {
    }
 
    void LBFGSHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
