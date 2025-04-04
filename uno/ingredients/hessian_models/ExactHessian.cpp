@@ -20,12 +20,20 @@ namespace uno {
    void ExactHessian::initialize(const Model& /*model*/) {
    }
 
+   void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+      // do nothing
+   }
+
    size_t ExactHessian::number_nonzeros(const Model& model) const {
       return model.number_hessian_nonzeros();
    }
 
    bool ExactHessian::is_positive_definite() const {
       return false;
+   }
+
+   void ExactHessian::notify_accepted_iterate(const Iterate& /*iterate*/) {
+      // do nothing
    }
 
    void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& primal_variables,
