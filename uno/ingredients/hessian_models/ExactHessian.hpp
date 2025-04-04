@@ -10,6 +10,7 @@ namespace uno {
    class ExactHessian : public HessianModel {
    public:
       ExactHessian() = default;
+      ~ExactHessian() override = default;
 
       [[nodiscard]] bool has_hessian_operator(const Model& model) const override;
       [[nodiscard]] bool has_hessian_matrix(const Model& model) const override;
@@ -19,6 +20,7 @@ namespace uno {
       [[nodiscard]] bool is_positive_definite() const override;
 
       void initialize(const Model& model) override;
+      void initialize_statistics(Statistics& statistics, const Options& options) const override;
       void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
          const Vector<double>& constraint_multipliers, double* hessian_values) override;
       void compute_hessian_vector_product(const Model& model, const double* x, const double* vector, double objective_multiplier,
