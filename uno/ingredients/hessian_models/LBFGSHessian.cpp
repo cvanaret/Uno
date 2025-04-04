@@ -2,14 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <stdexcept>
-#include "fortran_interface.h"
 #include "LBFGSHessian.hpp"
-
+#ifdef WITH_LAPACK
+#include "fortran_interface.h"
 #define LAPACK_cholesky_factorization FC_GLOBAL_(dpotrf, DPOTRF)
-
 extern "C" {
    void LAPACK_cholesky_factorization(char* uplo, int* n, double* a, int* lda, int* info);
 }
+#endif
 
 namespace uno {
    LBFGSHessian::LBFGSHessian(const Model& model): HessianModel("L-BFGS"), model(model) {
