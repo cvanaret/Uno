@@ -6,8 +6,11 @@
 #include "HessianModel.hpp"
 #include "ConvexifiedHessian.hpp"
 #include "ExactHessian.hpp"
-#include "LBFGSHessian.hpp"
 #include "ZeroHessian.hpp"
+#ifdef HAS_LAPACK
+#include "LBFGSHessian.hpp"
+#include "options/Options.hpp"
+#endif
 
 namespace uno {
    std::unique_ptr<HessianModel> HessianModelFactory::create(const std::string& hessian_model, bool convexify, const Options& options) {
@@ -21,7 +24,7 @@ namespace uno {
       }
 #ifdef HAS_LAPACK
       else if (hessian_model == "L-BFGS") {
-         return std::make_unique<LBFGSHessian>();
+         return std::make_unique<LBFGSHessian>(options);
       }
 #endif
       else if (hessian_model == "zero") {
