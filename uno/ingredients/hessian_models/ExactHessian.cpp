@@ -11,7 +11,13 @@ namespace uno {
    ExactHessian::ExactHessian(): HessianModel() {
    }
 
-   void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const { }
+   void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+      // do nothing
+   }
+
+   void ExactHessian::notify_accepted_iterate(const Iterate& /*iterate*/) {
+      // do nothing
+   }
 
    void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {

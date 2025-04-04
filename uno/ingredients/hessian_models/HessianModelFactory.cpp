@@ -6,8 +6,8 @@
 #include "HessianModel.hpp"
 #include "ConvexifiedHessian.hpp"
 #include "ExactHessian.hpp"
+#include "LBFGSHessian.hpp"
 #include "ZeroHessian.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    std::unique_ptr<HessianModel> HessianModelFactory::create(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros,
@@ -20,6 +20,11 @@ namespace uno {
             return std::make_unique<ExactHessian>();
          }
       }
+#ifdef HAS_LAPACK
+      else if (hessian_model == "L-BFGS") {
+         return std::make_unique<LBFGSHessian>(dimension);
+      }
+#endif
       else if (hessian_model == "zero") {
          return std::make_unique<ZeroHessian>();
       }

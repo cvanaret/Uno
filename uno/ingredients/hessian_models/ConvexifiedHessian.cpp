@@ -4,7 +4,6 @@
 #include "ConvexifiedHessian.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/hessian_models/UnstableRegularization.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "options/Options.hpp"
@@ -13,7 +12,6 @@
 
 namespace uno {
    ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t number_hessian_nonzeros, const Options& options):
-         HessianModel(),
          // inertia-based convexification needs a linear solver
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(dimension, number_hessian_nonzeros + dimension, options)),
          regularization_initial_value(options.get_double("regularization_initial_value")),
@@ -33,6 +31,10 @@ namespace uno {
       this->evaluation_count++;
       // regularize (only on the original variables) to convexify the problem
       this->regularize(statistics, hessian, model.number_variables);
+   }
+
+   void ConvexifiedHessian::notify_accepted_iterate(const Iterate& /*iterate*/) {
+      // do nothing
    }
 
    // evaluate_hessian() should have been called prior to calling compute_hessian_vector_product()
