@@ -12,11 +12,15 @@ extern "C" {
 }
 
 namespace uno {
-   LBFGSHessian::LBFGSHessian(): HessianModel() {
+   LBFGSHessian::LBFGSHessian(size_t dimension): HessianModel(), dimension(dimension) {
    }
 
    void LBFGSHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
       // do nothing
+   }
+
+   void LBFGSHessian::notify_accepted_iterate(const Iterate& /*iterate*/) {
+
    }
 
    void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const OptimizationProblem& /*problem*/,

@@ -12,10 +12,10 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t maximum_number_nonzeros, const Options& options):
+   ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t number_nonzeros, const Options& options):
          HessianModel(),
          // inertia-based convexification needs a linear solver
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(dimension, maximum_number_nonzeros, options)),
+         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(dimension, number_nonzeros, options)),
          regularization_initial_value(options.get_double("regularization_initial_value")),
          regularization_increase_factor(options.get_double("regularization_increase_factor")),
          regularization_failure_threshold(options.get_double("regularization_failure_threshold")) {
@@ -23,6 +23,10 @@ namespace uno {
 
    void ConvexifiedHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
       statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
+   }
+
+   void ConvexifiedHessian::notify_accepted_iterate(const Iterate& /*iterate*/) {
+      // do nothing
    }
 
    void ConvexifiedHessian::evaluate_hessian(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
