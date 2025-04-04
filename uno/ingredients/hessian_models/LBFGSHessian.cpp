@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include "LBFGSHessian.hpp"
 #include "model/Model.hpp"
+#include "options/Options.hpp"
 
 #ifdef WITH_LAPACK
 #include "fortran_interface.h"
@@ -22,9 +23,16 @@ namespace uno {
       return false;
    }
 
+   LBFGSHessian::LBFGSHessian(const Options& options): HessianModel(),
+      memory_size(options.get_unsigned_int("quasi_newton_memory_size")) {
+   }
+
    void LBFGSHessian::initialize(const Model& model) {
       this->dimension = model.number_variables;
-   }
+      //this->S_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
+      //this->Y_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
+      //this->M_matrix = DenseMatrix<double>(this->memory_size, this->memory_size);
+}
 
    void LBFGSHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
       // do nothing
