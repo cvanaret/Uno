@@ -89,6 +89,7 @@ file(GLOB TESTS_UNO_SOURCE_FILES
    unotest/unit_tests/ConcatenationTests.cpp
    unotest/unit_tests/COOSparseStorageTests.cpp
    unotest/unit_tests/CSCSparseStorageTests.cpp
+   unotest/unit_tests/DenseMatrixTests.cpp
    unotest/unit_tests/RangeTests.cpp
    unotest/unit_tests/ScalarMultipleTests.cpp
    unotest/unit_tests/SparseVectorTests.cpp
