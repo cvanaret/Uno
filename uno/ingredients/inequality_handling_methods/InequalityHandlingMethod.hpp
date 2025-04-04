@@ -48,9 +48,8 @@ namespace uno {
       [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const = 0;
 
-      virtual void postprocess_iterate(const OptimizationProblem& problem, Vector<double>& primals, Multipliers& multipliers) = 0;
-
       virtual void set_initial_point(const Vector<double>& initial_point) = 0;
+      virtual void postprocess_iterate(const OptimizationProblem& model, Vector<double>& primals, Multipliers& multipliers) = 0;
 
       size_t number_subproblems_solved{0};
       // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it

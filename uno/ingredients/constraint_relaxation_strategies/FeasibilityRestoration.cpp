@@ -187,9 +187,14 @@ namespace uno {
       }
       ConstraintRelaxationStrategy::set_progress_statistics(statistics, model, trial_iterate);
       if (accept_iterate) {
-         user_callbacks.notify_acceptable_iterate(trial_iterate.primals,
-               this->current_phase == Phase::OPTIMALITY ? trial_iterate.multipliers : trial_iterate.feasibility_multipliers,
-               objective_multiplier);
+         if (this->current_phase == Phase::OPTIMALITY) {
+            this->optimality_hessian_model->notify_accepted_iterate(trial_iterate);
+            user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, objective_multiplier);
+         }
+         else {
+            this->feasibility_hessian_model->notify_accepted_iterate(trial_iterate);
+            user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.feasibility_multipliers, objective_multiplier);
+         }
       }
       return accept_iterate;
    }

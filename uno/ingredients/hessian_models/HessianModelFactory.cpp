@@ -6,6 +6,7 @@
 #include "HessianModel.hpp"
 #include "ConvexifiedHessian.hpp"
 #include "ExactHessian.hpp"
+#include "LBFGSHessian.hpp"
 #include "ZeroHessian.hpp"
 
 namespace uno {
@@ -18,6 +19,11 @@ namespace uno {
             return std::make_unique<ExactHessian>();
          }
       }
+#ifdef HAS_LAPACK
+      else if (hessian_model == "L-BFGS") {
+         return std::make_unique<LBFGSHessian>();
+      }
+#endif
       else if (hessian_model == "zero") {
          return std::make_unique<ZeroHessian>();
       }
