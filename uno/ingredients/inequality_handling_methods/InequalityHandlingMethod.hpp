@@ -48,7 +48,7 @@ namespace uno {
       [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
             const Vector<double>& primal_direction, double step_length) const = 0;
 
-      void notify_accepted_iterate(const Iterate& iterate) const;
+      void notify_accepted_iterate(const Iterate &current_iterate, const Iterate& trial_iterate) const;
       virtual void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) = 0;
 
       [[nodiscard]] size_t get_hessian_evaluation_count() const;

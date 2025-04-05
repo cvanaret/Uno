@@ -16,8 +16,8 @@ namespace uno {
       this->trust_region_radius = new_trust_region_radius;
    }
 
-   void InequalityHandlingMethod::notify_accepted_iterate(const Iterate& iterate) const {
-      this->hessian_model->notify_accepted_iterate(iterate);
+   void InequalityHandlingMethod::notify_accepted_iterate(const Iterate& current_iterate, const Iterate& trial_iterate) const {
+      this->hessian_model->notify_accepted_iterate(current_iterate, trial_iterate);
    }
 
    size_t InequalityHandlingMethod::get_hessian_evaluation_count() const {
