@@ -178,6 +178,7 @@ namespace uno {
       }
       ConstraintRelaxationStrategy::set_progress_statistics(statistics, trial_iterate);
       if (accept_iterate) {
+         this->inequality_handling_method->notify_accepted_iterate(current_iterate, trial_iterate);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals,
                this->current_phase == Phase::OPTIMALITY ? trial_iterate.multipliers : trial_iterate.feasibility_multipliers,
                this->current_problem().get_objective_multiplier());
