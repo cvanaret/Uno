@@ -25,7 +25,7 @@ namespace uno {
       size_t evaluation_count{0};
 
       virtual void initialize_statistics(Statistics& statistics, const Options& options) const = 0;
-      virtual void notify_accepted_iterate(const Iterate& iterate) = 0;
+      virtual void notify_accepted_iterate(const Iterate& current_iterate, const Iterate& trial_iterate) = 0;
       virtual void evaluate_hessian(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
             const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) = 0;
       virtual void compute_hessian_vector_product(const OptimizationProblem& problem, const Vector<double>& vector,

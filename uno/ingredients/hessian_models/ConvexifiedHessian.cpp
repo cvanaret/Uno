@@ -25,7 +25,7 @@ namespace uno {
       statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
    }
 
-   void ConvexifiedHessian::notify_accepted_iterate(const Iterate& /*iterate*/) {
+   void ConvexifiedHessian::notify_accepted_iterate(const Iterate& /*current_iterate*/, const Iterate& /*trial_iterate*/) {
       // do nothing
    }
 

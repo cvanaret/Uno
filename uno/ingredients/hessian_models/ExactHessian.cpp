@@ -14,7 +14,7 @@ namespace uno {
       // do nothing
    }
 
-   void ExactHessian::notify_accepted_iterate(const Iterate& /*iterate*/) {
+   void ExactHessian::notify_accepted_iterate(const Iterate& /*current_iterate*/, const Iterate& /*trial_iterate*/) {
       // do nothing
    }
 
