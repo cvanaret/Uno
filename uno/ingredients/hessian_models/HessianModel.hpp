@@ -19,7 +19,7 @@ namespace uno {
    class HessianModel {
    public:
       HessianModel() = default;
-      virtual ~HessianModel();
+      virtual ~HessianModel() = default;
 
       size_t evaluation_count{0};
 
