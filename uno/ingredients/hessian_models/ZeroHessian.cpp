@@ -8,14 +8,14 @@
 namespace uno {
    void ZeroHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const { }
 
-   void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const OptimizationProblem& problem, const Vector<double>& /*primal_variables*/,
-         const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
-      hessian.set_dimension(problem.number_variables);
+   void ZeroHessian::evaluate_hessian(const Model& model, const Vector<double>& /*primal_variables*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
+      hessian.set_dimension(model.number_variables);
       hessian.reset();
    }
 
-   void ZeroHessian::compute_hessian_vector_product(const OptimizationProblem& /*problem*/,
-         const Vector<double>& /*vector*/, const Vector<double>& /*constraint_multipliers*/, Vector<double>& result) {
+   void ZeroHessian::compute_hessian_vector_product(const Model& /*model*/, const Vector<double>& /*vector*/, double /*objective_multiplier*/,
+         const Vector<double>& /*constraint_multipliers*/, Vector<double>& result) {
       result.fill(0.);
    }
 }

@@ -3,11 +3,11 @@
 
 #include <cassert>
 #include "l1RelaxedProblem.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/LagrangianGradient.hpp"
-#include "symbolic/Expression.hpp"
 #include "symbolic/VectorExpression.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "tools/Infinity.hpp"
@@ -95,9 +95,9 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
-      this->model.evaluate_lagrangian_hessian(x, this->objective_multiplier, multipliers, hessian);
+   void l1RelaxedProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& primal_variables,
+         const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
+      hessian_model.evaluate_hessian(this->model, primal_variables, this->get_objective_multiplier(), multipliers.constraints, hessian);
 
       // proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
@@ -114,8 +114,9 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_hessian_vector_product(const Vector<double>& vector, const Vector<double>& multipliers, Vector<double>& result) const {
-      this->model.compute_hessian_vector_product(vector, this->objective_multiplier, multipliers, result);
+   void l1RelaxedProblem::compute_hessian_vector_product(HessianModel& hessian_model, const Vector<double>& vector, const Multipliers& multipliers,
+         Vector<double>& result) const {
+      hessian_model.compute_hessian_vector_product(this->model, vector, this->get_objective_multiplier(), multipliers.constraints, result);
 
       // proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {

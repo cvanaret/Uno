@@ -25,24 +25,25 @@ namespace uno {
       statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
    }
 
-   void ConvexifiedHessian::evaluate_hessian(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
+   void ConvexifiedHessian::evaluate_hessian(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
          const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
       // evaluate Lagrangian Hessian
-      hessian.set_dimension(problem.number_variables);
-      problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, hessian);
+      hessian.set_dimension(model.number_variables);
+      model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, hessian);
       this->evaluation_count++;
       // regularize (only on the original variables) to convexify the problem
-      this->regularize(statistics, hessian, problem.get_number_original_variables());
+      throw std::runtime_error("ConvexifiedHessian::evaluate_hessian not implemented");
+      //this->regularize(statistics, hessian, model.number_variables);
    }
 
    // evaluate_hessian() should have been called prior to calling compute_hessian_vector_product()
    // this->regularization_factor was set
-   void ConvexifiedHessian::compute_hessian_vector_product(const OptimizationProblem& problem,
-         const Vector<double>& vector, const Vector<double>& constraint_multipliers, Vector<double>& result) {
+   void ConvexifiedHessian::compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, Vector<double>& result) {
       // (H + lambda I)*x = H*x + lambda*x
-      problem.compute_hessian_vector_product(vector, constraint_multipliers, result);
+      model.compute_hessian_vector_product(vector, objective_multiplier, constraint_multipliers, result);
       // add regularization contribution
-      for (size_t variable_index: Range(problem.get_number_original_variables())) {
+      for (size_t variable_index: Range(model.number_variables)) {
          result[variable_index] += this->regularization_factor * vector[variable_index];
       }
    }

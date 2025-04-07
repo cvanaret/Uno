@@ -10,9 +10,9 @@ namespace uno {
       ZeroHessian() = default;
 
       void initialize_statistics(Statistics& statistics, const Options& options) const override;
-      void evaluate_hessian(Statistics& statistics, const OptimizationProblem& problem, const Vector<double>& primal_variables,
-            const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
-      void compute_hessian_vector_product(const OptimizationProblem& problem, const Vector<double>& vector,
+      void evaluate_hessian(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
+      void compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double objective_multiplier,
          const Vector<double>& constraint_multipliers, Vector<double>& result) override;
    };
 } // namespace

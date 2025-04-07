@@ -36,7 +36,7 @@ namespace uno {
 
    void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
          Direction& direction, WarmstartInformation& warmstart_information) {
-      this->solver->solve_QP(statistics, problem, current_iterate, current_multipliers.constraints, this->initial_point, direction,
+      this->solver->solve_QP(statistics, problem, current_iterate, current_multipliers, this->initial_point, direction,
             *this->hessian_model, this->trust_region_radius, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;

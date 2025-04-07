@@ -2,6 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "OptimalityProblem.hpp"
+
+#include <ingredients/hessian_models/HessianModel.hpp>
+
 #include "optimization/Iterate.hpp"
 #include "optimization/LagrangianGradient.hpp"
 #include "symbolic/Expression.hpp"
@@ -27,13 +30,14 @@ namespace uno {
       constraint_jacobian = iterate.evaluations.constraint_jacobian;
    }
 
-   void OptimalityProblem::evaluate_lagrangian_hessian(const Vector<double>& x, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
-      this->model.evaluate_lagrangian_hessian(x, this->get_objective_multiplier(), multipliers, hessian);
+   void OptimalityProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& primal_variables,
+         const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
+      hessian_model.evaluate_hessian(this->model, primal_variables, this->get_objective_multiplier(), multipliers.constraints, hessian);
    }
 
-   void OptimalityProblem::compute_hessian_vector_product(const Vector<double>& vector, const Vector<double>& multipliers, Vector<double>& result) const {
-      this->model.compute_hessian_vector_product(vector, this->get_objective_multiplier(), multipliers, result);
+   void OptimalityProblem::compute_hessian_vector_product(HessianModel& hessian_model, const Vector<double>& vector, const Multipliers& multipliers,
+         Vector<double>& result) const {
+      hessian_model.compute_hessian_vector_product(this->model, vector, this->get_objective_multiplier(), multipliers.constraints, result);
    }
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
