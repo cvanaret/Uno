@@ -83,14 +83,14 @@ namespace uno {
       this->solve_subproblem(problem, initial_point, direction, warmstart_information);
    }
 
-   void BQPDSolver::solve_QP(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate,
+   void BQPDSolver::solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, const Vector<double>& initial_point, Direction& direction, HessianModel& hessian_model,
          double trust_region_radius, const WarmstartInformation& warmstart_information) {
       this->set_up_subproblem(problem, current_iterate, trust_region_radius, warmstart_information);
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          if (this->subproblem_is_regularized) {
             // regularize the explicit Hessian
-            problem.evaluate_lagrangian_hessian(hessian_model, current_iterate.primals, current_multipliers, this->hessian);
+            problem.evaluate_lagrangian_hessian(statistics, hessian_model, current_iterate.primals, current_multipliers, this->hessian);
          }
          this->save_hessian_operator(problem, hessian_model, current_multipliers);
       }

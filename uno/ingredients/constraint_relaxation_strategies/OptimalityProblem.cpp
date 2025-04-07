@@ -30,9 +30,9 @@ namespace uno {
       constraint_jacobian = iterate.evaluations.constraint_jacobian;
    }
 
-   void OptimalityProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& primal_variables,
+   void OptimalityProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
-      hessian_model.evaluate_hessian(this->model, primal_variables, this->get_objective_multiplier(), multipliers.constraints, hessian);
+      hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(), multipliers.constraints, hessian);
    }
 
    void OptimalityProblem::compute_hessian_vector_product(HessianModel& hessian_model, const Vector<double>& vector, const Multipliers& multipliers,

@@ -25,15 +25,14 @@ namespace uno {
       statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
    }
 
-   void ConvexifiedHessian::evaluate_hessian(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
-         const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
+   void ConvexifiedHessian::evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,
+         double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
       // evaluate Lagrangian Hessian
       hessian.set_dimension(model.number_variables);
       model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, hessian);
       this->evaluation_count++;
       // regularize (only on the original variables) to convexify the problem
-      throw std::runtime_error("ConvexifiedHessian::evaluate_hessian not implemented");
-      //this->regularize(statistics, hessian, model.number_variables);
+      this->regularize(statistics, hessian, model.number_variables);
    }
 
    // evaluate_hessian() should have been called prior to calling compute_hessian_vector_product()

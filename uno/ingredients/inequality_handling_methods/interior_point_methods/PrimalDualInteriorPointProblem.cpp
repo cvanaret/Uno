@@ -47,10 +47,10 @@ namespace uno {
       this->first_reformulation.evaluate_constraint_jacobian(iterate, constraint_jacobian);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& primal_variables,
+   void PrimalDualInteriorPointProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
       // original Lagrangian Hessian
-      this->first_reformulation.evaluate_lagrangian_hessian(hessian_model, primal_variables, multipliers, hessian);
+      this->first_reformulation.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {

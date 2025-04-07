@@ -13,8 +13,8 @@ namespace uno {
 
    void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const { }
 
-   void ExactHessian::evaluate_hessian(const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
-         const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
+   void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& primal_variables,
+         double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
       hessian.set_dimension(model.number_variables);
       model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, hessian);
       this->evaluation_count++;

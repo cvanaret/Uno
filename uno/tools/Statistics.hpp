@@ -31,7 +31,6 @@ namespace uno {
       void print_header();
       void print_current_line();
       void print_footer();
-   
 
    private:
       std::map<int, std::string> columns{};

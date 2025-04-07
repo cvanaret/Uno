@@ -122,7 +122,7 @@ namespace uno {
       return variable_value;
    }
 
-   void PrimalDualInteriorPointMethod::evaluate_functions(Statistics& /*statistics*/, const PrimalDualInteriorPointProblem& barrier_problem,
+   void PrimalDualInteriorPointMethod::evaluate_functions(Statistics& statistics, const PrimalDualInteriorPointProblem& barrier_problem,
          Iterate& current_iterate, const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
       // barrier objective gradient
       if (warmstart_information.objective_changed) {
@@ -137,7 +137,7 @@ namespace uno {
 
       // barrier Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         barrier_problem.evaluate_lagrangian_hessian(*this->hessian_model, current_iterate.primals, current_multipliers, this->hessian);
+         barrier_problem.evaluate_lagrangian_hessian(statistics, *this->hessian_model, current_iterate.primals, current_multipliers, this->hessian);
       }
    }
 

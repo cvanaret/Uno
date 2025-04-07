@@ -21,6 +21,7 @@ namespace uno {
    class RectangularMatrix;
    template <typename ElementType>
    class SparseVector;
+   class Statistics;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
 
@@ -42,7 +43,7 @@ namespace uno {
       virtual void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const = 0;
       virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const = 0;
       virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const = 0;
-      virtual void evaluate_lagrangian_hessian(HessianModel& hessian_model, const Vector<double>& primal_variables,
+      virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const = 0;
       virtual void compute_hessian_vector_product(HessianModel& hessian_model, const Vector<double>& vector,
          const Multipliers& multipliers, Vector<double>& result) const = 0;
