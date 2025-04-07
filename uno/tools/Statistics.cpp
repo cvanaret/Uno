@@ -14,8 +14,6 @@ namespace uno {
    int Statistics::string_width = 26;
    int Statistics::numerical_format_size = 4;
 
-   Statistics::Statistics(const Options& options): print_header_frequency(options.get_unsigned_int("statistics_print_header_frequency")) { }
-
    void Statistics::add_column(std::string_view name, int width, int order) {
       this->columns[order] = name;
       this->widths[name] = width;
@@ -83,9 +81,6 @@ namespace uno {
    }
 
    void Statistics::print_current_line() {
-      if (this->line_number % this->print_header_frequency == 0) {
-         this->print_header();
-      }
       for (const auto& element: this->columns) {
          const auto& header = element.second;
          int length;
@@ -104,7 +99,6 @@ namespace uno {
          }
       }
       std::cout << '\n';
-      this->line_number++;
    }
 
    void Statistics::print_footer() {

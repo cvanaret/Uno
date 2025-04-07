@@ -13,7 +13,7 @@ namespace uno {
 
    class Statistics {
    public:
-      explicit Statistics(const Options& options);
+      Statistics() = default;
 
       static int int_width;
       static int double_width;
@@ -34,12 +34,9 @@ namespace uno {
    
 
    private:
-      size_t line_number{0};
       std::map<int, std::string> columns{};
       std::map<std::string_view, int> widths{};
       std::map<std::string_view, std::string> current_line{};
-
-      const size_t print_header_frequency{};
       static std::string_view symbol(std::string_view value);
    };
 } // namespace
