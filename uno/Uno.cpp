@@ -100,12 +100,15 @@ namespace uno {
       statistics.set("status", "initial point");
       this->globalization_mechanism.initialize(statistics, current_iterate, options);
       options.print_used();
-      if (Logger::level == INFO) statistics.print_current_line();
+      if (Logger::level == INFO) {
+         statistics.print_header();
+         statistics.print_current_line();
+      }
       current_iterate.status = IterateStatus::NOT_OPTIMAL;
    }
 
    Statistics Uno::create_statistics(const Model& model, const Options& options) {
-      Statistics statistics(options);
+      Statistics statistics{};
       statistics.add_column("iter", Statistics::int_width, options.get_int("statistics_major_column_order"));
       statistics.add_column("step norm", Statistics::double_width - 5, options.get_int("statistics_step_norm_column_order"));
       statistics.add_column("objective", Statistics::double_width - 5, options.get_int("statistics_objective_column_order"));

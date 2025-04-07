@@ -12,6 +12,7 @@ namespace uno {
    class Direction;
    class Iterate;
    class HessianModel;
+   class Multipliers;
    class OptimizationProblem;
    class Options;
    template <typename ElementType>
@@ -29,7 +30,7 @@ namespace uno {
       void solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point, Direction& direction,
             double trust_region_radius, const WarmstartInformation& warmstart_information) override = 0;
 
-      virtual void solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& current_multipliers,
+      virtual void solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
             const Vector<double>& initial_point, Direction& direction, HessianModel& hessian_model, double trust_region_radius,
             const WarmstartInformation& warmstart_information) = 0;
 

@@ -137,7 +137,7 @@ namespace uno {
 
       // barrier Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->hessian_model->evaluate_hessian(statistics, barrier_problem, current_iterate.primals, current_multipliers.constraints, this->hessian);
+         barrier_problem.evaluate_lagrangian_hessian(statistics, *this->hessian_model, current_iterate.primals, current_multipliers, this->hessian);
       }
    }
 
@@ -161,7 +161,7 @@ namespace uno {
       statistics.set("barrier", this->barrier_parameter());
 
       // create a barrier problem
-      PrimalDualInteriorPointProblem barrier_problem(problem, current_multipliers, this->barrier_parameter());
+      PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
 
       // evaluate the functions at the current iterate
       this->evaluate_functions(statistics, barrier_problem, current_iterate, current_multipliers, warmstart_information);

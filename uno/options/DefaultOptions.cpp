@@ -29,7 +29,6 @@ namespace uno {
       options["enforce_linear_constraints"] = "no";
 
       /** statistics table **/
-      options["statistics_print_header_frequency"] = "15";
       options["statistics_major_column_order"] = "1";
       options["statistics_minor_column_order"] = "2";
       options["statistics_penalty_parameter_column_order"] = "5";
