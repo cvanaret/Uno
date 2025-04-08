@@ -17,20 +17,20 @@
 
 namespace uno {
    PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints,
-         size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
-         InequalityHandlingMethod("exact", number_variables, number_hessian_nonzeros, false, options),
+         size_t number_jacobian_nonzeros, const Model& model, const Options& options):
+         InequalityHandlingMethod("exact", model, false, options),
          objective_gradient(2 * number_variables), // original variables + barrier terms
          constraints(number_constraints),
          constraint_jacobian(number_constraints, number_variables),
-         hessian(number_variables, number_hessian_nonzeros, false, "COO"),
+         hessian(number_variables, model.number_hessian_nonzeros(), false, "COO"),
          augmented_system(options.get_string("sparse_format"), number_variables + number_constraints,
-               number_hessian_nonzeros
+               model.number_hessian_nonzeros()
                + number_variables /* diagonal barrier terms for bound constraints */
                + number_jacobian_nonzeros /* Jacobian */,
                true, /* use regularization */
                options),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(number_variables + number_constraints,
-               number_hessian_nonzeros
+               model.number_hessian_nonzeros()
                + number_variables + number_constraints /* regularization */
                + 2 * number_variables /* diagonal barrier terms */
                + number_jacobian_nonzeros, /* Jacobian */

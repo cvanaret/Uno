@@ -14,7 +14,7 @@ namespace uno {
    class QPSubproblem : public InequalityConstrainedMethod {
    public:
       QPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
-            size_t number_hessian_nonzeros, const Options& options);
+         const Model& model, const Options& options);
       ~QPSubproblem();
 
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;

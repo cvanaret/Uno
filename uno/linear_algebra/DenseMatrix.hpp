@@ -10,21 +10,24 @@
 #include "symbolic/Range.hpp"
 
 namespace uno {
+   // DenseMatrix is an m x n matrix in column-order order where the columns are concatenated in a long vector
+
    template <typename ElementType>
    class DenseMatrix {
    public:
       DenseMatrix(size_t number_rows, size_t number_columns);
+      //DenseMatrix& operator=(const DenseMatrix& other);
       ~DenseMatrix() = default;
 
       ElementType& entry(size_t row_index, size_t column_index);
       const ElementType& entry(size_t row_index, size_t column_index) const;
-      ElementType* data() const;
+      ElementType* data();
 
       void print(std::ostream& stream) const;
 
    protected:
       const size_t number_rows, number_columns;
-      std::vector<ElementType> matrix; // column-major ordering
+      std::vector<ElementType> matrix; // column-major order
    };
 
    template <typename ElementType>
@@ -32,6 +35,18 @@ namespace uno {
          number_rows(number_rows), number_columns(number_columns),
          matrix(number_rows * number_columns, ElementType(0)) {
    }
+
+   /*
+   template <typename ElementType>
+   DenseMatrix<ElementType>& DenseMatrix<ElementType>::operator=(const DenseMatrix& other) {
+      for (size_t column_index: Range(this->number_columns)) {
+         for (size_t row_index: Range(this->number_rows)) {
+            this->entry(row_index, column_index) = other.entry(row_index, column_index);
+         }
+      }
+      return *this;
+   }
+   */
 
    template <typename ElementType>
    ElementType& DenseMatrix<ElementType>::entry(size_t row_index, size_t column_index) {
@@ -44,7 +59,7 @@ namespace uno {
    }
 
    template <typename ElementType>
-   ElementType* DenseMatrix<ElementType>::data() const {
+   ElementType* DenseMatrix<ElementType>::data() {
       return this->matrix.data();
    }
 

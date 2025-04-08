@@ -11,8 +11,8 @@
 
 namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(const std::string& hessian_model, size_t number_variables, size_t number_constraints,
-         size_t number_hessian_nonzeros, bool convexify, const Options& options):
-         InequalityHandlingMethod(hessian_model, number_variables, number_hessian_nonzeros, convexify, options),
+         const Model& model, bool convexify, const Options& options):
+         InequalityHandlingMethod(hessian_model, model, convexify, options),
          initial_point(number_variables),
          direction_lower_bounds(number_variables),
          direction_upper_bounds(number_variables),

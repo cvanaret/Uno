@@ -4,11 +4,12 @@
 #ifndef UNO_LBFGSHESSIAN_H
 #define UNO_LBFGSHESSIAN_H
 
-#include "HessianModel.hpp"
+#include <vector>
+#include "../HessianModel.hpp"
 #include "linear_algebra/DenseMatrix.hpp"
 
 namespace uno {
-   class LBFGSHessian : public HessianModel {
+   class LBFGSHessian: public HessianModel {
    public:
       LBFGSHessian(size_t dimension, size_t memory_size);
       ~LBFGSHessian() override = default;
@@ -22,14 +23,20 @@ namespace uno {
 
    protected:
       const size_t dimension;
-      const size_t memory_capacity;
-      size_t current_memory_size{0};
-      size_t current_available_slot{0};
+      const size_t memory_size; // user defined
+      size_t used_memory_size{0}; // 0 <= used_memory_size <= memory_size
+      size_t current_available_slot{0}; // 0 <= current_available_slot < memory_size
+      // memory
       DenseMatrix<double> S_matrix;
       DenseMatrix<double> Y_matrix;
+      // Hessian representation
+      bool hessian_recomputation_required{false};
       DenseMatrix<double> L_matrix;
-      std::vector<double> D_matrix; // D is diagonal
+      std::vector<double> D_matrix; // diagonal
       DenseMatrix<double> M_matrix;
+
+      void update_memory(const Iterate& current_iterate, const Iterate& trial_iterate);
+      void compute_hessian_representation();
    };
 } // namespace
 

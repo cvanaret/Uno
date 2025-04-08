@@ -14,7 +14,7 @@ namespace uno {
    class LPSubproblem : public InequalityConstrainedMethod {
    public:
       LPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
-            const Options& options);
+         const Model& model, const Options& options);
       ~LPSubproblem();
 
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;

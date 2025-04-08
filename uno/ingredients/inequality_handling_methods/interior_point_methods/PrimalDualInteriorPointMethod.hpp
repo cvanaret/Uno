@@ -27,7 +27,7 @@ namespace uno {
    class PrimalDualInteriorPointMethod : public InequalityHandlingMethod {
    public:
       PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
-            size_t number_hessian_nonzeros, const Options& options);
+            const Model& model, const Options& options);
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;

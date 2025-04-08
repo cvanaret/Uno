@@ -19,15 +19,13 @@ namespace uno {
    class OptimizationProblem;
    class Options;
    class Statistics;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
    struct WarmstartInformation;
    
    class InequalityHandlingMethod {
    public:
-      InequalityHandlingMethod(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros, bool convexify, const Options& options);
+      InequalityHandlingMethod(const std::string& hessian_model, const Model& model, bool convexify, const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
       // virtual methods implemented by subclasses

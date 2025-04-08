@@ -6,9 +6,9 @@
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 
 namespace uno {
-   InequalityHandlingMethod::InequalityHandlingMethod(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros, bool convexify,
+   InequalityHandlingMethod::InequalityHandlingMethod(const std::string& hessian_model, const Model& model, bool convexify,
          const Options& options) :
-         hessian_model(HessianModelFactory::create(hessian_model, dimension, number_hessian_nonzeros, convexify, options)) {
+         hessian_model(HessianModelFactory::create(hessian_model, model, convexify, options)) {
    }
 
    void InequalityHandlingMethod::set_trust_region_radius(double new_trust_region_radius) {
