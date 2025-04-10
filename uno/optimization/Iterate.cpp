@@ -91,10 +91,10 @@ namespace uno {
 
       stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';
       stream << "Residuals │ Complementarity: " << iterate.residuals.complementarity << '\n';
-      //stream << "          └ Lagrangian gradient: " << iterate.residuals.lagrangian_gradient;
+      stream << "          └ Lagrangian gradient: " << iterate.residuals.lagrangian_gradient.assemble(1.);
       stream << "Feasibility residuals ┌ Stationarity: " << iterate.feasibility_residuals.stationarity << '\n';
       stream << "                      │ Complementarity: " << iterate.feasibility_residuals.complementarity << '\n';
-      //stream << "                      └ Lagrangian gradient: " << iterate.feasibility_residuals.lagrangian_gradient;
+      stream << "                      └ Lagrangian gradient: " << iterate.feasibility_residuals.lagrangian_gradient.assemble(1.);
 
       stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';
       stream << "Progress measures │ Optimality: " << iterate.progress.objective(1.) << '\n';
