@@ -58,7 +58,7 @@ namespace uno {
       virtual void compute_primal_dual_residuals(Iterate& iterate) = 0;
       virtual void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const = 0;
 
-      [[nodiscard]] size_t get_hessian_evaluation_count() const;
+      [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
       [[nodiscard]] size_t get_number_subproblems_solved() const;
 
    protected:

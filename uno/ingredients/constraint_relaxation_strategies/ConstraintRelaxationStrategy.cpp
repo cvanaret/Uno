@@ -231,10 +231,6 @@ namespace uno {
       }
    }
 
-   size_t ConstraintRelaxationStrategy::get_hessian_evaluation_count() const {
-      return this->inequality_handling_method->get_hessian_evaluation_count();
-   }
-
    size_t ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
       return this->inequality_handling_method->number_subproblems_solved;
    }

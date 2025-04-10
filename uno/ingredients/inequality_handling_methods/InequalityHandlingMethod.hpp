@@ -25,14 +25,14 @@ namespace uno {
    
    class InequalityHandlingMethod {
    public:
-      InequalityHandlingMethod(const std::string& hessian_model, const Model& model, bool convexify, const Options& options);
+      InequalityHandlingMethod() = default;
       virtual ~InequalityHandlingMethod() = default;
 
       // virtual methods implemented by subclasses
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
       virtual void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
       virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            Direction& direction, WarmstartInformation& warmstart_information) = 0;
+            Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) = 0;
 
       void set_trust_region_radius(double new_trust_region_radius);
       virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
@@ -46,10 +46,8 @@ namespace uno {
       [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
             const Vector<double>& primal_direction, double step_length) const = 0;
 
-      void notify_accepted_iterate(const Iterate &current_iterate, const Iterate& trial_iterate) const;
       virtual void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) = 0;
 
-      [[nodiscard]] size_t get_hessian_evaluation_count() const;
       virtual void set_initial_point(const Vector<double>& initial_point) = 0;
 
       size_t number_subproblems_solved{0};
@@ -57,7 +55,6 @@ namespace uno {
       bool subproblem_definition_changed{false};
 
    protected:
-      const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
       double trust_region_radius{INF<double>};
    };
 } // namespace

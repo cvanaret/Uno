@@ -17,8 +17,8 @@
 
 namespace uno {
    PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints,
-         size_t number_jacobian_nonzeros, const Model& model, const Options& options):
-         InequalityHandlingMethod("exact", model, false, options),
+            size_t number_jacobian_nonzeros, const Model& model, const Options& options):
+         InequalityHandlingMethod(),
          objective_gradient(2 * number_variables), // original variables + barrier terms
          constraints(number_constraints),
          constraint_jacobian(number_constraints, number_variables),
@@ -123,7 +123,7 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::evaluate_functions(Statistics& statistics, const PrimalDualInteriorPointProblem& barrier_problem,
-         Iterate& current_iterate, const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information) {
+         Iterate& current_iterate, const Multipliers& current_multipliers, HessianModel& hessian_model, const WarmstartInformation& warmstart_information) {
       // barrier objective gradient
       if (warmstart_information.objective_changed) {
          barrier_problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
@@ -137,12 +137,12 @@ namespace uno {
 
       // barrier Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         barrier_problem.evaluate_lagrangian_hessian(statistics, *this->hessian_model, current_iterate.primals, current_multipliers, this->hessian);
+         barrier_problem.evaluate_lagrangian_hessian(statistics, hessian_model, current_iterate.primals, current_multipliers, this->hessian);
       }
    }
 
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) {
       if (problem.has_inequality_constraints()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
@@ -164,7 +164,7 @@ namespace uno {
       PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
 
       // evaluate the functions at the current iterate
-      this->evaluate_functions(statistics, barrier_problem, current_iterate, current_multipliers, warmstart_information);
+      this->evaluate_functions(statistics, barrier_problem, current_iterate, current_multipliers, hessian_model, warmstart_information);
 
       // compute the primal-dual solution
       this->assemble_augmented_system(statistics, problem, current_multipliers, warmstart_information);

@@ -15,7 +15,7 @@ namespace uno {
       ~LBFGSHessian() override = default;
 
       void initialize_statistics(Statistics& statistics, const Options& options) const override;
-      void notify_accepted_iterate(const Iterate& current_iterate, const Iterate& trial_iterate) override;
+      void notify_accepted_iterate(const Model& model, const Iterate& current_iterate, const Iterate& trial_iterate) override;
       void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
       void compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double objective_multiplier,
@@ -35,7 +35,7 @@ namespace uno {
       std::vector<double> D_matrix; // diagonal
       DenseMatrix<double> M_matrix;
 
-      void update_memory(const Iterate& current_iterate, const Iterate& trial_iterate);
+      void update_memory(const Model& model, const Iterate& current_iterate, const Iterate& trial_iterate);
       void recompute_hessian_representation();
       static void perform_high_rank_update(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
          DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension);

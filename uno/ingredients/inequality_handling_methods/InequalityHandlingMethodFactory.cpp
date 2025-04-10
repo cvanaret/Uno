@@ -14,22 +14,22 @@
 namespace uno {
    std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
          size_t number_jacobian_nonzeros, const Model& model, const Options& options) {
-      const std::string subproblem_strategy = options.get_string("subproblem");
+      const std::string inequality_handling_method = options.get_string("inequality_handling_method");
       // active-set methods
-      if (subproblem_strategy == "QP") {
+      if (inequality_handling_method == "QP") {
          return std::make_unique<QPSubproblem>(number_variables, number_constraints, number_objective_gradient_nonzeros,
             number_jacobian_nonzeros, model, options);
       }
-      else if (subproblem_strategy == "LP") {
+      else if (inequality_handling_method == "LP") {
          return std::make_unique<LPSubproblem>(number_variables, number_constraints, number_objective_gradient_nonzeros,
-            number_jacobian_nonzeros, model, options);
+            number_jacobian_nonzeros, options);
       }
       // interior-point method
-      else if (subproblem_strategy == "primal_dual_interior_point") {
+      else if (inequality_handling_method == "primal_dual_interior_point") {
          return std::make_unique<PrimalDualInteriorPointMethod>(number_variables, number_constraints, number_jacobian_nonzeros,
                model, options);
       }
-      throw std::invalid_argument("Subproblem strategy " + subproblem_strategy + " is not supported");
+      throw std::invalid_argument("Subproblem strategy " + inequality_handling_method + " is not supported");
    }
 
    std::vector<std::string> InequalityHandlingMethodFactory::available_strategies() {

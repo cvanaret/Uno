@@ -39,7 +39,7 @@ namespace uno {
       void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-            Direction& direction, WarmstartInformation& warmstart_information) override;
+            Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
 
       void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
@@ -71,7 +71,7 @@ namespace uno {
       [[nodiscard]] double barrier_parameter() const;
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
       void evaluate_functions(Statistics& statistics, const PrimalDualInteriorPointProblem& barrier_problem, Iterate& current_iterate,
-            const Multipliers& current_multipliers, const WarmstartInformation& warmstart_information);
+            const Multipliers& current_multipliers, HessianModel& hessian_model, const WarmstartInformation& warmstart_information);
       void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate, const Multipliers& current_multipliers,
             const DualResiduals& residuals);
       [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals, const Vector<double>& direction_primals) const;

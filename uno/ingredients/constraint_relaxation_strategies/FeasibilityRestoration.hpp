@@ -7,6 +7,7 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "OptimalityProblem.hpp"
 #include "l1RelaxedProblem.hpp"
 
@@ -29,17 +30,20 @@ namespace uno {
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-            double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+         double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       // primal-dual residuals
       void compute_primal_dual_residuals(Iterate& iterate) override;
       void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
+      [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
    private:
       const OptimalityProblem optimality_problem;
       l1RelaxedProblem feasibility_problem;
+      const bool convexify;
+      std::unique_ptr<HessianModel> optimality_hessian_model;
+      std::unique_ptr<HessianModel> feasibility_hessian_model;
       Phase current_phase{Phase::OPTIMALITY};
-      const std::string& subproblem_strategy;
       const double linear_feasibility_tolerance;
       const bool switch_to_optimality_requires_linearized_feasibility;
       ProgressMeasures reference_optimality_progress{};
@@ -50,13 +54,13 @@ namespace uno {
 
       [[nodiscard]] const OptimizationProblem& current_problem() const;
       void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            Direction& direction, WarmstartInformation& warmstart_information);
+         Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information);
       void switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate, WarmstartInformation& warmstart_information);
 
       void evaluate_progress_measures(Iterate& iterate) const override;
       [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length);
       [[nodiscard]] bool can_switch_to_optimality_phase(const Iterate& current_iterate, const Iterate& trial_iterate, const Direction& direction,
-            double step_length);
+         double step_length);
    };
 } // namespace
 

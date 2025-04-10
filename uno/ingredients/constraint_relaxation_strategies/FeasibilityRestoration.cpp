@@ -4,6 +4,7 @@
 #include <functional>
 #include "FeasibilityRestoration.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
+#include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "model/Model.hpp"
@@ -35,7 +36,10 @@ namespace uno {
                options),
          optimality_problem(std::forward<OptimalityProblem>(optimality_problem)),
          feasibility_problem(std::forward<l1RelaxedProblem>(feasibility_problem)),
-         subproblem_strategy(options.get_string("subproblem")),
+         convexify((options.get_string("globalization_mechanism") == "LS" && options.get_string("inequality_handling_method") != "primal_dual_interior_point")
+            || options.get_bool("convexify_QP")),
+         optimality_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), model, this->convexify, options)),
+         feasibility_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), model, this->convexify, options)),
          linear_feasibility_tolerance(options.get_double("tolerance")),
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")),
          reference_optimality_primals(optimality_problem.number_variables) {
@@ -45,6 +49,7 @@ namespace uno {
    void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
       // statistics
       this->inequality_handling_method->initialize_statistics(statistics, options);
+      this->optimality_hessian_model->initialize_statistics(statistics, options);
       statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
       statistics.set("phase", "OPT");
 
@@ -67,10 +72,11 @@ namespace uno {
          statistics.set("phase", "OPT");
          try {
             DEBUG << "Solving the optimality subproblem\n";
-            this->solve_subproblem(statistics, this->optimality_problem, current_iterate, current_iterate.multipliers, direction, warmstart_information);
+            this->solve_subproblem(statistics, this->optimality_problem, current_iterate, current_iterate.multipliers, direction,
+               *this->optimality_hessian_model, warmstart_information);
             if (direction.status == SubproblemStatus::INFEASIBLE) {
                // switch to the feasibility problem, starting from the current direction
-               statistics.set("status", std::string("infeasible " + this->subproblem_strategy));
+               statistics.set("status", std::string("infeasible subproblem"));
                DEBUG << "/!\\ The subproblem is infeasible\n";
                this->switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
                this->inequality_handling_method->set_initial_point(direction.primals);
@@ -89,8 +95,8 @@ namespace uno {
       DEBUG << "Solving the feasibility subproblem\n";
       statistics.set("phase", "FEAS");
       // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
-      this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, current_iterate.feasibility_multipliers, direction,
-            warmstart_information);
+      this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, current_iterate.feasibility_multipliers,
+         direction, *this->feasibility_hessian_model, warmstart_information);
       std::swap(direction.multipliers, direction.feasibility_multipliers);
    }
 
@@ -119,9 +125,9 @@ namespace uno {
    }
 
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) {
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction, warmstart_information);
+      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction, hessian_model, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
       DEBUG3 << direction << '\n';
    }
@@ -177,7 +183,12 @@ namespace uno {
       }
       ConstraintRelaxationStrategy::set_progress_statistics(statistics, trial_iterate);
       if (accept_iterate) {
-         this->inequality_handling_method->notify_accepted_iterate(current_iterate, trial_iterate);
+         if (this->current_phase == Phase::OPTIMALITY) {
+            this->optimality_hessian_model->notify_accepted_iterate(this->model, current_iterate, trial_iterate);
+         }
+         else {
+            this->feasibility_hessian_model->notify_accepted_iterate(this->model, current_iterate, trial_iterate);
+         }
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals,
                this->current_phase == Phase::OPTIMALITY ? trial_iterate.multipliers : trial_iterate.feasibility_multipliers,
                this->current_problem().get_objective_multiplier());
@@ -224,5 +235,9 @@ namespace uno {
       const auto& residuals = (this->current_phase == Phase::OPTIMALITY) ? iterate.residuals : iterate.feasibility_residuals;
       statistics.set("stationarity", residuals.stationarity);
       statistics.set("complementarity", residuals.complementarity);
+   }
+
+   size_t FeasibilityRestoration::get_hessian_evaluation_count() const {
+      return this->optimality_hessian_model->evaluation_count + this->feasibility_hessian_model->evaluation_count;
    }
 } // namespace
