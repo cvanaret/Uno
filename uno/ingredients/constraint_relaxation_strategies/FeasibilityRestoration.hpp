@@ -8,7 +8,8 @@
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
-#include "OptimalityProblem.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "OptimizationProblem.hpp"
 #include "l1RelaxedProblem.hpp"
 
 namespace uno {
@@ -38,7 +39,7 @@ namespace uno {
       [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
    private:
-      const OptimalityProblem optimality_problem;
+      const OptimizationProblem optimality_problem;
       l1RelaxedProblem feasibility_problem;
       const bool convexify;
       std::unique_ptr<HessianModel> optimality_hessian_model;
@@ -50,7 +51,7 @@ namespace uno {
       Vector<double> reference_optimality_primals{};
 
       // delegating constructor
-      FeasibilityRestoration(const Model& model, OptimalityProblem&& optimality_problem, l1RelaxedProblem&& feasibility_problem, const Options& options);
+      FeasibilityRestoration(const Model& model, OptimizationProblem&& optimality_problem, l1RelaxedProblem&& feasibility_problem, const Options& options);
 
       [[nodiscard]] const OptimizationProblem& current_problem() const;
       void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,

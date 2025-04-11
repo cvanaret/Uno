@@ -71,12 +71,8 @@ namespace uno {
 
       // fill the Y matrix
       // TODO
-      std::cout << "Current Lag gradient:\n";
-      std::cout << current_iterate.residuals.lagrangian_gradient.objective_contribution << '\n';
-      std::cout << current_iterate.residuals.lagrangian_gradient.constraints_contribution << '\n';
-      std::cout << "Trial Lag gradient:\n";
-      std::cout << trial_iterate.residuals.lagrangian_gradient.objective_contribution << '\n';
-      std::cout << trial_iterate.residuals.lagrangian_gradient.constraints_contribution << '\n';
+      std::cout << "Current Lag gradient: " << current_iterate.residuals.lagrangian_gradient.assemble(1.);
+      std::cout << "Trial Lag gradient: " << trial_iterate.residuals.lagrangian_gradient.assemble(1.);
 
       this->used_memory_size = std::min(this->used_memory_size + 1, this->memory_size);
       std::cout << "There are now " << this->used_memory_size << " iterates in memory (capacity " <<

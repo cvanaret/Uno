@@ -7,11 +7,11 @@
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
-#include "linear_algebra/SparseStorageFactory.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "preprocessing/Preprocessing.hpp"
+#include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Infinity.hpp"
 
