@@ -4,11 +4,13 @@
 #include <cassert>
 #include "l1Relaxation.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
+#include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/UserCallbacks.hpp"
@@ -35,9 +37,12 @@ namespace uno {
    l1Relaxation::l1Relaxation(const Model& model, l1RelaxedProblem&& feasibility_problem, l1RelaxedProblem&& l1_relaxed_problem, const Options& options) :
          ConstraintRelaxationStrategy(model, l1_relaxed_problem.number_variables, l1_relaxed_problem.number_constraints,
                l1_relaxed_problem.number_objective_gradient_nonzeros(), l1_relaxed_problem.number_jacobian_nonzeros(),
-               l1_relaxed_problem.number_hessian_nonzeros(), options),
+               options),
          feasibility_problem(std::forward<l1RelaxedProblem>(feasibility_problem)),
          l1_relaxed_problem(std::forward<l1RelaxedProblem>(l1_relaxed_problem)),
+         convexify((options.get_string("globalization_mechanism") == "LS" && options.get_string("inequality_handling_method") != "primal_dual_interior_point")
+            || options.get_bool("convexify_QP")),
+         hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), model, this->convexify, options)),
          penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
          tolerance(options.get_double("tolerance")),
          parameters({
@@ -54,6 +59,7 @@ namespace uno {
    void l1Relaxation::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
       // statistics
       this->inequality_handling_method->initialize_statistics(statistics, options);
+      this->hessian_model->initialize_statistics(statistics, options);
       statistics.add_column("penalty", Statistics::double_width - 5, options.get_int("statistics_penalty_parameter_column_order"));
       statistics.set("penalty", this->penalty_parameter);
 
@@ -141,7 +147,8 @@ namespace uno {
 
       // solve the subproblem
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction, warmstart_information);
+      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction, *this->hessian_model,
+         warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, this->model.number_variables));
       DEBUG3 << direction << '\n';
       assert(direction.status == SubproblemStatus::OPTIMAL && "The subproblem was not solved to optimality");
@@ -262,6 +269,7 @@ namespace uno {
       if (accept_iterate) {
          this->check_exact_relaxation(trial_iterate);
          // this->set_dual_residuals_statistics(statistics, trial_iterate);
+         this->hessian_model->notify_accepted_iterate(this->model, current_iterate, trial_iterate);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, this->penalty_parameter);
       }
       this->set_progress_statistics(statistics, trial_iterate);
@@ -305,5 +313,9 @@ namespace uno {
    void l1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
       statistics.set("stationarity", iterate.residuals.stationarity);
       statistics.set("complementarity", iterate.residuals.complementarity);
+   }
+
+   size_t l1Relaxation::get_hessian_evaluation_count() const {
+      return this->hessian_model->evaluation_count;
    }
 } // namespace

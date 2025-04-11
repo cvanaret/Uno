@@ -15,14 +15,13 @@
 
 namespace uno {
    QPSubproblem::QPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
-         size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) :
-         InequalityConstrainedMethod(options.get_string("hessian_model"), number_variables, number_constraints, number_hessian_nonzeros,
-               options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"), options),
+         size_t number_jacobian_nonzeros, const Model& model, const Options& options) :
+         InequalityConstrainedMethod(number_variables, number_constraints),
          enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")),
          // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
          solver(QPSolverFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
                // if the QP solver is used during preprocessing, we need to allocate the Hessian with at least number_variables elements
-               std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, number_hessian_nonzeros),
+               std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, model.number_hessian_nonzeros()),
                options)) {
    }
 
@@ -35,9 +34,9 @@ namespace uno {
    }
 
    void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-         Direction& direction, WarmstartInformation& warmstart_information) {
+         Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) {
       this->solver->solve_QP(statistics, problem, current_iterate, current_multipliers, this->initial_point, direction,
-            *this->hessian_model, this->trust_region_radius, warmstart_information);
+         hessian_model, this->trust_region_radius, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;
       // reset the initial point

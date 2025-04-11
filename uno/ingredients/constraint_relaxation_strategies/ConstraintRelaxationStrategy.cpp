@@ -19,11 +19,11 @@
 
 namespace uno {
    ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Model& model, size_t number_variables, size_t number_constraints,
-         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
+         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, const Options& options):
          model(model),
          globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
-         inequality_handling_method(InequalityHandlingMethodFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
-               number_hessian_nonzeros, options)),
+         inequality_handling_method(InequalityHandlingMethodFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros,
+            number_jacobian_nonzeros, model, options)),
          progress_norm(norm_from_string(options.get_string("progress_norm"))),
          residual_norm(norm_from_string(options.get_string("residual_norm"))),
          residual_scaling_threshold(options.get_double("residual_scaling_threshold")),
@@ -66,8 +66,8 @@ namespace uno {
          const Vector<double>& primal_direction, double step_length) const {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
       const double current_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints, this->progress_norm);
-      const double trial_linearized_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints + step_length *
-                                                                                                                                      (current_iterate.evaluations.constraint_jacobian * primal_direction), this->progress_norm);
+      const double trial_linearized_constraint_violation = this->model.constraint_violation(current_iterate.evaluations.constraints +
+         step_length * (current_iterate.evaluations.constraint_jacobian * primal_direction), this->progress_norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
    }
 
@@ -229,10 +229,6 @@ namespace uno {
       if (this->model.is_constrained()) {
          statistics.set("primal feas", iterate.progress.infeasibility);
       }
-   }
-
-   size_t ConstraintRelaxationStrategy::get_hessian_evaluation_count() const {
-      return this->inequality_handling_method->get_hessian_evaluation_count();
    }
 
    size_t ConstraintRelaxationStrategy::get_number_subproblems_solved() const {

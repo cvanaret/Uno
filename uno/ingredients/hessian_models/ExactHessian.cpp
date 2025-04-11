@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ExactHessian.hpp"
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 
@@ -11,7 +10,13 @@ namespace uno {
    ExactHessian::ExactHessian(): HessianModel() {
    }
 
-   void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const { }
+   void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+      // do nothing
+   }
+
+   void ExactHessian::notify_accepted_iterate(const Model& /*model*/, const Iterate& /*current_iterate*/, const Iterate& /*trial_iterate*/) {
+      // do nothing
+   }
 
    void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
@@ -23,6 +28,7 @@ namespace uno {
    void ExactHessian::compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double objective_multiplier,
          const Vector<double>& constraint_multipliers, Vector<double>& result) {
       model.compute_hessian_vector_product(vector, objective_multiplier, constraint_multipliers, result);
+      // TODO fix the counter
       this->evaluation_count++;
    }
 } // namespace
