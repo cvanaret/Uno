@@ -42,7 +42,7 @@ namespace uno {
    protected:
       const OptimizationProblem& first_reformulation;
       const double barrier_parameter;
-      const double damping_factor{1e-5};
+      const double damping_factor{1e-5}; // TODO option
    };
 } // namespace
 

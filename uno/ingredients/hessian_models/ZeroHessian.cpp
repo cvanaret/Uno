@@ -8,7 +8,7 @@
 namespace uno {
    void ZeroHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const { }
 
-   void ZeroHessian::notify_accepted_iterate(const Model& /*model*/, const Iterate& /*current_iterate*/, const Iterate& /*trial_iterate*/) {
+   void ZeroHessian::notify_accepted_iterate(const Model& /*model*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
       // do nothing
    }
 
