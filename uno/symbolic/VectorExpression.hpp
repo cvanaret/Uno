@@ -5,7 +5,6 @@
 #define UNO_VECTOREXPRESSION_H
 
 #include <functional>
-#include "Collection.hpp"
 
 namespace uno {
    template <typename Indices, typename Callable>

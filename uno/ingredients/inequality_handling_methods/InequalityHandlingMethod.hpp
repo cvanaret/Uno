@@ -4,8 +4,6 @@
 #ifndef UNO_INEQUALITYHANDLINGMETHOD_H
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
-#include <memory>
-#include <string>
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "tools/Infinity.hpp"
 

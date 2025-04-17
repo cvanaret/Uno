@@ -15,7 +15,7 @@ namespace uno {
          HessianModel(),
          number_variables(number_variables),
          memory_size(memory_size),
-         current_memory_slot(memory_size-1),
+         current_memory_slot(0),
          S_matrix(number_variables, memory_size),
          Y_matrix(number_variables, memory_size),
          L_matrix(memory_size, memory_size),
@@ -27,9 +27,8 @@ namespace uno {
       // do nothing
    }
 
-   void LBFGSHessian::notify_accepted_iterate(const Model& model, const Iterate& current_iterate, const Iterate& trial_iterate) {
+   void LBFGSHessian::notify_accepted_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
       this->update_memory(model, current_iterate, trial_iterate);
-      this->hessian_recomputation_required = true;
    }
 
    void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& /*model*/, const Vector<double>& /*primal_variables*/,
@@ -56,39 +55,66 @@ namespace uno {
       }
    }
 
-   void LBFGSHessian::update_memory(const Model& model, const Iterate& current_iterate, const Iterate& trial_iterate) {
-      // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
-      this->current_memory_slot = (this->current_memory_slot + 1) % this->memory_size;
+   void LBFGSHessian::update_memory(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
       std::cout << "\n*** Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
       // TODO figure out if we're extending or replacing in memory
 
-      // fill the S matrix
+      // fill the S matrix: s = x_k - x_{k-1}
       for (size_t variable_index: Range(this->number_variables)) {
          this->S_matrix.entry(variable_index, this->current_memory_slot) = trial_iterate.primals[variable_index] -
             current_iterate.primals[variable_index];
       }
       std::cout << "S:\n" << this->S_matrix;
 
-      // fill the Y matrix
-      // TODO
-      std::cout << "Current Lag gradient: " << current_iterate.residuals.lagrangian_gradient.assemble(1.);
-      std::cout << "Trial Lag gradient: " << trial_iterate.residuals.lagrangian_gradient.assemble(1.);
+      // fill the Y matrix: y = \nabla L(x_k, y_k, z_k) - \nabla L(x_{k-1}, y_k, z_k)
+      model.evaluate_objective_gradient(current_iterate.primals, current_iterate.evaluations.objective_gradient);
+      model.evaluate_constraint_jacobian(current_iterate.primals, current_iterate.evaluations.constraint_jacobian);
+      model.evaluate_objective_gradient(trial_iterate.primals, trial_iterate.evaluations.objective_gradient);
+      model.evaluate_constraint_jacobian(trial_iterate.primals, trial_iterate.evaluations.constraint_jacobian);
 
-      this->used_memory_size = std::min(this->used_memory_size + 1, this->memory_size);
-      std::cout << "There are now " << this->used_memory_size << " iterates in memory (capacity " <<
-         this->memory_size << ")\n";
+      LagrangianGradient<double> current_lag_gradient(model.number_variables);
+      LagrangianGradient<double> trial_lag_gradient(model.number_variables);
+      model.evaluate_lagrangian_gradient(current_lag_gradient, current_iterate, trial_iterate.multipliers);
+      model.evaluate_lagrangian_gradient(trial_lag_gradient, trial_iterate, trial_iterate.multipliers);
+      const auto assembled_current_lag_gradient = current_lag_gradient.assemble(1.);
+      const auto assembled_trial_lag_gradient = trial_lag_gradient.assemble(1.);
+      for (size_t variable_index: Range(this->number_variables)) {
+         this->Y_matrix.entry(variable_index, this->current_memory_slot) = assembled_trial_lag_gradient[variable_index] -
+            assembled_current_lag_gradient[variable_index];
+      }
+      std::cout << "Y:\n" << this->Y_matrix;
+
+      // fill the D matrix (diagonal)
+      this->D_matrix[this->current_memory_slot] = 0.;
+      for (size_t variable_index: Range(this->number_variables)) {
+         this->D_matrix[this->current_memory_slot] += this->S_matrix.entry(variable_index, this->current_memory_slot) *
+            this->Y_matrix.entry(variable_index, this->current_memory_slot);
+      }
+      std::cout << "D: "; print_vector(std::cout, this->D_matrix);
+      if (this->D_matrix[this->current_memory_slot] <= 0.) {
+         std::cout << "Skipping iterate\n";
+      }
+      else {
+         // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
+         this->current_memory_slot = (this->current_memory_slot + 1) % this->memory_size;
+         this->used_memory_size = std::min(this->used_memory_size + 1, this->memory_size);
+         std::cout << "There are now " << this->used_memory_size << " iterates in memory (capacity " <<
+            this->memory_size << ")\n";
+         this->hessian_recomputation_required = true;
+      }
    }
 
    void LBFGSHessian::recompute_hessian_representation() {
       std::cout << "\n*** Recomputing the Hessian representation\n";
-      // fill the D matrix (diagonal)
-      this->D_matrix[this->current_memory_slot] = 10.; // TODO dot(s_new, y_new)
-      std::cout << "D: "; print_vector(std::cout, this->D_matrix);
 
       // fill the L matrix (lower triangular with a zero diagonal)
       for (size_t column_index: Range(this->used_memory_size)) {
          for (size_t row_index: Range(column_index+1, this->used_memory_size)) {
-            this->L_matrix.entry(row_index, column_index) = static_cast<double>(column_index + row_index); // TODO dot(s_i, y_j)
+            this->L_matrix.entry(row_index, column_index) = 0.;
+            for (size_t variable_index: Range(this->number_variables)) {
+               this->L_matrix.entry(row_index, column_index) += this->S_matrix.entry(variable_index, row_index) *
+                  this->Y_matrix.entry(variable_index, column_index); // si*yj;
+            }
          }
       }
       std::cout << "L:\n" << this->L_matrix;

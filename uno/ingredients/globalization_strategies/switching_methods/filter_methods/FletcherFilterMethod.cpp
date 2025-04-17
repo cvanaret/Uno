@@ -4,7 +4,6 @@
 #include "FletcherFilterMethod.hpp"
 #include "filters/Filter.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
-#include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
 #include "tools/Statistics.hpp"

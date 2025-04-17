@@ -6,7 +6,6 @@
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
-#include "tools/Logger.hpp"
 
 namespace uno {
    size_t Iterate::number_eval_objective = 0;

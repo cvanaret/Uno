@@ -3,11 +3,8 @@
 
 #include "LPSubproblem.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/WarmstartInformation.hpp"
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/subproblem_solvers/LPSolver.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
-#include "options/Options.hpp"
 
 namespace uno {
    LPSubproblem::LPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,

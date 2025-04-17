@@ -5,7 +5,6 @@
 #define UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 
 #include <cstddef>
-#include <tuple>
 
 namespace uno {
    // forward declarations

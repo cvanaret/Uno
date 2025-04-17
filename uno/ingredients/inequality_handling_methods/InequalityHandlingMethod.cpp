@@ -3,7 +3,6 @@
 
 #include <cassert>
 #include "InequalityHandlingMethod.hpp"
-#include "ingredients/hessian_models/HessianModelFactory.hpp"
 
 namespace uno {
    void InequalityHandlingMethod::set_trust_region_radius(double new_trust_region_radius) {

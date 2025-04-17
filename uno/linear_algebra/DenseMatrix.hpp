@@ -4,7 +4,6 @@
 #ifndef UNO_DENSEMATRIX_H
 #define UNO_DENSEMATRIX_H
 
-#include <cstddef>
 #include <iostream>
 #include <vector>
 #include "symbolic/Range.hpp"

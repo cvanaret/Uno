@@ -23,7 +23,7 @@ namespace uno {
       statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
    }
 
-   void ConvexifiedHessian::notify_accepted_iterate(const Model& /*model*/, Iterate& current_iterate, Iterate& trial_iterate) {
+   void ConvexifiedHessian::notify_accepted_iterate(const Model& /*model*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
       // do nothing
    }
 
