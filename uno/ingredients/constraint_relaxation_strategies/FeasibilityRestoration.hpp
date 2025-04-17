@@ -7,7 +7,7 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
-#include "OptimalityProblem.hpp"
+#include "OptimizationProblem.hpp"
 #include "l1RelaxedProblem.hpp"
 
 namespace uno {
@@ -36,7 +36,7 @@ namespace uno {
       void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
 
    private:
-      const OptimalityProblem optimality_problem;
+      const OptimizationProblem optimality_problem;
       l1RelaxedProblem feasibility_problem;
       Phase current_phase{Phase::OPTIMALITY};
       const std::string& subproblem_strategy;
@@ -46,7 +46,7 @@ namespace uno {
       Vector<double> reference_optimality_primals{};
 
       // delegating constructor
-      FeasibilityRestoration(const Model& model, OptimalityProblem&& optimality_problem, l1RelaxedProblem&& feasibility_problem, const Options& options);
+      FeasibilityRestoration(const Model& model, OptimizationProblem&& optimality_problem, l1RelaxedProblem&& feasibility_problem, const Options& options);
 
       [[nodiscard]] const OptimizationProblem& current_problem() const;
       void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,

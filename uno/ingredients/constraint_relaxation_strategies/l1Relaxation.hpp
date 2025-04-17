@@ -4,7 +4,6 @@
 #ifndef UNO_L1RELAXATION_H
 #define UNO_L1RELAXATION_H
 
-#include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "optimization/Multipliers.hpp"
