@@ -8,7 +8,6 @@
 #include <vector>
 #include "SparseStorage.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "tools/Infinity.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {

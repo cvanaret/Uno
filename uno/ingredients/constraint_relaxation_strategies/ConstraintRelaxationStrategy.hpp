@@ -5,6 +5,7 @@
 #define UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include "linear_algebra/Norm.hpp"
 #include "optimization/IterateStatus.hpp"

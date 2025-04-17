@@ -17,14 +17,14 @@
 namespace uno {
    FeasibilityRestoration::FeasibilityRestoration(const Model& model, const Options& options) :
          // call delegating constructor
-         FeasibilityRestoration(model, OptimalityProblem(model),
+         FeasibilityRestoration(model, OptimizationProblem(model, model.number_variables, model.number_constraints),
                // create the (restoration phase) feasibility problem (objective multiplier = 0)
                l1RelaxedProblem(model, 0., options.get_double("l1_constraint_violation_coefficient"), 0., nullptr),
                options) {
    }
 
    // private delegating constructor
-   FeasibilityRestoration::FeasibilityRestoration(const Model& model, OptimalityProblem&& optimality_problem, l1RelaxedProblem&& feasibility_problem,
+   FeasibilityRestoration::FeasibilityRestoration(const Model& model, OptimizationProblem&& optimality_problem, l1RelaxedProblem&& feasibility_problem,
             const Options& options) :
          ConstraintRelaxationStrategy(model,
                // allocate the largest size necessary to solve the optimality subproblem or the feasibility subproblem
@@ -34,7 +34,7 @@ namespace uno {
                std::max(optimality_problem.number_jacobian_nonzeros(), feasibility_problem.number_jacobian_nonzeros()),
                std::max(optimality_problem.number_hessian_nonzeros(), feasibility_problem.number_hessian_nonzeros()),
                options),
-         optimality_problem(std::forward<OptimalityProblem>(optimality_problem)),
+         optimality_problem(std::forward<OptimizationProblem>(optimality_problem)),
          feasibility_problem(std::forward<l1RelaxedProblem>(feasibility_problem)),
          subproblem_strategy(options.get_string("subproblem")),
          linear_feasibility_tolerance(options.get_double("tolerance")),

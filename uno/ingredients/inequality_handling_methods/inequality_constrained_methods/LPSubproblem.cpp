@@ -3,8 +3,6 @@
 
 #include "LPSubproblem.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/WarmstartInformation.hpp"
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/subproblem_solvers/LPSolver.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "options/Options.hpp"

@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "InequalityConstrainedMethod.hpp"
-#include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"

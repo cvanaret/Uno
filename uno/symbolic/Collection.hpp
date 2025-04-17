@@ -4,8 +4,6 @@
 #ifndef UNO_COLLECTION_H
 #define UNO_COLLECTION_H
 
-#include <functional>
-
 namespace uno {
    // iterable collection
    template <typename ElementType>

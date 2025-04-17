@@ -4,14 +4,11 @@
 #include "QPSubproblem.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/WarmstartInformation.hpp"
 #include "preprocessing/Preprocessing.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/QPSolver.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "options/Options.hpp"
-#include "tools/Statistics.hpp"
 
 namespace uno {
    QPSubproblem::QPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,

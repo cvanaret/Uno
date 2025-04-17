@@ -7,7 +7,6 @@
 #include "ConvexifiedHessian.hpp"
 #include "ExactHessian.hpp"
 #include "ZeroHessian.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    std::unique_ptr<HessianModel> HessianModelFactory::create(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros,

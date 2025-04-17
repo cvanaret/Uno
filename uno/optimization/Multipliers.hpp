@@ -4,7 +4,6 @@
 #ifndef UNO_MULTIPLIERS_H
 #define UNO_MULTIPLIERS_H
 
-#include <cmath>
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {

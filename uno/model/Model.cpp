@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cmath>
-#include <iostream>
 #include <utility>
 #include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
