@@ -3,11 +3,10 @@
 
 #include <memory>
 #include "HessianModel.hpp"
+#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
-   // forward declarations
-   template <typename IndexType, typename NumericalType>
-   class DirectSymmetricIndefiniteLinearSolver;
+   // forward declaration
    class Options;
 
    // Hessian with convexification (inertia correction)

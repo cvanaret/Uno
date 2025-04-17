@@ -8,7 +8,6 @@
 #include "model/Model.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "optimization/Multipliers.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 
 // include AMPL Solver Library (ASL)

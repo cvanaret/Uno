@@ -4,7 +4,6 @@
 #ifndef UNO_QPSOLVER_H
 #define UNO_QPSOLVER_H
 
-#include <vector>
 #include "LPSolver.hpp"
 
 namespace uno {

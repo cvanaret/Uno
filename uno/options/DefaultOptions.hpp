@@ -4,8 +4,6 @@
 #ifndef UNO_DEFAULTOPTIONS_H
 #define UNO_DEFAULTOPTIONS_H
 
-#include <optional>
-#include <string>
 #include "Options.hpp"
 
 namespace uno {

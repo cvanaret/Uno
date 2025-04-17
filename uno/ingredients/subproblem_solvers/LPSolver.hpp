@@ -4,8 +4,6 @@
 #ifndef UNO_LPSOLVER_H
 #define UNO_LPSOLVER_H
 
-#include <vector>
-
 namespace uno {
    // forward declarations
    class Direction;
