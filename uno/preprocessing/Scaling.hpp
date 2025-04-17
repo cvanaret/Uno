@@ -4,6 +4,7 @@
 #ifndef UNO_SCALING_H
 #define UNO_SCALING_H
 
+#include <cstddef>
 #include <vector>
 
 namespace uno {
