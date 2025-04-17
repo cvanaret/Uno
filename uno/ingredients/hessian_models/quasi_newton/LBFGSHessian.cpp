@@ -1,12 +1,10 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <stdexcept>
 #include "LBFGSHessian.hpp"
-
-#include <model/Model.hpp>
-
 #include "linear_algebra/LAPACK.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
+#include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Range.hpp"
 
@@ -31,18 +29,20 @@ namespace uno {
       this->update_memory(model, current_iterate, trial_iterate);
    }
 
-   void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& /*model*/, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& /*hessian*/) {
+   void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
       if (this->hessian_recomputation_required) {
          this->recompute_hessian_representation();
          this->hessian_recomputation_required = false;
       }
 
-      // TODO
-      throw std::runtime_error("LBFGSHessian::evaluate_hessian not implemented");
+      for (size_t variable_index: Range(model.number_variables)) {
+         hessian.insert(1., variable_index, variable_index);
+         hessian.finalize_column(variable_index);
+      }
    }
 
-   void LBFGSHessian::compute_hessian_vector_product(const Model& /*model*/, const Vector<double>& vector, double /*objective_multiplier*/,
+   void LBFGSHessian::compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double /*objective_multiplier*/,
          const Vector<double>& /*constraint_multipliers*/, Vector<double>& result) {
       if (this->hessian_recomputation_required) {
          this->recompute_hessian_representation();
@@ -50,7 +50,7 @@ namespace uno {
       }
 
       // for the moment, pretend we have an identity Hessian TODO
-      for (size_t variable_index: Range(vector.size())) {
+      for (size_t variable_index: Range(model.number_variables)) {
          result[variable_index] = vector[variable_index];
       }
    }
