@@ -8,6 +8,10 @@
 namespace uno {
    void ZeroHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const { }
 
+   void ZeroHessian::notify_accepted_iterate(const Model& /*model*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
+      // do nothing
+   }
+
    void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
       hessian.set_dimension(model.number_variables);

@@ -15,6 +15,9 @@ namespace uno {
    template <typename ElementType>
    class Collection;
    template <typename ElementType>
+   class LagrangianGradient;
+   class Multipliers;
+   template <typename ElementType>
    class RectangularMatrix;
    template <typename ElementType>
    class SparseVector;
@@ -89,6 +92,9 @@ namespace uno {
       [[nodiscard]] virtual double constraint_violation(double constraint_value, size_t constraint_index) const;
       template <typename Array>
       double constraint_violation(const Array& constraints, Norm residual_norm) const;
+
+      void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, const Iterate& iterate,
+         const Multipliers& multipliers) const;
    };
 
    // compute ||c||

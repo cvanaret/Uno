@@ -3,11 +3,10 @@
 
 #include <memory>
 #include "HessianModel.hpp"
+#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
-   // forward declarations
-   template <typename IndexType, typename NumericalType>
-   class DirectSymmetricIndefiniteLinearSolver;
+   // forward declaration
    class Options;
 
    // Hessian with convexification (inertia correction)
@@ -16,6 +15,7 @@ namespace uno {
       ConvexifiedHessian(size_t dimension, size_t number_hessian_nonzeros, const Options& options);
 
       void initialize_statistics(Statistics& statistics, const Options& options) const override;
+      void notify_accepted_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) override;
       void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
          const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
       void compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double objective_multiplier,
@@ -28,6 +28,6 @@ namespace uno {
       const double regularization_increase_factor{};
       const double regularization_failure_threshold{};
 
-      void regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables);
+      void regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_variables);
    };
 } // namespace

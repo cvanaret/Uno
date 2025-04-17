@@ -41,10 +41,13 @@ namespace uno {
       // primal-dual residuals
       void compute_primal_dual_residuals(Iterate& iterate) override;
       void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
+      [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
    protected:
       const l1RelaxedProblem feasibility_problem;
       l1RelaxedProblem l1_relaxed_problem;
+      const bool convexify;
+      std::unique_ptr<HessianModel> hessian_model;
       double penalty_parameter;
       const double tolerance;
       const l1RelaxationParameters parameters;

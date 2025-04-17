@@ -11,7 +11,6 @@
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
-#include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 

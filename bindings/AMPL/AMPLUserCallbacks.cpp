@@ -2,8 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "AMPLUserCallbacks.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "optimization/Multipliers.hpp"
 
 namespace uno {
    AMPLUserCallbacks::AMPLUserCallbacks(): UserCallbacks() { }

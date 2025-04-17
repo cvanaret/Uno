@@ -4,6 +4,7 @@
 #ifndef UNO_DIRECTSYMMETRICINDEFINITELINEARSOLVER_H
 #define UNO_DIRECTSYMMETRICINDEFINITELINEARSOLVER_H
 
+#include <tuple>
 #include "SymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {

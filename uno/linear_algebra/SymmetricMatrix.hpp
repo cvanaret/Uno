@@ -10,7 +10,6 @@
 #include <cassert>
 #include "SparseStorage.hpp"
 #include "SparseStorageFactory.hpp"
-#include "tools/Infinity.hpp"
 
 namespace uno {
    // abstract class

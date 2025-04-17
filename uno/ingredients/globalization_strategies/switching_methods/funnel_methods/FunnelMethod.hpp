@@ -6,7 +6,6 @@
 
 #include "../SwitchingMethod.hpp"
 #include "Funnel.hpp"
-#include "tools/Infinity.hpp"
 
 /*! \class TwoPhaseConstants
  * \brief Constants for funnel strategy

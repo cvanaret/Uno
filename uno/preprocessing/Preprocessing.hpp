@@ -4,9 +4,6 @@
 #ifndef UNO_PREPROCESSING_H
 #define UNO_PREPROCESSING_H
 
-#include <cstddef>
-#include <vector>
-
 namespace uno {
    // forward declarations
    class Iterate;
