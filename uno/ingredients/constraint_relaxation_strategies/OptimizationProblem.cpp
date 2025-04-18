@@ -65,14 +65,6 @@ namespace uno {
       return this->model.variable_upper_bound(variable_index);
    }
 
-   double OptimizationProblem::constraint_lower_bound(size_t constraint_index) const {
-      return this->model.constraint_lower_bound(constraint_index);
-   }
-
-   double OptimizationProblem::constraint_upper_bound(size_t constraint_index) const {
-      return this->model.constraint_upper_bound(constraint_index);
-   }
-
    const Collection<size_t>& OptimizationProblem::get_lower_bounded_variables() const {
       return this->model.get_lower_bounded_variables();
    }
@@ -87,6 +79,18 @@ namespace uno {
 
    const Collection<size_t>& OptimizationProblem::get_single_upper_bounded_variables() const {
       return this->model.get_single_upper_bounded_variables();
+   }
+
+   double OptimizationProblem::constraint_lower_bound(size_t constraint_index) const {
+      return this->model.constraint_lower_bound(constraint_index);
+   }
+
+   double OptimizationProblem::constraint_upper_bound(size_t constraint_index) const {
+      return this->model.constraint_upper_bound(constraint_index);
+   }
+
+   const Collection<size_t>& OptimizationProblem::get_inequality_constraints() const {
+      return this->model.get_inequality_constraints();
    }
 
    size_t OptimizationProblem::number_objective_gradient_nonzeros() const {

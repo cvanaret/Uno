@@ -103,10 +103,6 @@ namespace uno {
       return this->model->get_upper_bounded_variables();
    }
 
-   const SparseVector<size_t>& ScaledModel::get_slacks() const {
-      return this->model->get_slacks();
-   }
-
    const Collection<size_t>& ScaledModel::get_single_lower_bounded_variables() const {
       return this->model->get_single_lower_bounded_variables();
    }

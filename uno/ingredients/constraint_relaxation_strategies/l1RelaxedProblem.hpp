@@ -32,6 +32,7 @@ namespace uno {
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
+      [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const;
 
       [[nodiscard]] size_t number_objective_gradient_nonzeros() const override;
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;

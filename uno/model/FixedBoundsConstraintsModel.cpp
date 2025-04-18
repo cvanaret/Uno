@@ -113,10 +113,6 @@ namespace uno {
       return this->upper_bounded_variables_collection;
    }
 
-   const SparseVector<size_t>& FixedBoundsConstraintsModel::get_slacks() const {
-      return this->model->get_slacks();
-   }
-
    const Collection<size_t>& FixedBoundsConstraintsModel::get_single_lower_bounded_variables() const {
       return this->model->get_single_lower_bounded_variables();
    }

@@ -51,12 +51,14 @@ namespace uno {
       [[nodiscard]] size_t get_number_original_variables() const;
       [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const;
       [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const;
-      [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const;
-      [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const;
       [[nodiscard]] virtual const Collection<size_t>& get_lower_bounded_variables() const;
       [[nodiscard]] virtual const Collection<size_t>& get_upper_bounded_variables() const;
       [[nodiscard]] virtual const Collection<size_t>& get_single_lower_bounded_variables() const;
       [[nodiscard]] virtual const Collection<size_t>& get_single_upper_bounded_variables() const;
+
+      [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const;
+      [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const;
+      [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const;
 
       [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const;
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;

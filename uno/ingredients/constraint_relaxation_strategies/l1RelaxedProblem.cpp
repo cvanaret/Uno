@@ -228,14 +228,6 @@ namespace uno {
       }
    }
 
-   double l1RelaxedProblem::constraint_lower_bound(size_t constraint_index) const {
-      return this->model.constraint_lower_bound(constraint_index);
-   }
-
-   double l1RelaxedProblem::constraint_upper_bound(size_t constraint_index) const {
-      return this->model.constraint_upper_bound(constraint_index);
-   }
-
    const Collection<size_t>& l1RelaxedProblem::get_lower_bounded_variables() const {
       return this->lower_bounded_variables;
    }
@@ -252,6 +244,18 @@ namespace uno {
    const Collection<size_t>& l1RelaxedProblem::get_single_upper_bounded_variables() const {
       // same set as the model
       return this->model.get_single_upper_bounded_variables();
+   }
+
+   double l1RelaxedProblem::constraint_lower_bound(size_t constraint_index) const {
+      return this->model.constraint_lower_bound(constraint_index);
+   }
+
+   double l1RelaxedProblem::constraint_upper_bound(size_t constraint_index) const {
+      return this->model.constraint_upper_bound(constraint_index);
+   }
+
+   const Collection<size_t>& l1RelaxedProblem::get_inequality_constraints() const {
+      return this->model.get_inequality_constraints();
    }
 
    size_t l1RelaxedProblem::number_objective_gradient_nonzeros() const {

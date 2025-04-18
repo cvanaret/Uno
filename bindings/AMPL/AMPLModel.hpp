@@ -20,11 +20,6 @@ namespace uno {
    // forward reference
    class Options;
 
-   /*! \class AMPLModel
-    * \brief AMPL model
-    *
-    *  Description of an AMPL model
-    */
    class AMPLModel: public Model {
    public:
       AMPLModel(const std::string& file_name, const Options& options);
@@ -45,7 +40,6 @@ namespace uno {
       [[nodiscard]] BoundType get_variable_bound_type(size_t variable_index) const override;
       [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override;
       [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override;
-      [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
       [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
       [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;

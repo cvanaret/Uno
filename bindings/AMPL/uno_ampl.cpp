@@ -30,15 +30,10 @@ namespace uno {
    void run_uno_ampl(const std::string& model_name, const Options& options) {
       try {
          // AMPL model
-         std::unique_ptr<Model> ampl_model = std::make_unique<AMPLModel>(model_name, options);
-         DISCRETE << "Original model " << ampl_model->name << '\n' << ampl_model->number_variables << " variables, " <<
-            ampl_model->number_constraints << " constraints\n";
-
-         // reformulate (scale, add slacks, relax the bounds, ...) if necessary
-         std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), options);
-         DISCRETE << "Reformulated model " << model->name << '\n' << model->number_variables << " variables, " <<
-                  model->number_constraints << " constraints\n";
-
+         std::unique_ptr<Model> model = std::make_unique<AMPLModel>(model_name, options);
+         DISCRETE << "Original model " << model->name << '\n' << model->number_variables << " variables, " <<
+            model->number_constraints << " constraints\n\n";
+         
          // initialize initial primal and dual points
          Iterate initial_iterate(model->number_variables, model->number_constraints);
          model->initial_primal_point(initial_iterate.primals);

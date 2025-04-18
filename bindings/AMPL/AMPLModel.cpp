@@ -252,10 +252,6 @@ namespace uno {
       return this->upper_bounded_variables_collection;
    }
 
-   const SparseVector<size_t>& AMPLModel::get_slacks() const {
-      return this->slacks;
-   }
-
    const Collection<size_t>& AMPLModel::get_single_lower_bounded_variables() const {
       return this->single_lower_bounded_variables_collection;
    }

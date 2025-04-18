@@ -55,11 +55,8 @@ namespace uno {
       statistics.add_column("barrier", Statistics::double_width - 5, options.get_int("statistics_barrier_parameter_column_order"));
    }
 
-   void PrimalDualInteriorPointMethod::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
-      if (problem.has_inequality_constraints()) {
-         throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
-      }
-      if (problem.has_fixed_variables()) {
+   void PrimalDualInteriorPointMethod::generate_initial_iterate(const OptimizationProblem& first_reformulation, Iterate& initial_iterate) {
+      if (first_reformulation.has_fixed_variables()) {
          throw std::runtime_error("The problem has fixed variables. Move them to the set of general constraints.");
       }
 
@@ -69,22 +66,24 @@ namespace uno {
       //}
 
       // add the slacks to the initial iterate
-      initial_iterate.set_number_variables(problem.number_variables);
+      initial_iterate.set_number_variables(first_reformulation.number_variables + first_reformulation.get_inequality_constraints().size());
       // make the initial point strictly feasible wrt the bounds
-      for (size_t variable_index: Range(problem.number_variables)) {
+      for (size_t variable_index: Range(first_reformulation.number_variables)) {
          initial_iterate.primals[variable_index] = PrimalDualInteriorPointMethod::push_variable_to_interior(initial_iterate.primals[variable_index],
-               problem.variable_lower_bound(variable_index), problem.variable_upper_bound(variable_index));
+               first_reformulation.variable_lower_bound(variable_index), first_reformulation.variable_upper_bound(variable_index));
       }
 
       // set the slack variables (if any)
-      if (!problem.model.get_slacks().is_empty()) {
+      if (!first_reformulation.get_inequality_constraints().empty()) {
          // evaluate the constraints at the original point
-         initial_iterate.evaluate_constraints(problem.model);
+         initial_iterate.evaluate_constraints(first_reformulation.model);
 
          // set the slacks to the constraint values
-         for (const auto [constraint_index, slack_index]: problem.model.get_slacks()) {
-            initial_iterate.primals[slack_index] = PrimalDualInteriorPointMethod::push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index],
-                  problem.variable_lower_bound(slack_index), problem.variable_upper_bound(slack_index));
+         size_t slack_index = first_reformulation.number_variables;
+         for (const auto inequality_constraint_index: first_reformulation.get_inequality_constraints()) {
+            initial_iterate.primals[slack_index] = PrimalDualInteriorPointMethod::push_variable_to_interior(initial_iterate.evaluations.constraints[inequality_constraint_index],
+                  first_reformulation.constraint_lower_bound(inequality_constraint_index), first_reformulation.constraint_upper_bound(inequality_constraint_index));
+            slack_index++;
          }
          // since the slacks have been set, the function evaluations should also be updated
          initial_iterate.is_objective_gradient_computed = false;
@@ -93,16 +92,16 @@ namespace uno {
       }
 
       // set the bound multipliers
-      for (const size_t variable_index: problem.get_lower_bounded_variables()) {
+      for (const size_t variable_index: first_reformulation.get_lower_bounded_variables()) {
          initial_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
       }
-      for (const size_t variable_index: problem.get_upper_bounded_variables()) {
+      for (const size_t variable_index: first_reformulation.get_upper_bounded_variables()) {
          initial_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
       }
 
       // compute least-square multipliers
-      if (problem.is_constrained()) {
-         this->compute_least_square_multipliers(problem, initial_iterate, initial_iterate.multipliers.constraints);
+      if (first_reformulation.is_constrained()) {
+         this->compute_least_square_multipliers(first_reformulation, initial_iterate, initial_iterate.multipliers.constraints);
       }
    }
 
@@ -142,9 +141,6 @@ namespace uno {
 
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, Direction& direction, WarmstartInformation& warmstart_information) {
-      if (problem.has_inequality_constraints()) {
-         throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
-      }
       if (is_finite(this->trust_region_radius)) {
          throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet");
       }
