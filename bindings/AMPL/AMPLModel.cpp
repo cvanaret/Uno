@@ -11,7 +11,6 @@
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
-#include "options/Options.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "symbolic/UnaryNegation.hpp"
 #include "Uno.hpp"
@@ -38,13 +37,12 @@ namespace uno {
    }
 
    // generate the ASL object and call the private constructor
-   AMPLModel::AMPLModel(const std::string& file_name, const Options& options) : AMPLModel(file_name, generate_asl(file_name), options) {
+   AMPLModel::AMPLModel(const std::string& file_name) : AMPLModel(file_name, generate_asl(file_name)) {
    }
 
-   AMPLModel::AMPLModel(const std::string& file_name, ASL* asl, const Options& options) :
+   AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
          Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), (asl->i.objtype_[0] == 1) ? -1. : 1.),
          asl(asl),
-         write_solution_to_file(options.get_bool("AMPL_write_solution_to_file")),
          // allocate vectors
          asl_gradient(this->number_variables),
          variable_lower_bounds(this->number_variables),
@@ -304,9 +302,8 @@ namespace uno {
       std::copy(this->asl->i.pi0_, this->asl->i.pi0_ + this->number_constraints, multipliers.begin());
    }
 
-   void AMPLModel::postprocess_solution(Iterate& iterate, IterateStatus iterate_status) const {
-      if (this->write_solution_to_file) {
-         // write the primal-dual solution and status into a *.sol file
+   void AMPLModel::write_solution(Iterate& iterate, IterateStatus iterate_status) const {
+      // write the primal-dual solution and status into a *.sol file
          this->asl->p.solve_code_ = 400; // limit
          if (iterate_status == IterateStatus::FEASIBLE_KKT_POINT) {
             this->asl->p.solve_code_ = 0;
@@ -343,7 +340,6 @@ namespace uno {
          std::string message = "Uno ";
          message.append(Uno::current_version()).append(": ").append(iterate_status_to_message(iterate_status));
          write_sol_ASL(this->asl, message.data(), iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
-      }
    }
 
    size_t AMPLModel::number_objective_gradient_nonzeros() const {

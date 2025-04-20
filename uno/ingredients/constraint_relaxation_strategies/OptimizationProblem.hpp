@@ -6,9 +6,8 @@
 
 #include <vector>
 #include "linear_algebra/Norm.hpp"
-#include "model/Model.hpp"
 #include "optimization/LagrangianGradient.hpp"
-#include "symbolic/Expression.hpp"
+#include "optimization/Model.hpp"
 
 namespace uno {
    // forward declarations
@@ -34,10 +33,6 @@ namespace uno {
       const size_t number_variables; /*!< Number of variables */
       const size_t number_constraints; /*!< Number of constraints */
 
-      [[nodiscard]] bool is_constrained() const;
-      [[nodiscard]] bool has_inequality_constraints() const;
-      [[nodiscard]] bool has_fixed_variables() const;
-
       // function evaluations
       [[nodiscard]] virtual double get_objective_multiplier() const;
       virtual void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const;
@@ -55,9 +50,11 @@ namespace uno {
       [[nodiscard]] virtual const Collection<size_t>& get_upper_bounded_variables() const;
       [[nodiscard]] virtual const Collection<size_t>& get_single_lower_bounded_variables() const;
       [[nodiscard]] virtual const Collection<size_t>& get_single_upper_bounded_variables() const;
+      [[nodiscard]] virtual const Vector<size_t>& get_fixed_variables() const;
 
       [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const;
       [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const;
+      [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const;
       [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const;
 
       [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const;

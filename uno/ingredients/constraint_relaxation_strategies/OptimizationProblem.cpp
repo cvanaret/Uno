@@ -4,22 +4,11 @@
 #include "OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/Expression.hpp"
 
 namespace uno {
    OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
          model(model), number_variables(number_variables), number_constraints(number_constraints) {
-   }
-
-   bool OptimizationProblem::is_constrained() const {
-      return (0 < this->number_constraints);
-   }
-
-   bool OptimizationProblem::has_inequality_constraints() const {
-      return (!this->model.get_inequality_constraints().empty());
-   }
-
-   bool OptimizationProblem::has_fixed_variables() const {
-      return (!this->model.get_fixed_variables().empty());
    }
 
    double OptimizationProblem::get_objective_multiplier() const {
@@ -81,12 +70,20 @@ namespace uno {
       return this->model.get_single_upper_bounded_variables();
    }
 
+   const Vector<size_t>& OptimizationProblem::get_fixed_variables() const {
+      return this->model.get_fixed_variables();
+   }
+
    double OptimizationProblem::constraint_lower_bound(size_t constraint_index) const {
       return this->model.constraint_lower_bound(constraint_index);
    }
 
    double OptimizationProblem::constraint_upper_bound(size_t constraint_index) const {
       return this->model.constraint_upper_bound(constraint_index);
+   }
+
+   const Collection<size_t>& OptimizationProblem::get_equality_constraints() const {
+      return this->model.get_equality_constraints();
    }
 
    const Collection<size_t>& OptimizationProblem::get_inequality_constraints() const {

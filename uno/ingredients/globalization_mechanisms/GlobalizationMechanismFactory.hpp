@@ -6,9 +6,7 @@
 
 #include <memory>
 #include <vector>
-//#include "GlobalizationMechanism.hpp"
-//#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
-//#include "tools/Options.hpp"
+#include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 
 namespace uno {
    // forward declarations

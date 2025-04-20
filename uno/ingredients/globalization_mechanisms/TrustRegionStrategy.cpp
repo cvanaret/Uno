@@ -5,9 +5,9 @@
 #include <cassert>
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "TrustRegionStrategy.hpp"
-#include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/Model.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"

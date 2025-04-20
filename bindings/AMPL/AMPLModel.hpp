@@ -5,9 +5,9 @@
 #define UNO_AMPLMODEL_H
 
 #include <vector>
-#include "model/Model.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/Model.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 
 // include AMPL Solver Library (ASL)
@@ -17,12 +17,9 @@ extern "C" {
 }
 
 namespace uno {
-   // forward reference
-   class Options;
-
    class AMPLModel: public Model {
    public:
-      AMPLModel(const std::string& file_name, const Options& options);
+      explicit AMPLModel(const std::string& file_name);
       ~AMPLModel() override;
 
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
@@ -54,7 +51,7 @@ namespace uno {
 
       void initial_primal_point(Vector<double>& x) const override;
       void initial_dual_point(Vector<double>& multipliers) const override;
-      void postprocess_solution(Iterate& iterate, IterateStatus iterate_status) const override;
+      void write_solution(Iterate& iterate, IterateStatus iterate_status) const;
 
       [[nodiscard]] size_t number_objective_gradient_nonzeros() const override;
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
@@ -62,11 +59,10 @@ namespace uno {
 
    private:
       // private constructor to pass the dimensions to the Model base constructor
-      AMPLModel(const std::string& file_name, ASL* asl, const Options& options);
+      AMPLModel(const std::string& file_name, ASL* asl);
 
       // mutable: can be modified by const methods (internal state not seen by user)
       mutable ASL* asl; /*!< Instance of the AMPL Solver Library class */
-      const bool write_solution_to_file;
       mutable std::vector<double> asl_gradient{};
       mutable std::vector<double> asl_hessian{};
       size_t number_asl_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */

@@ -5,14 +5,16 @@
 #define UNO_L1RELAXEDPROBLEM_H
 
 #include "OptimizationProblem.hpp"
-#include "ElasticVariables.hpp"
 #include "symbolic/Concatenation.hpp"
 
 namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {
    public:
+      // constructor with a proximal term
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient, double proximal_coefficient,
-            double const* proximal_center);
+         double const* proximal_center);
+      // constructor without a proximal term
+      l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
 
       [[nodiscard]] double get_objective_multiplier() const override;
       void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
@@ -29,10 +31,12 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override;
       [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
       [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
+      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
-      [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const;
+      [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
+      [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
 
       [[nodiscard]] size_t number_objective_gradient_nonzeros() const override;
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
@@ -50,17 +54,13 @@ namespace uno {
       void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>& elastic_setting_function) const;
 
    protected:
+      const size_t number_elastic_variables;
       double objective_multiplier;
       const double constraint_violation_coefficient;
       double proximal_coefficient;
       double const* proximal_center;
-      ElasticVariables elastic_variables;
       const Concatenation<const Collection<size_t>&, ForwardRange> lower_bounded_variables; // model variables + elastic variables
       const Concatenation<const Collection<size_t>&, ForwardRange> single_lower_bounded_variables; // model variables + elastic variables
-
-      // delegating constructor
-      l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier, double constraint_violation_coefficient,
-            double proximal_coefficient, double const* proximal_center);
    };
 } // namespace
 

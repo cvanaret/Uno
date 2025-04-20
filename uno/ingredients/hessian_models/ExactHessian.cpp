@@ -3,7 +3,7 @@
 
 #include "ExactHessian.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
-#include "model/Model.hpp"
+#include "optimization/Model.hpp"
 
 namespace uno {
    // exact Hessian

@@ -3,8 +3,8 @@
 
 #include "GlobalizationMechanism.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
-#include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/Model.hpp"
 #include "symbolic/Expression.hpp"
 
 namespace uno {

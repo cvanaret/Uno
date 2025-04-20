@@ -4,7 +4,7 @@
 #include "Iterate.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "model/Model.hpp"
+#include "Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
 
 namespace uno {

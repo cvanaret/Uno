@@ -9,6 +9,7 @@
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/UserCallbacks.hpp"
@@ -24,10 +25,9 @@ namespace uno {
          // call delegating constructor
          l1Relaxation(model,
                // create the l1 feasibility problem (objective multiplier = 0)
-               l1RelaxedProblem(model, 0., options.get_double("l1_constraint_violation_coefficient"), 0., nullptr),
+               l1RelaxedProblem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
                // create the l1 relaxed problem
-               l1RelaxedProblem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient"),
-                  0., nullptr),
+               l1RelaxedProblem(model, options.get_double("l1_relaxation_initial_parameter"), options.get_double("l1_constraint_violation_coefficient")),
                options) {
    }
 

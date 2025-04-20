@@ -28,6 +28,7 @@ namespace uno {
    public:
       PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
             size_t number_hessian_nonzeros, const Options& options);
+      ~PrimalDualInteriorPointMethod() override = default;
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(const OptimizationProblem& first_reformulation, Iterate& initial_iterate) override;
@@ -78,17 +79,11 @@ namespace uno {
       [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate,
             const Vector<double>& primal_direction) const;
-      [[nodiscard]] static double primal_fraction_to_boundary(const OptimizationProblem& problem, const Vector<double>& current_primals,
-            const Vector<double>& primal_direction, double tau);
-      [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
-            Multipliers& direction_multipliers, double tau);
-      void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Multipliers& current_multipliers,
+      void assemble_augmented_system(Statistics& statistics, const PrimalDualInteriorPointProblem& barrier_problem, const Multipliers& current_multipliers,
             WarmstartInformation& warmstart_information);
       void assemble_augmented_rhs(const Multipliers& current_multipliers, size_t number_variables, size_t number_constraints);
-      void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
+      void assemble_primal_dual_direction(const PrimalDualInteriorPointProblem& barrier_problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
             Vector<double>& direction_primals, Multipliers& direction_multipliers);
-      void compute_bound_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
-            const Vector<double>& primal_direction, Multipliers& direction_multipliers);
       void compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate, Vector<double>& constraint_multipliers);
    };
 } // namespace

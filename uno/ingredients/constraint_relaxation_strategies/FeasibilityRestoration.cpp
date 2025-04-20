@@ -6,11 +6,12 @@
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
-#include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/Model.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/UserCallbacks.hpp"
 
@@ -19,7 +20,7 @@ namespace uno {
          // call delegating constructor
          FeasibilityRestoration(model, OptimizationProblem(model, model.number_variables, model.number_constraints),
                // create the (restoration phase) feasibility problem (objective multiplier = 0)
-               l1RelaxedProblem(model, 0., options.get_double("l1_constraint_violation_coefficient"), 0., nullptr),
+               l1RelaxedProblem(model, 0., options.get_double("l1_constraint_violation_coefficient")),
                options) {
    }
 
@@ -27,13 +28,13 @@ namespace uno {
    FeasibilityRestoration::FeasibilityRestoration(const Model& model, OptimizationProblem&& optimality_problem, l1RelaxedProblem&& feasibility_problem,
             const Options& options) :
          ConstraintRelaxationStrategy(model,
-               // allocate the largest size necessary to solve the optimality subproblem or the feasibility subproblem
-               std::max(optimality_problem.number_variables, feasibility_problem.number_variables),
-               std::max(optimality_problem.number_constraints, feasibility_problem.number_constraints),
-               std::max(optimality_problem.number_objective_gradient_nonzeros(), feasibility_problem.number_objective_gradient_nonzeros()),
-               std::max(optimality_problem.number_jacobian_nonzeros(), feasibility_problem.number_jacobian_nonzeros()),
-               std::max(optimality_problem.number_hessian_nonzeros(), feasibility_problem.number_hessian_nonzeros()),
-               options),
+            // allocate the largest size necessary to solve the optimality subproblem or the feasibility subproblem
+            std::max(optimality_problem.number_variables, feasibility_problem.number_variables),
+            std::max(optimality_problem.number_constraints, feasibility_problem.number_constraints),
+            std::max(optimality_problem.number_objective_gradient_nonzeros(), feasibility_problem.number_objective_gradient_nonzeros()),
+            std::max(optimality_problem.number_jacobian_nonzeros(), feasibility_problem.number_jacobian_nonzeros()),
+            std::max(optimality_problem.number_hessian_nonzeros(), feasibility_problem.number_hessian_nonzeros()),
+            options),
          optimality_problem(std::forward<OptimizationProblem>(optimality_problem)),
          feasibility_problem(std::forward<l1RelaxedProblem>(feasibility_problem)),
          subproblem_strategy(options.get_string("subproblem")),
