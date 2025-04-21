@@ -23,7 +23,7 @@ namespace uno {
       this->jacobian_sparsity_changed = false;
    }
 
-   void WarmstartInformation::iterate_changed() {
+   void WarmstartInformation::new_iterate() {
       this->objective_changed = true;
       this->constraints_changed = true;
       this->constraint_bounds_changed = true;
