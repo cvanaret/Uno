@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 #include "linear_algebra/Norm.hpp"
-#include "optimization/IterateStatus.hpp"
 #include "symbolic/VectorExpression.hpp"
 
 namespace uno {

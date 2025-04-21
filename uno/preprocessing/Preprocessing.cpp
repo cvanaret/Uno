@@ -1,15 +1,14 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <tuple>
 #include "Preprocessing.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "../optimization/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/Model.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {

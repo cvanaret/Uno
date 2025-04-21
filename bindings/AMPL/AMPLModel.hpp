@@ -7,6 +7,7 @@
 #include <vector>
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/IterateStatus.hpp"
 #include "optimization/Model.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 

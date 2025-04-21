@@ -110,8 +110,8 @@ namespace uno {
       if (0 < first_reformulation.number_constraints) {
          PrimalDualInteriorPointProblem barrier_problem(first_reformulation, this->barrier_parameter());
          this->compute_least_square_multipliers(barrier_problem, initial_iterate, initial_iterate.multipliers.constraints);
-         initial_iterate.multipliers.constraints[0] = -668;
-         initial_iterate.multipliers.constraints[1] = -934.66666667;
+         //initial_iterate.multipliers.constraints[0] = -668;
+         //initial_iterate.multipliers.constraints[1] = -934.66666667;
       }
    }
 

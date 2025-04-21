@@ -51,6 +51,8 @@ namespace uno {
       try {
          // use the initial primal-dual point to initialize the strategies and generate the initial iterate
          this->initialize(statistics, current_iterate, options);
+         // TODO create an optional scaling
+
          // allocate the trial iterate once and for all here
          Iterate trial_iterate(current_iterate);
 
@@ -147,8 +149,8 @@ namespace uno {
       const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
       const size_t number_hessian_evaluations = this->globalization_mechanism.get_hessian_evaluation_count();
       return {optimization_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,
-            timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
-            Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
+         timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
+         Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
    }
 
    std::string Uno::current_version() {
@@ -180,9 +182,8 @@ namespace uno {
    }
 
    std::string Uno::get_strategy_combination(const Options& options) {
-      return options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
-                                options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
-
+      return options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") +
+         " " + options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
    }
 
    void Uno::print_optimization_summary(const Result& result) {
