@@ -78,7 +78,6 @@ namespace uno {
 
    void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
       this->first_reformulation.evaluate_constraints(iterate, constraints);
-      std::cout << "Constraints: "; print_vector(std::cout, constraints);
       // inequality constraints l <= c(x) <= u: add the value of the slack. This results in c(x) - s = 0
       size_t slack_index = this->first_reformulation.number_variables;
       for (size_t inequality_constraint_index: this->first_reformulation.get_inequality_constraints()) {
@@ -356,7 +355,6 @@ namespace uno {
       }
    }
 
-   // TODO use a single function for primal and dual fraction-to-boundary rules
    double PrimalDualInteriorPointProblem::primal_fraction_to_boundary(const Vector<double>& current_primals,
          const Vector<double>& primal_direction, double tau) const {
       double step_length = 1.;
@@ -417,8 +415,24 @@ namespace uno {
             }
          }
       }
+      // slack variables
+      size_t slack_index = this->first_reformulation.number_variables;
+      for (size_t inequality_constraint_index: this->first_reformulation.get_inequality_constraints()) {
+         if (is_finite(this->first_reformulation.constraint_lower_bound(inequality_constraint_index)) && direction_multipliers.lower_bounds[slack_index] < 0.) {
+            double distance = -tau * current_multipliers.lower_bounds[slack_index] / direction_multipliers.lower_bounds[slack_index];
+            if (0. < distance) {
+               step_length = std::min(step_length, distance);
+            }
+         }
+         if (is_finite(this->first_reformulation.constraint_upper_bound(inequality_constraint_index)) && 0. < direction_multipliers.upper_bounds[slack_index]) {
+            double distance = -tau * current_multipliers.upper_bounds[slack_index] / direction_multipliers.upper_bounds[slack_index];
+            if (0. < distance) {
+               step_length = std::min(step_length, distance);
+            }
+         }
+         slack_index++;
+      }
       assert(0. < step_length && step_length <= 1. && "The dual fraction-to-boundary step length is not in (0, 1]");
-      // TODO slacks
       return step_length;
    }
 
