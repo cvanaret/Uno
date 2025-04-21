@@ -108,10 +108,8 @@ namespace uno {
 
       // compute least-square multipliers
       if (0 < first_reformulation.number_constraints) {
-         PrimalDualInteriorPointProblem barrier_problem(first_reformulation, this->barrier_parameter());
+         const PrimalDualInteriorPointProblem barrier_problem(first_reformulation, this->barrier_parameter());
          this->compute_least_square_multipliers(barrier_problem, initial_iterate, initial_iterate.multipliers.constraints);
-         //initial_iterate.multipliers.constraints[0] = -668;
-         //initial_iterate.multipliers.constraints[1] = -934.66666667;
       }
    }
 
@@ -264,8 +262,54 @@ namespace uno {
       this->compute_least_square_multipliers(problem, trial_iterate, trial_iterate.multipliers.constraints);
    }
 
+   // -\mu*\sum log(x)
    void PrimalDualInteriorPointMethod::set_auxiliary_measure(const Model& model, Iterate& iterate) {
-      // TODO
+// auxiliary measure: barrier terms
+      double barrier_terms = 0.;
+      // original variables
+      for (size_t variable_index: Range(model.number_variables)) {
+         const bool lower_bounded = is_finite(model.variable_lower_bound(variable_index));
+         const bool upper_bounded = is_finite(model.variable_upper_bound(variable_index));
+         if (lower_bounded) {
+            barrier_terms -= std::log(iterate.primals[variable_index] - model.variable_lower_bound(variable_index));
+            // damping
+            if (!upper_bounded) {
+               barrier_terms += this->damping_factor*(iterate.primals[variable_index] - model.variable_lower_bound(variable_index));
+            }
+         }
+         if (upper_bounded) {
+            barrier_terms -= std::log(model.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
+            // damping
+            if (!lower_bounded) {
+               barrier_terms += this->damping_factor*(model.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
+            }
+         }
+      }
+      // slack variables
+      size_t slack_index = model.number_variables;
+      for (size_t inequality_constraint_index: model.get_inequality_constraints()) {
+         const bool lower_bounded = is_finite(model.constraint_lower_bound(inequality_constraint_index));
+         const bool upper_bounded = is_finite(model.constraint_upper_bound(inequality_constraint_index));
+         if (lower_bounded) {
+            barrier_terms -= std::log(iterate.primals[slack_index] - model.constraint_lower_bound(inequality_constraint_index));
+            // damping
+            if (!upper_bounded) {
+               barrier_terms += this->damping_factor*(iterate.primals[slack_index] - model.constraint_lower_bound(inequality_constraint_index));
+            }
+         }
+         if (upper_bounded) {
+            barrier_terms -= std::log(model.constraint_upper_bound(inequality_constraint_index) - iterate.primals[slack_index]);
+            // damping
+            if (!lower_bounded) {
+               barrier_terms += this->damping_factor*(model.constraint_upper_bound(inequality_constraint_index) - iterate.primals[slack_index]);
+            }
+         }
+         slack_index++;
+      }
+
+      barrier_terms *= this->barrier_parameter();
+      assert(!std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
+      iterate.progress.auxiliary = barrier_terms;
    }
 
    double PrimalDualInteriorPointMethod::compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
@@ -353,12 +397,6 @@ namespace uno {
          barrier_problem.number_variables + barrier_problem.number_constraints);
       barrier_problem.compute_bound_dual_direction(current_primals, current_multipliers, direction_primals, direction_multipliers);
 
-      // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
-      const bool is_small_step = PrimalDualInteriorPointMethod::is_small_step(barrier_problem, current_primals, direction_primals);
-      if (is_small_step) {
-         DEBUG << "This is a small step\n";
-      }
-
       // "fraction-to-boundary" rule for primal variables and constraints multipliers
       const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter());
       const double primal_step_length = barrier_problem.primal_fraction_to_boundary(current_primals, direction_primals, tau);
@@ -371,6 +409,14 @@ namespace uno {
       direction_multipliers.constraints.scale(primal_step_length);
       direction_multipliers.lower_bounds.scale(bound_dual_step_length);
       direction_multipliers.upper_bounds.scale(bound_dual_step_length);
+
+      /*
+      // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
+      const bool is_small_step = PrimalDualInteriorPointMethod::is_small_step(barrier_problem, current_primals, direction_primals);
+      if (is_small_step) {
+         DEBUG << "This is a small step\n";
+      }
+      */
    }
 
    void PrimalDualInteriorPointMethod::compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate,
