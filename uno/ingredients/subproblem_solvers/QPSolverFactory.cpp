@@ -2,10 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <stdexcept>
+#include <vector>
 #include "QPSolverFactory.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "options/Options.hpp"
 #include "QPSolver.hpp"
+#include "options/Options.hpp"
 
 #ifdef HAS_BQPD
 #include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"

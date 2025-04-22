@@ -12,7 +12,7 @@ namespace uno {
    // Hessian with convexification (inertia correction)
    class ConvexifiedHessian : public HessianModel {
    public:
-      ConvexifiedHessian(size_t dimension, size_t number_hessian_nonzeros, const Options& options);
+      explicit ConvexifiedHessian(const Options& options);
 
       void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
          const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;

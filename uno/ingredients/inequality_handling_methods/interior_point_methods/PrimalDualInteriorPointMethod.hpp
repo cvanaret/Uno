@@ -29,7 +29,7 @@ namespace uno {
       PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
          size_t number_hessian_nonzeros, const Options& options);
 
-      void initialize(Statistics& statistics, const OptimizationProblem& first_reformulation, const Options& options) override;
+      void initialize(const OptimizationProblem& first_reformulation) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void set_initial_point(const Vector<double>& point) override;

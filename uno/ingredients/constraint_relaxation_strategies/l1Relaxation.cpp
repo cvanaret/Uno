@@ -40,10 +40,10 @@ namespace uno {
          l1_relaxed_problem(std::forward<l1RelaxedProblem>(l1_relaxed_problem)),
          penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), l1_relaxed_problem.number_variables,
-            l1_relaxed_problem.number_hessian_nonzeros(), false, options)),
-         feasibility_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), feasibility_problem.number_variables,
-            feasibility_problem.number_hessian_nonzeros(), false, options)),
+         convexify(options.get_string("subproblem") != "primal_dual_interior_point" &&
+            (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),
+         hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),
+         feasibility_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),
          tolerance(options.get_double("tolerance")),
          parameters({
                options.get_bool("l1_relaxation_fixed_parameter"),
@@ -58,7 +58,7 @@ namespace uno {
 
    void l1Relaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) {
       const l1RelaxedProblem relaxed_problem{model, this->penalty_parameter, this->constraint_violation_coefficient};
-      this->inequality_handling_method->initialize(statistics, relaxed_problem, options);
+      this->inequality_handling_method->initialize(relaxed_problem);
 
       // statistics
       this->inequality_handling_method->initialize_statistics(statistics, options);

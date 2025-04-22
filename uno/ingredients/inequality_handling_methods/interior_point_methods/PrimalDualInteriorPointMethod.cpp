@@ -28,12 +28,7 @@ namespace uno {
                + number_jacobian_nonzeros /* Jacobian */,
                true, /* use regularization */
                options),
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(number_variables + number_constraints,
-               number_hessian_nonzeros
-               + number_variables + number_constraints /* regularization */
-               + 2 * number_variables /* diagonal barrier terms */
-               + number_jacobian_nonzeros, /* Jacobian */
-               options)),
+         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)),
          barrier_parameter_update_strategy(options),
          previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
          default_multiplier(options.get_double("barrier_default_multiplier")),
@@ -50,8 +45,9 @@ namespace uno {
          l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
    }
 
-   void PrimalDualInteriorPointMethod::initialize(Statistics& statistics, const OptimizationProblem& first_reformulation, const Options& options) {
-
+   void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& first_reformulation) {
+      PrimalDualInteriorPointProblem barrier_problem(first_reformulation, this->barrier_parameter());
+      this->linear_solver->initialize_memory(barrier_problem);
    }
 
    void PrimalDualInteriorPointMethod::initialize_statistics(Statistics& statistics, const Options& options) {

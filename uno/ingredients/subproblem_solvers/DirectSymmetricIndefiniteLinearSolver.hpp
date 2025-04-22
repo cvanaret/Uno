@@ -10,7 +10,7 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver: public SymmetricIndefiniteLinearSolver<IndexType, ElementType> {
    public:
-      explicit DirectSymmetricIndefiniteLinearSolver(size_t dimension) : SymmetricIndefiniteLinearSolver<IndexType, ElementType>(dimension) { };
+      DirectSymmetricIndefiniteLinearSolver() = default;
       virtual ~DirectSymmetricIndefiniteLinearSolver() = default;
 
       virtual void do_symbolic_analysis(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;

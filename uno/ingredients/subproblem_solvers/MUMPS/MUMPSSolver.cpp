@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "MUMPSSolver.hpp"
+
+#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"
@@ -10,10 +12,7 @@
 #define USE_COMM_WORLD (-987654)
 
 namespace uno {
-   MUMPSSolver::MUMPSSolver(size_t dimension, size_t number_nonzeros) : DirectSymmetricIndefiniteLinearSolver<size_t, double>(dimension) {
-      this->row_indices.reserve(number_nonzeros);
-      this->column_indices.reserve(number_nonzeros);
-
+   MUMPSSolver::MUMPSSolver(size_t number_nonzeros): DirectSymmetricIndefiniteLinearSolver() {
       this->mumps_structure.sym = MUMPSSolver::GENERAL_SYMMETRIC;
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
       // TODO load number of processes from option file
@@ -50,7 +49,13 @@ namespace uno {
       this->mumps_structure.job = MUMPSSolver::JOB_END;
       dmumps_c(&this->mumps_structure);
    }
-   
+
+   void MUMPSSolver::initialize_memory(const OptimizationProblem& problem) {
+      const size_t number_nonzeros = problem.number_hessian_nonzeros() + problem.number_jacobian_nonzeros();
+      this->row_indices.reserve(number_nonzeros);
+      this->column_indices.reserve(number_nonzeros);
+   }
+
    void MUMPSSolver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
       this->mumps_structure.job = MUMPSSolver::JOB_ANALYSIS;
       this->mumps_structure.n = static_cast<int>(matrix.dimension());

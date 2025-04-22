@@ -23,7 +23,7 @@ namespace uno {
 
    QPSubproblem::~QPSubproblem() { }
 
-   void QPSubproblem::initialize(Statistics& statistics, const OptimizationProblem& first_reformulation, const Options& options) {
+   void QPSubproblem::initialize(const OptimizationProblem& first_reformulation) {
       this->solver->initialize_memory(first_reformulation);
    }
 

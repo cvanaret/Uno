@@ -15,7 +15,7 @@ namespace uno {
 
    LPSubproblem::~LPSubproblem() { }
 
-   void LPSubproblem::initialize(Statistics& statistics, const OptimizationProblem& first_reformulation, const Options& options) {
+   void LPSubproblem::initialize(const OptimizationProblem& first_reformulation) {
       this->solver->initialize_memory(first_reformulation);
    }
 

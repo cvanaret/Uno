@@ -8,6 +8,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
+#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 
 #define MA27ID FC_GLOBAL(ma27id, MA27ID)
 #define MA27AD FC_GLOBAL(ma27ad, MA27AD)
@@ -109,20 +110,25 @@ namespace uno {
    };
 
 
-   MA27Solver::MA27Solver(size_t max_dimension, size_t max_number_nonzeros):
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>(max_dimension),
-         n(static_cast<int>(max_dimension)), nnz(static_cast<int>(max_number_nonzeros)),
-         irn(max_number_nonzeros), icn(max_number_nonzeros),
-         iw((2 * max_number_nonzeros + 3 * max_dimension + 1) * 6 / 5), // 20% more than 2*nnz + 3*n + 1
-         ikeep(3 * max_dimension), iw1(2 * max_dimension) {
+   MA27Solver::MA27Solver(): DirectSymmetricIndefiniteLinearSolver() {
       // initialization: set the default values of the controlling parameters
       MA27ID(icntl.data(), cntl.data());
       // a suitable pivot order is to be chosen automatically
-      iflag = 0;
+      this->iflag = 0;
       // suppress warning messages
-      icntl[eICNTL::LP] = 0;
-      icntl[eICNTL::MP] = 0;
-      icntl[eICNTL::LDIAG] = 0;
+      this->icntl[eICNTL::LP] = 0;
+      this->icntl[eICNTL::MP] = 0;
+      this->icntl[eICNTL::LDIAG] = 0;
+   }
+
+   void MA27Solver::initialize_memory(const OptimizationProblem& problem) {
+      this->n = static_cast<int>(problem.number_variables);
+      this->nnz = static_cast<int>(problem.number_hessian_nonzeros() + problem.number_jacobian_nonzeros());
+      this->irn.resize(this->nnz);
+      this->icn.resize(this->nnz);
+      this->iw.resize((2 * this->nnz + 3 * this->n + 1) * 6 / 5); // 20% more than 2*nnz + 3*n + 1
+      this->ikeep.resize(3 * this->n);
+      this->iw1.resize(2 * this->n);
    }
 
    void MA27Solver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {

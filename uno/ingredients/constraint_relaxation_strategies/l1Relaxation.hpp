@@ -49,6 +49,7 @@ namespace uno {
       l1RelaxedProblem l1_relaxed_problem;
       double penalty_parameter;
       const double constraint_violation_coefficient;
+      const bool convexify;
       const std::unique_ptr<HessianModel> hessian_model;
       const std::unique_ptr<HessianModel> feasibility_hessian_model;
       const double tolerance;

@@ -11,8 +11,10 @@
 namespace uno {
    class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
-      explicit MUMPSSolver(size_t dimension, size_t number_nonzeros);
+      explicit MUMPSSolver(size_t number_nonzeros);
       ~MUMPSSolver() override;
+
+      void initialize_memory(const OptimizationProblem& problem) override;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;

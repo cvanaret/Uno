@@ -29,7 +29,7 @@ namespace uno {
       virtual ~InequalityHandlingMethod() = default;
 
       // virtual methods implemented by subclasses
-      virtual void initialize(Statistics& statistics, const OptimizationProblem& first_reformulation, const Options& options) = 0;
+      virtual void initialize(const OptimizationProblem& first_reformulation) = 0;
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
       virtual void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
       virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,

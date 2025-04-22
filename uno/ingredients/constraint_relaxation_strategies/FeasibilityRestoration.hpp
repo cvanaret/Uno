@@ -43,6 +43,7 @@ namespace uno {
       l1RelaxedProblem feasibility_problem;
       Phase current_phase{Phase::OPTIMALITY};
       const double constraint_violation_coefficient;
+      const bool convexify;
       const std::unique_ptr<HessianModel> optimality_hessian_model;
       const std::unique_ptr<HessianModel> feasibility_hessian_model;
       const double linear_feasibility_tolerance;

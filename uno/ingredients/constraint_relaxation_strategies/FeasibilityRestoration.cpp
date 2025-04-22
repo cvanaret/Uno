@@ -37,10 +37,10 @@ namespace uno {
          optimality_problem(std::forward<OptimizationProblem>(optimality_problem)),
          feasibility_problem(std::forward<l1RelaxedProblem>(feasibility_problem)),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         optimality_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), optimality_problem.number_variables,
-            optimality_problem.number_hessian_nonzeros(), false, options)),
-         feasibility_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), feasibility_problem.number_variables,
-            feasibility_problem.number_hessian_nonzeros(), false, options)),
+         convexify(options.get_string("subproblem") != "primal_dual_interior_point" &&
+            (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),
+         optimality_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),
+         feasibility_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),
          linear_feasibility_tolerance(options.get_double("tolerance")),
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")),
          reference_optimality_primals(optimality_problem.number_variables) {
@@ -49,7 +49,7 @@ namespace uno {
 
    void FeasibilityRestoration::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) {
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
-      this->inequality_handling_method->initialize(statistics, feasibility_problem, options);
+      this->inequality_handling_method->initialize(feasibility_problem);
 
       // statistics
       this->inequality_handling_method->initialize_statistics(statistics, options);

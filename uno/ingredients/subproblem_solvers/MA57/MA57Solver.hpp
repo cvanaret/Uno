@@ -30,8 +30,10 @@ namespace uno {
     */
    class MA57Solver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
-      MA57Solver(size_t dimension, size_t number_nonzeros);
+      MA57Solver();
       ~MA57Solver() override = default;
+
+      void initialize_memory(const OptimizationProblem& problem) override;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
@@ -52,10 +54,10 @@ namespace uno {
       MA57Factorization factorization{};
       std::vector<double> fact{0}; // do not initialize, resize at every iteration
       std::vector<int> ifact{0}; // do not initialize, resize at every iteration
-      const int lkeep;
+      int lkeep{};
       std::vector<int> keep{};
       std::vector<int> iwork{};
-      int lwork;
+      int lwork{};
       std::vector<double> work{};
 
       // for ma57id_ (default values of controlling parameters)

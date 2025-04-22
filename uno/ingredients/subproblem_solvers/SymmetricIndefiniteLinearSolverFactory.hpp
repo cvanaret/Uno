@@ -15,8 +15,7 @@ namespace uno {
 
    class SymmetricIndefiniteLinearSolverFactory {
    public:
-      static std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> create([[maybe_unused]] size_t dimension,
-            [[maybe_unused]] size_t number_nonzeros, const Options& options);
+      static std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> create(const Options& options);
 
       // return the list of available solvers
       static std::vector<std::string> available_solvers();
