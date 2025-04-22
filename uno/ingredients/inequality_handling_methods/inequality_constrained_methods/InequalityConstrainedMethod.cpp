@@ -5,7 +5,6 @@
 #include "optimization/Iterate.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
-#include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {

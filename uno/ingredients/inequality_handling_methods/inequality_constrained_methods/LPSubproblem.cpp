@@ -5,7 +5,6 @@
 #include "optimization/Direction.hpp"
 #include "ingredients/subproblem_solvers/LPSolver.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
-#include "options/Options.hpp"
 
 namespace uno {
    LPSubproblem::LPSubproblem(size_t number_variables, size_t number_constraints, const Options& options) :

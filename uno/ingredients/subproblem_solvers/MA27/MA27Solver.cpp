@@ -122,13 +122,14 @@ namespace uno {
    }
 
    void MA27Solver::initialize_memory(const OptimizationProblem& problem) {
+      const size_t number_nonzeros = problem.number_hessian_nonzeros() + problem.number_jacobian_nonzeros();
       this->n = static_cast<int>(problem.number_variables);
-      this->nnz = static_cast<int>(problem.number_hessian_nonzeros() + problem.number_jacobian_nonzeros());
-      this->irn.resize(this->nnz);
-      this->icn.resize(this->nnz);
-      this->iw.resize((2 * this->nnz + 3 * this->n + 1) * 6 / 5); // 20% more than 2*nnz + 3*n + 1
-      this->ikeep.resize(3 * this->n);
-      this->iw1.resize(2 * this->n);
+      this->nnz = static_cast<int>(number_nonzeros);
+      this->irn.resize(number_nonzeros);
+      this->icn.resize(number_nonzeros);
+      this->iw.resize((2 * number_nonzeros + 3 * problem.number_variables + 1) * 6 / 5); // 20% more than 2*nnz + 3*n + 1
+      this->ikeep.resize(3 * problem.number_variables);
+      this->iw1.resize(2 * problem.number_variables);
    }
 
    void MA27Solver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
@@ -223,27 +224,27 @@ namespace uno {
    }
 
    size_t MA27Solver::number_negative_eigenvalues() const {
-      return static_cast<size_t>(info[eINFO::NEIG]);
+      return static_cast<size_t>(this->info[eINFO::NEIG]);
    }
 
    bool MA27Solver::matrix_is_singular() const {
-      return (info[eINFO::IFLAG] == eIFLAG::SINGULAR || info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT);
+      return (this->info[eINFO::IFLAG] == eIFLAG::SINGULAR || this->info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT);
    }
 
    size_t MA27Solver::rank() const {
-      return (info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT) ? static_cast<size_t>(info[eINFO::IERROR]) : static_cast<size_t>(n);
+      return (this->info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT) ? static_cast<size_t>(this->info[eINFO::IERROR]) : static_cast<size_t>(n);
    }
 
    void MA27Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
       // build the internal matrix representation
-      irn.clear();
-      icn.clear();
-      factor.clear();
+      this->irn.clear();
+      this->icn.clear();
+      this->factor.clear();
       constexpr auto fortran_shift = 1;
       for (const auto [row_index, column_index, element]: matrix) {
-         irn.emplace_back(static_cast<int>(row_index + fortran_shift));
-         icn.emplace_back(static_cast<int>(column_index + fortran_shift));
-         factor.emplace_back(element);
+         this->irn.emplace_back(static_cast<int>(row_index + fortran_shift));
+         this->icn.emplace_back(static_cast<int>(column_index + fortran_shift));
+         this->factor.emplace_back(element);
       }
    }
 
