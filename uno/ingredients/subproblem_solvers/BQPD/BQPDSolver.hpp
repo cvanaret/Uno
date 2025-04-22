@@ -46,7 +46,7 @@ namespace uno {
 
    class BQPDSolver : public QPSolver {
    public:
-      BQPDSolver(size_t number_variables, size_t number_hessian_nonzeros, const Options& options);
+      explicit BQPDSolver(const Options& options);
 
       void initialize_memory(const OptimizationProblem& problem) override;
 
@@ -67,7 +67,7 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian{};
       std::vector<double> bqpd_jacobian{};
       std::vector<int> bqpd_jacobian_sparsity{};
-      SymmetricMatrix<size_t, double> hessian;
+      SymmetricMatrix<size_t, double> hessian{};
 
       int kmax{0};
       int kmax_limit;

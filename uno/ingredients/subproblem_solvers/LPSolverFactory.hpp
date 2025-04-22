@@ -14,7 +14,7 @@ namespace uno {
 
    class LPSolverFactory {
    public:
-      static std::unique_ptr<LPSolver> create([[maybe_unused]] size_t number_variables, [[maybe_unused]] const Options& options);
+      static std::unique_ptr<LPSolver> create([[maybe_unused]] const Options& options);
 
       static std::vector<std::string> available_solvers();
    };

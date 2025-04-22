@@ -8,16 +8,18 @@
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
-   InequalityConstrainedMethod::InequalityConstrainedMethod(size_t number_variables, size_t number_constraints):
-         InequalityHandlingMethod(),
-         initial_point(number_variables),
-         direction_lower_bounds(number_variables),
-         direction_upper_bounds(number_variables),
-         linearized_constraints_lower_bounds(number_constraints),
-         linearized_constraints_upper_bounds(number_constraints),
-         objective_gradient(number_variables),
-         constraints(number_constraints),
-         constraint_jacobian(number_constraints, number_variables) {
+   InequalityConstrainedMethod::InequalityConstrainedMethod(): InequalityHandlingMethod() {
+   }
+
+   void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem) {
+      this->initial_point.resize(problem.number_variables);
+      this->direction_lower_bounds.resize(problem.number_variables);
+      this->direction_upper_bounds.resize(problem.number_variables);
+      this->linearized_constraints_lower_bounds.resize(problem.number_constraints);
+      this->linearized_constraints_upper_bounds.resize(problem.number_constraints);
+      this->objective_gradient.reserve(problem.number_variables);
+      this->constraints.resize(problem.number_constraints);
+      this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
    }
 
    void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {

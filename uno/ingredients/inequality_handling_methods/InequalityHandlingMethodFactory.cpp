@@ -15,12 +15,12 @@ namespace uno {
    std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(size_t number_variables, size_t number_constraints,
          size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) {
       const std::string subproblem_strategy = options.get_string("subproblem");
-      // active-set methods
+      // inequality-constrained methods
       if (subproblem_strategy == "QP") {
-         return std::make_unique<QPSubproblem>(number_variables, number_constraints, number_hessian_nonzeros, options);
+         return std::make_unique<QPSubproblem>(options);
       }
       else if (subproblem_strategy == "LP") {
-         return std::make_unique<LPSubproblem>(number_variables, number_constraints, options);
+         return std::make_unique<LPSubproblem>(options);
       }
       // interior-point method
       else if (subproblem_strategy == "primal_dual_interior_point") {

@@ -15,8 +15,7 @@ namespace uno {
    class QPSolverFactory {
    public:
       // create a QP solver
-      static std::unique_ptr<QPSolver> create([[maybe_unused]] size_t number_variables,
-            [[maybe_unused]] size_t number_hessian_nonzeros, [[maybe_unused]] const Options& options);
+      static std::unique_ptr<QPSolver> create([[maybe_unused]] const Options& options);
 
       // return the list of available QP solvers
       static std::vector<std::string> available_solvers();

@@ -15,13 +15,12 @@
 #endif
 
 namespace uno {
-   std::unique_ptr<LPSolver> LPSolverFactory::create([[maybe_unused]] size_t number_variables,
-         [[maybe_unused]] const Options& options) {
+   std::unique_ptr<LPSolver> LPSolverFactory::create([[maybe_unused]] const Options& options) {
       try {
          [[maybe_unused]] const std::string& LP_solver_name = options.get_string("LP_solver");
 #ifdef HAS_BQPD
          if (LP_solver_name == "BQPD") {
-            return std::make_unique<BQPDSolver>(number_variables, 0, options);
+            return std::make_unique<BQPDSolver>(options);
          }
 #endif
 #ifdef HAS_HIGHS

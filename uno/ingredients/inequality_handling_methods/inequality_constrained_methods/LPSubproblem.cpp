@@ -7,14 +7,15 @@
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 
 namespace uno {
-   LPSubproblem::LPSubproblem(size_t number_variables, size_t number_constraints, const Options& options) :
-         InequalityConstrainedMethod(number_variables, number_constraints),
-         solver(LPSolverFactory::create(number_variables, options)) {
+   LPSubproblem::LPSubproblem(const Options& options):
+         InequalityConstrainedMethod(),
+         solver(LPSolverFactory::create(options)) {
    }
 
    LPSubproblem::~LPSubproblem() { }
 
    void LPSubproblem::initialize(const OptimizationProblem& first_reformulation) {
+      InequalityConstrainedMethod::initialize(first_reformulation);
       this->solver->initialize_memory(first_reformulation);
    }
 

@@ -13,8 +13,8 @@ namespace uno {
 
    class LPSubproblem : public InequalityConstrainedMethod {
    public:
-      LPSubproblem(size_t number_variables, size_t number_constraints, const Options& options);
-      ~LPSubproblem();
+      explicit LPSubproblem(const Options& options);
+      ~LPSubproblem() override;
 
       void initialize(const OptimizationProblem& first_reformulation) override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;

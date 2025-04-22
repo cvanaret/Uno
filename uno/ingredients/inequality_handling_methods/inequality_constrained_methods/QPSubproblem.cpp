@@ -11,19 +11,16 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   QPSubproblem::QPSubproblem(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros, const Options& options) :
-         InequalityConstrainedMethod(number_variables, number_constraints),
+   QPSubproblem::QPSubproblem(const Options& options):
+         InequalityConstrainedMethod(),
          enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")),
-         // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-         solver(QPSolverFactory::create(number_variables,
-               // if the QP solver is used during preprocessing, we need to allocate the Hessian with at least number_variables elements
-               std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, number_hessian_nonzeros),
-               options)) {
+         solver(QPSolverFactory::create(options)) {
    }
 
    QPSubproblem::~QPSubproblem() { }
 
    void QPSubproblem::initialize(const OptimizationProblem& first_reformulation) {
+      InequalityConstrainedMethod::initialize(first_reformulation);
       this->solver->initialize_memory(first_reformulation);
    }
 
