@@ -5,6 +5,7 @@
 #include <vector>
 #include "QPSolverFactory.hpp"
 #include "QPSolver.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
 
 #ifdef HAS_BQPD
