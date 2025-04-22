@@ -11,7 +11,7 @@
 namespace uno {
    class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
-      explicit MUMPSSolver(size_t number_nonzeros);
+      MUMPSSolver();
       ~MUMPSSolver() override;
 
       void initialize_memory(const OptimizationProblem& problem) override;

@@ -12,7 +12,7 @@
 #define USE_COMM_WORLD (-987654)
 
 namespace uno {
-   MUMPSSolver::MUMPSSolver(size_t number_nonzeros): DirectSymmetricIndefiniteLinearSolver() {
+   MUMPSSolver::MUMPSSolver(): DirectSymmetricIndefiniteLinearSolver() {
       this->mumps_structure.sym = MUMPSSolver::GENERAL_SYMMETRIC;
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
       // TODO load number of processes from option file
@@ -40,9 +40,6 @@ namespace uno {
       this->mumps_structure.icntl[2] = 6; // ICNTL(3)=6
       this->mumps_structure.icntl[3] = 6; // ICNTL(4)=2
        */
-
-      this->row_indices.reserve(number_nonzeros);
-      this->column_indices.reserve(number_nonzeros);
    }
 
    MUMPSSolver::~MUMPSSolver() {
