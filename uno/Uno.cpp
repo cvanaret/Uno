@@ -50,7 +50,7 @@ namespace uno {
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
       try {
          // use the initial primal-dual point to initialize the strategies and generate the initial iterate
-         this->initialize(statistics, current_iterate, options);
+         this->initialize(statistics, model, current_iterate, options);
          // allocate the trial iterate once and for all here
          Iterate trial_iterate(current_iterate);
 
@@ -94,11 +94,11 @@ namespace uno {
       return result;
    }
 
-   void Uno::initialize(Statistics& statistics, Iterate& current_iterate, const Options& options) {
+   void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) {
       statistics.start_new_line();
       statistics.set("iter", 0);
       statistics.set("status", "initial point");
-      this->globalization_mechanism.initialize(statistics, current_iterate, options);
+      this->globalization_mechanism.initialize(statistics, model, current_iterate, options);
       options.print_used();
       if (Logger::level == INFO) {
          statistics.print_header();

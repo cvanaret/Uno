@@ -36,7 +36,7 @@ namespace uno {
       const bool print_solution;
       const std::string strategy_combination;
 
-      void initialize(Statistics& statistics, Iterate& current_iterate, const Options& options);
+      void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options);
       [[nodiscard]] static Statistics create_statistics(const Model& model, const Options& options);
       [[nodiscard]] bool termination_criteria(IterateStatus current_status, size_t iteration, double current_time,
             OptimizationStatus& optimization_status) const;

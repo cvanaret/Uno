@@ -15,9 +15,13 @@
 namespace uno {
    l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
          double proximal_coefficient, double const* proximal_center):
-   // call delegating constructor
+         // call delegating constructor
          l1RelaxedProblem(model, ElasticVariables::generate(model), objective_multiplier, constraint_violation_coefficient, proximal_coefficient,
                proximal_center) {
+   }
+
+   l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient):
+      l1RelaxedProblem(model, objective_multiplier, constraint_violation_coefficient, 0., nullptr) {
    }
 
    // private delegating constructor

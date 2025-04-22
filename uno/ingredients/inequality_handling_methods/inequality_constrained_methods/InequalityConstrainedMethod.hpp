@@ -12,8 +12,7 @@
 namespace uno {
    class InequalityConstrainedMethod : public InequalityHandlingMethod {
    public:
-      InequalityConstrainedMethod(const std::string& hessian_model, size_t number_variables, size_t number_constraints,
-            size_t number_hessian_nonzeros, bool convexify, const Options& options);
+      InequalityConstrainedMethod(size_t number_variables, size_t number_constraints);
       ~InequalityConstrainedMethod() override = default;
       
       void initialize_statistics(Statistics& statistics, const Options& options) override;

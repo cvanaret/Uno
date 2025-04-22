@@ -7,6 +7,7 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "OptimizationProblem.hpp"
 #include "l1RelaxedProblem.hpp"
 
@@ -17,7 +18,7 @@ namespace uno {
    public:
       FeasibilityRestoration(const Model& model, const Options& options);
 
-      void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) override;
+      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) override;
 
       [[nodiscard]] size_t maximum_number_variables() const override;
       [[nodiscard]] size_t maximum_number_constraints() const override;
@@ -35,11 +36,15 @@ namespace uno {
       void compute_primal_dual_residuals(Iterate& iterate) override;
       void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
 
+      [[nodiscard]] size_t get_hessian_evaluation_count() const override;
+
    private:
       const OptimizationProblem optimality_problem;
       l1RelaxedProblem feasibility_problem;
       Phase current_phase{Phase::OPTIMALITY};
-      const std::string& subproblem_strategy;
+      const double constraint_violation_coefficient;
+      const std::unique_ptr<HessianModel> optimality_hessian_model;
+      const std::unique_ptr<HessianModel> feasibility_hessian_model;
       const double linear_feasibility_tolerance;
       const bool switch_to_optimality_requires_linearized_feasibility;
       ProgressMeasures reference_optimality_progress{};
@@ -50,7 +55,7 @@ namespace uno {
 
       [[nodiscard]] const OptimizationProblem& current_problem() const;
       void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            Direction& direction, WarmstartInformation& warmstart_information);
+            Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information);
       void switch_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate, WarmstartInformation& warmstart_information);
 
       void evaluate_progress_measures(Iterate& iterate) const override;

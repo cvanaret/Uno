@@ -21,7 +21,7 @@ namespace uno {
       explicit GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy);
       virtual ~GlobalizationMechanism() = default;
 
-      virtual void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) = 0;
+      virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) = 0;
       virtual void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
             WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
 

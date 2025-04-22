@@ -21,10 +21,6 @@ namespace uno {
          regularization_failure_threshold(options.get_double("regularization_failure_threshold")) {
    }
 
-   void ConvexifiedHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
-      statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
-   }
-
    void ConvexifiedHessian::evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
       // evaluate Lagrangian Hessian

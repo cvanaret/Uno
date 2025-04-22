@@ -17,7 +17,16 @@ namespace uno {
    public:
       using value_type = ElementType;
 
+      RectangularMatrix() = default;
+
       RectangularMatrix(size_t number_rows, size_t number_columns): matrix(number_rows) {
+         for (auto& row: this->matrix) {
+            row.reserve(number_columns);
+         }
+      }
+
+      void resize(size_t number_rows, size_t number_columns) {
+         this->matrix.resize(number_rows);
          for (auto& row: this->matrix) {
             row.reserve(number_columns);
          }
@@ -38,7 +47,7 @@ namespace uno {
       }
 
    protected:
-      std::vector<SparseVector<ElementType>> matrix;
+      std::vector<SparseVector<ElementType>> matrix{};
    };
 } // namespace
 

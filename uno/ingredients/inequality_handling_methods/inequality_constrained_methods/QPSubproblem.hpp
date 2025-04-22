@@ -13,13 +13,13 @@ namespace uno {
 
    class QPSubproblem : public InequalityConstrainedMethod {
    public:
-      QPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
-            size_t number_hessian_nonzeros, const Options& options);
+      QPSubproblem(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros, const Options& options);
       ~QPSubproblem();
 
+      void initialize(Statistics& statistics, const OptimizationProblem& first_reformulation, const Options& options) override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-            Direction& direction, WarmstartInformation& warmstart_information) override;
+            Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
 
    protected:

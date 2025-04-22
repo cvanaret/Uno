@@ -9,9 +9,8 @@
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
-   InequalityConstrainedMethod::InequalityConstrainedMethod(const std::string& hessian_model, size_t number_variables, size_t number_constraints,
-         size_t number_hessian_nonzeros, bool convexify, const Options& options):
-         InequalityHandlingMethod(hessian_model, number_variables, number_hessian_nonzeros, convexify, options),
+   InequalityConstrainedMethod::InequalityConstrainedMethod(size_t number_variables, size_t number_constraints):
+         InequalityHandlingMethod(),
          initial_point(number_variables),
          direction_lower_bounds(number_variables),
          direction_upper_bounds(number_variables),
@@ -22,8 +21,7 @@ namespace uno {
          constraint_jacobian(number_constraints, number_variables) {
    }
 
-   void InequalityConstrainedMethod::initialize_statistics(Statistics& statistics, const Options& options) {
-      this->hessian_model->initialize_statistics(statistics, options);
+   void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
    }
 
    void InequalityConstrainedMethod::set_initial_point(const Vector<double>& point) {

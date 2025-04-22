@@ -26,6 +26,8 @@ namespace uno {
       LPSolver() = default;
       virtual ~LPSolver() = default;
 
+      virtual void initialize_memory(const OptimizationProblem& problem) = 0;
+
       virtual void solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point, Direction& direction,
             double trust_region_radius, const WarmstartInformation& warmstart_information) = 0;
    };

@@ -29,13 +29,13 @@ namespace uno {
       assert(1. < this->decrease_factor && "The trust-region decrease factor should be > 1");
    }
 
-   void TrustRegionStrategy::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
+   void TrustRegionStrategy::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) {
       statistics.add_column("TR iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
       statistics.add_column("TR radius", Statistics::double_width - 4, options.get_int("statistics_TR_radius_column_order"));
       statistics.set("TR radius", this->radius);
       
       this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
-      this->constraint_relaxation_strategy.initialize(statistics, initial_iterate, options);
+      this->constraint_relaxation_strategy.initialize(statistics, model, initial_iterate, options);
    }
 
    void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
@@ -92,7 +92,7 @@ namespace uno {
             }
          }
          // if an evaluation error occurs, decrease the radius
-         catch (const EvaluationError& e) {
+         catch (const EvaluationError&) {
             statistics.set("status", "eval. error");
             if (Logger::level == INFO) statistics.print_current_line();
             this->decrease_radius();

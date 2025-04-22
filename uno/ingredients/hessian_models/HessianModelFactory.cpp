@@ -9,8 +9,8 @@
 #include "ZeroHessian.hpp"
 
 namespace uno {
-   std::unique_ptr<HessianModel> HessianModelFactory::create(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros,
-         bool convexify, const Options& options) {
+   std::unique_ptr<HessianModel> HessianModelFactory::create(const std::string& hessian_model, size_t dimension,
+         size_t number_hessian_nonzeros, bool convexify, const Options& options) {
       if (hessian_model == "exact") {
          if (convexify) {
             return std::make_unique<ConvexifiedHessian>(dimension, number_hessian_nonzeros, options);

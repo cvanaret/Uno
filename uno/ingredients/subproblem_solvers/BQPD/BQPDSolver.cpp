@@ -42,35 +42,42 @@ namespace uno {
    #define BIG 1e30
 
    // preallocate a bunch of stuff
-   BQPDSolver::BQPDSolver(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
-         size_t number_hessian_nonzeros, BQPDProblemType problem_type, const Options& options):
+   BQPDSolver::BQPDSolver(size_t number_variables, size_t number_hessian_nonzeros, const Options& options):
          QPSolver(),
          subproblem_is_regularized(options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP")),
-         lower_bounds(number_variables + number_constraints),
-         upper_bounds(number_variables + number_constraints),
-         constraints(number_constraints),
-         linear_objective(number_objective_gradient_nonzeros),
-         constraint_jacobian(number_constraints, number_variables),
-         bqpd_jacobian(number_jacobian_nonzeros + number_objective_gradient_nonzeros), // Jacobian + objective gradient
-         bqpd_jacobian_sparsity(number_jacobian_nonzeros + number_objective_gradient_nonzeros + number_constraints + 3),
          hessian(number_variables, number_hessian_nonzeros, this->subproblem_is_regularized, "CSC"),
-         kmax(problem_type == BQPDProblemType::QP ? options.get_int("BQPD_kmax") : 0), alp(static_cast<size_t>(this->mlp)),
+         kmax_limit(options.get_int("BQPD_kmax")),
+         alp(static_cast<size_t>(this->mlp)),
          lp(static_cast<size_t>(this->mlp)),
-         active_set(number_variables + number_constraints),
-         w(number_variables + number_constraints), gradient_solution(number_variables), residuals(number_variables + number_constraints),
-         e(number_variables + number_constraints),
-         size_hessian_sparsity(problem_type == BQPDProblemType::QP ? number_hessian_nonzeros + number_variables + 3 : 0),
-         size_hessian_workspace(number_hessian_nonzeros + static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * number_variables +
-                                number_constraints + this->mxwk0),
-         size_hessian_sparsity_workspace(this->size_hessian_sparsity + static_cast<size_t>(this->kmax) + this->mxiwk0),
-         workspace(this->size_hessian_workspace),
-         workspace_sparsity(this->size_hessian_sparsity_workspace),
-         current_hessian_indices(number_variables),
          print_subproblem(options.get_bool("print_subproblem")) {
+   }
+
+   void BQPDSolver::initialize_memory(const OptimizationProblem& problem) {
+      this->lower_bounds.resize(problem.number_variables + problem.number_constraints);
+      this->upper_bounds.resize(problem.number_variables + problem.number_constraints);
+      this->constraints.resize(problem.number_constraints);
+      this->linear_objective.reserve(problem.number_objective_gradient_nonzeros());
+      this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
+      this->bqpd_jacobian.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros()); // Jacobian + objective gradient
+      this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros() + problem.number_constraints + 3);
+      // this->hessian(number_variables, number_hessian_nonzeros, this->subproblem_is_regularized, "CSC");
+      this->kmax = (0 < problem.number_hessian_nonzeros()) ? this->kmax_limit : 0;
+      this->active_set.resize(problem.number_variables + problem.number_constraints);
       // default active set
-      for (size_t variable_index: Range(number_variables + number_constraints)) {
+      for (size_t variable_index: Range(problem.number_variables + problem.number_constraints)) {
          this->active_set[variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
       }
+      this->w.resize(problem.number_variables + problem.number_constraints);
+      this->gradient_solution.resize(problem.number_variables);
+      this->residuals.resize(problem.number_variables + problem.number_constraints);
+      this->e.resize(problem.number_variables + problem.number_constraints);
+      this->size_hessian_sparsity = problem.number_hessian_nonzeros() + problem.number_variables + 3; // TODO
+      this->size_hessian_workspace = problem.number_hessian_nonzeros() + static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) +
+         2 * problem.number_variables + problem.number_constraints + this->mxwk0;
+      this->size_hessian_sparsity_workspace = this->size_hessian_sparsity + static_cast<size_t>(this->kmax) + this->mxiwk0;
+      this->workspace.resize(this->size_hessian_workspace);
+      this->workspace_sparsity.resize(this->size_hessian_sparsity_workspace);
+      this->current_hessian_indices.resize(problem.number_variables);
    }
 
    void BQPDSolver::solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point, Direction& direction,
@@ -299,12 +306,16 @@ namespace uno {
    void BQPDSolver::save_gradients_to_local_format(size_t number_constraints) {
       size_t current_index = 0;
       for (const auto [variable_index, derivative]: this->linear_objective) {
+         assert(current_index < this->bqpd_jacobian.size() && "The allocation of bqpd_jacobian was not sufficient");
+         assert(current_index + 1 < this->bqpd_jacobian_sparsity.size() && "The allocation of bqpd_jacobian_sparsity was not sufficient");
          this->bqpd_jacobian[current_index] = derivative;
          this->bqpd_jacobian_sparsity[current_index + 1] = static_cast<int>(variable_index) + this->fortran_shift;
          current_index++;
       }
       for (size_t constraint_index: Range(number_constraints)) {
          for (const auto [variable_index, derivative]: this->constraint_jacobian[constraint_index]) {
+            assert(current_index < this->bqpd_jacobian.size() && "The allocation of bqpd_jacobian was not sufficient");
+            assert(current_index + 1 < this->bqpd_jacobian_sparsity.size() && "The allocation of bqpd_jacobian_sparsity was not sufficient");
             this->bqpd_jacobian[current_index] = derivative;
             this->bqpd_jacobian_sparsity[current_index + 1] = static_cast<int>(variable_index) + this->fortran_shift;
             current_index++;

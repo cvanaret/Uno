@@ -22,11 +22,11 @@ namespace uno {
       assert(0 < this->minimum_step_length && this->minimum_step_length < 1. && "The LS minimum step length should be in (0, 1)");
    }
 
-   void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) {
+   void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) {
       statistics.add_column("LS iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
       statistics.add_column("step length", Statistics::double_width - 4, options.get_int("statistics_LS_step_length_column_order"));
       
-      this->constraint_relaxation_strategy.initialize(statistics, initial_iterate, options);
+      this->constraint_relaxation_strategy.initialize(statistics, model, initial_iterate, options);
    }
 
    void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
@@ -61,7 +61,7 @@ namespace uno {
                   step_length, warmstart_information, user_callbacks);
             this->set_statistics(statistics, trial_iterate, this->direction, step_length, number_iterations);
          }
-         catch (const EvaluationError& e) {
+         catch (const EvaluationError&) {
             this->set_statistics(statistics, number_iterations);
             statistics.set("status", "eval. error");
          }

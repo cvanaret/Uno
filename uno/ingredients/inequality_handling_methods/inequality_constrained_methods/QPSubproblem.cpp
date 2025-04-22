@@ -11,13 +11,11 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   QPSubproblem::QPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
-         size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options) :
-         InequalityConstrainedMethod(options.get_string("hessian_model"), number_variables, number_constraints, number_hessian_nonzeros,
-               options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"), options),
+   QPSubproblem::QPSubproblem(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros, const Options& options) :
+         InequalityConstrainedMethod(number_variables, number_constraints),
          enforce_linear_constraints_at_initial_iterate(options.get_bool("enforce_linear_constraints")),
          // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
-         solver(QPSolverFactory::create(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
+         solver(QPSolverFactory::create(number_variables,
                // if the QP solver is used during preprocessing, we need to allocate the Hessian with at least number_variables elements
                std::max(this->enforce_linear_constraints_at_initial_iterate ? number_variables : 0, number_hessian_nonzeros),
                options)) {
@@ -25,16 +23,20 @@ namespace uno {
 
    QPSubproblem::~QPSubproblem() { }
 
+   void QPSubproblem::initialize(Statistics& statistics, const OptimizationProblem& first_reformulation, const Options& options) {
+      this->solver->initialize_memory(first_reformulation);
+   }
+
    void QPSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
       if (this->enforce_linear_constraints_at_initial_iterate) {
          Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, *this->solver);
       }
    }
 
-   void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-         Direction& direction, WarmstartInformation& warmstart_information) {
+   void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+         Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) {
       this->solver->solve_QP(statistics, problem, current_iterate, current_multipliers, this->initial_point, direction,
-            *this->hessian_model, this->trust_region_radius, warmstart_information);
+         hessian_model, this->trust_region_radius, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;
       // reset the initial point
