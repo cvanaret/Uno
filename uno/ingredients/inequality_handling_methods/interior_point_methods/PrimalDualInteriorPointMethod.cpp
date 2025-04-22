@@ -18,9 +18,6 @@ namespace uno {
    PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints,
          size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
          InequalityHandlingMethod(),
-         objective_gradient(2 * number_variables), // original variables + barrier terms
-         constraints(number_constraints),
-         constraint_jacobian(number_constraints, number_variables),
          hessian(number_variables, number_hessian_nonzeros, false, "COO"),
          augmented_system(options.get_string("sparse_format"), number_variables + number_constraints,
                number_hessian_nonzeros
@@ -46,7 +43,10 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& first_reformulation) {
-      PrimalDualInteriorPointProblem barrier_problem(first_reformulation, this->barrier_parameter());
+      const PrimalDualInteriorPointProblem barrier_problem(first_reformulation, this->barrier_parameter());
+      this->objective_gradient.reserve(barrier_problem.number_objective_gradient_nonzeros());
+      this->constraints.resize(barrier_problem.number_constraints);
+      this->constraint_jacobian.resize(barrier_problem.number_constraints, barrier_problem.number_variables);
       this->linear_solver->initialize_memory(barrier_problem);
    }
 
