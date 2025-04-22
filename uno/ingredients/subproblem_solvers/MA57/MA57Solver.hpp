@@ -46,6 +46,7 @@ namespace uno {
       [[nodiscard]] size_t rank() const override;
 
    private:
+      size_t dimension{};
       // internal matrix representation
       std::vector<int> row_indices;
       std::vector<int> column_indices;

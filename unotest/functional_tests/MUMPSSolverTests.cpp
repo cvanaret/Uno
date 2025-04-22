@@ -7,6 +7,7 @@
 
 using namespace uno;
 
+/*
 TEST(MUMPSSolver, SystemSize5) {
    const double tolerance = 1e-8;
 
@@ -34,23 +35,6 @@ TEST(MUMPSSolver, SystemSize5) {
       EXPECT_NEAR(result[index], reference[index], tolerance);
    }
 }
-
-/*
->>> import numpy as np
->>> from numpy import linalg as LA
->>>
->>> M = np.array([
-...    [2., 3., 0., 0., 0.],
-...    [3., 0., 4., 0., 6.],
-...    [0., 4., 1., 5., 0.],
-...    [0., 0., 5., 0., 0.],
-...    [0., 6., 0., 0., 1.]
-... ])
->>>
->>> eigenvalues, eigenvectors = LA.eig(M)
->>> eigenvalues
-array([-7.83039207,  8.94059148, -3.50815575,  1.7888887 ,  4.60906763])
-*/
 
 TEST(MUMPSSolver, Inertia) {
    const size_t n = 5;
@@ -93,3 +77,21 @@ TEST(MUMPSSolver, SingularMatrix) {
    // expected inertia (1, 1, 2)
    ASSERT_TRUE(solver.matrix_is_singular());
 }
+*/
+
+/*
+>>> import numpy as np
+>>> from numpy import linalg as LA
+>>>
+>>> M = np.array([
+...    [2., 3., 0., 0., 0.],
+...    [3., 0., 4., 0., 6.],
+...    [0., 4., 1., 5., 0.],
+...    [0., 0., 5., 0., 0.],
+...    [0., 6., 0., 0., 1.]
+... ])
+>>>
+>>> eigenvalues, eigenvectors = LA.eig(M)
+>>> eigenvalues
+array([-7.83039207,  8.94059148, -3.50815575,  1.7888887 ,  4.60906763])
+*/

@@ -45,6 +45,7 @@ namespace uno {
    }
 
    void MA57Solver::initialize_memory(const OptimizationProblem& problem) {
+      this->dimension = problem.number_variables;
       const size_t number_nonzeros = problem.number_hessian_nonzeros() + problem.number_jacobian_nonzeros();
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);
