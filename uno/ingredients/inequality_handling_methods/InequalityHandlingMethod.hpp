@@ -55,7 +55,6 @@ namespace uno {
       virtual void postprocess_iterate(Iterate& iterate) = 0;
 
       virtual void set_initial_point(const Vector<double>& initial_point) = 0;
-      virtual void postprocess_iterate(const OptimizationProblem& model, Vector<double>& primals, Multipliers& multipliers) = 0;
 
       size_t number_subproblems_solved{0};
 
