@@ -8,5 +8,5 @@ using namespace uno;
 
 TEST(DenseMatrix, Access) {
    DenseMatrix<double> M(5, 2);
-   ASSERT_EQ(M.get(1, 1), 0.);
+   ASSERT_EQ(M.entry(1, 1), 0.);
 }

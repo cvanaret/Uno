@@ -31,7 +31,7 @@ namespace uno {
       return true;
    }
 
-   void IdentityHessian::notify_accepted_iterate(const Iterate& /*iterate*/) {
+   void IdentityHessian::notify_accepted_iterate(const Iterate& /*current_iterate*/, const Iterate& /*trial_iterate*/) {
    }
 
    void IdentityHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
