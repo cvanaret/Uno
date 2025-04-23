@@ -206,7 +206,7 @@ namespace uno {
 
       // check the inertia
       [[maybe_unused]] auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = this->linear_solver->get_inertia();
-      assert(number_pos_eigenvalues == problem.number_variables && number_neg_eigenvalues == problem.number_constraints &&
+      assert(number_pos_eigenvalues == barrier_problem.number_variables && number_neg_eigenvalues == barrier_problem.number_constraints &&
          number_zero_eigenvalues == 0);
 
       // rhs
