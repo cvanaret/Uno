@@ -10,14 +10,14 @@
 #include "optimization/Multipliers.hpp"
 
 namespace uno {
-   // abstract Problem class
    Model::Model(std::string name, size_t number_variables, size_t number_constraints, double objective_sign) :
          name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), objective_sign(objective_sign) {
    }
 
    void Model::project_onto_variable_bounds(Vector<double>& x) const {
       for (size_t variable_index: Range(this->number_variables)) {
-         x[variable_index] = std::max(std::min(x[variable_index], this->variable_upper_bound(variable_index)), this->variable_lower_bound(variable_index));
+         x[variable_index] = std::max(std::min(x[variable_index], this->variable_upper_bound(variable_index)),
+            this->variable_lower_bound(variable_index));
       }
    }
 
@@ -33,7 +33,7 @@ namespace uno {
    }
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
-   void Model::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
+   void Model::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, const Iterate& iterate,
          const Multipliers& multipliers) const {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
@@ -57,7 +57,7 @@ namespace uno {
       // bound constraints of original variables
       for (size_t variable_index: Range(this->number_variables)) {
          lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
-                                                                          multipliers.upper_bounds[variable_index]);
+            multipliers.upper_bounds[variable_index]);
       }
    }
 } // namespace

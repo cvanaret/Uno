@@ -32,7 +32,7 @@ namespace uno {
 
       virtual void initialize(const Model& model) = 0;
       virtual void initialize_statistics(Statistics& statistics, const Options& options) const = 0;
-      virtual void notify_accepted_iterate(const Iterate& current_iterate, const Iterate& trial_iterate) = 0;
+      virtual void notify_accepted_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) = 0;
       virtual void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) = 0;
       virtual void compute_hessian_vector_product(const Model& model, const double* x, const double* vector,
