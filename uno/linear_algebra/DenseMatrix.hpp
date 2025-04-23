@@ -17,13 +17,17 @@ namespace uno {
    public:
       DenseMatrix(size_t number_rows, size_t number_columns);
       DenseMatrix() = default;
-      DenseMatrix<ElementType>& operator=(const DenseMatrix<ElementType>& other) = default;
-      DenseMatrix<ElementType>& operator=(DenseMatrix<ElementType>&& other) = default;
+      DenseMatrix(const DenseMatrix& other);
+      DenseMatrix& operator=(const DenseMatrix& other) = default;
+      DenseMatrix& operator=(DenseMatrix&& other) = default;
       ~DenseMatrix() = default;
 
       ElementType& entry(size_t row_index, size_t column_index);
       const ElementType& entry(size_t row_index, size_t column_index) const;
       ElementType* data();
+      void clear();
+
+      //VectorView<const DenseMatrix&> column(size_t column_index) const;
 
       void print(std::ostream& stream) const;
 
@@ -38,18 +42,17 @@ namespace uno {
          matrix(number_rows * number_columns, ElementType(0)) {
    }
 
-   /*
    template <typename ElementType>
-   DenseMatrix<ElementType>& DenseMatrix<ElementType>::operator=(const DenseMatrix& other) {
+   DenseMatrix<ElementType>::DenseMatrix(const DenseMatrix& other):
+         number_rows(other.number_rows), number_columns(other.number_columns),
+         matrix(other.number_rows * other.number_columns, ElementType(0)) {
       for (size_t column_index: Range(this->number_columns)) {
          for (size_t row_index: Range(this->number_rows)) {
             this->entry(row_index, column_index) = other.entry(row_index, column_index);
          }
       }
-      return *this;
    }
-   */
-
+   
    template <typename ElementType>
    ElementType& DenseMatrix<ElementType>::entry(size_t row_index, size_t column_index) {
       return this->matrix[column_index * this->number_rows + row_index];
@@ -64,6 +67,22 @@ namespace uno {
    ElementType* DenseMatrix<ElementType>::data() {
       return this->matrix.data();
    }
+
+   template <typename ElementType>
+   void DenseMatrix<ElementType>::clear() {
+      for (size_t column_index: Range(this->number_columns)) {
+         for (size_t row_index: Range(this->number_rows)) {
+            this->entry(row_index, column_index) = ElementType(0);
+         }
+      }
+   }
+
+   /*
+   template <typename ElementType>
+   VectorView<const DenseMatrix&> DenseMatrix<ElementType>::column(size_t column_index) const {
+      return {*this, column_index * this->number_rows, column_index * this->number_rows + this->number_rows};
+   }
+   */
 
    template <typename ElementType>
    void DenseMatrix<ElementType>::print(std::ostream& stream) const {
