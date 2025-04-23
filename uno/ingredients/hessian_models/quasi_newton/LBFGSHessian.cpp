@@ -48,7 +48,6 @@ namespace uno {
       std::cout << "Adding vector to L-BFGS memory at slot " << this->current_available_slot << '\n';
       // this->current_available_slot lives in [0, this->memory_size)
       this->update_memory(model, current_iterate, trial_iterate);
-      this->hessian_recomputation_required = true;
    }
    
    void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& /*model*/, const Vector<double>& /*primal_variables*/,
@@ -88,10 +87,11 @@ namespace uno {
       }
       std::cout << "S:\n" << this->S_matrix;
 
-      // fill the Y matrix
-      // TODO
-      std::cout << "Current Lag gradient: " << current_iterate.residuals.lagrangian_gradient.assemble(1.);
-      std::cout << "Trial Lag gradient: " << trial_iterate.residuals.lagrangian_gradient.assemble(1.);
+      // fill the Y matrix: y = \nabla L(x_k, y_k, z_k) - \nabla L(x_{k-1}, y_k, z_k)
+      model.evaluate_objective_gradient(current_iterate.primals, current_iterate.evaluations.objective_gradient);
+      model.evaluate_constraint_jacobian(current_iterate.primals, current_iterate.evaluations.constraint_jacobian);
+      model.evaluate_objective_gradient(trial_iterate.primals, trial_iterate.evaluations.objective_gradient);
+      model.evaluate_constraint_jacobian(trial_iterate.primals, trial_iterate.evaluations.constraint_jacobian);
 
       this->current_memory_size = std::min(this->current_memory_size + 1, this->memory_size);
       // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
