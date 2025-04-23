@@ -16,7 +16,7 @@ namespace uno {
       return 0;
    }
 
-   void ZeroHessian::notify_accepted_iterate(const Iterate& /*iterate*/) {
+   void ZeroHessian::notify_accepted_iterate(const Iterate& /*current_iterate*/, const Iterate& /*trial_iterate*/) {
       // do nothing
    }
 
