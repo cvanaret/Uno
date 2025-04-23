@@ -1,11 +1,12 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <stdexcept>
 #include "LBFGSHessian.hpp"
 #include "model/Model.hpp"
 #include "options/Options.hpp"
 #include "linear_algebra/LAPACK.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
+#include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Range.hpp"
 
