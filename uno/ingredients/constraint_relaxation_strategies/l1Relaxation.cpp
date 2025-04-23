@@ -285,8 +285,8 @@ namespace uno {
       if (accept_iterate) {
          this->check_exact_relaxation(trial_iterate);
          // this->set_dual_residuals_statistics(statistics, trial_iterate);
-         this->hessian_model->notify_accepted_iterate(current_iterate, trial_iterate);
-         this->feasibility_hessian_model->notify_accepted_iterate(current_iterate, trial_iterate);
+         this->l1_relaxed_subproblem_layer.hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
+         this->feasibility_subproblem_layer.hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, this->penalty_parameter);
       }
       this->set_progress_statistics(statistics, model, trial_iterate);
@@ -335,9 +335,12 @@ namespace uno {
       return this->l1_relaxed_subproblem_layer.get_hessian_evaluation_count() +
          this->feasibility_subproblem_layer.get_hessian_evaluation_count();
    }
+<<<<<<< HEAD
 
    size_t l1Relaxation::get_number_subproblems_solved() const {
       return this->inequality_handling_method->number_subproblems_solved +
          this->feasibility_inequality_handling_method->number_subproblems_solved;
    }
+=======
+>>>>>>> 7c18ee55 (Moved HessianModel to ConstraintRelaxationStrategy: one for each phase in FeasibilityRestoration, and one for l1Relaxation)
 } // namespace
