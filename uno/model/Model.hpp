@@ -8,7 +8,6 @@
 #include <vector>
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
-#include "optimization/SolutionStatus.hpp"
 #include "symbolic/VectorExpression.hpp"
 
 namespace uno {
