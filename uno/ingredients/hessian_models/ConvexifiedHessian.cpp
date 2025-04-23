@@ -33,7 +33,7 @@ namespace uno {
       return model.number_hessian_nonzeros() + model.number_variables;
    }
 
-   void ConvexifiedHessian::notify_accepted_iterate(const Model& /*model*/, const Iterate& /*current_iterate*/, const Iterate& /*trial_iterate*/) {
+   void ConvexifiedHessian::notify_accepted_iterate(const Model& /*model*/, Iterate& current_iterate, Iterate& trial_iterate) {
       // do nothing
    }
 
