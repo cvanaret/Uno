@@ -1,6 +1,7 @@
 #include <cassert>
 #include "HiGHSSolver.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
@@ -16,7 +17,7 @@ namespace uno {
       this->highs_solver.setOptionValue("output_flag", "false");
    }
 
-   void HiGHSSolver::initialize_memory(const OptimizationProblem& problem) {
+   void HiGHSSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& /*hessian_model*/) {
       this->constraints.resize(problem.number_constraints);
       this->linear_objective.reserve(problem.number_objective_gradient_nonzeros());
       this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
@@ -35,6 +36,7 @@ namespace uno {
       this->model.lp_.a_matrix_.value_.reserve(problem.number_jacobian_nonzeros());
       this->model.lp_.a_matrix_.index_.reserve(problem.number_jacobian_nonzeros());
       this->model.lp_.a_matrix_.start_.reserve(problem.number_variables + 1);
+      // const size_t number_hessian_nonzeros = hessian_model.number_nonzeros(problem);
    }
 
    void HiGHSSolver::solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& /*initial_point*/,

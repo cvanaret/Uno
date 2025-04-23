@@ -14,9 +14,9 @@ namespace uno {
 
    LPSubproblem::~LPSubproblem() { }
 
-   void LPSubproblem::initialize(const OptimizationProblem& first_reformulation) {
-      InequalityConstrainedMethod::initialize(first_reformulation);
-      this->solver->initialize_memory(first_reformulation);
+   void LPSubproblem::initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model) {
+      InequalityConstrainedMethod::initialize(first_reformulation, hessian_model);
+      this->solver->initialize_memory(first_reformulation, hessian_model);
    }
 
    void LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
@@ -31,7 +31,8 @@ namespace uno {
       this->initial_point.fill(0.);
    }
 
-   double LPSubproblem::hessian_quadratic_product(const Vector<double>& /*primal_direction*/) const {
+   double LPSubproblem::hessian_quadratic_product(const OptimizationProblem& /*problem*/, HessianModel& /*hessian_model*/,
+         const Vector<double>& /*primal_direction*/, const Multipliers& /*multipliers*/) const {
       return 0.;
    }
 } // namespace

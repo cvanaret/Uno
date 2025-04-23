@@ -13,13 +13,14 @@ namespace uno {
    class Direction {
    public:
       Direction(size_t number_variables, size_t number_constraints);
+      Direction() = default;
 
-      size_t number_variables;
-      size_t number_constraints;
+      size_t number_variables{};
+      size_t number_constraints{};
 
-      Vector<double> primals; /*!< Primal variables */
-      Multipliers multipliers; /*!< Multipliers */
-      Multipliers feasibility_multipliers; /*!< Multipliers */
+      Vector<double> primals{}; /*!< Primal variables */
+      Multipliers multipliers{}; /*!< Multipliers */
+      Multipliers feasibility_multipliers{}; /*!< Multipliers */
 
       SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */
 

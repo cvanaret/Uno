@@ -9,7 +9,8 @@
 namespace uno {
    class TrustRegionStrategy : public GlobalizationMechanism {
    public:
-      TrustRegionStrategy(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
+      explicit TrustRegionStrategy(const Options& options);
+      ~TrustRegionStrategy() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) override;
       void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
@@ -25,15 +26,15 @@ namespace uno {
       const double radius_reset_threshold;
       const double tolerance;
 
-      bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-            WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
+      bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         const Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
       void possibly_increase_radius(double step_norm);
       void decrease_radius(double step_norm);
       void decrease_radius();
       void decrease_radius_aggressively();
       void reset_radius();
       void reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
-      bool check_termination_with_small_step(Iterate& trial_iterate) const;
+      bool check_termination_with_small_step(const Model& model, Iterate& trial_iterate) const;
       void set_trust_region_statistics(Statistics& statistics, size_t number_iterations) const;
       void set_statistics(Statistics& statistics, const Direction& direction) const;
       void set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction) const;

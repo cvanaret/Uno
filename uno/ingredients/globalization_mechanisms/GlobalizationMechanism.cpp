@@ -3,16 +3,16 @@
 
 #include "GlobalizationMechanism.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Expression.hpp"
 
 namespace uno {
-   GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy) :
-         constraint_relaxation_strategy(constraint_relaxation_strategy),
-         direction(this->constraint_relaxation_strategy.maximum_number_variables(), this->constraint_relaxation_strategy.maximum_number_constraints()) {
+   GlobalizationMechanism::GlobalizationMechanism(const Options& options) :
+         constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(options)) {
    }
-
+   
    void GlobalizationMechanism::assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double primal_step_length, double dual_step_length) {
       trial_iterate.set_number_variables(current_iterate.primals.size());
@@ -36,10 +36,10 @@ namespace uno {
    }
 
    size_t GlobalizationMechanism::get_hessian_evaluation_count() const {
-      return this->constraint_relaxation_strategy.get_hessian_evaluation_count();
+      return this->constraint_relaxation_strategy->get_hessian_evaluation_count();
    }
 
    size_t GlobalizationMechanism::get_number_subproblems_solved() const {
-      return this->constraint_relaxation_strategy.get_number_subproblems_solved();
+      return this->constraint_relaxation_strategy->get_number_subproblems_solved();
    }
 } // namespace

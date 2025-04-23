@@ -277,11 +277,6 @@ namespace uno {
       return this->model.number_hessian_nonzeros();
    }
 
-   void l1RelaxedProblem::set_objective_multiplier(double new_objective_multiplier) {
-      assert(0. <= new_objective_multiplier && "The objective multiplier should be non-negative");
-      this->objective_multiplier = new_objective_multiplier;
-   }
-
    void l1RelaxedProblem::set_proximal_multiplier(double new_proximal_coefficient) {
       this->proximal_coefficient = new_proximal_coefficient;
    }

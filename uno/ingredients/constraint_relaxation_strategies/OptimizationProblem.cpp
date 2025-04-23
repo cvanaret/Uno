@@ -6,6 +6,10 @@
 #include "optimization/Iterate.hpp"
 
 namespace uno {
+   OptimizationProblem::OptimizationProblem(const Model& model):
+         model(model), number_variables(model.number_variables), number_constraints(model.number_constraints) {
+   }
+
    OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
          model(model), number_variables(number_variables), number_constraints(number_constraints) {
    }

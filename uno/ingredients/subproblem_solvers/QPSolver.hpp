@@ -11,13 +11,9 @@ namespace uno {
    class Direction;
    class Iterate;
    class HessianModel;
+   class Model;
    class Multipliers;
    class OptimizationProblem;
-   class Options;
-   template <typename ElementType>
-   class RectangularMatrix;
-   template <typename ElementType>
-   class SparseVector;
    class Statistics;
    struct WarmstartInformation;
 
@@ -26,7 +22,7 @@ namespace uno {
       QPSolver(): LPSolver() { }
       ~QPSolver() override = default;
 
-      void initialize_memory(const OptimizationProblem& problem) override = 0;
+      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) override = 0;
 
       void solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point, Direction& direction,
             double trust_region_radius, const WarmstartInformation& warmstart_information) override = 0;
@@ -34,8 +30,6 @@ namespace uno {
       virtual void solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
             const Vector<double>& initial_point, Direction& direction, HessianModel& hessian_model, double trust_region_radius,
             const WarmstartInformation& warmstart_information) = 0;
-
-      [[nodiscard]] virtual double hessian_quadratic_product(const Vector<double>& primal_direction) const = 0;
    };
 } // namespace
 

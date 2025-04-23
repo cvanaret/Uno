@@ -19,9 +19,9 @@ namespace uno {
 
    QPSubproblem::~QPSubproblem() { }
 
-   void QPSubproblem::initialize(const OptimizationProblem& first_reformulation) {
-      InequalityConstrainedMethod::initialize(first_reformulation);
-      this->solver->initialize_memory(first_reformulation);
+   void QPSubproblem::initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model) {
+      InequalityConstrainedMethod::initialize(first_reformulation, hessian_model);
+      this->solver->initialize_memory(first_reformulation, hessian_model);
    }
 
    void QPSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
@@ -40,7 +40,11 @@ namespace uno {
       this->initial_point.fill(0.);
    }
 
-   double QPSubproblem::hessian_quadratic_product(const Vector<double>& primal_direction) const {
-      return this->solver->hessian_quadratic_product(primal_direction);
+   double QPSubproblem::hessian_quadratic_product(const OptimizationProblem& problem, HessianModel& hessian_model,
+         const Vector<double>& primal_direction, const Multipliers& multipliers) const {
+      // TODO preallocate
+      Vector<double> result(primal_direction.size());
+      problem.compute_hessian_vector_product(hessian_model, primal_direction, multipliers, result);
+      return dot(primal_direction, result);
    }
 } // namespace

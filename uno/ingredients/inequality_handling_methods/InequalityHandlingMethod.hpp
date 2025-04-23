@@ -29,11 +29,11 @@ namespace uno {
       virtual ~InequalityHandlingMethod() = default;
 
       // virtual methods implemented by subclasses
-      virtual void initialize(const OptimizationProblem& first_reformulation) = 0;
+      virtual void initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model) = 0;
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
       virtual void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
       virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) = 0;
+         Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) = 0;
 
       void set_trust_region_radius(double new_trust_region_radius);
       virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
@@ -42,12 +42,13 @@ namespace uno {
       virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
 
       // progress measures
-      [[nodiscard]] virtual double hessian_quadratic_product(const Vector<double>& primal_direction) const = 0;
+      [[nodiscard]] virtual double hessian_quadratic_product(const OptimizationProblem& problem, HessianModel& hessian_model,
+         const Vector<double>& primal_direction, const Multipliers& multipliers) const = 0;
       virtual void set_auxiliary_measure(const Model& model, Iterate& iterate) = 0;
       [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
-            const Vector<double>& primal_direction, double step_length) const = 0;
+         const Vector<double>& primal_direction, double step_length) const = 0;
 
-      virtual void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) = 0;
+      virtual void postprocess_iterate(const OptimizationProblem& problem, Vector<double>& primals, Multipliers& multipliers) = 0;
 
       virtual void set_initial_point(const Vector<double>& initial_point) = 0;
 

@@ -48,7 +48,7 @@ namespace uno {
    public:
       explicit BQPDSolver(const Options& options);
 
-      void initialize_memory(const OptimizationProblem& problem) override;
+      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) override;
 
       void solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point, Direction& direction,
          double trust_region_radius, const WarmstartInformation& warmstart_information) override;
@@ -56,8 +56,6 @@ namespace uno {
       void solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
          const Vector<double>& initial_point, Direction& direction, HessianModel& hessian_model, double trust_region_radius,
          const WarmstartInformation& warmstart_information) override;
-
-      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
 
    private:
       const bool subproblem_is_regularized;

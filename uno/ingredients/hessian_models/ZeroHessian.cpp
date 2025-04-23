@@ -6,6 +6,10 @@
 #include "linear_algebra/SymmetricMatrix.hpp"
 
 namespace uno {
+   size_t ZeroHessian::number_nonzeros(const OptimizationProblem& /*problem*/) const {
+      return 0;
+   }
+
    void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
       hessian.set_dimension(model.number_variables);

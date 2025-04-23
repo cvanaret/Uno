@@ -42,11 +42,12 @@ namespace uno {
          l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
    }
 
-   void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& first_reformulation) {
+   void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& first_reformulation, const HessianModel& /*hessian_model*/) {
       const PrimalDualInteriorPointProblem barrier_problem(first_reformulation, this->barrier_parameter());
       this->objective_gradient.reserve(barrier_problem.number_objective_gradient_nonzeros());
       this->constraints.resize(barrier_problem.number_constraints);
       this->constraint_jacobian.resize(barrier_problem.number_constraints, barrier_problem.number_variables);
+      // TODO use hessian_model here
       this->linear_solver->initialize_memory(barrier_problem);
    }
 
@@ -175,7 +176,8 @@ namespace uno {
       direction.subproblem_objective = this->evaluate_subproblem_objective(direction);
    }
 
-   double PrimalDualInteriorPointMethod::hessian_quadratic_product(const Vector<double>& /*primal_direction*/) const {
+   double PrimalDualInteriorPointMethod::hessian_quadratic_product(const OptimizationProblem& problem, HessianModel& hessian_model,
+         const Vector<double>& primal_direction, const Multipliers& multipliers) const {
       throw std::runtime_error("PrimalDualInteriorPointMethod::hessian_quadratic_product not implemented");
    }
 
@@ -456,18 +458,18 @@ namespace uno {
             iterate, constraint_multipliers, this->least_square_multiplier_max_norm);
    }
 
-   void PrimalDualInteriorPointMethod::postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) {
+   void PrimalDualInteriorPointMethod::postprocess_iterate(const OptimizationProblem& problem, Vector<double>& primals, Multipliers& multipliers) {
       // rescale the bound multipliers (Eq. 16 in Ipopt paper)
       for (const size_t variable_index: problem.get_lower_bounded_variables()) {
-         const double coefficient = this->barrier_parameter() / (iterate.primals[variable_index] - problem.variable_lower_bound(variable_index));
+         const double coefficient = this->barrier_parameter() / (primals[variable_index] - problem.variable_lower_bound(variable_index));
          if (is_finite(coefficient)) {
             const double lb = coefficient / this->parameters.k_sigma;
             const double ub = coefficient * this->parameters.k_sigma;
             if (lb <= ub) {
-               const double current_value = iterate.multipliers.lower_bounds[variable_index];
-               iterate.multipliers.lower_bounds[variable_index] = std::max(std::min(iterate.multipliers.lower_bounds[variable_index], ub), lb);
-               if (iterate.multipliers.lower_bounds[variable_index] != current_value) {
-                  DEBUG << "Multiplier for lower bound " << variable_index << " rescaled from " << current_value << " to " << iterate.multipliers.lower_bounds[variable_index] << '\n';
+               const double current_value = multipliers.lower_bounds[variable_index];
+               multipliers.lower_bounds[variable_index] = std::max(std::min(multipliers.lower_bounds[variable_index], ub), lb);
+               if (multipliers.lower_bounds[variable_index] != current_value) {
+                  DEBUG << "Multiplier for lower bound " << variable_index << " rescaled from " << current_value << " to " << multipliers.lower_bounds[variable_index] << '\n';
                }
             }
             else {
@@ -477,15 +479,15 @@ namespace uno {
 
       }
       for (const size_t variable_index: problem.get_upper_bounded_variables()) {
-         const double coefficient = this->barrier_parameter() / (iterate.primals[variable_index] - problem.variable_upper_bound(variable_index));
+         const double coefficient = this->barrier_parameter() / (primals[variable_index] - problem.variable_upper_bound(variable_index));
          if (is_finite(coefficient)) {
             const double lb = coefficient * this->parameters.k_sigma;
             const double ub = coefficient / this->parameters.k_sigma;
             if (lb <= ub) {
-               const double current_value = iterate.multipliers.upper_bounds[variable_index];
-               iterate.multipliers.upper_bounds[variable_index] = std::max(std::min(iterate.multipliers.upper_bounds[variable_index], ub), lb);
-               if (iterate.multipliers.upper_bounds[variable_index] != current_value) {
-                  DEBUG << "Multiplier for upper bound " << variable_index << " rescaled from " << current_value << " to " << iterate.multipliers.upper_bounds[variable_index] << '\n';
+               const double current_value = multipliers.upper_bounds[variable_index];
+               multipliers.upper_bounds[variable_index] = std::max(std::min(multipliers.upper_bounds[variable_index], ub), lb);
+               if (multipliers.upper_bounds[variable_index] != current_value) {
+                  DEBUG << "Multiplier for upper bound " << variable_index << " rescaled from " << current_value << " to " << multipliers.upper_bounds[variable_index] << '\n';
                }
             }
             else {

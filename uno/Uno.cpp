@@ -23,8 +23,8 @@
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
-   Uno::Uno(GlobalizationMechanism& globalization_mechanism, const Options& options) :
-         globalization_mechanism(globalization_mechanism),
+   Uno::Uno(const Options& options) :
+         globalization_mechanism(GlobalizationMechanismFactory::create(options)),
          max_iterations(options.get_unsigned_int("max_iterations")),
          time_limit(options.get_double("time_limit")),
          print_solution(options.get_bool("print_solution")),
@@ -65,7 +65,7 @@ namespace uno {
 
                // compute an acceptable iterate by solving a subproblem at the current point
                warmstart_information.iterate_changed();
-               this->globalization_mechanism.compute_next_iterate(statistics, model, current_iterate, trial_iterate, warmstart_information, user_callbacks);
+               this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate, warmstart_information, user_callbacks);
                termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration(), optimization_status);
                user_callbacks.notify_new_primals(trial_iterate.primals);
                user_callbacks.notify_new_multipliers(trial_iterate.multipliers);
@@ -98,7 +98,7 @@ namespace uno {
       statistics.start_new_line();
       statistics.set("iter", 0);
       statistics.set("status", "initial point");
-      this->globalization_mechanism.initialize(statistics, model, current_iterate, options);
+      this->globalization_mechanism->initialize(statistics, model, current_iterate, options);
       options.print_used();
       if (Logger::level == INFO) {
          statistics.print_header();
@@ -145,8 +145,8 @@ namespace uno {
 
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate, size_t major_iterations,
          const Timer& timer) {
-      const size_t number_subproblems_solved = this->globalization_mechanism.get_number_subproblems_solved();
-      const size_t number_hessian_evaluations = this->globalization_mechanism.get_hessian_evaluation_count();
+      const size_t number_subproblems_solved = this->globalization_mechanism->get_number_subproblems_solved();
+      const size_t number_hessian_evaluations = this->globalization_mechanism->get_hessian_evaluation_count();
       return {optimization_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,
             timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
             Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};

@@ -2,12 +2,18 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ExactHessian.hpp"
+
+#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 
 namespace uno {
    // exact Hessian
    ExactHessian::ExactHessian(): HessianModel() {
+   }
+
+   size_t ExactHessian::number_nonzeros(const OptimizationProblem& problem) const {
+      return problem.number_hessian_nonzeros();
    }
 
    void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& primal_variables,

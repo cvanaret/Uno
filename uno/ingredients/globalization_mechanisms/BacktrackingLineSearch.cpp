@@ -12,8 +12,8 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   BacktrackingLineSearch::BacktrackingLineSearch(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options):
-         GlobalizationMechanism(constraint_relaxation_strategy),
+   BacktrackingLineSearch::BacktrackingLineSearch(const Options& options):
+         GlobalizationMechanism(options),
          backtracking_ratio(options.get_double("LS_backtracking_ratio")),
          minimum_step_length(options.get_double("LS_min_step_length")),
          scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")) {
@@ -26,14 +26,14 @@ namespace uno {
       statistics.add_column("LS iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
       statistics.add_column("step length", Statistics::double_width - 4, options.get_int("statistics_LS_step_length_column_order"));
       
-      this->constraint_relaxation_strategy.initialize(statistics, model, initial_iterate, options);
+      this->constraint_relaxation_strategy->initialize(statistics, model, initial_iterate, this->direction, options);
    }
 
    void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
-      this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, warmstart_information);
+      this->constraint_relaxation_strategy->compute_feasible_direction(statistics, model, current_iterate, this->direction, warmstart_information);
       BacktrackingLineSearch::check_unboundedness(this->direction);
       this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, warmstart_information, user_callbacks);
    }
@@ -57,8 +57,8 @@ namespace uno {
                   // scale or not the constraint dual direction with the LS step length
                   this->scale_duals_with_step_length ? step_length : 1.);
 
-            is_acceptable = this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, this->direction,
-                  step_length, warmstart_information, user_callbacks);
+            is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate,
+               this->direction, step_length, warmstart_information, user_callbacks);
             this->set_statistics(statistics, trial_iterate, this->direction, step_length, number_iterations);
          }
          catch (const EvaluationError&) {
@@ -67,8 +67,8 @@ namespace uno {
          }
 
          if (is_acceptable) {
-            trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
-            this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
+            trial_iterate.status = this->constraint_relaxation_strategy->check_termination(model, trial_iterate);
+            this->constraint_relaxation_strategy->set_dual_residuals_statistics(statistics, trial_iterate);
             termination = true;
             if (Logger::level == INFO) statistics.print_current_line();
          }
@@ -79,17 +79,17 @@ namespace uno {
          else { // minimum_step_length reached
             DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
             // check if we can terminate at a first-order point
-            termination = this->terminate_with_small_step_length(statistics, trial_iterate);
+            termination = this->terminate_with_small_step_length(statistics, model, trial_iterate);
             if (!termination) {
                // test if we can switch to solving the feasibility problem
-               if (this->constraint_relaxation_strategy.solving_feasibility_problem() || !model.is_constrained()) {
+               if (this->constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
                   throw std::runtime_error("LS failed");
                }
                // switch to solving the feasibility problem
                statistics.set("status", "small step length");
-               this->constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, current_iterate, warmstart_information);
-               this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, this->direction, this->direction.primals,
-                     warmstart_information);
+               this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, model, current_iterate, warmstart_information);
+               this->constraint_relaxation_strategy->compute_feasible_direction(statistics, model, current_iterate, this->direction,
+                  this->direction.primals, warmstart_information);
                BacktrackingLineSearch::check_unboundedness(this->direction);
                // restart backtracking
                step_length = 1.;
@@ -99,12 +99,12 @@ namespace uno {
       } // end while loop
    }
 
-   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, Iterate& trial_iterate) {
+   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, const Model& model, Iterate& trial_iterate) {
       bool termination = false;
-      trial_iterate.status = this->constraint_relaxation_strategy.check_termination(trial_iterate);
+      trial_iterate.status = this->constraint_relaxation_strategy->check_termination(model, trial_iterate);
       if (trial_iterate.status != IterateStatus::NOT_OPTIMAL) {
          statistics.set("status", "accepted (small step length)");
-         this->constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
+         this->constraint_relaxation_strategy->set_dual_residuals_statistics(statistics, trial_iterate);
          termination = true;
       }
       return termination;

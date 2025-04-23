@@ -14,7 +14,7 @@ namespace uno {
    public:
       explicit HiGHSSolver(const Options& options);
 
-      void initialize_memory(const OptimizationProblem& problem) override;
+      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) override;
 
       void solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point, Direction& direction,
             double trust_region_radius, const WarmstartInformation& warmstart_information) override;

@@ -1,6 +1,7 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <stdexcept>
 #include "ConvexifiedHessian.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/hessian_models/UnstableRegularization.hpp"
@@ -19,6 +20,10 @@ namespace uno {
          regularization_initial_value(options.get_double("regularization_initial_value")),
          regularization_increase_factor(options.get_double("regularization_increase_factor")),
          regularization_failure_threshold(options.get_double("regularization_failure_threshold")) {
+   }
+
+   size_t ConvexifiedHessian::number_nonzeros(const OptimizationProblem& problem) const {
+      return problem.number_hessian_nonzeros() + problem.number_variables;
    }
 
    void ConvexifiedHessian::evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,

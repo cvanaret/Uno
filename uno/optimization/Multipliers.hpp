@@ -14,6 +14,7 @@ namespace uno {
       Vector<double> constraints{}; /*!< Multipliers of the general constraints */
 
       Multipliers(size_t number_variables, size_t number_constraints);
+      Multipliers() = default;
       Multipliers(const Multipliers& other) = default;
       Multipliers(Multipliers&& other) = default;
       Multipliers& operator=(const Multipliers& other) = default;
