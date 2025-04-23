@@ -18,9 +18,8 @@ TEST(LAPACK, CholeskyFactorization) {
       0., 0., 98.
    };
    char uplo = 'L'; // lower triangular
-   int info{0};
+   int info = 0;
    LAPACK_cholesky_factorization(&uplo, &dimension, matrix.data(), &dimension, &info);
-
 
    ASSERT_EQ(info, 0);
    ASSERT_EQ(matrix[0], 2.);
