@@ -20,7 +20,7 @@ namespace uno {
       SymmetricIndefiniteLinearSolver() = default;
       virtual ~SymmetricIndefiniteLinearSolver() = default;
 
-      virtual void initialize_memory(const OptimizationProblem& problem) = 0;
+      virtual void initialize_memory(size_t dimension, size_t number_nonzeros) = 0;
 
       virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
             Vector<ElementType>& result) = 0;

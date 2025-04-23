@@ -31,6 +31,8 @@ namespace uno {
 
    void FeasibilityRestoration::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction, const Options& options) {
       // memory allocation
+      this->optimality_hessian_model->initialize(model);
+      this->feasibility_hessian_model->initialize(model);
       const OptimizationProblem optimality_problem{model};
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
       this->inequality_handling_method->initialize(feasibility_problem, *this->feasibility_hessian_model);

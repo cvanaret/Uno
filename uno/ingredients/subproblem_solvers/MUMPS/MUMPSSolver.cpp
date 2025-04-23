@@ -47,9 +47,8 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
    }
 
-   void MUMPSSolver::initialize_memory(const OptimizationProblem& problem) {
-      this->dimension = problem.number_variables;
-      const size_t number_nonzeros = problem.number_hessian_nonzeros() + problem.number_jacobian_nonzeros();
+   void MUMPSSolver::initialize_memory(size_t dimension, size_t number_nonzeros) {
+      this->dimension = dimension;
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);
    }

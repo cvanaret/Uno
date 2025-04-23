@@ -12,7 +12,7 @@ namespace uno {
    class DirectSymmetricIndefiniteLinearSolver: public SymmetricIndefiniteLinearSolver<IndexType, ElementType> {
    public:
       DirectSymmetricIndefiniteLinearSolver() = default;
-      virtual ~DirectSymmetricIndefiniteLinearSolver() = default;
+      ~DirectSymmetricIndefiniteLinearSolver() override = default;
 
       virtual void do_symbolic_analysis(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
       virtual void do_numerical_factorization(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;

@@ -33,7 +33,7 @@ namespace uno {
       MA57Solver();
       ~MA57Solver() override = default;
 
-      void initialize_memory(const OptimizationProblem& problem) override;
+      void initialize_memory(size_t dimension, size_t number_nonzeros) override;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;

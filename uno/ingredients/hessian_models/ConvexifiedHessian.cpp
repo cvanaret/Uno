@@ -22,6 +22,10 @@ namespace uno {
          regularization_failure_threshold(options.get_double("regularization_failure_threshold")) {
    }
 
+   void ConvexifiedHessian::initialize(const Model& model) {
+      linear_solver->initialize_memory(model.number_variables, model.number_hessian_nonzeros());
+   }
+
    size_t ConvexifiedHessian::number_nonzeros(const OptimizationProblem& problem) const {
       return problem.number_hessian_nonzeros() + problem.number_variables;
    }

@@ -121,15 +121,14 @@ namespace uno {
       this->icntl[eICNTL::LDIAG] = 0;
    }
 
-   void MA27Solver::initialize_memory(const OptimizationProblem& problem) {
-      const size_t number_nonzeros = problem.number_hessian_nonzeros() + problem.number_jacobian_nonzeros();
-      this->n = static_cast<int>(problem.number_variables);
+   void MA27Solver::initialize_memory(size_t dimension, size_t number_nonzeros) {
+      this->n = static_cast<int>(dimension);
       this->nnz = static_cast<int>(number_nonzeros);
       this->irn.resize(number_nonzeros);
       this->icn.resize(number_nonzeros);
-      this->iw.resize((2 * number_nonzeros + 3 * problem.number_variables + 1) * 6 / 5); // 20% more than 2*nnz + 3*n + 1
-      this->ikeep.resize(3 * problem.number_variables);
-      this->iw1.resize(2 * problem.number_variables);
+      this->iw.resize((2 * number_nonzeros + 3 * dimension + 1) * 6 / 5); // 20% more than 2*nnz + 3*n + 1
+      this->ikeep.resize(3 * dimension);
+      this->iw1.resize(2 * dimension);
    }
 
    void MA27Solver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {

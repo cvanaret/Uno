@@ -6,6 +6,10 @@
 #include "linear_algebra/SymmetricMatrix.hpp"
 
 namespace uno {
+   void ZeroHessian::initialize(const Model& /*model*/) {
+
+   }
+
    size_t ZeroHessian::number_nonzeros(const OptimizationProblem& /*problem*/) const {
       return 0;
    }

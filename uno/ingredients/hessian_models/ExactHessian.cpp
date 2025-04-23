@@ -8,8 +8,7 @@
 #include "model/Model.hpp"
 
 namespace uno {
-   // exact Hessian
-   ExactHessian::ExactHessian(): HessianModel() {
+   void ExactHessian::initialize(const Model& /*model*/) {
    }
 
    size_t ExactHessian::number_nonzeros(const OptimizationProblem& problem) const {
