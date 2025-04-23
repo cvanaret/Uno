@@ -204,7 +204,7 @@ namespace uno {
       const Inertia expected_inertia{problem.number_variables, problem.number_constraints, 0};
       subproblem_layer.regularization_strategy->regularize_augmented_matrix(statistics, this->augmented_system.matrix,
          dual_regularization_parameter, expected_inertia, *this->linear_solver);
-
+      
       // assemble the RHS
       this->assemble_augmented_rhs(current_multipliers, problem.number_variables, problem.number_constraints);
    }
