@@ -89,7 +89,7 @@ namespace uno {
       template <typename Array>
       double constraint_violation(const Array& constraints, Norm residual_norm) const;
 
-      void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
+      void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, const Iterate& iterate,
          const Multipliers& multipliers) const;
    };
 
