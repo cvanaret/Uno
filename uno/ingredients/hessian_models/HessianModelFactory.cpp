@@ -9,7 +9,7 @@
 #include "IdentityHessian.hpp"
 #include "ZeroHessian.hpp"
 #ifdef HAS_LAPACK
-#include "LBFGSHessian.hpp"
+#include "quasi_newton/LBFGSHessian.hpp"
 #endif
 #include "options/Options.hpp"
 

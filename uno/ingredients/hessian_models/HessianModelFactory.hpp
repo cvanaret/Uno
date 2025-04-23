@@ -9,6 +9,7 @@
 namespace uno {
    // forward declarations
    class HessianModel;
+   class Model;
    class Options;
 
    class HessianModelFactory {
