@@ -7,7 +7,6 @@
 
 using namespace uno;
 
-/*
 TEST(MUMPSSolver, SystemSize5) {
    const double tolerance = 1e-8;
 
@@ -26,7 +25,8 @@ TEST(MUMPSSolver, SystemSize5) {
    result.fill(0.);
    const std::array<double, n> reference{1., 2., 3., 4., 5.};
 
-   MUMPSSolver solver(n, nnz);
+   MUMPSSolver solver;
+   solver.initialize_memory(n, nnz);
    solver.do_symbolic_analysis(matrix);
    solver.do_numerical_factorization(matrix);
    solver.solve_indefinite_system(matrix, rhs, result);
@@ -48,7 +48,8 @@ TEST(MUMPSSolver, Inertia) {
    matrix.insert(5., 2, 3);
    matrix.insert(1., 4, 4);
 
-   MUMPSSolver solver(n, nnz);
+   MUMPSSolver solver;
+   solver.initialize_memory(n, nnz);
    solver.do_symbolic_analysis(matrix);
    solver.do_numerical_factorization(matrix);
 
@@ -70,14 +71,15 @@ TEST(MUMPSSolver, SingularMatrix) {
    matrix.insert(0.625075, 1, 1);
    matrix.insert(0., 2, 2);
    matrix.insert(0., 3, 3);
-   MUMPSSolver solver(n, nnz);
+
+   MUMPSSolver solver;
+   solver.initialize_memory(n, nnz);
    solver.do_symbolic_analysis(matrix);
    solver.do_numerical_factorization(matrix);
 
    // expected inertia (1, 1, 2)
    ASSERT_TRUE(solver.matrix_is_singular());
 }
-*/
 
 /*
 >>> import numpy as np
