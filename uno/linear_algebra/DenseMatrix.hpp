@@ -52,7 +52,7 @@ namespace uno {
          }
       }
    }
-   
+
    template <typename ElementType>
    ElementType& DenseMatrix<ElementType>::entry(size_t row_index, size_t column_index) {
       return this->matrix[column_index * this->number_rows + row_index];
