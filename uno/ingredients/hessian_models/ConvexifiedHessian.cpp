@@ -23,7 +23,7 @@ namespace uno {
    }
 
    void ConvexifiedHessian::initialize(const Model& model) {
-      linear_solver->initialize_memory(model.number_variables, model.number_hessian_nonzeros());
+      linear_solver->initialize_memory(model.number_variables, model.number_hessian_nonzeros() + model.number_variables);
    }
 
    size_t ConvexifiedHessian::number_nonzeros(const OptimizationProblem& problem) const {

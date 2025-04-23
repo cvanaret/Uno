@@ -45,6 +45,8 @@ namespace uno {
 
    void l1Relaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction, const Options& options) {
       // memory allocation
+      this->hessian_model->initialize(model);
+      this->feasibility_hessian_model->initialize(model);
       const l1RelaxedProblem l1_relaxed_problem{model, this->penalty_parameter, this->constraint_violation_coefficient};
       this->inequality_handling_method->initialize(l1_relaxed_problem, *this->hessian_model);
       this->trial_multipliers.constraints.resize(l1_relaxed_problem.number_constraints);
