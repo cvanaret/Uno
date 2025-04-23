@@ -12,7 +12,7 @@
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "model/Model.hpp"
+#include "optimization/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
@@ -83,7 +83,7 @@ namespace uno {
          }
          if (Logger::level == INFO) statistics.print_footer();
 
-         Uno::postprocess_iterate(model, current_iterate, current_iterate.status);
+         Uno::postprocess_iterate(model, current_iterate);
       }
       catch (const std::exception& e) {
          DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
@@ -136,10 +136,9 @@ namespace uno {
       return false;
    }
 
-   void Uno::postprocess_iterate(const Model& model, Iterate& iterate, IterateStatus termination_status) {
+   void Uno::postprocess_iterate(const Model& model, Iterate& iterate) {
       // in case the objective was not yet evaluated, evaluate it
       iterate.evaluate_objective(model);
-      model.postprocess_solution(iterate, termination_status);
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 
@@ -148,12 +147,25 @@ namespace uno {
       const size_t number_subproblems_solved = this->globalization_mechanism->get_number_subproblems_solved();
       const size_t number_hessian_evaluations = this->globalization_mechanism->get_hessian_evaluation_count();
       return {optimization_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,
-            timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
-            Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
+         timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
+         Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
    }
 
    std::string Uno::current_version() {
       return "1.3.0";
+   }
+
+   void Uno::print_instructions() {
+      std::cout << "Welcome in Uno " << Uno::current_version() << '\n';
+      std::cout << "To solve an AMPL model, type ./uno_ampl model.nl -AMPL [option_name=option_value ...]\n";
+      std::cout << "To choose a constraint relaxation strategy, use the argument constraint_relaxation_strategy="
+                   "[feasibility_restoration|l1_relaxation]\n";
+      std::cout << "To choose a subproblem method, use the argument subproblem=[QP|LP|primal_dual_interior_point]\n";
+      std::cout << "To choose a globalization mechanism, use the argument globalization_mechanism=[LS|TR]\n";
+      std::cout << "To choose a globalization strategy, use the argument globalization_strategy="
+                   "[l1_merit|fletcher_filter_method|waechter_filter_method]\n";
+      std::cout << "To choose a preset, use the argument preset=[filtersqp|ipopt|byrd]\n";
+      std::cout << "The options can be combined in the same command line.\n";
    }
 
    void Uno::print_available_strategies() {
@@ -169,11 +181,11 @@ namespace uno {
 
    std::string Uno::get_strategy_combination(const Options& options) {
       return options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
-                                options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
+         options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
 
    }
 
-   void Uno::print_optimization_summary(const Result& result) {
+   void Uno::print_optimization_summary(const Result& result) const {
       DISCRETE << "\nUno " << Uno::current_version() << " (" << this->strategy_combination << ")\n";
       DISCRETE << Timer::get_current_date();
       DISCRETE << "────────────────────────────────────────\n";

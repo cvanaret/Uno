@@ -30,7 +30,7 @@ namespace uno {
 
       void initialize(const OptimizationProblem& problem, const HessianModel& hessian_model) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
-      void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
+      void generate_initial_iterate(const OptimizationProblem& first_reformulation, Iterate& initial_iterate) override;
       void set_initial_point(const Vector<double>& point) override;
 
       void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
@@ -83,10 +83,10 @@ namespace uno {
          const Vector<double>& primal_direction, double tau);
       [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
          Multipliers& direction_multipliers, double tau);
-      void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Multipliers& current_multipliers,
+      void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& barrier_problem, const Multipliers& current_multipliers,
          WarmstartInformation& warmstart_information);
       void assemble_augmented_rhs(const Multipliers& current_multipliers, size_t number_variables, size_t number_constraints);
-      void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
+      void assemble_primal_dual_direction(const OptimizationProblem& barrier_problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
          Vector<double>& direction_primals, Multipliers& direction_multipliers);
       void compute_bound_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& primal_direction, Multipliers& direction_multipliers);

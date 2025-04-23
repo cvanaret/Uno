@@ -5,9 +5,9 @@
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/Model.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {

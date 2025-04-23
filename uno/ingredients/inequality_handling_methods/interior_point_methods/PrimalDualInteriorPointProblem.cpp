@@ -9,7 +9,9 @@
 namespace uno {
    PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter):
          OptimizationProblem(problem.model, problem.number_variables, problem.number_constraints),
-         first_reformulation(problem), barrier_parameter(barrier_parameter) { }
+         first_reformulation(problem),
+         equality_constraints(problem.number_constraints),
+         barrier_parameter(barrier_parameter) { }
 
    double PrimalDualInteriorPointProblem::get_objective_multiplier() const {
       return this->first_reformulation.get_objective_multiplier();
@@ -21,17 +23,17 @@ namespace uno {
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
          double barrier_term = 0.;
-         if (is_finite(first_reformulation.variable_lower_bound(variable_index))) { // lower bounded
-            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - first_reformulation.variable_lower_bound(variable_index));
+         if (is_finite(this->first_reformulation.variable_lower_bound(variable_index))) { // lower bounded
+            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - this->first_reformulation.variable_lower_bound(variable_index));
             // damping
             if (!is_finite(first_reformulation.variable_upper_bound(variable_index))) {
                barrier_term += this->damping_factor * this->barrier_parameter;
             }
          }
-         if (is_finite(first_reformulation.variable_upper_bound(variable_index))) { // upper bounded
-            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - first_reformulation.variable_upper_bound(variable_index));
+         if (is_finite(this->first_reformulation.variable_upper_bound(variable_index))) { // upper bounded
+            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - this->first_reformulation.variable_upper_bound(variable_index));
             // damping
-            if (!is_finite(first_reformulation.variable_lower_bound(variable_index))) {
+            if (!is_finite(this->first_reformulation.variable_lower_bound(variable_index))) {
                barrier_term -= this->damping_factor * this->barrier_parameter;
             }
          }
@@ -104,14 +106,6 @@ namespace uno {
       return INF<double>;
    }
 
-   double PrimalDualInteriorPointProblem::constraint_lower_bound(size_t /*constraint_index*/) const {
-      return 0.;
-   }
-
-   double PrimalDualInteriorPointProblem::constraint_upper_bound(size_t /*constraint_index*/) const {
-      return 0.;
-   }
-
    const Collection<size_t>& PrimalDualInteriorPointProblem::get_lower_bounded_variables() const {
       return this->first_reformulation.get_lower_bounded_variables();
    }
@@ -126,6 +120,27 @@ namespace uno {
 
    const Collection<size_t>& PrimalDualInteriorPointProblem::get_single_upper_bounded_variables() const {
       return this->first_reformulation.get_single_upper_bounded_variables();
+   }
+
+   const Vector<size_t>& PrimalDualInteriorPointProblem::get_fixed_variables() const {
+      // fixed variables are handled as linear constraints
+      return this->no_fixed_variables; // empty set
+   }
+
+   double PrimalDualInteriorPointProblem::constraint_lower_bound(size_t /*constraint_index*/) const {
+      return 0.;
+   }
+
+   double PrimalDualInteriorPointProblem::constraint_upper_bound(size_t /*constraint_index*/) const {
+      return 0.;
+   }
+
+   const Collection<size_t>& PrimalDualInteriorPointProblem::get_equality_constraints() const {
+      return this->equality_constraints;
+   }
+
+   const Collection<size_t>& PrimalDualInteriorPointProblem::get_inequality_constraints() const {
+      return this->inequality_constraints;
    }
 
    size_t PrimalDualInteriorPointProblem::number_objective_gradient_nonzeros() const {
