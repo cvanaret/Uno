@@ -39,7 +39,7 @@ namespace uno {
 
    void IdentityHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
    }
-   
+
    void IdentityHessian::notify_accepted_iterate(const Model& /*model*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
    }
 
