@@ -25,7 +25,6 @@ namespace uno {
       size_t evaluation_count{0};
 
       virtual void initialize(const Model& model) = 0;
-      virtual void initialize_statistics(Statistics& statistics, const Options& options) const = 0;
       [[nodiscard]] virtual size_t number_nonzeros(const Model& model) const = 0;
       virtual void notify_accepted_iterate(const Model& model, const Iterate& current_iterate, const Iterate& trial_iterate) = 0;
       virtual void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,

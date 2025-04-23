@@ -19,12 +19,8 @@ namespace uno {
       //this->S_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
       //this->Y_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
       //this->M_matrix = DenseMatrix<double>(this->memory_size, this->memory_size);
-}
-
-   void LBFGSHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
-      // do nothing
    }
-   
+
    size_t LBFGSHessian::number_nonzeros(const Model& model) const {
       // TODO estimate this
       return model.number_variables * model.number_variables;
@@ -74,12 +70,8 @@ namespace uno {
 
       // fill the Y matrix
       // TODO
-      std::cout << "Current Lag gradient:\n";
-      std::cout << current_iterate.residuals.lagrangian_gradient.objective_contribution << '\n';
-      std::cout << current_iterate.residuals.lagrangian_gradient.constraints_contribution << '\n';
-      std::cout << "Trial Lag gradient:\n";
-      std::cout << trial_iterate.residuals.lagrangian_gradient.objective_contribution << '\n';
-      std::cout << trial_iterate.residuals.lagrangian_gradient.constraints_contribution << '\n';
+      std::cout << "Current Lag gradient: " << current_iterate.residuals.lagrangian_gradient.assemble(1.);
+      std::cout << "Trial Lag gradient: " << trial_iterate.residuals.lagrangian_gradient.assemble(1.);
 
       this->current_memory_size = std::min(this->current_memory_size + 1, this->memory_size);
       // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory

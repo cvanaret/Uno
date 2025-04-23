@@ -10,6 +10,7 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/regularization_strategies/UnstableRegularization.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"

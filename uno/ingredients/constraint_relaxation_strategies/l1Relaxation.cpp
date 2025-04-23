@@ -335,12 +335,9 @@ namespace uno {
       return this->l1_relaxed_subproblem_layer.get_hessian_evaluation_count() +
          this->feasibility_subproblem_layer.get_hessian_evaluation_count();
    }
-<<<<<<< HEAD
 
    size_t l1Relaxation::get_number_subproblems_solved() const {
       return this->inequality_handling_method->number_subproblems_solved +
          this->feasibility_inequality_handling_method->number_subproblems_solved;
    }
-=======
->>>>>>> 7c18ee55 (Moved HessianModel to ConstraintRelaxationStrategy: one for each phase in FeasibilityRestoration, and one for l1Relaxation)
 } // namespace
