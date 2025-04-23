@@ -25,7 +25,8 @@ namespace uno {
    void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) {
       statistics.add_column("LS iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
       statistics.add_column("step length", Statistics::double_width - 4, options.get_int("statistics_LS_step_length_column_order"));
-      
+      statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
+
       this->constraint_relaxation_strategy->initialize(statistics, model, initial_iterate, this->direction, options);
    }
 

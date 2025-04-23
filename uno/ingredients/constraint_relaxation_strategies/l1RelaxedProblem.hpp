@@ -5,7 +5,6 @@
 #define UNO_L1RELAXEDPROBLEM_H
 
 #include "OptimizationProblem.hpp"
-#include "ElasticVariables.hpp"
 #include "symbolic/Concatenation.hpp"
 
 namespace uno {
@@ -50,17 +49,13 @@ namespace uno {
       void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>& elastic_setting_function) const;
 
    protected:
+      const size_t number_elastic_variables;
       const double objective_multiplier;
       const double constraint_violation_coefficient;
       double proximal_coefficient;
       double const* proximal_center;
-      ElasticVariables elastic_variables;
       const Concatenation<const Collection<size_t>&, ForwardRange> lower_bounded_variables; // model variables + elastic variables
       const Concatenation<const Collection<size_t>&, ForwardRange> single_lower_bounded_variables; // model variables + elastic variables
-
-      // delegating constructor
-      l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier, double constraint_violation_coefficient,
-            double proximal_coefficient, double const* proximal_center);
    };
 } // namespace
 
