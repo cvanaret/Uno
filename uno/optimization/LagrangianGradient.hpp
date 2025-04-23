@@ -17,7 +17,7 @@ namespace uno {
    // - the constraint contribution -\nabla c(x_k) y_k - z_k
    // The two contributions can be assembled with a given objective multiplier \rho (see assemble(double)):
    // \rho \nabla f(x_k) - \nabla c(x_k) y_k - z_k
-   // The resulting object, an AssembledLagrangianGradient, is a wrapper around the LagrangianGradient and rho
+   // The resulting object, an AssembledLagrangianGradient, is a wrapper around the LagrangianGradient and \rho
 
    template <typename ElementType>
    class AssembledLagrangianGradient {
@@ -94,6 +94,7 @@ namespace uno {
 
    template <typename ElementType>
    AssembledLagrangianGradient<ElementType> LagrangianGradient<ElementType>::assemble(double objective_multiplier) const {
+      // TODO use existing Expression
       return {*this, objective_multiplier};
    }
 } // namespace
