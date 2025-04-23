@@ -19,7 +19,7 @@ namespace uno {
       return model.number_hessian_nonzeros();
    }
 
-   void ExactHessian::notify_accepted_iterate(const Iterate& /*iterate*/) {
+   void ExactHessian::notify_accepted_iterate(const Iterate& /*current_iterate*/, const Iterate& /*trial_iterate*/) {
       // do nothing
    }
 

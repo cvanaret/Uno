@@ -33,6 +33,10 @@ namespace uno {
       return model.number_hessian_nonzeros() + model.number_variables;
    }
 
+   void ConvexifiedHessian::notify_accepted_iterate(const Iterate& /*current_iterate*/, const Iterate& /*trial_iterate*/) {
+      // do nothing
+   }
+
    void ConvexifiedHessian::evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
       // evaluate Lagrangian Hessian
@@ -41,10 +45,6 @@ namespace uno {
       this->evaluation_count++;
       // regularize (only on the original variables) to convexify the problem
       this->regularize(statistics, hessian, model.number_variables);
-   }
-
-   void ConvexifiedHessian::notify_accepted_iterate(const Iterate& /*iterate*/) {
-      // do nothing
    }
 
    // evaluate_hessian() should have been called prior to calling compute_hessian_vector_product()

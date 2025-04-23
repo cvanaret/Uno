@@ -270,8 +270,8 @@ namespace uno {
       if (accept_iterate) {
          this->check_exact_relaxation(trial_iterate);
          // this->set_dual_residuals_statistics(statistics, trial_iterate);
-         this->hessian_model->notify_accepted_iterate(trial_iterate);
-         this->feasibility_hessian_model->notify_accepted_iterate(trial_iterate);
+         this->hessian_model->notify_accepted_iterate(current_iterate, trial_iterate);
+         this->feasibility_hessian_model->notify_accepted_iterate(current_iterate, trial_iterate);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, this->penalty_parameter);
       }
       this->set_progress_statistics(statistics, model, trial_iterate);

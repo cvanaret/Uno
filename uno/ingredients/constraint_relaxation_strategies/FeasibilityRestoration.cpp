@@ -188,11 +188,11 @@ namespace uno {
       ConstraintRelaxationStrategy::set_progress_statistics(statistics, model, trial_iterate);
       if (accept_iterate) {
          if (this->current_phase == Phase::OPTIMALITY) {
-            this->optimality_hessian_model->notify_accepted_iterate(trial_iterate);
+            this->optimality_hessian_model->notify_accepted_iterate(current_iterate, trial_iterate);
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, objective_multiplier);
          }
          else {
-            this->feasibility_hessian_model->notify_accepted_iterate(trial_iterate);
+            this->feasibility_hessian_model->notify_accepted_iterate(current_iterate, trial_iterate);
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.feasibility_multipliers, objective_multiplier);
          }
       }
