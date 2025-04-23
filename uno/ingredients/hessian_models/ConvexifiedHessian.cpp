@@ -60,9 +60,9 @@ namespace uno {
    }
 
    // Nocedal and Wright, p51
-   void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables) {
+   void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_variables) {
       DEBUG << "Current Hessian:\n" << hessian << '\n';
-      const double smallest_diagonal_entry = hessian.smallest_diagonal_entry(number_original_variables);
+      const double smallest_diagonal_entry = hessian.smallest_diagonal_entry(number_variables);
       DEBUG << "The minimal diagonal entry of the matrix is " << smallest_diagonal_entry << '\n';
 
       this->regularization_factor = (smallest_diagonal_entry > 0.) ? 0. : this->regularization_initial_value - smallest_diagonal_entry;
@@ -72,7 +72,7 @@ namespace uno {
          DEBUG << "Testing factorization with regularization factor " << this->regularization_factor << '\n';
          if (0. < this->regularization_factor) {
             hessian.set_regularization([=](size_t variable_index) {
-               return (variable_index < number_original_variables) ? this->regularization_factor : 0.;
+               return (variable_index < number_variables) ? this->regularization_factor : 0.;
             });
          }
          DEBUG << "Current Hessian:\n" << hessian << '\n';
@@ -83,7 +83,7 @@ namespace uno {
             symbolic_analysis_performed = true;
          }
          this->linear_solver->do_numerical_factorization(hessian);
-         if (this->linear_solver->rank() == number_original_variables && this->linear_solver->number_negative_eigenvalues() == 0) {
+         if (this->linear_solver->rank() == number_variables && this->linear_solver->number_negative_eigenvalues() == 0) {
             good_inertia = true;
             DEBUG << "Factorization was a success\n";
          }

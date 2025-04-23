@@ -7,8 +7,9 @@
 #include "ConvexifiedHessian.hpp"
 #include "ExactHessian.hpp"
 #include "ZeroHessian.hpp"
+#include "model/Model.hpp"
 #ifdef HAS_LAPACK
-#include "LBFGSHessian.hpp"
+#include "quasi_newton/LBFGSHessian.hpp"
 #include "options/Options.hpp"
 #endif
 

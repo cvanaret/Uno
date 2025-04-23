@@ -18,8 +18,6 @@ namespace uno {
    class OptimizationProblem;
    class Options;
    class Statistics;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
    struct WarmstartInformation;

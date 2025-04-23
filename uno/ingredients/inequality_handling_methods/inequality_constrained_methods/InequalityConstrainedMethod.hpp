@@ -12,7 +12,7 @@
 namespace uno {
    class InequalityConstrainedMethod : public InequalityHandlingMethod {
    public:
-      InequalityConstrainedMethod();
+      InequalityConstrainedMethod() = default;
       ~InequalityConstrainedMethod() override = default;
 
       void initialize(const OptimizationProblem& problem, const HessianModel& hessian_model) override;

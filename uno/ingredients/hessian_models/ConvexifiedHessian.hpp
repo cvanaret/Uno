@@ -31,6 +31,6 @@ namespace uno {
       const double regularization_increase_factor{};
       const double regularization_failure_threshold{};
 
-      void regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_original_variables);
+      void regularize(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian, size_t number_variables);
    };
 } // namespace
