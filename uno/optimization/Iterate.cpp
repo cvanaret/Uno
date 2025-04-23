@@ -75,7 +75,7 @@ namespace uno {
 
       stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';
       stream << "Residuals │ Complementarity: " << iterate.residuals.complementarity << '\n';
-      stream << "          └ Lagrangian gradient: " << iterate.residuals.lagrangian_gradient;
+      //stream << "          └ Lagrangian gradient: " << iterate.residuals.lagrangian_gradient;
 
       stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';
       stream << "Progress measures │ Optimality: " << iterate.progress.objective(1.) << '\n';
