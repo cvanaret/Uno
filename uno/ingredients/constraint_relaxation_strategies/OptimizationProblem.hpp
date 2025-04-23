@@ -7,8 +7,6 @@
 #include <vector>
 #include "linear_algebra/Norm.hpp"
 #include "model/Model.hpp"
-#include "optimization/LagrangianGradient.hpp"
-#include "symbolic/Expression.hpp"
 
 namespace uno {
    // forward declarations
