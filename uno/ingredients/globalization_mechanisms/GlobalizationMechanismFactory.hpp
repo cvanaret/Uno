@@ -6,19 +6,15 @@
 
 #include <memory>
 #include <vector>
-//#include "GlobalizationMechanism.hpp"
-//#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
-//#include "tools/Options.hpp"
+#include "GlobalizationMechanism.hpp"
 
 namespace uno {
-   // forward declarations
-   class ConstraintRelaxationStrategy;
-   class GlobalizationMechanism;
+   // forward declaration
    class Options;
 
    class GlobalizationMechanismFactory {
    public:
-      static std::unique_ptr<GlobalizationMechanism> create(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options);
+      static std::unique_ptr<GlobalizationMechanism> create(const Options& options);
       static std::vector<std::string> available_strategies();
    };
 } // namespace

@@ -1,6 +1,7 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <stdexcept>
 #include "ConvexifiedHessian.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/hessian_models/UnstableRegularization.hpp"
@@ -12,17 +13,21 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   ConvexifiedHessian::ConvexifiedHessian(size_t dimension, size_t number_hessian_nonzeros, const Options& options):
+   ConvexifiedHessian::ConvexifiedHessian(const Options& options):
          HessianModel(),
          // inertia-based convexification needs a linear solver
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(dimension, number_hessian_nonzeros + dimension, options)),
+         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)),
          regularization_initial_value(options.get_double("regularization_initial_value")),
          regularization_increase_factor(options.get_double("regularization_increase_factor")),
          regularization_failure_threshold(options.get_double("regularization_failure_threshold")) {
    }
 
-   void ConvexifiedHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
-      statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
+   void ConvexifiedHessian::initialize(const Model& model) {
+      linear_solver->initialize_memory(model.number_variables, model.number_hessian_nonzeros() + model.number_variables);
+   }
+
+   size_t ConvexifiedHessian::number_nonzeros(const OptimizationProblem& problem) const {
+      return problem.number_hessian_nonzeros() + problem.number_variables;
    }
 
    void ConvexifiedHessian::evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,

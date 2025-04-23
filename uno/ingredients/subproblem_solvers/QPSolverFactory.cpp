@@ -2,25 +2,23 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <stdexcept>
+#include <vector>
 #include "QPSolverFactory.hpp"
+#include "QPSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
-#include "QPSolver.hpp"
 
 #ifdef HAS_BQPD
 #include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"
 #endif
 
 namespace uno {
-   std::unique_ptr<QPSolver> QPSolverFactory::create([[maybe_unused]] size_t number_variables, [[maybe_unused]] size_t number_constraints,
-         [[maybe_unused]] size_t number_objective_gradient_nonzeros, [[maybe_unused]] size_t number_jacobian_nonzeros,
-         [[maybe_unused]] size_t number_hessian_nonzeros, [[maybe_unused]] const Options& options) {
+   std::unique_ptr<QPSolver> QPSolverFactory::create([[maybe_unused]] const Options& options) {
       try {
          [[maybe_unused]] const std::string& QP_solver_name = options.get_string("QP_solver");
 #ifdef HAS_BQPD
          if (QP_solver_name == "BQPD") {
-            return std::make_unique<BQPDSolver>(number_variables, number_constraints, number_objective_gradient_nonzeros, number_jacobian_nonzeros,
-                  number_hessian_nonzeros, BQPDProblemType::QP, options);
+            return std::make_unique<BQPDSolver>(options);
          }
 #endif
          std::string message = "The QP solver ";

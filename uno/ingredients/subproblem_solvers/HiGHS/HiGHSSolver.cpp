@@ -1,6 +1,7 @@
 #include <cassert>
 #include "HiGHSSolver.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
@@ -10,30 +11,32 @@
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
-   HiGHSSolver::HiGHSSolver(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros,
-         size_t number_jacobian_nonzeros, size_t /*number_hessian_nonzeros*/, const Options& options):
+   HiGHSSolver::HiGHSSolver(const Options& options):
          LPSolver(),
-         constraints(number_constraints),
-         linear_objective(number_objective_gradient_nonzeros),
-         constraint_jacobian(number_constraints, number_variables),
          print_subproblem(options.get_bool("print_subproblem")) {
+      this->highs_solver.setOptionValue("output_flag", "false");
+   }
+
+   void HiGHSSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& /*hessian_model*/) {
+      this->constraints.resize(problem.number_constraints);
+      this->linear_objective.reserve(problem.number_objective_gradient_nonzeros());
+      this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
       this->model.lp_.sense_ = ObjSense::kMinimize;
       this->model.lp_.offset_ = 0.;
       // the linear part of the objective is a dense vector
-      this->model.lp_.col_cost_.resize(number_variables);
+      this->model.lp_.col_cost_.resize(problem.number_variables);
       // variable bounds
-      this->model.lp_.col_lower_.resize(number_variables);
-      this->model.lp_.col_upper_.resize(number_variables);
+      this->model.lp_.col_lower_.resize(problem.number_variables);
+      this->model.lp_.col_upper_.resize(problem.number_variables);
       // constraint bounds
-      this->model.lp_.row_lower_.resize(number_constraints);
-      this->model.lp_.row_upper_.resize(number_constraints);
+      this->model.lp_.row_lower_.resize(problem.number_constraints);
+      this->model.lp_.row_upper_.resize(problem.number_constraints);
       // constraint matrix in CSR format (each row is a constraint gradient)
       this->model.lp_.a_matrix_.format_ = MatrixFormat::kRowwise;
-      this->model.lp_.a_matrix_.value_.reserve(number_jacobian_nonzeros);
-      this->model.lp_.a_matrix_.index_.reserve(number_jacobian_nonzeros);
-      this->model.lp_.a_matrix_.start_.reserve(number_variables + 1);
-
-      this->highs_solver.setOptionValue("output_flag", "false");
+      this->model.lp_.a_matrix_.value_.reserve(problem.number_jacobian_nonzeros());
+      this->model.lp_.a_matrix_.index_.reserve(problem.number_jacobian_nonzeros());
+      this->model.lp_.a_matrix_.start_.reserve(problem.number_variables + 1);
+      // const size_t number_hessian_nonzeros = hessian_model.number_nonzeros(problem);
    }
 
    void HiGHSSolver::solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& /*initial_point*/,

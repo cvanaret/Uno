@@ -11,8 +11,11 @@
 namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {
    public:
+      // constructor with proximal term
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient, double proximal_coefficient,
             double const* proximal_center);
+      // constructor without proximal term
+      l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
 
       [[nodiscard]] double get_objective_multiplier() const override;
       void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
@@ -42,14 +45,12 @@ namespace uno {
             const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
 
       // parameterization
-      void set_objective_multiplier(double new_objective_multiplier);
-
       void set_proximal_multiplier(double new_proximal_coefficient);
       void set_proximal_center(double const* new_proximal_center);
       void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>& elastic_setting_function) const;
 
    protected:
-      double objective_multiplier;
+      const double objective_multiplier;
       const double constraint_violation_coefficient;
       double proximal_coefficient;
       double const* proximal_center;

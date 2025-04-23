@@ -13,14 +13,15 @@ namespace uno {
 
    class LPSubproblem : public InequalityConstrainedMethod {
    public:
-      LPSubproblem(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
-            const Options& options);
-      ~LPSubproblem();
+      explicit LPSubproblem(const Options& options);
+      ~LPSubproblem() override;
 
+      void initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model) override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-            Direction& direction, WarmstartInformation& warmstart_information) override;
-      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
+            Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) override;
+      [[nodiscard]] double hessian_quadratic_product(const OptimizationProblem& problem, HessianModel& hessian_model,
+         const Vector<double>& primal_direction, const Multipliers& multipliers) const override;
 
    private:
       // pointer to allow polymorphism

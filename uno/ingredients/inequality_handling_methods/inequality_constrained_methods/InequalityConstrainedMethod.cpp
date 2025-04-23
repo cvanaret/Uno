@@ -5,25 +5,24 @@
 #include "optimization/Iterate.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
-#include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
-   InequalityConstrainedMethod::InequalityConstrainedMethod(const std::string& hessian_model, size_t number_variables, size_t number_constraints,
-         size_t number_hessian_nonzeros, bool convexify, const Options& options):
-         InequalityHandlingMethod(hessian_model, number_variables, number_hessian_nonzeros, convexify, options),
-         initial_point(number_variables),
-         direction_lower_bounds(number_variables),
-         direction_upper_bounds(number_variables),
-         linearized_constraints_lower_bounds(number_constraints),
-         linearized_constraints_upper_bounds(number_constraints),
-         objective_gradient(number_variables),
-         constraints(number_constraints),
-         constraint_jacobian(number_constraints, number_variables) {
+   InequalityConstrainedMethod::InequalityConstrainedMethod(): InequalityHandlingMethod() {
    }
 
-   void InequalityConstrainedMethod::initialize_statistics(Statistics& statistics, const Options& options) {
-      this->hessian_model->initialize_statistics(statistics, options);
+   void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, const HessianModel& /*hessian_model*/) {
+      this->initial_point.resize(problem.number_variables);
+      this->direction_lower_bounds.resize(problem.number_variables);
+      this->direction_upper_bounds.resize(problem.number_variables);
+      this->linearized_constraints_lower_bounds.resize(problem.number_constraints);
+      this->linearized_constraints_upper_bounds.resize(problem.number_constraints);
+      this->objective_gradient.reserve(problem.number_variables);
+      this->constraints.resize(problem.number_constraints);
+      this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
+   }
+
+   void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
    }
 
    void InequalityConstrainedMethod::set_initial_point(const Vector<double>& point) {
@@ -92,6 +91,6 @@ namespace uno {
       return 0.;
    }
 
-   void InequalityConstrainedMethod::postprocess_iterate(const OptimizationProblem& /*problem*/, Iterate& /*iterate*/) {
+   void InequalityConstrainedMethod::postprocess_iterate(const OptimizationProblem& /*problem*/, Vector<double>& /*primals*/, Multipliers& /*multipliers*/) {
    }
 } // namespace

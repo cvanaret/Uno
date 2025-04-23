@@ -14,8 +14,7 @@ namespace uno {
 
    class HessianModelFactory {
    public:
-      static std::unique_ptr<HessianModel> create(const std::string& hessian_model, size_t dimension, size_t number_hessian_nonzeros,
-            bool convexify, const Options& options);
+      static std::unique_ptr<HessianModel> create(const std::string& hessian_model, bool convexify, const Options& options);
    };
 } // namespace
 

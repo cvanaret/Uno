@@ -4,12 +4,13 @@
 #ifndef UNO_H
 #define UNO_H
 
+#include <memory>
+#include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "optimization/Result.hpp"
 #include "optimization/IterateStatus.hpp"
 
 namespace uno {
    // forward declarations
-   class GlobalizationMechanism;
    class Model;
    class Options;
    class Statistics;
@@ -18,7 +19,7 @@ namespace uno {
 
    class Uno {
    public:
-      Uno(GlobalizationMechanism& globalization_mechanism, const Options& options);
+      explicit Uno(const Options& options);
 
       // solve with or without user callbacks
       Result solve(const Model& model, Iterate& initial_iterate, const Options& options);
@@ -30,13 +31,13 @@ namespace uno {
       void print_optimization_summary(const Result& result);
 
    private:
-      GlobalizationMechanism& globalization_mechanism; /*!< Globalization mechanism */
+      std::unique_ptr<GlobalizationMechanism> globalization_mechanism; /*!< Globalization mechanism */
       const size_t max_iterations; /*!< Maximum number of iterations */
       const double time_limit; /*!< CPU time limit (can be inf) */
       const bool print_solution;
       const std::string strategy_combination;
 
-      void initialize(Statistics& statistics, Iterate& current_iterate, const Options& options);
+      void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options);
       [[nodiscard]] static Statistics create_statistics(const Model& model, const Options& options);
       [[nodiscard]] bool termination_criteria(IterateStatus current_status, size_t iteration, double current_time,
             OptimizationStatus& optimization_status) const;

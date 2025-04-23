@@ -12,10 +12,10 @@
 namespace uno {
    class InequalityConstrainedMethod : public InequalityHandlingMethod {
    public:
-      InequalityConstrainedMethod(const std::string& hessian_model, size_t number_variables, size_t number_constraints,
-            size_t number_hessian_nonzeros, bool convexify, const Options& options);
+      InequalityConstrainedMethod();
       ~InequalityConstrainedMethod() override = default;
-      
+
+      void initialize(const OptimizationProblem& problem, const HessianModel& hessian_model) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void set_initial_point(const Vector<double>& point) override;
       void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
@@ -26,7 +26,7 @@ namespace uno {
       void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate&, const Vector<double>&, double) const override;
 
-      void postprocess_iterate(const OptimizationProblem& model, Iterate& iterate) override;
+      void postprocess_iterate(const OptimizationProblem& model, Vector<double>& primals, Multipliers& multipliers) override;
 
    protected:
       Vector<double> initial_point{};

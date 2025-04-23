@@ -6,7 +6,13 @@
 #include "linear_algebra/SymmetricMatrix.hpp"
 
 namespace uno {
-   void ZeroHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const { }
+   void ZeroHessian::initialize(const Model& /*model*/) {
+
+   }
+
+   size_t ZeroHessian::number_nonzeros(const OptimizationProblem& /*problem*/) const {
+      return 0;
+   }
 
    void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {

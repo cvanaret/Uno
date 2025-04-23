@@ -27,6 +27,7 @@ namespace uno {
 
    class OptimizationProblem {
    public:
+      explicit OptimizationProblem(const Model& model);
       OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints);
       virtual ~OptimizationProblem() = default;
 

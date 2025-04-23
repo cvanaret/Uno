@@ -15,13 +15,14 @@ namespace uno {
 
    class MA27Solver: public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
-      explicit MA27Solver(size_t max_dimension, size_t max_number_nonzeros);
+      MA27Solver();
       ~MA27Solver() override = default;
+
+      void initialize_memory(size_t dimension, size_t number_nonzeros) override;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
       void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
-
 
       [[nodiscard]] std::tuple<size_t, size_t, size_t> get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;

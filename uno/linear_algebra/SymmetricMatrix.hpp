@@ -19,7 +19,9 @@ namespace uno {
       using value_type = ElementType;
       
       SymmetricMatrix(size_t dimension, size_t capacity, bool use_regularization, const std::string& sparse_format);
+      SymmetricMatrix();
       ~SymmetricMatrix() = default;
+      SymmetricMatrix& operator=(SymmetricMatrix&& other) = default;
 
       void reset() { this->sparse_storage->reset(); }
       [[nodiscard]] size_t dimension() const { return this->sparse_storage->dimension; }
@@ -60,8 +62,13 @@ namespace uno {
    // implementation
 
    template <typename IndexType, typename ElementType>
-   SymmetricMatrix<IndexType, ElementType>::SymmetricMatrix(size_t dimension, size_t capacity, bool use_regularization, const std::string& sparse_format) :
+   SymmetricMatrix<IndexType, ElementType>::SymmetricMatrix(size_t dimension, size_t capacity, bool use_regularization, const std::string& sparse_format):
          sparse_storage(SparseStorageFactory<IndexType, ElementType>::create(sparse_format, dimension, capacity, use_regularization)) {
+   }
+
+   template <typename IndexType, typename ElementType>
+   SymmetricMatrix<IndexType, ElementType>::SymmetricMatrix():
+         sparse_storage(nullptr) {
    }
 
    template <typename IndexType, typename ElementType>

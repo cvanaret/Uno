@@ -44,33 +44,32 @@ namespace uno {
       UNCHANGED_ACTIVE_SET_AND_JACOBIAN_AND_REDUCED_HESSIAN = 6, // warm start
    };
 
-   enum class BQPDProblemType {LP, QP};
-
    class BQPDSolver : public QPSolver {
    public:
-      BQPDSolver(size_t number_variables, size_t number_constraints, size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros,
-            size_t number_hessian_nonzeros, BQPDProblemType problem_type, const Options& options);
+      explicit BQPDSolver(const Options& options);
+
+      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) override;
 
       void solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point, Direction& direction,
-            double trust_region_radius, const WarmstartInformation& warmstart_information) override;
+         double trust_region_radius, const WarmstartInformation& warmstart_information) override;
 
       void solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-            const Vector<double>& initial_point, Direction& direction, HessianModel& hessian_model, double trust_region_radius,
-            const WarmstartInformation& warmstart_information) override;
-
-      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& primal_direction) const override;
+         const Vector<double>& initial_point, Direction& direction, HessianModel& hessian_model, double trust_region_radius,
+         const WarmstartInformation& warmstart_information) override;
 
    private:
       const bool subproblem_is_regularized;
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
-      std::vector<double> constraints;
-      SparseVector<double> linear_objective;
-      RectangularMatrix<double> constraint_jacobian;
+      std::vector<double> constraints{};
+      SparseVector<double> linear_objective{};
+      RectangularMatrix<double> constraint_jacobian{};
       std::vector<double> bqpd_jacobian{};
       std::vector<int> bqpd_jacobian_sparsity{};
-      SymmetricMatrix<size_t, double> hessian;
+      SymmetricMatrix<size_t, double> hessian{};
 
-      int kmax{0}, mlp{1000};
+      int kmax{0};
+      int kmax_limit;
+      int mlp{1000};
       size_t mxwk0{2000000}, mxiwk0{500000};
       std::array<int, 100> info{};
       std::vector<double> alp{};
@@ -91,9 +90,9 @@ namespace uno {
       const bool print_subproblem;
 
       void set_up_subproblem(const OptimizationProblem& problem, Iterate& current_iterate, double trust_region_radius,
-            const WarmstartInformation& warmstart_information);
+         const WarmstartInformation& warmstart_information);
       void solve_subproblem(const OptimizationProblem& problem, const Vector<double>& initial_point, Direction& direction,
-            const WarmstartInformation& warmstart_information);
+         const WarmstartInformation& warmstart_information);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
       void save_hessian_operator(const OptimizationProblem& problem, HessianModel& hessian_model,
          const Multipliers& current_multipliers);

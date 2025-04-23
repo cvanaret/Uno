@@ -8,6 +8,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
+#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 
 #define MA27ID FC_GLOBAL(ma27id, MA27ID)
 #define MA27AD FC_GLOBAL(ma27ad, MA27AD)
@@ -109,20 +110,25 @@ namespace uno {
    };
 
 
-   MA27Solver::MA27Solver(size_t max_dimension, size_t max_number_nonzeros):
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>(max_dimension),
-         n(static_cast<int>(max_dimension)), nnz(static_cast<int>(max_number_nonzeros)),
-         irn(max_number_nonzeros), icn(max_number_nonzeros),
-         iw((2 * max_number_nonzeros + 3 * max_dimension + 1) * 6 / 5), // 20% more than 2*nnz + 3*n + 1
-         ikeep(3 * max_dimension), iw1(2 * max_dimension) {
+   MA27Solver::MA27Solver(): DirectSymmetricIndefiniteLinearSolver() {
       // initialization: set the default values of the controlling parameters
       MA27ID(icntl.data(), cntl.data());
       // a suitable pivot order is to be chosen automatically
-      iflag = 0;
+      this->iflag = 0;
       // suppress warning messages
-      icntl[eICNTL::LP] = 0;
-      icntl[eICNTL::MP] = 0;
-      icntl[eICNTL::LDIAG] = 0;
+      this->icntl[eICNTL::LP] = 0;
+      this->icntl[eICNTL::MP] = 0;
+      this->icntl[eICNTL::LDIAG] = 0;
+   }
+
+   void MA27Solver::initialize_memory(size_t dimension, size_t number_nonzeros) {
+      this->n = static_cast<int>(dimension);
+      this->nnz = static_cast<int>(number_nonzeros);
+      this->irn.resize(number_nonzeros);
+      this->icn.resize(number_nonzeros);
+      this->iw.resize((2 * number_nonzeros + 3 * dimension + 1) * 6 / 5); // 20% more than 2*nnz + 3*n + 1
+      this->ikeep.resize(3 * dimension);
+      this->iw1.resize(2 * dimension);
    }
 
    void MA27Solver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
@@ -217,27 +223,27 @@ namespace uno {
    }
 
    size_t MA27Solver::number_negative_eigenvalues() const {
-      return static_cast<size_t>(info[eINFO::NEIG]);
+      return static_cast<size_t>(this->info[eINFO::NEIG]);
    }
 
    bool MA27Solver::matrix_is_singular() const {
-      return (info[eINFO::IFLAG] == eIFLAG::SINGULAR || info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT);
+      return (this->info[eINFO::IFLAG] == eIFLAG::SINGULAR || this->info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT);
    }
 
    size_t MA27Solver::rank() const {
-      return (info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT) ? static_cast<size_t>(info[eINFO::IERROR]) : static_cast<size_t>(n);
+      return (this->info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT) ? static_cast<size_t>(this->info[eINFO::IERROR]) : static_cast<size_t>(n);
    }
 
    void MA27Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
       // build the internal matrix representation
-      irn.clear();
-      icn.clear();
-      factor.clear();
+      this->irn.clear();
+      this->icn.clear();
+      this->factor.clear();
       constexpr auto fortran_shift = 1;
       for (const auto [row_index, column_index, element]: matrix) {
-         irn.emplace_back(static_cast<int>(row_index + fortran_shift));
-         icn.emplace_back(static_cast<int>(column_index + fortran_shift));
-         factor.emplace_back(element);
+         this->irn.emplace_back(static_cast<int>(row_index + fortran_shift));
+         this->icn.emplace_back(static_cast<int>(column_index + fortran_shift));
+         this->factor.emplace_back(element);
       }
    }
 

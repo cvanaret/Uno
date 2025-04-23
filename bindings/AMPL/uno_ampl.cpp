@@ -3,10 +3,6 @@
 
 #include <string>
 #include <stdexcept>
-#include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
-#include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
-#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
-#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "AMPLModel.hpp"
 #include "AMPLUserCallbacks.hpp"
 #include "Uno.hpp"
@@ -46,16 +42,10 @@ namespace uno {
          model->initial_dual_point(initial_iterate.multipliers.constraints);
          initial_iterate.feasibility_multipliers.reset();
 
-         // create the constraint relaxation strategy, the globalization mechanism and the Uno solver
-         auto constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(*model, options);
-         auto globalization_mechanism = GlobalizationMechanismFactory::create(*constraint_relaxation_strategy, options);
-         Uno uno = Uno(*globalization_mechanism, options);
-
-         // create the user callbacks
-         AMPLUserCallbacks user_callbacks{};
-
          // solve the instance
-         Result result = uno.solve(*model, initial_iterate, options, user_callbacks);
+         Uno uno{options};
+         AMPLUserCallbacks user_callbacks{};
+         const Result result = uno.solve(*model, initial_iterate, options, user_callbacks);
          if (result.optimization_status == OptimizationStatus::SUCCESS) {
             // check result.solution.status
          }

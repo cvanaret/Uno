@@ -8,23 +8,22 @@
 
 namespace uno {
    // forward declarations
+   class OptimizationProblem;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
-
    template <typename ElementType>
    class Vector;
 
    template <typename IndexType, typename ElementType>
    class SymmetricIndefiniteLinearSolver {
    public:
-      explicit SymmetricIndefiniteLinearSolver(size_t dimension) : dimension(dimension) { };
+      SymmetricIndefiniteLinearSolver() = default;
       virtual ~SymmetricIndefiniteLinearSolver() = default;
+
+      virtual void initialize_memory(size_t dimension, size_t number_nonzeros) = 0;
 
       virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
             Vector<ElementType>& result) = 0;
-
-   protected:
-      const size_t dimension;
    };
 } // namespace
 

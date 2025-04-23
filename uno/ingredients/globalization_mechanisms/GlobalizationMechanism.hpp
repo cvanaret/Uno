@@ -4,11 +4,12 @@
 #ifndef UNO_GLOBALIZATIONMECHANISM_H
 #define UNO_GLOBALIZATIONMECHANISM_H
 
+#include <memory>
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "optimization/Direction.hpp"
 
 namespace uno {
    // forward declarations
-   class ConstraintRelaxationStrategy;
    class Iterate;
    class Model;
    class Options;
@@ -18,10 +19,10 @@ namespace uno {
 
    class GlobalizationMechanism {
    public:
-      explicit GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy);
+      explicit GlobalizationMechanism(const Options& options);
       virtual ~GlobalizationMechanism() = default;
 
-      virtual void initialize(Statistics& statistics, Iterate& initial_iterate, const Options& options) = 0;
+      virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) = 0;
       virtual void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
             WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
 
@@ -30,8 +31,8 @@ namespace uno {
 
    protected:
       // reference to allow polymorphism
-      ConstraintRelaxationStrategy& constraint_relaxation_strategy; /*!< Constraint relaxation strategy */
-      Direction direction;
+      std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy; /*!< Constraint relaxation strategy */
+      Direction direction{};
 
       static void assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
             double primal_step_length, double dual_step_length);

@@ -7,6 +7,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
+#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 
 #define MA57ID FC_GLOBAL(ma57id, MA57ID)
 #define MA57AD FC_GLOBAL(ma57ad, MA57AD)
@@ -34,20 +35,25 @@ namespace uno {
          double cntl[], int info[], double rinfo[]);
    }
 
-   MA57Solver::MA57Solver(size_t dimension, size_t number_nonzeros) : DirectSymmetricIndefiniteLinearSolver<size_t, double>(dimension),
-         lkeep(static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42)),
-         keep(static_cast<size_t>(lkeep)),
-         iwork(5 * dimension),
-         lwork(static_cast<int>(1.2 * static_cast<double>(dimension))),
-         work(static_cast<size_t>(this->lwork)), residuals(dimension) {
-      this->row_indices.reserve(number_nonzeros);
-      this->column_indices.reserve(number_nonzeros);
+   MA57Solver::MA57Solver(): DirectSymmetricIndefiniteLinearSolver() {
       // set the default values of the controlling parameters
       MA57ID(this->cntl.data(), this->icntl.data());
       // suppress warning messages
       this->icntl[4] = 0;
       // iterative refinement enabled
       this->icntl[8] = 1;
+   }
+
+   void MA57Solver::initialize_memory(size_t dimension, size_t number_nonzeros) {
+      this->dimension = dimension;
+      this->row_indices.reserve(number_nonzeros);
+      this->column_indices.reserve(number_nonzeros);
+      this->lkeep = static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42);
+      this->keep.resize(static_cast<size_t>(lkeep));
+      this->iwork.resize(5 * dimension);
+      this->lwork = static_cast<int>(1.2 * static_cast<double>(dimension));
+      this->work.resize(static_cast<size_t>(this->lwork));
+      this->residuals.resize(dimension);
    }
 
    void MA57Solver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {

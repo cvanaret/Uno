@@ -15,9 +15,13 @@
 namespace uno {
    l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
          double proximal_coefficient, double const* proximal_center):
-   // call delegating constructor
+         // call delegating constructor
          l1RelaxedProblem(model, ElasticVariables::generate(model), objective_multiplier, constraint_violation_coefficient, proximal_coefficient,
                proximal_center) {
+   }
+
+   l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient):
+      l1RelaxedProblem(model, objective_multiplier, constraint_violation_coefficient, 0., nullptr) {
    }
 
    // private delegating constructor
@@ -98,6 +102,7 @@ namespace uno {
    void l1RelaxedProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
       hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(), multipliers.constraints, hessian);
+      hessian.set_dimension(this->number_variables);
 
       // proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
@@ -271,11 +276,6 @@ namespace uno {
 
    size_t l1RelaxedProblem::number_hessian_nonzeros() const {
       return this->model.number_hessian_nonzeros();
-   }
-
-   void l1RelaxedProblem::set_objective_multiplier(double new_objective_multiplier) {
-      assert(0. <= new_objective_multiplier && "The objective multiplier should be non-negative");
-      this->objective_multiplier = new_objective_multiplier;
    }
 
    void l1RelaxedProblem::set_proximal_multiplier(double new_proximal_coefficient) {

@@ -29,8 +29,7 @@ namespace uno {
 #endif
 
 namespace uno {
-   std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> SymmetricIndefiniteLinearSolverFactory::create([[maybe_unused]] size_t dimension,
-         [[maybe_unused]] size_t number_nonzeros, const Options& options) {
+   std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> SymmetricIndefiniteLinearSolverFactory::create(const Options& options) {
       try {
          [[maybe_unused]] const std::string& linear_solver_name = options.get_string("linear_solver");
 #if defined(HAS_HSL) || defined(HAS_MA57)
@@ -39,7 +38,7 @@ namespace uno {
             && LIBHSL_isfunctional()
    #endif
                ) {
-            return std::make_unique<MA57Solver>(dimension, number_nonzeros);
+            return std::make_unique<MA57Solver>();
          }
 #endif
 
@@ -49,13 +48,13 @@ namespace uno {
             && LIBHSL_isfunctional()         
    # endif
          ) {
-            return std::make_unique<MA27Solver>(dimension, number_nonzeros);
+            return std::make_unique<MA27Solver>();
          }
 #endif // HAS_HSL || HAS_MA27
 
 #ifdef HAS_MUMPS
          if (linear_solver_name == "MUMPS") {
-            return std::make_unique<MUMPSSolver>(dimension, number_nonzeros);
+            return std::make_unique<MUMPSSolver>();
          }
 #endif
          std::string message = "The linear solver ";
