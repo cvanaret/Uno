@@ -10,7 +10,7 @@ namespace uno {
 
    }
 
-   size_t ZeroHessian::number_nonzeros(const OptimizationProblem& /*problem*/) const {
+   size_t ZeroHessian::number_nonzeros(const Model& /*model*/) const {
       return 0;
    }
 

@@ -10,7 +10,7 @@ namespace uno {
       ZeroHessian() = default;
 
       void initialize(const Model& model) override;
-      [[nodiscard]] size_t number_nonzeros(const OptimizationProblem& problem) const override;
+      [[nodiscard]] size_t number_nonzeros(const Model& model) const override;
       void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables, double objective_multiplier,
          const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
       void compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double objective_multiplier,

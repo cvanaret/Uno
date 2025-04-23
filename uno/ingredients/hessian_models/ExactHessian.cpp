@@ -11,8 +11,8 @@ namespace uno {
    void ExactHessian::initialize(const Model& /*model*/) {
    }
 
-   size_t ExactHessian::number_nonzeros(const OptimizationProblem& problem) const {
-      return problem.number_hessian_nonzeros();
+   size_t ExactHessian::number_nonzeros(const Model& model) const {
+      return model.number_hessian_nonzeros();
    }
 
    void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& primal_variables,

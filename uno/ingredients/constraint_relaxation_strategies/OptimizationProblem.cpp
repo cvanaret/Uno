@@ -101,8 +101,8 @@ namespace uno {
       return this->model.number_jacobian_nonzeros();
    }
 
-   size_t OptimizationProblem::number_hessian_nonzeros() const {
-      return this->model.number_hessian_nonzeros();
+   size_t OptimizationProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
+      return hessian_model.number_nonzeros(this->model);
    }
 
    double OptimizationProblem::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,

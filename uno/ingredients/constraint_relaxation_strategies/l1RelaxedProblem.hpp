@@ -37,7 +37,7 @@ namespace uno {
 
       [[nodiscard]] size_t number_objective_gradient_nonzeros() const override;
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
-      [[nodiscard]] size_t number_hessian_nonzeros() const override;
+      [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
 
       void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate, const Multipliers& multipliers) const override;
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
