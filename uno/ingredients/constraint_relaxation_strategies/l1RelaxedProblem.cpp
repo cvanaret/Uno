@@ -5,9 +5,9 @@
 #include "l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
-#include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/LagrangianGradient.hpp"
+#include "optimization/Model.hpp"
 #include "symbolic/VectorExpression.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "tools/Infinity.hpp"
@@ -262,12 +262,24 @@ namespace uno {
       return this->model.get_single_upper_bounded_variables();
    }
 
+   const Vector<size_t>& l1RelaxedProblem::get_fixed_variables() const {
+      return this->model.get_fixed_variables();
+   }
+
    double l1RelaxedProblem::constraint_lower_bound(size_t constraint_index) const {
       return this->model.constraint_lower_bound(constraint_index);
    }
 
    double l1RelaxedProblem::constraint_upper_bound(size_t constraint_index) const {
       return this->model.constraint_upper_bound(constraint_index);
+   }
+
+   const Collection<size_t>& l1RelaxedProblem::get_equality_constraints() const {
+      return this->model.get_equality_constraints();
+   }
+
+   const Collection<size_t>& l1RelaxedProblem::get_inequality_constraints() const {
+      return this->model.get_inequality_constraints();
    }
 
    size_t l1RelaxedProblem::number_objective_gradient_nonzeros() const {

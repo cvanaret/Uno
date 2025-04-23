@@ -4,13 +4,13 @@
 #include <cassert>
 #include "BacktrackingLineSearch.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
-#include "model/Model.hpp"
+#include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
-#include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
-#include "tools/Logger.hpp"
+#include "optimization/Model.hpp"
 #include "options/Options.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
