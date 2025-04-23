@@ -34,9 +34,9 @@ namespace uno {
 
    protected:
       size_t dimension{};
-      const size_t memory_size;
-      size_t current_memory_size{0};
-      size_t current_available_slot{0};
+      const size_t memory_size; // user defined
+      size_t current_memory_size{0}; // 0 <= used_memory_size <= memory_size
+      size_t current_available_slot{0}; // 0 <= current_available_slot < memory_size
       // memory
       DenseMatrix<double> S_matrix;
       DenseMatrix<double> Y_matrix;
@@ -47,7 +47,12 @@ namespace uno {
       DenseMatrix<double> M_matrix;
 
       void update_memory(const Iterate& current_iterate, const Iterate& trial_iterate);
-      void compute_hessian_representation();
+      void recompute_hessian_representation();
+      static void perform_high_rank_update(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
+         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension);
+      static void perform_high_rank_update_transpose(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
+         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension);
+      static void compute_cholesky_factors(DenseMatrix<double>& matrix, size_t dimension, size_t leading_dimension);
    };
 } // namespace
 
