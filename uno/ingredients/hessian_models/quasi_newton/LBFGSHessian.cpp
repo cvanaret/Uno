@@ -30,6 +30,10 @@ namespace uno {
       throw std::runtime_error("LBFGSHessian::number_nonzeros should not be called");
    }
 
+   void LBFGSHessian::compute_sparsity(int* /*row_indices*/, int* /*column_indices*/, int /*solver_indexing*/) const {
+      throw std::runtime_error("LBFGSHessian::compute_sparsity should not be called");
+   }
+
    bool LBFGSHessian::is_positive_definite() const {
       return true;
    }
@@ -43,7 +47,7 @@ namespace uno {
    void LBFGSHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
    }
 
-   void LBFGSHessian::notify_accepted_iterate(const Iterate& current_iterate, const Iterate& trial_iterate) {
+   void LBFGSHessian::notify_accepted_iterate(Iterate& current_iterate, Iterate& trial_iterate) {
       std::cout << "Adding vector to L-BFGS memory at slot " << this->current_available_slot << '\n';
       // this->current_available_slot lives in [0, this->memory_size)
       this->update_memory(current_iterate, trial_iterate);
@@ -70,7 +74,9 @@ namespace uno {
 
    // protected member functions
 
-   void LBFGSHessian::update_memory(const Iterate& current_iterate, const Iterate& trial_iterate) {
+   void LBFGSHessian::update_memory(Iterate& current_iterate, Iterate& trial_iterate) {
+      // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
+      this->current_available_slot = (this->current_available_slot + 1) % this->memory_size;
       std::cout << "\n*** Adding vector to L-BFGS memory at slot " << this->current_available_slot << '\n';
       // TODO figure out if we're extending or replacing in memory
 
@@ -124,7 +130,7 @@ namespace uno {
          this->current_memory_size, this->memory_size);
       // add M += S^T S
       LBFGSHessian::perform_high_rank_update_transpose(this->M_matrix, this->current_memory_size, this->memory_size,
-         this->S_matrix, this->current_memory_size, this->dimension);
+         this->S_matrix, this->current_memory_size, this->model.number_variables);
       std::cout << "M:\n" << this->M_matrix;
 
       // compute the Cholesky factors J of M = J J^T (J overwrites M)
