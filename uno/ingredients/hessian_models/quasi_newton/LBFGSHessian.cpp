@@ -88,6 +88,12 @@ namespace uno {
 
       // fill the Y matrix
       // TODO
+      std::cout << "Current Lag gradient:\n";
+      std::cout << current_iterate.residuals.lagrangian_gradient.objective_contribution << '\n';
+      std::cout << current_iterate.residuals.lagrangian_gradient.constraints_contribution << '\n';
+      std::cout << "Trial Lag gradient:\n";
+      std::cout << trial_iterate.residuals.lagrangian_gradient.objective_contribution << '\n';
+      std::cout << trial_iterate.residuals.lagrangian_gradient.constraints_contribution << '\n';
 
       this->current_memory_size = std::min(this->current_memory_size + 1, this->memory_size);
       // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
@@ -114,13 +120,14 @@ namespace uno {
       // Ltilde = L D^{-1/2}
       DenseMatrix<double> Ltilde_matrix(this->L_matrix); // copy L into Ltilde
       for (size_t column_index: Range(this->current_memory_size)) {
+         const double scaling = 1./std::sqrt(this->D_matrix[column_index]);
          for (size_t row_index: Range(column_index+1, this->current_memory_size)) {
-            Ltilde_matrix.entry(row_index, column_index) *= 1./std::sqrt(this->D_matrix[column_index]);
+            Ltilde_matrix.entry(row_index, column_index) *= scaling;
          }
       }
       std::cout << "Ltilde:\n" << Ltilde_matrix;
 
-      // form M = Ltilde Ltilde^T = L D^{-1} L^T
+      // form M = L D^{-1} L^T + S^T S = Ltilde Ltilde^T + S^T S
       this->M_matrix.clear();
       LBFGSHessian::perform_high_rank_update(this->M_matrix, this->current_memory_size, this->memory_size, Ltilde_matrix,
          this->current_memory_size, this->memory_size);
@@ -130,8 +137,8 @@ namespace uno {
       std::cout << "M:\n" << this->M_matrix;
 
       // compute the Cholesky factors J of M = J J^T (J overwrites M)
-      //LBFGSHessian::compute_cholesky_factors(this->M_matrix, this->current_memory_size, this->memory_size);
-      //std::cout << "J:\n" << this->M_matrix;
+      LBFGSHessian::compute_cholesky_factors(this->M_matrix, this->current_memory_size, this->memory_size);
+      std::cout << "J:\n" << this->M_matrix;
    }
 
    void LBFGSHessian::perform_high_rank_update(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
