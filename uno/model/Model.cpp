@@ -5,8 +5,14 @@
 #include <utility>
 #include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
+<<<<<<< HEAD
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
+=======
+#include "optimization/Iterate.hpp"
+#include "optimization/LagrangianGradient.hpp"
+#include "optimization/Multipliers.hpp"
+>>>>>>> 33d2a690 (Removed OptimalityProblem (replaced by virtual OptimizationProblem))
 
 namespace uno {
    // abstract Problem class

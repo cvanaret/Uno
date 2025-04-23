@@ -17,6 +17,9 @@ namespace uno {
    template <typename ElementType>
    class Collection;
    template <typename ElementType>
+   class LagrangianGradient;
+   class Multipliers;
+   template <typename ElementType>
    class SparseVector;
    template <typename ElementType>
    class Vector;

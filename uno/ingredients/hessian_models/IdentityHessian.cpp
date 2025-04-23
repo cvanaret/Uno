@@ -44,6 +44,7 @@ namespace uno {
    }
 
    void IdentityHessian::notify_accepted_iterate(const Iterate& /*current_iterate*/, const Iterate& /*trial_iterate*/) {
+      // do nothing
    }
 
    void IdentityHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
