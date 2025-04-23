@@ -5,7 +5,6 @@
 #define UNO_SCALING_H
 
 #include <vector>
-#include <cstddef>
 
 namespace uno {
    // forward declarations

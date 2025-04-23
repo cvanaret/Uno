@@ -16,7 +16,7 @@ namespace uno {
    size_t ExactHessian::number_nonzeros(const Model& model) const {
       return model.number_hessian_nonzeros();
    }
-
+   
    void ExactHessian::notify_accepted_iterate(const Model& /*model*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
       // do nothing
    }
