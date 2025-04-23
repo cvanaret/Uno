@@ -22,7 +22,7 @@ namespace uno {
 
       explicit LagrangianGradient(size_t number_variables);
       [[nodiscard]] size_t size() const;
-      [[nodiscard]] ElementType operator[](size_t variable_index) const;
+      //[[nodiscard]] ElementType operator[](size_t variable_index) const;
       void resize(size_t number_variables);
    };
 
@@ -37,11 +37,13 @@ namespace uno {
       return this->objective_contribution.size();
    }
 
+   /*
    // access i-th element
    template <typename ElementType>
    ElementType LagrangianGradient<ElementType>::operator[](size_t variable_index) const {
       return this->objective_contribution[variable_index] + this->constraints_contribution[variable_index];
    }
+   */
 
    template <typename ElementType>
    void LagrangianGradient<ElementType>::resize(size_t number_variables) {
@@ -49,6 +51,7 @@ namespace uno {
       this->constraints_contribution.resize(number_variables);
    }
 
+   /*
    template <typename ElementType>
    std::ostream& operator<<(std::ostream& stream, const LagrangianGradient<ElementType>& gradient) {
       for (size_t variable_index: Range(gradient.constraints_contribution.size())) {
@@ -57,6 +60,7 @@ namespace uno {
       stream << '\n';
       return stream;
    }
+   */
 } // namespace
 
 #endif // UNO_LAGRANGIANGRADIENT_H
