@@ -290,8 +290,13 @@ namespace uno {
       return this->model.number_jacobian_nonzeros() + this->number_elastic_variables;
    }
 
-   size_t l1RelaxedProblem::number_hessian_nonzeros() const {
-      return this->model.number_hessian_nonzeros();
+   size_t l1RelaxedProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
+      size_t number_nonzeros = hessian_model.number_nonzeros(this->model);
+      // proximal contribution
+      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+         number_nonzeros += this->model.number_variables;
+      }
+      return number_nonzeros;
    }
 
    void l1RelaxedProblem::set_proximal_multiplier(double new_proximal_coefficient) {

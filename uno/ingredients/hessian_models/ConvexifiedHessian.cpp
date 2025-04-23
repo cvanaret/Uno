@@ -26,8 +26,8 @@ namespace uno {
       linear_solver->initialize_memory(model.number_variables, model.number_hessian_nonzeros() + model.number_variables);
    }
 
-   size_t ConvexifiedHessian::number_nonzeros(const OptimizationProblem& problem) const {
-      return problem.number_hessian_nonzeros() + problem.number_variables;
+   size_t ConvexifiedHessian::number_nonzeros(const Model& model) const {
+      return model.number_hessian_nonzeros() + model.number_variables;
    }
 
    void ConvexifiedHessian::evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,

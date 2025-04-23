@@ -41,7 +41,7 @@ namespace uno {
       this->objective_gradient.reserve(barrier_problem.number_objective_gradient_nonzeros());
       this->constraints.resize(barrier_problem.number_constraints);
       this->constraint_jacobian.resize(barrier_problem.number_constraints, barrier_problem.number_variables);
-      const size_t number_hessian_nonzeros = hessian_model.number_nonzeros(barrier_problem);
+      const size_t number_hessian_nonzeros = barrier_problem.number_hessian_nonzeros(hessian_model);
       const size_t number_augmented_system_nonzeros = number_hessian_nonzeros + barrier_problem.number_jacobian_nonzeros() +
          barrier_problem.number_variables + barrier_problem.number_constraints; // primal-dual regularization,
       this->hessian = SymmetricMatrix<size_t, double>(barrier_problem.number_variables, number_hessian_nonzeros, false, "COO");

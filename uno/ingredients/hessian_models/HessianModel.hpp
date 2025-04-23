@@ -9,7 +9,6 @@
 namespace uno {
    // forward declarations
    class Model;
-   class OptimizationProblem;
    class Options;
    class Statistics;
    template <typename IndexType, typename ElementType>
@@ -25,7 +24,7 @@ namespace uno {
       size_t evaluation_count{0};
 
       virtual void initialize(const Model& model) = 0;
-      [[nodiscard]] virtual size_t number_nonzeros(const OptimizationProblem& problem) const = 0;
+      [[nodiscard]] virtual size_t number_nonzeros(const Model& model) const = 0;
       virtual void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) = 0;
       virtual void compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double objective_multiplier,

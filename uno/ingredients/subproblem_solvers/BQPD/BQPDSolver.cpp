@@ -59,7 +59,7 @@ namespace uno {
       this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
       this->bqpd_jacobian.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros()); // Jacobian + objective gradient
       this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros() + problem.number_constraints + 3);
-      const size_t number_hessian_nonzeros = hessian_model.number_nonzeros(problem);
+      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
       this->hessian = SymmetricMatrix<size_t, double>(problem.number_variables, number_hessian_nonzeros, this->subproblem_is_regularized, "CSC");
       this->kmax = (0 < number_hessian_nonzeros) ? this->kmax_limit : 0;
       this->active_set.resize(problem.number_variables + problem.number_constraints);

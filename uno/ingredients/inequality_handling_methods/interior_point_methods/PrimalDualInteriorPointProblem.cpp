@@ -143,15 +143,15 @@ namespace uno {
       return this->first_reformulation.number_jacobian_nonzeros();
    }
 
-   size_t PrimalDualInteriorPointProblem::number_hessian_nonzeros() const {
-      size_t number_zeros = this->first_reformulation.number_hessian_nonzeros();
+   size_t PrimalDualInteriorPointProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
+      size_t number_nonzeros = this->first_reformulation.number_hessian_nonzeros(hessian_model);
       // barrier contribution
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
          if (is_finite(this->first_reformulation.variable_lower_bound(variable_index)) || is_finite(this->first_reformulation.variable_upper_bound(variable_index))) {
-            number_zeros++;
+            number_nonzeros++;
          }
       }
-      return number_zeros;
+      return number_nonzeros;
    }
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,

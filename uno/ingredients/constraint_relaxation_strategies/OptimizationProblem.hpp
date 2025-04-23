@@ -61,7 +61,7 @@ namespace uno {
 
       [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const;
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
-      [[nodiscard]] virtual size_t number_hessian_nonzeros() const;
+      [[nodiscard]] virtual size_t number_hessian_nonzeros(const HessianModel& hessian_model) const;
 
       [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
             Norm residual_norm);
