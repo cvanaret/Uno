@@ -26,10 +26,9 @@ namespace uno {
 
    class PrimalDualInteriorPointMethod : public InequalityHandlingMethod {
    public:
-      PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros,
-         size_t number_hessian_nonzeros, const Options& options);
+      explicit PrimalDualInteriorPointMethod(const Options& options);
 
-      void initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model) override;
+      void initialize(const OptimizationProblem& problem, const HessianModel& hessian_model) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void set_initial_point(const Vector<double>& point) override;
@@ -54,7 +53,7 @@ namespace uno {
       SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
-      SymmetricMatrix<size_t, double> hessian;
+      SymmetricMatrix<size_t, double> hessian{};
 
       SymmetricIndefiniteLinearSystem<double> augmented_system;
       const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;

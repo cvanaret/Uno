@@ -25,7 +25,7 @@
 
 namespace uno {
    l1Relaxation::l1Relaxation(const Options& options):
-         ConstraintRelaxationStrategy(0, 0, 0, 0, options), // TODO
+         ConstraintRelaxationStrategy(options),
          penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          convexify(options.get_string("subproblem") != "primal_dual_interior_point" &&

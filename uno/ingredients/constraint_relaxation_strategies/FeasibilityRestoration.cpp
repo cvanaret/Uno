@@ -19,7 +19,7 @@
 
 namespace uno {
    FeasibilityRestoration::FeasibilityRestoration(const Options& options) :
-         ConstraintRelaxationStrategy(0, 0, 0, 0, options),
+         ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          convexify(options.get_string("subproblem") != "primal_dual_interior_point" &&
             (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),

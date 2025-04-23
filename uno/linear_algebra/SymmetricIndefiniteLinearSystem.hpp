@@ -17,12 +17,16 @@ namespace uno {
    template <typename ElementType>
    class SymmetricIndefiniteLinearSystem {
    public:
-      SymmetricMatrix<size_t, ElementType> matrix;
+      SymmetricMatrix<size_t, ElementType> matrix{};
       Vector<ElementType> rhs{};
       Vector<ElementType> solution{};
 
       SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension, size_t number_non_zeros, bool use_regularization,
             const Options& options);
+      explicit SymmetricIndefiniteLinearSystem(const Options& options);
+      //SymmetricIndefiniteLinearSystem& operator=(const SymmetricIndefiniteLinearSystem& other) = default;
+      SymmetricIndefiniteLinearSystem& operator=(SymmetricIndefiniteLinearSystem&& other) = default;
+
       void assemble_matrix(const SymmetricMatrix<size_t, double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
             size_t number_variables, size_t number_constraints);
       void factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, WarmstartInformation& warmstart_information);
@@ -51,6 +55,18 @@ namespace uno {
          matrix(dimension, number_non_zeros, use_regularization, sparse_format),
          rhs(dimension),
          solution(dimension),
+         regularization_failure_threshold(ElementType(options.get_double("regularization_failure_threshold"))),
+         primal_regularization_initial_factor(ElementType(options.get_double("primal_regularization_initial_factor"))),
+         dual_regularization_fraction(ElementType(options.get_double("dual_regularization_fraction"))),
+         primal_regularization_lb(ElementType(options.get_double("primal_regularization_lb"))),
+         primal_regularization_decrease_factor(ElementType(options.get_double("primal_regularization_decrease_factor"))),
+         primal_regularization_fast_increase_factor(ElementType(options.get_double("primal_regularization_fast_increase_factor"))),
+         primal_regularization_slow_increase_factor(ElementType(options.get_double("primal_regularization_slow_increase_factor"))),
+         threshold_unsuccessful_attempts(options.get_unsigned_int("threshold_unsuccessful_attempts")) {
+   }
+
+   template <typename ElementType>
+   SymmetricIndefiniteLinearSystem<ElementType>::SymmetricIndefiniteLinearSystem(const Options& options):
          regularization_failure_threshold(ElementType(options.get_double("regularization_failure_threshold"))),
          primal_regularization_initial_factor(ElementType(options.get_double("primal_regularization_initial_factor"))),
          dual_regularization_fraction(ElementType(options.get_double("dual_regularization_fraction"))),

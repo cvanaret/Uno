@@ -5,6 +5,7 @@
 #include "PrimalDualInteriorPointMethod.hpp"
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "optimization/Direction.hpp"
@@ -15,16 +16,9 @@
 #include "tools/Infinity.hpp"
 
 namespace uno {
-   PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(size_t number_variables, size_t number_constraints,
-         size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options):
+   PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(const Options& options):
          InequalityHandlingMethod(),
-         hessian(number_variables, number_hessian_nonzeros, false, "COO"),
-         augmented_system(options.get_string("sparse_format"), number_variables + number_constraints,
-               number_hessian_nonzeros
-               + number_variables /* diagonal barrier terms for bound constraints */
-               + number_jacobian_nonzeros /* Jacobian */,
-               true, /* use regularization */
-               options),
+         augmented_system(options),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)),
          barrier_parameter_update_strategy(options),
          previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
@@ -42,13 +36,21 @@ namespace uno {
          l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
    }
 
-   void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& first_reformulation, const HessianModel& /*hessian_model*/) {
-      const PrimalDualInteriorPointProblem barrier_problem(first_reformulation, this->barrier_parameter());
+   void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model) {
+      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
       this->objective_gradient.reserve(barrier_problem.number_objective_gradient_nonzeros());
       this->constraints.resize(barrier_problem.number_constraints);
       this->constraint_jacobian.resize(barrier_problem.number_constraints, barrier_problem.number_variables);
       // TODO use hessian_model here
       this->linear_solver->initialize_memory(barrier_problem);
+
+      const size_t number_hessian_nonzeros = hessian_model.number_nonzeros(barrier_problem);
+      this->hessian = SymmetricMatrix<size_t, double>(barrier_problem.number_variables, number_hessian_nonzeros, false, "COO");
+      this->augmented_system.matrix = SymmetricMatrix<size_t, double>(barrier_problem.number_variables + barrier_problem.number_constraints,
+         number_hessian_nonzeros + barrier_problem.number_jacobian_nonzeros(),
+         true, "COO");
+      this->augmented_system.rhs.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
+      this->augmented_system.solution.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
    }
 
    void PrimalDualInteriorPointMethod::initialize_statistics(Statistics& statistics, const Options& options) {

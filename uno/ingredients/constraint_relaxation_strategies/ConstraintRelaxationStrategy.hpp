@@ -33,8 +33,7 @@ namespace uno {
 
    class ConstraintRelaxationStrategy {
    public:
-      ConstraintRelaxationStrategy(size_t number_variables, size_t number_constraints,
-         size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const Options& options);
+      explicit ConstraintRelaxationStrategy(const Options& options);
       virtual ~ConstraintRelaxationStrategy();
 
       virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction, const Options& options) = 0;
