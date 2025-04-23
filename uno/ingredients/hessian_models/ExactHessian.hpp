@@ -14,7 +14,6 @@ namespace uno {
       [[nodiscard]] bool has_explicit_representation() const override;
 
       void initialize(const Model& model) override;
-      void initialize_statistics(Statistics& statistics, const Options& options) const override;
       [[nodiscard]] size_t number_nonzeros(const Model& model) const override;
       [[nodiscard]] bool is_positive_definite() const override;
       void notify_accepted_iterate(const Iterate& current_iterate, const Iterate& trial_iterate) override;
