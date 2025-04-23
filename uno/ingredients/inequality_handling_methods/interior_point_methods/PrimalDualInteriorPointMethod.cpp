@@ -163,7 +163,7 @@ namespace uno {
       statistics.set("barrier", this->barrier_parameter());
 
       // create a barrier problem
-      PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
+      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
 
       // evaluate the functions at the current iterate
       this->evaluate_functions(statistics, barrier_problem, current_iterate, current_multipliers, hessian_model, warmstart_information);
@@ -180,7 +180,11 @@ namespace uno {
 
    double PrimalDualInteriorPointMethod::hessian_quadratic_product(const OptimizationProblem& problem, HessianModel& hessian_model,
          const Vector<double>& primal_direction, const Multipliers& multipliers) const {
-      throw std::runtime_error("PrimalDualInteriorPointMethod::hessian_quadratic_product not implemented");
+      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
+      // TODO preallocate
+      Vector<double> result(primal_direction.size());
+      barrier_problem.compute_hessian_vector_product(hessian_model, primal_direction, multipliers, result);
+      return dot(primal_direction, result);
    }
 
    void PrimalDualInteriorPointMethod::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
