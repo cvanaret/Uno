@@ -44,10 +44,10 @@ namespace uno {
    void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
    }
 
-   void LBFGSHessian::notify_accepted_iterate(const Iterate& current_iterate, const Iterate& trial_iterate) {
+   void LBFGSHessian::notify_accepted_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
       std::cout << "Adding vector to L-BFGS memory at slot " << this->current_available_slot << '\n';
       // this->current_available_slot lives in [0, this->memory_size)
-      this->update_memory(current_iterate, trial_iterate);
+      this->update_memory(model, current_iterate, trial_iterate);
       this->hessian_recomputation_required = true;
    }
    
@@ -75,7 +75,9 @@ namespace uno {
 
    // protected member functions
 
-   void LBFGSHessian::update_memory(const Iterate& current_iterate, const Iterate& trial_iterate) {
+   void LBFGSHessian::update_memory(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
+      // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
+      this->current_available_slot = (this->current_available_slot + 1) % this->memory_size;
       std::cout << "\n*** Adding vector to L-BFGS memory at slot " << this->current_available_slot << '\n';
       // TODO figure out if we're extending or replacing in memory
 

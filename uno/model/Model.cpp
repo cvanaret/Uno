@@ -5,17 +5,10 @@
 #include <utility>
 #include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
-<<<<<<< HEAD
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
-=======
-#include "optimization/Iterate.hpp"
-#include "optimization/LagrangianGradient.hpp"
-#include "optimization/Multipliers.hpp"
->>>>>>> 33d2a690 (Removed OptimalityProblem (replaced by virtual OptimizationProblem))
 
 namespace uno {
-   // abstract Problem class
    Model::Model(std::string name, size_t number_variables, size_t number_constraints, double objective_sign) :
          name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints),
          optimization_sense(objective_sign) {
@@ -23,7 +16,8 @@ namespace uno {
 
    void Model::project_onto_variable_bounds(Vector<double>& x) const {
       for (size_t variable_index: Range(this->number_variables)) {
-         x[variable_index] = std::max(std::min(x[variable_index], this->variable_upper_bound(variable_index)), this->variable_lower_bound(variable_index));
+         x[variable_index] = std::max(std::min(x[variable_index], this->variable_upper_bound(variable_index)),
+            this->variable_lower_bound(variable_index));
       }
    }
 
