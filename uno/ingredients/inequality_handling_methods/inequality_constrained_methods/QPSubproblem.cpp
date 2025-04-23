@@ -43,7 +43,7 @@ namespace uno {
    double QPSubproblem::hessian_quadratic_product(const Vector<double>& vector) const {
       return this->solver->hessian_quadratic_product(vector);
    }
-   
+
    std::string QPSubproblem::get_strategy_combination() const {
       return "QP method";
    }

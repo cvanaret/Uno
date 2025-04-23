@@ -19,7 +19,7 @@ namespace uno {
       return model.number_hessian_nonzeros();
    }
 
-   void ExactHessian::notify_accepted_iterate(const Iterate& /*current_iterate*/, const Iterate& /*trial_iterate*/) {
+   void ExactHessian::notify_accepted_iterate(const Model& /*model*/, const Iterate& /*current_iterate*/, const Iterate& /*trial_iterate*/) {
       // do nothing
    }
 
@@ -33,6 +33,7 @@ namespace uno {
    void ExactHessian::compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double objective_multiplier,
          const Vector<double>& constraint_multipliers, Vector<double>& result) {
       model.compute_hessian_vector_product(vector, objective_multiplier, constraint_multipliers, result);
+      // TODO fix the counter
       this->evaluation_count++;
    }
 } // namespace

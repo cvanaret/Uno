@@ -41,7 +41,7 @@ namespace uno {
 
       // statistics
       this->inequality_handling_method->initialize_statistics(statistics, options);
-      // statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
+      this->optimality_hessian_model->initialize_statistics(statistics, options);
       statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
       statistics.set("phase", "OPT");
 
@@ -188,11 +188,11 @@ namespace uno {
       ConstraintRelaxationStrategy::set_progress_statistics(statistics, model, trial_iterate);
       if (accept_iterate) {
          if (this->current_phase == Phase::OPTIMALITY) {
-            this->optimality_hessian_model->notify_accepted_iterate(current_iterate, trial_iterate);
+            this->optimality_hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, objective_multiplier);
          }
          else {
-            this->feasibility_hessian_model->notify_accepted_iterate(current_iterate, trial_iterate);
+            this->feasibility_hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
             user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.feasibility_multipliers, objective_multiplier);
          }
       }
