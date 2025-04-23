@@ -8,7 +8,7 @@
 #include "optimization/Iterate.hpp"
 #include "symbolic/Range.hpp"
 
-#ifdef WITH_LAPACK
+#ifdef HAS_LAPACK
 #include "fortran_interface.h"
 #define LAPACK_cholesky_factorization FC_GLOBAL_(dpotrf, DPOTRF)
 extern "C" {
@@ -54,7 +54,37 @@ namespace uno {
    void LBFGSHessian::notify_accepted_iterate(const Iterate& current_iterate, const Iterate& trial_iterate) {
       std::cout << "Adding vector to L-BFGS memory at slot " << this->current_available_slot << '\n';
       // this->current_available_slot lives in [0, this->memory_size)
+      this->update_memory(current_iterate, trial_iterate);
+      this->hessian_recomputation_required = true;
+   }
+   
+   void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& /*model*/, const Vector<double>& /*primal_variables*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& /*hessian*/) {
+      throw std::runtime_error("LBFGSHessian::evaluate_hessian should not be called");
+   }
 
+   void LBFGSHessian::compute_hessian_vector_product(const Model& model, const double* vector, double /*objective_multiplier*/,
+         const Vector<double>& /*constraint_multipliers*/, double* result) {
+      if (this->hessian_recomputation_required) {
+         this->compute_hessian_representation();
+         this->hessian_recomputation_required = false;
+      }
+
+      // for the moment, pretend we have an identity Hessian TODO
+      for (size_t variable_index: Range(model.number_variables)) {
+         result[variable_index] = vector[variable_index];
+      }
+   }
+
+   std::string LBFGSHessian::get_name() const {
+      return "L-BFGS";
+   }
+
+   // protected member functions
+
+   void LBFGSHessian::update_memory(const Iterate& current_iterate, const Iterate& trial_iterate) {
+      std::cout << "Adding vector to L-BFGS memory at slot " << this->current_available_slot << '\n';
+      // this->current_available_slot lives in [0, this->memory_size)
       // TODO figure out if we're extending or replacing in memory
 
       // fill the S matrix
@@ -67,8 +97,15 @@ namespace uno {
       // fill the Y matrix
       // TODO
 
+      this->current_memory_size = std::min(this->current_memory_size + 1, this->memory_size);
+      std::cout << "There are now " << this->current_memory_size << " iterates in memory (capacity " <<
+         this->memory_size << ")\n";
+   }
+
+   void LBFGSHessian::compute_hessian_representation() {
       // fill the D matrix (diagonal)
       this->D_matrix[this->current_available_slot] = 1.; // TODO dot(s_new, y_new)
+      std::cout << "D: "; print_vector(std::cout, this->D_matrix);
 
       // fill the L matrix (lower triangular with a zero diagonal)
       for (size_t column_index: Range(this->current_memory_size)) {
@@ -78,27 +115,25 @@ namespace uno {
       }
       std::cout << "L:\n" << this->L_matrix;
 
+      // assemble m x m matrix M = S^T B0 S + L D^{-1} L^T
+      // where L D^{-1} L^T = D^{-1} L L^T (because D is diagonal)
+      // DenseMatrix<double> Ltilde_matrix(this->current_memory_size, this->current_memory_size);
+      // scale
+      std::cout << "M:\n" << this->M_matrix;
+
+      // compute the Cholesky factors J of M = J J^T (J overwrites M)
+      char uplo = 'L';
+      int info = 0;
+      int M_dimension = static_cast<int>(this->current_memory_size);
+      int M_leading_dimension = static_cast<int>(this->memory_size);
+      LAPACK_cholesky_factorization(&uplo, &M_dimension, this->M_matrix.data(), &M_leading_dimension, &info);
+      std::cout << "Cholesky info: " << info << '\n';
+      std::cout << "J:\n" << this->M_matrix;
+
       // if we exceed the size of the memory, we start over and replace the older point in memory
       this->current_available_slot = (this->current_available_slot + 1) % this->memory_size;
       this->current_memory_size = std::min(current_memory_size + 1, this->memory_size);
       std::cout << "There are now " << this->current_memory_size << " iterates in memory (capacity " <<
          this->memory_size << ")\n";
-   }
-
-   void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& /*model*/, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& /*hessian*/) {
-      throw std::runtime_error("LBFGSHessian::evaluate_hessian should not be called");
-   }
-
-   void LBFGSHessian::compute_hessian_vector_product(const Model& model, const double* vector, double /*objective_multiplier*/,
-         const Vector<double>& /*constraint_multipliers*/, double* result) {
-      //throw std::runtime_error("LBFGSHessian::compute_hessian_vector_product not implemented");
-      for (size_t variable_index: Range(model.number_variables)) {
-         result[variable_index] = vector[variable_index];
-      }
-   }
-
-   std::string LBFGSHessian::get_name() const {
-      return "L-BFGS";
    }
 } // namespace
