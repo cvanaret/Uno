@@ -299,7 +299,7 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::set_auxiliary_measure(Iterate& iterate) const {
+   double PrimalDualInteriorPointProblem::compute_auxiliary_measure(Iterate& iterate) const {
       // auxiliary measure: barrier terms
       double barrier_terms = 0.;
       // original variables
@@ -342,10 +342,9 @@ namespace uno {
          }
          slack_index++;
       }
-
       barrier_terms *= this->barrier_parameter;
       assert(!std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
-      iterate.progress.auxiliary = barrier_terms;
+      return barrier_terms;
    }
 
    double PrimalDualInteriorPointProblem::variable_lower_bound(size_t /*variable_index*/) const {

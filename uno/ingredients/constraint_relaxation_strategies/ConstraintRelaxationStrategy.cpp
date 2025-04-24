@@ -75,15 +75,15 @@ namespace uno {
       };
    }
 
-   void ConstraintRelaxationStrategy::compute_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model,
-         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Iterate& trial_iterate) {
+   void ConstraintRelaxationStrategy::compute_progress_measures(const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method,
+         const Model& model, GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Iterate& trial_iterate) {
       if (inequality_handling_method.subproblem_definition_changed) {
          DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
          globalization_strategy.reset();
-         inequality_handling_method.set_auxiliary_measure(model, current_iterate);
+         current_iterate.progress.auxiliary = inequality_handling_method.compute_auxiliary_measure(problem, current_iterate);
          inequality_handling_method.subproblem_definition_changed = false;
       }
-      this->evaluate_progress_measures(inequality_handling_method, model, trial_iterate);
+      this->evaluate_progress_measures(problem, inequality_handling_method, model, trial_iterate);
    }
 
    void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Model& model, const OptimizationProblem& optimality_problem,

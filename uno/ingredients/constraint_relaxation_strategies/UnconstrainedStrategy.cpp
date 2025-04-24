@@ -36,7 +36,7 @@ namespace uno {
 
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(problem, initial_iterate);
-      this->evaluate_progress_measures(*this->inequality_handling_method, model, initial_iterate);
+      this->evaluate_progress_measures(problem, *this->inequality_handling_method, model, initial_iterate);
       this->compute_primal_dual_residuals(model, initial_iterate);
       this->set_statistics(statistics, model, initial_iterate);
    }
@@ -75,7 +75,7 @@ namespace uno {
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const OptimizationProblem problem{model};
       this->inequality_handling_method->postprocess_iterate(problem, trial_iterate.primals, trial_iterate.multipliers);
-      this->compute_progress_measures(*this->inequality_handling_method, model, globalization_strategy, current_iterate, trial_iterate);
+      this->compute_progress_measures(problem, *this->inequality_handling_method, model, globalization_strategy, current_iterate, trial_iterate);
       constexpr double objective_multiplier = 1.;
       trial_iterate.objective_multiplier = objective_multiplier;
       warmstart_information.no_changes();
@@ -105,10 +105,11 @@ namespace uno {
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, problem, problem, iterate);
    }
 
-   void UnconstrainedStrategy::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const {
+   void UnconstrainedStrategy::evaluate_progress_measures(const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method,
+         const Model& model, Iterate& iterate) const {
       this->set_infeasibility_measure(model, iterate);
       this->set_objective_measure(model, iterate);
-      inequality_handling_method.set_auxiliary_measure(model, iterate);
+      iterate.progress.auxiliary = inequality_handling_method.compute_auxiliary_measure(problem, iterate);
    }
 
    ProgressMeasures UnconstrainedStrategy::compute_predicted_reduction_models(InequalityHandlingMethod& inequality_handling_method,

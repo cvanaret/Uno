@@ -283,8 +283,9 @@ namespace uno {
       //this->compute_least_square_multipliers(problem, trial_iterate, trial_iterate.multipliers.constraints);
    }
 
-   void PrimalDualInteriorPointMethod::set_auxiliary_measure(const Model& /*model*/, Iterate& iterate) {
-      iterate.progress.auxiliary = 0.; // TODO
+   double PrimalDualInteriorPointMethod::compute_auxiliary_measure(const OptimizationProblem& first_reformulation, Iterate& iterate) {
+      const PrimalDualInteriorPointProblem barrier_problem(first_reformulation, this->barrier_parameter());
+      return barrier_problem.compute_auxiliary_measure(iterate);
    }
 
    double PrimalDualInteriorPointMethod::compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,

@@ -27,7 +27,7 @@ namespace uno {
          Multipliers& direction_multipliers, double tau) const;
       void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& primal_direction, Multipliers& direction_multipliers) const;
-      void set_auxiliary_measure(Iterate& iterate) const;
+      [[nodiscard]] double compute_auxiliary_measure(Iterate& iterate) const;
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;

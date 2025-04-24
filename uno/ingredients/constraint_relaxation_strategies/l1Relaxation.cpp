@@ -74,7 +74,7 @@ namespace uno {
       initial_iterate.feasibility_multipliers.upper_bounds.resize(l1_relaxed_problem.number_variables);
       this->inequality_handling_method->set_elastic_variable_values(l1_relaxed_problem, initial_iterate);
       this->inequality_handling_method->generate_initial_iterate(l1_relaxed_problem, initial_iterate);
-      this->evaluate_progress_measures(*this->inequality_handling_method, model, initial_iterate);
+      this->evaluate_progress_measures(l1_relaxed_problem, *this->inequality_handling_method, model, initial_iterate);
       this->compute_primal_dual_residuals(model, initial_iterate);
       this->set_statistics(statistics, model, initial_iterate);
    }
@@ -268,7 +268,8 @@ namespace uno {
       this->inequality_handling_method->postprocess_iterate(l1_relaxed_problem, trial_iterate.primals, trial_iterate.multipliers);
       // compute the predicted reduction before the progress measures to make sure second-order information is valid
       const ProgressMeasures predicted_reduction = this->compute_predicted_reductions(model, current_iterate, direction, step_length);
-      this->compute_progress_measures(*this->inequality_handling_method, model, globalization_strategy, current_iterate, trial_iterate);
+      this->compute_progress_measures(l1_relaxed_problem, *this->inequality_handling_method, model, globalization_strategy,
+         current_iterate, trial_iterate);
       trial_iterate.objective_multiplier = l1_relaxed_problem.get_objective_multiplier();
 
       bool accept_iterate = false;
@@ -297,10 +298,11 @@ namespace uno {
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, l1_relaxed_problem, feasibility_problem, iterate);
    }
 
-   void l1Relaxation::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const {
+   void l1Relaxation::evaluate_progress_measures(const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method,
+         const Model& model, Iterate& iterate) const {
       this->set_infeasibility_measure(model, iterate);
       this->set_objective_measure(model, iterate);
-      inequality_handling_method.set_auxiliary_measure(model, iterate);
+      iterate.progress.auxiliary = inequality_handling_method.compute_auxiliary_measure(problem, iterate);
    }
 
    ProgressMeasures l1Relaxation::compute_predicted_reductions(const Model& model, Iterate& current_iterate, const Direction& direction,
