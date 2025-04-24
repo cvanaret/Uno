@@ -16,15 +16,11 @@ namespace uno {
    class HessianModel;
    class InequalityHandlingMethod;
    class Iterate;
-   template <typename ElementType>
-   class LagrangianGradient;
    class Model;
    class Multipliers;
    class OptimizationProblem;
    class Options;
    class Statistics;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
    class UserCallbacks;
    template <typename ElementType>
    class Vector;

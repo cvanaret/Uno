@@ -20,8 +20,6 @@ namespace uno {
    class RegularizationStrategy;
    class Statistics;
    class SubproblemLayer;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
    struct WarmstartInformation;

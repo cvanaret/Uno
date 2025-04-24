@@ -9,7 +9,7 @@
 namespace uno {
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
-      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter);
+      PrimalDualInteriorPointProblem(const OptimizationProblem& first_reformulation, double barrier_parameter);
 
       // function evaluations
       [[nodiscard]] double get_objective_multiplier() const override;
@@ -20,6 +20,14 @@ namespace uno {
          const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const Vector<double>& vector, const Multipliers& multipliers,
          Vector<double>& result) const override;
+
+      [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals,
+         const Vector<double>& primal_direction, double tau) const;
+      [[nodiscard]] double dual_fraction_to_boundary(const Multipliers& current_multipliers,
+         Multipliers& direction_multipliers, double tau) const;
+      void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
+         const Vector<double>& primal_direction, Multipliers& direction_multipliers) const;
+      void set_auxiliary_measure(Iterate& iterate) const;
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
@@ -45,6 +53,7 @@ namespace uno {
 
    protected:
       const OptimizationProblem& first_reformulation;
+      const size_t number_slack_variables;
       const Vector<size_t> no_fixed_variables{0};
       const Range<> equality_constraints;
       const Range<> inequality_constraints{0};

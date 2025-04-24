@@ -13,7 +13,7 @@ namespace uno {
    public:
       // constructor with proximal term
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient, double proximal_coefficient,
-            double const* proximal_center);
+         double const* proximal_center);
       // constructor without proximal term
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
 
@@ -45,7 +45,7 @@ namespace uno {
 
       void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate, const Multipliers& multipliers) const override;
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
-            const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
+         const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
 
       // parameterization
       void set_proximal_multiplier(double new_proximal_coefficient);
