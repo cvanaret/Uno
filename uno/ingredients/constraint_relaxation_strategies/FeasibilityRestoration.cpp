@@ -21,7 +21,7 @@ namespace uno {
    FeasibilityRestoration::FeasibilityRestoration(const Options& options) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         convexify(options.get_string("subproblem") != "primal_dual_interior_point" &&
+         convexify(options.get_string("inequality_handling_method") != "primal_dual_interior_point" &&
             (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),
          optimality_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),
          feasibility_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),
