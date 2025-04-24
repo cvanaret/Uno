@@ -77,8 +77,8 @@ namespace uno {
       [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction_model(const OptimizationProblem& problem,
          HessianModel& hessian_model, const Iterate& current_iterate, const Multipliers& multipliers, const Vector<double>& primal_direction,
          double step_length) const;
-      void compute_progress_measures(const Model& model, Iterate& current_iterate, Iterate& trial_iterate);
-      virtual void evaluate_progress_measures(const Model& model, Iterate& iterate) const = 0;
+      void compute_progress_measures(const Model& model, const OptimizationProblem& problem, Iterate& current_iterate, Iterate& trial_iterate);
+      virtual void evaluate_progress_measures(const Model& model, const OptimizationProblem& problem, Iterate& iterate) const = 0;
 
       void compute_primal_dual_residuals(const Model& model, const OptimizationProblem& optimality_problem,
          const OptimizationProblem& feasibility_problem, Iterate& iterate);

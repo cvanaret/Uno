@@ -79,14 +79,15 @@ namespace uno {
       };
    }
 
-   void ConstraintRelaxationStrategy::compute_progress_measures(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
+   void ConstraintRelaxationStrategy::compute_progress_measures(const Model& model, const OptimizationProblem& problem, Iterate& current_iterate,
+         Iterate& trial_iterate) {
       if (this->inequality_handling_method->subproblem_definition_changed) {
          DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
          this->globalization_strategy->reset();
-         this->inequality_handling_method->set_auxiliary_measure(model, current_iterate);
+         current_iterate.progress.auxiliary = this->inequality_handling_method->compute_auxiliary_measure(problem, current_iterate);
          this->inequality_handling_method->subproblem_definition_changed = false;
       }
-      this->evaluate_progress_measures(model, trial_iterate);
+      this->evaluate_progress_measures(model, problem, trial_iterate);
    }
 
    void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Model& model, const OptimizationProblem& optimality_problem,

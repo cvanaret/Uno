@@ -50,7 +50,7 @@ namespace uno {
       initial_iterate.feasibility_multipliers.lower_bounds.resize(feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(feasibility_problem.number_variables);
       this->inequality_handling_method->generate_initial_iterate(optimality_problem, initial_iterate);
-      this->evaluate_progress_measures(model, initial_iterate);
+      this->evaluate_progress_measures(model, optimality_problem, initial_iterate);
       this->compute_primal_dual_residuals(model, initial_iterate);
       this->set_statistics(statistics, model, initial_iterate);
       this->globalization_strategy->initialize(statistics, initial_iterate, options);
@@ -162,8 +162,16 @@ namespace uno {
       }
       // compute the predicted reduction before the progress measures to make sure second-order information is valid
       const ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(model, current_iterate, direction, step_length);
-      this->compute_progress_measures(model, current_iterate, trial_iterate);
-      trial_iterate.objective_multiplier = (this->current_phase == Phase::OPTIMALITY) ? 1. : 0.;
+      if (this->current_phase == Phase::OPTIMALITY) {
+         const OptimizationProblem optimality_problem{model};
+         this->compute_progress_measures(model, optimality_problem, current_iterate, trial_iterate);
+         trial_iterate.objective_multiplier = 1.;
+      }
+      else {
+         const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
+         this->compute_progress_measures(model, feasibility_problem, current_iterate, trial_iterate);
+         trial_iterate.objective_multiplier = 0.;
+      }
 
       // possibly go from restoration phase to optimality phase
       if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(current_iterate, model,
@@ -201,10 +209,10 @@ namespace uno {
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, optimality_problem, feasibility_problem, iterate);
    }
 
-   void FeasibilityRestoration::evaluate_progress_measures(const Model& model, Iterate& iterate) const {
+   void FeasibilityRestoration::evaluate_progress_measures(const Model& model, const OptimizationProblem& problem, Iterate& iterate) const {
       this->set_infeasibility_measure(model, iterate);
       this->set_objective_measure(model, iterate);
-      this->inequality_handling_method->set_auxiliary_measure(model, iterate);
+      iterate.progress.auxiliary = this->inequality_handling_method->compute_auxiliary_measure(problem, iterate);
    }
 
    ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(const Model& model, const Iterate& current_iterate,
