@@ -8,6 +8,7 @@
 #include "ExactHessian.hpp"
 #include "IdentityHessian.hpp"
 #include "ZeroHessian.hpp"
+#include "options/Options.hpp"
 #ifdef HAS_LAPACK
 #include "quasi_newton/LBFGSHessian.hpp"
 #endif
