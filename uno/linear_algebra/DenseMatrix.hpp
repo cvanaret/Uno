@@ -18,7 +18,7 @@ namespace uno {
       DenseMatrix() = default;
       DenseMatrix(const DenseMatrix& other);
       DenseMatrix& operator=(const DenseMatrix& other) = default;
-      DenseMatrix& operator=(DenseMatrix&& other) = default;
+      DenseMatrix& operator=(DenseMatrix&& other) noexcept = default;
       ~DenseMatrix() = default;
 
       ElementType& entry(size_t row_index, size_t column_index);
@@ -31,7 +31,7 @@ namespace uno {
       void print(std::ostream& stream) const;
 
    protected:
-      const size_t number_rows{}, number_columns{};
+      size_t number_rows{}, number_columns{};
       std::vector<ElementType> matrix{}; // column-major ordering
    };
 
