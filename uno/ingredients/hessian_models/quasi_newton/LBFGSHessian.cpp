@@ -37,9 +37,11 @@ namespace uno {
 
    void LBFGSHessian::initialize(const Model& model) {
       this->dimension = model.number_variables;
-      //this->S_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
-      //this->Y_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
-      //this->M_matrix = DenseMatrix<double>(this->memory_size, this->memory_size);
+      this->S_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
+      this->Y_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
+      this->L_matrix = DenseMatrix<double>(this->memory_size, this->memory_size);
+      this->D_matrix.resize(this->memory_size);
+      this->M_matrix = DenseMatrix<double>(this->memory_size, this->memory_size);
    }
 
    void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
@@ -63,7 +65,7 @@ namespace uno {
          this->hessian_recomputation_required = false;
       }
 
-      // for the moment, pretend we have an identity Hessian TODO
+      // TODO atm we use the identity
       for (size_t variable_index: Range(model.number_variables)) {
          result[variable_index] = vector[variable_index];
       }
@@ -76,29 +78,35 @@ namespace uno {
    // protected member functions
 
    void LBFGSHessian::update_memory(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
-      // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
-      this->current_available_slot = (this->current_available_slot + 1) % this->memory_size;
       std::cout << "\n*** Adding vector to L-BFGS memory at slot " << this->current_available_slot << '\n';
       // TODO figure out if we're extending or replacing in memory
 
-      // fill the S matrix
+      // update the matrices
+      // TODO check that the S entry isn't too small
+      LBFGSHessian::update_S_matrix(current_iterate, trial_iterate);
+      LBFGSHessian::update_Y_matrix(model, current_iterate, trial_iterate);
+
+      // update the bookkeeping
+      this->number_iterates_in_memory = std::min(this->number_iterates_in_memory + 1, this->memory_size);
+      this->hessian_recomputation_required = true;
+      std::cout << "There are now " << this->number_iterates_in_memory << " iterates in memory (capacity " <<
+         this->memory_size << ")\n";
+   }
+
+   void LBFGSHessian::update_S_matrix(const Iterate& current_iterate, const Iterate& trial_iterate) {
       for (size_t variable_index: Range(this->dimension)) {
          this->S_matrix.entry(variable_index, this->current_available_slot) = trial_iterate.primals[variable_index] -
             current_iterate.primals[variable_index];
       }
       std::cout << "S:\n" << this->S_matrix;
+   }
 
+   void LBFGSHessian::update_Y_matrix(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
       // fill the Y matrix: y = \nabla L(x_k, y_k, z_k) - \nabla L(x_{k-1}, y_k, z_k)
       model.evaluate_objective_gradient(current_iterate.primals, current_iterate.evaluations.objective_gradient);
       model.evaluate_constraint_jacobian(current_iterate.primals, current_iterate.evaluations.constraint_jacobian);
       model.evaluate_objective_gradient(trial_iterate.primals, trial_iterate.evaluations.objective_gradient);
       model.evaluate_constraint_jacobian(trial_iterate.primals, trial_iterate.evaluations.constraint_jacobian);
-
-      this->current_memory_size = std::min(this->current_memory_size + 1, this->memory_size);
-      // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
-      this->current_available_slot = (this->current_available_slot + 1) % this->memory_size;
-      std::cout << "There are now " << this->current_memory_size << " iterates in memory (capacity " <<
-         this->memory_size << ")\n";
    }
 
    void LBFGSHessian::recompute_hessian_representation() {
@@ -108,8 +116,8 @@ namespace uno {
       std::cout << "D: "; print_vector(std::cout, this->D_matrix);
 
       // fill the L matrix (lower triangular with a zero diagonal)
-      for (size_t column_index: Range(this->current_memory_size)) {
-         for (size_t row_index: Range(column_index+1, this->current_memory_size)) {
+      for (size_t column_index: Range(this->number_iterates_in_memory)) {
+         for (size_t row_index: Range(column_index+1, this->number_iterates_in_memory)) {
             this->L_matrix.entry(row_index, column_index) = 1.; // TODO dot(s_i, y_j)
          }
       }
@@ -118,9 +126,9 @@ namespace uno {
       // assemble m x m matrix M = S^T B0 S + L D^{-1} L^T
       // Ltilde = L D^{-1/2}
       DenseMatrix<double> Ltilde_matrix(this->L_matrix); // copy L into Ltilde
-      for (size_t column_index: Range(this->current_memory_size)) {
+      for (size_t column_index: Range(this->number_iterates_in_memory)) {
          const double scaling = 1./std::sqrt(this->D_matrix[column_index]);
-         for (size_t row_index: Range(column_index+1, this->current_memory_size)) {
+         for (size_t row_index: Range(column_index+1, this->number_iterates_in_memory)) {
             Ltilde_matrix.entry(row_index, column_index) *= scaling;
          }
       }
@@ -128,16 +136,20 @@ namespace uno {
 
       // form M = L D^{-1} L^T + S^T S = Ltilde Ltilde^T + S^T S
       this->M_matrix.clear();
-      LBFGSHessian::perform_high_rank_update(this->M_matrix, this->current_memory_size, this->memory_size, Ltilde_matrix,
-         this->current_memory_size, this->memory_size);
+      // add M += Ltilde Ltilde^T
+      LBFGSHessian::perform_high_rank_update(this->M_matrix, this->number_iterates_in_memory, this->memory_size, Ltilde_matrix,
+         this->number_iterates_in_memory, this->memory_size);
       // add M += S^T S
-      LBFGSHessian::perform_high_rank_update_transpose(this->M_matrix, this->current_memory_size, this->memory_size,
-         this->S_matrix, this->current_memory_size, this->dimension);
+      LBFGSHessian::perform_high_rank_update_transpose(this->M_matrix, this->number_iterates_in_memory, this->memory_size,
+         this->S_matrix, this->number_iterates_in_memory, this->dimension);
       std::cout << "M:\n" << this->M_matrix;
 
       // compute the Cholesky factors J of M = J J^T (J overwrites M)
-      LBFGSHessian::compute_cholesky_factors(this->M_matrix, this->current_memory_size, this->memory_size);
+      LBFGSHessian::compute_cholesky_factors(this->M_matrix, this->number_iterates_in_memory, this->memory_size);
       std::cout << "J:\n" << this->M_matrix;
+
+      // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
+      this->current_available_slot = (this->current_available_slot + 1) % this->memory_size;
    }
 
    void LBFGSHessian::perform_high_rank_update(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
@@ -181,6 +193,5 @@ namespace uno {
       int M_leading_dimension = static_cast<int>(leading_dimension);
       LAPACK_cholesky_factorization(&uplo, &M_dimension, matrix.data(), &M_leading_dimension, &info);
       std::cout << "Cholesky info: " << info << '\n';
-      std::cout << "J:\n" << matrix;
    }
 } // namespace
