@@ -2,10 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ExactHessian.hpp"
-
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
-#include "model/Model.hpp"
+#include "optimization/Model.hpp"
 
 namespace uno {
    void ExactHessian::initialize(const Model& /*model*/) {

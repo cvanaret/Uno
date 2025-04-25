@@ -1,7 +1,6 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <stdexcept>
 #include "ConvexifiedHessian.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/hessian_models/UnstableRegularization.hpp"

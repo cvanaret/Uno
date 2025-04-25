@@ -56,7 +56,7 @@ namespace uno {
       void switch_to_optimality_phase(Iterate& current_iterate, const Model& model, Iterate& trial_iterate,
          WarmstartInformation& warmstart_information);
 
-      void evaluate_progress_measures(const Model& model, Iterate& iterate) const override;
+      void evaluate_progress_measures(const Model& model, const OptimizationProblem& problem, Iterate& iterate) const override;
       [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(const Model& model, const Iterate& current_iterate,
          const Direction& direction, double step_length);
       [[nodiscard]] bool can_switch_to_optimality_phase(const Iterate& current_iterate, const Model& model, const Iterate& trial_iterate,

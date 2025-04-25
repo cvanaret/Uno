@@ -6,7 +6,6 @@
 #include "AMPLModel.hpp"
 #include "AMPLUserCallbacks.hpp"
 #include "Uno.hpp"
-#include "model/ModelFactory.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Options.hpp"
 #include "options/Presets.hpp"
@@ -26,26 +25,24 @@ namespace uno {
    void run_uno_ampl(const std::string& model_name, const Options& options) {
       try {
          // AMPL model
-         std::unique_ptr<Model> ampl_model = std::make_unique<AMPLModel>(model_name, options);
-         DISCRETE << "Original model " << ampl_model->name << '\n' << ampl_model->number_variables << " variables, " <<
-            ampl_model->number_constraints << " constraints\n";
-
-         // reformulate (scale, add slacks, relax the bounds, ...) if necessary
-         std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), options);
-         DISCRETE << "Reformulated model " << model->name << '\n' << model->number_variables << " variables, " <<
-                  model->number_constraints << " constraints\n";
+         const AMPLModel model(model_name);
+         DISCRETE << "AMPL model " << model.name << '\n' << model.number_variables << " variables, " <<
+            model.number_constraints << " constraints\n\n";
 
          // initialize initial primal and dual points
-         Iterate initial_iterate(model->number_variables, model->number_constraints);
-         model->initial_primal_point(initial_iterate.primals);
-         model->project_onto_variable_bounds(initial_iterate.primals);
-         model->initial_dual_point(initial_iterate.multipliers.constraints);
+         Iterate initial_iterate(model.number_variables, model.number_constraints);
+         model.initial_primal_point(initial_iterate.primals);
+         model.project_onto_variable_bounds(initial_iterate.primals);
+         model.initial_dual_point(initial_iterate.multipliers.constraints);
          initial_iterate.feasibility_multipliers.reset();
 
          // solve the instance
          Uno uno{options};
          AMPLUserCallbacks user_callbacks{};
-         const Result result = uno.solve(*model, initial_iterate, options, user_callbacks);
+         Result result = uno.solve(model, initial_iterate, options, user_callbacks);
+         if (options.get_bool("AMPL_write_solution_to_file")) {
+            model.write_solution(result.solution, result.solution.status);
+         }
          if (result.optimization_status == OptimizationStatus::SUCCESS) {
             // check result.solution.status
          }
@@ -58,19 +55,6 @@ namespace uno {
          DISCRETE << exception.what() << '\n';
       }
    }
-
-   void print_uno_instructions() {
-      std::cout << "Welcome in Uno " << Uno::current_version() << '\n';
-      std::cout << "To solve an AMPL model, type ./uno_ampl model.nl -AMPL [option_name=option_value ...]\n";
-      std::cout << "To choose a constraint relaxation strategy, use the argument constraint_relaxation_strategy="
-                   "[feasibility_restoration|l1_relaxation]\n";
-      std::cout << "To choose a subproblem method, use the argument subproblem=[QP|LP|primal_dual_interior_point]\n";
-      std::cout << "To choose a globalization mechanism, use the argument globalization_mechanism=[LS|TR]\n";
-      std::cout << "To choose a globalization strategy, use the argument globalization_strategy="
-                   "[l1_merit|fletcher_filter_method|waechter_filter_method]\n";
-      std::cout << "To choose a preset, use the argument preset=[filtersqp|ipopt|byrd]\n";
-      std::cout << "The options can be combined in the same command line.\n";
-   }
 } // namespace
 
 int main(int argc, char* argv[]) {
@@ -78,11 +62,11 @@ int main(int argc, char* argv[]) {
 
    try {
       if (argc == 1) {
-         print_uno_instructions();
+         Uno::print_instructions();
       }
       else if (argc == 2) {
          if (std::string(argv[1]) == "--v") {
-            print_uno_instructions();
+            Uno::print_instructions();
          }
          else if (std::string(argv[1]) == "--strategies") {
             Uno::print_available_strategies();

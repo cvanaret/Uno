@@ -8,9 +8,9 @@
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
-#include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/Model.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
@@ -28,7 +28,7 @@ namespace uno {
          ConstraintRelaxationStrategy(options),
          penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         convexify(options.get_string("subproblem") != "primal_dual_interior_point" &&
+         convexify(options.get_string("inequality_handling_method") != "primal_dual_interior_point" &&
             (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),
          hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),
          feasibility_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),
@@ -65,7 +65,7 @@ namespace uno {
       initial_iterate.feasibility_multipliers.upper_bounds.resize(l1_relaxed_problem.number_variables);
       this->inequality_handling_method->set_elastic_variable_values(l1_relaxed_problem, initial_iterate);
       this->inequality_handling_method->generate_initial_iterate(l1_relaxed_problem, initial_iterate);
-      this->evaluate_progress_measures(model, initial_iterate);
+      this->evaluate_progress_measures(model, l1_relaxed_problem, initial_iterate);
       this->compute_primal_dual_residuals(model, initial_iterate);
       this->set_statistics(statistics, model, initial_iterate);
       this->globalization_strategy->initialize(statistics, initial_iterate, options);
@@ -253,7 +253,7 @@ namespace uno {
       // compute the predicted reduction before the progress measures to make sure second-order information is valid
       const ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(model, l1_relaxed_problem,
          current_iterate, direction, step_length);
-      this->compute_progress_measures(model, current_iterate, trial_iterate);
+      this->compute_progress_measures(model, l1_relaxed_problem, current_iterate, trial_iterate);
       trial_iterate.objective_multiplier = l1_relaxed_problem.get_objective_multiplier();
 
       bool accept_iterate = false;
@@ -282,10 +282,10 @@ namespace uno {
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, l1_relaxed_problem, feasibility_problem, iterate);
    }
 
-   void l1Relaxation::evaluate_progress_measures(const Model& model, Iterate& iterate) const {
+   void l1Relaxation::evaluate_progress_measures(const Model& model, const OptimizationProblem& problem, Iterate& iterate) const {
       this->set_infeasibility_measure(model, iterate);
       this->set_objective_measure(model, iterate);
-      this->inequality_handling_method->set_auxiliary_measure(model, iterate);
+      iterate.progress.auxiliary = this->inequality_handling_method->compute_auxiliary_measure(problem, iterate);
    }
 
    ProgressMeasures l1Relaxation::compute_predicted_reduction_models(const Model& model, const OptimizationProblem& problem,
