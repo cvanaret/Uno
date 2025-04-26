@@ -53,7 +53,7 @@ jobs:
         sudo ln -s /usr/lib/libgtest_main.a /usr/local/lib/googletest/libgtest_main.a
 
     - name: Install LAPACK
-      run: sudo apt install libatlas-base-dev liblapack-dev libblas-dev
+      run: sudo apt install liblapack-dev
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
