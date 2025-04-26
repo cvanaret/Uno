@@ -94,6 +94,7 @@ file(GLOB TESTS_UNO_SOURCE_FILES
 # external dependencies #
 #########################
 set(LIBRARIES "")
+set(TEST_LIBRARIES "")
 
 # function that links an existing library to Uno
 function(link_to_uno library_name library_path)
@@ -146,6 +147,7 @@ if(WITH_LAPACK)
 		message(WARNING "Optional library LAPACK was not found.")
 	else()
 		link_to_uno(LAPACK ${LAPACK_LIBRARIES})
+		set(TEST_LIBRARIES ${TEST_LIBRARIES} ${LAPACK_LIBRARIES})
 		# enable the use of quasi-Newton methods
 		list(APPEND UNO_SOURCE_FILES uno/ingredients/hessian_models/quasi_newton/LBFGSHessian.cpp)
 		list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/LAPACKTests.cpp)
@@ -273,6 +275,6 @@ if(WITH_GTEST)
       message(WARNING "Optional library GTest was not found.")
    else()
       add_executable(run_unotest ${TESTS_UNO_SOURCE_FILES})
-      target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
+      target_link_libraries(run_unotest PUBLIC GTest::gtest ${TEST_LIBRARIES} uno)
    endif()
 endif()
