@@ -105,6 +105,7 @@ file(GLOB TESTS_UNO_SOURCE_FILES
 # external dependencies #
 #########################
 set(LIBRARIES "")
+set(TEST_LIBRARIES "")
 
 # function that links an existing library to Uno
 function(link_to_uno library_name library_path)
@@ -155,6 +156,7 @@ if(WITH_LAPACK)
 		message(WARNING "Optional library LAPACK was not found.")
 	else()
 		link_to_uno(LAPACK ${LAPACK_LIBRARIES})
+		set(TEST_LIBRARIES ${TEST_LIBRARIES} ${LAPACK_LIBRARIES})
 		# enable the use of quasi-Newton methods
 		list(APPEND UNO_SOURCE_FILES uno/ingredients/hessian_models/quasi_newton/LBFGSHessian.cpp)
 		list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/LAPACKTests.cpp)
@@ -308,9 +310,9 @@ if(TARGET uno_ampl)
    list(APPEND INSTALL_TARGETS uno_ampl)
 endif()
 install(TARGETS ${INSTALL_TARGETS}
-   COMPONENT libuno
-   EXPORT UnoTargets
-   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # DLLs on windows
-   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Static libraries
-   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Shared libraries
-   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+        COMPONENT libuno
+        EXPORT UnoTargets
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # DLLs on windows
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Static libraries
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Shared libraries
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
