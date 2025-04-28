@@ -9,8 +9,46 @@
 #include "symbolic/Range.hpp"
 
 namespace uno {
-   // DenseMatrix is an m x n matrix in column-order order where the columns are concatenated in a long vector
+   // forward declaration
+   template <typename ElementType>
+   class DenseMatrix;
 
+   template <typename ElementType>
+   class DenseColumn {
+   public:
+      using value_type = ElementType;
+
+      DenseColumn(const DenseMatrix<ElementType>& matrix, size_t column_index);
+      size_t size() const;
+      ElementType& operator[](size_t row_index);
+      const ElementType& operator[](size_t row_index) const;
+
+   protected:
+      const DenseMatrix<ElementType>& matrix;
+      const size_t column_index;
+   };
+
+   template<typename ElementType>
+   DenseColumn<ElementType>::DenseColumn(const DenseMatrix<ElementType> &matrix, size_t column_index):
+      matrix(matrix), column_index(column_index) {
+   }
+
+   template<typename ElementType>
+   size_t DenseColumn<ElementType>::size() const {
+      return this->matrix.get_number_rows();
+   }
+
+   template<typename ElementType>
+   ElementType& DenseColumn<ElementType>::operator[](size_t row_index) {
+      return this->matrix.entry(row_index, this->column_index);
+   }
+
+   template<typename ElementType>
+   const ElementType& DenseColumn<ElementType>::operator[](size_t row_index) const {
+      return this->matrix.entry(row_index, this->column_index);
+   }
+
+   // DenseMatrix is an m x n matrix in column-order order where the columns are concatenated in a long vector
    template <typename ElementType>
    class DenseMatrix {
    public:
@@ -21,8 +59,12 @@ namespace uno {
       DenseMatrix& operator=(DenseMatrix&& other) noexcept = default;
       ~DenseMatrix() = default;
 
+      size_t get_number_rows() const;
+      size_t get_number_columns() const;
       ElementType& entry(size_t row_index, size_t column_index);
       const ElementType& entry(size_t row_index, size_t column_index) const;
+      // vector view
+      DenseColumn<ElementType> column(size_t column_index) const;
       ElementType* data();
       void clear();
 
@@ -53,6 +95,16 @@ namespace uno {
    }
 
    template <typename ElementType>
+   size_t DenseMatrix<ElementType>::get_number_rows() const {
+      return this->number_rows;
+   }
+
+   template <typename ElementType>
+   size_t DenseMatrix<ElementType>::get_number_columns() const {
+      return this->number_columns;
+   }
+
+   template <typename ElementType>
    ElementType& DenseMatrix<ElementType>::entry(size_t row_index, size_t column_index) {
       return this->matrix[column_index * this->number_rows + row_index];
    }
@@ -60,6 +112,11 @@ namespace uno {
    template <typename ElementType>
    const ElementType& DenseMatrix<ElementType>::entry(size_t row_index, size_t column_index) const {
       return this->matrix[column_index * this->number_rows + row_index];
+   }
+
+   template <typename ElementType>
+   DenseColumn<ElementType> DenseMatrix<ElementType>::column(size_t column_index) const {
+      return {*this, column_index};
    }
 
    template <typename ElementType>

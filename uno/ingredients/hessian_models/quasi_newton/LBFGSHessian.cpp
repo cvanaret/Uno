@@ -83,14 +83,15 @@ namespace uno {
       // TODO figure out if we're extending or replacing in memory
 
       // update the matrices
+      LBFGSHessian::update_Y_matrix(current_iterate, trial_iterate);
       // TODO check that the S entry isn't too small
       LBFGSHessian::update_S_matrix(current_iterate, trial_iterate);
       LBFGSHessian::update_Y_matrix(current_iterate, trial_iterate);
 
       // update the bookkeeping
-      this->number_iterates_in_memory = std::min(this->number_iterates_in_memory + 1, this->memory_size);
+      this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
       this->hessian_recomputation_required = true;
-      std::cout << "There are now " << this->number_iterates_in_memory << " iterates in memory (capacity " <<
+      std::cout << "There are now " << this->number_entries_in_memory << " iterates in memory (capacity " <<
          this->memory_size << ")\n";
    }
 
@@ -104,15 +105,15 @@ namespace uno {
 
    void LBFGSHessian::update_Y_matrix(Iterate& current_iterate, Iterate& trial_iterate) {
       // fill the Y matrix: y = \nabla L(x_k, y_k, z_k) - \nabla L(x_{k-1}, y_k, z_k)
-      model.evaluate_objective_gradient(current_iterate.primals, current_iterate.evaluations.objective_gradient);
+      this->model.evaluate_objective_gradient(current_iterate.primals, current_iterate.evaluations.objective_gradient);
       //model.evaluate_constraint_jacobian(current_iterate.primals, current_iterate.evaluations.constraint_jacobian);
-      model.evaluate_objective_gradient(trial_iterate.primals, trial_iterate.evaluations.objective_gradient);
+      this->model.evaluate_objective_gradient(trial_iterate.primals, trial_iterate.evaluations.objective_gradient);
       //model.evaluate_constraint_jacobian(trial_iterate.primals, trial_iterate.evaluations.constraint_jacobian);
 
-      this->number_iterates_in_memory = std::min(this->number_iterates_in_memory + 1, this->memory_size);
+      this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
       // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
       this->current_available_slot = (this->current_available_slot + 1) % this->memory_size;
-      std::cout << "There are now " << this->number_iterates_in_memory << " iterates in memory (capacity " <<
+      std::cout << "There are now " << this->number_entries_in_memory << " iterates in memory (capacity " <<
          this->memory_size << ")\n";
    }
 
@@ -123,8 +124,8 @@ namespace uno {
       std::cout << "D: "; print_vector(std::cout, this->D_matrix);
 
       // fill the L matrix (lower triangular with a zero diagonal)
-      for (size_t column_index: Range(this->number_iterates_in_memory)) {
-         for (size_t row_index: Range(column_index+1, this->number_iterates_in_memory)) {
+      for (size_t column_index: Range(this->number_entries_in_memory)) {
+         for (size_t row_index: Range(column_index+1, this->number_entries_in_memory)) {
             this->L_matrix.entry(row_index, column_index) = 1.; // TODO dot(s_i, y_j)
          }
       }
@@ -133,10 +134,10 @@ namespace uno {
       // assemble m x m matrix M = S^T B0 S + L D^{-1} L^T
       // Ltilde = L D^{-1/2}
       DenseMatrix<double> Ltilde_matrix(this->L_matrix); // copy L into Ltilde
-      for (size_t column_index: Range(this->number_iterates_in_memory)) {
+      for (size_t column_index: Range(this->number_entries_in_memory)) {
          const double scaling = 1./std::sqrt(this->D_matrix[column_index]);
-         for (size_t row_index: Range(column_index+1, this->number_iterates_in_memory)) {
-            Ltilde_matrix.entry(row_index, column_index) *= scaling;
+         for (size_t row_index: Range(column_index+1, this->number_entries_in_memory)) {
+            //Ltilde_matrix.entry(row_index, column_index) *= scaling;
          }
       }
       std::cout << "Ltilde:\n" << Ltilde_matrix;
@@ -144,19 +145,34 @@ namespace uno {
       // form M = L D^{-1} L^T + S^T S = Ltilde Ltilde^T + S^T S
       this->M_matrix.clear();
       // add M += Ltilde Ltilde^T
-      LBFGSHessian::perform_high_rank_update(this->M_matrix, this->number_iterates_in_memory, this->memory_size, Ltilde_matrix,
-         this->number_iterates_in_memory, this->memory_size);
+      LBFGSHessian::perform_high_rank_update(this->M_matrix, this->number_entries_in_memory, this->memory_size, Ltilde_matrix,
+         this->number_entries_in_memory, this->memory_size);
       // add M += S^T S
-      LBFGSHessian::perform_high_rank_update_transpose(this->M_matrix, this->number_iterates_in_memory, this->memory_size,
-         this->S_matrix, this->number_iterates_in_memory, this->model.number_variables);
+      LBFGSHessian::perform_high_rank_update_transpose(this->M_matrix, this->number_entries_in_memory, this->memory_size,
+         this->S_matrix, this->number_entries_in_memory, this->model.number_variables);
       std::cout << "M:\n" << this->M_matrix;
 
       // compute the Cholesky factors J of M = J J^T (J overwrites M)
-      LBFGSHessian::compute_cholesky_factors(this->M_matrix, this->number_iterates_in_memory, this->memory_size);
+      LBFGSHessian::compute_cholesky_factors(this->M_matrix, this->number_entries_in_memory, this->memory_size);
       std::cout << "J:\n" << this->M_matrix;
+
+      // update the initial Hessian approximation delta * I, where delta = 1/gamma and gamma = s^T y / y^T y at the last entry
+      this->initial_identity_multiple = (0 < this->number_entries_in_memory) ? this->compute_initial_identity_factor() : 1.;
+      std::cout << "Initial identity multiple: " << this->initial_identity_multiple << '\n';
 
       // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
       this->current_available_slot = (this->current_available_slot + 1) % this->memory_size;
+   }
+
+   // precondition: 0 < this->number_entries_in_memory
+   double LBFGSHessian::compute_initial_identity_factor() const {
+      const auto last_column_Y = this->Y_matrix.column(this->number_entries_in_memory-1);
+      const auto last_column_S = this->S_matrix.column(this->number_entries_in_memory-1);
+      // return delta = 1/gamma where gamma is given by (7.20) in Numerical optimization (Nocedal & Wright)
+      const double numerator = dot(last_column_Y, last_column_Y);
+      const double denominator = dot(last_column_S, last_column_Y);
+      assert(denominator != 0 && "LBFGSHessian::compute_initial_identity_factor: the denominator is 0");
+      return numerator/denominator;
    }
 
    void LBFGSHessian::perform_high_rank_update(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
