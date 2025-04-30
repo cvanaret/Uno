@@ -36,7 +36,7 @@ namespace uno {
       size_t dimension{};
       const size_t memory_size; // user defined
       size_t number_entries_in_memory{0}; // 0 <= used_memory_size <= memory_size
-      size_t current_available_slot{0}; // 0 <= current_available_slot < memory_size
+      size_t current_memory_slot{0}; // 0 <= current_available_slot < memory_size
       // memory
       DenseMatrix<double> S_matrix;
       DenseMatrix<double> Y_matrix;
@@ -50,6 +50,7 @@ namespace uno {
       void update_memory(const Model& model, Iterate& current_iterate, Iterate& trial_iterate);
       void update_Y_matrix(const Model& model, Iterate& current_iterate, Iterate& trial_iterate);
       void update_S_matrix(const Iterate& current_iterate, const Iterate& trial_iterate);
+      void update_D_matrix();
       void recompute_hessian_representation();
       [[nodiscard]] double compute_initial_identity_factor() const;
 

@@ -6,8 +6,8 @@
 #include "options/Options.hpp"
 #include "linear_algebra/LAPACK.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
-#include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/Expression.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
@@ -48,7 +48,7 @@ namespace uno {
    }
 
    void LBFGSHessian::notify_accepted_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
-      std::cout << "Adding vector to L-BFGS memory at slot " << this->current_available_slot << '\n';
+      std::cout << "Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
       // this->current_available_slot lives in [0, this->memory_size)
       this->update_memory(model, current_iterate, trial_iterate);
    }
@@ -65,9 +65,9 @@ namespace uno {
          this->hessian_recomputation_required = false;
       }
 
-      // TODO atm we use the identity
+      // TODO atm we use delta * I
       for (size_t variable_index: Range(model.number_variables)) {
-         result[variable_index] = vector[variable_index];
+         result[variable_index] = this->initial_identity_multiple * vector[variable_index];
       }
    }
 
@@ -78,19 +78,27 @@ namespace uno {
    // protected member functions
 
    void LBFGSHessian::update_memory(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
-      std::cout << "\n*** Adding vector to L-BFGS memory at slot " << this->current_available_slot << '\n';
-      // TODO figure out if we're extending or replacing in memory
-
-      // update the matrices
-      LBFGSHessian::update_Y_matrix(model, current_iterate, trial_iterate);
+      std::cout << "*** Updating the BFGS memory\n";
+      // update the matrices Y, S and D
+      this->update_Y_matrix(model, current_iterate, trial_iterate);
       // TODO check that the S entry isn't too small
-      LBFGSHessian::update_S_matrix(current_iterate, trial_iterate);
+      this->update_S_matrix(current_iterate, trial_iterate);
+      this->update_D_matrix();
+      std::cout << "> Y: " << this->Y_matrix;
+      std::cout << "> S: " << this->S_matrix;
+      std::cout << "> D: "; print_vector(std::cout, this->D_matrix);
 
-      // update the bookkeeping
-      this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
-      this->hessian_recomputation_required = true;
-      std::cout << "There are now " << this->number_entries_in_memory << " iterates in memory (capacity " <<
-         this->memory_size << ")\n";
+      // check that the latest D entry s^T y is > 0
+      if (0. < this->D_matrix[this->current_memory_slot]) {
+         std::cout << "Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
+         this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
+         this->hessian_recomputation_required = true;
+         std::cout << "There are now " << this->number_entries_in_memory << " iterates in memory (capacity " <<
+            this->memory_size << ")\n";
+      }
+      else {
+         std::cout << "Skipping the update\n";
+      }
    }
 
    void LBFGSHessian::update_Y_matrix(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
@@ -99,29 +107,42 @@ namespace uno {
       model.evaluate_constraint_jacobian(current_iterate.primals, current_iterate.evaluations.constraint_jacobian);
       model.evaluate_objective_gradient(trial_iterate.primals, trial_iterate.evaluations.objective_gradient);
       model.evaluate_constraint_jacobian(trial_iterate.primals, trial_iterate.evaluations.constraint_jacobian);
+
+      // evaluate Lagrangian gradients at the current and trial iterates, both with the trial multipliers
+      LagrangianGradient<double> current_lagrangian_gradient(this->dimension);
+      LagrangianGradient<double> trial_lagrangian_gradient(this->dimension);
+      model.evaluate_lagrangian_gradient(current_lagrangian_gradient, current_iterate, trial_iterate.multipliers);
+      model.evaluate_lagrangian_gradient(trial_lagrangian_gradient, trial_iterate, trial_iterate.multipliers);
+      const auto assembled_current_lagrangian_gradient = current_lagrangian_gradient.assemble(1.);
+      const auto assembled_trial_lagrangian_gradient = trial_lagrangian_gradient.assemble(1.);
+      for (size_t variable_index: Range(this->dimension)) {
+         this->Y_matrix.entry(variable_index, this->current_memory_slot) = assembled_trial_lagrangian_gradient[variable_index] -
+            assembled_current_lagrangian_gradient[variable_index];
+      }
    }
 
    void LBFGSHessian::update_S_matrix(const Iterate& current_iterate, const Iterate& trial_iterate) {
       for (size_t variable_index: Range(this->dimension)) {
-         this->S_matrix.entry(variable_index, this->current_available_slot) = trial_iterate.primals[variable_index] -
+         this->S_matrix.entry(variable_index, this->current_memory_slot) = trial_iterate.primals[variable_index] -
             current_iterate.primals[variable_index];
       }
-      std::cout << "S:\n" << this->S_matrix;
+   }
+
+   void LBFGSHessian::update_D_matrix() {
+      this->D_matrix[this->current_memory_slot] = dot(this->S_matrix.column(this->current_memory_slot),
+         this->Y_matrix.column(this->current_memory_slot));
    }
 
    void LBFGSHessian::recompute_hessian_representation() {
       std::cout << "\n*** Recomputing the Hessian representation\n";
-      // fill the D matrix (diagonal)
-      this->D_matrix[this->current_available_slot] = 10.; // TODO dot(s_new, y_new)
-      std::cout << "D: "; print_vector(std::cout, this->D_matrix);
-
+      // TODO figure out if we're extending or replacing in memory
       // fill the L matrix (lower triangular with a zero diagonal)
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          for (size_t row_index: Range(column_index+1, this->number_entries_in_memory)) {
-            this->L_matrix.entry(row_index, column_index) = 1.; // TODO dot(s_i, y_j)
+            this->L_matrix.entry(row_index, column_index) = dot(this->S_matrix.column(row_index), this->Y_matrix.column(column_index));
          }
       }
-      std::cout << "L:\n" << this->L_matrix;
+      std::cout << "> L: " << this->L_matrix;
 
       // assemble m x m matrix M = S^T B0 S + L D^{-1} L^T
       // Ltilde = L D^{-1/2}
@@ -132,7 +153,7 @@ namespace uno {
             Ltilde_matrix.entry(row_index, column_index) *= scaling;
          }
       }
-      std::cout << "Ltilde:\n" << Ltilde_matrix;
+      std::cout << "> Ltilde: " << Ltilde_matrix;
 
       // form M = L D^{-1} L^T + S^T S = Ltilde Ltilde^T + S^T S
       this->M_matrix.clear();
@@ -142,18 +163,18 @@ namespace uno {
       // add M += S^T S
       LBFGSHessian::perform_high_rank_update_transpose(this->M_matrix, this->number_entries_in_memory, this->memory_size,
          this->S_matrix, this->number_entries_in_memory, this->dimension);
-      std::cout << "M:\n" << this->M_matrix;
+      std::cout << "> M: " << this->M_matrix;
 
       // compute the Cholesky factors J of M = J J^T (J overwrites M)
       LBFGSHessian::compute_cholesky_factors(this->M_matrix, this->number_entries_in_memory, this->memory_size);
-      std::cout << "J:\n" << this->M_matrix;
+      std::cout << "> J: " << this->M_matrix;
 
       // update the initial Hessian approximation delta * I, where delta = 1/gamma and gamma = s^T y / y^T y at the last entry
       this->initial_identity_multiple = (0 < this->number_entries_in_memory) ? this->compute_initial_identity_factor() : 1.;
-      std::cout << "Initial identity multiple: " << this->initial_identity_multiple << '\n';
+      std::cout << "Initial identity multiple: " << this->initial_identity_multiple << "\n\n";
 
       // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
-      this->current_available_slot = (this->current_available_slot + 1) % this->memory_size;
+      this->current_memory_slot = (this->current_memory_slot + 1) % this->memory_size;
    }
 
    // precondition: 0 < this->number_entries_in_memory
