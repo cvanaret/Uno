@@ -19,9 +19,18 @@ namespace uno {
       using value_type = ElementType;
 
       DenseColumn(const DenseMatrix<ElementType>& matrix, size_t column_index);
-      size_t size() const;
-      ElementType& operator[](size_t row_index);
-      const ElementType& operator[](size_t row_index) const;
+      template <typename Expression>
+      DenseColumn& operator=(Expression&& expression) {
+         //static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
+         for (size_t index = 0; index < this->size(); index++) {
+            this->operator[](index) = expression[index];
+         }
+         return *this;
+      }
+
+      [[nodiscard]] size_t size() const;
+      [[nodiscard]] ElementType& operator[](size_t row_index);
+      [[nodiscard]] const ElementType& operator[](size_t row_index) const;
 
    protected:
       const DenseMatrix<ElementType>& matrix;
@@ -59,13 +68,13 @@ namespace uno {
       DenseMatrix& operator=(DenseMatrix&& other) noexcept = default;
       ~DenseMatrix() = default;
 
-      size_t get_number_rows() const;
-      size_t get_number_columns() const;
-      ElementType& entry(size_t row_index, size_t column_index);
-      const ElementType& entry(size_t row_index, size_t column_index) const;
+      [[nodiscard]] size_t get_number_rows() const;
+      [[nodiscard]] size_t get_number_columns() const;
+      [[nodiscard]] ElementType& entry(size_t row_index, size_t column_index);
+      [[nodiscard]] const ElementType& entry(size_t row_index, size_t column_index) const;
       // vector view
-      DenseColumn<ElementType> column(size_t column_index) const;
-      ElementType* data();
+      [[nodiscard]] DenseColumn<ElementType> column(size_t column_index) const;
+      [[nodiscard]] ElementType* data();
       void clear();
 
       //VectorView<const DenseMatrix&> column(size_t column_index) const;
