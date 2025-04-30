@@ -53,3 +53,16 @@ TEST(DenseMatrix, ColumnMagnitude) {
    const double squared_magnitude = dot(second_column, second_column);
    ASSERT_EQ(squared_magnitude, 3218.);
 }
+
+/*
+TEST(DenseMatrix, ColumnOverwrite) {
+   const DenseMatrix<double> matrix = get_matrix();
+   auto second_column = matrix.column(1);
+   const Vector<double> x{1., 2., 3.};
+   // overwrite the second column with x
+   second_column = x;
+   ASSERT_EQ(matrix.entry(0, 1), 1.);
+   ASSERT_EQ(matrix.entry(1, 1), 2.);
+   ASSERT_EQ(matrix.entry(2, 1), 3.);
+}
+*/
