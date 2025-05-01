@@ -45,7 +45,7 @@ namespace uno {
       DenseMatrix<double> L_matrix;
       std::vector<double> D_matrix; // diagonal
       DenseMatrix<double> M_matrix;
-      double initial_identity_multiple{1.};
+      double initial_identity_multiple{1.}; // referred to as delta in Numerical optimization
 
       void update_memory(const Model& model, Iterate& current_iterate, Iterate& trial_iterate);
       void update_Y_matrix(const Model& model, Iterate& current_iterate, Iterate& trial_iterate);
@@ -55,9 +55,9 @@ namespace uno {
       [[nodiscard]] double compute_initial_identity_factor() const;
 
       static void perform_high_rank_update(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
-         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension);
+         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta);
       static void perform_high_rank_update_transpose(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
-         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension);
+         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta);
       static void compute_cholesky_factors(DenseMatrix<double>& matrix, size_t dimension, size_t leading_dimension);
    };
 } // namespace
