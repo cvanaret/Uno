@@ -92,6 +92,9 @@ namespace uno {
       // use the primal-dual and dual step lengths to scale the dual directions when assembling the trial iterate
       options.set_bool("LS_scale_duals_with_step_length", true);
 
+      /* L-BFGS options */
+      options.set("quasi_newton_memory_size", "3");
+
       /** regularization options **/
       // regularization failure threshold
       options.set_double("regularization_failure_threshold", 1e40);
