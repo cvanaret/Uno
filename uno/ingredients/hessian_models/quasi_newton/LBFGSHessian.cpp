@@ -7,8 +7,8 @@
 #include "linear_algebra/LAPACK.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/Expression.hpp"
 #include "symbolic/Range.hpp"
+#include "tools/Statistics.hpp"
 
 namespace uno {
    LBFGSHessian::LBFGSHessian(const Options& options): HessianModel(),
@@ -78,26 +78,26 @@ namespace uno {
    // protected member functions
 
    void LBFGSHessian::update_memory(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
-      std::cout << "*** Updating the BFGS memory\n";
+      DEBUG << "*** Updating the BFGS memory\n";
       // update the matrices Y, S and D
       this->update_Y_matrix(model, current_iterate, trial_iterate);
       // TODO check that the S entry isn't too small
       this->update_S_matrix(current_iterate, trial_iterate);
       this->update_D_matrix();
-      std::cout << "> Y: " << this->Y_matrix;
-      std::cout << "> S: " << this->S_matrix;
-      std::cout << "> D: "; print_vector(std::cout, this->D_matrix);
+      DEBUG << "> Y: " << this->Y_matrix;
+      DEBUG << "> S: " << this->S_matrix;
+      DEBUG << "> D: "; print_vector(DEBUG, this->D_matrix);
 
       // check that the latest D entry s^T y is > 0
       if (0. < this->D_matrix[this->current_memory_slot]) {
-         std::cout << "Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
+         DEBUG << "Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
          this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
          this->hessian_recomputation_required = true;
-         std::cout << "There are now " << this->number_entries_in_memory << " iterates in memory (capacity " <<
+         DEBUG << "There are now " << this->number_entries_in_memory << " iterates in memory (capacity " <<
             this->memory_size << ")\n";
       }
       else {
-         std::cout << "Skipping the update\n";
+         DEBUG << "Skipping the update\n";
       }
    }
 
@@ -113,6 +113,7 @@ namespace uno {
       LagrangianGradient<double> trial_lagrangian_gradient(this->dimension);
       model.evaluate_lagrangian_gradient(current_lagrangian_gradient, current_iterate, trial_iterate.multipliers);
       model.evaluate_lagrangian_gradient(trial_lagrangian_gradient, trial_iterate, trial_iterate.multipliers);
+      // TODO objective multiplier is hardcoded for the moment
       const auto assembled_current_lagrangian_gradient = current_lagrangian_gradient.assemble(1.);
       const auto assembled_trial_lagrangian_gradient = trial_lagrangian_gradient.assemble(1.);
       for (size_t variable_index: Range(this->dimension)) {
@@ -134,7 +135,7 @@ namespace uno {
    }
 
    void LBFGSHessian::recompute_hessian_representation() {
-      std::cout << "\n*** Recomputing the Hessian representation\n";
+      DEBUG << "\n*** Recomputing the Hessian representation\n";
       // TODO figure out if we're extending or replacing in memory
       // fill the L matrix (lower triangular with a zero diagonal)
       for (size_t column_index: Range(this->number_entries_in_memory)) {
@@ -142,10 +143,10 @@ namespace uno {
             this->L_matrix.entry(row_index, column_index) = dot(this->S_matrix.column(row_index), this->Y_matrix.column(column_index));
          }
       }
-      std::cout << "> L: " << this->L_matrix;
+      DEBUG << "> L: " << this->L_matrix;
 
-      // assemble m x m matrix M = S^T B0 S + L D^{-1} L^T
-      // Ltilde = L D^{-1/2}
+      // form Ltilde = L D^{-1/2}
+      // TODO preallocate
       DenseMatrix<double> Ltilde_matrix(this->L_matrix); // copy L into Ltilde
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const double scaling = 1./std::sqrt(this->D_matrix[column_index]);
@@ -153,25 +154,24 @@ namespace uno {
             Ltilde_matrix.entry(row_index, column_index) *= scaling;
          }
       }
-      std::cout << "> Ltilde: " << Ltilde_matrix;
-
-      // form M = L D^{-1} L^T + S^T S = Ltilde Ltilde^T + S^T S
-      this->M_matrix.clear();
-      // add M += Ltilde Ltilde^T
-      LBFGSHessian::perform_high_rank_update(this->M_matrix, this->number_entries_in_memory, this->memory_size, Ltilde_matrix,
-         this->number_entries_in_memory, this->memory_size);
-      // add M += S^T S
-      LBFGSHessian::perform_high_rank_update_transpose(this->M_matrix, this->number_entries_in_memory, this->memory_size,
-         this->S_matrix, this->number_entries_in_memory, this->dimension);
-      std::cout << "> M: " << this->M_matrix;
-
-      // compute the Cholesky factors J of M = J J^T (J overwrites M)
-      LBFGSHessian::compute_cholesky_factors(this->M_matrix, this->number_entries_in_memory, this->memory_size);
-      std::cout << "> J: " << this->M_matrix;
+      DEBUG << "> Ltilde: " << Ltilde_matrix;
 
       // update the initial Hessian approximation delta * I, where delta = 1/gamma and gamma = s^T y / y^T y at the last entry
       this->initial_identity_multiple = (0 < this->number_entries_in_memory) ? this->compute_initial_identity_factor() : 1.;
-      std::cout << "Initial identity multiple: " << this->initial_identity_multiple << "\n\n";
+      DEBUG << "Initial identity multiple: " << this->initial_identity_multiple << "\n";
+
+      // form m x m matrix M = L D^{-1} L^T + S^T B0 S = Ltilde Ltilde^T + S^T B0 S
+      this->M_matrix.clear();
+      // add M += Ltilde Ltilde^T
+      LBFGSHessian::perform_high_rank_update(this->M_matrix, this->number_entries_in_memory, this->memory_size, Ltilde_matrix,
+         this->number_entries_in_memory, this->memory_size, 1., 1.);
+      // add M += S^T B0 S (= delta S^T S)
+      LBFGSHessian::perform_high_rank_update_transpose(this->M_matrix, this->number_entries_in_memory, this->memory_size,
+         this->S_matrix, this->number_entries_in_memory, this->dimension, this->initial_identity_multiple, 1.);
+      DEBUG << "> M: " << this->M_matrix;
+      // compute the Cholesky factors J of M = J J^T (J overwrites M)
+      LBFGSHessian::compute_cholesky_factors(this->M_matrix, this->number_entries_in_memory, this->memory_size);
+      DEBUG << "> J: " << this->M_matrix << '\n';
 
       // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
       this->current_memory_slot = (this->current_memory_slot + 1) % this->memory_size;
@@ -179,43 +179,44 @@ namespace uno {
 
    // precondition: 0 < this->number_entries_in_memory
    double LBFGSHessian::compute_initial_identity_factor() const {
-      const auto last_column_Y = this->Y_matrix.column(this->number_entries_in_memory-1);
-      const auto last_column_S = this->S_matrix.column(this->number_entries_in_memory-1);
+      // TODO get the correct columns
+      const auto last_column_Y = this->Y_matrix.column(this->current_memory_slot);
+      const auto last_column_S = this->S_matrix.column(this->current_memory_slot);
       // return delta = 1/gamma where gamma is given by (7.20) in Numerical optimization (Nocedal & Wright)
       const double numerator = dot(last_column_Y, last_column_Y);
-      const double denominator = dot(last_column_S, last_column_Y);
+      const double denominator = dot(last_column_S, last_column_Y); // TODO should be the current D entry
       assert(denominator != 0 && "LBFGSHessian::compute_initial_identity_factor: the denominator is 0");
       return numerator/denominator;
    }
 
+   // performs symmetric rank k update
+   // C = alpha A A^T + beta C
    void LBFGSHessian::perform_high_rank_update(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
-         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension) {
-      std::cout << "Performing rank " << correction_rank << " update\n";
+         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta) {
+      DEBUG << "Performing rank " << correction_rank << " update\n";
       char uplo = 'L'; // lower triangular
       char trans = 'N';
       int n = static_cast<int>(matrix_dimension); // dimension of matrix
       int k = static_cast<int>(correction_rank); // number of columns of high_rank_correction
       int lda = static_cast<int>(correction_leading_dimension); // number of rows of high_rank_correction
       int ldc = static_cast<int>(matrix_leading_dimension); // leading dimension of matrix
-      double alpha = 1.;
-      double beta = 1.;
       assert(lda >= std::max(1, n) && "LBFGSHessian::perform_high_rank_update assumption on lda is violated");
       assert(ldc >= std::max(1, n) && "LBFGSHessian::perform_high_rank_update assumption on ldc is violated");
       LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, high_rank_correction.data(), &lda, &beta,
          matrix.data(), &ldc);
    }
 
+   // performs symmetric rank k update
+   // C = alpha A^T A + beta C
    void LBFGSHessian::perform_high_rank_update_transpose(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
-         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension) {
-      std::cout << "Performing rank " << correction_rank << " update\n";
+         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta) {
+      DEBUG << "Performing rank " << correction_rank << " update\n";
       char uplo = 'L'; // lower triangular
       char trans = 'T';
       int n = static_cast<int>(matrix_dimension); // dimension of matrix
       int k = static_cast<int>(correction_leading_dimension); // number of rows of high_rank_correction
       int lda = static_cast<int>(correction_leading_dimension); // number of rows of high_rank_correction
       int ldc = static_cast<int>(matrix_leading_dimension); // leading dimension of matrix
-      double alpha = 1.;
-      double beta = 1.;
       assert(lda >= std::max(1, k) && "LBFGSHessian::perform_high_rank_update_transpose assumption on lda is violated");
       assert(ldc >= std::max(1, n) && "LBFGSHessian::perform_high_rank_update assumption on ldc is violated");
       LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, high_rank_correction.data(), &lda, &beta,
@@ -228,6 +229,6 @@ namespace uno {
       int M_dimension = static_cast<int>(dimension);
       int M_leading_dimension = static_cast<int>(leading_dimension);
       LAPACK_cholesky_factorization(&uplo, &M_dimension, matrix.data(), &M_leading_dimension, &info);
-      std::cout << "Cholesky info: " << info << '\n';
+      DEBUG << "Cholesky info: " << info << '\n';
    }
 } // namespace
