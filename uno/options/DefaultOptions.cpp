@@ -41,6 +41,7 @@ namespace uno {
       options.set("statistics_restoration_phase_column_order", "20");
       options.set("statistics_regularization_column_order", "21");
       options.set("statistics_funnel_width_column_order", "25");
+      options.set("statistics_L-BFGS_initial_identity_multiple", "30");
       options.set("statistics_step_norm_column_order", "31");
       options.set("statistics_objective_column_order", "100");
       options.set("statistics_primal_feasibility_column_order", "101");
@@ -107,6 +108,9 @@ namespace uno {
       options.set("LS_min_step_length", "1e-12");
       // use the primal-dual and dual step lengths to scale the dual directions when assembling the trial iterate
       options.set("LS_scale_duals_with_step_length", "yes");
+
+      /* L-BFGS options */
+      options.set("quasi_newton_memory_size", "3");
 
       /** regularization options **/
       // regularization failure threshold
