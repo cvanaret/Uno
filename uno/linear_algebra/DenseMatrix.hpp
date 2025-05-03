@@ -9,16 +9,14 @@
 #include "symbolic/Range.hpp"
 
 namespace uno {
-   // forward declaration
-   template <typename ElementType>
-   class DenseMatrix;
-
-   template <typename ElementType>
+   template <typename ElementType, typename MatrixType>
    class DenseColumn {
    public:
-      using value_type = ElementType;
+      using value_type = std::remove_const_t<ElementType>;
 
-      DenseColumn(const DenseMatrix<ElementType>& matrix, size_t column_index);
+      DenseColumn(MatrixType& matrix, size_t column_index): matrix(matrix), column_index(column_index) {
+      }
+
       template <typename Expression>
       DenseColumn& operator=(Expression&& expression) {
          //static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
@@ -28,34 +26,22 @@ namespace uno {
          return *this;
       }
 
-      [[nodiscard]] size_t size() const;
-      [[nodiscard]] ElementType& operator[](size_t row_index);
-      [[nodiscard]] const ElementType& operator[](size_t row_index) const;
+      [[nodiscard]] size_t size() const {
+         return this->matrix.get_number_rows();
+      }
+
+      [[nodiscard]] ElementType& operator[](size_t row_index) {
+         return this->matrix.entry(row_index, this->column_index);
+      }
+
+      [[nodiscard]] const ElementType& operator[](size_t row_index) const {
+         return this->matrix.entry(row_index, this->column_index);
+      }
 
    protected:
-      const DenseMatrix<ElementType>& matrix;
+      MatrixType& matrix;
       const size_t column_index;
    };
-
-   template<typename ElementType>
-   DenseColumn<ElementType>::DenseColumn(const DenseMatrix<ElementType> &matrix, size_t column_index):
-      matrix(matrix), column_index(column_index) {
-   }
-
-   template<typename ElementType>
-   size_t DenseColumn<ElementType>::size() const {
-      return this->matrix.get_number_rows();
-   }
-
-   template<typename ElementType>
-   ElementType& DenseColumn<ElementType>::operator[](size_t row_index) {
-      return this->matrix.entry(row_index, this->column_index);
-   }
-
-   template<typename ElementType>
-   const ElementType& DenseColumn<ElementType>::operator[](size_t row_index) const {
-      return this->matrix.entry(row_index, this->column_index);
-   }
 
    // DenseMatrix is an m x n matrix in column-order order where the columns are concatenated in a long vector
    template <typename ElementType>
@@ -73,7 +59,8 @@ namespace uno {
       [[nodiscard]] ElementType& entry(size_t row_index, size_t column_index);
       [[nodiscard]] const ElementType& entry(size_t row_index, size_t column_index) const;
       // vector view
-      [[nodiscard]] DenseColumn<ElementType> column(size_t column_index) const;
+      [[nodiscard]] DenseColumn<ElementType, DenseMatrix<ElementType>> column(size_t column_index);
+      [[nodiscard]] DenseColumn<ElementType, const DenseMatrix<ElementType>> column(size_t column_index) const;
       [[nodiscard]] ElementType* data();
       void clear();
 
@@ -124,7 +111,12 @@ namespace uno {
    }
 
    template <typename ElementType>
-   DenseColumn<ElementType> DenseMatrix<ElementType>::column(size_t column_index) const {
+   DenseColumn<ElementType, DenseMatrix<ElementType>> DenseMatrix<ElementType>::column(size_t column_index) {
+      return {*this, column_index};
+   }
+
+   template <typename ElementType>
+   DenseColumn<ElementType, const DenseMatrix<ElementType>> DenseMatrix<ElementType>::column(size_t column_index) const {
       return {*this, column_index};
    }
 
