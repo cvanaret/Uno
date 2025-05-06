@@ -25,8 +25,8 @@ namespace uno {
       linear_solver->initialize_memory(model.number_variables, model.number_hessian_nonzeros() + model.number_variables);
    }
 
-   void ConvexifiedHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
-      // do nothing
+   void ConvexifiedHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
+      statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
    }
 
    size_t ConvexifiedHessian::number_nonzeros(const Model& model) const {

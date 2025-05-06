@@ -44,7 +44,9 @@ namespace uno {
    // preallocate a bunch of stuff
    BQPDSolver::BQPDSolver(const Options& options):
          QPSolver(),
-         subproblem_is_regularized(options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP")),
+         need_regularization(options.get_bool("convexify_QP") ||
+            (options.get_string("globalization_mechanism") != "TR" && options.get_string("hessian_model") == "exact")
+         ),
          kmax_limit(options.get_int("BQPD_kmax")),
          alp(static_cast<size_t>(this->mlp)),
          lp(static_cast<size_t>(this->mlp)),
@@ -60,7 +62,7 @@ namespace uno {
       this->bqpd_jacobian.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros()); // Jacobian + objective gradient
       this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros() + problem.number_constraints + 3);
       const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
-      this->hessian = SymmetricMatrix<size_t, double>(problem.number_variables, number_hessian_nonzeros, this->subproblem_is_regularized, "CSC");
+      this->hessian = SymmetricMatrix<size_t, double>(problem.number_variables, number_hessian_nonzeros, this->need_regularization, "CSC");
       this->kmax = (0 < number_hessian_nonzeros) ? this->kmax_limit : 0;
       this->active_set.resize(problem.number_variables + problem.number_constraints);
       // default active set

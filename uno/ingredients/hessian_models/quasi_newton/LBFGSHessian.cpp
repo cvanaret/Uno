@@ -25,10 +25,12 @@ namespace uno {
       this->M_matrix = DenseMatrix<double>(this->memory_size, this->memory_size);
       this->U_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
       this->V_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
-}
+      this->Hessian_approximation = DenseMatrix<double>(this->dimension, this->dimension);
+   }
 
-   void LBFGSHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+   void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
       // statistics.add_column("QN delta", Statistics::double_width - 5, options.get_int("statistics_L-BFGS_initial_identity_multiple"));
+      statistics.add_column("QN |memory|", Statistics::double_width - 5, 30);
    }
    
    size_t LBFGSHessian::number_nonzeros(const Model& model) const {
@@ -40,13 +42,54 @@ namespace uno {
       this->update_memory(model, current_iterate, trial_iterate);
    }
 
-   void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& /*model*/, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& /*hessian*/) {
+   void LBFGSHessian::evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& /*primal_variables*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
       if (this->hessian_recomputation_required) {
          this->recompute_hessian_representation();
          this->hessian_recomputation_required = false;
       }
-      throw std::runtime_error("LBFGSHessian::evaluate_hessian not implemented yet\n");
+      statistics.set("QN |memory|", this->number_entries_in_memory);
+
+      this->Hessian_approximation.clear();
+      // diagonal contribution
+      for (size_t variable_index: Range(model.number_variables)) {
+         this->Hessian_approximation.entry(variable_index, variable_index) = this->initial_identity_multiple;
+      }
+
+      // rank-2 contribution
+      // U U^T v
+      // H := alpha U U^T + beta H
+      char uplo = 'U'; // H is referenced in the upper triangular part
+      char trans = 'N'; // U U^T
+      int n = static_cast<int>(this->dimension); // dimension of H
+      int k = static_cast<int>(this->number_entries_in_memory); // number of columns of U
+      double alpha = -1.; // minus sign
+      double beta = 1.;
+      int lda = static_cast<int>(this->dimension); // leading dimension of U
+      int ldc = static_cast<int>(this->dimension); // leading dimension of H
+      LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, this->U_matrix.data(), &lda, &beta,
+         this->Hessian_approximation.data(), &ldc);
+      // V V^T v
+      // H := alpha V V^T + beta H
+      uplo = 'U'; // H is referenced in the upper triangular part
+      trans = 'N'; // V V^T
+      n = static_cast<int>(this->dimension); // dimension of H
+      k = static_cast<int>(this->number_entries_in_memory); // number of columns of V
+      alpha = 1.; // plus sign
+      beta = 1.;
+      lda = static_cast<int>(this->dimension); // leading dimension of V
+      ldc = static_cast<int>(this->dimension); // leading dimension of H
+      LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, this->V_matrix.data(), &lda, &beta,
+         this->Hessian_approximation.data(), &ldc);
+
+      // save the dense Hessian approximation into the sparse upper triangular Hessian
+      hessian.reset();
+      for (size_t column_index: Range(model.number_variables)) {
+         for (size_t row_index: Range(column_index+1)) {
+            hessian.insert(this->Hessian_approximation.entry(row_index, column_index), row_index, column_index);
+         }
+         hessian.finalize_column(column_index);
+      }
    }
 
    // Hessian-vector product where the Hessian approximation is Bk = B0 - U U^T + V V^T and B0 = delta I
@@ -88,13 +131,13 @@ namespace uno {
 
    void LBFGSHessian::update_memory(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
       DEBUG << "\n*** Updating the BFGS memory\n";
-      // update the matrices Y, S and D
-      this->update_Y_matrix(model, current_iterate, trial_iterate);
+      // update the matrices S, Y and D
       // TODO check that the S entry isn't too small
       this->update_S_matrix(current_iterate, trial_iterate);
+      this->update_Y_matrix(model, current_iterate, trial_iterate);
       this->update_D_matrix();
-      DEBUG << "> Y: " << this->Y_matrix;
       DEBUG << "> S: " << this->S_matrix;
+      DEBUG << "> Y: " << this->Y_matrix;
       DEBUG << "> D: "; print_vector(DEBUG, this->D_matrix);
 
       // check that the latest D entry s^T y is > 0
@@ -110,14 +153,17 @@ namespace uno {
       }
    }
 
-   void LBFGSHessian::update_Y_matrix(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
-      // fill the Y matrix: y = \nabla L(x_k, y_k, z_k) - \nabla L(x_{k-1}, y_k, z_k)
-      model.evaluate_objective_gradient(current_iterate.primals, current_iterate.evaluations.objective_gradient);
-      model.evaluate_constraint_jacobian(current_iterate.primals, current_iterate.evaluations.constraint_jacobian);
-      model.evaluate_objective_gradient(trial_iterate.primals, trial_iterate.evaluations.objective_gradient);
-      model.evaluate_constraint_jacobian(trial_iterate.primals, trial_iterate.evaluations.constraint_jacobian);
+   void LBFGSHessian::update_S_matrix(const Iterate& current_iterate, const Iterate& trial_iterate) {
+      this->S_matrix.column(this->current_memory_slot) = trial_iterate.primals - current_iterate.primals;
+   }
 
+   // fill the Y matrix: y = \nabla L(x_k, y_k, z_k) - \nabla L(x_{k-1}, y_k, z_k)
+   void LBFGSHessian::update_Y_matrix(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
       // evaluate Lagrangian gradients at the current and trial iterates, both with the trial multipliers
+      current_iterate.evaluate_objective_gradient(model);
+      current_iterate.evaluate_constraint_jacobian(model);
+      trial_iterate.evaluate_objective_gradient(model);
+      trial_iterate.evaluate_constraint_jacobian(model);
       LagrangianGradient<double> current_lagrangian_gradient(this->dimension);
       LagrangianGradient<double> trial_lagrangian_gradient(this->dimension);
       model.evaluate_lagrangian_gradient(current_lagrangian_gradient, current_iterate, trial_iterate.multipliers);
@@ -126,10 +172,6 @@ namespace uno {
       const auto assembled_current_lagrangian_gradient = current_lagrangian_gradient.assemble(1.);
       const auto assembled_trial_lagrangian_gradient = trial_lagrangian_gradient.assemble(1.);
       this->Y_matrix.column(this->current_memory_slot) = assembled_trial_lagrangian_gradient - assembled_current_lagrangian_gradient;
-   }
-
-   void LBFGSHessian::update_S_matrix(const Iterate& current_iterate, const Iterate& trial_iterate) {
-      this->S_matrix.column(this->current_memory_slot) = trial_iterate.primals - current_iterate.primals;
    }
 
    void LBFGSHessian::update_D_matrix() {
@@ -184,7 +226,7 @@ namespace uno {
       DEBUG << "> J: " << J_matrix;
 
       // compute V * Ltilde^T in W matrix (B A^T with A = Ltilde, B = V)
-      DenseMatrix<double> W_matrix(this->V_matrix); // copy V into W TODO preallocate
+      this->U_matrix = this->V_matrix;
       {
          char side = 'R'; //  B := alpha B op(A)
          char uplo = 'L'; // Ltilde is lower triangular
@@ -196,15 +238,16 @@ namespace uno {
          int lda = static_cast<int>(this->memory_size); // leading dimension of Ltilde
          int ldb = static_cast<int>(this->dimension); // leading dimension of V
          LAPACK_triangular_matrix_matrix_product(&side, &uplo, &transa, &diag, &m, &n, &alpha, Ltilde_matrix.data(), &lda,
-            W_matrix.data(), &ldb);
+            this->U_matrix.data(), &ldb);
       }
       // add delta S to X
       for (size_t column_index: Range(this->number_entries_in_memory)) {
-         W_matrix.column(column_index) += this->initial_identity_multiple * this->S_matrix.column(column_index);
+         this->U_matrix.column(column_index) += this->initial_identity_multiple * this->S_matrix.column(column_index);
       }
-      DEBUG << "> W: " << W_matrix;
+      DEBUG << "> W: " << this->U_matrix;
 
       // solve U J^T = W wrt U (X op(A) = alpha B with A = J, op(A) = A^T, alpha = 1, B = W)
+      // U overwrites W
       {
          char side = 'R'; // X op(A) = alpha B
          char uplo = 'L'; // J is lower triangular
@@ -215,11 +258,11 @@ namespace uno {
          double alpha = 1.;
          int lda = static_cast<int>(this->memory_size); // leading dimension of J
          int ldb = static_cast<int>(this->dimension); // leading dimension of W
-         LAPACK_triangular_back_solve(&side, &uplo, &transa, &diag, &m, &n, &alpha, J_matrix.data(), &lda, W_matrix.data(), &ldb);
+         LAPACK_triangular_back_solve(&side, &uplo, &transa, &diag, &m, &n, &alpha, J_matrix.data(), &lda,
+            this->U_matrix.data(), &ldb);
       }
-      DenseMatrix<double>& U_matrix = W_matrix;
-      DEBUG << "> U: " << U_matrix;
-      DEBUG << "> V: " << this->V_matrix;
+      DEBUG << "> U: " << this->U_matrix;
+      DEBUG << "> V: " << this->V_matrix << '\n';
 
       // increment the slot: if we exceed the size of the memory, we start over and replace the older point in memory
       this->current_memory_slot = (this->current_memory_slot + 1) % this->memory_size;
@@ -277,23 +320,5 @@ namespace uno {
       int M_leading_dimension = static_cast<int>(leading_dimension);
       LAPACK_cholesky_factorization(&uplo, &M_dimension, matrix.data(), &M_leading_dimension, &info);
       DEBUG << "Cholesky info: " << info << '\n';
-   }
-
-   // performs back-solve with lower-triangular L:
-   // L X = B   or
-   // L^T X = B
-   // X is overwritten on B
-   void LBFGSHessian::lower_triangular_back_solve(DenseMatrix<double>& L_matrix, size_t matrix_leading_dimension, DenseMatrix<double>& rhs,
-         size_t rhs_dimension, size_t rhs_leading_dimension, bool transpose) {
-      char side = 'L';
-      char uplo = 'L';
-      char transa = transpose ? 'T' : 'N';
-      char diag = 'N';
-      int m = static_cast<int>(rhs_dimension); // number of rows of rhs
-      int n = static_cast<int>(rhs_dimension); // number of right-hand sides (columns of rhs)
-      double alpha = 1.;
-      int lda = static_cast<int>(matrix_leading_dimension);
-      int ldb = static_cast<int>(rhs_leading_dimension);
-      LAPACK_triangular_back_solve(&side, &uplo, &transa, &diag, &m, &n, &alpha, L_matrix.data(), &lda, rhs.data(), &ldb);
    }
 } // namespace
