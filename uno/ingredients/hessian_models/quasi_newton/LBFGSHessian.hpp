@@ -9,9 +9,13 @@
 #include "linear_algebra/DenseMatrix.hpp"
 
 namespace uno {
-   // forward declaration
-   class Options;
-
+   // express the Hessian approximation at iteration k by a low-rank update:
+   // Bk = B0 - U U^T + V V^T
+   // where
+   // B0 = delta_k I
+   // V = Yk Dk^(-1/2)
+   // U = (B0 Sk + Yk Dk^(-1) Lk^T) J^(-T)
+   // J J^T = M = Sk^T B0 Sk + Lk Dk^(-1) Lk^T
    class LBFGSHessian: public HessianModel {
    public:
       explicit LBFGSHessian(const Options& options);
@@ -40,11 +44,13 @@ namespace uno {
       // memory
       DenseMatrix<double> S_matrix;
       DenseMatrix<double> Y_matrix;
-      // Hessian representation
+      // Hessian representation: Bk = B0 - U U^T + V V^T
       bool hessian_recomputation_required{false};
-      DenseMatrix<double> L_matrix;
+      DenseMatrix<double, MatrixShape::LOWER_TRIANGULAR> L_matrix;
       std::vector<double> D_matrix; // diagonal
       DenseMatrix<double> M_matrix;
+      DenseMatrix<double> U_matrix;
+      DenseMatrix<double> V_matrix;
       double initial_identity_multiple{1.}; // referred to as delta in Numerical optimization
 
       void update_memory(const Model& model, Iterate& current_iterate, Iterate& trial_iterate);
@@ -55,10 +61,12 @@ namespace uno {
       [[nodiscard]] double compute_initial_identity_factor() const;
 
       static void perform_high_rank_update(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
-         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta);
+         DenseMatrix<double, MatrixShape::LOWER_TRIANGULAR>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta);
       static void perform_high_rank_update_transpose(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
          DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta);
       static void compute_cholesky_factors(DenseMatrix<double>& matrix, size_t dimension, size_t leading_dimension);
+      static void lower_triangular_back_solve(DenseMatrix<double>& L_matrix, size_t matrix_leading_dimension, DenseMatrix<double>& rhs,
+         size_t rhs_dimension, size_t leading_dimension_rhs, bool transpose);
    };
 } // namespace
 
