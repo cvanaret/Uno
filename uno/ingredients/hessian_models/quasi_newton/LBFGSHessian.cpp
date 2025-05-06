@@ -34,8 +34,8 @@ namespace uno {
    }
    
    size_t LBFGSHessian::number_nonzeros(const Model& model) const {
-      // TODO estimate this
-      return model.number_variables * model.number_variables;
+      // upper triangular matrix
+      return (model.number_variables * (model.number_variables + 1))/2;
    }
 
    void LBFGSHessian::notify_accepted_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
