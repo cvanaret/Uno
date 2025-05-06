@@ -160,8 +160,6 @@ namespace uno {
          const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
          this->inequality_handling_method->postprocess_iterate(feasibility_problem, trial_iterate.primals, trial_iterate.feasibility_multipliers);
       }
-      // compute the predicted reduction before the progress measures to make sure second-order information is valid
-      const ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(model, current_iterate, direction, step_length);
       this->compute_progress_measures(model, current_iterate, trial_iterate);
       trial_iterate.objective_multiplier = (this->current_phase == Phase::OPTIMALITY) ? 1. : 0.;
 
@@ -183,6 +181,7 @@ namespace uno {
          statistics.set("status", "0 primal step");
       }
       else {
+         const ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(model, current_iterate, direction, step_length);
          accept_iterate = this->globalization_strategy->is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
                predicted_reduction, objective_multiplier);
       }
@@ -208,25 +207,12 @@ namespace uno {
    }
 
    ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(const Model& model, const Iterate& current_iterate,
-         const Direction& direction, double step_length) {
-      if (this->current_phase == Phase::OPTIMALITY) {
-         const OptimizationProblem optimality_problem{model};
-         return {
-            this->compute_predicted_infeasibility_reduction_model(model, current_iterate, direction.primals, step_length),
-            this->compute_predicted_objective_reduction_model(optimality_problem, *this->optimality_hessian_model, current_iterate,
-               current_iterate.multipliers, direction.primals, step_length),
-            this->inequality_handling_method->compute_predicted_auxiliary_reduction_model(model, current_iterate, direction.primals, step_length)
-         };
-      }
-      else {
-         const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
-         return {
-            this->compute_predicted_infeasibility_reduction_model(model, current_iterate, direction.primals, step_length),
-            this->compute_predicted_objective_reduction_model(feasibility_problem, *this->feasibility_hessian_model, current_iterate,
-               current_iterate.feasibility_multipliers, direction.primals, step_length),
-            this->inequality_handling_method->compute_predicted_auxiliary_reduction_model(model, current_iterate, direction.primals, step_length)
-         };
-      }
+         const Direction& direction, double step_length) const {
+      return {
+         this->compute_predicted_infeasibility_reduction_model(model, current_iterate, direction.primals, step_length),
+         this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length),
+         this->inequality_handling_method->compute_predicted_auxiliary_reduction_model(model, current_iterate, direction.primals, step_length)
+      };
    }
 
    void FeasibilityRestoration::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {

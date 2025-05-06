@@ -40,11 +40,7 @@ namespace uno {
       this->initial_point.fill(0.);
    }
 
-   double QPSubproblem::hessian_quadratic_product(const OptimizationProblem& problem, HessianModel& hessian_model,
-         const Vector<double>& primal_direction, const Multipliers& multipliers) const {
-      // TODO preallocate
-      Vector<double> result(primal_direction.size());
-      problem.compute_hessian_vector_product(hessian_model, primal_direction, multipliers, result);
-      return dot(primal_direction, result);
+   double QPSubproblem::hessian_quadratic_product(const Vector<double>& vector) const {
+      return this->solver->hessian_quadratic_product(vector);
    }
 } // namespace
