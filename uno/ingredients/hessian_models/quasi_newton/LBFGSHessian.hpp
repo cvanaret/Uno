@@ -51,11 +51,12 @@ namespace uno {
       DenseMatrix<double> M_matrix;
       DenseMatrix<double> U_matrix;
       DenseMatrix<double> V_matrix;
+      DenseMatrix<double> Hessian_approximation;
       double initial_identity_multiple{1.}; // referred to as delta in Numerical optimization
 
       void update_memory(const Model& model, Iterate& current_iterate, Iterate& trial_iterate);
-      void update_Y_matrix(const Model& model, Iterate& current_iterate, Iterate& trial_iterate);
       void update_S_matrix(const Iterate& current_iterate, const Iterate& trial_iterate);
+      void update_Y_matrix(const Model& model, Iterate& current_iterate, Iterate& trial_iterate);
       void update_D_matrix();
       void recompute_hessian_representation();
       [[nodiscard]] double compute_initial_identity_factor() const;
@@ -65,8 +66,6 @@ namespace uno {
       static void perform_high_rank_update_transpose(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
          DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta);
       static void compute_cholesky_factors(DenseMatrix<double>& matrix, size_t dimension, size_t leading_dimension);
-      static void lower_triangular_back_solve(DenseMatrix<double>& L_matrix, size_t matrix_leading_dimension, DenseMatrix<double>& rhs,
-         size_t rhs_dimension, size_t leading_dimension_rhs, bool transpose);
    };
 } // namespace
 
