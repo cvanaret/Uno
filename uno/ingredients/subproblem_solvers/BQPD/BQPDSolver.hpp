@@ -94,8 +94,7 @@ namespace uno {
       void solve_subproblem(const OptimizationProblem& problem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
-      void save_hessian_operator(const OptimizationProblem& problem, HessianModel& hessian_model,
-         const Multipliers& current_multipliers);
+      void save_hessian_in_local_format();
       void save_gradients_to_local_format(size_t number_constraints);
       void set_multipliers(size_t number_variables, Multipliers& direction_multipliers);
       static BQPDStatus bqpd_status_from_int(int ifail);

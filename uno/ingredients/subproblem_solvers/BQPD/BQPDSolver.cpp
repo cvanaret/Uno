@@ -94,15 +94,12 @@ namespace uno {
          double trust_region_radius, const WarmstartInformation& warmstart_information) {
       this->set_up_subproblem(problem, current_iterate, trust_region_radius, warmstart_information);
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         if (this->subproblem_is_regularized) {
-            // regularize the explicit Hessian
-            problem.evaluate_lagrangian_hessian(statistics, hessian_model, current_iterate.primals, current_multipliers, this->hessian);
-         }
-         this->save_hessian_operator(problem, hessian_model, current_multipliers);
+         problem.evaluate_lagrangian_hessian(statistics, hessian_model, current_iterate.primals, current_multipliers, this->hessian);
+         this->save_hessian_in_local_format();
       }
       if (this->print_subproblem) {
          DEBUG << "QP:\n";
-         DEBUG << "Implicit Hessian (only Hessian-vector products are performed)\n";
+         DEBUG << "Hessian: " << this->hessian;
       }
       this->solve_subproblem(problem, initial_point, direction, warmstart_information);
    }
@@ -217,10 +214,7 @@ namespace uno {
       return mode;
    }
 
-   // save Hessian linear operator (f(v) -> H*v) in the BQPD depths. Will be retrieved by hessian_vector_product()
-   void BQPDSolver::save_hessian_operator(const OptimizationProblem& problem, HessianModel& hessian_model,
-         const Multipliers& current_multipliers) {
-      /*
+   void BQPDSolver::save_hessian_in_local_format() {
       const size_t header_size = 1;
       // pointers withing the single array
       int* row_indices = &this->workspace_sparsity[header_size];
@@ -239,7 +233,7 @@ namespace uno {
          column_starts[column_index] += column_starts[column_index - 1];
          column_starts[column_index - 1] += this->fortran_shift;
       }
-      column_starts[hessian.dimension()] += this->fortran_shift;
+      column_starts[this->hessian.dimension()] += this->fortran_shift;
       // copy the entries
       //std::vector<int> current_indices(hessian.dimension());
       this->current_hessian_indices.fill(0);
@@ -251,28 +245,8 @@ namespace uno {
          row_indices[index] = static_cast<int>(row_index) + this->fortran_shift;
          this->current_hessian_indices[column_index]++;
       }
-      */
-      WSC.kk = 0; // static_cast<int>(this->hessian.number_nonzeros()); // length of ws that is used by gdotx
-      WSC.ll = 0; // static_cast<int>(this->hessian.number_nonzeros() + this->hessian.dimension() + 2); // length of lws that is used by gdotx
-
-      // hide pointers in lws
-      intptr_t pointer_to_problem = reinterpret_cast<intptr_t>(&problem);
-      std::copy(reinterpret_cast<const char *>(&pointer_to_problem),
-         reinterpret_cast<const char *>(&pointer_to_problem) + sizeof(intptr_t),
-         reinterpret_cast<char *>(this->workspace_sparsity.data()));
-      WSC.ll += sizeof(intptr_t);
-
-      intptr_t pointer_to_hessian_model = reinterpret_cast<intptr_t>(&hessian_model);
-      std::copy(reinterpret_cast<const char *>(&pointer_to_hessian_model),
-         reinterpret_cast<const char *>(&pointer_to_hessian_model) + sizeof(intptr_t),
-         reinterpret_cast<char *>(this->workspace_sparsity.data()) + sizeof(intptr_t));
-      WSC.ll += sizeof(intptr_t);
-
-      intptr_t pointer_to_multipliers = reinterpret_cast<intptr_t>(&current_multipliers);
-      std::copy(reinterpret_cast<const char *>(&pointer_to_multipliers),
-         reinterpret_cast<const char *>(&pointer_to_multipliers) + sizeof(intptr_t),
-         reinterpret_cast<char *>(this->workspace_sparsity.data()) + 2*sizeof(intptr_t));
-      WSC.ll += sizeof(intptr_t);
+      WSC.kk = static_cast<int>(this->hessian.number_nonzeros()); // length of ws that is used by gdotx
+      WSC.ll = static_cast<int>(this->hessian.number_nonzeros() + this->hessian.dimension() + 2); // length of lws that is used by gdotx
    }
 
    void BQPDSolver::save_gradients_to_local_format(size_t number_constraints) {
@@ -377,14 +351,13 @@ namespace uno {
    }
 } // namespace
 
-void hessian_vector_product(int *n, const double x[], const double /*ws*/[], const int lws[], double v[]) {
+void hessian_vector_product(int *n, const double x[], const double ws[], const int lws[], double v[]) {
    assert(n != nullptr && "BQPDSolver::hessian_vector_product: the dimension n passed by pointer is NULL");
 
    for (size_t i = 0; i < static_cast<size_t>(*n); i++) {
       v[i] = 0.;
    }
 
-   /*
    int footer_start = lws[0];
    for (int i = 0; i < *n; i++) {
       for (int k = lws[footer_start + i]; k < lws[footer_start + i + 1]; k++) {
@@ -395,41 +368,5 @@ void hessian_vector_product(int *n, const double x[], const double /*ws*/[], con
             v[j] += ws[k - 1] * x[i];
          }
       }
-   }
-   */
-
-   // retrieve problem, Hessian model and multipliers
-   intptr_t pointer_to_problem;
-   std::copy(reinterpret_cast<const char *>(lws),
-      reinterpret_cast<const char *>(lws) + sizeof(intptr_t),
-      reinterpret_cast<char *>(&pointer_to_problem));
-   const uno::OptimizationProblem* problem = reinterpret_cast<const uno::OptimizationProblem*>(pointer_to_problem);
-   assert(problem != nullptr && "BQPD's hessian_vector_product: the problem is NULL");
-
-   intptr_t pointer_to_hessian_model;
-   std::copy(reinterpret_cast<const char *>(lws) + sizeof(intptr_t),
-      reinterpret_cast<const char *>(lws) + 2*sizeof(intptr_t),
-      reinterpret_cast<char *>(&pointer_to_hessian_model));
-   uno::HessianModel* hessian_model = reinterpret_cast<uno::HessianModel*>(pointer_to_hessian_model);
-   assert(hessian_model != nullptr && "BQPD's hessian_vector_product: the Hessian model is NULL");
-
-   intptr_t pointer_to_multipliers;
-   std::copy(reinterpret_cast<const char *>(lws) + 2*sizeof(intptr_t),
-      reinterpret_cast<const char *>(lws) + 3*sizeof(intptr_t),
-      reinterpret_cast<char *>(&pointer_to_multipliers));
-   const uno::Multipliers* multipliers = reinterpret_cast<const uno::Multipliers*>(pointer_to_multipliers);
-   assert(multipliers != nullptr && "BQPD's hessian_vector_product: the multipliers are NULL");
-
-   // convert x[] and v[] into Vector<double>
-   // TODO improve that
-   const size_t number_variables = static_cast<size_t>(*n);
-   uno::Vector<double> primals(number_variables);
-   for (size_t variable_index: uno::Range(number_variables)) {
-      primals[variable_index] = x[variable_index];
-   }
-   uno::Vector<double> result(number_variables);
-   problem->compute_hessian_vector_product(*hessian_model, primals, *multipliers, result);
-   for (size_t variable_index: uno::Range(number_variables)) {
-      v[variable_index] = result[variable_index];
    }
 }
