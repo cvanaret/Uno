@@ -104,6 +104,12 @@ namespace uno {
       this->solve_subproblem(problem, initial_point, direction, warmstart_information);
    }
 
+   double BQPDSolver::hessian_quadratic_product(const Vector<double>& vector) const {
+      return this->hessian.quadratic_product(vector, vector);
+   }
+
+   // protected member functions
+
    void BQPDSolver::set_up_subproblem(const OptimizationProblem& problem, Iterate& current_iterate, double trust_region_radius,
          const WarmstartInformation& warmstart_information) {
       // initialize wsc_ common block (Hessian & workspace for BQPD)

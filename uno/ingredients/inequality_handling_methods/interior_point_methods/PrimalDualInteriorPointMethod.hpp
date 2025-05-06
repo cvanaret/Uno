@@ -40,8 +40,7 @@ namespace uno {
 
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
             Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) override;
-      [[nodiscard]] double hessian_quadratic_product(const OptimizationProblem& problem, HessianModel& hessian_model,
-         const Vector<double>& primal_direction, const Multipliers& multipliers) const override;
+      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
 
       void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,

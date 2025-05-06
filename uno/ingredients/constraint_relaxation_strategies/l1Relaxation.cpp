@@ -251,8 +251,8 @@ namespace uno {
       const l1RelaxedProblem l1_relaxed_problem{model, this->penalty_parameter, this->constraint_violation_coefficient};
       this->inequality_handling_method->postprocess_iterate(l1_relaxed_problem, trial_iterate.primals, trial_iterate.multipliers);
       // compute the predicted reduction before the progress measures to make sure second-order information is valid
-      const ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(model, l1_relaxed_problem,
-         current_iterate, direction, step_length);
+      const ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(model, current_iterate, direction,
+         step_length);
       this->compute_progress_measures(model, current_iterate, trial_iterate);
       trial_iterate.objective_multiplier = l1_relaxed_problem.get_objective_multiplier();
 
@@ -288,11 +288,11 @@ namespace uno {
       this->inequality_handling_method->set_auxiliary_measure(model, iterate);
    }
 
-   ProgressMeasures l1Relaxation::compute_predicted_reduction_models(const Model& model, const OptimizationProblem& problem,
-         Iterate& current_iterate, const Direction& direction, double step_length) {
+   ProgressMeasures l1Relaxation::compute_predicted_reduction_models(const Model& model, Iterate& current_iterate,
+         const Direction& direction, double step_length) {
       return {
          this->compute_predicted_infeasibility_reduction_model(model, current_iterate, direction.primals, step_length),
-         this->compute_predicted_objective_reduction_model(problem, *this->hessian_model, current_iterate, current_iterate.multipliers, direction.primals, step_length),
+         this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length),
          this->inequality_handling_method->compute_predicted_auxiliary_reduction_model(model, current_iterate, direction.primals, step_length)
       };
    }

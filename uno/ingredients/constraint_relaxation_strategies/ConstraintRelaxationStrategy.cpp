@@ -68,12 +68,12 @@ namespace uno {
       return current_constraint_violation - trial_linearized_constraint_violation;
    }
 
-   std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_objective_reduction_model(const OptimizationProblem& problem,
-         HessianModel& hessian_model, const Iterate& current_iterate, const Multipliers& multipliers, const Vector<double>& primal_direction, double step_length) const {
+   std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_objective_reduction_model(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length) const {
       // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
       const double directional_derivative = dot(primal_direction, current_iterate.evaluations.objective_gradient);
       const double quadratic_term = this->first_order_predicted_reduction ? 0. :
-         this->inequality_handling_method->hessian_quadratic_product(problem, hessian_model, primal_direction, multipliers);
+         this->inequality_handling_method->hessian_quadratic_product(primal_direction);
       return [=](double objective_multiplier) {
          return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
       };

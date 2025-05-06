@@ -31,8 +31,7 @@ namespace uno {
       this->initial_point.fill(0.);
    }
 
-   double LPSubproblem::hessian_quadratic_product(const OptimizationProblem& /*problem*/, HessianModel& /*hessian_model*/,
-         const Vector<double>& /*primal_direction*/, const Multipliers& /*multipliers*/) const {
+   double LPSubproblem::hessian_quadratic_product(const Vector<double>& /*vector*/) const {
       return 0.;
    }
 } // namespace

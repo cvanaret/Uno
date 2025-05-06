@@ -30,6 +30,8 @@ namespace uno {
       virtual void solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
             const Vector<double>& initial_point, Direction& direction, HessianModel& hessian_model, double trust_region_radius,
             const WarmstartInformation& warmstart_information) = 0;
+
+      [[nodiscard]] virtual double hessian_quadratic_product(const Vector<double>& vector) const = 0;
    };
 } // namespace
 

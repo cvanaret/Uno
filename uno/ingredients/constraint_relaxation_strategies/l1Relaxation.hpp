@@ -74,8 +74,8 @@ namespace uno {
          const Direction& feasibility_direction) const;
 
       void evaluate_progress_measures(const Model& model, Iterate& iterate) const override;
-      [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(const Model& model, const OptimizationProblem& problem,
-         Iterate& current_iterate, const Direction& direction, double step_length);
+      [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(const Model& model, Iterate& current_iterate,
+         const Direction& direction, double step_length);
 
       void check_exact_relaxation(Iterate& iterate) const;
    };
