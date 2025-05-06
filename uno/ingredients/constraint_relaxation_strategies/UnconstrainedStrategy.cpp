@@ -27,7 +27,7 @@ namespace uno {
       assert(this->problem != nullptr);
 
       // Hessian model
-      this->hessian_model = HessianModelFactory::create(model, options);
+      this->hessian_model = HessianModelFactory::create(model, 1., options);
 
       // memory allocation
       this->inequality_handling_method->initialize(*this->problem, initial_iterate, *this->hessian_model,

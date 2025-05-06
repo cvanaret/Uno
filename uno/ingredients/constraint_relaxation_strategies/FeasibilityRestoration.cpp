@@ -40,8 +40,8 @@ namespace uno {
       this->feasibility_problem = std::make_unique<l1RelaxedProblem>(model, 0., this->constraint_violation_coefficient);
 
       // Hessian models
-      this->optimality_hessian_model = HessianModelFactory::create(model, options);
-      this->feasibility_hessian_model = HessianModelFactory::create(model, options);
+      this->optimality_hessian_model = HessianModelFactory::create(model, 1., options);
+      this->feasibility_hessian_model = HessianModelFactory::create(model, 0., options);
 
       // memory allocation
       this->optimality_inequality_handling_method->initialize(*this->optimality_problem, initial_iterate,
