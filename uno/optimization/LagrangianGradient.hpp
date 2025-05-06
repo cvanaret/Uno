@@ -22,6 +22,8 @@ namespace uno {
    template <typename ElementType>
    class AssembledLagrangianGradient {
    public:
+      using value_type = ElementType;
+
       AssembledLagrangianGradient(const LagrangianGradient<ElementType>& lagrangian_gradient, ElementType objective_multiplier);
 
       [[nodiscard]] size_t size() const;
