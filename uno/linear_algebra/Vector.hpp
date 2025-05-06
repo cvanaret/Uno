@@ -151,12 +151,21 @@ namespace uno {
       }
       return result;
    }
-
+   
    template <typename Vector>
    typename Vector::value_type dot(const Vector& x, const Vector& y) {
       typename Vector::value_type dot_product = 0;
       const size_t size = std::min(x.size(), y.size());
       for (size_t index: Range(size)) {
+         dot_product += x[index] * y[index];
+      }
+      return dot_product;
+   }
+
+   template <typename Vector, typename Vector2>
+   typename Vector::value_type dot(const Vector& x, const Vector2& y) {
+      typename Vector::value_type dot_product = 0;
+      for (size_t index: Range(x.size())) {
          dot_product += x[index] * y[index];
       }
       return dot_product;
