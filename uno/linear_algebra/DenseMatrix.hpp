@@ -4,24 +4,37 @@
 #ifndef UNO_DENSEMATRIX_H
 #define UNO_DENSEMATRIX_H
 
+#include <cassert>
 #include <iostream>
 #include <vector>
+
+#include "symbolic/MatrixVectorProduct.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
-   template <typename ElementType, typename MatrixType>
+   // MatrixType can be const DenseMatrix (read-only) or DenseMatrix (writable)
+   template <typename MatrixType>
    class DenseColumn {
    public:
-      using value_type = std::remove_const_t<ElementType>;
+      using value_type = typename std::remove_reference_t<MatrixType>::value_type;
 
       DenseColumn(MatrixType& matrix, size_t column_index): matrix(matrix), column_index(column_index) {
       }
 
       template <typename Expression>
       DenseColumn& operator=(Expression&& expression) {
-         //static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
-         for (size_t index = 0; index < this->size(); index++) {
+         static_assert(std::is_same_v<typename std::remove_reference_t<Expression>::value_type, value_type>);
+         for (size_t index: Range(this->size())) {
             this->operator[](index) = expression[index];
+         }
+         return *this;
+      }
+
+      template <typename Expression>
+      DenseColumn& operator+=(Expression&& expression) {
+         static_assert(std::is_same_v<typename std::remove_reference_t<Expression>::value_type, value_type>);
+         for (size_t index: Range(this->size())) {
+            this->operator[](index) += expression[index];
          }
          return *this;
       }
@@ -30,12 +43,20 @@ namespace uno {
          return this->matrix.get_number_rows();
       }
 
-      [[nodiscard]] ElementType& operator[](size_t row_index) {
+      [[nodiscard]] value_type& operator[](size_t row_index) {
          return this->matrix.entry(row_index, this->column_index);
       }
 
-      [[nodiscard]] const ElementType& operator[](size_t row_index) const {
+      [[nodiscard]] const value_type& operator[](size_t row_index) const {
          return this->matrix.entry(row_index, this->column_index);
+      }
+
+      value_type* data() {
+         return this->matrix.data() + this->column_index * this->matrix.get_number_rows();
+      }
+
+      const value_type* data() const {
+         return this->matrix.data() + this->column_index * this->matrix.get_number_rows();
       }
 
    protected:
@@ -43,10 +64,18 @@ namespace uno {
       const size_t column_index;
    };
 
+   enum class MatrixShape {
+      GENERAL,
+      LOWER_TRIANGULAR,
+      UPPER_TRIANGULAR
+   };
+
    // DenseMatrix is an m x n matrix in column-order order where the columns are concatenated in a long vector
-   template <typename ElementType>
+   template <typename ElementType, MatrixShape Shape = MatrixShape::GENERAL>
    class DenseMatrix {
    public:
+      using value_type = ElementType;
+
       DenseMatrix(size_t number_rows, size_t number_columns);
       DenseMatrix() = default;
       DenseMatrix(const DenseMatrix& other);
@@ -59,12 +88,20 @@ namespace uno {
       [[nodiscard]] ElementType& entry(size_t row_index, size_t column_index);
       [[nodiscard]] const ElementType& entry(size_t row_index, size_t column_index) const;
       // vector view
-      [[nodiscard]] DenseColumn<ElementType, DenseMatrix<ElementType>> column(size_t column_index);
-      [[nodiscard]] DenseColumn<ElementType, const DenseMatrix<ElementType>> column(size_t column_index) const;
+      [[nodiscard]] DenseColumn<DenseMatrix<ElementType, Shape>> column(size_t column_index);
+      [[nodiscard]] DenseColumn<const DenseMatrix<ElementType, Shape>> column(size_t column_index) const;
       [[nodiscard]] ElementType* data();
       void clear();
 
-      //VectorView<const DenseMatrix&> column(size_t column_index) const;
+      // expressions
+      /*
+      DenseMatrix& operator=(const MatrixVectorProduct<
+            DenseMatrix<ElementType, MatrixShape::LOWER_TRIANGULAR>&,
+            DenseMatrix<ElementType, MatrixShape::LOWER_TRIANGULAR>&>& product) {
+         std::cout << "Specialization of DenseMatrix::operator= for product of lower triangular matrices\n";
+         return *this;
+      }
+      */
 
       void print(std::ostream& stream) const;
 
@@ -73,14 +110,17 @@ namespace uno {
       std::vector<ElementType> matrix{}; // column-major ordering
    };
 
-   template <typename ElementType>
-   DenseMatrix<ElementType>::DenseMatrix(size_t number_rows, size_t number_columns):
+   template <typename ElementType, MatrixShape Shape>
+   DenseMatrix<ElementType, Shape>::DenseMatrix(size_t number_rows, size_t number_columns):
          number_rows(number_rows), number_columns(number_columns),
          matrix(number_rows * number_columns, ElementType(0)) {
+      if ((Shape == MatrixShape::LOWER_TRIANGULAR || Shape == MatrixShape::UPPER_TRIANGULAR) && number_rows != number_columns) {
+         throw std::runtime_error("DenseMatrix: a triangular matrix must be square");
+      }
    }
 
-   template <typename ElementType>
-   DenseMatrix<ElementType>::DenseMatrix(const DenseMatrix& other):
+   template <typename ElementType, MatrixShape Shape>
+   DenseMatrix<ElementType, Shape>::DenseMatrix(const DenseMatrix& other):
          number_rows(other.number_rows), number_columns(other.number_columns),
          matrix(other.number_rows * other.number_columns, ElementType(0)) {
       for (size_t column_index: Range(this->number_columns)) {
@@ -90,43 +130,45 @@ namespace uno {
       }
    }
 
-   template <typename ElementType>
-   size_t DenseMatrix<ElementType>::get_number_rows() const {
+   template <typename ElementType, MatrixShape Shape>
+   size_t DenseMatrix<ElementType, Shape>::get_number_rows() const {
       return this->number_rows;
    }
 
-   template <typename ElementType>
-   size_t DenseMatrix<ElementType>::get_number_columns() const {
+   template <typename ElementType, MatrixShape Shape>
+   size_t DenseMatrix<ElementType, Shape>::get_number_columns() const {
       return this->number_columns;
    }
 
-   template <typename ElementType>
-   ElementType& DenseMatrix<ElementType>::entry(size_t row_index, size_t column_index) {
+   template <typename ElementType, MatrixShape Shape>
+   ElementType& DenseMatrix<ElementType, Shape>::entry(size_t row_index, size_t column_index) {
+      assert(row_index < this->get_number_rows() && column_index < this->get_number_columns() &&
+         "DenseMatrix::entry: indices out of bounds");
       return this->matrix[column_index * this->number_rows + row_index];
    }
 
-   template <typename ElementType>
-   const ElementType& DenseMatrix<ElementType>::entry(size_t row_index, size_t column_index) const {
+   template <typename ElementType, MatrixShape Shape>
+   const ElementType& DenseMatrix<ElementType, Shape>::entry(size_t row_index, size_t column_index) const {
       return this->matrix[column_index * this->number_rows + row_index];
    }
 
-   template <typename ElementType>
-   DenseColumn<ElementType, DenseMatrix<ElementType>> DenseMatrix<ElementType>::column(size_t column_index) {
+   template <typename ElementType, MatrixShape Shape>
+   DenseColumn<DenseMatrix<ElementType, Shape>> DenseMatrix<ElementType, Shape>::column(size_t column_index) {
       return {*this, column_index};
    }
 
-   template <typename ElementType>
-   DenseColumn<ElementType, const DenseMatrix<ElementType>> DenseMatrix<ElementType>::column(size_t column_index) const {
+   template <typename ElementType, MatrixShape Shape>
+   DenseColumn<const DenseMatrix<ElementType, Shape>> DenseMatrix<ElementType, Shape>::column(size_t column_index) const {
       return {*this, column_index};
    }
 
-   template <typename ElementType>
-   ElementType* DenseMatrix<ElementType>::data() {
+   template <typename ElementType, MatrixShape Shape>
+   ElementType* DenseMatrix<ElementType, Shape>::data() {
       return this->matrix.data();
    }
 
-   template <typename ElementType>
-   void DenseMatrix<ElementType>::clear() {
+   template <typename ElementType, MatrixShape Shape>
+   void DenseMatrix<ElementType, Shape>::clear() {
       for (size_t column_index: Range(this->number_columns)) {
          for (size_t row_index: Range(this->number_rows)) {
             this->entry(row_index, column_index) = ElementType(0);
@@ -134,15 +176,8 @@ namespace uno {
       }
    }
 
-   /*
-   template <typename ElementType>
-   VectorView<const DenseMatrix&> DenseMatrix<ElementType>::column(size_t column_index) const {
-      return {*this, column_index * this->number_rows, column_index * this->number_rows + this->number_rows};
-   }
-   */
-
-   template <typename ElementType>
-   void DenseMatrix<ElementType>::print(std::ostream& stream) const {
+   template <typename ElementType, MatrixShape Shape>
+   void DenseMatrix<ElementType, Shape>::print(std::ostream& stream) const {
       stream << "Dense matrix (" << this->number_rows << "x" << this->number_columns << ")\n";
       for (size_t column_index: Range(this->number_columns)) {
          stream << "Column " << column_index << ":";
@@ -153,8 +188,8 @@ namespace uno {
       }
    }
 
-   template <typename ElementType>
-   std::ostream& operator<<(std::ostream& stream, const DenseMatrix<ElementType>& matrix) {
+   template <typename ElementType, MatrixShape Shape>
+   std::ostream& operator<<(std::ostream& stream, const DenseMatrix<ElementType, Shape>& matrix) {
       matrix.print(stream);
       return stream;
    }
