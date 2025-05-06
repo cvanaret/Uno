@@ -30,8 +30,8 @@ namespace uno {
          optimality_problem(model),
          // relax the linear constraints in the l1 relaxed problem only if we are using a trust-region constraint
          feasibility_problem(model, 0., this->constraint_violation_coefficient, use_trust_region),
-         optimality_hessian_model(HessianModelFactory::create(model, options)),
-         feasibility_hessian_model(HessianModelFactory::create(model, options)),
+         optimality_hessian_model(HessianModelFactory::create(model, 1., options)),
+         feasibility_hessian_model(HessianModelFactory::create(model, 0., options)),
          optimality_inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
          feasibility_inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
          optimality_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),

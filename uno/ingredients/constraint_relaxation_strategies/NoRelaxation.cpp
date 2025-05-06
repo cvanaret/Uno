@@ -17,7 +17,7 @@ namespace uno {
          ConstraintRelaxationStrategy(options),
          problem(model),
          inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
-         hessian_model(HessianModelFactory::create(model, options)),
+         hessian_model(HessianModelFactory::create(model, 1., options)),
          inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
          globalization_strategy(options) {
    }

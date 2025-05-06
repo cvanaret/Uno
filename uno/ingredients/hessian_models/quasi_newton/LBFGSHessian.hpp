@@ -18,7 +18,7 @@ namespace uno {
    // J J^T = M = Sk^T B0 Sk + Lk Dk^(-1) Lk^T
    class LBFGSHessian: public HessianModel {
    public:
-      LBFGSHessian(const Model& model, const Options& options);
+      LBFGSHessian(const Model& model, double objective_multiplier, const Options& options);
       ~LBFGSHessian() override = default;
 
       [[nodiscard]] bool has_hessian_operator() const override;
@@ -38,6 +38,7 @@ namespace uno {
 
    protected:
       const Model& model;
+      const double fixed_objective_multiplier;
       const size_t memory_size; // user defined
       size_t number_entries_in_memory{0}; // 0 <= used_memory_size <= memory_size
       size_t current_memory_slot{0}; // 0 <= current_available_slot < memory_size
@@ -66,8 +67,6 @@ namespace uno {
       static void perform_high_rank_update_transpose(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
          DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta);
       static void compute_cholesky_factors(DenseMatrix<double>& matrix, size_t dimension, size_t leading_dimension);
-      static void lower_triangular_back_solve(DenseMatrix<double>& L_matrix, size_t matrix_leading_dimension, DenseMatrix<double>& rhs,
-         size_t rhs_dimension, size_t leading_dimension_rhs, bool transpose);
    };
 } // namespace
 
