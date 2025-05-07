@@ -151,7 +151,7 @@ namespace uno {
       }
       return result;
    }
-   
+
    template <typename Vector>
    typename Vector::value_type dot(const Vector& x, const Vector& y) {
       typename Vector::value_type dot_product = 0;
