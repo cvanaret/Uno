@@ -13,7 +13,7 @@ namespace uno {
       ~SwitchingMethod() override = default;
 
       bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress,
-            const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
+            const ProgressMeasures& predicted_reductions, double objective_multiplier) override;
 
    protected:
       const double delta;

@@ -168,6 +168,10 @@ namespace uno {
          const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
          this->feasibility_inequality_handling_method->postprocess_iterate(feasibility_problem, trial_iterate.primals, trial_iterate.feasibility_multipliers);
       }
+      // compute the progress measures and the predicted reductions
+      const ProgressMeasures predicted_reductions = this->compute_predicted_reductions(
+            this->current_phase == Phase::OPTIMALITY ? *this->optimality_inequality_handling_method : *this->feasibility_inequality_handling_method,
+            model, current_iterate, direction, step_length);
       this->compute_progress_measures(
          this->current_phase == Phase::OPTIMALITY ? *this->optimality_inequality_handling_method : *this->feasibility_inequality_handling_method,
          model, current_iterate, trial_iterate);
@@ -191,11 +195,8 @@ namespace uno {
          statistics.set("status", "0 primal step");
       }
       else {
-         const ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(
-            this->current_phase == Phase::OPTIMALITY ? *this->optimality_inequality_handling_method : *this->feasibility_inequality_handling_method,
-            model, current_iterate, direction, step_length);
          accept_iterate = this->globalization_strategy->is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
-               predicted_reduction, objective_multiplier);
+               predicted_reductions, objective_multiplier);
       }
       ConstraintRelaxationStrategy::set_progress_statistics(statistics, model, trial_iterate);
       if (accept_iterate) {
@@ -218,7 +219,7 @@ namespace uno {
       this->optimality_inequality_handling_method->set_auxiliary_measure(model, iterate); // TODO
    }
 
-   ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(const InequalityHandlingMethod& inequality_handling_method,
+   ProgressMeasures FeasibilityRestoration::compute_predicted_reductions(const InequalityHandlingMethod& inequality_handling_method,
          const Model& model, const Iterate& current_iterate, const Direction& direction, double step_length) const {
       return {
          this->compute_predicted_infeasibility_reduction_model(model, current_iterate, direction.primals, step_length),

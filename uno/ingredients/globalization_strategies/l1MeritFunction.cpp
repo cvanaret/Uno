@@ -16,9 +16,9 @@ namespace uno {
    }
 
    bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double objective_multiplier) {
       // predicted reduction with all contributions. This quantity should be positive (= negative directional derivative)
-      double constrained_predicted_reduction = l1MeritFunction::constrained_merit_function(predicted_reduction, objective_multiplier);
+      double constrained_predicted_reduction = l1MeritFunction::constrained_merit_function(predicted_reductions, objective_multiplier);
       DEBUG << "Constrained predicted reduction: " << constrained_predicted_reduction << '\n';
       if (constrained_predicted_reduction <= 0.) {
          DEBUG  << "The direction is not a descent direction for the merit function. You should decrease the penalty parameter.\n";

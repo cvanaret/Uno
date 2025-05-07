@@ -26,7 +26,7 @@ namespace uno {
       this->funnel.set_infeasibility_upper_bound(upper_bound);
       DEBUG << "Current funnel width: " << this->funnel.current_width() << '\n';
 
-      statistics.add_column("funnel width", Statistics::double_width, options.get_int("statistics_funnel_width_column_order"));
+      statistics.add_column("funnel width", Statistics::double_width - 3, options.get_int("statistics_funnel_width_column_order"));
       statistics.set("funnel width", this->funnel.current_width());
    }
 

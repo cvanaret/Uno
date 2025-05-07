@@ -15,7 +15,7 @@ namespace uno {
 
       void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-            const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
+            const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reductions, double objective_multiplier) override;
       [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& current_progress, const ProgressMeasures& trial_progress) const override;
       void reset() override;
       void notify_switch_to_feasibility(const ProgressMeasures& current_progress) override;
