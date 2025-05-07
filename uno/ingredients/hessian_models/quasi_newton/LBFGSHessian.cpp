@@ -12,8 +12,13 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   LBFGSHessian::LBFGSHessian(const Options& options): HessianModel(),
+   LBFGSHessian::LBFGSHessian(std::optional<double> fixed_objective_multiplier, const Options& options):
+         HessianModel(),
+         fixed_objective_multiplier(fixed_objective_multiplier),
          memory_size(options.get_unsigned_int("quasi_newton_memory_size")) {
+      if (fixed_objective_multiplier.has_value()) {
+         std::cout << "L-BFGS has fixed obj multiplier " << *fixed_objective_multiplier << '\n';
+      }
    }
 
    bool LBFGSHessian::has_implicit_representation() const {
@@ -142,9 +147,15 @@ namespace uno {
       model.evaluate_lagrangian_gradient(current_lagrangian_gradient, current_iterate, trial_iterate.multipliers);
       model.evaluate_lagrangian_gradient(trial_lagrangian_gradient, trial_iterate, trial_iterate.multipliers);
       // TODO objective multiplier is hardcoded for the moment
-      const auto assembled_current_lagrangian_gradient = current_lagrangian_gradient.assemble(1.);
-      const auto assembled_trial_lagrangian_gradient = trial_lagrangian_gradient.assemble(1.);
-      this->Y_matrix.column(this->current_memory_slot) = assembled_trial_lagrangian_gradient - assembled_current_lagrangian_gradient;
+      if (this->fixed_objective_multiplier.has_value()) {
+         const double objective_multiplier = *this->fixed_objective_multiplier;
+         const auto assembled_current_lagrangian_gradient = current_lagrangian_gradient.assemble(objective_multiplier);
+         const auto assembled_trial_lagrangian_gradient = trial_lagrangian_gradient.assemble(objective_multiplier);
+         this->Y_matrix.column(this->current_memory_slot) = assembled_trial_lagrangian_gradient - assembled_current_lagrangian_gradient;
+      }
+      else {
+         throw std::runtime_error("LBFGSHessian::update_Y_matrix: the objective multiplier varies. This is not implemented yet");
+      }
    }
 
    void LBFGSHessian::update_D_matrix() {
