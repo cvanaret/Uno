@@ -15,7 +15,7 @@ namespace uno {
    std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(size_t number_bound_constraints, const Options& options) {
       // set unconstrained strategy automatically
       if (number_bound_constraints == 0) {
-         return std::make_unique<QPSubproblem>(options); // by default TODO choose between QP and LP automatically
+         return std::make_unique<LPSubproblem>(options); // by default TODO choose between QP and LP automatically
       }
       const std::string inequality_handling_method = options.get_string("inequality_handling_method");
       // inequality-constrained methods
