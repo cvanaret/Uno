@@ -61,7 +61,7 @@ namespace uno {
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& /*hessian*/) {
       throw std::runtime_error("LBFGSHessian::evaluate_hessian should not be called");
    }
-   
+
    // Hessian-vector product where the Hessian approximation is Bk = B0 - U U^T + V V^T and B0 = delta I
    // Bk v = (B0 - U U^T + V V^T) v = delta v - U U^T x + V V^T x
    void LBFGSHessian::compute_hessian_vector_product(const Model& model, const double* vector, double /*objective_multiplier*/,
