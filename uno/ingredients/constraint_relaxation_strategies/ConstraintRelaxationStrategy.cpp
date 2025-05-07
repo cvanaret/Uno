@@ -18,9 +18,9 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Options& options):
-         globalization_strategy(GlobalizationStrategyFactory::create(options.get_string("globalization_strategy"), options)),
-         inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
+   ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(size_t number_constraints, size_t number_bounds_constraints, const Options& options):
+         globalization_strategy(GlobalizationStrategyFactory::create(number_constraints, options)),
+         inequality_handling_method(InequalityHandlingMethodFactory::create(number_bounds_constraints, options)),
          progress_norm(norm_from_string(options.get_string("progress_norm"))),
          residual_norm(norm_from_string(options.get_string("residual_norm"))),
          residual_scaling_threshold(options.get_double("residual_scaling_threshold")),

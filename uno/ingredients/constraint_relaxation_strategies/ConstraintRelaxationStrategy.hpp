@@ -33,7 +33,7 @@ namespace uno {
 
    class ConstraintRelaxationStrategy {
    public:
-      explicit ConstraintRelaxationStrategy(const Options& options);
+      ConstraintRelaxationStrategy(size_t number_constraints, size_t number_bounds_constraints, const Options& options);
       virtual ~ConstraintRelaxationStrategy();
 
       virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction, const Options& options) = 0;
@@ -57,6 +57,7 @@ namespace uno {
       virtual void compute_primal_dual_residuals(const Model& model, Iterate& iterate) = 0;
       virtual void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const = 0;
 
+      [[nodiscard]] virtual std::string get_strategy_combination() const = 0;
       [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
       [[nodiscard]] size_t get_number_subproblems_solved() const;
 

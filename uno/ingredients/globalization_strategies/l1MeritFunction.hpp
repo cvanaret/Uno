@@ -4,6 +4,7 @@
 #ifndef UNO_MERITFUNCTION_H
 #define UNO_MERITFUNCTION_H
 
+#include <string>
 #include "GlobalizationStrategy.hpp"
 #include "tools/Infinity.hpp"
 
@@ -19,6 +20,8 @@ namespace uno {
       void reset() override;
       void notify_switch_to_feasibility(const ProgressMeasures& current_progress) override;
       void notify_switch_to_optimality(const ProgressMeasures& current_progress) override;
+
+      [[nodiscard]] std::string get_strategy_combination() const override;
 
    protected:
       double smallest_known_infeasibility{INF<double>};

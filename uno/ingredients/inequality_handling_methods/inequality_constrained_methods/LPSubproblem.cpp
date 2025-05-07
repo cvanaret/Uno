@@ -34,4 +34,8 @@ namespace uno {
    double LPSubproblem::hessian_quadratic_product(const Vector<double>& /*vector*/) const {
       return 0.;
    }
+
+   std::string LPSubproblem::get_strategy_combination() const {
+      return "LP method";
+   }
 } // namespace

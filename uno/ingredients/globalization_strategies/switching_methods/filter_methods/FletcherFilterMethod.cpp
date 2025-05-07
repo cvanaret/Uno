@@ -68,4 +68,8 @@ namespace uno {
       // if the trial infeasibility improves upon the best known infeasibility
       return this->filter->infeasibility_sufficient_reduction(this->filter->get_smallest_infeasibility(), trial_progress.infeasibility);
    }
+
+   std::string FletcherFilterMethod::get_strategy_combination() const {
+      return "Fletcher filter method";
+   }
 } // namespace

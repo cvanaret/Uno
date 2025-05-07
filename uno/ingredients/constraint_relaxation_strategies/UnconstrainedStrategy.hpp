@@ -1,25 +1,22 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_FEASIBILITYRESTORATION_H
-#define UNO_FEASIBILITYRESTORATION_H
+#ifndef UNO_UNCONSTRAINEDSTRATEGY_H
+#define UNO_UNCONSTRAINEDSTRATEGY_H
 
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
-#include "linear_algebra/Vector.hpp"
 
 namespace uno {
    // forward declarations
    class OptimizationProblem;
 
-   enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
-
-   class FeasibilityRestoration : public ConstraintRelaxationStrategy {
+   class UnconstrainedStrategy : public ConstraintRelaxationStrategy {
    public:
-      FeasibilityRestoration(size_t number_constraints, size_t number_bounds_constraints, const Options& options);
-      ~FeasibilityRestoration() override = default;
+      UnconstrainedStrategy(size_t number_constraints, size_t number_bounds_constraints, const Options& options);
+      ~UnconstrainedStrategy() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction, const Options& options) override;
 
@@ -42,27 +39,16 @@ namespace uno {
       [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
    private:
-      Phase current_phase{Phase::OPTIMALITY};
-      const double constraint_violation_coefficient;
       const bool convexify;
-      const std::unique_ptr<HessianModel> optimality_hessian_model;
-      const std::unique_ptr<HessianModel> feasibility_hessian_model;
-      const double linear_feasibility_tolerance;
-      const bool switch_to_optimality_requires_linearized_feasibility;
-      ProgressMeasures reference_optimality_progress{};
-      Vector<double> reference_optimality_primals{};
+      const std::unique_ptr<HessianModel> hessian_model;
 
       void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
          Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information);
-      void switch_to_optimality_phase(Iterate& current_iterate, const Model& model, Iterate& trial_iterate,
-         WarmstartInformation& warmstart_information);
 
       void evaluate_progress_measures(const Model& model, Iterate& iterate) const override;
       [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(const Model& model, const Iterate& current_iterate,
          const Direction& direction, double step_length) const;
-      [[nodiscard]] bool can_switch_to_optimality_phase(const Iterate& current_iterate, const Model& model, const Iterate& trial_iterate,
-         const Direction& direction, double step_length);
    };
 } // namespace
 
-#endif //UNO_FEASIBILITYRESTORATION_H
+#endif //UNO_UNCONSTRAINEDSTRATEGY_H

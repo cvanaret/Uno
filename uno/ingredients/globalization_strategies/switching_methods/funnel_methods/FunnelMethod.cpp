@@ -126,6 +126,10 @@ namespace uno {
       return (trial_objective <= current_objective - this->parameters.gamma * trial_infeasibility);
    }
 
+   std::string FunnelMethod::get_strategy_combination() const {
+      return "funnel method";
+   }
+
    double FunnelMethod::compute_actual_objective_reduction(double current_objective_measure, double trial_objective_measure) {
       double actual_reduction = current_objective_measure - trial_objective_measure;
       if (this->protect_actual_reduction_against_roundoff) {

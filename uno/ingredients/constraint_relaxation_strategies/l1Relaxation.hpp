@@ -20,7 +20,7 @@ namespace uno {
 
    class l1Relaxation : public ConstraintRelaxationStrategy {
    public:
-      explicit l1Relaxation(const Options& options);
+      l1Relaxation(size_t number_constraints, size_t number_bounds_constraints, const Options& options);
       ~l1Relaxation() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction, const Options& options) override;
@@ -40,6 +40,7 @@ namespace uno {
       void compute_primal_dual_residuals(const Model& model, Iterate& iterate) override;
       void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
 
+      [[nodiscard]] std::string get_strategy_combination() const override;
       [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
    protected:

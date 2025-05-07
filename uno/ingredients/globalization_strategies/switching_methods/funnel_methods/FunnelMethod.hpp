@@ -7,11 +7,6 @@
 #include "../SwitchingMethod.hpp"
 #include "Funnel.hpp"
 
-/*! \class TwoPhaseConstants
- * \brief Constants for funnel strategy
- *
- *  Set of constants to control the funnel strategy
- */
 namespace uno {
    struct FunnelMethodParameters {
       double initial_upper_bound;
@@ -41,6 +36,8 @@ namespace uno {
             double trial_objective) const;
       [[nodiscard]] bool infeasibility_sufficient_reduction(double current_infeasibility, double trial_infeasibility) const;
       [[nodiscard]] bool objective_sufficient_reduction(double current_objective, double trial_objective, double trial_infeasibility) const;
+
+      [[nodiscard]] std::string get_strategy_combination() const override;
 
    protected:
       Funnel funnel;

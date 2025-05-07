@@ -12,20 +12,22 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(const Options& options) {
-      const std::string subproblem_strategy = options.get_string("subproblem");
+   std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(size_t /*number_bound_constraints*/,
+         const Options& options) {
+      // TODO set unconstrained strategy automatically
+      const std::string inequality_handling_method = options.get_string("inequality_handling_method");
       // inequality-constrained methods
-      if (subproblem_strategy == "QP") {
+      if (inequality_handling_method == "QP") {
          return std::make_unique<QPSubproblem>(options);
       }
-      else if (subproblem_strategy == "LP") {
+      else if (inequality_handling_method == "LP") {
          return std::make_unique<LPSubproblem>(options);
       }
       // interior-point method
-      else if (subproblem_strategy == "primal_dual_interior_point") {
+      else if (inequality_handling_method == "primal_dual_interior_point") {
          return std::make_unique<PrimalDualInteriorPointMethod>(options);
       }
-      throw std::invalid_argument("Subproblem strategy " + subproblem_strategy + " is not supported");
+      throw std::invalid_argument("Inequality handling method " + inequality_handling_method + " is not supported");
    }
 
    std::vector<std::string> InequalityHandlingMethodFactory::available_strategies() {

@@ -14,8 +14,8 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   TrustRegionStrategy::TrustRegionStrategy(const Options& options) :
-         GlobalizationMechanism(options),
+   TrustRegionStrategy::TrustRegionStrategy(size_t number_constraints, size_t number_bounds_constraints, const Options& options) :
+         GlobalizationMechanism(number_constraints, number_bounds_constraints, options),
          radius(options.get_double("TR_radius")),
          increase_factor(options.get_double("TR_increase_factor")),
          decrease_factor(options.get_double("TR_decrease_factor")),
@@ -104,6 +104,12 @@ namespace uno {
          }
       }
    }
+
+   std::string TrustRegionStrategy::get_strategy_combination() const {
+      return "TR " + this->constraint_relaxation_strategy->get_strategy_combination();
+   }
+
+   // protected member functions
 
    void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const {
       assert(0 < this->radius && "The trust-region radius should be positive");

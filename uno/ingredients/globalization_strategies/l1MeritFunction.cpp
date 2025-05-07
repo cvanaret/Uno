@@ -15,15 +15,6 @@ namespace uno {
       statistics.add_column("penalty", Statistics::double_width - 5, options.get_int("statistics_penalty_parameter_column_order"));
    }
 
-   void l1MeritFunction::reset() {
-   }
-
-   void l1MeritFunction::notify_switch_to_feasibility(const ProgressMeasures& /*current_progress*/) {
-   }
-
-   void l1MeritFunction::notify_switch_to_optimality(const ProgressMeasures& /*current_progress*/) {
-   }
-
    bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) {
       // predicted reduction with all contributions. This quantity should be positive (= negative directional derivative)
@@ -59,6 +50,21 @@ namespace uno {
       // TODO put constant in option file
       return (trial_progress.infeasibility <= 0.9*this->smallest_known_infeasibility);
    }
+
+   void l1MeritFunction::reset() {
+   }
+
+   void l1MeritFunction::notify_switch_to_feasibility(const ProgressMeasures& /*current_progress*/) {
+   }
+
+   void l1MeritFunction::notify_switch_to_optimality(const ProgressMeasures& /*current_progress*/) {
+   }
+
+   std::string l1MeritFunction::get_strategy_combination() const {
+      return "l1-merit";
+   }
+
+   // protected member functions
 
    double l1MeritFunction::constrained_merit_function(const ProgressMeasures& progress, double objective_multiplier) {
       return progress.objective(objective_multiplier) + progress.auxiliary + progress.infeasibility;

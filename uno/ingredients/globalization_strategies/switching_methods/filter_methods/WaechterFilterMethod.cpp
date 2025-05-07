@@ -86,4 +86,8 @@ namespace uno {
       return trial_progress.infeasibility <= this->sufficient_infeasibility_decrease_factor * reference_progress.infeasibility &&
          this->filter->acceptable(trial_progress.infeasibility, FilterMethod::unconstrained_merit_function(trial_progress));
    }
+
+   std::string WaechterFilterMethod::get_strategy_combination() const {
+      return "Waechter filter method";
+   }
 } // namespace

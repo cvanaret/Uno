@@ -4,6 +4,7 @@
 #ifndef UNO_INEQUALITYHANDLINGMETHOD_H
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
+#include <string>
 #include "tools/Infinity.hpp"
 
 namespace uno {
@@ -54,6 +55,8 @@ namespace uno {
       size_t number_subproblems_solved{0};
       // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
       bool subproblem_definition_changed{false};
+
+      [[nodiscard]] virtual std::string get_strategy_combination() const = 0;
 
    protected:
       double trust_region_radius{INF<double>};

@@ -9,8 +9,8 @@
 #include "symbolic/Expression.hpp"
 
 namespace uno {
-   GlobalizationMechanism::GlobalizationMechanism(const Options& options) :
-         constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(options)) {
+   GlobalizationMechanism::GlobalizationMechanism(size_t number_constraints, size_t number_bounds_constraints, const Options& options) :
+         constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(number_constraints, number_bounds_constraints, options)) {
    }
    
    void GlobalizationMechanism::assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,

@@ -29,9 +29,10 @@ namespace uno {
          std::unique_ptr<Model> ampl_model = std::make_unique<AMPLModel>(model_name, options);
          DISCRETE << "Original model " << ampl_model->name << '\n' << ampl_model->number_variables << " variables, " <<
             ampl_model->number_constraints << " constraints\n";
+         const size_t number_bound_constraints = ampl_model->get_lower_bounded_variables().size() + ampl_model->get_upper_bounded_variables().size();
 
          // reformulate (scale, add slacks, relax the bounds, ...) if necessary
-         std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), options);
+         std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), number_bound_constraints, options);
          DISCRETE << "Reformulated model " << model->name << '\n' << model->number_variables << " variables, " <<
                   model->number_constraints << " constraints\n";
 
@@ -43,7 +44,7 @@ namespace uno {
          initial_iterate.feasibility_multipliers.reset();
 
          // solve the instance
-         Uno uno{options};
+         Uno uno{model->number_constraints, number_bound_constraints, options};
          AMPLUserCallbacks user_callbacks{};
          const Result result = uno.solve(*model, initial_iterate, options, user_callbacks);
          if (result.optimization_status == OptimizationStatus::SUCCESS) {
