@@ -23,12 +23,12 @@
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
-   Uno::Uno(const Options& options) :
-         globalization_mechanism(GlobalizationMechanismFactory::create(options)),
+   Uno::Uno(size_t number_constraints, size_t number_bounds_constraints, const Options& options) :
+         globalization_mechanism(GlobalizationMechanismFactory::create(number_constraints, number_bounds_constraints, options)),
          max_iterations(options.get_unsigned_int("max_iterations")),
          time_limit(options.get_double("time_limit")),
          print_solution(options.get_bool("print_solution")),
-         strategy_combination(Uno::get_strategy_combination(options)) { }
+         strategy_combination(this->get_strategy_combination()) { }
    
    Level Logger::level = INFO;
 
@@ -167,10 +167,8 @@ namespace uno {
       std::cout << "- Linear solvers: " << join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", ") << '\n';
    }
 
-   std::string Uno::get_strategy_combination(const Options& options) {
-      return options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
-                                options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
-
+   std::string Uno::get_strategy_combination() const {
+      return this->globalization_mechanism->get_strategy_combination();
    }
 
    void Uno::print_optimization_summary(const Result& result) {

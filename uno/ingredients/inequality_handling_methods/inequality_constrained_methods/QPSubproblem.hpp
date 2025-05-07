@@ -22,6 +22,8 @@ namespace uno {
          Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
 
+      [[nodiscard]] std::string get_strategy_combination() const override;
+
    protected:
       const bool enforce_linear_constraints_at_initial_iterate;
       // pointer to allow polymorphism

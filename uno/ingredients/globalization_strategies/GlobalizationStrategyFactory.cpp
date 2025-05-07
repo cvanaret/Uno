@@ -6,12 +6,18 @@
 #include "GlobalizationStrategy.hpp"
 #include "GlobalizationStrategyFactory.hpp"
 #include "l1MeritFunction.hpp"
+#include "options/Options.hpp"
 #include "switching_methods/filter_methods/FletcherFilterMethod.hpp"
 #include "switching_methods/filter_methods/WaechterFilterMethod.hpp"
 #include "switching_methods/funnel_methods/FunnelMethod.hpp"
 
 namespace uno {
-   std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const std::string& strategy_type, const Options& options) {
+   std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(size_t number_constraints, const Options& options) {
+      // set unconstrained strategy automatically
+      if (number_constraints == 0) {
+         return std::make_unique<l1MeritFunction>(options);
+      }
+      const std::string& strategy_type = options.get_string("globalization_strategy");
       if (strategy_type == "l1_merit") {
          return std::make_unique<l1MeritFunction>(options);
       }

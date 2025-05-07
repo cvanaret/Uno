@@ -12,8 +12,8 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   BacktrackingLineSearch::BacktrackingLineSearch(const Options& options):
-         GlobalizationMechanism(options),
+   BacktrackingLineSearch::BacktrackingLineSearch(size_t number_constraints, size_t number_bounds_constraints, const Options& options):
+         GlobalizationMechanism(number_constraints, number_bounds_constraints, options),
          backtracking_ratio(options.get_double("LS_backtracking_ratio")),
          minimum_step_length(options.get_double("LS_min_step_length")),
          scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")) {
@@ -38,6 +38,12 @@ namespace uno {
       BacktrackingLineSearch::check_unboundedness(this->direction);
       this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, warmstart_information, user_callbacks);
    }
+
+   std::string BacktrackingLineSearch::get_strategy_combination() const {
+      return "LS " + this->constraint_relaxation_strategy->get_strategy_combination();
+   }
+
+   // protected member functions
 
    // go a fraction along the direction by finding an acceptable step length
    void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,

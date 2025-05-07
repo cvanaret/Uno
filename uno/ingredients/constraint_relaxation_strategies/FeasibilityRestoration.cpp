@@ -18,8 +18,8 @@
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
-   FeasibilityRestoration::FeasibilityRestoration(const Options& options) :
-         ConstraintRelaxationStrategy(options),
+   FeasibilityRestoration::FeasibilityRestoration(size_t number_constraints, size_t number_bounds_constraints, const Options& options) :
+         ConstraintRelaxationStrategy(number_constraints, number_bounds_constraints, options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          convexify(options.get_string("subproblem") != "primal_dual_interior_point" &&
             (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),
@@ -219,6 +219,11 @@ namespace uno {
       const auto& residuals = (this->current_phase == Phase::OPTIMALITY) ? iterate.residuals : iterate.feasibility_residuals;
       statistics.set("stationarity", residuals.stationarity);
       statistics.set("complementarity", residuals.complementarity);
+   }
+
+   std::string FeasibilityRestoration::get_strategy_combination() const {
+      return "feasibility restoration " + this->globalization_strategy->get_strategy_combination() + " " +
+         this->inequality_handling_method->get_strategy_combination();
    }
 
    size_t FeasibilityRestoration::get_hessian_evaluation_count() const {

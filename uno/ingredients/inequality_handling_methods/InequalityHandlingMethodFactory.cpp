@@ -12,7 +12,11 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(const Options& options) {
+   std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(size_t number_bound_constraints, const Options& options) {
+      // set unconstrained strategy automatically
+      if (number_bound_constraints == 0) {
+         return std::make_unique<QPSubproblem>(options); // by default TODO choose between QP and LP automatically
+      }
       const std::string subproblem_strategy = options.get_string("subproblem");
       // inequality-constrained methods
       if (subproblem_strategy == "QP") {

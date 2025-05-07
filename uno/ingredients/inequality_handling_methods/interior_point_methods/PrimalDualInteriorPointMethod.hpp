@@ -48,6 +48,8 @@ namespace uno {
 
       void postprocess_iterate(const OptimizationProblem& problem, Vector<double>& primals, Multipliers& multipliers) override;
 
+      [[nodiscard]] std::string get_strategy_combination() const override;
+
    protected:
       SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */

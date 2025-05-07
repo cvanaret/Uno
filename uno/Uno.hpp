@@ -19,7 +19,7 @@ namespace uno {
 
    class Uno {
    public:
-      explicit Uno(const Options& options);
+      Uno(size_t number_constraints, size_t number_bounds_constraints, const Options& options);
 
       // solve with or without user callbacks
       Result solve(const Model& model, Iterate& initial_iterate, const Options& options);
@@ -27,7 +27,6 @@ namespace uno {
 
       static std::string current_version();
       static void print_available_strategies();
-      static std::string get_strategy_combination(const Options& options);
       void print_optimization_summary(const Result& result);
 
    private:
@@ -37,6 +36,7 @@ namespace uno {
       const bool print_solution;
       const std::string strategy_combination;
 
+      [[nodiscard]] std::string get_strategy_combination() const;
       void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options);
       [[nodiscard]] static Statistics create_statistics(const Model& model, const Options& options);
       [[nodiscard]] bool termination_criteria(IterateStatus current_status, size_t iteration, double current_time,

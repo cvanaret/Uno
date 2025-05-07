@@ -9,12 +9,14 @@
 namespace uno {
    class TrustRegionStrategy : public GlobalizationMechanism {
    public:
-      explicit TrustRegionStrategy(const Options& options);
+      TrustRegionStrategy(size_t number_constraints, size_t number_bounds_constraints, const Options& options);
       ~TrustRegionStrategy() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) override;
       void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
             WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+
+      [[nodiscard]] std::string get_strategy_combination() const override;
 
    private:
       double radius; /*!< Current trust region radius */

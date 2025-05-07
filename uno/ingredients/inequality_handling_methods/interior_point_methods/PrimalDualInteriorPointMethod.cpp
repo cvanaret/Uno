@@ -502,4 +502,8 @@ namespace uno {
    void PrimalDualInteriorPointMethod::set_initial_point(const Vector<double>& /*point*/) {
       // do nothing
    }
+
+   std::string PrimalDualInteriorPointMethod::get_strategy_combination() const {
+      return "primal-dual interior-point method";
+   }
 } // namespace

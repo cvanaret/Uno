@@ -4,6 +4,8 @@
 #ifndef UNO_GLOBALIZATIONSTRATEGY_H
 #define UNO_GLOBALIZATIONSTRATEGY_H
 
+#include <string>
+
 namespace uno {
    // forward declarations
    class Iterate;
@@ -28,6 +30,8 @@ namespace uno {
 
       virtual void notify_switch_to_feasibility(const ProgressMeasures& current_progress) = 0;
       virtual void notify_switch_to_optimality(const ProgressMeasures& current_progress) = 0;
+
+      [[nodiscard]] virtual std::string get_strategy_combination() const = 0;
 
    protected:
       const double armijo_decrease_fraction; /*!< Sufficient reduction constant */

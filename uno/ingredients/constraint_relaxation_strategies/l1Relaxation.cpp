@@ -24,8 +24,8 @@
  */
 
 namespace uno {
-   l1Relaxation::l1Relaxation(const Options& options):
-         ConstraintRelaxationStrategy(options),
+   l1Relaxation::l1Relaxation(size_t number_constraints, size_t number_bounds_constraints, const Options& options):
+         ConstraintRelaxationStrategy(number_constraints, number_bounds_constraints, options),
          penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          convexify(options.get_string("subproblem") != "primal_dual_interior_point" &&
@@ -308,6 +308,11 @@ namespace uno {
    void l1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
       statistics.set("stationarity", iterate.residuals.stationarity);
       statistics.set("complementarity", iterate.residuals.complementarity);
+   }
+
+   std::string l1Relaxation::get_strategy_combination() const {
+      return "l1 relaxation " + this->globalization_strategy->get_strategy_combination() + " " +
+         this->inequality_handling_method->get_strategy_combination();
    }
 
    size_t l1Relaxation::get_hessian_evaluation_count() const {

@@ -13,7 +13,7 @@ namespace uno {
 
    class ModelFactory {
    public:
-      static std::unique_ptr<Model> reformulate(std::unique_ptr<Model> model, const Options& options);
+      static std::unique_ptr<Model> reformulate(std::unique_ptr<Model> model, size_t number_bound_constraints, const Options& options);
    };
 } // namespace
 

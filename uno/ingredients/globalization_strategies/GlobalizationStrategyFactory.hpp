@@ -14,7 +14,7 @@ namespace uno {
 
    class GlobalizationStrategyFactory {
    public:
-      static std::unique_ptr<GlobalizationStrategy> create(const std::string& strategy_type, const Options& options);
+      static std::unique_ptr<GlobalizationStrategy> create(size_t number_constraints, const Options& options);
       static std::vector<std::string> available_strategies();
    };
 } // namespace

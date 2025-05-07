@@ -14,7 +14,7 @@ namespace uno {
 
    class InequalityHandlingMethodFactory {
       public:
-         static std::unique_ptr<InequalityHandlingMethod> create(const Options& options);
+         static std::unique_ptr<InequalityHandlingMethod> create(size_t number_bound_constraints, const Options& options);
 
          static std::vector<std::string> available_strategies();
    };

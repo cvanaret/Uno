@@ -22,6 +22,8 @@ namespace uno {
             Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
 
+      [[nodiscard]] std::string get_strategy_combination() const override;
+
    private:
       // pointer to allow polymorphism
       const std::unique_ptr<LPSolver> solver;
