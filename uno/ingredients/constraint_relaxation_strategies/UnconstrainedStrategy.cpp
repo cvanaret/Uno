@@ -19,7 +19,7 @@ namespace uno {
          ConstraintRelaxationStrategy(number_constraints, number_bounds_constraints, options),
          convexify(options.get_string("inequality_handling_method") != "primal_dual_interior_point" &&
             (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),
-         hessian_model(HessianModelFactory::create(this->convexify, options)) {
+         hessian_model(HessianModelFactory::create(1., this->convexify, options)) {
    }
 
    void UnconstrainedStrategy::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction, const Options& options) {

@@ -31,8 +31,8 @@ namespace uno {
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          convexify(options.get_string("inequality_handling_method") != "primal_dual_interior_point" &&
             (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),
-         hessian_model(HessianModelFactory::create(this->convexify, options)),
-         feasibility_hessian_model(HessianModelFactory::create(this->convexify, options)),
+         hessian_model(HessianModelFactory::create(std::nullopt, this->convexify, options)),
+         feasibility_hessian_model(HessianModelFactory::create(0., this->convexify, options)),
          tolerance(options.get_double("tolerance")),
          parameters({
                options.get_bool("l1_relaxation_fixed_parameter"),

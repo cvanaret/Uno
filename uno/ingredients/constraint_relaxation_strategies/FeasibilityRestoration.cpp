@@ -25,8 +25,8 @@ namespace uno {
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          convexify(options.get_string("inequality_handling_method") != "primal_dual_interior_point" &&
             (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),
-         optimality_hessian_model(HessianModelFactory::create(this->convexify, options)),
-         feasibility_hessian_model(HessianModelFactory::create(this->convexify, options)),
+         optimality_hessian_model(HessianModelFactory::create(1., this->convexify, options)),
+         feasibility_hessian_model(HessianModelFactory::create(0., this->convexify, options)),
          linear_feasibility_tolerance(options.get_double("tolerance")),
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
    }
