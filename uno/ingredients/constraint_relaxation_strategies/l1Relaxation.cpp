@@ -28,7 +28,7 @@ namespace uno {
          ConstraintRelaxationStrategy(number_constraints, number_bounds_constraints, options),
          penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         convexify(options.get_string("subproblem") != "primal_dual_interior_point" &&
+         convexify(options.get_string("inequality_handling_method") != "primal_dual_interior_point" &&
             (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),
          hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),
          feasibility_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),

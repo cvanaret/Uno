@@ -17,7 +17,7 @@
 namespace uno {
    UnconstrainedStrategy::UnconstrainedStrategy(size_t number_constraints, size_t number_bounds_constraints, const Options& options) :
          ConstraintRelaxationStrategy(number_constraints, number_bounds_constraints, options),
-         convexify(options.get_string("subproblem") != "primal_dual_interior_point" &&
+         convexify(options.get_string("inequality_handling_method") != "primal_dual_interior_point" &&
             (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),
          hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)) {
    }
