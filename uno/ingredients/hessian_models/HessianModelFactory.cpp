@@ -8,10 +8,10 @@
 #include "ExactHessian.hpp"
 #include "IdentityHessian.hpp"
 #include "ZeroHessian.hpp"
-#include "options/Options.hpp"
 #ifdef HAS_LAPACK
 #include "quasi_newton/LBFGSHessian.hpp"
 #endif
+#include "options/Options.hpp"
 
 namespace uno {
    std::unique_ptr<HessianModel> HessianModelFactory::create(const Options& options) {
