@@ -10,9 +10,11 @@
 #ifdef HAS_LAPACK
 #include "quasi_newton/LBFGSHessian.hpp"
 #endif
+#include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<HessianModel> HessianModelFactory::create(const std::string& hessian_model, bool convexify, const Options& options) {
+   std::unique_ptr<HessianModel> HessianModelFactory::create(bool convexify, const Options& options) {
+      const std::string& hessian_model = options.get_string("hessian_model");
       if (hessian_model == "exact") {
          if (convexify) {
             return std::make_unique<ConvexifiedHessian>(options);
