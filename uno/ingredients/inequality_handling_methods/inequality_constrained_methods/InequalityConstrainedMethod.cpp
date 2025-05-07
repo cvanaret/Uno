@@ -50,30 +50,6 @@ namespace uno {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::set_direction_bounds(const OptimizationProblem& problem, const Iterate& current_iterate) {
-      // bounds of original variables intersected with trust region
-      for (size_t variable_index: Range(problem.get_number_original_variables())) {
-         this->direction_lower_bounds[variable_index] = std::max(-this->trust_region_radius,
-               problem.variable_lower_bound(variable_index) - current_iterate.primals[variable_index]);
-         this->direction_upper_bounds[variable_index] = std::min(this->trust_region_radius,
-               problem.variable_upper_bound(variable_index) - current_iterate.primals[variable_index]);
-      }
-      // bounds of additional variables (no trust region!)
-      for (size_t variable_index: Range(problem.get_number_original_variables(), problem.number_variables)) {
-         this->direction_lower_bounds[variable_index] = problem.variable_lower_bound(variable_index) - current_iterate.primals[variable_index];
-         this->direction_upper_bounds[variable_index] = problem.variable_upper_bound(variable_index) - current_iterate.primals[variable_index];
-      }
-   }
-
-   void InequalityConstrainedMethod::set_linearized_constraint_bounds(const OptimizationProblem& problem, const std::vector<double>& current_constraints) {
-      for (size_t constraint_index: Range(problem.number_constraints)) {
-         this->linearized_constraints_lower_bounds[constraint_index] = problem.constraint_lower_bound(constraint_index) -
-               current_constraints[constraint_index];
-         this->linearized_constraints_upper_bounds[constraint_index] = problem.constraint_upper_bound(constraint_index) -
-               current_constraints[constraint_index];
-      }
-   }
-
    void InequalityConstrainedMethod::compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers) {
       // compute dual *displacements* (active-set methods usually compute the new duals, not the displacements)
       view(direction_multipliers.constraints, 0, current_multipliers.constraints.size()) -= current_multipliers.constraints;

@@ -46,6 +46,9 @@ namespace uno {
       WarmstartInformation warmstart_information{};
       warmstart_information.whole_problem_changed();
 
+      std::cout << "Model: obj gradient has " << model.number_objective_gradient_nonzeros() << " NNZ\n";
+      std::cout << "Model: Jacobian has " << model.number_jacobian_nonzeros() << " NNZ\n";
+
       size_t major_iterations = 0;
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
       try {

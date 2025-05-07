@@ -34,7 +34,8 @@ namespace uno {
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
-      this->constraint_relaxation_strategy->compute_feasible_direction(statistics, model, current_iterate, this->direction, warmstart_information);
+      this->constraint_relaxation_strategy->compute_feasible_direction(statistics, model, current_iterate, this->direction,
+         INF<double>, warmstart_information);
       BacktrackingLineSearch::check_unboundedness(this->direction);
       this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, warmstart_information, user_callbacks);
    }
@@ -96,7 +97,7 @@ namespace uno {
                statistics.set("status", "small step length");
                this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, model, current_iterate, warmstart_information);
                this->constraint_relaxation_strategy->compute_feasible_direction(statistics, model, current_iterate, this->direction,
-                  this->direction.primals, warmstart_information);
+                  this->direction.primals, INF<double>, warmstart_information);
                BacktrackingLineSearch::check_unboundedness(this->direction);
                // restart backtracking
                step_length = 1.;

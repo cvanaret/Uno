@@ -10,19 +10,19 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 
 namespace uno {
-   // forward declarations
+   // forward declaration
    class OptimizationProblem;
 
    class UnconstrainedStrategy : public ConstraintRelaxationStrategy {
    public:
       UnconstrainedStrategy(size_t number_constraints, size_t number_bounds_constraints, const Options& options);
-      ~UnconstrainedStrategy() override = default;
+      ~UnconstrainedStrategy() override;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction, const Options& options) override;
 
       // direction computation
       void compute_feasible_direction(Statistics& statistics, const Model& model, Iterate& current_iterate, Direction& direction,
-         WarmstartInformation& warmstart_information) override;
+         double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, const Model& model, Iterate& current_iterate,
          WarmstartInformation& warmstart_information) override;
@@ -37,13 +37,15 @@ namespace uno {
 
       [[nodiscard]] std::string get_strategy_combination() const override;
       [[nodiscard]] size_t get_hessian_evaluation_count() const override;
+      [[nodiscard]] size_t get_number_subproblems_solved() const override;
 
    private:
       const bool convexify;
+      const std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
       const std::unique_ptr<HessianModel> hessian_model;
 
       void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-         Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information);
+         Direction& direction, HessianModel& hessian_model, double trust_region_radius, WarmstartInformation& warmstart_information);
 
       void evaluate_progress_measures(const Model& model, Iterate& iterate) const override;
       [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(const Model& model, const Iterate& current_iterate,

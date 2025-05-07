@@ -33,8 +33,7 @@ namespace uno {
       statistics.add_column("TR iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
       statistics.add_column("TR radius", Statistics::double_width - 4, options.get_int("statistics_TR_radius_column_order"));
       statistics.set("TR radius", this->radius);
-      
-      this->constraint_relaxation_strategy->set_trust_region_radius(this->radius);
+
       this->constraint_relaxation_strategy->initialize(statistics, model, initial_iterate, this->direction, options);
    }
 
@@ -53,9 +52,8 @@ namespace uno {
             this->set_trust_region_statistics(statistics, number_iterations);
 
             // compute the direction within the trust region
-            this->constraint_relaxation_strategy->set_trust_region_radius(this->radius);
             this->constraint_relaxation_strategy->compute_feasible_direction(statistics, model, current_iterate, this->direction,
-               warmstart_information);
+               this->radius, warmstart_information);
 
             // deal with errors in the subproblem
             if (this->direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {

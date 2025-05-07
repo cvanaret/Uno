@@ -31,9 +31,9 @@ namespace uno {
    }
 
    void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-         Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) {
+         Direction& direction, HessianModel& hessian_model, double trust_region_radius, WarmstartInformation& warmstart_information) {
       this->solver->solve_QP(statistics, problem, current_iterate, current_multipliers, this->initial_point, direction,
-         hessian_model, this->trust_region_radius, warmstart_information);
+         hessian_model, trust_region_radius, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;
       // reset the initial point

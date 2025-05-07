@@ -6,6 +6,7 @@
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
+#include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
@@ -19,8 +20,11 @@ namespace uno {
          ConstraintRelaxationStrategy(number_constraints, number_bounds_constraints, options),
          convexify(options.get_string("inequality_handling_method") != "primal_dual_interior_point" &&
             (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),
+         inequality_handling_method(InequalityHandlingMethodFactory::create(number_bounds_constraints, options)),
          hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)) {
    }
+
+   UnconstrainedStrategy::~UnconstrainedStrategy() { }
 
    void UnconstrainedStrategy::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction, const Options& options) {
       // memory allocation
@@ -41,12 +45,12 @@ namespace uno {
    }
 
    void UnconstrainedStrategy::compute_feasible_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Direction& direction, WarmstartInformation& warmstart_information) {
+         Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
       const OptimizationProblem problem{model};
       this->solve_subproblem(statistics, problem, current_iterate, current_iterate.multipliers, direction,
-         *this->hessian_model, warmstart_information);
+         *this->hessian_model, trust_region_radius, warmstart_information);
       warmstart_information.no_changes();
    }
 
@@ -60,9 +64,11 @@ namespace uno {
    }
 
    void UnconstrainedStrategy::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model, double trust_region_radius,
+         WarmstartInformation& warmstart_information) {
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction, hessian_model, warmstart_information);
+      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction, hessian_model,
+         trust_region_radius, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
    }
@@ -71,7 +77,7 @@ namespace uno {
          const Direction& direction, double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const OptimizationProblem problem{model};
       this->inequality_handling_method->postprocess_iterate(problem, trial_iterate.primals, trial_iterate.multipliers);
-      this->compute_progress_measures(model, current_iterate, trial_iterate);
+      this->compute_progress_measures(*this->inequality_handling_method, model, current_iterate, trial_iterate);
       constexpr double objective_multiplier = 1.;
       trial_iterate.objective_multiplier = objective_multiplier;
       warmstart_information.no_changes();
@@ -110,7 +116,7 @@ namespace uno {
          const Direction& direction, double step_length) const {
       return {
          this->compute_predicted_infeasibility_reduction_model(model, current_iterate, direction.primals, step_length),
-         this->compute_predicted_objective_reduction_model(current_iterate, direction.primals, step_length),
+         this->compute_predicted_objective_reduction_model(*this->inequality_handling_method, current_iterate, direction.primals, step_length),
          this->inequality_handling_method->compute_predicted_auxiliary_reduction_model(model, current_iterate, direction.primals, step_length)
       };
    }
@@ -127,5 +133,9 @@ namespace uno {
 
    size_t UnconstrainedStrategy::get_hessian_evaluation_count() const {
       return this->hessian_model->evaluation_count;
+   }
+
+   size_t UnconstrainedStrategy::get_number_subproblems_solved() const {
+      return this->inequality_handling_method->number_subproblems_solved;
    }
 } // namespace

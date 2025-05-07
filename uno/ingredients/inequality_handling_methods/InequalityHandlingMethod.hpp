@@ -34,7 +34,7 @@ namespace uno {
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
       virtual void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
       virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-         Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) = 0;
+         Direction& direction, HessianModel& hessian_model, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
 
       void set_trust_region_radius(double new_trust_region_radius);
       virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
@@ -57,9 +57,6 @@ namespace uno {
       bool subproblem_definition_changed{false};
 
       [[nodiscard]] virtual std::string get_strategy_combination() const = 0;
-
-   protected:
-      double trust_region_radius{INF<double>};
    };
 } // namespace
 

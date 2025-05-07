@@ -39,8 +39,6 @@ namespace uno {
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 
-      void set_direction_bounds(const OptimizationProblem& problem, const Iterate& current_iterate);
-      void set_linearized_constraint_bounds(const OptimizationProblem& problem, const std::vector<double>& current_constraints);
       static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
    };
 } // namespace

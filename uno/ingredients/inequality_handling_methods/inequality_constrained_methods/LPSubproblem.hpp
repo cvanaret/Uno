@@ -19,7 +19,7 @@ namespace uno {
       void initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model) override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-            Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) override;
+            Direction& direction, HessianModel& hessian_model, double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
 
       [[nodiscard]] std::string get_strategy_combination() const override;
