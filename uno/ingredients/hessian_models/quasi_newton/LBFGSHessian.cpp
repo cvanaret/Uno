@@ -119,8 +119,7 @@ namespace uno {
          DEBUG << "Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
          this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
          this->hessian_recomputation_required = true;
-         DEBUG << "There are now " << this->number_entries_in_memory << " iterates in memory (capacity " <<
-            this->memory_size << ")\n";
+         DEBUG << "There are now " << this->number_entries_in_memory << " entries in memory (capacity " << this->memory_size << ")\n";
       }
       else {
          DEBUG << "Skipping the update\n";
@@ -199,7 +198,7 @@ namespace uno {
       DenseMatrix<double>& J_matrix = this->M_matrix;
       DEBUG << "> J: " << J_matrix;
 
-      // compute V * Ltilde^T in W matrix (B A^T with A = Ltilde, B = V)
+      // compute V * Ltilde^T in W matrix (B A^T with A = Ltilde, B = V, W stored in U)
       this->U_matrix = this->V_matrix;
       {
          char side = 'R'; //  B := alpha B op(A)
@@ -214,7 +213,7 @@ namespace uno {
          LAPACK_triangular_matrix_matrix_product(&side, &uplo, &transa, &diag, &m, &n, &alpha, Ltilde_matrix.data(), &lda,
             this->U_matrix.data(), &ldb);
       }
-      // add delta S to X
+      // add delta S to U
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          this->U_matrix.column(column_index) += this->initial_identity_multiple * this->S_matrix.column(column_index);
       }
