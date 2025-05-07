@@ -17,7 +17,7 @@ namespace uno {
    UnconstrainedStrategy::UnconstrainedStrategy(size_t number_bound_constraints, const Options& options) :
          ConstraintRelaxationStrategy(options),
          inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
-         subproblem_layer(options) {
+         subproblem_layer(1., options) {
    }
 
    void UnconstrainedStrategy::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,

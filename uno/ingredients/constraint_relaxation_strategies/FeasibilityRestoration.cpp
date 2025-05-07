@@ -24,8 +24,8 @@ namespace uno {
    FeasibilityRestoration::FeasibilityRestoration(size_t number_bound_constraints, const Options& options) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         optimality_subproblem_layer(options),
-         feasibility_subproblem_layer(options),
+         optimality_subproblem_layer(1., options),
+         feasibility_subproblem_layer(0., options),
          optimality_inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
          feasibility_inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
          linear_feasibility_tolerance(options.get_double("tolerance")),
