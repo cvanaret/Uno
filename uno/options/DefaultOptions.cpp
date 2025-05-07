@@ -39,7 +39,7 @@ namespace uno {
       options["statistics_restoration_phase_column_order"] = "20";
       options["statistics_regularization_column_order"] = "21";
       options["statistics_funnel_width_column_order"] = "25";
-      options["statistics_L-BFGS_initial_identity_multiple"] = "30";
+      options["statistics_quasi_newton_memory_size"] = "30";
       options["statistics_step_norm_column_order"] = "31";
       options["statistics_objective_column_order"] = "100";
       options["statistics_primal_feasibility_column_order"] = "101";

@@ -29,8 +29,7 @@ namespace uno {
    }
 
    void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
-      // statistics.add_column("QN delta", Statistics::double_width - 5, options.get_int("statistics_L-BFGS_initial_identity_multiple"));
-      statistics.add_column("QN |memory|", Statistics::double_width - 5, 30);
+      statistics.add_column("QN |memory|", Statistics::double_width - 5, options.get_int("statistics_quasi_newton_memory_size"));
    }
    
    size_t LBFGSHessian::number_nonzeros(const Model& model) const {
@@ -56,8 +55,7 @@ namespace uno {
          this->Hessian_approximation.entry(variable_index, variable_index) = this->initial_identity_multiple;
       }
 
-      // rank-2 contribution
-      // U U^T v
+      // rank-2 contribution: -U U^T v + V V^T v
       // H := alpha U U^T + beta H
       char uplo = 'U'; // H is referenced in the upper triangular part
       char trans = 'N'; // U U^T
@@ -69,7 +67,6 @@ namespace uno {
       int ldc = static_cast<int>(this->dimension); // leading dimension of H
       LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, this->U_matrix.data(), &lda, &beta,
          this->Hessian_approximation.data(), &ldc);
-      // V V^T v
       // H := alpha V V^T + beta H
       uplo = 'U'; // H is referenced in the upper triangular part
       trans = 'N'; // V V^T
@@ -145,8 +142,7 @@ namespace uno {
          DEBUG << "Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
          this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
          this->hessian_recomputation_required = true;
-         DEBUG << "There are now " << this->number_entries_in_memory << " iterates in memory (capacity " <<
-            this->memory_size << ")\n";
+         DEBUG << "There are now " << this->number_entries_in_memory << " entries in memory (capacity " << this->memory_size << ")\n";
       }
       else {
          DEBUG << "Skipping the update\n";
@@ -225,7 +221,7 @@ namespace uno {
       DenseMatrix<double>& J_matrix = this->M_matrix;
       DEBUG << "> J: " << J_matrix;
 
-      // compute V * Ltilde^T in W matrix (B A^T with A = Ltilde, B = V)
+      // compute V * Ltilde^T in W matrix (B A^T with A = Ltilde, B = V, W stored in U)
       this->U_matrix = this->V_matrix;
       {
          char side = 'R'; //  B := alpha B op(A)
@@ -240,7 +236,7 @@ namespace uno {
          LAPACK_triangular_matrix_matrix_product(&side, &uplo, &transa, &diag, &m, &n, &alpha, Ltilde_matrix.data(), &lda,
             this->U_matrix.data(), &ldb);
       }
-      // add delta S to X
+      // add delta S to U
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          this->U_matrix.column(column_index) += this->initial_identity_multiple * this->S_matrix.column(column_index);
       }
