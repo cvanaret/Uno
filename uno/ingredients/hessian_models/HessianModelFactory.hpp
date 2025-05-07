@@ -5,7 +5,6 @@
 #define UNO_HESSIANMODELFACTORY_H
 
 #include <memory>
-#include <string>
 
 namespace uno {
    // forward declarations
