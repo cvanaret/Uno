@@ -14,7 +14,8 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<HessianModel> HessianModelFactory::create(const Options& options) {
+   std::unique_ptr<HessianModel> HessianModelFactory::create([[maybe_unused]] std::optional<double> fixed_objective_multiplier,
+         const Options& options) {
       const std::string& hessian_model = options.get_string("hessian_model");
       if (hessian_model == "exact") {
          return std::make_unique<ExactHessian>();
@@ -24,7 +25,7 @@ namespace uno {
       }
 #ifdef HAS_LAPACK
       else if (hessian_model == "L-BFGS") {
-         return std::make_unique<LBFGSHessian>(options);
+         return std::make_unique<LBFGSHessian>(fixed_objective_multiplier, options);
       }
 #endif
       else if (hessian_model == "zero") {
