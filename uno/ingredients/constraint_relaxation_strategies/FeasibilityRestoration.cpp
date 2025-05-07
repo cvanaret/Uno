@@ -25,8 +25,8 @@ namespace uno {
    FeasibilityRestoration::FeasibilityRestoration(const Options& options) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         optimality_hessian_model(HessianModelFactory::create(options)),
-         feasibility_hessian_model(HessianModelFactory::create(options)),
+         optimality_hessian_model(HessianModelFactory::create(1., options)),
+         feasibility_hessian_model(HessianModelFactory::create(0., options)),
          optimality_regularization_strategy(RegularizationStrategyFactory::create(options)),
          feasibility_regularization_strategy(RegularizationStrategyFactory::create(options)),
          optimality_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
