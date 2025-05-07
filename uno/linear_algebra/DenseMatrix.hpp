@@ -90,6 +90,7 @@ namespace uno {
       // vector view
       [[nodiscard]] DenseColumn<DenseMatrix<ElementType, Shape>> column(size_t column_index);
       [[nodiscard]] DenseColumn<const DenseMatrix<ElementType, Shape>> column(size_t column_index) const;
+
       [[nodiscard]] ElementType* data();
       void clear();
 
