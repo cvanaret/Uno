@@ -138,20 +138,19 @@ namespace uno {
    // fill the Y matrix: y = \nabla L(x_k, y_k, z_k) - \nabla L(x_{k-1}, y_k, z_k)
    void LBFGSHessian::update_Y_matrix(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
       // evaluate Lagrangian gradients at the current and trial iterates, both with the trial multipliers
-      current_iterate.evaluate_objective_gradient(model);
-      current_iterate.evaluate_constraint_jacobian(model);
-      trial_iterate.evaluate_objective_gradient(model);
-      trial_iterate.evaluate_constraint_jacobian(model);
-      LagrangianGradient<double> current_lagrangian_gradient(this->dimension);
-      LagrangianGradient<double> trial_lagrangian_gradient(this->dimension);
-      model.evaluate_lagrangian_gradient(current_lagrangian_gradient, current_iterate, trial_iterate.multipliers);
-      model.evaluate_lagrangian_gradient(trial_lagrangian_gradient, trial_iterate, trial_iterate.multipliers);
       // TODO objective multiplier is hardcoded for the moment
       if (this->fixed_objective_multiplier.has_value()) {
+         current_iterate.evaluate_objective_gradient(model);
+         current_iterate.evaluate_constraint_jacobian(model);
+         trial_iterate.evaluate_objective_gradient(model);
+         trial_iterate.evaluate_constraint_jacobian(model);
+         // TODO preallocate
+         Vector<double> current_lagrangian_gradient(this->dimension);
+         Vector<double> trial_lagrangian_gradient(this->dimension);
          const double objective_multiplier = *this->fixed_objective_multiplier;
-         const auto assembled_current_lagrangian_gradient = current_lagrangian_gradient.assemble(objective_multiplier);
-         const auto assembled_trial_lagrangian_gradient = trial_lagrangian_gradient.assemble(objective_multiplier);
-         this->Y_matrix.column(this->current_memory_slot) = assembled_trial_lagrangian_gradient - assembled_current_lagrangian_gradient;
+         model.evaluate_lagrangian_gradient(current_lagrangian_gradient, current_iterate, trial_iterate.multipliers, objective_multiplier);
+         model.evaluate_lagrangian_gradient(trial_lagrangian_gradient, trial_iterate, trial_iterate.multipliers, objective_multiplier);
+         this->Y_matrix.column(this->current_memory_slot) = trial_lagrangian_gradient - current_lagrangian_gradient;
       }
       else {
          throw std::runtime_error("LBFGSHessian::update_Y_matrix: the objective multiplier varies. This is not implemented yet");
