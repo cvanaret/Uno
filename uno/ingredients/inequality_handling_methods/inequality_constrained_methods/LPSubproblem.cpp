@@ -23,8 +23,9 @@ namespace uno {
    }
 
    void LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, HessianModel& /*hessian_model*/, WarmstartInformation& warmstart_information) {
-      this->solver->solve_LP(problem, current_iterate, this->initial_point, direction, this->trust_region_radius, warmstart_information);
+         const Multipliers& current_multipliers, Direction& direction, SubproblemLayer& /*subproblem_layer*/, double trust_region_radius,
+         WarmstartInformation& warmstart_information) {
+      this->solver->solve_LP(problem, current_iterate, this->initial_point, direction, trust_region_radius, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;
       // reset the initial point
@@ -35,7 +36,7 @@ namespace uno {
       return 0.;
    }
 
-   std::string LPSubproblem::get_strategy_combination() const {
+   std::string LPSubproblem::get_name() const {
       return "LP method";
    }
 } // namespace

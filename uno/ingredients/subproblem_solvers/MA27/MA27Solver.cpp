@@ -212,14 +212,14 @@ namespace uno {
       }
    }
 
-   std::tuple<size_t, size_t, size_t> MA27Solver::get_inertia() const {
+   Inertia MA27Solver::get_inertia() const {
       // rank = number_positive_eigenvalues + number_negative_eigenvalues
       // n = rank + number_zero_eigenvalues
       const size_t rankA = rank();
       const size_t num_negative_eigenvalues = number_negative_eigenvalues();
       const size_t num_positive_eigenvalues = rankA - num_negative_eigenvalues;
       const size_t num_zero_eigenvalues = static_cast<size_t>(n) - rankA;
-      return std::make_tuple(num_positive_eigenvalues, num_negative_eigenvalues, num_zero_eigenvalues);
+      return {num_positive_eigenvalues, num_negative_eigenvalues, num_zero_eigenvalues};
    }
 
    size_t MA27Solver::number_negative_eigenvalues() const {

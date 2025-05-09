@@ -5,8 +5,10 @@
 #define UNO_COOSPARSESTORAGE_H
 
 #include <cassert>
+#include <iostream>
 #include <vector>
 #include "SparseStorage.hpp"
+#include "Vector.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
@@ -20,6 +22,8 @@ namespace uno {
       COOSparseStorage(size_t dimension, size_t capacity, bool use_regularization);
 
       void reset() override;
+      void set_dimension(size_t new_dimension) override;
+
       void insert(ElementType term, IndexType row_index, IndexType column_index) override;
       void finalize_column(IndexType /*column_index*/) override { /* do nothing */ }
       void set_regularization(const std::function<ElementType(size_t index)>& regularization_function) override;
@@ -80,6 +84,14 @@ namespace uno {
       if (this->use_regularization) {
          this->initialize_regularization();
       }
+   }
+
+   template <typename IndexType, typename ElementType>
+   void COOSparseStorage<IndexType, ElementType>::set_dimension(size_t new_dimension) {
+      this->dimension = new_dimension;
+      this->entries.reserve(this->dimension);
+      this->row_indices.reserve(this->dimension);
+      this->column_indices.reserve(this->dimension);
    }
 
    template <typename IndexType, typename ElementType>

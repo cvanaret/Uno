@@ -2,21 +2,22 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <stdexcept>
+#include <string>
 #include "HessianModelFactory.hpp"
 #include "HessianModel.hpp"
-#include "ConvexifiedHessian.hpp"
 #include "ExactHessian.hpp"
+#include "IdentityHessian.hpp"
 #include "ZeroHessian.hpp"
+#include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<HessianModel> HessianModelFactory::create(const std::string& hessian_model, bool convexify, const Options& options) {
+   std::unique_ptr<HessianModel> HessianModelFactory::create(const Options& options) {
+      const std::string& hessian_model = options.get_string("hessian_model");
       if (hessian_model == "exact") {
-         if (convexify) {
-            return std::make_unique<ConvexifiedHessian>(options);
-         }
-         else {
-            return std::make_unique<ExactHessian>();
-         }
+         return std::make_unique<ExactHessian>();
+      }
+      else if (hessian_model == "identity") {
+         return std::make_unique<IdentityHessian>();
       }
       else if (hessian_model == "zero") {
          return std::make_unique<ZeroHessian>();

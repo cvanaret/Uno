@@ -14,8 +14,7 @@ namespace uno {
 
    class GlobalizationMechanismFactory {
    public:
-      static std::unique_ptr<GlobalizationMechanism> create(size_t number_constraints, size_t number_bounds_constraints,
-         const Options& options);
+      static std::unique_ptr<GlobalizationMechanism> create(const Options& options);
       static std::vector<std::string> available_strategies();
    };
 } // namespace

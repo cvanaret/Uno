@@ -5,7 +5,6 @@
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
 #include <string>
-#include "tools/Infinity.hpp"
 
 namespace uno {
    // forward declarations
@@ -17,7 +16,10 @@ namespace uno {
    class Multipliers;
    class OptimizationProblem;
    class Options;
+   template <typename ElementType>
+   class RegularizationStrategy;
    class Statistics;
+   class SubproblemLayer;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
    template <typename ElementType>
@@ -34,9 +36,8 @@ namespace uno {
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
       virtual void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
       virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-         Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information) = 0;
+         Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
 
-      void set_trust_region_radius(double new_trust_region_radius);
       virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
       [[nodiscard]] virtual double proximal_coefficient(const Iterate& current_iterate) const = 0;
@@ -56,10 +57,7 @@ namespace uno {
       // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
       bool subproblem_definition_changed{false};
 
-      [[nodiscard]] virtual std::string get_strategy_combination() const = 0;
-
-   protected:
-      double trust_region_radius{INF<double>};
+      [[nodiscard]] virtual std::string get_name() const = 0;
    };
 } // namespace
 

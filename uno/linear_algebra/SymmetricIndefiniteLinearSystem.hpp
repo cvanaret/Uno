@@ -7,7 +7,7 @@
 #include "SymmetricMatrix.hpp"
 #include "SparseStorageFactory.hpp"
 #include "RectangularMatrix.hpp"
-#include "ingredients/hessian_models/UnstableRegularization.hpp"
+#include "../ingredients/regularization_strategies/UnstableRegularization.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
@@ -125,11 +125,11 @@ namespace uno {
       size_t number_attempts = 1;
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";
 
-      auto [number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues] = linear_solver.get_inertia();
+      const Inertia estimated_inertia = linear_solver.get_inertia();
       DEBUG << "Expected inertia  (" << size_primal_block << ", " << size_dual_block << ", 0)\n";
-      DEBUG << "Estimated inertia (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
+      DEBUG << "Estimated inertia " << estimated_inertia << '\n';
 
-      if (number_pos_eigenvalues == size_primal_block && number_neg_eigenvalues == size_dual_block && number_zero_eigenvalues == 0) {
+      if (estimated_inertia.positive == size_primal_block && estimated_inertia.negative == size_dual_block && estimated_inertia.zero == 0) {
          DEBUG << "The inertia is correct\n";
          statistics.set("regulariz", this->primal_regularization);
          return;
@@ -162,11 +162,11 @@ namespace uno {
          number_attempts++;
          DEBUG << "Number of attempts: " << number_attempts << "\n";
 
-         std::tie(number_pos_eigenvalues, number_neg_eigenvalues, number_zero_eigenvalues) = linear_solver.get_inertia();
+         const Inertia new_estimated_inertia = linear_solver.get_inertia();
          DEBUG << "Expected inertia  (" << size_primal_block << ", " << size_dual_block << ", 0)\n";
-         DEBUG << "Estimated inertia (" << number_pos_eigenvalues << ", " << number_neg_eigenvalues << ", " << number_zero_eigenvalues << ")\n";
+         DEBUG << "Estimated inertia " << new_estimated_inertia << '\n';
 
-         if (number_pos_eigenvalues == size_primal_block && number_neg_eigenvalues == size_dual_block && number_zero_eigenvalues == 0) {
+         if (new_estimated_inertia.positive == size_primal_block && new_estimated_inertia.negative == size_dual_block && new_estimated_inertia.zero == 0) {
             good_inertia = true;
             DEBUG << "The inertia is correct\n";
             this->previous_primal_regularization = this->primal_regularization;

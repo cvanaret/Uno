@@ -47,7 +47,7 @@ namespace uno {
       virtual ~SparseStorage() = default;
 
       virtual void reset() = 0;
-      void set_dimension(size_t new_dimension);
+      virtual void set_dimension(size_t new_dimension) = 0;
 
       // build the matrix incrementally
       virtual void insert(ElementType term, IndexType row_index, IndexType column_index) = 0;
@@ -87,11 +87,6 @@ namespace uno {
          use_regularization(use_regularization) {
    }
 
-   template <typename IndexType, typename ElementType>
-   void SparseStorage<IndexType, ElementType>::set_dimension(size_t new_dimension) {
-      this->dimension = new_dimension;
-   }
-   
    template <typename Index, typename Element>
    std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& matrix) {
       stream << "Dimension: " << matrix.dimension << ", number of nonzeros: " << matrix.number_nonzeros << '\n';

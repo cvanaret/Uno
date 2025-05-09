@@ -10,17 +10,17 @@
 
 namespace uno {
    std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(size_t number_constraints,
-         size_t number_bounds_constraints, const Options& options) {
+         const Options& options) {
       // set unconstrained strategy automatically
       if (number_constraints == 0) {
-         return std::make_unique<UnconstrainedStrategy>(number_constraints, number_bounds_constraints, options);
+         return std::make_unique<UnconstrainedStrategy>(options);
       }
       const std::string constraint_relaxation_type = options.get_string("constraint_relaxation_strategy");
       if (constraint_relaxation_type == "feasibility_restoration") {
-         return std::make_unique<FeasibilityRestoration>(number_constraints, number_bounds_constraints, options);
+         return std::make_unique<FeasibilityRestoration>(options);
       }
       else if (constraint_relaxation_type == "l1_relaxation") {
-         return std::make_unique<l1Relaxation>(number_constraints, number_bounds_constraints, options);
+         return std::make_unique<l1Relaxation>(options);
       }
       throw std::invalid_argument("ConstraintRelaxationStrategy " + constraint_relaxation_type + " is not supported");
    }

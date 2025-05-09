@@ -111,7 +111,9 @@ namespace uno {
    void l1RelaxedProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
       hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(), multipliers.constraints, hessian);
+      DEBUG << "Current model Hessian:\n" << hessian << '\n';
       hessian.set_dimension(this->number_variables);
+      DEBUG << "Current Hessian with new dimensions:\n" << hessian << '\n';
 
       // proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
@@ -122,10 +124,7 @@ namespace uno {
          }
       }
 
-      // extend the dimension of the Hessian by finalizing the remaining columns (note: the elastics do not enter the Hessian)
-      for (size_t constraint_index: Range(this->model.number_variables, this->number_variables)) {
-         hessian.finalize_column(constraint_index);
-      }
+      DEBUG << "Current Hessian:\n" << hessian << '\n';
    }
 
    void l1RelaxedProblem::compute_hessian_vector_product(HessianModel& hessian_model, const Vector<double>& vector, const Multipliers& multipliers,

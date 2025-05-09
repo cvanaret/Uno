@@ -4,8 +4,8 @@
 #ifndef UNO_H
 #define UNO_H
 
-#include <memory>
-#include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
+#include "layers/GlobalizationLayer.hpp"
+#include "layers/ReformulationLayer.hpp"
 #include "optimization/Result.hpp"
 #include "optimization/IterateStatus.hpp"
 
@@ -30,7 +30,8 @@ namespace uno {
       void print_optimization_summary(const Result& result);
 
    private:
-      std::unique_ptr<GlobalizationMechanism> globalization_mechanism; /*!< Globalization mechanism */
+      ReformulationLayer reformulation_layer;
+      GlobalizationLayer globalization_layer;
       const size_t max_iterations; /*!< Maximum number of iterations */
       const double time_limit; /*!< CPU time limit (can be inf) */
       const bool print_solution;

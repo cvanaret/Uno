@@ -4,10 +4,9 @@
 #ifndef UNO_UNCONSTRAINEDSTRATEGY_H
 #define UNO_UNCONSTRAINEDSTRATEGY_H
 
-#include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
-#include "ingredients/hessian_models/HessianModel.hpp"
+#include "layers/SubproblemLayer.hpp"
 
 namespace uno {
    // forward declarations
@@ -15,39 +14,43 @@ namespace uno {
 
    class UnconstrainedStrategy : public ConstraintRelaxationStrategy {
    public:
-      UnconstrainedStrategy(size_t number_constraints, size_t number_bounds_constraints, const Options& options);
+      explicit UnconstrainedStrategy(const Options& options);
       ~UnconstrainedStrategy() override = default;
 
-      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction, const Options& options) override;
+      void initialize(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const Model& model,
+         Iterate& initial_iterate, Direction& direction, const Options& options) override;
 
       // direction computation
-      void compute_feasible_direction(Statistics& statistics, const Model& model, Iterate& current_iterate, Direction& direction,
-         WarmstartInformation& warmstart_information) override;
+      void compute_feasible_direction(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
+         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Direction& direction,
+         double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
-      void switch_to_feasibility_problem(Statistics& statistics, const Model& model, Iterate& current_iterate,
+      void switch_to_feasibility_problem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
+         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate,
          WarmstartInformation& warmstart_information) override;
 
       // trial iterate acceptance
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
+         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       // primal-dual residuals
       void compute_primal_dual_residuals(const Model& model, Iterate& iterate) override;
       void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
 
-      [[nodiscard]] std::string get_strategy_combination() const override;
+      [[nodiscard]] std::string get_name() const override;
       [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
    private:
-      const bool convexify;
-      const std::unique_ptr<HessianModel> hessian_model;
+      SubproblemLayer subproblem_layer;
 
-      void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-         Direction& direction, HessianModel& hessian_model, WarmstartInformation& warmstart_information);
+      void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
+         Iterate& current_iterate, const Multipliers& current_multipliers, Direction& direction, double trust_region_radius,
+         WarmstartInformation& warmstart_information);
 
-      void evaluate_progress_measures(const Model& model, Iterate& iterate) const override;
-      [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(const Model& model, const Iterate& current_iterate,
-         const Direction& direction, double step_length) const;
+      void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const override;
+      [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(InequalityHandlingMethod& inequality_handling_method,
+         const Model& model, const Iterate& current_iterate, const Direction& direction, double step_length) const;
    };
 } // namespace
 
