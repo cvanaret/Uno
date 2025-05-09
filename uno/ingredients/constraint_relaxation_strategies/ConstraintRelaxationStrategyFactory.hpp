@@ -14,7 +14,8 @@ namespace uno {
 
    class ConstraintRelaxationStrategyFactory {
    public:
-      static std::unique_ptr<ConstraintRelaxationStrategy> create(size_t number_constraints, const Options& options);
+      static std::unique_ptr<ConstraintRelaxationStrategy> create(size_t number_constraints, size_t number_bound_constraints,
+         const Options& options);
       static std::vector<std::string> available_strategies();
    };
 } // namespace

@@ -35,25 +35,26 @@ namespace uno {
       explicit ConstraintRelaxationStrategy(const Options& options);
       virtual ~ConstraintRelaxationStrategy();
 
-      virtual void initialize(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const Model& model,
-         Iterate& initial_iterate, Direction& direction, const Options& options) = 0;
+      virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
+         const Options& options) = 0;
 
       // direction computation
-      virtual void compute_feasible_direction(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
-         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
-      void compute_feasible_direction(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
-         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Direction& direction,
-         const Vector<double>& initial_point, double trust_region_radius, WarmstartInformation& warmstart_information);
-      [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
-      virtual void switch_to_feasibility_problem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
-         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate,
+      virtual void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         const Model& model, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) = 0;
+      /*
+      void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
+         Iterate& current_iterate, Direction& direction, const Vector<double>& initial_point, double trust_region_radius,
+         WarmstartInformation& warmstart_information);
+      */
+      [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
+      virtual void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         const Model& model, Iterate& current_iterate, WarmstartInformation& warmstart_information) = 0;
 
       // trial iterate acceptance
-      [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
-         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
+      [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
       [[nodiscard]] IterateStatus check_termination(const Model& model, Iterate& iterate);
 
       // primal-dual residuals
@@ -62,7 +63,7 @@ namespace uno {
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
-      [[nodiscard]] size_t get_number_subproblems_solved() const;
+      [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
 
    protected:
       const Norm progress_norm;

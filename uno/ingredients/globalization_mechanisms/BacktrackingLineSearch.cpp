@@ -90,7 +90,7 @@ namespace uno {
          else { // minimum_step_length reached
             DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
             // check if we can terminate at a first-order point
-            termination = this->terminate_with_small_step_length(statistics, reformulation_layer, model, trial_iterate);
+            termination = BacktrackingLineSearch::terminate_with_small_step_length(statistics, reformulation_layer, model, trial_iterate);
             if (!termination) {
                // test if we can switch to solving the feasibility problem
                if (reformulation_layer.constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
@@ -98,11 +98,10 @@ namespace uno {
                }
                // switch to solving the feasibility problem
                statistics.set("status", "small step length");
-               reformulation_layer.constraint_relaxation_strategy->switch_to_feasibility_problem(statistics,
-                  *reformulation_layer.inequality_handling_method, globalization_strategy, model, current_iterate, warmstart_information);
-               reformulation_layer.constraint_relaxation_strategy->compute_feasible_direction(statistics,
-                  *reformulation_layer.inequality_handling_method, globalization_strategy, model, current_iterate,
-                  reformulation_layer.direction, reformulation_layer.direction.primals, INF<double>, warmstart_information);
+               reformulation_layer.constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, globalization_strategy,
+                  model, current_iterate, warmstart_information);
+               reformulation_layer.constraint_relaxation_strategy->compute_feasible_direction(statistics, globalization_strategy,
+                  model, current_iterate, reformulation_layer.direction, INF<double>, warmstart_information);
                BacktrackingLineSearch::check_unboundedness(reformulation_layer.direction);
                // restart backtracking
                step_length = 1.;
@@ -112,7 +111,7 @@ namespace uno {
       } // end while loop
    }
 
-   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, ReformulationLayer& reformulation_layer,
+   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, const ReformulationLayer& reformulation_layer,
          const Model& model, Iterate& trial_iterate) {
       bool termination = false;
       trial_iterate.status = reformulation_layer.constraint_relaxation_strategy->check_termination(model, trial_iterate);

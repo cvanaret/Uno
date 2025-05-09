@@ -30,13 +30,15 @@ namespace uno {
    ConstraintRelaxationStrategy::~ConstraintRelaxationStrategy() { }
 
    // with initial point
+   /*
    void ConstraintRelaxationStrategy::compute_feasible_direction(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Direction& direction,
          const Vector<double>& initial_point, double trust_region_radius, WarmstartInformation& warmstart_information) {
       inequality_handling_method.set_initial_point(initial_point);
-      this->compute_feasible_direction(statistics, inequality_handling_method, globalization_strategy, model, current_iterate,
+      this->compute_feasible_direction(statistics, globalization_strategy, model, current_iterate,
          direction, trust_region_radius, warmstart_information);
    }
+   */
 
    // infeasibility measure: constraint violation
    void ConstraintRelaxationStrategy::set_infeasibility_measure(const Model& model, Iterate& iterate) const {

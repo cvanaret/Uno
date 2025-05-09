@@ -101,7 +101,7 @@ namespace uno {
          // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
          problem.evaluate_lagrangian_hessian(statistics, *subproblem_layer.hessian_model, current_iterate.primals, current_multipliers, this->hessian);
          // regularize the Hessian
-         const Inertia expected_inertia{problem.get_number_original_variables(), 0, 0};
+         const Inertia expected_inertia{problem.get_number_original_variables(), 0, problem.number_variables - problem.get_number_original_variables()};
          subproblem_layer.regularization_strategy->regularize_hessian(statistics, this->hessian, expected_inertia);
          this->save_hessian_in_local_format();
       }

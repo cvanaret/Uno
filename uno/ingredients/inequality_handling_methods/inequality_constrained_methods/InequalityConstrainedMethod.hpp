@@ -13,7 +13,8 @@ namespace uno {
       InequalityConstrainedMethod();
       ~InequalityConstrainedMethod() override = default;
 
-      void initialize(const OptimizationProblem& problem, const HessianModel& hessian_model) override;
+      void initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void set_initial_point(const Vector<double>& point) override;
       void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;

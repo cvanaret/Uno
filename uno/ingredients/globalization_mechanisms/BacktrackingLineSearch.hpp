@@ -30,7 +30,7 @@ namespace uno {
       void backtrack_along_direction(Statistics& statistics, ReformulationLayer& reformulation_layer, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, Iterate& trial_iterate, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks);
-      [[nodiscard]] bool terminate_with_small_step_length(Statistics& statistics, ReformulationLayer& reformulation_layer,
+      [[nodiscard]] static bool terminate_with_small_step_length(Statistics& statistics, const ReformulationLayer& reformulation_layer,
          const Model& model, Iterate& trial_iterate);
       [[nodiscard]] double decrease_step_length(double step_length) const;
       static void check_unboundedness(const Direction& direction);

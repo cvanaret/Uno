@@ -19,8 +19,9 @@ namespace uno {
 
    QPSubproblem::~QPSubproblem() { }
 
-   void QPSubproblem::initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model) {
-      InequalityConstrainedMethod::initialize(first_reformulation, hessian_model);
+   void QPSubproblem::initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy) {
+      InequalityConstrainedMethod::initialize(first_reformulation, hessian_model, regularization_strategy);
       this->solver->initialize_memory(first_reformulation, hessian_model);
    }
 

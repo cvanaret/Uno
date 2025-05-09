@@ -10,6 +10,8 @@ namespace uno {
    // forward declarations
    template <typename ElementType>
    class Collection;
+   class HessianModel;
+   class OptimizationProblem;
    class Options;
    class Statistics;
    template <typename IndexType, typename ElementType>
@@ -21,7 +23,7 @@ namespace uno {
       RegularizationStrategy() = default;
       virtual ~RegularizationStrategy() = default;
 
-      virtual void initialize_memory(size_t dimension, size_t number_nonzeros) = 0;
+      virtual void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) = 0;
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
 
       virtual void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian, const Inertia& expected_inertia) = 0;

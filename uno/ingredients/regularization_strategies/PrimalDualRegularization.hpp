@@ -24,7 +24,7 @@ namespace uno {
    public:
       explicit PrimalDualRegularization(const Options& options);
 
-      void initialize_memory(size_t dimension, size_t number_nonzeros) override;
+      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
       void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian, const Inertia& expected_inertia) override;
@@ -61,7 +61,10 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void PrimalDualRegularization<ElementType>::initialize_memory(size_t dimension, size_t number_nonzeros) {
+   void PrimalDualRegularization<ElementType>::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) {
+      const size_t dimension = problem.number_variables + problem.number_constraints;
+      const size_t number_nonzeros = problem.number_hessian_nonzeros(hessian_model) + problem.number_jacobian_nonzeros() +
+         problem.number_variables + problem.number_constraints; // diagonal primal-dual regularization
       this->linear_solver->initialize_memory(dimension, number_nonzeros);
    }
 

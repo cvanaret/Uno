@@ -7,6 +7,7 @@
 #include <memory>
 #include "RegularizationStrategy.hpp"
 #include "UnstableRegularization.hpp"
+#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
@@ -20,7 +21,7 @@ namespace uno {
    public:
       explicit PrimalRegularization(const Options& options);
 
-      void initialize_memory(size_t dimension, size_t number_nonzeros) override;
+      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
       void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian, const Inertia& expected_inertia) override;
@@ -45,8 +46,10 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void PrimalRegularization<ElementType>::initialize_memory(size_t dimension, size_t number_nonzeros) {
-      this->linear_solver->initialize_memory(dimension, number_nonzeros);
+   void PrimalRegularization<ElementType>::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) {
+      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model) +
+         problem.number_variables; // diagonal regularization
+      this->linear_solver->initialize_memory(problem.number_variables, number_hessian_nonzeros);
    }
 
    template <typename ElementType>
@@ -81,12 +84,14 @@ namespace uno {
             symbolic_analysis_performed = true;
          }
          this->linear_solver->do_numerical_factorization(hessian);
-         if (this->linear_solver->rank() == expected_inertia.positive) {
+         const Inertia estimated_inertia = this->linear_solver->get_inertia();
+         DEBUG << "Expected inertia: " << expected_inertia << '\n';
+         DEBUG << "Estimated inertia: " << estimated_inertia << '\n';
+         if (estimated_inertia == expected_inertia) {
             good_inertia = true;
             DEBUG << "Factorization was a success\n";
          }
          else {
-            DEBUG << "rank: " << this->linear_solver->rank() << ", negative eigenvalues: " << this->linear_solver->number_negative_eigenvalues() << '\n';
             regularization_factor = (regularization_factor == 0.) ? this->regularization_initial_value : this->regularization_increase_factor * regularization_factor;
             if (regularization_factor > this->regularization_failure_threshold) {
                throw UnstableRegularization();

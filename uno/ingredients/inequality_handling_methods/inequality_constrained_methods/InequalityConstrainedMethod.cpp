@@ -5,14 +5,17 @@
 #include "optimization/Iterate.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
+#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(): InequalityHandlingMethod() {
    }
 
-   void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, const HessianModel& /*hessian_model*/) {
+   void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy) {
       this->initial_point.resize(problem.number_variables);
+      regularization_strategy.initialize_memory(problem, hessian_model);
    }
 
    void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {

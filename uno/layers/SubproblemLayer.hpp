@@ -5,6 +5,8 @@
 #define UNO_SUBPROBLEMLAYER_H
 
 #include <memory>
+
+#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
@@ -25,8 +27,9 @@ namespace uno {
          regularization_strategy(RegularizationStrategyFactory::create(options)) {
       }
 
-      void initialize(const Model& model) const {
+      void initialize(const Model& model, const OptimizationProblem& problem) const {
          this->hessian_model->initialize(model);
+         this->regularization_strategy->initialize_memory(problem, *this->hessian_model);
       }
 
       void initialize_statistics(Statistics& statistics, const Options& options) const {

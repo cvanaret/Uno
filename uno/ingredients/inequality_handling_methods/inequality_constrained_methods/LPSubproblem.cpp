@@ -14,8 +14,9 @@ namespace uno {
 
    LPSubproblem::~LPSubproblem() { }
 
-   void LPSubproblem::initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model) {
-      InequalityConstrainedMethod::initialize(first_reformulation, hessian_model);
+   void LPSubproblem::initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy) {
+      InequalityConstrainedMethod::initialize(first_reformulation, hessian_model, regularization_strategy);
       this->solver->initialize_memory(first_reformulation, hessian_model);
    }
 

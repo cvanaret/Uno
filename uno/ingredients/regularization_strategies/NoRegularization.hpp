@@ -12,7 +12,7 @@ namespace uno {
    public:
       explicit NoRegularization() = default;
 
-      void initialize_memory(size_t /*dimension*/, size_t /*number_nonzeros*/) override {
+      void initialize_memory(const OptimizationProblem& /*problem*/, const HessianModel& /*hessian_model*/) override {
          // do nothing
       }
 

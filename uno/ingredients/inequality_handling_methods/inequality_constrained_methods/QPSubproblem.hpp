@@ -16,7 +16,8 @@ namespace uno {
       explicit QPSubproblem(const Options& options);
       ~QPSubproblem() override;
 
-      void initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model) override;
+      void initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy) override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
          Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius, WarmstartInformation& warmstart_information) override;
