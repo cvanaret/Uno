@@ -22,16 +22,15 @@ namespace uno {
       Vector<ElementType> solution{};
 
       SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension, size_t number_non_zeros, bool use_regularization,
-            const Options& options);
+         const Options& options);
       explicit SymmetricIndefiniteLinearSystem(const Options& options);
-      //SymmetricIndefiniteLinearSystem& operator=(const SymmetricIndefiniteLinearSystem& other) = default;
       SymmetricIndefiniteLinearSystem& operator=(SymmetricIndefiniteLinearSystem&& other) = default;
 
       void assemble_matrix(const SymmetricMatrix<size_t, double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
-            size_t number_variables, size_t number_constraints);
+         size_t number_variables, size_t number_constraints);
       void factorize_matrix(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, WarmstartInformation& warmstart_information);
       void regularize_matrix(Statistics& statistics, DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver,
-            size_t size_primal_block, size_t size_dual_block, ElementType dual_regularization_parameter, WarmstartInformation& warmstart_information);
+         const Inertia& expected_inertia, ElementType dual_regularization_parameter, WarmstartInformation& warmstart_information);
       void solve(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
       // [[nodiscard]] T get_primal_regularization() const;
 
@@ -51,7 +50,7 @@ namespace uno {
 
    template <typename ElementType>
    SymmetricIndefiniteLinearSystem<ElementType>::SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension,
-         size_t number_non_zeros, bool use_regularization, const Options& options):
+            size_t number_non_zeros, bool use_regularization, const Options& options):
          matrix(dimension, number_non_zeros, use_regularization, sparse_format),
          rhs(dimension),
          solution(dimension),
@@ -117,7 +116,7 @@ namespace uno {
    // the matrix has been factorized prior to calling this function
    template <typename ElementType>
    void SymmetricIndefiniteLinearSystem<ElementType>::regularize_matrix(Statistics& statistics,
-         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, size_t size_primal_block, size_t size_dual_block,
+         DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver, const Inertia& expected_inertia,
          ElementType dual_regularization_parameter, WarmstartInformation& warmstart_information) {
       DEBUG2 << "Original matrix\n" << this->matrix << '\n';
       this->primal_regularization = ElementType(0.);
@@ -126,18 +125,19 @@ namespace uno {
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";
 
       const Inertia estimated_inertia = linear_solver.get_inertia();
-      DEBUG << "Expected inertia  (" << size_primal_block << ", " << size_dual_block << ", 0)\n";
+      DEBUG << "Expected inertia  " << expected_inertia << '\n';
       DEBUG << "Estimated inertia " << estimated_inertia << '\n';
 
-      if (estimated_inertia.positive == size_primal_block && estimated_inertia.negative == size_dual_block && estimated_inertia.zero == 0) {
+      if (estimated_inertia == expected_inertia) {
          DEBUG << "The inertia is correct\n";
          statistics.set("regulariz", this->primal_regularization);
          return;
       }
 
       // set the constraint regularization coefficient
-      if (linear_solver.matrix_is_singular()) {
+      if (0 < estimated_inertia.zero) {
          DEBUG << "Matrix is singular\n";
+         throw std::runtime_error("STOP");
          this->dual_regularization = this->dual_regularization_fraction * dual_regularization_parameter;
       }
       // set the Hessian regularization coefficient
@@ -151,7 +151,7 @@ namespace uno {
 
       // regularize the augmented matrix
       this->matrix.set_regularization([=](size_t row_index) {
-         return (row_index < size_primal_block) ? this->primal_regularization : -this->dual_regularization;
+         return (row_index < expected_inertia.positive) ? this->primal_regularization : -this->dual_regularization;
       });
 
       bool good_inertia = false;
@@ -163,10 +163,10 @@ namespace uno {
          DEBUG << "Number of attempts: " << number_attempts << "\n";
 
          const Inertia new_estimated_inertia = linear_solver.get_inertia();
-         DEBUG << "Expected inertia  (" << size_primal_block << ", " << size_dual_block << ", 0)\n";
+         DEBUG << "Expected inertia  " << expected_inertia << '\n';
          DEBUG << "Estimated inertia " << new_estimated_inertia << '\n';
 
-         if (new_estimated_inertia.positive == size_primal_block && new_estimated_inertia.negative == size_dual_block && new_estimated_inertia.zero == 0) {
+         if (new_estimated_inertia == expected_inertia) {
             good_inertia = true;
             DEBUG << "The inertia is correct\n";
             this->previous_primal_regularization = this->primal_regularization;
@@ -182,7 +182,7 @@ namespace uno {
             if (this->primal_regularization <= this->regularization_failure_threshold) {
                // regularize the augmented matrix
                this->matrix.set_regularization([=](size_t row_index) {
-                  return (row_index < size_primal_block) ? this->primal_regularization : -this->dual_regularization;
+                  return (row_index < expected_inertia.positive) ? this->primal_regularization : -this->dual_regularization;
                });
             }
             else {
@@ -197,13 +197,6 @@ namespace uno {
    void SymmetricIndefiniteLinearSystem<ElementType>::solve(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
       linear_solver.solve_indefinite_system(this->matrix, this->rhs, this->solution);
    }
-
-   /*
-   template <typename ElementType>
-   ElementType SymmetricIndefiniteLinearSystem<ElementType>::get_primal_regularization() const {
-      return this->primal_regularization;
-   }
-   */
 } // namespace
 
 #endif // UNO_SYMMETRICINDEFINITELINEARSYSTEM_H

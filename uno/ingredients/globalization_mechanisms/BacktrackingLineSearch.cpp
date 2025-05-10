@@ -3,7 +3,7 @@
 
 #include <cassert>
 #include "BacktrackingLineSearch.hpp"
-#include "layers/ReformulationLayer.hpp"
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationErrors.hpp"
@@ -29,16 +29,16 @@ namespace uno {
       statistics.add_column("step length", Statistics::double_width - 4, options.get_int("statistics_LS_step_length_column_order"));
    }
 
-   void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, ReformulationLayer& reformulation_layer,
+   void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
-      reformulation_layer.compute_feasible_direction(statistics, globalization_strategy, model, current_iterate, INF<double>,
-         warmstart_information);
-      BacktrackingLineSearch::check_unboundedness(reformulation_layer.direction);
-      this->backtrack_along_direction(statistics, reformulation_layer, globalization_strategy, model, current_iterate, trial_iterate,
-         warmstart_information, user_callbacks);
+      constraint_relaxation_strategy.compute_feasible_direction(statistics, globalization_strategy, model, current_iterate,
+         direction, INF<double>, warmstart_information);
+      BacktrackingLineSearch::check_unboundedness(direction);
+      this->backtrack_along_direction(statistics, constraint_relaxation_strategy, globalization_strategy, model, current_iterate,
+         trial_iterate, direction, warmstart_information, user_callbacks);
    }
 
    std::string BacktrackingLineSearch::get_name() const {
@@ -48,9 +48,9 @@ namespace uno {
    // protected member functions
 
    // go a fraction along the direction by finding an acceptable step length
-   void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, ReformulationLayer& reformulation_layer,
+   void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
@@ -63,14 +63,14 @@ namespace uno {
          bool is_acceptable = false;
          try {
             // take a step as a fraction of the direction
-            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, reformulation_layer.direction,
+            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction,
                step_length,
                // scale or not the constraint dual direction with the LS step length
                this->scale_duals_with_step_length ? step_length : 1.);
 
-            is_acceptable = reformulation_layer.is_iterate_acceptable(statistics, globalization_strategy, model, current_iterate,
-               trial_iterate, reformulation_layer.direction, step_length, warmstart_information, user_callbacks);
-            this->set_statistics(statistics, trial_iterate, reformulation_layer.direction, step_length, number_iterations);
+            is_acceptable = constraint_relaxation_strategy.is_iterate_acceptable(statistics, globalization_strategy, model, current_iterate,
+               trial_iterate, direction, step_length, warmstart_information, user_callbacks);
+            this->set_statistics(statistics, trial_iterate, direction, step_length, number_iterations);
          }
          catch (const EvaluationError&) {
             this->set_statistics(statistics, number_iterations);
@@ -78,8 +78,8 @@ namespace uno {
          }
 
          if (is_acceptable) {
-            trial_iterate.status = reformulation_layer.constraint_relaxation_strategy->check_termination(model, trial_iterate);
-            reformulation_layer.constraint_relaxation_strategy->set_dual_residuals_statistics(statistics, trial_iterate);
+            trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
+            constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
             termination = true;
             if (Logger::level == INFO) statistics.print_current_line();
          }
@@ -90,19 +90,20 @@ namespace uno {
          else { // minimum_step_length reached
             DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
             // check if we can terminate at a first-order point
-            termination = BacktrackingLineSearch::terminate_with_small_step_length(statistics, reformulation_layer, model, trial_iterate);
+            termination = BacktrackingLineSearch::terminate_with_small_step_length(statistics, constraint_relaxation_strategy,
+               model, trial_iterate);
             if (!termination) {
                // test if we can switch to solving the feasibility problem
-               if (reformulation_layer.constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
+               if (constraint_relaxation_strategy.solving_feasibility_problem() || !model.is_constrained()) {
                   throw std::runtime_error("LS failed");
                }
                // switch to solving the feasibility problem
                statistics.set("status", "small step length");
-               reformulation_layer.constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, globalization_strategy,
+               constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, globalization_strategy,
                   model, current_iterate, warmstart_information);
-               reformulation_layer.constraint_relaxation_strategy->compute_feasible_direction(statistics, globalization_strategy,
-                  model, current_iterate, reformulation_layer.direction, INF<double>, warmstart_information);
-               BacktrackingLineSearch::check_unboundedness(reformulation_layer.direction);
+               constraint_relaxation_strategy.compute_feasible_direction(statistics, globalization_strategy,
+                  model, current_iterate, direction, INF<double>, warmstart_information);
+               BacktrackingLineSearch::check_unboundedness(direction);
                // restart backtracking
                step_length = 1.;
                number_iterations = 0;
@@ -111,13 +112,13 @@ namespace uno {
       } // end while loop
    }
 
-   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, const ReformulationLayer& reformulation_layer,
-         const Model& model, Iterate& trial_iterate) {
+   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics,
+         ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Model& model, Iterate& trial_iterate) {
       bool termination = false;
-      trial_iterate.status = reformulation_layer.constraint_relaxation_strategy->check_termination(model, trial_iterate);
+      trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
       if (trial_iterate.status != IterateStatus::NOT_OPTIMAL) {
          statistics.set("status", "accepted (small step length)");
-         reformulation_layer.constraint_relaxation_strategy->set_dual_residuals_statistics(statistics, trial_iterate);
+         constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
          termination = true;
       }
       return termination;

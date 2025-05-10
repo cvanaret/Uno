@@ -6,7 +6,6 @@
 #include "TrustRegionStrategy.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
-#include "layers/ReformulationLayer.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationErrors.hpp"
@@ -38,9 +37,9 @@ namespace uno {
       statistics.set("TR radius", this->radius);
    }
 
-   void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, ReformulationLayer& reformulation_layer,
+   void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
       size_t number_iterations = 0;
@@ -54,20 +53,20 @@ namespace uno {
             this->set_trust_region_statistics(statistics, number_iterations);
 
             // compute the direction within the trust region
-            reformulation_layer.compute_feasible_direction(statistics, globalization_strategy, model, current_iterate,
-               this->radius, warmstart_information);
+            constraint_relaxation_strategy.compute_feasible_direction(statistics, globalization_strategy, model, current_iterate,
+               direction, this->radius, warmstart_information);
 
             // deal with errors in the subproblem
-            if (reformulation_layer.direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
+            if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
                // the subproblem is always bounded, but the objective may exceed a very large negative value
-               this->set_statistics(statistics, reformulation_layer.direction);
+               this->set_statistics(statistics, direction);
                statistics.set("status", "unbounded subproblem");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius_aggressively();
                warmstart_information.whole_problem_changed();
             }
-            else if (reformulation_layer.direction.status == SubproblemStatus::ERROR) {
-               this->set_statistics(statistics, reformulation_layer.direction);
+            else if (direction.status == SubproblemStatus::ERROR) {
+               this->set_statistics(statistics, direction);
                statistics.set("status", "solver error");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius();
@@ -75,18 +74,18 @@ namespace uno {
             }
             else {
                // take full primal-dual step
-               GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, reformulation_layer.direction, 1., 1.);
-               this->reset_active_trust_region_multipliers(model, reformulation_layer.direction, trial_iterate);
+               GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, 1., 1.);
+               this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
 
-               is_acceptable = this->is_iterate_acceptable(statistics, reformulation_layer, globalization_strategy, model,
-                  current_iterate, trial_iterate, reformulation_layer.direction, warmstart_information, user_callbacks);
+               is_acceptable = this->is_iterate_acceptable(statistics, constraint_relaxation_strategy, globalization_strategy,
+                  model, current_iterate, trial_iterate, direction, warmstart_information, user_callbacks);
                if (is_acceptable) {
-                  reformulation_layer.constraint_relaxation_strategy->set_dual_residuals_statistics(statistics, trial_iterate);
+                  constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
                   this->reset_radius();
                   termination = true;
                }
                else {
-                  this->decrease_radius(reformulation_layer.direction.norm);
+                  this->decrease_radius(direction.norm);
                   warmstart_information.variable_bounds_changed = true;
                }
                if (Logger::level == INFO) statistics.print_current_line();
@@ -129,19 +128,19 @@ namespace uno {
    }
 
    // the trial iterate is accepted by the constraint relaxation strategy or if the step is small and we cannot switch to solving the feasibility problem
-   bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const ReformulationLayer& reformulation_layer,
+   bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
-      bool accept_iterate = reformulation_layer.is_iterate_acceptable(statistics, globalization_strategy, model,
+      bool accept_iterate = constraint_relaxation_strategy.is_iterate_acceptable(statistics, globalization_strategy, model,
          current_iterate, trial_iterate, direction, 1., warmstart_information, user_callbacks);
       this->set_statistics(statistics, trial_iterate, direction);
       if (accept_iterate) {
-         trial_iterate.status = reformulation_layer.constraint_relaxation_strategy->check_termination(model, trial_iterate);
+         trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
          // possibly increase the radius if trust region is active
          this->possibly_increase_radius(direction.norm);
       }
       else if (this->radius < this->minimum_radius) { // rejected, but small radius
-         accept_iterate = this->check_termination_with_small_step(*reformulation_layer.constraint_relaxation_strategy, model, trial_iterate);
+         accept_iterate = this->check_termination_with_small_step(constraint_relaxation_strategy, model, trial_iterate);
       }
       return accept_iterate;
    }

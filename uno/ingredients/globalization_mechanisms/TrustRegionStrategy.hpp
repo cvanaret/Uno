@@ -13,9 +13,9 @@ namespace uno {
       ~TrustRegionStrategy() override = default;
 
       void initialize(Statistics& statistics, const Options& options) override;
-      void compute_next_iterate(Statistics& statistics, ReformulationLayer& reformulation_layer, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, WarmstartInformation& warmstart_information,
-         UserCallbacks& user_callbacks) override;
+      void compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       [[nodiscard]] std::string get_name() const override;
 
@@ -29,7 +29,7 @@ namespace uno {
       const double radius_reset_threshold;
       const double tolerance;
 
-      bool is_iterate_acceptable(Statistics& statistics, const ReformulationLayer& reformulation_layer,
+      bool is_iterate_acceptable(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
       void possibly_increase_radius(double step_norm);

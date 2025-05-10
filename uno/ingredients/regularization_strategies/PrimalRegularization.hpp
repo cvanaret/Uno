@@ -25,21 +25,28 @@ namespace uno {
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
       void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian, const Inertia& expected_inertia) override;
+      void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian, const Inertia& expected_inertia,
+         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
       void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
          const Collection<size_t>& primal_variables, const Collection<size_t>& dual_variables, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia) override;
+      void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
+         const Collection<size_t>& primal_variables, const Collection<size_t>& dual_variables, ElementType dual_regularization_parameter,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
 
    protected:
-      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;
+      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver{};
+      size_t dimension{0};
+      size_t number_nonzeros{0};
       const double regularization_initial_value{};
       const double regularization_increase_factor{};
       const double regularization_failure_threshold{};
+      bool symbolic_analysis_performed{false};
    };
 
    template <typename ElementType>
    PrimalRegularization<ElementType>::PrimalRegularization(const Options& options):
          RegularizationStrategy<ElementType>(),
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)),
          regularization_initial_value(options.get_double("regularization_initial_value")),
          regularization_increase_factor(options.get_double("regularization_increase_factor")),
          regularization_failure_threshold(options.get_double("regularization_failure_threshold")) {
@@ -47,9 +54,8 @@ namespace uno {
 
    template <typename ElementType>
    void PrimalRegularization<ElementType>::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) {
-      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model) +
-         problem.number_variables; // diagonal regularization
-      this->linear_solver->initialize_memory(problem.number_variables, number_hessian_nonzeros);
+      this->dimension = problem.number_variables;
+      this->number_nonzeros = problem.number_hessian_nonzeros(hessian_model) + problem.number_variables; // diagonal regularization
    }
 
    template <typename ElementType>
@@ -61,6 +67,19 @@ namespace uno {
    template <typename ElementType>
    void PrimalRegularization<ElementType>::regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian,
          const Inertia& expected_inertia) {
+      // pick the member linear solver
+      if (this->linear_solver == nullptr) {
+         Options options{false};
+         options["linear_solver"] = "MA57";
+         this->linear_solver = SymmetricIndefiniteLinearSolverFactory::create(options);
+         this->linear_solver->initialize_memory(this->dimension, this->number_nonzeros);
+      }
+      this->regularize_hessian(statistics, hessian, expected_inertia, *this->linear_solver);
+   }
+
+   template <typename ElementType>
+   void PrimalRegularization<ElementType>::regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) {
       DEBUG << "Current Hessian:\n" << hessian << '\n';
       const size_t hessian_dimension = hessian.dimension();
       const double smallest_diagonal_entry = hessian.smallest_diagonal_entry(hessian_dimension);
@@ -68,7 +87,6 @@ namespace uno {
 
       double regularization_factor = (smallest_diagonal_entry > 0.) ? 0. : this->regularization_initial_value - smallest_diagonal_entry;
       bool good_inertia = false;
-      bool symbolic_analysis_performed = false;
       while (!good_inertia) {
          DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
          if (0. < regularization_factor) {
@@ -79,12 +97,12 @@ namespace uno {
          DEBUG << "Current Hessian:\n" << hessian << '\n';
 
          // perform the symbolic analysis only once
-         if (!symbolic_analysis_performed) {
-            this->linear_solver->do_symbolic_analysis(hessian);
-            symbolic_analysis_performed = true;
+         if (!this->symbolic_analysis_performed) {
+            linear_solver.do_symbolic_analysis(hessian);
+            this->symbolic_analysis_performed = true;
          }
-         this->linear_solver->do_numerical_factorization(hessian);
-         const Inertia estimated_inertia = this->linear_solver->get_inertia();
+         linear_solver.do_numerical_factorization(hessian);
+         const Inertia estimated_inertia = linear_solver.get_inertia();
          DEBUG << "Expected inertia: " << expected_inertia << '\n';
          DEBUG << "Estimated inertia: " << estimated_inertia << '\n';
          if (estimated_inertia == expected_inertia) {
@@ -102,12 +120,26 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& /*statistics*/, SymmetricMatrix <size_t, ElementType>& /*augmented_matrix*/,
-         const Collection<size_t>& /*primal_variables*/, const Collection<size_t>& /*dual_variables*/, ElementType /*dual_regularization_parameter*/,
-         const Inertia& /*expected_inertia*/) {
-      throw std::runtime_error("PrimalRegularization<ElementType>::regularize_augmented_matrix not implemented yet");
+   void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix <size_t, ElementType>& augmented_matrix,
+         const Collection<size_t>& primal_variables, const Collection<size_t>& dual_variables, ElementType dual_regularization_parameter,
+         const Inertia& expected_inertia) {
+      // pick the member linear solver
+      if (this->linear_solver == nullptr) {
+         Options options{false};
+         options["linear_solver"] = "MA57";
+         this->linear_solver = SymmetricIndefiniteLinearSolverFactory::create(options);
+         this->linear_solver->initialize_memory(this->dimension, this->number_nonzeros);
+      }
+      this->regularize_augmented_matrix(statistics, augmented_matrix, primal_variables, dual_variables, dual_regularization_parameter,
+         expected_inertia, *this->linear_solver);
    }
 
+   template <typename ElementType>
+   void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& /*statistics*/, SymmetricMatrix <size_t, ElementType>& /*augmented_matrix*/,
+         const Collection<size_t>& /*primal_variables*/, const Collection<size_t>& /*dual_variables*/, ElementType /*dual_regularization_parameter*/,
+         const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) {
+      throw std::runtime_error("PrimalRegularization<ElementType>::regularize_augmented_matrix not implemented yet");
+   }
 } // namespace
 
 #endif // UNO_PRIMALREGULARIZATION_H

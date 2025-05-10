@@ -49,8 +49,8 @@ namespace uno {
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
 
       // memory allocation
-      this->l1_relaxed_subproblem_layer.initialize(model, l1_relaxed_problem);
-      this->feasibility_subproblem_layer.initialize(model, feasibility_problem);
+      this->l1_relaxed_subproblem_layer.hessian_model->initialize(model);
+      this->feasibility_subproblem_layer.hessian_model->initialize(model);
       this->inequality_handling_method->initialize(l1_relaxed_problem, *this->l1_relaxed_subproblem_layer.hessian_model,
          *this->l1_relaxed_subproblem_layer.regularization_strategy);
       this->feasibility_inequality_handling_method->initialize(feasibility_problem, *this->feasibility_subproblem_layer.hessian_model,

@@ -32,16 +32,19 @@ namespace uno {
    void FeasibilityRestoration::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
          Direction& direction, const Options& options) {
       const OptimizationProblem optimality_problem{model};
-      const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
+      l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
+      this->reference_optimality_primals.resize(optimality_problem.number_variables);
+      feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
+      feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
 
       // memory allocation
-      this->optimality_subproblem_layer.initialize(model, optimality_problem);
-      this->feasibility_subproblem_layer.initialize(model, feasibility_problem);
+      // TODO allocate the feasibility phase only when entering the first time?
+      this->optimality_subproblem_layer.hessian_model->initialize(model);
+      this->feasibility_subproblem_layer.hessian_model->initialize(model);
       this->optimality_inequality_handling_method->initialize(optimality_problem, *this->optimality_subproblem_layer.hessian_model,
          *this->optimality_subproblem_layer.regularization_strategy);
       this->feasibility_inequality_handling_method->initialize(feasibility_problem, *this->feasibility_subproblem_layer.hessian_model,
          *this->feasibility_subproblem_layer.regularization_strategy);
-      this->reference_optimality_primals.resize(optimality_problem.number_variables);
       direction = Direction(feasibility_problem.number_variables, feasibility_problem.number_constraints);
 
       // statistics
@@ -97,7 +100,7 @@ namespace uno {
       // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
       l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
       feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
-      feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient(current_iterate));
+      feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
       this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method, feasibility_problem, current_iterate,
          current_iterate.feasibility_multipliers, direction, this->feasibility_subproblem_layer, trust_region_radius,
          warmstart_information);

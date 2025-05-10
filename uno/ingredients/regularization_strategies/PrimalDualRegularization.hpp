@@ -9,7 +9,6 @@
 #include "UnstableRegularization.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
@@ -28,11 +27,18 @@ namespace uno {
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
       void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian, const Inertia& expected_inertia) override;
+      void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian, const Inertia& expected_inertia,
+         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
       void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix, const Collection<size_t>& primal_variables,
          const Collection<size_t>& dual_variables, ElementType dual_regularization_parameter, const Inertia& expected_inertia) override;
+      void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix, const Collection<size_t>& primal_variables,
+         const Collection<size_t>& dual_variables, ElementType dual_regularization_parameter, const Inertia& expected_inertia,
+         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
 
    protected:
-      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;
+      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver{};
+      size_t dimension;
+      size_t number_nonzeros;
       ElementType primal_regularization{0.};
       ElementType dual_regularization{0.};
       ElementType previous_primal_regularization{0.};
@@ -44,12 +50,12 @@ namespace uno {
       const ElementType primal_regularization_fast_increase_factor;
       const ElementType primal_regularization_slow_increase_factor;
       const size_t threshold_unsuccessful_attempts;
+      bool symbolic_analysis_performed{false};
    };
 
    template <typename ElementType>
    PrimalDualRegularization<ElementType>::PrimalDualRegularization(const Options& options):
          RegularizationStrategy<ElementType>(),
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)),
          regularization_failure_threshold(ElementType(options.get_double("regularization_failure_threshold"))),
          primal_regularization_initial_factor(ElementType(options.get_double("primal_regularization_initial_factor"))),
          dual_regularization_fraction(ElementType(options.get_double("dual_regularization_fraction"))),
@@ -62,10 +68,9 @@ namespace uno {
 
    template <typename ElementType>
    void PrimalDualRegularization<ElementType>::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) {
-      const size_t dimension = problem.number_variables + problem.number_constraints;
-      const size_t number_nonzeros = problem.number_hessian_nonzeros(hessian_model) + problem.number_jacobian_nonzeros() +
+      this->dimension = problem.number_variables + problem.number_constraints;
+      this->number_nonzeros = problem.number_hessian_nonzeros(hessian_model) + problem.number_jacobian_nonzeros() +
          problem.number_variables + problem.number_constraints; // diagonal primal-dual regularization
-      this->linear_solver->initialize_memory(dimension, number_nonzeros);
    }
 
    template <typename ElementType>
@@ -76,24 +81,61 @@ namespace uno {
    template <typename ElementType>
    void PrimalDualRegularization<ElementType>::regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian,
          const Inertia& expected_inertia) {
+      // pick the member linear solver
+      if (this->linear_solver == nullptr) {
+         Options options{false};
+         this->linear_solver = SymmetricIndefiniteLinearSolverFactory::create(options);
+         this->linear_solver->initialize_memory(this->dimension, this->number_nonzeros);
+      }
+      this->regularize_hessian(statistics, hessian, expected_inertia, *this->linear_solver);
+   }
+
+   template <typename ElementType>
+   void PrimalDualRegularization<ElementType>::regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) {
       // to regularize the Hessian only, call the function for the augmented matrix with no dual part
-      this->regularize_augmented_matrix(statistics, hessian, Range(hessian.dimension()), Range(0), ElementType(0), expected_inertia);
+      this->regularize_augmented_matrix(statistics, hessian, Range(hessian.dimension()), Range(0), ElementType(0),
+         expected_inertia, linear_solver);
    }
 
    // the augmented matrix has been factorized prior to calling this function
    template <typename ElementType>
    void PrimalDualRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
-         const Collection<size_t>& /*primal_variables*/, const Collection<size_t>& /*dual_variables*/, ElementType dual_regularization_parameter,
+         const Collection<size_t>& primal_variables, const Collection<size_t>& dual_variables, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia) {
+      if (this->linear_solver == nullptr) {
+         Options options{false};
+         this->linear_solver = SymmetricIndefiniteLinearSolverFactory::create(options);
+         this->linear_solver->initialize_memory(this->dimension, this->number_nonzeros);
+      }
+      this->regularize_augmented_matrix(statistics, augmented_matrix, primal_variables, dual_variables, dual_regularization_parameter,
+         expected_inertia, *this->linear_solver);
+   }
+
+   template <typename ElementType>
+   void PrimalDualRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
+         const Collection<size_t>& /*primal_variables*/, const Collection<size_t>& /*dual_variables*/, ElementType dual_regularization_parameter,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) {
+      DEBUG2 << "Original matrix\n" << augmented_matrix << '\n';
+
       this->primal_regularization = ElementType(0);
       this->dual_regularization = ElementType(0);
       DEBUG << "Testing factorization with regularization factors (0, 0)\n";
       size_t number_attempts = 1;
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";
 
-      const Inertia estimated_inertia = this->linear_solver->get_inertia();
-      DEBUG << "Expected inertia  (" << expected_inertia.positive << ", " << expected_inertia.negative << ", " << expected_inertia.zero << ")\n";
-      DEBUG << "Estimated inertia (" << estimated_inertia.positive << ", " << estimated_inertia.negative << ", " << estimated_inertia.zero << ")\n";
+      // perform the symbolic analysis only once
+      if (!this->symbolic_analysis_performed) {
+         DEBUG << "Performing symbolic analysis of the indefinite system\n";
+         linear_solver.do_symbolic_analysis(augmented_matrix);
+         this->symbolic_analysis_performed = true;
+      }
+
+      DEBUG << "Performing numerical factorization of the indefinite system\n";
+      linear_solver.do_numerical_factorization(augmented_matrix);
+      const Inertia estimated_inertia = linear_solver.get_inertia();
+      DEBUG << "Expected inertia  " << expected_inertia << '\n';
+      DEBUG << "Estimated inertia " << estimated_inertia << '\n';
 
       if (estimated_inertia == expected_inertia) {
          DEBUG << "The inertia is correct\n";
@@ -102,7 +144,7 @@ namespace uno {
       }
 
       // set the constraint regularization coefficient
-      if (this->linear_solver->matrix_is_singular()) {
+      if (linear_solver.matrix_is_singular()) {
          DEBUG << "Matrix is singular\n";
          this->dual_regularization = this->dual_regularization_fraction * dual_regularization_parameter;
       }
@@ -125,13 +167,13 @@ namespace uno {
          DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
          DEBUG2 << augmented_matrix << '\n';
          DEBUG << "Performing numerical factorization of the indefinite system\n";
-         this->linear_solver->do_numerical_factorization(augmented_matrix);
+         linear_solver.do_numerical_factorization(augmented_matrix);
          number_attempts++;
          DEBUG << "Number of attempts: " << number_attempts << "\n";
 
-         const Inertia new_estimated_inertia = this->linear_solver->get_inertia();
-         DEBUG << "Expected inertia  " << expected_inertia << ")\n";
-         DEBUG << "Estimated inertia " << new_estimated_inertia << ")\n";
+         const Inertia new_estimated_inertia = linear_solver.get_inertia();
+         DEBUG << "Expected inertia  " << expected_inertia << '\n';
+         DEBUG << "Estimated inertia " << new_estimated_inertia << '\n';
 
          if (new_estimated_inertia.positive == expected_inertia.positive && new_estimated_inertia.negative == expected_inertia.negative &&
                new_estimated_inertia.zero == expected_inertia.zero) {
@@ -158,9 +200,6 @@ namespace uno {
             }
          }
       }
-      // check the inertia
-      const Inertia latest_estimated_inertia = this->linear_solver->get_inertia();
-      assert(latest_estimated_inertia == expected_inertia);
       statistics.set("regulariz", this->primal_regularization);
    }
 } // namespace

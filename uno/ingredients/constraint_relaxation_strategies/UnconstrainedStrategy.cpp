@@ -25,7 +25,7 @@ namespace uno {
       const OptimizationProblem problem{model};
 
       // memory allocation
-      this->subproblem_layer.initialize(model, problem);
+      this->subproblem_layer.hessian_model->initialize(model);
       this->inequality_handling_method->initialize(problem, *this->subproblem_layer.hessian_model,
          *this->subproblem_layer.regularization_strategy);
       direction = Direction(problem.number_variables, problem.number_constraints);

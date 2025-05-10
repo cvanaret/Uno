@@ -24,9 +24,20 @@ namespace uno {
          // do nothing
       }
 
+      void regularize_hessian(Statistics& /*statistics*/, SymmetricMatrix<size_t, ElementType>& /*hessian*/, const Inertia& /*expected_inertia*/,
+            DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) override {
+         // do nothing
+      }
+
       void regularize_augmented_matrix(Statistics& /*statistics*/, SymmetricMatrix<size_t, ElementType>& /*augmented_matrix*/,
             const Collection<size_t>& /*primal_variables*/, const Collection<size_t>& /*dual_variables*/, ElementType /*dual_regularization_parameter*/,
             const Inertia& /*expected_inertia*/) override {
+         // do nothing
+      }
+
+      void regularize_augmented_matrix(Statistics& /*statistics*/, SymmetricMatrix<size_t, ElementType>& /*augmented_matrix*/,
+            const Collection<size_t>& /*primal_variables*/, const Collection<size_t>& /*dual_variables*/, ElementType /*dual_regularization_parameter*/,
+            const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) override {
          // do nothing
       }
    };

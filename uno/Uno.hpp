@@ -4,8 +4,9 @@
 #ifndef UNO_H
 #define UNO_H
 
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "layers/GlobalizationLayer.hpp"
-#include "layers/ReformulationLayer.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/Result.hpp"
 #include "optimization/IterateStatus.hpp"
 
@@ -30,12 +31,12 @@ namespace uno {
       void print_optimization_summary(const Result& result);
 
    private:
-      ReformulationLayer reformulation_layer;
+      std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy;
       GlobalizationLayer globalization_layer;
+      Direction direction{};
       const size_t max_iterations; /*!< Maximum number of iterations */
       const double time_limit; /*!< CPU time limit (can be inf) */
       const bool print_solution;
-      const std::string strategy_combination;
 
       [[nodiscard]] std::string get_strategy_combination() const;
       void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options);

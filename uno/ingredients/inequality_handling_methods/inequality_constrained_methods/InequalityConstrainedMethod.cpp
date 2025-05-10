@@ -38,7 +38,7 @@ namespace uno {
       });
    }
 
-   double InequalityConstrainedMethod::proximal_coefficient(const Iterate& /*current_iterate*/) const {
+   double InequalityConstrainedMethod::proximal_coefficient() const {
       return 0.;
    }
 

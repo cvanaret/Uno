@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <string>
+#include <stdexcept>
 #include "GlobalizationMechanism.hpp"
 #include "GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_mechanisms/TrustRegionStrategy.hpp"

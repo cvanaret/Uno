@@ -8,7 +8,6 @@
 #include <iostream>
 #include <vector>
 #include "SparseStorage.hpp"
-#include "Vector.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {

@@ -46,10 +46,12 @@ namespace uno {
 
    void MA57Solver::initialize_memory(size_t dimension, size_t number_nonzeros) {
       this->dimension = dimension;
+      this->factorization.n = static_cast<int>(dimension);
+      this->factorization.nnz = static_cast<int>(number_nonzeros);
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);
       this->lkeep = static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42);
-      this->keep.resize(static_cast<size_t>(lkeep));
+      this->keep.resize(static_cast<size_t>(this->lkeep));
       this->iwork.resize(5 * dimension);
       this->lwork = static_cast<int>(1.2 * static_cast<double>(dimension));
       this->work.resize(static_cast<size_t>(this->lwork));

@@ -4,10 +4,13 @@
 #ifndef UNO_GLOBALIZATIONMECHANISM_H
 #define UNO_GLOBALIZATIONMECHANISM_H
 
-#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
+#include <string>
 
 namespace uno {
    // forward declarations
+   class ConstraintRelaxationStrategy;
+   class Direction;
+   class GlobalizationStrategy;
    class Iterate;
    class Model;
    class Options;
@@ -22,9 +25,9 @@ namespace uno {
       virtual ~GlobalizationMechanism() = default;
 
       virtual void initialize(Statistics& statistics, const Options& options) = 0;
-      virtual void compute_next_iterate(Statistics& statistics, ReformulationLayer& reformulation_layer, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, WarmstartInformation& warmstart_information,
-         UserCallbacks& user_callbacks) = 0;
+      virtual void compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
 

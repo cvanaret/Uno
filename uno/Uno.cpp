@@ -1,8 +1,9 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <cmath>
+//#include <cmath>
 #include "Uno.hpp"
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
@@ -24,12 +25,11 @@
 
 namespace uno {
    Uno::Uno(size_t number_constraints, size_t number_bounds_constraints, const Options& options) :
-         reformulation_layer(number_constraints, number_bounds_constraints, options),
+         constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(number_constraints, number_bounds_constraints, options)),
          globalization_layer(number_constraints, options),
          max_iterations(options.get_unsigned_int("max_iterations")),
          time_limit(options.get_double("time_limit")),
-         print_solution(options.get_bool("print_solution")),
-         strategy_combination(this->get_strategy_combination()) { }
+         print_solution(options.get_bool("print_solution")) { }
    
    Level Logger::level = INFO;
 
@@ -66,8 +66,9 @@ namespace uno {
 
                // compute an acceptable iterate by solving a subproblem at the current point
                warmstart_information.iterate_changed();
-               this->globalization_layer.mechanism->compute_next_iterate(statistics, this->reformulation_layer,
-                  *this->globalization_layer.strategy, model, current_iterate, trial_iterate, warmstart_information, user_callbacks);
+               this->globalization_layer.mechanism->compute_next_iterate(statistics, *this->constraint_relaxation_strategy,
+                  *this->globalization_layer.strategy, model, current_iterate, trial_iterate, this->direction, warmstart_information,
+                  user_callbacks);
                termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration(), optimization_status);
                user_callbacks.notify_new_primals(trial_iterate.primals);
                user_callbacks.notify_new_multipliers(trial_iterate.multipliers);
@@ -100,7 +101,7 @@ namespace uno {
       statistics.start_new_line();
       statistics.set("iter", 0);
       statistics.set("status", "initial point");
-      this->reformulation_layer.initialize(statistics, model, current_iterate, options);
+      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, options);
       this->globalization_layer.initialize(statistics, current_iterate, options);
       options.print_used();
       if (Logger::level == INFO) {
@@ -148,8 +149,8 @@ namespace uno {
 
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate, size_t major_iterations,
          const Timer& timer) {
-      const size_t number_subproblems_solved = this->reformulation_layer.get_number_subproblems_solved();
-      const size_t number_hessian_evaluations = this->reformulation_layer.constraint_relaxation_strategy->get_hessian_evaluation_count();
+      const size_t number_subproblems_solved = this->constraint_relaxation_strategy->get_number_subproblems_solved();
+      const size_t number_hessian_evaluations = this->constraint_relaxation_strategy->get_hessian_evaluation_count();
       return {optimization_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,
             timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
             Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
@@ -171,11 +172,11 @@ namespace uno {
    }
 
    std::string Uno::get_strategy_combination() const {
-      return this->globalization_layer.mechanism->get_name();
+      return this->globalization_layer.mechanism->get_name() + this->globalization_layer.strategy->get_name();
    }
 
    void Uno::print_optimization_summary(const Result& result) {
-      DISCRETE << "\nUno " << Uno::current_version() << " (" << this->strategy_combination << ")\n";
+      DISCRETE << "\nUno " << Uno::current_version() << " (" << this->get_strategy_combination() << ")\n";
       DISCRETE << Timer::get_current_date();
       DISCRETE << "────────────────────────────────────────\n";
       result.print(this->print_solution);
