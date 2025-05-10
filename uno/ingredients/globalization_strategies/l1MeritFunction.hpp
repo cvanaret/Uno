@@ -21,7 +21,7 @@ namespace uno {
       void notify_switch_to_feasibility(const ProgressMeasures& current_progress) override;
       void notify_switch_to_optimality(const ProgressMeasures& current_progress) override;
 
-      [[nodiscard]] std::string get_strategy_combination() const override;
+      [[nodiscard]] std::string get_name() const override;
 
    protected:
       double smallest_known_infeasibility{INF<double>};

@@ -126,7 +126,7 @@ namespace uno {
       return (trial_objective <= current_objective - this->parameters.gamma * trial_infeasibility);
    }
 
-   std::string FunnelMethod::get_strategy_combination() const {
+   std::string FunnelMethod::get_name() const {
       return "funnel method";
    }
 

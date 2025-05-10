@@ -2,17 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "GlobalizationMechanism.hpp"
-#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
-#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "model/Model.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Expression.hpp"
 
 namespace uno {
-   GlobalizationMechanism::GlobalizationMechanism(size_t number_constraints, size_t number_bounds_constraints, const Options& options) :
-         constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(number_constraints, number_bounds_constraints, options)) {
-   }
-   
    void GlobalizationMechanism::assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double primal_step_length, double dual_step_length) {
       trial_iterate.set_number_variables(current_iterate.primals.size());
@@ -33,13 +28,5 @@ namespace uno {
       trial_iterate.are_constraints_computed = false;
       trial_iterate.is_constraint_jacobian_computed = false;
       trial_iterate.status = IterateStatus::NOT_OPTIMAL;
-   }
-
-   size_t GlobalizationMechanism::get_hessian_evaluation_count() const {
-      return this->constraint_relaxation_strategy->get_hessian_evaluation_count();
-   }
-
-   size_t GlobalizationMechanism::get_number_subproblems_solved() const {
-      return this->constraint_relaxation_strategy->get_number_subproblems_solved();
    }
 } // namespace

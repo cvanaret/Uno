@@ -5,8 +5,6 @@
 #define UNO_INEQUALITYCONSTRAINEDMETHOD_H
 
 #include "../InequalityHandlingMethod.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -15,12 +13,13 @@ namespace uno {
       InequalityConstrainedMethod();
       ~InequalityConstrainedMethod() override = default;
 
-      void initialize(const OptimizationProblem& problem, const HessianModel& hessian_model) override;
+      void initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void set_initial_point(const Vector<double>& point) override;
       void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
-      [[nodiscard]] double proximal_coefficient(const Iterate& current_iterate) const override;
+      [[nodiscard]] double proximal_coefficient() const override;
       void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
       void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
@@ -30,17 +29,7 @@ namespace uno {
 
    protected:
       Vector<double> initial_point{};
-      std::vector<double> direction_lower_bounds{};
-      std::vector<double> direction_upper_bounds{};
-      std::vector<double> linearized_constraints_lower_bounds{};
-      std::vector<double> linearized_constraints_upper_bounds{};
 
-      SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
-      std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-      RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
-
-      void set_direction_bounds(const OptimizationProblem& problem, const Iterate& current_iterate);
-      void set_linearized_constraint_bounds(const OptimizationProblem& problem, const std::vector<double>& current_constraints);
       static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
    };
 } // namespace

@@ -4,23 +4,19 @@
 #include "ConstraintRelaxationStrategy.hpp"
 #include "OptimizationProblem.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
-#include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
-#include "optimization/Direction.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
-#include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Multipliers.hpp"
+#include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
 #include "symbolic/Expression.hpp"
-#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(size_t number_constraints, size_t number_bounds_constraints, const Options& options):
-         globalization_strategy(GlobalizationStrategyFactory::create(number_constraints, options)),
-         inequality_handling_method(InequalityHandlingMethodFactory::create(number_bounds_constraints, options)),
+   ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Options& options):
          progress_norm(norm_from_string(options.get_string("progress_norm"))),
          residual_norm(norm_from_string(options.get_string("residual_norm"))),
          residual_scaling_threshold(options.get_double("residual_scaling_threshold")),
@@ -33,16 +29,16 @@ namespace uno {
 
    ConstraintRelaxationStrategy::~ConstraintRelaxationStrategy() { }
 
-   void ConstraintRelaxationStrategy::set_trust_region_radius(double trust_region_radius) {
-      this->inequality_handling_method->set_trust_region_radius(trust_region_radius);
-   }
-
    // with initial point
-   void ConstraintRelaxationStrategy::compute_feasible_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
-      Direction& direction, const Vector<double>& initial_point, WarmstartInformation& warmstart_information) {
-      this->inequality_handling_method->set_initial_point(initial_point);
-      this->compute_feasible_direction(statistics, model, current_iterate, direction, warmstart_information);
+   /*
+   void ConstraintRelaxationStrategy::compute_feasible_direction(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
+         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Direction& direction,
+         const Vector<double>& initial_point, double trust_region_radius, WarmstartInformation& warmstart_information) {
+      inequality_handling_method.set_initial_point(initial_point);
+      this->compute_feasible_direction(statistics, globalization_strategy, model, current_iterate,
+         direction, trust_region_radius, warmstart_information);
    }
+   */
 
    // infeasibility measure: constraint violation
    void ConstraintRelaxationStrategy::set_infeasibility_measure(const Model& model, Iterate& iterate) const {
@@ -59,7 +55,7 @@ namespace uno {
       };
    }
 
-   double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction_model(const Model& model, const Iterate& current_iterate,
+   double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
       const double current_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints, this->progress_norm);
@@ -68,25 +64,26 @@ namespace uno {
       return current_constraint_violation - trial_linearized_constraint_violation;
    }
 
-   std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_objective_reduction_model(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const {
+   std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_objective_reduction(InequalityHandlingMethod& inequality_handling_method,
+         const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const {
       // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
       const double directional_derivative = dot(primal_direction, current_iterate.evaluations.objective_gradient);
       const double quadratic_term = this->first_order_predicted_reduction ? 0. :
-         this->inequality_handling_method->hessian_quadratic_product(primal_direction);
+         inequality_handling_method.hessian_quadratic_product(primal_direction);
       return [=](double objective_multiplier) {
          return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
       };
    }
 
-   void ConstraintRelaxationStrategy::compute_progress_measures(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
-      if (this->inequality_handling_method->subproblem_definition_changed) {
+   void ConstraintRelaxationStrategy::compute_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model,
+         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Iterate& trial_iterate) {
+      if (inequality_handling_method.subproblem_definition_changed) {
          DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
-         this->globalization_strategy->reset();
-         this->inequality_handling_method->set_auxiliary_measure(model, current_iterate);
-         this->inequality_handling_method->subproblem_definition_changed = false;
+         globalization_strategy.reset();
+         inequality_handling_method.set_auxiliary_measure(model, current_iterate);
+         inequality_handling_method.subproblem_definition_changed = false;
       }
-      this->evaluate_progress_measures(model, trial_iterate);
+      this->evaluate_progress_measures(inequality_handling_method, model, trial_iterate);
    }
 
    void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Model& model, const OptimizationProblem& optimality_problem,
@@ -227,9 +224,5 @@ namespace uno {
       if (model.is_constrained()) {
          statistics.set("primal feas", iterate.progress.infeasibility);
       }
-   }
-
-   size_t ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
-      return this->inequality_handling_method->number_subproblems_solved;
    }
 } // namespace

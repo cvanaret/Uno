@@ -60,7 +60,7 @@ namespace uno {
    void l1MeritFunction::notify_switch_to_optimality(const ProgressMeasures& /*current_progress*/) {
    }
 
-   std::string l1MeritFunction::get_strategy_combination() const {
+   std::string l1MeritFunction::get_name() const {
       return "l1-merit";
    }
 

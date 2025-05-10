@@ -87,7 +87,7 @@ namespace uno {
          this->filter->acceptable(trial_progress.infeasibility, FilterMethod::unconstrained_merit_function(trial_progress));
    }
 
-   std::string WaechterFilterMethod::get_strategy_combination() const {
+   std::string WaechterFilterMethod::get_name() const {
       return "Waechter filter method";
    }
 } // namespace

@@ -5,6 +5,9 @@
 #include "BQPDSolver.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
+#include "ingredients/subproblem_solvers/MA57/MA57Solver.hpp"
+#include "layers/SubproblemLayer.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
@@ -44,7 +47,8 @@ namespace uno {
    // preallocate a bunch of stuff
    BQPDSolver::BQPDSolver(const Options& options):
          QPSolver(),
-         subproblem_is_regularized(options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP")),
+         regularize(options.get_string("regularization_strategy") == "primal" ||
+            options.get_string("regularization_strategy") == "primal_dual"),
          kmax_limit(options.get_int("BQPD_kmax")),
          alp(static_cast<size_t>(this->mlp)),
          lp(static_cast<size_t>(this->mlp)),
@@ -60,7 +64,7 @@ namespace uno {
       this->bqpd_jacobian.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros()); // Jacobian + objective gradient
       this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros() + problem.number_constraints + 3);
       const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
-      this->hessian = SymmetricMatrix<size_t, double>(problem.number_variables, number_hessian_nonzeros, this->subproblem_is_regularized, "CSC");
+      this->hessian = SymmetricMatrix<size_t, double>(problem.number_variables, number_hessian_nonzeros, this->regularize, "CSC");
       this->kmax = (0 < number_hessian_nonzeros) ? this->kmax_limit : 0;
       this->active_set.resize(problem.number_variables + problem.number_constraints);
       // default active set
@@ -90,11 +94,15 @@ namespace uno {
    }
 
    void BQPDSolver::solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, const Vector<double>& initial_point, Direction& direction, HessianModel& hessian_model,
-         double trust_region_radius, const WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, const Vector<double>& initial_point, Direction& direction,
+         SubproblemLayer& subproblem_layer, double trust_region_radius, const WarmstartInformation& warmstart_information) {
       this->set_up_subproblem(problem, current_iterate, trust_region_radius, warmstart_information);
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         problem.evaluate_lagrangian_hessian(statistics, hessian_model, current_iterate.primals, current_multipliers, this->hessian);
+         // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
+         problem.evaluate_lagrangian_hessian(statistics, *subproblem_layer.hessian_model, current_iterate.primals, current_multipliers, this->hessian);
+         // regularize the Hessian
+         const Inertia expected_inertia{problem.get_number_original_variables(), 0, problem.number_variables - problem.get_number_original_variables()};
+         subproblem_layer.regularization_strategy->regularize_hessian(statistics, this->hessian, expected_inertia);
          this->save_hessian_in_local_format();
       }
       if (this->print_subproblem) {
@@ -152,9 +160,9 @@ namespace uno {
       if (warmstart_information.constraint_bounds_changed || warmstart_information.constraints_changed) {
          for (size_t constraint_index: Range(problem.number_constraints)) {
             this->lower_bounds[problem.number_variables + constraint_index] = problem.constraint_lower_bound(constraint_index) -
-                                                                              this->constraints[constraint_index];
+               this->constraints[constraint_index];
             this->upper_bounds[problem.number_variables + constraint_index] = problem.constraint_upper_bound(constraint_index) -
-                                                                              this->constraints[constraint_index];
+               this->constraints[constraint_index];
          }
       }
       for (size_t variable_index: Range(problem.number_variables + problem.number_constraints)) {
