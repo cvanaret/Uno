@@ -13,6 +13,7 @@
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/UserCallbacks.hpp"
@@ -30,8 +31,8 @@ namespace uno {
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          convexify(options.get_string("inequality_handling_method") != "primal_dual_interior_point" &&
             (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),
-         hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),
-         feasibility_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),
+         hessian_model(HessianModelFactory::create(std::nullopt, this->convexify, options)),
+         feasibility_hessian_model(HessianModelFactory::create(0., this->convexify, options)),
          tolerance(options.get_double("tolerance")),
          parameters({
                options.get_bool("l1_relaxation_fixed_parameter"),
@@ -56,6 +57,7 @@ namespace uno {
 
       // statistics
       this->inequality_handling_method->initialize_statistics(statistics, options);
+      this->hessian_model->initialize_statistics(statistics, options);
       statistics.add_column("penalty", Statistics::double_width - 5, options.get_int("statistics_penalty_parameter_column_order"));
       statistics.set("penalty", this->penalty_parameter);
 
@@ -270,6 +272,8 @@ namespace uno {
       if (accept_iterate) {
          this->check_exact_relaxation(trial_iterate);
          // this->set_dual_residuals_statistics(statistics, trial_iterate);
+         this->hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
+         this->feasibility_hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, this->penalty_parameter);
       }
       this->set_progress_statistics(statistics, model, trial_iterate);

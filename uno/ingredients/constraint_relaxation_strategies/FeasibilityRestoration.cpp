@@ -9,11 +9,13 @@
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/UserCallbacks.hpp"
 
@@ -23,8 +25,8 @@ namespace uno {
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          convexify(options.get_string("inequality_handling_method") != "primal_dual_interior_point" &&
             (options.get_string("globalization_mechanism") != "TR" || options.get_bool("convexify_QP"))),
-         optimality_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),
-         feasibility_hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), this->convexify, options)),
+         optimality_hessian_model(HessianModelFactory::create(1., this->convexify, options)),
+         feasibility_hessian_model(HessianModelFactory::create(0., this->convexify, options)),
          linear_feasibility_tolerance(options.get_double("tolerance")),
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
    }
@@ -41,7 +43,7 @@ namespace uno {
 
       // statistics
       this->inequality_handling_method->initialize_statistics(statistics, options);
-      // statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
+      this->optimality_hessian_model->initialize_statistics(statistics, options);
       statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
       statistics.set("phase", "OPT");
 
@@ -187,9 +189,14 @@ namespace uno {
       }
       ConstraintRelaxationStrategy::set_progress_statistics(statistics, model, trial_iterate);
       if (accept_iterate) {
-         user_callbacks.notify_acceptable_iterate(trial_iterate.primals,
-               this->current_phase == Phase::OPTIMALITY ? trial_iterate.multipliers : trial_iterate.feasibility_multipliers,
-               objective_multiplier);
+         if (this->current_phase == Phase::OPTIMALITY) {
+            this->optimality_hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
+            user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, objective_multiplier);
+         }
+         else {
+            this->feasibility_hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
+            user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.feasibility_multipliers, objective_multiplier);
+         }
       }
       return accept_iterate;
    }

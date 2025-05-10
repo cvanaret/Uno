@@ -8,9 +8,6 @@
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
-   InequalityConstrainedMethod::InequalityConstrainedMethod(): InequalityHandlingMethod() {
-   }
-
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, const HessianModel& /*hessian_model*/) {
       this->initial_point.resize(problem.number_variables);
       this->direction_lower_bounds.resize(problem.number_variables);

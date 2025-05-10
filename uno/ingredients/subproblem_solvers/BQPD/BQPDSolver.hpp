@@ -60,7 +60,7 @@ namespace uno {
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
 
    private:
-      const bool subproblem_is_regularized;
+      const bool need_regularization;
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
       std::vector<double> constraints{};
       SparseVector<double> linear_objective{};
