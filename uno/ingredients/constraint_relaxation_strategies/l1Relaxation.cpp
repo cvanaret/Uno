@@ -11,7 +11,6 @@
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Statistics.hpp"
@@ -101,8 +100,6 @@ namespace uno {
       // stage a: compute a direction for the current penalty parameter
       this->solve_l1_relaxed_problem(statistics, model, current_iterate, direction, this->penalty_parameter, trust_region_radius,
          warmstart_information);
-      // from now on, only the penalty parameter, therefore the objective, changes
-      warmstart_information.only_objective_changed();
 
       // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
       if (0. < this->penalty_parameter && !this->parameters.fixed_parameter) {
@@ -122,7 +119,7 @@ namespace uno {
             this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method, feasibility_problem, current_iterate,
                current_iterate.feasibility_multipliers, feasibility_direction, this->feasibility_subproblem_layer,
                trust_region_radius, warmstart_information);
-            std::swap(direction.multipliers, direction.feasibility_multipliers);
+            std::swap(feasibility_direction.multipliers, feasibility_direction.feasibility_multipliers);
             const double residual_lowest_violation = model.constraint_violation(current_iterate.evaluations.constraints +
                   current_iterate.evaluations.constraint_jacobian * feasibility_direction.primals, Norm::L1);
             DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
@@ -145,7 +142,7 @@ namespace uno {
                feasibility_direction, trust_region_radius, warmstart_information);
 
             // save the dual feasibility direction
-            direction.feasibility_multipliers = feasibility_direction.multipliers;
+            direction.feasibility_multipliers = feasibility_direction.feasibility_multipliers;
          }
       }
    }
