@@ -195,8 +195,7 @@ namespace uno {
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
       const Inertia expected_inertia{problem.number_variables, problem.number_constraints, 0};
       subproblem_layer.regularization_strategy->regularize_augmented_matrix(statistics, this->augmented_system.matrix,
-         Range(problem.number_variables), Range(problem.number_constraints), dual_regularization_parameter, expected_inertia,
-         *this->linear_solver);
+         dual_regularization_parameter, expected_inertia, *this->linear_solver);
 
       // assemble the RHS
       this->assemble_augmented_rhs(current_multipliers, problem.number_variables, problem.number_constraints);

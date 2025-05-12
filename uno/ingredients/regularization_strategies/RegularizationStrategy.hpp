@@ -8,8 +8,6 @@
 
 namespace uno {
    // forward declarations
-   template <typename ElementType>
-   class Collection;
    template <typename IndexType, typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
    class HessianModel;
@@ -32,11 +30,10 @@ namespace uno {
       virtual void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
-         const Collection<size_t>& primal_variables, const Collection<size_t>& dual_variables, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia) = 0;
+         ElementType dual_regularization_parameter, const Inertia& expected_inertia) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
-         const Collection<size_t>& primal_variables, const Collection<size_t>& dual_variables, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) = 0;
+         ElementType dual_regularization_parameter, const Inertia& expected_inertia,
+         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) = 0;
    };
 } // namespace
 

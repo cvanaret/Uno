@@ -29,11 +29,10 @@ namespace uno {
       void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
       void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
-         const Collection<size_t>& primal_variables, const Collection<size_t>& dual_variables, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia) override;
+         ElementType dual_regularization_parameter, const Inertia& expected_inertia) override;
       void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
-         const Collection<size_t>& primal_variables, const Collection<size_t>& dual_variables, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
+         ElementType dual_regularization_parameter, const Inertia& expected_inertia,
+         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
 
    protected:
       const std::string& optional_linear_solver_name;
@@ -83,7 +82,7 @@ namespace uno {
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) {
       DEBUG << "Current Hessian:\n" << hessian << '\n';
       const size_t hessian_dimension = hessian.dimension();
-      const double smallest_diagonal_entry = hessian.smallest_diagonal_entry(hessian_dimension);
+      const double smallest_diagonal_entry = hessian.smallest_diagonal_entry(expected_inertia.positive);
       DEBUG << "The minimal diagonal entry of the matrix is " << smallest_diagonal_entry << '\n';
 
       double regularization_factor = (smallest_diagonal_entry > 0.) ? 0. : this->regularization_initial_value - smallest_diagonal_entry;
@@ -122,21 +121,20 @@ namespace uno {
 
    template <typename ElementType>
    void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix <size_t, ElementType>& augmented_matrix,
-         const Collection<size_t>& primal_variables, const Collection<size_t>& dual_variables, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia) {
+         ElementType dual_regularization_parameter, const Inertia& expected_inertia) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
          this->optional_linear_solver->initialize_memory(this->dimension, this->number_nonzeros);
       }
-      this->regularize_augmented_matrix(statistics, augmented_matrix, primal_variables, dual_variables, dual_regularization_parameter,
-         expected_inertia, *this->optional_linear_solver);
+      this->regularize_augmented_matrix(statistics, augmented_matrix, dual_regularization_parameter, expected_inertia,
+         *this->optional_linear_solver);
    }
 
    template <typename ElementType>
    void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& /*statistics*/, SymmetricMatrix <size_t, ElementType>& /*augmented_matrix*/,
-         const Collection<size_t>& /*primal_variables*/, const Collection<size_t>& /*dual_variables*/, ElementType /*dual_regularization_parameter*/,
-         const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) {
+         ElementType /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/,
+         DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) {
       throw std::runtime_error("PrimalRegularization<ElementType>::regularize_augmented_matrix not implemented yet");
    }
 } // namespace
