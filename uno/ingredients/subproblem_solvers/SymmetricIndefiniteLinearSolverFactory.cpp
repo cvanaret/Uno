@@ -51,7 +51,7 @@ namespace uno {
 #endif // HAS_HSL || HAS_MA27
 
 #ifdef HAS_MUMPS
-      if (linear_solver_name == "MUMPS") {
+      if (linear_solver == "MUMPS") {
          return std::make_unique<MUMPSSolver>();
       }
 #endif
