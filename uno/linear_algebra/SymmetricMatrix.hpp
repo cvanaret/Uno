@@ -83,7 +83,8 @@ namespace uno {
          }
       }
       // look at the first max_dimension diagonal entries
-      return *std::min_element(diagonal_entries.begin(), diagonal_entries.begin() + max_dimension);
+      return *std::min_element(diagonal_entries.begin(), diagonal_entries.begin() +
+         static_cast<typename std::vector<ElementType>::difference_type>(max_dimension));
    }
    
    template <typename IndexType, typename ElementType>

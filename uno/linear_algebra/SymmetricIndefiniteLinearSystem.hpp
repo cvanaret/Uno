@@ -19,8 +19,6 @@ namespace uno {
       Vector<ElementType> rhs{};
       Vector<ElementType> solution{};
 
-      SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension, size_t number_non_zeros, bool use_regularization,
-         const Options& options);
       SymmetricIndefiniteLinearSystem() = default;
       SymmetricIndefiniteLinearSystem& operator=(SymmetricIndefiniteLinearSystem&& other) = default;
 
@@ -28,14 +26,6 @@ namespace uno {
          size_t number_variables, size_t number_constraints);
       void solve(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
    };
-
-   template <typename ElementType>
-   SymmetricIndefiniteLinearSystem<ElementType>::SymmetricIndefiniteLinearSystem(const std::string& sparse_format, size_t dimension,
-            size_t number_non_zeros, bool use_regularization, const Options& options):
-         matrix(dimension, number_non_zeros, use_regularization, sparse_format),
-         rhs(dimension),
-         solution(dimension) {
-   }
 
    template <typename ElementType>
    void SymmetricIndefiniteLinearSystem<ElementType>::assemble_matrix(const SymmetricMatrix<size_t, double>& hessian,
