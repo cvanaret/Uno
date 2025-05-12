@@ -190,7 +190,6 @@ namespace uno {
       const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
       const fint* asl_row_index = this->asl->i.sputinfo_->hrownos;
       // check that the column pointers are sorted in increasing order
-      // TODO throw exception
       assert(in_increasing_order(asl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
 
       // copy the nonzeros in the Hessian

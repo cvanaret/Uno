@@ -262,11 +262,12 @@ namespace uno {
       return std::sqrt(this->barrier_parameter());
    }
 
-   void PrimalDualInteriorPointMethod::exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) {
-      assert(this->solving_feasibility_problem && "The barrier subproblem did not know it was solving the feasibility problem.");
+   void PrimalDualInteriorPointMethod::exit_feasibility_problem(const OptimizationProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+      //assert(this->solving_feasibility_problem && "The barrier subproblem did not know it was solving the feasibility problem.");
       this->barrier_parameter_update_strategy.set_barrier_parameter(this->previous_barrier_parameter);
       this->solving_feasibility_problem = false;
-      this->compute_least_square_multipliers(problem, trial_iterate, trial_iterate.multipliers.constraints);
+      // TODO computing the least-square multipliers messes up the factorization in the linear solver
+      //this->compute_least_square_multipliers(problem, trial_iterate, trial_iterate.multipliers.constraints);
    }
 
    void PrimalDualInteriorPointMethod::set_auxiliary_measure(const Model& model, Iterate& iterate) {
