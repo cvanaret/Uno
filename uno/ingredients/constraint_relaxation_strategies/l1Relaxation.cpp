@@ -167,8 +167,8 @@ namespace uno {
       this->solve_subproblem(statistics, *this->inequality_handling_method, l1_relaxed_problem, current_iterate,
          current_iterate.multipliers, direction, this->l1_relaxed_subproblem_layer, trust_region_radius, warmstart_information);
       if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
-         throw std::runtime_error("l1Relaxation::solve_l1_relaxed_problem: the subproblem is unbounded, this should not happen. If the subproblem "
-            "has curvature, use regularization. If not, use a trust-region method.\n");
+         throw std::runtime_error("l1Relaxation::solve_l1_relaxed_problem: the subproblem is unbounded, this should not happen. "
+            "If the subproblem has curvature, use regularization. If not, use a trust-region method.\n");
       }
    }
 
