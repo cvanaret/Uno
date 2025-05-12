@@ -5,6 +5,7 @@
 #define UNO_PRIMALDUALREGULARIZATION_H
 
 #include <cassert>
+#include <string>
 #include "RegularizationStrategy.hpp"
 #include "UnstableRegularization.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
@@ -36,9 +37,10 @@ namespace uno {
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
 
    protected:
-      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver{};
-      size_t dimension;
-      size_t number_nonzeros;
+      const std::string& optional_linear_solver_name;
+      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> optional_linear_solver{};
+      size_t dimension{};
+      size_t number_nonzeros{};
       ElementType primal_regularization{0.};
       ElementType dual_regularization{0.};
       ElementType previous_primal_regularization{0.};
@@ -56,6 +58,7 @@ namespace uno {
    template <typename ElementType>
    PrimalDualRegularization<ElementType>::PrimalDualRegularization(const Options& options):
          RegularizationStrategy<ElementType>(),
+         optional_linear_solver_name(options.get_string("linear_solver")),
          regularization_failure_threshold(ElementType(options.get_double("regularization_failure_threshold"))),
          primal_regularization_initial_factor(ElementType(options.get_double("primal_regularization_initial_factor"))),
          dual_regularization_fraction(ElementType(options.get_double("dual_regularization_fraction"))),
@@ -82,12 +85,11 @@ namespace uno {
    void PrimalDualRegularization<ElementType>::regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian,
          const Inertia& expected_inertia) {
       // pick the member linear solver
-      if (this->linear_solver == nullptr) {
-         Options options{false};
-         this->linear_solver = SymmetricIndefiniteLinearSolverFactory::create(options);
-         this->linear_solver->initialize_memory(this->dimension, this->number_nonzeros);
+      if (this->optional_linear_solver == nullptr) {
+         this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
+         this->optional_linear_solver->initialize_memory(this->dimension, this->number_nonzeros);
       }
-      this->regularize_hessian(statistics, hessian, expected_inertia, *this->linear_solver);
+      this->regularize_hessian(statistics, hessian, expected_inertia, *this->optional_linear_solver);
    }
 
    template <typename ElementType>
@@ -103,13 +105,12 @@ namespace uno {
    void PrimalDualRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
          const Collection<size_t>& primal_variables, const Collection<size_t>& dual_variables, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia) {
-      if (this->linear_solver == nullptr) {
-         Options options{false};
-         this->linear_solver = SymmetricIndefiniteLinearSolverFactory::create(options);
-         this->linear_solver->initialize_memory(this->dimension, this->number_nonzeros);
+      if (this->optional_linear_solver == nullptr) {
+         this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
+         this->optional_linear_solver->initialize_memory(this->dimension, this->number_nonzeros);
       }
       this->regularize_augmented_matrix(statistics, augmented_matrix, primal_variables, dual_variables, dual_regularization_parameter,
-         expected_inertia, *this->linear_solver);
+         expected_inertia, *this->optional_linear_solver);
    }
 
    template <typename ElementType>

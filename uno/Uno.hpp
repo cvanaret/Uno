@@ -28,7 +28,7 @@ namespace uno {
 
       static std::string current_version();
       static void print_available_strategies();
-      void print_optimization_summary(const Result& result);
+      void print_optimization_summary(const Result& result) const;
 
    private:
       std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy;

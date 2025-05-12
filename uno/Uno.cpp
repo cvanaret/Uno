@@ -172,10 +172,10 @@ namespace uno {
    }
 
    std::string Uno::get_strategy_combination() const {
-      return this->globalization_layer.mechanism->get_name() + this->globalization_layer.strategy->get_name();
+      return this->globalization_layer.mechanism->get_name() + " " + this->globalization_layer.strategy->get_name();
    }
 
-   void Uno::print_optimization_summary(const Result& result) {
+   void Uno::print_optimization_summary(const Result& result) const {
       DISCRETE << "\nUno " << Uno::current_version() << " (" << this->get_strategy_combination() << ")\n";
       DISCRETE << Timer::get_current_date();
       DISCRETE << "────────────────────────────────────────\n";

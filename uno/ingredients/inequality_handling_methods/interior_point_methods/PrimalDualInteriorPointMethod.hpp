@@ -57,7 +57,7 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
       SymmetricMatrix<size_t, double> hessian{};
 
-      SymmetricIndefiniteLinearSystem<double> augmented_system;
+      SymmetricIndefiniteLinearSystem<double> augmented_system{};
       const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;
 
       BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
@@ -86,7 +86,7 @@ namespace uno {
       [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
          Multipliers& direction_multipliers, double tau);
       void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Multipliers& current_multipliers,
-         SubproblemLayer& subproblem_layer, WarmstartInformation& warmstart_information);
+         SubproblemLayer& subproblem_layer);
       void assemble_augmented_rhs(const Multipliers& current_multipliers, size_t number_variables, size_t number_constraints);
       void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
          Vector<double>& direction_primals, Multipliers& direction_multipliers);

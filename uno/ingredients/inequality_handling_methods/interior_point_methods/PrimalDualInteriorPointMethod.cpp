@@ -19,8 +19,7 @@
 namespace uno {
    PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(const Options& options):
          InequalityHandlingMethod(),
-         augmented_system(options),
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options)),
+         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))),
          barrier_parameter_update_strategy(options),
          previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
          default_multiplier(options.get_double("barrier_default_multiplier")),
@@ -174,7 +173,7 @@ namespace uno {
       this->evaluate_functions(statistics, barrier_problem, current_iterate, current_multipliers, subproblem_layer, warmstart_information);
 
       // compute the primal-dual solution
-      this->assemble_augmented_system(statistics, problem, current_multipliers, subproblem_layer, warmstart_information);
+      this->assemble_augmented_system(statistics, problem, current_multipliers, subproblem_layer);
       this->augmented_system.solve(*this->linear_solver);
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
       this->number_subproblems_solved++;
@@ -188,24 +187,16 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
-         const Multipliers& current_multipliers, SubproblemLayer& subproblem_layer, WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, SubproblemLayer& subproblem_layer) {
       // assemble and factorize the augmented matrix
       this->augmented_system.assemble_matrix(this->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
-      DEBUG << "Testing factorization with regularization factors (0, 0)\n";
-      this->augmented_system.factorize_matrix(*this->linear_solver, warmstart_information);
 
       // regularize the augmented matrix
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
       const Inertia expected_inertia{problem.number_variables, problem.number_constraints, 0};
-      /*
-      this->augmented_system.regularize_matrix(statistics, *this->linear_solver, expected_inertia, dual_regularization_parameter,
-         warmstart_information);
-      */
       subproblem_layer.regularization_strategy->regularize_augmented_matrix(statistics, this->augmented_system.matrix,
          Range(problem.number_variables), Range(problem.number_constraints), dual_regularization_parameter, expected_inertia,
          *this->linear_solver);
-      // check the inertia
-      //assert(this->linear_solver->get_inertia() == expected_inertia);
 
       // assemble the RHS
       this->assemble_augmented_rhs(current_multipliers, problem.number_variables, problem.number_constraints);
