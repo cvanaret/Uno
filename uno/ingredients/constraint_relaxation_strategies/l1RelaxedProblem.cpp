@@ -121,11 +121,6 @@ namespace uno {
             hessian.insert(proximal_term, variable_index, variable_index);
          }
       }
-
-      // extend the dimension of the Hessian by finalizing the remaining columns (note: the elastics do not enter the Hessian)
-      for (size_t constraint_index: Range(this->model.number_variables, this->number_variables)) {
-         hessian.finalize_column(constraint_index);
-      }
    }
 
    void l1RelaxedProblem::compute_hessian_vector_product(HessianModel& hessian_model, const Vector<double>& vector, const Multipliers& multipliers,

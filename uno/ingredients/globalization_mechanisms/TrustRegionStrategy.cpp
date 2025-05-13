@@ -3,9 +3,11 @@
 
 #include <cmath>
 #include <cassert>
-#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "TrustRegionStrategy.hpp"
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
+#include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "model/Model.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -14,8 +16,8 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   TrustRegionStrategy::TrustRegionStrategy(size_t number_constraints, size_t number_bounds_constraints, const Options& options) :
-         GlobalizationMechanism(number_constraints, number_bounds_constraints, options),
+   TrustRegionStrategy::TrustRegionStrategy(const Options& options) :
+         GlobalizationMechanism(),
          radius(options.get_double("TR_radius")),
          increase_factor(options.get_double("TR_increase_factor")),
          decrease_factor(options.get_double("TR_decrease_factor")),
@@ -29,17 +31,15 @@ namespace uno {
       assert(1. < this->decrease_factor && "The trust-region decrease factor should be > 1");
    }
 
-   void TrustRegionStrategy::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) {
+   void TrustRegionStrategy::initialize(Statistics& statistics, const Options& options) {
       statistics.add_column("TR iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
       statistics.add_column("TR radius", Statistics::double_width - 4, options.get_int("statistics_TR_radius_column_order"));
       statistics.set("TR radius", this->radius);
-      
-      this->constraint_relaxation_strategy->set_trust_region_radius(this->radius);
-      this->constraint_relaxation_strategy->initialize(statistics, model, initial_iterate, this->direction, options);
    }
 
-   void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+   void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
       size_t number_iterations = 0;
@@ -53,21 +53,20 @@ namespace uno {
             this->set_trust_region_statistics(statistics, number_iterations);
 
             // compute the direction within the trust region
-            this->constraint_relaxation_strategy->set_trust_region_radius(this->radius);
-            this->constraint_relaxation_strategy->compute_feasible_direction(statistics, model, current_iterate, this->direction,
-               warmstart_information);
+            constraint_relaxation_strategy.compute_feasible_direction(statistics, globalization_strategy, model, current_iterate,
+               direction, this->radius, warmstart_information);
 
             // deal with errors in the subproblem
-            if (this->direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
+            if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
                // the subproblem is always bounded, but the objective may exceed a very large negative value
-               this->set_statistics(statistics, this->direction);
+               this->set_statistics(statistics, direction);
                statistics.set("status", "unbounded subproblem");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius_aggressively();
                warmstart_information.whole_problem_changed();
             }
-            else if (this->direction.status == SubproblemStatus::ERROR) {
-               this->set_statistics(statistics, this->direction);
+            else if (direction.status == SubproblemStatus::ERROR) {
+               this->set_statistics(statistics, direction);
                statistics.set("status", "solver error");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius();
@@ -75,18 +74,18 @@ namespace uno {
             }
             else {
                // take full primal-dual step
-               GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, this->direction, 1., 1.);
-               this->reset_active_trust_region_multipliers(model, this->direction, trial_iterate);
+               GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, 1., 1.);
+               this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
 
-               is_acceptable = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, this->direction,
-                  warmstart_information, user_callbacks);
+               is_acceptable = this->is_iterate_acceptable(statistics, constraint_relaxation_strategy, globalization_strategy,
+                  model, current_iterate, trial_iterate, direction, warmstart_information, user_callbacks);
                if (is_acceptable) {
-                  this->constraint_relaxation_strategy->set_dual_residuals_statistics(statistics, trial_iterate);
+                  constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
                   this->reset_radius();
                   termination = true;
                }
                else {
-                  this->decrease_radius(this->direction.norm);
+                  this->decrease_radius(direction.norm);
                   warmstart_information.variable_bounds_changed = true;
                }
                if (Logger::level == INFO) statistics.print_current_line();
@@ -105,8 +104,8 @@ namespace uno {
       }
    }
 
-   std::string TrustRegionStrategy::get_strategy_combination() const {
-      return "TR " + this->constraint_relaxation_strategy->get_strategy_combination();
+   std::string TrustRegionStrategy::get_name() const {
+      return "TR";
    }
 
    // protected member functions
@@ -129,32 +128,34 @@ namespace uno {
    }
 
    // the trial iterate is accepted by the constraint relaxation strategy or if the step is small and we cannot switch to solving the feasibility problem
-   bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+   bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
-      bool accept_iterate = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, direction, 1.,
-            warmstart_information, user_callbacks);
+      bool accept_iterate = constraint_relaxation_strategy.is_iterate_acceptable(statistics, globalization_strategy, model,
+         current_iterate, trial_iterate, direction, 1., warmstart_information, user_callbacks);
       this->set_statistics(statistics, trial_iterate, direction);
       if (accept_iterate) {
-         trial_iterate.status = this->constraint_relaxation_strategy->check_termination(model, trial_iterate);
+         trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
          // possibly increase the radius if trust region is active
          this->possibly_increase_radius(direction.norm);
       }
       else if (this->radius < this->minimum_radius) { // rejected, but small radius
-         accept_iterate = this->check_termination_with_small_step(model, trial_iterate);
+         accept_iterate = this->check_termination_with_small_step(constraint_relaxation_strategy, model, trial_iterate);
       }
       return accept_iterate;
    }
 
-   bool TrustRegionStrategy::check_termination_with_small_step(const Model& model, Iterate& trial_iterate) const {
+   bool TrustRegionStrategy::check_termination_with_small_step(ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+         const Model& model, Iterate& trial_iterate) const {
       // terminate with a feasible point
       if (trial_iterate.progress.infeasibility <= this->tolerance) {
          trial_iterate.status = IterateStatus::FEASIBLE_SMALL_STEP;
-         this->constraint_relaxation_strategy->compute_primal_dual_residuals(model, trial_iterate);
+         constraint_relaxation_strategy.compute_primal_dual_residuals(model, trial_iterate);
          return true;
       }
-      else if (this->constraint_relaxation_strategy->solving_feasibility_problem()) { // terminate with an infeasible point
+      else if (constraint_relaxation_strategy.solving_feasibility_problem()) { // terminate with an infeasible point
          trial_iterate.status = IterateStatus::INFEASIBLE_SMALL_STEP;
-         this->constraint_relaxation_strategy->compute_primal_dual_residuals(model, trial_iterate);
+         constraint_relaxation_strategy.compute_primal_dual_residuals(model, trial_iterate);
          return true;
       }
       else { // do not terminate, infeasible non stationary

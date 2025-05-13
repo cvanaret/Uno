@@ -5,17 +5,17 @@
 #define UNO_LINEARSOLVERFACTORY_H
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace uno {
-   // forward declarations
+   // forward declaration
    template <class IndexType, class ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
-   class Options;
 
    class SymmetricIndefiniteLinearSolverFactory {
    public:
-      static std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> create(const Options& options);
+      static std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> create(const std::string& linear_solver);
 
       // return the list of available solvers
       static std::vector<std::string> available_solvers();

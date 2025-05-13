@@ -5,21 +5,17 @@
 #include "optimization/Iterate.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
+#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(): InequalityHandlingMethod() {
    }
 
-   void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, const HessianModel& /*hessian_model*/) {
+   void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy) {
       this->initial_point.resize(problem.number_variables);
-      this->direction_lower_bounds.resize(problem.number_variables);
-      this->direction_upper_bounds.resize(problem.number_variables);
-      this->linearized_constraints_lower_bounds.resize(problem.number_constraints);
-      this->linearized_constraints_upper_bounds.resize(problem.number_constraints);
-      this->objective_gradient.reserve(problem.number_variables);
-      this->constraints.resize(problem.number_constraints);
-      this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
+      regularization_strategy.initialize_memory(problem, hessian_model);
    }
 
    void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
@@ -42,36 +38,12 @@ namespace uno {
       });
    }
 
-   double InequalityConstrainedMethod::proximal_coefficient(const Iterate& /*current_iterate*/) const {
+   double InequalityConstrainedMethod::proximal_coefficient() const {
       return 0.;
    }
 
    void InequalityConstrainedMethod::exit_feasibility_problem(const OptimizationProblem& /*problem*/, Iterate& /*trial_iterate*/) {
       // do nothing
-   }
-
-   void InequalityConstrainedMethod::set_direction_bounds(const OptimizationProblem& problem, const Iterate& current_iterate) {
-      // bounds of original variables intersected with trust region
-      for (size_t variable_index: Range(problem.get_number_original_variables())) {
-         this->direction_lower_bounds[variable_index] = std::max(-this->trust_region_radius,
-               problem.variable_lower_bound(variable_index) - current_iterate.primals[variable_index]);
-         this->direction_upper_bounds[variable_index] = std::min(this->trust_region_radius,
-               problem.variable_upper_bound(variable_index) - current_iterate.primals[variable_index]);
-      }
-      // bounds of additional variables (no trust region!)
-      for (size_t variable_index: Range(problem.get_number_original_variables(), problem.number_variables)) {
-         this->direction_lower_bounds[variable_index] = problem.variable_lower_bound(variable_index) - current_iterate.primals[variable_index];
-         this->direction_upper_bounds[variable_index] = problem.variable_upper_bound(variable_index) - current_iterate.primals[variable_index];
-      }
-   }
-
-   void InequalityConstrainedMethod::set_linearized_constraint_bounds(const OptimizationProblem& problem, const std::vector<double>& current_constraints) {
-      for (size_t constraint_index: Range(problem.number_constraints)) {
-         this->linearized_constraints_lower_bounds[constraint_index] = problem.constraint_lower_bound(constraint_index) -
-               current_constraints[constraint_index];
-         this->linearized_constraints_upper_bounds[constraint_index] = problem.constraint_upper_bound(constraint_index) -
-               current_constraints[constraint_index];
-      }
    }
 
    void InequalityConstrainedMethod::compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers) {

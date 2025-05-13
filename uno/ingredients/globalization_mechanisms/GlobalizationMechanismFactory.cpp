@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <string>
+#include <stdexcept>
 #include "GlobalizationMechanism.hpp"
 #include "GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_mechanisms/TrustRegionStrategy.hpp"
@@ -9,14 +10,13 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(size_t number_constraints, size_t number_bounds_constraints,
-         const Options& options) {
+   std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const Options& options) {
       const std::string& mechanism_type = options.get_string("globalization_mechanism");
        if (mechanism_type == "TR") {
-           return std::make_unique<TrustRegionStrategy>(number_constraints, number_bounds_constraints, options);
+           return std::make_unique<TrustRegionStrategy>(options);
        }
        else if (mechanism_type == "LS") {
-           return std::make_unique<BacktrackingLineSearch>(number_constraints, number_bounds_constraints, options);
+           return std::make_unique<BacktrackingLineSearch>(options);
        }
        throw std::invalid_argument("GlobalizationMechanism " + mechanism_type + " is not supported");
    }

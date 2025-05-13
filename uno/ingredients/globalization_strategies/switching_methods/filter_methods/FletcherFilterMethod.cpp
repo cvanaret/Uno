@@ -5,7 +5,6 @@
 #include "filters/Filter.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "tools/Logger.hpp"
-#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
@@ -69,7 +68,7 @@ namespace uno {
       return this->filter->infeasibility_sufficient_reduction(this->filter->get_smallest_infeasibility(), trial_progress.infeasibility);
    }
 
-   std::string FletcherFilterMethod::get_strategy_combination() const {
+   std::string FletcherFilterMethod::get_name() const {
       return "Fletcher filter method";
    }
 } // namespace

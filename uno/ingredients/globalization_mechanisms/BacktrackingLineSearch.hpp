@@ -12,23 +12,26 @@ namespace uno {
 
    class BacktrackingLineSearch : public GlobalizationMechanism {
    public:
-      BacktrackingLineSearch(size_t number_constraints, size_t number_bounds_constraints, const Options& options);
+      explicit BacktrackingLineSearch(const Options& options);
       ~BacktrackingLineSearch() override = default;
 
-      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) override;
-      void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+      void initialize(Statistics& statistics, const Options& options) override;
+      void compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
-      [[nodiscard]] std::string get_strategy_combination() const override;
+      [[nodiscard]] std::string get_name() const override;
 
    private:
       const double backtracking_ratio;
       const double minimum_step_length;
       const bool scale_duals_with_step_length;
 
-      void backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
-      [[nodiscard]] bool terminate_with_small_step_length(Statistics& statistics, const Model& model, Iterate& trial_iterate);
+      void backtrack_along_direction(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
+      [[nodiscard]] static bool terminate_with_small_step_length(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+         const Model& model, Iterate& trial_iterate);
       [[nodiscard]] double decrease_step_length(double step_length) const;
       static void check_unboundedness(const Direction& direction);
       void set_statistics(Statistics& statistics, size_t number_iterations) const;

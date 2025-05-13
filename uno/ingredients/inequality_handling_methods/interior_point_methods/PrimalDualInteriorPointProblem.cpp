@@ -145,7 +145,7 @@ namespace uno {
 
    size_t PrimalDualInteriorPointProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
       size_t number_nonzeros = this->first_reformulation.number_hessian_nonzeros(hessian_model);
-      // barrier contribution
+      // barrier contribution: original variables
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
          if (is_finite(this->first_reformulation.variable_lower_bound(variable_index)) || is_finite(this->first_reformulation.variable_upper_bound(variable_index))) {
             number_nonzeros++;

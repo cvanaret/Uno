@@ -46,10 +46,12 @@ namespace uno {
 
    void MA57Solver::initialize_memory(size_t dimension, size_t number_nonzeros) {
       this->dimension = dimension;
+      this->factorization.n = static_cast<int>(dimension);
+      this->factorization.nnz = static_cast<int>(number_nonzeros);
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);
       this->lkeep = static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42);
-      this->keep.resize(static_cast<size_t>(lkeep));
+      this->keep.resize(static_cast<size_t>(this->lkeep));
       this->iwork.resize(5 * dimension);
       this->lwork = static_cast<int>(1.2 * static_cast<double>(dimension));
       this->work.resize(static_cast<size_t>(this->lwork));
@@ -138,14 +140,14 @@ namespace uno {
       }
    }
 
-   std::tuple<size_t, size_t, size_t> MA57Solver::get_inertia() const {
+   Inertia MA57Solver::get_inertia() const {
       // rank = number_positive_eigenvalues + number_negative_eigenvalues
       // n = rank + number_zero_eigenvalues
       const size_t rank = this->rank();
       const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
       const size_t number_positive_eigenvalues = rank - number_negative_eigenvalues;
       const size_t number_zero_eigenvalues = static_cast<size_t>(this->factorization.n) - rank;
-      return std::make_tuple(number_positive_eigenvalues, number_negative_eigenvalues, number_zero_eigenvalues);
+      return {number_positive_eigenvalues, number_negative_eigenvalues, number_zero_eigenvalues};
    }
 
    size_t MA57Solver::number_negative_eigenvalues() const {

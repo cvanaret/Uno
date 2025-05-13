@@ -82,6 +82,7 @@ namespace uno {
             diagonal_entries[row_index] += element;
          }
       }
+      // look at the first max_dimension diagonal entries
       return *std::min_element(diagonal_entries.begin(), diagonal_entries.end());
    }
    

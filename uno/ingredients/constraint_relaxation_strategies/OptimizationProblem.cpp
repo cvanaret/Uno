@@ -4,6 +4,7 @@
 #include "OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/Expression.hpp"
 
 namespace uno {
    OptimizationProblem::OptimizationProblem(const Model& model):

@@ -4,8 +4,6 @@
 #ifndef UNO_VECTOREXPRESSION_H
 #define UNO_VECTOREXPRESSION_H
 
-#include <functional>
-
 namespace uno {
    template <typename Indices, typename Callable>
    class VectorExpression {

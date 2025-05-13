@@ -80,11 +80,11 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
    }
 
-   std::tuple<size_t, size_t, size_t> MUMPSSolver::get_inertia() const {
+   Inertia MUMPSSolver::get_inertia() const {
       const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
       const size_t number_zero_eigenvalues = this->number_zero_eigenvalues();
       const size_t number_positive_eigenvalues = static_cast<size_t>(this->mumps_structure.n) - (number_negative_eigenvalues + number_zero_eigenvalues);
-      return std::make_tuple(number_positive_eigenvalues, number_negative_eigenvalues, number_zero_eigenvalues);
+      return {number_positive_eigenvalues, number_negative_eigenvalues, number_zero_eigenvalues};
    }
 
    size_t MUMPSSolver::number_negative_eigenvalues() const {

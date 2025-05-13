@@ -54,13 +54,13 @@ namespace uno {
          double trust_region_radius, const WarmstartInformation& warmstart_information) override;
 
       void solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-         const Vector<double>& initial_point, Direction& direction, HessianModel& hessian_model, double trust_region_radius,
-         const WarmstartInformation& warmstart_information) override;
+         const Vector<double>& initial_point, Direction& direction, SubproblemLayer& subproblem_layer,
+         double trust_region_radius, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
 
    private:
-      const bool subproblem_is_regularized;
+      const bool regularize;
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
       std::vector<double> constraints{};
       SparseVector<double> linear_objective{};
