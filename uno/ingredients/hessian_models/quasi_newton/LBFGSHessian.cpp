@@ -166,7 +166,7 @@ namespace uno {
    void LBFGSHessian::recompute_hessian_representation() {
       assert(0 < this->number_entries_in_memory && "LBFGSHessian::recompute_hessian_representation was called with an empty memory");
 
-      DEBUG << "\n*** Recomputing the Hessian representation\n";
+      DEBUG << "\n*** Recomputing the Hessian representation with " << this->number_entries_in_memory << " entries\n";
       // TODO figure out if we're extending or replacing in memory
       // fill the L matrix (lower triangular with a zero diagonal)
       for (size_t column_index: Range(this->number_entries_in_memory)) {
