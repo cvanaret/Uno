@@ -23,6 +23,7 @@ namespace uno {
       ~LBFGSHessian() override = default;
 
       void initialize(const Model& model) override;
+      void initialize_statistics(Statistics& statistics, const Options& options) const override;
       [[nodiscard]] size_t number_nonzeros(const Model& model) const override;
       void notify_accepted_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) override;
       void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,

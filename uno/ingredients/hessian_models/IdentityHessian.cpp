@@ -11,6 +11,10 @@ namespace uno {
       // do nothing
    }
 
+   void IdentityHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+      // do nothing
+   }
+
    size_t IdentityHessian::number_nonzeros(const Model& model) const {
       return model.number_variables;
    }

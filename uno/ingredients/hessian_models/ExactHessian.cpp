@@ -7,6 +7,11 @@
 
 namespace uno {
    void ExactHessian::initialize(const Model& /*model*/) {
+      // do nothing
+   }
+
+   void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+      // do nothing
    }
 
    size_t ExactHessian::number_nonzeros(const Model& model) const {

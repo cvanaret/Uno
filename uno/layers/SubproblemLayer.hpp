@@ -27,6 +27,7 @@ namespace uno {
       }
 
       void initialize_statistics(Statistics& statistics, const Options& options) const {
+         this->hessian_model->initialize_statistics(statistics, options);
          this->regularization_strategy->initialize_statistics(statistics, options);
       }
 

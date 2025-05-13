@@ -33,6 +33,10 @@ namespace uno {
       this->Hessian_approximation = DenseMatrix<double>(this->dimension, this->dimension);
    }
 
+   void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
+      statistics.add_column("QN |memory|", Statistics::double_width - 4, options.get_int("statistics_quasi_newton_memory_size"));
+   }
+
    size_t LBFGSHessian::number_nonzeros(const Model& model) const {
       // upper triangular matrix
       return (model.number_variables * (model.number_variables + 1))/2;
