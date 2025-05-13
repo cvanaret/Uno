@@ -12,6 +12,7 @@
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/UserCallbacks.hpp"

@@ -8,7 +8,6 @@
 #include "SparseStorageFactory.hpp"
 #include "RectangularMatrix.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {

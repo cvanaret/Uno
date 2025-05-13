@@ -4,6 +4,7 @@
 #ifndef UNO_L1RELAXEDPROBLEM_H
 #define UNO_L1RELAXEDPROBLEM_H
 
+#include <functional>
 #include "OptimizationProblem.hpp"
 #include "symbolic/Concatenation.hpp"
 

@@ -6,7 +6,6 @@
 #include "SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "options/Options.hpp"
 
 #if defined(HAS_HSL) || defined(HAS_MA57)
 #include "ingredients/subproblem_solvers/MA57/MA57Solver.hpp"
