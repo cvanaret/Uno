@@ -28,8 +28,8 @@ Oscar Dowson [@odow](https://github.com/odow), David Kiessling [@david0oo](https
 We argue that most optimization methods can be broken down into the following generic ingredients:
 * a **constraint relaxation strategy**: a systematic way to relax the general constraints;
 * an **inequality handling method**: a systematic way to handle the inequality constraints;
-* a **Hessian model**: a model of the Lagrangian Hessian of the reformulated problem;
-* a **regularization strategy**: a strategy to regularize the Lagrangian Hessian or the augmented system;
+* a **Hessian model**: a model of the Lagrangian Hessian of the original problem;
+* a **regularization strategy**: a strategy to regularize the Lagrangian Hessian or the augmented system of the reformulated problem;
 * a **globalization strategy**: an acceptance test of the trial iterate;
 * a **globalization mechanism**: a recourse action upon rejection of the trial iterate.
 
