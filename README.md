@@ -25,32 +25,25 @@ Oscar Dowson [@odow](https://github.com/odow), David Kiessling [@david0oo](https
 
 ## Unifying nonlinearly constrained nonconvex optimization
 
-We argue that most optimization methods can be broken down into four generic ingredients:
-* a **constraint relaxation strategy**: a systematic way to relax the nonlinear constraints;
-* a **subproblem**: a local model of the (possibly relaxed) problem at the current primal-dual iterate;
+We argue that most optimization methods can be broken down into the following generic ingredients:
+* a **constraint relaxation strategy**: a systematic way to relax the general constraints;
+* an **inequality handling method**: a systematic way to handle the inequality constraints;
+* a **Hessian model**: a model of the Lagrangian Hessian of the reformulated problem;
+* a **regularization strategy**: a strategy to regularize the Lagrangian Hessian or the augmented system;
 * a **globalization strategy**: an acceptance test of the trial iterate;
 * a **globalization mechanism**: a recourse action upon rejection of the trial iterate.
 
-<!--
-The following hypergraph illustrates how some of the state-of-the-art solvers can be decomposed in terms of the four ingredients:
+The following graph gives an overview of state-of-the-art strategies:
 <p align="center">
-   <img src="docs/figures/combination_hypergraph.png" alt="Combination hypergraph" width="75%" />
+   <img src="docs/figures/wheel.png" alt="Uno hypergraph" width="65%" />
 </p>
 
-## Uno
--->
-
-Uno implements the following strategies:
-<p align="center">
-   <img src="docs/figures/hypergraph_uno.png" alt="Uno hypergraph" width="65%" />
-</p>
-
-**Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches. For more details, check out our [preprint](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization) or my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
+**Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches. For more details, check out our [preprint](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization) or my [latest slides](https://www.researchgate.net/publication/390271091).
 
 Uno implements **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
-* `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method);
-* `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method);
-* `byrd` mimics Byrd's S $\ell_1$ QP (line-search $\ell_1$ merit S $\ell_1$ QP method).
+* `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
+* `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual regularization);
+* `byrd` mimics Byrd's S $\ell_1$ QP (line-search $\ell_1$ merit S $\ell_1$ QP method with exact Hessian and primal regularization).
 
 ## Latest results (September 26, 2024)
 
@@ -112,7 +105,9 @@ Uno can be installed in Julia via [Uno_jll.jl](https://github.com/JuliaBinaryWra
 ### Combining strategies on the fly
 
 For an overview of the available strategies, type: ```./uno_ampl --strategies```:
-- to pick a globalization mechanism, use the argument : ```globalization_mechanism=[LS|TR]```  
 - to pick a constraint relaxation strategy, use the argument: ```constraint_relaxation_strategy=[feasibility_restoration|l1_relaxation]```  
-- to pick a globalization strategy, use the argument: ```globalization_strategy=[l1_merit|fletcher_filter_method|waechter_filter_method|funnel_method]```  
-- to pick a subproblem method, use the argument: ```subproblem=[QP|LP|primal_dual_interior_point]```  
+- to pick an inequality handling method, use the argument: ```subproblem=[QP|LP|primal_dual_interior_point]``` 
+- to pick a Hessian model, use the argument: ```hessian_model=[exact|identity|zero]``` 
+- to pick a regularization strategy, use the argument: ```regularization_strategy=[primal|primal_dual|none]``` 
+- to pick a globalization strategy, use the argument: ```globalization_strategy=[l1_merit|fletcher_filter_method|waechter_filter_method|funnel_method]```   
+- to pick a globalization mechanism, use the argument : ```globalization_mechanism=[LS|TR]```  
