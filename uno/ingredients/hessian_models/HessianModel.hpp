@@ -29,6 +29,7 @@ namespace uno {
       [[nodiscard]] virtual bool has_explicit_representation() const = 0;
 
       virtual void initialize(const Model& model) = 0;
+      virtual void initialize_statistics(Statistics& statistics, const Options& options) const = 0;
       [[nodiscard]] virtual size_t number_nonzeros(const Model& model) const = 0;
       [[nodiscard]] virtual bool is_positive_definite() const = 0;
       virtual void notify_accepted_iterate(const Model& model, Iterate &current_iterate, Iterate &trial_iterate) = 0;

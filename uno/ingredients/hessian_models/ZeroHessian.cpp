@@ -16,6 +16,11 @@ namespace uno {
    }
 
    void ZeroHessian::initialize(const Model& /*model*/) {
+      // do nothing
+   }
+
+   void ZeroHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+      // do nothing
    }
 
    size_t ZeroHessian::number_nonzeros(const Model& /*model*/) const {
