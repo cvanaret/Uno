@@ -52,10 +52,11 @@ namespace uno {
       this->V_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
       this->Hessian_approximation = DenseMatrix<double>(this->dimension, this->dimension);
    }
-
-   void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
-   }
    
+   void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
+      statistics.add_column("QN |memory|", Statistics::double_width - 4, options.get_int("statistics_quasi_newton_memory_size"));
+   }
+
    void LBFGSHessian::notify_accepted_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
       std::cout << "Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
       // this->current_available_slot lives in [0, this->memory_size)
