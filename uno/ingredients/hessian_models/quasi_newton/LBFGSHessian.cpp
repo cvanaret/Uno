@@ -17,7 +17,7 @@ namespace uno {
          fixed_objective_multiplier(fixed_objective_multiplier),
          memory_size(options.get_unsigned_int("quasi_newton_memory_size")) {
       if (fixed_objective_multiplier.has_value()) {
-         std::cout << "L-BFGS has fixed obj multiplier " << *fixed_objective_multiplier << '\n';
+         DEBUG << "L-BFGS Hessian model was declared with a fixed objective multiplier of " << *fixed_objective_multiplier << '\n';
       }
    }
 
