@@ -1,6 +1,9 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#ifndef UNO_IDENTITYHESSIAN_H
+#define UNO_IDENTITYHESSIAN_H
+
 #include "HessianModel.hpp"
 
 namespace uno {
@@ -17,3 +20,5 @@ namespace uno {
          const Vector<double>& constraint_multipliers, Vector<double>& result) override;
    };
 } // namespace
+
+#endif // UNO_IDENTITYHESSIAN_H
