@@ -2,7 +2,7 @@
 
 <div align="center">
 
-   *A modern, modular solver for nonlinearly constrained optimization*
+   *A modern, modular solver for nonlinearly constrained nonconvex optimization*
 
 </div>
 
@@ -16,14 +16,14 @@ $$
 \end{align}
 $$
 
-The theoretical abstract framework for unifying nonlinearly constrained optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory). Uno was designed and implemented by Charlie Vanaret. It is released under the MIT license (see the [license file](LICENSE)).
+The theoretical abstract framework for unifying nonlinearly constrained nonconvex optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory). Uno was designed and implemented by Charlie Vanaret. It is released under the MIT license (see the [license file](LICENSE)).
 
 The contributors are (in alphabetical order):
 Oscar Dowson [@odow](https://github.com/odow), David Kiessling [@david0oo](https://github.com/david0oo), Alexis Montoison [@amontoison](https://github.com/amontoison), Manuel Schaich [@worc4021](https://github.com/worc4021), Silvio Traversaro [@traversaro](https://github.com/traversaro), Rujia Liu [@rujialiu](https://github.com/rujialiu).
 
 ![Unit tests on Ubuntu workflow](https://github.com/cvanaret/Uno/actions/workflows/unit-tests-ubuntu.yml/badge.svg)
 
-## Unifying nonlinearly constrained optimization
+## Unifying nonlinearly constrained nonconvex optimization
 
 We argue that most optimization methods can be broken down into the following generic ingredients:
 * a **constraint relaxation strategy**: a systematic way to relax the general constraints;
