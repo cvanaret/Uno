@@ -21,12 +21,13 @@ namespace uno {
       std::unique_ptr<HessianModel> hessian_model;
       std::unique_ptr<RegularizationStrategy<double>> regularization_strategy;
 
-      explicit SubproblemLayer(const Options& options):
-         hessian_model(HessianModelFactory::create(options)),
+      explicit SubproblemLayer(std::optional<double> fixed_objective_multiplier, const Options& options):
+         hessian_model(HessianModelFactory::create(fixed_objective_multiplier, options)),
          regularization_strategy(RegularizationStrategyFactory::create(options)) {
       }
 
       void initialize_statistics(Statistics& statistics, const Options& options) const {
+         this->hessian_model->initialize_statistics(statistics, options);
          this->regularization_strategy->initialize_statistics(statistics, options);
       }
 

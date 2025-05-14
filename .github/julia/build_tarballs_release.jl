@@ -118,6 +118,7 @@ cmake \
     -DMUMPS_MPISEQ_LIBRARY="${libdir}/libmpiseq.${dlext}" \
     -DBLAS_LIBRARIES="${libdir}/libopenblas.${dlext}" \
     -DLAPACK_LIBRARIES="${libdir}/libopenblas.${dlext}" \
+    -DWITH_LAPACK=ON \
     ..
 
 make -j${nproc}

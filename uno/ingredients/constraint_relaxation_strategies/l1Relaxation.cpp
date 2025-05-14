@@ -28,8 +28,8 @@ namespace uno {
          ConstraintRelaxationStrategy(options),
          penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         l1_relaxed_subproblem_layer(options),
-         feasibility_subproblem_layer(options),
+         l1_relaxed_subproblem_layer(std::nullopt, options),
+         feasibility_subproblem_layer(0., options),
          inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
          feasibility_inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
          tolerance(options.get_double("tolerance")),
@@ -285,6 +285,8 @@ namespace uno {
       if (accept_iterate) {
          this->check_exact_relaxation(trial_iterate);
          // this->set_dual_residuals_statistics(statistics, trial_iterate);
+         this->l1_relaxed_subproblem_layer.hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
+         this->feasibility_subproblem_layer.hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, this->penalty_parameter);
       }
       this->set_progress_statistics(statistics, model, trial_iterate);
@@ -326,7 +328,9 @@ namespace uno {
    }
 
    std::string l1Relaxation::get_name() const {
-      return "l1 relaxation";
+      return "l1 relaxation " + this->inequality_handling_method->get_name() + " with " +
+         this->l1_relaxed_subproblem_layer.hessian_model->get_name() + " Hessian and " +
+         this->l1_relaxed_subproblem_layer.regularization_strategy->get_name() + " regularization";
    }
 
    size_t l1Relaxation::get_hessian_evaluation_count() const {

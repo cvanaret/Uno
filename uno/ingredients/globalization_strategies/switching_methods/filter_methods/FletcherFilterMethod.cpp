@@ -69,6 +69,6 @@ namespace uno {
    }
 
    std::string FletcherFilterMethod::get_name() const {
-      return "Fletcher filter method";
+      return "Fletcher-filter";
    }
 } // namespace

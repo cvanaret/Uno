@@ -10,7 +10,8 @@
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
-   // forward declaration
+   // forward declarations
+   class Model;
    class OptimizationProblem;
 
    enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
