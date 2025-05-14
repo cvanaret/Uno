@@ -91,17 +91,6 @@ namespace uno {
 
       [[nodiscard]] ElementType* data();
       void clear();
-
-      // expressions
-      /*
-      DenseMatrix& operator=(const MatrixVectorProduct<
-            DenseMatrix<ElementType, MatrixShape::LOWER_TRIANGULAR>&,
-            DenseMatrix<ElementType, MatrixShape::LOWER_TRIANGULAR>&>& product) {
-         std::cout << "Specialization of DenseMatrix::operator= for product of lower triangular matrices\n";
-         return *this;
-      }
-      */
-
       void print(std::ostream& stream) const;
 
    protected:
