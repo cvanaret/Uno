@@ -127,7 +127,9 @@ namespace uno {
    }
 
    std::string UnconstrainedStrategy::get_name() const {
-      return "unconstrained";
+      return "unconstrained " + this->inequality_handling_method->get_name() + " with " +
+         this->subproblem_layer.hessian_model->get_name() + " Hessian and " +
+         this->subproblem_layer.regularization_strategy->get_name() + " regularization";
    }
 
    size_t UnconstrainedStrategy::get_hessian_evaluation_count() const {

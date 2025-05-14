@@ -248,7 +248,9 @@ namespace uno {
    }
 
    std::string FeasibilityRestoration::get_name() const {
-      return "feasibility restoration";
+      return "feasibility restoration " + this->optimality_inequality_handling_method->get_name() + " with " +
+         this->optimality_subproblem_layer.hessian_model->get_name() + " Hessian and " +
+         this->optimality_subproblem_layer.regularization_strategy->get_name() + " regularization";
    }
 
    size_t FeasibilityRestoration::get_hessian_evaluation_count() const {

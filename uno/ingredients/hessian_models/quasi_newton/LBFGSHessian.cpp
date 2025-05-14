@@ -129,6 +129,10 @@ namespace uno {
       }
    }
 
+   std::string LBFGSHessian::get_name() const {
+      return "L-BFGS";
+   }
+
    // protected member functions
 
    void LBFGSHessian::update_memory(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {

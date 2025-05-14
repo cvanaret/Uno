@@ -35,4 +35,8 @@ namespace uno {
       // TODO fix the counter
       this->evaluation_count++;
    }
+
+   std::string ExactHessian::get_name() const {
+      return "exact";
+   }
 } // namespace

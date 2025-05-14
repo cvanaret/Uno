@@ -33,6 +33,7 @@ namespace uno {
       void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
          ElementType dual_regularization_parameter, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
+      [[nodiscard]] std::string get_name() const override;
 
    protected:
       const std::string& optional_linear_solver_name;
@@ -136,6 +137,11 @@ namespace uno {
          ElementType /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) {
       throw std::runtime_error("PrimalRegularization<ElementType>::regularize_augmented_matrix not implemented yet");
+   }
+
+   template <typename ElementType>
+   std::string PrimalRegularization<ElementType>::get_name() const {
+      return "primal";
    }
 } // namespace
 
