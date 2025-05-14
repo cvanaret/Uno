@@ -177,6 +177,7 @@ namespace uno {
       // compute the primal-dual solution
       this->assemble_augmented_system(statistics, problem, current_multipliers, subproblem_layer);
       this->augmented_system.solve(*this->linear_solver);
+      DEBUG2 << "Solution: "; print_vector(DEBUG2, this->augmented_system.solution); DEBUG << '\n';
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
       this->number_subproblems_solved++;
 
@@ -413,7 +414,7 @@ namespace uno {
          // constraints
          this->augmented_system.rhs[number_variables + constraint_index] = -this->constraints[constraint_index];
       }
-      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(this->augmented_system.rhs, 0, number_variables + number_constraints)); DEBUG << '\n';
+      DEBUG2 << "RHS: "; print_vector(DEBUG2, this->augmented_system.rhs); DEBUG << '\n';
    }
 
    void PrimalDualInteriorPointMethod::assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals,

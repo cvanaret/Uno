@@ -17,7 +17,7 @@ namespace uno {
       fixed_objective_multiplier(fixed_objective_multiplier),
       memory_size(options.get_unsigned_int("quasi_newton_memory_size")) {
       if (fixed_objective_multiplier.has_value()) {
-         std::cout << "L-BFGS has fixed obj multiplier " << *fixed_objective_multiplier << '\n';
+         DEBUG << "L-BFGS Hessian model was declared with a fixed objective multiplier of " << *fixed_objective_multiplier << '\n';
       }
    }
 
@@ -47,7 +47,10 @@ namespace uno {
    }
 
    void LBFGSHessian::evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
+         double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
+      assert((!this->fixed_objective_multiplier.has_value() || *this->fixed_objective_multiplier == objective_multiplier) &&
+         "LBFGSHessian was declared with a fixed objective multiplier, but was passed another value");
+
       if (this->hessian_recomputation_required) {
          this->recompute_hessian_representation();
          this->hessian_recomputation_required = false;
@@ -60,6 +63,7 @@ namespace uno {
          this->Hessian_approximation.entry(variable_index, variable_index) = this->initial_identity_multiple;
       }
 
+      // TODO enclose this code in a function
       // rank-2 contribution: -U U^T v + V V^T v
       // H := alpha U U^T + beta H
       char uplo = 'U'; // H is referenced in the upper triangular part
