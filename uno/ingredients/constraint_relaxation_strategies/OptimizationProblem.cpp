@@ -140,6 +140,11 @@ namespace uno {
       }
    }
 
+   void OptimizationProblem::compute_least_square_stationarity(Iterate& iterate, const Multipliers& multipliers,
+         Vector<double>& stationarity_residuals) const {
+      throw std::runtime_error("OptimizationProblem::evaluate_stationarity_residual not implemented");
+   }
+
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints

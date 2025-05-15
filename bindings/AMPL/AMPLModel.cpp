@@ -337,7 +337,7 @@ namespace uno {
       iterate.multipliers.constraints *= this->objective_sign;
       iterate.multipliers.lower_bounds *= this->objective_sign;
       iterate.multipliers.upper_bounds *= this->objective_sign;
-      iterate.evaluations.objective *= this->objective_sign;
+      iterate.model_evaluations.objective *= this->objective_sign;
 
       // include the bound duals in the .sol file, using suffixes
       SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};

@@ -47,9 +47,11 @@ namespace uno {
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
 
       void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-            const Multipliers& multipliers) const override;
+         const Multipliers& multipliers) const override;
+      void compute_least_square_stationarity(Iterate& iterate, const Multipliers& multipliers,
+         Vector<double>& stationarity_residuals) const override;
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
-            const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
+         const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
 
    protected:
       const OptimizationProblem& first_reformulation;
@@ -59,6 +61,14 @@ namespace uno {
       const Range<> inequality_constraints{0};
       const double barrier_parameter;
       const double damping_factor{1e-5}; // TODO option
+      const double relaxation_factor{0.}; // TODO option
+
+      [[nodiscard]] double original_variable_lower_bound(size_t variable_index) const;
+      [[nodiscard]] double original_variable_upper_bound(size_t variable_index) const;
+      [[nodiscard]] double slack_lower_bound(size_t inequality_constraint_index) const;
+      [[nodiscard]] double slack_upper_bound(size_t inequality_constraint_index) const;
+      [[nodiscard]] double relaxed_lower_bound(double lower_bound) const;
+      [[nodiscard]] double relaxed_upper_bound(double upper_bound) const;
    };
 } // namespace
 

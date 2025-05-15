@@ -66,6 +66,8 @@ namespace uno {
       [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
          Norm residual_norm);
       virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate, const Multipliers& multipliers) const;
+      virtual void compute_least_square_stationarity(Iterate& iterate, const Multipliers& multipliers,
+         Vector<double>& stationarity_residuals) const;
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
    };

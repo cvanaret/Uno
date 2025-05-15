@@ -62,34 +62,34 @@ namespace uno {
       statistics.add_column("barrier", Statistics::double_width - 5, options.get_int("statistics_barrier_parameter_column_order"));
    }
 
-   void PrimalDualInteriorPointMethod::generate_initial_iterate(const OptimizationProblem& first_reformulation, Iterate& initial_iterate) {
+   void PrimalDualInteriorPointMethod::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
       // TODO: enforce linear constraints at initial point
       //if (options.get_bool("enforce_linear_constraints")) {
       //   Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, this->solver);
       //}
 
-      const PrimalDualInteriorPointProblem barrier_problem(first_reformulation, this->barrier_parameter());
+      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
 
       // add the slacks to the initial iterate
       initial_iterate.set_number_variables(barrier_problem.number_variables);
       // make the initial point strictly feasible wrt the bounds
-      for (size_t variable_index: Range(first_reformulation.number_variables)) {
+      for (size_t variable_index: Range(problem.number_variables)) {
          initial_iterate.primals[variable_index] = PrimalDualInteriorPointMethod::push_variable_to_interior(initial_iterate.primals[variable_index],
-            first_reformulation.variable_lower_bound(variable_index), first_reformulation.variable_upper_bound(variable_index));
+            problem.variable_lower_bound(variable_index), problem.variable_upper_bound(variable_index));
       }
 
       // set the slack variables (if any)
-      if (!first_reformulation.get_inequality_constraints().empty()) {
+      if (!problem.get_inequality_constraints().empty()) {
          // evaluate the constraints at the original point
-         initial_iterate.evaluate_constraints(first_reformulation.model);
+         initial_iterate.evaluate_constraints(problem.model);
 
          // set the slacks to the constraint values
-         size_t slack_index = first_reformulation.number_variables;
-         for (const auto inequality_constraint_index: first_reformulation.get_inequality_constraints()) {
+         size_t slack_index = problem.number_variables;
+         for (const auto inequality_constraint_index: problem.get_inequality_constraints()) {
             initial_iterate.primals[slack_index] = PrimalDualInteriorPointMethod::push_variable_to_interior(
-               initial_iterate.evaluations.constraints[inequality_constraint_index],
-               first_reformulation.constraint_lower_bound(inequality_constraint_index),
-               first_reformulation.constraint_upper_bound(inequality_constraint_index));
+               initial_iterate.model_evaluations.constraints[inequality_constraint_index],
+               problem.constraint_lower_bound(inequality_constraint_index),
+               problem.constraint_upper_bound(inequality_constraint_index));
             slack_index++;
          }
          // since the slacks have been set, the function evaluations should also be updated
@@ -99,27 +99,27 @@ namespace uno {
       }
 
       // set the bound multipliers
-      for (const size_t variable_index: first_reformulation.get_lower_bounded_variables()) {
+      for (const size_t variable_index: problem.get_lower_bounded_variables()) {
          initial_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
       }
-      for (const size_t variable_index: first_reformulation.get_upper_bounded_variables()) {
+      for (const size_t variable_index: problem.get_upper_bounded_variables()) {
          initial_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
       }
-      size_t slack_index = first_reformulation.number_variables;
-      for (size_t inequality_constraint_index: first_reformulation.get_inequality_constraints()) {
-         if (is_finite(first_reformulation.constraint_lower_bound(inequality_constraint_index))) {
+      size_t slack_index = problem.number_variables;
+      for (size_t inequality_constraint_index: problem.get_inequality_constraints()) {
+         if (is_finite(problem.constraint_lower_bound(inequality_constraint_index))) {
             initial_iterate.multipliers.lower_bounds[slack_index] = this->default_multiplier;
          }
-         if (is_finite(first_reformulation.constraint_upper_bound(inequality_constraint_index))) {
+         if (is_finite(problem.constraint_upper_bound(inequality_constraint_index))) {
             initial_iterate.multipliers.lower_bounds[slack_index] = -this->default_multiplier;
          }
          slack_index++;
       }
 
       // compute least-square multipliers
-      if (0 < first_reformulation.number_constraints) {
+      if (0 < problem.number_constraints) {
          Preprocessing::compute_least_square_multipliers(barrier_problem, this->augmented_system.matrix, this->augmented_system.rhs,
-            *this->linear_solver, initial_iterate, initial_iterate.multipliers.constraints, this->least_square_multiplier_max_norm);
+            *this->linear_solver, initial_iterate, initial_iterate.multipliers, this->least_square_multiplier_max_norm);
       }
    }
 
