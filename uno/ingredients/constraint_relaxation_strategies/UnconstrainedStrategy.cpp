@@ -11,6 +11,7 @@
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Statistics.hpp"
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {

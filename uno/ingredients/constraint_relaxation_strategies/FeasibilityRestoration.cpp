@@ -9,7 +9,6 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/regularization_strategies/UnstableRegularization.hpp"
-#include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Model.hpp"
@@ -17,6 +16,7 @@
 #include "options/Options.hpp"
 #include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Statistics.hpp"
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {

@@ -24,7 +24,7 @@ namespace uno {
       // TODO change this
       objective_gradient = iterate.evaluations.objective_gradient;
    }
-
+   
    void OptimizationProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
       constraints = iterate.evaluations.constraints;

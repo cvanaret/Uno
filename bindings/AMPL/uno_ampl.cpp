@@ -10,7 +10,6 @@
 #include "options/Options.hpp"
 #include "options/Presets.hpp"
 #include "tools/Logger.hpp"
-#include "Uno.hpp"
 
 /*
 size_t memory_allocation_amount = 0;

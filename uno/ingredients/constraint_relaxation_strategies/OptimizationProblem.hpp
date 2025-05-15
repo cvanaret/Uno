@@ -64,10 +64,10 @@ namespace uno {
       [[nodiscard]] virtual size_t number_hessian_nonzeros(const HessianModel& hessian_model) const;
 
       [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
-            Norm residual_norm);
+         Norm residual_norm);
       virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate, const Multipliers& multipliers) const;
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
-            const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
+         const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
    };
 } // namespace
 

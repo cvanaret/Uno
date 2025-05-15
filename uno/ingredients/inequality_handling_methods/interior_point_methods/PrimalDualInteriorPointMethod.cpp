@@ -17,6 +17,7 @@
 #include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Infinity.hpp"
+#include "tools/Statistics.hpp"
 
 namespace uno {
    PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(const Options& options):
@@ -52,14 +53,12 @@ namespace uno {
          number_augmented_system_nonzeros);
       regularization_strategy.initialize_memory(barrier_problem, hessian_model);
       this->augmented_system.matrix = SymmetricMatrix<size_t, double>(barrier_problem.number_variables + barrier_problem.number_constraints,
-         number_augmented_system_nonzeros,
-         true, "COO");
+         number_augmented_system_nonzeros, true, "COO");
       this->augmented_system.rhs.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
       this->augmented_system.solution.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
    }
 
    void PrimalDualInteriorPointMethod::initialize_statistics(Statistics& statistics, const Options& options) {
-      statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
       statistics.add_column("barrier", Statistics::double_width - 5, options.get_int("statistics_barrier_parameter_column_order"));
    }
 
@@ -119,7 +118,8 @@ namespace uno {
 
       // compute least-square multipliers
       if (0 < first_reformulation.number_constraints) {
-         this->compute_least_square_multipliers(barrier_problem, initial_iterate, initial_iterate.multipliers.constraints);
+         Preprocessing::compute_least_square_multipliers(barrier_problem, this->augmented_system.matrix, this->augmented_system.rhs,
+            *this->linear_solver, initial_iterate, initial_iterate.multipliers.constraints, this->least_square_multiplier_max_norm);
       }
    }
 
@@ -183,7 +183,9 @@ namespace uno {
 
       // compute the primal-dual solution
       this->assemble_augmented_system(statistics, barrier_problem, current_multipliers, subproblem_layer);
+      DEBUG2 << "\nRHS: "; print_vector(DEBUG2, this->augmented_system.rhs);
       this->augmented_system.solve(*this->linear_solver);
+      DEBUG2 << "Solution: "; print_vector(DEBUG2, this->augmented_system.solution); DEBUG << '\n';
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
       this->number_subproblems_solved++;
 
@@ -196,13 +198,12 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::assemble_augmented_system(Statistics& statistics, const PrimalDualInteriorPointProblem& barrier_problem,
-         const Multipliers& current_multipliers, SubproblemLayer& subproblem_layer) {
+         const Multipliers& current_multipliers, const SubproblemLayer& subproblem_layer) {
       // assemble and factorize the augmented matrix
       this->augmented_system.assemble_matrix(this->hessian, this->constraint_jacobian, barrier_problem.number_variables,
          barrier_problem.number_constraints);
 
       // regularize the augmented matrix
-      DEBUG << "Testing factorization with regularization factors (0, 0)\n";
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
       const Inertia expected_inertia{barrier_problem.number_variables, barrier_problem.number_constraints, 0};
       subproblem_layer.regularization_strategy->regularize_augmented_matrix(statistics, this->augmented_system.matrix,
@@ -278,7 +279,8 @@ namespace uno {
       this->barrier_parameter_update_strategy.set_barrier_parameter(this->previous_barrier_parameter);
       this->solving_feasibility_problem = false;
       // TODO computing the least-square multipliers messes up the factorization in the linear solver
-      //this->compute_least_square_multipliers(problem, trial_iterate, trial_iterate.multipliers.constraints);
+      // Preprocessing::compute_least_square_multipliers(problem, this->augmented_system.matrix, this->augmented_system.rhs,
+      //   *this->linear_solver, trial_iterate, trial_iterate.multipliers.constraints, this->least_square_multiplier_max_norm);
    }
 
    double PrimalDualInteriorPointMethod::compute_auxiliary_measure(const OptimizationProblem& first_reformulation, Iterate& iterate) {
@@ -359,7 +361,6 @@ namespace uno {
          // constraints
          this->augmented_system.rhs[number_variables + constraint_index] = -this->constraints[constraint_index];
       }
-      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(this->augmented_system.rhs, 0, number_variables + number_constraints)); DEBUG << '\n';
    }
 
    void PrimalDualInteriorPointMethod::assemble_primal_dual_direction(const PrimalDualInteriorPointProblem& barrier_problem, const Vector<double>& current_primals,
@@ -389,14 +390,6 @@ namespace uno {
       if (is_small_step) {
          DEBUG << "This is a small step\n";
       }
-   }
-
-   void PrimalDualInteriorPointMethod::compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate,
-         Vector<double>& constraint_multipliers) {
-      this->augmented_system.matrix.set_dimension(problem.number_variables + problem.number_constraints);
-      this->augmented_system.matrix.reset();
-      Preprocessing::compute_least_square_multipliers(problem.model, this->augmented_system.matrix, this->augmented_system.rhs, *this->linear_solver,
-         iterate, constraint_multipliers, this->least_square_multiplier_max_norm);
    }
 
    void PrimalDualInteriorPointMethod::postprocess_iterate(const OptimizationProblem& problem, Vector<double>& primals, Multipliers& multipliers) {

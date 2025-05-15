@@ -82,11 +82,10 @@ namespace uno {
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
       void assemble_augmented_system(Statistics& statistics, const PrimalDualInteriorPointProblem& barrier_problem, const Multipliers& current_multipliers,
-         SubproblemLayer& subproblem_layer);
+         const SubproblemLayer& subproblem_layer);
       void assemble_augmented_rhs(const Multipliers& current_multipliers, size_t number_variables, size_t number_constraints);
       void assemble_primal_dual_direction(const PrimalDualInteriorPointProblem& barrier_problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
          Vector<double>& direction_primals, Multipliers& direction_multipliers);
-      void compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate, Vector<double>& constraint_multipliers);
    };
 } // namespace
 
