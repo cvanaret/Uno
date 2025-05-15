@@ -2,12 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Preprocessing.hpp"
-
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Model.hpp"
 #include "symbolic/VectorView.hpp"
@@ -16,30 +14,18 @@ namespace uno {
    // compute a least-square approximation of the multipliers by solving a linear system
    void Preprocessing::compute_least_square_multipliers(const OptimizationProblem& problem, SymmetricMatrix<size_t, double>& matrix,
          Vector<double>& rhs, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate,
-         Vector<double>& multipliers, double multiplier_max_norm) {
-      // evaluate the first derivatives
-      SparseVector<double> objective_gradient(problem.number_variables);
-      RectangularMatrix<double> constraint_jacobian(problem.number_constraints, problem.number_variables);
-      problem.evaluate_objective_gradient(current_iterate, objective_gradient);
-      problem.evaluate_constraint_jacobian(current_iterate, constraint_jacobian);
+         Multipliers& multipliers, double multiplier_max_norm) {
       DEBUG << "Computing least-square multipliers\n";
       DEBUG2 << "Current primals: " << current_iterate.primals << '\n';
-
-      /* generate the right-hand side */
       rhs.fill(0.);
-      // objective gradient
-      for (const auto [variable_index, derivative]: objective_gradient) {
-         rhs[variable_index] += derivative;
-      }
-      // variable bound constraints
-      for (size_t variable_index: Range(problem.number_variables)) {
-         rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];
-      }
-      DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, view(rhs, 0, problem.number_variables + problem.number_constraints));
+
+      // generate the right-hand side: stationarity residual \nabla f(x) - z
+      problem.compute_least_square_stationarity(current_iterate, multipliers, rhs);
+      DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, rhs);
 
       // if the residuals on the RHS are all 0, the least-square multipliers are all 0
-      if (norm_inf(view(rhs, 0, problem.number_variables + problem.number_constraints)) == 0.) {
-         multipliers.fill(0.);
+      if (norm_inf(rhs) == 0.) {
+         multipliers.constraints.fill(0.);
          DEBUG << "Least-square multipliers are all 0.\n";
          return;
       }
@@ -51,7 +37,9 @@ namespace uno {
          matrix.insert(1., variable_index, variable_index);
          matrix.finalize_column(variable_index);
       }
-      // Jacobian of general constraints
+      // constraint Jacobian
+      RectangularMatrix<double> constraint_jacobian(problem.number_constraints, problem.number_variables);
+      problem.evaluate_constraint_jacobian(current_iterate, constraint_jacobian);
       for (size_t constraint_index: Range(problem.number_constraints)) {
          for (const auto [variable_index, derivative]: constraint_jacobian[constraint_index]) {
             matrix.insert(derivative, variable_index, problem.number_variables + constraint_index);
@@ -60,7 +48,7 @@ namespace uno {
       }
       DEBUG2 << "Matrix for least-square multipliers:\n" << matrix << '\n';
 
-      /* solve the system */
+      // solve the system
       Vector<double> solution(matrix.dimension());
       linear_solver.do_symbolic_analysis(matrix);
       linear_solver.do_numerical_factorization(matrix);
@@ -70,7 +58,7 @@ namespace uno {
       const auto trial_multipliers = view(solution, problem.number_variables, problem.number_variables + problem.number_constraints);
       DEBUG2 << "Trial multipliers: "; print_vector(DEBUG2, trial_multipliers);
       if (norm_inf(trial_multipliers) <= multiplier_max_norm) {
-         multipliers = trial_multipliers;
+         multipliers.constraints = trial_multipliers;
       }
       else {
          DEBUG << "Ignoring the least-square multipliers\n";
