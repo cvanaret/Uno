@@ -38,11 +38,6 @@ namespace uno {
       virtual void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) = 0;
-      /*
-      void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, Direction& direction, const Vector<double>& initial_point, double trust_region_radius,
-         WarmstartInformation& warmstart_information);
-      */
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
       virtual void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, WarmstartInformation& warmstart_information) = 0;
@@ -93,7 +88,7 @@ namespace uno {
       [[nodiscard]] IterateStatus check_first_order_convergence(const Model& model, Iterate& current_iterate, double tolerance) const;
 
       void set_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const;
-      void set_progress_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const;
+      static void set_progress_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) ;
    };
 } // namespace
 

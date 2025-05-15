@@ -104,8 +104,8 @@ namespace uno {
 
       // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
       if (0. < this->penalty_parameter && !this->parameters.fixed_parameter) {
-         double linearized_residual = model.constraint_violation(current_iterate.evaluations.constraints +
-               current_iterate.evaluations.constraint_jacobian * direction.primals, Norm::L1);
+         double linearized_residual = model.constraint_violation(current_iterate.model_evaluations.constraints +
+            current_iterate.model_evaluations.constraint_jacobian * direction.primals, Norm::L1);
          DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
 
          // terminate if the current direction is already feasible, otherwise adjust the penalty parameter
@@ -121,8 +121,8 @@ namespace uno {
                current_iterate.feasibility_multipliers, feasibility_direction, this->feasibility_subproblem_layer,
                trust_region_radius, warmstart_information);
             std::swap(feasibility_direction.multipliers, feasibility_direction.feasibility_multipliers);
-            const double residual_lowest_violation = model.constraint_violation(current_iterate.evaluations.constraints +
-                  current_iterate.evaluations.constraint_jacobian * feasibility_direction.primals, Norm::L1);
+            const double residual_lowest_violation = model.constraint_violation(current_iterate.model_evaluations.constraints +
+               current_iterate.model_evaluations.constraint_jacobian * feasibility_direction.primals, Norm::L1);
             DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
             this->feasibility_inequality_handling_method->exit_feasibility_problem(feasibility_problem, current_iterate);
 
@@ -131,8 +131,8 @@ namespace uno {
             if (this->penalty_parameter < current_penalty_parameter) {
                this->solve_l1_relaxed_problem(statistics, model, current_iterate, direction, this->penalty_parameter,
                   trust_region_radius, warmstart_information);
-               linearized_residual = model.constraint_violation(current_iterate.evaluations.constraints +
-                     current_iterate.evaluations.constraint_jacobian * direction.primals, Norm::L1);
+               linearized_residual = model.constraint_violation(current_iterate.model_evaluations.constraints +
+                  current_iterate.model_evaluations.constraint_jacobian * direction.primals, Norm::L1);
             }
 
             // stage d: further decrease penalty parameter to reach a fraction of the ideal decrease
@@ -201,7 +201,7 @@ namespace uno {
 
       // complementarity error
       const double shift_value = 0.;
-      error += feasibility_problem.complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints,
+      error += feasibility_problem.complementarity_error(current_iterate.primals, current_iterate.model_evaluations.constraints,
             this->trial_multipliers, shift_value, Norm::L1);
       return error;
    }
@@ -218,8 +218,8 @@ namespace uno {
             trust_region_radius, warmstart_information);
 
          // recompute the linearized residual
-         linearized_residual = model.constraint_violation(current_iterate.evaluations.constraints +
-            current_iterate.evaluations.constraint_jacobian * direction.primals, Norm::L1);
+         linearized_residual = model.constraint_violation(current_iterate.model_evaluations.constraints +
+            current_iterate.model_evaluations.constraint_jacobian * direction.primals, Norm::L1);
          DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
       }
       DEBUG << "Condition enforce_linearized_residual_sufficient_decrease is true\n";
@@ -288,7 +288,7 @@ namespace uno {
          // this->set_dual_residuals_statistics(statistics, trial_iterate);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, this->penalty_parameter);
       }
-      this->set_progress_statistics(statistics, model, trial_iterate);
+      ConstraintRelaxationStrategy::set_progress_statistics(statistics, model, trial_iterate);
       return accept_iterate;
    }
 

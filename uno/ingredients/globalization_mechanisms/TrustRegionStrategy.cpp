@@ -202,7 +202,7 @@ namespace uno {
 
    void TrustRegionStrategy::set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction) const {
       if (trial_iterate.is_objective_computed) {
-         statistics.set("objective", trial_iterate.evaluations.objective);
+         statistics.set("objective", trial_iterate.model_evaluations.objective);
       }
       this->set_statistics(statistics, direction);
    }

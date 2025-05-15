@@ -16,15 +16,15 @@ namespace uno {
    Iterate::Iterate(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
          primals(number_variables), multipliers(number_variables, number_constraints), feasibility_multipliers(number_variables, number_constraints),
-         evaluations(number_variables, number_constraints), residuals(number_variables), feasibility_residuals(number_variables) {
+         model_evaluations(number_variables, number_constraints), residuals(number_variables), feasibility_residuals(number_variables) {
    }
 
    void Iterate::evaluate_objective(const Model& model) {
       if (!this->is_objective_computed) {
          // evaluate the objective
-         this->evaluations.objective = model.evaluate_objective(this->primals);
+         this->model_evaluations.objective = model.evaluate_objective(this->primals);
          Iterate::number_eval_objective++;
-         if (!is_finite(this->evaluations.objective)) {
+         if (!is_finite(this->model_evaluations.objective)) {
             throw FunctionEvaluationError();
          }
          this->is_objective_computed = true;
@@ -35,10 +35,10 @@ namespace uno {
       if (!this->are_constraints_computed) {
          if (model.is_constrained()) {
             // evaluate the constraints
-            model.evaluate_constraints(this->primals, this->evaluations.constraints);
+            model.evaluate_constraints(this->primals, this->model_evaluations.constraints);
             Iterate::number_eval_constraints++;
             // check finiteness
-            if (std::any_of(this->evaluations.constraints.cbegin(), this->evaluations.constraints.cend(), [](double constraint_j) {
+            if (std::any_of(this->model_evaluations.constraints.cbegin(), this->model_evaluations.constraints.cend(), [](double constraint_j) {
                return !is_finite(constraint_j);
             })) {
                throw FunctionEvaluationError();
@@ -50,9 +50,9 @@ namespace uno {
 
    void Iterate::evaluate_objective_gradient(const Model& model) {
       if (!this->is_objective_gradient_computed) {
-         this->evaluations.objective_gradient.clear();
+         this->model_evaluations.objective_gradient.clear();
          // evaluate the objective gradient
-         model.evaluate_objective_gradient(this->primals, this->evaluations.objective_gradient);
+         model.evaluate_objective_gradient(this->primals, this->model_evaluations.objective_gradient);
          this->is_objective_gradient_computed = true;
          Iterate::number_eval_objective_gradient++;
       }
@@ -60,9 +60,9 @@ namespace uno {
 
    void Iterate::evaluate_constraint_jacobian(const Model& model) {
       if (!this->is_constraint_jacobian_computed) {
-         this->evaluations.constraint_jacobian.clear();
+         this->model_evaluations.constraint_jacobian.clear();
          if (model.is_constrained()) {
-            model.evaluate_constraint_jacobian(this->primals, this->evaluations.constraint_jacobian);
+            model.evaluate_constraint_jacobian(this->primals, this->model_evaluations.constraint_jacobian);
             Iterate::number_eval_jacobian++;
          }
          this->is_constraint_jacobian_computed = true;
@@ -74,7 +74,7 @@ namespace uno {
       this->primals.resize(new_number_variables);
       this->multipliers.lower_bounds.resize(new_number_variables);
       this->multipliers.upper_bounds.resize(new_number_variables);
-      this->evaluations.objective_gradient.reserve(new_number_variables);
+      this->model_evaluations.objective_gradient.reserve(new_number_variables);
       this->residuals.lagrangian_gradient.resize(new_number_variables);
    }
 
@@ -86,7 +86,7 @@ namespace uno {
       stream << "                        ┌ Constraint: " << iterate.feasibility_multipliers.constraints << '\n';
       stream << "Feasibility multipliers │ Lower bound: " << iterate.feasibility_multipliers.lower_bounds << '\n';
       stream << "                        └ Upper bound: " << iterate.feasibility_multipliers.upper_bounds << '\n';
-      stream << "Objective value: " << iterate.evaluations.objective << '\n';
+      stream << "Objective value: " << iterate.model_evaluations.objective << '\n';
       stream << "Primal feasibility: " << iterate.primal_feasibility << '\n';
 
       stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';

@@ -42,7 +42,7 @@ namespace uno {
       if (this->objective_multiplier != 0.) {
          iterate.evaluate_objective_gradient(this->model);
          // TODO change this
-         objective_gradient = iterate.evaluations.objective_gradient;
+         objective_gradient = iterate.model_evaluations.objective_gradient;
          scale(objective_gradient, this->objective_multiplier);
       }
       else {
@@ -66,7 +66,7 @@ namespace uno {
 
    void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
-      constraints = iterate.evaluations.constraints;
+      constraints = iterate.model_evaluations.constraints;
 
       // add the contribution of the elastic variables
       size_t elastic_index = this->model.number_variables;
@@ -88,7 +88,7 @@ namespace uno {
    void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
       iterate.evaluate_constraint_jacobian(this->model);
       // TODO change this
-      constraint_jacobian = iterate.evaluations.constraint_jacobian;
+      constraint_jacobian = iterate.model_evaluations.constraint_jacobian;
 
       // add the contribution of the elastic variables
       size_t elastic_index = this->model.number_variables;
@@ -144,14 +144,14 @@ namespace uno {
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // objective gradient
-      for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
+      for (auto [variable_index, derivative]: iterate.model_evaluations.objective_gradient) {
          lagrangian_gradient.objective_contribution[variable_index] += derivative;
       }
 
       // constraints
       for (size_t constraint_index: Range(this->number_constraints)) {
          if (multipliers.constraints[constraint_index] != 0.) {
-            for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
+            for (auto [variable_index, derivative]: iterate.model_evaluations.constraint_jacobian[constraint_index]) {
                lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
             }
          }
