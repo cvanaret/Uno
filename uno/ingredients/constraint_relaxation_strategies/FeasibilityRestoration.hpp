@@ -61,8 +61,9 @@ namespace uno {
       void switch_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy, const Model& model,
          Iterate& trial_iterate, WarmstartInformation& warmstart_information);
 
-      void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const override;
-      [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(InequalityHandlingMethod& inequality_handling_method,
+      void evaluate_progress_measures(const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method,
+         const Model& model, Iterate& iterate) const override;
+      [[nodiscard]] ProgressMeasures compute_predicted_reductions(InequalityHandlingMethod& inequality_handling_method,
          const Model& model, const Iterate& current_iterate, const Direction& direction, double step_length) const;
       [[nodiscard]] bool can_switch_to_optimality_phase(const Iterate& current_iterate, const GlobalizationStrategy& globalization_strategy,
          const Model& model, const Iterate& trial_iterate, const Direction& direction, double step_length);

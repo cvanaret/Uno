@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 #include "linear_algebra/Norm.hpp"
-#include "optimization/IterateStatus.hpp"
 #include "symbolic/VectorExpression.hpp"
 
 namespace uno {
@@ -60,7 +59,6 @@ namespace uno {
       [[nodiscard]] virtual BoundType get_variable_bound_type(size_t variable_index) const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_lower_bounded_variables() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_upper_bounded_variables() const = 0;
-      [[nodiscard]] virtual const SparseVector<size_t>& get_slacks() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_single_lower_bounded_variables() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_single_upper_bounded_variables() const = 0;
       [[nodiscard]] virtual const Vector<size_t>& get_fixed_variables() const = 0;
@@ -75,7 +73,6 @@ namespace uno {
 
       virtual void initial_primal_point(Vector<double>& x) const = 0;
       virtual void initial_dual_point(Vector<double>& multipliers) const = 0;
-      virtual void postprocess_solution(Iterate& iterate, IterateStatus termination_status) const = 0;
 
       [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const = 0;
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;

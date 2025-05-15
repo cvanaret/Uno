@@ -5,10 +5,8 @@
 #define UNO_SYMMETRICINDEFINITELINEARSYSTEM_H
 
 #include "SymmetricMatrix.hpp"
-#include "SparseStorageFactory.hpp"
 #include "RectangularMatrix.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "tools/Statistics.hpp"
 
 namespace uno {
    template <typename ElementType>

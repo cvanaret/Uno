@@ -9,14 +9,14 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/regularization_strategies/UnstableRegularization.hpp"
-#include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
-#include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/Model.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Statistics.hpp"
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
@@ -62,7 +62,7 @@ namespace uno {
       initial_iterate.feasibility_multipliers.lower_bounds.resize(feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(feasibility_problem.number_variables);
       this->optimality_inequality_handling_method->generate_initial_iterate(optimality_problem, initial_iterate);
-      this->evaluate_progress_measures(*this->optimality_inequality_handling_method, model, initial_iterate);
+      this->evaluate_progress_measures(optimality_problem, *this->optimality_inequality_handling_method, model, initial_iterate);
       this->compute_primal_dual_residuals(model, initial_iterate);
       this->set_statistics(statistics, model, initial_iterate);
    }
@@ -147,7 +147,7 @@ namespace uno {
          const Model& model, const Iterate& trial_iterate, const Direction& direction, double step_length) {
       return globalization_strategy.is_infeasibility_sufficiently_reduced(this->reference_optimality_progress, trial_iterate.progress) &&
          (!this->switch_to_optimality_requires_linearized_feasibility ||
-         model.constraint_violation(current_iterate.evaluations.constraints + step_length*(current_iterate.evaluations.constraint_jacobian *
+         model.constraint_violation(current_iterate.model_evaluations.constraints + step_length*(current_iterate.model_evaluations.constraint_jacobian *
          direction.primals), this->residual_norm) <= this->linear_feasibility_tolerance);
    }
 
@@ -172,15 +172,17 @@ namespace uno {
       if (this->current_phase == Phase::OPTIMALITY) {
          const OptimizationProblem optimality_problem{model};
          this->optimality_inequality_handling_method->postprocess_iterate(optimality_problem, trial_iterate.primals, trial_iterate.multipliers);
-         this->compute_progress_measures(*this->optimality_inequality_handling_method, model, globalization_strategy, current_iterate, trial_iterate);
+         this->compute_progress_measures(optimality_problem, *this->optimality_inequality_handling_method, model, globalization_strategy,
+            current_iterate, trial_iterate);
       }
       else {
          const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
          this->feasibility_inequality_handling_method->postprocess_iterate(feasibility_problem, trial_iterate.primals, trial_iterate.feasibility_multipliers);
-         this->compute_progress_measures(*this->feasibility_inequality_handling_method, model, globalization_strategy, current_iterate, trial_iterate);
+         this->compute_progress_measures(feasibility_problem, *this->feasibility_inequality_handling_method, model, globalization_strategy,
+            current_iterate, trial_iterate);
       }
       trial_iterate.objective_multiplier = (this->current_phase == Phase::OPTIMALITY) ? 1. : 0.;
-      const ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(
+      const ProgressMeasures predicted_reduction = this->compute_predicted_reductions(
          (this->current_phase == Phase::OPTIMALITY) ? *this->optimality_inequality_handling_method : *this->feasibility_inequality_handling_method,
          model, current_iterate, direction, step_length);
 
@@ -220,13 +222,14 @@ namespace uno {
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, optimality_problem, feasibility_problem, iterate);
    }
 
-   void FeasibilityRestoration::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const {
+   void FeasibilityRestoration::evaluate_progress_measures(const OptimizationProblem& problem,
+         InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const {
       this->set_infeasibility_measure(model, iterate);
       this->set_objective_measure(model, iterate);
-      inequality_handling_method.set_auxiliary_measure(model, iterate);
+      iterate.progress.auxiliary = inequality_handling_method.compute_auxiliary_measure(problem, iterate);
    }
 
-   ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(InequalityHandlingMethod& inequality_handling_method,
+   ProgressMeasures FeasibilityRestoration::compute_predicted_reductions(InequalityHandlingMethod& inequality_handling_method,
          const Model& model, const Iterate& current_iterate, const Direction& direction, double step_length) const {
       return {
          this->compute_predicted_infeasibility_reduction(model, current_iterate, direction.primals, step_length),

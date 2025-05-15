@@ -16,15 +16,11 @@ namespace uno {
    class HessianModel;
    class InequalityHandlingMethod;
    class Iterate;
-   template <typename ElementType>
-   class LagrangianGradient;
    class Model;
    class Multipliers;
    class OptimizationProblem;
    class Options;
    class Statistics;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
    class UserCallbacks;
    template <typename ElementType>
    class Vector;
@@ -42,11 +38,6 @@ namespace uno {
       virtual void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) = 0;
-      /*
-      void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, Direction& direction, const Vector<double>& initial_point, double trust_region_radius,
-         WarmstartInformation& warmstart_information);
-      */
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
       virtual void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, WarmstartInformation& warmstart_information) = 0;
@@ -83,9 +74,10 @@ namespace uno {
          const Vector<double>& primal_direction, double step_length) const;
       [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(InequalityHandlingMethod& inequality_handling_method,
          const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const;
-      void compute_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model,
-         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Iterate& trial_iterate);
-      virtual void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const = 0;
+      void compute_progress_measures(const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method,
+         const Model& model, GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Iterate& trial_iterate);
+      virtual void evaluate_progress_measures(const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method,
+         const Model& model, Iterate& iterate) const = 0;
 
       void compute_primal_dual_residuals(const Model& model, const OptimizationProblem& optimality_problem,
          const OptimizationProblem& feasibility_problem, Iterate& iterate);
@@ -96,7 +88,7 @@ namespace uno {
       [[nodiscard]] IterateStatus check_first_order_convergence(const Model& model, Iterate& current_iterate, double tolerance) const;
 
       void set_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const;
-      void set_progress_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const;
+      static void set_progress_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) ;
    };
 } // namespace
 

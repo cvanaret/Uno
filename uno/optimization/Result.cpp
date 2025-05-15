@@ -11,7 +11,7 @@ namespace uno {
       DISCRETE << "Optimization status:\t\t\t" << optimization_status_to_message(this->optimization_status) << '\n';
       DISCRETE << "Iterate status:\t\t\t\t" << iterate_status_to_message(this->solution.status) << '\n';
 
-      DISCRETE << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution.evaluations.objective << '\n';
+      DISCRETE << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution.model_evaluations.objective << '\n';
       DISCRETE << "Primal feasibility:\t\t\t" << this->solution.primal_feasibility << '\n';
 
       DISCRETE << "┌ Stationarity residual:\t\t" << this->solution.residuals.stationarity << '\n';

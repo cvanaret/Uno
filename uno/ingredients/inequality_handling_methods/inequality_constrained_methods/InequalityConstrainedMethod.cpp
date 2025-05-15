@@ -54,8 +54,8 @@ namespace uno {
    }
 
    // auxiliary measure is 0 in inequality-constrained methods
-   void InequalityConstrainedMethod::set_auxiliary_measure(const Model& /*model*/, Iterate& iterate) {
-      iterate.progress.auxiliary = 0.;
+   double InequalityConstrainedMethod::compute_auxiliary_measure(const OptimizationProblem& /*first_reformulation*/, Iterate& /*iterate*/) {
+      return 0.;
    }
 
    double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const Model& /*model*/, const Iterate& /*current_iterate*/,
