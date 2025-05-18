@@ -121,9 +121,15 @@ namespace uno {
       this->reference_optimality_primals.resize(current_iterate.number_variables);
       this->reference_optimality_primals = current_iterate.primals;
 
+      // the local multipliers used for the feasibility phase become the iterate's multipliers
+      std::swap(current_iterate.multipliers, this->other_phase_multipliers);
+      DEBUG << "Now working with feasibility phase multipliers\n";
+
       // memory allocation
-      const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
-      const auto [number_variables, number_constraints] = this->feasibility_inequality_handling_method->get_dimensions(feasibility_problem);
+      l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
+      feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
+      feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
+
       if (this->first_switch_to_feasibility) {
          DEBUG << "Allocating memory for the feasibility phase\n";
          // memory allocation of the feasibility phase
@@ -132,17 +138,16 @@ namespace uno {
             *this->feasibility_subproblem_layer.regularization_strategy);
 
          // memory allocation of the current iterate
+         const auto [number_variables, number_constraints] = this->feasibility_inequality_handling_method->get_dimensions(feasibility_problem);
          current_iterate.primals.resize(number_variables);
+         current_iterate.multipliers.constraints.resize(number_constraints);
+         current_iterate.multipliers.lower_bounds.resize(number_variables);
+         current_iterate.multipliers.upper_bounds.resize(number_variables);
          current_iterate.feasibility_residuals.lagrangian_gradient.resize(number_variables);
          this->feasibility_inequality_handling_method->generate_initial_iterate(feasibility_problem, current_iterate);
          direction = Direction(number_variables, number_constraints);
          this->first_switch_to_feasibility = false;
       }
-      // the local multipliers used for the feasibility phase become the iterate's multipliers
-      this->other_phase_multipliers.constraints.resize(number_constraints);
-      this->other_phase_multipliers.lower_bounds.resize(number_variables);
-      this->other_phase_multipliers.upper_bounds.resize(number_variables);
-      std::swap(current_iterate.multipliers, this->other_phase_multipliers);
 
       this->feasibility_inequality_handling_method->set_elastic_variable_values(feasibility_problem, current_iterate.primals, current_iterate.multipliers);
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(feasibility_problem, current_iterate);
@@ -179,6 +184,7 @@ namespace uno {
       globalization_strategy.notify_switch_to_optimality(current_iterate.progress);
       // the optimality multipliers stored locally are restored into the iterate
       std::swap(trial_iterate.multipliers, this->other_phase_multipliers);
+      DEBUG << "Restoring optimality phase multipliers\n";
 
       const OptimizationProblem optimality_problem{model};
       current_iterate.set_number_variables(optimality_problem.number_variables);
