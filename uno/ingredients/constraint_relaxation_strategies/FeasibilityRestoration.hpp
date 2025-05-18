@@ -8,6 +8,7 @@
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "layers/SubproblemLayer.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/Multipliers.hpp"
 
 namespace uno {
    // forward declaration
@@ -28,7 +29,7 @@ namespace uno {
          Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
+         Iterate& current_iterate, Direction& direction, WarmstartInformation& warmstart_information) override;
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -45,11 +46,13 @@ namespace uno {
 
    private:
       Phase current_phase{Phase::OPTIMALITY};
+      bool first_switch_to_feasibility{true};
       const double constraint_violation_coefficient;
       SubproblemLayer optimality_subproblem_layer;
       SubproblemLayer feasibility_subproblem_layer;
       std::unique_ptr<InequalityHandlingMethod> optimality_inequality_handling_method;
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
+      Multipliers other_phase_multipliers{};
       const double linear_feasibility_tolerance;
       const bool switch_to_optimality_requires_linearized_feasibility;
       ProgressMeasures reference_optimality_progress{};

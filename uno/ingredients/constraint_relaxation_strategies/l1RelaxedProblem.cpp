@@ -314,22 +314,20 @@ namespace uno {
       this->proximal_center = new_proximal_center;
    }
 
-   void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t,
-         double)>& elastic_setting_function) const {
-      iterate.set_number_variables(this->number_variables);
+   void l1RelaxedProblem::set_elastic_variable_values(const std::function<void(size_t, size_t, double)>& elastic_setting_function) const {
       size_t elastic_index = this->model.number_variables;
       for (size_t inequality_index: this->model.get_inequality_constraints()) {
          if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
-            elastic_setting_function(iterate, inequality_index, elastic_index, 1.);
+            elastic_setting_function(inequality_index, elastic_index, 1.);
          }
          else { // positive part
-            elastic_setting_function(iterate, inequality_index, elastic_index, -1.);
+            elastic_setting_function(inequality_index, elastic_index, -1.);
          }
          elastic_index++;
       }
       for (size_t equality_index: this->model.get_equality_constraints()) {
-         elastic_setting_function(iterate, equality_index, elastic_index, 1.);
-         elastic_setting_function(iterate, equality_index, elastic_index+1, -1.);
+         elastic_setting_function(equality_index, elastic_index, 1.);
+         elastic_setting_function(equality_index, elastic_index+1, -1.);
          elastic_index += 2;
       }
    }

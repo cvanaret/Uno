@@ -31,7 +31,7 @@ namespace uno {
          Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
+         Iterate& current_iterate, Direction& direction, WarmstartInformation& warmstart_information) override;
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
@@ -53,6 +53,7 @@ namespace uno {
       SubproblemLayer feasibility_subproblem_layer;
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
+      Multipliers feasibility_multipliers{};
       const double tolerance;
       const l1RelaxationParameters parameters;
       const double small_duals_threshold;
@@ -68,7 +69,7 @@ namespace uno {
          double trust_region_radius, WarmstartInformation& warmstart_information);
 
       // functions that decrease the penalty parameter to enforce particular conditions
-      void decrease_parameter_aggressively(const Model& model, Iterate& current_iterate, const Direction& direction);
+      void decrease_parameter_aggressively(const Model& model, Iterate& current_iterate, const Direction& feasibility_direction);
       double compute_infeasible_dual_error(const Model& model, Iterate& current_iterate);
       void enforce_linearized_residual_sufficient_decrease(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Direction& direction, double linearized_residual, double residual_lowest_violation, double trust_region_radius,

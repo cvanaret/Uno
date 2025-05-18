@@ -62,7 +62,7 @@ namespace uno {
                major_iterations++;
                statistics.start_new_line();
                statistics.set("iter", major_iterations);
-               DEBUG << "### Outer iteration " << major_iterations << '\n';
+               DEBUG << "\n### Outer iteration " << major_iterations << '\n';
 
                // compute an acceptable iterate by solving a subproblem at the current point
                warmstart_information.iterate_changed();

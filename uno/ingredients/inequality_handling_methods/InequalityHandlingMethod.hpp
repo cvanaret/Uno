@@ -4,7 +4,9 @@
 #ifndef UNO_INEQUALITYHANDLINGMETHOD_H
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
+#include <tuple>
 #include <string>
+#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 
 namespace uno {
    // forward declarations
@@ -30,6 +32,7 @@ namespace uno {
       virtual ~InequalityHandlingMethod() = default;
 
       // virtual methods implemented by subclasses
+      [[nodiscard]] virtual std::pair<size_t, size_t> get_dimensions(const OptimizationProblem& problem) const = 0;
       virtual void initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy) = 0;
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
@@ -38,7 +41,7 @@ namespace uno {
          Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
 
       virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
-      virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
+      virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Vector<double>& current_primals, Multipliers& multipliers) = 0;
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
       virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
 

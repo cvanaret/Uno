@@ -114,15 +114,20 @@ namespace uno {
       assert(0 < this->radius && "The trust-region radius should be positive");
       // reset multipliers for bound constraints active at trust region (except if one of the original bounds is active)
       for (size_t variable_index: Range(model.number_variables)) {
+         assert(variable_index < direction.primals.size() && "The primal direction is smaller than the current index");
+         assert(variable_index < trial_iterate.primals.size() && "The primal trial iterate is smaller than the current index");
+         assert(variable_index < trial_iterate.multipliers.lower_bounds.size() && "The dual trial iterate is smaller than the current index");
+         //assert(variable_index < trial_iterate.feasibility_multipliers.lower_bounds.size() && "The feasibility dual trial iterate is smaller than the current index");
+
          if (std::abs(direction.primals[variable_index] + this->radius) <= this->activity_tolerance &&
                this->activity_tolerance < std::abs(trial_iterate.primals[variable_index] - model.variable_lower_bound(variable_index))) {
             trial_iterate.multipliers.lower_bounds[variable_index] = 0.;
-            trial_iterate.feasibility_multipliers.lower_bounds[variable_index] = 0.;
+            //trial_iterate.feasibility_multipliers.lower_bounds[variable_index] = 0.;
          }
          if (std::abs(direction.primals[variable_index] - this->radius) <= this->activity_tolerance &&
                this->activity_tolerance < std::abs(model.variable_upper_bound(variable_index) - trial_iterate.primals[variable_index])) {
             trial_iterate.multipliers.upper_bounds[variable_index] = 0.;
-            trial_iterate.feasibility_multipliers.upper_bounds[variable_index] = 0.;
+            //trial_iterate.feasibility_multipliers.upper_bounds[variable_index] = 0.;
          }
       }
    }

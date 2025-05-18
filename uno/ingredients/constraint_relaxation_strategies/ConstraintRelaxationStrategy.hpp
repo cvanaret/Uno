@@ -40,7 +40,7 @@ namespace uno {
          WarmstartInformation& warmstart_information) = 0;
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
       virtual void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, WarmstartInformation& warmstart_information) = 0;
+         const Model& model, Iterate& current_iterate, Direction& direction, WarmstartInformation& warmstart_information) = 0;
 
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,

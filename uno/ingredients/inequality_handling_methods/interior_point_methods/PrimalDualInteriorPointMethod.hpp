@@ -6,13 +6,12 @@
 
 #include "../InequalityHandlingMethod.hpp"
 #include "PrimalDualInteriorPointProblem.hpp"
+#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 
 namespace uno {
-   // forward references
-   template <typename IndexType, typename NumericalType>
-   class DirectSymmetricIndefiniteLinearSolver;
+   // forward reference
    class DualResiduals;
 
    struct InteriorPointParameters {
@@ -28,6 +27,7 @@ namespace uno {
    public:
       explicit PrimalDualInteriorPointMethod(const Options& options);
 
+      [[nodiscard]] std::pair<size_t, size_t> get_dimensions(const OptimizationProblem& problem) const override;
       void initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
@@ -35,7 +35,7 @@ namespace uno {
       void set_initial_point(const Vector<double>& point) override;
 
       void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
-      void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
+      void set_elastic_variable_values(const l1RelaxedProblem& problem, Vector<double>& current_primals, Multipliers& current_multipliers) override;
       [[nodiscard]] double proximal_coefficient() const override;
       void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 

@@ -34,7 +34,7 @@ namespace uno {
          model.initial_primal_point(initial_iterate.primals);
          model.project_onto_variable_bounds(initial_iterate.primals);
          model.initial_dual_point(initial_iterate.multipliers.constraints);
-         initial_iterate.feasibility_multipliers.reset();
+         //initial_iterate.feasibility_multipliers.reset();
 
          // solve the instance
          const size_t number_bound_constraints = model.get_lower_bounded_variables().size() + model.get_upper_bounded_variables().size();

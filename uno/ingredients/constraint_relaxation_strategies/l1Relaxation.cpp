@@ -70,9 +70,11 @@ namespace uno {
 
       // initial iterate
       initial_iterate.feasibility_residuals.lagrangian_gradient.resize(l1_relaxed_problem.number_variables);
+      /*
       initial_iterate.feasibility_multipliers.lower_bounds.resize(l1_relaxed_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(l1_relaxed_problem.number_variables);
-      this->inequality_handling_method->set_elastic_variable_values(l1_relaxed_problem, initial_iterate);
+      */
+      this->inequality_handling_method->set_elastic_variable_values(l1_relaxed_problem, initial_iterate.primals, this->feasibility_multipliers);
       this->inequality_handling_method->generate_initial_iterate(l1_relaxed_problem, initial_iterate);
       this->evaluate_progress_measures(l1_relaxed_problem, *this->inequality_handling_method, model, initial_iterate);
       this->compute_primal_dual_residuals(model, initial_iterate);
@@ -91,7 +93,7 @@ namespace uno {
    }
 
    void l1Relaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, GlobalizationStrategy& /*globalization_strategy*/,
-         const Model& /*model*/, Iterate& /*current_iterate*/, WarmstartInformation& /*warmstart_information*/) {
+         const Model& /*model*/, Iterate& /*current_iterate*/, Direction& /*direction*/, WarmstartInformation& /*warmstart_information*/) {
       throw std::runtime_error("l1Relaxation::switch_to_feasibility_problem is not implemented");
    }
 
@@ -118,9 +120,8 @@ namespace uno {
             this->feasibility_inequality_handling_method->initialize_feasibility_problem(feasibility_problem, current_iterate);
             Direction feasibility_direction(direction.number_variables, direction.number_constraints);
             this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method, feasibility_problem, current_iterate,
-               current_iterate.feasibility_multipliers, feasibility_direction, this->feasibility_subproblem_layer,
+               this->feasibility_multipliers, feasibility_direction, this->feasibility_subproblem_layer,
                trust_region_radius, warmstart_information);
-            std::swap(feasibility_direction.multipliers, feasibility_direction.feasibility_multipliers);
             const double residual_lowest_violation = model.constraint_violation(current_iterate.model_evaluations.constraints +
                current_iterate.model_evaluations.constraint_jacobian * feasibility_direction.primals, Norm::L1);
             DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
@@ -143,7 +144,7 @@ namespace uno {
                feasibility_direction, trust_region_radius, warmstart_information);
 
             // save the dual feasibility direction
-            direction.feasibility_multipliers = feasibility_direction.feasibility_multipliers;
+            this->feasibility_multipliers = feasibility_direction.multipliers;
          }
       }
    }
@@ -173,10 +174,10 @@ namespace uno {
       }
    }
 
-   void l1Relaxation::decrease_parameter_aggressively(const Model& model, Iterate& current_iterate, const Direction& direction) {
-      this->trial_multipliers.constraints = current_iterate.feasibility_multipliers.constraints + direction.feasibility_multipliers.constraints;
-      this->trial_multipliers.lower_bounds = current_iterate.feasibility_multipliers.lower_bounds + direction.feasibility_multipliers.lower_bounds;
-      this->trial_multipliers.upper_bounds = current_iterate.feasibility_multipliers.upper_bounds + direction.feasibility_multipliers.upper_bounds;
+   void l1Relaxation::decrease_parameter_aggressively(const Model& model, Iterate& current_iterate, const Direction& feasibility_direction) {
+      this->trial_multipliers.constraints = this->feasibility_multipliers.constraints + feasibility_direction.multipliers.constraints;
+      this->trial_multipliers.lower_bounds = this->feasibility_multipliers.lower_bounds + feasibility_direction.multipliers.lower_bounds;
+      this->trial_multipliers.upper_bounds = this->feasibility_multipliers.upper_bounds + feasibility_direction.multipliers.upper_bounds;
 
       // there must be at least a nonzero dual to avoid trivial stationary points
       if (this->trial_multipliers.not_all_zero(model.number_variables, this->small_duals_threshold)) {

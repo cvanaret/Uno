@@ -15,8 +15,8 @@ namespace uno {
 
    Iterate::Iterate(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
-         primals(number_variables), multipliers(number_variables, number_constraints), feasibility_multipliers(number_variables, number_constraints),
-         model_evaluations(number_variables, number_constraints), residuals(number_variables), feasibility_residuals(number_variables) {
+         primals(number_variables), multipliers(number_variables, number_constraints),
+         model_evaluations(number_variables, number_constraints), residuals(number_variables) {
    }
 
    void Iterate::evaluate_objective(const Model& model) {
@@ -71,11 +71,13 @@ namespace uno {
 
    void Iterate::set_number_variables(size_t new_number_variables) {
       this->number_variables = new_number_variables;
+      /*
       this->primals.resize(new_number_variables);
       this->multipliers.lower_bounds.resize(new_number_variables);
       this->multipliers.upper_bounds.resize(new_number_variables);
       this->model_evaluations.objective_gradient.reserve(new_number_variables);
       this->residuals.lagrangian_gradient.resize(new_number_variables);
+      */
    }
 
    std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
@@ -83,9 +85,11 @@ namespace uno {
       stream << "            ┌ Constraint: " << iterate.multipliers.constraints << '\n';
       stream << "Multipliers │ Lower bound: " << iterate.multipliers.lower_bounds << '\n';
       stream << "            └ Upper bound: " << iterate.multipliers.upper_bounds << '\n';
+      /*
       stream << "                        ┌ Constraint: " << iterate.feasibility_multipliers.constraints << '\n';
       stream << "Feasibility multipliers │ Lower bound: " << iterate.feasibility_multipliers.lower_bounds << '\n';
       stream << "                        └ Upper bound: " << iterate.feasibility_multipliers.upper_bounds << '\n';
+      */
       stream << "Objective value: " << iterate.model_evaluations.objective << '\n';
       stream << "Primal feasibility: " << iterate.primal_feasibility << '\n';
 

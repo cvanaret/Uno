@@ -79,7 +79,7 @@ namespace uno {
 
    void Preprocessing::enforce_linear_constraints(const Model& /*model*/, Vector<double>& /*primals*/, Multipliers& /*multipliers*/,
          QPSolver& /*qp_solver*/) {
-      WARNING << "Preprocessing::enforce_linear_constraints not implemented yet\n";
+      DEBUG << "Preprocessing::enforce_linear_constraints not implemented yet\n";
       /*
       const auto& linear_constraints = model.get_linear_constraints();
       INFO << "\nPreprocessing phase: the problem has " << linear_constraints.size() << " linear constraints\n";

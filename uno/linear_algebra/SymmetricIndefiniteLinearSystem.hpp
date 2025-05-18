@@ -6,7 +6,6 @@
 
 #include "SymmetricMatrix.hpp"
 #include "RectangularMatrix.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    template <typename ElementType>
@@ -17,11 +16,9 @@ namespace uno {
       Vector<ElementType> solution{};
 
       SymmetricIndefiniteLinearSystem() = default;
-      SymmetricIndefiniteLinearSystem& operator=(SymmetricIndefiniteLinearSystem&& other) = default;
 
       void assemble_matrix(const SymmetricMatrix<size_t, double>& hessian, const RectangularMatrix<double>& constraint_jacobian,
          size_t number_variables, size_t number_constraints);
-      void solve(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver);
    };
 
    template <typename ElementType>
@@ -47,11 +44,6 @@ namespace uno {
          }
          this->matrix.finalize_column(column_index);
       }
-   }
-
-   template <typename ElementType>
-   void SymmetricIndefiniteLinearSystem<ElementType>::solve(DirectSymmetricIndefiniteLinearSolver<size_t, ElementType>& linear_solver) {
-      linear_solver.solve_indefinite_system(this->matrix, this->rhs, this->solution);
    }
 } // namespace
 

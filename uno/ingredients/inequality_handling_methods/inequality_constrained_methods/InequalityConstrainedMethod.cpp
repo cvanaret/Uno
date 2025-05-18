@@ -12,6 +12,10 @@ namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(): InequalityHandlingMethod() {
    }
 
+   std::pair<size_t, size_t> InequalityConstrainedMethod::get_dimensions(const OptimizationProblem& problem) const {
+      return {problem.number_variables, problem.number_constraints};
+   }
+
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy) {
       this->initial_point.resize(problem.number_variables);
@@ -30,11 +34,12 @@ namespace uno {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
-      problem.set_elastic_variable_values(current_iterate, [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
-         iterate.primals[elastic_index] = 0.;
-         iterate.feasibility_multipliers.lower_bounds[elastic_index] = 1.;
-         iterate.feasibility_multipliers.upper_bounds[elastic_index] = 0.;
+   void InequalityConstrainedMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Vector<double>& current_primals,
+         Multipliers& current_multipliers) {
+      problem.set_elastic_variable_values([&](size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
+         current_primals[elastic_index] = 0.;
+         current_multipliers.lower_bounds[elastic_index] = 1.;
+         current_multipliers.upper_bounds[elastic_index] = 0.;
       });
    }
 

@@ -6,7 +6,6 @@
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/regularization_strategies/Inertia.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "layers/SubproblemLayer.hpp"
 #include "optimization/Direction.hpp"
@@ -37,6 +36,11 @@ namespace uno {
          least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
          damping_factor(options.get_double("barrier_damping_factor")),
          l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
+   }
+
+   std::pair<size_t, size_t> PrimalDualInteriorPointMethod::get_dimensions(const OptimizationProblem& problem) const {
+      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
+      return {barrier_problem.number_variables, barrier_problem.number_constraints};
    }
 
    void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
@@ -80,7 +84,7 @@ namespace uno {
 
       // set the slack variables (if any)
       if (!problem.get_inequality_constraints().empty()) {
-         // evaluate the constraints at the original point
+         // evaluate the constraints at the initial point
          initial_iterate.evaluate_constraints(problem.model);
 
          // set the slacks to the constraint values
@@ -184,7 +188,7 @@ namespace uno {
       // compute the primal-dual solution
       this->assemble_augmented_system(statistics, barrier_problem, current_multipliers, subproblem_layer);
       DEBUG2 << "\nRHS: "; print_vector(DEBUG2, this->augmented_system.rhs);
-      this->augmented_system.solve(*this->linear_solver);
+      this->linear_solver->solve_indefinite_system(this->augmented_system.matrix, this->augmented_system.rhs, this->augmented_system.solution);
       DEBUG2 << "Solution: "; print_vector(DEBUG2, this->augmented_system.solution); DEBUG << '\n';
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
       this->number_subproblems_solved++;
@@ -199,11 +203,11 @@ namespace uno {
 
    void PrimalDualInteriorPointMethod::assemble_augmented_system(Statistics& statistics, const PrimalDualInteriorPointProblem& barrier_problem,
          const Multipliers& current_multipliers, const SubproblemLayer& subproblem_layer) {
-      // assemble and factorize the augmented matrix
+      // assemble the augmented matrix
       this->augmented_system.assemble_matrix(this->hessian, this->constraint_jacobian, barrier_problem.number_variables,
          barrier_problem.number_constraints);
 
-      // regularize the augmented matrix
+      // factorize and regularize the augmented matrix
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
       const Inertia expected_inertia{barrier_problem.number_variables, barrier_problem.number_constraints, 0};
       subproblem_layer.regularization_strategy->regularize_augmented_matrix(statistics, this->augmented_system.matrix,
@@ -236,15 +240,15 @@ namespace uno {
    }
 
    // set the elastic variables of the current iterate
-   void PrimalDualInteriorPointMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
+   void PrimalDualInteriorPointMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Vector<double>& current_primals, Multipliers& current_multipliers) {
       DEBUG << "IPM: setting the elastic variables and their duals\n";
 
       // TODO set the bound multipliers
       for (const size_t variable_index: problem.get_lower_bounded_variables()) {
-         current_iterate.feasibility_multipliers.lower_bounds[variable_index] = this->default_multiplier;
+         current_multipliers.lower_bounds[variable_index] = this->default_multiplier;
       }
       for (const size_t variable_index: problem.get_upper_bounded_variables()) {
-         current_iterate.feasibility_multipliers.upper_bounds[variable_index] = -this->default_multiplier;
+         current_multipliers.upper_bounds[variable_index] = -this->default_multiplier;
       }
 
       // c(x) - p + n = 0
@@ -253,7 +257,7 @@ namespace uno {
       // where jacobian_coefficient = -1 for p, +1 for n
       // Note: IPOPT uses a '+' sign because they define the Lagrangian as f(x) + \lambda^T c(x)
       const double mu = this->barrier_parameter();
-      const auto elastic_setting_function = [&](Iterate& iterate, size_t constraint_index, size_t elastic_index, double jacobian_coefficient) {
+      const auto elastic_setting_function = [&](size_t constraint_index, size_t elastic_index, double jacobian_coefficient) {
          // precomputations
          const double constraint_j = this->constraints[constraint_index];
          const double rho = this->l1_constraint_violation_coefficient;
@@ -261,13 +265,13 @@ namespace uno {
          const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
          const double sqrt_radical = std::sqrt(radical);
 
-         iterate.primals[elastic_index] = (mu_over_rho - jacobian_coefficient * constraint_j + sqrt_radical) / 2.;
-         iterate.feasibility_multipliers.lower_bounds[elastic_index] = mu / iterate.primals[elastic_index];
-         iterate.feasibility_multipliers.upper_bounds[elastic_index] = 0.;
-         assert(0. < iterate.primals[elastic_index] && "The elastic variable is not strictly positive.");
-         assert(0. < iterate.feasibility_multipliers.lower_bounds[elastic_index] && "The elastic dual is not strictly positive.");
+         current_primals[elastic_index] = (mu_over_rho - jacobian_coefficient * constraint_j + sqrt_radical) / 2.;
+         current_multipliers.lower_bounds[elastic_index] = mu / current_primals[elastic_index];
+         current_multipliers.upper_bounds[elastic_index] = 0.;
+         assert(0. < current_primals[elastic_index] && "The elastic variable is not strictly positive.");
+         assert(0. < current_multipliers.lower_bounds[elastic_index] && "The elastic dual is not strictly positive.");
       };
-      problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
+      problem.set_elastic_variable_values(elastic_setting_function);
    }
 
    double PrimalDualInteriorPointMethod::proximal_coefficient() const {

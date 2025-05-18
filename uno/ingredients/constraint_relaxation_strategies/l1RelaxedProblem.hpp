@@ -50,7 +50,7 @@ namespace uno {
       // parameterization
       void set_proximal_multiplier(double new_proximal_coefficient);
       void set_proximal_center(double const* new_proximal_center);
-      void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>& elastic_setting_function) const;
+      void set_elastic_variable_values(const std::function<void(size_t, size_t, double)>& elastic_setting_function) const;
 
    protected:
       const size_t number_elastic_variables;
