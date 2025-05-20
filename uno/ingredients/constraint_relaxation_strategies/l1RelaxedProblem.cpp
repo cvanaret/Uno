@@ -160,12 +160,17 @@ namespace uno {
       // bound constraints of original variables
       for (size_t variable_index: Range(this->model.number_variables)) {
          lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
-                                                                          multipliers.upper_bounds[variable_index]);
+            multipliers.upper_bounds[variable_index]);
       }
 
       // elastic variables
       size_t elastic_index = this->model.number_variables;
       for (size_t inequality_index: this->model.get_inequality_constraints()) {
+         assert(elastic_index < lagrangian_gradient.constraints_contribution.size() &&
+            "Elastic variables of inequality constraints: the index exceeds the size of lagrangian_gradient.constraints_contribution");
+         assert(inequality_index < multipliers.constraints.size() && "The index exceeds the size of multipliers.constraints");
+         assert(elastic_index < multipliers.lower_bounds.size() && "The index exceeds the size of multipliers.lower_bounds");
+
          if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
             lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
                multipliers.constraints[inequality_index] - multipliers.lower_bounds[elastic_index];
@@ -176,7 +181,11 @@ namespace uno {
          }
          elastic_index++;
       }
-      for ([[maybe_unused]] size_t _: this->model.get_equality_constraints()) {
+      for ([[maybe_unused]] size_t equality_index: this->model.get_equality_constraints()) {
+         assert(elastic_index < lagrangian_gradient.constraints_contribution.size() &&
+            "Elastic variables of equality constraints: the index exceeds the size of lagrangian_gradient.constraints_contribution");
+         assert(elastic_index+1 < multipliers.lower_bounds.size() && "The index exceeds the size of multipliers.lower_bounds");
+
          lagrangian_gradient.constraints_contribution[elastic_index] += 2*this->constraint_violation_coefficient -
             multipliers.lower_bounds[elastic_index] - multipliers.lower_bounds[elastic_index+1];
          elastic_index += 2;
