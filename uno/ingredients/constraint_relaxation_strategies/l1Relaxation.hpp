@@ -7,6 +7,7 @@
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "layers/SubproblemLayer.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/Multipliers.hpp"
 
 namespace uno {
@@ -23,24 +24,25 @@ namespace uno {
       l1Relaxation(size_t number_bound_constraints, const Options& options);
       ~l1Relaxation() override = default;
 
-      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         const Options& options) override;
+      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) override;
 
       // direction computation
-      void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) override;
+      const Direction& compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         const Model& model, Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, Direction& direction, WarmstartInformation& warmstart_information) override;
+         Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
+
+      void assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate, double primal_step_length,
+         double dual_step_length) override;
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+         Iterate& current_iterate, Iterate& trial_iterate, double step_length, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) override;
 
       // primal-dual residuals
       void compute_primal_dual_residuals(const Model& model, Iterate& iterate) override;
-      void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
 
       [[nodiscard]] std::string get_name() const override;
       [[nodiscard]] size_t get_hessian_evaluation_count() const override;
@@ -57,10 +59,11 @@ namespace uno {
       const double tolerance;
       const l1RelaxationParameters parameters;
       const double small_duals_threshold;
+      Direction direction{};
       // preallocated temporary multipliers
       Multipliers trial_multipliers{};
 
-      void solve_sequence_of_relaxed_subproblems(Statistics& statistics, const Model& model, Iterate& current_iterate, Direction& direction,
+      void solve_sequence_of_relaxed_subproblems(Statistics& statistics, const Model& model, Iterate& current_iterate,
          double trust_region_radius, WarmstartInformation& warmstart_information);
       void solve_l1_relaxed_problem(Statistics& statistics, const Model& model, Iterate& current_iterate, Direction& direction,
          double current_penalty_parameter, double trust_region_radius, WarmstartInformation& warmstart_information);

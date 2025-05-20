@@ -32,7 +32,7 @@ namespace uno {
    }
 
    void FeasibilityRestoration::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
-         Direction& direction, const Options& options) {
+         const Options& options) {
       const OptimizationProblem optimality_problem{model};
 
       // memory allocation of the optimality phase
@@ -50,7 +50,7 @@ namespace uno {
       this->optimality_inequality_handling_method->generate_initial_iterate(optimality_problem, initial_iterate);
       this->evaluate_progress_measures(optimality_problem, *this->optimality_inequality_handling_method, model, initial_iterate);
       this->compute_primal_dual_residuals(model, initial_iterate);
-      direction = Direction(number_variables, number_constraints);
+      this->optimality_direction = Direction(number_variables, number_constraints);
 
       // statistics: initialize the statistics using both phases, in case they are different strategies
       this->optimality_subproblem_layer.initialize_statistics(statistics, options);
@@ -62,34 +62,32 @@ namespace uno {
       this->set_statistics(statistics, model, initial_iterate);
    }
 
-   void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         WarmstartInformation& warmstart_information) {
-      direction.reset();
+   const Direction& FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         const Model& model, Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) {
+      this->optimality_direction.reset();
       // if we are in the optimality phase, solve the optimality problem
       if (this->current_phase == Phase::OPTIMALITY) {
          statistics.set("phase", "OPT");
          try {
             DEBUG << "Solving the optimality subproblem\n";
             const OptimizationProblem optimality_problem{model};
-            this->solve_subproblem(statistics, *this->optimality_inequality_handling_method, optimality_problem, current_iterate,
-               current_iterate.multipliers, direction, this->optimality_subproblem_layer, trust_region_radius, warmstart_information);
-            if (direction.status == SubproblemStatus::INFEASIBLE) {
+            FeasibilityRestoration::solve_subproblem(statistics, *this->optimality_inequality_handling_method, optimality_problem,
+               current_iterate, this->optimality_direction, this->optimality_subproblem_layer, trust_region_radius, warmstart_information);
+            if (this->optimality_direction.status == SubproblemStatus::INFEASIBLE) {
                // switch to the feasibility problem, starting from the current direction
                statistics.set("status", std::string("infeasible subproblem"));
                DEBUG << "/!\\ The subproblem is infeasible\n";
-               this->switch_to_feasibility_problem(statistics, globalization_strategy, model, current_iterate, direction,
-                  warmstart_information);
-               this->feasibility_inequality_handling_method->set_initial_point(direction.primals);
+               this->switch_to_feasibility_problem(statistics, globalization_strategy, model, current_iterate, warmstart_information);
+               this->feasibility_inequality_handling_method->set_initial_point(this->optimality_direction.primals);
             }
             else {
+               ConstraintRelaxationStrategy::check_unboundedness(this->optimality_direction);
                warmstart_information.no_changes();
-               return;
+               return this->optimality_direction;
             }
          }
          catch (const UnstableRegularization&) {
-            this->switch_to_feasibility_problem(statistics, globalization_strategy, model, current_iterate, direction,
-               warmstart_information);
+            this->switch_to_feasibility_problem(statistics, globalization_strategy, model, current_iterate, warmstart_information);
          }
       }
 
@@ -100,9 +98,10 @@ namespace uno {
       l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
       feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
       feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
-      this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method, feasibility_problem, current_iterate,
-         current_iterate.multipliers, direction, this->feasibility_subproblem_layer, trust_region_radius,
-         warmstart_information);
+      FeasibilityRestoration::solve_subproblem(statistics, *this->feasibility_inequality_handling_method, feasibility_problem,
+         current_iterate, this->feasibility_direction, this->feasibility_subproblem_layer, trust_region_radius, warmstart_information);
+      ConstraintRelaxationStrategy::check_unboundedness(this->feasibility_direction);
+      return this->feasibility_direction;
    }
 
    bool FeasibilityRestoration::solving_feasibility_problem() const {
@@ -111,7 +110,7 @@ namespace uno {
 
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Direction& direction, WarmstartInformation& warmstart_information) {
+         const Model& model, Iterate& current_iterate, WarmstartInformation& warmstart_information) {
       DEBUG << "Switching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       globalization_strategy.notify_switch_to_feasibility(current_iterate.progress);
@@ -119,7 +118,9 @@ namespace uno {
       // save the current point (progress and primals) upon switching
       this->reference_optimality_progress = current_iterate.progress;
       this->reference_optimality_primals.resize(current_iterate.number_variables);
-      this->reference_optimality_primals = current_iterate.primals;
+      for (size_t variable_index: Range(current_iterate.number_variables)) {
+         this->reference_optimality_primals[variable_index] = current_iterate.primals[variable_index];
+      }
 
       // the local multipliers used for the feasibility phase become the iterate's multipliers
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
@@ -129,6 +130,7 @@ namespace uno {
       l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
       feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
       feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
+      current_iterate.set_number_variables(feasibility_problem.number_variables);
 
       if (this->first_switch_to_feasibility) {
          DEBUG << "Allocating memory for the feasibility phase\n";
@@ -143,9 +145,9 @@ namespace uno {
          current_iterate.multipliers.constraints.resize(number_constraints);
          current_iterate.multipliers.lower_bounds.resize(number_variables);
          current_iterate.multipliers.upper_bounds.resize(number_variables);
-         current_iterate.feasibility_residuals.lagrangian_gradient.resize(number_variables);
+         current_iterate.residuals.lagrangian_gradient.resize(number_variables);
          this->feasibility_inequality_handling_method->generate_initial_iterate(feasibility_problem, current_iterate);
-         direction = Direction(number_variables, number_constraints);
+         this->feasibility_direction = Direction(number_variables, number_constraints);
          this->first_switch_to_feasibility = false;
       }
 
@@ -159,18 +161,24 @@ namespace uno {
       warmstart_information.whole_problem_changed();
    }
 
+   void FeasibilityRestoration::assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate, double primal_step_length,
+         double dual_step_length) {
+      ConstraintRelaxationStrategy::assemble_trial_iterate(current_iterate, trial_iterate,
+         (this->current_phase == Phase::OPTIMALITY) ? this->optimality_direction : this->feasibility_direction,
+         primal_step_length, dual_step_length);
+   }
+
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
-         const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers, Direction& direction,
+         const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
          SubproblemLayer& subproblem_layer, double trust_region_radius, WarmstartInformation& warmstart_information) {
-      direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      inequality_handling_method.solve(statistics, problem, current_iterate, current_multipliers, direction,
+      inequality_handling_method.solve(statistics, problem, current_iterate, current_iterate.multipliers, direction,
          subproblem_layer, trust_region_radius, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
    }
 
    bool FeasibilityRestoration::can_switch_to_optimality_phase(const Iterate& current_iterate, const GlobalizationStrategy& globalization_strategy,
-         const Model& model, const Iterate& trial_iterate, const Direction& direction, double step_length) {
+         const Model& model, const Iterate& trial_iterate, const Direction& direction, double step_length) const {
       return globalization_strategy.is_infeasibility_sufficiently_reduced(this->reference_optimality_progress, trial_iterate.progress) &&
          (!this->switch_to_optimality_requires_linearized_feasibility ||
          model.constraint_violation(current_iterate.model_evaluations.constraints + step_length*(current_iterate.model_evaluations.constraint_jacobian *
@@ -189,15 +197,17 @@ namespace uno {
       const OptimizationProblem optimality_problem{model};
       current_iterate.set_number_variables(optimality_problem.number_variables);
       trial_iterate.set_number_variables(optimality_problem.number_variables);
+      this->optimality_direction.number_variables = optimality_problem.number_variables;
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
 
+      this->optimality_inequality_handling_method->generate_initial_iterate(optimality_problem, trial_iterate);
       this->optimality_inequality_handling_method->exit_feasibility_problem(optimality_problem, trial_iterate);
       // set a cold start in the subproblem solver
       warmstart_information.whole_problem_changed();
    }
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       if (this->current_phase == Phase::OPTIMALITY) {
          const OptimizationProblem optimality_problem{model};
@@ -207,18 +217,18 @@ namespace uno {
       }
       else {
          const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
-         this->feasibility_inequality_handling_method->postprocess_iterate(feasibility_problem, trial_iterate.primals, this->other_phase_multipliers);
+         this->feasibility_inequality_handling_method->postprocess_iterate(feasibility_problem, trial_iterate.primals, trial_iterate.multipliers);
          this->compute_progress_measures(feasibility_problem, *this->feasibility_inequality_handling_method, model, globalization_strategy,
             current_iterate, trial_iterate);
       }
       trial_iterate.objective_multiplier = (this->current_phase == Phase::OPTIMALITY) ? 1. : 0.;
       const ProgressMeasures predicted_reduction = this->compute_predicted_reductions(
          (this->current_phase == Phase::OPTIMALITY) ? *this->optimality_inequality_handling_method : *this->feasibility_inequality_handling_method,
-         model, current_iterate, direction, step_length);
+         model, current_iterate, this->optimality_direction, step_length);
 
       // possibly go from restoration phase to optimality phase
       if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(current_iterate, globalization_strategy,
-            model, trial_iterate, direction, step_length)) {
+            model, trial_iterate, this->optimality_direction, step_length)) {
          this->switch_to_optimality_phase(current_iterate, globalization_strategy, model, trial_iterate, warmstart_information);
       }
       else {
@@ -227,7 +237,7 @@ namespace uno {
 
       bool accept_iterate = false;
       const double objective_multiplier = (this->current_phase == Phase::OPTIMALITY) ? 1. : 0.;
-      if (direction.norm == 0.) {
+      if (this->optimality_direction.norm == 0.) {
          DEBUG << "Zero step acceptable\n";
          trial_iterate.evaluate_objective(model);
          accept_iterate = true;
@@ -241,13 +251,16 @@ namespace uno {
       if (accept_iterate) {
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, objective_multiplier);
       }
+      statistics.set("step norm", step_length * this->optimality_direction.norm);
       return accept_iterate;
    }
 
    void FeasibilityRestoration::compute_primal_dual_residuals(const Model& model, Iterate& iterate) {
       const OptimizationProblem optimality_problem{model};
       const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, optimality_problem, feasibility_problem, iterate);
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(model,
+         (this->current_phase == Phase::OPTIMALITY) ? optimality_problem : feasibility_problem,
+         iterate);
    }
 
    void FeasibilityRestoration::evaluate_progress_measures(const OptimizationProblem& problem,
@@ -264,12 +277,6 @@ namespace uno {
          this->compute_predicted_objective_reduction(inequality_handling_method, current_iterate, direction.primals, step_length),
          inequality_handling_method.compute_predicted_auxiliary_reduction_model(model, current_iterate, direction.primals, step_length)
       };
-   }
-
-   void FeasibilityRestoration::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-      const auto& residuals = (this->current_phase == Phase::OPTIMALITY) ? iterate.residuals : iterate.feasibility_residuals;
-      statistics.set("stationarity", residuals.stationarity);
-      statistics.set("complementarity", residuals.complementarity);
    }
 
    std::string FeasibilityRestoration::get_name() const {

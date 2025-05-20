@@ -75,38 +75,27 @@ namespace uno {
       this->evaluate_progress_measures(problem, inequality_handling_method, model, trial_iterate);
    }
 
-   void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Model& model, const OptimizationProblem& optimality_problem,
-         const OptimizationProblem& feasibility_problem, Iterate& iterate) {
+   void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Model& model, const OptimizationProblem& problem,
+         Iterate& iterate) {
       iterate.evaluate_objective_gradient(model);
       iterate.evaluate_constraints(model);
       iterate.evaluate_constraint_jacobian(model);
 
-      // stationarity errors:
-      // - for KKT conditions: with standard multipliers and current objective multiplier
-      // - for FJ conditions: with standard multipliers and 0 objective multiplier
-      // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
-      optimality_problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, iterate, iterate.multipliers);
+      problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, iterate, iterate.multipliers);
       iterate.residuals.stationarity = OptimizationProblem::stationarity_error(iterate.residuals.lagrangian_gradient, iterate.objective_multiplier,
             this->residual_norm);
-      //feasibility_problem.evaluate_lagrangian_gradient(iterate.feasibility_residuals.lagrangian_gradient, iterate, iterate.feasibility_multipliers);
-      //iterate.feasibility_residuals.stationarity = OptimizationProblem::stationarity_error(iterate.feasibility_residuals.lagrangian_gradient, 0.,
-      //      this->residual_norm);
 
       // constraint violation of the original problem
       iterate.primal_feasibility = model.constraint_violation(iterate.model_evaluations.constraints, this->residual_norm);
 
       // complementarity error
       const double shift_value = 0.;
-      iterate.residuals.complementarity = optimality_problem.complementarity_error(iterate.primals, iterate.model_evaluations.constraints,
+      iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, iterate.model_evaluations.constraints,
             iterate.multipliers, shift_value, this->residual_norm);
-      //iterate.feasibility_residuals.complementarity = feasibility_problem.complementarity_error(iterate.primals, iterate.model_evaluations.constraints,
-      //      iterate.feasibility_multipliers, shift_value, this->residual_norm);
 
       // scaling factors
       iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(model, iterate.multipliers);
       iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(model, iterate.multipliers);
-      //iterate.feasibility_residuals.stationarity_scaling = this->compute_stationarity_scaling(model, iterate.feasibility_multipliers);
-      //iterate.feasibility_residuals.complementarity_scaling = this->compute_complementarity_scaling(model, iterate.feasibility_multipliers);
    }
 
    double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const {
@@ -138,6 +127,34 @@ namespace uno {
          );
          return std::max(1., bound_multiplier_norm / scaling_factor);
       }
+   }
+
+   void ConstraintRelaxationStrategy::assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate,
+         const Direction& direction, double primal_step_length, double dual_step_length) {
+      //assert(current_iterate.number_variables == direction.number_variables && "The primal iterate and the primal direction do not match");
+      current_iterate.set_number_variables(direction.number_variables);
+      trial_iterate.set_number_variables(direction.number_variables);
+
+      // resize the trial iterate to the same size as the current iterate
+      trial_iterate.primals.resize(current_iterate.primals.size());
+      trial_iterate.multipliers.constraints.resize(current_iterate.multipliers.constraints.size());
+      trial_iterate.multipliers.lower_bounds.resize(current_iterate.multipliers.lower_bounds.size());
+      trial_iterate.multipliers.upper_bounds.resize(current_iterate.multipliers.upper_bounds.size());
+
+      // take primal step
+      trial_iterate.primals = current_iterate.primals + primal_step_length * direction.primals;
+
+      // take dual step: line-search carried out only on constraint multipliers. Bound multipliers updated with full step
+      trial_iterate.multipliers.constraints = current_iterate.multipliers.constraints + dual_step_length * direction.multipliers.constraints;
+      trial_iterate.multipliers.lower_bounds = current_iterate.multipliers.lower_bounds + direction.multipliers.lower_bounds;
+      trial_iterate.multipliers.upper_bounds = current_iterate.multipliers.upper_bounds + direction.multipliers.upper_bounds;
+
+      trial_iterate.progress.reset();
+      trial_iterate.is_objective_computed = false;
+      trial_iterate.is_objective_gradient_computed = false;
+      trial_iterate.are_constraints_computed = false;
+      trial_iterate.is_constraint_jacobian_computed = false;
+      trial_iterate.status = IterateStatus::NOT_OPTIMAL;
    }
 
    IterateStatus ConstraintRelaxationStrategy::check_termination(const Model& model, Iterate& iterate) {
@@ -173,28 +190,20 @@ namespace uno {
       }
    }
 
+   void ConstraintRelaxationStrategy::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
+      statistics.set("stationarity", iterate.residuals.stationarity);
+      statistics.set("complementarity", iterate.residuals.complementarity);
+   }
+
    IterateStatus ConstraintRelaxationStrategy::check_first_order_convergence(const Model& model, Iterate& current_iterate, double tolerance) const {
       // evaluate termination conditions based on optimality conditions
       const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
       const bool primal_feasibility = (current_iterate.primal_feasibility <= tolerance);
       const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
-
-      /*
-      const bool feasibility_stationarity = (current_iterate.feasibility_residuals.stationarity <= tolerance);
-      const bool feasibility_complementarity = (current_iterate.feasibility_residuals.complementarity <= tolerance);
-      const bool no_trivial_duals = current_iterate.feasibility_multipliers.not_all_zero(model.number_variables, tolerance);
-      */
-
       DEBUG << "\nTermination criteria for tolerance = " << tolerance << ":\n";
       DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
       DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
       DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
-
-      /*
-      DEBUG << "Feasibility stationarity: " << std::boolalpha << feasibility_stationarity << '\n';
-      DEBUG << "Feasibility complementarity: " << std::boolalpha << feasibility_complementarity << '\n';
-      DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
-      */
 
       if (stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
          // feasible regular stationary point
@@ -218,6 +227,13 @@ namespace uno {
       statistics.set("objective", iterate.model_evaluations.objective);
       if (model.is_constrained()) {
          statistics.set("primal feas", iterate.progress.infeasibility);
+      }
+   }
+
+   void ConstraintRelaxationStrategy::check_unboundedness(const Direction& direction) {
+      if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
+         throw std::runtime_error("The subproblem is unbounded, this should not happen. If the subproblem has curvature,"
+            "use regularization. If not, use a trust-region method.\n");
       }
    }
 } // namespace

@@ -27,7 +27,7 @@ namespace uno {
 
    void InequalityConstrainedMethod::set_initial_point(const Vector<double>& point) {
       // copy the point into the member
-      this->initial_point = point;
+      // TODO this->initial_point = point;
    }
 
    void InequalityConstrainedMethod::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {

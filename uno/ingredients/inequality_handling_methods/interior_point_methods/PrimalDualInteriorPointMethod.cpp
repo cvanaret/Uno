@@ -122,8 +122,8 @@ namespace uno {
 
       // compute least-square multipliers
       if (0 < problem.number_constraints) {
-         Preprocessing::compute_least_square_multipliers(barrier_problem, this->augmented_system.matrix, this->augmented_system.rhs,
-            *this->linear_solver, initial_iterate, initial_iterate.multipliers, this->least_square_multiplier_max_norm);
+         //Preprocessing::compute_least_square_multipliers(barrier_problem, this->augmented_system.matrix, this->augmented_system.rhs,
+         //   *this->linear_solver, initial_iterate, initial_iterate.multipliers, this->least_square_multiplier_max_norm);
       }
    }
 
@@ -169,9 +169,8 @@ namespace uno {
       }
 
       // possibly update the barrier parameter
-      const auto& residuals = this->solving_feasibility_problem ? current_iterate.feasibility_residuals : current_iterate.residuals;
       if (!this->first_feasibility_iteration) {
-         this->update_barrier_parameter(problem, current_iterate, current_multipliers, residuals);
+         this->update_barrier_parameter(problem, current_iterate, current_multipliers, current_iterate.residuals);
       }
       else {
          this->first_feasibility_iteration = false;
@@ -180,7 +179,6 @@ namespace uno {
 
       // create a barrier problem
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
-      direction.set_dimensions(barrier_problem.number_variables, barrier_problem.number_constraints);
 
       // evaluate the functions at the current iterate
       this->evaluate_functions(statistics, barrier_problem, current_iterate, current_multipliers, subproblem_layer, warmstart_information);
@@ -399,6 +397,9 @@ namespace uno {
    void PrimalDualInteriorPointMethod::postprocess_iterate(const OptimizationProblem& problem, Vector<double>& primals, Multipliers& multipliers) {
       // rescale the bound multipliers (Eq. 16 in Ipopt paper)
       for (const size_t variable_index: problem.get_lower_bounded_variables()) {
+         assert(variable_index < primals.size() && "The index exceeds the size of primals");
+         assert(variable_index < multipliers.lower_bounds.size() && "The index exceeds the size of multipliers.lower_bounds");
+
          const double coefficient = this->barrier_parameter() / (primals[variable_index] - problem.variable_lower_bound(variable_index));
          if (is_finite(coefficient)) {
             const double lb = coefficient / this->parameters.k_sigma;
@@ -417,6 +418,9 @@ namespace uno {
 
       }
       for (const size_t variable_index: problem.get_upper_bounded_variables()) {
+         assert(variable_index < primals.size() && "The index exceeds the size of primals");
+         assert(variable_index < multipliers.upper_bounds.size() && "The index exceeds the size of multipliers.lower_bounds");
+
          const double coefficient = this->barrier_parameter() / (primals[variable_index] - problem.variable_upper_bound(variable_index));
          if (is_finite(coefficient)) {
             const double lb = coefficient * this->parameters.k_sigma;

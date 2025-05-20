@@ -43,8 +43,7 @@ namespace uno {
          small_duals_threshold(options.get_double("l1_small_duals_threshold")) {
    }
 
-   void l1Relaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         const Options& options) {
+   void l1Relaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) {
       const l1RelaxedProblem l1_relaxed_problem{model, this->penalty_parameter, this->constraint_violation_coefficient};
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
 
@@ -58,7 +57,7 @@ namespace uno {
       this->trial_multipliers.constraints.resize(l1_relaxed_problem.number_constraints);
       this->trial_multipliers.lower_bounds.resize(l1_relaxed_problem.number_variables);
       this->trial_multipliers.upper_bounds.resize(l1_relaxed_problem.number_variables);
-      direction = Direction(l1_relaxed_problem.number_variables, l1_relaxed_problem.number_constraints);
+      this->direction = Direction(l1_relaxed_problem.number_variables, l1_relaxed_problem.number_constraints);
 
       // statistics
       this->l1_relaxed_subproblem_layer.initialize_statistics(statistics, options);
@@ -69,7 +68,7 @@ namespace uno {
       statistics.set("penalty", this->penalty_parameter);
 
       // initial iterate
-      initial_iterate.feasibility_residuals.lagrangian_gradient.resize(l1_relaxed_problem.number_variables);
+      initial_iterate.residuals.lagrangian_gradient.resize(l1_relaxed_problem.number_variables);
       /*
       initial_iterate.feasibility_multipliers.lower_bounds.resize(l1_relaxed_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(l1_relaxed_problem.number_variables);
@@ -81,11 +80,13 @@ namespace uno {
       this->set_statistics(statistics, model, initial_iterate);
    }
 
-   void l1Relaxation::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& /*globalization_strategy*/, const Model& model,
-         Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
+   const Direction& l1Relaxation::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& /*globalization_strategy*/, const Model& model,
+         Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) {
       statistics.set("penalty", this->penalty_parameter);
-      direction.reset();
-      this->solve_sequence_of_relaxed_subproblems(statistics, model, current_iterate, direction, trust_region_radius, warmstart_information);
+      this->direction.reset();
+      this->solve_sequence_of_relaxed_subproblems(statistics, model, current_iterate, trust_region_radius, warmstart_information);
+      ConstraintRelaxationStrategy::check_unboundedness(this->direction);
+      return this->direction;
    }
    
    bool l1Relaxation::solving_feasibility_problem() const {
@@ -93,21 +94,27 @@ namespace uno {
    }
 
    void l1Relaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, GlobalizationStrategy& /*globalization_strategy*/,
-         const Model& /*model*/, Iterate& /*current_iterate*/, Direction& /*direction*/, WarmstartInformation& /*warmstart_information*/) {
+         const Model& /*model*/, Iterate& /*current_iterate*/, WarmstartInformation& /*warmstart_information*/) {
       throw std::runtime_error("l1Relaxation::switch_to_feasibility_problem is not implemented");
+   }
+
+   void l1Relaxation::assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate, double primal_step_length,
+         double dual_step_length) {
+      ConstraintRelaxationStrategy::assemble_trial_iterate(current_iterate, trial_iterate, this->direction,
+         primal_step_length, dual_step_length);
    }
 
    // use Byrd's steering rules to update the penalty parameter and compute a descent direction
    void l1Relaxation::solve_sequence_of_relaxed_subproblems(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
+         double trust_region_radius, WarmstartInformation& warmstart_information) {
       // stage a: compute a direction for the current penalty parameter
-      this->solve_l1_relaxed_problem(statistics, model, current_iterate, direction, this->penalty_parameter, trust_region_radius,
+      this->solve_l1_relaxed_problem(statistics, model, current_iterate, this->direction, this->penalty_parameter, trust_region_radius,
          warmstart_information);
 
       // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
       if (0. < this->penalty_parameter && !this->parameters.fixed_parameter) {
          double linearized_residual = model.constraint_violation(current_iterate.model_evaluations.constraints +
-            current_iterate.model_evaluations.constraint_jacobian * direction.primals, Norm::L1);
+            current_iterate.model_evaluations.constraint_jacobian * this->direction.primals, Norm::L1);
          DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
 
          // terminate if the current direction is already feasible, otherwise adjust the penalty parameter
@@ -118,10 +125,12 @@ namespace uno {
             DEBUG << "Compute ideal solution by solving the feasibility problem:\n";
             const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
             this->feasibility_inequality_handling_method->initialize_feasibility_problem(feasibility_problem, current_iterate);
-            Direction feasibility_direction(direction.number_variables, direction.number_constraints);
+            // TODO preallocate
+            Direction feasibility_direction(this->direction.number_variables, this->direction.number_constraints);
             this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method, feasibility_problem, current_iterate,
                this->feasibility_multipliers, feasibility_direction, this->feasibility_subproblem_layer,
                trust_region_radius, warmstart_information);
+            // TODO if we use a TR, the multipliers are not reset!
             const double residual_lowest_violation = model.constraint_violation(current_iterate.model_evaluations.constraints +
                current_iterate.model_evaluations.constraint_jacobian * feasibility_direction.primals, Norm::L1);
             DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
@@ -130,17 +139,17 @@ namespace uno {
             // stage f: update the penalty parameter based on the current dual error
             this->decrease_parameter_aggressively(model, current_iterate, feasibility_direction);
             if (this->penalty_parameter < current_penalty_parameter) {
-               this->solve_l1_relaxed_problem(statistics, model, current_iterate, direction, this->penalty_parameter,
+               this->solve_l1_relaxed_problem(statistics, model, current_iterate, this->direction, this->penalty_parameter,
                   trust_region_radius, warmstart_information);
                linearized_residual = model.constraint_violation(current_iterate.model_evaluations.constraints +
-                  current_iterate.model_evaluations.constraint_jacobian * direction.primals, Norm::L1);
+                  current_iterate.model_evaluations.constraint_jacobian * this->direction.primals, Norm::L1);
             }
 
             // stage d: further decrease penalty parameter to reach a fraction of the ideal decrease
-            this->enforce_linearized_residual_sufficient_decrease(statistics, model, current_iterate, direction,
+            this->enforce_linearized_residual_sufficient_decrease(statistics, model, current_iterate, this->direction,
                linearized_residual, residual_lowest_violation, trust_region_radius, warmstart_information);
             // stage e: further decrease penalty parameter to guarantee a descent direction for the l1 merit function
-            this->enforce_descent_direction_for_l1_merit(statistics, model, current_iterate, direction,
+            this->enforce_descent_direction_for_l1_merit(statistics, model, current_iterate, this->direction,
                feasibility_direction, trust_region_radius, warmstart_information);
 
             // save the dual feasibility direction
@@ -150,12 +159,12 @@ namespace uno {
    }
 
    void l1Relaxation::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
-         const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers, Direction& direction,
-         SubproblemLayer& subproblem_layer, double trust_region_radius, WarmstartInformation& warmstart_information) {
+         const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+         Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius,
+         WarmstartInformation& warmstart_information) {
       DEBUG << "Solving the subproblem with penalty parameter " << problem.get_objective_multiplier() << "\n\n";
 
       // solve the subproblem
-      direction.set_dimensions(problem.number_variables, problem.number_constraints);
       inequality_handling_method.solve(statistics, problem, current_iterate, current_multipliers, direction,
          subproblem_layer, trust_region_radius, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
@@ -197,7 +206,7 @@ namespace uno {
    double l1Relaxation::compute_infeasible_dual_error(const Model& model, Iterate& current_iterate) {
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
       // stationarity error
-      feasibility_problem.evaluate_lagrangian_gradient(current_iterate.feasibility_residuals.lagrangian_gradient, current_iterate, this->trial_multipliers);
+      feasibility_problem.evaluate_lagrangian_gradient(current_iterate.residuals.lagrangian_gradient, current_iterate, this->trial_multipliers);
       double error = norm_1(current_iterate.residuals.lagrangian_gradient.constraints_contribution);
 
       // complementarity error
@@ -263,18 +272,18 @@ namespace uno {
    }
 
    bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         WarmstartInformation& /*warmstart_information*/, UserCallbacks& user_callbacks) {
+         Iterate& current_iterate, Iterate& trial_iterate, double step_length, WarmstartInformation& /*warmstart_information*/,
+         UserCallbacks& user_callbacks) {
       const l1RelaxedProblem l1_relaxed_problem{model, this->penalty_parameter, this->constraint_violation_coefficient};
       this->inequality_handling_method->postprocess_iterate(l1_relaxed_problem, trial_iterate.primals, trial_iterate.multipliers);
       // compute the predicted reduction before the progress measures to make sure second-order information is valid
-      const ProgressMeasures predicted_reduction = this->compute_predicted_reductions(model, current_iterate, direction, step_length);
+      const ProgressMeasures predicted_reduction = this->compute_predicted_reductions(model, current_iterate, this->direction, step_length);
       this->compute_progress_measures(l1_relaxed_problem, *this->inequality_handling_method, model, globalization_strategy,
          current_iterate, trial_iterate);
       trial_iterate.objective_multiplier = l1_relaxed_problem.get_objective_multiplier();
 
       bool accept_iterate = false;
-      if (direction.norm == 0.) {
+      if (this->direction.norm == 0.) {
          DEBUG << "Zero step acceptable\n";
          trial_iterate.evaluate_objective(model);
          accept_iterate = true;
@@ -296,7 +305,8 @@ namespace uno {
    void l1Relaxation::compute_primal_dual_residuals(const Model& model, Iterate& iterate) {
       const l1RelaxedProblem l1_relaxed_problem{model, this->penalty_parameter, this->constraint_violation_coefficient};
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, l1_relaxed_problem, feasibility_problem, iterate);
+      // TODO test optimality problem and feasibility problem
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, l1_relaxed_problem, iterate);
    }
 
    void l1Relaxation::evaluate_progress_measures(const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method,
@@ -321,11 +331,6 @@ namespace uno {
       if (0. < norm_inf_multipliers && this->penalty_parameter <= 1./norm_inf_multipliers) {
          DEBUG << "The value of the penalty parameter is consistent with an exact relaxation\n\n";
       }
-   }
-
-   void l1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-      statistics.set("stationarity", iterate.residuals.stationarity);
-      statistics.set("complementarity", iterate.residuals.complementarity);
    }
 
    std::string l1Relaxation::get_name() const {

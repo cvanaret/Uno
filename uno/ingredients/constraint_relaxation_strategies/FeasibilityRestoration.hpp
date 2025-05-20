@@ -8,6 +8,7 @@
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "layers/SubproblemLayer.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/Multipliers.hpp"
 
 namespace uno {
@@ -21,24 +22,25 @@ namespace uno {
       FeasibilityRestoration(size_t number_bound_constraints, const Options& options);
       ~FeasibilityRestoration() override = default;
 
-      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         const Options& options) override;
+      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) override;
 
       // direction computation
-      void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) override;
+      const Direction& compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         const Model& model, Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, Direction& direction, WarmstartInformation& warmstart_information) override;
+         Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
+
+      void assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate, double primal_step_length,
+         double dual_step_length) override;
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       // primal-dual residuals
       void compute_primal_dual_residuals(const Model& model, Iterate& iterate) override;
-      void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
 
       [[nodiscard]] std::string get_name() const override;
       [[nodiscard]] size_t get_hessian_evaluation_count() const override;
@@ -52,14 +54,18 @@ namespace uno {
       SubproblemLayer feasibility_subproblem_layer;
       std::unique_ptr<InequalityHandlingMethod> optimality_inequality_handling_method;
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
+      // multipliers for the other phase (not the current one). These will be swapped with the current multipliers
+      // of the current/trial iterate whenever we switch phases
       Multipliers other_phase_multipliers{};
       const double linear_feasibility_tolerance;
       const bool switch_to_optimality_requires_linearized_feasibility;
       ProgressMeasures reference_optimality_progress{};
       Vector<double> reference_optimality_primals{};
+      Direction optimality_direction{};
+      Direction feasibility_direction{};
 
-      void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         Iterate& current_iterate, const Multipliers& current_multipliers, Direction& direction, SubproblemLayer& subproblem_layer,
+      static void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
+         const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction, SubproblemLayer& subproblem_layer,
          double trust_region_radius, WarmstartInformation& warmstart_information);
       void switch_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy, const Model& model,
          Iterate& trial_iterate, WarmstartInformation& warmstart_information);
@@ -69,7 +75,7 @@ namespace uno {
       [[nodiscard]] ProgressMeasures compute_predicted_reductions(InequalityHandlingMethod& inequality_handling_method,
          const Model& model, const Iterate& current_iterate, const Direction& direction, double step_length) const;
       [[nodiscard]] bool can_switch_to_optimality_phase(const Iterate& current_iterate, const GlobalizationStrategy& globalization_strategy,
-         const Model& model, const Iterate& trial_iterate, const Direction& direction, double step_length);
+         const Model& model, const Iterate& trial_iterate, const Direction& direction, double step_length) const;
    };
 } // namespace
 

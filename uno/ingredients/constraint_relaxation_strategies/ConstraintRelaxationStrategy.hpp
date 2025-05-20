@@ -31,26 +31,27 @@ namespace uno {
       explicit ConstraintRelaxationStrategy(const Options& options);
       virtual ~ConstraintRelaxationStrategy();
 
-      virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         const Options& options) = 0;
+      virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, const Options& options) = 0;
 
       // direction computation
-      virtual void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         WarmstartInformation& warmstart_information) = 0;
+      virtual const Direction& compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         const Model& model, Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
       virtual void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Direction& direction, WarmstartInformation& warmstart_information) = 0;
+         const Model& model, Iterate& current_iterate, WarmstartInformation& warmstart_information) = 0;
+
+      virtual void assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate, double primal_step_length,
+         double dual_step_length) = 0;
 
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
       [[nodiscard]] IterateStatus check_termination(const Model& model, Iterate& iterate);
 
       // primal-dual residuals
       virtual void compute_primal_dual_residuals(const Model& model, Iterate& iterate) = 0;
-      virtual void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const = 0;
+      void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
@@ -68,6 +69,8 @@ namespace uno {
       // first_order_predicted_reduction is true when the predicted reduction can be taken as first-order (e.g. in line-search methods)
       const bool first_order_predicted_reduction;
 
+      static void assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double primal_step_length, double dual_step_length);
       void set_objective_measure(const Model& model, Iterate& iterate) const;
       void set_infeasibility_measure(const Model& model, Iterate& iterate) const;
       [[nodiscard]] double compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
@@ -79,8 +82,7 @@ namespace uno {
       virtual void evaluate_progress_measures(const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method,
          const Model& model, Iterate& iterate) const = 0;
 
-      void compute_primal_dual_residuals(const Model& model, const OptimizationProblem& optimality_problem,
-         const OptimizationProblem& feasibility_problem, Iterate& iterate);
+      void compute_primal_dual_residuals(const Model& model, const OptimizationProblem& problem, Iterate& iterate);
 
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;
@@ -88,7 +90,8 @@ namespace uno {
       [[nodiscard]] IterateStatus check_first_order_convergence(const Model& model, Iterate& current_iterate, double tolerance) const;
 
       void set_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const;
-      static void set_progress_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) ;
+      static void set_progress_statistics(Statistics& statistics, const Model& model, const Iterate& iterate);
+      static void check_unboundedness(const Direction& direction);
    };
 } // namespace
 

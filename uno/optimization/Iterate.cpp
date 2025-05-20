@@ -2,10 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Iterate.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/Vector.hpp"
 #include "Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
+#include "symbolic/VectorView.hpp"
 
 namespace uno {
    size_t Iterate::number_eval_objective = 0;
@@ -71,40 +70,21 @@ namespace uno {
 
    void Iterate::set_number_variables(size_t new_number_variables) {
       this->number_variables = new_number_variables;
-      /*
-      this->primals.resize(new_number_variables);
-      this->multipliers.lower_bounds.resize(new_number_variables);
-      this->multipliers.upper_bounds.resize(new_number_variables);
-      this->model_evaluations.objective_gradient.reserve(new_number_variables);
-      this->residuals.lagrangian_gradient.resize(new_number_variables);
-      */
    }
 
    std::ostream& operator<<(std::ostream& stream, const Iterate& iterate) {
-      stream << "Primal variables: " << iterate.primals << '\n';
-      stream << "            ┌ Constraint: " << iterate.multipliers.constraints << '\n';
-      stream << "Multipliers │ Lower bound: " << iterate.multipliers.lower_bounds << '\n';
-      stream << "            └ Upper bound: " << iterate.multipliers.upper_bounds << '\n';
-      /*
-      stream << "                        ┌ Constraint: " << iterate.feasibility_multipliers.constraints << '\n';
-      stream << "Feasibility multipliers │ Lower bound: " << iterate.feasibility_multipliers.lower_bounds << '\n';
-      stream << "                        └ Upper bound: " << iterate.feasibility_multipliers.upper_bounds << '\n';
-      */
+      stream << "Primal variables: " << view(iterate.primals, 0, iterate.number_variables) << '\n';
+      stream << "            ┌ Constraint: " << view(iterate.multipliers.constraints, 0, iterate.number_constraints) << '\n';
+      stream << "Multipliers │ Lower bound: " << view(iterate.multipliers.lower_bounds, 0, iterate.number_variables) << '\n';
+      stream << "            └ Upper bound: " << view(iterate.multipliers.upper_bounds, 0, iterate.number_variables) << '\n';
       stream << "Objective value: " << iterate.model_evaluations.objective << '\n';
       stream << "Primal feasibility: " << iterate.primal_feasibility << '\n';
-
       stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';
       stream << "Residuals │ Complementarity: " << iterate.residuals.complementarity << '\n';
       stream << "          └ Lagrangian gradient: " << iterate.residuals.lagrangian_gradient;
-      stream << "Feasibility residuals ┌ Stationarity: " << iterate.feasibility_residuals.stationarity << '\n';
-      stream << "                      │ Complementarity: " << iterate.feasibility_residuals.complementarity << '\n';
-      stream << "                      └ Lagrangian gradient: " << iterate.feasibility_residuals.lagrangian_gradient;
-
       stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';
       stream << "Progress measures │ Optimality: " << iterate.progress.objective(1.) << '\n';
       stream << "                  └ Auxiliary terms: " << iterate.progress.auxiliary << '\n';
-
-
       return stream;
    }
 } // namespace

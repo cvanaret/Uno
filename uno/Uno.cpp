@@ -1,20 +1,15 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-//#include <cmath>
 #include "Uno.hpp"
-#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
-#include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
-#include "linear_algebra/Vector.hpp"
 #include "optimization/Model.hpp"
-#include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 #include "optimization/OptimizationStatus.hpp"
@@ -67,7 +62,7 @@ namespace uno {
                // compute an acceptable iterate by solving a subproblem at the current point
                warmstart_information.iterate_changed();
                this->globalization_layer.mechanism->compute_next_iterate(statistics, *this->constraint_relaxation_strategy,
-                  *this->globalization_layer.strategy, model, current_iterate, trial_iterate, this->direction, warmstart_information,
+                  *this->globalization_layer.strategy, model, current_iterate, trial_iterate, warmstart_information,
                   user_callbacks);
                termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration(), optimization_status);
                user_callbacks.notify_new_primals(trial_iterate.primals);
@@ -97,11 +92,11 @@ namespace uno {
       return result;
    }
 
-   void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) {
+   void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) const {
       statistics.start_new_line();
       statistics.set("iter", 0);
       statistics.set("status", "initial point");
-      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, options);
+      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, options);
       this->globalization_layer.initialize(statistics, current_iterate, options);
       options.print_used();
       if (Logger::level == INFO) {
@@ -143,11 +138,12 @@ namespace uno {
    void Uno::postprocess_iterate(const Model& model, Iterate& iterate) {
       // in case the objective was not yet evaluated, evaluate it
       iterate.evaluate_objective(model);
+      iterate.set_number_variables(model.number_variables);
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate, size_t major_iterations,
-         const Timer& timer) {
+         const Timer& timer) const {
       const size_t number_subproblems_solved = this->constraint_relaxation_strategy->get_number_subproblems_solved();
       const size_t number_hessian_evaluations = this->constraint_relaxation_strategy->get_hessian_evaluation_count();
       return {optimization_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,

@@ -25,7 +25,6 @@ namespace uno {
       size_t number_constraints;
       Vector<double> primals;
       Multipliers multipliers;
-      //Multipliers feasibility_multipliers{};
       double objective_multiplier{1.};
 
       // evaluations
@@ -43,7 +42,6 @@ namespace uno {
       // primal-dual residuals
       double primal_feasibility{INF<double>};
       DualResiduals residuals;
-      DualResiduals feasibility_residuals{};
 
       // measures of progress (infeasibility, objective, auxiliary)
       ProgressMeasures progress{INF<double>, {}, INF<double>};
