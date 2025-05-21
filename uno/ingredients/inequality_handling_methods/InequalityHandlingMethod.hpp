@@ -36,6 +36,7 @@ namespace uno {
       virtual void initialize(const OptimizationProblem& first_reformulation, const HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy) = 0;
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
+      virtual void set_reformulation_variables(const OptimizationProblem& problem, Iterate& initial_iterate) const = 0;
       virtual void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
       virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
          Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;

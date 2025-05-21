@@ -16,6 +16,7 @@ namespace uno {
       [[nodiscard]] std::pair<size_t, size_t> get_dimensions(const OptimizationProblem& problem) const override;
       void initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy) override;
+      void set_reformulation_variables(const OptimizationProblem& problem, Iterate& initial_iterate) const override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void set_initial_point(const Vector<double>& point) override;
       void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;

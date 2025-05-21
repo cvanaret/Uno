@@ -66,41 +66,42 @@ namespace uno {
       statistics.add_column("barrier", Statistics::double_width - 5, options.get_int("statistics_barrier_parameter_column_order"));
    }
 
+   // set the slack variables (if any)
+   void PrimalDualInteriorPointMethod::set_reformulation_variables(const OptimizationProblem& problem, Iterate& iterate) const {
+      if (!problem.get_inequality_constraints().empty()) {
+         // evaluate the constraints at the initial point
+         iterate.evaluate_constraints(problem.model);
+
+         // set the slacks to the constraint values
+         size_t slack_index = problem.number_variables;
+         for (const auto inequality_constraint_index: problem.get_inequality_constraints()) {
+            /*
+            std::cout << "Slack " << slack_index << " reset within [" << problem.constraint_lower_bound(inequality_constraint_index) <<
+               ", " << problem.constraint_upper_bound(inequality_constraint_index) << "] with value ";
+               */
+            iterate.primals[slack_index] = PrimalDualInteriorPointMethod::push_variable_to_interior(
+               iterate.model_evaluations.constraints[inequality_constraint_index],
+               problem.constraint_lower_bound(inequality_constraint_index),
+               problem.constraint_upper_bound(inequality_constraint_index));
+            //std::cout << iterate.primals[slack_index] << '\n';
+            slack_index++;
+         }
+         // since the slacks have been set, the function evaluations should also be updated
+         iterate.is_objective_gradient_computed = false;
+         iterate.are_constraints_computed = false;
+         iterate.is_constraint_jacobian_computed = false;
+      }
+   }
+
    void PrimalDualInteriorPointMethod::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
-      // TODO: enforce linear constraints at initial point
-      //if (options.get_bool("enforce_linear_constraints")) {
-      //   Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, this->solver);
-      //}
-
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
-
-      // add the slacks to the initial iterate
-      initial_iterate.set_number_variables(barrier_problem.number_variables);
-      // make the initial point strictly feasible wrt the bounds
+      // set the original primals: make the initial point strictly feasible wrt the bounds
       for (size_t variable_index: Range(problem.number_variables)) {
          initial_iterate.primals[variable_index] = PrimalDualInteriorPointMethod::push_variable_to_interior(initial_iterate.primals[variable_index],
             problem.variable_lower_bound(variable_index), problem.variable_upper_bound(variable_index));
       }
 
-      // set the slack variables (if any)
-      if (!problem.get_inequality_constraints().empty()) {
-         // evaluate the constraints at the initial point
-         initial_iterate.evaluate_constraints(problem.model);
-
-         // set the slacks to the constraint values
-         size_t slack_index = problem.number_variables;
-         for (const auto inequality_constraint_index: problem.get_inequality_constraints()) {
-            initial_iterate.primals[slack_index] = PrimalDualInteriorPointMethod::push_variable_to_interior(
-               initial_iterate.model_evaluations.constraints[inequality_constraint_index],
-               problem.constraint_lower_bound(inequality_constraint_index),
-               problem.constraint_upper_bound(inequality_constraint_index));
-            slack_index++;
-         }
-         // since the slacks have been set, the function evaluations should also be updated
-         initial_iterate.is_objective_gradient_computed = false;
-         initial_iterate.are_constraints_computed = false;
-         initial_iterate.is_constraint_jacobian_computed = false;
-      }
+      // set the slacks
+      this->set_reformulation_variables(problem, initial_iterate);
 
       // set the bound multipliers
       for (const size_t variable_index: problem.get_lower_bounded_variables()) {
@@ -122,8 +123,9 @@ namespace uno {
 
       // compute least-square multipliers
       if (0 < problem.number_constraints) {
-         //Preprocessing::compute_least_square_multipliers(barrier_problem, this->augmented_system.matrix, this->augmented_system.rhs,
-         //   *this->linear_solver, initial_iterate, initial_iterate.multipliers, this->least_square_multiplier_max_norm);
+         const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
+         Preprocessing::compute_least_square_multipliers(barrier_problem, this->augmented_system.matrix, this->augmented_system.rhs,
+            *this->linear_solver, initial_iterate, initial_iterate.multipliers, this->least_square_multiplier_max_norm);
       }
    }
 
@@ -255,9 +257,9 @@ namespace uno {
       // where jacobian_coefficient = -1 for p, +1 for n
       // Note: IPOPT uses a '+' sign because they define the Lagrangian as f(x) + \lambda^T c(x)
       const double mu = this->barrier_parameter();
-      const auto elastic_setting_function = [&](size_t constraint_index, size_t elastic_index, double jacobian_coefficient) {
+      const auto elastic_setting_function = [&](size_t inequality_constraint_index, size_t elastic_index, double jacobian_coefficient) {
          // precomputations
-         const double constraint_j = this->constraints[constraint_index];
+         const double constraint_j = this->constraints[inequality_constraint_index];
          const double rho = this->l1_constraint_violation_coefficient;
          const double mu_over_rho = mu / rho;
          const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);

@@ -31,6 +31,7 @@ namespace uno {
       void initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
+      void set_reformulation_variables(const OptimizationProblem& problem, Iterate& iterate) const override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void set_initial_point(const Vector<double>& point) override;
 

@@ -150,6 +150,9 @@ namespace uno {
          this->feasibility_direction = Direction(number_variables, number_constraints);
          this->first_switch_to_feasibility = false;
       }
+      else {
+         this->feasibility_inequality_handling_method->set_reformulation_variables(feasibility_problem, current_iterate);
+      }
 
       this->feasibility_inequality_handling_method->set_elastic_variable_values(feasibility_problem, current_iterate.primals, current_iterate.multipliers);
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(feasibility_problem, current_iterate);
@@ -159,6 +162,7 @@ namespace uno {
 
       if (Logger::level == INFO) statistics.print_current_line();
       warmstart_information.whole_problem_changed();
+      throw std::runtime_error("STOP");
    }
 
    void FeasibilityRestoration::assemble_trial_iterate(Iterate& current_iterate, Iterate& trial_iterate, double primal_step_length,
@@ -188,6 +192,7 @@ namespace uno {
    void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& trial_iterate, WarmstartInformation& warmstart_information) {
       DEBUG << "Switching from restoration to optimality phase\n";
+      std::cout << "Switching from restoration to optimality phase\n";
       this->current_phase = Phase::OPTIMALITY;
       globalization_strategy.notify_switch_to_optimality(current_iterate.progress);
       // the optimality multipliers stored locally are restored into the iterate
@@ -200,7 +205,7 @@ namespace uno {
       this->optimality_direction.number_variables = optimality_problem.number_variables;
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
 
-      this->optimality_inequality_handling_method->generate_initial_iterate(optimality_problem, trial_iterate);
+      this->optimality_inequality_handling_method->set_reformulation_variables(optimality_problem, trial_iterate);
       this->optimality_inequality_handling_method->exit_feasibility_problem(optimality_problem, trial_iterate);
       // set a cold start in the subproblem solver
       warmstart_information.whole_problem_changed();
@@ -209,6 +214,16 @@ namespace uno {
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, Iterate& trial_iterate, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+      // possibly go from restoration phase to optimality phase
+      if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(current_iterate, globalization_strategy,
+            model, trial_iterate, this->optimality_direction, step_length)) {
+         this->switch_to_optimality_phase(current_iterate, globalization_strategy, model, trial_iterate, warmstart_information);
+      }
+      else {
+         warmstart_information.no_changes();
+      }
+
+      // compute progress measures
       if (this->current_phase == Phase::OPTIMALITY) {
          const OptimizationProblem optimality_problem{model};
          this->optimality_inequality_handling_method->postprocess_iterate(optimality_problem, trial_iterate.primals, trial_iterate.multipliers);
@@ -230,6 +245,9 @@ namespace uno {
       if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(current_iterate, globalization_strategy,
             model, trial_iterate, this->optimality_direction, step_length)) {
          this->switch_to_optimality_phase(current_iterate, globalization_strategy, model, trial_iterate, warmstart_information);
+         const OptimizationProblem optimality_problem{model};
+         this->compute_progress_measures(optimality_problem, *this->optimality_inequality_handling_method, model, globalization_strategy,
+            current_iterate, trial_iterate);
       }
       else {
          warmstart_information.no_changes();

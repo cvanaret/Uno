@@ -299,13 +299,18 @@ namespace uno {
       }
    }
 
+   // auxiliary measure: barrier terms
    double PrimalDualInteriorPointProblem::compute_auxiliary_measure(Iterate& iterate) const {
-      // auxiliary measure: barrier terms
+      //std::cout << "Computation of auxiliary measure:\n";
       double barrier_terms = 0.;
       // original variables
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
          const bool lower_bounded = is_finite(this->original_variable_lower_bound(variable_index));
          const bool upper_bounded = is_finite(this->original_variable_upper_bound(variable_index));
+         /*
+         std::cout << "Primal x[" << variable_index << "] = " << iterate.primals[variable_index] << " should be in [" << this->original_variable_lower_bound(variable_index) <<
+            ", " << this->original_variable_upper_bound(variable_index) << "]\n";
+         */
          if (lower_bounded) {
             barrier_terms -= std::log(iterate.primals[variable_index] - this->original_variable_lower_bound(variable_index));
             // damping
@@ -326,6 +331,10 @@ namespace uno {
       for (size_t inequality_constraint_index: this->first_reformulation.get_inequality_constraints()) {
          const bool lower_bounded = is_finite(this->slack_lower_bound(inequality_constraint_index));
          const bool upper_bounded = is_finite(this->slack_upper_bound(inequality_constraint_index));
+         /*
+         std::cout << "Primal x[" << slack_index << "] = " << iterate.primals[slack_index] << " should be in [" << this->slack_lower_bound(inequality_constraint_index) <<
+            ", " << this->slack_upper_bound(inequality_constraint_index) << "]\n";
+         */
          if (lower_bounded) {
             barrier_terms -= std::log(iterate.primals[slack_index] - this->slack_lower_bound(inequality_constraint_index));
             // damping

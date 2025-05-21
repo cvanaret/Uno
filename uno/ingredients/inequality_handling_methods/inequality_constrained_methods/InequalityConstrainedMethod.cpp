@@ -22,6 +22,10 @@ namespace uno {
       regularization_strategy.initialize_memory(problem, hessian_model);
    }
 
+   void InequalityConstrainedMethod::set_reformulation_variables(const OptimizationProblem& problem, Iterate& initial_iterate) const {
+      // do nothing
+   }
+
    void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
    }
 
