@@ -29,6 +29,7 @@ namespace uno {
       if (this->enforce_linear_constraints_at_initial_iterate) {
          Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, *this->solver);
       }
+      InequalityConstrainedMethod::set_reformulation_variables(problem, initial_iterate);
    }
 
    void QPSubproblem::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,

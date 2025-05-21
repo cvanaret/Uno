@@ -38,13 +38,12 @@ namespace uno {
    }
 
    // generate the ASL object and call the private constructor
-   AMPLModel::AMPLModel(const std::string& file_name, const Options& options) : AMPLModel(file_name, generate_asl(file_name), options) {
+   AMPLModel::AMPLModel(const std::string& file_name) : AMPLModel(file_name, generate_asl(file_name)) {
    }
 
-   AMPLModel::AMPLModel(const std::string& file_name, ASL* asl, const Options& options) :
+   AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
          Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), (asl->i.objtype_[0] == 1) ? -1. : 1.),
          asl(asl),
-         write_solution_to_file(options.get_bool("AMPL_write_solution_to_file")),
          // allocate vectors
          asl_gradient(this->number_variables),
          variable_lower_bounds(this->number_variables),
@@ -251,10 +250,6 @@ namespace uno {
       return this->upper_bounded_variables_collection;
    }
 
-   const SparseVector<size_t>& AMPLModel::get_slacks() const {
-      return this->slacks;
-   }
-
    const Collection<size_t>& AMPLModel::get_single_lower_bounded_variables() const {
       return this->single_lower_bounded_variables_collection;
    }
@@ -307,48 +302,6 @@ namespace uno {
       std::copy(this->asl->i.pi0_, this->asl->i.pi0_ + this->number_constraints, multipliers.begin());
    }
 
-   void AMPLModel::postprocess_solution(Iterate& iterate, IterateStatus iterate_status) const {
-      if (this->write_solution_to_file) {
-         // write the primal-dual solution and status into a *.sol file
-         this->asl->p.solve_code_ = 400; // limit
-         if (iterate_status == IterateStatus::FEASIBLE_KKT_POINT) {
-            this->asl->p.solve_code_ = 0;
-         }
-         if (iterate_status == IterateStatus::FEASIBLE_SMALL_STEP) {
-            this->asl->p.solve_code_ = 100;
-         }
-         else if (iterate_status == IterateStatus::INFEASIBLE_STATIONARY_POINT) {
-            this->asl->p.solve_code_ = 200;
-         }
-         else if (iterate_status == IterateStatus::UNBOUNDED) {
-            this->asl->p.solve_code_ = 300;
-         }
-         else if (iterate_status == IterateStatus::INFEASIBLE_SMALL_STEP) {
-            this->asl->p.solve_code_ = 500;
-         }
-
-         // flip the signs of the multipliers and the objective if we maximize
-         iterate.multipliers.constraints *= this->objective_sign;
-         iterate.multipliers.lower_bounds *= this->objective_sign;
-         iterate.multipliers.upper_bounds *= this->objective_sign;
-         iterate.evaluations.objective *= this->objective_sign;
-
-         // include the bound duals in the .sol file, using suffixes
-         SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
-         SufDecl upper_bound_suffix{const_cast<char*>("upper_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
-         std::array<SufDecl, 2> suffixes{lower_bound_suffix, upper_bound_suffix};
-         suf_declare_ASL(this->asl, suffixes.data(), suffixes.size());
-         suf_rput_ASL(this->asl, "lower_bound_duals", ASL_Sufkind_var, iterate.multipliers.lower_bounds.data());
-         suf_rput_ASL(this->asl, "upper_bound_duals", ASL_Sufkind_var, iterate.multipliers.upper_bounds.data());
-
-         Option_Info option_info{};
-         option_info.wantsol = 9; // write the solution without printing the message to stdout
-         std::string message = "Uno ";
-         message.append(Uno::current_version()).append(": ").append(iterate_status_to_message(iterate_status));
-         write_sol_ASL(this->asl, message.data(), iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
-      }
-   }
-
    size_t AMPLModel::number_objective_gradient_nonzeros() const {
       return static_cast<size_t>(this->asl->i.nzo_);
    }
@@ -359,6 +312,46 @@ namespace uno {
 
    size_t AMPLModel::number_hessian_nonzeros() const {
       return this->number_asl_hessian_nonzeros;
+   }
+
+   void AMPLModel::write_solution(Iterate& iterate, IterateStatus iterate_status) const {
+      // write the primal-dual solution and status into a *.sol file
+      this->asl->p.solve_code_ = 400; // limit
+      if (iterate_status == IterateStatus::FEASIBLE_KKT_POINT) {
+         this->asl->p.solve_code_ = 0;
+      }
+      if (iterate_status == IterateStatus::FEASIBLE_SMALL_STEP) {
+         this->asl->p.solve_code_ = 100;
+      }
+      else if (iterate_status == IterateStatus::INFEASIBLE_STATIONARY_POINT) {
+         this->asl->p.solve_code_ = 200;
+      }
+      else if (iterate_status == IterateStatus::UNBOUNDED) {
+         this->asl->p.solve_code_ = 300;
+      }
+      else if (iterate_status == IterateStatus::INFEASIBLE_SMALL_STEP) {
+         this->asl->p.solve_code_ = 500;
+      }
+
+      // flip the signs of the multipliers and the objective if we maximize
+      iterate.multipliers.constraints *= this->objective_sign;
+      iterate.multipliers.lower_bounds *= this->objective_sign;
+      iterate.multipliers.upper_bounds *= this->objective_sign;
+      iterate.model_evaluations.objective *= this->objective_sign;
+
+      // include the bound duals in the .sol file, using suffixes
+      SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
+      SufDecl upper_bound_suffix{const_cast<char*>("upper_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
+      std::array<SufDecl, 2> suffixes{lower_bound_suffix, upper_bound_suffix};
+      suf_declare_ASL(this->asl, suffixes.data(), suffixes.size());
+      suf_rput_ASL(this->asl, "lower_bound_duals", ASL_Sufkind_var, iterate.multipliers.lower_bounds.data());
+      suf_rput_ASL(this->asl, "upper_bound_duals", ASL_Sufkind_var, iterate.multipliers.upper_bounds.data());
+
+      Option_Info option_info{};
+      option_info.wantsol = 9; // write the solution without printing the message to stdout
+      std::string message = "Uno ";
+      message.append(Uno::current_version()).append(": ").append(iterate_status_to_message(iterate_status));
+      write_sol_ASL(this->asl, message.data(), iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
    }
 
    void AMPLModel::generate_variables() {

@@ -9,12 +9,10 @@
 namespace uno {
    // forward declarations
    class ConstraintRelaxationStrategy;
-   class Direction;
    class GlobalizationStrategy;
    class Iterate;
    class Model;
    class Options;
-   class ReformulationLayer;
    class Statistics;
    class UserCallbacks;
    struct WarmstartInformation;
@@ -27,13 +25,9 @@ namespace uno {
       virtual void initialize(Statistics& statistics, const Options& options) = 0;
       virtual void compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
-
-   protected:
-      static void assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         double primal_step_length, double dual_step_length);
    };
 } // namespace
 

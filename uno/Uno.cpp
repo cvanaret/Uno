@@ -1,20 +1,15 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-//#include <cmath>
 #include "Uno.hpp"
-#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
-#include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "model/Model.hpp"
-#include "optimization/Iterate.hpp"
+#include "optimization/Model.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 #include "optimization/OptimizationStatus.hpp"
@@ -62,12 +57,12 @@ namespace uno {
                major_iterations++;
                statistics.start_new_line();
                statistics.set("iter", major_iterations);
-               DEBUG << "### Outer iteration " << major_iterations << '\n';
+               DEBUG << "\n### Outer iteration " << major_iterations << '\n';
 
                // compute an acceptable iterate by solving a subproblem at the current point
                warmstart_information.iterate_changed();
                this->globalization_layer.mechanism->compute_next_iterate(statistics, *this->constraint_relaxation_strategy,
-                  *this->globalization_layer.strategy, model, current_iterate, trial_iterate, this->direction, warmstart_information,
+                  *this->globalization_layer.strategy, model, current_iterate, trial_iterate, warmstart_information,
                   user_callbacks);
                termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration(), optimization_status);
                user_callbacks.notify_new_primals(trial_iterate.primals);
@@ -86,7 +81,7 @@ namespace uno {
          }
          if (Logger::level == INFO) statistics.print_footer();
 
-         Uno::postprocess_iterate(model, current_iterate, current_iterate.status);
+         Uno::postprocess_iterate(model, current_iterate);
       }
       catch (const std::exception& e) {
          DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
@@ -97,11 +92,11 @@ namespace uno {
       return result;
    }
 
-   void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) {
+   void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) const {
       statistics.start_new_line();
       statistics.set("iter", 0);
       statistics.set("status", "initial point");
-      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, options);
+      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, options);
       this->globalization_layer.initialize(statistics, current_iterate, options);
       options.print_used();
       if (Logger::level == INFO) {
@@ -140,24 +135,37 @@ namespace uno {
       return false;
    }
 
-   void Uno::postprocess_iterate(const Model& model, Iterate& iterate, IterateStatus termination_status) {
+   void Uno::postprocess_iterate(const Model& model, Iterate& iterate) {
       // in case the objective was not yet evaluated, evaluate it
       iterate.evaluate_objective(model);
-      model.postprocess_solution(iterate, termination_status);
+      iterate.set_number_variables(model.number_variables);
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate, size_t major_iterations,
-         const Timer& timer) {
+         const Timer& timer) const {
       const size_t number_subproblems_solved = this->constraint_relaxation_strategy->get_number_subproblems_solved();
       const size_t number_hessian_evaluations = this->constraint_relaxation_strategy->get_hessian_evaluation_count();
       return {optimization_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,
-            timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
-            Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
+         timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
+         Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
    }
 
    std::string Uno::current_version() {
       return "1.3.0";
+   }
+
+   void Uno::print_instructions() {
+      std::cout << "Welcome in Uno " << Uno::current_version() << '\n';
+      std::cout << "To solve an AMPL model, type ./uno_ampl model.nl -AMPL [option_name=option_value ...]\n";
+      std::cout << "To choose a constraint relaxation strategy, use the argument constraint_relaxation_strategy="
+                   "[feasibility_restoration|l1_relaxation]\n";
+      std::cout << "To choose a subproblem method, use the argument subproblem=[QP|LP|primal_dual_interior_point]\n";
+      std::cout << "To choose a globalization mechanism, use the argument globalization_mechanism=[LS|TR]\n";
+      std::cout << "To choose a globalization strategy, use the argument globalization_strategy="
+                   "[l1_merit|fletcher_filter_method|waechter_filter_method]\n";
+      std::cout << "To choose a preset, use the argument preset=[filtersqp|ipopt|byrd]\n";
+      std::cout << "The options can be combined in the same command line.\n";
    }
 
    void Uno::print_available_strategies() {

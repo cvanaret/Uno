@@ -3,7 +3,7 @@
 
 #include "IdentityHessian.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
-#include "model/Model.hpp"
+#include "optimization/Model.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {

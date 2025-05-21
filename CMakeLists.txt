@@ -63,7 +63,6 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
    uno/ingredients/regularization_strategies/*.cpp
    uno/ingredients/subproblem_solvers/*.cpp
-   uno/model/*.cpp
    uno/optimization/*.cpp
    uno/options/*.cpp
    uno/preprocessing/*.cpp

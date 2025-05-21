@@ -64,7 +64,6 @@ namespace uno {
       for (size_t index: Range(view.size())) {
          stream << view[index] << " ";
       }
-      stream << '\n';
       return stream;
    }
 } // namespace

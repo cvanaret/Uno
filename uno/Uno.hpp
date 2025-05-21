@@ -27,6 +27,7 @@ namespace uno {
       Result solve(const Model& model, Iterate& initial_iterate, const Options& options, UserCallbacks& user_callbacks);
 
       static std::string current_version();
+      static void print_instructions();
       static void print_available_strategies();
       void print_optimization_summary(const Result& result) const;
 
@@ -39,13 +40,13 @@ namespace uno {
       const bool print_solution;
 
       [[nodiscard]] std::string get_strategy_combination() const;
-      void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options);
+      void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) const;
       [[nodiscard]] static Statistics create_statistics(const Model& model, const Options& options);
       [[nodiscard]] bool termination_criteria(IterateStatus current_status, size_t iteration, double current_time,
             OptimizationStatus& optimization_status) const;
-      static void postprocess_iterate(const Model& model, Iterate& iterate, IterateStatus termination_status);
+      static void postprocess_iterate(const Model& model, Iterate& iterate);
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate,
-            size_t major_iterations, const Timer& timer);
+            size_t major_iterations, const Timer& timer) const;
    };
 } // namespace
 

@@ -11,6 +11,7 @@ namespace uno {
    class DualResiduals {
    public:
       explicit DualResiduals(size_t number_variables): lagrangian_gradient(number_variables) { }
+      DualResiduals() = default;
 
       double stationarity{INF<double>};
       double complementarity{INF<double>};
@@ -18,7 +19,7 @@ namespace uno {
       double stationarity_scaling{INF<double>};
       double complementarity_scaling{INF<double>};
 
-      LagrangianGradient<double> lagrangian_gradient;
+      LagrangianGradient<double> lagrangian_gradient{};
    };
 } // namespace
 

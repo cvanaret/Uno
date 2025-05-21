@@ -7,6 +7,9 @@
 #include "GlobalizationMechanism.hpp"
 
 namespace uno {
+   // forward declaration
+   class Direction;
+
    class TrustRegionStrategy : public GlobalizationMechanism {
    public:
       explicit TrustRegionStrategy(const Options& options);
@@ -15,7 +18,7 @@ namespace uno {
       void initialize(Statistics& statistics, const Options& options) override;
       void compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       [[nodiscard]] std::string get_name() const override;
 
@@ -41,8 +44,7 @@ namespace uno {
       bool check_termination_with_small_step(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Model& model,
          Iterate& trial_iterate) const;
       void set_trust_region_statistics(Statistics& statistics, size_t number_iterations) const;
-      void set_statistics(Statistics& statistics, const Direction& direction) const;
-      void set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction) const;
+      void set_statistics(Statistics& statistics, const Iterate& trial_iterate) const;
    };
 } // namespace
 

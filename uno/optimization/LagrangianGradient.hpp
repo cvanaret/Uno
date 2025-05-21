@@ -21,6 +21,8 @@ namespace uno {
       using value_type = ElementType;
 
       explicit LagrangianGradient(size_t number_variables);
+      LagrangianGradient() = default;
+
       [[nodiscard]] size_t size() const;
       [[nodiscard]] ElementType operator[](size_t variable_index) const;
       void resize(size_t number_variables);
