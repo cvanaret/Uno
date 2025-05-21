@@ -80,7 +80,7 @@ namespace uno {
       iterate.evaluate_objective_gradient(model);
       iterate.evaluate_constraints(model);
       iterate.evaluate_constraint_jacobian(model);
-      
+
       problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, iterate, iterate.multipliers);
       iterate.residuals.stationarity = OptimizationProblem::stationarity_error(iterate.residuals.lagrangian_gradient, iterate.objective_multiplier,
             this->residual_norm);

@@ -343,7 +343,9 @@ namespace uno {
          slack_index++;
       }
       barrier_terms *= this->barrier_parameter;
-      assert(!std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
+      if (std::isnan(barrier_terms)) {
+         throw std::runtime_error("The auxiliary measure is not an number");
+      }
       return barrier_terms;
    }
 
