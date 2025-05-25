@@ -11,7 +11,7 @@
     * MUMPS (sparse indefinite symmetric linear solver): https://mumps-solver.org/index.php?page=dwnld
     * HiGHS (linear programming solver): https://highs.dev
 
-* to compile MUMPS in sequential mode, set the following variables at the end of your Makefile.inc:
+* to compile MUMPS in sequential mode, remove the flag `-fopenmp` at the end of your `Makefile.inc` and set the following variables:
 ```console
 INCS = $(INCSEQ)
 LIBS = $(LIBSEQ)
