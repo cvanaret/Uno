@@ -4,9 +4,10 @@
 #ifndef UNO_EXPRESSION_H
 #define UNO_EXPRESSION_H
 
+#include "MatrixVectorProduct.hpp"
 #include "ScalarMultiple.hpp"
+#include "Subtraction.hpp"
 #include "Sum.hpp"
 #include "UnaryNegation.hpp"
-#include "MatrixVectorProduct.hpp"
 
 #endif // UNO_EXPRESSION_H

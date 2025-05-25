@@ -17,7 +17,7 @@ namespace uno {
    UnconstrainedStrategy::UnconstrainedStrategy(size_t number_bound_constraints, const Options& options) :
          ConstraintRelaxationStrategy(options),
          inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
-         subproblem_layer(options) {
+         subproblem_layer(1., options) {
    }
 
    void UnconstrainedStrategy::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
@@ -95,6 +95,7 @@ namespace uno {
       }
       ConstraintRelaxationStrategy::set_progress_statistics(statistics, model, trial_iterate);
       if (accept_iterate) {
+         this->subproblem_layer.hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, objective_multiplier);
       }
       return accept_iterate;
@@ -126,7 +127,9 @@ namespace uno {
    }
 
    std::string UnconstrainedStrategy::get_name() const {
-      return "unconstrained";
+      return "unconstrained " + this->inequality_handling_method->get_name() + " with " +
+         this->subproblem_layer.hessian_model->get_name() + " Hessian and " +
+         this->subproblem_layer.regularization_strategy->get_name() + " regularization";
    }
 
    size_t UnconstrainedStrategy::get_hessian_evaluation_count() const {
