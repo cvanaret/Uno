@@ -24,12 +24,11 @@ namespace uno {
       size_t number_variables;
       size_t number_constraints;
       Vector<double> primals;
-      Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
-      Multipliers feasibility_multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
+      Multipliers multipliers;
       double objective_multiplier{1.};
 
       // evaluations
-      Evaluations evaluations;
+      Evaluations model_evaluations;
       static size_t number_eval_objective;
       static size_t number_eval_constraints;
       static size_t number_eval_objective_gradient;
@@ -43,7 +42,6 @@ namespace uno {
       // primal-dual residuals
       double primal_feasibility{INF<double>};
       DualResiduals residuals;
-      DualResiduals feasibility_residuals;
 
       // measures of progress (infeasibility, objective, auxiliary)
       ProgressMeasures progress{INF<double>, {}, INF<double>};

@@ -4,13 +4,13 @@
 #include <cassert>
 #include "BacktrackingLineSearch.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
-#include "model/Model.hpp"
+#include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
-#include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
-#include "tools/Logger.hpp"
+#include "optimization/Model.hpp"
 #include "options/Options.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
@@ -31,14 +31,13 @@ namespace uno {
 
    void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
       constraint_relaxation_strategy.compute_feasible_direction(statistics, globalization_strategy, model, current_iterate,
-         direction, INF<double>, warmstart_information);
-      BacktrackingLineSearch::check_unboundedness(direction);
+         INF<double>, warmstart_information);
       this->backtrack_along_direction(statistics, constraint_relaxation_strategy, globalization_strategy, model, current_iterate,
-         trial_iterate, direction, warmstart_information, user_callbacks);
+         trial_iterate, warmstart_information, user_callbacks);
    }
 
    std::string BacktrackingLineSearch::get_name() const {
@@ -50,7 +49,7 @@ namespace uno {
    // go a fraction along the direction by finding an acceptable step length
    void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
@@ -63,14 +62,14 @@ namespace uno {
          bool is_acceptable = false;
          try {
             // take a step as a fraction of the direction
-            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction,
-               step_length,
+            constraint_relaxation_strategy.assemble_trial_iterate(current_iterate, trial_iterate, step_length,
                // scale or not the constraint dual direction with the LS step length
                this->scale_duals_with_step_length ? step_length : 1.);
+            model.project_onto_variable_bounds(trial_iterate.primals);
 
             is_acceptable = constraint_relaxation_strategy.is_iterate_acceptable(statistics, globalization_strategy, model, current_iterate,
-               trial_iterate, direction, step_length, warmstart_information, user_callbacks);
-            this->set_statistics(statistics, trial_iterate, direction, step_length, number_iterations);
+               trial_iterate, step_length, warmstart_information, user_callbacks);
+            this->set_statistics(statistics, trial_iterate, number_iterations);
          }
          catch (const EvaluationError&) {
             this->set_statistics(statistics, number_iterations);
@@ -102,8 +101,8 @@ namespace uno {
                constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, globalization_strategy,
                   model, current_iterate, warmstart_information);
                constraint_relaxation_strategy.compute_feasible_direction(statistics, globalization_strategy,
-                  model, current_iterate, direction, INF<double>, warmstart_information);
-               BacktrackingLineSearch::check_unboundedness(direction);
+                  model, current_iterate, INF<double>, warmstart_information);
+               // TODO BacktrackingLineSearch::check_unboundedness(direction);
                // restart backtracking
                step_length = 1.;
                number_iterations = 0;
@@ -131,23 +130,14 @@ namespace uno {
       return step_length;
    }
 
-   void BacktrackingLineSearch::check_unboundedness(const Direction& direction) {
-      if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
-         throw std::runtime_error("The subproblem is unbounded, this should not happen. If the subproblem has curvature,"
-            "use regularization. If not, use a trust-region method.\n");
-      }
-   }
-
    void BacktrackingLineSearch::set_statistics(Statistics& statistics, size_t number_iterations) const {
       statistics.set("LS iter", number_iterations);
    }
 
-   void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction,
-         double primal_dual_step_length, size_t number_iterations) const {
+   void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Iterate& trial_iterate, size_t number_iterations) const {
       if (trial_iterate.is_objective_computed) {
-         statistics.set("objective", trial_iterate.evaluations.objective);
+         statistics.set("objective", trial_iterate.model_evaluations.objective);
       }
-      statistics.set("step norm", primal_dual_step_length * direction.norm);
       this->set_statistics(statistics, number_iterations);
    }
 } // namespace

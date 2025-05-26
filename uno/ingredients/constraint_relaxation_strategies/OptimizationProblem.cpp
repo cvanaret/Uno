@@ -15,18 +15,6 @@ namespace uno {
          model(model), number_variables(number_variables), number_constraints(number_constraints) {
    }
 
-   bool OptimizationProblem::is_constrained() const {
-      return (0 < this->number_constraints);
-   }
-
-   bool OptimizationProblem::has_inequality_constraints() const {
-      return (!this->model.get_inequality_constraints().empty());
-   }
-
-   bool OptimizationProblem::has_fixed_variables() const {
-      return (!this->model.get_fixed_variables().empty());
-   }
-
    double OptimizationProblem::get_objective_multiplier() const {
       return 1.;
    }
@@ -34,18 +22,18 @@ namespace uno {
    void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const {
       iterate.evaluate_objective_gradient(this->model);
       // TODO change this
-      objective_gradient = iterate.evaluations.objective_gradient;
+      objective_gradient = iterate.model_evaluations.objective_gradient;
    }
 
    void OptimizationProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
-      constraints = iterate.evaluations.constraints;
+      constraints = iterate.model_evaluations.constraints;
    }
 
    void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
       iterate.evaluate_constraint_jacobian(this->model);
       // TODO change this
-      constraint_jacobian = iterate.evaluations.constraint_jacobian;
+      constraint_jacobian = iterate.model_evaluations.constraint_jacobian;
    }
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
@@ -70,14 +58,6 @@ namespace uno {
       return this->model.variable_upper_bound(variable_index);
    }
 
-   double OptimizationProblem::constraint_lower_bound(size_t constraint_index) const {
-      return this->model.constraint_lower_bound(constraint_index);
-   }
-
-   double OptimizationProblem::constraint_upper_bound(size_t constraint_index) const {
-      return this->model.constraint_upper_bound(constraint_index);
-   }
-
    const Collection<size_t>& OptimizationProblem::get_lower_bounded_variables() const {
       return this->model.get_lower_bounded_variables();
    }
@@ -92,6 +72,26 @@ namespace uno {
 
    const Collection<size_t>& OptimizationProblem::get_single_upper_bounded_variables() const {
       return this->model.get_single_upper_bounded_variables();
+   }
+
+   const Vector<size_t>& OptimizationProblem::get_fixed_variables() const {
+      return this->model.get_fixed_variables();
+   }
+
+   double OptimizationProblem::constraint_lower_bound(size_t constraint_index) const {
+      return this->model.constraint_lower_bound(constraint_index);
+   }
+
+   double OptimizationProblem::constraint_upper_bound(size_t constraint_index) const {
+      return this->model.constraint_upper_bound(constraint_index);
+   }
+
+   const Collection<size_t>& OptimizationProblem::get_equality_constraints() const {
+      return this->model.get_equality_constraints();
+   }
+
+   const Collection<size_t>& OptimizationProblem::get_inequality_constraints() const {
+      return this->model.get_inequality_constraints();
    }
 
    size_t OptimizationProblem::number_objective_gradient_nonzeros() const {
@@ -120,14 +120,14 @@ namespace uno {
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // objective gradient
-      for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
+      for (auto [variable_index, derivative]: iterate.model_evaluations.objective_gradient) {
          lagrangian_gradient.objective_contribution[variable_index] += derivative;
       }
 
       // constraints
       for (size_t constraint_index: Range(this->number_constraints)) {
          if (multipliers.constraints[constraint_index] != 0.) {
-            for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
+            for (auto [variable_index, derivative]: iterate.model_evaluations.constraint_jacobian[constraint_index]) {
                lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
             }
          }
@@ -138,6 +138,11 @@ namespace uno {
          lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
                                                                           multipliers.upper_bounds[variable_index]);
       }
+   }
+
+   void OptimizationProblem::compute_least_square_stationarity(Iterate& iterate, const Multipliers& multipliers,
+         Vector<double>& stationarity_residuals) const {
+      throw std::runtime_error("OptimizationProblem::evaluate_stationarity_residual not implemented");
    }
 
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,

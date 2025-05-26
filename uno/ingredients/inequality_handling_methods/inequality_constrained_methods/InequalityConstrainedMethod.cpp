@@ -12,10 +12,18 @@ namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(): InequalityHandlingMethod() {
    }
 
+   std::pair<size_t, size_t> InequalityConstrainedMethod::get_dimensions(const OptimizationProblem& problem) const {
+      return {problem.number_variables, problem.number_constraints};
+   }
+
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy) {
       this->initial_point.resize(problem.number_variables);
       regularization_strategy.initialize_memory(problem, hessian_model);
+   }
+
+   void InequalityConstrainedMethod::set_reformulation_variables(const OptimizationProblem& problem, Iterate& initial_iterate) const {
+      // do nothing
    }
 
    void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
@@ -23,18 +31,19 @@ namespace uno {
 
    void InequalityConstrainedMethod::set_initial_point(const Vector<double>& point) {
       // copy the point into the member
-      this->initial_point = point;
+      // TODO this->initial_point = point;
    }
 
    void InequalityConstrainedMethod::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
-      problem.set_elastic_variable_values(current_iterate, [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
-         iterate.primals[elastic_index] = 0.;
-         iterate.feasibility_multipliers.lower_bounds[elastic_index] = 1.;
-         iterate.feasibility_multipliers.upper_bounds[elastic_index] = 0.;
+   void InequalityConstrainedMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Vector<double>& current_primals,
+         Multipliers& current_multipliers) {
+      problem.set_elastic_variable_values([&](size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
+         current_primals[elastic_index] = 0.;
+         current_multipliers.lower_bounds[elastic_index] = 1.;
+         current_multipliers.upper_bounds[elastic_index] = 0.;
       });
    }
 
@@ -54,8 +63,8 @@ namespace uno {
    }
 
    // auxiliary measure is 0 in inequality-constrained methods
-   void InequalityConstrainedMethod::set_auxiliary_measure(const Model& /*model*/, Iterate& iterate) {
-      iterate.progress.auxiliary = 0.;
+   double InequalityConstrainedMethod::compute_auxiliary_measure(const OptimizationProblem& /*first_reformulation*/, Iterate& /*iterate*/) {
+      return 0.;
    }
 
    double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const Model& /*model*/, const Iterate& /*current_iterate*/,

@@ -20,7 +20,8 @@ namespace uno {
       this->solver->initialize_memory(first_reformulation, hessian_model);
    }
 
-   void LPSubproblem::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
+   void LPSubproblem::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
+      InequalityConstrainedMethod::set_reformulation_variables(problem, initial_iterate);
    }
 
    void LPSubproblem::solve(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate,

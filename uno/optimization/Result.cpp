@@ -3,7 +3,6 @@
 
 #include <iomanip>
 #include "Result.hpp"
-#include "IterateStatus.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
@@ -11,14 +10,11 @@ namespace uno {
       DISCRETE << "Optimization status:\t\t\t" << optimization_status_to_message(this->optimization_status) << '\n';
       DISCRETE << "Iterate status:\t\t\t\t" << iterate_status_to_message(this->solution.status) << '\n';
 
-      DISCRETE << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution.evaluations.objective << '\n';
+      DISCRETE << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution.model_evaluations.objective << '\n';
       DISCRETE << "Primal feasibility:\t\t\t" << this->solution.primal_feasibility << '\n';
 
       DISCRETE << "┌ Stationarity residual:\t\t" << this->solution.residuals.stationarity << '\n';
       DISCRETE << "└ Complementarity residual:\t\t" << this->solution.residuals.complementarity << '\n';
-
-      DISCRETE << "┌ Feasibility stationarity residual:\t" << this->solution.residuals.stationarity << '\n';
-      DISCRETE << "└ Feasibility complementarity residual:\t" << this->solution.residuals.complementarity << '\n';
 
       DISCRETE << "┌ Infeasibility measure:\t\t" << this->solution.progress.infeasibility << '\n';
       DISCRETE << "│ Objective measure:\t\t\t" << this->solution.progress.objective(1.) << '\n';
@@ -28,14 +24,9 @@ namespace uno {
          DISCRETE << "Primal solution:\t\t\t"; print_vector(DISCRETE, view(this->solution.primals, 0, this->number_variables));
          DISCRETE << "┌ Constraint multipliers:\t\t"; print_vector(DISCRETE, this->solution.multipliers.constraints);
          DISCRETE << "│ Lower bound multipliers:\t\t"; print_vector(DISCRETE, view(this->solution.multipliers.lower_bounds, 0,
-               this->number_variables));
+            this->number_variables));
          DISCRETE << "└ Upper bound multipliers:\t\t"; print_vector(DISCRETE, view(this->solution.multipliers.upper_bounds, 0,
-               this->number_variables));
-         DISCRETE << "┌ Constraint feasibility multipliers:\t"; print_vector(DISCRETE, this->solution.feasibility_multipliers.constraints);
-         DISCRETE << "│ Lower bound feasibility multipliers:\t"; print_vector(DISCRETE, view(this->solution.feasibility_multipliers.lower_bounds, 0,
-               this->number_variables));
-         DISCRETE << "└ Upper bound feasibility multipliers:\t"; print_vector(DISCRETE, view(this->solution.feasibility_multipliers.upper_bounds, 0,
-               this->number_variables));
+            this->number_variables));
          DISCRETE << "Objective multiplier:\t\t\t" << this->solution.objective_multiplier << '\n';
       }
 

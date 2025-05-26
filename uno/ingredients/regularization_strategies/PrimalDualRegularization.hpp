@@ -119,7 +119,7 @@ namespace uno {
       this->dual_regularization = ElementType(0);
       DEBUG << "Testing factorization with regularization factors (0, 0)\n";
       size_t number_attempts = 1;
-      DEBUG << "Number of attempts: " << number_attempts << "\n\n";
+      DEBUG << "Number of attempts: " << number_attempts << '\n';
 
       // perform the symbolic analysis only once
       if (!this->symbolic_analysis_performed) {

@@ -5,9 +5,9 @@
 #include "l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
-#include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/LagrangianGradient.hpp"
+#include "optimization/Model.hpp"
 #include "symbolic/VectorExpression.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "tools/Infinity.hpp"
@@ -42,7 +42,7 @@ namespace uno {
       if (this->objective_multiplier != 0.) {
          iterate.evaluate_objective_gradient(this->model);
          // TODO change this
-         objective_gradient = iterate.evaluations.objective_gradient;
+         objective_gradient = iterate.model_evaluations.objective_gradient;
          scale(objective_gradient, this->objective_multiplier);
       }
       else {
@@ -66,7 +66,7 @@ namespace uno {
 
    void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
-      constraints = iterate.evaluations.constraints;
+      constraints = iterate.model_evaluations.constraints;
 
       // add the contribution of the elastic variables
       size_t elastic_index = this->model.number_variables;
@@ -88,7 +88,7 @@ namespace uno {
    void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
       iterate.evaluate_constraint_jacobian(this->model);
       // TODO change this
-      constraint_jacobian = iterate.evaluations.constraint_jacobian;
+      constraint_jacobian = iterate.model_evaluations.constraint_jacobian;
 
       // add the contribution of the elastic variables
       size_t elastic_index = this->model.number_variables;
@@ -144,14 +144,14 @@ namespace uno {
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // objective gradient
-      for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
+      for (auto [variable_index, derivative]: iterate.model_evaluations.objective_gradient) {
          lagrangian_gradient.objective_contribution[variable_index] += derivative;
       }
 
       // constraints
       for (size_t constraint_index: Range(this->number_constraints)) {
          if (multipliers.constraints[constraint_index] != 0.) {
-            for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
+            for (auto [variable_index, derivative]: iterate.model_evaluations.constraint_jacobian[constraint_index]) {
                lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
             }
          }
@@ -160,12 +160,17 @@ namespace uno {
       // bound constraints of original variables
       for (size_t variable_index: Range(this->model.number_variables)) {
          lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
-                                                                          multipliers.upper_bounds[variable_index]);
+            multipliers.upper_bounds[variable_index]);
       }
 
       // elastic variables
       size_t elastic_index = this->model.number_variables;
       for (size_t inequality_index: this->model.get_inequality_constraints()) {
+         assert(elastic_index < lagrangian_gradient.constraints_contribution.size() &&
+            "Elastic variables of inequality constraints: the index exceeds the size of lagrangian_gradient.constraints_contribution");
+         assert(inequality_index < multipliers.constraints.size() && "The index exceeds the size of multipliers.constraints");
+         assert(elastic_index < multipliers.lower_bounds.size() && "The index exceeds the size of multipliers.lower_bounds");
+
          if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
             lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
                multipliers.constraints[inequality_index] - multipliers.lower_bounds[elastic_index];
@@ -176,7 +181,11 @@ namespace uno {
          }
          elastic_index++;
       }
-      for ([[maybe_unused]] size_t _: this->model.get_equality_constraints()) {
+      for ([[maybe_unused]] size_t equality_index: this->model.get_equality_constraints()) {
+         assert(elastic_index < lagrangian_gradient.constraints_contribution.size() &&
+            "Elastic variables of equality constraints: the index exceeds the size of lagrangian_gradient.constraints_contribution");
+         assert(elastic_index+1 < multipliers.lower_bounds.size() && "The index exceeds the size of multipliers.lower_bounds");
+
          lagrangian_gradient.constraints_contribution[elastic_index] += 2*this->constraint_violation_coefficient -
             multipliers.lower_bounds[elastic_index] - multipliers.lower_bounds[elastic_index+1];
          elastic_index += 2;
@@ -262,12 +271,24 @@ namespace uno {
       return this->model.get_single_upper_bounded_variables();
    }
 
+   const Vector<size_t>& l1RelaxedProblem::get_fixed_variables() const {
+      return this->model.get_fixed_variables();
+   }
+
    double l1RelaxedProblem::constraint_lower_bound(size_t constraint_index) const {
       return this->model.constraint_lower_bound(constraint_index);
    }
 
    double l1RelaxedProblem::constraint_upper_bound(size_t constraint_index) const {
       return this->model.constraint_upper_bound(constraint_index);
+   }
+
+   const Collection<size_t>& l1RelaxedProblem::get_equality_constraints() const {
+      return this->model.get_equality_constraints();
+   }
+
+   const Collection<size_t>& l1RelaxedProblem::get_inequality_constraints() const {
+      return this->model.get_inequality_constraints();
    }
 
    size_t l1RelaxedProblem::number_objective_gradient_nonzeros() const {
@@ -302,22 +323,20 @@ namespace uno {
       this->proximal_center = new_proximal_center;
    }
 
-   void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t,
-         double)>& elastic_setting_function) const {
-      iterate.set_number_variables(this->number_variables);
+   void l1RelaxedProblem::set_elastic_variable_values(const std::function<void(size_t, size_t, double)>& elastic_setting_function) const {
       size_t elastic_index = this->model.number_variables;
       for (size_t inequality_index: this->model.get_inequality_constraints()) {
          if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
-            elastic_setting_function(iterate, inequality_index, elastic_index, 1.);
+            elastic_setting_function(inequality_index, elastic_index, 1.);
          }
          else { // positive part
-            elastic_setting_function(iterate, inequality_index, elastic_index, -1.);
+            elastic_setting_function(inequality_index, elastic_index, -1.);
          }
          elastic_index++;
       }
       for (size_t equality_index: this->model.get_equality_constraints()) {
-         elastic_setting_function(iterate, equality_index, elastic_index, 1.);
-         elastic_setting_function(iterate, equality_index, elastic_index+1, -1.);
+         elastic_setting_function(equality_index, elastic_index, 1.);
+         elastic_setting_function(equality_index, elastic_index+1, -1.);
          elastic_index += 2;
       }
    }

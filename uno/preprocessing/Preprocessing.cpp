@@ -2,39 +2,30 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Preprocessing.hpp"
+#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "model/Model.hpp"
-#include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/Model.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
    // compute a least-square approximation of the multipliers by solving a linear system
-   void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<size_t, double>& matrix, Vector<double>& rhs,
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers,
-         double multiplier_max_norm) {
-      current_iterate.evaluate_objective_gradient(model);
-      current_iterate.evaluate_constraint_jacobian(model);
+   void Preprocessing::compute_least_square_multipliers(const OptimizationProblem& problem, SymmetricMatrix<size_t, double>& matrix,
+         Vector<double>& rhs, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate,
+         Multipliers& multipliers, double multiplier_max_norm) {
       DEBUG << "Computing least-square multipliers\n";
       DEBUG2 << "Current primals: " << current_iterate.primals << '\n';
-
-      /* generate the right-hand side */
       rhs.fill(0.);
-      // objective gradient
-      for (const auto [variable_index, derivative]: current_iterate.evaluations.objective_gradient) {
-         rhs[variable_index] += model.objective_sign * derivative;
-      }
-      // variable bound constraints
-      for (size_t variable_index: Range(model.number_variables)) {
-         rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];
-      }
-      DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, view(rhs, 0, model.number_variables + model.number_constraints));
+
+      // generate the right-hand side: stationarity residual \nabla f(x) - z
+      problem.compute_least_square_stationarity(current_iterate, multipliers, rhs);
+      DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, rhs);
 
       // if the residuals on the RHS are all 0, the least-square multipliers are all 0
-      if (norm_inf(view(rhs, 0, model.number_variables + model.number_constraints)) == 0.) {
-         multipliers.fill(0.);
+      if (norm_inf(rhs) == 0.) {
+         multipliers.constraints.fill(0.);
          DEBUG << "Least-square multipliers are all 0.\n";
          return;
       }
@@ -42,30 +33,32 @@ namespace uno {
       /* build the symmetric matrix */
       matrix.reset();
       // identity block
-      for (size_t variable_index: Range(model.number_variables)) {
+      for (size_t variable_index: Range(problem.number_variables)) {
          matrix.insert(1., variable_index, variable_index);
          matrix.finalize_column(variable_index);
       }
-      // Jacobian of general constraints
-      for (size_t constraint_index: Range(model.number_constraints)) {
-         for (const auto [variable_index, derivative]: current_iterate.evaluations.constraint_jacobian[constraint_index]) {
-            matrix.insert(derivative, variable_index, model.number_variables + constraint_index);
+      // constraint Jacobian
+      RectangularMatrix<double> constraint_jacobian(problem.number_constraints, problem.number_variables);
+      problem.evaluate_constraint_jacobian(current_iterate, constraint_jacobian);
+      for (size_t constraint_index: Range(problem.number_constraints)) {
+         for (const auto [variable_index, derivative]: constraint_jacobian[constraint_index]) {
+            matrix.insert(derivative, variable_index, problem.number_variables + constraint_index);
          }
-         matrix.finalize_column(model.number_variables + constraint_index);
+         matrix.finalize_column(problem.number_variables + constraint_index);
       }
       DEBUG2 << "Matrix for least-square multipliers:\n" << matrix << '\n';
 
-      /* solve the system */
+      // solve the system
       Vector<double> solution(matrix.dimension());
       linear_solver.do_symbolic_analysis(matrix);
       linear_solver.do_numerical_factorization(matrix);
       linear_solver.solve_indefinite_system(matrix, rhs, solution);
 
       // if least-square multipliers too big, discard them. Otherwise, keep them
-      const auto trial_multipliers = view(solution, model.number_variables, model.number_variables + model.number_constraints);
+      const auto trial_multipliers = view(solution, problem.number_variables, problem.number_variables + problem.number_constraints);
       DEBUG2 << "Trial multipliers: "; print_vector(DEBUG2, trial_multipliers);
       if (norm_inf(trial_multipliers) <= multiplier_max_norm) {
-         multipliers = trial_multipliers;
+         multipliers.constraints = trial_multipliers;
       }
       else {
          DEBUG << "Ignoring the least-square multipliers\n";
@@ -86,7 +79,7 @@ namespace uno {
 
    void Preprocessing::enforce_linear_constraints(const Model& /*model*/, Vector<double>& /*primals*/, Multipliers& /*multipliers*/,
          QPSolver& /*qp_solver*/) {
-      WARNING << "Preprocessing::enforce_linear_constraints not implemented yet\n";
+      DEBUG << "Preprocessing::enforce_linear_constraints not implemented yet\n";
       /*
       const auto& linear_constraints = model.get_linear_constraints();
       INFO << "\nPreprocessing phase: the problem has " << linear_constraints.size() << " linear constraints\n";
