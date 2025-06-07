@@ -132,7 +132,8 @@ ${CXX} -shared $(flagon -Wl,--whole-archive) libuno.a $(flagon -Wl,--no-whole-ar
 cp libuno.a ${prefix}/lib/libuno.a
 cp libuno.${dlext} ${libdir}/libuno.${dlext}
 
-install_license ${WORKSPACE}/srcdir/Uno/LICENSE /usr/share/licenses/BQPD
+# Uno
+install_license ${WORKSPACE}/srcdir/Uno/LICENSE
 """
 
 # These are the platforms we will build for by default, unless further

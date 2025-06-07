@@ -68,7 +68,12 @@ install -v -m 755 "uno_ampl${exeext}" -t "${bindir}"
 ${CXX} -shared $(flagon -Wl,--whole-archive) libuno.a $(flagon -Wl,--no-whole-archive) -o libuno.${dlext} -L${libdir} -l${OMP} -l${LBT} -ldmumps -lmetis -lhsl -lhighs
 # cp libuno.${dlext} ${libdir}/libuno.${dlext}
 
+# Uno
 install_license ${WORKSPACE}/srcdir/Uno/LICENSE
+
+# BQPD
+cp ${prefix}/share/licenses/BQPD/LICENSE ${WORKSPACE}/srcdir/Uno/LICENSE_BQPD
+install_license ${WORKSPACE}/srcdir/Uno/LICENSE_BQPD
 """
 
 platforms = supported_platforms()
