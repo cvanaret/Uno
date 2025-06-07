@@ -109,7 +109,7 @@ cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
     -DHIGHS=${LIBHIGHS} \
-    -DBQPD=${libdir}/libbpqd.a \
+    -DBQPD=${libdir}/libbqpd.a \
     -DHSL=${libdir}/libhsl.${dlext} \
     -DMUMPS_INCLUDE_DIR=${includedir} \
     -DMETIS_INCLUDE_DIR=${includedir} \
