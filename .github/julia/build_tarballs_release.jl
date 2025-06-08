@@ -109,6 +109,7 @@ cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
     -DHIGHS=${LIBHIGHS} \
+    -DBQPD=${libdir}/libbqpd.a \
     -DHSL=${libdir}/libhsl.${dlext} \
     -DMUMPS_INCLUDE_DIR=${includedir} \
     -DMETIS_INCLUDE_DIR=${includedir} \
@@ -131,6 +132,7 @@ ${CXX} -shared $(flagon -Wl,--whole-archive) libuno.a $(flagon -Wl,--no-whole-ar
 cp libuno.a ${prefix}/lib/libuno.a
 cp libuno.${dlext} ${libdir}/libuno.${dlext}
 
+# Uno
 install_license ${WORKSPACE}/srcdir/Uno/LICENSE
 """
 
@@ -149,6 +151,7 @@ products = [
 
 # Dependencies that must be installed before this package can be built
 dependencies = [
+    BuildDependency(PackageSpec(name="BQPD_jll", uuid="1325ac01-0a49-589f-8355-43321054aaab")),
     Dependency(PackageSpec(name="HiGHS_jll", uuid="8fd58aa0-07eb-5a78-9b36-339c94fd15ea"), compat="1.11.0"),
     Dependency(PackageSpec(name="HSL_jll", uuid="017b0a0e-03f4-516a-9b91-836bbd1904dd")),
     Dependency(PackageSpec(name="METIS_jll", uuid="d00139f3-1899-568f-a2f0-47f597d42d70")),
