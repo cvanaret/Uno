@@ -10,6 +10,7 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/regularization_strategies/UnstableRegularization.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
@@ -23,8 +24,8 @@ namespace uno {
    FeasibilityRestoration::FeasibilityRestoration(size_t number_bound_constraints, const Options& options) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         optimality_subproblem_layer(options),
-         feasibility_subproblem_layer(options),
+         optimality_subproblem_layer(1., options),
+         feasibility_subproblem_layer(0., options),
          optimality_inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
          feasibility_inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
          linear_feasibility_tolerance(options.get_double("tolerance")),
@@ -207,9 +208,14 @@ namespace uno {
       }
       ConstraintRelaxationStrategy::set_progress_statistics(statistics, model, trial_iterate);
       if (accept_iterate) {
-         user_callbacks.notify_acceptable_iterate(trial_iterate.primals,
-               this->current_phase == Phase::OPTIMALITY ? trial_iterate.multipliers : trial_iterate.feasibility_multipliers,
-               objective_multiplier);
+         if (this->current_phase == Phase::OPTIMALITY) {
+            this->optimality_subproblem_layer.hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
+            user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, objective_multiplier);
+         }
+         else {
+            this->feasibility_subproblem_layer.hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
+            user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.feasibility_multipliers, objective_multiplier);
+         }
       }
       return accept_iterate;
    }
@@ -242,7 +248,9 @@ namespace uno {
    }
 
    std::string FeasibilityRestoration::get_name() const {
-      return "feasibility restoration";
+      return "feasibility restoration " + this->optimality_inequality_handling_method->get_name() + " with " +
+         this->optimality_subproblem_layer.hessian_model->get_name() + " Hessian and " +
+         this->optimality_subproblem_layer.regularization_strategy->get_name() + " regularization";
    }
 
    size_t FeasibilityRestoration::get_hessian_evaluation_count() const {

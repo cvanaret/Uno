@@ -7,11 +7,19 @@
 
 namespace uno {
    void ZeroHessian::initialize(const Model& /*model*/) {
+      // do nothing
+   }
 
+   void ZeroHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+      // do nothing
    }
 
    size_t ZeroHessian::number_nonzeros(const Model& /*model*/) const {
       return 0;
+   }
+
+   void ZeroHessian::notify_accepted_iterate(const Model& /*model*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
+      // do nothing
    }
 
    void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
@@ -26,5 +34,9 @@ namespace uno {
    void ZeroHessian::compute_hessian_vector_product(const Model& /*model*/, const Vector<double>& /*vector*/, double /*objective_multiplier*/,
          const Vector<double>& /*constraint_multipliers*/, Vector<double>& result) {
       result.fill(0.);
+   }
+
+   std::string ZeroHessian::get_name() const {
+      return "zero";
    }
 }

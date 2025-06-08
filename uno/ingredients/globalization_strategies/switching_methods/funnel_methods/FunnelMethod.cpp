@@ -127,7 +127,7 @@ namespace uno {
    }
 
    std::string FunnelMethod::get_name() const {
-      return "funnel method";
+      return "funnel";
    }
 
    double FunnelMethod::compute_actual_objective_reduction(double current_objective_measure, double trial_objective_measure) {

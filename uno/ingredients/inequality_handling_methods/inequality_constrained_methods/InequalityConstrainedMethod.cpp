@@ -9,9 +9,6 @@
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
-   InequalityConstrainedMethod::InequalityConstrainedMethod(): InequalityHandlingMethod() {
-   }
-
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy) {
       this->initial_point.resize(problem.number_variables);

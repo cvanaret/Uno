@@ -15,22 +15,6 @@ namespace uno {
          model(model), number_variables(number_variables), number_constraints(number_constraints) {
    }
 
-   bool OptimizationProblem::is_constrained() const {
-      return (0 < this->number_constraints);
-   }
-
-   bool OptimizationProblem::has_inequality_constraints() const {
-      return (!this->model.get_inequality_constraints().empty());
-   }
-
-   bool OptimizationProblem::has_fixed_variables() const {
-      return (!this->model.get_fixed_variables().empty());
-   }
-
-   double OptimizationProblem::get_objective_multiplier() const {
-      return 1.;
-   }
-
    void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const {
       iterate.evaluate_objective_gradient(this->model);
       // TODO change this
@@ -56,6 +40,57 @@ namespace uno {
    void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, const Vector<double>& vector, const Multipliers& multipliers,
          Vector<double>& result) const {
       hessian_model.compute_hessian_vector_product(this->model, vector, this->get_objective_multiplier(), multipliers.constraints, result);
+   }
+
+   // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
+   void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
+         const Multipliers& multipliers) const {
+      return this->model.evaluate_lagrangian_gradient(lagrangian_gradient, iterate, multipliers);
+   }
+
+   double OptimizationProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
+         const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
+      // bound constraints
+      const Range variables_range = Range(this->model.number_variables);
+      const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
+         if (0. < multipliers.lower_bounds[variable_index]) {
+            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index)) - shift_value;
+         }
+         if (multipliers.upper_bounds[variable_index] < 0.) {
+            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->model.variable_upper_bound(variable_index)) - shift_value;
+         }
+         return 0.;
+      }};
+
+      // inequality constraints
+      const VectorExpression constraint_complementarity{this->model.get_inequality_constraints(), [&](size_t constraint_index) {
+         if (0. < multipliers.constraints[constraint_index]) { // lower bound
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_lower_bound(constraint_index)) -
+                   shift_value;
+         }
+         else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_upper_bound(constraint_index)) -
+                   shift_value;
+         }
+         return 0.;
+      }};
+      return norm(residual_norm, variable_complementarity, constraint_complementarity);
+   }
+
+   bool OptimizationProblem::is_constrained() const {
+      return (0 < this->number_constraints);
+   }
+
+   bool OptimizationProblem::has_inequality_constraints() const {
+      return (!this->model.get_inequality_constraints().empty());
+   }
+
+   bool OptimizationProblem::has_fixed_variables() const {
+      return (!this->model.get_fixed_variables().empty());
+   }
+
+   double OptimizationProblem::get_objective_multiplier() const {
+      return 1.;
    }
 
    size_t OptimizationProblem::get_number_original_variables() const {
@@ -111,61 +146,5 @@ namespace uno {
       // norm of the scaled Lagrangian gradient
       const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
       return norm(residual_norm, scaled_lagrangian);
-   }
-
-   // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
-   void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-         const Multipliers& multipliers) const {
-      lagrangian_gradient.objective_contribution.fill(0.);
-      lagrangian_gradient.constraints_contribution.fill(0.);
-
-      // objective gradient
-      for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
-         lagrangian_gradient.objective_contribution[variable_index] += derivative;
-      }
-
-      // constraints
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         if (multipliers.constraints[constraint_index] != 0.) {
-            for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
-               lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
-            }
-         }
-      }
-
-      // bound constraints of original variables
-      for (size_t variable_index: Range(this->number_variables)) {
-         lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
-                                                                          multipliers.upper_bounds[variable_index]);
-      }
-   }
-
-   double OptimizationProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
-         const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
-      // bound constraints
-      const Range variables_range = Range(this->model.number_variables);
-      const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
-         if (0. < multipliers.lower_bounds[variable_index]) {
-            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index)) - shift_value;
-         }
-         if (multipliers.upper_bounds[variable_index] < 0.) {
-            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->model.variable_upper_bound(variable_index)) - shift_value;
-         }
-         return 0.;
-      }};
-
-      // inequality constraints
-      const VectorExpression constraint_complementarity{this->model.get_inequality_constraints(), [&](size_t constraint_index) {
-         if (0. < multipliers.constraints[constraint_index]) { // lower bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_lower_bound(constraint_index)) -
-                   shift_value;
-         }
-         else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_upper_bound(constraint_index)) -
-                   shift_value;
-         }
-         return 0.;
-      }};
-      return norm(residual_norm, variable_complementarity, constraint_complementarity);
    }
 } // namespace

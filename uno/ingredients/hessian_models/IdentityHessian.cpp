@@ -11,8 +11,16 @@ namespace uno {
       // do nothing
    }
 
+   void IdentityHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+      // do nothing
+   }
+
    size_t IdentityHessian::number_nonzeros(const Model& model) const {
       return model.number_variables;
+   }
+
+   void IdentityHessian::notify_accepted_iterate(const Model& /*model*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
+      // do nothing
    }
 
    void IdentityHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
@@ -31,5 +39,9 @@ namespace uno {
       for (size_t variable_index: Range(model.number_variables)) {
          result[variable_index] = vector[variable_index];
       }
+   }
+
+   std::string IdentityHessian::get_name() const {
+      return "identity";
    }
 } // namespace

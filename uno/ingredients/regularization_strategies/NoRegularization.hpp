@@ -39,6 +39,10 @@ namespace uno {
             DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) override {
          // do nothing
       }
+
+      [[nodiscard]] std::string get_name() const override {
+         return "no";
+      }
    };
 } // namespace
 
