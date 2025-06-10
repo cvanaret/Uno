@@ -51,6 +51,12 @@ jobs:
         mkdir deps
         tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
 
+    - name: Install Fortran compiler
+      uses: fortran-lang/setup-fortran@main
+      with:
+        compiler: 'gcc'
+        version: '13'
+
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
