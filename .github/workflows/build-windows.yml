@@ -42,6 +42,7 @@ jobs:
       run: |
         VERSION_BQPD="1.0.0"
         PLATFORM="x86_64-w64-mingw32"
+        choco install wget
         wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
         mkdir deps
         tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
