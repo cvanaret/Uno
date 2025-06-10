@@ -47,15 +47,16 @@ namespace uno {
    // preallocate a bunch of stuff
    BQPDSolver::BQPDSolver(const Options& options):
          QPSolver(),
-         regularize(options.get_string("regularization_strategy") == "primal" ||
-            options.get_string("regularization_strategy") == "primal_dual"),
          kmax_limit(options.get_int("BQPD_kmax")),
          alp(static_cast<size_t>(this->mlp)),
          lp(static_cast<size_t>(this->mlp)),
          print_subproblem(options.get_bool("print_subproblem")) {
    }
 
-   void BQPDSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) {
+   void BQPDSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy) {
+      regularization_strategy.initialize_memory(problem, hessian_model);
+
       this->lower_bounds.resize(problem.number_variables + problem.number_constraints);
       this->upper_bounds.resize(problem.number_variables + problem.number_constraints);
       this->constraints.resize(problem.number_constraints);
@@ -64,8 +65,11 @@ namespace uno {
       this->bqpd_jacobian.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros()); // Jacobian + objective gradient
       this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros() + problem.number_constraints + 3);
       const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
-      this->hessian = SymmetricMatrix<size_t, double>(problem.number_variables, number_hessian_nonzeros, this->regularize, "CSC");
-      this->kmax = (0 < number_hessian_nonzeros) ? this->kmax_limit : 0;
+      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros +
+         (regularization_strategy.performs_primal_regularization() ? problem.number_variables : 0);
+      this->hessian = SymmetricMatrix<size_t, double>(problem.number_variables, number_hessian_nonzeros,
+         regularization_strategy.performs_primal_regularization(), "CSC");
+      this->kmax = (0 < number_regularized_hessian_nonzeros) ? this->kmax_limit : 0;
       this->active_set.resize(problem.number_variables + problem.number_constraints);
       // default active set
       for (size_t variable_index: Range(problem.number_variables + problem.number_constraints)) {
@@ -75,8 +79,8 @@ namespace uno {
       this->gradient_solution.resize(problem.number_variables);
       this->residuals.resize(problem.number_variables + problem.number_constraints);
       this->e.resize(problem.number_variables + problem.number_constraints);
-      this->size_hessian_sparsity = number_hessian_nonzeros + problem.number_variables + 3; // TODO
-      this->size_hessian_workspace = number_hessian_nonzeros + static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) +
+      this->size_hessian_sparsity = number_regularized_hessian_nonzeros + problem.number_variables + 3; // TODO
+      this->size_hessian_workspace = number_regularized_hessian_nonzeros + static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) +
          2 * problem.number_variables + problem.number_constraints + this->mxwk0;
       this->size_hessian_sparsity_workspace = this->size_hessian_sparsity + static_cast<size_t>(this->kmax) + this->mxiwk0;
       this->workspace.resize(this->size_hessian_workspace);

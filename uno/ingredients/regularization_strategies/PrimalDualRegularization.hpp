@@ -35,6 +35,9 @@ namespace uno {
       void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
 
+      [[nodiscard]] bool performs_primal_regularization() const override;
+      [[nodiscard]] bool performs_dual_regularization() const override;
+
    protected:
       const std::string& optional_linear_solver_name;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> optional_linear_solver{};
@@ -198,6 +201,16 @@ namespace uno {
          }
       }
       statistics.set("regulariz", this->primal_regularization);
+   }
+
+   template <typename ElementType>
+   bool PrimalDualRegularization<ElementType>::performs_primal_regularization() const {
+      return true;
+   }
+
+   template <typename ElementType>
+   bool PrimalDualRegularization<ElementType>::performs_dual_regularization() const {
+      return true;
    }
 } // namespace
 
