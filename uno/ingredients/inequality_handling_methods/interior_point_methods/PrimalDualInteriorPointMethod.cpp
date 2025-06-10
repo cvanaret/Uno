@@ -41,16 +41,19 @@ namespace uno {
    void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy) {
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
+      regularization_strategy.initialize_memory(barrier_problem, hessian_model);
+
       this->objective_gradient.reserve(barrier_problem.number_objective_gradient_nonzeros());
       this->constraints.resize(barrier_problem.number_constraints);
       this->constraint_jacobian.resize(barrier_problem.number_constraints, barrier_problem.number_variables);
       const size_t number_hessian_nonzeros = barrier_problem.number_hessian_nonzeros(hessian_model);
-      const size_t number_augmented_system_nonzeros = number_hessian_nonzeros + barrier_problem.number_jacobian_nonzeros() +
-         barrier_problem.number_variables + barrier_problem.number_constraints; // primal-dual regularization,
+      const size_t number_augmented_system_nonzeros = barrier_problem.number_hessian_nonzeros(hessian_model) +
+         barrier_problem.number_jacobian_nonzeros() +
+         (regularization_strategy.performs_primal_regularization() ? problem.number_variables : 0) +
+         (regularization_strategy.performs_dual_regularization() ? problem.number_constraints : 0);
       this->hessian = SymmetricMatrix<size_t, double>(barrier_problem.number_variables, number_hessian_nonzeros, false, "COO");
       this->linear_solver->initialize_memory(barrier_problem.number_variables + barrier_problem.number_constraints,
          number_augmented_system_nonzeros);
-      regularization_strategy.initialize_memory(barrier_problem, hessian_model);
       this->augmented_system.matrix = SymmetricMatrix<size_t, double>(barrier_problem.number_variables + barrier_problem.number_constraints,
          number_augmented_system_nonzeros,
          true, "COO");

@@ -34,6 +34,9 @@ namespace uno {
       virtual void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
          ElementType dual_regularization_parameter, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) = 0;
+
+      [[nodiscard]] virtual bool performs_primal_regularization() const = 0;
+      [[nodiscard]] virtual bool performs_dual_regularization() const = 0;
    };
 } // namespace
 

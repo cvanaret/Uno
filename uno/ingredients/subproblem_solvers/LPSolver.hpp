@@ -11,6 +11,8 @@ namespace uno {
    class Iterate;
    class OptimizationProblem;
    template <typename ElementType>
+   class RegularizationStrategy;
+   template <typename ElementType>
    class Vector;
    struct WarmstartInformation;
 
@@ -23,7 +25,8 @@ namespace uno {
       LPSolver() = default;
       virtual ~LPSolver() = default;
 
-      virtual void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) = 0;
+      virtual void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy) = 0;
 
       virtual void solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point, Direction& direction,
             double trust_region_radius, const WarmstartInformation& warmstart_information) = 0;

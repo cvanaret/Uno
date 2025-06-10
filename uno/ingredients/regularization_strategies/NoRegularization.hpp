@@ -39,6 +39,14 @@ namespace uno {
             DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) override {
          // do nothing
       }
+
+      [[nodiscard]] bool performs_primal_regularization() const override {
+         return false;
+      }
+
+      [[nodiscard]] bool performs_dual_regularization() const override {
+         return false;
+      }
    };
 } // namespace
 

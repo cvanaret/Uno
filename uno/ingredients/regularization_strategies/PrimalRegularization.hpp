@@ -34,6 +34,9 @@ namespace uno {
          ElementType dual_regularization_parameter, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
 
+      [[nodiscard]] bool performs_primal_regularization() const override;
+      [[nodiscard]] bool performs_dual_regularization() const override;
+
    protected:
       const std::string& optional_linear_solver_name;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> optional_linear_solver{};
@@ -136,6 +139,16 @@ namespace uno {
          ElementType /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) {
       throw std::runtime_error("PrimalRegularization<ElementType>::regularize_augmented_matrix not implemented yet");
+   }
+
+   template <typename ElementType>
+   bool PrimalRegularization<ElementType>::performs_primal_regularization() const {
+      return true;
+   }
+
+   template <typename ElementType>
+   bool PrimalRegularization<ElementType>::performs_dual_regularization() const {
+      return false;
    }
 } // namespace
 

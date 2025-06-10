@@ -48,7 +48,8 @@ namespace uno {
    public:
       explicit BQPDSolver(const Options& options);
 
-      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) override;
+      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy) override;
 
       void solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point, Direction& direction,
          double trust_region_radius, const WarmstartInformation& warmstart_information) override;
@@ -60,7 +61,6 @@ namespace uno {
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
 
    private:
-      const bool regularize;
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
       std::vector<double> constraints{};
       SparseVector<double> linear_objective{};

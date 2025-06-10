@@ -16,7 +16,8 @@ namespace uno {
       this->highs_solver.setOptionValue("output_flag", "false");
    }
 
-   void HiGHSSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& /*hessian_model*/) {
+   void HiGHSSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& /*hessian_model*/,
+         RegularizationStrategy<double>& /*regularization_strategy*/) {
       this->constraints.resize(problem.number_constraints);
       this->linear_objective.reserve(problem.number_objective_gradient_nonzeros());
       this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
