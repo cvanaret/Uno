@@ -30,8 +30,7 @@ namespace uno {
       this->initial_point.resize(problem.number_variables);
       regularization_strategy.initialize_memory(problem, hessian_model);
       this->LP_direction = Direction(problem.number_variables, problem.number_constraints);
-      NoRegularization<double> no_regularization{};
-      this->LP_solver->initialize_memory(problem, ZeroHessian(), no_regularization);
+      this->LP_solver->initialize_memory(problem, this->LP_hessian_model, this->LP_regularization_strategy);
       this->QP_solver->initialize_memory(problem, hessian_model, regularization_strategy);
    }
 
@@ -78,6 +77,7 @@ namespace uno {
       Subproblem EQP_subproblem{fixed_active_set_problem, current_iterate, current_multipliers, hessian_model,
          regularization_strategy, trust_region_radius};
       this->solve_EQP(statistics, EQP_subproblem, current_multipliers, direction, warmstart_information);
+
       DEBUG << "d^*(EQP) = " << direction << '\n';
       // reset the initial point
       this->initial_point.fill(0.);
@@ -140,7 +140,7 @@ namespace uno {
       InequalityHandlingMethod::compute_dual_displacements(current_multipliers, this->LP_direction.multipliers);
       this->number_subproblems_solved++;
    }
-
+   
    void LPEQPMethod::solve_EQP(Statistics& statistics, Subproblem& subproblem, const Multipliers& current_multipliers,
          Direction& direction, const WarmstartInformation& warmstart_information) {
       this->QP_solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
