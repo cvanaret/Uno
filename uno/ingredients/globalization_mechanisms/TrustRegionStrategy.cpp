@@ -41,6 +41,7 @@ namespace uno {
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
+      this->reset_radius();
 
       size_t number_iterations = 0;
       bool termination = false;
@@ -63,13 +64,14 @@ namespace uno {
                statistics.set("status", "unbounded subproblem");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius_aggressively();
-               warmstart_information.whole_problem_changed();
+               warmstart_information.variable_bounds_changed = true;
             }
             else if (direction.status == SubproblemStatus::ERROR) {
                this->set_statistics(statistics, direction);
                statistics.set("status", "solver error");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius();
+               // reset the Hessian representation of the subproblem solver
                warmstart_information.whole_problem_changed();
             }
             else {
@@ -81,7 +83,6 @@ namespace uno {
                   model, current_iterate, trial_iterate, direction, warmstart_information, user_callbacks);
                if (is_acceptable) {
                   constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
-                  this->reset_radius();
                   termination = true;
                }
                else {
@@ -95,8 +96,9 @@ namespace uno {
          catch (const EvaluationError&) {
             statistics.set("status", "eval. error");
             if (Logger::level == INFO) statistics.print_current_line();
+            DEBUG << "A function could not be evaluated. The trust-region radius will be reduced\n";
             this->decrease_radius();
-            warmstart_information.whole_problem_changed();
+            warmstart_information.variable_bounds_changed = true;
          }
          if (!is_acceptable && this->radius < this->minimum_radius) {
             throw std::runtime_error("Small radius");
@@ -184,7 +186,7 @@ namespace uno {
 
    void TrustRegionStrategy::decrease_radius_aggressively() {
       this->radius /= this->aggressive_decrease_factor;
-      DEBUG << "Trust-region radius decreased to " << this->radius << '\n';
+      DEBUG << "Trust-region radius aggressively decreased to " << this->radius << '\n';
    }
 
    void TrustRegionStrategy::reset_radius() {
