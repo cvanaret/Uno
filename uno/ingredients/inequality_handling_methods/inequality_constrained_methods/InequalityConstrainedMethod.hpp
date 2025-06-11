@@ -31,6 +31,7 @@ namespace uno {
 
       // progress measures
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
+      static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
       void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate&,
          const Vector<double>&, double) const override;
@@ -46,8 +47,6 @@ namespace uno {
       std::unique_ptr<LPSolver> solver{};
       Vector<double> initial_point{};
       const Options& options; // copy of the options for delayed allocation of solver
-
-      static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
    };
 } // namespace
 

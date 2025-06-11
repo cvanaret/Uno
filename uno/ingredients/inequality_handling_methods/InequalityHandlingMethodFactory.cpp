@@ -5,6 +5,7 @@
 #include "InequalityHandlingMethod.hpp"
 #include "InequalityHandlingMethodFactory.hpp"
 #include "inequality_constrained_methods/InequalityConstrainedMethod.hpp"
+#include "equality_constrained_methods/LPEQPMethod.hpp"
 #include "interior_point_methods/PrimalDualInteriorPointMethod.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
@@ -18,6 +19,10 @@ namespace uno {
       // inequality-constrained methods
       if (inequality_handling_method == "inequality_constrained") {
          return std::make_unique<InequalityConstrainedMethod>(options);
+      }
+      // equality-constrained methods
+      else if (inequality_handling_method == "LPEQP") {
+         return std::make_unique<LPEQPMethod>(options);
       }
       // interior-point method
       else if (inequality_handling_method == "primal_dual_interior_point") {
