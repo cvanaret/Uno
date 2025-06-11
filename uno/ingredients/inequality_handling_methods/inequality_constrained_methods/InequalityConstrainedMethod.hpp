@@ -54,8 +54,6 @@ namespace uno {
       std::unique_ptr<InequalityConstrainedSolver> solver{};
       Vector<double> initial_point{};
       const Options& options; // copy of the options for delayed allocation of solver
-
-      static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
    };
 } // namespace
 
