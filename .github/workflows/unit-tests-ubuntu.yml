@@ -52,10 +52,19 @@ jobs:
         sudo ln -s /usr/lib/libgtest.a /usr/local/lib/googletest/libgtest.a
         sudo ln -s /usr/lib/libgtest_main.a /usr/local/lib/googletest/libgtest_main.a
 
+    - name: Download BQPD
+      shell: bash
+      run: |
+        VERSION_BQPD="1.0.0"
+        PLATFORM="x86_64-linux-gnu"
+        wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
+        mkdir deps
+        tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
+
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DWITH_GTEST=ON
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DWITH_GTEST=ON -DBQPD=./deps/lib/libbqpd.a
 
     - name: Build
       # Build your program with the given configuration
