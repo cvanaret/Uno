@@ -54,11 +54,22 @@ jobs:
     - name: add MinGW64 directory to path
       run: echo "C:\mingw64\bin" >> "$GITHUB_PATH"
 
+    - name: Install Intel Fortran Compiler
+      run: choco install intel-oneapi-compiler-fortran --yes
+
     - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DBQPD=".\deps\lib\libbqpd.a" .
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+        cmake -G "NMake Makefiles" ^
+              -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} ^
+              -DCMAKE_C_COMPILER=cl ^
+              -DCMAKE_CXX_COMPILER=cl ^
+              -DCMAKE_Fortran_COMPILER=ifx ^
+              -DBQPD=.\deps\lib\libbqpd.a .
 
     - name: Build
-      # Build your program with the given configuration
-      run: nmake
+      shell: cmd
+      run: |
+        call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+        nmake
