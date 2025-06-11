@@ -91,12 +91,13 @@ namespace uno {
 
       void set_up_subproblem(const OptimizationProblem& problem, Iterate& current_iterate, double trust_region_radius,
          const WarmstartInformation& warmstart_information);
+      void display_subproblem(const OptimizationProblem& problem, const Vector<double>& initial_point);
       void solve_subproblem(const OptimizationProblem& problem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
       void save_hessian_in_local_format();
       void save_gradients_to_local_format(size_t number_constraints);
-      void set_multipliers(size_t number_variables, Multipliers& direction_multipliers);
+      void assemble_direction(size_t number_variables, Direction& direction) const;
       static BQPDStatus bqpd_status_from_int(int ifail);
       static SubproblemStatus status_from_bqpd_status(BQPDStatus bqpd_status);
    };
