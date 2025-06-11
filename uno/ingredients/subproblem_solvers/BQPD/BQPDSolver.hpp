@@ -95,7 +95,7 @@ namespace uno {
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
       void hide_pointers_in_workspace();
       void save_gradients_to_local_format(size_t number_constraints);
-      void set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const;
+      void assemble_direction(size_t number_variables, Direction& direction) const;
       static BQPDStatus bqpd_status_from_int(int ifail);
       static SubproblemStatus status_from_bqpd_status(BQPDStatus bqpd_status);
    };
