@@ -26,7 +26,7 @@ namespace uno {
       this->initial_point.resize(problem.number_variables);
       regularization_strategy.initialize_memory(problem, hessian_model);
       this->LP_direction = Direction(problem.number_variables, problem.number_constraints);
-      this->LP_solver->initialize_memory(problem, this->LP_hessian_model, regularization_strategy);
+      this->LP_solver->initialize_memory(problem, ZeroHessian(), regularization_strategy);
       this->QP_solver->initialize_memory(problem, hessian_model, regularization_strategy);
    }
 
@@ -52,6 +52,7 @@ namespace uno {
       this->solve_LP(statistics, problem, current_iterate, current_multipliers, this->LP_direction, subproblem_layer,
          trust_region_radius, warmstart_information);
       DEBUG << "d^*(LP) = " << this->LP_direction << '\n';
+
       if (this->LP_direction.status == SubproblemStatus::INFEASIBLE) {
          DEBUG << "Infeasible LP, EQP direction will not be computed.\n";
          direction = this->LP_direction;
@@ -60,15 +61,20 @@ namespace uno {
          return;
       }
 
+      // TODO compute Cauchy point
+
       // set up EQP subproblem: set active constraints as equations and inactive bounds as +/-INF
       const EQPProblem EQP_problem(problem, this->LP_direction.active_set);
 
       // compute EQP direction
-      this->solve_QP(statistics, EQP_problem, current_iterate, current_multipliers, direction, subproblem_layer,
+      this->solve_EQP(statistics, EQP_problem, current_iterate, current_multipliers, direction, subproblem_layer,
          trust_region_radius, warmstart_information);
       DEBUG << "d^*(EQP) = " << direction << '\n';
       // reset the initial point
       this->initial_point.fill(0.);
+
+      // TODO compute convex combination of the Cauchy and EQP directions
+
    }
 
    void LPEQPMethod::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
@@ -128,7 +134,7 @@ namespace uno {
       this->number_subproblems_solved++;
    }
 
-   void LPEQPMethod::solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+   void LPEQPMethod::solve_EQP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius,
          const WarmstartInformation& warmstart_information) {
       this->QP_solver->solve(statistics, problem, current_iterate, current_multipliers, this->initial_point, direction,

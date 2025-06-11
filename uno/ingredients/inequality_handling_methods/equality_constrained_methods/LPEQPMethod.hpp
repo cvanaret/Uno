@@ -44,7 +44,6 @@ namespace uno {
    protected:
       Vector<double> initial_point{};
       const bool enforce_linear_constraints_at_initial_iterate;
-      const ZeroHessian LP_hessian_model{};
       Direction LP_direction{};
       // pointers to allow polymorphism
       const std::unique_ptr<LPSolver> LP_solver;
@@ -54,7 +53,7 @@ namespace uno {
       void solve_LP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius,
          const WarmstartInformation& warmstart_information);
-      void solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+      void solve_EQP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius,
          const WarmstartInformation& warmstart_information);
    };
