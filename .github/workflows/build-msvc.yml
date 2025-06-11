@@ -54,13 +54,15 @@ jobs:
     - name: add MinGW64 directory to path
       run: echo "C:\mingw64\bin" >> "$GITHUB_PATH"
 
-    - name: Install Intel Fortran Compiler
-      run: choco install intel-oneapi-compiler-fortran --yes
+    - name: Install Fortran compiler
+      uses: fortran-lang/setup-fortran@main
+      with:
+        compiler: 'intel'
+        version: '2025.0'
 
     - name: Configure CMake
       shell: cmd
       run: |
-        call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
         cmake -G "NMake Makefiles" ^
               -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} ^
               -DCMAKE_C_COMPILER=cl ^
@@ -69,7 +71,4 @@ jobs:
               -DBQPD=.\deps\lib\libbqpd.a .
 
     - name: Build
-      shell: cmd
-      run: |
-        call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat"
-        nmake
+      run: nmake
