@@ -55,9 +55,6 @@ jobs:
         mkdir deps
         tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
 
-    - name: add MinGW64 directory to path
-      run: echo "C:\mingw64\bin" >> "$GITHUB_PATH"
-
     - name: Install Fortran compiler
       uses: fortran-lang/setup-fortran@main
       with:
