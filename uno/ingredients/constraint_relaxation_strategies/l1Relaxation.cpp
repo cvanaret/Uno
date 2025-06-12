@@ -6,8 +6,11 @@
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
+#include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
+#include "ingredients/regularization_strategies/RegularizationStrategyFactory.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
@@ -28,8 +31,10 @@ namespace uno {
          ConstraintRelaxationStrategy(options),
          penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         l1_relaxed_subproblem_layer(options),
-         feasibility_subproblem_layer(options),
+         l1_relaxed_hessian_model(HessianModelFactory::create(options)),
+         feasibility_hessian_model(HessianModelFactory::create(options)),
+         l1_relaxed_regularization_strategy(RegularizationStrategyFactory::create(options)),
+         feasibility_regularization_strategy(RegularizationStrategyFactory::create(options)),
          inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
          feasibility_inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
          tolerance(options.get_double("tolerance")),
@@ -49,20 +54,20 @@ namespace uno {
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
 
       // memory allocation
-      this->l1_relaxed_subproblem_layer.hessian_model->initialize(model);
-      this->feasibility_subproblem_layer.hessian_model->initialize(model);
-      this->inequality_handling_method->initialize(l1_relaxed_problem, *this->l1_relaxed_subproblem_layer.hessian_model,
-         *this->l1_relaxed_subproblem_layer.regularization_strategy);
-      this->feasibility_inequality_handling_method->initialize(feasibility_problem, *this->feasibility_subproblem_layer.hessian_model,
-         *this->feasibility_subproblem_layer.regularization_strategy);
+      this->l1_relaxed_hessian_model->initialize(model);
+      this->feasibility_hessian_model->initialize(model);
+      this->inequality_handling_method->initialize(l1_relaxed_problem, *this->l1_relaxed_hessian_model,
+         *this->l1_relaxed_regularization_strategy);
+      this->feasibility_inequality_handling_method->initialize(feasibility_problem, *this->feasibility_hessian_model,
+         *this->feasibility_regularization_strategy);
       this->trial_multipliers.constraints.resize(l1_relaxed_problem.number_constraints);
       this->trial_multipliers.lower_bounds.resize(l1_relaxed_problem.number_variables);
       this->trial_multipliers.upper_bounds.resize(l1_relaxed_problem.number_variables);
       direction = Direction(l1_relaxed_problem.number_variables, l1_relaxed_problem.number_constraints);
 
       // statistics
-      this->l1_relaxed_subproblem_layer.initialize_statistics(statistics, options);
-      this->feasibility_subproblem_layer.initialize_statistics(statistics, options);
+      this->l1_relaxed_regularization_strategy->initialize_statistics(statistics, options);
+      this->feasibility_regularization_strategy->initialize_statistics(statistics, options);
       this->inequality_handling_method->initialize_statistics(statistics, options);
       this->feasibility_inequality_handling_method->initialize_statistics(statistics, options);
       statistics.add_column("penalty", Statistics::double_width - 5, options.get_int("statistics_penalty_parameter_column_order"));
@@ -118,8 +123,8 @@ namespace uno {
             this->feasibility_inequality_handling_method->initialize_feasibility_problem(feasibility_problem, current_iterate);
             Direction feasibility_direction(direction.number_variables, direction.number_constraints);
             this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method, feasibility_problem, current_iterate,
-               current_iterate.feasibility_multipliers, feasibility_direction, this->feasibility_subproblem_layer,
-               trust_region_radius, warmstart_information);
+               current_iterate.feasibility_multipliers, feasibility_direction, *this->feasibility_hessian_model,
+               *this->feasibility_regularization_strategy, trust_region_radius, warmstart_information);
             std::swap(feasibility_direction.multipliers, feasibility_direction.feasibility_multipliers);
             const double residual_lowest_violation = model.constraint_violation(current_iterate.evaluations.constraints +
                   current_iterate.evaluations.constraint_jacobian * feasibility_direction.primals, Norm::L1);
@@ -150,13 +155,14 @@ namespace uno {
 
    void l1Relaxation::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers, Direction& direction,
-         SubproblemLayer& subproblem_layer, double trust_region_radius, WarmstartInformation& warmstart_information) {
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
+         WarmstartInformation& warmstart_information) {
       DEBUG << "Solving the subproblem with penalty parameter " << problem.get_objective_multiplier() << "\n\n";
 
       // solve the subproblem
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      inequality_handling_method.solve(statistics, problem, current_iterate, current_multipliers, direction,
-         subproblem_layer, trust_region_radius, warmstart_information);
+      inequality_handling_method.solve(statistics, problem, current_iterate, current_multipliers, direction, hessian_model,
+         regularization_strategy, trust_region_radius, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
       assert(direction.status == SubproblemStatus::OPTIMAL && "The subproblem was not solved to optimality");
@@ -166,7 +172,8 @@ namespace uno {
          double current_penalty_parameter, double trust_region_radius, WarmstartInformation& warmstart_information) {
       const l1RelaxedProblem l1_relaxed_problem{model, current_penalty_parameter, this->constraint_violation_coefficient};
       this->solve_subproblem(statistics, *this->inequality_handling_method, l1_relaxed_problem, current_iterate,
-         current_iterate.multipliers, direction, this->l1_relaxed_subproblem_layer, trust_region_radius, warmstart_information);
+         current_iterate.multipliers, direction, *this->l1_relaxed_hessian_model, *this->l1_relaxed_regularization_strategy,
+         trust_region_radius, warmstart_information);
       if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
          throw std::runtime_error("l1Relaxation::solve_l1_relaxed_problem: the subproblem is unbounded, this should not happen. "
             "If the subproblem has curvature, use regularization. If not, use a trust-region method.\n");
@@ -330,8 +337,7 @@ namespace uno {
    }
 
    size_t l1Relaxation::get_hessian_evaluation_count() const {
-      return this->l1_relaxed_subproblem_layer.get_hessian_evaluation_count() +
-         this->feasibility_subproblem_layer.get_hessian_evaluation_count();
+      return this->l1_relaxed_hessian_model->evaluation_count + this->feasibility_hessian_model->evaluation_count;
    }
 
    size_t l1Relaxation::get_number_subproblems_solved() const {

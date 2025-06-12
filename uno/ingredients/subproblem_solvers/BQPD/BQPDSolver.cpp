@@ -7,7 +7,6 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem_solvers/MA57/MA57Solver.hpp"
-#include "layers/SubproblemLayer.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
@@ -90,14 +89,15 @@ namespace uno {
 
    void BQPDSolver::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, const Vector<double>& initial_point, Direction& direction,
-         SubproblemLayer& subproblem_layer, double trust_region_radius, const WarmstartInformation& warmstart_information) {
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
+         const WarmstartInformation& warmstart_information) {
       this->set_up_subproblem(problem, current_iterate, trust_region_radius, warmstart_information);
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
-         problem.evaluate_lagrangian_hessian(statistics, *subproblem_layer.hessian_model, current_iterate.primals, current_multipliers, this->hessian);
+         problem.evaluate_lagrangian_hessian(statistics, hessian_model, current_iterate.primals, current_multipliers, this->hessian);
          // regularize the Hessian
          const Inertia expected_inertia{problem.get_number_original_variables(), 0, problem.number_variables - problem.get_number_original_variables()};
-         subproblem_layer.regularization_strategy->regularize_hessian(statistics, this->hessian, expected_inertia);
+         regularization_strategy.regularize_hessian(statistics, this->hessian, expected_inertia);
          this->save_hessian_in_local_format();
       }
       if (this->print_subproblem) {

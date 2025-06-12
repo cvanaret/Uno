@@ -5,7 +5,6 @@
 #include "Uno.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
-#include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
@@ -26,7 +25,8 @@
 namespace uno {
    Uno::Uno(size_t number_constraints, size_t number_bounds_constraints, const Options& options) :
          constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(number_constraints, number_bounds_constraints, options)),
-         globalization_layer(number_constraints, options),
+         globalization_strategy(GlobalizationStrategyFactory::create(number_constraints, options)),
+         globalization_mechanism(GlobalizationMechanismFactory::create(options)),
          max_iterations(options.get_unsigned_int("max_iterations")),
          time_limit(options.get_double("time_limit")),
          print_solution(options.get_bool("print_solution")) { }
@@ -66,8 +66,8 @@ namespace uno {
 
                // compute an acceptable iterate by solving a subproblem at the current point
                warmstart_information.iterate_changed();
-               this->globalization_layer.mechanism->compute_next_iterate(statistics, *this->constraint_relaxation_strategy,
-                  *this->globalization_layer.strategy, model, current_iterate, trial_iterate, this->direction, warmstart_information,
+               this->globalization_mechanism->compute_next_iterate(statistics, *this->constraint_relaxation_strategy,
+                  *this->globalization_strategy, model, current_iterate, trial_iterate, this->direction, warmstart_information,
                   user_callbacks);
                termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration(), optimization_status);
                user_callbacks.notify_new_primals(trial_iterate.primals);
@@ -102,7 +102,8 @@ namespace uno {
       statistics.set("iter", 0);
       statistics.set("status", "initial point");
       this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, options);
-      this->globalization_layer.initialize(statistics, current_iterate, options);
+      this->globalization_strategy->initialize(statistics, current_iterate, options);
+      this->globalization_mechanism->initialize(statistics, options);
       options.print_used();
       if (Logger::level == INFO) {
          statistics.print_header();
@@ -172,7 +173,7 @@ namespace uno {
    }
 
    std::string Uno::get_strategy_combination() const {
-      return this->globalization_layer.mechanism->get_name() + " " + this->globalization_layer.strategy->get_name();
+      return this->globalization_mechanism->get_name() + " " + this->globalization_strategy->get_name();
    }
 
    void Uno::print_optimization_summary(const Result& result) const {

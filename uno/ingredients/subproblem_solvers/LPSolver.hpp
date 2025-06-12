@@ -14,7 +14,6 @@ namespace uno {
    template <typename ElementType>
    class RegularizationStrategy;
    class Statistics;
-   class SubproblemLayer;
    template <typename ElementType>
    class Vector;
    struct WarmstartInformation;
@@ -33,7 +32,8 @@ namespace uno {
 
       virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, const Vector<double>& initial_point, Direction& direction,
-         SubproblemLayer& subproblem_layer, double trust_region_radius, const WarmstartInformation& warmstart_information) = 0;
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
+         const WarmstartInformation& warmstart_information) = 0;
 
       [[nodiscard]] virtual double hessian_quadratic_product(const Vector<double>& vector) const = 0;
    };

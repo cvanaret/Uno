@@ -4,8 +4,10 @@
 #ifndef UNO_H
 #define UNO_H
 
+#include <memory>
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
-#include "layers/GlobalizationLayer.hpp"
+#include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
+#include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Result.hpp"
 #include "optimization/IterateStatus.hpp"
@@ -32,7 +34,8 @@ namespace uno {
 
    private:
       std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy;
-      GlobalizationLayer globalization_layer;
+      std::unique_ptr<GlobalizationStrategy> globalization_strategy;
+      std::unique_ptr<GlobalizationMechanism> globalization_mechanism;
       Direction direction{};
       const size_t max_iterations; /*!< Maximum number of iterations */
       const double time_limit; /*!< CPU time limit (can be inf) */

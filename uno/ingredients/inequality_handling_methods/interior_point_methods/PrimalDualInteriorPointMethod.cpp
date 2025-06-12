@@ -6,9 +6,9 @@
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/regularization_strategies/Inertia.hpp"
+#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
-#include "layers/SubproblemLayer.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -133,7 +133,7 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::evaluate_functions(Statistics& statistics, const PrimalDualInteriorPointProblem& barrier_problem,
-         Iterate& current_iterate, const Multipliers& current_multipliers, SubproblemLayer& subproblem_layer, const WarmstartInformation& warmstart_information) {
+         Iterate& current_iterate, const Multipliers& current_multipliers, HessianModel& hessian_model, const WarmstartInformation& warmstart_information) {
       // barrier objective gradient
       if (warmstart_information.objective_changed) {
          barrier_problem.evaluate_objective_gradient(current_iterate, this->objective_gradient);
@@ -147,13 +147,13 @@ namespace uno {
 
       // barrier Lagrangian Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         barrier_problem.evaluate_lagrangian_hessian(statistics, *subproblem_layer.hessian_model, current_iterate.primals, current_multipliers, this->hessian);
+         barrier_problem.evaluate_lagrangian_hessian(statistics, hessian_model, current_iterate.primals, current_multipliers, this->hessian);
       }
    }
 
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius,
-         WarmstartInformation& warmstart_information) {
+         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius, WarmstartInformation& warmstart_information) {
       if (problem.has_inequality_constraints()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
@@ -175,10 +175,10 @@ namespace uno {
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
 
       // evaluate the functions at the current iterate
-      this->evaluate_functions(statistics, barrier_problem, current_iterate, current_multipliers, subproblem_layer, warmstart_information);
+      this->evaluate_functions(statistics, barrier_problem, current_iterate, current_multipliers, hessian_model, warmstart_information);
 
       // compute the primal-dual solution
-      this->assemble_augmented_system(statistics, problem, current_multipliers, subproblem_layer);
+      this->assemble_augmented_system(statistics, problem, current_multipliers, regularization_strategy);
       this->augmented_system.solve(*this->linear_solver);
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
       this->number_subproblems_solved++;
@@ -192,14 +192,14 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
-         const Multipliers& current_multipliers, SubproblemLayer& subproblem_layer) {
+         const Multipliers& current_multipliers, RegularizationStrategy<double>& regularization_strategy) {
       // assemble and factorize the augmented matrix
       this->augmented_system.assemble_matrix(this->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
 
       // regularize the augmented matrix
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
       const Inertia expected_inertia{problem.number_variables, problem.number_constraints, 0};
-      subproblem_layer.regularization_strategy->regularize_augmented_matrix(statistics, this->augmented_system.matrix,
+      regularization_strategy.regularize_augmented_matrix(statistics, this->augmented_system.matrix,
          dual_regularization_parameter, expected_inertia, *this->linear_solver);
 
       // assemble the RHS
