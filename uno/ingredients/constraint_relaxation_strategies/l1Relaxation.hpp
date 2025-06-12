@@ -4,9 +4,10 @@
 #ifndef UNO_L1RELAXATION_H
 #define UNO_L1RELAXATION_H
 
+#include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
-#include "layers/SubproblemLayer.hpp"
+#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "optimization/Multipliers.hpp"
 
 namespace uno {
@@ -49,8 +50,10 @@ namespace uno {
    protected:
       double penalty_parameter;
       const double constraint_violation_coefficient;
-      SubproblemLayer l1_relaxed_subproblem_layer;
-      SubproblemLayer feasibility_subproblem_layer;
+      std::unique_ptr<HessianModel> l1_relaxed_hessian_model;
+      std::unique_ptr<HessianModel> feasibility_hessian_model;
+      std::unique_ptr<RegularizationStrategy<double>> l1_relaxed_regularization_strategy;
+      std::unique_ptr<RegularizationStrategy<double>> feasibility_regularization_strategy;
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
       const double tolerance;
@@ -64,8 +67,8 @@ namespace uno {
       void solve_l1_relaxed_problem(Statistics& statistics, const Model& model, Iterate& current_iterate, Direction& direction,
          double current_penalty_parameter, double trust_region_radius, WarmstartInformation& warmstart_information);
       void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         Iterate& current_iterate, const Multipliers& current_multipliers, Direction& direction, SubproblemLayer& subproblem_layer,
-         double trust_region_radius, WarmstartInformation& warmstart_information);
+         Iterate& current_iterate, const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius, WarmstartInformation& warmstart_information);
 
       // functions that decrease the penalty parameter to enforce particular conditions
       void decrease_parameter_aggressively(const Model& model, Iterate& current_iterate, const Direction& direction);

@@ -7,8 +7,8 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
-#include "layers/SubproblemLayer.hpp"
 
 namespace uno {
    // forward declarations
@@ -44,7 +44,8 @@ namespace uno {
 
    private:
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
-      SubproblemLayer subproblem_layer;
+      std::unique_ptr<HessianModel> hessian_model;
+      std::unique_ptr<RegularizationStrategy<double>> regularization_strategy;
 
       void solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, Direction& direction, double trust_region_radius,

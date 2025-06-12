@@ -4,9 +4,10 @@
 #ifndef UNO_FEASIBILITYRESTORATION_H
 #define UNO_FEASIBILITYRESTORATION_H
 
+#include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
-#include "layers/SubproblemLayer.hpp"
+#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -46,8 +47,10 @@ namespace uno {
    private:
       Phase current_phase{Phase::OPTIMALITY};
       const double constraint_violation_coefficient;
-      SubproblemLayer optimality_subproblem_layer;
-      SubproblemLayer feasibility_subproblem_layer;
+      std::unique_ptr<HessianModel> optimality_hessian_model;
+      std::unique_ptr<HessianModel> feasibility_hessian_model;
+      std::unique_ptr<RegularizationStrategy<double>> optimality_regularization_strategy;
+      std::unique_ptr<RegularizationStrategy<double>> feasibility_regularization_strategy;
       std::unique_ptr<InequalityHandlingMethod> optimality_inequality_handling_method;
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
       const double linear_feasibility_tolerance;
@@ -56,8 +59,8 @@ namespace uno {
       Vector<double> reference_optimality_primals{};
 
       void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         Iterate& current_iterate, const Multipliers& current_multipliers, Direction& direction, SubproblemLayer& subproblem_layer,
-         double trust_region_radius, WarmstartInformation& warmstart_information);
+         Iterate& current_iterate, const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius, WarmstartInformation& warmstart_information);
       void switch_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy, const Model& model,
          Iterate& trial_iterate, WarmstartInformation& warmstart_information);
 

@@ -40,7 +40,8 @@ namespace uno {
       [[nodiscard]] double proximal_coefficient() const override;
 
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-         Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius, WarmstartInformation& warmstart_information) override;
+         Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
+         double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
 
       void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
@@ -74,7 +75,7 @@ namespace uno {
       [[nodiscard]] double barrier_parameter() const;
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
       void evaluate_functions(Statistics& statistics, const PrimalDualInteriorPointProblem& barrier_problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, SubproblemLayer& subproblem_layer, const WarmstartInformation& warmstart_information);
+         const Multipliers& current_multipliers, HessianModel& hessian_model, const WarmstartInformation& warmstart_information);
       void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate, const Multipliers& current_multipliers,
          const DualResiduals& residuals);
       [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
@@ -86,7 +87,7 @@ namespace uno {
       [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
          Multipliers& direction_multipliers, double tau);
       void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Multipliers& current_multipliers,
-         SubproblemLayer& subproblem_layer);
+         RegularizationStrategy<double>& regularization_strategy);
       void assemble_augmented_rhs(const Multipliers& current_multipliers, size_t number_variables, size_t number_constraints);
       void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
          Vector<double>& direction_primals, Multipliers& direction_multipliers);
