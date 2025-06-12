@@ -9,9 +9,12 @@ namespace uno {
    class Direction;
    class HessianModel;
    class Iterate;
+   class Multipliers;
    class OptimizationProblem;
    template <typename ElementType>
    class RegularizationStrategy;
+   class Statistics;
+   class SubproblemLayer;
    template <typename ElementType>
    class Vector;
    struct WarmstartInformation;
@@ -28,8 +31,11 @@ namespace uno {
       virtual void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy) = 0;
 
-      virtual void solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point, Direction& direction,
-            double trust_region_radius, const WarmstartInformation& warmstart_information) = 0;
+      virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, const Vector<double>& initial_point, Direction& direction,
+         SubproblemLayer& subproblem_layer, double trust_region_radius, const WarmstartInformation& warmstart_information) = 0;
+
+      [[nodiscard]] virtual double hessian_quadratic_product(const Vector<double>& vector) const = 0;
    };
 } // namespace
 

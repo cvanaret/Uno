@@ -18,17 +18,15 @@ namespace uno {
       }
       else {
          /** default preset **/
-         const auto QP_solvers = QPSolverFactory::available_solvers();
          const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
-         const auto LP_solvers = LPSolverFactory::available_solvers();
 
-         if (!QP_solvers.empty()) {
+         if (!QPSolverFactory::available_solvers.empty()) {
             Presets::set(options, "filtersqp");
          }
          else if (!linear_solvers.empty()) {
             Presets::set(options, "ipopt");
          }
-         else if (!LP_solvers.empty()) {
+         else if (!LPSolverFactory::available_solvers.empty()) {
             Presets::set(options, "filterslp");
          }
          // note: byrd is not very robust and is not considered as a default preset
@@ -71,7 +69,7 @@ namespace uno {
       }
       else if (preset_name == "filtersqp") {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["inequality_handling_method"] = "QP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["hessian_model"] = "exact";
          options["regularization_strategy"] = "none";
          options["globalization_mechanism"] = "TR";
@@ -91,7 +89,7 @@ namespace uno {
       }
       else if (preset_name == "byrd") {
          options["constraint_relaxation_strategy"] = "l1_relaxation";
-         options["inequality_handling_method"] = "QP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["hessian_model"] = "exact";
          options["regularization_strategy"] = "primal";
          options["globalization_mechanism"] = "LS";
@@ -112,7 +110,7 @@ namespace uno {
       }
       else if (preset_name == "funnelsqp") {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["inequality_handling_method"] = "QP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["hessian_model"] = "exact";
          options["regularization_strategy"] = "none";
          options["globalization_mechanism"] = "TR";
@@ -140,7 +138,7 @@ namespace uno {
       }
       else if (preset_name == "filterslp") {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["inequality_handling_method"] = "LP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["hessian_model"] = "zero";
          options["regularization_strategy"] = "none";
          options["globalization_mechanism"] = "TR";

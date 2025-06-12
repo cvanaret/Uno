@@ -88,16 +88,7 @@ namespace uno {
       this->current_hessian_indices.resize(problem.number_variables);
    }
 
-   void BQPDSolver::solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& initial_point, Direction& direction,
-         double trust_region_radius, const WarmstartInformation& warmstart_information) {
-      if (this->print_subproblem) {
-         DEBUG << "LP:\n";
-      }
-      this->set_up_subproblem(problem, current_iterate, trust_region_radius, warmstart_information);
-      this->solve_subproblem(problem, initial_point, direction, warmstart_information);
-   }
-
-   void BQPDSolver::solve_QP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+   void BQPDSolver::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, const Vector<double>& initial_point, Direction& direction,
          SubproblemLayer& subproblem_layer, double trust_region_radius, const WarmstartInformation& warmstart_information) {
       this->set_up_subproblem(problem, current_iterate, trust_region_radius, warmstart_information);
@@ -110,7 +101,7 @@ namespace uno {
          this->save_hessian_in_local_format();
       }
       if (this->print_subproblem) {
-         DEBUG << "QP:\n";
+         DEBUG << "Subproblem:\n";
          DEBUG << "Hessian: " << this->hessian;
       }
       this->solve_subproblem(problem, initial_point, direction, warmstart_information);

@@ -40,14 +40,14 @@ namespace uno {
          Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
 
       virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
+      virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
-      virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
 
       // progress measures
       [[nodiscard]] virtual double hessian_quadratic_product(const Vector<double>& vector) const = 0;
       virtual void set_auxiliary_measure(const Model& model, Iterate& iterate) = 0;
-      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
+      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& iterate,
          const Vector<double>& primal_direction, double step_length) const = 0;
 
       virtual void postprocess_iterate(const OptimizationProblem& problem, Vector<double>& primals, Multipliers& multipliers) = 0;
