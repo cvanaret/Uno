@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "LPEQPMethod.hpp"
-#include "EQPProblem.hpp"
+#include "FixedActiveSetProblem.hpp"
 #include "optimization/Iterate.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
@@ -73,14 +73,13 @@ namespace uno {
       // TODO compute Cauchy point
 
       // reformulate the problem by setting active constraints as equations and inactive bounds as +/-INF
-      const EQPProblem fixed_active_set_problem(problem, this->LP_direction.active_set);
+      const FixedActiveSetProblem fixed_active_set_problem(problem, this->LP_direction.active_set);
 
       // compute EQP direction
       const ForwardRange primal_regularization_indices{problem.get_number_original_variables()};
       Subproblem EQP_subproblem{fixed_active_set_problem, current_iterate, current_multipliers, hessian_model,
          regularization_strategy, trust_region_radius, primal_regularization_indices, empty_dual_regularization};
       this->solve_EQP(statistics, EQP_subproblem, current_multipliers, direction, warmstart_information);
-
       DEBUG << "d^*(EQP) = " << direction << '\n';
       // reset the initial point
       this->initial_point.fill(0.);
