@@ -12,16 +12,15 @@
 
 namespace uno {
    // compute a least-square approximation of the multipliers by solving a linear system
-   void Preprocessing::compute_least_square_multipliers(const Model& model, SymmetricMatrix<size_t, double>& matrix, Vector<double>& rhs,
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, Iterate& current_iterate, Vector<double>& multipliers,
-         double multiplier_max_norm) {
+   void Preprocessing::compute_least_square_multipliers(const Model& model, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+         Iterate& current_iterate, Vector<double>& multipliers, double multiplier_max_norm) {
       current_iterate.evaluate_objective_gradient(model);
       current_iterate.evaluate_constraint_jacobian(model);
       DEBUG << "Computing least-square multipliers\n";
       DEBUG2 << "Current primals: " << current_iterate.primals << '\n';
 
       /* generate the right-hand side */
-      rhs.fill(0.);
+      Vector<double> rhs(model.number_variables + model.number_constraints);
       // objective gradient
       for (const auto [variable_index, derivative]: current_iterate.evaluations.objective_gradient) {
          rhs[variable_index] += model.objective_sign * derivative;
@@ -40,7 +39,8 @@ namespace uno {
       }
 
       /* build the symmetric matrix */
-      matrix.reset();
+      SymmetricMatrix<size_t, double> matrix(model.number_variables + model.number_constraints,
+         model.number_variables + model.number_jacobian_nonzeros(), false, "COO");
       // identity block
       for (size_t variable_index: Range(model.number_variables)) {
          matrix.insert(1., variable_index, variable_index);

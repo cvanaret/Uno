@@ -57,12 +57,11 @@ namespace uno {
       this->mumps_structure.job = MUMPSSolver::JOB_ANALYSIS;
       this->mumps_structure.n = static_cast<int>(matrix.dimension());
       this->mumps_structure.nnz = static_cast<int>(matrix.number_nonzeros());
-      this->mumps_structure.a = nullptr;
       this->save_sparsity_to_local_format(matrix);
       // connect the local sparsity with the pointers in the structure
       this->mumps_structure.irn = this->row_indices.data();
       this->mumps_structure.jcn = this->column_indices.data();
-      this->mumps_structure.a = nullptr;
+      this->mumps_structure.a = const_cast<double*>(matrix.data_pointer());
       dmumps_c(&this->mumps_structure);
       this->mumps_structure.icntl[7] = 8; // ICNTL(8) = 8: recompute scaling before factorization
    }

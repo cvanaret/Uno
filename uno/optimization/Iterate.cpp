@@ -100,7 +100,6 @@ namespace uno {
       stream << "Progress measures │ Optimality: " << iterate.progress.objective(1.) << '\n';
       stream << "                  └ Auxiliary terms: " << iterate.progress.auxiliary << '\n';
 
-
       return stream;
    }
 } // namespace

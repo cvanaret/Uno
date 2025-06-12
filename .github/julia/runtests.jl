@@ -18,11 +18,12 @@ import Uno_jll
 Create a new `AmplNLWriter.Optimizer` object that uses Uno as the backing
 solver.
 """
-function Optimizer(options = String["logger=SILENT", "preset=ipopt", "unbounded_objective_threshold=-1e15"])
+function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_solver=HiGHS", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
+Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "unbounded_objective_threshold=-1e15"])
+Optimizer_Uno_filterslp() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_solver=HiGHS", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
@@ -36,7 +37,7 @@ Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_solver=HiGH
     # are meant to be "easy" in the sense that most NLP solvers can find the
     # same global minimum, but a test failure can sometimes be allowed.
     MINLPTests.test_nlp_expr(
-        Optimizer;
+        Optimizer_Uno_ipopt;
         exclude = [
             # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
             "005_010",
@@ -49,7 +50,7 @@ Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_solver=HiGH
         primal_target,
     )
     MINLPTests.test_nlp_expr(
-        Optimizer_LP;
+        Optimizer_Uno_filterslp;
         exclude = [
             "001_010",  # Local solution
             "003_014",  # Local solution
@@ -69,9 +70,9 @@ Optimizer_LP() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_solver=HiGH
     # This function tests convex nonlinear programs. Test failures here should
     # never be allowed, because even local NLP solvers should find the global
     # optimum.
-    MINLPTests.test_nlp_cvx_expr(Optimizer; primal_target)
+    MINLPTests.test_nlp_cvx_expr(Optimizer_Uno_ipopt; primal_target)
     MINLPTests.test_nlp_cvx_expr(
-        Optimizer_LP; 
+        Optimizer_Uno_filterslp; 
         primal_target,
         objective_tol = 1e-4,
         primal_tol = 1e-4,
@@ -83,7 +84,7 @@ end
 # tests in here with weird edge cases, so a variety of exclusions are expected.
 @testset "MathOptInterface.test" begin
     optimizer = MOI.instantiate(
-        Optimizer;
+        Optimizer_Uno_ipopt;
         with_cache_type = Float64,
         with_bridge_type = Float64,
     )
