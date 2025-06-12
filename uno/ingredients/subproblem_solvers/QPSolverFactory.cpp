@@ -23,22 +23,13 @@ namespace uno {
 #endif
          std::string message = "The QP solver ";
          message.append(QP_solver_name).append(" is unknown").append("\n").append("The following values are available: ")
-               .append(join(QPSolverFactory::available_solvers(), ", "));
+               .append(join(QPSolverFactory::available_solvers, ", "));
          throw std::invalid_argument(message);
       }
       catch (const std::out_of_range& exception) {
          std::string message = exception.what();
-         message.append("\n").append("The following values are available: ").append(join(QPSolverFactory::available_solvers(), ", "));
+         message.append("\n").append("The following values are available: ").append(join(QPSolverFactory::available_solvers, ", "));
          throw std::out_of_range(message);
       }
-   }
-
-   // return the list of available QP solvers
-   std::vector<std::string> QPSolverFactory::available_solvers() {
-      std::vector<std::string> solvers{};
-#ifdef HAS_BQPD
-      solvers.emplace_back("BQPD");
-#endif
-      return solvers;
    }
 } // namespace

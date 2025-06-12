@@ -194,14 +194,12 @@ namespace uno {
 
       /** solvers: check the available solvers **/
       // QP solver
-      const auto QP_solvers = QPSolverFactory::available_solvers();
-      if (!QP_solvers.empty()) {
-         options["QP_solver"] = QP_solvers[0];
+      if (!QPSolverFactory::available_solvers.empty()) {
+         options["QP_solver"] = QPSolverFactory::available_solvers[0];
       }
       // LP solver
-      const auto LP_solvers = LPSolverFactory::available_solvers();
-      if (!LP_solvers.empty()) {
-         options["LP_solver"] = LP_solvers[0];
+      if (!LPSolverFactory::available_solvers.empty()) {
+         options["LP_solver"] = LPSolverFactory::available_solvers[0];
       }
       // linear solver
       const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();

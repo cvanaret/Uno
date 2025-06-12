@@ -1,6 +1,7 @@
 #include <cassert>
 #include "HiGHSSolver.hpp"
 #include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
+#include "layers/SubproblemLayer.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
@@ -39,13 +40,25 @@ namespace uno {
       // const size_t number_hessian_nonzeros = hessian_model.number_nonzeros(problem);
    }
 
-   void HiGHSSolver::solve_LP(const OptimizationProblem& problem, Iterate& current_iterate, const Vector<double>& /*initial_point*/,
-         Direction& direction, double trust_region_radius, const WarmstartInformation& warmstart_information) {
+   void HiGHSSolver::solve(Statistics& /*statistics*/, const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& /*current_multipliers*/, const Vector<double>& /*initial_point*/, Direction& direction,
+         SubproblemLayer& subproblem_layer, double trust_region_radius, const WarmstartInformation& warmstart_information) {
+      // check if HiGHS can solve the subproblem
+      const size_t number_regularized_hessian_nonzeros = problem.number_hessian_nonzeros(*subproblem_layer.hessian_model) +
+         (subproblem_layer.regularization_strategy->performs_primal_regularization() ? problem.number_variables : 0);
+      if (0 < number_regularized_hessian_nonzeros) {
+         throw std::runtime_error("The subproblem has curvature. For the moment, HiGHS can only solve LPs");
+      }
+
       if (this->print_subproblem) {
          DEBUG << "LP:\n";
       }
       this->set_up_subproblem(problem, current_iterate, trust_region_radius, warmstart_information);
       this->solve_subproblem(problem, direction);
+   }
+
+   double HiGHSSolver::hessian_quadratic_product(const Vector<double>& vector) const {
+      return 0.;
    }
 
    void HiGHSSolver::set_up_subproblem(const OptimizationProblem& problem, Iterate& current_iterate, double trust_region_radius,

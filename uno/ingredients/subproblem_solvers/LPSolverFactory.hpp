@@ -4,8 +4,8 @@
 #ifndef UNO_LPSOLVERFACTORY_H
 #define UNO_LPSOLVERFACTORY_H
 
+#include <array>
 #include <memory>
-#include <vector>
 
 namespace uno {
    // forward declarations
@@ -16,7 +16,15 @@ namespace uno {
    public:
       static std::unique_ptr<LPSolver> create([[maybe_unused]] const Options& options);
 
-      static std::vector<std::string> available_solvers();
+      // list of available LP solvers
+      constexpr static std::array available_solvers{
+#ifdef HAS_BQPD
+         "BQPD",
+#endif
+#ifdef HAS_HIGHS
+         "HiGHS"
+#endif
+      };
    };
 } // namespace
 

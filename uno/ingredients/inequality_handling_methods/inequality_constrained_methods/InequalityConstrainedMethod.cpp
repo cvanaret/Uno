@@ -6,27 +6,63 @@
 #include "linear_algebra/Vector.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
+#include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"
+#include "optimization/Direction.hpp"
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
-   InequalityConstrainedMethod::InequalityConstrainedMethod(): InequalityHandlingMethod() {
+   InequalityConstrainedMethod::InequalityConstrainedMethod(const Options& options):
+         InequalityHandlingMethod(), options(options) {
    }
 
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy) {
       this->initial_point.resize(problem.number_variables);
       regularization_strategy.initialize_memory(problem, hessian_model);
+
+      // allocate the LP/QP solver, depending on the presence of curvature in the subproblem
+      const size_t number_regularized_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model) +
+         (regularization_strategy.performs_primal_regularization() ? problem.number_variables : 0);
+      if (number_regularized_hessian_nonzeros == 0) {
+         DEBUG << "No curvature in the subproblems, allocating an LP solver\n";
+         this->solver = LPSolverFactory::create(this->options);
+      }
+      else {
+         DEBUG << "Curvature in the subproblems, allocating a QP solver\n";
+         this->solver = QPSolverFactory::create(this->options);
+      }
+      this->solver->initialize_memory(problem, hessian_model, regularization_strategy);
    }
 
    void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
+      // do nothing
    }
 
-   void InequalityConstrainedMethod::set_initial_point(const Vector<double>& point) {
-      // copy the point into the member
-      this->initial_point = point;
+   void InequalityConstrainedMethod::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
+      /*
+      if (this->enforce_linear_constraints_at_initial_iterate) {
+         Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, *this->solver);
+      }
+      */
+   }
+
+   void InequalityConstrainedMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+         Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius, WarmstartInformation& warmstart_information) {
+      this->solver->solve(statistics, problem, current_iterate, current_multipliers, this->initial_point, direction,
+         subproblem_layer, trust_region_radius, warmstart_information);
+      InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
+      this->number_subproblems_solved++;
+      // reset the initial point
+      this->initial_point.fill(0.);
    }
 
    void InequalityConstrainedMethod::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
+      // do nothing
+   }
+
+   void InequalityConstrainedMethod::exit_feasibility_problem(const OptimizationProblem& /*problem*/, Iterate& /*trial_iterate*/) {
       // do nothing
    }
 
@@ -42,8 +78,8 @@ namespace uno {
       return 0.;
    }
 
-   void InequalityConstrainedMethod::exit_feasibility_problem(const OptimizationProblem& /*problem*/, Iterate& /*trial_iterate*/) {
-      // do nothing
+   double InequalityConstrainedMethod::hessian_quadratic_product(const Vector<double>& vector) const {
+      return this->solver->hessian_quadratic_product(vector);
    }
 
    void InequalityConstrainedMethod::compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers) {
@@ -64,5 +100,15 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::postprocess_iterate(const OptimizationProblem& /*problem*/, Vector<double>& /*primals*/, Multipliers& /*multipliers*/) {
+      // do nothing
+   }
+
+   void InequalityConstrainedMethod::set_initial_point(const Vector<double>& point) {
+      // copy the point into the member
+      this->initial_point = point;
+   }
+
+   std::string InequalityConstrainedMethod::get_name() const {
+      return "inequality-constrained method";
    }
 } // namespace
