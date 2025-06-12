@@ -2,10 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "LPEQPMethod.hpp"
-#include "EQPProblem.hpp"
+#include "FixedActiveSetProblem.hpp"
 #include "optimization/Iterate.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
+#include "ingredients/regularization_strategies/NoRegularization.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
@@ -26,7 +27,8 @@ namespace uno {
       this->initial_point.resize(problem.number_variables);
       regularization_strategy.initialize_memory(problem, hessian_model);
       this->LP_direction = Direction(problem.number_variables, problem.number_constraints);
-      this->LP_solver->initialize_memory(problem, ZeroHessian(), regularization_strategy);
+      NoRegularization<double> no_regularization{};
+      this->LP_solver->initialize_memory(problem, ZeroHessian(), no_regularization);
       this->QP_solver->initialize_memory(problem, hessian_model, regularization_strategy);
    }
 
@@ -63,11 +65,11 @@ namespace uno {
 
       // TODO compute Cauchy point
 
-      // set up EQP subproblem: set active constraints as equations and inactive bounds as +/-INF
-      const EQPProblem EQP_problem(problem, this->LP_direction.active_set);
+      // reformulate the problem by setting active constraints as equations and inactive bounds as +/-INF
+      const FixedActiveSetProblem fixed_active_set_problem(problem, this->LP_direction.active_set);
 
       // compute EQP direction
-      this->solve_EQP(statistics, EQP_problem, current_iterate, current_multipliers, direction, subproblem_layer,
+      this->solve_EQP(statistics, fixed_active_set_problem, current_iterate, current_multipliers, direction, subproblem_layer,
          trust_region_radius, warmstart_information);
       DEBUG << "d^*(EQP) = " << direction << '\n';
       // reset the initial point
