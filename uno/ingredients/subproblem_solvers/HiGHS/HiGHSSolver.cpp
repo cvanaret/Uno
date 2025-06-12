@@ -57,7 +57,7 @@ namespace uno {
       this->solve_subproblem(problem, direction);
    }
 
-   double HiGHSSolver::hessian_quadratic_product(const Vector<double>& vector) const {
+   double HiGHSSolver::hessian_quadratic_product(const Vector<double>& /*vector*/) const {
       return 0.;
    }
 

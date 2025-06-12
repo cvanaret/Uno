@@ -110,7 +110,7 @@ namespace uno {
       }
       else if (preset_name == "funnelsqp") {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["inequality_handling_method"] = "QP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["hessian_model"] = "exact";
          options["regularization_strategy"] = "none";
          options["globalization_mechanism"] = "TR";
@@ -138,7 +138,7 @@ namespace uno {
       }
       else if (preset_name == "filterslp") {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
-         options["inequality_handling_method"] = "LP";
+         options["inequality_handling_method"] = "inequality_constrained";
          options["hessian_model"] = "zero";
          options["regularization_strategy"] = "none";
          options["globalization_mechanism"] = "TR";
