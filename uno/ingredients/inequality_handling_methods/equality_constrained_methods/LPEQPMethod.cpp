@@ -45,14 +45,17 @@ namespace uno {
    }
 
    void LPEQPMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius,
+         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
          WarmstartInformation& warmstart_information) {
       // solve LP subproblem (within trust-region to avoid unboundedness)
       if (trust_region_radius == INF<double>) {
          trust_region_radius = 100.; // TODO option
       }
-      this->solve_LP(statistics, problem, current_iterate, current_multipliers, this->LP_direction, subproblem_layer,
-         trust_region_radius, warmstart_information);
+      ZeroHessian zero_hessian{};
+      NoRegularization<double> no_regularization{};
+      this->solve_LP(statistics, problem, current_iterate, current_multipliers, this->LP_direction, zero_hessian,
+         no_regularization, trust_region_radius, warmstart_information);
       DEBUG << "d^*(LP) = " << this->LP_direction << '\n';
 
       if (this->LP_direction.status == SubproblemStatus::INFEASIBLE) {
@@ -69,8 +72,8 @@ namespace uno {
       const FixedActiveSetProblem fixed_active_set_problem(problem, this->LP_direction.active_set);
 
       // compute EQP direction
-      this->solve_EQP(statistics, fixed_active_set_problem, current_iterate, current_multipliers, direction, subproblem_layer,
-         trust_region_radius, warmstart_information);
+      this->solve_EQP(statistics, fixed_active_set_problem, current_iterate, current_multipliers, direction, hessian_model,
+         regularization_strategy, trust_region_radius, warmstart_information);
       DEBUG << "d^*(EQP) = " << direction << '\n';
       // reset the initial point
       this->initial_point.fill(0.);
@@ -128,19 +131,21 @@ namespace uno {
 
    // protected member functions
    void LPEQPMethod::solve_LP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius,
+         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
          const WarmstartInformation& warmstart_information) {
       this->LP_solver->solve(statistics, problem, current_iterate, current_multipliers, this->initial_point, direction,
-         subproblem_layer, trust_region_radius, warmstart_information);
+         hessian_model, regularization_strategy, trust_region_radius, warmstart_information);
       InequalityHandlingMethod::compute_dual_displacements(current_multipliers, this->LP_direction.multipliers);
       this->number_subproblems_solved++;
    }
 
    void LPEQPMethod::solve_EQP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, SubproblemLayer& subproblem_layer, double trust_region_radius,
+         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
          const WarmstartInformation& warmstart_information) {
       this->QP_solver->solve(statistics, problem, current_iterate, current_multipliers, this->initial_point, direction,
-         subproblem_layer, trust_region_radius, warmstart_information);
+         hessian_model, regularization_strategy, trust_region_radius, warmstart_information);
       InequalityHandlingMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;
    }
