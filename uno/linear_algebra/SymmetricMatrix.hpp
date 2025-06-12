@@ -4,7 +4,6 @@
 #ifndef UNO_SYMMETRICMATRIX_H
 #define UNO_SYMMETRICMATRIX_H
 
-#include <algorithm>
 #include <memory>
 #include <functional>
 #include <cassert>

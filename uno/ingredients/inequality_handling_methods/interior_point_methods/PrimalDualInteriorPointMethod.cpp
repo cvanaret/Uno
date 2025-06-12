@@ -470,8 +470,8 @@ namespace uno {
          Vector<double>& constraint_multipliers) {
       this->augmented_system.matrix.set_dimension(problem.number_variables + problem.number_constraints);
       this->augmented_system.matrix.reset();
-      Preprocessing::compute_least_square_multipliers(problem.model, this->augmented_system.matrix, this->augmented_system.rhs, *this->linear_solver,
-            iterate, constraint_multipliers, this->least_square_multiplier_max_norm);
+      Preprocessing::compute_least_square_multipliers(problem.model, *this->linear_solver, iterate, constraint_multipliers,
+         this->least_square_multiplier_max_norm);
    }
 
    void PrimalDualInteriorPointMethod::postprocess_iterate(const OptimizationProblem& problem, Vector<double>& primals, Multipliers& multipliers) {
