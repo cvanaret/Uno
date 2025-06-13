@@ -53,8 +53,6 @@ namespace uno {
       if (trust_region_radius == INF<double>) {
          trust_region_radius = 100.; // TODO option
       }
-      ZeroHessian zero_hessian{};
-      NoRegularization<double> no_regularization{};
       this->solve_LP(statistics, problem, current_iterate, current_multipliers, trust_region_radius, warmstart_information);
       DEBUG << "d^*(LP) = " << this->LP_direction << '\n';
 
@@ -92,6 +90,10 @@ namespace uno {
       // do nothing
    }
 
+   void LPEQPMethod::exit_feasibility_problem(const OptimizationProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+      // do nothing
+   }
+
    void LPEQPMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
       problem.set_elastic_variable_values(current_iterate, [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
          iterate.primals[elastic_index] = 0.;
@@ -102,10 +104,6 @@ namespace uno {
 
    double LPEQPMethod::proximal_coefficient() const {
       return 0.;
-   }
-
-   void LPEQPMethod::exit_feasibility_problem(const OptimizationProblem& /*problem*/, Iterate& /*trial_iterate*/) {
-      // do nothing
    }
 
    // progress measures
@@ -144,14 +142,13 @@ namespace uno {
       // for the Hessian evaluation of the EQP step
       this->number_subproblems_solved++;
 
+      // TODO compare radius and original bound
       // reset multipliers for bound constraints active at trust region (except if one of the original bounds is active)
-      for (size_t variable_index: Range(problem.number_variables)) {
-         if (std::abs(this->LP_direction.primals[variable_index] + trust_region_radius) <= this->activity_tolerance) {
-            this->LP_direction.multipliers.lower_bounds[variable_index] = 0.;
-         }
-         if (std::abs(this->LP_direction.primals[variable_index] - trust_region_radius) <= this->activity_tolerance) {
-            this->LP_direction.multipliers.upper_bounds[variable_index] = 0.;
-         }
+      for (size_t variable_index: this->LP_direction.active_set.bounds.at_lower_bound) {
+         this->LP_direction.multipliers.lower_bounds[variable_index] = 0.;
+      }
+      for (size_t variable_index: this->LP_direction.active_set.bounds.at_upper_bound) {
+         this->LP_direction.multipliers.upper_bounds[variable_index] = 0.;
       }
    }
 
@@ -162,6 +159,7 @@ namespace uno {
       this->QP_solver->solve(statistics, problem, current_iterate, this->LP_direction.multipliers, this->initial_point,
          direction, hessian_model, regularization_strategy, trust_region_radius, warmstart_information);
 
+      // TODO compare radius and original bound
       // fix EQP multipliers (the QP solver has no knowledge of the original bounds of fixed variables)
       for (size_t variable_index: this->LP_direction.active_set.bounds.at_lower_bound) {
          direction.multipliers.lower_bounds[variable_index] = direction.multipliers.upper_bounds[variable_index];
