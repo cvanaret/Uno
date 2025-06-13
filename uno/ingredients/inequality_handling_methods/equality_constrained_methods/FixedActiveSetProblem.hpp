@@ -12,11 +12,23 @@ namespace uno {
 
    class FixedActiveSetProblem: public OptimizationProblem {
    public:
-      FixedActiveSetProblem(const OptimizationProblem& problem, const ActiveSet& active_set);
+      FixedActiveSetProblem(const OptimizationProblem& problem, const ActiveSet& active_set, double trust_region_radius);
+
+      [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const;
+      [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const;
+      [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const;
+      [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const;
 
    protected:
       const OptimizationProblem& first_reformulation;
       const ActiveSet& active_set;
+      double trust_region_radius;
+
+      const double activity_tolerance{1e-6}; // TODO option
+      Vector<double> variables_lower_bounds;
+      Vector<double> variables_upper_bounds;
+      Vector<double> constraints_lower_bounds;
+      Vector<double> constraints_upper_bounds;
    };
 } // namespace
 
