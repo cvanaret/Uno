@@ -11,8 +11,8 @@ namespace uno {
       HessianModel &hessian_model, RegularizationStrategy<double> &regularization_strategy, double trust_region_radius,
       const Collection<size_t>& primal_regularization_indices, const Collection<size_t>& dual_regularization_indices):
          number_variables(problem.number_variables), number_constraints(problem.number_constraints),
-         problem(problem), current_iterate(current_iterate), current_multipliers(current_multipliers), hessian_model(hessian_model),
-         regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius),
+         trust_region_radius(trust_region_radius), problem(problem), current_iterate(current_iterate),
+         current_multipliers(current_multipliers), hessian_model(hessian_model), regularization_strategy(regularization_strategy),
          primal_regularization_indices(primal_regularization_indices), dual_regularization_indices(dual_regularization_indices) {
    }
 
