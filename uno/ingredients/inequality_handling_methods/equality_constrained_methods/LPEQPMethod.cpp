@@ -153,6 +153,7 @@ namespace uno {
             this->LP_direction.multipliers.upper_bounds[variable_index] = 0.;
          }
       }
+      this->number_subproblems_solved++;
    }
    
    void LPEQPMethod::solve_EQP(Statistics& statistics, Subproblem& subproblem, const Multipliers& current_multipliers,
@@ -160,7 +161,7 @@ namespace uno {
       this->QP_solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
 
       // TODO compare radius and original bound
-      // fix EQP multipliers (the QP solver has no knowledge of the original bounds of fixed variables)
+      // correct EQP multipliers (the QP solver has no knowledge of the original bounds of fixed variables)
       for (size_t variable_index: this->LP_direction.active_set.bounds.at_lower_bound) {
          direction.multipliers.lower_bounds[variable_index] = direction.multipliers.upper_bounds[variable_index];
          direction.multipliers.upper_bounds[variable_index] = 0.;
