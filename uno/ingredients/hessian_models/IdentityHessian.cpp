@@ -32,4 +32,8 @@ namespace uno {
          result[variable_index] = vector[variable_index];
       }
    }
+
+   std::string IdentityHessian::get_name() const {
+      return "identity";
+   }
 } // namespace

@@ -27,4 +27,8 @@ namespace uno {
          const Vector<double>& /*constraint_multipliers*/, Vector<double>& result) {
       result.fill(0.);
    }
+
+   std::string ZeroHessian::get_name() const {
+      return "zero";
+   }
 }

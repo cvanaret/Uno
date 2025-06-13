@@ -25,4 +25,8 @@ namespace uno {
       model.compute_hessian_vector_product(vector, objective_multiplier, constraint_multipliers, result);
       this->evaluation_count++;
    }
+
+   std::string ExactHessian::get_name() const {
+      return "exact";
+   }
 } // namespace
