@@ -10,7 +10,6 @@
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"
 #include "optimization/Direction.hpp"
-#include "symbolic/VectorView.hpp"
 
 namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(const Options& options):
@@ -81,13 +80,6 @@ namespace uno {
 
    double InequalityConstrainedMethod::hessian_quadratic_product(const Vector<double>& vector) const {
       return this->solver->hessian_quadratic_product(vector);
-   }
-
-   void InequalityConstrainedMethod::compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers) {
-      // compute dual *displacements* (active-set methods usually compute the new duals, not the displacements)
-      view(direction_multipliers.constraints, 0, current_multipliers.constraints.size()) -= current_multipliers.constraints;
-      view(direction_multipliers.lower_bounds, 0, current_multipliers.lower_bounds.size()) -= current_multipliers.lower_bounds;
-      view(direction_multipliers.upper_bounds, 0, current_multipliers.upper_bounds.size()) -= current_multipliers.upper_bounds;
    }
 
    // auxiliary measure is 0 in inequality-constrained methods

@@ -103,6 +103,7 @@ namespace uno {
       if (this->print_subproblem) {
          DEBUG << "Subproblem:\n";
          DEBUG << "Hessian: " << this->hessian;
+         display_subproblem(problem, initial_point);
       }
       this->solve_subproblem(problem, initial_point, direction, warmstart_information);
    }
@@ -166,23 +167,23 @@ namespace uno {
       }
    }
 
+   void BQPDSolver::display_subproblem(const OptimizationProblem& problem, const Vector<double>& initial_point) {
+      DEBUG << "objective gradient: " << this->linear_objective;
+      for (size_t constraint_index: Range(problem.number_constraints)) {
+         DEBUG << "gradient c" << constraint_index << ": " << this->constraint_jacobian[constraint_index];
+      }
+      for (size_t variable_index: Range(problem.number_variables)) {
+         DEBUG << "d" << variable_index << " in [" << this->lower_bounds[variable_index] << ", " << this->upper_bounds[variable_index] << "]\n";
+      }
+      for (size_t constraint_index: Range(problem.number_constraints)) {
+         DEBUG << "linearized c" << constraint_index << " in [" << this->lower_bounds[problem.number_variables + constraint_index] << ", " <<
+               this->upper_bounds[problem.number_variables + constraint_index] << "]\n";
+      }
+      DEBUG << "Initial point: " << initial_point << '\n';
+   }
+
    void BQPDSolver::solve_subproblem(const OptimizationProblem& problem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) {
-      if (this->print_subproblem) {
-         DEBUG << "objective gradient: " << this->linear_objective;
-         for (size_t constraint_index: Range(problem.number_constraints)) {
-            DEBUG << "gradient c" << constraint_index << ": " << this->constraint_jacobian[constraint_index];
-         }
-         for (size_t variable_index: Range(problem.number_variables)) {
-            DEBUG << "d" << variable_index << " in [" << this->lower_bounds[variable_index] << ", " << this->upper_bounds[variable_index] << "]\n";
-         }
-         for (size_t constraint_index: Range(problem.number_constraints)) {
-            DEBUG << "linearized c" << constraint_index << " in [" << this->lower_bounds[problem.number_variables + constraint_index] << ", " <<
-                  this->upper_bounds[problem.number_variables + constraint_index] << "]\n";
-         }
-         DEBUG << "Initial point: " << initial_point << '\n';
-      }
-
       direction.primals = initial_point;
       const int n = static_cast<int>(problem.number_variables);
       const int m = static_cast<int>(problem.number_constraints);
@@ -206,7 +207,7 @@ namespace uno {
          direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], this->lower_bounds[variable_index]),
                this->upper_bounds[variable_index]);
       }
-      this->set_multipliers(problem.number_variables, direction.multipliers);
+      this->assemble_direction(problem.number_variables, direction);
    }
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {
@@ -292,8 +293,10 @@ namespace uno {
       }
    }
 
-   void BQPDSolver::set_multipliers(size_t number_variables, Multipliers& direction_multipliers) {
-      direction_multipliers.reset();
+   void BQPDSolver::assemble_direction(size_t number_variables, Direction& direction) const {
+      direction.multipliers.reset();
+      direction.active_set.reset();
+
       // active constraints
       for (size_t active_constraint_index: Range(number_variables - static_cast<size_t>(this->k))) {
          const size_t index = static_cast<size_t>(std::abs(this->active_set[active_constraint_index]) - this->fortran_shift);
@@ -301,20 +304,24 @@ namespace uno {
          if (index < number_variables) {
             // bound constraint
             if (0 <= this->active_set[active_constraint_index]) { // lower bound active
-               direction_multipliers.lower_bounds[index] = this->residuals[index];
+               direction.multipliers.lower_bounds[index] = this->residuals[index];
+               direction.active_set.bounds.at_lower_bound.push_back(index);
             }
             else { // upper bound active */
-               direction_multipliers.upper_bounds[index] = -this->residuals[index];
+               direction.multipliers.upper_bounds[index] = -this->residuals[index];
+               direction.active_set.bounds.at_upper_bound.push_back(index);
             }
          }
          else {
             // general constraint
             size_t constraint_index = index - number_variables;
             if (0 <= this->active_set[active_constraint_index]) { // lower bound active
-               direction_multipliers.constraints[constraint_index] = this->residuals[index];
+               direction.multipliers.constraints[constraint_index] = this->residuals[index];
+               direction.active_set.constraints.at_lower_bound.push_back(constraint_index);
             }
             else { // upper bound active
-               direction_multipliers.constraints[constraint_index] = -this->residuals[index];
+               direction.multipliers.constraints[constraint_index] = -this->residuals[index];
+               direction.active_set.constraints.at_upper_bound.push_back(constraint_index);
             }
          }
       }

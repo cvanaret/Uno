@@ -18,10 +18,6 @@ namespace uno {
    class Vector;
    struct WarmstartInformation;
 
-   /*! \class LPSolver
-    * \brief LP solver
-    *
-    */
    class LPSolver {
    public:
       LPSolver() = default;
