@@ -27,9 +27,9 @@ namespace uno {
          WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
+      void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
       [[nodiscard]] double proximal_coefficient() const override;
-      void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
 
       // progress measures
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
