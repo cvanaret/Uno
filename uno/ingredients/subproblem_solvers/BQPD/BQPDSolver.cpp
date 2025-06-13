@@ -295,6 +295,7 @@ namespace uno {
 
    void BQPDSolver::assemble_direction(size_t number_variables, Direction& direction) const {
       direction.multipliers.reset();
+      direction.active_set.reset();
 
       // active constraints
       for (size_t active_constraint_index: Range(number_variables - static_cast<size_t>(this->k))) {
