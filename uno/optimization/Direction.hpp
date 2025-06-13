@@ -27,6 +27,13 @@ namespace uno {
 
       ActiveSet(size_t number_variables, size_t number_constraints): constraints(number_constraints), bounds(number_variables) { }
       ActiveSet() = default;
+
+      void reset() {
+         this->constraints.at_lower_bound.clear();
+         this->constraints.at_upper_bound.clear();
+         this->bounds.at_lower_bound.clear();
+         this->bounds.at_upper_bound.clear();
+      }
    };
 
    class Direction {
