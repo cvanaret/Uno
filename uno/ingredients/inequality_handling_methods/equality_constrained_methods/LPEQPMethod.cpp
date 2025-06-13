@@ -50,6 +50,7 @@ namespace uno {
          const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
          WarmstartInformation& warmstart_information) {
+      //std::cout << "Before solving LP:\n"; warmstart_information.display();
       // solve LP subproblem (within trust-region to avoid unboundedness)
       if (trust_region_radius == INF<double>) {
          trust_region_radius = 100.; // TODO option
@@ -67,11 +68,14 @@ namespace uno {
          this->initial_point.fill(0.);
          return;
       }
+      else {
+         this->initial_point = this->LP_direction.primals;
+      }
 
       // TODO compute Cauchy point
 
       // reformulate the problem by setting active constraints as equations and inactive bounds as +/-INF
-      const FixedActiveSetProblem fixed_active_set_problem(problem, this->LP_direction.active_set);
+      const FixedActiveSetProblem fixed_active_set_problem(problem, this->LP_direction.active_set, trust_region_radius);
 
       // compute EQP direction
       Subproblem EQP_subproblem{fixed_active_set_problem, current_iterate, current_multipliers, hessian_model,
@@ -138,11 +142,31 @@ namespace uno {
       this->LP_solver->solve(statistics, subproblem, this->initial_point, this->LP_direction, warmstart_information);
       InequalityHandlingMethod::compute_dual_displacements(current_multipliers, this->LP_direction.multipliers);
       this->number_subproblems_solved++;
+
+      // reset multipliers for bound constraints active at trust region (except if one of the original bounds is active)
+      for (size_t variable_index: Range(subproblem.number_variables)) {
+         if (std::abs(this->LP_direction.primals[variable_index] + subproblem.trust_region_radius) <= this->activity_tolerance) {
+            this->LP_direction.multipliers.lower_bounds[variable_index] = 0.;
+         }
+         if (std::abs(this->LP_direction.primals[variable_index] - subproblem.trust_region_radius) <= this->activity_tolerance) {
+            this->LP_direction.multipliers.upper_bounds[variable_index] = 0.;
+         }
+      }
    }
    
    void LPEQPMethod::solve_EQP(Statistics& statistics, Subproblem& subproblem, const Multipliers& current_multipliers,
          Direction& direction, const WarmstartInformation& warmstart_information) {
       this->QP_solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
+
+      // fix EQP multipliers (the QP solver has no knowledge of the original bounds of fixed variables)
+      for (size_t variable_index: this->LP_direction.active_set.bounds.at_lower_bound) {
+         direction.multipliers.lower_bounds[variable_index] = direction.multipliers.upper_bounds[variable_index];
+         direction.multipliers.upper_bounds[variable_index] = 0.;
+      }
+      for (size_t variable_index: this->LP_direction.active_set.bounds.at_upper_bound) {
+         direction.multipliers.upper_bounds[variable_index] = direction.multipliers.lower_bounds[variable_index];
+         direction.multipliers.lower_bounds[variable_index] = 0.;
+      }
       InequalityHandlingMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;
    }

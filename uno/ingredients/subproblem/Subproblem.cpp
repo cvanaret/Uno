@@ -11,8 +11,8 @@ namespace uno {
    Subproblem::Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
       HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius):
          number_variables(problem.number_variables), number_constraints(problem.number_constraints),
-         problem(problem), current_iterate(current_iterate), current_multipliers(current_multipliers), hessian_model(hessian_model),
-         regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius) {
+         trust_region_radius(trust_region_radius), problem(problem), current_iterate(current_iterate),
+         current_multipliers(current_multipliers), hessian_model(hessian_model), regularization_strategy(regularization_strategy) {
    }
 
    void Subproblem::evaluate_objective_gradient(SparseVector<double>& linear_objective) const {
