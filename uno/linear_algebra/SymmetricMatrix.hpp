@@ -129,7 +129,9 @@ namespace uno {
    template <typename Index, typename Element>
    inline std::ostream& operator<<(std::ostream& stream, const SymmetricMatrix<Index, Element>& matrix) {
       stream << "Dimension: " << matrix.dimension() << ", number of nonzeros: " << matrix.number_nonzeros() << '\n';
-      matrix.print(stream);
+      if (0 < matrix.number_nonzeros()) {
+         matrix.print(stream);
+      }
       return stream;
    }
 } // namespace
