@@ -138,18 +138,17 @@ namespace uno {
          const Multipliers& current_multipliers, double trust_region_radius, const WarmstartInformation& warmstart_information) {
       this->LP_solver->solve(statistics, problem, current_iterate, current_multipliers, this->initial_point, this->LP_direction,
          this->LP_hessian_model, this->LP_regularization, trust_region_radius, warmstart_information);
+      // reset multipliers for bound constraints active at trust region (except if one of the original bounds is active)
       // note: here, we do not compute dual displacements, but rather the trial duals themselves. They will be used
       // for the Hessian evaluation of the EQP step
-      this->number_subproblems_solved++;
-
       // TODO compare radius and original bound
-      // reset multipliers for bound constraints active at trust region (except if one of the original bounds is active)
       for (size_t variable_index: this->LP_direction.active_set.bounds.at_lower_bound) {
          this->LP_direction.multipliers.lower_bounds[variable_index] = 0.;
       }
       for (size_t variable_index: this->LP_direction.active_set.bounds.at_upper_bound) {
          this->LP_direction.multipliers.upper_bounds[variable_index] = 0.;
       }
+      this->number_subproblems_solved++;
    }
 
    void LPEQPMethod::solve_EQP(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
@@ -160,7 +159,7 @@ namespace uno {
          direction, hessian_model, regularization_strategy, trust_region_radius, warmstart_information);
 
       // TODO compare radius and original bound
-      // fix EQP multipliers (the QP solver has no knowledge of the original bounds of fixed variables)
+      // correct EQP multipliers (the QP solver has no knowledge of the original bounds of fixed variables)
       for (size_t variable_index: this->LP_direction.active_set.bounds.at_lower_bound) {
          direction.multipliers.lower_bounds[variable_index] = direction.multipliers.upper_bounds[variable_index];
          direction.multipliers.upper_bounds[variable_index] = 0.;
