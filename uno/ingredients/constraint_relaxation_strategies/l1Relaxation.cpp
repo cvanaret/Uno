@@ -333,7 +333,9 @@ namespace uno {
    }
 
    std::string l1Relaxation::get_name() const {
-      return "l1 relaxation";
+      return "l1 relaxation " + this->inequality_handling_method->get_name() + " with " +
+         this->l1_relaxed_hessian_model->get_name() + " Hessian and " + this->l1_relaxed_regularization_strategy->get_name() +
+         " regularization";
    }
 
    size_t l1Relaxation::get_hessian_evaluation_count() const {

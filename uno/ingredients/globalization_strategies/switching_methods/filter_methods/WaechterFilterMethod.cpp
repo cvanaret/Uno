@@ -88,6 +88,6 @@ namespace uno {
    }
 
    std::string WaechterFilterMethod::get_name() const {
-      return "Waechter filter method";
+      return "Waechter-filter";
    }
 } // namespace

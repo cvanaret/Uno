@@ -37,6 +37,7 @@ namespace uno {
 
       [[nodiscard]] bool performs_primal_regularization() const override;
       [[nodiscard]] bool performs_dual_regularization() const override;
+      [[nodiscard]] std::string get_name() const override;
 
    protected:
       const std::string& optional_linear_solver_name;
@@ -211,6 +212,11 @@ namespace uno {
    template <typename ElementType>
    bool PrimalDualRegularization<ElementType>::performs_dual_regularization() const {
       return true;
+   }
+
+   template <typename ElementType>
+   std::string PrimalDualRegularization<ElementType>::get_name() const {
+      return "primal-dual";
    }
 } // namespace
 

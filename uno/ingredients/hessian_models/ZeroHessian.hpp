@@ -7,7 +7,6 @@
 #include "HessianModel.hpp"
 
 namespace uno {
-   // zero Hessian
    class ZeroHessian : public HessianModel {
    public:
       ZeroHessian() = default;
@@ -18,6 +17,7 @@ namespace uno {
          const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;
       void compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double objective_multiplier,
          const Vector<double>& constraint_multipliers, Vector<double>& result) override;
+      [[nodiscard]] std::string get_name() const override;
    };
 } // namespace
 

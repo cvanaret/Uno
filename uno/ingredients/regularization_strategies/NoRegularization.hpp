@@ -47,6 +47,10 @@ namespace uno {
       [[nodiscard]] bool performs_dual_regularization() const override {
          return false;
       }
+
+      [[nodiscard]] std::string get_name() const override {
+         return "no";
+      }
    };
 } // namespace
 
