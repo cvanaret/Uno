@@ -52,8 +52,6 @@ namespace uno {
          WarmstartInformation& warmstart_information);
 
       void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const override;
-      [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(InequalityHandlingMethod& inequality_handling_method,
-         const Model& model, const Iterate& current_iterate, const Direction& direction, double step_length) const;
    };
 } // namespace
 
