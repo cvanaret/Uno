@@ -7,12 +7,11 @@
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategyFactory.hpp"
-#include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/VectorView.hpp"
-#include "tools/UserCallbacks.hpp"
+#include "tools/Statistics.hpp"
 
 namespace uno {
    UnconstrainedStrategy::UnconstrainedStrategy(size_t number_bound_constraints, const Options& options) :

@@ -7,7 +7,6 @@
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/regularization_strategies/Inertia.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
@@ -17,6 +16,7 @@
 #include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Infinity.hpp"
+#include "tools/Statistics.hpp"
 
 namespace uno {
    PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(const Options& options):
@@ -54,11 +54,11 @@ namespace uno {
       this->hessian = SymmetricMatrix<size_t, double>(barrier_problem.number_variables, number_hessian_nonzeros, false, "COO");
       this->linear_solver->initialize_memory(barrier_problem.number_variables + barrier_problem.number_constraints,
          number_augmented_system_nonzeros);
-      this->augmented_system.matrix = SymmetricMatrix<size_t, double>(barrier_problem.number_variables + barrier_problem.number_constraints,
+      this->augmented_matrix = SymmetricMatrix<size_t, double>(barrier_problem.number_variables + barrier_problem.number_constraints,
          number_augmented_system_nonzeros,
          true, "COO");
-      this->augmented_system.rhs.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
-      this->augmented_system.solution.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
+      this->rhs.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
+      this->solution.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
    }
 
    void PrimalDualInteriorPointMethod::initialize_statistics(Statistics& statistics, const Options& options) {
@@ -179,7 +179,7 @@ namespace uno {
 
       // compute the primal-dual solution
       this->assemble_augmented_system(statistics, problem, current_multipliers, regularization_strategy);
-      this->augmented_system.solve(*this->linear_solver);
+      this->linear_solver->solve_indefinite_system(this->augmented_matrix, this->rhs, this->solution);
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
       this->number_subproblems_solved++;
 
@@ -194,13 +194,32 @@ namespace uno {
    void PrimalDualInteriorPointMethod::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
          const Multipliers& current_multipliers, RegularizationStrategy<double>& regularization_strategy) {
       // assemble and factorize the augmented matrix
-      this->augmented_system.assemble_matrix(this->hessian, this->constraint_jacobian, problem.number_variables, problem.number_constraints);
+      this->augmented_matrix.set_dimension(problem.number_variables + problem.number_constraints);
+      this->augmented_matrix.reset();
+      // copy the Lagrangian Hessian in the top left block
+      //size_t current_column = 0;
+      for (const auto [row_index, column_index, element]: this->hessian) {
+         // finalize all empty columns
+         /*for (size_t column: Range(current_column, column_index)) {
+            this->matrix.finalize_column(column);
+            current_column++;
+         }*/
+         this->augmented_matrix.insert(element, row_index, column_index);
+      }
+
+      // Jacobian of general constraints
+      for (size_t column_index: Range(problem.number_constraints)) {
+         for (const auto [row_index, derivative]: this->constraint_jacobian[column_index]) {
+            this->augmented_matrix.insert(derivative, row_index, problem.number_variables + column_index);
+         }
+         this->augmented_matrix.finalize_column(column_index);
+      }
 
       // regularize the augmented matrix
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
       const Inertia expected_inertia{problem.number_variables, problem.number_constraints, 0};
-      regularization_strategy.regularize_augmented_matrix(statistics, this->augmented_system.matrix,
-         dual_regularization_parameter, expected_inertia, *this->linear_solver);
+      regularization_strategy.regularize_augmented_matrix(statistics, this->augmented_matrix, dual_regularization_parameter,
+         expected_inertia, *this->linear_solver);
 
       // assemble the RHS
       this->assemble_augmented_rhs(current_multipliers, problem.number_variables, problem.number_constraints);
@@ -398,11 +417,11 @@ namespace uno {
 
    // generate the right-hand side
    void PrimalDualInteriorPointMethod::assemble_augmented_rhs(const Multipliers& current_multipliers, size_t number_variables, size_t number_constraints) {
-      this->augmented_system.rhs.fill(0.);
+      this->rhs.fill(0.);
 
       // objective gradient
       for (const auto [variable_index, derivative]: this->objective_gradient) {
-         this->augmented_system.rhs[variable_index] -= derivative;
+         this->rhs[variable_index] -= derivative;
       }
 
       // constraint: evaluations and gradients
@@ -410,21 +429,21 @@ namespace uno {
          // Lagrangian
          if (current_multipliers.constraints[constraint_index] != 0.) {
             for (const auto [variable_index, derivative]: this->constraint_jacobian[constraint_index]) {
-               this->augmented_system.rhs[variable_index] += current_multipliers.constraints[constraint_index] * derivative;
+               this->rhs[variable_index] += current_multipliers.constraints[constraint_index] * derivative;
             }
          }
          // constraints
-         this->augmented_system.rhs[number_variables + constraint_index] = -this->constraints[constraint_index];
+         this->rhs[number_variables + constraint_index] = -this->constraints[constraint_index];
       }
-      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(this->augmented_system.rhs, 0, number_variables + number_constraints)); DEBUG << '\n';
+      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(this->rhs, 0, number_variables + number_constraints)); DEBUG << '\n';
    }
 
    void PrimalDualInteriorPointMethod::assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals,
          const Multipliers& current_multipliers, Vector<double>& direction_primals, Multipliers& direction_multipliers) {
       // form the primal-dual direction
-      direction_primals = view(this->augmented_system.solution, 0, problem.number_variables);
+      direction_primals = view(this->solution, 0, problem.number_variables);
       // retrieve the duals with correct signs (note the minus sign)
-      direction_multipliers.constraints = view(-this->augmented_system.solution, problem.number_variables,
+      direction_multipliers.constraints = view(-this->solution, problem.number_variables,
             problem.number_variables + problem.number_constraints);
       this->compute_bound_dual_direction(problem, current_primals, current_multipliers, direction_primals, direction_multipliers);
 
@@ -468,8 +487,8 @@ namespace uno {
 
    void PrimalDualInteriorPointMethod::compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate,
          Vector<double>& constraint_multipliers) {
-      this->augmented_system.matrix.set_dimension(problem.number_variables + problem.number_constraints);
-      this->augmented_system.matrix.reset();
+      this->augmented_matrix.set_dimension(problem.number_variables + problem.number_constraints);
+      this->augmented_matrix.reset();
       Preprocessing::compute_least_square_multipliers(problem.model, *this->linear_solver, iterate, constraint_multipliers,
          this->least_square_multiplier_max_norm);
    }
