@@ -102,6 +102,7 @@ namespace uno {
    }
 
    void Statistics::print_footer() {
+      /*
       for (const auto& element: this->columns) {
          const auto& header = element.second;
          for (int j = 0; j < this->widths[header]; j++) {
@@ -109,6 +110,8 @@ namespace uno {
          }
       }
       std::cout << '\n';
+      */
+      Statistics::print_header();
    }
    
    std::string_view Statistics::symbol(std::string_view value) {

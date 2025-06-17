@@ -191,15 +191,6 @@ namespace uno {
          (this->current_phase == Phase::OPTIMALITY) ? *this->optimality_inequality_handling_method : *this->feasibility_inequality_handling_method,
          model, current_iterate, direction, step_length);
 
-      // possibly go from restoration phase to optimality phase
-      if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(current_iterate, globalization_strategy,
-            model, trial_iterate, direction, step_length)) {
-         this->switch_to_optimality_phase(current_iterate, globalization_strategy, model, trial_iterate, warmstart_information);
-      }
-      else {
-         warmstart_information.no_changes();
-      }
-
       bool accept_iterate = false;
       const double objective_multiplier = (this->current_phase == Phase::OPTIMALITY) ? 1. : 0.;
       if (direction.norm == 0.) {
@@ -217,6 +208,15 @@ namespace uno {
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals,
                this->current_phase == Phase::OPTIMALITY ? trial_iterate.multipliers : trial_iterate.feasibility_multipliers,
                objective_multiplier);
+      }
+
+      // possibly go from restoration phase to optimality phase
+      if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(current_iterate, globalization_strategy,
+            model, trial_iterate, direction, step_length)) {
+         this->switch_to_optimality_phase(current_iterate, globalization_strategy, model, trial_iterate, warmstart_information);
+            }
+      else {
+         warmstart_information.no_changes();
       }
       return accept_iterate;
    }
