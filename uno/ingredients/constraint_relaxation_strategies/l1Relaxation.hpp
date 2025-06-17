@@ -72,7 +72,7 @@ namespace uno {
 
       // functions that decrease the penalty parameter to enforce particular conditions
       void decrease_parameter_aggressively(const Model& model, Iterate& current_iterate, const Direction& direction);
-      double compute_infeasible_dual_error(const Model& model, Iterate& current_iterate);
+      double compute_infeasible_dual_error(const Model& model, Iterate& current_iterate) const;
       void enforce_linearized_residual_sufficient_decrease(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Direction& direction, double linearized_residual, double residual_lowest_violation, double trust_region_radius,
          WarmstartInformation& warmstart_information);
@@ -84,8 +84,6 @@ namespace uno {
          const Direction& feasibility_direction) const;
 
       void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const override;
-      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const Model& model, Iterate& current_iterate,
-         const Direction& direction, double step_length);
 
       void check_exact_relaxation(Iterate& iterate) const;
    };

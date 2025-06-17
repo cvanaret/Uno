@@ -14,6 +14,7 @@
 #include "symbolic/VectorView.hpp"
 #include "symbolic/Expression.hpp"
 #include "tools/Statistics.hpp"
+#include "tools/UserCallbacks.hpp"
 
 namespace uno {
    ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Options& options):
@@ -76,7 +77,7 @@ namespace uno {
    }
 
    void ConstraintRelaxationStrategy::compute_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model,
-         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Iterate& trial_iterate) {
+         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Iterate& trial_iterate) const {
       if (inequality_handling_method.subproblem_definition_changed) {
          DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
          globalization_strategy.reset();
@@ -86,8 +87,45 @@ namespace uno {
       this->evaluate_progress_measures(inequality_handling_method, model, trial_iterate);
    }
 
+   ProgressMeasures ConstraintRelaxationStrategy::compute_predicted_reductions(InequalityHandlingMethod& inequality_handling_method,
+         const Model& model, const Iterate& current_iterate, const Direction& direction, double step_length) const {
+      return {
+         this->compute_predicted_infeasibility_reduction(model, current_iterate, direction.primals, step_length),
+         this->compute_predicted_objective_reduction(inequality_handling_method, current_iterate, direction.primals, step_length),
+         inequality_handling_method.compute_predicted_auxiliary_reduction_model(model, current_iterate, direction.primals, step_length)
+      };
+   }
+
+   bool ConstraintRelaxationStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         const Model& model, const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method,
+         Iterate& current_iterate, Iterate& trial_iterate, Multipliers& trial_multipliers, const Direction& direction,
+         double step_length, UserCallbacks& user_callbacks) const {
+      inequality_handling_method.postprocess_iterate(problem, trial_iterate.primals, trial_multipliers);
+      const double objective_multiplier = problem.get_objective_multiplier();
+      trial_iterate.objective_multiplier = objective_multiplier;
+      this->compute_progress_measures(inequality_handling_method, model, globalization_strategy, current_iterate, trial_iterate);
+      
+      bool accept_iterate = false;
+      if (direction.norm == 0.) {
+         DEBUG << "Zero step acceptable\n";
+         trial_iterate.evaluate_objective(model);
+         accept_iterate = true;
+         statistics.set("status", "0 primal step");
+      }
+      else {
+         const ProgressMeasures predicted_reduction = ConstraintRelaxationStrategy::compute_predicted_reductions(inequality_handling_method,
+         model, current_iterate, direction, step_length);
+         accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
+            predicted_reduction, objective_multiplier);
+      }
+      if (accept_iterate) {
+         user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_multipliers, objective_multiplier);
+      }
+      return accept_iterate;
+   }
+
    void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const Model& model, const OptimizationProblem& optimality_problem,
-         const OptimizationProblem& feasibility_problem, Iterate& iterate) {
+         const OptimizationProblem& feasibility_problem, Iterate& iterate) const {
       iterate.evaluate_objective_gradient(model);
       iterate.evaluate_constraints(model);
       iterate.evaluate_constraint_jacobian(model);
@@ -107,7 +145,7 @@ namespace uno {
       iterate.primal_feasibility = model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
 
       // complementarity error
-      const double shift_value = 0.;
+      constexpr double shift_value = 0.;
       iterate.residuals.complementarity = optimality_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
             iterate.multipliers, shift_value, this->residual_norm);
       iterate.feasibility_residuals.complementarity = feasibility_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
@@ -215,11 +253,11 @@ namespace uno {
    }
 
    void ConstraintRelaxationStrategy::set_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const {
-      this->set_progress_statistics(statistics, model, iterate);
+      this->set_primal_statistics(statistics, model, iterate);
       this->set_dual_residuals_statistics(statistics, iterate);
    }
 
-   void ConstraintRelaxationStrategy::set_progress_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const {
+   void ConstraintRelaxationStrategy::set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const {
       statistics.set("objective", iterate.evaluations.objective);
       if (model.is_constrained()) {
          statistics.set("primal feas", iterate.progress.infeasibility);

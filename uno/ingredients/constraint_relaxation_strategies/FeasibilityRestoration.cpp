@@ -176,48 +176,30 @@ namespace uno {
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+      bool accept_iterate = false;
+      // determine acceptability, depending on the current phase
       if (this->current_phase == Phase::OPTIMALITY) {
          const OptimizationProblem optimality_problem{model};
-         this->optimality_inequality_handling_method->postprocess_iterate(optimality_problem, trial_iterate.primals, trial_iterate.multipliers);
-         this->compute_progress_measures(*this->optimality_inequality_handling_method, model, globalization_strategy, current_iterate, trial_iterate);
+         accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy, model,
+            optimality_problem, *this->optimality_inequality_handling_method, current_iterate, trial_iterate,
+            trial_iterate.multipliers, direction, step_length, user_callbacks);
       }
       else {
          const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
-         this->feasibility_inequality_handling_method->postprocess_iterate(feasibility_problem, trial_iterate.primals, trial_iterate.feasibility_multipliers);
-         this->compute_progress_measures(*this->feasibility_inequality_handling_method, model, globalization_strategy, current_iterate, trial_iterate);
-      }
-      trial_iterate.objective_multiplier = (this->current_phase == Phase::OPTIMALITY) ? 1. : 0.;
-      const ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(
-         (this->current_phase == Phase::OPTIMALITY) ? *this->optimality_inequality_handling_method : *this->feasibility_inequality_handling_method,
-         model, current_iterate, direction, step_length);
-
-      bool accept_iterate = false;
-      const double objective_multiplier = (this->current_phase == Phase::OPTIMALITY) ? 1. : 0.;
-      if (direction.norm == 0.) {
-         DEBUG << "Zero step acceptable\n";
-         trial_iterate.evaluate_objective(model);
-         accept_iterate = true;
-         statistics.set("status", "0 primal step");
-      }
-      else {
-         accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
-            predicted_reduction, objective_multiplier);
-      }
-      ConstraintRelaxationStrategy::set_progress_statistics(statistics, model, trial_iterate);
-      if (accept_iterate) {
-         user_callbacks.notify_acceptable_iterate(trial_iterate.primals,
-               this->current_phase == Phase::OPTIMALITY ? trial_iterate.multipliers : trial_iterate.feasibility_multipliers,
-               objective_multiplier);
+         accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy, model,
+            feasibility_problem, *this->feasibility_inequality_handling_method, current_iterate, trial_iterate,
+            trial_iterate.feasibility_multipliers, direction, step_length, user_callbacks);
       }
 
       // possibly go from restoration phase to optimality phase
       if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(current_iterate, globalization_strategy,
             model, trial_iterate, direction, step_length)) {
          this->switch_to_optimality_phase(current_iterate, globalization_strategy, model, trial_iterate, warmstart_information);
-            }
+      }
       else {
          warmstart_information.no_changes();
       }
+      ConstraintRelaxationStrategy::set_primal_statistics(statistics, model, trial_iterate);
       return accept_iterate;
    }
 
@@ -231,15 +213,6 @@ namespace uno {
       this->set_infeasibility_measure(model, iterate);
       this->set_objective_measure(model, iterate);
       inequality_handling_method.set_auxiliary_measure(model, iterate);
-   }
-
-   ProgressMeasures FeasibilityRestoration::compute_predicted_reduction_models(InequalityHandlingMethod& inequality_handling_method,
-         const Model& model, const Iterate& current_iterate, const Direction& direction, double step_length) const {
-      return {
-         this->compute_predicted_infeasibility_reduction(model, current_iterate, direction.primals, step_length),
-         this->compute_predicted_objective_reduction(inequality_handling_method, current_iterate, direction.primals, step_length),
-         inequality_handling_method.compute_predicted_auxiliary_reduction_model(model, current_iterate, direction.primals, step_length)
-      };
    }
 
    void FeasibilityRestoration::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {

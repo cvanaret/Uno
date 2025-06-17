@@ -14,6 +14,7 @@
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
@@ -110,7 +111,7 @@ namespace uno {
       // penalty update: if penalty parameter is already 0 or fixed by the user, no need to decrease it
       if (0. < this->penalty_parameter && !this->parameters.fixed_parameter) {
          double linearized_residual = model.constraint_violation(current_iterate.evaluations.constraints +
-               current_iterate.evaluations.constraint_jacobian * direction.primals, Norm::L1);
+            current_iterate.evaluations.constraint_jacobian * direction.primals, Norm::L1);
          DEBUG << "Linearized infeasibility mk(dk): " << linearized_residual << "\n\n";
 
          // terminate if the current direction is already feasible, otherwise adjust the penalty parameter
@@ -127,7 +128,7 @@ namespace uno {
                *this->feasibility_regularization_strategy, trust_region_radius, warmstart_information);
             std::swap(feasibility_direction.multipliers, feasibility_direction.feasibility_multipliers);
             const double residual_lowest_violation = model.constraint_violation(current_iterate.evaluations.constraints +
-                  current_iterate.evaluations.constraint_jacobian * feasibility_direction.primals, Norm::L1);
+               current_iterate.evaluations.constraint_jacobian * feasibility_direction.primals, Norm::L1);
             DEBUG << "Lowest linearized infeasibility mk(dk): " << residual_lowest_violation << '\n';
             this->feasibility_inequality_handling_method->exit_feasibility_problem(feasibility_problem, current_iterate);
 
@@ -137,7 +138,7 @@ namespace uno {
                this->solve_l1_relaxed_problem(statistics, model, current_iterate, direction, this->penalty_parameter,
                   trust_region_radius, warmstart_information);
                linearized_residual = model.constraint_violation(current_iterate.evaluations.constraints +
-                     current_iterate.evaluations.constraint_jacobian * direction.primals, Norm::L1);
+                  current_iterate.evaluations.constraint_jacobian * direction.primals, Norm::L1);
             }
 
             // stage d: further decrease penalty parameter to reach a fraction of the ideal decrease
@@ -200,14 +201,14 @@ namespace uno {
    }
 
    // measure that combines KKT error and complementarity error
-   double l1Relaxation::compute_infeasible_dual_error(const Model& model, Iterate& current_iterate) {
+   double l1Relaxation::compute_infeasible_dual_error(const Model& model, Iterate& current_iterate) const {
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
       // stationarity error
       feasibility_problem.evaluate_lagrangian_gradient(current_iterate.feasibility_residuals.lagrangian_gradient, current_iterate, this->trial_multipliers);
       double error = norm_1(current_iterate.residuals.lagrangian_gradient.constraints_contribution);
 
       // complementarity error
-      const double shift_value = 0.;
+      constexpr double shift_value = 0.;
       error += feasibility_problem.complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints,
             this->trial_multipliers, shift_value, Norm::L1);
       return error;
@@ -270,31 +271,16 @@ namespace uno {
 
    bool l1Relaxation::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         WarmstartInformation& /*warmstart_information*/, UserCallbacks& user_callbacks) {
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const l1RelaxedProblem l1_relaxed_problem{model, this->penalty_parameter, this->constraint_violation_coefficient};
-      this->inequality_handling_method->postprocess_iterate(l1_relaxed_problem, trial_iterate.primals, trial_iterate.multipliers);
-      // compute the predicted reduction before the progress measures to make sure second-order information is valid
-      const ProgressMeasures predicted_reduction = this->compute_predicted_reductions(model, current_iterate, direction, step_length);
-      this->compute_progress_measures(*this->inequality_handling_method, model, globalization_strategy, current_iterate, trial_iterate);
-      trial_iterate.objective_multiplier = l1_relaxed_problem.get_objective_multiplier();
-
-      bool accept_iterate = false;
-      if (direction.norm == 0.) {
-         DEBUG << "Zero step acceptable\n";
-         trial_iterate.evaluate_objective(model);
-         accept_iterate = true;
-         statistics.set("status", "0 primal step");
-      }
-      else {
-         accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
-            predicted_reduction, this->penalty_parameter);
-      }
+      const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
+         model, l1_relaxed_problem, *this->inequality_handling_method, current_iterate, trial_iterate, trial_iterate.multipliers,
+         direction, step_length, user_callbacks);
       if (accept_iterate) {
          this->check_exact_relaxation(trial_iterate);
-         // this->set_dual_residuals_statistics(statistics, trial_iterate);
-         user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, this->penalty_parameter);
       }
-      this->set_progress_statistics(statistics, model, trial_iterate);
+      ConstraintRelaxationStrategy::set_primal_statistics(statistics, model, trial_iterate);
+      warmstart_information.no_changes();
       return accept_iterate;
    }
 
@@ -308,15 +294,6 @@ namespace uno {
       this->set_infeasibility_measure(model, iterate);
       this->set_objective_measure(model, iterate);
       inequality_handling_method.set_auxiliary_measure(model, iterate);
-   }
-
-   ProgressMeasures l1Relaxation::compute_predicted_reductions(const Model& model, Iterate& current_iterate, const Direction& direction,
-         double step_length) {
-      return {
-         this->compute_predicted_infeasibility_reduction(model, current_iterate, direction.primals, step_length),
-         this->compute_predicted_objective_reduction(*this->inequality_handling_method, current_iterate, direction.primals, step_length),
-         this->inequality_handling_method->compute_predicted_auxiliary_reduction_model(model, current_iterate, direction.primals, step_length)
-      };
    }
 
    // for information purposes, check that l1 is an exact relaxation
