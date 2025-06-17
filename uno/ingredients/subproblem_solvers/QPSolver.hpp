@@ -15,10 +15,8 @@ namespace uno {
       void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy) override = 0;
 
-      void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-         const Vector<double>& initial_point, Direction& direction, HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
-         const WarmstartInformation& warmstart_information) override = 0;
+      void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
+         Direction& direction, const WarmstartInformation& warmstart_information) override = 0;
    };
 } // namespace
 

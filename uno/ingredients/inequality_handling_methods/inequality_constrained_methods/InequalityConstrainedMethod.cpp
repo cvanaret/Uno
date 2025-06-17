@@ -6,6 +6,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"
@@ -49,10 +50,11 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
-         double trust_region_radius, WarmstartInformation& warmstart_information) {
-      this->solver->solve(statistics, problem, current_iterate, current_multipliers, this->initial_point, direction,
-         hessian_model, regularization_strategy, trust_region_radius, warmstart_information);
+         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius, WarmstartInformation& warmstart_information) {
+      // create the subproblem and solve it
+      Subproblem subproblem{problem, current_iterate, current_multipliers, hessian_model, regularization_strategy, trust_region_radius};
+      this->solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;
       // reset the initial point
