@@ -11,6 +11,7 @@
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Collection.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
@@ -30,10 +31,13 @@ namespace uno {
       void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian, const Inertia& expected_inertia) override;
       void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
-      void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia) override;
-      void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
+      void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
+         double* regularization_array, const Collection<size_t>& primal_block, const Collection<size_t>& dual_block,
+         ElementType dual_regularization_parameter, const Inertia& expected_inertia) override;
+      void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
+         double* regularization_array, const Collection<size_t>& primal_block, const Collection<size_t>& dual_block,
+         ElementType dual_regularization_parameter, const Inertia& expected_inertia,
+         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
 
       [[nodiscard]] bool performs_primal_regularization() const override;
       [[nodiscard]] bool performs_dual_regularization() const override;
@@ -96,27 +100,29 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void PrimalDualRegularization<ElementType>::regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) {
+   void PrimalDualRegularization<ElementType>::regularize_hessian(Statistics& /*statistics*/, SymmetricMatrix<size_t, ElementType>& /*hessian*/,
+         const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) {
       // to regularize the Hessian only, call the function for the augmented matrix with no dual part
-      this->regularize_augmented_matrix(statistics, hessian, ElementType(0), expected_inertia, linear_solver);
       // TODO fix
+      throw std::runtime_error("PrimalDualRegularization::regularize_hessian not implemented yet");
    }
 
    // the augmented matrix has been factorized prior to calling this function
    template <typename ElementType>
    void PrimalDualRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
+         double* regularization_array, const Collection<size_t>& primal_block, const Collection<size_t>& dual_block,
          ElementType dual_regularization_parameter, const Inertia& expected_inertia) {
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
          this->optional_linear_solver->initialize_memory(this->dimension, this->number_nonzeros);
       }
-      this->regularize_augmented_matrix(statistics, augmented_matrix, dual_regularization_parameter, expected_inertia,
-         *this->optional_linear_solver);
+      this->regularize_augmented_matrix(statistics, augmented_matrix, regularization_array, primal_block, dual_block,
+         dual_regularization_parameter, expected_inertia, *this->optional_linear_solver);
    }
 
    template <typename ElementType>
    void PrimalDualRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
+         double* regularization_array, const Collection<size_t>& primal_block, const Collection<size_t>& dual_block,
          ElementType dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) {
       DEBUG2 << "Original matrix\n" << augmented_matrix << '\n';
 
@@ -156,13 +162,21 @@ namespace uno {
       }
       else {
          this->primal_regularization = std::max(this->primal_regularization_lb,
-               this->previous_primal_regularization / this->primal_regularization_decrease_factor);
+            this->previous_primal_regularization / this->primal_regularization_decrease_factor);
       }
 
       // regularize the augmented matrix
+      for (size_t index: primal_block) {
+         regularization_array[index] = this->primal_regularization;
+      }
+      for (size_t index: dual_block) {
+         regularization_array[expected_inertia.positive + index] = -this->dual_regularization;
+      }
+      /*
       augmented_matrix.set_regularization([=](size_t row_index) {
          return (row_index < expected_inertia.positive) ? this->primal_regularization : -this->dual_regularization; // TODO
       });
+      */
 
       bool good_inertia = false;
       while (!good_inertia) {
@@ -193,9 +207,17 @@ namespace uno {
 
             if (this->primal_regularization <= this->regularization_failure_threshold) {
                // regularize the augmented matrix
+               /*
                augmented_matrix.set_regularization([=](size_t row_index) {
                   return (row_index < expected_inertia.positive) ? this->primal_regularization : -this->dual_regularization; // TODO
                });
+               */
+               for (size_t index: primal_block) {
+                  regularization_array[index] = this->primal_regularization;
+               }
+               for (size_t index: dual_block) {
+                  regularization_array[expected_inertia.positive + index] = -this->dual_regularization;
+               }
             }
             else {
                throw UnstableRegularization();

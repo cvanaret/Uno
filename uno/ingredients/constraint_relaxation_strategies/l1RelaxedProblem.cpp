@@ -176,10 +176,18 @@ namespace uno {
          }
          elastic_index++;
       }
-      for ([[maybe_unused]] size_t _: this->model.get_equality_constraints()) {
+      for ([[maybe_unused]] size_t equality_index: this->model.get_equality_constraints()) {
+         /*
          lagrangian_gradient.constraints_contribution[elastic_index] += 2*this->constraint_violation_coefficient -
             multipliers.lower_bounds[elastic_index] - multipliers.lower_bounds[elastic_index+1];
          elastic_index += 2;
+         */
+         lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
+               multipliers.constraints[equality_index] - multipliers.lower_bounds[elastic_index];
+         elastic_index++;
+         lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
+               multipliers.constraints[equality_index] - multipliers.lower_bounds[elastic_index];
+         elastic_index++;
       }
 
       // proximal contribution

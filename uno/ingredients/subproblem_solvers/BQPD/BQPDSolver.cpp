@@ -113,8 +113,11 @@ namespace uno {
       ALPHAC.alpha = 0.; // inertia control
 
       // evaluate the functions based on warmstart information
-      subproblem.evaluate_functions(statistics, this->linear_objective, this->constraints, this->constraint_jacobian,
-         this->hessian, warmstart_information);
+      subproblem.evaluate_functions(this->linear_objective, this->constraints, this->constraint_jacobian, warmstart_information);
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         this->hessian.reset();
+      }
+      subproblem.compute_regularized_hessian(statistics, this->hessian, warmstart_information);
 
       // variable bounds
       subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds, warmstart_information);
@@ -130,13 +133,11 @@ namespace uno {
          this->upper_bounds[variable_index] = std::min(BIG, this->upper_bounds[variable_index]);
       }
 
-      // Jacobian (objective and constraints) and Hessian
+      // save Jacobian (objective and constraints) and Hessian in BQPD format
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->save_gradients_to_local_format(subproblem.number_constraints);
       }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         // regularize the Hessian and store in the BQPD format
-         subproblem.regularize_hessian(statistics, this->hessian, warmstart_information);
          this->save_hessian_in_local_format();
       }
    }

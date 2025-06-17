@@ -14,9 +14,8 @@ namespace uno {
          regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius) {
    }
 
-   void Subproblem::evaluate_functions(Statistics& statistics, SparseVector<double>& linear_objective,
-         std::vector<double>& constraints, RectangularMatrix<double>& constraint_jacobian,
-         SymmetricMatrix<size_t, double>& hessian, const WarmstartInformation& warmstart_information) const {
+   void Subproblem::evaluate_functions(SparseVector<double>& linear_objective, std::vector<double>& constraints,
+         RectangularMatrix<double>& constraint_jacobian, const WarmstartInformation& warmstart_information) const {
       if (warmstart_information.objective_changed) {
          this->problem.evaluate_objective_gradient(this->current_iterate, linear_objective);
       }
@@ -24,16 +23,14 @@ namespace uno {
          this->problem.evaluate_constraints(this->current_iterate, constraints);
          this->problem.evaluate_constraint_jacobian(this->current_iterate, constraint_jacobian);
       }
+   }
+
+   void Subproblem::compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian,
+         const WarmstartInformation& warmstart_information) const {
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
          this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
             this->current_multipliers, hessian);
-      }
-   }
-
-   void Subproblem::regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian,
-         const WarmstartInformation& warmstart_information) const {
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // regularize the Hessian
          const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
             this->problem.number_variables - this->problem.get_number_original_variables()};
@@ -41,21 +38,12 @@ namespace uno {
       }
    }
 
-   void Subproblem::assemble_augmented_matrix(SymmetricMatrix<size_t, double>& augmented_matrix,
-         const SymmetricMatrix<size_t, double>& hessian, RectangularMatrix<double>& constraint_jacobian) const {
-      // assemble and factorize the augmented matrix
+   void Subproblem::assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
+         RectangularMatrix<double>& constraint_jacobian) const {
+      // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
+      this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
+         this->current_multipliers, augmented_matrix);
       augmented_matrix.set_dimension(this->problem.number_variables + this->problem.number_constraints);
-      augmented_matrix.reset();
-      // copy the Lagrangian Hessian in the top left block
-      //size_t current_column = 0;
-      for (const auto [row_index, column_index, element]: hessian) {
-         // finalize all empty columns
-         /*for (size_t column: Range(current_column, column_index)) {
-            this->matrix.finalize_column(column);
-            current_column++;
-         }*/
-         augmented_matrix.insert(element, row_index, column_index);
-      }
 
       // Jacobian of general constraints
       for (size_t column_index: Range(this->problem.number_constraints)) {

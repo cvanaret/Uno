@@ -28,17 +28,16 @@ namespace uno {
       Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
          HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
 
-      void evaluate_functions(Statistics& statistics, SparseVector<double>& linear_objective,
-         std::vector<double>& constraints, RectangularMatrix<double>& constraint_jacobian,
-         SymmetricMatrix<size_t, double>& hessian, const WarmstartInformation& warmstart_information) const;
+      void evaluate_functions(SparseVector<double>& linear_objective, std::vector<double>& constraints,
+         RectangularMatrix<double>& constraint_jacobian, const WarmstartInformation& warmstart_information) const;
 
       // Hessian regularization
-      void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian,
+      void compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian,
          const WarmstartInformation& warmstart_information) const;
 
       // augmented system
-      void assemble_augmented_matrix(SymmetricMatrix<size_t, double>& augmented_matrix,
-         const SymmetricMatrix<size_t, double>& hessian, RectangularMatrix<double>& constraint_jacobian) const;
+      void assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
+         RectangularMatrix<double>& constraint_jacobian) const;
       void assemble_augmented_rhs(const SparseVector<double>& objective_gradient, const std::vector<double>& constraints,
          RectangularMatrix<double>& constraint_jacobian, Vector<double>& rhs) const;
 

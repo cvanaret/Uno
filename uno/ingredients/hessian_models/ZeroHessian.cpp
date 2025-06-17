@@ -7,7 +7,6 @@
 
 namespace uno {
    void ZeroHessian::initialize(const Model& /*model*/) {
-
    }
 
    size_t ZeroHessian::number_nonzeros(const Model& /*model*/) const {

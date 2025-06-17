@@ -42,7 +42,7 @@ namespace uno {
    void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy) {
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter());
-      regularization_strategy.initialize_memory(barrier_problem, hessian_model);
+      regularization_strategy.initialize_memory(barrier_problem, hessian_model); // number of constraints for dual regularization
 
       this->objective_gradient.reserve(barrier_problem.number_objective_gradient_nonzeros());
       this->constraints.resize(barrier_problem.number_constraints);
@@ -57,7 +57,7 @@ namespace uno {
          number_augmented_system_nonzeros);
       this->augmented_matrix = SymmetricMatrix<size_t, double>(barrier_problem.number_variables + barrier_problem.number_constraints,
          number_augmented_system_nonzeros,
-         true, "COO");
+         false, "COO");
       this->rhs.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
       this->solution.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
    }
@@ -159,12 +159,8 @@ namespace uno {
       const Subproblem subproblem{barrier_problem, current_iterate, current_multipliers, hessian_model, regularization_strategy,
          trust_region_radius};
 
-      // evaluate the functions at the current iterate
-      subproblem.evaluate_functions(statistics, this->objective_gradient, this->constraints, this->constraint_jacobian,
-         this->hessian, warmstart_information);
-
       // compute the primal-dual solution
-      this->assemble_augmented_system(statistics, subproblem, regularization_strategy);
+      this->assemble_augmented_system(statistics, problem, subproblem, regularization_strategy, warmstart_information);
       this->linear_solver->solve_indefinite_system(this->augmented_matrix, this->rhs, this->solution);
       assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
       this->number_subproblems_solved++;
@@ -177,15 +173,31 @@ namespace uno {
       return 0.; // TODO
    }
 
-   void PrimalDualInteriorPointMethod::assemble_augmented_system(Statistics& statistics, const Subproblem& subproblem,
-         RegularizationStrategy<double>& regularization_strategy) {
+   void PrimalDualInteriorPointMethod::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
+         const Subproblem& subproblem, RegularizationStrategy<double>& regularization_strategy, const WarmstartInformation& warmstart_information) {
+      // evaluate the functions at the current iterate
+      subproblem.evaluate_functions(this->objective_gradient, this->constraints, this->constraint_jacobian, warmstart_information);
+
       // assemble the augmented matrix
-      subproblem.assemble_augmented_matrix(this->augmented_matrix, this->hessian, this->constraint_jacobian);
+      this->augmented_matrix.reset();
+      // pack the regularization at the beginning of the matrix
+      if (regularization_strategy.performs_primal_regularization()) {
+         for (size_t index: Range(problem.get_number_original_variables())) {
+            this->augmented_matrix.insert(0., index, index);
+         }
+      }
+      if (regularization_strategy.performs_dual_regularization()) {
+         for (size_t index: problem.get_equality_constraints()) {
+            this->augmented_matrix.insert(0., subproblem.number_variables + index, subproblem.number_variables + index);
+         }
+      }
+      subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix, this->constraint_jacobian);
 
       // regularize the augmented matrix
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
       const Inertia expected_inertia{subproblem.number_variables, subproblem.number_constraints, 0};
-      regularization_strategy.regularize_augmented_matrix(statistics, this->augmented_matrix, dual_regularization_parameter,
+      regularization_strategy.regularize_augmented_matrix(statistics, this->augmented_matrix, this->augmented_matrix.data_pointer(),
+         Range(problem.get_number_original_variables()), problem.get_equality_constraints(), dual_regularization_parameter,
          expected_inertia, *this->linear_solver);
 
       // assemble the RHS
@@ -331,6 +343,7 @@ namespace uno {
 
    double PrimalDualInteriorPointMethod::evaluate_subproblem_objective(const Direction& direction) const {
       const double linear_term = dot(direction.primals, this->objective_gradient);
+      // TODO Hessian is not used any more
       const double quadratic_term = this->hessian.quadratic_product(direction.primals, direction.primals) / 2.;
       return linear_term + quadratic_term;
    }

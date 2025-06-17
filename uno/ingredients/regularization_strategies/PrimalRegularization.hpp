@@ -29,8 +29,10 @@ namespace uno {
       void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
       void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
+         double* regularization_array, const Collection<size_t>& primal_block, const Collection<size_t>& dual_block,
          ElementType dual_regularization_parameter, const Inertia& expected_inertia) override;
       void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
+         double* regularization_array, const Collection<size_t>& primal_block, const Collection<size_t>& dual_block,
          ElementType dual_regularization_parameter, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
 
@@ -125,18 +127,20 @@ namespace uno {
 
    template <typename ElementType>
    void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix <size_t, ElementType>& augmented_matrix,
+         double* regularization_array, const Collection<size_t>& primal_block, const Collection<size_t>& dual_block,
          ElementType dual_regularization_parameter, const Inertia& expected_inertia) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
          this->optional_linear_solver->initialize_memory(this->dimension, this->number_nonzeros);
       }
-      this->regularize_augmented_matrix(statistics, augmented_matrix, dual_regularization_parameter, expected_inertia,
-         *this->optional_linear_solver);
+      this->regularize_augmented_matrix(statistics, augmented_matrix, regularization_array, primal_block, dual_block,
+         dual_regularization_parameter, expected_inertia, *this->optional_linear_solver);
    }
 
    template <typename ElementType>
    void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& /*statistics*/, SymmetricMatrix <size_t, ElementType>& /*augmented_matrix*/,
+         double* /*regularization_array*/, const Collection<size_t>& /*primal_block*/, const Collection<size_t>& /*dual_block*/,
          ElementType /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) {
       throw std::runtime_error("PrimalRegularization<ElementType>::regularize_augmented_matrix not implemented yet");
