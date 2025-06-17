@@ -16,6 +16,7 @@ namespace uno {
    // forward references
    class DualResiduals;
    class PrimalDualInteriorPointProblem;
+   class Subproblem;
 
    struct InteriorPointParameters {
       double tau_min;
@@ -77,8 +78,6 @@ namespace uno {
 
       [[nodiscard]] double barrier_parameter() const;
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
-      void evaluate_functions(Statistics& statistics, const PrimalDualInteriorPointProblem& barrier_problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, HessianModel& hessian_model, const WarmstartInformation& warmstart_information);
       void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate, const Multipliers& current_multipliers,
          const DualResiduals& residuals);
       [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
@@ -89,9 +88,7 @@ namespace uno {
          const Vector<double>& primal_direction, double tau);
       [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
          Multipliers& direction_multipliers, double tau);
-      void assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem, const Multipliers& current_multipliers,
-         RegularizationStrategy<double>& regularization_strategy);
-      void assemble_augmented_rhs(const Multipliers& current_multipliers, size_t number_variables, size_t number_constraints);
+      void assemble_augmented_system(Statistics& statistics, const Subproblem& subproblem, RegularizationStrategy<double>& regularization_strategy);
       void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
          Vector<double>& direction_primals, Multipliers& direction_multipliers);
       void compute_bound_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,

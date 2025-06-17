@@ -9,7 +9,8 @@
 namespace uno {
    PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter):
          OptimizationProblem(problem.model, problem.number_variables, problem.number_constraints),
-         first_reformulation(problem), barrier_parameter(barrier_parameter) { }
+         first_reformulation(problem), barrier_parameter(barrier_parameter),
+         equality_constraints(problem.number_constraints) { }
 
    double PrimalDualInteriorPointProblem::get_objective_multiplier() const {
       return this->first_reformulation.get_objective_multiplier();
@@ -104,14 +105,6 @@ namespace uno {
       return INF<double>;
    }
 
-   double PrimalDualInteriorPointProblem::constraint_lower_bound(size_t /*constraint_index*/) const {
-      return 0.;
-   }
-
-   double PrimalDualInteriorPointProblem::constraint_upper_bound(size_t /*constraint_index*/) const {
-      return 0.;
-   }
-
    const Collection<size_t>& PrimalDualInteriorPointProblem::get_lower_bounded_variables() const {
       return this->first_reformulation.get_lower_bounded_variables();
    }
@@ -126,6 +119,26 @@ namespace uno {
 
    const Collection<size_t>& PrimalDualInteriorPointProblem::get_single_upper_bounded_variables() const {
       return this->first_reformulation.get_single_upper_bounded_variables();
+   }
+
+   const Vector<size_t>& PrimalDualInteriorPointProblem::get_fixed_variables() const {
+      return this->fixed_variables;
+   }
+
+   double PrimalDualInteriorPointProblem::constraint_lower_bound(size_t /*constraint_index*/) const {
+      return 0.;
+   }
+
+   double PrimalDualInteriorPointProblem::constraint_upper_bound(size_t /*constraint_index*/) const {
+      return 0.;
+   }
+
+   const Collection<size_t>& PrimalDualInteriorPointProblem::get_equality_constraints() const {
+      return this->equality_constraints;
+   }
+
+   const Collection<size_t>& PrimalDualInteriorPointProblem::get_inequality_constraints() const {
+      return this->inequality_constraints;
    }
 
    size_t PrimalDualInteriorPointProblem::number_objective_gradient_nonzeros() const {

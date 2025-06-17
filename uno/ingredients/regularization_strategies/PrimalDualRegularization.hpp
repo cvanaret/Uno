@@ -100,6 +100,7 @@ namespace uno {
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) {
       // to regularize the Hessian only, call the function for the augmented matrix with no dual part
       this->regularize_augmented_matrix(statistics, hessian, ElementType(0), expected_inertia, linear_solver);
+      // TODO fix
    }
 
    // the augmented matrix has been factorized prior to calling this function

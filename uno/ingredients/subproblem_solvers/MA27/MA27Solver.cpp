@@ -6,9 +6,9 @@
 #include "MA27Solver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/OptimizationProblem.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 
 #define MA27ID FC_GLOBAL(ma27id, MA27ID)
 #define MA27AD FC_GLOBAL(ma27ad, MA27AD)

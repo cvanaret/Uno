@@ -3,7 +3,6 @@
 
 #include <cassert>
 #include "BQPDSolver.hpp"
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
@@ -11,6 +10,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
@@ -70,8 +70,8 @@ namespace uno {
       this->hessian = SymmetricMatrix<size_t, double>(problem.number_variables, number_hessian_nonzeros,
          regularization_strategy.performs_primal_regularization(), "CSC");
       this->kmax = (0 < number_regularized_hessian_nonzeros) ? this->kmax_limit : 0;
-      this->active_set.resize(problem.number_variables + problem.number_constraints);
       // default active set
+      this->active_set.resize(problem.number_variables + problem.number_constraints);
       for (size_t variable_index: Range(problem.number_variables + problem.number_constraints)) {
          this->active_set[variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
       }
@@ -124,7 +124,7 @@ namespace uno {
       auto constraints_upper_bounds = view(this->upper_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
       subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, this->constraints, warmstart_information);
 
-      // replace INFs with large finite values
+      // replace INFs with large finite values (TODO: is that really useful?)
       for (size_t variable_index: Range(subproblem.number_variables + subproblem.number_constraints)) {
          this->lower_bounds[variable_index] = std::max(-BIG, this->lower_bounds[variable_index]);
          this->upper_bounds[variable_index] = std::min(BIG, this->upper_bounds[variable_index]);

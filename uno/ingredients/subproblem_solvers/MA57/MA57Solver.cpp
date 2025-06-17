@@ -5,9 +5,9 @@
 #include "MA57Solver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/OptimizationProblem.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 
 #define MA57ID FC_GLOBAL(ma57id, MA57ID)
 #define MA57AD FC_GLOBAL(ma57ad, MA57AD)

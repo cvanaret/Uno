@@ -1,8 +1,9 @@
 #include <vector>
 #include "Subproblem.hpp"
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 
 namespace uno {
@@ -38,6 +39,54 @@ namespace uno {
             this->problem.number_variables - this->problem.get_number_original_variables()};
          this->regularization_strategy.regularize_hessian(statistics, hessian, expected_inertia);
       }
+   }
+
+   void Subproblem::assemble_augmented_matrix(SymmetricMatrix<size_t, double>& augmented_matrix,
+         const SymmetricMatrix<size_t, double>& hessian, RectangularMatrix<double>& constraint_jacobian) const {
+      // assemble and factorize the augmented matrix
+      augmented_matrix.set_dimension(this->problem.number_variables + this->problem.number_constraints);
+      augmented_matrix.reset();
+      // copy the Lagrangian Hessian in the top left block
+      //size_t current_column = 0;
+      for (const auto [row_index, column_index, element]: hessian) {
+         // finalize all empty columns
+         /*for (size_t column: Range(current_column, column_index)) {
+            this->matrix.finalize_column(column);
+            current_column++;
+         }*/
+         augmented_matrix.insert(element, row_index, column_index);
+      }
+
+      // Jacobian of general constraints
+      for (size_t column_index: Range(this->problem.number_constraints)) {
+         for (const auto [row_index, derivative]: constraint_jacobian[column_index]) {
+            augmented_matrix.insert(derivative, row_index, this->problem.number_variables + column_index);
+         }
+         augmented_matrix.finalize_column(column_index);
+      }
+   }
+
+   void Subproblem::assemble_augmented_rhs(const SparseVector<double>& objective_gradient, const std::vector<double>& constraints,
+         RectangularMatrix<double>& constraint_jacobian, Vector<double>& rhs) const {
+      rhs.fill(0.);
+
+      // objective gradient
+      for (const auto [variable_index, derivative]: objective_gradient) {
+         rhs[variable_index] -= derivative;
+      }
+
+      // constraint: evaluations and gradients
+      for (size_t constraint_index: Range(number_constraints)) {
+         // Lagrangian
+         if (current_multipliers.constraints[constraint_index] != 0.) {
+            for (const auto [variable_index, derivative]: constraint_jacobian[constraint_index]) {
+               rhs[variable_index] += current_multipliers.constraints[constraint_index] * derivative;
+            }
+         }
+         // constraints
+         rhs[number_variables + constraint_index] = -constraints[constraint_index];
+      }
+      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, number_variables + number_constraints)); DEBUG << '\n';
    }
 
    void Subproblem::set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,

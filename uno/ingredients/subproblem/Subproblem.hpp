@@ -3,9 +3,10 @@
 
 #ifndef UNO_SUBPROBLEM_H
 #define UNO_SUBPROBLEM_H
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
+
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "optimization/Multipliers.hpp"
+#include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 
 namespace uno {
@@ -31,8 +32,15 @@ namespace uno {
          std::vector<double>& constraints, RectangularMatrix<double>& constraint_jacobian,
          SymmetricMatrix<size_t, double>& hessian, const WarmstartInformation& warmstart_information) const;
 
+      // Hessian regularization
       void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian,
          const WarmstartInformation& warmstart_information) const;
+
+      // augmented system
+      void assemble_augmented_matrix(SymmetricMatrix<size_t, double>& augmented_matrix,
+         const SymmetricMatrix<size_t, double>& hessian, RectangularMatrix<double>& constraint_jacobian) const;
+      void assemble_augmented_rhs(const SparseVector<double>& objective_gradient, const std::vector<double>& constraints,
+         RectangularMatrix<double>& constraint_jacobian, Vector<double>& rhs) const;
 
       void set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,
          const WarmstartInformation& warmstart_information) const;
