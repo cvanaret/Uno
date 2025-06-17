@@ -130,11 +130,13 @@ namespace uno {
          this->upper_bounds[variable_index] = std::min(BIG, this->upper_bounds[variable_index]);
       }
 
-      // Jacobian (objective and constraints)
+      // Jacobian (objective and constraints) and Hessian
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->save_gradients_to_local_format(subproblem.number_constraints);
       }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         // regularize the Hessian and store in the BQPD format
+         subproblem.regularize_hessian(statistics, this->hessian, warmstart_information);
          this->save_hessian_in_local_format();
       }
    }
@@ -151,7 +153,7 @@ namespace uno {
          }
          for (size_t constraint_index: Range(subproblem.number_constraints)) {
             DEBUG << "linearized c" << constraint_index << " in [" << this->lower_bounds[subproblem.number_variables + constraint_index] << ", " <<
-                  this->upper_bounds[subproblem.number_variables + constraint_index] << "]\n";
+               this->upper_bounds[subproblem.number_variables + constraint_index] << "]\n";
          }
          DEBUG << "Initial point: " << initial_point << '\n';
       }
@@ -166,10 +168,10 @@ namespace uno {
       // solve the LP/QP
       DEBUG2 << "Running BQPD\n";
       BQPD(&n, &m, &this->k, &this->kmax, this->bqpd_jacobian.data(), this->bqpd_jacobian_sparsity.data(), direction.primals.data(),
-            this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
-            this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp,
-            &this->peq_solution, this->workspace.data(), this->workspace_sparsity.data(), &mode_integer, &this->ifail, this->info.data(),
-            &this->iprint, &this->nout);
+         this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
+         this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp,
+         &this->peq_solution, this->workspace.data(), this->workspace_sparsity.data(), &mode_integer, &this->ifail, this->info.data(),
+         &this->iprint, &this->nout);
       DEBUG2 << "Ran BQPD\n";
       const BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
       direction.status = BQPDSolver::status_from_bqpd_status(bqpd_status);
@@ -177,7 +179,7 @@ namespace uno {
       // project solution into bounds
       for (size_t variable_index: Range(subproblem.number_variables)) {
          direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], this->lower_bounds[variable_index]),
-               this->upper_bounds[variable_index]);
+            this->upper_bounds[variable_index]);
       }
       this->set_multipliers(subproblem.number_variables, direction.multipliers);
    }

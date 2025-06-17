@@ -27,6 +27,12 @@ namespace uno {
          // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
          this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
             this->current_multipliers, hessian);
+      }
+   }
+
+   void Subproblem::regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian,
+         const WarmstartInformation& warmstart_information) const {
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // regularize the Hessian
          const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
             this->problem.number_variables - this->problem.get_number_original_variables()};

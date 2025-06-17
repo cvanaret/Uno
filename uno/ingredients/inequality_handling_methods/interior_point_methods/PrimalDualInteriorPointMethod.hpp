@@ -6,7 +6,6 @@
 
 #include <memory>
 #include "../InequalityHandlingMethod.hpp"
-#include "PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -14,8 +13,9 @@
 #include "BarrierParameterUpdateStrategy.hpp"
 
 namespace uno {
-   // forward reference
+   // forward references
    class DualResiduals;
+   class PrimalDualInteriorPointProblem;
 
    struct InteriorPointParameters {
       double tau_min;

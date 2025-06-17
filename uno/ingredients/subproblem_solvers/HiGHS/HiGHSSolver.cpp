@@ -96,6 +96,10 @@ namespace uno {
          this->model.lp_.a_matrix_.start_.emplace_back(number_nonzeros);
       }
 
+      // regularize the Hessian and store in the BQPD format
+      subproblem.regularize_hessian(statistics, this->hessian, warmstart_information);
+      // TODO save Hessian into HiGHS format
+
       if (this->print_subproblem) {
          DEBUG << "LP:\n";
          DEBUG << "Linear objective part: "; print_vector(DEBUG, view(this->model.lp_.col_cost_, 0, subproblem.number_variables));

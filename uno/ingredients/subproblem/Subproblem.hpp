@@ -31,6 +31,9 @@ namespace uno {
          std::vector<double>& constraints, RectangularMatrix<double>& constraint_jacobian,
          SymmetricMatrix<size_t, double>& hessian, const WarmstartInformation& warmstart_information) const;
 
+      void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian,
+         const WarmstartInformation& warmstart_information) const;
+
       void set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,
          const WarmstartInformation& warmstart_information) const;
 

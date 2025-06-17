@@ -3,13 +3,10 @@
 
 #include "InequalityConstrainedMethod.hpp"
 #include "optimization/Iterate.hpp"
-#include "linear_algebra/Vector.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
-#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"
 #include "optimization/Direction.hpp"
 #include "symbolic/VectorView.hpp"
 
