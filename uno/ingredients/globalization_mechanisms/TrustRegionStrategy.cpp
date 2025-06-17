@@ -11,8 +11,8 @@
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
-#include "tools/Logger.hpp"
 #include "options/Options.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {

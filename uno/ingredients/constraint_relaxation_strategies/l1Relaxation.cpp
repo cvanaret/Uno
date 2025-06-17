@@ -19,7 +19,6 @@
 #include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Statistics.hpp"
-#include "tools/UserCallbacks.hpp"
 
 /*
  * Infeasibility detection and SQP methods for nonlinear optimization

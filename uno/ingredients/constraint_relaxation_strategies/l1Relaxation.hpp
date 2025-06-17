@@ -6,7 +6,6 @@
 
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
-#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "optimization/Multipliers.hpp"
 

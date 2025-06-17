@@ -4,15 +4,17 @@
 #ifndef UNO_PRIMALDUALINTERIORPOINTMETHOD_H
 #define UNO_PRIMALDUALINTERIORPOINTMETHOD_H
 
+#include <memory>
 #include "../InequalityHandlingMethod.hpp"
 #include "PrimalDualInteriorPointProblem.hpp"
-#include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
+#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 
 namespace uno {
-   // forward references
-   template <typename IndexType, typename NumericalType>
-   class DirectSymmetricIndefiniteLinearSolver;
+   // forward reference
    class DualResiduals;
 
    struct InteriorPointParameters {
@@ -57,8 +59,9 @@ namespace uno {
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
       SymmetricMatrix<size_t, double> hessian{};
-
-      SymmetricIndefiniteLinearSystem<double> augmented_system{};
+      SymmetricMatrix<size_t, double> augmented_matrix{};
+      Vector<double> rhs{};
+      Vector<double> solution{};
       const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;
 
       BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
