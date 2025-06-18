@@ -6,7 +6,6 @@
 
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
-#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 

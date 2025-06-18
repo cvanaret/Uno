@@ -4,10 +4,9 @@
 #ifndef UNO_SUBPROBLEM_H
 #define UNO_SUBPROBLEM_H
 
-#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
-#include "optimization/Multipliers.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "symbolic/Range.hpp"
 
 namespace uno {
    // forward declarations
@@ -20,6 +19,11 @@ namespace uno {
    class RegularizationStrategy;
    template <typename ElementType>
    class SparseVector;
+   class Statistics;
+   template <typename IndexType, typename ElementType>
+   class SymmetricMatrix;
+   template <typename ElementType>
+   class Vector;
 
    class Subproblem {
    public:
@@ -28,10 +32,11 @@ namespace uno {
       Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
          HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
 
+      // constraints, objective gradient and Jacobian
       void evaluate_functions(SparseVector<double>& linear_objective, std::vector<double>& constraints,
          RectangularMatrix<double>& constraint_jacobian, const WarmstartInformation& warmstart_information) const;
 
-      // Hessian regularization
+      // regularized Hessian
       void compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian,
          const WarmstartInformation& warmstart_information) const;
 
@@ -41,9 +46,11 @@ namespace uno {
       void assemble_augmented_rhs(const SparseVector<double>& objective_gradient, const std::vector<double>& constraints,
          RectangularMatrix<double>& constraint_jacobian, Vector<double>& rhs) const;
 
+      // variables bounds
       void set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,
          const WarmstartInformation& warmstart_information) const;
 
+      // constraints bounds
       template <typename Array>
       void set_constraints_bounds(Array& constraints_lower_bounds, Array& constraints_upper_bounds,
          std::vector<double>& constraints, const WarmstartInformation& warmstart_information) const;

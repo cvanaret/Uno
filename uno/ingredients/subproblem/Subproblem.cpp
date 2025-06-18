@@ -1,10 +1,8 @@
-#include <vector>
 #include "Subproblem.hpp"
+#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/OptimizationProblem.hpp"
-#include "optimization/WarmstartInformation.hpp"
 
 namespace uno {
    Subproblem::Subproblem(const OptimizationProblem &problem, Iterate &current_iterate, const Multipliers &current_multipliers,
@@ -64,17 +62,17 @@ namespace uno {
       }
 
       // constraint: evaluations and gradients
-      for (size_t constraint_index: Range(number_constraints)) {
+      for (size_t constraint_index: Range(this->number_constraints)) {
          // Lagrangian
-         if (current_multipliers.constraints[constraint_index] != 0.) {
+         if (this->current_multipliers.constraints[constraint_index] != 0.) {
             for (const auto [variable_index, derivative]: constraint_jacobian[constraint_index]) {
-               rhs[variable_index] += current_multipliers.constraints[constraint_index] * derivative;
+               rhs[variable_index] += this->current_multipliers.constraints[constraint_index] * derivative;
             }
          }
          // constraints
-         rhs[number_variables + constraint_index] = -constraints[constraint_index];
+         rhs[this->number_variables + constraint_index] = -constraints[constraint_index];
       }
-      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, number_variables + number_constraints)); DEBUG << '\n';
+      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints)); DEBUG << '\n';
    }
 
    void Subproblem::set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,
