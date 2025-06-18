@@ -29,7 +29,7 @@ namespace uno {
       this->constraints.resize(problem.number_constraints);
       this->linear_objective.reserve(problem.number_objective_gradient_nonzeros());
       this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
-      this->hessian = SymmetricMatrix<size_t, double>(problem.number_variables, 0, false, "CSC"); // TODO
+      this->hessian = SymmetricMatrix<size_t, double>("CSC", problem.number_variables, 0, std::nullopt); // TODO
       this->model.lp_.sense_ = ObjSense::kMinimize;
       this->model.lp_.offset_ = 0.;
       // the linear part of the objective is a dense vector

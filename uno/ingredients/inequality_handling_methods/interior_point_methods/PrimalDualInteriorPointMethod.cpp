@@ -59,10 +59,10 @@ namespace uno {
          (regularization_strategy.performs_dual_regularization() ? problem.get_equality_constraints().size() : 0);
       this->linear_solver->initialize_memory(barrier_problem.number_variables + barrier_problem.number_constraints,
          number_augmented_system_nonzeros);
-      this->augmented_matrix = SymmetricMatrix<size_t, double>(barrier_problem.number_variables + barrier_problem.number_constraints,
+      this->augmented_matrix = SymmetricMatrix<size_t, double>("COO",
+         barrier_problem.number_variables + barrier_problem.number_constraints,
          number_augmented_system_nonzeros,
-         true,
-         "COO");
+         problem.get_number_original_variables() + problem.get_equality_constraints().size()); // size of regularization
       this->rhs.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
       this->solution.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
    }

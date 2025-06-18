@@ -39,8 +39,8 @@ namespace uno {
       }
 
       /* build the symmetric matrix */
-      SymmetricMatrix<size_t, double> matrix(model.number_variables + model.number_constraints,
-         model.number_variables + model.number_jacobian_nonzeros(), false, "COO");
+      SymmetricMatrix<size_t, double> matrix("COO", model.number_variables + model.number_constraints,
+         model.number_variables + model.number_jacobian_nonzeros(), std::nullopt);
       // identity block
       for (size_t variable_index: Range(model.number_variables)) {
          matrix.insert(1., variable_index, variable_index);

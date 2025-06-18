@@ -19,7 +19,7 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    class CSCSparseStorage : public SparseStorage<IndexType, ElementType> {
    public:
-      CSCSparseStorage(size_t dimension, size_t capacity, bool use_regularization);
+      CSCSparseStorage(size_t dimension, size_t capacity, std::optional<size_t> optional_regularization);
 
       void reset() override;
       void set_dimension(size_t new_dimension) override;
@@ -46,8 +46,8 @@ namespace uno {
    };
 
    template <typename IndexType, typename ElementType>
-   CSCSparseStorage<IndexType, ElementType>::CSCSparseStorage(size_t dimension, size_t capacity, bool use_regularization):
-         SparseStorage<IndexType, ElementType>(dimension, capacity, use_regularization),
+   CSCSparseStorage<IndexType, ElementType>::CSCSparseStorage(size_t dimension, size_t capacity, std::optional<size_t> optional_regularization):
+         SparseStorage<IndexType, ElementType>(dimension, capacity, optional_regularization),
          column_starts(dimension + 1) {
       this->entries.reserve(this->capacity);
       this->row_indices.reserve(this->capacity);
