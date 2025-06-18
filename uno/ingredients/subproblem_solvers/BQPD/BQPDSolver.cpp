@@ -56,18 +56,22 @@ namespace uno {
 
    void BQPDSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
          const RegularizationStrategy<double>& regularization_strategy) {
-      this->lower_bounds.resize(problem.number_variables + problem.number_constraints);
-      this->upper_bounds.resize(problem.number_variables + problem.number_constraints);
-      this->constraints.resize(problem.number_constraints);
-      this->linear_objective.reserve(problem.number_objective_gradient_nonzeros());
-      this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
-      this->bqpd_jacobian.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros()); // Jacobian + objective gradient
-      this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros() + problem.number_constraints + 3);
+      // determine whether the subproblem has curvature
       const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
       const bool regularize = !hessian_model.is_positive_definite() && regularization_strategy.performs_primal_regularization();
       const size_t regularization_size = problem.get_number_original_variables();
       const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros +
          (regularize ? regularization_size : 0);
+
+      this->lower_bounds.resize(problem.number_variables + problem.number_constraints);
+      this->upper_bounds.resize(problem.number_variables + problem.number_constraints);
+      this->constraints.resize(problem.number_constraints);
+      this->linear_objective.reserve(problem.number_objective_gradient_nonzeros());
+      this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
+      // Jacobian + objective gradient
+      this->bqpd_jacobian.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros());
+      this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros() +
+         problem.number_constraints + 3);
       this->hessian = SymmetricMatrix<size_t, double>("CSC", problem.number_variables, number_hessian_nonzeros,
          regularize ? std::optional(regularization_size) : std::nullopt);
       this->kmax = (0 < number_regularized_hessian_nonzeros) ? this->kmax_limit : 0;

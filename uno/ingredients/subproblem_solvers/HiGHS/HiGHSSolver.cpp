@@ -1,3 +1,6 @@
+// Copyright (c) 2024 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
 #include <cassert>
 #include "HiGHSSolver.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
@@ -13,14 +16,13 @@
 
 namespace uno {
    HiGHSSolver::HiGHSSolver(const Options& options):
-         LPSolver(),
-         print_subproblem(options.get_bool("print_subproblem")) {
+         LPSolver(), print_subproblem(options.get_bool("print_subproblem")) {
       this->highs_solver.setOptionValue("output_flag", "false");
    }
 
    void HiGHSSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
          const RegularizationStrategy<double>& regularization_strategy) {
-      // check if HiGHS can solve the subproblem
+      // determine whether the subproblem has curvature. For the moment, HiGHS can only solve LPs
       const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
       const bool regularize = !hessian_model.is_positive_definite() && regularization_strategy.performs_primal_regularization();
       const size_t regularization_size = problem.get_number_original_variables();
@@ -67,6 +69,7 @@ namespace uno {
 
       // evaluate the functions based on warmstart information
       subproblem.evaluate_functions(this->linear_objective, this->constraints, this->constraint_jacobian, warmstart_information);
+      // regularize the Hessian. TODO: store it in HiGHS format
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->hessian.reset();
       }
@@ -102,10 +105,6 @@ namespace uno {
          }
          this->model.lp_.a_matrix_.start_.emplace_back(number_nonzeros);
       }
-
-      // regularize the Hessian and store in the BQPD format
-      subproblem.compute_regularized_hessian(statistics, this->hessian, warmstart_information);
-      // TODO save Hessian into HiGHS format
 
       if (this->print_subproblem) {
          DEBUG << "LP:\n";
