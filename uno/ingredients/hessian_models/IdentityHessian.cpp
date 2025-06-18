@@ -15,6 +15,10 @@ namespace uno {
       return model.number_variables;
    }
 
+   bool IdentityHessian::is_positive_definite() const {
+      return true;
+   }
+
    void IdentityHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
       DEBUG << "Setting identity Hessian\n";

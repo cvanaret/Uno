@@ -1,5 +1,6 @@
 #include <cassert>
 #include "HiGHSSolver.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -20,8 +21,11 @@ namespace uno {
    void HiGHSSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
          const RegularizationStrategy<double>& regularization_strategy) {
       // check if HiGHS can solve the subproblem
-      const size_t number_regularized_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model) +
-         (regularization_strategy.performs_primal_regularization() ? problem.number_variables : 0);
+      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
+      const bool regularize = !hessian_model.is_positive_definite() && regularization_strategy.performs_primal_regularization();
+      const size_t regularization_size = problem.get_number_original_variables();
+      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros +
+         (regularize ? regularization_size : 0);
       if (0 < number_regularized_hessian_nonzeros) {
          throw std::runtime_error("The subproblem has curvature. For the moment, HiGHS can only solve LPs");
       }
