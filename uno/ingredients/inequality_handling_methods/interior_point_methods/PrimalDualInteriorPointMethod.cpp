@@ -13,6 +13,7 @@
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
 #include "preprocessing/Preprocessing.hpp"
+#include "symbolic/CollectionAdapter.hpp"
 #include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Infinity.hpp"
@@ -59,7 +60,9 @@ namespace uno {
       this->linear_solver->initialize_memory(barrier_problem.number_variables + barrier_problem.number_constraints,
          number_augmented_system_nonzeros);
       this->augmented_matrix = SymmetricMatrix<size_t, double>(barrier_problem.number_variables + barrier_problem.number_constraints,
-         number_augmented_system_nonzeros, false, "COO");
+         number_augmented_system_nonzeros,
+         true,
+         "COO");
       this->rhs.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
       this->solution.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
    }
@@ -169,23 +172,12 @@ namespace uno {
 
       // assemble the augmented matrix
       this->augmented_matrix.reset();
-      // pack the regularization at the beginning of the matrix
-      if (regularization_strategy.performs_primal_regularization()) {
-         for (size_t index: Range(problem.get_number_original_variables())) {
-            this->augmented_matrix.insert(0., index, index);
-         }
-      }
-      if (regularization_strategy.performs_dual_regularization()) {
-         for (size_t index: problem.get_equality_constraints()) {
-            this->augmented_matrix.insert(0., subproblem.number_variables + index, subproblem.number_variables + index);
-         }
-      }
       subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix, this->constraint_jacobian);
 
       // regularize the augmented matrix
       const double dual_regularization_parameter = std::pow(this->barrier_parameter(), this->parameters.regularization_exponent);
       const Inertia expected_inertia{subproblem.number_variables, subproblem.number_constraints, 0};
-      regularization_strategy.regularize_augmented_matrix(statistics, this->augmented_matrix, this->augmented_matrix.data_pointer(),
+      regularization_strategy.regularize_augmented_matrix(statistics, this->augmented_matrix,
          Range(problem.get_number_original_variables()), problem.get_equality_constraints(), dual_regularization_parameter,
          expected_inertia, *this->linear_solver);
 

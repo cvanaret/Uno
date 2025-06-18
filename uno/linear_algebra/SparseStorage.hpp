@@ -8,6 +8,10 @@
 #include <functional>
 
 namespace uno {
+   // forward declaration
+   template <typename ElementType>
+   class Collection;
+
    // abstract class
    template <typename IndexType, typename ElementType>
    class SparseStorage {
@@ -53,7 +57,7 @@ namespace uno {
       virtual void insert(ElementType term, IndexType row_index, IndexType column_index) = 0;
       // this method will be used by the CSCSparseStorage subclass
       virtual void finalize_column(IndexType column_index) = 0;
-      virtual void set_regularization(const std::function<ElementType(size_t /*index*/)>& regularization_function) = 0;
+      virtual void set_regularization(const Collection<size_t>& indices, size_t offset, double factor) = 0;
       virtual const ElementType* data_pointer() const noexcept = 0;
       virtual ElementType* data_pointer() noexcept = 0;
 

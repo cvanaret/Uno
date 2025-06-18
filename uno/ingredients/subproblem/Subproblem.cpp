@@ -32,7 +32,8 @@ namespace uno {
          // regularize the Hessian
          const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
             this->problem.number_variables - this->problem.get_number_original_variables()};
-         this->regularization_strategy.regularize_hessian(statistics, hessian, expected_inertia);
+         this->regularization_strategy.regularize_hessian(statistics, hessian,
+            Range(this->problem.get_number_original_variables()), expected_inertia);
       }
    }
 

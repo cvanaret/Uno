@@ -23,7 +23,7 @@ namespace uno {
       virtual ~LPSolver() = default;
 
       virtual void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy) = 0;
+         const RegularizationStrategy<double>& regularization_strategy) = 0;
 
       virtual void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) = 0;

@@ -4,13 +4,16 @@
 #ifndef UNO_SYMMETRICMATRIX_H
 #define UNO_SYMMETRICMATRIX_H
 
-#include <memory>
-#include <functional>
 #include <cassert>
+#include <memory>
 #include "SparseStorage.hpp"
 #include "SparseStorageFactory.hpp"
 
 namespace uno {
+   // forward declaration
+   template <typename ElementType>
+   class Collection;
+
    // abstract class
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix {
@@ -36,12 +39,8 @@ namespace uno {
       
       [[nodiscard]] ElementType smallest_diagonal_entry(size_t max_dimension) const;
       
-      void set_regularization(const std::function<ElementType(size_t /*index*/)>& regularization_function) {
-         this->sparse_storage->set_regularization(regularization_function);
-      }
-
-      static SymmetricMatrix<IndexType, ElementType> zero(size_t dimension) {
-         return {dimension, 0, false, "COO"}; // TODO change
+      void set_regularization(const Collection<size_t>& indices, size_t offset, double factor) {
+         this->sparse_storage->set_regularization(indices, offset, factor);
       }
 
       typename SparseStorage<IndexType, ElementType>::iterator begin() const { return this->sparse_storage->begin(); }
@@ -108,7 +107,6 @@ namespace uno {
 
    template <typename IndexType, typename ElementType>
    inline void SymmetricMatrix<IndexType, ElementType>::insert(ElementType term, IndexType row_index, IndexType column_index) {
-      // check if element in upper/lower triangular part
       this->sparse_storage->insert(term, row_index, column_index);
    }
    

@@ -16,7 +16,7 @@ namespace uno {
       explicit HiGHSSolver(const Options& options);
 
       void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy) override;
+         const RegularizationStrategy<double>& regularization_strategy) override;
 
       void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override;

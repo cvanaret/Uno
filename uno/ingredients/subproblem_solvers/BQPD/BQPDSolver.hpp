@@ -50,7 +50,7 @@ namespace uno {
       explicit BQPDSolver(const Options& options);
 
       void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy) override;
+         const RegularizationStrategy<double>& regularization_strategy) override;
 
       void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override;
@@ -89,12 +89,13 @@ namespace uno {
       const bool print_subproblem;
 
       void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information);
+      void display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const;
       void solve_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
       void save_hessian_in_local_format();
       void save_gradients_to_local_format(size_t number_constraints);
-      void set_multipliers(size_t number_variables, Multipliers& direction_multipliers);
+      void set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const;
       static BQPDStatus bqpd_status_from_int(int ifail);
       static SubproblemStatus status_from_bqpd_status(BQPDStatus bqpd_status);
    };

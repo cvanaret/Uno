@@ -13,7 +13,7 @@ namespace uno {
       ~QPSolver() override = default;
 
       void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy) override = 0;
+         const RegularizationStrategy<double>& regularization_strategy) override = 0;
 
       void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override = 0;

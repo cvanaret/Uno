@@ -24,7 +24,7 @@ namespace uno {
 
       void insert(ElementType term, IndexType row_index, IndexType column_index) override;
       void finalize_column(IndexType /*column_index*/) override { /* do nothing */ }
-      void set_regularization(const std::function<ElementType(size_t index)>& regularization_function) override;
+      void set_regularization(const Collection<size_t>& indices, size_t offset, double factor) override;
       const ElementType* data_pointer() const noexcept override { return this->entries.data(); }
       ElementType* data_pointer() noexcept override { return this->entries.data(); }
 
@@ -103,13 +103,13 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSparseStorage<IndexType, ElementType>::set_regularization(const std::function<ElementType(size_t /*index*/)>& regularization_function) {
+   void COOSparseStorage<IndexType, ElementType>::set_regularization(const Collection<size_t>& indices, size_t offset, double factor) {
       assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
 
       // the regularization terms (that lie at the start of the entries vector) can be directly modified
-      for (size_t row_index: Range(this->dimension)) {
-         const ElementType element = regularization_function(row_index);
-         this->entries[row_index] = element;
+      for (size_t index: indices) {
+         const ElementType element = factor;
+         this->entries[index + offset] = element;
       }
    }
 

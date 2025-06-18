@@ -18,7 +18,7 @@ namespace uno {
    }
 
    void HiGHSSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy) {
+         const RegularizationStrategy<double>& regularization_strategy) {
       // check if HiGHS can solve the subproblem
       const size_t number_regularized_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model) +
          (regularization_strategy.performs_primal_regularization() ? problem.number_variables : 0);
