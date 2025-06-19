@@ -25,14 +25,14 @@ namespace uno {
    rinfo[]);
    // numerical factorization
    void MA57BD(const int* n, int* ne, const double a[], /* out */ double fact[], const int* lfact, /* out */ int ifact[], const int* lifact,
-         const int* lkeep, const int keep[], int iwork[], int icntl[], double cntl[], /* out */ int info[], /* out */ double rinfo[]);
+      const int* lkeep, const int keep[], int iwork[], int icntl[], double cntl[], /* out */ int info[], /* out */ double rinfo[]);
    // linear system solve without iterative refinement
    void MA57CD(const int* job, const int* n, double fact[], int* lfact, int ifact[], int* lifact, const int* nrhs, double rhs[], const int* lrhs, double
    work[], int* lwork, int iwork[], int icntl[], int info[]);
    // linear system solve with iterative refinement
    void MA57DD(const int* job, const int* n, int* ne, const double a[], const int irn[], const int jcn[], double fact[], int* lfact, int ifact[], int*
    lifact, const double rhs[], double x[], double resid[], double work[], int iwork[], int icntl[],
-         double cntl[], int info[], double rinfo[]);
+      double cntl[], int info[], double rinfo[]);
    }
 
    MA57Solver::MA57Solver(): DirectSymmetricIndefiniteLinearSolver() {
@@ -126,17 +126,17 @@ namespace uno {
       // solve the linear system
       if (this->use_iterative_refinement) {
          MA57DD(&this->job, &n, &nnz, matrix.data_pointer(), this->row_indices.data(), this->column_indices.data(),
-               this->fact.data(), &this->factorization.lfact, this->ifact.data(), &this->factorization.lifact,
-               rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
-               this->cntl.data(), this->info.data(), this->rinfo.data());
+            this->fact.data(), &this->factorization.lfact, this->ifact.data(), &this->factorization.lifact,
+            rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
+            this->cntl.data(), this->info.data(), this->rinfo.data());
       }
       else {
          // copy rhs into result (overwritten by MA57)
          result = rhs;
 
          MA57CD(&this->job, &n, this->fact.data(), &this->factorization.lfact, this->ifact.data(),
-               &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
-               this->icntl.data(), this->info.data());
+            &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
+            this->icntl.data(), this->info.data());
       }
    }
 

@@ -160,8 +160,13 @@ namespace uno {
       // compute the primal-dual solution
       this->assemble_augmented_system(statistics, subproblem, warmstart_information);
       this->linear_solver->solve_indefinite_system(this->augmented_matrix, this->rhs, this->solution);
-      assert(direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
       this->number_subproblems_solved++;
+
+      // check whether the augmented matrix was singular, in which case the subproblem is infeasible
+      if (this->linear_solver->matrix_is_singular()) {
+         direction.status = SubproblemStatus::INFEASIBLE;
+         return;
+      }
 
       this->assemble_primal_dual_direction(problem, current_iterate.primals, current_multipliers, direction.primals, direction.multipliers);
       direction.subproblem_objective = this->evaluate_subproblem_objective(direction);
