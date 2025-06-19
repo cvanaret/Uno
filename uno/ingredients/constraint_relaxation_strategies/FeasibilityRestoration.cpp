@@ -52,9 +52,6 @@ namespace uno {
          *this->optimality_regularization_strategy);
       this->feasibility_inequality_handling_method->initialize(feasibility_problem, *this->feasibility_hessian_model,
          *this->feasibility_regularization_strategy);
-      std::cout << "Allocating a direction with " <<
-         (std::max(optimality_problem.number_variables, feasibility_problem.number_variables)) << " variables and " <<
-         (std::max(optimality_problem.number_constraints, feasibility_problem.number_constraints)) << " constraints\n";
       direction = Direction(
          std::max(optimality_problem.number_variables, feasibility_problem.number_variables),
          std::max(optimality_problem.number_constraints, feasibility_problem.number_constraints)
