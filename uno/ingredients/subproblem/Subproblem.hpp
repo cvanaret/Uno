@@ -5,7 +5,6 @@
 #define UNO_SUBPROBLEM_H
 
 #include "optimization/OptimizationProblem.hpp"
-#include "optimization/WarmstartInformation.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
@@ -33,12 +32,12 @@ namespace uno {
          HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
 
       // constraints, objective gradient and Jacobian
-      void evaluate_functions(SparseVector<double>& linear_objective, std::vector<double>& constraints,
-         RectangularMatrix<double>& constraint_jacobian, const WarmstartInformation& warmstart_information) const;
+      void evaluate_objective_gradient(SparseVector<double>& linear_objective) const;
+      void evaluate_constraints(std::vector<double>& constraints) const;
+      void evaluate_jacobian(RectangularMatrix<double>& constraint_jacobian) const;
 
       // regularized Hessian
-      void compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian,
-         const WarmstartInformation& warmstart_information) const;
+      void compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian) const;
 
       // augmented system
       void assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
@@ -47,13 +46,12 @@ namespace uno {
          RectangularMatrix<double>& constraint_jacobian, Vector<double>& rhs) const;
 
       // variables bounds
-      void set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,
-         const WarmstartInformation& warmstart_information) const;
+      void set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds) const;
 
       // constraints bounds
       template <typename Array>
       void set_constraints_bounds(Array& constraints_lower_bounds, Array& constraints_upper_bounds,
-         std::vector<double>& constraints, const WarmstartInformation& warmstart_information) const;
+         std::vector<double>& constraints) const;
 
    protected:
       const OptimizationProblem& problem;
@@ -66,12 +64,10 @@ namespace uno {
 
    template <typename Array>
    void Subproblem::set_constraints_bounds(Array& constraints_lower_bounds, Array& constraints_upper_bounds,
-         std::vector<double>& constraints, const WarmstartInformation& warmstart_information) const {
-      if (warmstart_information.constraint_bounds_changed || warmstart_information.constraints_changed) {
-         for (size_t constraint_index: Range(this->problem.number_constraints)) {
-            constraints_lower_bounds[constraint_index] = this->problem.constraint_lower_bound(constraint_index) - constraints[constraint_index];
-            constraints_upper_bounds[constraint_index] = this->problem.constraint_upper_bound(constraint_index) - constraints[constraint_index];
-         }
+         std::vector<double>& constraints) const {
+      for (size_t constraint_index: Range(this->problem.number_constraints)) {
+         constraints_lower_bounds[constraint_index] = this->problem.constraint_lower_bound(constraint_index) - constraints[constraint_index];
+         constraints_upper_bounds[constraint_index] = this->problem.constraint_upper_bound(constraint_index) - constraints[constraint_index];
       }
    }
 } // namespace

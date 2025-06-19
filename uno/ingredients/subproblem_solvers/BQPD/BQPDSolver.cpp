@@ -116,19 +116,29 @@ namespace uno {
       ALPHAC.alpha = 0.; // inertia control
 
       // evaluate the functions based on warmstart information
-      subproblem.evaluate_functions(this->linear_objective, this->constraints, this->constraint_jacobian, warmstart_information);
+      if (warmstart_information.objective_changed) {
+         subproblem.evaluate_objective_gradient(this->linear_objective);
+      }
+      if (warmstart_information.constraints_changed) {
+         subproblem.evaluate_constraints(this->constraints);
+         subproblem.evaluate_jacobian(this->constraint_jacobian);
+      }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->hessian.reset();
+         subproblem.compute_regularized_hessian(statistics, this->hessian);
       }
-      subproblem.compute_regularized_hessian(statistics, this->hessian, warmstart_information);
 
       // variable bounds
-      subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds, warmstart_information);
+      if (warmstart_information.variable_bounds_changed) {
+         subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds);
+      }
 
       // constraint bounds
-      auto constraints_lower_bounds = view(this->lower_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
-      auto constraints_upper_bounds = view(this->upper_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
-      subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, this->constraints, warmstart_information);
+      if (warmstart_information.constraint_bounds_changed || warmstart_information.constraints_changed) {
+         auto constraints_lower_bounds = view(this->lower_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
+         auto constraints_upper_bounds = view(this->upper_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
+         subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, this->constraints);
+      }
 
       // replace INFs with large finite values (TODO: is that really useful?)
       for (size_t variable_index: Range(subproblem.number_variables + subproblem.number_constraints)) {

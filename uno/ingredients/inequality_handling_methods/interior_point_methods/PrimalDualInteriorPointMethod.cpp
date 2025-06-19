@@ -11,6 +11,7 @@
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "preprocessing/Preprocessing.hpp"
 #include "symbolic/CollectionAdapter.hpp"
@@ -171,7 +172,13 @@ namespace uno {
    void PrimalDualInteriorPointMethod::assemble_augmented_system(Statistics& statistics, const OptimizationProblem& problem,
          const Subproblem& subproblem, RegularizationStrategy<double>& regularization_strategy, const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
-      subproblem.evaluate_functions(this->objective_gradient, this->constraints, this->constraint_jacobian, warmstart_information);
+      if (warmstart_information.objective_changed) {
+         subproblem.evaluate_objective_gradient(this->objective_gradient);
+      }
+      if (warmstart_information.constraints_changed) {
+         subproblem.evaluate_constraints(this->constraints);
+         subproblem.evaluate_jacobian(this->constraint_jacobian);
+      }
 
       // assemble the augmented matrix
       this->augmented_matrix.reset();

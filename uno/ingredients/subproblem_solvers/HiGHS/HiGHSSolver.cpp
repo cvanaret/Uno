@@ -8,6 +8,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/OptimizationProblem.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
@@ -67,19 +68,28 @@ namespace uno {
       this->model.lp_.num_row_ = static_cast<HighsInt>(subproblem.number_constraints);
 
       // evaluate the functions based on warmstart information
-      subproblem.evaluate_functions(this->linear_objective, this->constraints, this->constraint_jacobian, warmstart_information);
-      // regularize the Hessian. TODO: store it in HiGHS format
+      if (warmstart_information.objective_changed) {
+         subproblem.evaluate_objective_gradient(this->linear_objective);
+      }
+      if (warmstart_information.constraints_changed) {
+         subproblem.evaluate_constraints(this->constraints);
+         subproblem.evaluate_jacobian(this->constraint_jacobian);
+      }
+      // evaluate the Hessian and regularize it TODO: store it in HiGHS format
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->hessian.reset();
+         subproblem.compute_regularized_hessian(statistics, this->hessian);
       }
-      subproblem.compute_regularized_hessian(statistics, this->hessian, warmstart_information);
 
       // variable bounds
-      subproblem.set_variables_bounds(this->model.lp_.col_lower_, this->model.lp_.col_upper_, warmstart_information);
+      if (warmstart_information.variable_bounds_changed) {
+         subproblem.set_variables_bounds(this->model.lp_.col_lower_, this->model.lp_.col_upper_);
+      }
 
       // constraint bounds
-      subproblem.set_constraints_bounds(this->model.lp_.row_lower_, this->model.lp_.row_upper_, this->constraints,
-         warmstart_information);
+      if (warmstart_information.constraint_bounds_changed || warmstart_information.constraints_changed) {
+         subproblem.set_constraints_bounds(this->model.lp_.row_lower_, this->model.lp_.row_upper_, this->constraints);
+      }
 
       // copy the sparse linear objective into the HiGHS dense vector
       for (size_t variable_index: Range(subproblem.number_variables)) {
