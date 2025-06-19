@@ -124,8 +124,8 @@ namespace uno {
 
    template <typename ElementType>
    void PrimalDualRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
-         const Collection<size_t>& primal_indices, const Collection<size_t>& dual_indices,
-         ElementType dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) {
+         const Collection<size_t>& primal_indices, const Collection<size_t>& dual_indices, ElementType dual_regularization_parameter,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) {
       DEBUG2 << "Original matrix\n" << augmented_matrix << '\n';
 
       this->primal_regularization = ElementType(0);
