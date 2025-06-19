@@ -45,7 +45,7 @@ namespace uno {
       template <typename Expression>
       Vector<ElementType>& operator=(const Expression& expression) {
          static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
-         for (size_t index: Range(this->size())) {
+         for (size_t index: Range(expression.size())) {
             this->vector[index] = expression[index];
          }
          return *this;
