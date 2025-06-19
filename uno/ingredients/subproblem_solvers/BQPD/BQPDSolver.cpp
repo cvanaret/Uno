@@ -58,10 +58,9 @@ namespace uno {
          const RegularizationStrategy<double>& regularization_strategy) {
       // determine whether the subproblem has curvature
       const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
-      const bool regularize = !hessian_model.is_positive_definite() && regularization_strategy.performs_primal_regularization();
-      const size_t regularization_size = problem.get_number_original_variables();
-      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros +
-         (regularize ? regularization_size : 0);
+      const size_t regularization_size = (!hessian_model.is_positive_definite() &&
+         regularization_strategy.performs_primal_regularization()) ? problem.get_number_original_variables() : 0;
+      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
 
       this->lower_bounds.resize(problem.number_variables + problem.number_constraints);
       this->upper_bounds.resize(problem.number_variables + problem.number_constraints);
@@ -73,7 +72,7 @@ namespace uno {
       this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros() +
          problem.number_constraints + 3);
       this->hessian = SymmetricMatrix<size_t, double>("CSC", problem.number_variables, number_hessian_nonzeros,
-         regularize ? std::optional(regularization_size) : std::nullopt);
+         regularization_size);
       this->kmax = (0 < number_regularized_hessian_nonzeros) ? this->kmax_limit : 0;
       // default active set
       this->active_set.resize(problem.number_variables + problem.number_constraints);

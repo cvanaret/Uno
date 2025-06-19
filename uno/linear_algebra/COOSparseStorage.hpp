@@ -17,7 +17,7 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    class COOSparseStorage : public SparseStorage<IndexType, ElementType> {
    public:
-      COOSparseStorage(size_t dimension, size_t capacity, std::optional<size_t> optional_regularization);
+      COOSparseStorage(size_t dimension, size_t capacity, size_t regularization_size);
 
       void reset() override;
       void set_dimension(size_t new_dimension) override;
@@ -58,8 +58,8 @@ namespace uno {
    // implementation
 
    template <typename IndexType, typename ElementType>
-   COOSparseStorage<IndexType, ElementType>::COOSparseStorage(size_t dimension, size_t capacity, std::optional<size_t> optional_regularization):
-         SparseStorage<IndexType, ElementType>(dimension, capacity, optional_regularization) {
+   COOSparseStorage<IndexType, ElementType>::COOSparseStorage(size_t dimension, size_t capacity, size_t regularization_size):
+         SparseStorage<IndexType, ElementType>(dimension, capacity, regularization_size) {
       this->entries.reserve(this->capacity);
       this->row_indices.reserve(this->capacity);
       this->column_indices.reserve(this->capacity);

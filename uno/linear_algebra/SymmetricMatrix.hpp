@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <cassert>
 #include <memory>
-#include <optional>
 #include "SparseStorage.hpp"
 #include "SparseStorageFactory.hpp"
 
@@ -22,8 +21,7 @@ namespace uno {
    public:
       using value_type = ElementType;
       
-      SymmetricMatrix(const std::string& sparse_format, size_t dimension, size_t capacity,
-         std::optional<size_t> optional_regularization);
+      SymmetricMatrix(const std::string& sparse_format, size_t dimension, size_t capacity, size_t regularization_size);
       SymmetricMatrix();
       ~SymmetricMatrix() = default;
       SymmetricMatrix& operator=(SymmetricMatrix&& other) = default;
@@ -64,8 +62,8 @@ namespace uno {
 
    template <typename IndexType, typename ElementType>
    SymmetricMatrix<IndexType, ElementType>::SymmetricMatrix(const std::string& sparse_format, size_t dimension, size_t capacity,
-      std::optional<size_t> optional_regularization):
-         sparse_storage(SparseStorageFactory<IndexType, ElementType>::create(sparse_format, dimension, capacity, optional_regularization)) {
+      size_t regularization_size):
+         sparse_storage(SparseStorageFactory<IndexType, ElementType>::create(sparse_format, dimension, capacity, regularization_size)) {
    }
 
    template <typename IndexType, typename ElementType>

@@ -10,7 +10,7 @@ using namespace uno;
 TEST(MA57Solver, SystemSize5) {
    const size_t n = 5;
    const size_t nnz = 7;
-   SymmetricMatrix<size_t, double> matrix("COO", n, nnz, std::nullopt);
+   SymmetricMatrix<size_t, double> matrix("COO", n, nnz, 0);
    matrix.insert(2., 0, 0);
    matrix.insert(3., 0, 1);
    matrix.insert(4., 1, 2);
@@ -38,7 +38,7 @@ TEST(MA57Solver, SystemSize5) {
 TEST(MA57Solver, Inertia) {
    const size_t n = 5;
    const size_t nnz = 7;
-   SymmetricMatrix<size_t, double> matrix("COO", n, nnz, std::nullopt);
+   SymmetricMatrix<size_t, double> matrix("COO", n, nnz, 0);
    matrix.insert(2., 0, 0);
    matrix.insert(3., 0, 1);
    matrix.insert(4., 1, 2);
@@ -62,7 +62,7 @@ TEST(MA57Solver, SingularMatrix) {
    const size_t n = 4;
    const size_t nnz = 7;
    // comes from hs015 solved with byrd preset
-   SymmetricMatrix<size_t, double> matrix("COO", n, nnz, std::nullopt);
+   SymmetricMatrix<size_t, double> matrix("COO", n, nnz, 0);
    matrix.insert( -0.0198, 0, 0);
    matrix.insert(0.625075, 0, 0);
    matrix.insert(-0.277512, 0, 1);

@@ -54,16 +54,18 @@ namespace uno {
       this->objective_gradient.reserve(barrier_problem.number_objective_gradient_nonzeros());
       this->constraints.resize(barrier_problem.number_constraints);
       this->constraint_jacobian.resize(barrier_problem.number_constraints, barrier_problem.number_variables);
+      const size_t primal_regularization_size = problem.get_number_original_variables();
+      const size_t dual_regularization_size = problem.get_equality_constraints().size();
+      const size_t regularization_size =
+         (regularization_strategy.performs_primal_regularization() ? primal_regularization_size : 0) +
+         (regularization_strategy.performs_dual_regularization() ? dual_regularization_size : 0);
       const size_t number_augmented_system_nonzeros = barrier_problem.number_hessian_nonzeros(hessian_model) +
-         barrier_problem.number_jacobian_nonzeros() +
-         (regularization_strategy.performs_primal_regularization() ? problem.get_number_original_variables() : 0) +
-         (regularization_strategy.performs_dual_regularization() ? problem.get_equality_constraints().size() : 0);
+         barrier_problem.number_jacobian_nonzeros() + regularization_size;
       this->linear_solver->initialize_memory(barrier_problem.number_variables + barrier_problem.number_constraints,
          number_augmented_system_nonzeros);
       this->augmented_matrix = SymmetricMatrix<size_t, double>("COO",
          barrier_problem.number_variables + barrier_problem.number_constraints,
-         number_augmented_system_nonzeros,
-         problem.get_number_original_variables() + problem.get_equality_constraints().size()); // size of regularization
+         number_augmented_system_nonzeros, regularization_size);
       this->rhs.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
       this->solution.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
    }

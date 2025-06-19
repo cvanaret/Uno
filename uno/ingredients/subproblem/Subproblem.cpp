@@ -1,4 +1,5 @@
 #include "Subproblem.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
@@ -25,16 +26,18 @@ namespace uno {
    }
 
    void Subproblem::compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian,
-         const WarmstartInformation& warmstart_information) const {
+           const WarmstartInformation& warmstart_information) const {
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
          this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
             this->current_multipliers, hessian);
-         // regularize the Hessian
-         const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
-            this->problem.number_variables - this->problem.get_number_original_variables()};
-         this->regularization_strategy.regularize_hessian(statistics, hessian,
-            Range(this->problem.get_number_original_variables()), expected_inertia);
+         // regularize the Hessian only if necessary
+         if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
+            const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
+               this->problem.number_variables - this->problem.get_number_original_variables()};
+            this->regularization_strategy.regularize_hessian(statistics, hessian,
+               Range(this->problem.get_number_original_variables()), expected_inertia);
+         }
       }
    }
 

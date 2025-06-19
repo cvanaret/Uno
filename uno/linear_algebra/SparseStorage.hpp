@@ -4,7 +4,6 @@
 #ifndef UNO_SPARSESTORAGE_H
 #define UNO_SPARSESTORAGE_H
 
-#include <optional>
 #include <ostream>
 
 namespace uno {
@@ -47,7 +46,7 @@ namespace uno {
       size_t number_nonzeros{0};
       size_t capacity;
 
-      SparseStorage(size_t dimension, size_t capacity, std::optional<size_t> optional_regularization);
+      SparseStorage(size_t dimension, size_t capacity, size_t regularization_size);
       virtual ~SparseStorage() = default;
 
       virtual void reset() = 0;
@@ -84,12 +83,11 @@ namespace uno {
    // implementation
 
    template <typename IndexType, typename ElementType>
-   SparseStorage<IndexType, ElementType>::SparseStorage(size_t dimension, size_t capacity,
-      std::optional<size_t> optional_regularization) :
+   SparseStorage<IndexType, ElementType>::SparseStorage(size_t dimension, size_t capacity, size_t regularization_size) :
          dimension(dimension),
          // if regularization is used, allocate the necessary space
-         capacity(capacity + (optional_regularization.has_value() ? *optional_regularization : 0)),
-         use_regularization(optional_regularization.has_value()) {
+         capacity(capacity + regularization_size),
+         use_regularization(0 < regularization_size) {
    }
 
    template <typename Index, typename Element>

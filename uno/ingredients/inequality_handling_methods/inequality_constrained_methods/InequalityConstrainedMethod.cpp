@@ -25,10 +25,9 @@ namespace uno {
 
       // allocate the LP/QP solver, depending on the presence of curvature in the subproblem
       const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
-      const bool regularize = !hessian_model.is_positive_definite() && regularization_strategy.performs_primal_regularization();
-      const size_t regularization_size = problem.get_number_original_variables();
-      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros +
-         (regularize ? regularization_size : 0);
+      const size_t regularization_size = (!hessian_model.is_positive_definite() &&
+         regularization_strategy.performs_primal_regularization()) ? problem.get_number_original_variables() : 0;
+      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
       if (number_regularized_hessian_nonzeros == 0) {
          DEBUG << "No curvature in the subproblems, allocating an LP solver\n";
          this->solver = LPSolverFactory::create(this->options);
