@@ -11,6 +11,7 @@
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "optimization/Direction.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(const Options& options):

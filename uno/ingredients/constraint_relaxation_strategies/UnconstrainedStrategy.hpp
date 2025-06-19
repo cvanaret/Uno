@@ -10,9 +10,6 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 
 namespace uno {
-   // forward declarations
-   class OptimizationProblem;
-
    class UnconstrainedStrategy : public ConstraintRelaxationStrategy {
    public:
       UnconstrainedStrategy(size_t number_bound_constraints, const Options& options);

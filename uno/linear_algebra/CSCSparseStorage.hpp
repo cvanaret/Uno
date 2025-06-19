@@ -12,10 +12,9 @@
 
 namespace uno {
    /*
- * Compressed Sparse Column
- * https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_column_(CSC_or_CCS)
- */
-
+    * Compressed Sparse Column
+    * https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_column_(CSC_or_CCS)
+    */
    template <typename IndexType, typename ElementType>
    class CSCSparseStorage : public SparseStorage<IndexType, ElementType> {
    public:

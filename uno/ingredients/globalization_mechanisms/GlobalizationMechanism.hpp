@@ -14,7 +14,6 @@ namespace uno {
    class Iterate;
    class Model;
    class Options;
-   class ReformulationLayer;
    class Statistics;
    class UserCallbacks;
    struct WarmstartInformation;

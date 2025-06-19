@@ -24,7 +24,7 @@ namespace uno {
       const double sufficient_infeasibility_decrease_factor;
 
       [[nodiscard]] bool is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-            const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) override;
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) override;
    };
 } // namespace
 

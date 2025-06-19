@@ -6,9 +6,9 @@
 
 #include <cassert>
 #include <functional>
+#include <ostream>
 #include <vector>
 #include "symbolic/Range.hpp"
-#include "tools/Logger.hpp"
 
 namespace uno {
    // SparseVector is a sparse vector that uses contiguous memory. It contains:

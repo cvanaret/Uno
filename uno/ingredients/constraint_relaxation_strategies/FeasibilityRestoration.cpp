@@ -19,6 +19,7 @@
 #include "options/Options.hpp"
 #include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {

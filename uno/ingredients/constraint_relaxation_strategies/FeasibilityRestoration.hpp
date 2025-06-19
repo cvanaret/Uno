@@ -11,9 +11,6 @@
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
-   // forward declaration
-   class OptimizationProblem;
-
    enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
    class FeasibilityRestoration : public ConstraintRelaxationStrategy {

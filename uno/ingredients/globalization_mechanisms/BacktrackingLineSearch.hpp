@@ -7,9 +7,6 @@
 #include "GlobalizationMechanism.hpp"
 
 namespace uno {
-   // forward declaration
-   struct WarmstartInformation;
-
    class BacktrackingLineSearch : public GlobalizationMechanism {
    public:
       explicit BacktrackingLineSearch(const Options& options);

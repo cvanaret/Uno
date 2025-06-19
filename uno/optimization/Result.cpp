@@ -5,6 +5,7 @@
 #include "Result.hpp"
 #include "IterateStatus.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    void Result::print(bool print_primal_dual_solution) const {

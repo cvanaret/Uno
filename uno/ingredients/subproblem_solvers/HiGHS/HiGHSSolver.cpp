@@ -6,13 +6,11 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    HiGHSSolver::HiGHSSolver(const Options& options):
@@ -51,6 +49,7 @@ namespace uno {
       this->model.lp_.a_matrix_.value_.reserve(problem.number_jacobian_nonzeros());
       this->model.lp_.a_matrix_.index_.reserve(problem.number_jacobian_nonzeros());
       this->model.lp_.a_matrix_.start_.reserve(problem.number_variables + 1);
+      // TODO Hessian
    }
 
    void HiGHSSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& /*initial_point*/,
@@ -94,7 +93,6 @@ namespace uno {
       this->model.lp_.a_matrix_.value_.clear();
       this->model.lp_.a_matrix_.index_.clear();
       this->model.lp_.a_matrix_.start_.clear();
-
       size_t number_nonzeros = 0;
       this->model.lp_.a_matrix_.start_.emplace_back(number_nonzeros);
       for (size_t constraint_index: Range(subproblem.number_constraints)) {

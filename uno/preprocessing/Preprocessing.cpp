@@ -9,6 +9,7 @@
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    // compute a least-square approximation of the multipliers by solving a linear system

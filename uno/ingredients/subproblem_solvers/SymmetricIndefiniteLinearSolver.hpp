@@ -8,7 +8,6 @@
 
 namespace uno {
    // forward declarations
-   class OptimizationProblem;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
    template <typename ElementType>

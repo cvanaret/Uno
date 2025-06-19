@@ -17,10 +17,6 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   // forward declaration
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
-
    template <typename ElementType>
    class PrimalDualRegularization: public RegularizationStrategy<ElementType> {
    public:

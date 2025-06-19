@@ -14,7 +14,7 @@ namespace uno {
       void add(double current_infeasibility, double current_objective) override;
       [[nodiscard]] bool acceptable(double trial_infeasibility, double trial_objective) override;
       [[nodiscard]] bool acceptable_wrt_current_iterate(double current_infeasibility, double current_objective, double trial_infeasibility,
-            double trial_objective) const override;
+         double trial_objective) const override;
       [[nodiscard]] double compute_actual_objective_reduction(double current_objective, double current_infeasibility, double trial_objective) override;
 
    protected:

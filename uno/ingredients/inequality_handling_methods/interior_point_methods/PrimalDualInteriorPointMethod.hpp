@@ -15,7 +15,6 @@
 namespace uno {
    // forward references
    class DualResiduals;
-   class PrimalDualInteriorPointProblem;
    class Subproblem;
 
    struct InteriorPointParameters {
