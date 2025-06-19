@@ -23,15 +23,15 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   FeasibilityRestoration::FeasibilityRestoration(size_t number_bound_constraints, const Options& options) :
+   FeasibilityRestoration::FeasibilityRestoration(const Options& options) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          optimality_hessian_model(HessianModelFactory::create(options)),
          feasibility_hessian_model(HessianModelFactory::create(options)),
          optimality_regularization_strategy(RegularizationStrategyFactory::create(options)),
          feasibility_regularization_strategy(RegularizationStrategyFactory::create(options)),
-         optimality_inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
-         feasibility_inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
+         optimality_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
+         feasibility_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
          linear_feasibility_tolerance(options.get_double("tolerance")),
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
    }
@@ -52,6 +52,9 @@ namespace uno {
          *this->optimality_regularization_strategy);
       this->feasibility_inequality_handling_method->initialize(feasibility_problem, *this->feasibility_hessian_model,
          *this->feasibility_regularization_strategy);
+      std::cout << "Allocating a direction with " <<
+         (std::max(optimality_problem.number_variables, feasibility_problem.number_variables)) << " variables and " <<
+         (std::max(optimality_problem.number_constraints, feasibility_problem.number_constraints)) << " constraints\n";
       direction = Direction(
          std::max(optimality_problem.number_variables, feasibility_problem.number_variables),
          std::max(optimality_problem.number_constraints, feasibility_problem.number_constraints)

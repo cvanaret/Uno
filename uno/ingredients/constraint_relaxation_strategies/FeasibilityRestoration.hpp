@@ -15,7 +15,7 @@ namespace uno {
 
    class FeasibilityRestoration : public ConstraintRelaxationStrategy {
    public:
-      FeasibilityRestoration(size_t number_bound_constraints, const Options& options);
+      explicit FeasibilityRestoration(const Options& options);
       ~FeasibilityRestoration() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,

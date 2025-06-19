@@ -28,7 +28,7 @@
  */
 
 namespace uno {
-   l1Relaxation::l1Relaxation(size_t number_bound_constraints, const Options& options):
+   l1Relaxation::l1Relaxation(const Options& options):
          ConstraintRelaxationStrategy(options),
          penalty_parameter(options.get_double("l1_relaxation_initial_parameter")),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
@@ -36,8 +36,8 @@ namespace uno {
          feasibility_hessian_model(HessianModelFactory::create(options)),
          l1_relaxed_regularization_strategy(RegularizationStrategyFactory::create(options)),
          feasibility_regularization_strategy(RegularizationStrategyFactory::create(options)),
-         inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
-         feasibility_inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
+         inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
+         feasibility_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
          tolerance(options.get_double("tolerance")),
          parameters({
                options.get_bool("l1_relaxation_fixed_parameter"),

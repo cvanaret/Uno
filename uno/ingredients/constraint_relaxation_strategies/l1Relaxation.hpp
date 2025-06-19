@@ -20,7 +20,7 @@ namespace uno {
 
    class l1Relaxation : public ConstraintRelaxationStrategy {
    public:
-      l1Relaxation(size_t number_bound_constraints, const Options& options);
+      explicit l1Relaxation(const Options& options);
       ~l1Relaxation() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,

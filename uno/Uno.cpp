@@ -23,8 +23,8 @@
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
-   Uno::Uno(size_t number_constraints, size_t number_bounds_constraints, const Options& options) :
-         constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(number_constraints, number_bounds_constraints, options)),
+   Uno::Uno(size_t number_constraints, const Options& options) :
+         constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(number_constraints, options)),
          globalization_strategy(GlobalizationStrategyFactory::create(number_constraints, options)),
          globalization_mechanism(GlobalizationMechanismFactory::create(options)),
          max_iterations(options.get_unsigned_int("max_iterations")),

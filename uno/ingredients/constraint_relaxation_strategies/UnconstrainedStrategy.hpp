@@ -12,7 +12,7 @@
 namespace uno {
    class UnconstrainedStrategy : public ConstraintRelaxationStrategy {
    public:
-      UnconstrainedStrategy(size_t number_bound_constraints, const Options& options);
+      explicit UnconstrainedStrategy(const Options& options);
       ~UnconstrainedStrategy() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,

@@ -15,9 +15,9 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   UnconstrainedStrategy::UnconstrainedStrategy(size_t number_bound_constraints, const Options& options) :
+   UnconstrainedStrategy::UnconstrainedStrategy(const Options& options) :
          ConstraintRelaxationStrategy(options),
-         inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
+         inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
          hessian_model(HessianModelFactory::create(options)),
          regularization_strategy(RegularizationStrategyFactory::create(options)) {
    }
