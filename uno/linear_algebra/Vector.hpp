@@ -4,7 +4,6 @@
 #ifndef UNO_VECTOR_H
 #define UNO_VECTOR_H
 
-#include <cassert>
 #include <vector>
 #include <initializer_list>
 #include "symbolic/Range.hpp"
@@ -46,7 +45,6 @@ namespace uno {
       template <typename Expression>
       Vector<ElementType>& operator=(const Expression& expression) {
          static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
-         assert(expression.size() <= this->size() && "The expression is larger than the current vector");
          for (size_t index = 0; index < this->size(); index++) {
             this->vector[index] = expression[index];
          }

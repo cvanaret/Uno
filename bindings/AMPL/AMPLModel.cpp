@@ -182,8 +182,7 @@ namespace uno {
       const int objective_number = -1;
       objective_multiplier *= this->objective_sign;
       // flip the signs of the multipliers: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
-      // note: multipliers may be larger than multipliers_with_flipped_sign, therefore we create a view
-      this->multipliers_with_flipped_sign = -view(multipliers, 0, this->number_constraints);
+      this->multipliers_with_flipped_sign = -multipliers;
       (*(this->asl)->p.Sphes)(this->asl, nullptr, const_cast<double*>(this->asl_hessian.data()), objective_number, &objective_multiplier,
             const_cast<double*>(this->multipliers_with_flipped_sign.data()));
 
