@@ -389,13 +389,16 @@ namespace uno {
       return step_length;
    }
 
-   void PrimalDualInteriorPointMethod::assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals,
-         const Multipliers& current_multipliers, Vector<double>& direction_primals, Multipliers& direction_multipliers) {
+   void PrimalDualInteriorPointMethod::assemble_primal_dual_direction(const OptimizationProblem& problem,
+         const Vector<double>& current_primals, const Multipliers& current_multipliers, Vector<double>& direction_primals,
+         Multipliers& direction_multipliers) {
       // form the primal-dual direction
+      std::cout << "direction_primals = view\n";
       direction_primals = view(this->solution, 0, problem.number_variables);
       // retrieve the duals with correct signs (note the minus sign)
+      std::cout << "direction_multipliers.constraints = view\n";
       direction_multipliers.constraints = view(-this->solution, problem.number_variables,
-            problem.number_variables + problem.number_constraints);
+         problem.number_variables + problem.number_constraints);
       this->compute_bound_dual_direction(problem, current_primals, current_multipliers, direction_primals, direction_multipliers);
 
       // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO

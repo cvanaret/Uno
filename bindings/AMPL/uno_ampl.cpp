@@ -28,13 +28,14 @@ namespace uno {
          // AMPL model
          std::unique_ptr<Model> ampl_model = std::make_unique<AMPLModel>(model_name, options);
          DISCRETE << "Original model " << ampl_model->name << '\n' << ampl_model->number_variables << " variables, " <<
-            ampl_model->number_constraints << " constraints\n";
-         const size_t number_bound_constraints = ampl_model->get_lower_bounded_variables().size() + ampl_model->get_upper_bounded_variables().size();
+            ampl_model->number_constraints << " constraints (" << ampl_model->get_equality_constraints().size() <<
+            " equality, " << ampl_model->get_inequality_constraints().size() << " inequality)\n";
 
          // reformulate (scale, add slacks, relax the bounds, ...) if necessary
-         std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), number_bound_constraints, options);
+         std::unique_ptr<Model> model = ModelFactory::reformulate(std::move(ampl_model), options);
          DISCRETE << "Reformulated model " << model->name << '\n' << model->number_variables << " variables, " <<
-                  model->number_constraints << " constraints\n";
+            model->number_constraints << " constraints (" << model->get_equality_constraints().size() <<
+            " equality, " << model->get_inequality_constraints().size() << " inequality)\n";
 
          // initialize initial primal and dual points
          Iterate initial_iterate(model->number_variables, model->number_constraints);
@@ -44,6 +45,8 @@ namespace uno {
          initial_iterate.feasibility_multipliers.reset();
 
          // solve the instance
+         const size_t number_bound_constraints = model->get_lower_bounded_variables().size() +
+            model->get_upper_bounded_variables().size();
          Uno uno{model->number_constraints, number_bound_constraints, options};
          AMPLUserCallbacks user_callbacks{};
          const Result result = uno.solve(*model, initial_iterate, options, user_callbacks);
