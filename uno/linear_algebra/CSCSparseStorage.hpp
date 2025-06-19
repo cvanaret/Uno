@@ -90,7 +90,7 @@ namespace uno {
       assert(column_index < this->dimension && "The dimension of the matrix was exceeded");
 
       // possibly add regularization
-      if (this->use_regularization) {
+      if (0 < this->regularization_size) {
          this->insert(ElementType(0), column_index, column_index);
       }
       this->current_column++;
@@ -103,7 +103,7 @@ namespace uno {
 
    template <typename IndexType, typename ElementType>
    void CSCSparseStorage<IndexType, ElementType>::set_regularization(const Collection<size_t>& indices, size_t offset, double factor) {
-      assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
+      assert(0 < this->regularization_size && "You are trying to regularize a matrix where regularization was not preallocated.");
 
       for (size_t row_index: indices) {
          // the regularization term is located at the end of the column, that is right before the start of the next column

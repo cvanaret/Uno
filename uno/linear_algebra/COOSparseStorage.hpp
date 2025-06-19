@@ -65,7 +65,7 @@ namespace uno {
       this->column_indices.reserve(this->capacity);
 
       // initialize regularization terms
-      if (this->use_regularization) {
+      if (0 < this->regularization_size) {
          this->initialize_regularization();
       }
    }
@@ -79,7 +79,7 @@ namespace uno {
       this->column_indices.clear();
 
       // initialize regularization terms
-      if (this->use_regularization) {
+      if (0 < this->regularization_size) {
          this->initialize_regularization();
       }
    }
@@ -104,7 +104,7 @@ namespace uno {
 
    template <typename IndexType, typename ElementType>
    void COOSparseStorage<IndexType, ElementType>::set_regularization(const Collection<size_t>& indices, size_t offset, double factor) {
-      assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
+      assert(0 < this->regularization_size && "You are trying to regularize a matrix where regularization was not preallocated.");
 
       // the regularization terms (that lie at the start of the entries vector) can be directly modified
       for (size_t index: indices) {
@@ -123,7 +123,7 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    void COOSparseStorage<IndexType, ElementType>::initialize_regularization() {
       // introduce elements at the start of the entries
-      for (size_t row_index: Range(this->dimension)) {
+      for (size_t row_index: Range(this->regularization_size)) {
          this->insert(ElementType(0), IndexType(row_index), IndexType(row_index));
       }
    }

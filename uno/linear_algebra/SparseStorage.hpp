@@ -72,8 +72,7 @@ namespace uno {
       friend std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& matrix);
 
    protected:
-      // regularization
-      const bool use_regularization;
+      const size_t regularization_size;
 
       // virtual iterator functions
       [[nodiscard]] virtual std::tuple<IndexType, IndexType, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const = 0;
@@ -87,7 +86,7 @@ namespace uno {
          dimension(dimension),
          // if regularization is used, allocate the necessary space
          capacity(capacity + regularization_size),
-         use_regularization(0 < regularization_size) {
+         regularization_size(regularization_size) {
    }
 
    template <typename Index, typename Element>
