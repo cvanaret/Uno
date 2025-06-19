@@ -52,7 +52,10 @@ namespace uno {
          *this->optimality_regularization_strategy);
       this->feasibility_inequality_handling_method->initialize(feasibility_problem, *this->feasibility_hessian_model,
          *this->feasibility_regularization_strategy);
-      direction = Direction(feasibility_problem.number_variables, feasibility_problem.number_constraints);
+      direction = Direction(
+         std::max(optimality_problem.number_variables, feasibility_problem.number_variables),
+         std::max(optimality_problem.number_constraints, feasibility_problem.number_constraints)
+      );
 
       // statistics
       this->optimality_regularization_strategy->initialize_statistics(statistics, options);
