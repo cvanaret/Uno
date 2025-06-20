@@ -7,13 +7,11 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   Subproblem::Subproblem(const OptimizationProblem &problem, Iterate &current_iterate, const Multipliers &current_multipliers,
-      HessianModel &hessian_model, RegularizationStrategy<double> &regularization_strategy, double trust_region_radius,
-      const Collection<size_t>& primal_regularization_indices, const Collection<size_t>& dual_regularization_indices):
+   Subproblem::Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
+      HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius):
          number_variables(problem.number_variables), number_constraints(problem.number_constraints),
          problem(problem), current_iterate(current_iterate), current_multipliers(current_multipliers), hessian_model(hessian_model),
-         regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius),
-         primal_regularization_indices(primal_regularization_indices), dual_regularization_indices(dual_regularization_indices) {
+         regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius) {
    }
 
    void Subproblem::evaluate_objective_gradient(SparseVector<double>& linear_objective) const {
@@ -36,7 +34,8 @@ namespace uno {
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
          const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
             this->problem.number_variables - this->problem.get_number_original_variables()};
-         this->regularization_strategy.regularize_hessian(statistics, hessian, this->primal_regularization_indices, expected_inertia);
+         this->regularization_strategy.regularize_hessian(statistics, hessian, this->problem.get_primal_regularization_variables(),
+            expected_inertia);
       }
    }
 
@@ -60,8 +59,8 @@ namespace uno {
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const {
       const Inertia expected_inertia{this->number_variables, this->number_constraints, 0};
       this->regularization_strategy.regularize_augmented_matrix(statistics, augmented_matrix,
-         this->primal_regularization_indices, this->dual_regularization_indices, dual_regularization_parameter,
-         expected_inertia, linear_solver);
+         this->problem.get_primal_regularization_variables(), this->problem.get_dual_regularization_constraints(),
+         dual_regularization_parameter, expected_inertia, linear_solver);
    }
 
    void Subproblem::assemble_augmented_rhs(const SparseVector<double>& objective_gradient, const std::vector<double>& constraints,

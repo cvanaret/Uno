@@ -142,6 +142,10 @@ namespace uno {
       return this->inequality_constraints;
    }
 
+   const Collection<size_t>& PrimalDualInteriorPointProblem::get_dual_regularization_constraints() const {
+      return this->first_reformulation.get_equality_constraints();
+   }
+
    size_t PrimalDualInteriorPointProblem::number_objective_gradient_nonzeros() const {
       size_t number_nonzeros = this->first_reformulation.number_objective_gradient_nonzeros();
       // barrier contribution

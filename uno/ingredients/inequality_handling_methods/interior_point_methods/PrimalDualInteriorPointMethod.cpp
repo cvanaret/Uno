@@ -146,10 +146,8 @@ namespace uno {
       // create the interior-point reformulation
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters.regularization_exponent);
       // crate the subproblem
-      const ForwardRange primal_regularization_indices = Range(problem.get_number_original_variables());
-      const Collection<size_t>& dual_regularization_indices = problem.get_equality_constraints();
       const Subproblem subproblem{barrier_problem, current_iterate, current_multipliers, hessian_model, regularization_strategy,
-         trust_region_radius, primal_regularization_indices, dual_regularization_indices};
+         trust_region_radius};
 
       // compute the primal-dual solution
       this->linear_solver->solve_indefinite_system(statistics, subproblem, this->solution, warmstart_information);

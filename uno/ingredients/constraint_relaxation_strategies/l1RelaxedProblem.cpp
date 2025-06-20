@@ -290,6 +290,10 @@ namespace uno {
       return this->model.get_inequality_constraints();
    }
 
+   const Collection<size_t>& l1RelaxedProblem::get_dual_regularization_constraints() const {
+      return this->dual_regularization_constraints;
+   }
+
    size_t l1RelaxedProblem::number_objective_gradient_nonzeros() const {
       // elastic contribution
       size_t number_nonzeros = this->number_elastic_variables;

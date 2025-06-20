@@ -52,11 +52,13 @@ namespace uno {
       [[nodiscard]] virtual const Collection<size_t>& get_single_lower_bounded_variables() const;
       [[nodiscard]] virtual const Collection<size_t>& get_single_upper_bounded_variables() const;
       [[nodiscard]] virtual const Vector<size_t>& get_fixed_variables() const;
+      [[nodiscard]] virtual const Collection<size_t>& get_primal_regularization_variables() const;
 
       [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const;
       [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const;
       [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const;
       [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const;
+      [[nodiscard]] virtual const Collection<size_t>& get_dual_regularization_constraints() const;
 
       [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const;
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
@@ -68,6 +70,10 @@ namespace uno {
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
       [[nodiscard]] virtual double dual_regularization_factor() const;
+
+   protected:
+      const ForwardRange primal_regularization_variables;
+      const ForwardRange dual_regularization_constraints;
    };
 } // namespace
 

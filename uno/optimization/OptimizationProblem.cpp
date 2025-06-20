@@ -8,11 +8,13 @@
 
 namespace uno {
    OptimizationProblem::OptimizationProblem(const Model& model):
-         model(model), number_variables(model.number_variables), number_constraints(model.number_constraints) {
+         model(model), number_variables(model.number_variables), number_constraints(model.number_constraints),
+         primal_regularization_variables(model.number_variables), dual_regularization_constraints(model.number_constraints) {
    }
 
    OptimizationProblem::OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints):
-         model(model), number_variables(number_variables), number_constraints(number_constraints) {
+         model(model), number_variables(number_variables), number_constraints(number_constraints),
+         primal_regularization_variables(model.number_variables), dual_regularization_constraints(model.number_constraints) {
    }
 
    double OptimizationProblem::get_objective_multiplier() const {
@@ -78,6 +80,10 @@ namespace uno {
       return this->model.get_fixed_variables();
    }
 
+   const Collection<size_t>& OptimizationProblem::get_primal_regularization_variables() const {
+      return this->primal_regularization_variables;
+   }
+
    double OptimizationProblem::constraint_lower_bound(size_t constraint_index) const {
       return this->model.constraint_lower_bound(constraint_index);
    }
@@ -92,6 +98,10 @@ namespace uno {
 
    const Collection<size_t>& OptimizationProblem::get_inequality_constraints() const {
       return this->model.get_inequality_constraints();
+   }
+
+   const Collection<size_t>& OptimizationProblem::get_dual_regularization_constraints() const {
+      return this->dual_regularization_constraints;
    }
 
    size_t OptimizationProblem::number_objective_gradient_nonzeros() const {

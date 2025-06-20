@@ -30,11 +30,13 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
       [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
+      // [[nodiscard]] virtual const Collection<size_t>& get_primal_regularization_variables() const;
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
+      [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
 
       [[nodiscard]] size_t number_objective_gradient_nonzeros() const override;
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
