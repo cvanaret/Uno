@@ -9,7 +9,8 @@ namespace uno {
    Direction::Direction(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
          primals(number_variables), multipliers(number_variables, number_constraints),
-         feasibility_multipliers(number_variables, number_constraints)  {
+         feasibility_multipliers(number_variables, number_constraints),
+         active_set(number_variables, number_constraints){
    }
 
    void Direction::set_dimensions(size_t new_number_variables, size_t new_number_constraints) {

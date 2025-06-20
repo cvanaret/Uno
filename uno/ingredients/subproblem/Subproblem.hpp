@@ -29,6 +29,7 @@ namespace uno {
    class Subproblem {
    public:
       const size_t number_variables, number_constraints;
+      const double trust_region_radius;
 
       Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
          HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
@@ -66,7 +67,6 @@ namespace uno {
       const Multipliers& current_multipliers;
       HessianModel& hessian_model;
       RegularizationStrategy<double>& regularization_strategy;
-      const double trust_region_radius;
       const Collection<size_t>& primal_regularization_indices;
       const Collection<size_t>& dual_regularization_indices;
    };
