@@ -143,7 +143,6 @@ namespace uno {
       InequalityHandlingMethod::compute_dual_displacements(current_multipliers, this->LP_direction.multipliers);
       this->number_subproblems_solved++;
 
-      // TODO compare radius and original bound
       // reset multipliers for bound constraints active at trust region (except if one of the original bounds is active)
       for (size_t variable_index: Range(subproblem.number_variables)) {
          if (std::abs(this->LP_direction.primals[variable_index] + subproblem.trust_region_radius) <= this->activity_tolerance) {
@@ -159,8 +158,7 @@ namespace uno {
    void LPEQPMethod::solve_EQP(Statistics& statistics, Subproblem& subproblem, const Multipliers& current_multipliers,
          Direction& direction, const WarmstartInformation& warmstart_information) {
       this->QP_solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
-
-      // TODO compare radius and original bound
+      
       // correct EQP multipliers (the QP solver has no knowledge of the original bounds of fixed variables)
       for (size_t variable_index: this->LP_direction.active_set.bounds.at_lower_bound) {
          direction.multipliers.lower_bounds[variable_index] = direction.multipliers.upper_bounds[variable_index];
