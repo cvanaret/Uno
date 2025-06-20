@@ -134,7 +134,7 @@ namespace uno {
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
          this->optional_linear_solver->initialize_memory(this->dimension, 0, this->number_nonzeros,
-            primal_indices.size() + dual_indices.size());
+            primal_indices.size());
       }
       this->regularize_augmented_matrix(statistics, augmented_matrix, primal_indices, dual_indices,
          dual_regularization_parameter, expected_inertia, *this->optional_linear_solver);
