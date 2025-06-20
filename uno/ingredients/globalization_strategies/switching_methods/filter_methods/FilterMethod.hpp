@@ -12,11 +12,6 @@ namespace uno {
    class Filter;
    class Options;
 
-   /*! \class TwoPhaseConstants
-    * \brief Constants for filter strategy
-    *
-    *  Set of constants to control the filter strategy
-    */
    struct FilterStrategyParameters {
       double upper_bound;
       double infeasibility_factor;
@@ -37,7 +32,8 @@ namespace uno {
       const std::unique_ptr<Filter> filter;
       const FilterStrategyParameters parameters; /*!< Set of constants */
 
-      [[nodiscard]] double compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility, double trial_objective_measure);
+      [[nodiscard]] double compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility,
+         double trial_objective_measure);
       void set_statistics(Statistics& statistics) const override;
    };
 } // namespace

@@ -56,7 +56,7 @@ namespace uno {
       // sum operator
       template <typename Expression>
       Vector<ElementType>& operator+=(const Expression& expression) {
-         for (size_t index = 0; index < this->size(); index++) {
+         for (size_t index: Range(this->size())) {
             this->vector[index] += expression[index];
          }
          return *this;
@@ -85,13 +85,13 @@ namespace uno {
       void emplace_back(ElementType element) { this->vector.emplace_back(element); }
 
       void fill(ElementType value) {
-         for (size_t index = 0; index < this->size(); index++) {
+         for (size_t index: Range(this->size())) {
             this->vector[index] = value;
          }
       }
 
       void scale(ElementType factor) {
-         for (size_t index = 0; index < this->size(); index++) {
+         for (size_t index: Range(this->size())) {
             this->vector[index] *= factor;
          }
       }
@@ -131,7 +131,7 @@ namespace uno {
    // subtract operator
    template <typename ResultExpression, typename Expression>
    void operator-=(ResultExpression&& result, const Expression& expression) {
-      for (size_t index = 0; index < result.size(); index++) {
+      for (size_t index: Range(result.size())) {
          result[index] -= expression[index];
       }
    }

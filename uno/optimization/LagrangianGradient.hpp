@@ -4,7 +4,7 @@
 #ifndef UNO_LAGRANGIANGRADIENT_H
 #define UNO_LAGRANGIANGRADIENT_H
 
-#include <iostream>
+#include <ostream>
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -60,5 +60,3 @@ namespace uno {
 } // namespace
 
 #endif // UNO_LAGRANGIANGRADIENT_H
-
-

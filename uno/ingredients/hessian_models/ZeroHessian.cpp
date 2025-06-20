@@ -2,16 +2,19 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ZeroHessian.hpp"
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
+#include "model/Model.hpp"
 
 namespace uno {
    void ZeroHessian::initialize(const Model& /*model*/) {
-
    }
 
    size_t ZeroHessian::number_nonzeros(const Model& /*model*/) const {
       return 0;
+   }
+
+   bool ZeroHessian::is_positive_definite() const {
+      return false;
    }
 
    void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,

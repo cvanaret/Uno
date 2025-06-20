@@ -3,16 +3,17 @@
 
 #include <cassert>
 #include "BQPDSolver.hpp"
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
-#include "ingredients/subproblem_solvers/MA57/MA57Solver.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 
@@ -22,7 +23,8 @@
 #define hessian_vector_product FC_GLOBAL(gdotx, GDOTX)
 
 extern "C" {
-   void hessian_vector_product([[maybe_unused]] int *n, const double x[], const double ws[], const int lws[], double v[]);
+   void hessian_vector_product([[maybe_unused]] int *dimension, const double vector[], const double hessian_values[],
+      const int hessian_sparsity[], double result[]);
 
    // fortran common block used in bqpd/bqpd.f
    extern struct {
@@ -53,24 +55,27 @@ namespace uno {
    }
 
    void BQPDSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy) {
-      regularization_strategy.initialize_memory(problem, hessian_model);
+         const RegularizationStrategy<double>& regularization_strategy) {
+      // determine whether the subproblem has curvature
+      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
+      const size_t regularization_size = (!hessian_model.is_positive_definite() &&
+         regularization_strategy.performs_primal_regularization()) ? problem.get_number_original_variables() : 0;
+      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
 
       this->lower_bounds.resize(problem.number_variables + problem.number_constraints);
       this->upper_bounds.resize(problem.number_variables + problem.number_constraints);
       this->constraints.resize(problem.number_constraints);
       this->linear_objective.reserve(problem.number_objective_gradient_nonzeros());
       this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
-      this->bqpd_jacobian.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros()); // Jacobian + objective gradient
-      this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros() + problem.number_constraints + 3);
-      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
-      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros +
-         (regularization_strategy.performs_primal_regularization() ? problem.number_variables : 0);
-      this->hessian = SymmetricMatrix<size_t, double>(problem.number_variables, number_hessian_nonzeros,
-         regularization_strategy.performs_primal_regularization(), "CSC");
+      // Jacobian + objective gradient
+      this->bqpd_jacobian.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros());
+      this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros() +
+         problem.number_constraints + 3);
+      this->hessian = SymmetricMatrix<size_t, double>("CSC", problem.number_variables, number_hessian_nonzeros,
+         regularization_size);
       this->kmax = (0 < number_regularized_hessian_nonzeros) ? this->kmax_limit : 0;
-      this->active_set.resize(problem.number_variables + problem.number_constraints);
       // default active set
+      this->active_set.resize(problem.number_variables + problem.number_constraints);
       for (size_t variable_index: Range(problem.number_variables + problem.number_constraints)) {
          this->active_set[variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
       }
@@ -87,24 +92,13 @@ namespace uno {
       this->current_hessian_indices.resize(problem.number_variables);
    }
 
-   void BQPDSolver::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, const Vector<double>& initial_point, Direction& direction,
-         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
-         const WarmstartInformation& warmstart_information) {
-      this->set_up_subproblem(problem, current_iterate, trust_region_radius, warmstart_information);
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
-         problem.evaluate_lagrangian_hessian(statistics, hessian_model, current_iterate.primals, current_multipliers, this->hessian);
-         // regularize the Hessian
-         const Inertia expected_inertia{problem.get_number_original_variables(), 0, problem.number_variables - problem.get_number_original_variables()};
-         regularization_strategy.regularize_hessian(statistics, this->hessian, expected_inertia);
-         this->save_hessian_in_local_format();
-      }
+   void BQPDSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
+         Direction& direction, const WarmstartInformation& warmstart_information) {
+      this->set_up_subproblem(statistics, subproblem, warmstart_information);
       if (this->print_subproblem) {
-         DEBUG << "Subproblem:\n";
-         DEBUG << "Hessian: " << this->hessian;
+         this->display_subproblem(subproblem, initial_point);
       }
-      this->solve_subproblem(problem, initial_point, direction, warmstart_information);
+      this->solve_subproblem(subproblem, initial_point, direction, warmstart_information);
    }
 
    double BQPDSolver::hessian_quadratic_product(const Vector<double>& vector) const {
@@ -113,7 +107,7 @@ namespace uno {
 
    // protected member functions
 
-   void BQPDSolver::set_up_subproblem(const OptimizationProblem& problem, Iterate& current_iterate, double trust_region_radius,
+   void BQPDSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem,
          const WarmstartInformation& warmstart_information) {
       // initialize wsc_ common block (Hessian & workspace for BQPD)
       // setting the common block here ensures that several instances of BQPD can run simultaneously
@@ -121,71 +115,68 @@ namespace uno {
       WSC.mxlws = static_cast<int>(this->size_hessian_sparsity_workspace);
       ALPHAC.alpha = 0.; // inertia control
 
-      // function evaluations
+      // evaluate the functions based on warmstart information
       if (warmstart_information.objective_changed) {
-         problem.evaluate_objective_gradient(current_iterate, this->linear_objective);
+         subproblem.evaluate_objective_gradient(this->linear_objective);
       }
       if (warmstart_information.constraints_changed) {
-         problem.evaluate_constraints(current_iterate, this->constraints);
-         problem.evaluate_constraint_jacobian(current_iterate, this->constraint_jacobian);
+         subproblem.evaluate_constraints(this->constraints);
+         subproblem.evaluate_jacobian(this->constraint_jacobian);
       }
-
-      // Jacobian (objective and constraints)
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->save_gradients_to_local_format(problem.number_constraints);
+         this->hessian.reset();
+         subproblem.compute_regularized_hessian(statistics, this->hessian);
       }
 
       // variable bounds
       if (warmstart_information.variable_bounds_changed) {
-         // bounds of original variables intersected with trust region
-         for (size_t variable_index: Range(problem.get_number_original_variables())) {
-            this->lower_bounds[variable_index] = std::max(-trust_region_radius,
-                  problem.variable_lower_bound(variable_index) - current_iterate.primals[variable_index]);
-            this->upper_bounds[variable_index] = std::min(trust_region_radius,
-                  problem.variable_upper_bound(variable_index) - current_iterate.primals[variable_index]);
-         }
-         // bounds of additional variables (no trust region!)
-         for (size_t variable_index: Range(problem.get_number_original_variables(), problem.number_variables)) {
-            this->lower_bounds[variable_index] = problem.variable_lower_bound(variable_index) - current_iterate.primals[variable_index];
-            this->upper_bounds[variable_index] = problem.variable_upper_bound(variable_index) - current_iterate.primals[variable_index];
-         }
+         subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds);
       }
 
       // constraint bounds
       if (warmstart_information.constraint_bounds_changed || warmstart_information.constraints_changed) {
-         for (size_t constraint_index: Range(problem.number_constraints)) {
-            this->lower_bounds[problem.number_variables + constraint_index] = problem.constraint_lower_bound(constraint_index) -
-               this->constraints[constraint_index];
-            this->upper_bounds[problem.number_variables + constraint_index] = problem.constraint_upper_bound(constraint_index) -
-               this->constraints[constraint_index];
-         }
+         auto constraints_lower_bounds = view(this->lower_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
+         auto constraints_upper_bounds = view(this->upper_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
+         subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, this->constraints);
       }
-      for (size_t variable_index: Range(problem.number_variables + problem.number_constraints)) {
+
+      // replace INFs with large finite values (TODO: is that really useful?)
+      for (size_t variable_index: Range(subproblem.number_variables + subproblem.number_constraints)) {
          this->lower_bounds[variable_index] = std::max(-BIG, this->lower_bounds[variable_index]);
          this->upper_bounds[variable_index] = std::min(BIG, this->upper_bounds[variable_index]);
       }
+
+      // save Jacobian (objective and constraints) and Hessian in BQPD format
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         this->save_gradients_to_local_format(subproblem.number_constraints);
+      }
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         this->save_hessian_in_local_format();
+      }
    }
 
-   void BQPDSolver::solve_subproblem(const OptimizationProblem& problem, const Vector<double>& initial_point, Direction& direction,
-         const WarmstartInformation& warmstart_information) {
-      if (this->print_subproblem) {
-         DEBUG << "objective gradient: " << this->linear_objective;
-         for (size_t constraint_index: Range(problem.number_constraints)) {
-            DEBUG << "gradient c" << constraint_index << ": " << this->constraint_jacobian[constraint_index];
-         }
-         for (size_t variable_index: Range(problem.number_variables)) {
-            DEBUG << "d" << variable_index << " in [" << this->lower_bounds[variable_index] << ", " << this->upper_bounds[variable_index] << "]\n";
-         }
-         for (size_t constraint_index: Range(problem.number_constraints)) {
-            DEBUG << "linearized c" << constraint_index << " in [" << this->lower_bounds[problem.number_variables + constraint_index] << ", " <<
-                  this->upper_bounds[problem.number_variables + constraint_index] << "]\n";
-         }
-         DEBUG << "Initial point: " << initial_point << '\n';
+   void BQPDSolver::display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const {
+      DEBUG << "Subproblem:\n";
+      DEBUG << "Hessian: " << this->hessian;
+      DEBUG << "objective gradient: " << this->linear_objective;
+      for (size_t constraint_index: Range(subproblem.number_constraints)) {
+         DEBUG << "gradient c" << constraint_index << ": " << this->constraint_jacobian[constraint_index];
       }
+      for (size_t variable_index: Range(subproblem.number_variables)) {
+         DEBUG << "d" << variable_index << " in [" << this->lower_bounds[variable_index] << ", " << this->upper_bounds[variable_index] << "]\n";
+      }
+      for (size_t constraint_index: Range(subproblem.number_constraints)) {
+         DEBUG << "linearized c" << constraint_index << " in [" << this->lower_bounds[subproblem.number_variables + constraint_index] << ", " <<
+            this->upper_bounds[subproblem.number_variables + constraint_index] << "]\n";
+      }
+      DEBUG << "Initial point: " << initial_point << '\n';
+   }
 
+   void BQPDSolver::solve_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
+         const WarmstartInformation& warmstart_information) {
       direction.primals = initial_point;
-      const int n = static_cast<int>(problem.number_variables);
-      const int m = static_cast<int>(problem.number_constraints);
+      const int n = static_cast<int>(subproblem.number_variables);
+      const int m = static_cast<int>(subproblem.number_constraints);
 
       const BQPDMode mode = BQPDSolver::determine_mode(warmstart_information);
       const int mode_integer = static_cast<int>(mode);
@@ -193,20 +184,20 @@ namespace uno {
       // solve the LP/QP
       DEBUG2 << "Running BQPD\n";
       BQPD(&n, &m, &this->k, &this->kmax, this->bqpd_jacobian.data(), this->bqpd_jacobian_sparsity.data(), direction.primals.data(),
-            this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
-            this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp,
-            &this->peq_solution, this->workspace.data(), this->workspace_sparsity.data(), &mode_integer, &this->ifail, this->info.data(),
-            &this->iprint, &this->nout);
+         this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
+         this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp,
+         &this->peq_solution, this->workspace.data(), this->workspace_sparsity.data(), &mode_integer, &this->ifail, this->info.data(),
+         &this->iprint, &this->nout);
       DEBUG2 << "Ran BQPD\n";
       const BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
       direction.status = BQPDSolver::status_from_bqpd_status(bqpd_status);
 
       // project solution into bounds
-      for (size_t variable_index: Range(problem.number_variables)) {
+      for (size_t variable_index: Range(subproblem.number_variables)) {
          direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], this->lower_bounds[variable_index]),
-               this->upper_bounds[variable_index]);
+            this->upper_bounds[variable_index]);
       }
-      this->set_multipliers(problem.number_variables, direction.multipliers);
+      this->set_multipliers(subproblem.number_variables, direction.multipliers);
    }
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {
@@ -249,7 +240,7 @@ namespace uno {
       for (const auto [row_index, column_index, element]: this->hessian) {
          const size_t index = static_cast<size_t>(column_starts[column_index] + this->current_hessian_indices[column_index] - this->fortran_shift);
          assert(index <= static_cast<size_t>(column_starts[column_index + 1]) &&
-                "BQPD: error in converting the Hessian matrix to the local format. Try setting the sparse format to CSC");
+            "BQPD: error in converting the Hessian matrix to the local format. Try setting the sparse format to CSC");
          this->workspace[index] = element;
          row_indices[index] = static_cast<int>(row_index) + this->fortran_shift;
          this->current_hessian_indices[column_index]++;
@@ -292,7 +283,7 @@ namespace uno {
       }
    }
 
-   void BQPDSolver::set_multipliers(size_t number_variables, Multipliers& direction_multipliers) {
+   void BQPDSolver::set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const {
       direction_multipliers.reset();
       // active constraints
       for (size_t active_constraint_index: Range(number_variables - static_cast<size_t>(this->k))) {
@@ -360,21 +351,21 @@ namespace uno {
    }
 } // namespace
 
-void hessian_vector_product(int *n, const double x[], const double ws[], const int lws[], double v[]) {
-   assert(n != nullptr && "BQPDSolver::hessian_vector_product: the dimension n passed by pointer is NULL");
+void hessian_vector_product(int* dimension, const double vector[], const double hessian_values[], const int hessian_sparsity[], double result[]) {
+   assert(dimension != nullptr && "BQPDSolver::hessian_vector_product: the dimension n passed by pointer is NULL");
 
-   for (size_t i = 0; i < static_cast<size_t>(*n); i++) {
-      v[i] = 0.;
+   for (size_t i = 0; i < static_cast<size_t>(*dimension); i++) {
+      result[i] = 0.;
    }
 
-   int footer_start = lws[0];
-   for (int i = 0; i < *n; i++) {
-      for (int k = lws[footer_start + i]; k < lws[footer_start + i + 1]; k++) {
-         int j = lws[k] - 1;
-         v[i] += ws[k - 1] * x[j];
-         if (j != i) {
+   int footer_start = hessian_sparsity[0];
+   for (int row_index = 0; row_index < *dimension; row_index++) {
+      for (int k = hessian_sparsity[footer_start + row_index]; k < hessian_sparsity[footer_start + row_index + 1]; k++) {
+         int column_index = hessian_sparsity[k] - 1;
+         result[row_index] += hessian_values[k - 1] * vector[column_index];
+         if (column_index != row_index) {
             // off-diagonal term
-            v[j] += ws[k - 1] * x[i];
+            result[column_index] += hessian_values[k - 1] * vector[row_index];
          }
       }
    }

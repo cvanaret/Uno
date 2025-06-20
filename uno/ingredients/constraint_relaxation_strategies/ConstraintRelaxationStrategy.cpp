@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ConstraintRelaxationStrategy.hpp"
-#include "OptimizationProblem.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
@@ -10,9 +9,11 @@
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Multipliers.hpp"
+#include "optimization/OptimizationProblem.hpp"
 #include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
 #include "symbolic/Expression.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/UserCallbacks.hpp"
 

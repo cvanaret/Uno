@@ -4,7 +4,6 @@
 #include <functional>
 #include "FeasibilityRestoration.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
@@ -15,22 +14,24 @@
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   FeasibilityRestoration::FeasibilityRestoration(size_t number_bound_constraints, const Options& options) :
+   FeasibilityRestoration::FeasibilityRestoration(const Options& options) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          optimality_hessian_model(HessianModelFactory::create(options)),
          feasibility_hessian_model(HessianModelFactory::create(options)),
          optimality_regularization_strategy(RegularizationStrategyFactory::create(options)),
          feasibility_regularization_strategy(RegularizationStrategyFactory::create(options)),
-         optimality_inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
-         feasibility_inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
+         optimality_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
+         feasibility_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
          linear_feasibility_tolerance(options.get_double("tolerance")),
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
    }
@@ -51,7 +52,10 @@ namespace uno {
          *this->optimality_regularization_strategy);
       this->feasibility_inequality_handling_method->initialize(feasibility_problem, *this->feasibility_hessian_model,
          *this->feasibility_regularization_strategy);
-      direction = Direction(feasibility_problem.number_variables, feasibility_problem.number_constraints);
+      direction = Direction(
+         std::max(optimality_problem.number_variables, feasibility_problem.number_variables),
+         std::max(optimality_problem.number_constraints, feasibility_problem.number_constraints)
+      );
 
       // statistics
       this->optimality_regularization_strategy->initialize_statistics(statistics, options);
@@ -150,7 +154,7 @@ namespace uno {
    }
 
    bool FeasibilityRestoration::can_switch_to_optimality_phase(const Iterate& current_iterate, const GlobalizationStrategy& globalization_strategy,
-         const Model& model, const Iterate& trial_iterate, const Direction& direction, double step_length) {
+         const Model& model, const Iterate& trial_iterate, const Direction& direction, double step_length) const {
       return globalization_strategy.is_infeasibility_sufficiently_reduced(this->reference_optimality_progress, trial_iterate.progress) &&
          (!this->switch_to_optimality_requires_linearized_feasibility ||
          model.constraint_violation(current_iterate.evaluations.constraints + step_length*(current_iterate.evaluations.constraint_jacobian *
@@ -158,7 +162,7 @@ namespace uno {
    }
 
    void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& trial_iterate, WarmstartInformation& warmstart_information) {
+         const Model& model, Iterate& trial_iterate) {
       DEBUG << "Switching from restoration to optimality phase\n";
       this->current_phase = Phase::OPTIMALITY;
       globalization_strategy.notify_switch_to_optimality(current_iterate.progress);
@@ -168,8 +172,6 @@ namespace uno {
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
 
       this->optimality_inequality_handling_method->exit_feasibility_problem(optimality_problem, trial_iterate);
-      // set a cold start in the subproblem solver
-      warmstart_information.whole_problem_changed();
    }
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -191,9 +193,11 @@ namespace uno {
       }
 
       // possibly go from restoration phase to optimality phase
-      if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(current_iterate, globalization_strategy,
-            model, trial_iterate, direction, step_length)) {
-         this->switch_to_optimality_phase(current_iterate, globalization_strategy, model, trial_iterate, warmstart_information);
+      if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(current_iterate,
+            globalization_strategy, model, trial_iterate, direction, step_length)) {
+         this->switch_to_optimality_phase(current_iterate, globalization_strategy, model, trial_iterate);
+         // set a cold start in the subproblem solver
+         warmstart_information.whole_problem_changed();
       }
       else {
          warmstart_information.no_changes();
@@ -208,7 +212,8 @@ namespace uno {
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, optimality_problem, feasibility_problem, iterate);
    }
 
-   void FeasibilityRestoration::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const {
+   void FeasibilityRestoration::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model,
+         Iterate& iterate) const {
       this->set_infeasibility_measure(model, iterate);
       this->set_objective_measure(model, iterate);
       inequality_handling_method.set_auxiliary_measure(model, iterate);

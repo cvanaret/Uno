@@ -3,14 +3,15 @@
 
 #include "InequalityConstrainedMethod.hpp"
 #include "optimization/Iterate.hpp"
-#include "linear_algebra/Vector.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
-#include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"
 #include "optimization/Direction.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(const Options& options):
@@ -23,8 +24,10 @@ namespace uno {
       regularization_strategy.initialize_memory(problem, hessian_model);
 
       // allocate the LP/QP solver, depending on the presence of curvature in the subproblem
-      const size_t number_regularized_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model) +
-         (regularization_strategy.performs_primal_regularization() ? problem.number_variables : 0);
+      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
+      const size_t regularization_size = (!hessian_model.is_positive_definite() &&
+         regularization_strategy.performs_primal_regularization()) ? problem.get_number_original_variables() : 0;
+      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
       if (number_regularized_hessian_nonzeros == 0) {
          DEBUG << "No curvature in the subproblems, allocating an LP solver\n";
          this->solver = LPSolverFactory::create(this->options);
@@ -49,10 +52,14 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
-         double trust_region_radius, WarmstartInformation& warmstart_information) {
-      this->solver->solve(statistics, problem, current_iterate, current_multipliers, this->initial_point, direction,
-         hessian_model, regularization_strategy, trust_region_radius, warmstart_information);
+         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius, WarmstartInformation& warmstart_information) {
+      // create the subproblem and solve it
+      const ForwardRange primal_regularization_variables(problem.get_number_original_variables());
+      const ForwardRange dual_regularization_variables(0);
+      Subproblem subproblem{problem, current_iterate, current_multipliers, hessian_model, regularization_strategy,
+         trust_region_radius, primal_regularization_variables, dual_regularization_variables};
+      this->solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;
       // reset the initial point
@@ -83,8 +90,10 @@ namespace uno {
       return this->solver->hessian_quadratic_product(vector);
    }
 
+   // compute dual *displacements*
+   // because of the way we form LPs/QPs, we get the new *multipliers* back from the solver. To get the dual displacements/direction,
+   // we need to subtract the current multipliers
    void InequalityConstrainedMethod::compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers) {
-      // compute dual *displacements* (active-set methods usually compute the new duals, not the displacements)
       view(direction_multipliers.constraints, 0, current_multipliers.constraints.size()) -= current_multipliers.constraints;
       view(direction_multipliers.lower_bounds, 0, current_multipliers.lower_bounds.size()) -= current_multipliers.lower_bounds;
       view(direction_multipliers.upper_bounds, 0, current_multipliers.upper_bounds.size()) -= current_multipliers.upper_bounds;

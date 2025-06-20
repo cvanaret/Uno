@@ -22,7 +22,7 @@ namespace uno {
 
    class Uno {
    public:
-      Uno(size_t number_constraints, size_t number_bounds_constraints, const Options& options);
+      Uno(size_t number_constraints, const Options& options);
 
       // solve with or without user callbacks
       Result solve(const Model& model, Iterate& initial_iterate, const Options& options);

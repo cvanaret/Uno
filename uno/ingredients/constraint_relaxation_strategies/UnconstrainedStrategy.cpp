@@ -2,21 +2,22 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "UnconstrainedStrategy.hpp"
-#include "ingredients/constraint_relaxation_strategies/OptimizationProblem.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategyFactory.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/VectorView.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   UnconstrainedStrategy::UnconstrainedStrategy(size_t number_bound_constraints, const Options& options) :
+   UnconstrainedStrategy::UnconstrainedStrategy(const Options& options) :
          ConstraintRelaxationStrategy(options),
-         inequality_handling_method(InequalityHandlingMethodFactory::create(number_bound_constraints, options)),
+         inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
          hessian_model(HessianModelFactory::create(options)),
          regularization_strategy(RegularizationStrategyFactory::create(options)) {
    }

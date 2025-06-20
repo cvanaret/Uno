@@ -10,7 +10,7 @@ using namespace uno;
 TEST(MA27Solver, SystemSize5) {
    const size_t n = 5;
    const size_t nnz = 7;
-   SymmetricMatrix<size_t, double> matrix(n, nnz, false, "COO");
+   SymmetricMatrix<size_t, double> matrix("COO", n, nnz, 0);
    matrix.insert(2., 0, 0);
    matrix.insert(3., 0, 1);
    matrix.insert(4., 1, 2);
@@ -24,7 +24,7 @@ TEST(MA27Solver, SystemSize5) {
    const std::array<double, n> reference{1., 2., 3., 4., 5.};
 
    MA27Solver solver;
-   solver.initialize_memory(n, nnz);
+   solver.initialize_memory(n, 0, nnz, 0);
    solver.do_symbolic_analysis(matrix);
    solver.do_numerical_factorization(matrix);
    solver.solve_indefinite_system(matrix, rhs, result);
@@ -37,7 +37,7 @@ TEST(MA27Solver, SystemSize5) {
 TEST(MA27Solver, Inertia) {
    const size_t n = 5;
    const size_t nnz = 7;
-   SymmetricMatrix<size_t, double> matrix(n, nnz, false, "COO");
+   SymmetricMatrix<size_t, double> matrix("COO", n, nnz, 0);
    matrix.insert(2., 0, 0);
    matrix.insert(3., 0, 1);
    matrix.insert(4., 1, 2);
@@ -47,7 +47,7 @@ TEST(MA27Solver, Inertia) {
    matrix.insert(1., 4, 4);
 
    MA27Solver solver;
-   solver.initialize_memory(n, nnz);
+   solver.initialize_memory(n, 0, nnz, 0);
    solver.do_symbolic_analysis(matrix);
    solver.do_numerical_factorization(matrix);
 
@@ -61,7 +61,7 @@ TEST(MA27Solver, SingularMatrix) {
    const size_t n = 4;
    const size_t nnz = 7;
    // comes from hs015 solved with byrd preset
-   SymmetricMatrix<size_t, double> matrix(n, nnz, false, "COO");
+   SymmetricMatrix<size_t, double> matrix("COO", n, nnz, 0);
    matrix.insert(-0.0198, 0, 0);
    matrix.insert(0.625075, 0, 0);
    matrix.insert(-0.277512, 0, 1);
@@ -70,7 +70,7 @@ TEST(MA27Solver, SingularMatrix) {
    matrix.insert(0., 2, 2);
    matrix.insert(0., 3, 3);
    MA27Solver solver;
-   solver.initialize_memory(n, nnz);
+   solver.initialize_memory(n, 0, nnz, 0);
    solver.do_symbolic_analysis(matrix);
    solver.do_numerical_factorization(matrix);
 

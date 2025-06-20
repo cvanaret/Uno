@@ -194,7 +194,6 @@ namespace uno {
       assert(in_increasing_order(asl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
 
       // copy the nonzeros in the Hessian
-      hessian.reset();
       for (size_t column_index: Range(this->number_variables)) {
          for (size_t k: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
             const size_t row_index = static_cast<size_t>(asl_row_index[k]);

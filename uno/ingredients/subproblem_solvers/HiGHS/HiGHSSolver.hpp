@@ -1,3 +1,6 @@
+// Copyright (c) 2024 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
 #ifndef UNO_HIGHSSOLVER_H
 #define UNO_HIGHSSOLVER_H
 
@@ -5,6 +8,7 @@
 #include "Highs.h"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 
 namespace uno {
    // forward declaration
@@ -15,12 +19,10 @@ namespace uno {
       explicit HiGHSSolver(const Options& options);
 
       void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy) override;
+         const RegularizationStrategy<double>& regularization_strategy) override;
 
-      void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, const Vector<double>& initial_point, Direction& direction,
-         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
-         const WarmstartInformation& warmstart_information) override;
+      void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
+         Direction& direction, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
 
@@ -30,12 +32,12 @@ namespace uno {
       std::vector<double> constraints{};
       SparseVector<double> linear_objective{};
       RectangularMatrix<double> constraint_jacobian{};
+      SymmetricMatrix<size_t, double> hessian{};
 
       const bool print_subproblem;
 
-      void set_up_subproblem(const OptimizationProblem& problem, Iterate& current_iterate, double trust_region_radius,
-         const WarmstartInformation& warmstart_information);
-      void solve_subproblem(const OptimizationProblem& problem, Direction& direction);
+      void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information);
+      void solve_subproblem(const Subproblem& subproblem, Direction& direction);
    };
 } // namespace
 

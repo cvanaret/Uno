@@ -6,17 +6,13 @@
 
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
-#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 
 namespace uno {
-   // forward declarations
-   class OptimizationProblem;
-
    class UnconstrainedStrategy : public ConstraintRelaxationStrategy {
    public:
-      UnconstrainedStrategy(size_t number_bound_constraints, const Options& options);
+      explicit UnconstrainedStrategy(const Options& options);
       ~UnconstrainedStrategy() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,

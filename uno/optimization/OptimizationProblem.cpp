@@ -15,18 +15,6 @@ namespace uno {
          model(model), number_variables(number_variables), number_constraints(number_constraints) {
    }
 
-   bool OptimizationProblem::is_constrained() const {
-      return (0 < this->number_constraints);
-   }
-
-   bool OptimizationProblem::has_inequality_constraints() const {
-      return (!this->model.get_inequality_constraints().empty());
-   }
-
-   bool OptimizationProblem::has_fixed_variables() const {
-      return (!this->model.get_fixed_variables().empty());
-   }
-
    double OptimizationProblem::get_objective_multiplier() const {
       return 1.;
    }
@@ -70,14 +58,6 @@ namespace uno {
       return this->model.variable_upper_bound(variable_index);
    }
 
-   double OptimizationProblem::constraint_lower_bound(size_t constraint_index) const {
-      return this->model.constraint_lower_bound(constraint_index);
-   }
-
-   double OptimizationProblem::constraint_upper_bound(size_t constraint_index) const {
-      return this->model.constraint_upper_bound(constraint_index);
-   }
-
    const Collection<size_t>& OptimizationProblem::get_lower_bounded_variables() const {
       return this->model.get_lower_bounded_variables();
    }
@@ -92,6 +72,26 @@ namespace uno {
 
    const Collection<size_t>& OptimizationProblem::get_single_upper_bounded_variables() const {
       return this->model.get_single_upper_bounded_variables();
+   }
+
+   const Vector<size_t>& OptimizationProblem::get_fixed_variables() const {
+      return this->model.get_fixed_variables();
+   }
+
+   double OptimizationProblem::constraint_lower_bound(size_t constraint_index) const {
+      return this->model.constraint_lower_bound(constraint_index);
+   }
+
+   double OptimizationProblem::constraint_upper_bound(size_t constraint_index) const {
+      return this->model.constraint_upper_bound(constraint_index);
+   }
+
+   const Collection<size_t>& OptimizationProblem::get_equality_constraints() const {
+      return this->model.get_equality_constraints();
+   }
+
+   const Collection<size_t>& OptimizationProblem::get_inequality_constraints() const {
+      return this->model.get_inequality_constraints();
    }
 
    size_t OptimizationProblem::number_objective_gradient_nonzeros() const {
@@ -167,5 +167,9 @@ namespace uno {
          return 0.;
       }};
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
+   }
+
+   double OptimizationProblem::dual_regularization_factor() const {
+      return 0.;
    }
 } // namespace

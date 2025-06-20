@@ -11,10 +11,11 @@ namespace uno {
    class WaechterFilterMethod : public FilterMethod {
    public:
       explicit WaechterFilterMethod(const Options& options);
-      ~WaechterFilterMethod();
+      ~WaechterFilterMethod() override;
 
       void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
-      [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress, const ProgressMeasures& trial_progress) const override;
+      [[nodiscard]] bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress,
+         const ProgressMeasures& trial_progress) const override;
 
       [[nodiscard]] std::string get_name() const override;
 
@@ -23,7 +24,7 @@ namespace uno {
       const double sufficient_infeasibility_decrease_factor;
 
       [[nodiscard]] bool is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-            const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) override;
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) override;
    };
 } // namespace
 

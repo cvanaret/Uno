@@ -12,21 +12,20 @@
 
 namespace uno {
    /*
- * Compressed Sparse Column
- * https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_column_(CSC_or_CCS)
- */
-
+    * Compressed Sparse Column
+    * https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_column_(CSC_or_CCS)
+    */
    template <typename IndexType, typename ElementType>
    class CSCSparseStorage : public SparseStorage<IndexType, ElementType> {
    public:
-      CSCSparseStorage(size_t dimension, size_t capacity, bool use_regularization);
+      CSCSparseStorage(size_t dimension, size_t capacity, size_t regularization_size);
 
       void reset() override;
       void set_dimension(size_t new_dimension) override;
 
       void insert(ElementType term, IndexType row_index, IndexType column_index) override;
       void finalize_column(IndexType column_index) override;
-      void set_regularization(const std::function<ElementType(IndexType /*index*/)>& regularization_function) override;
+      void set_regularization(const Collection<size_t>& indices, size_t offset, double factor) override;
       const ElementType* data_pointer() const noexcept override { return this->entries.data(); }
       ElementType* data_pointer() noexcept override { return this->entries.data(); }
 
@@ -46,8 +45,8 @@ namespace uno {
    };
 
    template <typename IndexType, typename ElementType>
-   CSCSparseStorage<IndexType, ElementType>::CSCSparseStorage(size_t dimension, size_t capacity, bool use_regularization):
-         SparseStorage<IndexType, ElementType>(dimension, capacity, use_regularization),
+   CSCSparseStorage<IndexType, ElementType>::CSCSparseStorage(size_t dimension, size_t capacity, size_t regularization_size):
+         SparseStorage<IndexType, ElementType>(dimension, capacity, regularization_size),
          column_starts(dimension + 1) {
       this->entries.reserve(this->capacity);
       this->row_indices.reserve(this->capacity);
@@ -91,7 +90,7 @@ namespace uno {
       assert(column_index < this->dimension && "The dimension of the matrix was exceeded");
 
       // possibly add regularization
-      if (this->use_regularization) {
+      if (0 < this->regularization_size) {
          this->insert(ElementType(0), column_index, column_index);
       }
       this->current_column++;
@@ -103,14 +102,14 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void CSCSparseStorage<IndexType, ElementType>::set_regularization(const std::function<ElementType(IndexType /*index*/)>& regularization_function) {
-      assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
+   void CSCSparseStorage<IndexType, ElementType>::set_regularization(const Collection<size_t>& indices, size_t offset, double factor) {
+      assert(0 < this->regularization_size && "You are trying to regularize a matrix where regularization was not preallocated.");
 
-      for (size_t row_index: Range(this->dimension)) {
+      for (size_t row_index: indices) {
          // the regularization term is located at the end of the column, that is right before the start of the next column
-         const size_t k = static_cast<size_t>(this->column_starts[row_index + 1] - 1);
-         const ElementType element = regularization_function(row_index);
-         this->entries[k] = element;
+         const size_t position = static_cast<size_t>(this->column_starts[row_index + offset + 1] - 1);
+         const ElementType element = factor;
+         this->entries[position] = element;
       }
    }
 

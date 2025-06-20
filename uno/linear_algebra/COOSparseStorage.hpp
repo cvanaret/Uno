@@ -17,14 +17,14 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    class COOSparseStorage : public SparseStorage<IndexType, ElementType> {
    public:
-      COOSparseStorage(size_t dimension, size_t capacity, bool use_regularization);
+      COOSparseStorage(size_t dimension, size_t capacity, size_t regularization_size);
 
       void reset() override;
       void set_dimension(size_t new_dimension) override;
 
       void insert(ElementType term, IndexType row_index, IndexType column_index) override;
       void finalize_column(IndexType /*column_index*/) override { /* do nothing */ }
-      void set_regularization(const std::function<ElementType(size_t index)>& regularization_function) override;
+      void set_regularization(const Collection<size_t>& indices, size_t offset, double factor) override;
       const ElementType* data_pointer() const noexcept override { return this->entries.data(); }
       ElementType* data_pointer() noexcept override { return this->entries.data(); }
 
@@ -58,14 +58,14 @@ namespace uno {
    // implementation
 
    template <typename IndexType, typename ElementType>
-   COOSparseStorage<IndexType, ElementType>::COOSparseStorage(size_t dimension, size_t capacity, bool use_regularization):
-         SparseStorage<IndexType, ElementType>(dimension, capacity, use_regularization) {
+   COOSparseStorage<IndexType, ElementType>::COOSparseStorage(size_t dimension, size_t capacity, size_t regularization_size):
+         SparseStorage<IndexType, ElementType>(dimension, capacity, regularization_size) {
       this->entries.reserve(this->capacity);
       this->row_indices.reserve(this->capacity);
       this->column_indices.reserve(this->capacity);
 
       // initialize regularization terms
-      if (this->use_regularization) {
+      if (0 < this->regularization_size) {
          this->initialize_regularization();
       }
    }
@@ -79,7 +79,7 @@ namespace uno {
       this->column_indices.clear();
 
       // initialize regularization terms
-      if (this->use_regularization) {
+      if (0 < this->regularization_size) {
          this->initialize_regularization();
       }
    }
@@ -103,13 +103,13 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSparseStorage<IndexType, ElementType>::set_regularization(const std::function<ElementType(size_t /*index*/)>& regularization_function) {
-      assert(this->use_regularization && "You are trying to regularize a matrix where regularization was not preallocated.");
+   void COOSparseStorage<IndexType, ElementType>::set_regularization(const Collection<size_t>& indices, size_t offset, double factor) {
+      assert(0 < this->regularization_size && "You are trying to regularize a matrix where regularization was not preallocated.");
 
       // the regularization terms (that lie at the start of the entries vector) can be directly modified
-      for (size_t row_index: Range(this->dimension)) {
-         const ElementType element = regularization_function(row_index);
-         this->entries[row_index] = element;
+      for (size_t index: indices) {
+         const ElementType element = factor;
+         this->entries[index + offset] = element;
       }
    }
 
@@ -123,7 +123,7 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    void COOSparseStorage<IndexType, ElementType>::initialize_regularization() {
       // introduce elements at the start of the entries
-      for (size_t row_index: Range(this->dimension)) {
+      for (size_t row_index: Range(this->regularization_size)) {
          this->insert(ElementType(0), IndexType(row_index), IndexType(row_index));
       }
    }

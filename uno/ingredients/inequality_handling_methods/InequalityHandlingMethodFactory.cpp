@@ -12,8 +12,7 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(size_t /*number_bound_constraints*/,
-         const Options& options) {
+   std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(const Options& options) {
       // TODO set unconstrained strategy automatically
       const std::string inequality_handling_method = options.get_string("inequality_handling_method");
       // inequality-constrained methods

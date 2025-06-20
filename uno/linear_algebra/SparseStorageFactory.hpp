@@ -13,17 +13,17 @@ namespace uno {
    class SparseStorageFactory {
    public:
       static std::unique_ptr<SparseStorage<IndexType, ElementType>> create(const std::string& sparse_storage_type, size_t dimension,
-            size_t capacity, bool use_regularization);
+         size_t capacity, size_t regularization_size);
    };
 
    template <typename IndexType, typename ElementType>
    std::unique_ptr<SparseStorage<IndexType, ElementType>> SparseStorageFactory<IndexType, ElementType>::create(const std::string& sparse_storage_type,
-         size_t dimension, size_t capacity, bool use_regularization) {
+         size_t dimension, size_t capacity, size_t regularization_size) {
       if (sparse_storage_type == "COO") {
-         return std::make_unique<COOSparseStorage<IndexType, ElementType>>(dimension, capacity, use_regularization);
+         return std::make_unique<COOSparseStorage<IndexType, ElementType>>(dimension, capacity, regularization_size);
       }
       else if (sparse_storage_type == "CSC") {
-         return std::make_unique<CSCSparseStorage<IndexType, ElementType>>(dimension, capacity, use_regularization);
+         return std::make_unique<CSCSparseStorage<IndexType, ElementType>>(dimension, capacity, regularization_size);
       }
       throw std::invalid_argument("Sparse storage " + sparse_storage_type + " unknown");
    }
