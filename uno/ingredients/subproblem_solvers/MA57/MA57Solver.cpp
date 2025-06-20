@@ -58,7 +58,7 @@ namespace uno {
       this->column_indices.reserve(number_nonzeros);
 
       // evaluations
-      this->objective_gradient.reserve(number_constraints);
+      this->objective_gradient.reserve(number_variables);
       this->constraints.resize(number_constraints);
       this->constraint_jacobian.resize(number_constraints, number_variables);
       this->augmented_matrix = SymmetricMatrix<size_t, double>("COO", dimension, number_hessian_nonzeros, regularization_size);

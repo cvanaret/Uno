@@ -134,7 +134,7 @@ namespace uno {
       this->column_indices.resize(number_nonzeros);
 
       // evaluations
-      this->objective_gradient.reserve(number_constraints);
+      this->objective_gradient.reserve(number_variables);
       this->constraints.resize(number_constraints);
       this->constraint_jacobian.resize(number_constraints, number_variables);
       this->augmented_matrix = SymmetricMatrix<size_t, double>("COO", dimension, number_hessian_nonzeros, regularization_size);
@@ -192,18 +192,18 @@ namespace uno {
 
          int la = static_cast<int>(factor.size());
          int liw = static_cast<int>(iw.size());
-         MA27_numerical_factorization(&n, &nnz, row_indices.data(), column_indices.data(), factor.data(), &la, iw.data(), &liw, ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(),
-            cntl.data(), info.data());
+         MA27_numerical_factorization(&n, &nnz, row_indices.data(), column_indices.data(), factor.data(), &la, iw.data(),
+            &liw, ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(), cntl.data(), info.data());
          factorization_done = true;
 
          if (info[eINFO::IFLAG] == eIFLAG::INSUFFICIENTINTEGER) {
-            INFO << "MA27: insufficient integer workspace, resizing and retrying. \n";
+            DEBUG << "MA27: insufficient integer workspace, resizing and retrying. \n";
             // increase the size of iw
             iw.resize(static_cast<size_t>(info[eINFO::IERROR]));
             factorization_done = false;
          }
          if (info[eINFO::IFLAG] == eIFLAG::INSUFFICIENTREAL) {
-            INFO << "MA27: insufficient real workspace, resizing and retrying. \n";
+            DEBUG << "MA27: insufficient real workspace, resizing and retrying. \n";
             // increase the size of factor
             factor.resize(static_cast<size_t>(info[eINFO::IERROR]));
             factorization_done = false;

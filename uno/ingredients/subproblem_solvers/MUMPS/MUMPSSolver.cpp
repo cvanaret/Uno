@@ -59,7 +59,7 @@ namespace uno {
       this->column_indices.reserve(number_nonzeros);
 
       // evaluations
-      this->objective_gradient.reserve(number_constraints);
+      this->objective_gradient.reserve(number_variables);
       this->constraints.resize(number_constraints);
       this->constraint_jacobian.resize(number_constraints, number_variables);
       this->augmented_matrix = SymmetricMatrix<size_t, double>("COO", dimension, number_hessian_nonzeros, regularization_size);
@@ -74,7 +74,7 @@ namespace uno {
       // connect the local sparsity with the pointers in the structure
       this->mumps_structure.irn = this->row_indices.data();
       this->mumps_structure.jcn = this->column_indices.data();
-      this->mumps_structure.a = const_cast<double*>(matrix.data_pointer());
+      //this->mumps_structure.a = const_cast<double*>(matrix.data_pointer());
       dmumps_c(&this->mumps_structure);
       this->mumps_structure.icntl[7] = 8; // ICNTL(8) = 8: recompute scaling before factorization
    }
