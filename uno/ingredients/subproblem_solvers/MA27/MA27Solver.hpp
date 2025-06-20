@@ -17,6 +17,26 @@ namespace uno {
    template <typename ElementType>
    class Vector;
 
+   struct MA27Workspace {
+      int n{};                         // dimension of current factorisation (maximal value here is <= max_dimension)
+      int nnz{};                     // number of nonzeros of current factorisation
+      std::array<int, 30> icntl{};      // integer array of length 30; integer control values
+      std::array<double, 5> cntl{};     // double array of length 5; double control values
+
+      std::vector<int> iw{};           // integer workspace of length liw
+      std::vector<int> ikeep{};        // integer array of 3*n; pivot sequence
+      std::vector<int> iw1{};          // integer workspace array of length n
+      int nsteps{};                    // integer, to be set by ma27
+      int iflag{};                     // integer; 0 if pivot order chosen automatically; 1 if the pivot order set by ikeep
+      std::array<int, 20> info{};       // integer array of length 20
+      double ops{};                    // double, operations count
+
+      std::vector<double> factor{};    // data array of length la;
+      int maxfrt{};                    // integer, to be set by ma27
+      std::vector<double> w{};         // double workspace
+      const size_t number_factorization_attempts{5};
+   };
+
    class MA27Solver: public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
       MA27Solver();
@@ -38,14 +58,10 @@ namespace uno {
       [[nodiscard]] size_t rank() const override;
 
    private:
-      int n{};                         // dimension of current factorisation (maximal value here is <= max_dimension)
-      int nnz{};                     // number of nonzeros of current factorisation
-      std::array<int, 30> icntl{};      // integer array of length 30; integer control values
-      std::array<double, 5> cntl{};     // double array of length 5; double control values
-
       // internal matrix representation
       std::vector<int> row_indices{};          // row index of input
       std::vector<int> column_indices{};          // col index of input
+      MA27Workspace workspace{};
 
       // evaluations
       SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
@@ -54,19 +70,7 @@ namespace uno {
       SymmetricMatrix<size_t, double> augmented_matrix{};
       Vector<double> rhs{};
 
-      std::vector<int> iw{};           // integer workspace of length liw
-      std::vector<int> ikeep{};        // integer array of 3*n; pivot sequence
-      std::vector<int> iw1{};          // integer workspace array of length n
-      int nsteps{};                    // integer, to be set by ma27
-      int iflag{};                     // integer; 0 if pivot order chosen automatically; 1 if the pivot order set by ikeep
-      std::array<int, 20> info{};       // integer array of length 20
-      double ops{};                    // double, operations count
-
-      std::vector<double> factor{};    // data array of length la;
-      int maxfrt{};                    // integer, to be set by ma27
-      std::vector<double> w{};         // double workspace
-      const size_t number_factorization_attempts{5};
-
+      static constexpr size_t fortran_shift{1};
 
       // bool use_iterative_refinement{false}; // Not sure how to do this with ma27
       void save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix);

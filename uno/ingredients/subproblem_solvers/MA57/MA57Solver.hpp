@@ -15,13 +15,31 @@ namespace uno {
    // forward declaration
    class Statistics;
 
-   struct MA57Factorization {
+   struct MA57Workspace {
       int n{};
       int nnz{};
       int lfact{};
       int lifact{};
 
-      MA57Factorization() = default;
+      std::vector<double> fact{0}; // do not initialize, resize at every iteration
+      std::vector<int> ifact{0}; // do not initialize, resize at every iteration
+      int lkeep{};
+      std::vector<int> keep{};
+      std::vector<int> iwork{};
+      int lwork{};
+      std::vector<double> work{};
+
+      // for ma57id_ (default values of controlling parameters)
+      std::array<double, 5> cntl{};
+      std::array<int, 20> icntl{};
+      std::array<double, 20> rinfo{};
+      std::array<int, 40> info{};
+
+      const int nrhs{1}; // number of right hand side being solved
+      const int job{1};
+      std::vector<double> residuals;
+
+      MA57Workspace() = default;
    };
 
    /*! \class MA57Solver
@@ -55,6 +73,7 @@ namespace uno {
       // internal matrix representation
       std::vector<int> row_indices;
       std::vector<int> column_indices;
+      MA57Workspace workspace{};
 
       // evaluations
       SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
@@ -63,26 +82,7 @@ namespace uno {
       SymmetricMatrix<size_t, double> augmented_matrix{};
       Vector<double> rhs{};
 
-      // factorization
-      MA57Factorization factorization{};
-      std::vector<double> fact{0}; // do not initialize, resize at every iteration
-      std::vector<int> ifact{0}; // do not initialize, resize at every iteration
-      int lkeep{};
-      std::vector<int> keep{};
-      std::vector<int> iwork{};
-      int lwork{};
-      std::vector<double> work{};
-
-      // for ma57id_ (default values of controlling parameters)
-      std::array<double, 5> cntl{};
-      std::array<int, 20> icntl{};
-      std::array<double, 20> rinfo{};
-      std::array<int, 40> info{};
-
-      const int nrhs{1}; // number of right hand side being solved
-      const int job{1};
-      std::vector<double> residuals;
-      const size_t fortran_shift{1};
+      static constexpr size_t fortran_shift{1};
 
       bool use_iterative_refinement{false};
       void save_sparsity_pattern_internally(const SymmetricMatrix<size_t, double>& matrix);
