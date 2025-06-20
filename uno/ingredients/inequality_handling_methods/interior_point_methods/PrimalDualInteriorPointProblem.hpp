@@ -10,7 +10,8 @@
 namespace uno {
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
-      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter);
+      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter,
+         double dual_regularization_exponent);
 
       // function evaluations
       [[nodiscard]] double get_objective_multiplier() const override;
@@ -43,10 +44,12 @@ namespace uno {
          const Multipliers& multipliers) const override;
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
+      [[nodiscard]] double dual_regularization_factor() const override;
 
    protected:
       const OptimizationProblem& first_reformulation;
       const double barrier_parameter;
+      const double dual_regularization_exponent;
       const double damping_factor{1e-5};
       const Vector<size_t> fixed_variables{};
       const ForwardRange equality_constraints;

@@ -45,6 +45,8 @@ namespace uno {
    protected:
       const std::string& optional_linear_solver_name;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> optional_linear_solver{};
+      size_t number_variables{};
+      size_t number_constraints{};
       size_t dimension{};
       size_t number_hessian_nonzeros{};
       size_t number_jacobian_nonzeros{};
@@ -78,6 +80,8 @@ namespace uno {
 
    template <typename ElementType>
    void PrimalDualRegularization<ElementType>::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) {
+      this->number_variables = problem.number_variables;
+      this->number_constraints = problem.number_constraints;
       this->dimension = problem.number_variables + problem.number_constraints;
       this->number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
       this->number_jacobian_nonzeros = problem.number_jacobian_nonzeros();
@@ -94,7 +98,8 @@ namespace uno {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize_memory(this->dimension, this->number_hessian_nonzeros, indices.size());
+         this->optional_linear_solver->initialize_memory(this->number_variables, this->number_constraints,
+            this->number_hessian_nonzeros, indices.size());
       }
       this->regularize_hessian(statistics, hessian, indices, expected_inertia, *this->optional_linear_solver);
    }
@@ -115,8 +120,8 @@ namespace uno {
          ElementType dual_regularization_parameter, const Inertia& expected_inertia) {
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize_memory(this->dimension, this->number_hessian_nonzeros +
-            this->number_jacobian_nonzeros, primal_indices.size() + dual_indices.size());
+         this->optional_linear_solver->initialize_memory(this->number_variables, this->number_constraints,
+            this->number_hessian_nonzeros + this->number_jacobian_nonzeros, primal_indices.size() + dual_indices.size());
       }
       this->regularize_augmented_matrix(statistics, augmented_matrix, primal_indices, dual_indices,
          dual_regularization_parameter, expected_inertia, *this->optional_linear_solver);

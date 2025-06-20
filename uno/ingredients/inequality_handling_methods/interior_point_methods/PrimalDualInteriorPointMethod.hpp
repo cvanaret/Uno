@@ -7,7 +7,6 @@
 #include <memory>
 #include "../InequalityHandlingMethod.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
@@ -57,9 +56,6 @@ namespace uno {
    protected:
       SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-      RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
-      SymmetricMatrix<size_t, double> augmented_matrix{};
-      Vector<double> rhs{};
       Vector<double> solution{};
       const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;
 
@@ -86,12 +82,10 @@ namespace uno {
          const Vector<double>& primal_direction, double tau);
       [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
          Multipliers& direction_multipliers, double tau);
-      void assemble_augmented_system(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information);
       void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
          Vector<double>& direction_primals, Multipliers& direction_multipliers);
       void compute_bound_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
          const Vector<double>& primal_direction, Multipliers& direction_multipliers);
-      void compute_least_square_multipliers(const OptimizationProblem& problem, Iterate& iterate, Vector<double>& constraint_multipliers);
    };
 } // namespace
 

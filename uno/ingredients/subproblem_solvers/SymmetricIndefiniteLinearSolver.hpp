@@ -8,10 +8,13 @@
 
 namespace uno {
    // forward declarations
+   class Statistics;
+   class Subproblem;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
+   class WarmstartInformation;
 
    template <typename IndexType, typename ElementType>
    class SymmetricIndefiniteLinearSolver {
@@ -19,10 +22,13 @@ namespace uno {
       SymmetricIndefiniteLinearSolver() = default;
       virtual ~SymmetricIndefiniteLinearSolver() = default;
 
-      virtual void initialize_memory(size_t dimension, size_t number_hessian_nonzeros, size_t regularization_size) = 0;
+      virtual void initialize_memory(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros,
+         size_t regularization_size) = 0;
 
       virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
          Vector<ElementType>& result) = 0;
+      virtual void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Vector<ElementType>& solution,
+         const WarmstartInformation& warmstart_information) = 0;
    };
 } // namespace
 

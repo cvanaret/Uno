@@ -101,4 +101,8 @@ namespace uno {
          variables_upper_bounds[variable_index] = this->problem.variable_upper_bound(variable_index) - this->current_iterate.primals[variable_index];
       }
    }
+
+   double Subproblem::dual_regularization_factor() const {
+      return this->problem.dual_regularization_factor();
+   }
 } // namespace

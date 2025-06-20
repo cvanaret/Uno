@@ -24,7 +24,7 @@ TEST(MA57Solver, SystemSize5) {
    const std::array<double, n> reference{1., 2., 3., 4., 5.};
 
    MA57Solver solver;
-   solver.initialize_memory(n, nnz, 0);
+   solver.initialize_memory(n, 0, nnz, 0);
    solver.do_symbolic_analysis(matrix);
    solver.do_numerical_factorization(matrix);
    solver.solve_indefinite_system(matrix, rhs, result);
@@ -48,7 +48,7 @@ TEST(MA57Solver, Inertia) {
    matrix.insert(1., 4, 4);
 
    MA57Solver solver;
-   solver.initialize_memory(n, nnz, 0);
+   solver.initialize_memory(n, 0, nnz, 0);
    solver.do_symbolic_analysis(matrix);
    solver.do_numerical_factorization(matrix);
 
@@ -72,7 +72,7 @@ TEST(MA57Solver, SingularMatrix) {
    matrix.insert(0., 3, 3);
 
    MA57Solver solver;
-   solver.initialize_memory(n, nnz, 0);
+   solver.initialize_memory(n, 0, nnz, 0);
    solver.do_symbolic_analysis(matrix);
    solver.do_numerical_factorization(matrix);
 

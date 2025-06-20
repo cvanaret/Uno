@@ -3,9 +3,10 @@
 
 #include <cassert>
 #include "MA57Solver.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "optimization/OptimizationProblem.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 
@@ -44,7 +45,9 @@ namespace uno {
       this->icntl[8] = 1;
    }
 
-   void MA57Solver::initialize_memory(size_t dimension, size_t number_hessian_nonzeros, size_t regularization_size) {
+   void MA57Solver::initialize_memory(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros,
+         size_t regularization_size) {
+      const size_t dimension = number_variables + number_constraints;
       const size_t number_nonzeros = number_hessian_nonzeros + regularization_size;
       this->dimension = dimension;
       this->factorization.n = static_cast<int>(dimension);
@@ -53,6 +56,13 @@ namespace uno {
       // reserve the COO sparse representation
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);
+
+      // evaluations
+      this->objective_gradient.reserve(number_constraints);
+      this->constraints.resize(number_constraints);
+      this->constraint_jacobian.resize(number_constraints, number_variables);
+      this->augmented_matrix = SymmetricMatrix<size_t, double>("COO", dimension, number_hessian_nonzeros, regularization_size);
+      this->rhs.resize(dimension);
 
       this->lkeep = static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42);
       this->keep.resize(static_cast<size_t>(this->lkeep));
@@ -142,6 +152,30 @@ namespace uno {
             &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
             this->icntl.data(), this->info.data());
       }
+   }
+
+   void MA57Solver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Vector<double>& solution,
+         const WarmstartInformation& warmstart_information) {
+      // evaluate the functions at the current iterate
+      if (warmstart_information.objective_changed) {
+         subproblem.evaluate_objective_gradient(this->objective_gradient);
+      }
+      if (warmstart_information.constraints_changed) {
+         subproblem.evaluate_constraints(this->constraints);
+         subproblem.evaluate_jacobian(this->constraint_jacobian);
+      }
+
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         // assemble the augmented matrix
+         this->augmented_matrix.reset();
+         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix, this->constraint_jacobian);
+         // regularize the augmented matrix (this calls the analysis and the factorization)
+         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix, subproblem.dual_regularization_factor(), *this);
+
+         // assemble the RHS
+         subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);
+      }
+      this->solve_indefinite_system(this->augmented_matrix, this->rhs, solution);
    }
 
    Inertia MA57Solver::get_inertia() const {

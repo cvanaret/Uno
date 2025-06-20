@@ -80,7 +80,7 @@ namespace uno {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize_memory(this->dimension, this->number_nonzeros, indices.size());
+         this->optional_linear_solver->initialize_memory(this->dimension, 0, this->number_nonzeros, indices.size());
       }
       this->regularize_hessian(statistics, hessian, indices, expected_inertia, *this->optional_linear_solver);
    }
@@ -133,7 +133,7 @@ namespace uno {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize_memory(this->dimension, this->number_nonzeros,
+         this->optional_linear_solver->initialize_memory(this->dimension, 0, this->number_nonzeros,
             primal_indices.size() + dual_indices.size());
       }
       this->regularize_augmented_matrix(statistics, augmented_matrix, primal_indices, dual_indices,

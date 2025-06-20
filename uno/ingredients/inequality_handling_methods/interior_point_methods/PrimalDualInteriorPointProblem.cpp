@@ -7,9 +7,10 @@
 #include "tools/Infinity.hpp"
 
 namespace uno {
-   PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter):
+   PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter,
+      double dual_regularization_exponent):
          OptimizationProblem(problem.model, problem.number_variables, problem.number_constraints),
-         first_reformulation(problem), barrier_parameter(barrier_parameter),
+         first_reformulation(problem), barrier_parameter(barrier_parameter), dual_regularization_exponent(dual_regularization_exponent),
          equality_constraints(problem.number_constraints) { }
 
    double PrimalDualInteriorPointProblem::get_objective_multiplier() const {
@@ -196,5 +197,9 @@ namespace uno {
    double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       return this->first_reformulation.complementarity_error(primals, constraints, multipliers, shift_value, residual_norm);
+   }
+
+   double PrimalDualInteriorPointProblem::dual_regularization_factor() const {
+      return std::pow(this->barrier_parameter, this->dual_regularization_exponent);
    }
 } // namespace

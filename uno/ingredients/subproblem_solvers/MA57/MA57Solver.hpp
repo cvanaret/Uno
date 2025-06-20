@@ -7,6 +7,9 @@
 #include <array>
 #include <vector>
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/SymmetricMatrix.hpp"
 
 namespace uno {
    // forward declaration
@@ -32,11 +35,14 @@ namespace uno {
       MA57Solver();
       ~MA57Solver() override = default;
 
-      void initialize_memory(size_t dimension, size_t number_hessian_nonzeros, size_t regularization_size) override;
+      void initialize_memory(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros,
+         size_t regularization_size) override;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
       void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
+      void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Vector<double>& solution,
+         const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -49,6 +55,14 @@ namespace uno {
       // internal matrix representation
       std::vector<int> row_indices;
       std::vector<int> column_indices;
+
+      // evaluations
+      SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
+      std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+      RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
+      SymmetricMatrix<size_t, double> augmented_matrix{};
+      Vector<double> rhs{};
+
       // factorization
       MA57Factorization factorization{};
       std::vector<double> fact{0}; // do not initialize, resize at every iteration

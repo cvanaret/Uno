@@ -58,6 +58,8 @@ namespace uno {
       void set_constraints_bounds(Array& constraints_lower_bounds, Array& constraints_upper_bounds,
          std::vector<double>& constraints) const;
 
+      [[nodiscard]] double dual_regularization_factor() const;
+
    protected:
       const OptimizationProblem& problem;
       Iterate& current_iterate;

@@ -4,8 +4,10 @@
 #include <cassert>
 #include <stdexcept>
 #include "MA27Solver.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 
@@ -120,12 +122,24 @@ namespace uno {
       this->icntl[eICNTL::LDIAG] = 0;
    }
 
-   void MA27Solver::initialize_memory(size_t dimension, size_t number_hessian_nonzeros, size_t regularization_size) {
+   void MA27Solver::initialize_memory(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros,
+         size_t regularization_size) {
+      const size_t dimension = number_variables + number_constraints;
       const size_t number_nonzeros = number_hessian_nonzeros + regularization_size;
       this->n = static_cast<int>(dimension);
       this->nnz = static_cast<int>(number_nonzeros);
-      this->irn.resize(number_nonzeros);
-      this->icn.resize(number_nonzeros);
+
+      // reserve the COO representation
+      this->row_indices.resize(number_nonzeros);
+      this->column_indices.resize(number_nonzeros);
+
+      // evaluations
+      this->objective_gradient.reserve(number_constraints);
+      this->constraints.resize(number_constraints);
+      this->constraint_jacobian.resize(number_constraints, number_variables);
+      this->augmented_matrix = SymmetricMatrix<size_t, double>("COO", dimension, number_hessian_nonzeros, regularization_size);
+      this->rhs.resize(dimension);
+
       this->iw.resize((2 * number_nonzeros + 3 * dimension + 1) * 6 / 5); // 20% more than 2*nnz + 3*n + 1
       this->ikeep.resize(3 * dimension);
       this->iw1.resize(2 * dimension);
@@ -133,28 +147,29 @@ namespace uno {
 
    void MA27Solver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
       assert(matrix.dimension() <= iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(matrix.number_nonzeros() <= irn.capacity() &&
+      assert(matrix.number_nonzeros() <= this->row_indices.capacity() &&
              "MA27Solver: the number of nonzeros of the matrix is larger than the preallocated size");
 
       // build the internal matrix representation
       save_matrix_to_local_format(matrix);
 
-      n = static_cast<int>(matrix.dimension());
-      nnz = static_cast<int>(matrix.number_nonzeros());
+      this->n = static_cast<int>(matrix.dimension());
+      this->nnz = static_cast<int>(matrix.number_nonzeros());
 
       // symbolic analysis
-      int liw = static_cast<int>(iw.size());
-      MA27_symbolic_analysis(&n, &nnz,                                   /* size info */
-            irn.data(), icn.data(),                     /* matrix indices */
-            iw.data(), &liw, ikeep.data(), iw1.data(),  /* solver workspace */
-            &nsteps, &iflag, icntl.data(), cntl.data(), info.data(), &ops);
+      int liw = static_cast<int>(this->iw.size());
+      MA27_symbolic_analysis(&this->n, &this->nnz,                                   /* size info */
+         this->row_indices.data(), this->column_indices.data(),                     /* matrix indices */
+         this->iw.data(), &liw, this->ikeep.data(), this->iw1.data(),  /* solver workspace */
+         &this->nsteps, &this->iflag, this->icntl.data(), this->cntl.data(), this->info.data(), &this->ops);
 
       // resize the factor by at least INFO(5) (here, 50% more)
-      factor.resize(static_cast<size_t>(3 * info[eINFO::NRLNEC] / 2));
+      this->factor.resize(static_cast<size_t>(3 * this->info[eINFO::NRLNEC] / 2));
 
       assert(info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the symbolic analysis failed");
       if (info[eINFO::IFLAG] != eIFLAG::SUCCESS) {
-         WARNING << "MA27 has issued a warning: IFLAG = " << info[eINFO::IFLAG] << " additional info, IERROR = " << info[eINFO::IERROR] << '\n';
+         WARNING << "MA27 has issued a warning: IFLAG = " << this->info[eINFO::IFLAG] << " additional info, IERROR = "
+            << this->info[eINFO::IERROR] << '\n';
       }
    }
 
@@ -177,7 +192,7 @@ namespace uno {
 
          int la = static_cast<int>(factor.size());
          int liw = static_cast<int>(iw.size());
-         MA27_numerical_factorization(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw, ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(),
+         MA27_numerical_factorization(&n, &nnz, row_indices.data(), column_indices.data(), factor.data(), &la, iw.data(), &liw, ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(),
             cntl.data(), info.data());
          factorization_done = true;
 
@@ -212,6 +227,30 @@ namespace uno {
       }
    }
 
+   void MA27Solver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Vector<double>& solution,
+         const WarmstartInformation& warmstart_information) {
+      // evaluate the functions at the current iterate
+      if (warmstart_information.objective_changed) {
+         subproblem.evaluate_objective_gradient(this->objective_gradient);
+      }
+      if (warmstart_information.constraints_changed) {
+         subproblem.evaluate_constraints(this->constraints);
+         subproblem.evaluate_jacobian(this->constraint_jacobian);
+      }
+
+      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         // assemble the augmented matrix
+         this->augmented_matrix.reset();
+         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix, this->constraint_jacobian);
+         // regularize the augmented matrix (this calls the analysis and the factorization)
+         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix, subproblem.dual_regularization_factor(), *this);
+
+         // assemble the RHS
+         subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);
+      }
+      this->solve_indefinite_system(this->augmented_matrix, this->rhs, solution);
+   }
+
    Inertia MA27Solver::get_inertia() const {
       // rank = number_positive_eigenvalues + number_negative_eigenvalues
       // n = rank + number_zero_eigenvalues
@@ -236,13 +275,13 @@ namespace uno {
 
    void MA27Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
       // build the internal matrix representation
-      this->irn.clear();
-      this->icn.clear();
+      this->row_indices.clear();
+      this->column_indices.clear();
       this->factor.clear();
       constexpr auto fortran_shift = 1;
       for (const auto [row_index, column_index, element]: matrix) {
-         this->irn.emplace_back(static_cast<int>(row_index + fortran_shift));
-         this->icn.emplace_back(static_cast<int>(column_index + fortran_shift));
+         this->row_indices.emplace_back(static_cast<int>(row_index + fortran_shift));
+         this->column_indices.emplace_back(static_cast<int>(column_index + fortran_shift));
          this->factor.emplace_back(element);
       }
    }

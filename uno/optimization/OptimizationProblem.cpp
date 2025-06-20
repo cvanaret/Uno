@@ -168,4 +168,8 @@ namespace uno {
       }};
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
    }
+
+   double OptimizationProblem::dual_regularization_factor() const {
+      return 0.;
+   }
 } // namespace
