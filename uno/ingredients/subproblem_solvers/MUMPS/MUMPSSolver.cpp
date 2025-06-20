@@ -46,7 +46,8 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
    }
 
-   void MUMPSSolver::initialize_memory(size_t dimension, size_t number_nonzeros) {
+   void MUMPSSolver::initialize_memory(size_t dimension, size_t number_hessian_nonzeros, size_t regularization_size) {
+      const size_t number_nonzeros = number_hessian_nonzeros + regularization_size;
       this->dimension = dimension;
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);

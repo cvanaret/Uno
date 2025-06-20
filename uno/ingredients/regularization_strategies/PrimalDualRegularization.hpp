@@ -26,9 +26,9 @@ namespace uno {
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
       void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian,
-         const Collection<size_t>& variable_block, const Inertia& expected_inertia) override;
+         const Collection<size_t>& indices, const Inertia& expected_inertia) override;
       void regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian,
-         const Collection<size_t>& variable_block, const Inertia& expected_inertia,
+         const Collection<size_t>& indices, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
       void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& augmented_matrix,
          const Collection<size_t>& primal_indices, const Collection<size_t>& dual_indices,
@@ -90,18 +90,18 @@ namespace uno {
 
    template <typename ElementType>
    void PrimalDualRegularization<ElementType>::regularize_hessian(Statistics& statistics, SymmetricMatrix<size_t, ElementType>& hessian,
-         const Collection<size_t>& variable_block, const Inertia& expected_inertia) {
+         const Collection<size_t>& indices, const Inertia& expected_inertia) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize_memory(this->dimension, this->number_hessian_nonzeros + variable_block.size());
+         this->optional_linear_solver->initialize_memory(this->dimension, this->number_hessian_nonzeros, indices.size());
       }
-      this->regularize_hessian(statistics, hessian, variable_block, expected_inertia, *this->optional_linear_solver);
+      this->regularize_hessian(statistics, hessian, indices, expected_inertia, *this->optional_linear_solver);
    }
 
    template <typename ElementType>
    void PrimalDualRegularization<ElementType>::regularize_hessian(Statistics& /*statistics*/, SymmetricMatrix<size_t, ElementType>& /*hessian*/,
-         const Collection<size_t>& /*variable_block*/, const Inertia& /*expected_inertia*/,
+         const Collection<size_t>& /*indices*/, const Inertia& /*expected_inertia*/,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) {
       // to regularize the Hessian only, call the function for the augmented matrix with no dual part
       // TODO fix
@@ -116,7 +116,7 @@ namespace uno {
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
          this->optional_linear_solver->initialize_memory(this->dimension, this->number_hessian_nonzeros +
-            this->number_jacobian_nonzeros + primal_indices.size() + dual_indices.size());
+            this->number_jacobian_nonzeros, primal_indices.size() + dual_indices.size());
       }
       this->regularize_augmented_matrix(statistics, augmented_matrix, primal_indices, dual_indices,
          dual_regularization_parameter, expected_inertia, *this->optional_linear_solver);

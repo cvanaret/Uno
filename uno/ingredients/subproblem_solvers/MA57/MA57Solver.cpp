@@ -9,47 +9,51 @@
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 
-#define MA57ID FC_GLOBAL(ma57id, MA57ID)
-#define MA57AD FC_GLOBAL(ma57ad, MA57AD)
-#define MA57BD FC_GLOBAL(ma57bd, MA57BD)
-#define MA57CD FC_GLOBAL(ma57cd, MA57CD)
-#define MA57DD FC_GLOBAL(ma57dd, MA57DD)
+#define MA57_set_default_parameters FC_GLOBAL(ma57id, MA57ID)
+#define MA57_symbolic_analysis FC_GLOBAL(ma57ad, MA57AD)
+#define MA57_numerical_factorization FC_GLOBAL(ma57bd, MA57BD)
+#define MA57_linear_solve FC_GLOBAL(ma57cd, MA57CD)
+#define MA57_linear_solve_with_iterative_refinement FC_GLOBAL(ma57dd, MA57DD)
 
 namespace uno {
    extern "C" {
    // MA57
    // default values of controlling parameters
-   void MA57ID(double cntl[], int icntl[]);
+   void MA57_set_default_parameters(double cntl[], int icntl[]);
    // symbolic analysis
-   void MA57AD(const int* n, const int* ne, const int irn[], const int jcn[], const int* lkeep, int keep[], int iwork[], int icntl[], int info[], double
-   rinfo[]);
+   void MA57_symbolic_analysis(const int* n, const int* ne, const int irn[], const int jcn[], const int* lkeep, int keep[],
+      int iwork[], int icntl[], int info[], double rinfo[]);
    // numerical factorization
-   void MA57BD(const int* n, int* ne, const double a[], /* out */ double fact[], const int* lfact, /* out */ int ifact[], const int* lifact,
+   void MA57_numerical_factorization(const int* n, int* ne, const double a[], /* out */ double fact[], const int* lfact, /* out */ int ifact[], const int* lifact,
       const int* lkeep, const int keep[], int iwork[], int icntl[], double cntl[], /* out */ int info[], /* out */ double rinfo[]);
    // linear system solve without iterative refinement
-   void MA57CD(const int* job, const int* n, double fact[], int* lfact, int ifact[], int* lifact, const int* nrhs, double rhs[], const int* lrhs, double
+   void MA57_linear_solve(const int* job, const int* n, double fact[], int* lfact, int ifact[], int* lifact, const int* nrhs, double rhs[], const int* lrhs, double
    work[], int* lwork, int iwork[], int icntl[], int info[]);
    // linear system solve with iterative refinement
-   void MA57DD(const int* job, const int* n, int* ne, const double a[], const int irn[], const int jcn[], double fact[], int* lfact, int ifact[], int*
+   void MA57_linear_solve_with_iterative_refinement(const int* job, const int* n, int* ne, const double a[], const int irn[], const int jcn[], double fact[], int* lfact, int ifact[], int*
    lifact, const double rhs[], double x[], double resid[], double work[], int iwork[], int icntl[],
       double cntl[], int info[], double rinfo[]);
    }
 
    MA57Solver::MA57Solver(): DirectSymmetricIndefiniteLinearSolver() {
       // set the default values of the controlling parameters
-      MA57ID(this->cntl.data(), this->icntl.data());
+      MA57_set_default_parameters(this->cntl.data(), this->icntl.data());
       // suppress warning messages
       this->icntl[4] = 0;
       // iterative refinement enabled
       this->icntl[8] = 1;
    }
 
-   void MA57Solver::initialize_memory(size_t dimension, size_t number_nonzeros) {
+   void MA57Solver::initialize_memory(size_t dimension, size_t number_hessian_nonzeros, size_t regularization_size) {
+      const size_t number_nonzeros = number_hessian_nonzeros + regularization_size;
       this->dimension = dimension;
       this->factorization.n = static_cast<int>(dimension);
       this->factorization.nnz = static_cast<int>(number_nonzeros);
+
+      // reserve the COO sparse representation
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);
+
       this->lkeep = static_cast<int>(5 * dimension + number_nonzeros + std::max(dimension, number_nonzeros) + 42);
       this->keep.resize(static_cast<size_t>(this->lkeep));
       this->iwork.resize(5 * dimension);
@@ -61,7 +65,7 @@ namespace uno {
    void MA57Solver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
       assert(matrix.dimension() <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
       assert(matrix.number_nonzeros() <= this->row_indices.capacity() &&
-             "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
+         "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
 
       // build the internal matrix representation
       this->save_sparsity_pattern_internally(matrix);
@@ -70,7 +74,7 @@ namespace uno {
       const int nnz = static_cast<int>(matrix.number_nonzeros());
 
       // symbolic analysis
-      MA57AD(/* const */ &n,
+      MA57_symbolic_analysis(/* const */ &n,
             /* const */ &nnz,
             /* const */ this->row_indices.data(),
             /* const */ this->column_indices.data(),
@@ -104,7 +108,7 @@ namespace uno {
       int nnz = static_cast<int>(matrix.number_nonzeros());
 
       // numerical factorization
-      MA57BD(&n,
+      MA57_numerical_factorization(&n,
             &nnz,
             /* const */ matrix.data_pointer(),
             /* out */ this->fact.data(),
@@ -125,8 +129,8 @@ namespace uno {
 
       // solve the linear system
       if (this->use_iterative_refinement) {
-         MA57DD(&this->job, &n, &nnz, matrix.data_pointer(), this->row_indices.data(), this->column_indices.data(),
-            this->fact.data(), &this->factorization.lfact, this->ifact.data(), &this->factorization.lifact,
+         MA57_linear_solve_with_iterative_refinement(&this->job, &n, &nnz, matrix.data_pointer(), this->row_indices.data(),
+            this->column_indices.data(), this->fact.data(), &this->factorization.lfact, this->ifact.data(), &this->factorization.lifact,
             rhs.data(), result.data(), this->residuals.data(), this->work.data(), this->iwork.data(), this->icntl.data(),
             this->cntl.data(), this->info.data(), this->rinfo.data());
       }
@@ -134,7 +138,7 @@ namespace uno {
          // copy rhs into result (overwritten by MA57)
          result = rhs;
 
-         MA57CD(&this->job, &n, this->fact.data(), &this->factorization.lfact, this->ifact.data(),
+         MA57_linear_solve(&this->job, &n, this->fact.data(), &this->factorization.lfact, this->ifact.data(),
             &this->factorization.lifact, &this->nrhs, result.data(), &lrhs, this->work.data(), &this->lwork, this->iwork.data(),
             this->icntl.data(), this->info.data());
       }
@@ -168,6 +172,8 @@ namespace uno {
    size_t MA57Solver::rank() const {
       return static_cast<size_t>(this->info[24]);
    }
+
+   // protected member functions
 
    void MA57Solver::save_sparsity_pattern_internally(const SymmetricMatrix<size_t, double>& matrix) {
       // build the internal matrix representation

@@ -6,25 +6,24 @@
 #include "MA27Solver.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "optimization/OptimizationProblem.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 
-#define MA27ID FC_GLOBAL(ma27id, MA27ID)
-#define MA27AD FC_GLOBAL(ma27ad, MA27AD)
-#define MA27BD FC_GLOBAL(ma27bd, MA27BD)
-#define MA27CD FC_GLOBAL(ma27cd, MA27CD)
+#define MA27_set_default_parameters FC_GLOBAL(ma27id, MA27ID)
+#define MA27_symbolic_analysis FC_GLOBAL(ma27ad, MA27AD)
+#define MA27_numerical_factorization FC_GLOBAL(ma27bd, MA27BD)
+#define MA27_linear_solve FC_GLOBAL(ma27cd, MA27CD)
 
 extern "C" {
-   void MA27ID(int ICNTL[], double CNTL[]);
+   void MA27_set_default_parameters(int ICNTL[], double CNTL[]);
 
-   void MA27AD(int* N, int* NZ, int IRN[], int ICN[], int IW[], int* LIW, int IKEEP[], int IW1[],
+   void MA27_symbolic_analysis(int* N, int* NZ, int IRN[], int ICN[], int IW[], int* LIW, int IKEEP[], int IW1[],
          int* NSTEPS, int* IFLAG, int ICNTL[], double CNTL[], int INFO[], double* OPS);
 
-   void MA27BD(int* N, int* NZ, int IRN[], int ICN[], double A[], int* LA, int IW[], int* LIW,
+   void MA27_numerical_factorization(int* N, int* NZ, int IRN[], int ICN[], double A[], int* LA, int IW[], int* LIW,
          int IKEEP[], int* NSTEPS, int* MAXFRT, int IW1[], int ICNTL[], double CNTL[], int INFO[]);
 
-   void MA27CD(int* N, double A[], int* LA, int IW[], int* LIW, double W[], int* MAXFRT, double RHS[],
+   void MA27_linear_solve(int* N, double A[], int* LA, int IW[], int* LIW, double W[], int* MAXFRT, double RHS[],
          int IW1[], int* NSTEPS, int ICNTL[], int INFO[]);
 }
 
@@ -112,7 +111,7 @@ namespace uno {
 
    MA27Solver::MA27Solver(): DirectSymmetricIndefiniteLinearSolver() {
       // initialization: set the default values of the controlling parameters
-      MA27ID(icntl.data(), cntl.data());
+      MA27_set_default_parameters(icntl.data(), cntl.data());
       // a suitable pivot order is to be chosen automatically
       this->iflag = 0;
       // suppress warning messages
@@ -121,7 +120,8 @@ namespace uno {
       this->icntl[eICNTL::LDIAG] = 0;
    }
 
-   void MA27Solver::initialize_memory(size_t dimension, size_t number_nonzeros) {
+   void MA27Solver::initialize_memory(size_t dimension, size_t number_hessian_nonzeros, size_t regularization_size) {
+      const size_t number_nonzeros = number_hessian_nonzeros + regularization_size;
       this->n = static_cast<int>(dimension);
       this->nnz = static_cast<int>(number_nonzeros);
       this->irn.resize(number_nonzeros);
@@ -144,7 +144,7 @@ namespace uno {
 
       // symbolic analysis
       int liw = static_cast<int>(iw.size());
-      MA27AD(&n, &nnz,                                   /* size info */
+      MA27_symbolic_analysis(&n, &nnz,                                   /* size info */
             irn.data(), icn.data(),                     /* matrix indices */
             iw.data(), &liw, ikeep.data(), iw1.data(),  /* solver workspace */
             &nsteps, &iflag, icntl.data(), cntl.data(), info.data(), &ops);
@@ -177,8 +177,8 @@ namespace uno {
 
          int la = static_cast<int>(factor.size());
          int liw = static_cast<int>(iw.size());
-         MA27BD(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw, ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(),
-               cntl.data(), info.data());
+         MA27_numerical_factorization(&n, &nnz, irn.data(), icn.data(), factor.data(), &la, iw.data(), &liw, ikeep.data(), &nsteps, &maxfrt, iw1.data(), icntl.data(),
+            cntl.data(), info.data());
          factorization_done = true;
 
          if (info[eINFO::IFLAG] == eIFLAG::INSUFFICIENTINTEGER) {
@@ -204,7 +204,7 @@ namespace uno {
 
       result = rhs;
 
-      MA27CD(&n, factor.data(), &la, iw.data(), &liw, w.data(), &maxfrt, result.data(), iw1.data(), &nsteps, icntl.data(), info.data());
+      MA27_linear_solve(&n, factor.data(), &la, iw.data(), &liw, w.data(), &maxfrt, result.data(), iw1.data(), &nsteps, icntl.data(), info.data());
 
       assert(info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the linear solve failed");
       if (info[eINFO::IFLAG] != eIFLAG::SUCCESS) {

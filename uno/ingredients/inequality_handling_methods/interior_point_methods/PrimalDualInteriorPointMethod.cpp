@@ -5,7 +5,6 @@
 #include "PrimalDualInteriorPointMethod.hpp"
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
-#include "ingredients/regularization_strategies/Inertia.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
@@ -66,9 +65,8 @@ namespace uno {
          barrier_problem.number_jacobian_nonzeros();
       this->augmented_matrix = SymmetricMatrix<size_t, double>("COO", barrier_problem.number_variables + barrier_problem.number_constraints,
          number_augmented_system_nonzeros, regularization_size);
-      const size_t number_regularized_augmented_system_nonzeros = number_augmented_system_nonzeros + regularization_size;
       this->linear_solver->initialize_memory(barrier_problem.number_variables + barrier_problem.number_constraints,
-         number_regularized_augmented_system_nonzeros);
+         number_augmented_system_nonzeros, regularization_size);
    }
 
    void PrimalDualInteriorPointMethod::initialize_statistics(Statistics& statistics, const Options& options) {
@@ -320,7 +318,7 @@ namespace uno {
    void PrimalDualInteriorPointMethod::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate,
          const Multipliers& current_multipliers, const DualResiduals& residuals) {
       const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(problem, current_iterate,
-            current_multipliers, residuals);
+         current_multipliers, residuals);
       // the barrier parameter may have been changed earlier when entering restoration
       this->subproblem_definition_changed = this->subproblem_definition_changed || barrier_parameter_updated;
    }

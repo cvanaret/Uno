@@ -7,8 +7,6 @@
 #include <cassert>
 #include <vector>
 #include <initializer_list>
-#include <iostream>
-
 #include "symbolic/Range.hpp"
 
 namespace uno {

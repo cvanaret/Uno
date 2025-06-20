@@ -10,8 +10,7 @@
 
 namespace uno {
    // forward declaration
-   template <typename ElementType>
-   class Vector;
+   class Statistics;
 
    struct MA57Factorization {
       int n{};
@@ -33,7 +32,7 @@ namespace uno {
       MA57Solver();
       ~MA57Solver() override = default;
 
-      void initialize_memory(size_t dimension, size_t number_nonzeros) override;
+      void initialize_memory(size_t dimension, size_t number_hessian_nonzeros, size_t regularization_size) override;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
@@ -50,7 +49,6 @@ namespace uno {
       // internal matrix representation
       std::vector<int> row_indices;
       std::vector<int> column_indices;
-
       // factorization
       MA57Factorization factorization{};
       std::vector<double> fact{0}; // do not initialize, resize at every iteration
