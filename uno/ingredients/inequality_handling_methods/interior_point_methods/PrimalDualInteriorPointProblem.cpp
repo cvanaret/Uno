@@ -143,6 +143,12 @@ namespace uno {
    }
 
    const Collection<size_t>& PrimalDualInteriorPointProblem::get_dual_regularization_constraints() const {
+      if (this->first_reformulation.get_dual_regularization_constraints().empty()) {
+         // this is an indication that the constraints (if there is any) were already regularized in a previous
+         // reformulation (e.g. l1 relaxation). In that case, we stick to an empty set
+         return this->first_reformulation.get_dual_regularization_constraints();
+      }
+      // otherwise, we pick the set of equality constraints, since the inequality constraints have slacks
       return this->first_reformulation.get_equality_constraints();
    }
 
