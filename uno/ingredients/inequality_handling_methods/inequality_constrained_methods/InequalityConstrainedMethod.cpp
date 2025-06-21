@@ -55,10 +55,8 @@ namespace uno {
          const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy, double trust_region_radius, WarmstartInformation& warmstart_information) {
       // create the subproblem and solve it
-      const ForwardRange primal_regularization_variables(problem.get_number_original_variables());
-      const ForwardRange dual_regularization_variables(0);
       Subproblem subproblem{problem, current_iterate, current_multipliers, hessian_model, regularization_strategy,
-         trust_region_radius, primal_regularization_variables, dual_regularization_variables};
+         trust_region_radius};
       this->solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
       this->number_subproblems_solved++;
