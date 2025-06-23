@@ -14,6 +14,7 @@ namespace uno {
    // forward declarations
    template <typename ElementType>
    class Collection;
+   class Iterate;
    template <typename ElementType>
    class RectangularMatrix;
    template <typename ElementType>
@@ -26,14 +27,6 @@ namespace uno {
    enum FunctionType {LINEAR, NONLINEAR};
    enum BoundType {EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED};
 
-   // forward declaration
-   class Iterate;
-
-   /*! \class Problem
-    * \brief Optimization problem
-    *
-    *  Description of an optimization problem
-    */
    class Model {
    public:
       Model(std::string name, size_t number_variables, size_t number_constraints, double objective_sign);
@@ -50,9 +43,9 @@ namespace uno {
       virtual void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const = 0;
       virtual void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const = 0;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-            SymmetricMatrix<size_t, double>& hessian) const = 0;
-      virtual void compute_hessian_vector_product(const Vector<double>& vector, double objective_multiplier, const Vector<double>& multipliers,
-            Vector<double>& result) const = 0;
+         SymmetricMatrix<size_t, double>& hessian) const = 0;
+      virtual void compute_hessian_vector_product(const Vector<double>& vector, double objective_multiplier,
+         const Vector<double>& multipliers, Vector<double>& result) const = 0;
 
       // purely virtual functions
       [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;
@@ -94,7 +87,7 @@ namespace uno {
    // compute ||c||
    template <typename Array>
    double Model::constraint_violation(const Array& constraints, Norm residual_norm) const {
-      const Range constraints_range = Range(constraints.size());
+      const Range constraints_range = Range(this->number_constraints);
       const VectorExpression constraint_violation{constraints_range, [&](size_t constraint_index) {
          return this->constraint_violation(constraints[constraint_index], constraint_index);
       }};
