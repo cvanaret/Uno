@@ -83,7 +83,7 @@ namespace uno {
       if (this->current_phase == Phase::OPTIMALITY) {
          statistics.set("phase", "OPT");
          try {
-            DEBUG << "Solving the optimality subproblem\n";
+            DEBUG << "Solving the optimality problem\n";
             const OptimizationProblem optimality_problem{model};
             this->solve_subproblem(statistics, *this->optimality_inequality_handling_method, optimality_problem, current_iterate,
                current_iterate.multipliers, direction, *this->optimality_hessian_model, *this->optimality_regularization_strategy,
@@ -106,7 +106,7 @@ namespace uno {
       }
 
       // solve the feasibility problem (minimize the constraint violation)
-      DEBUG << "Solving the feasibility subproblem\n";
+      DEBUG << "Solving the feasibility problem\n";
       statistics.set("phase", "FEAS");
       // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
       l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
