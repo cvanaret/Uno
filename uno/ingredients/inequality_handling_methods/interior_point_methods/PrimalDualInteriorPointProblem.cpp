@@ -178,6 +178,27 @@ namespace uno {
       return number_nonzeros;
    }
 
+   void PrimalDualInteriorPointProblem::set_auxiliary_measure(Iterate& iterate) const {
+      // auxiliary measure: barrier terms
+      double barrier_terms = 0.;
+      for (const size_t variable_index: this->first_reformulation.get_lower_bounded_variables()) {
+         barrier_terms -= std::log(iterate.primals[variable_index] - this->first_reformulation.variable_lower_bound(variable_index));
+      }
+      for (const size_t variable_index: this->first_reformulation.get_upper_bounded_variables()) {
+         barrier_terms -= std::log(this->first_reformulation.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
+      }
+      // damping
+      for (const size_t variable_index: this->first_reformulation.get_single_lower_bounded_variables()) {
+         barrier_terms += this->damping_factor*(iterate.primals[variable_index] - this->first_reformulation.variable_lower_bound(variable_index));
+      }
+      for (const size_t variable_index: this->first_reformulation.get_single_upper_bounded_variables()) {
+         barrier_terms += this->damping_factor*(this->first_reformulation.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
+      }
+      barrier_terms *= this->barrier_parameter;
+      assert(!std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
+      iterate.progress.auxiliary = barrier_terms;
+   }
+
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
          const Multipliers& multipliers) const {
       this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, iterate, multipliers);

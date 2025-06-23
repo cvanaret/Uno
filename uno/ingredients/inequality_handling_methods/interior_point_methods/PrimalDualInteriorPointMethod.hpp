@@ -45,7 +45,7 @@ namespace uno {
          double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
 
-      void set_auxiliary_measure(const Model& model, Iterate& iterate) override;
+      void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const override;
 

@@ -238,25 +238,10 @@ namespace uno {
       return std::sqrt(this->barrier_parameter());
    }
 
-   void PrimalDualInteriorPointMethod::set_auxiliary_measure(const Model& model, Iterate& iterate) {
+   void PrimalDualInteriorPointMethod::set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) {
       // auxiliary measure: barrier terms
-      double barrier_terms = 0.;
-      for (const size_t variable_index: model.get_lower_bounded_variables()) {
-         barrier_terms -= std::log(iterate.primals[variable_index] - model.variable_lower_bound(variable_index));
-      }
-      for (const size_t variable_index: model.get_upper_bounded_variables()) {
-         barrier_terms -= std::log(model.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
-      }
-      // damping
-      for (const size_t variable_index: model.get_single_lower_bounded_variables()) {
-         barrier_terms += this->damping_factor*(iterate.primals[variable_index] - model.variable_lower_bound(variable_index));
-      }
-      for (const size_t variable_index: model.get_single_upper_bounded_variables()) {
-         barrier_terms += this->damping_factor*(model.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
-      }
-      barrier_terms *= this->barrier_parameter();
-      assert(!std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
-      iterate.progress.auxiliary = barrier_terms;
+      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters.regularization_exponent);
+      barrier_problem.set_auxiliary_measure(iterate);
    }
 
    double PrimalDualInteriorPointMethod::compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
