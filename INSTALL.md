@@ -37,9 +37,9 @@ mkdir build
 ```console
 cd build/
 ```
-3. Execute cmake (you may provide the paths to the libraries ASL, BQPD and MA57):  
+3. Execute cmake (you may provide the paths to the library files):  
 ```console
-cmake -DBQPD=path -DMA57=path -DAMPLSOLVER=path -DCMAKE_BUILD_TYPE=[Release|Debug] ..
+cmake -DBQPD=path/libbqpd.a -DMA57=path/libma57.so -DAMPLSOLVER=path/amplsolver.a -DCMAKE_BUILD_TYPE=[Release|Debug] ..
 ```
 4. **(or)** Use ccmake to provide the paths to the required and optional libraries:
 ```console
@@ -66,14 +66,6 @@ sudo apt-get install googletest
 ```console
 ./run_unotest
 ```
-
-### Autocompletion
-
-To benefit from autocompletion, install the file `uno_ampl-completion.bash`:
-```console
-sudo cp uno_ampl-completion.bash /etc/bash_completion.d/
-```
-and open a new terminal.
 
 ### Precompiled libraries and executables
 
