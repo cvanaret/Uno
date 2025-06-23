@@ -11,6 +11,8 @@ namespace uno {
    public:
       ZeroHessian() = default;
 
+      [[nodiscard]] bool implicit_representation() const override;
+
       void initialize(const Model& model) override;
       [[nodiscard]] size_t number_nonzeros(const Model& model) const override;
       [[nodiscard]] bool is_positive_definite() const override;

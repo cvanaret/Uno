@@ -7,6 +7,10 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
+   bool IdentityHessian::implicit_representation() const {
+      return true;
+   }
+
    void IdentityHessian::initialize(const Model& /*model*/) {
       // do nothing
    }

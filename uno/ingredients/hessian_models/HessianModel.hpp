@@ -23,6 +23,8 @@ namespace uno {
 
       size_t evaluation_count{0};
 
+      [[nodiscard]] virtual bool implicit_representation() const = 0;
+
       virtual void initialize(const Model& model) = 0;
       [[nodiscard]] virtual size_t number_nonzeros(const Model& model) const = 0;
       [[nodiscard]] virtual bool is_positive_definite() const = 0;

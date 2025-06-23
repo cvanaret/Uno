@@ -6,6 +6,10 @@
 #include "model/Model.hpp"
 
 namespace uno {
+   bool ExactHessian::implicit_representation() const {
+      return false; // with the current ASL version, we want to form the explicit Hessian
+   }
+
    void ExactHessian::initialize(const Model& /*model*/) {
    }
 

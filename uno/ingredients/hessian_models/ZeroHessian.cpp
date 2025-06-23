@@ -6,6 +6,10 @@
 #include "model/Model.hpp"
 
 namespace uno {
+   bool ZeroHessian::implicit_representation() const {
+      return true;
+   }
+
    void ZeroHessian::initialize(const Model& /*model*/) {
    }
 
