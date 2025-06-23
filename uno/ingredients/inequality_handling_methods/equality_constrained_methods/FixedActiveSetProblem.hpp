@@ -8,11 +8,12 @@
 
 namespace uno {
    // forward declaration
-   class ActiveSet;
+   struct ActiveSet;
 
    class FixedActiveSetProblem: public OptimizationProblem {
    public:
-      FixedActiveSetProblem(const OptimizationProblem& problem, const ActiveSet& active_set, double trust_region_radius);
+      FixedActiveSetProblem(const OptimizationProblem& problem, const Vector<double>& current_primals, const ActiveSet& active_set,
+         double trust_region_radius);
 
       [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const;
       [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const;
@@ -20,7 +21,8 @@ namespace uno {
       [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const;
 
    protected:
-      const OptimizationProblem& first_reformulation;
+      const OptimizationProblem& problem;
+      const Vector<double>& direction_primals;
       const ActiveSet& active_set;
       double trust_region_radius;
 

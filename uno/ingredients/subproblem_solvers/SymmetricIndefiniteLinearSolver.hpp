@@ -14,7 +14,7 @@ namespace uno {
    class Subproblem;
    template <typename ElementType>
    class Vector;
-   class WarmstartInformation;
+   struct WarmstartInformation;
 
    template <typename ElementType>
    class SymmetricIndefiniteLinearSolver {
