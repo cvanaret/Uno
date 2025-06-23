@@ -14,7 +14,7 @@ namespace uno {
    class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
-   class WarmstartInformation;
+   struct WarmstartInformation;
 
    template <typename IndexType, typename ElementType>
    class SymmetricIndefiniteLinearSolver {

@@ -13,6 +13,7 @@
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
 
@@ -60,7 +61,8 @@ namespace uno {
       const ForwardRange empty_dual_regularization{0};
       Subproblem LP_subproblem{problem, current_iterate, current_multipliers, this->LP_hessian_model,
          this->LP_regularization_strategy, trust_region_radius, empty_primal_regularization, empty_dual_regularization};
-      this->solve_LP(statistics, LP_subproblem, current_multipliers, warmstart_information);
+      constexpr WarmstartInformation LP_warmstart_information{};
+      this->solve_LP(statistics, LP_subproblem, current_multipliers, LP_warmstart_information);
       DEBUG << "d^*(LP) = " << this->LP_direction << '\n';
 
       if (this->LP_direction.status == SubproblemStatus::INFEASIBLE) {
@@ -77,19 +79,20 @@ namespace uno {
       // TODO compute Cauchy point
 
       // reformulate the problem by setting active constraints as equations and inactive bounds as +/-INF
-      const FixedActiveSetProblem fixed_active_set_problem(problem, this->LP_direction.active_set, trust_region_radius);
+      const FixedActiveSetProblem fixed_active_set_problem(problem, this->LP_direction.primals, this->LP_direction.active_set,
+         trust_region_radius);
 
       // compute EQP direction
       const ForwardRange primal_regularization_indices{problem.get_number_original_variables()};
       Subproblem EQP_subproblem{fixed_active_set_problem, current_iterate, current_multipliers, hessian_model,
-         regularization_strategy, trust_region_radius, primal_regularization_indices, empty_dual_regularization};
-      this->solve_EQP(statistics, EQP_subproblem, current_multipliers, direction, warmstart_information);
+         regularization_strategy, INF<double>, primal_regularization_indices, empty_dual_regularization};
+      constexpr WarmstartInformation EQP_warmstart_information{};
+      this->solve_EQP(statistics, EQP_subproblem, current_multipliers, direction, EQP_warmstart_information);
       DEBUG << "d^*(EQP) = " << direction << '\n';
       // reset the initial point
       this->initial_point.fill(0.);
 
       // TODO compute convex combination of the Cauchy and EQP directions
-
    }
 
    void LPEQPMethod::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
