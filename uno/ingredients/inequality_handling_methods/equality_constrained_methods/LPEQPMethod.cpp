@@ -139,6 +139,7 @@ namespace uno {
    // protected member functions
    void LPEQPMethod::solve_LP(Statistics& statistics, Subproblem& subproblem, const Multipliers& current_multipliers,
          const WarmstartInformation& warmstart_information) {
+      DEBUG << "LP-EQP: solving the LP subproblem\n";
       this->LP_solver->solve(statistics, subproblem, this->initial_point, this->LP_direction, warmstart_information);
       InequalityHandlingMethod::compute_dual_displacements(current_multipliers, this->LP_direction.multipliers);
       this->number_subproblems_solved++;
@@ -157,6 +158,7 @@ namespace uno {
    
    void LPEQPMethod::solve_EQP(Statistics& statistics, Subproblem& subproblem, const Multipliers& current_multipliers,
          Direction& direction, const WarmstartInformation& warmstart_information) {
+      DEBUG << "LP-EQP: solving the EQP subproblem\n";
       this->QP_solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
       
       // correct EQP multipliers (the QP solver has no knowledge of the original bounds of fixed variables)
