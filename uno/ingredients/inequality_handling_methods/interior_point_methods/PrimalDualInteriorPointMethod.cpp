@@ -117,11 +117,12 @@ namespace uno {
       if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet");
       }
+      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
 
       // possibly update the barrier parameter
       const auto& residuals = this->solving_feasibility_problem ? current_iterate.feasibility_residuals : current_iterate.residuals;
       if (!this->first_feasibility_iteration) {
-         this->update_barrier_parameter(problem, current_iterate, current_multipliers, residuals);
+         this->update_barrier_parameter(barrier_problem, current_iterate, current_multipliers, residuals);
       }
       else {
          this->first_feasibility_iteration = false;
@@ -129,7 +130,6 @@ namespace uno {
       statistics.set("barrier", this->barrier_parameter());
 
       // crate the subproblem
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
       const Subproblem subproblem{barrier_problem, current_iterate, current_multipliers, hessian_model, regularization_strategy,
          trust_region_radius};
 
@@ -240,9 +240,8 @@ namespace uno {
       // }, "α*(μ*X^{-1} e^T d)"};
    }
 
-   void PrimalDualInteriorPointMethod::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate,
-         const Multipliers& current_multipliers, const DualResiduals& residuals) {
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
+   void PrimalDualInteriorPointMethod::update_barrier_parameter(const PrimalDualInteriorPointProblem& barrier_problem,
+         const Iterate& current_iterate, const Multipliers& current_multipliers, const DualResiduals& residuals) {
       const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(barrier_problem,
          current_iterate, current_multipliers, residuals);
       // the barrier parameter may have been changed earlier when entering restoration
