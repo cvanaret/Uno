@@ -6,6 +6,7 @@
 
 #include <memory>
 #include "../InequalityHandlingMethod.hpp"
+#include "InteriorPointParameters.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
@@ -15,15 +16,6 @@ namespace uno {
    // forward references
    class DualResiduals;
    class Subproblem;
-
-   struct InteriorPointParameters {
-      double tau_min;
-      double k_sigma;
-      double regularization_exponent;
-      double small_direction_factor;
-      double push_variable_to_interior_k1;
-      double push_variable_to_interior_k2;
-   };
 
    class PrimalDualInteriorPointMethod : public InequalityHandlingMethod {
    public:
@@ -46,7 +38,7 @@ namespace uno {
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
 
       void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) override;
-      [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& current_iterate,
+      [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem, const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const override;
 
       void postprocess_iterate(const OptimizationProblem& problem, Vector<double>& primals, Multipliers& multipliers) override;
@@ -64,7 +56,6 @@ namespace uno {
       const double default_multiplier;
       const InteriorPointParameters parameters;
       const double least_square_multiplier_max_norm;
-      const double damping_factor; // (Section 3.7 in IPOPT paper)
       const double l1_constraint_violation_coefficient; // (rho in Section 3.3.1 in IPOPT paper)
 
       bool solving_feasibility_problem{false};
@@ -76,16 +67,6 @@ namespace uno {
          const DualResiduals& residuals);
       [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
       [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
-      [[nodiscard]] double compute_barrier_term_directional_derivative(const Model& model, const Iterate& current_iterate,
-         const Vector<double>& primal_direction) const;
-      [[nodiscard]] static double primal_fraction_to_boundary(const OptimizationProblem& problem, const Vector<double>& current_primals,
-         const Vector<double>& primal_direction, double tau);
-      [[nodiscard]] static double dual_fraction_to_boundary(const OptimizationProblem& problem, const Multipliers& current_multipliers,
-         Multipliers& direction_multipliers, double tau);
-      void assemble_primal_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
-         Vector<double>& direction_primals, Multipliers& direction_multipliers);
-      void compute_bound_dual_direction(const OptimizationProblem& problem, const Vector<double>& current_primals, const Multipliers& current_multipliers,
-         const Vector<double>& primal_direction, Multipliers& direction_multipliers);
    };
 } // namespace
 

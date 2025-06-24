@@ -102,8 +102,8 @@ namespace uno {
       iterate.progress.auxiliary = 0.;
    }
 
-   double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const Model& /*model*/, const Iterate& /*current_iterate*/,
-         const Vector<double>& /*primal_direction*/, double /*step_length*/) const {
+   double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const OptimizationProblem& /*problem*/,
+         const Iterate& /*current_iterate*/, const Vector<double>& /*primal_direction*/, double /*step_length*/) const {
       return 0.;
    }
 

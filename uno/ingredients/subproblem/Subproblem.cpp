@@ -3,6 +3,7 @@
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
 
@@ -84,6 +85,10 @@ namespace uno {
          rhs[this->number_variables + constraint_index] = -constraints[constraint_index];
       }
       DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints)); DEBUG << '\n';
+   }
+
+   void Subproblem::assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const {
+      this->problem.assemble_primal_dual_direction(this->current_iterate, this->current_multipliers, solution, direction);
    }
 
    void Subproblem::set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds) const {

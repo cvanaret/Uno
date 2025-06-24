@@ -82,7 +82,7 @@ namespace uno {
       void compute_progress_measures(InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Iterate& trial_iterate) const;
       [[nodiscard]] ProgressMeasures compute_predicted_reductions(InequalityHandlingMethod& inequality_handling_method,
-         const Model& model, const Iterate& current_iterate, const Direction& direction, double step_length) const;
+         const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction, double step_length) const;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method, Iterate& current_iterate,
          Iterate& trial_iterate, Multipliers& trial_multipliers, const Direction& direction, double step_length,

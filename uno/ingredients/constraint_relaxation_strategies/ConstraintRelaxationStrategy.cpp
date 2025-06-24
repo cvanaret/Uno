@@ -90,11 +90,11 @@ namespace uno {
    }
 
    ProgressMeasures ConstraintRelaxationStrategy::compute_predicted_reductions(InequalityHandlingMethod& inequality_handling_method,
-         const Model& model, const Iterate& current_iterate, const Direction& direction, double step_length) const {
+         const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction, double step_length) const {
       return {
-         this->compute_predicted_infeasibility_reduction(model, current_iterate, direction.primals, step_length),
+         this->compute_predicted_infeasibility_reduction(problem.model, current_iterate, direction.primals, step_length),
          this->compute_predicted_objective_reduction(inequality_handling_method, current_iterate, direction.primals, step_length),
-         inequality_handling_method.compute_predicted_auxiliary_reduction_model(model, current_iterate, direction.primals, step_length)
+         inequality_handling_method.compute_predicted_auxiliary_reduction_model(problem, current_iterate, direction.primals, step_length)
       };
    }
 
@@ -116,7 +116,7 @@ namespace uno {
       }
       else {
          const ProgressMeasures predicted_reduction = ConstraintRelaxationStrategy::compute_predicted_reductions(inequality_handling_method,
-            problem.model, current_iterate, direction, step_length);
+            problem, current_iterate, direction, step_length);
          accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
             predicted_reduction, objective_multiplier);
       }

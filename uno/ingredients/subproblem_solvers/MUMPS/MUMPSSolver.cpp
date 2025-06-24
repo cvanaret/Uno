@@ -62,8 +62,11 @@ namespace uno {
       this->objective_gradient.reserve(number_variables);
       this->constraints.resize(number_constraints);
       this->constraint_jacobian.resize(number_constraints, number_variables);
+
+      // augmented system
       this->augmented_matrix = SymmetricMatrix<size_t, double>("COO", dimension, number_hessian_nonzeros, regularization_size);
       this->rhs.resize(dimension);
+      this->solution.resize(dimension);
    }
 
    void MUMPSSolver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
@@ -92,7 +95,7 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
    }
 
-   void MUMPSSolver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Vector<double>& solution,
+   void MUMPSSolver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       if (warmstart_information.objective_changed) {
@@ -113,7 +116,9 @@ namespace uno {
          // assemble the RHS
          subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);
       }
-      this->solve_indefinite_system(this->augmented_matrix, this->rhs, solution);
+      this->solve_indefinite_system(this->augmented_matrix, this->rhs, this->solution);
+      // assemble the full primal-dual direction
+      subproblem.assemble_primal_dual_direction(this->solution, direction);
    }
 
    Inertia MUMPSSolver::get_inertia() const {

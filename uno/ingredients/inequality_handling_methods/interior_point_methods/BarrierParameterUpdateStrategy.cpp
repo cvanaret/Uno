@@ -52,7 +52,7 @@ namespace uno {
          DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
          // update complementarity error
          double scaled_complementarity_error = BarrierParameterUpdateStrategy::compute_shifted_complementarity_error(problem, current_iterate.primals,
-               current_multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
+            current_multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
          primal_dual_error = std::max({
             scaled_stationarity,
             primal_feasibility,

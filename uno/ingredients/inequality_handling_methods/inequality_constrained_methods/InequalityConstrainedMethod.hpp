@@ -32,7 +32,7 @@ namespace uno {
       // progress measures
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
       void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) override;
-      [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate&,
+      [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem, const Iterate&,
          const Vector<double>&, double) const override;
 
       void postprocess_iterate(const OptimizationProblem& model, Vector<double>& primals, Multipliers& multipliers) override;
