@@ -12,10 +12,6 @@
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
 #include "preprocessing/Preprocessing.hpp"
-#include "symbolic/CollectionAdapter.hpp"
-#include "symbolic/Expression.hpp"
-#include "symbolic/VectorView.hpp"
-#include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
@@ -50,9 +46,6 @@ namespace uno {
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
       regularization_strategy.initialize_memory(barrier_problem, hessian_model);
 
-      this->objective_gradient.reserve(barrier_problem.number_objective_gradient_nonzeros());
-      this->constraints.resize(barrier_problem.number_constraints);
-      this->solution.resize(barrier_problem.number_variables + barrier_problem.number_constraints);
       const size_t primal_regularization_size = problem.get_number_original_variables();
       const size_t dual_regularization_size = problem.get_equality_constraints().size();
       const size_t regularization_size =
@@ -209,7 +202,6 @@ namespace uno {
    void PrimalDualInteriorPointMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
       DEBUG << "IPM: setting the elastic variables and their duals\n";
 
-      // TODO set the bound multipliers
       for (const size_t variable_index: problem.get_lower_bounded_variables()) {
          current_iterate.feasibility_multipliers.lower_bounds[variable_index] = this->default_multiplier;
       }
@@ -217,6 +209,7 @@ namespace uno {
          current_iterate.feasibility_multipliers.upper_bounds[variable_index] = -this->default_multiplier;
       }
 
+      /*
       // c(x) - p + n = 0
       // analytical expression for p and n:
       // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
@@ -238,6 +231,7 @@ namespace uno {
          assert(0. < iterate.feasibility_multipliers.lower_bounds[elastic_index] && "The elastic dual is not strictly positive.");
       };
       problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
+      */
    }
 
    double PrimalDualInteriorPointMethod::proximal_coefficient() const {
@@ -277,10 +271,8 @@ namespace uno {
       return (norm_inf(relative_direction_size) <= this->parameters.small_direction_factor * machine_epsilon);
    }
 
-   double PrimalDualInteriorPointMethod::evaluate_subproblem_objective(const Direction& direction) const {
-      const double linear_term = dot(direction.primals, this->objective_gradient);
-      const double quadratic_term = 0.; // TODO
-      return linear_term + quadratic_term;
+   double PrimalDualInteriorPointMethod::evaluate_subproblem_objective(const Direction& /*direction*/) const {
+      return 0.; // TODO (only used in l1Relaxation at the moment)
    }
 
    void PrimalDualInteriorPointMethod::postprocess_iterate(const OptimizationProblem& problem, Vector<double>& primals,

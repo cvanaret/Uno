@@ -8,8 +8,6 @@
 #include "../InequalityHandlingMethod.hpp"
 #include "InteriorPointParameters.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 
 namespace uno {
@@ -46,11 +44,7 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    protected:
-      SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
-      std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-      Vector<double> solution{};
       const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;
-
       BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
       double previous_barrier_parameter;
       const double default_multiplier;
