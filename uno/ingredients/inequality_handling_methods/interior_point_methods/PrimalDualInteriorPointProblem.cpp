@@ -264,6 +264,17 @@ namespace uno {
 
    // protected member functions
 
+   double PrimalDualInteriorPointProblem::push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const {
+      const double range = upper_bound - lower_bound;
+      const double perturbation_lb = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(lower_bound)),
+         this->parameters.push_variable_to_interior_k2 * range);
+      const double perturbation_ub = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(upper_bound)),
+         this->parameters.push_variable_to_interior_k2 * range);
+      variable_value = std::max(variable_value, lower_bound + perturbation_lb);
+      variable_value = std::min(variable_value, upper_bound - perturbation_ub);
+      return variable_value;
+   }
+
    void PrimalDualInteriorPointProblem::compute_bound_dual_direction(const Vector<double>& current_primals,
          const Multipliers& current_multipliers, const Vector<double>& primal_direction, Multipliers& direction_multipliers) const {
       direction_multipliers.lower_bounds.fill(0.);

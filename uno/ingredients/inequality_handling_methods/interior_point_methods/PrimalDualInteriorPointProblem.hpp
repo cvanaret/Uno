@@ -46,6 +46,7 @@ namespace uno {
       void assemble_primal_dual_direction(const Iterate& current_iterate, const Multipliers& current_multipliers,
          const Vector<double>& solution, Direction& direction) const override;
 
+      [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
       void set_auxiliary_measure(Iterate& iterate) const;
       void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
          const Multipliers& multipliers) const override;
