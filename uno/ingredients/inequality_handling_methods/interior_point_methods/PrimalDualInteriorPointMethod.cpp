@@ -209,7 +209,6 @@ namespace uno {
          current_iterate.feasibility_multipliers.upper_bounds[variable_index] = -this->default_multiplier;
       }
 
-      /*
       // c(x) - p + n = 0
       // analytical expression for p and n:
       // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
@@ -218,7 +217,7 @@ namespace uno {
       const double mu = this->barrier_parameter();
       const auto elastic_setting_function = [&](Iterate& iterate, size_t constraint_index, size_t elastic_index, double jacobian_coefficient) {
          // precomputations
-         const double constraint_j = this->constraints[constraint_index];
+         const double constraint_j = 0.; // TODO the constraints are not stored here any more... this->constraints[constraint_index];
          const double rho = this->l1_constraint_violation_coefficient;
          const double mu_over_rho = mu / rho;
          const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
@@ -231,7 +230,6 @@ namespace uno {
          assert(0. < iterate.feasibility_multipliers.lower_bounds[elastic_index] && "The elastic dual is not strictly positive.");
       };
       problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
-      */
    }
 
    double PrimalDualInteriorPointMethod::proximal_coefficient() const {
