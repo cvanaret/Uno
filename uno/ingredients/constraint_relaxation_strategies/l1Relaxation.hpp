@@ -82,7 +82,8 @@ namespace uno {
       [[nodiscard]] bool is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction,
          const Direction& feasibility_direction) const;
 
-      void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const override;
+      void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
+         Iterate& iterate) const override;
 
       void check_exact_relaxation(Iterate& iterate) const;
    };

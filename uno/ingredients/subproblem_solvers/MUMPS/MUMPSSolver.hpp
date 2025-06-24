@@ -23,7 +23,7 @@ namespace uno {
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
       void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
-      void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Vector<double>& solution,
+      void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
@@ -45,8 +45,11 @@ namespace uno {
       SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
+
+      // augmented system
       SymmetricMatrix<size_t, double> augmented_matrix{};
       Vector<double> rhs{};
+      Vector<double> solution{};
 
       static const int JOB_INIT = -1;
       static const int JOB_END = -2;

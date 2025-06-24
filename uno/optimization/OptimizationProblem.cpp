@@ -116,6 +116,11 @@ namespace uno {
       return hessian_model.number_nonzeros(this->model);
    }
 
+   void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Multipliers& /*current_multipliers*/,
+         const Vector<double>& /*solution*/, Direction& /*direction*/) const {
+      // do nothing
+   }
+
    double OptimizationProblem::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
          Norm residual_norm) {
       // norm of the scaled Lagrangian gradient

@@ -47,7 +47,8 @@ namespace uno {
          const Multipliers& current_multipliers, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information);
 
-      void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const override;
+      void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
+         Iterate& iterate) const override;
    };
 } // namespace
 

@@ -77,45 +77,46 @@ namespace uno {
       };
    }
 
-   void ConstraintRelaxationStrategy::compute_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model,
-         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Iterate& trial_iterate) const {
+   void ConstraintRelaxationStrategy::compute_progress_measures(InequalityHandlingMethod& inequality_handling_method,
+         const OptimizationProblem& problem, GlobalizationStrategy& globalization_strategy, Iterate& current_iterate,
+         Iterate& trial_iterate) const {
       if (inequality_handling_method.subproblem_definition_changed) {
          DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
          globalization_strategy.reset();
-         inequality_handling_method.set_auxiliary_measure(model, current_iterate);
+         inequality_handling_method.set_auxiliary_measure(problem, current_iterate);
          inequality_handling_method.subproblem_definition_changed = false;
       }
-      this->evaluate_progress_measures(inequality_handling_method, model, trial_iterate);
+      this->evaluate_progress_measures(inequality_handling_method, problem, trial_iterate);
    }
 
    ProgressMeasures ConstraintRelaxationStrategy::compute_predicted_reductions(InequalityHandlingMethod& inequality_handling_method,
-         const Model& model, const Iterate& current_iterate, const Direction& direction, double step_length) const {
+         const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction, double step_length) const {
       return {
-         this->compute_predicted_infeasibility_reduction(model, current_iterate, direction.primals, step_length),
+         this->compute_predicted_infeasibility_reduction(problem.model, current_iterate, direction.primals, step_length),
          this->compute_predicted_objective_reduction(inequality_handling_method, current_iterate, direction.primals, step_length),
-         inequality_handling_method.compute_predicted_auxiliary_reduction_model(model, current_iterate, direction.primals, step_length)
+         inequality_handling_method.compute_predicted_auxiliary_reduction_model(problem, current_iterate, direction.primals, step_length)
       };
    }
 
    bool ConstraintRelaxationStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method,
-         Iterate& current_iterate, Iterate& trial_iterate, Multipliers& trial_multipliers, const Direction& direction,
-         double step_length, UserCallbacks& user_callbacks) const {
+         const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method, Iterate& current_iterate,
+         Iterate& trial_iterate, Multipliers& trial_multipliers, const Direction& direction, double step_length,
+         UserCallbacks& user_callbacks) const {
       inequality_handling_method.postprocess_iterate(problem, trial_iterate.primals, trial_multipliers);
       const double objective_multiplier = problem.get_objective_multiplier();
       trial_iterate.objective_multiplier = objective_multiplier;
-      this->compute_progress_measures(inequality_handling_method, model, globalization_strategy, current_iterate, trial_iterate);
+      this->compute_progress_measures(inequality_handling_method, problem, globalization_strategy, current_iterate, trial_iterate);
       
       bool accept_iterate = false;
       if (direction.norm == 0.) {
          DEBUG << "Zero step acceptable\n";
-         trial_iterate.evaluate_objective(model);
+         trial_iterate.evaluate_objective(problem.model);
          accept_iterate = true;
          statistics.set("status", "0 primal step");
       }
       else {
          const ProgressMeasures predicted_reduction = ConstraintRelaxationStrategy::compute_predicted_reductions(inequality_handling_method,
-         model, current_iterate, direction, step_length);
+            problem, current_iterate, direction, step_length);
          accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
             predicted_reduction, objective_multiplier);
       }

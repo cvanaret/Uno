@@ -79,15 +79,16 @@ namespace uno {
          const Vector<double>& primal_direction, double step_length) const;
       [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(InequalityHandlingMethod& inequality_handling_method,
          const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const;
-      void compute_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model,
+      void compute_progress_measures(InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
          GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Iterate& trial_iterate) const;
       [[nodiscard]] ProgressMeasures compute_predicted_reductions(InequalityHandlingMethod& inequality_handling_method,
-         const Model& model, const Iterate& current_iterate, const Direction& direction, double step_length) const;
+         const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction, double step_length) const;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method,
-         Iterate& current_iterate, Iterate& trial_iterate, Multipliers& trial_multipliers, const Direction& direction,
-         double step_length, UserCallbacks& user_callbacks) const;
-      virtual void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const = 0;
+         const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method, Iterate& current_iterate,
+         Iterate& trial_iterate, Multipliers& trial_multipliers, const Direction& direction, double step_length,
+         UserCallbacks& user_callbacks) const;
+      virtual void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
+         const OptimizationProblem& problem, Iterate& iterate) const = 0;
 
       void compute_primal_dual_residuals(const Model& model, const OptimizationProblem& optimality_problem,
          const OptimizationProblem& feasibility_problem, Iterate& iterate) const;

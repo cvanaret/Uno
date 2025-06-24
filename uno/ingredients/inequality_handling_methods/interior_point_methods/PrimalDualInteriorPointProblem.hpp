@@ -4,6 +4,7 @@
 #ifndef UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 #define UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 
+#include "InteriorPointParameters.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 
@@ -11,7 +12,7 @@ namespace uno {
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter,
-         double dual_regularization_exponent);
+         const InteriorPointParameters &parameters);
 
       // function evaluations
       [[nodiscard]] double get_objective_multiplier() const override;
@@ -42,20 +43,36 @@ namespace uno {
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
 
+      void assemble_primal_dual_direction(const Iterate& current_iterate, const Multipliers& current_multipliers,
+         const Vector<double>& solution, Direction& direction) const override;
+
+      [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
+      void set_auxiliary_measure(Iterate& iterate) const;
       void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
          const Multipliers& multipliers) const override;
       [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
       [[nodiscard]] double dual_regularization_factor() const override;
+      [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
+         const Vector<double>& primal_direction) const;
+      void postprocess_iterate(Vector<double>& primals, Multipliers& multipliers) const;
+      [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
+         double barrier_parameter) const;
 
    protected:
       const OptimizationProblem& first_reformulation;
       const double barrier_parameter;
-      const double dual_regularization_exponent;
-      const double damping_factor{1e-5};
+      const InteriorPointParameters& parameters;
       const Vector<size_t> fixed_variables{};
       const ForwardRange equality_constraints;
       const ForwardRange inequality_constraints{0};
+
+      void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
+         const Vector<double>& primal_direction, Multipliers& direction_multipliers) const;
+      [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,
+         double tau) const;
+      [[nodiscard]] double dual_fraction_to_boundary(const Multipliers& current_multipliers, const Multipliers& direction_multipliers,
+         double tau) const;
    };
 } // namespace
 

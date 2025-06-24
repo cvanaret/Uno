@@ -37,7 +37,7 @@ namespace uno {
 
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(problem, initial_iterate);
-      this->evaluate_progress_measures(*this->inequality_handling_method, model, initial_iterate);
+      this->evaluate_progress_measures(*this->inequality_handling_method, problem, initial_iterate);
       this->compute_primal_dual_residuals(model, initial_iterate);
       this->set_statistics(statistics, model, initial_iterate);
    }
@@ -76,7 +76,7 @@ namespace uno {
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const OptimizationProblem problem{model};
       const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
-         model, problem, *this->inequality_handling_method, current_iterate, trial_iterate, trial_iterate.multipliers,
+         problem, *this->inequality_handling_method, current_iterate, trial_iterate, trial_iterate.multipliers,
          direction, step_length, user_callbacks);
       ConstraintRelaxationStrategy::set_primal_statistics(statistics, model, trial_iterate);
       warmstart_information.no_changes();
@@ -88,10 +88,11 @@ namespace uno {
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, problem, problem, iterate);
    }
 
-   void UnconstrainedStrategy::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model, Iterate& iterate) const {
-      this->set_infeasibility_measure(model, iterate);
-      this->set_objective_measure(model, iterate);
-      inequality_handling_method.set_auxiliary_measure(model, iterate);
+   void UnconstrainedStrategy::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
+         const OptimizationProblem& problem, Iterate& iterate) const {
+      this->set_infeasibility_measure(problem.model, iterate);
+      this->set_objective_measure(problem.model, iterate);
+      inequality_handling_method.set_auxiliary_measure(problem, iterate);
    }
 
    void UnconstrainedStrategy::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {

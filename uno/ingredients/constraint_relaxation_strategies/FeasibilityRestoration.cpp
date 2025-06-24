@@ -70,7 +70,7 @@ namespace uno {
       initial_iterate.feasibility_multipliers.lower_bounds.resize(feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(feasibility_problem.number_variables);
       this->optimality_inequality_handling_method->generate_initial_iterate(optimality_problem, initial_iterate);
-      this->evaluate_progress_measures(*this->optimality_inequality_handling_method, model, initial_iterate);
+      this->evaluate_progress_measures(*this->optimality_inequality_handling_method, optimality_problem, initial_iterate);
       this->compute_primal_dual_residuals(model, initial_iterate);
       this->set_statistics(statistics, model, initial_iterate);
    }
@@ -181,13 +181,13 @@ namespace uno {
       // determine acceptability, depending on the current phase
       if (this->current_phase == Phase::OPTIMALITY) {
          const OptimizationProblem optimality_problem{model};
-         accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy, model,
+         accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
             optimality_problem, *this->optimality_inequality_handling_method, current_iterate, trial_iterate,
             trial_iterate.multipliers, direction, step_length, user_callbacks);
       }
       else {
          const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
-         accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy, model,
+         accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
             feasibility_problem, *this->feasibility_inequality_handling_method, current_iterate, trial_iterate,
             trial_iterate.feasibility_multipliers, direction, step_length, user_callbacks);
       }
@@ -212,11 +212,11 @@ namespace uno {
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, optimality_problem, feasibility_problem, iterate);
    }
 
-   void FeasibilityRestoration::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const Model& model,
-         Iterate& iterate) const {
-      this->set_infeasibility_measure(model, iterate);
-      this->set_objective_measure(model, iterate);
-      inequality_handling_method.set_auxiliary_measure(model, iterate);
+   void FeasibilityRestoration::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
+         const OptimizationProblem& problem, Iterate& iterate) const {
+      this->set_infeasibility_measure(problem.model, iterate);
+      this->set_objective_measure(problem.model, iterate);
+      inequality_handling_method.set_auxiliary_measure(problem, iterate);
    }
 
    void FeasibilityRestoration::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {

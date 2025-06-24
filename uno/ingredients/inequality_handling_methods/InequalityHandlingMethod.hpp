@@ -45,9 +45,9 @@ namespace uno {
 
       // progress measures
       [[nodiscard]] virtual double hessian_quadratic_product(const Vector<double>& vector) const = 0;
-      virtual void set_auxiliary_measure(const Model& model, Iterate& iterate) = 0;
-      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Model& model, const Iterate& iterate,
-         const Vector<double>& primal_direction, double step_length) const = 0;
+      virtual void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) = 0;
+      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem,
+         const Iterate& iterate, const Vector<double>& primal_direction, double step_length) const = 0;
 
       virtual void postprocess_iterate(const OptimizationProblem& problem, Vector<double>& primals, Multipliers& multipliers) = 0;
 

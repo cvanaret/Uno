@@ -6,11 +6,12 @@
 
 namespace uno {
    // forward declarations
+   class DualResiduals;
    class Iterate;
    class Multipliers;
    class OptimizationProblem;
    class Options;
-   class DualResiduals;
+   class PrimalDualInteriorPointProblem;
    template <typename ElementType>
    class Vector;
 
@@ -26,16 +27,13 @@ namespace uno {
       explicit BarrierParameterUpdateStrategy(const Options& options);
       [[nodiscard]] double get_barrier_parameter() const;
       void set_barrier_parameter(double new_barrier_parameter);
-      [[nodiscard]] bool update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate,
-         const Multipliers& current_multipliers, const DualResiduals& residuals);
+      [[nodiscard]] bool update_barrier_parameter(const PrimalDualInteriorPointProblem& barrier_problem,
+         const Iterate& current_iterate, const Multipliers& current_multipliers, const DualResiduals& residuals);
 
    protected:
       double barrier_parameter;
       const double tolerance;
       const UpdateParameters parameters;
-
-      [[nodiscard]] static double compute_shifted_complementarity_error(const OptimizationProblem& problem,
-         const Vector<double>& primals, const Multipliers& multipliers, double shift_value);
    };
 } // namespace
 

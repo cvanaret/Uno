@@ -8,6 +8,7 @@
 
 namespace uno {
    // forward declarations
+   class Direction;
    class Statistics;
    class Subproblem;
    template <typename IndexType, typename ElementType>
@@ -27,7 +28,7 @@ namespace uno {
 
       virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
          Vector<ElementType>& result) = 0;
-      virtual void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Vector<ElementType>& solution,
+      virtual void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) = 0;
    };
 } // namespace
