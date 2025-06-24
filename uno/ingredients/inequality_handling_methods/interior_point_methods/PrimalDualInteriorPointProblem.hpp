@@ -56,6 +56,8 @@ namespace uno {
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
       void postprocess_iterate(Vector<double>& primals, Multipliers& multipliers) const;
+      [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
+         double barrier_parameter) const;
 
    protected:
       const OptimizationProblem& first_reformulation;

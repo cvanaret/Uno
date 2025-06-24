@@ -401,4 +401,22 @@ namespace uno {
          }
       }
    }
+
+   double PrimalDualInteriorPointProblem::compute_centrality_error(const Vector<double>& primals,
+         const Multipliers& multipliers, double barrier_parameter) const {
+      const Range variables_range = Range(this->first_reformulation.number_variables);
+      const VectorExpression shifted_bound_complementarity{variables_range, [&](size_t variable_index) {
+         double result = 0.;
+         if (0. < multipliers.lower_bounds[variable_index]) { // lower bound
+            result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
+               (primals[variable_index] - this->first_reformulation.variable_lower_bound(variable_index)) - barrier_parameter));
+         }
+         if (multipliers.upper_bounds[variable_index] < 0.) { // upper bound
+            result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
+               (primals[variable_index] - this->first_reformulation.variable_upper_bound(variable_index)) - barrier_parameter));
+         }
+         return result;
+      }};
+      return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
+   }
 } // namespace

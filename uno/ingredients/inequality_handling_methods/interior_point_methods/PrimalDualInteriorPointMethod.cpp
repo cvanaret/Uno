@@ -242,8 +242,9 @@ namespace uno {
 
    void PrimalDualInteriorPointMethod::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate,
          const Multipliers& current_multipliers, const DualResiduals& residuals) {
-      const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(problem, current_iterate,
-         current_multipliers, residuals);
+      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
+      const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(barrier_problem,
+         current_iterate, current_multipliers, residuals);
       // the barrier parameter may have been changed earlier when entering restoration
       this->subproblem_definition_changed = this->subproblem_definition_changed || barrier_parameter_updated;
    }
