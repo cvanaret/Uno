@@ -22,10 +22,10 @@ namespace uno {
          return std::make_unique<InequalityConstrainedMethod>(options);
       }
       // interior-point methods
-      else if (inequality_handling_method == "primal_dual_interior_point" && options.get_string("barrier_function") == "log") {
+      else if (inequality_handling_method == "interior_point" && options.get_string("barrier_function") == "log") {
          return std::make_unique<InteriorPointMethod<PrimalDualInteriorPointProblem>>(options);
       }
-      else if (inequality_handling_method == "primal_dual_interior_point" && options.get_string("barrier_function") == "exp") {
+      else if (inequality_handling_method == "interior_point" && options.get_string("barrier_function") == "exp") {
          return std::make_unique<InteriorPointMethod<ExponentialBarrierProblem>>(options);
       }
       throw std::invalid_argument("Inequality handling method " + inequality_handling_method + " is not supported");
@@ -37,7 +37,7 @@ namespace uno {
          strategies.emplace_back("inequality_constrained");
       }
       if (!SymmetricIndefiniteLinearSolverFactory::available_solvers().empty()) {
-         strategies.emplace_back("primal_dual_interior_point");
+         strategies.emplace_back("interior_point");
       }
       return strategies;
    }
