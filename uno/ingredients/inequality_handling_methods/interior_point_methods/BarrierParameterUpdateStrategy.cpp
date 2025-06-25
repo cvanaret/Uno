@@ -6,8 +6,8 @@
 #include "BarrierParameterUpdateStrategy.hpp"
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "optimization/Iterate.hpp"
-#include "tools/Logger.hpp"
 #include "options/Options.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    BarrierParameterUpdateStrategy::BarrierParameterUpdateStrategy(const Options& options):
@@ -30,7 +30,7 @@ namespace uno {
       this->barrier_parameter = new_barrier_parameter;
    }
 
-   bool BarrierParameterUpdateStrategy::update_barrier_parameter(const PrimalDualInteriorPointProblem& barrier_problem,
+   bool BarrierParameterUpdateStrategy::update_barrier_parameter(const BarrierProblem& barrier_problem,
          const Iterate& current_iterate, const DualResiduals& residuals) {
       // primal-dual errors
       const double scaled_stationarity = residuals.stationarity / residuals.stationarity_scaling;
