@@ -1,7 +1,7 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "PrimalDualInteriorPointProblem.hpp"
+#include "ExponentialBarrierProblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
@@ -11,21 +11,17 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter,
+   ExponentialBarrierProblem::ExponentialBarrierProblem(const OptimizationProblem& problem, double barrier_parameter,
       const InteriorPointParameters &parameters):
          BarrierProblem(problem.model, problem.number_variables, problem.number_constraints),
          first_reformulation(problem), barrier_parameter(barrier_parameter),
-         parameters(parameters), equality_constraints(problem.number_constraints) {
-      if (!problem.get_inequality_constraints().empty()) {
-         throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
-      }
-   }
+         parameters(parameters), equality_constraints(problem.number_constraints) { }
 
-   double PrimalDualInteriorPointProblem::get_objective_multiplier() const {
+   double ExponentialBarrierProblem::get_objective_multiplier() const {
       return this->first_reformulation.get_objective_multiplier();
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
+   void ExponentialBarrierProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
       this->first_reformulation.evaluate_objective_gradient(iterate, objective_gradient);
 
       // barrier terms
@@ -49,15 +45,15 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+   void ExponentialBarrierProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
       this->first_reformulation.evaluate_constraints(iterate, constraints);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
+   void ExponentialBarrierProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
       this->first_reformulation.evaluate_constraint_jacobian(iterate, constraint_jacobian);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
+   void ExponentialBarrierProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
       // original Lagrangian Hessian
       this->first_reformulation.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian);
@@ -81,7 +77,7 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,
+   void ExponentialBarrierProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,
          const Multipliers& multipliers, double* result) const {
       // original Lagrangian Hessian
       this->first_reformulation.compute_hessian_vector_product(hessian_model, vector, multipliers, result);
@@ -105,65 +101,65 @@ namespace uno {
       }
    }
 
-   double PrimalDualInteriorPointProblem::variable_lower_bound(size_t /*variable_index*/) const {
+   double ExponentialBarrierProblem::variable_lower_bound(size_t /*variable_index*/) const {
       return -INF<double>;
    }
 
-   double PrimalDualInteriorPointProblem::variable_upper_bound(size_t /*variable_index*/) const {
+   double ExponentialBarrierProblem::variable_upper_bound(size_t /*variable_index*/) const {
       return INF<double>;
    }
 
-   const Collection<size_t>& PrimalDualInteriorPointProblem::get_lower_bounded_variables() const {
+   const Collection<size_t>& ExponentialBarrierProblem::get_lower_bounded_variables() const {
       return this->first_reformulation.get_lower_bounded_variables();
    }
 
-   const Collection<size_t>& PrimalDualInteriorPointProblem::get_upper_bounded_variables() const {
+   const Collection<size_t>& ExponentialBarrierProblem::get_upper_bounded_variables() const {
       return this->first_reformulation.get_upper_bounded_variables();
    }
 
-   const Collection<size_t>& PrimalDualInteriorPointProblem::get_single_lower_bounded_variables() const {
+   const Collection<size_t>& ExponentialBarrierProblem::get_single_lower_bounded_variables() const {
       return this->first_reformulation.get_single_lower_bounded_variables();
    }
 
-   const Collection<size_t>& PrimalDualInteriorPointProblem::get_single_upper_bounded_variables() const {
+   const Collection<size_t>& ExponentialBarrierProblem::get_single_upper_bounded_variables() const {
       return this->first_reformulation.get_single_upper_bounded_variables();
    }
 
-   const Vector<size_t>& PrimalDualInteriorPointProblem::get_fixed_variables() const {
+   const Vector<size_t>& ExponentialBarrierProblem::get_fixed_variables() const {
       return this->fixed_variables;
    }
 
-   double PrimalDualInteriorPointProblem::constraint_lower_bound(size_t /*constraint_index*/) const {
+   double ExponentialBarrierProblem::constraint_lower_bound(size_t /*constraint_index*/) const {
       return 0.;
    }
 
-   double PrimalDualInteriorPointProblem::constraint_upper_bound(size_t /*constraint_index*/) const {
+   double ExponentialBarrierProblem::constraint_upper_bound(size_t /*constraint_index*/) const {
       return 0.;
    }
 
-   const Collection<size_t>& PrimalDualInteriorPointProblem::get_equality_constraints() const {
+   const Collection<size_t>& ExponentialBarrierProblem::get_equality_constraints() const {
       return this->equality_constraints;
    }
 
-   const Collection<size_t>& PrimalDualInteriorPointProblem::get_inequality_constraints() const {
+   const Collection<size_t>& ExponentialBarrierProblem::get_inequality_constraints() const {
       return this->inequality_constraints;
    }
 
-   const Collection<size_t>& PrimalDualInteriorPointProblem::get_dual_regularization_constraints() const {
+   const Collection<size_t>& ExponentialBarrierProblem::get_dual_regularization_constraints() const {
       if (this->first_reformulation.get_dual_regularization_constraints().empty()) {
          // this is an indication that the constraints (if there is any) were already regularized in a previous
          // reformulation (e.g. l1 relaxation). In that case, we stick to an empty set
          return this->first_reformulation.get_dual_regularization_constraints();
       }
-      // otherwise, we pick the set of equality constraints, since the inequality constraints have slacks
+      // otherwise, we pick the set of equality constraints
       return this->first_reformulation.get_equality_constraints();
    }
 
-   size_t PrimalDualInteriorPointProblem::number_jacobian_nonzeros() const {
+   size_t ExponentialBarrierProblem::number_jacobian_nonzeros() const {
       return this->first_reformulation.number_jacobian_nonzeros();
    }
 
-   size_t PrimalDualInteriorPointProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
+   size_t ExponentialBarrierProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
       size_t number_nonzeros = this->first_reformulation.number_hessian_nonzeros(hessian_model);
       // barrier contribution: original variables
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
@@ -174,7 +170,7 @@ namespace uno {
       return number_nonzeros;
    }
 
-   void PrimalDualInteriorPointProblem::assemble_primal_dual_direction(const Iterate& current_iterate, const Multipliers& current_multipliers,
+   void ExponentialBarrierProblem::assemble_primal_dual_direction(const Iterate& current_iterate, const Multipliers& current_multipliers,
          const Vector<double>& solution, Direction& direction) const {
       // form the primal-dual direction
       direction.primals = view(solution, 0, this->first_reformulation.number_variables);
@@ -185,8 +181,8 @@ namespace uno {
 
       // "fraction-to-boundary" rule for primal variables and constraints multipliers
       const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter);
-      const double primal_step_length = PrimalDualInteriorPointProblem::primal_fraction_to_boundary(current_iterate.primals, direction.primals, tau);
-      const double bound_dual_step_length = PrimalDualInteriorPointProblem::dual_fraction_to_boundary(current_multipliers, direction.multipliers, tau);
+      const double primal_step_length = ExponentialBarrierProblem::primal_fraction_to_boundary(current_iterate.primals, direction.primals, tau);
+      const double bound_dual_step_length = ExponentialBarrierProblem::dual_fraction_to_boundary(current_multipliers, direction.multipliers, tau);
       DEBUG << "Fraction-to-boundary rules:\n";
       DEBUG << "primal step length = " << primal_step_length << '\n';
       DEBUG << "bound dual step length = " << bound_dual_step_length << "\n\n";
@@ -197,7 +193,7 @@ namespace uno {
       direction.multipliers.upper_bounds.scale(bound_dual_step_length);
    }
 
-   void PrimalDualInteriorPointProblem::set_auxiliary_measure(Iterate& iterate) const {
+   void ExponentialBarrierProblem::set_auxiliary_measure(Iterate& iterate) const {
       // auxiliary measure: barrier terms
       double barrier_terms = 0.;
       for (const size_t variable_index: this->first_reformulation.get_lower_bounded_variables()) {
@@ -220,7 +216,7 @@ namespace uno {
       iterate.progress.auxiliary = barrier_terms;
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
+   void ExponentialBarrierProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
          const Multipliers& multipliers) const {
       this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, iterate, multipliers);
 
@@ -246,13 +242,18 @@ namespace uno {
       }
    }
 
-   double PrimalDualInteriorPointProblem::dual_regularization_factor() const {
+   double ExponentialBarrierProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
+         const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
+      return this->first_reformulation.complementarity_error(primals, constraints, multipliers, shift_value, residual_norm);
+   }
+
+   double ExponentialBarrierProblem::dual_regularization_factor() const {
       return std::pow(this->barrier_parameter, this->parameters.dual_regularization_exponent);
    }
 
    // protected member functions
 
-   double PrimalDualInteriorPointProblem::push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const {
+   double ExponentialBarrierProblem::push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const {
       const double range = upper_bound - lower_bound;
       const double perturbation_lb = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(lower_bound)),
          this->parameters.push_variable_to_interior_k2 * range);
@@ -263,7 +264,7 @@ namespace uno {
       return variable_value;
    }
 
-   void PrimalDualInteriorPointProblem::compute_bound_dual_direction(const Vector<double>& current_primals,
+   void ExponentialBarrierProblem::compute_bound_dual_direction(const Vector<double>& current_primals,
          const Multipliers& current_multipliers, const Vector<double>& primal_direction, Multipliers& direction_multipliers) const {
       direction_multipliers.lower_bounds.fill(0.);
       direction_multipliers.upper_bounds.fill(0.);
@@ -282,7 +283,7 @@ namespace uno {
    }
 
    // TODO use a single function for primal and dual fraction-to-boundary rules
-   double PrimalDualInteriorPointProblem::primal_fraction_to_boundary(const Vector<double>& current_primals,
+   double ExponentialBarrierProblem::primal_fraction_to_boundary(const Vector<double>& current_primals,
          const Vector<double>& primal_direction, double tau) const {
       double step_length = 1.;
       for (const size_t variable_index: this->first_reformulation.get_lower_bounded_variables()) {
@@ -305,7 +306,7 @@ namespace uno {
       return step_length;
    }
 
-   double PrimalDualInteriorPointProblem::dual_fraction_to_boundary(const Multipliers& current_multipliers,
+   double ExponentialBarrierProblem::dual_fraction_to_boundary(const Multipliers& current_multipliers,
          const Multipliers& direction_multipliers, double tau) const {
       double step_length = 1.;
       for (const size_t variable_index: this->first_reformulation.get_lower_bounded_variables()) {
@@ -328,7 +329,7 @@ namespace uno {
       return step_length;
    }
 
-   double PrimalDualInteriorPointProblem::compute_barrier_term_directional_derivative(const Iterate& current_iterate,
+   double ExponentialBarrierProblem::compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const {
       double directional_derivative = 0.;
       for (const size_t variable_index: this->first_reformulation.get_lower_bounded_variables()) {
@@ -349,7 +350,7 @@ namespace uno {
       return directional_derivative;
    }
 
-   void PrimalDualInteriorPointProblem::postprocess_iterate(Vector<double>& primals, Multipliers& multipliers) const {
+   void ExponentialBarrierProblem::postprocess_iterate(Vector<double>& primals, Multipliers& multipliers) const {
       // rescale the bound multipliers (Eq. 16 in Ipopt paper)
       for (const size_t variable_index: this->first_reformulation.get_lower_bounded_variables()) {
          const double coefficient = this->barrier_parameter / (primals[variable_index] - this->first_reformulation.variable_lower_bound(variable_index));
@@ -390,7 +391,7 @@ namespace uno {
       }
    }
 
-   double PrimalDualInteriorPointProblem::compute_centrality_error(const Vector<double>& primals,
+   double ExponentialBarrierProblem::compute_centrality_error(const Vector<double>& primals,
          const Multipliers& multipliers, double barrier_parameter) const {
       const Range variables_range = Range(this->first_reformulation.number_variables);
       const VectorExpression shifted_bound_complementarity{variables_range, [&](size_t variable_index) {

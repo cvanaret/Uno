@@ -145,6 +145,7 @@ namespace uno {
       options["l1_constraint_violation_coefficient"] = "1";
 
       /** barrier subproblem options **/
+      options["barrier_function"] = "log";
       options["barrier_initial_parameter"] = "0.1";
       options["barrier_default_multiplier"] = "1";
       // Ipopt parameters
