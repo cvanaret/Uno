@@ -6,11 +6,10 @@
 
 namespace uno {
    // forward declarations
+   class BarrierProblem;
    class DualResiduals;
    class Iterate;
-   class Multipliers;
    class Options;
-   class PrimalDualInteriorPointProblem;
 
    struct UpdateParameters {
       double k_mu;
@@ -24,8 +23,8 @@ namespace uno {
       explicit BarrierParameterUpdateStrategy(const Options& options);
       [[nodiscard]] double get_barrier_parameter() const;
       void set_barrier_parameter(double new_barrier_parameter);
-      [[nodiscard]] bool update_barrier_parameter(const PrimalDualInteriorPointProblem& barrier_problem,
-         const Iterate& current_iterate, const DualResiduals& residuals);
+      [[nodiscard]] bool update_barrier_parameter(const BarrierProblem& barrier_problem, const Iterate& current_iterate,
+         const DualResiduals& residuals);
 
    protected:
       double barrier_parameter;
