@@ -4,8 +4,8 @@
 #ifndef UNO_EXPONENTIALBARRIERPROBLEM_H
 #define UNO_EXPONENTIALBARRIERPROBLEM_H
 
-#include "InteriorPointParameters.hpp"
-#include "BarrierProblem.hpp"
+#include "../InteriorPointParameters.hpp"
+#include "../BarrierProblem.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
