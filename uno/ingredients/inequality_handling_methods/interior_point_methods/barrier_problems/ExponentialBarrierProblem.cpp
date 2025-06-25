@@ -12,7 +12,8 @@
 namespace uno {
    ExponentialBarrierProblem::ExponentialBarrierProblem(const OptimizationProblem& problem, double barrier_parameter,
       const InteriorPointParameters &parameters):
-         BarrierProblem(problem.model, problem.number_variables, problem.number_constraints),
+         // no slacks: as many constraints as the number of equality constraints of the problem
+         BarrierProblem(problem.model, problem.number_variables, problem.get_equality_constraints().size()),
          reformulated_problem(problem), barrier_parameter(barrier_parameter),
          parameters(parameters), equality_constraints(problem.number_constraints) { }
 
@@ -186,7 +187,7 @@ namespace uno {
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_equality_constraints() const {
-      return this->equality_constraints;
+      return this->reformulated_problem.get_equality_constraints();
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_inequality_constraints() const {
