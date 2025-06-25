@@ -4,8 +4,8 @@
 #ifndef UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 #define UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 
-#include "InteriorPointParameters.hpp"
-#include "BarrierProblem.hpp"
+#include "../InteriorPointParameters.hpp"
+#include "../BarrierProblem.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
