@@ -44,6 +44,14 @@ namespace uno {
          // do nothing
       }
 
+      [[nodiscard]] double get_primal_regularization_factor() const override {
+         return 0.;
+      }
+
+      [[nodiscard]] double get_dual_regularization_factor() const override {
+         return 0.;
+      }
+
       [[nodiscard]] bool performs_primal_regularization() const override {
          return false;
       }

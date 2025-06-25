@@ -33,6 +33,8 @@ namespace uno {
       Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
          HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
 
+      [[nodiscard]] bool implicit_hessian_representation() const;
+
       // constraints, objective gradient and Jacobian
       void evaluate_objective_gradient(SparseVector<double>& linear_objective) const;
       void evaluate_constraints(std::vector<double>& constraints) const;
@@ -40,6 +42,7 @@ namespace uno {
 
       // regularized Hessian
       void compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian) const;
+      void compute_hessian_vector_product(const Vector<double>& vector, Vector<double>& result) const;
 
       // augmented system
       void assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,

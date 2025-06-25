@@ -38,6 +38,8 @@ namespace uno {
          ElementType dual_regularization_parameter, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
 
+      [[nodiscard]] double get_primal_regularization_factor() const override;
+      [[nodiscard]] double get_dual_regularization_factor() const override;
       [[nodiscard]] bool performs_primal_regularization() const override;
       [[nodiscard]] bool performs_dual_regularization() const override;
       [[nodiscard]] std::string get_name() const override;
@@ -214,6 +216,16 @@ namespace uno {
          }
       }
       statistics.set("regulariz", this->primal_regularization);
+   }
+
+   template <typename ElementType>
+      double PrimalDualRegularization<ElementType>::get_primal_regularization_factor() const {
+      return this->primal_regularization;
+   }
+
+   template <typename ElementType>
+   double PrimalDualRegularization<ElementType>::get_dual_regularization_factor() const {
+      return this->dual_regularization;
    }
 
    template <typename ElementType>

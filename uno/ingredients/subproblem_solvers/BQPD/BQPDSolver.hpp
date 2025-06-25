@@ -77,7 +77,7 @@ namespace uno {
       size_t size_hessian_sparsity{};
       size_t size_hessian_workspace{};
       size_t size_hessian_sparsity_workspace{};
-      std::vector<double> workspace{};
+      std::vector<double> workspace{}; // ws
       std::vector<int> workspace_sparsity{}; // lws
       int k{0};
       int iprint{0}, nout{6};
@@ -93,7 +93,7 @@ namespace uno {
       void solve_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
-      void save_hessian_in_local_format();
+      void hide_pointers_in_workspace(const Subproblem& subproblem);
       void save_gradients_to_local_format(size_t number_constraints);
       void set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const;
       static BQPDStatus bqpd_status_from_int(int ifail);

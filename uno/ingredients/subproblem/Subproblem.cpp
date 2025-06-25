@@ -15,6 +15,10 @@ namespace uno {
          regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius) {
    }
 
+   bool Subproblem::implicit_hessian_representation() const {
+      return this->hessian_model.implicit_representation();
+   }
+
    void Subproblem::evaluate_objective_gradient(SparseVector<double>& linear_objective) const {
       this->problem.evaluate_objective_gradient(this->current_iterate, linear_objective);
    }
@@ -38,6 +42,16 @@ namespace uno {
          this->regularization_strategy.regularize_hessian(statistics, hessian, this->problem.get_primal_regularization_variables(),
             expected_inertia);
       }
+   }
+
+   void Subproblem::compute_hessian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      std::cout << "Subproblem::compute_hessian_vector_product\n";
+      // evaluate the matrix-vector product with the Lagrangian Hessian
+      this->problem.compute_hessian_vector_product(this->hessian_model, vector, this->current_multipliers, result);
+      std::cout << "vector: " << vector << "\n";
+      std::cout << "result: " << vector << "\n";
+      // add the regularization contribution
+      // TODO!!!!
    }
 
    void Subproblem::assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
