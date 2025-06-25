@@ -4,6 +4,7 @@
 #include <cmath>
 #include "PrimalDualInteriorPointMethod.hpp"
 #include "PrimalDualInteriorPointProblem.hpp"
+#include "ExponentialBarrierProblem.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
@@ -16,6 +17,8 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
+   using MyBarrierProblem = ExponentialBarrierProblem;
+
    PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(const Options& options):
          InequalityHandlingMethod(),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))),
@@ -55,7 +58,7 @@ namespace uno {
    void PrimalDualInteriorPointMethod::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
       // TODO: enforce linear constraints at initial point
 
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
+      const MyBarrierProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
 
       // add the slacks to the initial iterate
       initial_iterate.set_number_variables(problem.number_variables);
@@ -107,7 +110,7 @@ namespace uno {
 
       // possibly update the barrier parameter
       if (!this->first_feasibility_iteration) {
-         const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
+         const MyBarrierProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
          this->update_barrier_parameter(barrier_problem, current_iterate, current_iterate.residuals);
       }
       else {
@@ -115,8 +118,8 @@ namespace uno {
       }
       statistics.set("barrier", this->barrier_parameter());
 
-      // create the subproblem
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
+      // crate the subproblem
+      const MyBarrierProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
       const Subproblem subproblem{barrier_problem, current_iterate, hessian_model, regularization_strategy,
          trust_region_radius};
 
@@ -242,19 +245,19 @@ namespace uno {
 
    void PrimalDualInteriorPointMethod::set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) {
       // auxiliary measure: barrier terms
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
+      const MyBarrierProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
       barrier_problem.set_auxiliary_measure(iterate);
    }
 
    double PrimalDualInteriorPointMethod::compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem,
          const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const {
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
+      const MyBarrierProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
       const double directional_derivative = barrier_problem.compute_barrier_term_directional_derivative(current_iterate, primal_direction);
       return step_length * (-directional_derivative);
       // }, "α*(μ*X^{-1} e^T d)"};
    }
 
-   void PrimalDualInteriorPointMethod::update_barrier_parameter(const PrimalDualInteriorPointProblem& barrier_problem,
+   void PrimalDualInteriorPointMethod::update_barrier_parameter(const BarrierProblem& barrier_problem,
          const Iterate& current_iterate, const DualResiduals& residuals) {
       const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(barrier_problem,
          current_iterate, residuals);

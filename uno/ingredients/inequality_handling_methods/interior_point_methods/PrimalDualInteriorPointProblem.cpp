@@ -13,9 +13,13 @@
 namespace uno {
    PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter,
       const InteriorPointParameters &parameters):
-         OptimizationProblem(problem.model, problem.number_variables, problem.number_constraints),
+         BarrierProblem(problem.model, problem.number_variables, problem.number_constraints),
          first_reformulation(problem), barrier_parameter(barrier_parameter),
-         parameters(parameters), equality_constraints(problem.number_constraints) { }
+         parameters(parameters), equality_constraints(problem.number_constraints) {
+      if (!problem.get_inequality_constraints().empty()) {
+         throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
+      }
+   }
 
    double PrimalDualInteriorPointProblem::get_objective_multiplier() const {
       return this->first_reformulation.get_objective_multiplier();
