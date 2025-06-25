@@ -4,11 +4,9 @@
 #include <cassert>
 #include <cmath>
 #include "BarrierParameterUpdateStrategy.hpp"
-
-#include "PrimalDualInteriorPointProblem.hpp"
+#include "BarrierProblem.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
-#include "symbolic/VectorExpression.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
 
@@ -33,7 +31,7 @@ namespace uno {
       this->barrier_parameter = new_barrier_parameter;
    }
 
-   bool BarrierParameterUpdateStrategy::update_barrier_parameter(const PrimalDualInteriorPointProblem& barrier_problem,
+   bool BarrierParameterUpdateStrategy::update_barrier_parameter(const BarrierProblem& barrier_problem,
          const Iterate& current_iterate, const Multipliers& current_multipliers, const DualResiduals& residuals) {
       // primal-dual errors
       const double scaled_stationarity = residuals.stationarity / residuals.stationarity_scaling;

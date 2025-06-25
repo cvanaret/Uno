@@ -39,6 +39,7 @@ namespace uno {
       if (preset_name == "ipopt") {
          options["constraint_relaxation_strategy"] = "feasibility_restoration";
          options["inequality_handling_method"] = "primal_dual_interior_point";
+         options["barrier_function"] = "log";
          options["hessian_model"] = "exact";
          options["regularization_strategy"] = "primal_dual";
          options["globalization_mechanism"] = "LS";

@@ -163,6 +163,7 @@ namespace uno {
       options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
 
       /** barrier subproblem options **/
+      options["barrier_function"] = "log";
       options["barrier_initial_parameter"] = "0.1";
       options["barrier_default_multiplier"] = "1";
       // Ipopt parameters
