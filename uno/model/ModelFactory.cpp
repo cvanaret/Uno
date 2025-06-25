@@ -10,7 +10,8 @@
 namespace uno {
    // note: ownership of the pointer is transferred
    std::unique_ptr<Model> ModelFactory::reformulate(std::unique_ptr<Model> model, const Options& options) {
-      if (options.get_string("inequality_handling_method") == "primal_dual_interior_point") {
+      if (options.get_string("inequality_handling_method") == "primal_dual_interior_point" &&
+            options.get_string("barrier_function") == "log") {
          // move the fixed variables to the set of general constraints
          if (!model->get_fixed_variables().empty()) {
             model = std::make_unique<FixedBoundsConstraintsModel>(std::move(model), options);
