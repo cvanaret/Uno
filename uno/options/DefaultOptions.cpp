@@ -198,8 +198,8 @@ namespace uno {
          options["QP_solver"] = QPSolverFactory::available_solvers[0];
       }
       // LP solver
-      if (!LPSolverFactory::available_solvers.empty()) {
-         options["LP_solver"] = LPSolverFactory::available_solvers[0];
+      if (0 < std::tuple_size_v<typeof(LPSolverFactory::available_solvers)>) {
+         options["LP_solver"] = std::get<0>(LPSolverFactory::available_solvers);
       }
       // linear solver
       const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();

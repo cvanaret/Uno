@@ -5,12 +5,15 @@
 #define UNO_LITERALS_H
 
 #include <array>
+#include <initializer_list>
 
 namespace uno {
+   using literal = const char*;
+
    // make_literal_array creates an array of literals (const char*)
    // the return type is correct, even if there is no argument supplied
    template <typename... Types>
-   constexpr std::array<const char*, sizeof...(Types)> make_literal_array(Types&&... types) {
+   constexpr std::array<literal, sizeof...(Types)> make_literal_array(Types&&... types) {
       return {types...};
    }
 } // namespace
