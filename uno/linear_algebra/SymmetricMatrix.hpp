@@ -32,6 +32,8 @@ namespace uno {
       [[nodiscard]] size_t number_nonzeros() const { return this->sparse_storage->number_nonzeros; }
       [[nodiscard]] size_t capacity() const { return this->sparse_storage->capacity; }
       template <typename Vector1, typename Vector2>
+      void product(const Vector1& vector, Vector2& result) const;
+      template <typename Vector1, typename Vector2>
       ElementType quadratic_product(const Vector1& x, const Vector2& y) const;
 
       // build the matrix incrementally
@@ -85,7 +87,19 @@ namespace uno {
       // look at the first max_dimension diagonal entries
       return *std::min_element(diagonal_entries.begin(), diagonal_entries.end());
    }
-   
+
+   template <typename IndexType, typename ElementType>
+   template <typename Vector1, typename Vector2>
+   inline void SymmetricMatrix<IndexType, ElementType>::product(const Vector1& vector, Vector2& result) const {
+      for (const auto [row_index, column_index, element]: *this) { // get the (row_index, column_index) element
+         result[row_index] += element * vector[column_index];
+         if (row_index != column_index) {
+            // consider the (column_index, row_index) as well (by symmetry)
+            result[column_index] += element * vector[row_index];
+         }
+      }
+   }
+
    template <typename IndexType, typename ElementType>
    template <typename Vector1, typename Vector2>
    inline ElementType SymmetricMatrix<IndexType, ElementType>::quadratic_product(const Vector1& x, const Vector2& y) const {
