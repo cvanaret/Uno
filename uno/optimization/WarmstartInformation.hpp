@@ -5,7 +5,8 @@
 #define UNO_WARMSTARTINFORMATION_H
 
 namespace uno {
-   struct WarmstartInformation {
+   class WarmstartInformation {
+   public:
       bool objective_changed{true};
       bool constraints_changed{true};
       bool constraint_bounds_changed{true};
