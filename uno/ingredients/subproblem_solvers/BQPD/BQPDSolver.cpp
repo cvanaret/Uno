@@ -56,11 +56,10 @@ namespace uno {
 
    void BQPDSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
          const RegularizationStrategy<double>& regularization_strategy) {
-      // determine whether the subproblem has curvature
-      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
-      const size_t regularization_size = (!hessian_model.is_positive_definite() &&
-         regularization_strategy.performs_primal_regularization()) ? problem.get_number_original_variables() : 0;
-      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
+      this->w.resize(problem.number_variables + problem.number_constraints);
+      this->gradient_solution.resize(problem.number_variables);
+      this->residuals.resize(problem.number_variables + problem.number_constraints);
+      this->e.resize(problem.number_variables + problem.number_constraints);
 
       this->lower_bounds.resize(problem.number_variables + problem.number_constraints);
       this->upper_bounds.resize(problem.number_variables + problem.number_constraints);
@@ -71,24 +70,27 @@ namespace uno {
       this->bqpd_jacobian.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros());
       this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros() +
          problem.number_constraints + 3);
-      this->hessian = SymmetricMatrix<size_t, double>("CSC", problem.number_variables, number_hessian_nonzeros,
-         regularization_size);
-      this->kmax = (0 < number_regularized_hessian_nonzeros) ? this->kmax_limit : 0;
       // default active set
       this->active_set.resize(problem.number_variables + problem.number_constraints);
       for (size_t variable_index: Range(problem.number_variables + problem.number_constraints)) {
          this->active_set[variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
       }
-      this->w.resize(problem.number_variables + problem.number_constraints);
-      this->gradient_solution.resize(problem.number_variables);
-      this->residuals.resize(problem.number_variables + problem.number_constraints);
-      this->e.resize(problem.number_variables + problem.number_constraints);
-      this->size_hessian_sparsity = number_regularized_hessian_nonzeros + problem.number_variables + 3; // TODO
-      this->size_hessian_workspace = number_regularized_hessian_nonzeros + static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) +
+
+      // determine whether the subproblem has curvature
+      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
+      const size_t regularization_size = (!hessian_model.is_positive_definite() &&
+         regularization_strategy.performs_primal_regularization()) ? problem.get_number_original_variables() : 0;
+      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
+      this->hessian = SymmetricMatrix<size_t, double>("COO", problem.number_variables, number_hessian_nonzeros,
+         regularization_size);
+      this->kmax = (0 < number_regularized_hessian_nonzeros) ? this->kmax_limit : 0;
+
+      this->size_hessian_sparsity = sizeof(intptr_t) + problem.number_variables + 3; // TODO
+      this->size_hessian_workspace = 0 + static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) +
          2 * problem.number_variables + problem.number_constraints + this->mxwk0;
       this->size_hessian_sparsity_workspace = this->size_hessian_sparsity + static_cast<size_t>(this->kmax) + this->mxiwk0;
-      this->workspace.resize(this->size_hessian_workspace);
-      this->workspace_sparsity.resize(this->size_hessian_sparsity_workspace);
+      this->workspace.resize(this->size_hessian_workspace); // ws
+      this->workspace_sparsity.resize(this->size_hessian_sparsity_workspace); // lws
       this->current_hessian_indices.resize(problem.number_variables);
    }
 
@@ -150,9 +152,7 @@ namespace uno {
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->save_gradients_to_local_format(subproblem.number_constraints);
       }
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->save_hessian_in_local_format();
-      }
+      this->hide_pointers_in_workspace();
    }
 
    void BQPDSolver::display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const {
@@ -214,39 +214,16 @@ namespace uno {
       return mode;
    }
 
-   void BQPDSolver::save_hessian_in_local_format() {
-      const size_t header_size = 1;
-      // pointers withing the single array
-      int* row_indices = &this->workspace_sparsity[header_size];
-      int* column_starts = &this->workspace_sparsity[header_size + this->hessian.number_nonzeros()];
-      // header
-      this->workspace_sparsity[0] = static_cast<int>(this->hessian.number_nonzeros() + 1);
-      // count the elements in each column
-      for (size_t column_index: Range(this->hessian.dimension() + 1)) {
-         column_starts[column_index] = 0;
-      }
-      for (const auto [row_index, column_index, element]: this->hessian) {
-         column_starts[column_index + 1]++;
-      }
-      // carry over the column starts
-      for (size_t column_index: Range(1, this->hessian.dimension() + 1)) {
-         column_starts[column_index] += column_starts[column_index - 1];
-         column_starts[column_index - 1] += this->fortran_shift;
-      }
-      column_starts[this->hessian.dimension()] += this->fortran_shift;
-      // copy the entries
-      //std::vector<int> current_indices(hessian.dimension());
-      this->current_hessian_indices.fill(0);
-      for (const auto [row_index, column_index, element]: this->hessian) {
-         const size_t index = static_cast<size_t>(column_starts[column_index] + this->current_hessian_indices[column_index] - this->fortran_shift);
-         assert(index <= static_cast<size_t>(column_starts[column_index + 1]) &&
-            "BQPD: error in converting the Hessian matrix to the local format. Try setting the sparse format to CSC");
-         this->workspace[index] = element;
-         row_indices[index] = static_cast<int>(row_index) + this->fortran_shift;
-         this->current_hessian_indices[column_index]++;
-      }
-      WSC.kk = static_cast<int>(this->hessian.number_nonzeros()); // length of ws that is used by gdotx
-      WSC.ll = static_cast<int>(this->hessian.number_nonzeros() + this->hessian.dimension() + 2); // length of lws that is used by gdotx
+   void BQPDSolver::hide_pointers_in_workspace() {
+      WSC.kk = 0; // length of ws that is used by gdotx
+      WSC.ll = 0; // length of lws that is used by gdotx
+
+      // hide pointer to the Hessian in lws
+      intptr_t pointer_to_hessian = reinterpret_cast<intptr_t>(&this->hessian);
+      std::copy(reinterpret_cast<const char *>(&pointer_to_hessian),
+         reinterpret_cast<const char *>(&pointer_to_hessian) + sizeof(intptr_t),
+         reinterpret_cast<char *>(this->workspace_sparsity.data()));
+      WSC.ll += sizeof(intptr_t);
    }
 
    void BQPDSolver::save_gradients_to_local_format(size_t number_constraints) {
@@ -351,22 +328,20 @@ namespace uno {
    }
 } // namespace
 
-void hessian_vector_product(int* dimension, const double vector[], const double hessian_values[], const int hessian_sparsity[], double result[]) {
+void hessian_vector_product(int* dimension, const double vector[], const double /*ws*/[], const int lws[], double result[]) {
    assert(dimension != nullptr && "BQPDSolver::hessian_vector_product: the dimension n passed by pointer is NULL");
 
    for (size_t i = 0; i < static_cast<size_t>(*dimension); i++) {
       result[i] = 0.;
    }
 
-   int footer_start = hessian_sparsity[0];
-   for (int row_index = 0; row_index < *dimension; row_index++) {
-      for (int k = hessian_sparsity[footer_start + row_index]; k < hessian_sparsity[footer_start + row_index + 1]; k++) {
-         int column_index = hessian_sparsity[k] - 1;
-         result[row_index] += hessian_values[k - 1] * vector[column_index];
-         if (column_index != row_index) {
-            // off-diagonal term
-            result[column_index] += hessian_values[k - 1] * vector[row_index];
-         }
-      }
-   }
+   // retrieve Hessian
+   intptr_t pointer_to_hessian;
+   std::copy(reinterpret_cast<const char *>(lws),
+      reinterpret_cast<const char *>(lws) + sizeof(intptr_t),
+      reinterpret_cast<char *>(&pointer_to_hessian));
+   const uno::SymmetricMatrix<size_t, double>* hessian = reinterpret_cast<const uno::SymmetricMatrix<size_t, double>*>(pointer_to_hessian);
+   assert(hessian != nullptr && "BQPD's hessian_vector_product: the hessian is NULL");
+
+   hessian->product(vector, result);
 }
