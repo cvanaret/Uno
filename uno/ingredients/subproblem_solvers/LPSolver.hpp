@@ -15,7 +15,7 @@ namespace uno {
    class Subproblem;
    template <typename ElementType>
    class Vector;
-   struct WarmstartInformation;
+   class WarmstartInformation;
 
    class LPSolver {
    public:
