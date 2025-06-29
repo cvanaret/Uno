@@ -176,7 +176,7 @@ else()
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MUMPS/MUMPSSolver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MUMPSSolverTests.cpp)
    list(APPEND LIBRARIES ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
-   
+
    list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
 
    if(NOT MUMPS_MPISEQ_LIBRARY)
@@ -197,20 +197,20 @@ else()
       # link dummy parallel library (provided by MUMPS distribution)
       link_to_uno(MUMPS_MPISEQ_LIBRARY ${MUMPS_MPISEQ_LIBRARY})
    endif()
-   
+
    find_package(METIS REQUIRED)
    list(APPEND LIBRARIES ${METIS_LIBRARY})
    list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
-   
+
+   find_package(LAPACK REQUIRED)
+   list(APPEND LIBRARIES ${LAPACK_LIBRARIES})
+
    find_package(BLAS REQUIRED)
    list(APPEND LIBRARIES ${BLAS_LIBRARIES})
-   
-   find_package(LAPACK REQUIRED)
-	link_to_uno(LAPACK ${LAPACK_LIBRARIES})
-   
+
    find_package(OpenMP REQUIRED)
    list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
-   
+
    add_definitions("-D HAS_MUMPS")
 endif()
 
