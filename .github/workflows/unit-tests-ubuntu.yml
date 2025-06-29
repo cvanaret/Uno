@@ -33,7 +33,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        architecture: [x86, x64]
+        architecture: [x64]
 
     steps:
     - uses: actions/checkout@v4
