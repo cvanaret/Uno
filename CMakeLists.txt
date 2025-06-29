@@ -206,7 +206,7 @@ else()
    list(APPEND LIBRARIES ${BLAS_LIBRARIES})
    
    find_package(LAPACK REQUIRED)
-	link_to_uno(LAPACK ${LAPACK_LIBRARIES})
+   list(APPEND LIBRARIES ${LAPACK_LIBRARIES})
    
    find_package(OpenMP REQUIRED)
    list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
