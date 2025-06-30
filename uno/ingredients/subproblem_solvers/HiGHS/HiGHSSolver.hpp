@@ -7,6 +7,7 @@
 #include "ingredients/subproblem_solvers/LPSolver.hpp"
 #include "Highs.h"
 #include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 
@@ -32,7 +33,7 @@ namespace uno {
       std::vector<double> constraints{};
       SparseVector<double> linear_objective{};
       RectangularMatrix<double> constraint_jacobian{};
-      SymmetricMatrix<size_t, double> hessian{};
+      SparseSymmetricMatrix<COOSparseStorage<size_t, double>> hessian{};
 
       const bool print_subproblem;
 

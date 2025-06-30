@@ -34,7 +34,6 @@ namespace uno {
       this->constraints.resize(problem.number_constraints);
       this->linear_objective.reserve(problem.number_objective_gradient_nonzeros());
       this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
-      this->hessian = SymmetricMatrix<size_t, double>("CSC", problem.number_variables, 0, 0); // TODO
       this->model.lp_.sense_ = ObjSense::kMinimize;
       this->model.lp_.offset_ = 0.;
       // the linear part of the objective is a dense vector
@@ -51,6 +50,7 @@ namespace uno {
       this->model.lp_.a_matrix_.index_.reserve(problem.number_jacobian_nonzeros());
       this->model.lp_.a_matrix_.start_.reserve(problem.number_variables + 1);
       // TODO Hessian
+      // this->hessian = SymmetricMatrix<size_t, double>("CSC", problem.number_variables, 0, 0); // TODO
    }
 
    void HiGHSSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& /*initial_point*/,

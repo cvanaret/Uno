@@ -4,10 +4,8 @@
 #ifndef UNO_SYMMETRICMATRIX_H
 #define UNO_SYMMETRICMATRIX_H
 
-#include <algorithm>
 #include <cassert>
 #include <memory>
-#include "SparseStorage.hpp"
 #include "SparseStorageFactory.hpp"
 
 namespace uno {
@@ -20,73 +18,79 @@ namespace uno {
    class SymmetricMatrix {
    public:
       using value_type = ElementType;
-      
-      SymmetricMatrix(const std::string& sparse_format, size_t dimension, size_t capacity, size_t regularization_size);
-      SymmetricMatrix();
-      ~SymmetricMatrix() = default;
+
+      class iterator {
+      public:
+         iterator(const SymmetricMatrix& matrix, size_t column_index, size_t nonzero_index) :
+               matrix(matrix), column_index(column_index), nonzero_index(nonzero_index) {
+         }
+
+         [[nodiscard]] std::tuple<IndexType, IndexType, ElementType> operator*() const {
+            return this->matrix.dereference_iterator(this->column_index, this->nonzero_index);
+         }
+
+         iterator& operator++() {
+            this->matrix.increment_iterator(this->column_index, this->nonzero_index);
+            return *this;
+         }
+
+         friend bool operator!=(const iterator& a, const iterator& b) {
+            return a.nonzero_index != b.nonzero_index;
+         }
+
+      protected:
+         const SymmetricMatrix& matrix;
+         size_t column_index;
+         size_t nonzero_index;
+      };
+
+      SymmetricMatrix() = default;
+
+      virtual ~SymmetricMatrix() = default;
       SymmetricMatrix& operator=(SymmetricMatrix&& other) = default;
 
-      void reset() { this->sparse_storage->reset(); }
-      [[nodiscard]] size_t dimension() const { return this->sparse_storage->dimension; }
-      void set_dimension(size_t new_dimension) { this->sparse_storage->set_dimension(new_dimension); }
-      [[nodiscard]] size_t number_nonzeros() const { return this->sparse_storage->number_nonzeros; }
-      [[nodiscard]] size_t capacity() const { return this->sparse_storage->capacity; }
+      virtual void reset() = 0;
+      [[nodiscard]] virtual size_t dimension() const = 0;
+      virtual void set_dimension(size_t new_dimension) = 0;
+      [[nodiscard]] virtual size_t number_nonzeros() const = 0;
+      [[nodiscard]] virtual size_t capacity() const = 0;
+
+      // build the matrix incrementally
+      virtual void insert(ElementType term, IndexType row_index, IndexType column_index) = 0;
+      virtual void finalize_column(IndexType column_index) = 0;
+      
+      [[nodiscard]] virtual ElementType smallest_diagonal_entry(size_t max_dimension) const = 0;
+      
+      virtual void set_regularization(const Collection<size_t>& indices, size_t offset, double factor) = 0;
+
+      iterator begin() const {
+         return iterator(*this, 0, 0);
+      }
+
+      iterator end() const {
+         return iterator(*this, this->dimension(), this->number_nonzeros());
+      }
+
+      [[nodiscard]] virtual const ElementType* data_pointer() const noexcept = 0;
+      [[nodiscard]] virtual ElementType* data_pointer() noexcept = 0;
+
       template <typename Vector1, typename Vector2>
       void product(const Vector1& vector, Vector2& result) const;
       template <typename Vector1, typename Vector2>
       ElementType quadratic_product(const Vector1& x, const Vector2& y) const;
 
-      // build the matrix incrementally
-      void insert(ElementType term, IndexType row_index, IndexType column_index);
-      void finalize_column(IndexType column_index) { this->sparse_storage->finalize_column(column_index); }
-      
-      [[nodiscard]] ElementType smallest_diagonal_entry(size_t max_dimension) const;
-      
-      void set_regularization(const Collection<size_t>& indices, size_t offset, double factor) {
-         this->sparse_storage->set_regularization(indices, offset, factor);
-      }
-
-      typename SparseStorage<IndexType, ElementType>::iterator begin() const { return this->sparse_storage->begin(); }
-      typename SparseStorage<IndexType, ElementType>::iterator end() const { return this->sparse_storage->end(); }
-
-      [[nodiscard]] const ElementType* data_pointer() const noexcept { return this->sparse_storage->data_pointer(); }
-      [[nodiscard]] ElementType* data_pointer() noexcept { return this->sparse_storage->data_pointer(); }
-
-      void print(std::ostream& stream) const { this->sparse_storage->print(stream); }
+      virtual void print(std::ostream& stream) const = 0;
       template <typename Index, typename Element>
       friend std::ostream& operator<<(std::ostream& stream, const SymmetricMatrix<Index, Element>& matrix);
 
    protected:
-      std::unique_ptr<SparseStorage<IndexType, ElementType>> sparse_storage;
+      // virtual iterator functions
+      [[nodiscard]] virtual std::tuple<IndexType, IndexType, ElementType> dereference_iterator(size_t column_index,
+         size_t nonzero_index) const = 0;
+      virtual void increment_iterator(size_t& column_index, size_t& nonzero_index) const = 0;
    };
 
    // implementation
-
-   template <typename IndexType, typename ElementType>
-   SymmetricMatrix<IndexType, ElementType>::SymmetricMatrix(const std::string& sparse_format, size_t dimension, size_t capacity,
-      size_t regularization_size):
-         sparse_storage(SparseStorageFactory<IndexType, ElementType>::create(sparse_format, dimension, capacity, regularization_size)) {
-   }
-
-   template <typename IndexType, typename ElementType>
-   SymmetricMatrix<IndexType, ElementType>::SymmetricMatrix():
-         sparse_storage(nullptr) {
-   }
-
-   template <typename IndexType, typename ElementType>
-   inline ElementType SymmetricMatrix<IndexType, ElementType>::smallest_diagonal_entry(size_t max_dimension) const {
-      // diagonal entries might be at several locations and must be accumulated
-      // TODO preallocate this vector somewhere
-      std::vector<ElementType> diagonal_entries(max_dimension, ElementType(0));
-
-      for (const auto [row_index, column_index, element]: *this->sparse_storage) {
-         if (row_index == column_index && row_index < max_dimension) {
-            diagonal_entries[row_index] += element;
-         }
-      }
-      // look at the first max_dimension diagonal entries
-      return *std::min_element(diagonal_entries.begin(), diagonal_entries.end());
-   }
 
    template <typename IndexType, typename ElementType>
    template <typename Vector1, typename Vector2>
@@ -122,12 +126,7 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   inline void SymmetricMatrix<IndexType, ElementType>::insert(ElementType term, IndexType row_index, IndexType column_index) {
-      this->sparse_storage->insert(term, row_index, column_index);
-   }
-   
-   template <typename Index, typename Element>
-   inline std::ostream& operator<<(std::ostream& stream, const SymmetricMatrix<Index, Element>& matrix) {
+   inline std::ostream& operator<<(std::ostream& stream, const SymmetricMatrix<IndexType, ElementType>& matrix) {
       stream << "Dimension: " << matrix.dimension() << ", number of nonzeros: " << matrix.number_nonzeros() << '\n';
       matrix.print(stream);
       return stream;

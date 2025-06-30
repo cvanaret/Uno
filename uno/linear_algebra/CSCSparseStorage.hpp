@@ -19,6 +19,10 @@ namespace uno {
    class CSCSparseStorage : public SparseStorage<IndexType, ElementType> {
    public:
       CSCSparseStorage(size_t dimension, size_t capacity, size_t regularization_size);
+      CSCSparseStorage() = default;
+      ~CSCSparseStorage() override = default;
+      CSCSparseStorage& operator=(const CSCSparseStorage& other) = default;
+      CSCSparseStorage& operator=(CSCSparseStorage&& other) = default;
 
       void reset() override;
       void set_dimension(size_t new_dimension) override;
@@ -31,17 +35,17 @@ namespace uno {
 
       void print(std::ostream& stream) const override;
 
+      // iterator functions
+      [[nodiscard]] std::tuple<IndexType, IndexType, ElementType> dereference_iterator(IndexType column_index, size_t nonzero_index) const override;
+      void increment_iterator(IndexType& column_index, IndexType& nonzero_index) const override;
+
    protected:
-      std::vector<ElementType> entries;
+      std::vector<ElementType> entries{};
       // entries and row_indices have nnz elements
       // column_starts has dimension+1 elements
       Vector<IndexType> column_starts{};
       std::vector<IndexType> row_indices{};
       IndexType current_column{0};
-
-      // iterator functions
-      [[nodiscard]] std::tuple<IndexType, IndexType, ElementType> dereference_iterator(IndexType column_index, size_t nonzero_index) const override;
-      void increment_iterator(IndexType& column_index, IndexType& nonzero_index) const override;
    };
 
    template <typename IndexType, typename ElementType>

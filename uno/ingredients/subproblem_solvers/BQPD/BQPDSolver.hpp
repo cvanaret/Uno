@@ -8,6 +8,7 @@
 #include <vector>
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -64,7 +65,7 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian{};
       std::vector<double> bqpd_jacobian{};
       std::vector<int> bqpd_jacobian_sparsity{};
-      SymmetricMatrix<size_t, double> hessian{};
+      SparseSymmetricMatrix<COOSparseStorage<size_t, double>> hessian{};
 
       int kmax{0};
       int kmax_limit;

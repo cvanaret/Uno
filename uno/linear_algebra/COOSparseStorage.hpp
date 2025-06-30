@@ -18,6 +18,10 @@ namespace uno {
    class COOSparseStorage : public SparseStorage<IndexType, ElementType> {
    public:
       COOSparseStorage(size_t dimension, size_t capacity, size_t regularization_size);
+      COOSparseStorage() = default;
+      ~COOSparseStorage() override = default;
+      COOSparseStorage& operator=(const COOSparseStorage& other) = default;
+      COOSparseStorage& operator=(COOSparseStorage&& other) = default;
 
       void reset() override;
       void set_dimension(size_t new_dimension) override;
@@ -29,6 +33,10 @@ namespace uno {
       ElementType* data_pointer() noexcept override { return this->entries.data(); }
 
       void print(std::ostream& stream) const override;
+
+      // iterator functions
+      [[nodiscard]] std::tuple<IndexType, IndexType, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const override;
+      void increment_iterator(size_t& column_index, size_t& nonzero_index) const override;
 
       const IndexType* row_indices_pointer() const {
          return this->row_indices.data();
@@ -44,15 +52,11 @@ namespace uno {
       }
 
    protected:
-      std::vector<ElementType> entries;
-      std::vector<IndexType> row_indices;
-      std::vector<IndexType> column_indices;
+      std::vector<ElementType> entries{};
+      std::vector<IndexType> row_indices{};
+      std::vector<IndexType> column_indices{};
 
       void initialize_regularization();
-
-      // iterator functions
-      [[nodiscard]] std::tuple<IndexType, IndexType, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const override;
-      void increment_iterator(size_t& column_index, size_t& nonzero_index) const override;
    };
 
    // implementation

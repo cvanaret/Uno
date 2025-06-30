@@ -40,13 +40,17 @@ namespace uno {
          size_t nonzero_index;
       };
 
+      using index_type = IndexType;
       using value_type = ElementType;
 
-      size_t dimension;
+      size_t dimension{0};
       size_t number_nonzeros{0};
-      size_t capacity;
+      size_t capacity{0};
 
       SparseStorage(size_t dimension, size_t capacity, size_t regularization_size);
+      SparseStorage() = default;
+      SparseStorage& operator=(const SparseStorage& other) = default;
+      SparseStorage& operator=(SparseStorage&& other) = default;
       virtual ~SparseStorage() = default;
 
       virtual void reset() = 0;
@@ -68,15 +72,16 @@ namespace uno {
       }
 
       virtual void print(std::ostream& stream) const = 0;
-      template <typename Index, typename Element>
-      friend std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& matrix);
-
-   protected:
-      const size_t regularization_size;
 
       // virtual iterator functions
       [[nodiscard]] virtual std::tuple<IndexType, IndexType, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const = 0;
       virtual void increment_iterator(size_t& column_index, size_t& nonzero_index) const = 0;
+
+      template <typename Index, typename Element>
+      friend std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& sparse_storage);
+
+   protected:
+      size_t regularization_size{0};
    };
 
    // implementation

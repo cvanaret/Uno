@@ -8,8 +8,8 @@
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "dmumps_c.h"
 #include "linear_algebra/RectangularMatrix.hpp"
+#include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 
 namespace uno {
    class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
@@ -47,7 +47,7 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 
       // augmented system
-      SymmetricMatrix<size_t, double> augmented_matrix{};
+      SparseSymmetricMatrix<COOSparseStorage<size_t, double>> augmented_matrix{};
       Vector<double> rhs{};
       Vector<double> solution{};
 
