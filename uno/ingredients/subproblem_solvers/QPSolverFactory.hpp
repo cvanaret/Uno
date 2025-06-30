@@ -5,8 +5,8 @@
 #define UNO_QPSOLVERFACTORY_H
 
 #include <memory>
+#include <vector>
 #include "QPSolver.hpp"
-#include "tools/Literals.hpp"
 
 namespace uno {
    // forward declaration
@@ -18,11 +18,7 @@ namespace uno {
       static std::unique_ptr<QPSolver> create([[maybe_unused]] const Options& options);
 
       // list of available QP solvers
-      constexpr static auto available_solvers = make_literal_array(
-#ifdef HAS_BQPD
-         "BQPD"
-#endif
-      );
+      static std::vector<std::string> available_solvers();
    };
 } // namespace
 

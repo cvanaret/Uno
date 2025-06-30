@@ -5,8 +5,7 @@
 #define UNO_LPSOLVERFACTORY_H
 
 #include <memory>
-#include <tuple>
-#include "tools/Literals.hpp"
+#include <vector>
 
 namespace uno {
    // forward declarations
@@ -18,15 +17,7 @@ namespace uno {
       static std::unique_ptr<LPSolver> create([[maybe_unused]] const Options& options);
 
       // list of available LP solvers
-      constexpr static auto test = std::tuple{};
-      constexpr static auto available_solvers = std::tuple{
-#ifdef HAS_BQPD
-         "BQPD",
-#endif
-#ifdef HAS_HIGHS
-         "HiGHS",
-#endif
-      };
+      static std::vector<std::string> available_solvers();
    };
 } // namespace
 
