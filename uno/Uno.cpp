@@ -167,8 +167,8 @@ namespace uno {
       std::cout << "- Globalization mechanisms: " << join(GlobalizationMechanismFactory::available_strategies(), ", ") << '\n';
       std::cout << "- Globalization strategies: " << join(GlobalizationStrategyFactory::available_strategies(), ", ") << '\n';
       std::cout << "- Inequality handling methods: " << join(InequalityHandlingMethodFactory::available_strategies(), ", ") << '\n';
-      std::cout << "- QP solvers: " << join(QPSolverFactory::available_solvers, ", ") << '\n';
-      std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers, ", ") << '\n';
+      std::cout << "- QP solvers: " << join(QPSolverFactory::available_solvers(), ", ") << '\n';
+      std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers(), ", ") << '\n';
       std::cout << "- Linear solvers: " << join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", ") << '\n';
    }
 

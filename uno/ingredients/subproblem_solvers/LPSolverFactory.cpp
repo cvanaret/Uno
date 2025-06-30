@@ -30,13 +30,24 @@ namespace uno {
 #endif
          std::string message = "The LP solver ";
          message.append(LP_solver_name).append(" is unknown").append("\n").append("The following values are available: ")
-               .append(join(LPSolverFactory::available_solvers, ", "));
+               .append(join(LPSolverFactory::available_solvers(), ", "));
          throw std::invalid_argument(message);
       }
       catch (const std::out_of_range& exception) {
          std::string message = exception.what();
-         message.append("\n").append("The following values are available: ").append(join(LPSolverFactory::available_solvers, ", "));
+         message.append("\n").append("The following values are available: ").append(join(LPSolverFactory::available_solvers(), ", "));
          throw std::out_of_range(message);
       }
+   }
+
+   std::vector<std::string> LPSolverFactory::available_solvers() {
+      std::vector<std::string> solvers{};
+#ifdef HAS_BQPD
+      solvers.emplace_back("BQPD");
+#endif
+#ifdef HAS_HIGHS
+      solvers.emplace_back("HiGHS");
+#endif
+      return solvers;
    }
 } // namespace

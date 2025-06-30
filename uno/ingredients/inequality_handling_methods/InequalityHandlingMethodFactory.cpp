@@ -28,7 +28,7 @@ namespace uno {
 
    std::vector<std::string> InequalityHandlingMethodFactory::available_strategies() {
       std::vector<std::string> strategies{};
-      if (!LPSolverFactory::available_solvers.empty() || !QPSolverFactory::available_solvers.empty()) {
+      if (!LPSolverFactory::available_solvers().empty() || !QPSolverFactory::available_solvers().empty()) {
          strategies.emplace_back("inequality_constrained");
       }
       if (!SymmetricIndefiniteLinearSolverFactory::available_solvers().empty()) {

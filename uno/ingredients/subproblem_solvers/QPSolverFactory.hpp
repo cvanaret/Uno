@@ -4,8 +4,8 @@
 #ifndef UNO_QPSOLVERFACTORY_H
 #define UNO_QPSOLVERFACTORY_H
 
-#include <array>
 #include <memory>
+#include <vector>
 #include "QPSolver.hpp"
 
 namespace uno {
@@ -18,11 +18,7 @@ namespace uno {
       static std::unique_ptr<QPSolver> create([[maybe_unused]] const Options& options);
 
       // list of available QP solvers
-      constexpr static std::array available_solvers{
-#ifdef HAS_BQPD
-         "BQPD",
-#endif
-      };
+      static std::vector<std::string> available_solvers();
    };
 } // namespace
 

@@ -21,7 +21,7 @@ namespace uno {
    class Statistics;
    template <typename ElementType>
    class Vector;
-   struct WarmstartInformation;
+   class WarmstartInformation;
    
    class InequalityHandlingMethod {
    public:

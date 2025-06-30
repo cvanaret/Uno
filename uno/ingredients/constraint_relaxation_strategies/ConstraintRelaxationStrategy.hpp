@@ -24,7 +24,7 @@ namespace uno {
    class UserCallbacks;
    template <typename ElementType>
    class Vector;
-   struct WarmstartInformation;
+   class WarmstartInformation;
 
    class ConstraintRelaxationStrategy {
    public:
