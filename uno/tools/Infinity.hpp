@@ -9,7 +9,7 @@
 
 namespace uno {
    template <typename NumericalType>
-   const double INF = std::numeric_limits<NumericalType>::infinity();
+   constexpr double INF = std::numeric_limits<NumericalType>::infinity();
 
    template <typename NumericalType>
    inline bool is_finite(NumericalType value) {
