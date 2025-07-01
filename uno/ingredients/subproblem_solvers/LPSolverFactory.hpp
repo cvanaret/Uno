@@ -6,6 +6,7 @@
 
 #include <initializer_list>
 #include <memory>
+#include <string_view>
 
 namespace uno {
    // forward declarations
