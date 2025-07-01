@@ -6,7 +6,6 @@
 
 #include <initializer_list>
 #include <memory>
-#include <string_view>
 
 namespace uno {
    // forward declarations
@@ -18,7 +17,7 @@ namespace uno {
       static std::unique_ptr<LPSolver> create([[maybe_unused]] const Options& options);
 
       // list of available LP solvers
-      constexpr static std::initializer_list<std::string_view> available_solvers{
+      constexpr static std::initializer_list<const char*> available_solvers{
 #ifdef HAS_BQPD
          "BQPD",
 #endif
