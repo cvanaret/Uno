@@ -59,7 +59,6 @@ namespace uno {
          options["progress_norm"] = "L1";
          options["residual_norm"] = "INF";
          options["scale_functions"] = "yes";
-         options["sparse_format"] = "COO";
          options["tolerance"] = "1e-8";
          options["loose_tolerance"] = "1e-6";
          options["loose_tolerance_consecutive_iteration_threshold"] = "15";
@@ -77,7 +76,6 @@ namespace uno {
          options["filter_type"] = "standard";
          options["progress_norm"] = "L1";
          options["residual_norm"] = "L2";
-         options["sparse_format"] = "CSC";
          options["TR_radius"] = "10";
          options["l1_constraint_violation_coefficient"] = "1.";
          options["enforce_linear_constraints"] = "yes";
@@ -104,7 +102,6 @@ namespace uno {
          options["loose_tolerance"] = "1e-6";
          options["progress_norm"] = "L1";
          options["residual_norm"] = "L1";
-         options["sparse_format"] = "CSC";
          options["LS_scale_duals_with_step_length"] = "no";
          options["protect_actual_reduction_against_roundoff"] = "no";
       }
@@ -117,7 +114,6 @@ namespace uno {
          options["globalization_strategy"] = "funnel_method";
          options["progress_norm"] = "L1";
          options["residual_norm"] = "L2";
-         options["sparse_format"] = "CSC";
          options["TR_radius"] = "10";
          options["l1_constraint_violation_coefficient"] = "1.";
          options["enforce_linear_constraints"] = "yes";
@@ -146,7 +142,6 @@ namespace uno {
          options["filter_type"] = "standard";
          options["progress_norm"] = "L1";
          options["residual_norm"] = "L2";
-         options["sparse_format"] = "CSC";
          options["TR_radius"] = "10";
          options["l1_constraint_violation_coefficient"] = "1.";
          options["enforce_linear_constraints"] = "yes";

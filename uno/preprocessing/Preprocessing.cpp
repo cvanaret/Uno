@@ -40,7 +40,7 @@ namespace uno {
       }
 
       /* build the symmetric matrix */
-      SparseSymmetricMatrix<COOSparseStorage<size_t, double>> matrix(model.number_variables + model.number_constraints,
+      SparseSymmetricMatrix<COOFormat<size_t, double>> matrix(model.number_variables + model.number_constraints,
          model.number_variables + model.number_jacobian_nonzeros(), 0);
       // identity block
       for (size_t variable_index: Range(model.number_variables)) {

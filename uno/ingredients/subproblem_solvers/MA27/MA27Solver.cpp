@@ -139,7 +139,7 @@ namespace uno {
       this->constraint_jacobian.resize(number_constraints, number_variables);
 
       // augmented system
-      this->augmented_matrix = SparseSymmetricMatrix<COOSparseStorage<size_t, double>>(dimension, number_hessian_nonzeros,
+      this->augmented_matrix = SparseSymmetricMatrix<COOFormat<size_t, double>>(dimension, number_hessian_nonzeros,
          regularization_size);
       this->rhs.resize(dimension);
       this->solution.resize(dimension);

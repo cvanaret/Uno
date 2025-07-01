@@ -47,7 +47,7 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 
       // augmented system
-      SparseSymmetricMatrix<COOSparseStorage<size_t, double>> augmented_matrix{};
+      SparseSymmetricMatrix<COOFormat<size_t, double>> augmented_matrix{};
       Vector<double> rhs{};
       Vector<double> solution{};
 

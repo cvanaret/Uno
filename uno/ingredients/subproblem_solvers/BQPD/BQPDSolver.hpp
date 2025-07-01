@@ -65,7 +65,7 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian{};
       std::vector<double> bqpd_jacobian{};
       std::vector<int> bqpd_jacobian_sparsity{};
-      SparseSymmetricMatrix<COOSparseStorage<size_t, double>> hessian{};
+      SparseSymmetricMatrix<COOFormat<size_t, double>> hessian{};
 
       int kmax{0};
       int kmax_limit;

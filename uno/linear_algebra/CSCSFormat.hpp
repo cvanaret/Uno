@@ -16,13 +16,13 @@ namespace uno {
     * https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_column_(CSC_or_CCS)
     */
    template <typename IndexType, typename ElementType>
-   class CSCSparseStorage : public SparseStorage<IndexType, ElementType> {
+   class CSCSFormat : public SparseStorage<IndexType, ElementType> {
    public:
-      CSCSparseStorage(size_t dimension, size_t capacity, size_t regularization_size);
-      CSCSparseStorage() = default;
-      ~CSCSparseStorage() override = default;
-      CSCSparseStorage& operator=(const CSCSparseStorage& other) = default;
-      CSCSparseStorage& operator=(CSCSparseStorage&& other) = default;
+      CSCSFormat(size_t dimension, size_t capacity, size_t regularization_size);
+      CSCSFormat() = default;
+      ~CSCSFormat() override = default;
+      CSCSFormat& operator=(const CSCSFormat& other) = default;
+      CSCSFormat& operator=(CSCSFormat&& other) = default;
 
       void reset() override;
       void set_dimension(size_t new_dimension) override;
@@ -49,7 +49,7 @@ namespace uno {
    };
 
    template <typename IndexType, typename ElementType>
-   CSCSparseStorage<IndexType, ElementType>::CSCSparseStorage(size_t dimension, size_t capacity, size_t regularization_size):
+   CSCSFormat<IndexType, ElementType>::CSCSFormat(size_t dimension, size_t capacity, size_t regularization_size):
          SparseStorage<IndexType, ElementType>(dimension, capacity, regularization_size),
          column_starts(dimension + 1) {
       this->entries.reserve(this->capacity);
@@ -57,7 +57,7 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void CSCSparseStorage<IndexType, ElementType>::reset() {
+   void CSCSFormat<IndexType, ElementType>::reset() {
       // empty the matrix
       this->number_nonzeros = 0;
       this->entries.clear();
@@ -67,7 +67,7 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void CSCSparseStorage<IndexType, ElementType>::set_dimension(size_t new_dimension) {
+   void CSCSFormat<IndexType, ElementType>::set_dimension(size_t new_dimension) {
       this->column_starts.resize(new_dimension + 1);
       // if we enlarge the storage, copy the column starts
       if (this->dimension < new_dimension) {
@@ -79,7 +79,7 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void CSCSparseStorage<IndexType, ElementType>::insert(ElementType term, IndexType row_index, IndexType column_index) {
+   void CSCSFormat<IndexType, ElementType>::insert(ElementType term, IndexType row_index, IndexType column_index) {
       assert(column_index == this->current_column && "The previous columns should be finalized");
 
       this->entries.emplace_back(term);
@@ -89,7 +89,7 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void CSCSparseStorage<IndexType, ElementType>::finalize_column(IndexType column_index) {
+   void CSCSFormat<IndexType, ElementType>::finalize_column(IndexType column_index) {
       assert(column_index == this->current_column && "You are not finalizing the current column");
       assert(column_index < this->dimension && "The dimension of the matrix was exceeded");
 
@@ -106,7 +106,7 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void CSCSparseStorage<IndexType, ElementType>::set_regularization(const Collection<size_t>& indices, size_t offset, double factor) {
+   void CSCSFormat<IndexType, ElementType>::set_regularization(const Collection<size_t>& indices, size_t offset, double factor) {
       assert(0 < this->regularization_size && "You are trying to regularize a matrix where regularization was not preallocated.");
 
       for (size_t row_index: indices) {
@@ -118,13 +118,13 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   std::tuple<IndexType, IndexType, ElementType> CSCSparseStorage<IndexType, ElementType>::dereference_iterator(IndexType column_index,
+   std::tuple<IndexType, IndexType, ElementType> CSCSFormat<IndexType, ElementType>::dereference_iterator(IndexType column_index,
          size_t nonzero_index) const {
       return {this->row_indices[nonzero_index], column_index, this->entries[nonzero_index]};
    }
 
    template <typename IndexType, typename ElementType>
-   void CSCSparseStorage<IndexType, ElementType>::increment_iterator(IndexType& column_index, IndexType& nonzero_index) const {
+   void CSCSFormat<IndexType, ElementType>::increment_iterator(IndexType& column_index, IndexType& nonzero_index) const {
       if (this->column_starts[column_index] <= nonzero_index && nonzero_index + 1 < this->column_starts[column_index + 1]) {
          // stay in the column
          nonzero_index++;
@@ -139,7 +139,7 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void CSCSparseStorage<IndexType, ElementType>::print(std::ostream& stream) const {
+   void CSCSFormat<IndexType, ElementType>::print(std::ostream& stream) const {
       stream << "W = "; print_vector(stream, view(this->entries, 0, this->number_nonzeros));
       stream << "with column start: "; print_vector(stream, view(this->column_starts, 0, this->dimension + 1));
       stream << "and row index: "; print_vector(stream, view(this->row_indices, 0, this->number_nonzeros));

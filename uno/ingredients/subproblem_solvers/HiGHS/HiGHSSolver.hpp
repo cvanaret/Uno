@@ -33,7 +33,7 @@ namespace uno {
       std::vector<double> constraints{};
       SparseVector<double> linear_objective{};
       RectangularMatrix<double> constraint_jacobian{};
-      SparseSymmetricMatrix<COOSparseStorage<size_t, double>> hessian{};
+      SparseSymmetricMatrix<COOFormat<size_t, double>> hessian{};
 
       const bool print_subproblem;
 
