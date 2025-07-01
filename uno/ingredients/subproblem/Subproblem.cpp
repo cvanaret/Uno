@@ -5,6 +5,7 @@
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {

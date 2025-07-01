@@ -7,9 +7,11 @@
 #include <array>
 #include <vector>
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "linear_algebra/COOFormat.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/Vector.hpp"
 
 namespace uno {
    // forward declaration

@@ -7,9 +7,11 @@
 #include <vector>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "dmumps_c.h"
+#include "linear_algebra/COOFormat.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/Vector.hpp"
 
 namespace uno {
    class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {

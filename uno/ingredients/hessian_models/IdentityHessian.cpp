@@ -3,6 +3,7 @@
 
 #include "IdentityHessian.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "tools/Logger.hpp"
 

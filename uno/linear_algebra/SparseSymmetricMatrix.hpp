@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <vector>
 #include "SymmetricMatrix.hpp"
 
 namespace uno {
@@ -59,7 +60,19 @@ namespace uno {
          this->sparse_storage.finalize_column(column_index);
       }
 
-      [[nodiscard]] value_type smallest_diagonal_entry(size_t max_dimension) const override;
+      [[nodiscard]] value_type smallest_diagonal_entry(size_t max_dimension) const override {
+         // diagonal entries might be at several locations and must be accumulated
+         // TODO preallocate this vector somewhere
+         std::vector<value_type> diagonal_entries(max_dimension, value_type(0));
+
+         for (const auto [row_index, column_index, element]: *this) {
+            if (row_index == column_index && row_index < max_dimension) {
+               diagonal_entries[row_index] += element;
+            }
+         }
+         // look at the first max_dimension diagonal entries
+         return *std::min_element(diagonal_entries.begin(), diagonal_entries.end());
+      }
 
       void set_regularization(const Collection<size_t>& indices, size_t offset, double factor) override {
          this->sparse_storage.set_regularization(indices, offset, factor);
@@ -83,26 +96,6 @@ namespace uno {
          this->sparse_storage.increment_iterator(column_index, nonzero_index);
       }
    };
-
-   // implementation
-
-   template <typename SparseStorage>
-   inline typename SparseSymmetricMatrix<SparseStorage>::value_type
-         SparseSymmetricMatrix<SparseStorage>::smallest_diagonal_entry(size_t max_dimension) const {
-      // diagonal entries might be at several locations and must be accumulated
-      // TODO preallocate this vector somewhere
-      std::vector<value_type> diagonal_entries(max_dimension, value_type(0));
-
-      for (const auto [row_index, column_index, element]: *this) {
-         if (row_index == column_index && row_index < max_dimension) {
-            diagonal_entries[row_index] += element;
-         }
-      }
-      // look at the first max_dimension diagonal entries
-      return *std::min_element(diagonal_entries.begin(), diagonal_entries.end());
-   }
-
-
 } // namespace
 
 #endif // UNO_SPARSESYMMETRICMATRIX_H

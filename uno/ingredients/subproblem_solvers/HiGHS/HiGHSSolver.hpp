@@ -6,6 +6,7 @@
 
 #include "ingredients/subproblem_solvers/LPSolver.hpp"
 #include "Highs.h"
+#include "linear_algebra/COOFormat.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"

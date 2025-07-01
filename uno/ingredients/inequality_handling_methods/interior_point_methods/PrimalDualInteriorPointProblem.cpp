@@ -6,6 +6,7 @@
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/UnaryNegation.hpp"
+#include "symbolic/VectorView.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 

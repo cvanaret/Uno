@@ -14,6 +14,7 @@
 #include "options/Options.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "symbolic/UnaryNegation.hpp"
+#include "symbolic/VectorView.hpp"
 #include "Uno.hpp"
 
 namespace uno {

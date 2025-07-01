@@ -5,8 +5,7 @@
 #define UNO_SYMMETRICMATRIX_H
 
 #include <cassert>
-#include <memory>
-#include "SparseStorageFactory.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    // forward declaration
