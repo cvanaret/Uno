@@ -1,4 +1,7 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.7)
+if(${CMAKE_VERSION} VERSION_LESS 3.12)
+	cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,13 +19,14 @@ project(unopy)
 include_directories("${CMAKE_SOURCE_DIR}/../../uno")
 
 set(UNO_DIRECTORY ${CMAKE_SOURCE_DIR}/../../uno)
-set(SOURCE_FILES ${UNO_DIRECTORY}/tools/Options.cpp)
+set(SOURCE_FILES ${UNO_DIRECTORY}/options/Options.cpp)
 set(HEADER_FILES
 		${UNO_DIRECTORY}/linear_algebra/SparseVector.hpp
 		${UNO_DIRECTORY}/linear_algebra/RectangularMatrix.hpp
-		${UNO_DIRECTORY}/tools/Options.hpp)
+		${UNO_DIRECTORY}/options/Options.hpp)
 set(PYTHON_FILES SparseVector.cpp RectangularMatrix.cpp Options.cpp unopy.cpp)
 
+set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 REQUIRED)
 
 pybind11_add_module(unopy 
