@@ -4,8 +4,8 @@
 #ifndef UNO_GLOBALIZATIONSTRATEGYFACTORY_H
 #define UNO_GLOBALIZATIONSTRATEGYFACTORY_H
 
+#include <array>
 #include <memory>
-#include <vector>
 
 namespace uno {
    // forward declarations
@@ -15,7 +15,10 @@ namespace uno {
    class GlobalizationStrategyFactory {
    public:
       static std::unique_ptr<GlobalizationStrategy> create(size_t number_constraints, const Options& options);
-      static std::vector<std::string> available_strategies();
+
+      constexpr static std::array available_strategies{
+         "l1_merit", "fletcher_filter_method", "waechter_filter_method", "funnel_method"
+      };
    };
 } // namespace
 

@@ -24,8 +24,4 @@ namespace uno {
       }
       throw std::invalid_argument("ConstraintRelaxationStrategy " + constraint_relaxation_type + " is not supported");
    }
-
-   std::vector<std::string> ConstraintRelaxationStrategyFactory::available_strategies() {
-      return {"feasibility_restoration", "l1_relaxation"};
-   }
 } // namespace

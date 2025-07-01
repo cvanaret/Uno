@@ -139,11 +139,13 @@ namespace uno {
    template <typename Container>
    std::string join(const Container& vector, const std::string& separator) {
       std::string result{};
-      if (!vector.empty()) {
-         result = vector[0];
-         for (size_t variable_index: Range(1, vector.size())) {
-            result += separator + vector[variable_index];
+      size_t index = 0;
+      for (const auto& element: vector) {
+         if (0 < index) {
+            result += separator;
          }
+         result += element;
+         index++;
       }
       return result;
    }

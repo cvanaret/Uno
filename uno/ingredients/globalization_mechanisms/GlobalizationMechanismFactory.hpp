@@ -4,8 +4,8 @@
 #ifndef UNO_GLOBALIZATIONMECHANISMFACTORY_H
 #define UNO_GLOBALIZATIONMECHANISMFACTORY_H
 
+#include <array>
 #include <memory>
-#include <vector>
 #include "GlobalizationMechanism.hpp"
 
 namespace uno {
@@ -15,7 +15,10 @@ namespace uno {
    class GlobalizationMechanismFactory {
    public:
       static std::unique_ptr<GlobalizationMechanism> create(const Options& options);
-      static std::vector<std::string> available_strategies();
+
+      constexpr static std::array available_strategies{
+         "TR", "LS"
+      };
    };
 } // namespace
 
