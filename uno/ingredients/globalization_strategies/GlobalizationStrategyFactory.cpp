@@ -32,8 +32,4 @@ namespace uno {
       }
       throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
    }
-
-   std::vector<std::string> GlobalizationStrategyFactory::available_strategies() {
-      return {"l1_merit", "fletcher_filter_method", "waechter_filter_method", "funnel_method"};
-   }
 }

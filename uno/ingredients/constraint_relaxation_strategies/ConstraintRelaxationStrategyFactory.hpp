@@ -4,8 +4,8 @@
 #ifndef UNO_CONSTRAINTRELAXATIONSTRATEGYFACTORY_H
 #define UNO_CONSTRAINTRELAXATIONSTRATEGYFACTORY_H
 
+#include <array>
 #include <memory>
-#include <vector>
 
 namespace uno {
    // forward declarations
@@ -15,7 +15,10 @@ namespace uno {
    class ConstraintRelaxationStrategyFactory {
    public:
       static std::unique_ptr<ConstraintRelaxationStrategy> create(size_t number_constraints, const Options& options);
-      static std::vector<std::string> available_strategies();
+
+      constexpr static std::array available_strategies{
+         "feasibility_restoration", "l1_relaxation"
+      };
    };
 } // namespace
 

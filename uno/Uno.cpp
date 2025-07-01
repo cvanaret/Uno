@@ -163,12 +163,12 @@ namespace uno {
 
    void Uno::print_available_strategies() {
       std::cout << "Available strategies:\n";
-      std::cout << "- Constraint relaxation strategies: " << join(ConstraintRelaxationStrategyFactory::available_strategies(), ", ") << '\n';
-      std::cout << "- Globalization mechanisms: " << join(GlobalizationMechanismFactory::available_strategies(), ", ") << '\n';
-      std::cout << "- Globalization strategies: " << join(GlobalizationStrategyFactory::available_strategies(), ", ") << '\n';
+      std::cout << "- Constraint relaxation strategies: " << join(ConstraintRelaxationStrategyFactory::available_strategies, ", ") << '\n';
+      std::cout << "- Globalization mechanisms: " << join(GlobalizationMechanismFactory::available_strategies, ", ") << '\n';
+      std::cout << "- Globalization strategies: " << join(GlobalizationStrategyFactory::available_strategies, ", ") << '\n';
       std::cout << "- Inequality handling methods: " << join(InequalityHandlingMethodFactory::available_strategies(), ", ") << '\n';
-      std::cout << "- QP solvers: " << join(QPSolverFactory::available_solvers(), ", ") << '\n';
-      std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers(), ", ") << '\n';
+      std::cout << "- QP solvers: " << join(QPSolverFactory::available_solvers, ", ") << '\n';
+      std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers, ", ") << '\n';
       std::cout << "- Linear solvers: " << join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", ") << '\n';
    }
 
