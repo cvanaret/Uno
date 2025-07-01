@@ -5,7 +5,7 @@
 * download the AMPL solver library (ASL): http://www.netlib.org/ampl/solvers/
 
 * download **optional** solvers:
-    * BQPD (indefinite null-space QP solver): https://www.mcs.anl.gov/~leyffer/solvers.html
+    * BQPD (null-space active set solver for nonconvex quadratic programming): get a precompiled binary for your architecture (https://github.com/leyffer/BQPD_jll.jl/releases) or get in touch with Sven Leyffer to apply for an academic license (https://www.mcs.anl.gov/~leyffer/solvers.html)
     * MA57 (sparse indefinite symmetric linear solver): http://www.hsl.rl.ac.uk/catalogue/ma57.html
     * LIBHSL (collection of libraries for sparse linear systems): https://licences.stfc.ac.uk/products/Software/HSL/LibHSL
     * MUMPS (sparse indefinite symmetric linear solver): https://mumps-solver.org/index.php?page=dwnld
