@@ -45,7 +45,7 @@ cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
     -DHIGHS=${LIBHIGHS} \
-    -DBQPD=${libdir}/libbqpd.a \
+    -DBQPD=${prefix}/lib/libbqpd.a \
     -DHSL=${libdir}/libhsl.${dlext} \
     -DBLA_VENDOR="libblastrampoline" \
     -DMUMPS_INCLUDE_DIR=${includedir} \
