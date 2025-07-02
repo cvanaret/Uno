@@ -7,7 +7,6 @@
 #include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "model/Model.hpp"
-#include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
