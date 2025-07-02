@@ -18,7 +18,6 @@
 #include "fortran_interface.h"
 
 #define WSC FC_GLOBAL(wsc, WSC)
-#define ALPHAC FC_GLOBAL(alphac, ALPHAC)
 #define BQPD FC_GLOBAL(bqpd, BQPD)
 #define hessian_vector_product FC_GLOBAL(gdotx, GDOTX)
 
@@ -30,11 +29,6 @@ extern "C" {
    extern struct {
       int kk, ll, kkk, lll, mxws, mxlws;
    } WSC;
-
-   // fortran common for inertia correction in wdotd
-   extern struct {
-      double alpha;
-   } ALPHAC;
 
    extern void
    BQPD(const int* n, const int* m, int* k, int* kmax, double* a, int* la, double* x, double* bl, double* bu, double* f, double* fmin, double* g,
@@ -115,7 +109,6 @@ namespace uno {
       // setting the common block here ensures that several instances of BQPD can run simultaneously
       WSC.mxws = static_cast<int>(this->size_hessian_workspace);
       WSC.mxlws = static_cast<int>(this->size_hessian_sparsity_workspace);
-      ALPHAC.alpha = 0.; // inertia control
 
       // evaluate the functions based on warmstart information
       if (warmstart_information.objective_changed) {
