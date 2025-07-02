@@ -15,31 +15,6 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    class SparseStorage {
    public:
-      class iterator {
-      public:
-         iterator(const SparseStorage<IndexType, ElementType>& sparse_storage, size_t column_index, size_t nonzero_index) :
-               sparse_storage(sparse_storage), column_index(column_index), nonzero_index(nonzero_index) {
-         }
-
-         [[nodiscard]] std::tuple<IndexType, IndexType, ElementType> operator*() const {
-            return this->sparse_storage.dereference_iterator(this->column_index, this->nonzero_index);
-         }
-
-         iterator& operator++() {
-            this->sparse_storage.increment_iterator(this->column_index, this->nonzero_index);
-            return *this;
-         }
-
-         friend bool operator!=(const iterator& a, const iterator& b) {
-            return a.nonzero_index != b.nonzero_index;
-         }
-
-      protected:
-         const SparseStorage<IndexType, ElementType>& sparse_storage;
-         size_t column_index;
-         size_t nonzero_index;
-      };
-
       using index_type = IndexType;
       using value_type = ElementType;
 
@@ -63,14 +38,6 @@ namespace uno {
       virtual void set_regularization(const Collection<size_t>& indices, size_t offset, double factor) = 0;
       virtual const ElementType* data_pointer() const noexcept = 0;
       virtual ElementType* data_pointer() noexcept = 0;
-
-      [[nodiscard]] iterator begin() const {
-         return iterator(*this, 0, 0);
-      }
-      [[nodiscard]] iterator end() const {
-         return iterator(*this, this->dimension, this->number_nonzeros);
-      }
-
       virtual void print(std::ostream& stream) const = 0;
 
       // virtual iterator functions
@@ -92,13 +59,6 @@ namespace uno {
          // if regularization is used, allocate the necessary space
          capacity(capacity + regularization_size),
          regularization_size(regularization_size) {
-   }
-
-   template <typename Index, typename Element>
-   std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& matrix) {
-      stream << "Dimension: " << matrix.dimension << ", number of nonzeros: " << matrix.number_nonzeros << '\n';
-      matrix.print(stream);
-      return stream;
    }
 } // namespace
 

@@ -78,7 +78,13 @@ namespace uno {
       template <typename Vector1, typename Vector2>
       ElementType quadratic_product(const Vector1& x, const Vector2& y) const;
 
-      virtual void print(std::ostream& stream) const = 0;
+      void print(std::ostream& stream) const {
+         stream << "Dimension: " << this->dimension() << ", number of nonzeros: " << this->number_nonzeros() << '\n';
+         for (const auto [row_index, column_index, element]: *this) {
+            stream << "m(" << row_index << ", " << column_index << ") = " << element << '\n';
+         }
+      }
+
       template <typename Index, typename Element>
       friend std::ostream& operator<<(std::ostream& stream, const SymmetricMatrix<Index, Element>& matrix);
 
@@ -126,7 +132,6 @@ namespace uno {
 
    template <typename IndexType, typename ElementType>
    inline std::ostream& operator<<(std::ostream& stream, const SymmetricMatrix<IndexType, ElementType>& matrix) {
-      stream << "Dimension: " << matrix.dimension() << ", number of nonzeros: " << matrix.number_nonzeros() << '\n';
       matrix.print(stream);
       return stream;
    }

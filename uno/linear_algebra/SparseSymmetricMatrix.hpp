@@ -81,8 +81,6 @@ namespace uno {
       [[nodiscard]] const value_type* data_pointer() const noexcept override { return this->sparse_storage.data_pointer(); }
       [[nodiscard]] value_type* data_pointer() noexcept override { return this->sparse_storage.data_pointer(); }
 
-      void print(std::ostream& stream) const override { this->sparse_storage.print(stream); }
-
    protected:
       SparseStorage sparse_storage{};
 

@@ -8,6 +8,7 @@
 #include <vector>
 #include "SparseStorage.hpp"
 #include "symbolic/Range.hpp"
+#include "symbolic/VectorView.hpp"
 
 namespace uno {
    /*
@@ -119,9 +120,9 @@ namespace uno {
 
    template <typename IndexType, typename ElementType>
    void COOFormat<IndexType, ElementType>::print(std::ostream& stream) const {
-      for (const auto [row_index, column_index, element]: *this) {
-         stream << "m(" << row_index << ", " << column_index << ") = " << element << '\n';
-      }
+      stream << "values = "; print_vector(stream, view(this->entries, 0, this->number_nonzeros));
+      stream << "with column indices: "; print_vector(stream, view(this->row_indices, 0, this->number_nonzeros));
+      stream << "and row indices: "; print_vector(stream, view(this->column_indices, 0, this->number_nonzeros));
    }
 
    template <typename IndexType, typename ElementType>
