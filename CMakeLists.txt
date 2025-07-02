@@ -11,7 +11,7 @@ endif()
 ######################
 
 # define the project name
-project(Uno VERSION 1.3.0
+project(Uno VERSION 2.0.0
         DESCRIPTION "Uno (Unifying Nonconvex Optimization)"
         LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
