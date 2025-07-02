@@ -28,8 +28,9 @@ Oscar Dowson [@odow](https://github.com/odow), David Kiessling [@david0oo](https
 We argue that most optimization methods can be broken down into the following generic ingredients:
 * a **constraint relaxation strategy**: a systematic way to relax the general constraints;
 * an **inequality handling method**: a systematic way to handle the inequality constraints;
-* a **Hessian model**: a model of the Lagrangian Hessian of the original problem;
-* a **regularization strategy**: a strategy to regularize the Lagrangian Hessian or the augmented system of the reformulated problem;
+* a **Lagrange-Newton subproblem**: a local Lagrange-Newton approximation of the reformulated problem. It includes:
+	* a **Hessian model**: a model of the Lagrangian Hessian of the original problem;
+	* a **regularization strategy**: a strategy to regularize the Lagrangian Hessian or the augmented system of the reformulated problem;
 * a **globalization strategy**: an acceptance test of the trial iterate;
 * a **globalization mechanism**: a recourse action upon rejection of the trial iterate.
 
@@ -110,4 +111,4 @@ For an overview of the available strategies, type: ```./uno_ampl --strategies```
 - to pick a Hessian model, use the argument: ```hessian_model=[exact|identity|zero]``` 
 - to pick a regularization strategy, use the argument: ```regularization_strategy=[primal|primal_dual|none]``` 
 - to pick a globalization strategy, use the argument: ```globalization_strategy=[l1_merit|fletcher_filter_method|waechter_filter_method|funnel_method]```   
-- to pick a globalization mechanism, use the argument : ```globalization_mechanism=[LS|TR]```  
+- to pick a globalization mechanism, use the argument : ```globalization_mechanism=[TR|LS]```  
