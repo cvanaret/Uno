@@ -8,7 +8,6 @@
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
-#include "symbolic/VectorExpression.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
 

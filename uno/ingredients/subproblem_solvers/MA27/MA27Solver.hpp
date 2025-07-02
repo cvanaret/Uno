@@ -7,9 +7,10 @@
 #include <array>
 #include <vector>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "linear_algebra/COOFormat.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
+#include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -69,7 +70,7 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 
       // augmented system
-      SymmetricMatrix<size_t, double> augmented_matrix{};
+      SparseSymmetricMatrix<COOFormat<size_t, double>> augmented_matrix{};
       Vector<double> rhs{};
       Vector<double> solution{};
 

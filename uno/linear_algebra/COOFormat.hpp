@@ -8,6 +8,7 @@
 #include <vector>
 #include "SparseStorage.hpp"
 #include "symbolic/Range.hpp"
+#include "symbolic/VectorView.hpp"
 
 namespace uno {
    /*
@@ -15,9 +16,13 @@ namespace uno {
     * https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)
     */
    template <typename IndexType, typename ElementType>
-   class COOSparseStorage : public SparseStorage<IndexType, ElementType> {
+   class COOFormat : public SparseStorage<IndexType, ElementType> {
    public:
-      COOSparseStorage(size_t dimension, size_t capacity, size_t regularization_size);
+      COOFormat(size_t dimension, size_t capacity, size_t regularization_size);
+      COOFormat() = default;
+      ~COOFormat() override = default;
+      COOFormat& operator=(const COOFormat& other) = default;
+      COOFormat& operator=(COOFormat&& other) = default;
 
       void reset() override;
       void set_dimension(size_t new_dimension) override;
@@ -29,6 +34,10 @@ namespace uno {
       ElementType* data_pointer() noexcept override { return this->entries.data(); }
 
       void print(std::ostream& stream) const override;
+
+      // iterator functions
+      [[nodiscard]] std::tuple<IndexType, IndexType, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const override;
+      void increment_iterator(size_t& column_index, size_t& nonzero_index) const override;
 
       const IndexType* row_indices_pointer() const {
          return this->row_indices.data();
@@ -44,21 +53,17 @@ namespace uno {
       }
 
    protected:
-      std::vector<ElementType> entries;
-      std::vector<IndexType> row_indices;
-      std::vector<IndexType> column_indices;
+      std::vector<ElementType> entries{};
+      std::vector<IndexType> row_indices{};
+      std::vector<IndexType> column_indices{};
 
       void initialize_regularization();
-
-      // iterator functions
-      [[nodiscard]] std::tuple<IndexType, IndexType, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const override;
-      void increment_iterator(size_t& column_index, size_t& nonzero_index) const override;
    };
 
    // implementation
 
    template <typename IndexType, typename ElementType>
-   COOSparseStorage<IndexType, ElementType>::COOSparseStorage(size_t dimension, size_t capacity, size_t regularization_size):
+   COOFormat<IndexType, ElementType>::COOFormat(size_t dimension, size_t capacity, size_t regularization_size):
          SparseStorage<IndexType, ElementType>(dimension, capacity, regularization_size) {
       this->entries.reserve(this->capacity);
       this->row_indices.reserve(this->capacity);
@@ -71,7 +76,7 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSparseStorage<IndexType, ElementType>::reset() {
+   void COOFormat<IndexType, ElementType>::reset() {
       // empty the matrix
       this->number_nonzeros = 0;
       this->entries.clear();
@@ -85,7 +90,7 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSparseStorage<IndexType, ElementType>::set_dimension(size_t new_dimension) {
+   void COOFormat<IndexType, ElementType>::set_dimension(size_t new_dimension) {
       this->dimension = new_dimension;
       this->entries.reserve(this->dimension);
       this->row_indices.reserve(this->dimension);
@@ -93,7 +98,7 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSparseStorage<IndexType, ElementType>::insert(ElementType term, IndexType row_index, IndexType column_index) {
+   void COOFormat<IndexType, ElementType>::insert(ElementType term, IndexType row_index, IndexType column_index) {
       assert(this->number_nonzeros <= this->row_indices.size() && "The COO matrix doesn't have a sufficient capacity");
 
       this->entries.emplace_back(term);
@@ -103,7 +108,7 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSparseStorage<IndexType, ElementType>::set_regularization(const Collection<size_t>& indices, size_t offset, double factor) {
+   void COOFormat<IndexType, ElementType>::set_regularization(const Collection<size_t>& indices, size_t offset, double factor) {
       assert(0 < this->regularization_size && "You are trying to regularize a matrix where regularization was not preallocated.");
 
       // the regularization terms (that lie at the start of the entries vector) can be directly modified
@@ -114,14 +119,14 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSparseStorage<IndexType, ElementType>::print(std::ostream& stream) const {
-      for (const auto [row_index, column_index, element]: *this) {
-         stream << "m(" << row_index << ", " << column_index << ") = " << element << '\n';
-      }
+   void COOFormat<IndexType, ElementType>::print(std::ostream& stream) const {
+      stream << "values = "; print_vector(stream, view(this->entries, 0, this->number_nonzeros));
+      stream << "with column indices: "; print_vector(stream, view(this->row_indices, 0, this->number_nonzeros));
+      stream << "and row indices: "; print_vector(stream, view(this->column_indices, 0, this->number_nonzeros));
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSparseStorage<IndexType, ElementType>::initialize_regularization() {
+   void COOFormat<IndexType, ElementType>::initialize_regularization() {
       // introduce elements at the start of the entries
       for (size_t row_index: Range(this->regularization_size)) {
          this->insert(ElementType(0), IndexType(row_index), IndexType(row_index));
@@ -129,13 +134,13 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   std::tuple<IndexType, IndexType, ElementType> COOSparseStorage<IndexType, ElementType>::dereference_iterator(size_t /*column_index*/,
+   std::tuple<IndexType, IndexType, ElementType> COOFormat<IndexType, ElementType>::dereference_iterator(size_t /*column_index*/,
          size_t nonzero_index) const {
       return {this->row_indices[nonzero_index], this->column_indices[nonzero_index], this->entries[nonzero_index]};
    }
 
    template <typename IndexType, typename ElementType>
-   void COOSparseStorage<IndexType, ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
+   void COOFormat<IndexType, ElementType>::increment_iterator(size_t& column_index, size_t& nonzero_index) const {
       nonzero_index++;
       // if end reached
       if (nonzero_index == this->number_nonzeros) {

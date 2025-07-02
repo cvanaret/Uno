@@ -3,10 +3,10 @@
 
 #include "Preprocessing.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
+#include "linear_algebra/COOFormat.hpp"
+#include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "model/Model.hpp"
-#include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
@@ -40,7 +40,7 @@ namespace uno {
       }
 
       /* build the symmetric matrix */
-      SymmetricMatrix<size_t, double> matrix("COO", model.number_variables + model.number_constraints,
+      SparseSymmetricMatrix<COOFormat<size_t, double>> matrix(model.number_variables + model.number_constraints,
          model.number_variables + model.number_jacobian_nonzeros(), 0);
       // identity block
       for (size_t variable_index: Range(model.number_variables)) {

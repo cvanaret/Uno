@@ -53,8 +53,6 @@ namespace uno {
       // Hessian model (exact|zero)
       options["hessian_model"] = "exact";
       options["regularization_strategy"] = "primal";
-      // sparse matrix format (COO|CSC)
-      options["sparse_format"] = "COO";
       // scale the functions (yes|no)
       options["scale_functions"] = "no";
       options["function_scaling_threshold"] = "100";

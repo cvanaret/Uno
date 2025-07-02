@@ -4,7 +4,6 @@
 #ifndef UNO_NORM_H
 #define UNO_NORM_H
 
-#include <algorithm>
 #include <cmath>
 #include <string>
 #include "symbolic/Range.hpp"
@@ -33,7 +32,7 @@ namespace uno {
    // generic norm function for iterators that return [key, value] pairs
    // https://stackoverflow.com/questions/38701475/how-to-overload-function-for-different-iterator-value-types-in-c
    template <typename KeyValueIterable, typename AccumulationFunction, typename ElementType = typename KeyValueIterable::value_type,
-         typename std::enable_if_t<!std::is_member_function_pointer<decltype(&KeyValueIterable::operator[])>::value, int> = 0>
+      std::enable_if_t<!std::is_member_function_pointer_v<decltype(&KeyValueIterable::operator[])>, int> = 0>
    ElementType generic_norm(const KeyValueIterable& x, const AccumulationFunction& accumulation_function) {
       ElementType result{0};
       for (const auto [_, element]: x) {

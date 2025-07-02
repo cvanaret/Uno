@@ -3,6 +3,7 @@
 
 #include "ZeroHessian.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 
 namespace uno {

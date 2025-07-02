@@ -81,8 +81,8 @@ namespace uno {
       const size_t regularization_size = (!hessian_model.is_positive_definite() &&
          regularization_strategy.performs_primal_regularization()) ? problem.get_number_original_variables() : 0;
       const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
-      this->hessian = SymmetricMatrix<size_t, double>("COO", problem.number_variables, number_hessian_nonzeros,
-         regularization_size);
+      this->hessian = SparseSymmetricMatrix<COOFormat<size_t, double>>(problem.number_variables,
+         number_hessian_nonzeros, regularization_size);
       this->kmax = (0 < number_regularized_hessian_nonzeros) ? this->kmax_limit : 0;
 
       this->size_hessian_sparsity = sizeof(intptr_t) + problem.number_variables + 3; // TODO

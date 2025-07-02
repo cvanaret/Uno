@@ -15,38 +15,17 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    class SparseStorage {
    public:
-      class iterator {
-      public:
-         iterator(const SparseStorage<IndexType, ElementType>& sparse_storage, size_t column_index, size_t nonzero_index) :
-               sparse_storage(sparse_storage), column_index(column_index), nonzero_index(nonzero_index) {
-         }
-
-         [[nodiscard]] std::tuple<IndexType, IndexType, ElementType> operator*() const {
-            return this->sparse_storage.dereference_iterator(this->column_index, this->nonzero_index);
-         }
-
-         iterator& operator++() {
-            this->sparse_storage.increment_iterator(this->column_index, this->nonzero_index);
-            return *this;
-         }
-
-         friend bool operator!=(const iterator& a, const iterator& b) {
-            return a.nonzero_index != b.nonzero_index;
-         }
-
-      protected:
-         const SparseStorage<IndexType, ElementType>& sparse_storage;
-         size_t column_index;
-         size_t nonzero_index;
-      };
-
+      using index_type = IndexType;
       using value_type = ElementType;
 
-      size_t dimension;
+      size_t dimension{0};
       size_t number_nonzeros{0};
-      size_t capacity;
+      size_t capacity{0};
 
       SparseStorage(size_t dimension, size_t capacity, size_t regularization_size);
+      SparseStorage() = default;
+      SparseStorage& operator=(const SparseStorage& other) = default;
+      SparseStorage& operator=(SparseStorage&& other) = default;
       virtual ~SparseStorage() = default;
 
       virtual void reset() = 0;
@@ -59,24 +38,17 @@ namespace uno {
       virtual void set_regularization(const Collection<size_t>& indices, size_t offset, double factor) = 0;
       virtual const ElementType* data_pointer() const noexcept = 0;
       virtual ElementType* data_pointer() noexcept = 0;
-
-      [[nodiscard]] iterator begin() const {
-         return iterator(*this, 0, 0);
-      }
-      [[nodiscard]] iterator end() const {
-         return iterator(*this, this->dimension, this->number_nonzeros);
-      }
-
       virtual void print(std::ostream& stream) const = 0;
-      template <typename Index, typename Element>
-      friend std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& matrix);
-
-   protected:
-      const size_t regularization_size;
 
       // virtual iterator functions
       [[nodiscard]] virtual std::tuple<IndexType, IndexType, ElementType> dereference_iterator(size_t column_index, size_t nonzero_index) const = 0;
       virtual void increment_iterator(size_t& column_index, size_t& nonzero_index) const = 0;
+
+      template <typename Index, typename Element>
+      friend std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& sparse_storage);
+
+   protected:
+      size_t regularization_size{0};
    };
 
    // implementation
@@ -87,13 +59,6 @@ namespace uno {
          // if regularization is used, allocate the necessary space
          capacity(capacity + regularization_size),
          regularization_size(regularization_size) {
-   }
-
-   template <typename Index, typename Element>
-   std::ostream& operator<<(std::ostream& stream, const SparseStorage<Index, Element>& matrix) {
-      stream << "Dimension: " << matrix.dimension << ", number of nonzeros: " << matrix.number_nonzeros << '\n';
-      matrix.print(stream);
-      return stream;
    }
 } // namespace
 

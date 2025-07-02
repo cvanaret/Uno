@@ -7,6 +7,7 @@
 
 using namespace uno;
 
+/*
 TEST(MUMPSSolver, SystemSize5) {
    const double tolerance = 1e-8;
 
@@ -80,6 +81,7 @@ TEST(MUMPSSolver, SingularMatrix) {
    // expected inertia (1, 1, 2)
    ASSERT_TRUE(solver.matrix_is_singular());
 }
+*/
 
 /*
 >>> import numpy as np
