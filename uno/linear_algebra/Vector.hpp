@@ -5,6 +5,7 @@
 #define UNO_VECTOR_H
 
 #include <cassert>
+#include <string>
 #include <vector>
 #include <initializer_list>
 #include "symbolic/Range.hpp"
