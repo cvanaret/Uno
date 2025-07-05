@@ -220,9 +220,16 @@ endif()
 add_library(uno STATIC ${UNO_SOURCE_FILES})
 set_property(TARGET uno PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(uno PUBLIC ${DIRECTORIES})
+
+set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+if(APPLE)
+  list(REMOVE_ITEM FORTRAN_LIBS gcc)
+  list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
+  list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
+endif()
 target_link_libraries(uno PUBLIC ${LIBRARIES}
    # link Fortran compiler even when static libraries are linked
-   ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} 
+   ${FORTRAN_LIBS}
 )
 
 ######################
