@@ -220,6 +220,9 @@ endif()
 add_library(uno STATIC ${UNO_SOURCE_FILES})
 set_property(TARGET uno PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(uno PUBLIC ${DIRECTORIES})
+
+message(STATUS "CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES = ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}")
+list(REMOVE_ITEM CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES gcc)
 target_link_libraries(uno PUBLIC ${LIBRARIES}
    # link Fortran compiler even when static libraries are linked
    ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES} 
