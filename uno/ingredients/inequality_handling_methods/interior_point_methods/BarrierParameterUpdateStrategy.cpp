@@ -1,13 +1,11 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include <cassert>
-#include <cmath>
 #include "BarrierParameterUpdateStrategy.hpp"
-
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/OptimizationProblem.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"
 
