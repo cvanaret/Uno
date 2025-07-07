@@ -112,3 +112,7 @@ For an overview of the available strategies, type: ```./uno_ampl --strategies```
 - to pick a regularization strategy, use the argument: ```regularization_strategy=[primal|primal_dual|none]``` 
 - to pick a globalization strategy, use the argument: ```globalization_strategy=[l1_merit|fletcher_filter_method|waechter_filter_method|funnel_method]```   
 - to pick a globalization mechanism, use the argument : ```globalization_mechanism=[TR|LS]```  
+
+## Acknowledgments
+
+The Uno logo was created by Charlie Vanaret based on a [saddle point icon by luimonts](https://thenounproject.com/icon/saddle-point-258207/) (CC BY 3.0).
