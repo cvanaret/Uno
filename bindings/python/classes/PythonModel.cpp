@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
-#include "PythonModel.hpp"
+#include "../modules/PythonModel.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Concatenation.hpp"
