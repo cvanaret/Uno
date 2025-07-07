@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
 #include <pybind11/pybind11.h>
 #include "linear_algebra/RectangularMatrix.hpp"
 
