@@ -262,7 +262,6 @@ else()
    message(STATUS "Found amplsolver")
    add_executable(uno_ampl EXCLUDE_FROM_ALL bindings/AMPL/AMPLModel.cpp bindings/AMPL/AMPLUserCallbacks.cpp
       bindings/AMPL/uno_ampl.cpp)
-
    target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} ${CMAKE_DL_LIBS})
    add_definitions("-D HAS_AMPLSOLVER")
    # include the corresponding directory
@@ -277,8 +276,9 @@ message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
 if(WITH_GTEST)
    find_package(GTest CONFIG REQUIRED)
    if(GTest_DIR)
-      add_executable(run_unotest ${TESTS_UNO_SOURCE_FILES})
-      target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB})
+      add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
+      target_include_directories(run_unotest PUBLIC ${DIRECTORIES})
+      target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES})
    endif()
 endif()
 
