@@ -115,7 +115,7 @@ function(link_to_uno library_name library_path)
    # include the corresponding directory
    get_filename_component(directory ${library_path} DIRECTORY)
    set(DIRECTORIES ${DIRECTORIES} ${directory} PARENT_SCOPE)
-   message(STATUS "Library ${library_name} was found.")
+   message(STATUS "Found ${library_name}")
 endfunction()
 
 # HSL or MA57
@@ -259,9 +259,10 @@ find_library(AMPLSOLVER amplsolver)
 if(NOT AMPLSOLVER)
    message(WARNING "Optional library amplsolver (ASL) was not found.")
 else()
-   message(STATUS "Library amplsolver was found.")
-   add_executable(uno_ampl bindings/AMPL/AMPLModel.cpp bindings/AMPL/AMPLUserCallbacks.cpp bindings/AMPL/uno_ampl.cpp)
-   
+   message(STATUS "Found amplsolver")
+   add_executable(uno_ampl EXCLUDE_FROM_ALL bindings/AMPL/AMPLModel.cpp bindings/AMPL/AMPLUserCallbacks.cpp
+      bindings/AMPL/uno_ampl.cpp)
+
    target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} ${CMAKE_DL_LIBS})
    add_definitions("-D HAS_AMPLSOLVER")
    # include the corresponding directory
@@ -275,9 +276,7 @@ endif()
 message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
 if(WITH_GTEST)
    find_package(GTest CONFIG REQUIRED)
-   if(NOT GTest_DIR)
-      message(WARNING "Optional library GTest was not found.")
-   else()
+   if(GTest_DIR)
       add_executable(run_unotest ${TESTS_UNO_SOURCE_FILES})
       target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB})
    endif()
