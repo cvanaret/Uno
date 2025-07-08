@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <pybind11/pybind11.h>
+#include "options/DefaultOptions.hpp"
 #include "options/Options.hpp"
 
 namespace py = pybind11;
@@ -12,6 +13,14 @@ namespace uno {
       py::class_<Options>(module, "Options")
          // constructor
          .def(py::init<bool>(), py::arg("are_default_options"), "Constructor")
+         // static methods
+         .def_static("get_default", []() {
+            Options options = DefaultOptions::load();
+            // determine the default solvers based on the available libraries
+            Options solvers_options = DefaultOptions::determine_solvers();
+            options.overwrite_with(solvers_options);
+            return options;
+         }, "create default options")
          // methods
          .def("__setitem__", [](Options& options, const std::string& key, const std::string& value) {
             options[key] = value;
@@ -19,11 +28,9 @@ namespace uno {
          //.def("__getitem__", &Options::get_string, py::arg("key"), "Read an option")
          //.def_static("get_default_options", &Options::get_default_options, py::arg("file_path"), "Read default options from an option file")
          // string representation
-         /*
          .def("__repr__", [](const Options& options) {
-            return options.to_string(false);
-         })
-         */
+            return options.to_string();
+         });
       ;
    }
 } // namespace

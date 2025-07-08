@@ -273,6 +273,36 @@ if(AMPLSOLVER)
    include_directories(${directory})
 endif()
 
+############################
+# optional Python bindings #
+############################
+
+set(PYBIND11_FINDPYTHON ON)
+find_package(pybind11)
+if(pybind11_DIR)
+   # link-time optimization
+   if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto=auto")
+   endif()
+
+   set(HEADER_FILES
+      uno/linear_algebra/RectangularMatrix.hpp
+      uno/linear_algebra/SparseVector.hpp
+   )
+   set(PYTHON_MODULES
+      bindings/python/modules/Options.cpp
+      bindings/python/modules/RectangularMatrix.cpp
+      bindings/python/modules/SparseVector.cpp
+      bindings/python/modules/SymmetricMatrix.cpp
+      bindings/python/unopy.cpp
+   )
+
+   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+   pybind11_add_module(unopy EXCLUDE_FROM_ALL ${UNO_SOURCE_FILES} ${PYTHON_MODULES})
+   target_link_libraries(unopy PUBLIC ${LIBRARIES})
+   target_include_directories(unopy PUBLIC ${DIRECTORIES} uno)
+endif()
+
 ##################################
 # optional GoogleTest unit tests #
 ##################################
