@@ -29,6 +29,11 @@ endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders)
 
+# options
+option(BUILD_STATIC_LIBS "Build using static libraries" ON)
+option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
+option(WITH_GTEST "Enable GoogleTest" OFF)
+
 # determine whether a Fortran compiler is required, based on the available optional dependencies
 find_library(HSL hsl)
 find_library(MA57 ma57)
@@ -42,6 +47,14 @@ if(HSL OR MA57 OR MA27 OR BQPD)
    FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
                                MACRO_NAMESPACE "FC_"
                                SYMBOL_NAMESPACE "FC_")
+   # link with Fortran libraries (should be filtered for Apple architectures)
+   # even when static libraries are linked
+   set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+   if(APPLE)
+      list(REMOVE_ITEM FORTRAN_LIBS gcc)
+      list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
+      list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
+   endif()
 endif()
 
 # directories
@@ -217,20 +230,27 @@ endif()
 ###############
 # Uno library #
 ###############
-add_library(uno STATIC ${UNO_SOURCE_FILES})
-set_property(TARGET uno PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_include_directories(uno PUBLIC ${DIRECTORIES})
+# compile the Uno source files once, whatever the compilation type is (static or shared)
+add_library(uno_files OBJECT ${UNO_SOURCE_FILES})
+target_include_directories(uno_files PUBLIC ${DIRECTORIES})
+target_link_libraries(uno_files PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
+set_property(TARGET uno_files PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
-if(APPLE)
-  list(REMOVE_ITEM FORTRAN_LIBS gcc)
-  list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
-  list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
+if(BUILD_STATIC_LIBS)
+   add_library(uno_static STATIC $<TARGET_OBJECTS:uno_files>)
+   set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
+   # by default, the target to install is the static library
+   set(DEFAULT_UNO_LIB uno_static)
 endif()
-target_link_libraries(uno PUBLIC ${LIBRARIES}
-   # link Fortran compiler even when static libraries are linked
-   ${FORTRAN_LIBS}
-)
+
+if(BUILD_SHARED_LIBS)
+   add_library(uno_shared SHARED $<TARGET_OBJECTS:uno_files>)
+   set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
+   # if the static library has not been built, the target to install is the shared library
+   if(NOT BUILD_STATIC_LIBS)
+      set(DEFAULT_UNO_LIB uno_shared)
+   endif()
+endif()
 
 ######################
 # optional AMPL main #
@@ -242,7 +262,7 @@ else()
    message(STATUS "Library amplsolver was found.")
    add_executable(uno_ampl bindings/AMPL/AMPLModel.cpp bindings/AMPL/AMPLUserCallbacks.cpp bindings/AMPL/uno_ampl.cpp)
    
-   target_link_libraries(uno_ampl PUBLIC uno ${AMPLSOLVER} ${CMAKE_DL_LIBS})
+   target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} ${CMAKE_DL_LIBS})
    add_definitions("-D HAS_AMPLSOLVER")
    # include the corresponding directory
    get_filename_component(directory ${AMPLSOLVER} DIRECTORY)
@@ -252,7 +272,6 @@ endif()
 ##################################
 # optional GoogleTest unit tests #
 ##################################
-option(WITH_GTEST "Enable GoogleTest" OFF)
 message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
 if(WITH_GTEST)
    find_package(GTest CONFIG REQUIRED)
@@ -260,6 +279,27 @@ if(WITH_GTEST)
       message(WARNING "Optional library GTest was not found.")
    else()
       add_executable(run_unotest ${TESTS_UNO_SOURCE_FILES})
-      target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
+      target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB})
    endif()
 endif()
+
+#########################################
+# install library (and AMPL executable) #
+#########################################
+set(INSTALL_TARGETS "")
+if(TARGET uno_static)
+   list(APPEND INSTALL_TARGETS uno_static)
+endif()
+if(TARGET uno_shared)
+   list(APPEND INSTALL_TARGETS uno_shared)
+endif()
+if(TARGET uno_ampl)
+   list(APPEND INSTALL_TARGETS uno_ampl)
+endif()
+install(TARGETS ${INSTALL_TARGETS}
+  COMPONENT libuno
+  EXPORT UnoTargets
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # DLLs on windows
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Static libraries
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Shared libraries
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
