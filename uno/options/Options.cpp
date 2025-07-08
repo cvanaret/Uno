@@ -119,6 +119,14 @@ namespace uno {
       }
    }
 
+   std::string Options::to_string() const {
+      std::string options{};
+      for (const auto& [option_name, option_value]: this->options) {
+         options.append("- ").append(option_name).append(" = ").append(option_value).append("\n");
+      }
+      return options;
+   }
+
    void Options::print_used() const {
       size_t number_used_options = 0;
       std::string option_list{};
