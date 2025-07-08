@@ -121,7 +121,7 @@ cmake \
     -DLAPACK_LIBRARIES="${libdir}/libopenblas.${dlext}" \
     ..
 
-make uno_static -j${nproc}
+make -j${nproc}
 
 # Uno does not support `make install`. Manually copy for now.
 install -v -m 755 "uno_ampl${exeext}" -t "${bindir}"

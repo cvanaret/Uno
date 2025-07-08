@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.7)
 if(${CMAKE_VERSION} VERSION_LESS 3.12)
-	cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
+   cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 endif()
 
 ######################
@@ -32,6 +32,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${C
 # options
 option(BUILD_STATIC_LIBS "Build using static libraries" ON)
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
+if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
+   message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
+endif()
 option(WITH_GTEST "Enable GoogleTest" OFF)
 
 # determine whether a Fortran compiler is required, based on the available optional dependencies
@@ -45,8 +48,8 @@ if(HSL OR MA57 OR MA27 OR BQPD)
    include(FortranCInterface)
    FortranCInterface_VERIFY(CXX)
    FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
-                               MACRO_NAMESPACE "FC_"
-                               SYMBOL_NAMESPACE "FC_")
+           MACRO_NAMESPACE "FC_"
+           SYMBOL_NAMESPACE "FC_")
    # link with Fortran libraries (should be filtered for Apple architectures)
    # even when static libraries are linked
    set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
@@ -62,42 +65,42 @@ set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
 
 # source files
 file(GLOB UNO_SOURCE_FILES
-   uno/Uno.cpp
-   uno/ingredients/constraint_relaxation_strategies/*.cpp
-   uno/ingredients/globalization_mechanisms/*.cpp
-   uno/ingredients/globalization_strategies/*.cpp
-   uno/ingredients/globalization_strategies/switching_methods/*.cpp
-   uno/ingredients/globalization_strategies/switching_methods/filter_methods/*.cpp
-   uno/ingredients/globalization_strategies/switching_methods/filter_methods/filters/*.cpp
-   uno/ingredients/globalization_strategies/switching_methods/funnel_methods/*.cpp
-   uno/ingredients/hessian_models/*.cpp
-   uno/ingredients/inequality_handling_methods/*.cpp
-   uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
-   uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
-   uno/ingredients/regularization_strategies/*.cpp
-   uno/ingredients/subproblem/*.cpp
-   uno/ingredients/subproblem_solvers/*.cpp
-   uno/model/*.cpp
-   uno/optimization/*.cpp
-   uno/options/*.cpp
-   uno/preprocessing/*.cpp
-   uno/tools/*.cpp
+        uno/Uno.cpp
+        uno/ingredients/constraint_relaxation_strategies/*.cpp
+        uno/ingredients/globalization_mechanisms/*.cpp
+        uno/ingredients/globalization_strategies/*.cpp
+        uno/ingredients/globalization_strategies/switching_methods/*.cpp
+        uno/ingredients/globalization_strategies/switching_methods/filter_methods/*.cpp
+        uno/ingredients/globalization_strategies/switching_methods/filter_methods/filters/*.cpp
+        uno/ingredients/globalization_strategies/switching_methods/funnel_methods/*.cpp
+        uno/ingredients/hessian_models/*.cpp
+        uno/ingredients/inequality_handling_methods/*.cpp
+        uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
+        uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
+        uno/ingredients/regularization_strategies/*.cpp
+        uno/ingredients/subproblem/*.cpp
+        uno/ingredients/subproblem_solvers/*.cpp
+        uno/model/*.cpp
+        uno/optimization/*.cpp
+        uno/options/*.cpp
+        uno/preprocessing/*.cpp
+        uno/tools/*.cpp
 )
 
 # unit test source files
 file(GLOB TESTS_UNO_SOURCE_FILES
-   unotest/unit_tests/unotest.cpp
-   unotest/unit_tests/CollectionAdapterTests.cpp
-   unotest/unit_tests/ConcatenationTests.cpp
-   unotest/unit_tests/COOSparseStorageTests.cpp
-   unotest/unit_tests/CSCSparseStorageTests.cpp
-   unotest/unit_tests/MatrixVectorProductTests.cpp
-   unotest/unit_tests/RangeTests.cpp
-   unotest/unit_tests/ScalarMultipleTests.cpp
-   unotest/unit_tests/SparseVectorTests.cpp
-   unotest/unit_tests/SumTests.cpp
-   unotest/unit_tests/VectorTests.cpp
-   unotest/unit_tests/VectorViewTests.cpp
+        unotest/unit_tests/unotest.cpp
+        unotest/unit_tests/CollectionAdapterTests.cpp
+        unotest/unit_tests/ConcatenationTests.cpp
+        unotest/unit_tests/COOSparseStorageTests.cpp
+        unotest/unit_tests/CSCSparseStorageTests.cpp
+        unotest/unit_tests/MatrixVectorProductTests.cpp
+        unotest/unit_tests/RangeTests.cpp
+        unotest/unit_tests/ScalarMultipleTests.cpp
+        unotest/unit_tests/SparseVectorTests.cpp
+        unotest/unit_tests/SumTests.cpp
+        unotest/unit_tests/VectorTests.cpp
+        unotest/unit_tests/VectorViewTests.cpp
 )
 
 #########################
@@ -123,24 +126,19 @@ find_library(HSL hsl)
 if(HSL)
    link_to_uno(hsl ${HSL})
 else()
-   message(WARNING "Optional library HSL was not found.")
    find_library(MA57 ma57)
    if(MA57)
       link_to_uno(ma57 ${MA57})
-   else()
-      message(WARNING "Optional library MA57 was not found.")
    endif()
    find_library(MA27 ma27)
    if(MA27)
       link_to_uno(ma27 ${MA27})
-   else()
-      message(WARNING "Optional library MA27 was not found.")
    endif()
 endif()
 if(HSL OR MA57)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA57/MA57Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
-   
+
    find_package(BLAS REQUIRED)
    list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 endif()
@@ -154,17 +152,13 @@ endif()
 
 # METIS
 find_library(METIS metis)
-if(NOT METIS)
-   message(WARNING "Optional library METIS was not found.")
-else()
+if(METIS)
    link_to_uno(metis ${METIS})
 endif()
 
 # BQPD
 find_library(BQPD bqpd)
-if(NOT BQPD)
-   message(WARNING "Optional library BQPD was not found.")
-else()
+if(BQPD)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/BQPDSolverTests.cpp)
    link_to_uno(bqpd ${BQPD})
@@ -172,9 +166,7 @@ endif()
 
 # HiGHS
 find_package(HIGHS)
-if(NOT HIGHS_FOUND)
-   message(WARNING "Optional library HiGHS was not found.")
-else()
+if(HIGHS_FOUND)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
    list(APPEND LIBRARIES highs::highs)
@@ -183,9 +175,7 @@ endif()
 
 # MUMPS
 find_package(MUMPS)
-if(NOT MUMPS_LIBRARY)
-   message(WARNING "Optional library MUMPS was not found.")
-else()
+if(MUMPS_LIBRARY)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MUMPS/MUMPSSolver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MUMPSSolverTests.cpp)
    list(APPEND LIBRARIES ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
@@ -256,13 +246,12 @@ endif()
 # optional AMPL main #
 ######################
 find_library(AMPLSOLVER amplsolver)
-if(NOT AMPLSOLVER)
-   message(WARNING "Optional library amplsolver (ASL) was not found.")
-else()
+if(AMPLSOLVER)
    message(STATUS "Found amplsolver")
    add_executable(uno_ampl EXCLUDE_FROM_ALL bindings/AMPL/AMPLModel.cpp bindings/AMPL/AMPLUserCallbacks.cpp
-      bindings/AMPL/uno_ampl.cpp)
-   target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} ${CMAKE_DL_LIBS})
+           bindings/AMPL/uno_ampl.cpp)
+   target_include_directories(uno_ampl PUBLIC ${DIRECTORIES})
+   target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} ${LIBRARIES} ${CMAKE_DL_LIBS} ${FORTRAN_LIBS})
    add_definitions("-D HAS_AMPLSOLVER")
    # include the corresponding directory
    get_filename_component(directory ${AMPLSOLVER} DIRECTORY)
@@ -296,9 +285,9 @@ if(TARGET uno_ampl)
    list(APPEND INSTALL_TARGETS uno_ampl)
 endif()
 install(TARGETS ${INSTALL_TARGETS}
-  COMPONENT libuno
-  EXPORT UnoTargets
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # DLLs on windows
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Static libraries
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Shared libraries
-  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+        COMPONENT libuno
+        EXPORT UnoTargets
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # DLLs on windows
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Static libraries
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Shared libraries
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
