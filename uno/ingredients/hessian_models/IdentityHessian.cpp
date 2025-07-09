@@ -8,6 +8,14 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
+   bool IdentityHessian::has_implicit_representation() const {
+      return true;
+   }
+
+   bool IdentityHessian::has_explicit_representation() const {
+      return true;
+   }
+
    void IdentityHessian::initialize(const Model& /*model*/) {
       // do nothing
    }

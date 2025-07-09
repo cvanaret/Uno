@@ -7,6 +7,14 @@
 #include "model/Model.hpp"
 
 namespace uno {
+   bool ZeroHessian::has_implicit_representation() const {
+      return true;
+   }
+
+   bool ZeroHessian::has_explicit_representation() const {
+      return true;
+   }
+
    void ZeroHessian::initialize(const Model& /*model*/) {
    }
 

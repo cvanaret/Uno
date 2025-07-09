@@ -22,8 +22,8 @@
 #define hessian_vector_product FC_GLOBAL(gdotx, GDOTX)
 
 extern "C" {
-   void hessian_vector_product([[maybe_unused]] int *dimension, const double vector[], const double hessian_values[],
-      const int hessian_sparsity[], double result[]);
+   void hessian_vector_product([[maybe_unused]] int *dimension, const double vector[], const double ws[],
+      const int lws[], double result[]);
 
    // fortran common block used in bqpd/bqpd.f
    extern struct {
@@ -70,14 +70,17 @@ namespace uno {
          this->active_set[variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
       }
 
-      // determine whether the subproblem has curvature
+      // Hessian: determine whether the subproblem has curvature
       const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
       const size_t regularization_size = (!hessian_model.is_positive_definite() &&
          regularization_strategy.performs_primal_regularization()) ? problem.get_number_original_variables() : 0;
       const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
-      this->hessian = SparseSymmetricMatrix<COOFormat<size_t, double>>(problem.number_variables,
-         number_hessian_nonzeros, regularization_size);
       this->kmax = (0 < number_regularized_hessian_nonzeros) ? this->kmax_limit : 0;
+      // if the Hessian model only has an explicit representation, allocate an explicit Hessian matrix
+      if (!hessian_model.has_implicit_representation() && hessian_model.has_explicit_representation()) {
+         this->hessian = SparseSymmetricMatrix<COOFormat<size_t, double>>(problem.number_variables,
+            number_hessian_nonzeros, regularization_size);
+      }
 
       // 4 pointers hidden in lws
       constexpr size_t hidden_pointers_size = 4*sizeof(intptr_t);
@@ -342,11 +345,29 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
    assert(subproblem != nullptr && "BQPD's hessian_vector_product: subproblem is NULL");
    assert(hessian != nullptr && "BQPD's hessian_vector_product: hessian is NULL");
 
-   // if the Hessian has not been evaluated at the current point, evaluate it
-   if (*evaluate_hessian) {
-      hessian->reset();
-      subproblem->compute_regularized_hessian(*statistics, *hessian);
-      *evaluate_hessian = false;
+   // by default, try to perform a Hessian-vector product if possible
+   if (subproblem->has_implicit_hessian_representation()) {
+      uno::Vector<double> uno_vector(*dimension); // TODO wrap
+      for (size_t index: uno::Range(*dimension)) {
+         uno_vector[index] = vector[index];
+      }
+      uno::Vector<double> uno_result(*dimension); // TODO wrap
+      subproblem->compute_hessian_vector_product(uno_vector, uno_result);
+      for (size_t index: uno::Range(*dimension)) {
+         result[index] = uno_result[index];
+      }
    }
-   hessian->product(vector, result);
+   // otherwise, try to compute the explicit matrix
+   else if (subproblem->has_explicit_hessian_representation()) {
+      // if the Hessian has not been evaluated at the current point, evaluate it
+      if (*evaluate_hessian) {
+         hessian->reset();
+         subproblem->compute_regularized_hessian(*statistics, *hessian);
+         *evaluate_hessian = false;
+      }
+      hessian->product(vector, result);
+   }
+   else {
+      throw std::runtime_error("Hessian model cannot be evaluated");
+   }
 }

@@ -41,6 +41,10 @@ namespace uno {
       }
    }
 
+   void Subproblem::compute_hessian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      return this->problem.compute_hessian_vector_product(this->hessian_model, vector, this->current_multipliers, result);
+   }
+
    void Subproblem::assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
          RectangularMatrix<double>& constraint_jacobian) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
@@ -105,6 +109,14 @@ namespace uno {
          variables_lower_bounds[variable_index] = this->problem.variable_lower_bound(variable_index) - this->current_iterate.primals[variable_index];
          variables_upper_bounds[variable_index] = this->problem.variable_upper_bound(variable_index) - this->current_iterate.primals[variable_index];
       }
+   }
+
+   bool Subproblem::has_implicit_hessian_representation() const {
+      return this->hessian_model.has_implicit_representation();
+   }
+
+   bool Subproblem::has_explicit_hessian_representation() const {
+      return this->hessian_model.has_explicit_representation();
    }
 
    double Subproblem::dual_regularization_factor() const {
