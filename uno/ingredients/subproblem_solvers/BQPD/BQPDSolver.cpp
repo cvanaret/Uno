@@ -79,13 +79,14 @@ namespace uno {
          number_hessian_nonzeros, regularization_size);
       this->kmax = (0 < number_regularized_hessian_nonzeros) ? this->kmax_limit : 0;
 
-      this->size_hessian_sparsity = sizeof(intptr_t) + problem.number_variables + 3; // TODO
+      // 4 pointers hidden in lws
+      constexpr size_t hidden_pointers_size = 4*sizeof(intptr_t);
+      this->size_hessian_sparsity = hidden_pointers_size + problem.number_variables + 3;
       this->size_hessian_workspace = 0 + static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) +
          2 * problem.number_variables + problem.number_constraints + this->mxwk0;
       this->size_hessian_sparsity_workspace = this->size_hessian_sparsity + static_cast<size_t>(this->kmax) + this->mxiwk0;
       this->workspace.resize(this->size_hessian_workspace); // ws
       this->workspace_sparsity.resize(this->size_hessian_sparsity_workspace); // lws
-      this->current_hessian_indices.resize(problem.number_variables);
    }
 
    void BQPDSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
@@ -119,8 +120,7 @@ namespace uno {
          subproblem.evaluate_jacobian(this->constraint_jacobian);
       }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->hessian.reset();
-         subproblem.compute_regularized_hessian(statistics, this->hessian);
+         this->evaluate_hessian = true;
       }
 
       // variable bounds
@@ -141,11 +141,11 @@ namespace uno {
          this->upper_bounds[variable_index] = std::min(BIG, this->upper_bounds[variable_index]);
       }
 
-      // save Jacobian (objective and constraints) and Hessian in BQPD format
+      // save objective gradient and constraint Jacobian into BQPD workspace
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->save_gradients_to_local_format(subproblem.number_constraints);
+         this->save_gradients_into_workspace(subproblem.number_constraints);
       }
-      this->hide_pointers_in_workspace();
+      this->hide_pointers_in_workspace(statistics, subproblem);
    }
 
    void BQPDSolver::display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const {
@@ -207,19 +207,23 @@ namespace uno {
       return mode;
    }
 
-   void BQPDSolver::hide_pointers_in_workspace() {
+   // hide pointers to arbitrary objects into this->workspace_sparsity (BQPD's lws)
+   void BQPDSolver::hide_pointers_in_workspace(Statistics& statistics, const Subproblem& subproblem) {
       WSC.kk = 0; // length of ws that is used by gdotx
       WSC.ll = 0; // length of lws that is used by gdotx
 
-      // hide pointer to the Hessian in lws
-      intptr_t pointer_to_hessian = reinterpret_cast<intptr_t>(&this->hessian);
-      std::copy(reinterpret_cast<const char *>(&pointer_to_hessian),
-         reinterpret_cast<const char *>(&pointer_to_hessian) + sizeof(intptr_t),
-         reinterpret_cast<char *>(this->workspace_sparsity.data()));
+      // hide pointer to this->evaluate_hessian, statistics, subproblem and Hessian
+      hide_pointer(0, this->workspace_sparsity.data(), this->evaluate_hessian);
+      WSC.ll += sizeof(intptr_t);
+      hide_pointer(1, this->workspace_sparsity.data(), statistics);
+      WSC.ll += sizeof(intptr_t);
+      hide_pointer(2, this->workspace_sparsity.data(), subproblem);
+      WSC.ll += sizeof(intptr_t);
+      hide_pointer(3, this->workspace_sparsity.data(), this->hessian);
       WSC.ll += sizeof(intptr_t);
    }
 
-   void BQPDSolver::save_gradients_to_local_format(size_t number_constraints) {
+   void BQPDSolver::save_gradients_into_workspace(size_t number_constraints) {
       size_t current_index = 0;
       for (const auto [variable_index, derivative]: this->linear_objective) {
          assert(current_index < this->bqpd_jacobian.size() && "The allocation of bqpd_jacobian was not sufficient");
@@ -328,13 +332,21 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
       result[i] = 0.;
    }
 
-   // retrieve Hessian
-   intptr_t pointer_to_hessian;
-   std::copy(reinterpret_cast<const char *>(lws),
-      reinterpret_cast<const char *>(lws) + sizeof(intptr_t),
-      reinterpret_cast<char *>(&pointer_to_hessian));
-   const uno::SymmetricMatrix<size_t, double>* hessian = reinterpret_cast<const uno::SymmetricMatrix<size_t, double>*>(pointer_to_hessian);
-   assert(hessian != nullptr && "BQPD's hessian_vector_product: the hessian is NULL");
+   // retrieve flag evaluate_hessian, statistics, subproblem and Hessian
+   bool* evaluate_hessian = uno::retrieve_pointer<bool>(0, lws);
+   uno::Statistics* statistics = uno::retrieve_pointer<uno::Statistics>(1, lws);
+   uno::Subproblem* subproblem = uno::retrieve_pointer<uno::Subproblem>(2, lws);
+   uno::SymmetricMatrix<size_t, double>* hessian = uno::retrieve_pointer<uno::SymmetricMatrix<size_t, double>>(3, lws);
+   assert(evaluate_hessian != nullptr && "BQPD's hessian_vector_product: the flag evaluate_hessian is NULL");
+   assert(statistics != nullptr && "BQPD's hessian_vector_product: statistics is NULL");
+   assert(subproblem != nullptr && "BQPD's hessian_vector_product: subproblem is NULL");
+   assert(hessian != nullptr && "BQPD's hessian_vector_product: hessian is NULL");
 
+   // if the Hessian has not been evaluated at the current point, evaluate it
+   if (*evaluate_hessian) {
+      hessian->reset();
+      subproblem->compute_regularized_hessian(*statistics, *hessian);
+      *evaluate_hessian = false;
+   }
    hessian->product(vector, result);
 }
