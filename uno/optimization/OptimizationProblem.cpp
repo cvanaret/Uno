@@ -158,26 +158,26 @@ namespace uno {
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
-      const Range variables_range = Range(this->model.number_variables);
+      const Range variables_range = Range(std::min(this->number_variables, primals.size()));
       const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
          if (0. < multipliers.lower_bounds[variable_index]) {
-            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->model.variable_lower_bound(variable_index)) - shift_value;
+            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index)) - shift_value;
          }
          if (multipliers.upper_bounds[variable_index] < 0.) {
-            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->model.variable_upper_bound(variable_index)) - shift_value;
+            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->variable_upper_bound(variable_index)) - shift_value;
          }
          return 0.;
       }};
 
       // inequality constraints
-      const VectorExpression constraint_complementarity{this->model.get_inequality_constraints(), [&](size_t constraint_index) {
+      const VectorExpression constraint_complementarity{this->get_inequality_constraints(), [&](size_t constraint_index) {
          if (0. < multipliers.constraints[constraint_index]) { // lower bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_lower_bound(constraint_index)) -
-                   shift_value;
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_lower_bound(constraint_index)) -
+               shift_value;
          }
          else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->model.constraint_upper_bound(constraint_index)) -
-                   shift_value;
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_upper_bound(constraint_index)) -
+               shift_value;
          }
          return 0.;
       }};

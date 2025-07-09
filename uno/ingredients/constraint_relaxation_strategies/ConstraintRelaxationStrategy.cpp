@@ -137,20 +137,24 @@ namespace uno {
       // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
       optimality_problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, iterate, iterate.multipliers);
       iterate.residuals.stationarity = OptimizationProblem::stationarity_error(iterate.residuals.lagrangian_gradient, iterate.objective_multiplier,
-            this->residual_norm);
+         this->residual_norm);
       feasibility_problem.evaluate_lagrangian_gradient(iterate.feasibility_residuals.lagrangian_gradient, iterate, iterate.feasibility_multipliers);
       iterate.feasibility_residuals.stationarity = OptimizationProblem::stationarity_error(iterate.feasibility_residuals.lagrangian_gradient, 0.,
-            this->residual_norm);
+         this->residual_norm);
 
       // constraint violation of the original problem
       iterate.primal_feasibility = model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
 
       // complementarity error
       constexpr double shift_value = 0.;
-      iterate.residuals.complementarity = optimality_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
-            iterate.multipliers, shift_value, this->residual_norm);
-      iterate.feasibility_residuals.complementarity = feasibility_problem.complementarity_error(iterate.primals, iterate.evaluations.constraints,
-            iterate.feasibility_multipliers, shift_value, this->residual_norm);
+      // TODO preallocate constraints
+      std::vector<double> constraints(optimality_problem.number_constraints);
+      optimality_problem.evaluate_constraints(iterate, constraints);
+      iterate.residuals.complementarity = optimality_problem.complementarity_error(iterate.primals, constraints,
+         iterate.multipliers, shift_value, this->residual_norm);
+      feasibility_problem.evaluate_constraints(iterate, constraints);
+      iterate.feasibility_residuals.complementarity = feasibility_problem.complementarity_error(iterate.primals, constraints,
+         iterate.feasibility_multipliers, shift_value, this->residual_norm);
 
       // scaling factors
       iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(model, iterate.multipliers);

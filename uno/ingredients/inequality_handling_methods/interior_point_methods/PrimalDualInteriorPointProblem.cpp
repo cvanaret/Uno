@@ -254,11 +254,6 @@ namespace uno {
       }
    }
 
-   double PrimalDualInteriorPointProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
-         const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
-      return this->first_reformulation.complementarity_error(primals, constraints, multipliers, shift_value, residual_norm);
-   }
-
    double PrimalDualInteriorPointProblem::dual_regularization_factor() const {
       return std::pow(this->barrier_parameter, this->parameters.dual_regularization_exponent);
    }
