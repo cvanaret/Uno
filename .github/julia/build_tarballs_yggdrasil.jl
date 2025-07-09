@@ -61,6 +61,8 @@ cmake \
     ..
 
 make uno_ampl -j${nproc}
+make uno_ampl -j${nproc}
+make uno_ampl -j${nproc}
 make install
 
 # Uno
@@ -74,6 +76,7 @@ install_license ${WORKSPACE}/srcdir/Uno/LICENSE_BQPD
 platforms = supported_platforms()
 filter!(p -> !(Sys.isfreebsd(p) && arch(p) == "aarch64"), platforms)
 platforms = expand_cxxstring_abis(platforms)
+platforms = expand_gfortran_versions(platforms)
 
 products = [
     # This LibraryProduct may be useful once Uno provides a C API. We omit it for now.
