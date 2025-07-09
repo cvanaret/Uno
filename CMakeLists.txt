@@ -50,14 +50,6 @@ if(HSL OR MA57 OR MA27 OR BQPD)
    FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
            MACRO_NAMESPACE "FC_"
            SYMBOL_NAMESPACE "FC_")
-   # link with Fortran libraries (should be filtered for Apple architectures)
-   # even when static libraries are linked
-   set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
-   if(APPLE)
-      list(REMOVE_ITEM FORTRAN_LIBS gcc)
-      list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
-      list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
-   endif()
 endif()
 
 # directories
@@ -220,6 +212,15 @@ endif()
 ###############
 # Uno library #
 ###############
+# link with Fortran libraries (should be filtered for Apple architectures)
+# even when static libraries are linked
+set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+if(APPLE)
+   list(REMOVE_ITEM FORTRAN_LIBS gcc)
+   list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
+   list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
+endif()
+
 # compile the Uno source files once, whatever the compilation type is (static or shared)
 add_library(uno_files OBJECT ${UNO_SOURCE_FILES})
 target_include_directories(uno_files PUBLIC ${DIRECTORIES})
