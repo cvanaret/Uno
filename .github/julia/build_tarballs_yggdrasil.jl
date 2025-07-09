@@ -44,7 +44,7 @@ cmake \
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
     -DCMAKE_BUILD_TYPE=Release \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
-    -DHIGHS=${LIBHIGHS} \
+    -DHIGHS_DIR=${LIBHIGHS} \
     -DBQPD=${prefix}/lib/libbqpd.a \
     -DHSL=${libdir}/libhsl.${dlext} \
     -DBLA_VENDOR="libblastrampoline" \
@@ -80,6 +80,8 @@ products = [
     # LibraryProduct("libuno", :libuno),
     # We call this amplexe to match the convention of other JLL packages (like Ipopt_jll) that provide AMPL wrappers
     ExecutableProduct("uno_ampl", :amplexe),
+    LibraryProduct("libuno", :libuno),
+    FileProduct("lib/libuno.a", :libuno_a),
 ]
 
 dependencies = [
