@@ -6,13 +6,12 @@
 
 #include <array>
 #include <vector>
+#include "ingredients/subproblem_solvers/QPSolver.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "linear_algebra/COOFormat.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "ingredients/subproblem_solvers/QPSolver.hpp"
 
 namespace uno {
    // forward declarations
@@ -21,6 +20,8 @@ namespace uno {
    class Subproblem;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
+   template <typename ElementType>
+   class Vector;
 
    // see bqpd.f
    enum class BQPDStatus {
@@ -84,8 +85,8 @@ namespace uno {
       int iprint{0}, nout{6};
       double fmin{-1e20};
       int peq_solution{0}, ifail{0};
+      bool evaluate_hessian{false};
       const int fortran_shift{1};
-      Vector<int> current_hessian_indices{};
 
       const bool print_subproblem;
 
@@ -94,12 +95,32 @@ namespace uno {
       void solve_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
-      void hide_pointers_in_workspace();
-      void save_gradients_to_local_format(size_t number_constraints);
+      void hide_pointers_in_workspace(Statistics& statistics, const Subproblem& subproblem);
+      void save_gradients_into_workspace(size_t number_constraints);
       void set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const;
       static BQPDStatus bqpd_status_from_int(int ifail);
       static SubproblemStatus status_from_bqpd_status(BQPDStatus bqpd_status);
    };
+
+   // hide a pointer to an arbitrary object at a given position of lws (BQPD integer workspace)
+   template <typename T>
+   void hide_pointer(size_t position_in_lws, int lws[], const T& object) {
+      intptr_t pointer_to_object = reinterpret_cast<intptr_t>(&object);
+      std::copy(reinterpret_cast<const char *>(&pointer_to_object),
+         reinterpret_cast<const char *>(&pointer_to_object) + sizeof(intptr_t),
+         reinterpret_cast<char *>(lws) + position_in_lws*sizeof(intptr_t));
+   }
+
+   // retrieve a pointer to an arbitrary object at a given position of lws (BQPD integer workspace)
+   template <typename T>
+   T* retrieve_pointer(size_t position_in_lws, const int lws[]) {
+      intptr_t pointer_to_object;
+      std::copy(reinterpret_cast<const char *>(lws) + position_in_lws*sizeof(intptr_t),
+         reinterpret_cast<const char *>(lws) + (position_in_lws+1)*sizeof(intptr_t),
+         reinterpret_cast<char *>(&pointer_to_object));
+      T* object = reinterpret_cast<T*>(pointer_to_object);
+      return object;
+   }
 } // namespace
 
 #endif // UNO_BQPDSOLVER_H
