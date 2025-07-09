@@ -50,8 +50,6 @@ namespace uno {
       void set_auxiliary_measure(Iterate& iterate) const;
       void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
          const Multipliers& multipliers) const override;
-      [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
-         const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
       [[nodiscard]] double dual_regularization_factor() const override;
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
