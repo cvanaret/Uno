@@ -35,9 +35,11 @@ namespace uno {
       }
    }
 
-   void ZeroHessian::compute_hessian_vector_product(const Model& /*model*/, const Vector<double>& /*vector*/, double /*objective_multiplier*/,
-         const Vector<double>& /*constraint_multipliers*/, Vector<double>& result) {
-      result.fill(0.);
+   void ZeroHessian::compute_hessian_vector_product(const Model& model, const double* /*vector*/, double /*objective_multiplier*/,
+         const Vector<double>& /*constraint_multipliers*/, double* result) {
+      for (size_t variable_index: Range(model.number_variables)) {
+         result[variable_index] = 0.;
+      }
    }
 
    std::string ZeroHessian::get_name() const {

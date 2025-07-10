@@ -31,8 +31,8 @@ namespace uno {
       [[nodiscard]] virtual bool is_positive_definite() const = 0;
       virtual void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) = 0;
-      virtual void compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double objective_multiplier,
-         const Vector<double>& constraint_multipliers, Vector<double>& result) = 0;
+      virtual void compute_hessian_vector_product(const Model& model, const double* vector, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, double* result) = 0;
       [[nodiscard]] virtual std::string get_name() const = 0;
    };
 } // namespace

@@ -123,8 +123,8 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_hessian_vector_product(HessianModel& hessian_model, const Vector<double>& vector, const Multipliers& multipliers,
-         Vector<double>& result) const {
+   void l1RelaxedProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector, const Multipliers& multipliers,
+         double* result) const {
       hessian_model.compute_hessian_vector_product(this->model, vector, this->get_objective_multiplier(), multipliers.constraints, result);
 
       // proximal contribution

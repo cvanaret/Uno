@@ -41,6 +41,18 @@ namespace uno {
       }
    }
 
+   void Subproblem::compute_hessian_vector_product(const double* vector, double* result) const {
+      // unregularized Hessian-vector product
+      this->problem.compute_hessian_vector_product(this->hessian_model, vector, this->current_multipliers, result);
+      // contribution of the regularization strategy
+      const double regularization_factor = this->regularization_strategy.get_primal_regularization_factor();
+      if (0. < regularization_factor) {
+         for (size_t index: Range(this->number_variables)) {
+            result[index] += regularization_factor*vector[index];
+         }
+      }
+   }
+
    void Subproblem::assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
          RectangularMatrix<double>& constraint_jacobian) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
