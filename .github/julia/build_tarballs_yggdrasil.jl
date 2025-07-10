@@ -61,8 +61,6 @@ cmake \
     ..
 
 make uno_ampl -j${nproc}
-make uno_ampl -j${nproc}
-make uno_ampl -j${nproc}
 make install
 
 # Uno
