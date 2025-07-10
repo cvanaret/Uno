@@ -4,6 +4,7 @@
 #ifndef UNO_SUBPROBLEM_H
 #define UNO_SUBPROBLEM_H
 
+#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 
@@ -16,8 +17,6 @@ namespace uno {
    class Multipliers;
    template <typename ElementType>
    class RectangularMatrix;
-   template <typename ElementType>
-   class RegularizationStrategy;
    template <typename ElementType>
    class SparseVector;
    class Statistics;
@@ -40,7 +39,8 @@ namespace uno {
 
       // regularized Hessian
       void compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian) const;
-      void compute_hessian_vector_product(const Vector<double>& vector, Vector<double>& result) const;
+      template <typename Vector1, typename Vector2>
+      void compute_hessian_vector_product(const Vector1& vector, Vector2& result) const;
 
       // augmented system
       void assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
@@ -79,6 +79,28 @@ namespace uno {
       for (size_t constraint_index: Range(this->problem.number_constraints)) {
          constraints_lower_bounds[constraint_index] = this->problem.constraint_lower_bound(constraint_index) - constraints[constraint_index];
          constraints_upper_bounds[constraint_index] = this->problem.constraint_upper_bound(constraint_index) - constraints[constraint_index];
+      }
+   }
+
+   template <typename Vector1, typename Vector2>
+   void Subproblem::compute_hessian_vector_product(const Vector1& vector, Vector2& result) const {
+      // copy to and from uno::Vector
+      Vector<double> uno_vector(this->number_variables); // TODO wrap
+      for (size_t index: Range(this->number_variables)) {
+         uno_vector[index] = vector[index];
+      }
+      Vector<double> uno_result(this->number_variables); // TODO wrap
+      // unregularized Hessian-vector product
+      this->problem.compute_hessian_vector_product(this->hessian_model, uno_vector, this->current_multipliers, uno_result);
+      // contribution of the regularization strategy
+      const double regularization_factor = this->regularization_strategy.get_primal_regularization_factor();
+      if (0. < regularization_factor) {
+         for (size_t index: Range(this->number_variables)) {
+            result[index] += regularization_factor*vector[index];
+         }
+      }
+      for (size_t index: Range(this->number_variables)) {
+         result[index] = uno_result[index];
       }
    }
 } // namespace

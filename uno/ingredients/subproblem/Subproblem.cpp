@@ -41,10 +41,6 @@ namespace uno {
       }
    }
 
-   void Subproblem::compute_hessian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      return this->problem.compute_hessian_vector_product(this->hessian_model, vector, this->current_multipliers, result);
-   }
-
    void Subproblem::assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
          RectangularMatrix<double>& constraint_jacobian) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point

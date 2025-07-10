@@ -52,6 +52,10 @@ namespace uno {
          return false;
       }
 
+      [[nodiscard]] double get_primal_regularization_factor() const override {
+         return 0.;
+      }
+
       [[nodiscard]] std::string get_name() const override {
          return "no";
       }

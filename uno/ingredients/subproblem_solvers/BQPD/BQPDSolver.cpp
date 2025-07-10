@@ -347,15 +347,7 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
 
    // by default, try to perform a Hessian-vector product if possible
    if (subproblem->has_implicit_hessian_representation()) {
-      uno::Vector<double> uno_vector(*dimension); // TODO wrap
-      for (size_t index: uno::Range(*dimension)) {
-         uno_vector[index] = vector[index];
-      }
-      uno::Vector<double> uno_result(*dimension); // TODO wrap
-      subproblem->compute_hessian_vector_product(uno_vector, uno_result);
-      for (size_t index: uno::Range(*dimension)) {
-         result[index] = uno_result[index];
-      }
+      subproblem->compute_hessian_vector_product(vector, result);
    }
    // otherwise, try to compute the explicit matrix
    else if (subproblem->has_explicit_hessian_representation()) {
