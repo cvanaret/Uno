@@ -163,6 +163,7 @@ if(HIGHS_FOUND)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
    list(APPEND LIBRARIES highs::highs)
    add_definitions("-D HAS_HIGHS")
+   message(STATUS "Found HiGHS")
 endif()
 
 # MUMPS
@@ -207,6 +208,7 @@ if(MUMPS_LIBRARY)
    list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
 
    add_definitions("-D HAS_MUMPS")
+   message(STATUS "Found MUMPS")
 endif()
 
 ###############
