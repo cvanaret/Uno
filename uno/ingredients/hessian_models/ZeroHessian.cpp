@@ -16,6 +16,11 @@ namespace uno {
    }
 
    void ZeroHessian::initialize(const Model& /*model*/) {
+      // do nothing
+   }
+
+   void ZeroHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+      // do nothing
    }
 
    size_t ZeroHessian::number_nonzeros(const Model& /*model*/) const {
@@ -24,6 +29,10 @@ namespace uno {
 
    bool ZeroHessian::is_positive_definite() const {
       return false;
+   }
+
+   void ZeroHessian::notify_accepted_iterate(const Model& /*model*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
+      // do nothing
    }
 
    void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,

@@ -150,6 +150,15 @@ namespace uno {
       }
       return result;
    }
+
+   template <typename Vector1, typename Vector2>
+   typename Vector1::value_type dot(const Vector1& x, const Vector2& y) {
+      typename Vector1::value_type dot_product = 0;
+      for (size_t index: Range(x.size())) {
+         dot_product += x[index] * y[index];
+      }
+      return dot_product;
+   }
 } // namespace
 
 #endif // UNO_VECTOR_H

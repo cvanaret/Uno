@@ -56,6 +56,7 @@ cmake \
     -DMUMPS_MPISEQ_LIBRARY="${libdir}/libmpiseq.${dlext}" \
     -DBLAS_LIBRARIES="${libdir}/lib${LBT}.${dlext}" \
     -DLAPACK_LIBRARIES="${libdir}/lib${LBT}.${dlext}" \
+    -DWITH_LAPACK=ON \
     ..
 
 make -j${nproc}
