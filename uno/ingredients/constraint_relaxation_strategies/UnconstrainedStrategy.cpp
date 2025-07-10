@@ -73,8 +73,7 @@ namespace uno {
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const OptimizationProblem problem{model};
       const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
-         problem, *this->inequality_handling_method, current_iterate, trial_iterate, trial_iterate.multipliers,
-         direction, step_length, user_callbacks);
+         problem, *this->inequality_handling_method, current_iterate, trial_iterate, direction, step_length, user_callbacks);
       warmstart_information.no_changes();
       return accept_iterate;
    }
