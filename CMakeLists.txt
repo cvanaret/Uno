@@ -212,8 +212,7 @@ endif()
 ###############
 # Uno library #
 ###############
-# link with Fortran libraries (should be filtered for Apple architectures)
-# even when static libraries are linked
+# link with Fortran libraries (filtered for Apple architectures) even when static libraries are linked
 set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
 if(APPLE)
    list(REMOVE_ITEM FORTRAN_LIBS gcc)
@@ -230,17 +229,18 @@ set_property(TARGET uno_files PROPERTY POSITION_INDEPENDENT_CODE ON)
 if(BUILD_STATIC_LIBS)
    add_library(uno_static STATIC $<TARGET_OBJECTS:uno_files>)
    set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
-   # by default, the target to install is the static library
-   set(DEFAULT_UNO_LIB uno_static)
 endif()
 
 if(BUILD_SHARED_LIBS)
    add_library(uno_shared SHARED $<TARGET_OBJECTS:uno_files>)
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
-   # if the static library has not been built, the target to install is the shared library
-   if(NOT BUILD_STATIC_LIBS)
-      set(DEFAULT_UNO_LIB uno_shared)
-   endif()
+endif()
+
+if(BUILD_STATIC_LIBS)
+   # by default, the target to install is the static library
+   set(DEFAULT_UNO_LIB uno_static)
+else()
+   set(DEFAULT_UNO_LIB uno_shared)
 endif()
 
 ######################
