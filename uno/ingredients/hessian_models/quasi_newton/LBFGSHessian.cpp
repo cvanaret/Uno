@@ -58,9 +58,10 @@ namespace uno {
    }
 
    void LBFGSHessian::notify_accepted_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
-      std::cout << "Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
+      DEBUG << "Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
       // this->current_available_slot lives in [0, this->memory_size)
       this->update_memory(model, current_iterate, trial_iterate);
+      // TODO set "QN |memory|"
    }
    
    void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& /*model*/, const Vector<double>& /*primal_variables*/,
