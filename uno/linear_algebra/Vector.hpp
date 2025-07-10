@@ -21,7 +21,7 @@ namespace uno {
 
       // constructors and destructor
       explicit Vector(size_t capacity = 0): vector(capacity) { }
-      explicit Vector(size_t capacity, ElementType value): vector(capacity, value) { }
+      Vector(size_t capacity, ElementType value): vector(capacity, value) { }
       Vector(std::initializer_list<ElementType> initializer_list): vector(initializer_list) { }
       Vector(const Vector<ElementType>& other) noexcept : vector(other.vector) { }
       Vector(Vector<ElementType>&& other) noexcept : vector(std::move(other.vector)) { }

@@ -8,6 +8,14 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
+   bool IdentityHessian::has_implicit_representation() const {
+      return true;
+   }
+
+   bool IdentityHessian::has_explicit_representation() const {
+      return true;
+   }
+
    void IdentityHessian::initialize(const Model& /*model*/) {
       // do nothing
    }
@@ -30,9 +38,8 @@ namespace uno {
       }
    }
 
-   void IdentityHessian::compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double /*objective_multiplier*/,
-         const Vector<double>& /*constraint_multipliers*/, Vector<double>& result) {
-      result.fill(0.);
+   void IdentityHessian::compute_hessian_vector_product(const Model& model, const double* vector, double /*objective_multiplier*/,
+         const Vector<double>& /*constraint_multipliers*/, double* result) {
       for (size_t variable_index: Range(model.number_variables)) {
          result[variable_index] = vector[variable_index];
       }

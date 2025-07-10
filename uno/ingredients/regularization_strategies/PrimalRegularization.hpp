@@ -39,6 +39,7 @@ namespace uno {
 
       [[nodiscard]] bool performs_primal_regularization() const override;
       [[nodiscard]] bool performs_dual_regularization() const override;
+      [[nodiscard]] double get_primal_regularization_factor() const override;
       [[nodiscard]] std::string get_name() const override;
 
    protected:
@@ -46,6 +47,7 @@ namespace uno {
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> optional_linear_solver{};
       size_t dimension{};
       size_t number_nonzeros{};
+      double regularization_factor{0.};
       const double regularization_initial_value{};
       const double regularization_increase_factor{};
       const double regularization_failure_threshold{};
@@ -92,12 +94,12 @@ namespace uno {
       const double smallest_diagonal_entry = hessian.smallest_diagonal_entry(expected_inertia.positive);
       DEBUG << "The minimal diagonal entry of the matrix is " << smallest_diagonal_entry << '\n';
 
-      double regularization_factor = (smallest_diagonal_entry > 0.) ? 0. : this->regularization_initial_value - smallest_diagonal_entry;
+      this->regularization_factor = (smallest_diagonal_entry > 0.) ? 0. : this->regularization_initial_value - smallest_diagonal_entry;
       bool good_inertia = false;
       while (!good_inertia) {
-         DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
-         if (0. < regularization_factor) {
-            hessian.set_regularization(indices, 0, regularization_factor);
+         DEBUG << "Testing factorization with regularization factor " << this->regularization_factor << '\n';
+         if (0. < this->regularization_factor) {
+            hessian.set_regularization(indices, 0, this->regularization_factor);
          }
          DEBUG << "Current Hessian:\n" << hessian;
 
@@ -115,14 +117,15 @@ namespace uno {
             DEBUG << "Factorization was a success";
          }
          else {
-            regularization_factor = (regularization_factor == 0.) ? this->regularization_initial_value : this->regularization_increase_factor * regularization_factor;
-            if (regularization_factor > this->regularization_failure_threshold) {
+            this->regularization_factor = (this->regularization_factor == 0.) ? this->regularization_initial_value :
+               this->regularization_increase_factor * this->regularization_factor;
+            if (this->regularization_factor > this->regularization_failure_threshold) {
                throw UnstableRegularization();
             }
          }
          DEBUG << '\n';
       }
-      statistics.set("regulariz", regularization_factor);
+      statistics.set("regulariz", this->regularization_factor);
    }
 
    template <typename ElementType>
@@ -155,6 +158,11 @@ namespace uno {
    template <typename ElementType>
    bool PrimalRegularization<ElementType>::performs_dual_regularization() const {
       return false;
+   }
+
+   template <typename ElementType>
+   double PrimalRegularization<ElementType>::get_primal_regularization_factor() const {
+      return this->regularization_factor;
    }
 
    template <typename ElementType>

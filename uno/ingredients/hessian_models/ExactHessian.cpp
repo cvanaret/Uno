@@ -6,6 +6,17 @@
 #include "model/Model.hpp"
 
 namespace uno {
+   bool ExactHessian::has_implicit_representation() const {
+      // As long as we use the ASL library ("solvers"), we need to form the explicit Hessian
+      // The reason is that the ASL Hessian representation changes as soon as trial
+      // iterates are evaluated. The variant "solvers2" should address the issue.
+      return false;
+   }
+
+   bool ExactHessian::has_explicit_representation() const {
+      return true;
+   }
+
    void ExactHessian::initialize(const Model& /*model*/) {
    }
 
@@ -24,8 +35,8 @@ namespace uno {
       this->evaluation_count++;
    }
 
-   void ExactHessian::compute_hessian_vector_product(const Model& model, const Vector<double>& vector, double objective_multiplier,
-         const Vector<double>& constraint_multipliers, Vector<double>& result) {
+   void ExactHessian::compute_hessian_vector_product(const Model& model, const double* vector, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, double* result) {
       model.compute_hessian_vector_product(vector, objective_multiplier, constraint_multipliers, result);
       this->evaluation_count++;
    }
