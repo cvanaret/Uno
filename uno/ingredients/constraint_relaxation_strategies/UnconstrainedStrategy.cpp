@@ -32,6 +32,7 @@ namespace uno {
       direction = Direction(problem.number_variables, problem.number_constraints);
 
       // statistics
+      this->hessian_model->initialize_statistics(statistics, options);
       this->regularization_strategy->initialize_statistics(statistics, options);
       this->inequality_handling_method->initialize_statistics(statistics, options);
 
@@ -78,6 +79,9 @@ namespace uno {
       const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
          problem, *this->inequality_handling_method, current_iterate, trial_iterate, trial_iterate.multipliers,
          direction, step_length, user_callbacks);
+      if (accept_iterate) {
+         this->hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
+      }
       ConstraintRelaxationStrategy::set_primal_statistics(statistics, model, trial_iterate);
       warmstart_information.no_changes();
       return accept_iterate;

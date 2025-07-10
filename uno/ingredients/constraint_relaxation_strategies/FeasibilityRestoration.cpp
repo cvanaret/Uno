@@ -58,6 +58,8 @@ namespace uno {
       );
 
       // statistics
+      this->optimality_hessian_model->initialize_statistics(statistics, options);
+      this->feasibility_hessian_model->initialize_statistics(statistics, options);
       this->optimality_regularization_strategy->initialize_statistics(statistics, options);
       this->feasibility_regularization_strategy->initialize_statistics(statistics, options);
       this->optimality_inequality_handling_method->initialize_statistics(statistics, options);
@@ -184,12 +186,18 @@ namespace uno {
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
             optimality_problem, *this->optimality_inequality_handling_method, current_iterate, trial_iterate,
             trial_iterate.multipliers, direction, step_length, user_callbacks);
+         if (accept_iterate) {
+            this->optimality_hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
+         }
       }
       else {
          const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
             feasibility_problem, *this->feasibility_inequality_handling_method, current_iterate, trial_iterate,
             trial_iterate.feasibility_multipliers, direction, step_length, user_callbacks);
+         if (accept_iterate) {
+            this->feasibility_hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
+         }
       }
 
       // possibly go from restoration phase to optimality phase

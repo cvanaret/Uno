@@ -67,6 +67,8 @@ namespace uno {
       direction = Direction(l1_relaxed_problem.number_variables, l1_relaxed_problem.number_constraints);
 
       // statistics
+      this->l1_relaxed_hessian_model->initialize_statistics(statistics, options);
+      this->feasibility_hessian_model->initialize_statistics(statistics, options);
       this->l1_relaxed_regularization_strategy->initialize_statistics(statistics, options);
       this->feasibility_regularization_strategy->initialize_statistics(statistics, options);
       this->inequality_handling_method->initialize_statistics(statistics, options);
@@ -277,6 +279,8 @@ namespace uno {
          l1_relaxed_problem, *this->inequality_handling_method, current_iterate, trial_iterate, trial_iterate.multipliers,
          direction, step_length, user_callbacks);
       if (accept_iterate) {
+         // TODO is that correct?
+         this->l1_relaxed_hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
          this->check_exact_relaxation(trial_iterate);
       }
       ConstraintRelaxationStrategy::set_primal_statistics(statistics, model, trial_iterate);
