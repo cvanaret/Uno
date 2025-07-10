@@ -3,18 +3,20 @@
 
 cmake_minimum_required(VERSION 3.7)
 if(${CMAKE_VERSION} VERSION_LESS 3.12)
-	cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
+   cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
 endif()
 
 ######################
 # project definition #
 ######################
 
-# define the project name
+# define the project
 project(Uno VERSION 2.0.0
         DESCRIPTION "Uno (Unifying Nonconvex Optimization)"
         LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
+
+# compile options
 if (MSVC)
    add_compile_options("$<$<COMPILE_LANGUAGE:C>:/utf-8>")
    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
@@ -29,6 +31,14 @@ endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders)
 
+# options
+option(BUILD_STATIC_LIBS "Build using static libraries" ON)
+option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
+if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
+   message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
+endif()
+option(WITH_GTEST "Enable GoogleTest" OFF)
+
 # determine whether a Fortran compiler is required, based on the available optional dependencies
 find_library(HSL hsl)
 find_library(MA57 ma57)
@@ -40,8 +50,8 @@ if(HSL OR MA57 OR MA27 OR BQPD)
    include(FortranCInterface)
    FortranCInterface_VERIFY(CXX)
    FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
-                               MACRO_NAMESPACE "FC_"
-                               SYMBOL_NAMESPACE "FC_")
+      MACRO_NAMESPACE "FC_"
+      SYMBOL_NAMESPACE "FC_")
 endif()
 
 # directories
@@ -102,7 +112,7 @@ function(link_to_uno library_name library_path)
    # include the corresponding directory
    get_filename_component(directory ${library_path} DIRECTORY)
    set(DIRECTORIES ${DIRECTORIES} ${directory} PARENT_SCOPE)
-   message(STATUS "Library ${library_name} was found.")
+   message(STATUS "Found ${library_name}")
 endfunction()
 
 # HSL or MA57
@@ -110,24 +120,19 @@ find_library(HSL hsl)
 if(HSL)
    link_to_uno(hsl ${HSL})
 else()
-   message(WARNING "Optional library HSL was not found.")
    find_library(MA57 ma57)
    if(MA57)
       link_to_uno(ma57 ${MA57})
-   else()
-      message(WARNING "Optional library MA57 was not found.")
    endif()
    find_library(MA27 ma27)
    if(MA27)
       link_to_uno(ma27 ${MA27})
-   else()
-      message(WARNING "Optional library MA27 was not found.")
    endif()
 endif()
 if(HSL OR MA57)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA57/MA57Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
-   
+
    find_package(BLAS REQUIRED)
    list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 endif()
@@ -141,17 +146,13 @@ endif()
 
 # METIS
 find_library(METIS metis)
-if(NOT METIS)
-   message(WARNING "Optional library METIS was not found.")
-else()
+if(METIS)
    link_to_uno(metis ${METIS})
 endif()
 
 # BQPD
 find_library(BQPD bqpd)
-if(NOT BQPD)
-   message(WARNING "Optional library BQPD was not found.")
-else()
+if(BQPD)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/BQPDSolverTests.cpp)
    link_to_uno(bqpd ${BQPD})
@@ -159,20 +160,17 @@ endif()
 
 # HiGHS
 find_package(HIGHS)
-if(NOT HIGHS_FOUND)
-   message(WARNING "Optional library HiGHS was not found.")
-else()
+if(HIGHS_FOUND)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
    list(APPEND LIBRARIES highs::highs)
    add_definitions("-D HAS_HIGHS")
+   message(STATUS "Found HiGHS")
 endif()
 
 # MUMPS
 find_package(MUMPS)
-if(NOT MUMPS_LIBRARY)
-   message(WARNING "Optional library MUMPS was not found.")
-else()
+if(MUMPS_LIBRARY)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MUMPS/MUMPSSolver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MUMPSSolverTests.cpp)
    list(APPEND LIBRARIES ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
@@ -212,37 +210,57 @@ else()
    list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
 
    add_definitions("-D HAS_MUMPS")
+   message(STATUS "Found MUMPS")
 endif()
 
 ###############
 # Uno library #
 ###############
-add_library(uno STATIC ${UNO_SOURCE_FILES})
-set_property(TARGET uno PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_include_directories(uno PUBLIC ${DIRECTORIES})
-
+# link with Fortran libraries (filtered for Apple architectures) even when static libraries are linked
 set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
 if(APPLE)
-  list(REMOVE_ITEM FORTRAN_LIBS gcc)
-  list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
-  list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
+   list(REMOVE_ITEM FORTRAN_LIBS gcc)
+   list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
+   list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
 endif()
-target_link_libraries(uno PUBLIC ${LIBRARIES}
-   # link Fortran compiler even when static libraries are linked
-   ${FORTRAN_LIBS}
-)
+
+# compile the Uno source files once, whatever the compilation type is (static or shared)
+add_library(uno_files OBJECT ${UNO_SOURCE_FILES})
+set_property(TARGET uno_files PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_include_directories(uno_files PUBLIC ${DIRECTORIES})
+target_link_libraries(uno_files PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
+
+if(BUILD_STATIC_LIBS)
+   add_library(uno_static STATIC $<TARGET_OBJECTS:uno_files>)
+   target_include_directories(uno_static PUBLIC ${DIRECTORIES})
+   target_link_libraries(uno_static PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
+   set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
+endif()
+
+if(BUILD_SHARED_LIBS)
+   add_library(uno_shared SHARED $<TARGET_OBJECTS:uno_files>)
+   target_include_directories(uno_shared PUBLIC ${DIRECTORIES})
+   target_link_libraries(uno_shared PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
+   set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
+endif()
+
+if(BUILD_STATIC_LIBS)
+   # by default, the target to install is the static library
+   set(DEFAULT_UNO_LIB uno_static)
+else()
+   set(DEFAULT_UNO_LIB uno_shared)
+endif()
 
 ######################
 # optional AMPL main #
 ######################
 find_library(AMPLSOLVER amplsolver)
-if(NOT AMPLSOLVER)
-   message(WARNING "Optional library amplsolver (ASL) was not found.")
-else()
-   message(STATUS "Library amplsolver was found.")
-   add_executable(uno_ampl bindings/AMPL/AMPLModel.cpp bindings/AMPL/AMPLUserCallbacks.cpp bindings/AMPL/uno_ampl.cpp)
-   
-   target_link_libraries(uno_ampl PUBLIC uno ${AMPLSOLVER} ${CMAKE_DL_LIBS})
+if(AMPLSOLVER)
+   message(STATUS "Found amplsolver")
+   add_executable(uno_ampl EXCLUDE_FROM_ALL bindings/AMPL/AMPLModel.cpp bindings/AMPL/AMPLUserCallbacks.cpp
+      bindings/AMPL/uno_ampl.cpp)
+   target_include_directories(uno_ampl PUBLIC ${DIRECTORIES})
+   target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} ${LIBRARIES} ${CMAKE_DL_LIBS} ${FORTRAN_LIBS})
    add_definitions("-D HAS_AMPLSOLVER")
    # include the corresponding directory
    get_filename_component(directory ${AMPLSOLVER} DIRECTORY)
@@ -252,14 +270,33 @@ endif()
 ##################################
 # optional GoogleTest unit tests #
 ##################################
-option(WITH_GTEST "Enable GoogleTest" OFF)
 message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
 if(WITH_GTEST)
    find_package(GTest CONFIG REQUIRED)
-   if(NOT GTest_DIR)
-      message(WARNING "Optional library GTest was not found.")
-   else()
-      add_executable(run_unotest ${TESTS_UNO_SOURCE_FILES})
-      target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
+   if(GTest_DIR)
+      add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
+      target_include_directories(run_unotest PUBLIC ${DIRECTORIES})
+      target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES})
    endif()
 endif()
+
+#########################################
+# install library (and AMPL executable) #
+#########################################
+set(INSTALL_TARGETS "")
+if(TARGET uno_static)
+   list(APPEND INSTALL_TARGETS uno_static)
+endif()
+if(TARGET uno_shared)
+   list(APPEND INSTALL_TARGETS uno_shared)
+endif()
+if(TARGET uno_ampl)
+   list(APPEND INSTALL_TARGETS uno_ampl)
+endif()
+install(TARGETS ${INSTALL_TARGETS}
+   COMPONENT libuno
+   EXPORT UnoTargets
+   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # DLLs on windows
+   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Static libraries
+   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Shared libraries
+   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
