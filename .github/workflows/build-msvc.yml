@@ -80,10 +80,7 @@ jobs:
               -DMUMPS_PORD_LIBRARY=${{github.workspace}}\deps\lib\libpord.a ^
               -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\deps\lib\libmpiseq.a ^
               -DBLAS_LIBRARIES=${{github.workspace}}\deps\lib\libblas.a ^
-              -DLAPACK_LIBRARIES=${{github.workspace}}\deps\lib\liblapack.a ^
-              -DBUILD_STATIC_LIBS=ON ^
-              -DBUILD_SHARED_LIBS=ON ^
-              .
+              -DLAPACK_LIBRARIES=${{github.workspace}}\deps\lib\liblapack.a .
 
     - name: Build
       run: nmake
