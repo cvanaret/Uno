@@ -228,17 +228,21 @@ endif()
 
 # compile the Uno source files once, whatever the compilation type is (static or shared)
 add_library(uno_files OBJECT ${UNO_SOURCE_FILES})
+set_property(TARGET uno_files PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(uno_files PUBLIC ${DIRECTORIES})
 target_link_libraries(uno_files PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
-set_property(TARGET uno_files PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if(BUILD_STATIC_LIBS)
    add_library(uno_static STATIC $<TARGET_OBJECTS:uno_files>)
+   target_include_directories(uno_static PUBLIC ${DIRECTORIES})
+   target_link_libraries(uno_static PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
 endif()
 
 if(BUILD_SHARED_LIBS)
    add_library(uno_shared SHARED $<TARGET_OBJECTS:uno_files>)
+   target_include_directories(uno_shared PUBLIC ${DIRECTORIES})
+   target_link_libraries(uno_shared PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
 endif()
 
