@@ -1,7 +1,6 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-//#include <cmath>
 #include "Uno.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
@@ -95,6 +94,14 @@ namespace uno {
       Result result = this->create_result(model, optimization_status, current_iterate, major_iterations, timer);
       this->print_optimization_summary(result);
       return result;
+   }
+
+   void Uno::solve(size_t number_variables, size_t number_constraints, const std::function<double(const std::vector<double>&)>& objective) {
+      std::cout << "Congrats, you just called Uno with (n, m) = (" << number_variables << ", " << number_constraints << ")\n";
+      std::vector<double> x(2);
+      x[0] = 7.;
+      x[1] = 4.;
+      std::cout << "Objective value of x = [" << x[0] << ", " << x[1] << "] is " << objective(x) << '\n';
    }
 
    void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) {
