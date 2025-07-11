@@ -297,8 +297,7 @@ if(pybind11_DIR)
       bindings/python/unopy.cpp
    )
 
-   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-   pybind11_add_module(unopy EXCLUDE_FROM_ALL ${UNO_SOURCE_FILES} ${PYTHON_MODULES})
+   pybind11_add_module(unopy EXCLUDE_FROM_ALL $<TARGET_OBJECTS:uno_files> ${PYTHON_MODULES})
    target_link_libraries(unopy PUBLIC ${LIBRARIES})
    target_include_directories(unopy PUBLIC ${DIRECTORIES} uno)
 endif()
