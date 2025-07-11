@@ -93,7 +93,7 @@ namespace uno {
       this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
    }
-
+   
    std::string Uno::current_version() {
       return "2.0.3";
    }
