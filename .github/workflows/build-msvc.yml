@@ -28,8 +28,10 @@ jobs:
       matrix:
         os: [windows-latest]
         architecture: [x64, x86]
+        library: [shared, static]
         # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
         BUILD_TYPE: [Release, Debug]
+
 
     steps:
     - name: Checkout repository
@@ -64,21 +66,33 @@ jobs:
     - name: Configure CMake
       shell: cmd
       run: |
-        cmake -G "NMake Makefiles" ^
-              -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} ^
-              -DCMAKE_C_COMPILER=cl ^
-              -DCMAKE_CXX_COMPILER=cl ^
-              -DCMAKE_Fortran_COMPILER=ifx ^
-              -DMUMPS_INCLUDE_DIR=${{github.workspace}}\deps\include ^
-              -DMETIS_INCLUDE_DIR=${{github.workspace}}\deps\include ^
-              -DBQPD=${{github.workspace}}\deps\lib\libbqpd.a ^
-              -DMETIS_LIBRARY=${{github.workspace}}\deps\lib\libmetis.a ^
-              -DMUMPS_LIBRARY=${{github.workspace}}\deps\lib\libdmumps.a ^
-              -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\deps\lib\libmumps_common.a ^
-              -DMUMPS_PORD_LIBRARY=${{github.workspace}}\deps\lib\libpord.a ^
-              -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\deps\lib\libmpiseq.a ^
-              -DBLAS_LIBRARIES=${{github.workspace}}\deps\lib\libblas.a ^
-              -DLAPACK_LIBRARIES=${{github.workspace}}\deps\lib\liblapack.a .
+        if "%{{matrix.library}}"=="static" (
+          cmake -G "NMake Makefiles" ^
+                -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} ^
+                -DCMAKE_C_COMPILER=cl ^
+                -DCMAKE_CXX_COMPILER=cl ^
+                -DCMAKE_Fortran_COMPILER=ifx ^
+                -DMUMPS_INCLUDE_DIR=${{github.workspace}}\deps\include ^
+                -DMETIS_INCLUDE_DIR=${{github.workspace}}\deps\include ^
+                -DBQPD=${{github.workspace}}\deps\lib\libbqpd.a ^
+                -DMETIS_LIBRARY=${{github.workspace}}\deps\lib\libmetis.a ^
+                -DMUMPS_LIBRARY=${{github.workspace}}\deps\lib\libdmumps.a ^
+                -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\deps\lib\libmumps_common.a ^
+                -DMUMPS_PORD_LIBRARY=${{github.workspace}}\deps\lib\libpord.a ^
+                -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\deps\lib\libmpiseq.a ^
+                -DBLAS_LIBRARIES=${{github.workspace}}\deps\lib\libblas.a ^
+                -DLAPACK_LIBRARIES=${{github.workspace}}\deps\lib\liblapack.a ^
+                -DBUILD_STATIC_LIBS=ON ^
+                -DBUILD_SHARED_LIBS=OFF .
+        ) else (
+          cmake -G "NMake Makefiles" ^
+                -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} ^
+                -DCMAKE_C_COMPILER=cl ^
+                -DCMAKE_CXX_COMPILER=cl ^
+                -DCMAKE_Fortran_COMPILER=ifx ^
+                -DBUILD_STATIC_LIBS=OFF ^
+                -DBUILD_SHARED_LIBS=ON .
+        )
 
     - name: Build
       run: nmake
