@@ -269,7 +269,7 @@ endif()
 ##################################
 # optional GoogleTest unit tests #
 ##################################
-find_package(GTest CONFIG REQUIRED)
+find_package(GTest CONFIG)
 if(GTest_DIR)
    add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
    target_include_directories(run_unotest PUBLIC ${DIRECTORIES})
