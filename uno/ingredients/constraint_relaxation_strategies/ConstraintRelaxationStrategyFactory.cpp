@@ -9,10 +9,10 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(size_t number_constraints,
+   std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(bool constrained_model,
          const Options& options) {
       // set unconstrained strategy automatically
-      if (number_constraints == 0) {
+      if (!constrained_model) {
          return std::make_unique<UnconstrainedStrategy>(options);
       }
       const std::string constraint_relaxation_type = options.get_string("constraint_relaxation_strategy");
