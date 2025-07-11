@@ -4,7 +4,7 @@
 
 * download the AMPL solver library (ASL): http://www.netlib.org/ampl/solvers/
 
-* download **optional** solvers:
+* **(optional)** download  solvers:
     * BQPD (null-space active set solver for nonconvex quadratic programming): get a precompiled binary for your architecture (https://github.com/leyffer/BQPD_jll.jl/releases) or get in touch with Sven Leyffer to apply for an academic license (https://www.mcs.anl.gov/~leyffer/solvers.html)
     * MA57 (sparse indefinite symmetric linear solver): http://www.hsl.rl.ac.uk/catalogue/ma57.html
     * LIBHSL (collection of libraries for sparse linear systems): https://licences.stfc.ac.uk/products/Software/HSL/LibHSL
@@ -18,51 +18,76 @@ LIBS = $(LIBSEQ)
 LIBSEQNEEDED = libseqneeded
 ```
 
-* install BLAS and LAPACK:
+* **(optional)** install BLAS and LAPACK:
 ```console
-sudo apt-get install libblas-dev liblapack-dev
+sudo apt install libblas-dev liblapack-dev
 ```
 * install cmake (and optionally ccmake, CMake curses interface):
 ```console
-sudo apt-get install cmake cmake-curses-gui
+sudo apt install cmake cmake-curses-gui
 ```
 
 ### Compilation
 
-1. Create a `build` directory in the main directory:
+1. Create a `build` directory in the main directory and move to it:
 ```console
-mkdir build
+mkdir build && cd build
 ```
-2. Move to the build directory:
+2. Execute cmake:  
 ```console
-cd build/
+cmake [options] ..
 ```
-3. Execute cmake (you may provide the paths to the library files):  
-```console
-cmake -DBQPD=path/libbqpd.a -DMA57=path/libma57.so -DAMPLSOLVER=path/amplsolver.a -DCMAKE_BUILD_TYPE=[Release|Debug] ..
-```
-4. **(or)** Use ccmake to provide the paths to the required and optional libraries:
+You can pass the following options:
+- build type: `-DCMAKE_BUILD_TYPE=[Release|Debug]`
+- build the Uno static library `uno_static`: `-DBUILD_STATIC_LIBS=[ON|OFF]`
+- build the Uno shared library `uno_shared`: `-DBUILD_SHARED_LIBS=[ON|OFF]`
+- enable LAPACK: `-DWITH_LAPACK=[ON|OFF]`
+- path to the BQPD library: `-DBQPD=path_to_bqpd_lib`
+- path to the MA27 library: `-DMA57=path_to_MA27_lib`
+- path to the MA57 library: `-DMA57=path_to_MA57_lib`
+- path to ASL library: `-DAMPLSOLVER=path_to_amplsolver_lib`
+- path to HiGHS install directory: `-DHIGHS_DIR=path_to_highs_install_dir`
+- path to HSL library: `-DHSL=path_to_hsl_lib`
+- path to METIS library (`fakemetis` is built with MA57): `-DMETIS=path_to_metis_lib`
+- path to MUMPS library: `-DMUMPS_LIBRARY=path_to_mumps_lib`
+- path to MUMPS common library: `-DMUMPS_COMMON_LIBRARY=path_to_mumps_common_lib`
+- path to MUMPS PORD library: `-DMUMPS_PORD_LIBRARY=path_to_mumps_pord_lib`
+- path to MUMPS MPISEQ library: `-DMUMPS_MPISEQ_LIBRARY=path_to_mumps_mpiseq_lib`
+- path to MUMPS include directory: `-DMUMPS_INCLUDE_DIR=path_to_mumps_include_dir`
+
+3. **(or)** Use ccmake to provide the paths to the required and optional libraries:
 ```console
 ccmake ..
 ```
-5. Compile (in parallel: `n` being the number of threads, e.g. 6):
+4. Compile (in parallel: `n` being the number of threads, e.g. 6):
 ```console
 make -jn
 ```
 
-To compile the code with different configurations, simply create a `build` directory for each configuration and perform instructions 1 to 5.
+To compile the code with different configurations, simply create a `build` directory for each configuration and perform instructions 1 to 4.
+
+### Install
+
+5. Install the built libraries and executable (`uno_static`, `uno_shared`, and `uno_ampl`):
+```console
+sudo make install
+```
 
 ### Unit tests
 
 6. Install the GoogleTest suite:
 ```console
-sudo apt-get install googletest
+sudo apt install googletest
 ```
-7. Perform steps 2 and 3 with the flag
+7. Perform step 2 with the flag
 ```console
 -DWITH_GTEST=ON
 ```
-8. Run the test suite:
+8. Compile the test suite:
+```console
+make run_unotest -jn
+```
+9. Run the test suite:
 ```console
 ./run_unotest
 ```
