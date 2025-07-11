@@ -4,6 +4,7 @@
 #include <pybind11/pybind11.h>
 #include "options/DefaultOptions.hpp"
 #include "options/Options.hpp"
+#include "options/Presets.hpp"
 
 namespace py = pybind11;
 
@@ -21,6 +22,9 @@ namespace uno {
             options.overwrite_with(solvers_options);
             return options;
          }, "create default options")
+         .def_static("set_preset", [](Options& options, const std::string& preset_name) {
+            Presets::set(options, preset_name);
+         }, "set a preset")
          // methods
          .def("__setitem__", [](Options& options, const std::string& key, const std::string& value) {
             options[key] = value;
