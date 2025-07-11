@@ -280,8 +280,6 @@ endif()
 set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11)
 if(pybind11_DIR)
-   message(STATUS "Found pybind11")
-
    # link-time optimization
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto=auto")
