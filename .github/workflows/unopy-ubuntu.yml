@@ -44,17 +44,7 @@ jobs:
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-                                                -DMUMPS_INCLUDE_DIR=${{github.workspace}}/deps/include \
-                                                -DMETIS_INCLUDE_DIR=${{github.workspace}}/deps/include \
-                                                -DBQPD=${{github.workspace}}/deps/lib/libbqpd.a \
-                                                -DMETIS_LIBRARY=${{github.workspace}}/deps/lib/libmetis.a \
-                                                -DMUMPS_LIBRARY=${{github.workspace}}/deps/lib/libdmumps.a \
-                                                -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/deps/lib/libmumps_common.a \
-                                                -DMUMPS_PORD_LIBRARY=${{github.workspace}}/deps/lib/libpord.a \
-                                                -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/deps/lib/libmpiseq.a \
-                                                -DBLAS_LIBRARIES=${{github.workspace}}/deps/lib/libblas.a \
-                                                -DLAPACK_LIBRARIES=${{github.workspace}}/deps/lib/liblapack.a
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --target unopy --config ${{env.BUILD_TYPE}}
