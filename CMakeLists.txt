@@ -280,6 +280,8 @@ endif()
 set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11)
 if(pybind11_DIR)
+   message(STATUS "Found pybind11")
+
    # link-time optimization
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto=auto")
@@ -294,7 +296,7 @@ if(pybind11_DIR)
       bindings/python/unopy.cpp
    )
 
-   pybind11_add_module(unopy EXCLUDE_FROM_ALL $<TARGET_OBJECTS:uno_files> ${PYTHON_MODULES})
+   pybind11_add_module(unopy SHARED EXCLUDE_FROM_ALL $<TARGET_OBJECTS:uno_files> ${PYTHON_MODULES})
    target_link_libraries(unopy PUBLIC ${LIBRARIES})
    target_include_directories(unopy PUBLIC ${DIRECTORIES})
 endif()
@@ -325,6 +327,9 @@ if(TARGET uno_shared)
 endif()
 if(TARGET uno_ampl)
    list(APPEND INSTALL_TARGETS uno_ampl)
+endif()
+if(TARGET unopy)
+   list(APPEND INSTALL_TARGETS unopy)
 endif()
 install(TARGETS ${INSTALL_TARGETS}
         COMPONENT libuno
