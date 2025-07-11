@@ -37,7 +37,6 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
    message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
 endif()
-option(WITH_GTEST "Enable GoogleTest" OFF)
 
 # determine whether a Fortran compiler is required, based on the available optional dependencies
 find_library(HSL hsl)
@@ -270,14 +269,11 @@ endif()
 ##################################
 # optional GoogleTest unit tests #
 ##################################
-message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
-if(WITH_GTEST)
-   find_package(GTest CONFIG REQUIRED)
-   if(GTest_DIR)
-      add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
-      target_include_directories(run_unotest PUBLIC ${DIRECTORIES})
-      target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES})
-   endif()
+find_package(GTest CONFIG REQUIRED)
+if(GTest_DIR)
+   add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
+   target_include_directories(run_unotest PUBLIC ${DIRECTORIES})
+   target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES})
 endif()
 
 #########################################
