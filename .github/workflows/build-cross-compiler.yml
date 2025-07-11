@@ -33,6 +33,7 @@ jobs:
           - aarch64-linux-gnu-cxx11
           - aarch64-apple-darwin-cxx11
           - x86_64-w64-mingw32-cxx11
+          - i686-w64-mingw32-cxx11
 
     steps:
       - uses: actions/checkout@v4
