@@ -79,15 +79,11 @@ sudo make install
 ```console
 sudo apt install googletest
 ```
-7. Perform step 2 with the flag
-```console
--DWITH_GTEST=ON
-```
-8. Compile the test suite:
+7. Compile the test suite:
 ```console
 make run_unotest -jn
 ```
-9. Run the test suite:
+8. Run the test suite:
 ```console
 ./run_unotest
 ```
