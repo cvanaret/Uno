@@ -15,6 +15,7 @@ $$
                            & ~x_L \le x \le x_U \\
 \end{align}
 $$
+
 where $f: \mathbb{R}^n \rightarrow \mathbb{R}$ and $c: \mathbb{R}^n \rightarrow \mathbb{R}^m$ are (ideally twice) continuously differentiable.
 
 This formulation allows for unbounded variables and equality constraints, and explicitly separates general nonlinear and bound constraints.
