@@ -289,17 +289,14 @@ if(pybind11_DIR)
       uno/linear_algebra/RectangularMatrix.hpp
       uno/linear_algebra/SparseVector.hpp
    )
-   set(PYTHON_MODULES
-      bindings/python/modules/Options.cpp
-      bindings/python/modules/RectangularMatrix.cpp
-      bindings/python/modules/SparseVector.cpp
-      bindings/python/modules/SymmetricMatrix.cpp
+   file(GLOB PYTHON_MODULES
+      bindings/python/modules/*.cpp
       bindings/python/unopy.cpp
    )
 
    pybind11_add_module(unopy EXCLUDE_FROM_ALL $<TARGET_OBJECTS:uno_files> ${PYTHON_MODULES})
    target_link_libraries(unopy PUBLIC ${LIBRARIES})
-   target_include_directories(unopy PUBLIC ${DIRECTORIES} uno)
+   target_include_directories(unopy PUBLIC ${DIRECTORIES})
 endif()
 
 ##################################
