@@ -45,7 +45,7 @@ namespace uno {
          initial_iterate.feasibility_multipliers.reset();
 
          // solve the instance
-         Uno uno{model->number_constraints, options};
+         Uno uno{0 < model->number_constraints, options};
          AMPLUserCallbacks user_callbacks{};
          const Result result = uno.solve(*model, initial_iterate, options, user_callbacks);
          if (result.optimization_status == OptimizationStatus::SUCCESS) {
