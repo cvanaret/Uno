@@ -10,7 +10,6 @@ on:
       - 'LICENSE'
       - '*.cff'
       - '*.options'
-      - 'uno_ampl-completion.bash'
   pull_request:
     branches: [ "main" ]
     paths-ignore:
@@ -18,7 +17,6 @@ on:
       - 'LICENSE'
       - '*.cff'
       - '*.options'
-      - 'uno_ampl-completion.bash'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)

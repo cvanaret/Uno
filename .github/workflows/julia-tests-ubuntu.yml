@@ -7,7 +7,6 @@ on:
       - 'LICENSE'
       - '*.cff'
       - '*.options'
-      - 'uno_ampl-completion.bash'
   pull_request:
     branches: [main]
     paths-ignore:
@@ -15,7 +14,6 @@ on:
       - 'LICENSE'
       - '*.cff'
       - '*.options'
-      - 'uno_ampl-completion.bash'
     
 # needed to allow julia-actions/cache to delete old caches that it has created
 permissions:

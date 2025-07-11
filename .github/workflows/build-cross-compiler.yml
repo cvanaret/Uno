@@ -8,7 +8,6 @@ on:
       - 'LICENSE'
       - '*.cff'
       - '*.options'
-      - 'uno_ampl-completion.bash'
   pull_request:
     branches: [main]
     paths-ignore:
@@ -16,7 +15,6 @@ on:
       - 'LICENSE'
       - '*.cff'
       - '*.options'
-      - 'uno_ampl-completion.bash'
 
 permissions:
   actions: write
