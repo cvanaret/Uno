@@ -12,9 +12,9 @@
 #include "switching_methods/funnel_methods/FunnelMethod.hpp"
 
 namespace uno {
-   std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(size_t number_constraints, const Options& options) {
+   std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(bool constrained_model, const Options& options) {
       // set unconstrained strategy automatically
-      if (number_constraints == 0) {
+      if (!constrained_model) {
          return std::make_unique<l1MeritFunction>(options);
       }
       const std::string& strategy_type = options.get_string("globalization_strategy");

@@ -4,7 +4,9 @@
 #ifndef UNO_H
 #define UNO_H
 
+#include <functional>
 #include <memory>
+#include <vector>
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
@@ -22,11 +24,12 @@ namespace uno {
 
    class Uno {
    public:
-      Uno(size_t number_constraints, const Options& options);
+      Uno(bool constrained_model, const Options& options);
 
       // solve with or without user callbacks
       Result solve(const Model& model, Iterate& initial_iterate, const Options& options);
       Result solve(const Model& model, Iterate& initial_iterate, const Options& options, UserCallbacks& user_callbacks);
+      void solve(size_t number_variables, size_t number_constraints, const std::function<double(const std::vector<double>&)>& objective);
 
       static std::string current_version();
       static void print_available_strategies();
