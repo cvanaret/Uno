@@ -96,12 +96,21 @@ namespace uno {
       return result;
    }
 
-   void Uno::solve(size_t number_variables, size_t number_constraints, const std::function<double(const std::vector<double>&)>& objective) {
+   using T = double;
+
+   void Uno::solve(size_t number_variables, size_t number_constraints, const objective_function_type& evaluate_objective,
+         const constraint_functions_type& evaluate_constraints, const Options& /*options*/) {
       std::cout << "Congrats, you just called Uno with (n, m) = (" << number_variables << ", " << number_constraints << ")\n";
-      std::vector<double> x(2);
+      Vector<double> x(number_variables);
       x[0] = 7.;
       x[1] = 4.;
-      std::cout << "Objective value of x = [" << x[0] << ", " << x[1] << "] is " << objective(x) << '\n';
+      std::cout << "Objective value at x = [" << x[0] << ", " << x[1] << "] is " << evaluate_objective(x) << '\n';
+      Vector<double> constraints(number_constraints);
+      std::cout << "C++\n";
+      std::cout << "x at " << &x << '\n';
+      std::cout << "constraints at " << &constraints << '\n';
+      evaluate_constraints(x, constraints);
+      std::cout << "Constraint values at x = [" << x[0] << ", " << x[1] << "] is " << constraints[0] << '\n';
    }
 
    void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) {

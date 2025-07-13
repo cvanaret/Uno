@@ -28,11 +28,6 @@ namespace uno {
    // forward declaration
    class Iterate;
 
-   /*! \class Problem
-    * \brief Optimization problem
-    *
-    *  Description of an optimization problem
-    */
    class Model {
    public:
       Model(std::string name, size_t number_variables, size_t number_constraints, double objective_sign);
