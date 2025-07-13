@@ -6,10 +6,10 @@
 
 #include <functional>
 #include <memory>
-#include <vector>
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Result.hpp"
 #include "optimization/IterateStatus.hpp"
@@ -24,12 +24,16 @@ namespace uno {
 
    class Uno {
    public:
+      using objective_function_type = std::function<double(const Vector<double>&)>;
+      using constraint_functions_type = std::function<void(const Vector<double>&, Vector<double>&)>;
+
       Uno(bool constrained_model, const Options& options);
 
       // solve with or without user callbacks
       Result solve(const Model& model, Iterate& initial_iterate, const Options& options);
       Result solve(const Model& model, Iterate& initial_iterate, const Options& options, UserCallbacks& user_callbacks);
-      void solve(size_t number_variables, size_t number_constraints, const std::function<double(const std::vector<double>&)>& objective);
+      void solve(size_t number_variables, size_t number_constraints, const objective_function_type& evaluate_objective,
+         const constraint_functions_type& evaluate_constraints, const Options& options);
 
       static std::string current_version();
       static void print_available_strategies();
