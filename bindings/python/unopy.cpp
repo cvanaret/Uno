@@ -2,19 +2,21 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <pybind11/pybind11.h>
+#include "linear_algebra/Vector.hpp"
 
 namespace py = pybind11;
 
+PYBIND11_MAKE_OPAQUE(uno::Vector<double>);
+
 namespace uno {
-   // individual classes
    void define_SparseVector(py::module& module);
    void define_RectangularMatrix(py::module& module);
    void define_SymmetricMatrix(py::module& module);
    void define_Options(py::module& module);
-   //void define_Model(py::module& module);
    void define_UnoSolver(py::module& module);
+   void define_Vector(py::module& module);
 
-   // module definition
+   // unopy module definition
    PYBIND11_MODULE(unopy, module) {
       module.doc() = "Python bindings to the solver Uno for nonlinearly constrained optimization";
       
@@ -22,7 +24,7 @@ namespace uno {
       define_RectangularMatrix(module);
       define_SymmetricMatrix(module);
       define_Options(module);
-      //define_Model(module);
       define_UnoSolver(module);
+      define_Vector(module);
    }
 } // namespace

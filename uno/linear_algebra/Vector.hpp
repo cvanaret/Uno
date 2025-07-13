@@ -4,6 +4,7 @@
 #ifndef UNO_VECTOR_H
 #define UNO_VECTOR_H
 
+#include <iostream>
 #include <cassert>
 #include <string>
 #include <vector>
@@ -23,7 +24,7 @@ namespace uno {
       explicit Vector(size_t capacity = 0): vector(capacity) { }
       Vector(size_t capacity, ElementType value): vector(capacity, value) { }
       Vector(std::initializer_list<ElementType> initializer_list): vector(initializer_list) { }
-      Vector(const Vector<ElementType>& other) noexcept : vector(other.vector) { }
+      Vector(const Vector<ElementType>& other) noexcept : vector(other.vector) { std::cout << "Vector copy constructor\n"; }
       Vector(Vector<ElementType>&& other) noexcept : vector(std::move(other.vector)) { }
       ~Vector() = default;
 
