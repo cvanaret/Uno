@@ -8,10 +8,10 @@
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
-#include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Result.hpp"
 #include "optimization/SolutionStatus.hpp"
+#include "tools/PointerWrapper.hpp"
 
 namespace uno {
    // forward declarations
