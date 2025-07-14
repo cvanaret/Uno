@@ -36,7 +36,7 @@ def evaluate_hessian(x, objective_multiplier, y, hessian):
 	hessian.insert(200.*objective_multiplier + 2.*y[1], 1, 1)
 
 if __name__ == '__main__':
-	options = unopy.Options.get_default()
+	options = unopy.get_default_options()
 	unopy.set_preset(options, "filtersqp")
 	constrained_model = (0 < number_constraints)
 	uno_solver = unopy.UnoSolver(constrained_model, options)
