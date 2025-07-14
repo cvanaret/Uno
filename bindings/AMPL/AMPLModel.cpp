@@ -199,7 +199,7 @@ namespace uno {
          for (size_t k: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
             const size_t row_index = static_cast<size_t>(asl_row_index[k]);
             const double entry = this->asl_hessian[k];
-            hessian.insert(entry, row_index, column_index);
+            hessian.insert(row_index, column_index, entry);
          }
          hessian.finalize_column(column_index);
       }

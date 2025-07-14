@@ -27,7 +27,7 @@ namespace uno {
       void reset() override;
       void set_dimension(size_t new_dimension) override;
 
-      void insert(ElementType term, IndexType row_index, IndexType column_index) override;
+      void insert(IndexType row_index, IndexType column_index, ElementType term) override;
       void finalize_column(IndexType /*column_index*/) override { /* do nothing */ }
       void set_regularization(const Collection<size_t>& indices, size_t offset, double factor) override;
       const ElementType* data_pointer() const noexcept override { return this->entries.data(); }
@@ -98,7 +98,7 @@ namespace uno {
    }
 
    template <typename IndexType, typename ElementType>
-   void COOFormat<IndexType, ElementType>::insert(ElementType term, IndexType row_index, IndexType column_index) {
+   void COOFormat<IndexType, ElementType>::insert(IndexType row_index, IndexType column_index, ElementType term) {
       assert(this->number_nonzeros <= this->row_indices.size() && "The COO matrix doesn't have a sufficient capacity");
 
       this->entries.emplace_back(term);
@@ -129,7 +129,7 @@ namespace uno {
    void COOFormat<IndexType, ElementType>::initialize_regularization() {
       // introduce elements at the start of the entries
       for (size_t row_index: Range(this->regularization_size)) {
-         this->insert(ElementType(0), IndexType(row_index), IndexType(row_index));
+         this->insert(IndexType(row_index), IndexType(row_index), ElementType(0));
       }
    }
 

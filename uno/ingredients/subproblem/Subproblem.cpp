@@ -63,7 +63,7 @@ namespace uno {
       // Jacobian of general constraints
       for (size_t column_index: Range(this->problem.number_constraints)) {
          for (const auto [row_index, derivative]: constraint_jacobian[column_index]) {
-            augmented_matrix.insert(derivative, row_index, this->problem.number_variables + column_index);
+            augmented_matrix.insert(row_index, this->problem.number_variables + column_index, derivative);
          }
          augmented_matrix.finalize_column(column_index);
       }

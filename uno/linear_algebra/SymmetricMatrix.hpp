@@ -55,7 +55,7 @@ namespace uno {
       [[nodiscard]] virtual size_t capacity() const = 0;
 
       // build the matrix incrementally
-      virtual void insert(ElementType term, IndexType row_index, IndexType column_index) = 0;
+      virtual void insert(IndexType row_index, IndexType column_index, ElementType term) = 0;
       virtual void finalize_column(IndexType column_index) = 0;
       
       [[nodiscard]] virtual ElementType smallest_diagonal_entry(size_t max_dimension) const = 0;
