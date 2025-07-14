@@ -52,8 +52,8 @@ namespace uno {
       }
 
       // build the matrix incrementally
-      void insert(value_type term, index_type row_index, index_type column_index) override {
-         this->sparse_storage.insert(term, row_index, column_index);
+      void insert(index_type row_index, index_type column_index, value_type term) override {
+         this->sparse_storage.insert(row_index, column_index, term);
       }
 
       void finalize_column(index_type column_index) override {

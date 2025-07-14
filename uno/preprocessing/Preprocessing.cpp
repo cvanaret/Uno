@@ -44,13 +44,13 @@ namespace uno {
          model.number_variables + model.number_jacobian_nonzeros(), 0);
       // identity block
       for (size_t variable_index: Range(model.number_variables)) {
-         matrix.insert(1., variable_index, variable_index);
+         matrix.insert(variable_index, variable_index, 1.);
          matrix.finalize_column(variable_index);
       }
       // Jacobian of general constraints
       for (size_t constraint_index: Range(model.number_constraints)) {
          for (const auto [variable_index, derivative]: current_iterate.evaluations.constraint_jacobian[constraint_index]) {
-            matrix.insert(derivative, variable_index, model.number_variables + constraint_index);
+            matrix.insert(variable_index, model.number_variables + constraint_index, derivative);
          }
          matrix.finalize_column(model.number_variables + constraint_index);
       }

@@ -118,7 +118,7 @@ namespace uno {
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
             const double proximal_term = this->proximal_coefficient * scaling * scaling;
-            hessian.insert(proximal_term, variable_index, variable_index);
+            hessian.insert(variable_index, variable_index, proximal_term);
          }
       }
    }

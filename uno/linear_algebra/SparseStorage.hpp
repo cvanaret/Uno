@@ -32,7 +32,7 @@ namespace uno {
       virtual void set_dimension(size_t new_dimension) = 0;
 
       // build the matrix incrementally
-      virtual void insert(ElementType term, IndexType row_index, IndexType column_index) = 0;
+      virtual void insert(IndexType row_index, IndexType column_index, ElementType term) = 0;
       // this method will be used by the CSCSparseStorage subclass
       virtual void finalize_column(IndexType column_index) = 0;
       virtual void set_regularization(const Collection<size_t>& indices, size_t offset, double factor) = 0;

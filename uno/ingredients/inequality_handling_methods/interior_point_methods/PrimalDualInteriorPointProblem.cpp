@@ -73,7 +73,7 @@ namespace uno {
                const double distance_to_bound = primal_variables[variable_index] - this->first_reformulation.variable_upper_bound(variable_index);
                diagonal_barrier_term += multipliers.upper_bounds[variable_index] / distance_to_bound;
             }
-            hessian.insert(diagonal_barrier_term, variable_index, variable_index);
+            hessian.insert(variable_index, variable_index, diagonal_barrier_term);
          }
       }
    }

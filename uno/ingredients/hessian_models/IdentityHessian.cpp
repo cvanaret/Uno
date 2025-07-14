@@ -33,7 +33,7 @@ namespace uno {
       DEBUG << "Setting identity Hessian\n";
       hessian.reset();
       for (size_t variable_index: Range(model.number_variables)) {
-         hessian.insert(1., variable_index, variable_index);
+         hessian.insert(variable_index, variable_index, 1.);
          hessian.finalize_column(variable_index);
       }
    }
