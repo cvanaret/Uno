@@ -131,7 +131,7 @@ namespace uno {
    std::string Uno::current_version() {
       return "2.1.0";
    }
-
+   
    void Uno::print_available_strategies() {
       std::cout << "Available Uno strategies:\n";
       std::cout << "- Constraint relaxation strategies: " << join(ConstraintRelaxationStrategyFactory::available_strategies, ", ") << '\n';

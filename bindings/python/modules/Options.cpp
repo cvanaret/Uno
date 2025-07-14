@@ -22,9 +22,6 @@ namespace uno {
             options.overwrite_with(solvers_options);
             return options;
          }, "create default options")
-         .def_static("set_preset", [](Options& options, const std::string& preset_name) {
-            Presets::set(options, preset_name);
-         }, "set a preset")
          // methods
          .def("__setitem__", [](Options& options, const std::string& key, const std::string& value) {
             options[key] = value;
@@ -35,6 +32,9 @@ namespace uno {
          .def("__repr__", [](const Options& options) {
             return options.to_string();
          });
-      ;
+      // set a preset
+      module.def("set_preset", [](Options& options, const std::string& preset_name) {
+         Presets::set(options, preset_name);
+      }, "set a preset");
    }
 } // namespace
