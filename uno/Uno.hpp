@@ -29,8 +29,10 @@ namespace uno {
       using objective_function_type = std::function<double(PointerWrapper<Vector<double>>)>;
       using constraint_functions_type = std::function<void(PointerWrapper<Vector<double>>, PointerWrapper<Vector<double>>)>;
       using objective_gradient_type = std::function<void(PointerWrapper<Vector<double>>, PointerWrapper<SparseVector<double>>)>;
-      using hessian_type = std::function<void(PointerWrapper<Vector<double>> /*x*/, PointerWrapper<Vector<double>> /*y*/,
-         double objective_multiplier, PointerWrapper<SymmetricMatrix<size_t, double>>)>;
+      using jacobian_type = std::function<void(PointerWrapper<Vector<double>> /*x*/,
+         PointerWrapper<SymmetricMatrix<size_t, double>> /*jacobian*/)>;
+      using hessian_type = std::function<void(PointerWrapper<Vector<double>> /*x*/, double objective_multiplier,
+         PointerWrapper<Vector<double>> /*y*/, PointerWrapper<SymmetricMatrix<size_t, double>> /*hessian*/)>;
 
       Uno(bool constrained_model, const Options& options);
 
@@ -39,7 +41,7 @@ namespace uno {
       Result solve(const Model& model, Iterate& initial_iterate, const Options& options, UserCallbacks& user_callbacks);
       void solve(size_t number_variables, size_t number_constraints, const objective_function_type& evaluate_objective,
          const constraint_functions_type& evaluate_constraints, const objective_gradient_type& evaluate_objective_gradient,
-         const hessian_type& evaluate_hessian, const Options& options);
+         const jacobian_type& evaluate_jacobian, const hessian_type& evaluate_hessian, const Options& options);
 
       static std::string current_version();
       static void print_available_strategies();
