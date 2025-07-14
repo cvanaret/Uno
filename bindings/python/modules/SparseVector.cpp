@@ -13,9 +13,6 @@ namespace uno {
    void define_SparseVector(py::module& module) {
       // SparseVector class (instantiated with double elements)
       py::class_<PythonSparseVector>(module, "SparseVector")
-         // constructor
-         //.def(py::init<size_t>(), py::arg("capacity"), "Constructor")
-         // methods
          //.def("size", &SparseVector<double>::size, "Number of elements")
          .def("insert", [](PythonSparseVector& self, size_t index, double value) {
             self->insert(index, value);
