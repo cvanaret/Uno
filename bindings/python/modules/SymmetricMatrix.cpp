@@ -14,8 +14,8 @@ namespace uno {
       // SymmetricMatrix class (instantiated with size_t indices and double elements)
       py::class_<PythonSymmetricMatrix>(module, "SymmetricMatrix")
          // methods
-         .def("insert", [](PythonSymmetricMatrix& self, double element, size_t row_index, size_t column_index) {
-            self->insert(element, row_index, column_index);
-         }, py::arg("element"), py::arg("row_index"), py::arg("column_index"), "Insert an element");
+         .def("insert", [](PythonSymmetricMatrix& self, size_t row_index, size_t column_index, double element) {
+            self->insert(row_index, column_index, element);
+         }, py::arg("row_index"), py::arg("column_index"), py::arg("element"), "Insert an element");
    }
 } // namespace
