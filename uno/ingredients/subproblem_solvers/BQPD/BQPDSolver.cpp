@@ -317,28 +317,28 @@ namespace uno {
          case BQPDStatus::UNBOUNDED_PROBLEM:
             return SubproblemStatus::UNBOUNDED_PROBLEM;
          case BQPDStatus::BOUND_INCONSISTENCY:
-            std::cout << "BQPD error: bound inconsistency\n";
+            DEBUG << "BQPD error: bound inconsistency\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::INFEASIBLE:
             return SubproblemStatus::INFEASIBLE;
             // errors
          case BQPDStatus::INCORRECT_PARAMETER:
-            std::cout << "BQPD error: incorrect parameter\n";
+            DEBUG << "BQPD error: incorrect parameter\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::LP_INSUFFICIENT_SPACE:
-            std::cout << "BQPD error: LP insufficient space\n";
+            DEBUG << "BQPD error: LP insufficient space\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::HESSIAN_INSUFFICIENT_SPACE:
-            std::cout << "BQPD kmax too small, continue anyway\n";
+            DEBUG << "BQPD kmax too small, continue anyway\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::SPARSE_INSUFFICIENT_SPACE:
-            std::cout << "BQPD error: sparse insufficient space\n";
+            DEBUG << "BQPD error: sparse insufficient space\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::MAX_RESTARTS_REACHED:
-            std::cout << "BQPD max restarts reached\n";
+            DEBUG << "BQPD max restarts reached\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::UNDEFINED:
-            std::cout << "BQPD error: undefined\n";
+            DEBUG << "BQPD error: undefined\n";
             return SubproblemStatus::ERROR;
       }
       throw std::invalid_argument("The BQPD ifail is not consistent with the Uno status values");

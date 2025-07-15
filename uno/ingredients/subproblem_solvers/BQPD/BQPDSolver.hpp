@@ -70,7 +70,7 @@ namespace uno {
 
       int kmax{0};
       int mlp{1000};
-      const size_t nprof{5000000};
+      const size_t nprof{10000000};
       std::array<int, 100> info{};
       std::vector<double> alp{};
       std::vector<int> lp{}, active_set{};
