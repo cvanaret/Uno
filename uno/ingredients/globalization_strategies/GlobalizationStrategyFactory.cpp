@@ -10,11 +10,13 @@
 #include "switching_methods/filter_methods/FletcherFilterMethod.hpp"
 #include "switching_methods/filter_methods/WaechterFilterMethod.hpp"
 #include "switching_methods/funnel_methods/FunnelMethod.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(size_t number_constraints, const Options& options) {
       // set unconstrained strategy automatically
       if (number_constraints == 0) {
+         INFO << "The model is unconstrained, picking a merit function as globalization strategy\n";
          return std::make_unique<l1MeritFunction>(options);
       }
       const std::string& strategy_type = options.get_string("globalization_strategy");
