@@ -90,7 +90,6 @@ namespace uno {
 
       void partition_variables();
       void partition_constraints();
-
       void compute_lagrangian_hessian_sparsity();
    };
 
