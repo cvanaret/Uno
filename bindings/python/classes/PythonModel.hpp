@@ -21,7 +21,8 @@ namespace uno {
          const objective_gradient_type& evaluate_objective_gradient, const jacobian_type& evaluate_jacobian,
          const lagrangian_hessian_type& evaluate_lagrangian_hessian, const std::vector<double>& variables_lower_bounds,
          const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
-         const std::vector<double>& constraints_upper_bounds);
+         const std::vector<double>& constraints_upper_bounds, const std::vector<double>& primal_initial_point,
+         const std::vector<double>& dual_initial_point);
       ~PythonModel() override = default;
 
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
@@ -72,6 +73,35 @@ namespace uno {
       const std::vector<double>& variables_upper_bounds;
       const std::vector<double>& constraints_lower_bounds;
       const std::vector<double>& constraints_upper_bounds;
+
+      const std::vector<double>& primal_initial_point;
+      const std::vector<double>& dual_initial_point;
+
+      std::vector<BoundType> variable_status; /*!< Status of the variables (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
+      std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
+      std::vector<BoundType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
+    * UNBOUNDED) */
+
+      // lists of variables and constraints + corresponding collection objects
+      std::vector<size_t> linear_constraints{};
+      CollectionAdapter<std::vector<size_t>&> linear_constraints_collection;
+      std::vector<size_t> equality_constraints{};
+      CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;
+      std::vector<size_t> inequality_constraints{};
+      CollectionAdapter<std::vector<size_t>&> inequality_constraints_collection;
+      SparseVector<size_t> slacks{};
+      std::vector<size_t> lower_bounded_variables;
+      CollectionAdapter<std::vector<size_t>&> lower_bounded_variables_collection;
+      std::vector<size_t> upper_bounded_variables;
+      CollectionAdapter<std::vector<size_t>&> upper_bounded_variables_collection;
+      std::vector<size_t> single_lower_bounded_variables{}; // indices of the single lower-bounded variables
+      CollectionAdapter<std::vector<size_t>&> single_lower_bounded_variables_collection;
+      std::vector<size_t> single_upper_bounded_variables{}; // indices of the single upper-bounded variables
+      CollectionAdapter<std::vector<size_t>&> single_upper_bounded_variables_collection;
+      Vector<size_t> fixed_variables;
+
+   protected:
+      void categorize_bounded_variables();
    };
 } // namespace
 
