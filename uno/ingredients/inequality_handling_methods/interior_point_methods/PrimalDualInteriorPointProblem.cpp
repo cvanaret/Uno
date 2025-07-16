@@ -45,7 +45,7 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
       this->first_reformulation.evaluate_constraints(iterate, constraints);
    }
 

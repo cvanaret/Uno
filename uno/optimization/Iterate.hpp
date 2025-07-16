@@ -29,7 +29,7 @@ namespace uno {
       double objective_multiplier{1.};
 
       // evaluations
-      Evaluations evaluations;
+      Evaluations model_evaluations;
       static size_t number_eval_objective;
       static size_t number_eval_constraints;
       static size_t number_eval_objective_gradient;

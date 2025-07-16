@@ -111,7 +111,7 @@ namespace uno {
    }
    */
 
-   void AMPLModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
+   void AMPLModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       fint error_flag = 0;
       (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &error_flag);
       if (0 < error_flag) {
@@ -284,7 +284,7 @@ namespace uno {
          iterate.multipliers.constraints *= this->objective_sign;
          iterate.multipliers.lower_bounds *= this->objective_sign;
          iterate.multipliers.upper_bounds *= this->objective_sign;
-         iterate.evaluations.objective *= this->objective_sign;
+         iterate.model_evaluations.objective *= this->objective_sign;
 
          // include the bound duals in the .sol file, using suffixes
          SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
@@ -304,7 +304,7 @@ namespace uno {
          iterate.multipliers.constraints *= this->objective_sign;
          iterate.multipliers.lower_bounds *= this->objective_sign;
          iterate.multipliers.upper_bounds *= this->objective_sign;
-         iterate.evaluations.objective *= this->objective_sign;
+         iterate.model_evaluations.objective *= this->objective_sign;
       }
    }
 

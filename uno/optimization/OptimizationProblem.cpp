@@ -24,18 +24,18 @@ namespace uno {
    void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
       iterate.evaluate_objective_gradient(this->model);
       // TODO change this
-      objective_gradient = iterate.evaluations.objective_gradient;
+      objective_gradient = iterate.model_evaluations.objective_gradient;
    }
 
-   void OptimizationProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+   void OptimizationProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
-      constraints = iterate.evaluations.constraints;
+      constraints = iterate.model_evaluations.constraints;
    }
 
    void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
       iterate.evaluate_constraint_jacobian(this->model);
       // TODO change this
-      constraint_jacobian = iterate.evaluations.constraint_jacobian;
+      constraint_jacobian = iterate.model_evaluations.constraint_jacobian;
    }
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
@@ -131,12 +131,12 @@ namespace uno {
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // objective gradient
-      lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
+      lagrangian_gradient.objective_contribution = iterate.model_evaluations.objective_gradient;
 
       // constraints
       for (size_t constraint_index: Range(this->number_constraints)) {
          if (multipliers.constraints[constraint_index] != 0.) {
-            for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
+            for (auto [variable_index, derivative]: iterate.model_evaluations.constraint_jacobian[constraint_index]) {
                lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
             }
          }
@@ -149,7 +149,7 @@ namespace uno {
       }
    }
 
-   double OptimizationProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
+   double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
       const Range variables_range = Range(std::min(this->number_variables, primals.size()));

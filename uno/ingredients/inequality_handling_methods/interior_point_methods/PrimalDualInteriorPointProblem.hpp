@@ -17,7 +17,7 @@ namespace uno {
       // function evaluations
       [[nodiscard]] double get_objective_multiplier() const override;
       void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const override;
-      void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
+      void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
       void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const override;

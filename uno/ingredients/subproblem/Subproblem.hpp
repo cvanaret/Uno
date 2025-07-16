@@ -35,7 +35,7 @@ namespace uno {
 
       // constraints, objective gradient and Jacobian
       void evaluate_objective_gradient(Vector<double>& linear_objective) const;
-      void evaluate_constraints(std::vector<double>& constraints) const;
+      void evaluate_constraints(Vector<double>& constraints) const;
       void evaluate_jacobian(RectangularMatrix<double>& constraint_jacobian) const;
 
       // regularized Hessian
@@ -47,7 +47,7 @@ namespace uno {
          RectangularMatrix<double>& constraint_jacobian) const;
       void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const;
-      void assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
+      void assemble_augmented_rhs(const Vector<double>& objective_gradient, const Vector<double>& constraints,
          RectangularMatrix<double>& constraint_jacobian, Vector<double>& rhs) const;
       void assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const;
 
@@ -57,7 +57,7 @@ namespace uno {
       // constraints bounds
       template <typename Array>
       void set_constraints_bounds(Array& constraints_lower_bounds, Array& constraints_upper_bounds,
-         std::vector<double>& constraints) const;
+         Vector<double>& constraints) const;
 
       [[nodiscard]] bool has_implicit_hessian_representation() const;
       [[nodiscard]] bool has_explicit_hessian_representation() const;
@@ -75,7 +75,7 @@ namespace uno {
 
    template <typename Array>
    void Subproblem::set_constraints_bounds(Array& constraints_lower_bounds, Array& constraints_upper_bounds,
-         std::vector<double>& constraints) const {
+         Vector<double>& constraints) const {
       for (size_t constraint_index: Range(this->problem.number_constraints)) {
          constraints_lower_bounds[constraint_index] = this->problem.constraint_lower_bound(constraint_index) - constraints[constraint_index];
          constraints_upper_bounds[constraint_index] = this->problem.constraint_upper_bound(constraint_index) - constraints[constraint_index];
