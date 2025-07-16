@@ -4,24 +4,13 @@
 #ifndef UNO_UNOSOLVERWRAPPER_H
 #define UNO_UNOSOLVERWRAPPER_H
 
-#include <functional>
+
 #include "Uno.hpp"
-#include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "tools/PointerWrapper.hpp"
+#include "PythonTypes.hpp"
 
 namespace uno {
    // forward declarations
    class Options;
-
-   using objective_function_type = std::function<double(PointerWrapper<Vector<double>>)>;
-   using constraint_functions_type = std::function<void(PointerWrapper<Vector<double>>, PointerWrapper<Vector<double>>)>;
-   using objective_gradient_type = std::function<void(PointerWrapper<Vector<double>>, PointerWrapper<SparseVector<double>>)>;
-   using jacobian_type = std::function<void(PointerWrapper<Vector<double>> /*x*/,
-      PointerWrapper<SymmetricMatrix<size_t, double>> /*jacobian*/)>;
-   using hessian_type = std::function<void(PointerWrapper<Vector<double>> /*x*/, double objective_multiplier,
-      PointerWrapper<Vector<double>> /*y*/, PointerWrapper<SymmetricMatrix<size_t, double>> /*hessian*/)>;
 
    class UnoSolverWrapper {
    public:
@@ -29,10 +18,13 @@ namespace uno {
 
       void solve(size_t number_variables, size_t number_constraints, const objective_function_type& evaluate_objective,
          const constraint_functions_type& evaluate_constraints, const objective_gradient_type& evaluate_objective_gradient,
-         const jacobian_type& evaluate_jacobian, const hessian_type& evaluate_hessian, const Options& options);
+         const jacobian_type& evaluate_jacobian, const lagrangian_hessian_type& evaluate_lagrangian_hessian,
+         const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
+         const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds,
+         const Options& options);
 
    protected:
-
+      Uno uno_solver;
    };
 } // namespace
 

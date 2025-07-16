@@ -15,8 +15,11 @@ namespace uno {
          .def(py::init<bool, const Options&>(), py::arg("constrained_model"), py::arg("options"), "Constructor")
          // methods
          .def("solve", &UnoSolverWrapper::solve,
+            /*
             py::arg("number_variables"), py::arg("number_constraints"), py::arg("evaluate_objective"), py::arg("evaluate_constraints"),
-            py::arg("evaluate_objective_gradient"), py::arg("evaluate_jacobian"), py::arg("evaluate_hessian"),
-            py::arg("options"), "Solve an optimization model with the Uno solver");
+            py::arg("evaluate_objective_gradient"), py::arg("evaluate_jacobian"), py::arg("evaluate_lagrangian_hessian"),
+            py::arg("options"),
+            */
+            "Solve an optimization model with the Uno solver");
    }
 } // namespace
