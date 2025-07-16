@@ -40,6 +40,8 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "QP_
         exclude = [
             "001_010",  # Local solution
             "003_014",  # Local solution
+            "004_010",  # Local solution
+            "004_011",  # Local solution
             "008_010",  # Local solution
             # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
             "005_010",
@@ -50,17 +52,9 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "QP_
             "007_010",
         ],
         primal_target,
-        objective_tol = 1e-4,
-        primal_tol = 1e-4,
     )
     # This function tests convex nonlinear programs. Test failures here should
     # never be allowed, because even local NLP solvers should find the global
     # optimum.
-    MINLPTests.test_nlp_cvx_expr(
-        Optimizer_Uno_filtersqp; 
-        primal_target,
-        objective_tol = 1e-4,
-        primal_tol = 1e-4,
-        exclude = ["501_011"],  # Iteration limit
-    )
+    MINLPTests.test_nlp_cvx_expr(Optimizer_Uno_filtersqp; primal_target)
 end
