@@ -85,6 +85,7 @@ namespace uno {
 
       void find_fixed_variables();
       void partition_constraints();
+
       void compute_lagrangian_hessian_sparsity();
    };
 
