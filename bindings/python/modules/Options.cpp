@@ -27,13 +27,14 @@ namespace uno {
       module.def("get_default_options", []() {
          Options options = DefaultOptions::load();
          // determine the default solvers based on the available libraries
-         Options solvers_options = DefaultOptions::determine_solvers();
+         const Options solvers_options = DefaultOptions::determine_solvers();
          options.overwrite_with(solvers_options);
          return options;
       }, "create default options");
       // set a preset
       module.def("set_preset", [](Options& options, const std::string& preset_name) {
-         Presets::set(options, preset_name);
+         const Options preset_options = Presets::get_preset_options(preset_name);
+         options.overwrite_with(preset_options);
       }, "set a preset");
    }
 } // namespace

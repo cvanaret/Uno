@@ -5,6 +5,7 @@
 #define UNO_PYTHONTYPES_H
 
 #include <functional>
+#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -12,13 +13,13 @@
 
 namespace uno {
    // types of the model's functions (objective, constraints, gradients, Jacobian, Hessian)
-   using objective_function_type = std::function<double(PointerWrapper<const Vector<double>>)>;
-   using constraint_functions_type = std::function<void(PointerWrapper<const Vector<double>>, PointerWrapper<Vector<double>>)>;
-   using objective_gradient_type = std::function<void(PointerWrapper<const Vector<double>>, PointerWrapper<SparseVector<double>>)>;
-   using jacobian_type = std::function<void(PointerWrapper<const Vector<double>> /*x*/,
-      PointerWrapper<SymmetricMatrix<size_t, double>> /*jacobian*/)>;
-   using lagrangian_hessian_type = std::function<void(PointerWrapper<const Vector<double>> /*x*/, double objective_multiplier,
-      PointerWrapper<const Vector<double>> /*y*/, PointerWrapper<SymmetricMatrix<size_t, double>> /*hessian*/)>;
+   using objective_function_type = std::function<double(PointerWrapper<Vector<double>>)>;
+   using constraint_functions_type = std::function<void(PointerWrapper<Vector<double>>, PointerWrapper<Vector<double>>)>;
+   using objective_gradient_type = std::function<void(PointerWrapper<Vector<double>>, PointerWrapper<SparseVector<double>>)>;
+   using jacobian_type = std::function<void(PointerWrapper<Vector<double>> /*x*/,
+      PointerWrapper<RectangularMatrix<double>> /*jacobian*/)>;
+   using lagrangian_hessian_type = std::function<void(PointerWrapper<Vector<double>> /*x*/, double objective_multiplier,
+      PointerWrapper<Vector<double>> /*y*/, PointerWrapper<SymmetricMatrix<size_t, double>> /*hessian*/)>;
 } // namespace
 
 #endif // UNO_PYTHONTYPES_H

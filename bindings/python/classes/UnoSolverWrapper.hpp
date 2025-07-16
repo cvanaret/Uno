@@ -21,7 +21,7 @@ namespace uno {
          const jacobian_type& evaluate_jacobian, const lagrangian_hessian_type& evaluate_lagrangian_hessian,
          const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
          const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds,
-         const Options& options);
+         const std::vector<double>& primal_initial_point, const std::vector<double>& dual_initial_point, const Options& options);
 
    protected:
       Uno uno_solver;
