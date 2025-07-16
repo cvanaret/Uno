@@ -23,6 +23,10 @@ jobs:
   test:
     name: Julia - ${{ github.event_name }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        UNO_PRESET: [uno_ipopt, uno_filterslp]
+    
     steps:
       - uses: actions/checkout@v4
       # Install Julia 1.7 for BinaryBuilder. Note that this is an old version of
@@ -60,4 +64,4 @@ jobs:
           using Pkg
           Pkg.instantiate()
           Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
-          include("/home/runner/work/Uno/Uno/.github/julia/runtests.jl")
+          include("/home/runner/work/Uno/Uno/.github/julia/runtests_${{matrix.UNO_PRESET}}.jl")

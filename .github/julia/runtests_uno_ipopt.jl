@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2024: Charlie Vanaret and contributors
+# Copyright (c) 2018-2025: Charlie Vanaret and contributors
 #
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
@@ -23,7 +23,6 @@ function Optimizer(options)
 end
 
 Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "unbounded_objective_threshold=-1e15"])
-Optimizer_Uno_filterslp() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_solver=HiGHS", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
@@ -49,35 +48,10 @@ Optimizer_Uno_filterslp() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_
         ],
         primal_target,
     )
-    MINLPTests.test_nlp_expr(
-        Optimizer_Uno_filterslp;
-        exclude = [
-            "001_010",  # Local solution
-            "003_014",  # Local solution
-            "008_010",  # Local solution
-            # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
-            "005_010",
-            # Okay to exclude forever: AmplNLWriter does not support
-            # user-defined functions.
-            "006_010",
-            # Remove once https://github.com/cvanaret/Uno/issues/38 is fixed
-            "007_010",
-        ],
-        primal_target,
-        objective_tol = 1e-4,
-        primal_tol = 1e-4,
-    )
     # This function tests convex nonlinear programs. Test failures here should
     # never be allowed, because even local NLP solvers should find the global
     # optimum.
     MINLPTests.test_nlp_cvx_expr(Optimizer_Uno_ipopt; primal_target)
-    MINLPTests.test_nlp_cvx_expr(
-        Optimizer_Uno_filterslp; 
-        primal_target,
-        objective_tol = 1e-4,
-        primal_tol = 1e-4,
-        exclude = ["501_011"],  # Iteration limit
-    )
 end
 
 # This testset runs the full gamut of MOI.Test.runtests. There are a number of
