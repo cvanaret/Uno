@@ -3,8 +3,8 @@ name: BinaryBuilder.jl
 on: [push, pull_request]
   branches: [main]
   paths: # run only if this particular yml file is updated (ignoring the others)
-    - '.github/workflows/build-cross-compiler.yml'
     - '!.github/workflows/**.yml'
+    - '.github/workflows/build-cross-compiler.yml'
   paths-ignore:
     - '*.md'
     - 'LICENSE'
