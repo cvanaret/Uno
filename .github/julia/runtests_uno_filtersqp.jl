@@ -28,7 +28,7 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "QP_
 @testset "MINLPTests" begin
     primal_target = Dict(
         MINLPTests.FEASIBLE_PROBLEM => MOI.FEASIBLE_POINT,
-        MINLPTests.INFEASIBLE_PROBLEM => MOI.INFEASIBLE_POINT,
+        MINLPTests.INFEASIBLE_PROBLEM => MOI.NO_SOLUTION,
     )
     # This function tests (potentially) non-convex nonlinear programs. The tests
     # are meant to be "easy" in the sense that most NLP solvers can find the
