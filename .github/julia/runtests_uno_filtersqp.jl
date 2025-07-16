@@ -39,7 +39,6 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "QP_
             "003_014",  # Local solution
             "004_010",  # Local solution
             "004_011",  # Local solution
-            "007_010",  # Local solution
             "008_010",  # Local solution
             # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
             "005_010",
