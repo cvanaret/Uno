@@ -25,7 +25,6 @@ namespace uno {
       CSCFormat& operator=(CSCFormat&& other) = default;
 
       void reset() override;
-      void set_dimension(size_t new_dimension) override;
 
       void insert(ElementType term, IndexType row_index, IndexType column_index) override;
       void finalize_column(IndexType column_index) override;
@@ -64,18 +63,6 @@ namespace uno {
       this->row_indices.clear();
       this->column_starts.fill(0);
       this->current_column = 0;
-   }
-
-   template <typename IndexType, typename ElementType>
-   void CSCFormat<IndexType, ElementType>::set_dimension(size_t new_dimension) {
-      this->column_starts.resize(new_dimension + 1);
-      // if we enlarge the storage, copy the column starts
-      if (this->dimension < new_dimension) {
-         for (size_t index: Range(this->dimension + 1, new_dimension + 1)) {
-            this->column_starts[index] = this->column_starts[this->dimension];
-         }
-      }
-      this->dimension = new_dimension;
    }
 
    template <typename IndexType, typename ElementType>

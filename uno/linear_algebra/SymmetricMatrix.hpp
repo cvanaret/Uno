@@ -50,7 +50,6 @@ namespace uno {
 
       virtual void reset() = 0;
       [[nodiscard]] virtual size_t dimension() const = 0;
-      virtual void set_dimension(size_t new_dimension) = 0;
       [[nodiscard]] virtual size_t number_nonzeros() const = 0;
       [[nodiscard]] virtual size_t capacity() const = 0;
 

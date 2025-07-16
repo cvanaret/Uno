@@ -29,7 +29,6 @@ namespace uno {
       virtual ~SparseStorage() = default;
 
       virtual void reset() = 0;
-      virtual void set_dimension(size_t new_dimension) = 0;
 
       // build the matrix incrementally
       virtual void insert(IndexType row_index, IndexType column_index, ElementType term) = 0;

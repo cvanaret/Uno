@@ -28,7 +28,6 @@ namespace uno {
 
    void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
-      hessian.set_dimension(model.number_variables);
       hessian.reset();
       for (size_t variable_index: Range(model.number_variables)) {
          hessian.finalize_column(variable_index);

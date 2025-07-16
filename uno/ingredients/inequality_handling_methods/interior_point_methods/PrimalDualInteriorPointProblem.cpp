@@ -57,7 +57,6 @@ namespace uno {
          const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
       // original Lagrangian Hessian
       this->first_reformulation.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian);
-      hessian.set_dimension(this->number_variables);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
