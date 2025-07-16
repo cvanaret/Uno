@@ -108,7 +108,7 @@ namespace uno {
       const double objective_multiplier = problem.get_objective_multiplier();
       trial_iterate.objective_multiplier = objective_multiplier;
       this->compute_progress_measures(inequality_handling_method, problem, globalization_strategy, current_iterate, trial_iterate);
-      
+
       bool accept_iterate = false;
       if (direction.norm == 0.) {
          DEBUG << "Zero step acceptable\n";
