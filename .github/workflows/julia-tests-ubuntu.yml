@@ -21,11 +21,11 @@ permissions:
   contents: read
 jobs:
   test:
-    name: Julia - ${{ github.event_name }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        UNO_PRESET: [uno_ipopt, uno_filterslp]
+        UNO_PRESET: [uno_filtersqp, uno_ipopt, uno_filterslp]
+    name: Julia tests of ${{matrix.UNO_PRESET}} - ${{ github.event_name }}
     
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +58,7 @@ jobs:
         with:
           version: "1.10"
           arch: x64
-      - name: Test .github/julia/runtests.jl
+      - name: Test ${{matrix.UNO_PRESET}} preset on .github/julia/runtests.jl
         shell: julia --color=yes --project=.github/julia {0}
         run: |
           using Pkg
