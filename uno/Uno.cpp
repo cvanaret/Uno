@@ -17,7 +17,6 @@
 #include "tools/Logger.hpp"
 #include "optimization/OptimizationStatus.hpp"
 #include "options/Options.hpp"
-#include "tools/PointerWrapper.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/Timer.hpp"
 #include "tools/UserCallbacks.hpp"
