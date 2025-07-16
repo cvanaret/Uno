@@ -58,7 +58,6 @@ namespace uno {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
          this->current_multipliers, augmented_matrix);
-      augmented_matrix.set_dimension(this->problem.number_variables + this->problem.number_constraints);
 
       // Jacobian of general constraints
       for (size_t column_index: Range(this->problem.number_constraints)) {

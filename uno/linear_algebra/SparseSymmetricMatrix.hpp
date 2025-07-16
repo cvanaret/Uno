@@ -39,10 +39,6 @@ namespace uno {
          return this->sparse_storage.dimension;
       }
 
-      void set_dimension(size_t new_dimension) override {
-         this->sparse_storage.set_dimension(new_dimension);
-      }
-
       [[nodiscard]] size_t number_nonzeros() const override {
          return this->sparse_storage.number_nonzeros;
       }

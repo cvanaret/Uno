@@ -25,7 +25,6 @@ namespace uno {
       COOFormat& operator=(COOFormat&& other) = default;
 
       void reset() override;
-      void set_dimension(size_t new_dimension) override;
 
       void insert(IndexType row_index, IndexType column_index, ElementType term) override;
       void finalize_column(IndexType /*column_index*/) override { /* do nothing */ }
@@ -87,14 +86,6 @@ namespace uno {
       if (0 < this->regularization_size) {
          this->initialize_regularization();
       }
-   }
-
-   template <typename IndexType, typename ElementType>
-   void COOFormat<IndexType, ElementType>::set_dimension(size_t new_dimension) {
-      this->dimension = new_dimension;
-      this->entries.reserve(this->dimension);
-      this->row_indices.reserve(this->dimension);
-      this->column_indices.reserve(this->dimension);
    }
 
    template <typename IndexType, typename ElementType>
