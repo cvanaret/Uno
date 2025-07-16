@@ -39,10 +39,24 @@ extern "C" {
 namespace uno {
    #define BIG 1e30
 
+   // heuristic to select kmax (the maximum size of the nullspace)
+   // source: Minotaur code
+   // https://github.com/coin-or/minotaur/blob/51a8bb78241a0b2e9ae94802aa76af8319f99192/src/interfaces/UnoEngine.cpp#L277
+   int pick_kmax_heuristically(size_t number_variables, size_t number_constraints) {
+      size_t kmax = 0;
+      if (number_variables <= 1500) {
+         kmax = number_variables;
+      } else if (number_variables <= 5000) {
+         kmax = number_variables - number_constraints/5;
+      } else {
+         kmax = 5000;
+      }
+      return static_cast<int>(kmax);
+   }
+
    // preallocate a bunch of stuff
    BQPDSolver::BQPDSolver(const Options& options):
          QPSolver(),
-         kmax_limit(options.get_int("BQPD_kmax")),
          alp(static_cast<size_t>(this->mlp)),
          lp(static_cast<size_t>(this->mlp)),
          print_subproblem(options.get_bool("print_subproblem")) {
@@ -74,22 +88,25 @@ namespace uno {
       const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
       const size_t regularization_size = (!hessian_model.is_positive_definite() &&
          regularization_strategy.performs_primal_regularization()) ? problem.get_number_original_variables() : 0;
-      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
-      this->kmax = (0 < number_regularized_hessian_nonzeros) ? this->kmax_limit : 0;
       // if the Hessian model only has an explicit representation, allocate an explicit Hessian matrix
       if (!hessian_model.has_implicit_representation() && hessian_model.has_explicit_representation()) {
          this->hessian = SparseSymmetricMatrix<COOFormat<size_t, double>>(problem.number_variables,
             number_hessian_nonzeros, regularization_size);
       }
+      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
+      this->kmax = (0 < number_regularized_hessian_nonzeros) ? pick_kmax_heuristically(problem.number_variables,
+         problem.number_constraints) : 0;
 
+      // allocation of integer and real workspaces
+      this->mxws = static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * problem.number_variables +
+         problem.number_constraints /* (required by bqpd.f) */ + 5 * problem.number_variables + this->nprof /* (required
+         by sparseL.f) */;
       // 4 pointers hidden in lws
       constexpr size_t hidden_pointers_size = 4*sizeof(intptr_t);
-      this->size_hessian_sparsity = hidden_pointers_size + problem.number_variables + 3;
-      this->size_hessian_workspace = 0 + static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) +
-         2 * problem.number_variables + problem.number_constraints + this->mxwk0;
-      this->size_hessian_sparsity_workspace = this->size_hessian_sparsity + static_cast<size_t>(this->kmax) + this->mxiwk0;
-      this->workspace.resize(this->size_hessian_workspace); // ws
-      this->workspace_sparsity.resize(this->size_hessian_sparsity_workspace); // lws
+      this->mxlws = hidden_pointers_size + static_cast<size_t>(this->kmax) /* (required by bqpd.f) */ +
+         9 * problem.number_variables + problem.number_constraints /* (required by sparseL.f) */;
+      this->ws.resize(this->mxws);
+      this->lws.resize(this->mxlws);
    }
 
    void BQPDSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
@@ -111,8 +128,8 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       // initialize wsc_ common block (Hessian & workspace for BQPD)
       // setting the common block here ensures that several instances of BQPD can run simultaneously
-      WSC.mxws = static_cast<int>(this->size_hessian_workspace);
-      WSC.mxlws = static_cast<int>(this->size_hessian_sparsity_workspace);
+      WSC.mxws = static_cast<int>(this->mxws);
+      WSC.mxlws = static_cast<int>(this->mxlws);
 
       // evaluate the functions based on warmstart information
       if (warmstart_information.objective_changed) {
@@ -182,7 +199,7 @@ namespace uno {
       BQPD(&n, &m, &this->k, &this->kmax, this->bqpd_jacobian.data(), this->bqpd_jacobian_sparsity.data(), direction.primals.data(),
          this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
          this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp,
-         &this->peq_solution, this->workspace.data(), this->workspace_sparsity.data(), &mode_integer, &this->ifail, this->info.data(),
+         &this->peq_solution, this->ws.data(), this->lws.data(), &mode_integer, &this->ifail, this->info.data(),
          &this->iprint, &this->nout);
       DEBUG2 << "Ran BQPD\n";
       const BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
@@ -216,13 +233,13 @@ namespace uno {
       WSC.ll = 0; // length of lws that is used by gdotx
 
       // hide pointer to this->evaluate_hessian, statistics, subproblem and Hessian
-      hide_pointer(0, this->workspace_sparsity.data(), this->evaluate_hessian);
+      hide_pointer(0, this->lws.data(), this->evaluate_hessian);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(1, this->workspace_sparsity.data(), statistics);
+      hide_pointer(1, this->lws.data(), statistics);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(2, this->workspace_sparsity.data(), subproblem);
+      hide_pointer(2, this->lws.data(), subproblem);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(3, this->workspace_sparsity.data(), this->hessian);
+      hide_pointer(3, this->lws.data(), this->hessian);
       WSC.ll += sizeof(intptr_t);
    }
 

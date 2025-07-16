@@ -69,18 +69,17 @@ namespace uno {
       SparseSymmetricMatrix<COOFormat<size_t, double>> hessian{};
 
       int kmax{0};
-      int kmax_limit;
       int mlp{1000};
-      size_t mxwk0{2000000}, mxiwk0{500000};
+      const size_t nprof{10000000};
       std::array<int, 100> info{};
       std::vector<double> alp{};
       std::vector<int> lp{}, active_set{};
       std::vector<double> w{}, gradient_solution{}, residuals{}, e{};
       size_t size_hessian_sparsity{};
-      size_t size_hessian_workspace{};
-      size_t size_hessian_sparsity_workspace{};
-      std::vector<double> workspace{};
-      std::vector<int> workspace_sparsity{}; // lws
+      size_t mxws{};
+      size_t mxlws{};
+      std::vector<double> ws{};
+      std::vector<int> lws{};
       int k{0};
       int iprint{0}, nout{6};
       double fmin{-1e20};
