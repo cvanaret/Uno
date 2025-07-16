@@ -11,7 +11,6 @@
 #include "optimization/Direction.hpp"
 #include "optimization/Result.hpp"
 #include "optimization/SolutionStatus.hpp"
-#include "tools/PointerWrapper.hpp"
 
 namespace uno {
    // forward declarations
