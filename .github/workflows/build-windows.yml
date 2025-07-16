@@ -5,18 +5,22 @@ name: Build on Windows
 on:
   push:
     branches: [ "main" ]
-    paths-ignore:
-      - '*.md'
-      - 'LICENSE'
-      - '*.cff'
-      - '*.options'
+    paths:
+      - '!.github/workflows/**.yml'
+      - '.github/workflows/build-windows.yml'
+      - '!*.md'
+      - '!LICENSE'
+      - '!*.cff'
+      - '!*.options'
   pull_request:
     branches: [ "main" ]
-    paths-ignore:
-      - '*.md'
-      - 'LICENSE'
-      - '*.cff'
-      - '*.options'
+    paths:
+      - '!.github/workflows/**.yml'
+      - '.github/workflows/build-windows.yml'
+      - '!*.md'
+      - '!LICENSE'
+      - '!*.cff'
+      - '!*.options'
     
 jobs:
   build:

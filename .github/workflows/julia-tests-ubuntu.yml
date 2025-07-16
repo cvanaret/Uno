@@ -2,18 +2,22 @@ name: JuliaCI
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - '*.md'
-      - 'LICENSE'
-      - '*.cff'
-      - '*.options'
+    paths:
+      - '!.github/workflows/**.yml'
+      - '.github/workflows/julia-tests-ubuntu.yml'
+      - '!*.md'
+      - '!LICENSE'
+      - '!*.cff'
+      - '!*.options'
   pull_request:
     branches: [main]
-    paths-ignore:
-      - '*.md'
-      - 'LICENSE'
-      - '*.cff'
-      - '*.options'
+    paths:
+      - '!.github/workflows/**.yml'
+      - '.github/workflows/julia-tests-ubuntu.yml'
+      - '!*.md'
+      - '!LICENSE'
+      - '!*.cff'
+      - '!*.options'
     
 # needed to allow julia-actions/cache to delete old caches that it has created
 permissions:
