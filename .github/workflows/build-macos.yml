@@ -5,22 +5,16 @@ name: Build on macOS
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - '!.github/workflows/**.yml'
-      - '.github/workflows/build-macos.yml'
-      - '!*.md'
-      - '!LICENSE'
-      - '!*.cff'
-      - '!*.options'
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
   pull_request:
     branches: [ "main" ]
-    paths:
-      - '!.github/workflows/**.yml'
-      - '.github/workflows/build-macos.yml'
-      - '!*.md'
-      - '!LICENSE'
-      - '!*.cff'
-      - '!*.options'
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
 
 jobs:
   build:
