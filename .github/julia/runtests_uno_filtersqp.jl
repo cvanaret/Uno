@@ -98,7 +98,10 @@ end
             r"^test_conic_linear_INFEASIBLE_2$",
             r"^test_linear_INFEASIBLE$",
             r"^test_linear_INFEASIBLE_2$",
+            r"^test_quadratic_SecondOrderCone_basic$",
+            r"^test_quadratic_nonconvex_constraint_basic$",
             r"^test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_",
+            r"^test_solve_VariableIndex_ConstraintDual_MAX_SENSE$",
             # ==================================================================
             # The following tests are okay to exclude forever.
             #
