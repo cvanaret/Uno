@@ -160,13 +160,12 @@ namespace uno {
    }
 
    double HomogeneousEqualityConstrainedModel::constraint_lower_bound(size_t /*constraint_index*/) const {
-      return 0.; } // c(x) = 0
+      return 0.; // c(x) = 0
+   }
 
    double HomogeneousEqualityConstrainedModel::constraint_upper_bound(size_t /*constraint_index*/) const {
-      return 0.; }
-
-   FunctionType HomogeneousEqualityConstrainedModel::get_constraint_type(size_t constraint_index) const {
-      return this->model->get_constraint_type(constraint_index); }
+      return 0.;
+   }
 
    BoundType HomogeneousEqualityConstrainedModel::get_constraint_bound_type(size_t /*constraint_index*/) const {
       return EQUAL_BOUNDS;

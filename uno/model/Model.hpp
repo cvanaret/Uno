@@ -68,7 +68,6 @@ namespace uno {
 
       [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const = 0;
       [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const = 0;
-      [[nodiscard]] virtual FunctionType get_constraint_type(size_t constraint_index) const = 0;
       [[nodiscard]] virtual BoundType get_constraint_bound_type(size_t constraint_index) const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const = 0;

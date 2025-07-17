@@ -127,10 +127,6 @@ namespace uno {
       return this->scaling.get_constraint_scaling(constraint_index) * this->model->constraint_upper_bound(constraint_index);
    }
 
-   FunctionType ScaledModel::get_constraint_type(size_t constraint_index) const {
-      return this->model->get_constraint_type(constraint_index);
-   }
-
    BoundType ScaledModel::get_constraint_bound_type(size_t constraint_index) const {
       return this->model->get_constraint_bound_type(constraint_index);
    }

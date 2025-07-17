@@ -153,17 +153,6 @@ namespace uno {
       }
    }
 
-   FunctionType FixedBoundsConstraintsModel::get_constraint_type(size_t constraint_index) const {
-      if (constraint_index < this->model->number_constraints) {
-// original constraint
-         return this->model->get_constraint_type(constraint_index);
-      }
-      else {
-// fixed variables
-         return FunctionType::LINEAR;
-      }
-   }
-
    BoundType FixedBoundsConstraintsModel::get_constraint_bound_type(size_t constraint_index) const {
       if (constraint_index < this->model->number_constraints) {
 // original constraint

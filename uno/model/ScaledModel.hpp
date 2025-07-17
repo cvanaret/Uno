@@ -39,7 +39,6 @@ namespace uno {
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
-      [[nodiscard]] FunctionType get_constraint_type(size_t constraint_index) const override;
       [[nodiscard]] BoundType get_constraint_bound_type(size_t constraint_index) const override;
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
