@@ -31,10 +31,9 @@ namespace uno {
       INFEASIBLE = 3,
       INCORRECT_PARAMETER = 4,
       LP_INSUFFICIENT_SPACE = 5,
-      HESSIAN_INSUFFICIENT_SPACE = 6,
+      REDUCED_HESSIAN_INSUFFICIENT_SPACE = 6,
       SPARSE_INSUFFICIENT_SPACE = 7,
-      MAX_RESTARTS_REACHED = 8,
-      UNDEFINED = 9
+      MAX_RESTARTS_REACHED = 8
    };
 
    enum BQPDMode {
@@ -70,7 +69,7 @@ namespace uno {
 
       int kmax{0};
       int mlp{1000};
-      const size_t nprof{10000000};
+      const size_t nprof{2000000};
       std::array<int, 100> info{};
       std::vector<double> alp{};
       std::vector<int> lp{}, active_set{};
@@ -97,8 +96,9 @@ namespace uno {
       void hide_pointers_in_workspace(Statistics& statistics, const Subproblem& subproblem);
       void save_gradients_into_workspace(size_t number_constraints);
       void set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const;
-      static BQPDStatus bqpd_status_from_int(int ifail);
-      static SubproblemStatus status_from_bqpd_status(BQPDStatus bqpd_status);
+      [[nodiscard]] static BQPDStatus bqpd_status_from_int(int ifail);
+      [[nodiscard]] bool check_sufficient_workspace_size(BQPDStatus bqpd_status);
+      [[nodiscard]] static SubproblemStatus status_from_bqpd_status(BQPDStatus bqpd_status);
    };
 
    // hide a pointer to an arbitrary object at a given position of lws (BQPD integer workspace)

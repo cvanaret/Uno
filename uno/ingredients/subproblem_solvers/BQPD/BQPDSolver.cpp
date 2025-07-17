@@ -185,6 +185,30 @@ namespace uno {
       DEBUG << "Initial point: " << initial_point << '\n';
    }
 
+   // we use (x*4)/3 to increase by 33% TODO add an option
+   bool BQPDSolver::check_sufficient_workspace_size(BQPDStatus bqpd_status) {
+      switch (bqpd_status) {
+         case BQPDStatus::REDUCED_HESSIAN_INSUFFICIENT_SPACE:
+            // increase kmax
+            this->kmax = (this->kmax*4)/3;
+            return false;
+
+         case BQPDStatus::SPARSE_INSUFFICIENT_SPACE:
+            // allocate more size for (sparse) factors
+            this->mxws = (this->mxws*4)/3;
+            this->mxlws = (this->mxlws*4)/3;
+            this->ws.resize(this->mxws);
+            this->lws.resize(this->mxlws);
+            WSC.mxws = static_cast<int>(this->mxws);
+            WSC.mxlws = static_cast<int>(this->mxlws);
+            return false;
+
+         default:
+            break;
+      }
+      return true;
+   }
+
    void BQPDSolver::solve_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) {
       direction.primals = initial_point;
@@ -195,15 +219,21 @@ namespace uno {
       const int mode_integer = static_cast<int>(mode);
 
       // solve the LP/QP
-      DEBUG2 << "Running BQPD\n";
-      BQPD(&n, &m, &this->k, &this->kmax, this->bqpd_jacobian.data(), this->bqpd_jacobian_sparsity.data(), direction.primals.data(),
-         this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
-         this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp,
-         &this->peq_solution, this->ws.data(), this->lws.data(), &mode_integer, &this->ifail, this->info.data(),
-         &this->iprint, &this->nout);
-      DEBUG2 << "Ran BQPD\n";
-      const BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
-      direction.status = BQPDSolver::status_from_bqpd_status(bqpd_status);
+      bool termination = false;
+      while (!termination) {
+         DEBUG2 << "Running BQPD\n";
+         BQPD(&n, &m, &this->k, &this->kmax, this->bqpd_jacobian.data(), this->bqpd_jacobian_sparsity.data(), direction.primals.data(),
+            this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
+            this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp,
+            &this->peq_solution, this->ws.data(), this->lws.data(), &mode_integer, &this->ifail, this->info.data(),
+            &this->iprint, &this->nout);
+         DEBUG2 << "Ran BQPD\n";
+         const BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
+         termination = this->check_sufficient_workspace_size(bqpd_status);
+         if (termination) {
+            direction.status = BQPDSolver::status_from_bqpd_status(bqpd_status);
+         }
+      }
 
       // project solution into bounds
       for (size_t variable_index: Range(subproblem.number_variables)) {
@@ -326,22 +356,14 @@ namespace uno {
             DEBUG << "BQPD error: incorrect parameter\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::LP_INSUFFICIENT_SPACE:
-            DEBUG << "BQPD error: LP insufficient space\n";
-            return SubproblemStatus::ERROR;
-         case BQPDStatus::HESSIAN_INSUFFICIENT_SPACE:
-            DEBUG << "BQPD kmax too small, continue anyway\n";
-            return SubproblemStatus::ERROR;
-         case BQPDStatus::SPARSE_INSUFFICIENT_SPACE:
-            DEBUG << "BQPD error: sparse insufficient space\n";
+            DEBUG << "BQPD error: insufficient LP space\n";
             return SubproblemStatus::ERROR;
          case BQPDStatus::MAX_RESTARTS_REACHED:
             DEBUG << "BQPD max restarts reached\n";
             return SubproblemStatus::ERROR;
-         case BQPDStatus::UNDEFINED:
-            DEBUG << "BQPD error: undefined\n";
-            return SubproblemStatus::ERROR;
+         default:
+            throw std::invalid_argument("The BQPD ifail is not consistent with the Uno status values");
       }
-      throw std::invalid_argument("The BQPD ifail is not consistent with the Uno status values");
    }
 } // namespace
 
