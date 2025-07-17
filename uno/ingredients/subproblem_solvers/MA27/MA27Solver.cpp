@@ -5,8 +5,10 @@
 #include <stdexcept>
 #include "MA27Solver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
@@ -238,7 +240,7 @@ namespace uno {
       }
    }
 
-   void MA27Solver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
+   void MA27Solver::solve_equality_constrained_subproblem(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       if (warmstart_information.objective_changed) {
@@ -262,6 +264,9 @@ namespace uno {
       this->solve_indefinite_system(this->augmented_matrix, this->rhs, this->solution);
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(this->solution, direction);
+      if (this->matrix_is_singular()) {
+         direction.status = SubproblemStatus::INFEASIBLE;
+      }
    }
 
    Inertia MA27Solver::get_inertia() const {

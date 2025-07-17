@@ -109,7 +109,7 @@ namespace uno {
       this->lws.resize(this->mxlws);
    }
 
-   void BQPDSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
+   void BQPDSolver::solve_inequality_constrained_subproblem(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) {
       this->set_up_subproblem(statistics, subproblem, warmstart_information);
       if (this->print_subproblem) {
