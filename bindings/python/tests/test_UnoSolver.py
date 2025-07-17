@@ -43,8 +43,6 @@ dual_initial_point = [0., 0.]
 if __name__ == '__main__':
 	options = unopy.get_default_options()
 	unopy.set_preset(options, "filtersqp")
-	#options["logger"] = "DEBUG3"
-	#options["print_subproblem"] = "yes"
 	constrained_model = (0 < number_constraints)
 	uno_solver = unopy.UnoSolver(constrained_model, options)
 	result = uno_solver.solve(number_variables, number_constraints,
@@ -60,3 +58,4 @@ if __name__ == '__main__':
 		primal_initial_point,
 		dual_initial_point,
 		options)
+	# TODO result
