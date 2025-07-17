@@ -9,14 +9,12 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
-      - '*.options'
   pull_request:
     branches: [ "main" ]
     paths-ignore:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
-      - '*.options'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -50,7 +48,7 @@ jobs:
         sudo ln -s /usr/lib/libgtest.a /usr/local/lib/googletest/libgtest.a
         sudo ln -s /usr/lib/libgtest_main.a /usr/local/lib/googletest/libgtest_main.a
 
-    - name: Download dependencies
+    - name: Download dependencies (BQPD and MUMPS_static)
       shell: bash
       run: |
         VERSION_BQPD="1.0.0"

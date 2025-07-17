@@ -6,14 +6,12 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
-      - '*.options'
   pull_request:
     branches: [main]
     paths-ignore:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
-      - '*.options'
     
 # needed to allow julia-actions/cache to delete old caches that it has created
 permissions:
@@ -21,8 +19,12 @@ permissions:
   contents: read
 jobs:
   test:
-    name: Julia - ${{ github.event_name }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        UNO_PRESET: [uno_filtersqp, uno_ipopt, uno_filterslp]
+    name: Julia tests of ${{matrix.UNO_PRESET}} - ${{ github.event_name }}
+    
     steps:
       - uses: actions/checkout@v4
       # Install Julia 1.7 for BinaryBuilder. Note that this is an old version of
@@ -54,10 +56,10 @@ jobs:
         with:
           version: "1.10"
           arch: x64
-      - name: Test .github/julia/runtests.jl
+      - name: Test ${{matrix.UNO_PRESET}} preset on .github/julia/runtests.jl
         shell: julia --color=yes --project=.github/julia {0}
         run: |
           using Pkg
           Pkg.instantiate()
           Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
-          include("/home/runner/work/Uno/Uno/.github/julia/runtests.jl")
+          include("/home/runner/work/Uno/Uno/.github/julia/runtests_${{matrix.UNO_PRESET}}.jl")

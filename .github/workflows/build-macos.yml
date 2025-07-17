@@ -9,14 +9,12 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
-      - '*.options'
   pull_request:
     branches: [ "main" ]
     paths-ignore:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
-      - '*.options'
 
 jobs:
   build:
