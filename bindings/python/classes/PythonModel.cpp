@@ -10,7 +10,8 @@ namespace uno {
    PythonModel::PythonModel(const std::string& file_name, size_t number_variables, size_t number_constraints,
             double objective_sign, const objective_function_type& evaluate_objective, const constraint_functions_type& evaluate_constraints,
             const objective_gradient_type& evaluate_objective_gradient, const jacobian_type& evaluate_jacobian,
-            const lagrangian_hessian_type& evaluate_lagrangian_hessian, const std::vector<double>& variables_lower_bounds,
+            const lagrangian_hessian_type& evaluate_lagrangian_hessian, size_t number_objective_gradient_nonzeros,
+            size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const std::vector<double>& variables_lower_bounds,
             const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
             const std::vector<double>& constraints_upper_bounds, const std::vector<double>& primal_initial_point,
             const std::vector<double>& dual_initial_point) :
@@ -18,6 +19,10 @@ namespace uno {
          // functions
          objective(evaluate_objective), constraints(evaluate_constraints), objective_gradient(evaluate_objective_gradient),
          jacobian(evaluate_jacobian), hessian(evaluate_lagrangian_hessian),
+         // sparsity
+         number_objective_gradient_nonzeros(number_objective_gradient_nonzeros),
+         number_jacobian_nonzeros(number_jacobian_nonzeros),
+         number_hessian_nonzeros(number_hessian_nonzeros),
          // bounds
          variables_lower_bounds(variables_lower_bounds), variables_upper_bounds(variables_upper_bounds),
          constraints_lower_bounds(constraints_lower_bounds), constraints_upper_bounds(constraints_upper_bounds),
@@ -145,15 +150,15 @@ namespace uno {
       // do nothing
    }
 
-   size_t PythonModel::number_objective_gradient_nonzeros() const {
-      return 2;
+   size_t PythonModel::get_number_objective_gradient_nonzeros() const {
+      return this->number_objective_gradient_nonzeros;
    }
 
-   size_t PythonModel::number_jacobian_nonzeros() const {
-      return 4;
+   size_t PythonModel::get_number_jacobian_nonzeros() const {
+      return this->number_jacobian_nonzeros;
    }
 
-   size_t PythonModel::number_hessian_nonzeros() const {
-      return 3;
+   size_t PythonModel::get_number_hessian_nonzeros() const {
+      return this->number_hessian_nonzeros;
    }
 } // namespace
