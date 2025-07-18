@@ -27,7 +27,7 @@ namespace uno {
       objective_gradient = iterate.evaluations.objective_gradient;
    }
 
-   void OptimizationProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+   void OptimizationProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
       constraints = iterate.evaluations.constraints;
    }
@@ -105,11 +105,11 @@ namespace uno {
    }
 
    size_t OptimizationProblem::number_objective_gradient_nonzeros() const {
-      return this->model.number_objective_gradient_nonzeros();
+      return this->model.get_number_objective_gradient_nonzeros();
    }
 
    size_t OptimizationProblem::number_jacobian_nonzeros() const {
-      return this->model.number_jacobian_nonzeros();
+      return this->model.get_number_jacobian_nonzeros();
    }
 
    size_t OptimizationProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
@@ -155,7 +155,7 @@ namespace uno {
       }
    }
 
-   double OptimizationProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
+   double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
       const Range variables_range = Range(std::min(this->number_variables, primals.size()));

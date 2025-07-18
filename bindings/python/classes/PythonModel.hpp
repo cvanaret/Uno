@@ -1,29 +1,30 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_AMPLMODEL_H
-#define UNO_AMPLMODEL_H
+#ifndef UNO_PYTHONMODEL_H
+#define UNO_PYTHONMODEL_H
 
 #include <vector>
+#include "PythonTypes.hpp"
+#include "UnoSolverWrapper.hpp"
 #include "model/Model.hpp"
-#include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/Vector.hpp"
 #include "symbolic/CollectionAdapter.hpp"
-
-// include AMPL Solver Library (ASL)
-extern "C" {
-#include "asl_pfgh.h"
-#include "getstub.h"
-}
 
 namespace uno {
    // forward reference
    class Options;
 
-   class AMPLModel: public Model {
+   class PythonModel: public Model {
    public:
-      AMPLModel(const std::string& file_name, const Options& options);
-      ~AMPLModel() override;
+      PythonModel(const std::string& file_name, size_t number_variables, size_t number_constraints,
+         double objective_sign, const objective_function_type& evaluate_objective, const constraint_functions_type& evaluate_constraints,
+         const objective_gradient_type& evaluate_objective_gradient, const jacobian_type& evaluate_jacobian,
+         const lagrangian_hessian_type& evaluate_lagrangian_hessian, size_t number_objective_gradient_nonzeros,
+         size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const std::vector<double>& variables_lower_bounds,
+         const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
+         const std::vector<double>& constraints_upper_bounds, const std::vector<double>& primal_initial_point,
+         const std::vector<double>& dual_initial_point);
+      ~PythonModel() override = default;
 
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
       void evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const override;
@@ -58,21 +59,30 @@ namespace uno {
       [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
       [[nodiscard]] size_t get_number_hessian_nonzeros() const override;
 
-   private:
-      // private constructor to pass the dimensions to the Model base constructor
-      AMPLModel(const std::string& file_name, ASL* asl, const Options& options);
+   protected:
+      // functions
+      const objective_function_type& objective;
+      const constraint_functions_type& constraints;
+      const objective_gradient_type& objective_gradient;
+      const jacobian_type& jacobian;
+      const lagrangian_hessian_type& hessian;
 
-      // mutable: can be modified by const methods (internal state not seen by user)
-      mutable ASL* asl; /*!< Instance of the AMPL Solver Library class */
-      const bool write_solution_to_file;
-      mutable std::vector<double> asl_gradient{};
-      mutable std::vector<double> asl_hessian{};
-      size_t number_asl_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
+      const size_t number_objective_gradient_nonzeros;
+      const size_t number_jacobian_nonzeros;
+      const size_t number_hessian_nonzeros;
 
-      mutable Vector<double> multipliers_with_flipped_sign;
+      const std::vector<double>& variables_lower_bounds;
+      const std::vector<double>& variables_upper_bounds;
+      const std::vector<double>& constraints_lower_bounds;
+      const std::vector<double>& constraints_upper_bounds;
+
+      const std::vector<double>& primal_initial_point;
+      const std::vector<double>& dual_initial_point;
+
+      std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
 
       // lists of variables and constraints + corresponding collection objects
-      ForwardRange linear_constraints;
+      ForwardRange linear_constraints{0};
       std::vector<size_t> equality_constraints{};
       CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;
       std::vector<size_t> inequality_constraints{};
@@ -87,22 +97,7 @@ namespace uno {
       std::vector<size_t> single_upper_bounded_variables{}; // indices of the single upper-bounded variables
       CollectionAdapter<std::vector<size_t>&> single_upper_bounded_variables_collection;
       Vector<size_t> fixed_variables;
-
-      void compute_lagrangian_hessian_sparsity();
    };
-
-   // check that an array of integers is in increasing order (x[i] <= x[i+1])
-   template <typename Array>
-   bool in_increasing_order(const Array& array, size_t length) {
-      size_t index = 0;
-      while (index < length - 1) {
-         if (array[index] > array[index + 1]) {
-            return false;
-         }
-         index++;
-      }
-      return true;
-   }
 } // namespace
 
-#endif // UNO_AMPLMODEL_H
+#endif // UNO_PYTHONMODEL_H

@@ -64,7 +64,7 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
       constraints = iterate.evaluations.constraints;
 
@@ -264,13 +264,13 @@ namespace uno {
 
       // objective contribution
       if (this->objective_multiplier != 0.) {
-         number_nonzeros += this->model.number_objective_gradient_nonzeros();
+         number_nonzeros += this->model.get_number_objective_gradient_nonzeros();
       }
       return number_nonzeros;
    }
 
    size_t l1RelaxedProblem::number_jacobian_nonzeros() const {
-      return this->model.number_jacobian_nonzeros() + this->number_elastic_variables;
+      return this->model.get_number_jacobian_nonzeros() + this->number_elastic_variables;
    }
 
    size_t l1RelaxedProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {

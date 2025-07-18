@@ -44,7 +44,7 @@ namespace uno {
       scale(gradient, this->scaling.get_objective_scaling());
    }
 
-   void ScaledModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
+   void ScaledModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       this->model->evaluate_constraints(x, constraints);
       for (size_t constraint_index: Range(this->number_constraints)) {
          constraints[constraint_index] *= this->scaling.get_constraint_scaling(constraint_index);
@@ -162,16 +162,16 @@ namespace uno {
       this->model->postprocess_solution(iterate, termination_status);
    }
 
-   size_t ScaledModel::number_objective_gradient_nonzeros() const {
-      return this->model->number_objective_gradient_nonzeros();
+   size_t ScaledModel::get_number_objective_gradient_nonzeros() const {
+      return this->model->get_number_objective_gradient_nonzeros();
    }
 
-   size_t ScaledModel::number_jacobian_nonzeros() const {
-      return this->model->number_jacobian_nonzeros();
+   size_t ScaledModel::get_number_jacobian_nonzeros() const {
+      return this->model->get_number_jacobian_nonzeros();
    }
 
-   size_t ScaledModel::number_hessian_nonzeros() const {
-      return this->model->number_hessian_nonzeros();
+   size_t ScaledModel::get_number_hessian_nonzeros() const {
+      return this->model->get_number_hessian_nonzeros();
    }
 } // namespace
 

@@ -10,6 +10,7 @@
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/Vector.hpp"
 
 namespace uno {
    // forward declaration
@@ -30,7 +31,7 @@ namespace uno {
    protected:
       HighsModel model;
       Highs highs_solver;
-      std::vector<double> constraints{};
+      Vector<double> constraints{};
       SparseVector<double> linear_objective{};
       RectangularMatrix<double> constraint_jacobian{};
       SparseSymmetricMatrix<COOFormat<size_t, double>> hessian{};
