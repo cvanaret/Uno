@@ -22,7 +22,7 @@ This formulation allows for unbounded variables and equality constraints, and ex
 
 ## Unifying nonlinearly constrained optimization
 
-We argue that most optimization methods can be broken down into the following generic ingredients:
+We consider the family of **Lagrange-Newton (essentially SQP and interior-point) methods** that iteratively solve the optimality (KKT) conditions with Newton's method, and we argue that most Lagrange-Newton methods can be broken down into the following generic ingredients:
 * a **constraint relaxation strategy**: a systematic way to relax the general constraints;
 * an **inequality handling method**: a systematic way to handle the inequality constraints;
 * a **Lagrange-Newton subproblem**: a local Lagrange-Newton approximation of the reformulated problem, composed of:
