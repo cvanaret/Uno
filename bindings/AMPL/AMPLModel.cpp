@@ -357,6 +357,7 @@ namespace uno {
          }
          else if (!is_finite(lower_bound) && !is_finite(upper_bound)) {
             WARNING << "Constraint c" << constraint_index << " has no bounds\n";
+            this->inequality_constraints.emplace_back(constraint_index);
          }
          else {
             this->inequality_constraints.emplace_back(constraint_index);
