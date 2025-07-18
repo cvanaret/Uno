@@ -24,7 +24,6 @@ namespace uno {
    class Vector;
 
    enum FunctionType {LINEAR, NONLINEAR};
-   enum BoundType {EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES, UNBOUNDED};
 
    // forward declaration
    class Iterate;
@@ -58,7 +57,6 @@ namespace uno {
       // purely virtual functions
       [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;
       [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const = 0;
-      [[nodiscard]] virtual BoundType get_variable_bound_type(size_t variable_index) const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_lower_bounded_variables() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_upper_bounded_variables() const = 0;
       [[nodiscard]] virtual const SparseVector<size_t>& get_slacks() const = 0;
@@ -68,8 +66,6 @@ namespace uno {
 
       [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const = 0;
       [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const = 0;
-      [[nodiscard]] virtual FunctionType get_constraint_type(size_t constraint_index) const = 0;
-      [[nodiscard]] virtual BoundType get_constraint_bound_type(size_t constraint_index) const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_linear_constraints() const = 0;

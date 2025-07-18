@@ -20,11 +20,6 @@ namespace uno {
    // forward reference
    class Options;
 
-   /*! \class AMPLModel
-    * \brief AMPL model
-    *
-    *  Description of an AMPL model
-    */
    class AMPLModel: public Model {
    public:
       AMPLModel(const std::string& file_name, const Options& options);
@@ -42,7 +37,6 @@ namespace uno {
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
-      [[nodiscard]] BoundType get_variable_bound_type(size_t variable_index) const override;
       [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override;
       [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override;
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
@@ -52,8 +46,6 @@ namespace uno {
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
-      [[nodiscard]] FunctionType get_constraint_type(size_t constraint_index) const override;
-      [[nodiscard]] BoundType get_constraint_bound_type(size_t constraint_index) const override;
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
@@ -77,19 +69,10 @@ namespace uno {
       mutable std::vector<double> asl_hessian{};
       size_t number_asl_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
 
-      std::vector<double> variable_lower_bounds;
-      std::vector<double> variable_upper_bounds;
-      std::vector<double> constraint_lower_bounds;
-      std::vector<double> constraint_upper_bounds;
-      std::vector<BoundType> variable_status; /*!< Status of the variables (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
-      std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
-      std::vector<BoundType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
-    * UNBOUNDED) */
       mutable Vector<double> multipliers_with_flipped_sign;
 
       // lists of variables and constraints + corresponding collection objects
-      std::vector<size_t> linear_constraints{};
-      CollectionAdapter<std::vector<size_t>&> linear_constraints_collection;
+      ForwardRange linear_constraints;
       std::vector<size_t> equality_constraints{};
       CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;
       std::vector<size_t> inequality_constraints{};
@@ -105,11 +88,9 @@ namespace uno {
       CollectionAdapter<std::vector<size_t>&> single_upper_bounded_variables_collection;
       Vector<size_t> fixed_variables;
 
-      void generate_variables();
-      void generate_constraints();
-
+      void partition_variables();
+      void partition_constraints();
       void compute_lagrangian_hessian_sparsity();
-      static void determine_bounds_types(const std::vector<double>& lower_bounds, const std::vector<double>& upper_bounds, std::vector<BoundType>& status);
    };
 
    // check that an array of integers is in increasing order (x[i] <= x[i+1])

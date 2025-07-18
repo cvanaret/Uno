@@ -78,7 +78,7 @@ namespace uno {
          SparseVector<double>& gradient) const {
       this->model->evaluate_constraint_gradient(x, constraint_index, gradient);
       // if the original constraint is an inequality, add the slack contribution
-      if (this->model->get_constraint_bound_type(constraint_index) != EQUAL_BOUNDS) {
+      if (this->model->constraint_lower_bound(constraint_index) != this->model->constraint_upper_bound(constraint_index)) {
          const size_t slack_variable_index = this->slack_index_of_constraint_index[constraint_index];
          gradient.insert(slack_variable_index, -1.);
       }
@@ -128,17 +128,6 @@ namespace uno {
       }
    }
 
-   BoundType HomogeneousEqualityConstrainedModel::get_variable_bound_type(size_t variable_index) const {
-      if (variable_index < this->model->number_variables) { // original variable
-         return this->model->get_variable_bound_type(variable_index);
-      }
-      else { // slack variable
-         const size_t inequality_index = variable_index - this->model->number_variables;
-         const size_t constraint_index = this->constraint_index_of_inequality_index[inequality_index];
-         return this->model->get_constraint_bound_type(constraint_index);
-      }
-   }
-
    const Collection<size_t>& HomogeneousEqualityConstrainedModel::get_lower_bounded_variables() const {
       return this->lower_bounded_variables;
    }
@@ -160,16 +149,11 @@ namespace uno {
    }
 
    double HomogeneousEqualityConstrainedModel::constraint_lower_bound(size_t /*constraint_index*/) const {
-      return 0.; } // c(x) = 0
+      return 0.; // c(x) = 0
+   }
 
    double HomogeneousEqualityConstrainedModel::constraint_upper_bound(size_t /*constraint_index*/) const {
-      return 0.; }
-
-   FunctionType HomogeneousEqualityConstrainedModel::get_constraint_type(size_t constraint_index) const {
-      return this->model->get_constraint_type(constraint_index); }
-
-   BoundType HomogeneousEqualityConstrainedModel::get_constraint_bound_type(size_t /*constraint_index*/) const {
-      return EQUAL_BOUNDS;
+      return 0.;
    }
 
    const Collection<size_t>& HomogeneousEqualityConstrainedModel::get_equality_constraints() const {

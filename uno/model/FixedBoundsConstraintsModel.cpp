@@ -95,16 +95,6 @@ namespace uno {
       return this->model->variable_upper_bound(variable_index);
    }
 
-   BoundType FixedBoundsConstraintsModel::get_variable_bound_type(size_t variable_index) const {
-      if (this->model->variable_lower_bound(variable_index) == this->model->variable_upper_bound(variable_index)) {
-      // fixed variable: remove the bounds
-         return BoundType::UNBOUNDED;
-      }
-      else {
-         return this->model->get_variable_bound_type(variable_index);
-      }
-   }
-
    const Collection<size_t>& FixedBoundsConstraintsModel::get_lower_bounded_variables() const {
       return this->lower_bounded_variables_collection;
    }
@@ -143,35 +133,13 @@ namespace uno {
 
    double FixedBoundsConstraintsModel::constraint_upper_bound(size_t constraint_index) const {
       if (constraint_index < this->model->number_constraints) {
-// original constraint
+         // original constraint
          return this->model->constraint_upper_bound(constraint_index);
       }
       else {
-// fixed variable
+         // fixed variable
          const size_t variable_index = this->model->get_fixed_variables()[constraint_index - this->model->number_constraints];
          return this->model->variable_lower_bound(variable_index);
-      }
-   }
-
-   FunctionType FixedBoundsConstraintsModel::get_constraint_type(size_t constraint_index) const {
-      if (constraint_index < this->model->number_constraints) {
-// original constraint
-         return this->model->get_constraint_type(constraint_index);
-      }
-      else {
-// fixed variables
-         return FunctionType::LINEAR;
-      }
-   }
-
-   BoundType FixedBoundsConstraintsModel::get_constraint_bound_type(size_t constraint_index) const {
-      if (constraint_index < this->model->number_constraints) {
-// original constraint
-         return this->model->get_constraint_bound_type(constraint_index);
-      }
-      else {
-// fixed variables
-         return BoundType::EQUAL_BOUNDS;
       }
    }
 
@@ -187,7 +155,7 @@ namespace uno {
 
    void FixedBoundsConstraintsModel::initial_primal_point(Vector<double>& x) const {
       this->model->initial_primal_point(x);
-// set the fixed variables
+      // set the fixed variables
       for (size_t variable_index: this->model->get_fixed_variables()) {
          x[variable_index] = this->model->variable_lower_bound(variable_index);
       }
@@ -198,7 +166,7 @@ namespace uno {
    }
 
    void FixedBoundsConstraintsModel::postprocess_solution(Iterate& iterate, IterateStatus termination_status) const {
-// move the multipliers back from the general constraints to the bound constraints
+      // move the multipliers back from the general constraints to the bound constraints
       size_t current_constraint = this->model->number_constraints;
       for (size_t variable_index: this->model->get_fixed_variables()) {
          const double constraint_multiplier = iterate.multipliers.constraints[current_constraint];

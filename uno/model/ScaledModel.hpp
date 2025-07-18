@@ -29,7 +29,6 @@ namespace uno {
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
-      [[nodiscard]] BoundType get_variable_bound_type(size_t variable_index) const override;
       [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override;
       [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override;
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
@@ -39,8 +38,6 @@ namespace uno {
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
-      [[nodiscard]] FunctionType get_constraint_type(size_t constraint_index) const override;
-      [[nodiscard]] BoundType get_constraint_bound_type(size_t constraint_index) const override;
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
