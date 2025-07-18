@@ -91,10 +91,6 @@ namespace uno {
       return this->model->variable_upper_bound(variable_index);
    }
 
-   BoundType ScaledModel::get_variable_bound_type(size_t variable_index) const {
-      return this->model->get_variable_bound_type(variable_index);
-   }
-
    const Collection<size_t>& ScaledModel::get_lower_bounded_variables() const {
       return this->model->get_lower_bounded_variables();
    }
@@ -125,10 +121,6 @@ namespace uno {
 
    double ScaledModel::constraint_upper_bound(size_t constraint_index) const {
       return this->scaling.get_constraint_scaling(constraint_index) * this->model->constraint_upper_bound(constraint_index);
-   }
-
-   BoundType ScaledModel::get_constraint_bound_type(size_t constraint_index) const {
-      return this->model->get_constraint_bound_type(constraint_index);
    }
 
    const Collection<size_t>& ScaledModel::get_equality_constraints() const {

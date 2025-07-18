@@ -48,8 +48,6 @@ namespace uno {
          write_solution_to_file(options.get_bool("AMPL_write_solution_to_file")),
          // allocate vectors
          asl_gradient(this->number_variables),
-         variable_status(this->number_variables),
-         constraint_status(this->number_constraints),
          multipliers_with_flipped_sign(this->number_constraints),
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
@@ -216,10 +214,6 @@ namespace uno {
       return (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index + 1] : INF<double>;
    }
 
-   BoundType AMPLModel::get_variable_bound_type(size_t variable_index) const {
-      return this->variable_status[variable_index];
-   }
-
    const Collection<size_t>& AMPLModel::get_lower_bounded_variables() const {
       return this->lower_bounded_variables_collection;
    }
@@ -250,10 +244,6 @@ namespace uno {
 
    double AMPLModel::constraint_upper_bound(size_t constraint_index) const {
       return (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2*constraint_index + 1] : INF<double>;
-   }
-
-   BoundType AMPLModel::get_constraint_bound_type(size_t constraint_index) const {
-      return this->constraint_status[constraint_index];
    }
 
    const Collection<size_t>& AMPLModel::get_equality_constraints() const {
@@ -341,26 +331,19 @@ namespace uno {
          // figure out the type of the bounds
          if (lower_bound == upper_bound) {
             WARNING << "Variable x" << variable_index << " has identical bounds\n";
-            this->variable_status[variable_index] = EQUAL_BOUNDS;
             this->fixed_variables.emplace_back(variable_index);
          }
          else if (is_finite(lower_bound) && is_finite(upper_bound)) {
-            this->variable_status[variable_index] = BOUNDED_BOTH_SIDES;
             this->lower_bounded_variables.emplace_back(variable_index);
             this->upper_bounded_variables.emplace_back(variable_index);
          }
          else if (is_finite(lower_bound)) {
-            this->variable_status[variable_index] = BOUNDED_LOWER;
             this->lower_bounded_variables.emplace_back(variable_index);
             this->single_lower_bounded_variables.emplace_back(variable_index);
          }
          else if (is_finite(upper_bound)) {
-            this->variable_status[variable_index] = BOUNDED_UPPER;
             this->upper_bounded_variables.emplace_back(variable_index);
             this->single_upper_bounded_variables.emplace_back(variable_index);
-         }
-         else {
-            this->variable_status[variable_index] = UNBOUNDED;
          }
       }
    }
@@ -370,24 +353,13 @@ namespace uno {
          const double lower_bound = this->constraint_lower_bound(constraint_index);
          const double upper_bound = this->constraint_upper_bound(constraint_index);
          if (lower_bound == upper_bound) {
-            this->constraint_status[constraint_index] = EQUAL_BOUNDS;
             this->equality_constraints.emplace_back(constraint_index);
          }
-         else if (is_finite(lower_bound) && is_finite(upper_bound)) {
-            this->constraint_status[constraint_index] = BOUNDED_BOTH_SIDES;
-            this->inequality_constraints.emplace_back(constraint_index);
-         }
-         else if (is_finite(lower_bound)) {
-            this->constraint_status[constraint_index] = BOUNDED_LOWER;
-            this->inequality_constraints.emplace_back(constraint_index);
-         }
-         else if (is_finite(upper_bound)) {
-            this->constraint_status[constraint_index] = BOUNDED_UPPER;
-            this->inequality_constraints.emplace_back(constraint_index);
+         else if (!is_finite(lower_bound) && !is_finite(upper_bound)) {
+            WARNING << "Constraint c" << constraint_index << " has no bounds\n";
          }
          else {
-            WARNING << "Constraint x" << constraint_index << " has no bounds\n";
-            this->constraint_status[constraint_index] = UNBOUNDED;
+            this->inequality_constraints.emplace_back(constraint_index);
          }
       }
    }

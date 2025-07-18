@@ -37,7 +37,6 @@ namespace uno {
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
-      [[nodiscard]] BoundType get_variable_bound_type(size_t variable_index) const override;
       [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override;
       [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override;
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
@@ -47,7 +46,6 @@ namespace uno {
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
-      [[nodiscard]] BoundType get_constraint_bound_type(size_t constraint_index) const override;
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
@@ -71,9 +69,6 @@ namespace uno {
       mutable std::vector<double> asl_hessian{};
       size_t number_asl_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
 
-      std::vector<BoundType> variable_status; /*!< Status of the variables (EQUALITY, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES) */
-      std::vector<BoundType> constraint_status; /*!< Status of the constraints (EQUAL_BOUNDS, BOUNDED_LOWER, BOUNDED_UPPER, BOUNDED_BOTH_SIDES,
-    * UNBOUNDED) */
       mutable Vector<double> multipliers_with_flipped_sign;
 
       // lists of variables and constraints + corresponding collection objects

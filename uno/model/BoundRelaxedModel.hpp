@@ -40,7 +40,6 @@ namespace uno {
       // only these two functions are redefined
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
-      [[nodiscard]] BoundType get_variable_bound_type(size_t variable_index) const override { return this->model->get_variable_bound_type(variable_index); }
       [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override { return this->model->get_lower_bounded_variables(); }
       [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override { return this->model->get_upper_bounded_variables(); }
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override { return this->model->get_slacks(); }
@@ -50,7 +49,6 @@ namespace uno {
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override { return this->model->constraint_lower_bound(constraint_index); }
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override { return this->model->constraint_upper_bound(constraint_index); }
-      [[nodiscard]] BoundType get_constraint_bound_type(size_t constraint_index) const override { return this->model->get_constraint_bound_type(constraint_index); }
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override { return this->model->get_equality_constraints(); }
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override { return this->model->get_inequality_constraints(); }
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override { return this->model->get_linear_constraints(); }
