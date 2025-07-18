@@ -3,7 +3,6 @@
 
 #include "PythonModel.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "optimization/Iterate.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "Uno.hpp"
 
@@ -25,10 +24,7 @@ namespace uno {
          // initial point
          primal_initial_point(primal_initial_point), dual_initial_point(dual_initial_point),
          // additional information on the variables and the constraints
-         variable_status(this->number_variables),
          constraint_type(this->number_constraints),
-         constraint_status(this->number_constraints),
-         linear_constraints_collection(this->linear_constraints),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints),
          lower_bounded_variables_collection(this->lower_bounded_variables),
@@ -41,20 +37,13 @@ namespace uno {
       this->single_lower_bounded_variables.reserve(this->number_variables);
       this->single_upper_bounded_variables.reserve(this->number_variables);
       this->fixed_variables.reserve(this->number_variables);
-      for (size_t variable_index: Range(this->number_variables)) {
-         if (variables_lower_bounds[variable_index] == variables_upper_bounds[variable_index]) {
-            WARNING << "Variable x" << variable_index << " has identical bounds\n";
-            this->fixed_variables.emplace_back(variable_index);
-         }
-      }
-      this->categorize_bounded_variables();
+      this->partition_variables(this->fixed_variables, this->lower_bounded_variables, this->upper_bounded_variables,
+         this->single_lower_bounded_variables, this->single_upper_bounded_variables);
 
       // constraints
       this->equality_constraints.reserve(this->number_constraints);
       this->inequality_constraints.reserve(this->number_constraints);
-      this->linear_constraints.reserve(this->number_constraints);
-      Model::determine_bounds_types(this->constraints_lower_bounds, this->constraints_upper_bounds, this->constraint_status);
-      Model::partition_constraints(this->equality_constraints, this->inequality_constraints);
+      this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
 
    double PythonModel::evaluate_objective(const Vector<double>& x) const {
@@ -71,7 +60,7 @@ namespace uno {
    }
 
    // sparse gradient
-   void PythonModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
+   void PythonModel::evaluate_constraint_gradient(const Vector<double>& /*x*/, size_t /*constraint_index*/, SparseVector<double>& /*gradient*/) const {
       throw std::runtime_error("PythonModel::evaluate_constraint_gradient not implemented");
    }
 
@@ -85,8 +74,8 @@ namespace uno {
          wrap_pointer(&hessian));
    }
 
-   void PythonModel::compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
-         double* result) const {
+   void PythonModel::compute_hessian_vector_product(const double* /*vector*/, double /*objective_multiplier*/,
+         const Vector<double>& /*multipliers*/, double* /*result*/) const {
       throw std::runtime_error("PythonModel::compute_hessian_vector_product not implemented yet");
    }
 
@@ -96,28 +85,6 @@ namespace uno {
 
    double PythonModel::variable_upper_bound(size_t variable_index) const {
       return this->variables_upper_bounds[variable_index];
-   }
-
-   BoundType PythonModel::get_variable_bound_type(size_t variable_index) const {
-      const double lb = this->variable_lower_bound(variable_index);
-      const double ub = this->variable_upper_bound(variable_index);
-      const bool is_lb_finite = is_finite(lb);
-      const bool is_ub_finite = is_finite(ub);
-      if (is_lb_finite && is_ub_finite) {
-         if (lb == ub) {
-            return EQUAL_BOUNDS;
-         }
-         else {
-            return BOUNDED_BOTH_SIDES;
-         }
-      }
-      else if (is_lb_finite) {
-         return BOUNDED_LOWER;
-      }
-      else if (is_ub_finite) {
-         return BOUNDED_UPPER;
-      }
-      return UNBOUNDED;
    }
 
    const Collection<size_t>& PythonModel::get_lower_bounded_variables() const {
@@ -152,14 +119,6 @@ namespace uno {
       return this->constraints_upper_bounds[constraint_index];
    }
 
-   FunctionType PythonModel::get_constraint_type(size_t constraint_index) const {
-      return this->constraint_type[constraint_index];
-   }
-
-   BoundType PythonModel::get_constraint_bound_type(size_t constraint_index) const {
-      return this->constraint_status[constraint_index];
-   }
-
    const Collection<size_t>& PythonModel::get_equality_constraints() const {
       return this->equality_constraints_collection;
    }
@@ -169,7 +128,7 @@ namespace uno {
    }
 
    const Collection<size_t>& PythonModel::get_linear_constraints() const {
-      return this->linear_constraints_collection;
+      return this->linear_constraints;
    }
 
    // initial primal point
@@ -182,7 +141,7 @@ namespace uno {
       multipliers = this->dual_initial_point;
    }
 
-   void PythonModel::postprocess_solution(Iterate& iterate, IterateStatus iterate_status) const {
+   void PythonModel::postprocess_solution(Iterate& /*iterate*/, IterateStatus /*iterate_status*/) const {
       // do nothing
    }
 
@@ -196,25 +155,5 @@ namespace uno {
 
    size_t PythonModel::number_hessian_nonzeros() const {
       return 3;
-   }
-
-   void PythonModel::categorize_bounded_variables() {
-      Model::determine_bounds_types(this->variables_lower_bounds, this->variables_upper_bounds, this->variable_status);
-      // figure out the bounded variables
-      for (size_t variable_index: Range(this->number_variables)) {
-         const BoundType status = this->get_variable_bound_type(variable_index);
-         if (status == BOUNDED_LOWER || status == BOUNDED_BOTH_SIDES) {
-            this->lower_bounded_variables.emplace_back(variable_index);
-            if (status == BOUNDED_LOWER) {
-               this->single_lower_bounded_variables.emplace_back(variable_index);
-            }
-         }
-         if (status == BOUNDED_UPPER || status == BOUNDED_BOTH_SIDES) {
-            this->upper_bounded_variables.emplace_back(variable_index);
-            if (status == BOUNDED_UPPER) {
-               this->single_upper_bounded_variables.emplace_back(variable_index);
-            }
-         }
-      }
    }
 } // namespace
