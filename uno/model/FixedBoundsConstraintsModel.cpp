@@ -181,15 +181,15 @@ namespace uno {
       this->model->postprocess_solution(iterate, termination_status);
    }
 
-   size_t FixedBoundsConstraintsModel::number_objective_gradient_nonzeros() const {
-      return this->model->number_objective_gradient_nonzeros();
+   size_t FixedBoundsConstraintsModel::get_number_objective_gradient_nonzeros() const {
+      return this->model->get_number_objective_gradient_nonzeros();
    }
 
-   size_t FixedBoundsConstraintsModel::number_jacobian_nonzeros() const {
-      return this->model->number_jacobian_nonzeros() + this->model->get_fixed_variables().size();
+   size_t FixedBoundsConstraintsModel::get_number_jacobian_nonzeros() const {
+      return this->model->get_number_jacobian_nonzeros() + this->model->get_fixed_variables().size();
    }
 
-   size_t FixedBoundsConstraintsModel::number_hessian_nonzeros() const {
-      return this->model->number_hessian_nonzeros();
+   size_t FixedBoundsConstraintsModel::get_number_hessian_nonzeros() const {
+      return this->model->get_number_hessian_nonzeros();
    }
 } // namespace

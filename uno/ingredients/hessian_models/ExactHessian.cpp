@@ -21,7 +21,7 @@ namespace uno {
    }
 
    size_t ExactHessian::number_nonzeros(const Model& model) const {
-      return model.number_hessian_nonzeros();
+      return model.get_number_hessian_nonzeros();
    }
 
    bool ExactHessian::is_positive_definite() const {

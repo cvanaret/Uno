@@ -313,15 +313,15 @@ namespace uno {
       }
    }
 
-   size_t AMPLModel::number_objective_gradient_nonzeros() const {
+   size_t AMPLModel::get_number_objective_gradient_nonzeros() const {
       return static_cast<size_t>(this->asl->i.nzo_);
    }
 
-   size_t AMPLModel::number_jacobian_nonzeros() const {
+   size_t AMPLModel::get_number_jacobian_nonzeros() const {
       return static_cast<size_t>(this->asl->i.nzc_);
    }
 
-   size_t AMPLModel::number_hessian_nonzeros() const {
+   size_t AMPLModel::get_number_hessian_nonzeros() const {
       return this->number_asl_hessian_nonzeros;
    }
 

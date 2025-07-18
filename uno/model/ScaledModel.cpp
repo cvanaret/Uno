@@ -162,16 +162,16 @@ namespace uno {
       this->model->postprocess_solution(iterate, termination_status);
    }
 
-   size_t ScaledModel::number_objective_gradient_nonzeros() const {
-      return this->model->number_objective_gradient_nonzeros();
+   size_t ScaledModel::get_number_objective_gradient_nonzeros() const {
+      return this->model->get_number_objective_gradient_nonzeros();
    }
 
-   size_t ScaledModel::number_jacobian_nonzeros() const {
-      return this->model->number_jacobian_nonzeros();
+   size_t ScaledModel::get_number_jacobian_nonzeros() const {
+      return this->model->get_number_jacobian_nonzeros();
    }
 
-   size_t ScaledModel::number_hessian_nonzeros() const {
-      return this->model->number_hessian_nonzeros();
+   size_t ScaledModel::get_number_hessian_nonzeros() const {
+      return this->model->get_number_hessian_nonzeros();
    }
 } // namespace
 

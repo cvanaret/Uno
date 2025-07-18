@@ -54,9 +54,9 @@ namespace uno {
       void initial_dual_point(Vector<double>& multipliers) const override;
       void postprocess_solution(Iterate& iterate, IterateStatus iterate_status) const override;
 
-      [[nodiscard]] size_t number_objective_gradient_nonzeros() const override;
-      [[nodiscard]] size_t number_jacobian_nonzeros() const override;
-      [[nodiscard]] size_t number_hessian_nonzeros() const override;
+      [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
+      [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
+      [[nodiscard]] size_t get_number_hessian_nonzeros() const override;
 
    private:
       // private constructor to pass the dimensions to the Model base constructor
