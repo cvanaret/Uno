@@ -4,31 +4,21 @@
 #ifndef UNO_LPSOLVER_H
 #define UNO_LPSOLVER_H
 
-namespace uno {
-   // forward declarations
-   class Direction;
-   class HessianModel;
-   class OptimizationProblem;
-   template <typename ElementType>
-   class RegularizationStrategy;
-   class Statistics;
-   class Subproblem;
-   template <typename ElementType>
-   class Vector;
-   class WarmstartInformation;
+#include "InequalityConstrainedSubproblemSolver.hpp"
 
-   class LPSolver {
+namespace uno {
+   class LPSolver: public InequalityConstrainedSubproblemSolver {
    public:
       LPSolver() = default;
-      virtual ~LPSolver() = default;
+      ~LPSolver() override = default;
 
-      virtual void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         const RegularizationStrategy<double>& regularization_strategy) = 0;
+      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
+         const RegularizationStrategy<double>& regularization_strategy) override = 0;
 
-      virtual void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) = 0;
+      void solve_inequality_constrained_subproblem(Statistics& statistics, Subproblem& subproblem,
+         const Vector<double>& initial_point, Direction& direction, const WarmstartInformation& warmstart_information) override = 0;
 
-      [[nodiscard]] virtual double hessian_quadratic_product(const Vector<double>& vector) const = 0;
+      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override = 0;
    };
 } // namespace
 
