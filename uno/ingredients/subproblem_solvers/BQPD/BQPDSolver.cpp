@@ -313,13 +313,24 @@ namespace uno {
       for (size_t active_constraint_index: Range(number_variables - static_cast<size_t>(this->k))) {
          const size_t index = static_cast<size_t>(std::abs(this->active_set[active_constraint_index]) - this->fortran_shift);
 
+         // bound constraint
          if (index < number_variables) {
-            // bound constraint
-            if (0 <= this->active_set[active_constraint_index]) { // lower bound active
-               direction_multipliers.lower_bounds[index] = this->residuals[index];
+            // variable is not fixed
+            if (this->lower_bounds[index] < this->upper_bounds[index]) {
+               if (0 <= this->active_set[active_constraint_index]) { // lower bound active
+                  direction_multipliers.lower_bounds[index] = this->residuals[index];
+               }
+               else { // upper bound active
+                  direction_multipliers.upper_bounds[index] = -this->residuals[index];
+               }
             }
-            else { // upper bound active */
-               direction_multipliers.upper_bounds[index] = -this->residuals[index];
+            else { // variable fixed
+               if (0. <= this->residuals[index]) {
+                  direction_multipliers.lower_bounds[index] = this->residuals[index];
+               }
+               else {
+                  direction_multipliers.upper_bounds[index] = this->residuals[index];
+               }
             }
          }
          else {
