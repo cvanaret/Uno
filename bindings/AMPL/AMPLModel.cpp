@@ -309,6 +309,12 @@ namespace uno {
          std::string message = "Uno ";
          message.append(Uno::current_version()).append(": ").append(iterate_status_to_message(iterate_status));
          write_sol_ASL(this->asl, message.data(), iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
+
+         // flip the signs of the multipliers and the objective back if we maximize
+         iterate.multipliers.constraints *= this->objective_sign;
+         iterate.multipliers.lower_bounds *= this->objective_sign;
+         iterate.multipliers.upper_bounds *= this->objective_sign;
+         iterate.evaluations.objective *= this->objective_sign;
       }
    }
 
