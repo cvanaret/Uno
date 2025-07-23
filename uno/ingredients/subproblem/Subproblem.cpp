@@ -32,6 +32,7 @@ namespace uno {
    void Subproblem::compute_regularized_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
       // structure of original Lagrangian Hessian
       this->problem.compute_hessian_structure(this->hessian_model, row_indices, column_indices);
+
       // regularize the Hessian only if required (diagonal regularization)
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
          for (size_t variable_index: this->get_primal_regularization_variables()) {
@@ -45,6 +46,7 @@ namespace uno {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
          this->current_multipliers, hessian);
+
       // regularize the Hessian only if required
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
          const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
@@ -56,11 +58,12 @@ namespace uno {
    void Subproblem::compute_hessian_vector_product(const double* vector, double* result) const {
       // unregularized Hessian-vector product
       this->problem.compute_hessian_vector_product(this->hessian_model, vector, this->current_multipliers, result);
+
       // contribution of the regularization strategy
       const double regularization_factor = this->regularization_strategy.get_primal_regularization_factor();
       if (0. < regularization_factor) {
-         for (size_t index: Range(this->number_variables)) {
-            result[index] += regularization_factor*vector[index];
+         for (size_t variable_index: this->get_primal_regularization_variables()) {
+            result[variable_index] += regularization_factor*vector[variable_index];
          }
       }
    }
@@ -151,16 +154,8 @@ namespace uno {
       return this->problem.get_dual_regularization_constraints();
    }
 
-   size_t Subproblem::number_jacobian_nonzeros() const {
-      return this->problem.number_jacobian_nonzeros();
-   }
-
-   size_t Subproblem::number_hessian_nonzeros() const {
-      return this->problem.number_hessian_nonzeros(this->hessian_model);
-   }
-
    size_t Subproblem::number_augmented_system_nonzeros() const {
-      return this->number_hessian_nonzeros() + this->number_jacobian_nonzeros();
+      return this->problem.number_hessian_nonzeros(this->hessian_model) + this->problem.number_jacobian_nonzeros();
    }
 
    size_t Subproblem::regularization_size() const {
