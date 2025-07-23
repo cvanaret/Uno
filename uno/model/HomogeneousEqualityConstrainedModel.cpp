@@ -190,11 +190,11 @@ namespace uno {
       this->model->postprocess_solution(iterate, termination_status);
    }
 
-   size_t HomogeneousEqualityConstrainedModel::number_jacobian_nonzeros() const {
-      return this->model->number_jacobian_nonzeros() + this->slacks.size();
+   size_t HomogeneousEqualityConstrainedModel::get_number_jacobian_nonzeros() const {
+      return this->model->get_number_jacobian_nonzeros() + this->slacks.size();
    }
 
-   size_t HomogeneousEqualityConstrainedModel::number_hessian_nonzeros() const {
-      return this->model->number_hessian_nonzeros();
+   size_t HomogeneousEqualityConstrainedModel::get_number_hessian_nonzeros() const {
+      return this->model->get_number_hessian_nonzeros();
    }
 } // namespace

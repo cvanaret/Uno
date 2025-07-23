@@ -257,7 +257,7 @@ namespace uno {
    }
 
    size_t l1RelaxedProblem::number_jacobian_nonzeros() const {
-      return this->model.number_jacobian_nonzeros() + this->number_elastic_variables;
+      return this->model.get_number_jacobian_nonzeros() + this->number_elastic_variables;
    }
 
    size_t l1RelaxedProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {

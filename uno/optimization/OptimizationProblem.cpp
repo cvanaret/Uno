@@ -105,7 +105,7 @@ namespace uno {
    }
 
    size_t OptimizationProblem::number_jacobian_nonzeros() const {
-      return this->model.number_jacobian_nonzeros();
+      return this->model.get_number_jacobian_nonzeros();
    }
 
    size_t OptimizationProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {

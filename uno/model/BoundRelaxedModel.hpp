@@ -59,8 +59,8 @@ namespace uno {
          this->model->postprocess_solution(iterate, termination_status);
       }
 
-      [[nodiscard]] size_t number_jacobian_nonzeros() const override { return this->model->number_jacobian_nonzeros(); }
-      [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model->number_hessian_nonzeros(); }
+      [[nodiscard]] size_t get_number_jacobian_nonzeros() const override { return this->model->get_number_jacobian_nonzeros(); }
+      [[nodiscard]] size_t get_number_hessian_nonzeros() const override { return this->model->get_number_hessian_nonzeros(); }
 
    private:
       const std::unique_ptr<Model> model{};

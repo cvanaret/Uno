@@ -52,8 +52,8 @@ namespace uno {
 
       void postprocess_solution(Iterate& iterate, IterateStatus termination_status) const override;
 
-      [[nodiscard]] size_t number_jacobian_nonzeros() const override;
-      [[nodiscard]] size_t number_hessian_nonzeros() const override;
+      [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
+      [[nodiscard]] size_t get_number_hessian_nonzeros() const override;
 
    private:
       const std::unique_ptr<Model> model{};
