@@ -11,7 +11,6 @@
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
-#include "optimization/OptimizationProblem.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Collection.hpp"
 #include "tools/Logger.hpp"
@@ -23,7 +22,6 @@ namespace uno {
    public:
       explicit PrimalDualRegularization(const Options& options);
 
-      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
       void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, SymmetricMatrix<size_t, ElementType>& hessian,
@@ -45,11 +43,6 @@ namespace uno {
    protected:
       const std::string& optional_linear_solver_name;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> optional_linear_solver{};
-      size_t number_variables{};
-      size_t number_constraints{};
-      size_t dimension{};
-      size_t number_hessian_nonzeros{};
-      size_t number_jacobian_nonzeros{};
       ElementType primal_regularization{0.};
       ElementType dual_regularization{0.};
       ElementType previous_primal_regularization{0.};
@@ -79,15 +72,6 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void PrimalDualRegularization<ElementType>::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) {
-      this->number_variables = problem.number_variables;
-      this->number_constraints = problem.number_constraints;
-      this->dimension = problem.number_variables + problem.number_constraints;
-      this->number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
-      this->number_jacobian_nonzeros = problem.number_jacobian_nonzeros();
-   }
-
-   template <typename ElementType>
    void PrimalDualRegularization<ElementType>::initialize_statistics(Statistics& statistics, const Options& options) {
       statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
    }
@@ -104,7 +88,7 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void PrimalDualRegularization<ElementType>::regularize_hessian(Statistics& /*statistics*/, const Subproblem& subproblem,
+   void PrimalDualRegularization<ElementType>::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
          SymmetricMatrix<size_t, ElementType>& /*hessian*/, const Inertia& /*expected_inertia*/,
          DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) {
       // to regularize the Hessian only, call the function for the augmented matrix with no dual part

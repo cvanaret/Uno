@@ -22,7 +22,6 @@ namespace uno {
          const Multipliers& /*current_multipliers*/, HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy, double /*trust_region_radius*/) {
       this->initial_point.resize(problem.number_variables);
-      regularization_strategy.initialize_memory(problem, hessian_model);
 
       // allocate the LP/QP solver, depending on the presence of curvature in the subproblem
       bool subproblem_has_curvature = problem.has_curvature(hessian_model);

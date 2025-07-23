@@ -22,7 +22,6 @@ namespace uno {
    public:
       explicit PrimalRegularization(const Options& options);
 
-      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
       void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, SymmetricMatrix<size_t, ElementType>& hessian,
@@ -44,8 +43,6 @@ namespace uno {
    protected:
       const std::string& optional_linear_solver_name;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> optional_linear_solver{};
-      size_t dimension{};
-      size_t number_nonzeros{};
       double regularization_factor{0.};
       const double regularization_initial_value{};
       const double regularization_increase_factor{};
@@ -60,12 +57,6 @@ namespace uno {
          regularization_initial_value(options.get_double("regularization_initial_value")),
          regularization_increase_factor(options.get_double("regularization_increase_factor")),
          regularization_failure_threshold(options.get_double("regularization_failure_threshold")) {
-   }
-
-   template <typename ElementType>
-   void PrimalRegularization<ElementType>::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) {
-      this->dimension = problem.number_variables;
-      this->number_nonzeros = problem.number_hessian_nonzeros(hessian_model); // diagonal regularization
    }
 
    template <typename ElementType>

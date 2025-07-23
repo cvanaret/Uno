@@ -32,6 +32,18 @@ namespace uno {
       this->problem.evaluate_constraint_jacobian(this->current_iterate, constraint_jacobian);
    }
 
+   void Subproblem::compute_regularized_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      // structure of original Lagrangian Hessian
+      this->problem.compute_hessian_structure(this->hessian_model, row_indices, column_indices);
+      // regularize the Hessian only if required (diagonal regularization)
+      if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
+         for (size_t variable_index: this->get_primal_regularization_variables()) {
+            row_indices.emplace_back(variable_index);
+            column_indices.emplace_back(variable_index);
+         }
+      }
+   }
+
    void Subproblem::compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,

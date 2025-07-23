@@ -26,7 +26,6 @@ namespace uno {
       RegularizationStrategy() = default;
       virtual ~RegularizationStrategy() = default;
 
-      virtual void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model) = 0;
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
 
       virtual void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, SymmetricMatrix<size_t, ElementType>& hessian,

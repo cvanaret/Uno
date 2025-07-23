@@ -36,6 +36,7 @@ namespace uno {
       void evaluate_jacobian(RectangularMatrix<double>& constraint_jacobian) const;
 
       // regularized Hessian
+      void compute_regularized_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const;
       void compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian) const;
       void compute_hessian_vector_product(const double* vector, double* result) const;
 
