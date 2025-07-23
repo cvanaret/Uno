@@ -90,16 +90,6 @@ namespace uno {
       return result;
    }
 
-   // sparse gradient
-   void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
-      fint error_flag = 0;
-      (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), gradient.data(), &error_flag);
-      if (0 < error_flag) {
-         throw GradientEvaluationError();
-      }
-      gradient.scale(this->objective_sign);
-   }
-
    /*
    double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const {
       fint error_flag = 0;
@@ -116,6 +106,32 @@ namespace uno {
       (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &error_flag);
       if (0 < error_flag) {
          throw FunctionEvaluationError();
+      }
+   }
+
+   // dense gradient
+   void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
+      fint error_flag = 0;
+      (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), gradient.data(), &error_flag);
+      if (0 < error_flag) {
+         throw GradientEvaluationError();
+      }
+      gradient.scale(this->objective_sign);
+   }
+
+   void AMPLModel::compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
+      const fint* asl_row_index = this->asl->i.sputinfo_->hrownos;
+      // check that the column pointers are sorted in increasing order
+      //assert(in_increasing_order(asl_column_start, this->number_variables + 1) &&
+      //    "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
+
+      for (size_t column_index: Range(this->number_variables)) {
+         for (size_t nonzero_index: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
+            const size_t row_index = static_cast<size_t>(asl_row_index[nonzero_index]);
+            row_indices.emplace_back(row_index);
+            column_indices.emplace_back(column_index);
+         }
       }
    }
 
