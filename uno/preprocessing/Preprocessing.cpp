@@ -24,7 +24,7 @@ namespace uno {
       /* generate the right-hand side */
       Vector<double> rhs(model.number_variables + model.number_constraints);
       // objective gradient
-      rhs = model.objective_sign * current_iterate.evaluations.objective_gradient;
+      rhs = model.objective_sign * current_iterate.model_evaluations.objective_gradient;
       // variable bound constraints
       for (size_t variable_index: Range(model.number_variables)) {
          rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];
@@ -40,7 +40,7 @@ namespace uno {
 
       /* build the symmetric matrix */
       SparseSymmetricMatrix<COOFormat<size_t, double>> matrix(model.number_variables + model.number_constraints,
-         model.number_variables + model.number_jacobian_nonzeros(), 0);
+         model.number_variables + model.get_number_jacobian_nonzeros(), 0);
       // identity block
       for (size_t variable_index: Range(model.number_variables)) {
          matrix.insert(variable_index, variable_index, 1.);
@@ -48,7 +48,7 @@ namespace uno {
       }
       // Jacobian of general constraints
       for (size_t constraint_index: Range(model.number_constraints)) {
-         for (const auto [variable_index, derivative]: current_iterate.evaluations.constraint_jacobian[constraint_index]) {
+         for (const auto [variable_index, derivative]: current_iterate.model_evaluations.constraint_jacobian[constraint_index]) {
             matrix.insert(variable_index, model.number_variables + constraint_index, derivative);
          }
          matrix.finalize_column(model.number_variables + constraint_index);

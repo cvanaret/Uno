@@ -28,11 +28,6 @@ namespace uno {
    // forward declaration
    class Iterate;
 
-   /*! \class Problem
-    * \brief Optimization problem
-    *
-    *  Description of an optimization problem
-    */
    class Model {
    public:
       Model(std::string name, size_t number_variables, size_t number_constraints, double objective_sign);
@@ -45,7 +40,7 @@ namespace uno {
 
       [[nodiscard]] virtual double evaluate_objective(const Vector<double>& x) const = 0;
       virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
-      virtual void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const = 0;
+      virtual void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const = 0;
       virtual void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const = 0;
       virtual void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const = 0;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
@@ -74,8 +69,8 @@ namespace uno {
       virtual void initial_dual_point(Vector<double>& multipliers) const = 0;
       virtual void postprocess_solution(Iterate& iterate, IterateStatus termination_status) const = 0;
 
-      [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;
-      [[nodiscard]] virtual size_t number_hessian_nonzeros() const = 0;
+      [[nodiscard]] virtual size_t get_number_jacobian_nonzeros() const = 0;
+      [[nodiscard]] virtual size_t get_number_hessian_nonzeros() const = 0;
 
       // auxiliary functions
       void project_onto_variable_bounds(Vector<double>& x) const;
@@ -85,6 +80,10 @@ namespace uno {
       [[nodiscard]] virtual double constraint_violation(double constraint_value, size_t constraint_index) const;
       template <typename Array>
       double constraint_violation(const Array& constraints, Norm residual_norm) const;
+      void partition_variables(Vector<size_t>& fixed_variables, std::vector<size_t>& lower_bounded_variables,
+         std::vector<size_t>& upper_bounded_variables, std::vector<size_t>& single_lower_bounded_variables,
+         std::vector<size_t>& single_upper_bounded_variables) const;
+      void partition_constraints(std::vector<size_t>& equality_constraints, std::vector<size_t>& inequality_constraints) const;
    };
 
    // compute ||c||

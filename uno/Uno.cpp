@@ -1,7 +1,6 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-//#include <cmath>
 #include "Uno.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
@@ -11,7 +10,6 @@
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
-#include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -23,9 +21,9 @@
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
-   Uno::Uno(size_t number_constraints, const Options& options) :
-         constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(number_constraints, options)),
-         globalization_strategy(GlobalizationStrategyFactory::create(number_constraints, options)),
+   Uno::Uno(bool constrained_model, const Options& options) :
+         constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(constrained_model, options)),
+         globalization_strategy(GlobalizationStrategyFactory::create(constrained_model, options)),
          globalization_mechanism(GlobalizationMechanismFactory::create(options)),
          max_iterations(options.get_unsigned_int("max_iterations")),
          time_limit(options.get_double("time_limit")),

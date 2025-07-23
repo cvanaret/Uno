@@ -44,13 +44,13 @@ namespace uno {
    // infeasibility measure: constraint violation
    void ConstraintRelaxationStrategy::set_infeasibility_measure(const Model& model, Iterate& iterate) const {
       iterate.evaluate_constraints(model);
-      iterate.progress.infeasibility = model.constraint_violation(iterate.evaluations.constraints, this->progress_norm);
+      iterate.progress.infeasibility = model.constraint_violation(iterate.model_evaluations.constraints, this->progress_norm);
    }
 
    // objective measure: scaled objective
    void ConstraintRelaxationStrategy::set_objective_measure(const Model& model, Iterate& iterate) const {
       iterate.evaluate_objective(model);
-      const double objective = iterate.evaluations.objective;
+      const double objective = iterate.model_evaluations.objective;
       iterate.progress.objective = [=](double objective_multiplier) {
          return objective_multiplier * objective;
       };
@@ -59,16 +59,16 @@ namespace uno {
    double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
-      const double current_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints, this->progress_norm);
-      const double trial_linearized_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints +
-         step_length * (current_iterate.evaluations.constraint_jacobian * primal_direction), this->progress_norm);
+      const double current_constraint_violation = model.constraint_violation(current_iterate.model_evaluations.constraints, this->progress_norm);
+      const double trial_linearized_constraint_violation = model.constraint_violation(current_iterate.model_evaluations.constraints +
+         step_length * (current_iterate.model_evaluations.constraint_jacobian * primal_direction), this->progress_norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
    }
 
    std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_objective_reduction(InequalityHandlingMethod& inequality_handling_method,
          const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const {
       // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
-      const double directional_derivative = dot(primal_direction, current_iterate.evaluations.objective_gradient);
+      const double directional_derivative = dot(primal_direction, current_iterate.model_evaluations.objective_gradient);
       const double quadratic_term = this->first_order_predicted_reduction ? 0. :
          inequality_handling_method.hessian_quadratic_product(primal_direction);
       return [=](double objective_multiplier) {
@@ -143,12 +143,12 @@ namespace uno {
          this->residual_norm);
 
       // constraint violation of the original problem
-      iterate.primal_feasibility = model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
+      iterate.primal_feasibility = model.constraint_violation(iterate.model_evaluations.constraints, this->residual_norm);
 
       // complementarity error
       constexpr double shift_value = 0.;
       // TODO preallocate constraints
-      std::vector<double> constraints(optimality_problem.number_constraints);
+      Vector<double> constraints(optimality_problem.number_constraints);
       optimality_problem.evaluate_constraints(iterate, constraints);
       iterate.residuals.complementarity = optimality_problem.complementarity_error(iterate.primals, constraints,
          iterate.multipliers, shift_value, this->residual_norm);
@@ -195,7 +195,7 @@ namespace uno {
    }
 
    IterateStatus ConstraintRelaxationStrategy::check_termination(const Model& model, Iterate& iterate) {
-      if (iterate.is_objective_computed && iterate.evaluations.objective < this->unbounded_objective_threshold) {
+      if (iterate.is_objective_computed && iterate.model_evaluations.objective < this->unbounded_objective_threshold) {
          return IterateStatus::UNBOUNDED;
       }
 
@@ -263,7 +263,7 @@ namespace uno {
    }
 
    void ConstraintRelaxationStrategy::set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const {
-      statistics.set("objective", iterate.evaluations.objective);
+      statistics.set("objective", iterate.model_evaluations.objective);
       if (model.is_constrained()) {
          statistics.set("primal feas", iterate.progress.infeasibility);
       }

@@ -21,7 +21,7 @@ namespace uno {
       this->problem.evaluate_objective_gradient(this->current_iterate, linear_objective);
    }
 
-   void Subproblem::evaluate_constraints(std::vector<double>& constraints) const {
+   void Subproblem::evaluate_constraints(Vector<double>& constraints) const {
       this->problem.evaluate_constraints(this->current_iterate, constraints);
    }
 
@@ -77,7 +77,7 @@ namespace uno {
          dual_regularization_parameter, expected_inertia, linear_solver);
    }
 
-   void Subproblem::assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
+   void Subproblem::assemble_augmented_rhs(const Vector<double>& objective_gradient, const Vector<double>& constraints,
          RectangularMatrix<double>& constraint_jacobian, Vector<double>& rhs) const {
       rhs.fill(0.);
 
