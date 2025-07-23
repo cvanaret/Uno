@@ -33,7 +33,7 @@ namespace uno {
       return this->model->evaluate_objective(x);
    }
 
-   void FixedBoundsConstraintsModel::evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const {
+   void FixedBoundsConstraintsModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       this->model->evaluate_objective_gradient(x, gradient);
    }
 
@@ -179,10 +179,6 @@ namespace uno {
          current_constraint++;
       }
       this->model->postprocess_solution(iterate, termination_status);
-   }
-
-   size_t FixedBoundsConstraintsModel::number_objective_gradient_nonzeros() const {
-      return this->model->number_objective_gradient_nonzeros();
    }
 
    size_t FixedBoundsConstraintsModel::number_jacobian_nonzeros() const {

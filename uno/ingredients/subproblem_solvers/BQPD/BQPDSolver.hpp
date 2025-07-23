@@ -11,7 +11,7 @@
 #include "linear_algebra/COOFormat.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseSymmetricMatrix.hpp"
-#include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/Vector.hpp"
 
 namespace uno {
    // forward declarations
@@ -20,8 +20,6 @@ namespace uno {
    class Subproblem;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;
-   template <typename ElementType>
-   class Vector;
 
    // see bqpd.f
    enum class BQPDStatus {
@@ -61,7 +59,7 @@ namespace uno {
    private:
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
       std::vector<double> constraints{};
-      SparseVector<double> linear_objective{};
+      Vector<double> linear_objective{};
       RectangularMatrix<double> constraint_jacobian{};
       std::vector<double> bqpd_jacobian{};
       std::vector<int> bqpd_jacobian_sparsity{};
@@ -74,7 +72,6 @@ namespace uno {
       std::vector<double> alp{};
       std::vector<int> lp{}, active_set{};
       std::vector<double> w{}, gradient_solution{}, residuals{}, e{};
-      size_t size_hessian_sparsity{};
       size_t mxws{};
       size_t mxlws{};
       std::vector<double> ws{};
@@ -94,7 +91,7 @@ namespace uno {
          const WarmstartInformation& warmstart_information);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
       void hide_pointers_in_workspace(Statistics& statistics, const Subproblem& subproblem);
-      void save_gradients_into_workspace(size_t number_constraints);
+      void save_gradients_into_workspace(size_t number_variables, size_t number_constraints);
       void set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const;
       [[nodiscard]] static BQPDStatus bqpd_status_from_int(int ifail);
       [[nodiscard]] bool check_sufficient_workspace_size(BQPDStatus bqpd_status);

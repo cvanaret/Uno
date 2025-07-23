@@ -59,7 +59,7 @@ namespace uno {
       this->column_indices.reserve(number_nonzeros);
 
       // evaluations
-      this->objective_gradient.reserve(number_variables);
+      this->objective_gradient.resize(number_variables);
       this->constraints.resize(number_constraints);
       this->constraint_jacobian.resize(number_constraints, number_variables);
 

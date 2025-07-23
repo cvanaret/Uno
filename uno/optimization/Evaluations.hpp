@@ -6,14 +6,14 @@
 
 #include <vector>
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
    struct Evaluations {
       double objective{INF<double>}; /*!< Objective value */
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-      SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
+      Vector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 
       Evaluations(size_t number_variables, size_t number_constraints):

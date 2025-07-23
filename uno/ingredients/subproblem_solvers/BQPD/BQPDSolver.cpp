@@ -72,11 +72,11 @@ namespace uno {
       this->lower_bounds.resize(problem.number_variables + problem.number_constraints);
       this->upper_bounds.resize(problem.number_variables + problem.number_constraints);
       this->constraints.resize(problem.number_constraints);
-      this->linear_objective.reserve(problem.number_objective_gradient_nonzeros());
+      this->linear_objective.resize(problem.number_variables);
       this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
       // Jacobian + objective gradient
-      this->bqpd_jacobian.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros());
-      this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_objective_gradient_nonzeros() +
+      this->bqpd_jacobian.resize(problem.number_jacobian_nonzeros() + problem.number_variables);
+      this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_variables +
          problem.number_constraints + 3);
       // default active set
       this->active_set.resize(problem.number_variables + problem.number_constraints);
@@ -163,7 +163,7 @@ namespace uno {
 
       // save objective gradient and constraint Jacobian into BQPD workspace
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->save_gradients_into_workspace(subproblem.number_constraints);
+         this->save_gradients_into_workspace(subproblem.number_variables, subproblem.number_constraints);
       }
       this->hide_pointers_in_workspace(statistics, subproblem);
    }
@@ -273,12 +273,12 @@ namespace uno {
       WSC.ll += sizeof(intptr_t);
    }
 
-   void BQPDSolver::save_gradients_into_workspace(size_t number_constraints) {
+   void BQPDSolver::save_gradients_into_workspace(size_t number_variables, size_t number_constraints) {
       size_t current_index = 0;
-      for (const auto [variable_index, derivative]: this->linear_objective) {
+      for (size_t variable_index: Range(number_variables)) {
          assert(current_index < this->bqpd_jacobian.size() && "The allocation of bqpd_jacobian was not sufficient");
          assert(current_index + 1 < this->bqpd_jacobian_sparsity.size() && "The allocation of bqpd_jacobian_sparsity was not sufficient");
-         this->bqpd_jacobian[current_index] = derivative;
+         this->bqpd_jacobian[current_index] = this->linear_objective[variable_index];
          this->bqpd_jacobian_sparsity[current_index + 1] = static_cast<int>(variable_index) + this->fortran_shift;
          current_index++;
       }

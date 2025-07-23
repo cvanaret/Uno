@@ -91,23 +91,13 @@ namespace uno {
    }
 
    // sparse gradient
-   void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const {
+   void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       fint error_flag = 0;
-      // evaluate the ASL gradient (always in a dense vector)
-      (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), this->asl_gradient.data(), &error_flag);
+      (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), gradient.data(), &error_flag);
       if (0 < error_flag) {
          throw GradientEvaluationError();
       }
-
-      // create the Uno sparse vector
-      ograd* asl_variables_tmp = this->asl->i.Ograd_[0];
-      while (asl_variables_tmp != nullptr) {
-         const size_t variable_index = static_cast<size_t>(asl_variables_tmp->varno);
-         // scale by the objective sign
-         const double partial_derivative = this->objective_sign*this->asl_gradient[variable_index];
-         gradient.insert(variable_index, partial_derivative);
-         asl_variables_tmp = asl_variables_tmp->next;
-      }
+      gradient.scale(this->objective_sign);
    }
 
    /*
@@ -316,10 +306,6 @@ namespace uno {
          iterate.multipliers.upper_bounds *= this->objective_sign;
          iterate.evaluations.objective *= this->objective_sign;
       }
-   }
-
-   size_t AMPLModel::number_objective_gradient_nonzeros() const {
-      return static_cast<size_t>(this->asl->i.nzo_);
    }
 
    size_t AMPLModel::number_jacobian_nonzeros() const {

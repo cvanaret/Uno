@@ -8,6 +8,7 @@
 #include "linear_algebra/RectangularMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
@@ -23,9 +24,7 @@ namespace uno {
       /* generate the right-hand side */
       Vector<double> rhs(model.number_variables + model.number_constraints);
       // objective gradient
-      for (const auto [variable_index, derivative]: current_iterate.evaluations.objective_gradient) {
-         rhs[variable_index] += model.objective_sign * derivative;
-      }
+      rhs = model.objective_sign * current_iterate.evaluations.objective_gradient;
       // variable bound constraints
       for (size_t variable_index: Range(model.number_variables)) {
          rhs[variable_index] -= current_iterate.multipliers.lower_bounds[variable_index] + current_iterate.multipliers.upper_bounds[variable_index];

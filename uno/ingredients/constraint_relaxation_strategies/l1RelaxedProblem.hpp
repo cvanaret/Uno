@@ -18,7 +18,7 @@ namespace uno {
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
 
       [[nodiscard]] double get_objective_multiplier() const override;
-      void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const override;
+      void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const override;
       void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
       void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
@@ -41,7 +41,6 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
 
-      [[nodiscard]] size_t number_objective_gradient_nonzeros() const override;
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
 
