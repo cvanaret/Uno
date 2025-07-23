@@ -12,31 +12,27 @@ namespace uno {
    public:
       explicit NoRegularization() = default;
 
-      void initialize_memory(const OptimizationProblem& /*problem*/, const HessianModel& /*hessian_model*/) override {
-         // do nothing
-      }
-
       void initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) override {
          // do nothing
       }
 
-      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& subproblem, SymmetricMatrix<size_t, ElementType>& /*hessian*/,
+      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, SymmetricMatrix<size_t, ElementType>& /*hessian*/,
             const Inertia& /*expected_inertia*/) override {
          // do nothing
       }
 
-      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& subproblem, SymmetricMatrix<size_t, ElementType>& /*hessian*/,
+      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, SymmetricMatrix<size_t, ElementType>& /*hessian*/,
             const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) override {
          // do nothing
       }
 
-      void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& subproblem,
+      void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
             SymmetricMatrix<size_t, ElementType>& /*augmented_matrix*/, ElementType /*dual_regularization_parameter*/,
             const Inertia& /*expected_inertia*/) override {
          // do nothing
       }
 
-      void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& subproblem,
+      void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
             SymmetricMatrix<size_t, ElementType>& /*augmented_matrix*/, ElementType /*dual_regularization_parameter*/,
             const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) override {
          // do nothing
