@@ -24,6 +24,14 @@ namespace uno {
       return model.number_variables;
    }
 
+   void IdentityHessian::compute_structure(const Model& model, Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      // diagonal structure
+      for (size_t variable_index: Range(model.number_variables)) {
+         row_indices[variable_index] = variable_index;
+         column_indices[variable_index] = variable_index;
+      }
+   }
+
    bool IdentityHessian::is_positive_definite() const {
       return true;
    }

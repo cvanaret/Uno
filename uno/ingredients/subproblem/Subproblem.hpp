@@ -60,6 +60,17 @@ namespace uno {
       [[nodiscard]] bool has_explicit_hessian_representation() const;
       [[nodiscard]] bool has_curvature() const;
 
+      [[nodiscard]] bool performs_primal_regularization() const;
+      [[nodiscard]] bool performs_dual_regularization() const;
+
+      [[nodiscard]] const Collection<size_t>& get_primal_regularization_variables() const;
+      [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const;
+
+      [[nodiscard]] size_t number_jacobian_nonzeros() const;
+      [[nodiscard]] size_t number_hessian_nonzeros() const;
+      [[nodiscard]] size_t number_augmented_system_nonzeros() const;
+      [[nodiscard]] size_t regularization_size() const;
+
       [[nodiscard]] double dual_regularization_factor() const;
 
    protected:

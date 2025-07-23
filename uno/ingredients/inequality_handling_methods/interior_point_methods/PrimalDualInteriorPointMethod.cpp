@@ -35,8 +35,9 @@ namespace uno {
          l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
    }
 
-   void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy) {
+   void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
       if (!problem.get_inequality_constraints().empty()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
@@ -46,15 +47,9 @@ namespace uno {
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
       regularization_strategy.initialize_memory(barrier_problem, hessian_model);
 
-      const size_t primal_regularization_size = problem.get_number_original_variables();
-      const size_t dual_regularization_size = problem.get_equality_constraints().size();
-      const size_t regularization_size =
-         (regularization_strategy.performs_primal_regularization() ? primal_regularization_size : 0) +
-         (regularization_strategy.performs_dual_regularization() ? dual_regularization_size : 0);
-      const size_t number_augmented_system_nonzeros = barrier_problem.number_hessian_nonzeros(hessian_model) +
-         barrier_problem.number_jacobian_nonzeros();
-      this->linear_solver->initialize_memory(barrier_problem.number_variables, barrier_problem.number_constraints,
-         number_augmented_system_nonzeros, regularization_size);
+      const Subproblem subproblem{barrier_problem, current_iterate, hessian_model, regularization_strategy,
+         trust_region_radius};
+      this->linear_solver->initialize_memory(subproblem);
    }
 
    void PrimalDualInteriorPointMethod::initialize_statistics(Statistics& statistics, const Options& options) {

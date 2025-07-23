@@ -25,9 +25,17 @@ namespace uno {
       AMPLModel(const std::string& file_name, const Options& options);
       ~AMPLModel() override;
 
+      // function evaluations
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
-      void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
       void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override;
+
+      // dense objective gradient
+      void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
+
+      // structures of Jacobian and Hessian
+      void compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const override;
+
+      // numerical evaluations of Jacobian and Hessian
       void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
       void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,

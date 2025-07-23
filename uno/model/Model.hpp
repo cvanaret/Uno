@@ -28,11 +28,6 @@ namespace uno {
    // forward declaration
    class Iterate;
 
-   /*! \class Problem
-    * \brief Optimization problem
-    *
-    *  Description of an optimization problem
-    */
    class Model {
    public:
       Model(std::string name, size_t number_variables, size_t number_constraints, double objective_sign);
@@ -43,9 +38,17 @@ namespace uno {
       const size_t number_constraints; /*!< Number of constraints */
       const double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
 
+      // function evaluations
       [[nodiscard]] virtual double evaluate_objective(const Vector<double>& x) const = 0;
-      virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
       virtual void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const = 0;
+
+      // dense objective gradient
+      virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
+
+      // structures of Jacobian and Hessian
+      virtual void compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const = 0;
+
+      // numerical evaluations of Jacobian and Hessian
       virtual void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const = 0;
       virtual void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const = 0;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,

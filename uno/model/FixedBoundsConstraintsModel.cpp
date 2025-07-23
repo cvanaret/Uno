@@ -33,10 +33,6 @@ namespace uno {
       return this->model->evaluate_objective(x);
    }
 
-   void FixedBoundsConstraintsModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
-      this->model->evaluate_objective_gradient(x, gradient);
-   }
-
    void FixedBoundsConstraintsModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
       this->model->evaluate_constraints(x, constraints);
       // add the fixed variables
@@ -45,6 +41,14 @@ namespace uno {
          constraints[current_constraint] = x[fixed_variable_index];
          current_constraint++;
       }
+   }
+
+   void FixedBoundsConstraintsModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
+      this->model->evaluate_objective_gradient(x, gradient);
+   }
+
+   void FixedBoundsConstraintsModel::compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      this->model->compute_hessian_structure(row_indices, column_indices);
    }
 
    void FixedBoundsConstraintsModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {

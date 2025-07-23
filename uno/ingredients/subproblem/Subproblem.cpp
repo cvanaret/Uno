@@ -40,8 +40,7 @@ namespace uno {
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
          const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
             this->problem.number_variables - this->problem.get_number_original_variables()};
-         this->regularization_strategy.regularize_hessian(statistics, hessian, this->problem.get_primal_regularization_variables(),
-            expected_inertia);
+         this->regularization_strategy.regularize_hessian(statistics, *this, hessian, expected_inertia);
       }
    }
 
@@ -75,8 +74,7 @@ namespace uno {
    void Subproblem::regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const {
       const Inertia expected_inertia{this->number_variables, this->number_constraints, 0};
-      this->regularization_strategy.regularize_augmented_matrix(statistics, augmented_matrix,
-         this->problem.get_primal_regularization_variables(), this->problem.get_dual_regularization_constraints(),
+      this->regularization_strategy.regularize_augmented_matrix(statistics, *this, augmented_matrix,
          dual_regularization_parameter, expected_inertia, linear_solver);
    }
 
@@ -141,6 +139,43 @@ namespace uno {
          }
          return false;
       }
+   }
+
+   bool Subproblem::performs_primal_regularization() const {
+      return this->regularization_strategy.performs_primal_regularization();
+   }
+
+   bool Subproblem::performs_dual_regularization() const {
+      return this->regularization_strategy.performs_dual_regularization();
+   }
+
+   const Collection<size_t>& Subproblem::get_primal_regularization_variables() const {
+      return this->problem.get_primal_regularization_variables();
+   }
+
+   const Collection<size_t>& Subproblem::get_dual_regularization_constraints() const {
+      return this->problem.get_dual_regularization_constraints();
+   }
+
+   size_t Subproblem::number_jacobian_nonzeros() const {
+      return this->problem.number_jacobian_nonzeros();
+   }
+
+   size_t Subproblem::number_hessian_nonzeros() const {
+      return this->problem.number_hessian_nonzeros(this->hessian_model);
+   }
+
+   size_t Subproblem::number_augmented_system_nonzeros() const {
+      return this->number_hessian_nonzeros() + this->number_jacobian_nonzeros();
+   }
+
+   size_t Subproblem::regularization_size() const {
+      const size_t primal_regularization_size = this->get_primal_regularization_variables().size();
+      const size_t dual_regularization_size = this->get_dual_regularization_constraints().size();
+      const size_t regularization_size =
+         (this->performs_primal_regularization() ? primal_regularization_size : 0) +
+         (this->performs_dual_regularization() ? dual_regularization_size : 0);
+      return regularization_size;
    }
 
    double Subproblem::dual_regularization_factor() const {

@@ -22,15 +22,20 @@ namespace uno {
       return 1.;
    }
 
+   void OptimizationProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+      iterate.evaluate_constraints(this->model);
+      constraints = iterate.evaluations.constraints;
+   }
+
    void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
       iterate.evaluate_objective_gradient(this->model);
       // TODO change this
       objective_gradient = iterate.evaluations.objective_gradient;
    }
 
-   void OptimizationProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
-      iterate.evaluate_constraints(this->model);
-      constraints = iterate.evaluations.constraints;
+   void OptimizationProblem::compute_hessian_structure(const HessianModel& hessian_model, Vector<size_t>& row_indices,
+         Vector<size_t>& column_indices) const {
+      hessian_model.compute_structure(this->model, row_indices, column_indices);
    }
 
    void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {

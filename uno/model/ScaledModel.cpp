@@ -39,16 +39,20 @@ namespace uno {
       return this->scaling.get_objective_scaling()*objective;
    }
 
-   void ScaledModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
-      this->model->evaluate_objective_gradient(x, gradient);
-      gradient.scale(this->scaling.get_objective_scaling());
-   }
-
    void ScaledModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
       this->model->evaluate_constraints(x, constraints);
       for (size_t constraint_index: Range(this->number_constraints)) {
          constraints[constraint_index] *= this->scaling.get_constraint_scaling(constraint_index);
       }
+   }
+
+   void ScaledModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
+      this->model->evaluate_objective_gradient(x, gradient);
+      gradient.scale(this->scaling.get_objective_scaling());
+   }
+
+   void ScaledModel::compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      this->model->compute_hessian_structure(row_indices, column_indices);
    }
 
    void ScaledModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {

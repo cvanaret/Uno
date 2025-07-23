@@ -90,16 +90,6 @@ namespace uno {
       return result;
    }
 
-   // sparse gradient
-   void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
-      fint error_flag = 0;
-      (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), gradient.data(), &error_flag);
-      if (0 < error_flag) {
-         throw GradientEvaluationError();
-      }
-      gradient.scale(this->objective_sign);
-   }
-
    /*
    double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const {
       fint error_flag = 0;
@@ -117,6 +107,20 @@ namespace uno {
       if (0 < error_flag) {
          throw FunctionEvaluationError();
       }
+   }
+
+   // dense gradient
+   void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
+      fint error_flag = 0;
+      (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), gradient.data(), &error_flag);
+      if (0 < error_flag) {
+         throw GradientEvaluationError();
+      }
+      gradient.scale(this->objective_sign);
+   }
+
+   void AMPLModel::compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+
    }
 
    // sparse gradient

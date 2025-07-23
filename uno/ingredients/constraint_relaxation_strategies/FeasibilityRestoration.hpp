@@ -19,7 +19,7 @@ namespace uno {
       ~FeasibilityRestoration() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         const Options& options) override;
+         double trust_region_radius, const Options& options) override;
 
       // direction computation
       void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,

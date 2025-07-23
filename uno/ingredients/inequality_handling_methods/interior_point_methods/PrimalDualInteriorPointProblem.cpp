@@ -23,6 +23,10 @@ namespace uno {
       return this->first_reformulation.get_objective_multiplier();
    }
 
+   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+      this->first_reformulation.evaluate_constraints(iterate, constraints);
+   }
+
    void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
       this->first_reformulation.evaluate_objective_gradient(iterate, objective_gradient);
 
@@ -47,8 +51,20 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
-      this->first_reformulation.evaluate_constraints(iterate, constraints);
+   void PrimalDualInteriorPointProblem::compute_hessian_structure(const HessianModel& hessian_model, Vector<size_t>& row_indices,
+         Vector<size_t>& column_indices) const {
+      // original Lagrangian Hessian
+      this->first_reformulation.compute_hessian_structure(hessian_model, row_indices, column_indices);
+
+      // diagonal barrier terms
+      for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
+         const bool finite_lower_bound = is_finite(this->first_reformulation.variable_lower_bound(variable_index));
+         const bool finite_upper_bound = is_finite(this->first_reformulation.variable_upper_bound(variable_index));
+         if (finite_lower_bound || finite_upper_bound) {
+            row_indices.emplace_back(variable_index);
+            column_indices.emplace_back(variable_index);
+         }
+      }
    }
 
    void PrimalDualInteriorPointProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {

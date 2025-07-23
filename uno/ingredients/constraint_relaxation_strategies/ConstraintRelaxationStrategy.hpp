@@ -32,7 +32,7 @@ namespace uno {
       virtual ~ConstraintRelaxationStrategy();
 
       virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         const Options& options) = 0;
+         double trust_region_radius, const Options& options) = 0;
 
       // direction computation
       virtual void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,

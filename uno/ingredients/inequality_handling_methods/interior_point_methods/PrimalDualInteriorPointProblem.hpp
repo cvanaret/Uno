@@ -14,10 +14,19 @@ namespace uno {
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter,
          const InteriorPointParameters &parameters);
 
-      // function evaluations
       [[nodiscard]] double get_objective_multiplier() const override;
-      void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const override;
+
+      // constraint evaluations
       void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
+
+      // dense objective gradient
+      void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const override;
+
+      // structures of Jacobian and Hessian
+      void compute_hessian_structure(const HessianModel& hessian_model, Vector<size_t>& row_indices,
+         Vector<size_t>& column_indices) const override;
+
+      // numerical evaluations of Jacobian and Hessian
       void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const override;

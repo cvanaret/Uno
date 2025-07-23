@@ -57,10 +57,6 @@ namespace uno {
       return this->model->evaluate_objective(x);
    }
 
-   void HomogeneousEqualityConstrainedModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
-      this->model->evaluate_objective_gradient(x, gradient);
-   }
-
    void HomogeneousEqualityConstrainedModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
       this->model->evaluate_constraints(x, constraints);
       // inequality constraints: add the slacks
@@ -72,6 +68,14 @@ namespace uno {
       for (const size_t constraint_index: this->model->get_equality_constraints()) {
          constraints[constraint_index] -= this->model->constraint_lower_bound(constraint_index);
       }
+   }
+
+   void HomogeneousEqualityConstrainedModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
+      this->model->evaluate_objective_gradient(x, gradient);
+   }
+
+   void HomogeneousEqualityConstrainedModel::compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      this->model->compute_hessian_structure(row_indices, column_indices);
    }
 
    void HomogeneousEqualityConstrainedModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index,

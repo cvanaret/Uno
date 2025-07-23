@@ -91,25 +91,31 @@ namespace uno {
       this->workspace.icntl[8] = 1;
    }
 
-   void MA57Solver::initialize_memory(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros,
-         size_t regularization_size) {
-      const size_t dimension = number_variables + number_constraints;
-      const size_t number_nonzeros = number_hessian_nonzeros + regularization_size;
+   void MA57Solver::initialize_memory(const Subproblem& subproblem) {
+      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
       this->dimension = dimension;
 
-      // reserve the COO sparse representation
-      this->row_indices.reserve(number_nonzeros);
-      this->column_indices.reserve(number_nonzeros);
-
       // evaluations
-      this->objective_gradient.resize(number_variables);
-      this->constraints.resize(number_constraints);
-      this->constraint_jacobian.resize(number_constraints, number_variables);
+      this->objective_gradient.resize(subproblem.number_variables);
+      this->constraints.resize(subproblem.number_constraints);
+      this->constraint_jacobian.resize(subproblem.number_constraints, subproblem.number_variables);
 
       // augmented system
-      this->augmented_matrix = SparseSymmetricMatrix<COOFormat<size_t, double>>(dimension, number_hessian_nonzeros, regularization_size);
+      const size_t number_augmented_system_nonzeros = subproblem.number_augmented_system_nonzeros();
+      const size_t regularization_size = subproblem.regularization_size();
+      const size_t number_nonzeros = number_augmented_system_nonzeros + regularization_size;
+      // compute the COO sparse representation
+      this->row_indices.reserve(number_nonzeros);
+      this->column_indices.reserve(number_nonzeros);
+      this->augmented_matrix = SparseSymmetricMatrix<COOFormat<size_t, double>>(dimension, number_augmented_system_nonzeros,
+         regularization_size);
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
+
+      /*
+      Vector<size_t> test_row_indices;
+      Vector<size_t> test_column_indices;
+      */
 
       // workspace
       this->workspace.n = static_cast<int>(dimension);
