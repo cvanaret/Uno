@@ -27,7 +27,10 @@ namespace uno {
       [[nodiscard]] virtual bool has_explicit_representation() const = 0;
 
       virtual void initialize(const Model& model) = 0;
+
       [[nodiscard]] virtual size_t number_nonzeros(const Model& model) const = 0;
+      virtual void compute_structure(const Model& model, Vector<size_t>& row_indices, Vector<size_t>& column_indices) const = 0;
+
       [[nodiscard]] virtual bool is_positive_definite() const = 0;
       virtual void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) = 0;

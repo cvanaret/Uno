@@ -9,7 +9,6 @@
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/COOFormat.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
@@ -43,8 +42,7 @@ namespace uno {
       MA27Solver();
       ~MA27Solver() override = default;
 
-      void initialize_memory(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros,
-         size_t regularization_size) override;
+      void initialize_memory(const Subproblem& subproblem) override;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;

@@ -50,17 +50,18 @@ namespace uno {
    }
 
    void l1Relaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         const Options& options) {
+         double trust_region_radius, const Options& options) {
       const l1RelaxedProblem l1_relaxed_problem{model, this->penalty_parameter, this->constraint_violation_coefficient};
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
 
       // memory allocation
       this->l1_relaxed_hessian_model->initialize(model);
       this->feasibility_hessian_model->initialize(model);
-      this->inequality_handling_method->initialize(l1_relaxed_problem, *this->l1_relaxed_hessian_model,
-         *this->l1_relaxed_regularization_strategy);
-      this->feasibility_inequality_handling_method->initialize(feasibility_problem, *this->feasibility_hessian_model,
-         *this->feasibility_regularization_strategy);
+      this->inequality_handling_method->initialize(l1_relaxed_problem, initial_iterate, initial_iterate.multipliers,
+         *this->l1_relaxed_hessian_model, *this->l1_relaxed_regularization_strategy, trust_region_radius);
+      this->feasibility_inequality_handling_method->initialize(feasibility_problem, initial_iterate,
+         initial_iterate.feasibility_multipliers, *this->feasibility_hessian_model, *this->feasibility_regularization_strategy,
+         trust_region_radius);
       this->trial_multipliers.constraints.resize(l1_relaxed_problem.number_constraints);
       this->trial_multipliers.lower_bounds.resize(l1_relaxed_problem.number_variables);
       this->trial_multipliers.upper_bounds.resize(l1_relaxed_problem.number_variables);

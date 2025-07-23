@@ -18,8 +18,9 @@ namespace uno {
          InequalityHandlingMethod(), options(options) {
    }
 
-   void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy) {
+   void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, Iterate& /*current_iterate*/,
+         const Multipliers& /*current_multipliers*/, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double /*trust_region_radius*/) {
       this->initial_point.resize(problem.number_variables);
       regularization_strategy.initialize_memory(problem, hessian_model);
 
