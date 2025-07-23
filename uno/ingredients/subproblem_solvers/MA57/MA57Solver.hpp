@@ -61,7 +61,7 @@ namespace uno {
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
       void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
-      void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
+      void solve_equality_constrained_subproblem(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] Inertia get_inertia() const override;

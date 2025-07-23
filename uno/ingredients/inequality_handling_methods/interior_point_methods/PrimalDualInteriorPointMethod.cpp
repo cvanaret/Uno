@@ -18,7 +18,7 @@
 namespace uno {
    PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(const Options& options):
          InequalityHandlingMethod(),
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))),
+         solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))),
          barrier_parameter_update_strategy(options),
          previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
          default_multiplier(options.get_double("barrier_default_multiplier")),
@@ -53,7 +53,7 @@ namespace uno {
          (regularization_strategy.performs_dual_regularization() ? dual_regularization_size : 0);
       const size_t number_augmented_system_nonzeros = barrier_problem.number_hessian_nonzeros(hessian_model) +
          barrier_problem.number_jacobian_nonzeros();
-      this->linear_solver->initialize_memory(barrier_problem.number_variables, barrier_problem.number_constraints,
+      this->solver->initialize_memory(barrier_problem.number_variables, barrier_problem.number_constraints,
          number_augmented_system_nonzeros, regularization_size);
    }
 
@@ -102,7 +102,7 @@ namespace uno {
 
       // compute least-square multipliers
       if (0 < problem.number_constraints) {
-         Preprocessing::compute_least_square_multipliers(problem.model, *this->linear_solver, initial_iterate,
+         Preprocessing::compute_least_square_multipliers(problem.model, *this->solver, initial_iterate,
             initial_iterate.multipliers.constraints, this->least_square_multiplier_max_norm);
       }
    }
@@ -136,12 +136,11 @@ namespace uno {
          trust_region_radius};
 
       // compute the primal-dual solution
-      this->linear_solver->solve_indefinite_system(statistics, subproblem, direction, warmstart_information);
+      this->solver->solve_equality_constrained_subproblem(statistics, subproblem, direction, warmstart_information);
       this->number_subproblems_solved++;
 
       // check whether the augmented matrix was singular, in which case the subproblem is infeasible
-      if (this->linear_solver->matrix_is_singular()) {
-         direction.status = SubproblemStatus::INFEASIBLE;
+      if (direction.status == SubproblemStatus::INFEASIBLE) {
          return;
       }
       direction.subproblem_objective = this->evaluate_subproblem_objective(direction);
