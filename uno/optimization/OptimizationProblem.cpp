@@ -33,6 +33,10 @@ namespace uno {
       objective_gradient = iterate.evaluations.objective_gradient;
    }
 
+   void OptimizationProblem::compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      this->model.compute_jacobian_structure(row_indices, column_indices);
+   }
+
    void OptimizationProblem::compute_hessian_structure(const HessianModel& hessian_model, Vector<size_t>& row_indices,
          Vector<size_t>& column_indices) const {
       hessian_model.compute_structure(this->model, row_indices, column_indices);

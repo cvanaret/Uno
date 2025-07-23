@@ -51,6 +51,10 @@ namespace uno {
       gradient.scale(this->scaling.get_objective_scaling());
    }
 
+   void ScaledModel::compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      this->model->compute_jacobian_structure(row_indices, column_indices);
+   }
+
    void ScaledModel::compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
       this->model->compute_hessian_structure(row_indices, column_indices);
    }

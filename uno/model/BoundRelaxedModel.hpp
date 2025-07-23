@@ -27,6 +27,10 @@ namespace uno {
       }
 
       // structures of Jacobian and Hessian
+      void compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const override {
+         this->model->compute_jacobian_structure(row_indices, column_indices);
+      }
+
       void compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const override {
          this->model->compute_hessian_structure(row_indices, column_indices);
       }
@@ -35,13 +39,16 @@ namespace uno {
       void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override {
          this->model->evaluate_constraint_gradient(x, constraint_index, gradient);
       }
+
       void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override {
          this->model->evaluate_constraint_jacobian(x, constraint_jacobian);
       }
+
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
             SymmetricMatrix<size_t, double>& hessian) const override {
          this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
       }
+
       void compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
             double* result) const override {
          this->model->compute_hessian_vector_product(vector, objective_multiplier, multipliers, result);
