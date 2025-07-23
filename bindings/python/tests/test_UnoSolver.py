@@ -21,8 +21,8 @@ def evaluate_constraints(x, constraints):
 	constraints[1] = x[0] + x[1]**2
 	
 def evaluate_objective_gradient(x, gradient):
-	gradient.insert(0, 400.*x[0]**3 - 400.*x[0]*x[1] + 2.*x[0] - 2.)
-	gradient.insert(1, 200.*(x[1] - x[0]**2))
+	gradient[0] = 400.*x[0]**3 - 400.*x[0]*x[1] + 2.*x[0] - 2.
+	gradient[1] = 200.*(x[1] - x[0]**2)
 
 def evaluate_jacobian(x, jacobian):
 	# c0
@@ -37,7 +37,6 @@ def evaluate_lagrangian_hessian(x, objective_multiplier, y, hessian):
 	hessian.insert(0, 1, -400.*objective_multiplier*x[0] - y[0])
 	hessian.insert(1, 1, 200.*objective_multiplier - 2.*y[1])
 
-number_objective_gradient_nonzeros = 2
 number_jacobian_nonzeros = 4
 number_hessian_nonzeros = 3
 
@@ -55,7 +54,6 @@ if __name__ == '__main__':
 		evaluate_objective_gradient,
 		evaluate_jacobian,
 		evaluate_lagrangian_hessian,
-		number_objective_gradient_nonzeros,
 		number_jacobian_nonzeros,
 		number_hessian_nonzeros,
 		variables_lower_bounds,

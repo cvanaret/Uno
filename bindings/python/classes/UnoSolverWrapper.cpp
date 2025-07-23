@@ -14,7 +14,7 @@ namespace uno {
    void UnoSolverWrapper::solve(size_t number_variables, size_t number_constraints, const objective_function_type& evaluate_objective,
          const constraint_functions_type& evaluate_constraints, const objective_gradient_type& evaluate_objective_gradient,
          const jacobian_type& evaluate_jacobian, const lagrangian_hessian_type& evaluate_lagrangian_hessian,
-         size_t number_objective_gradient_nonzeros, size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros,
+         size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros,
          const std::vector<double>& variables_lower_bounds, const std::vector<double>& variables_upper_bounds,
          const std::vector<double>& constraints_lower_bounds, const std::vector<double>& constraints_upper_bounds,
          const std::vector<double>& primal_initial_point, const std::vector<double>& dual_initial_point,
@@ -22,7 +22,7 @@ namespace uno {
       // create the model
       std::unique_ptr<Model> python_model = std::make_unique<PythonModel>("python_model", number_variables, number_constraints,
          1., evaluate_objective, evaluate_constraints, evaluate_objective_gradient, evaluate_jacobian,
-         evaluate_lagrangian_hessian, number_objective_gradient_nonzeros, number_jacobian_nonzeros, number_hessian_nonzeros,
+         evaluate_lagrangian_hessian, number_jacobian_nonzeros, number_hessian_nonzeros,
          variables_lower_bounds, variables_upper_bounds, constraints_lower_bounds,
          constraints_upper_bounds, primal_initial_point, dual_initial_point);
       // reformulate (scale, add slacks, relax the bounds, ...) if necessary

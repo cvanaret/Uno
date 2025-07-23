@@ -10,8 +10,8 @@ namespace uno {
    PythonModel::PythonModel(const std::string& file_name, size_t number_variables, size_t number_constraints,
             double objective_sign, const objective_function_type& evaluate_objective, const constraint_functions_type& evaluate_constraints,
             const objective_gradient_type& evaluate_objective_gradient, const jacobian_type& evaluate_jacobian,
-            const lagrangian_hessian_type& evaluate_lagrangian_hessian, size_t number_objective_gradient_nonzeros,
-            size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const std::vector<double>& variables_lower_bounds,
+            const lagrangian_hessian_type& evaluate_lagrangian_hessian, size_t number_jacobian_nonzeros,
+            size_t number_hessian_nonzeros, const std::vector<double>& variables_lower_bounds,
             const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
             const std::vector<double>& constraints_upper_bounds, const std::vector<double>& primal_initial_point,
             const std::vector<double>& dual_initial_point) :
@@ -20,7 +20,6 @@ namespace uno {
          objective(evaluate_objective), constraints(evaluate_constraints), objective_gradient(evaluate_objective_gradient),
          jacobian(evaluate_jacobian), hessian(evaluate_lagrangian_hessian),
          // sparsity
-         number_objective_gradient_nonzeros(number_objective_gradient_nonzeros),
          number_jacobian_nonzeros(number_jacobian_nonzeros),
          number_hessian_nonzeros(number_hessian_nonzeros),
          // bounds
@@ -56,7 +55,7 @@ namespace uno {
    }
 
    // sparse gradient
-   void PythonModel::evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const {
+   void PythonModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       this->objective_gradient(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(&gradient));
    }
 
@@ -148,10 +147,6 @@ namespace uno {
 
    void PythonModel::postprocess_solution(Iterate& /*iterate*/, IterateStatus /*iterate_status*/) const {
       // do nothing
-   }
-
-   size_t PythonModel::get_number_objective_gradient_nonzeros() const {
-      return this->number_objective_gradient_nonzeros;
    }
 
    size_t PythonModel::get_number_jacobian_nonzeros() const {

@@ -85,7 +85,9 @@ namespace uno {
       CollectionAdapter<std::vector<size_t>&> inequality_constraints_collection;
       SparseVector<size_t> slacks{};
       Vector<size_t> fixed_variables;
-      
+
+      void partition_variables();
+      void partition_constraints();
       void compute_lagrangian_hessian_sparsity();
    };
 

@@ -136,7 +136,6 @@ namespace uno {
       return this->dual_regularization_constraints;
    }
 
-
    void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& /*solution*/,
          Direction& /*direction*/) const {
    }
