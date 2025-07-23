@@ -19,15 +19,15 @@ namespace uno {
       PythonModel(const std::string& file_name, size_t number_variables, size_t number_constraints,
          double objective_sign, const objective_function_type& evaluate_objective, const constraint_functions_type& evaluate_constraints,
          const objective_gradient_type& evaluate_objective_gradient, const jacobian_type& evaluate_jacobian,
-         const lagrangian_hessian_type& evaluate_lagrangian_hessian, size_t number_objective_gradient_nonzeros,
-         size_t number_jacobian_nonzeros, size_t number_hessian_nonzeros, const std::vector<double>& variables_lower_bounds,
+         const lagrangian_hessian_type& evaluate_lagrangian_hessian, size_t number_jacobian_nonzeros,
+         size_t number_hessian_nonzeros, const std::vector<double>& variables_lower_bounds,
          const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
          const std::vector<double>& constraints_upper_bounds, const std::vector<double>& primal_initial_point,
          const std::vector<double>& dual_initial_point);
       ~PythonModel() override = default;
 
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
-      void evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const override;
+      void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
       void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override;
       void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
       void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
@@ -55,7 +55,6 @@ namespace uno {
       void initial_dual_point(Vector<double>& multipliers) const override;
       void postprocess_solution(Iterate& iterate, IterateStatus iterate_status) const override;
 
-      [[nodiscard]] size_t get_number_objective_gradient_nonzeros() const override;
       [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
       [[nodiscard]] size_t get_number_hessian_nonzeros() const override;
 
@@ -67,7 +66,6 @@ namespace uno {
       const jacobian_type& jacobian;
       const lagrangian_hessian_type& hessian;
 
-      const size_t number_objective_gradient_nonzeros;
       const size_t number_jacobian_nonzeros;
       const size_t number_hessian_nonzeros;
 

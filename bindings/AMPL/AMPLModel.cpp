@@ -308,7 +308,7 @@ namespace uno {
    size_t AMPLModel::number_hessian_nonzeros() const {
       return this->number_asl_hessian_nonzeros;
    }
-
+   
    void AMPLModel::compute_lagrangian_hessian_sparsity() {
       // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
       // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);

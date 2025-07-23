@@ -15,7 +15,7 @@ namespace uno {
    // types of the model's functions (objective, constraints, gradients, Jacobian, Hessian)
    using objective_function_type = std::function<double(PointerWrapper<Vector<double>>)>;
    using constraint_functions_type = std::function<void(PointerWrapper<Vector<double>>, PointerWrapper<Vector<double>>)>;
-   using objective_gradient_type = std::function<void(PointerWrapper<Vector<double>>, PointerWrapper<SparseVector<double>>)>;
+   using objective_gradient_type = std::function<void(PointerWrapper<Vector<double>>, PointerWrapper<Vector<double>>)>;
    using jacobian_type = std::function<void(PointerWrapper<Vector<double>> /*x*/,
       PointerWrapper<RectangularMatrix<double>> /*jacobian*/)>;
    using lagrangian_hessian_type = std::function<void(PointerWrapper<Vector<double>> /*x*/, double objective_multiplier,
