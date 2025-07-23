@@ -93,11 +93,11 @@ namespace uno {
    // sparse gradient
    void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       fint error_flag = 0;
-      // evaluate the ASL gradient (always in a dense vector)
       (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), gradient.data(), &error_flag);
       if (0 < error_flag) {
          throw GradientEvaluationError();
       }
+      gradient.scale(this->objective_sign);
    }
 
    /*
