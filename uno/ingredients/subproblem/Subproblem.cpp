@@ -72,6 +72,33 @@ namespace uno {
       }
    }
 
+   void Subproblem::compute_regularized_augmented_matrix_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      // structure of original Lagrangian Hessian
+      this->problem.compute_hessian_structure(this->hessian_model, row_indices, column_indices);
+
+      // Jacobian of general constraints: to get the transpose, switch the order of the vectors
+      this->problem.compute_jacobian_structure(column_indices, row_indices);
+      // shift the column indices of the Jacobian
+      for (size_t nnz_index: Range(this->problem.number_jacobian_nonzeros())) {
+         column_indices[this->problem.number_hessian_nonzeros(this->hessian_model) + nnz_index] += this->problem.number_variables;
+      }
+
+      // regularize the augmented matrix only if required (diagonal regularization)
+      if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
+         for (size_t variable_index: this->get_primal_regularization_variables()) {
+            row_indices.emplace_back(variable_index);
+            column_indices.emplace_back(variable_index);
+         }
+      }
+      if (this->regularization_strategy.performs_dual_regularization()) {
+         for (size_t constraint_index: this->get_dual_regularization_constraints()) {
+            const size_t shifted_constraint_index = this->number_variables + constraint_index;
+            row_indices.emplace_back(shifted_constraint_index);
+            column_indices.emplace_back(shifted_constraint_index);
+         }
+      }
+   }
+
    void Subproblem::assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
          RectangularMatrix<double>& constraint_jacobian) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point

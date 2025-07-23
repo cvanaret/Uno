@@ -112,11 +112,6 @@ namespace uno {
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
 
-      /*
-      Vector<size_t> test_row_indices;
-      Vector<size_t> test_column_indices;
-      */
-
       // workspace
       this->workspace.n = static_cast<int>(dimension);
       this->workspace.nnz = static_cast<int>(number_nonzeros);

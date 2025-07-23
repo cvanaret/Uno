@@ -27,23 +27,27 @@ namespace uno {
       this->first_reformulation.evaluate_constraints(iterate, constraints);
    }
 
+   void PrimalDualInteriorPointProblem::compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      this->first_reformulation.compute_jacobian_structure(row_indices, column_indices);
+   }
+
    void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
       this->first_reformulation.evaluate_objective_gradient(iterate, objective_gradient);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
          double barrier_term = 0.;
-         if (is_finite(first_reformulation.variable_lower_bound(variable_index))) { // lower bounded
-            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - first_reformulation.variable_lower_bound(variable_index));
+         if (is_finite(this->first_reformulation.variable_lower_bound(variable_index))) { // lower bounded
+            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - this->first_reformulation.variable_lower_bound(variable_index));
             // damping
-            if (!is_finite(first_reformulation.variable_upper_bound(variable_index))) {
+            if (!is_finite(this->first_reformulation.variable_upper_bound(variable_index))) {
                barrier_term += this->parameters.damping_factor * this->barrier_parameter;
             }
          }
-         if (is_finite(first_reformulation.variable_upper_bound(variable_index))) { // upper bounded
-            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - first_reformulation.variable_upper_bound(variable_index));
+         if (is_finite(this->first_reformulation.variable_upper_bound(variable_index))) { // upper bounded
+            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - this->first_reformulation.variable_upper_bound(variable_index));
             // damping
-            if (!is_finite(first_reformulation.variable_lower_bound(variable_index))) {
+            if (!is_finite(this->first_reformulation.variable_lower_bound(variable_index))) {
                barrier_term -= this->parameters.damping_factor * this->barrier_parameter;
             }
          }

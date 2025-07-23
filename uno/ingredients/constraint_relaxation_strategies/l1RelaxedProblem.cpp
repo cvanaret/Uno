@@ -52,7 +52,7 @@ namespace uno {
          elastic_index++;
       }
       for (size_t equality_index: this->model.get_equality_constraints()) {
-         constraints[equality_index] += (iterate.primals[elastic_index] - iterate.primals[elastic_index+1]);
+         constraints[equality_index] += (iterate.primals[elastic_index] - iterate.primals[elastic_index + 1]);
          elastic_index += 2;
       }
    }
@@ -81,6 +81,25 @@ namespace uno {
             const double proximal_term = this->proximal_coefficient * scaling * scaling * (iterate.primals[variable_index] - this->proximal_center[variable_index]);
             objective_gradient[variable_index] += proximal_term;
          }
+      }
+   }
+
+   void l1RelaxedProblem::compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      this->model.compute_jacobian_structure(row_indices, column_indices);
+
+      // add the contribution of the elastic variables
+      size_t elastic_index = this->model.number_variables;
+      for (size_t inequality_index: this->model.get_inequality_constraints()) {
+         row_indices.emplace_back(inequality_index);
+         column_indices.emplace_back(elastic_index);
+         elastic_index++;
+      }
+      for (size_t equality_index: this->model.get_equality_constraints()) {
+         row_indices.emplace_back(equality_index);
+         column_indices.emplace_back(elastic_index);
+         row_indices.emplace_back(equality_index);
+         column_indices.emplace_back(elastic_index + 1);
+         elastic_index += 2;
       }
    }
 
@@ -115,7 +134,7 @@ namespace uno {
       }
       for (size_t equality_index: this->model.get_equality_constraints()) {
          constraint_jacobian[equality_index].insert(elastic_index, 1.);
-         constraint_jacobian[equality_index].insert(elastic_index+1, -1.);
+         constraint_jacobian[equality_index].insert(elastic_index + 1, -1.);
          elastic_index += 2;
       }
    }
@@ -223,7 +242,7 @@ namespace uno {
       DEBUG << "Feasibility stationarity: " << std::boolalpha << feasibility_stationarity << '\n';
       DEBUG << "Feasibility complementarity: " << std::boolalpha << feasibility_complementarity << '\n';
       DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
-
+      
       if (this->model.is_constrained() && feasibility_stationarity && !primal_feasibility && feasibility_complementarity &&
             no_trivial_duals) {
          // no primal feasibility, stationary point of constraint violation
@@ -331,7 +350,7 @@ namespace uno {
       }
       for (size_t equality_index: this->model.get_equality_constraints()) {
          elastic_setting_function(iterate, equality_index, elastic_index, 1.);
-         elastic_setting_function(iterate, equality_index, elastic_index+1, -1.);
+         elastic_setting_function(iterate, equality_index, elastic_index + 1, -1.);
          elastic_index += 2;
       }
    }

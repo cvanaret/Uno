@@ -41,6 +41,7 @@ namespace uno {
       void compute_hessian_vector_product(const double* vector, double* result) const;
 
       // augmented system
+      void compute_regularized_augmented_matrix_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const;
       void assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
          RectangularMatrix<double>& constraint_jacobian) const;
       void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
