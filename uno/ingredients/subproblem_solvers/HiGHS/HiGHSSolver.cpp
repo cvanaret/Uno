@@ -32,7 +32,7 @@ namespace uno {
       }
 
       this->constraints.resize(problem.number_constraints);
-      this->linear_objective.reserve(problem.number_variables);
+      this->linear_objective.resize(problem.number_variables);
       this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
       this->model.lp_.sense_ = ObjSense::kMinimize;
       this->model.lp_.offset_ = 0.;
