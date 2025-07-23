@@ -15,13 +15,23 @@ namespace uno {
    public:
       BoundRelaxedModel(std::unique_ptr<Model> original_model, const Options& options);
 
+      // function evaluations
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override { return this->model->evaluate_objective(x); }
-      void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override {
-         this->model->evaluate_objective_gradient(x, gradient);
-      }
       void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override {
          this->model->evaluate_constraints(x, constraints);
       }
+
+      // dense objective gradient
+      void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override {
+         this->model->evaluate_objective_gradient(x, gradient);
+      }
+
+      // structures of Jacobian and Hessian
+      void compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const override {
+         this->model->compute_hessian_structure(row_indices, column_indices);
+      }
+
+      // numerical evaluations of Jacobian and Hessian
       void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override {
          this->model->evaluate_constraint_gradient(x, constraint_index, gradient);
       }

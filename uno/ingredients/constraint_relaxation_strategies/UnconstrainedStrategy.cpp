@@ -22,12 +22,13 @@ namespace uno {
    }
 
    void UnconstrainedStrategy::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
-         Direction& direction, const Options& options) {
+         Direction& direction, double trust_region_radius, const Options& options) {
       const OptimizationProblem problem{model};
 
       // memory allocation
       this->hessian_model->initialize(model);
-      this->inequality_handling_method->initialize(problem, *this->hessian_model, *this->regularization_strategy);
+      this->inequality_handling_method->initialize(problem, initial_iterate, initial_iterate.multipliers, *this->hessian_model,
+         *this->regularization_strategy, trust_region_radius);
       direction = Direction(problem.number_variables, problem.number_constraints);
 
       // statistics

@@ -36,10 +36,19 @@ namespace uno {
       const size_t number_variables; /*!< Number of variables */
       const size_t number_constraints; /*!< Number of constraints */
 
-      // function evaluations
       [[nodiscard]] virtual double get_objective_multiplier() const;
-      virtual void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const;
+
+      // constraint evaluations
       virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const;
+
+      // dense objective gradient
+      virtual void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const;
+
+      // structures of Jacobian and Hessian
+      virtual void compute_hessian_structure(const HessianModel& hessian_model, Vector<size_t>& row_indices,
+         Vector<size_t>& column_indices) const;
+
+      // numerical evaluations of Jacobian and Hessian
       virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const;
       virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
          const Multipliers& multipliers) const;

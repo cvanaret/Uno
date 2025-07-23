@@ -23,8 +23,7 @@ namespace uno {
       SymmetricIndefiniteLinearSolver() = default;
       virtual ~SymmetricIndefiniteLinearSolver() = default;
 
-      virtual void initialize_memory(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros,
-         size_t regularization_size) = 0;
+      virtual void initialize_memory(const Subproblem& subproblem) = 0;
 
       virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
          Vector<ElementType>& result) = 0;
