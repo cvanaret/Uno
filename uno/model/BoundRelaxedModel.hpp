@@ -16,7 +16,7 @@ namespace uno {
       BoundRelaxedModel(std::unique_ptr<Model> original_model, const Options& options);
 
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override { return this->model->evaluate_objective(x); }
-      void evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const override {
+      void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override {
          this->model->evaluate_objective_gradient(x, gradient);
       }
       void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override {
@@ -59,7 +59,6 @@ namespace uno {
          this->model->postprocess_solution(iterate, termination_status);
       }
 
-      [[nodiscard]] size_t number_objective_gradient_nonzeros() const override { return this->model->number_objective_gradient_nonzeros(); }
       [[nodiscard]] size_t number_jacobian_nonzeros() const override { return this->model->number_jacobian_nonzeros(); }
       [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model->number_hessian_nonzeros(); }
 

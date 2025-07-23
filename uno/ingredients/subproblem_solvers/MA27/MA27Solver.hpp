@@ -65,7 +65,7 @@ namespace uno {
       MA27Workspace workspace{};
 
       // evaluations
-      SparseVector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
+      Vector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 

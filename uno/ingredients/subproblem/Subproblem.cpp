@@ -5,6 +5,7 @@
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/UnaryNegation.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
@@ -16,7 +17,7 @@ namespace uno {
          regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius) {
    }
 
-   void Subproblem::evaluate_objective_gradient(SparseVector<double>& linear_objective) const {
+   void Subproblem::evaluate_objective_gradient(Vector<double>& linear_objective) const {
       this->problem.evaluate_objective_gradient(this->current_iterate, linear_objective);
    }
 
@@ -76,14 +77,12 @@ namespace uno {
          dual_regularization_parameter, expected_inertia, linear_solver);
    }
 
-   void Subproblem::assemble_augmented_rhs(const SparseVector<double>& objective_gradient, const std::vector<double>& constraints,
+   void Subproblem::assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
          RectangularMatrix<double>& constraint_jacobian, Vector<double>& rhs) const {
       rhs.fill(0.);
 
       // objective gradient
-      for (const auto [variable_index, derivative]: objective_gradient) {
-         rhs[variable_index] -= derivative;
-      }
+      rhs = -objective_gradient;
 
       // constraint: evaluations and gradients
       for (size_t constraint_index: Range(this->number_constraints)) {

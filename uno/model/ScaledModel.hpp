@@ -18,7 +18,7 @@ namespace uno {
       ScaledModel(std::unique_ptr<Model> original_model, Iterate& initial_iterate, const Options& options);
 
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
-      void evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const override;
+      void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
       void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override;
       void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
       void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
@@ -46,7 +46,6 @@ namespace uno {
       void initial_dual_point(Vector<double>& multipliers) const override;
       void postprocess_solution(Iterate& iterate, IterateStatus termination_status) const override;
 
-      [[nodiscard]] size_t number_objective_gradient_nonzeros() const override;
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] size_t number_hessian_nonzeros() const override;
 

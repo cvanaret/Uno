@@ -51,7 +51,7 @@ namespace uno {
 
    void Iterate::evaluate_objective_gradient(const Model& model) {
       if (!this->is_objective_gradient_computed) {
-         this->evaluations.objective_gradient.clear();
+         this->evaluations.objective_gradient.fill(0.);
          // evaluate the objective gradient
          model.evaluate_objective_gradient(this->primals, this->evaluations.objective_gradient);
          this->is_objective_gradient_computed = true;

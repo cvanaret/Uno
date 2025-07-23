@@ -44,7 +44,7 @@ namespace uno {
       const double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
 
       [[nodiscard]] virtual double evaluate_objective(const Vector<double>& x) const = 0;
-      virtual void evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const = 0;
+      virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
       virtual void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const = 0;
       virtual void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const = 0;
       virtual void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const = 0;
@@ -74,7 +74,6 @@ namespace uno {
       virtual void initial_dual_point(Vector<double>& multipliers) const = 0;
       virtual void postprocess_solution(Iterate& iterate, IterateStatus termination_status) const = 0;
 
-      [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const = 0;
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;
       [[nodiscard]] virtual size_t number_hessian_nonzeros() const = 0;
 

@@ -21,7 +21,7 @@ namespace uno {
       return 1.;
    }
 
-   void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const {
+   void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
       iterate.evaluate_objective_gradient(this->model);
       // TODO change this
       objective_gradient = iterate.evaluations.objective_gradient;
@@ -104,10 +104,6 @@ namespace uno {
       return this->dual_regularization_constraints;
    }
 
-   size_t OptimizationProblem::number_objective_gradient_nonzeros() const {
-      return this->model.number_objective_gradient_nonzeros();
-   }
-
    size_t OptimizationProblem::number_jacobian_nonzeros() const {
       return this->model.number_jacobian_nonzeros();
    }
@@ -135,9 +131,7 @@ namespace uno {
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // objective gradient
-      for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
-         lagrangian_gradient.objective_contribution[variable_index] += derivative;
-      }
+      lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
 
       // constraints
       for (size_t constraint_index: Range(this->number_constraints)) {

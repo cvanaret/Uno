@@ -32,7 +32,7 @@ namespace uno {
       }
 
       this->constraints.resize(problem.number_constraints);
-      this->linear_objective.reserve(problem.number_objective_gradient_nonzeros());
+      this->linear_objective.reserve(problem.number_variables);
       this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
       this->model.lp_.sense_ = ObjSense::kMinimize;
       this->model.lp_.offset_ = 0.;
@@ -91,12 +91,9 @@ namespace uno {
          subproblem.set_constraints_bounds(this->model.lp_.row_lower_, this->model.lp_.row_upper_, this->constraints);
       }
 
-      // copy the sparse linear objective into the HiGHS dense vector
+      // copy the linear objective into the HiGHS vector
       for (size_t variable_index: Range(subproblem.number_variables)) {
-         this->model.lp_.col_cost_[variable_index] = 0.;
-      }
-      for (const auto [variable_index, derivative]: this->linear_objective) {
-         this->model.lp_.col_cost_[variable_index] = derivative;
+         this->model.lp_.col_cost_[variable_index] = this->linear_objective[variable_index];
       }
 
       // copy the constraint matrix into the HiGHS structure

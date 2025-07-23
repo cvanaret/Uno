@@ -57,7 +57,7 @@ namespace uno {
       return this->model->evaluate_objective(x);
    }
 
-   void HomogeneousEqualityConstrainedModel::evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const {
+   void HomogeneousEqualityConstrainedModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       this->model->evaluate_objective_gradient(x, gradient);
    }
 
@@ -189,9 +189,6 @@ namespace uno {
       iterate.number_variables = this->model->number_variables;
       this->model->postprocess_solution(iterate, termination_status);
    }
-
-   size_t HomogeneousEqualityConstrainedModel::number_objective_gradient_nonzeros() const {
-      return this->model->number_objective_gradient_nonzeros(); }
 
    size_t HomogeneousEqualityConstrainedModel::number_jacobian_nonzeros() const {
       return this->model->number_jacobian_nonzeros() + this->slacks.size();

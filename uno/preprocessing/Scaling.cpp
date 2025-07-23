@@ -13,7 +13,7 @@ namespace uno {
          gradient_threshold(gradient_threshold), objective_scaling(1.), constraint_scaling(number_constraints, 1.) {
    }
 
-   void Scaling::compute(const SparseVector<double>& objective_gradient, const RectangularMatrix<double>& constraint_jacobian) {
+   void Scaling::compute(const Vector<double>& objective_gradient, const RectangularMatrix<double>& constraint_jacobian) {
       // objective
       this->objective_scaling = std::min(1., this->gradient_threshold / norm_inf(objective_gradient));
 

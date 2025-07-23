@@ -37,7 +37,7 @@ namespace uno {
 
       // function evaluations
       [[nodiscard]] virtual double get_objective_multiplier() const;
-      virtual void evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const;
+      virtual void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const;
       virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const;
       virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
@@ -61,7 +61,6 @@ namespace uno {
       [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const;
       [[nodiscard]] virtual const Collection<size_t>& get_dual_regularization_constraints() const;
 
-      [[nodiscard]] virtual size_t number_objective_gradient_nonzeros() const;
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
       [[nodiscard]] virtual size_t number_hessian_nonzeros(const HessianModel& hessian_model) const;
 

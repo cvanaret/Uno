@@ -19,7 +19,7 @@ namespace uno {
          initial_iterate.evaluate_constraint_jacobian(*this->model);
          this->scaling.compute(initial_iterate.evaluations.objective_gradient, initial_iterate.evaluations.constraint_jacobian);
          // scale the gradients
-         scale(initial_iterate.evaluations.objective_gradient, this->scaling.get_objective_scaling());
+         initial_iterate.evaluations.objective_gradient.scale(this->scaling.get_objective_scaling());
          for (size_t constraint_index: Range(this->model->number_constraints)) {
             scale(initial_iterate.evaluations.constraint_jacobian[constraint_index], this->scaling.get_constraint_scaling(constraint_index));
          }
@@ -39,9 +39,9 @@ namespace uno {
       return this->scaling.get_objective_scaling()*objective;
    }
 
-   void ScaledModel::evaluate_objective_gradient(const Vector<double>& x, SparseVector<double>& gradient) const {
+   void ScaledModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       this->model->evaluate_objective_gradient(x, gradient);
-      scale(gradient, this->scaling.get_objective_scaling());
+      gradient.scale(this->scaling.get_objective_scaling());
    }
 
    void ScaledModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
@@ -160,10 +160,6 @@ namespace uno {
          iterate.multipliers.upper_bounds[variable_index] /= this->scaling.get_objective_scaling();
       }
       this->model->postprocess_solution(iterate, termination_status);
-   }
-
-   size_t ScaledModel::number_objective_gradient_nonzeros() const {
-      return this->model->number_objective_gradient_nonzeros();
    }
 
    size_t ScaledModel::number_jacobian_nonzeros() const {

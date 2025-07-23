@@ -34,7 +34,7 @@ namespace uno {
          HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
 
       // constraints, objective gradient and Jacobian
-      void evaluate_objective_gradient(SparseVector<double>& linear_objective) const;
+      void evaluate_objective_gradient(Vector<double>& linear_objective) const;
       void evaluate_constraints(std::vector<double>& constraints) const;
       void evaluate_jacobian(RectangularMatrix<double>& constraint_jacobian) const;
 
@@ -47,7 +47,7 @@ namespace uno {
          RectangularMatrix<double>& constraint_jacobian) const;
       void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const;
-      void assemble_augmented_rhs(const SparseVector<double>& objective_gradient, const std::vector<double>& constraints,
+      void assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
          RectangularMatrix<double>& constraint_jacobian, Vector<double>& rhs) const;
       void assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const;
 

@@ -37,21 +37,21 @@ namespace uno {
       return this->objective_multiplier;
    }
 
-   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const {
+   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
       // scale nabla f(x) by rho
       if (this->objective_multiplier != 0.) {
          iterate.evaluate_objective_gradient(this->model);
          // TODO change this
          objective_gradient = iterate.evaluations.objective_gradient;
-         scale(objective_gradient, this->objective_multiplier);
+         objective_gradient.scale(this->objective_multiplier);
       }
       else {
-         objective_gradient.clear();
+         objective_gradient.fill(0.);
       }
 
       // constraint violation (through elastic variables) contribution
       for (size_t elastic_index: Range(this->model.number_variables, this->number_variables)) {
-         objective_gradient.insert(elastic_index, this->constraint_violation_coefficient);
+         objective_gradient[elastic_index] = this->constraint_violation_coefficient;
       }
 
       // proximal contribution
@@ -59,7 +59,7 @@ namespace uno {
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
             const double proximal_term = this->proximal_coefficient * scaling * scaling * (iterate.primals[variable_index] - this->proximal_center[variable_index]);
-            objective_gradient.insert(variable_index, proximal_term);
+            objective_gradient[variable_index] += proximal_term;
          }
       }
    }
@@ -143,9 +143,7 @@ namespace uno {
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // objective gradient
-      for (auto [variable_index, derivative]: iterate.evaluations.objective_gradient) {
-         lagrangian_gradient.objective_contribution[variable_index] += derivative;
-      }
+      lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
 
       // constraints
       for (size_t constraint_index: Range(this->number_constraints)) {
@@ -256,17 +254,6 @@ namespace uno {
 
    const Collection<size_t>& l1RelaxedProblem::get_dual_regularization_constraints() const {
       return this->dual_regularization_constraints;
-   }
-
-   size_t l1RelaxedProblem::number_objective_gradient_nonzeros() const {
-      // elastic contribution
-      size_t number_nonzeros = this->number_elastic_variables;
-
-      // objective contribution
-      if (this->objective_multiplier != 0.) {
-         number_nonzeros += this->model.number_objective_gradient_nonzeros();
-      }
-      return number_nonzeros;
    }
 
    size_t l1RelaxedProblem::number_jacobian_nonzeros() const {

@@ -21,7 +21,7 @@ namespace uno {
       return this->first_reformulation.get_objective_multiplier();
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, SparseVector<double>& objective_gradient) const {
+   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
       this->first_reformulation.evaluate_objective_gradient(iterate, objective_gradient);
 
       // barrier terms
@@ -41,7 +41,7 @@ namespace uno {
                barrier_term -= this->parameters.damping_factor * this->barrier_parameter;
             }
          }
-         objective_gradient.insert(variable_index, barrier_term);
+         objective_gradient[variable_index] += barrier_term;
       }
    }
 
@@ -153,17 +153,6 @@ namespace uno {
       }
       // otherwise, we pick the set of equality constraints, since the inequality constraints have slacks
       return this->first_reformulation.get_equality_constraints();
-   }
-
-   size_t PrimalDualInteriorPointProblem::number_objective_gradient_nonzeros() const {
-      size_t number_nonzeros = this->first_reformulation.number_objective_gradient_nonzeros();
-      // barrier contribution
-      for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         if (is_finite(this->first_reformulation.variable_lower_bound(variable_index)) || is_finite(this->first_reformulation.variable_upper_bound(variable_index))) {
-            number_nonzeros++;
-         }
-      }
-      return number_nonzeros;
    }
 
    size_t PrimalDualInteriorPointProblem::number_jacobian_nonzeros() const {
