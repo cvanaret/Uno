@@ -120,7 +120,19 @@ namespace uno {
    }
 
    void AMPLModel::compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
+      const fint* asl_row_index = this->asl->i.sputinfo_->hrownos;
+      // check that the column pointers are sorted in increasing order
+      //assert(in_increasing_order(asl_column_start, this->number_variables + 1) &&
+      //    "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
 
+      for (size_t column_index: Range(this->number_variables)) {
+         for (size_t nonzero_index: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
+            const size_t row_index = static_cast<size_t>(asl_row_index[nonzero_index]);
+            row_indices.emplace_back(row_index);
+            column_indices.emplace_back(column_index);
+         }
+      }
    }
 
    // sparse gradient
