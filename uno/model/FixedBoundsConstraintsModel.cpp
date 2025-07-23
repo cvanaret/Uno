@@ -47,6 +47,19 @@ namespace uno {
       this->model->evaluate_objective_gradient(x, gradient);
    }
 
+   void FixedBoundsConstraintsModel::compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      // original constraints
+      this->model->compute_jacobian_structure(row_indices, column_indices);
+
+      // fixed variables (as linear constraints)
+      size_t constraint_index = this->model->number_constraints;
+      for (size_t fixed_variable_index: this->model->get_fixed_variables()) {
+         row_indices.emplace_back(constraint_index);
+         column_indices.emplace_back(fixed_variable_index);
+         constraint_index++;
+      }
+   }
+
    void FixedBoundsConstraintsModel::compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
       this->model->compute_hessian_structure(row_indices, column_indices);
    }
@@ -57,7 +70,7 @@ namespace uno {
          this->model->evaluate_constraint_gradient(x, constraint_index, gradient);
       }
       else {
-         // fixed variable
+         // fixed variable (as linear constraint)
          const size_t variable_index = this->model->get_fixed_variables()[constraint_index - this->model->number_constraints];
          gradient.insert(variable_index, 1.);
       }

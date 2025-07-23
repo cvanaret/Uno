@@ -46,6 +46,7 @@ namespace uno {
       virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
 
       // structures of Jacobian and Hessian
+      virtual void compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const = 0;
       virtual void compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const = 0;
 
       // numerical evaluations of Jacobian and Hessian
