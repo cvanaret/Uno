@@ -45,8 +45,6 @@ namespace uno {
          throw std::runtime_error("The problem has fixed variables. Move them to the set of general constraints.");
       }
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-      regularization_strategy.initialize_memory(barrier_problem, hessian_model);
-
       const Subproblem subproblem{barrier_problem, current_iterate, current_multipliers, hessian_model, regularization_strategy,
          trust_region_radius};
       this->linear_solver->initialize_memory(subproblem);
