@@ -27,7 +27,7 @@ namespace uno {
 
       // memory allocation
       this->hessian_model->initialize(model);
-      this->inequality_handling_method->initialize(problem, initial_iterate, initial_iterate.multipliers, *this->hessian_model,
+      this->inequality_handling_method->initialize(problem, initial_iterate, *this->hessian_model,
          *this->regularization_strategy, trust_region_radius);
       direction = Direction(problem.number_variables, problem.number_constraints);
 

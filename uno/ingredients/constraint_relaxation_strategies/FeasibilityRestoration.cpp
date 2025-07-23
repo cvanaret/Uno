@@ -48,9 +48,9 @@ namespace uno {
       // TODO allocate the feasibility phase only when entering the first time?
       this->optimality_hessian_model->initialize(model);
       this->feasibility_hessian_model->initialize(model);
-      this->optimality_inequality_handling_method->initialize(optimality_problem, initial_iterate, initial_iterate.multipliers,
+      this->optimality_inequality_handling_method->initialize(optimality_problem, initial_iterate,
          *this->optimality_hessian_model, *this->optimality_regularization_strategy, trust_region_radius);
-      this->feasibility_inequality_handling_method->initialize(feasibility_problem, initial_iterate, initial_iterate.multipliers,
+      this->feasibility_inequality_handling_method->initialize(feasibility_problem, initial_iterate,
          *this->feasibility_hessian_model, *this->feasibility_regularization_strategy, trust_region_radius);
       direction = Direction(
          std::max(optimality_problem.number_variables, feasibility_problem.number_variables),
