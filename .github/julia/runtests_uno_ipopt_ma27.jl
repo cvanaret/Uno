@@ -22,7 +22,7 @@ function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=MA27", "unbounded_objective_threshold=-1e15", "print_solution=yes"])
+Optimizer_Uno_ipopt() = Optimizer(["logger=INFO", "preset=ipopt", "linear_solver=MA27", "unbounded_objective_threshold=-1e15", "print_solution=yes"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
