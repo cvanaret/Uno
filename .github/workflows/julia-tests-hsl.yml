@@ -65,7 +65,7 @@ jobs:
 
     - name: Configure CMake -- Uno
       run: |
-        LIBBLAS_PATH="/scratch/github-actions/actions_runner_uno/lapack/builddir/libblas.a"
+        LIBBLAS_PATH="/scratch/github-actions/actions_runner_uno/lapack/builddir/lib/libblas.a"
         LIBLAPACK_PATH="/scratch/github-actions/actions_runner_uno/lapack/builddir/lib/liblapack.a"
         LIBHSL_PATH="/scratch/github-actions/actions_runner_uno/libhsl/builddir/libhsl.a"
         LIBAMPL_PATH="/scratch/github-actions/actions_runner_uno/ampl/amplsolver.a"
