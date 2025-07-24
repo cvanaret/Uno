@@ -48,9 +48,11 @@ namespace uno {
       }
       // Jacobian of general constraints
       for (size_t constraint_index: Range(model.number_constraints)) {
+         /*
          for (const auto [variable_index, derivative]: current_iterate.evaluations.constraint_jacobian[constraint_index]) {
             matrix.insert(variable_index, model.number_variables + constraint_index, derivative);
          }
+         */
          matrix.finalize_column(model.number_variables + constraint_index);
       }
       DEBUG2 << "Matrix for least-square multipliers:\n" << matrix << '\n';

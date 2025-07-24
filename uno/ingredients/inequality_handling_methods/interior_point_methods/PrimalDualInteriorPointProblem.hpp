@@ -28,9 +28,9 @@ namespace uno {
          Vector<size_t>& column_indices) const override;
 
       // numerical evaluations of Jacobian and Hessian
-      void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
+      void evaluate_constraint_jacobian(Iterate& iterate, Vector<double>& jacobian_values) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const override;
+         const Multipliers& multipliers, Vector<double>& hessian_values) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* vector, const Multipliers& multipliers,
          double* result) const override;
 

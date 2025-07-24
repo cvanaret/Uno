@@ -42,10 +42,11 @@ namespace uno {
       hessian_model.compute_structure(this->model, row_indices, column_indices);
    }
 
-   void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
-      iterate.evaluate_constraint_jacobian(this->model);
+   void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, Vector<double>& jacobian_values) const {
+      //iterate.evaluate_constraint_jacobian(this->model);
       // TODO change this
-      constraint_jacobian = iterate.evaluations.constraint_jacobian;
+      //constraint_jacobian = iterate.evaluations.constraint_jacobian;
+      this->model.evaluate_constraint_jacobian(iterate.primals, jacobian_values);
    }
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
@@ -58,6 +59,7 @@ namespace uno {
       lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
 
       // constraints
+      /*
       for (size_t constraint_index: Range(this->number_constraints)) {
          if (multipliers.constraints[constraint_index] != 0.) {
             for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
@@ -65,6 +67,7 @@ namespace uno {
             }
          }
       }
+      */
 
       // bound constraints of original variables
       for (size_t variable_index: Range(this->number_variables)) {
@@ -73,9 +76,10 @@ namespace uno {
       }
    }
 
-   void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
-      hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(), multipliers.constraints, hessian);
+   void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
+         const Vector<double>& primal_variables, const Multipliers& multipliers, Vector<double>& hessian_values) const {
+      hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(),
+         multipliers.constraints, hessian_values);
    }
 
    void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector, const Multipliers& multipliers,

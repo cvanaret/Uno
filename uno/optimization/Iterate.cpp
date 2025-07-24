@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include "Iterate.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
@@ -14,10 +13,10 @@ namespace uno {
    size_t Iterate::number_eval_objective_gradient = 0;
    size_t Iterate::number_eval_jacobian = 0;
 
-   Iterate::Iterate(size_t number_variables, size_t number_constraints) :
+   Iterate::Iterate(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzero) :
          number_variables(number_variables), number_constraints(number_constraints),
          primals(number_variables), multipliers(number_variables, number_constraints),
-         evaluations(number_variables, number_constraints), residuals(number_variables) {
+         evaluations(number_variables, number_constraints, number_jacobian_nonzero), residuals(number_variables) {
    }
 
    void Iterate::evaluate_objective(const Model& model) {
@@ -61,9 +60,8 @@ namespace uno {
 
    void Iterate::evaluate_constraint_jacobian(const Model& model) {
       if (!this->is_constraint_jacobian_computed) {
-         this->evaluations.constraint_jacobian.clear();
          if (model.is_constrained()) {
-            model.evaluate_constraint_jacobian(this->primals, this->evaluations.constraint_jacobian);
+            model.evaluate_constraint_jacobian(this->primals, this->evaluations.jacobian_values);
             Iterate::number_eval_jacobian++;
          }
          this->is_constraint_jacobian_computed = true;

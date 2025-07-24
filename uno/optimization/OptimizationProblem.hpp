@@ -18,13 +18,7 @@ namespace uno {
    class HessianModel;
    class Iterate;
    class Multipliers;
-   template <typename ElementType>
-   class RectangularMatrix;
-   template <typename ElementType>
-   class SparseVector;
    class Statistics;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
 
    class OptimizationProblem {
    public:
@@ -50,11 +44,11 @@ namespace uno {
          Vector<size_t>& column_indices) const;
 
       // numerical evaluations of Jacobian and Hessian
-      virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const;
+      virtual void evaluate_constraint_jacobian(Iterate& iterate, Vector<double>& jacobian_values) const;
       virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
          const Multipliers& multipliers) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const;
+         const Multipliers& multipliers, Vector<double>& hessian_values) const;
       virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,
          const Multipliers& multipliers, double* result) const;
 

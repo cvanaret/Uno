@@ -71,16 +71,17 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
-      this->first_reformulation.evaluate_constraint_jacobian(iterate, constraint_jacobian);
+   void PrimalDualInteriorPointProblem::evaluate_constraint_jacobian(Iterate& iterate, Vector<double>& jacobian_values) const {
+      this->first_reformulation.evaluate_constraint_jacobian(iterate, jacobian_values);
    }
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
+         const Multipliers& multipliers, Vector<double>& hessian_values) const {
       // original Lagrangian Hessian
-      this->first_reformulation.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian);
+      this->first_reformulation.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian_values);
 
       // barrier terms
+      size_t nonzero_index = this->first_reformulation.number_hessian_nonzeros(hessian_model);
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
          const bool finite_lower_bound = is_finite(this->first_reformulation.variable_lower_bound(variable_index));
          const bool finite_upper_bound = is_finite(this->first_reformulation.variable_upper_bound(variable_index));
@@ -94,7 +95,8 @@ namespace uno {
                const double distance_to_bound = primal_variables[variable_index] - this->first_reformulation.variable_upper_bound(variable_index);
                diagonal_barrier_term += multipliers.upper_bounds[variable_index] / distance_to_bound;
             }
-            hessian.insert(variable_index, variable_index, diagonal_barrier_term);
+            hessian_values[nonzero_index] = diagonal_barrier_term;
+            ++nonzero_index;
          }
       }
    }

@@ -42,7 +42,7 @@ namespace uno {
       MA27Solver();
       ~MA27Solver() override = default;
 
-      void initialize_memory(const Subproblem& subproblem) override;
+      void initialize(const Subproblem& subproblem) override;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;

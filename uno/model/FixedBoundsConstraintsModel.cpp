@@ -64,31 +64,19 @@ namespace uno {
       this->model->compute_hessian_structure(row_indices, column_indices);
    }
 
-   void FixedBoundsConstraintsModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
-      if (constraint_index < this->model->number_constraints) {
-         // original constraint
-         this->model->evaluate_constraint_gradient(x, constraint_index, gradient);
-      }
-      else {
-         // fixed variable (as linear constraint)
-         const size_t variable_index = this->model->get_fixed_variables()[constraint_index - this->model->number_constraints];
-         gradient.insert(variable_index, 1.);
-      }
-   }
-
-   void FixedBoundsConstraintsModel::evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
-      this->model->evaluate_constraint_jacobian(x, constraint_jacobian);
+   void FixedBoundsConstraintsModel::evaluate_constraint_jacobian(const Vector<double>& x, Vector<double>& jacobian_values) const {
+      this->model->evaluate_constraint_jacobian(x, jacobian_values);
       // add the fixed variables
-      size_t current_constraint = this->model->number_constraints;
-      for (size_t fixed_variable_index: this->model->get_fixed_variables()) {
-         constraint_jacobian[current_constraint].insert(fixed_variable_index, 1.);
-         current_constraint++;
+      size_t nonzero_index = this->model->number_jacobian_nonzeros();
+      for (size_t _: this->model->get_fixed_variables()) {
+         jacobian_values[nonzero_index] = 1.;
+         ++nonzero_index;
       }
    }
 
    void FixedBoundsConstraintsModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
-      this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
+         Vector<double>& hessian_values) const {
+      this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
    }
 
    void FixedBoundsConstraintsModel::compute_hessian_vector_product(const double* vector, double objective_multiplier,

@@ -48,7 +48,7 @@ namespace uno {
       dmumps_c(&this->mumps_structure);
    }
 
-   void MUMPSSolver::initialize_memory(const Subproblem& subproblem) {
+   void MUMPSSolver::initialize(const Subproblem& subproblem) {
       const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
       this->dimension = dimension;
 

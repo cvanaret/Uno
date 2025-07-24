@@ -88,33 +88,20 @@ namespace uno {
       this->model->compute_hessian_structure(row_indices, column_indices);
    }
 
-   void HomogeneousEqualityConstrainedModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index,
-         SparseVector<double>& gradient) const {
-      this->model->evaluate_constraint_gradient(x, constraint_index, gradient);
-
-      // if the original constraint is an inequality, add the slack contribution
-      if (this->model->constraint_lower_bound(constraint_index) != this->model->constraint_upper_bound(constraint_index)) {
-         const size_t slack_variable_index = this->slack_index_of_constraint_index[constraint_index];
-         gradient.insert(slack_variable_index, -1.);
-      }
-   }
-
-   void HomogeneousEqualityConstrainedModel::evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
-      this->model->evaluate_constraint_jacobian(x, constraint_jacobian);
+   void HomogeneousEqualityConstrainedModel::evaluate_constraint_jacobian(const Vector<double>& x, Vector<double>& jacobian_values) const {
+      this->model->evaluate_constraint_jacobian(x, jacobian_values);
 
       // add the slack contributions
-      for (const auto [constraint_index, slack_index]: this->get_slacks()) {
-         constraint_jacobian[constraint_index].insert(slack_index, -1.);
+      size_t nonzero_index = this->model->number_jacobian_nonzeros();
+      for (const auto _: this->get_slacks()) {
+         jacobian_values[nonzero_index] = -1.;
+         ++nonzero_index;
       }
    }
 
    void HomogeneousEqualityConstrainedModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier,
-         const Vector<double>& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
-      this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
-      // extend the dimension of the Hessian by finalizing the remaining columns (note: the slacks do not enter the Hessian)
-      for (size_t constraint_index: Range(this->model->number_variables, this->number_variables)) {
-         hessian.finalize_column(constraint_index);
-      }
+         const Vector<double>& multipliers, Vector<double>& hessian_values) const {
+      this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
    }
 
    void HomogeneousEqualityConstrainedModel::compute_hessian_vector_product(const double* vector, double objective_multiplier,

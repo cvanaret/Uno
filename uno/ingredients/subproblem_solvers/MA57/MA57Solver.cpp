@@ -91,7 +91,7 @@ namespace uno {
       this->workspace.icntl[8] = 1;
    }
 
-   void MA57Solver::initialize_memory(const Subproblem& subproblem) {
+   void MA57Solver::initialize(const Subproblem& subproblem) {
       const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
       this->dimension = dimension;
 
@@ -107,8 +107,16 @@ namespace uno {
       // compute the COO sparse representation
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);
-      this->augmented_matrix = SparseSymmetricMatrix<COOFormat<size_t, double>>(dimension, number_augmented_system_nonzeros,
-         regularization_size);
+      // use temporary vectors of size_t
+      Vector<size_t> tmp_row_indices(number_nonzeros);
+      Vector<size_t> tmp_column_indices(number_nonzeros);
+      subproblem.compute_regularized_augmented_matrix_structure(tmp_row_indices, tmp_column_indices);
+      // build vectors of int
+      for (size_t nonzero_index: Range(number_nonzeros)) {
+         this->row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
+         this->column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
+      }
+      this->matrix_values.resize(number_nonzeros);
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
 
@@ -230,15 +238,13 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         subproblem.evaluate_jacobian(this->constraint_jacobian);
       }
 
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // assemble the augmented matrix
-         this->augmented_matrix.reset();
-         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix, this->constraint_jacobian);
+         subproblem.assemble_augmented_matrix(statistics, this->matrix_values);
          // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix, subproblem.dual_regularization_factor(), *this);
+         subproblem.regularize_augmented_matrix(statistics, this->matrix_values, subproblem.dual_regularization_factor(), *this);
 
          // assemble the RHS
          subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);

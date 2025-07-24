@@ -59,26 +59,25 @@ namespace uno {
       this->model->compute_hessian_structure(row_indices, column_indices);
    }
 
-   void ScaledModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
-      this->model->evaluate_constraint_gradient(x, constraint_index, gradient);
-      scale(gradient, this->scaling.get_constraint_scaling(constraint_index));
-   }
-
-   void ScaledModel::evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
-      this->model->evaluate_constraint_jacobian(x, constraint_jacobian);
+   void ScaledModel::evaluate_constraint_jacobian(const Vector<double>& x, Vector<double>& jacobian_values) const {
+      this->model->evaluate_constraint_jacobian(x, jacobian_values);
+      // TODO scaling
+      /*
       for (size_t constraint_index: Range(this->number_constraints)) {
          scale(constraint_jacobian[constraint_index], this->scaling.get_constraint_scaling(constraint_index));
       }
+      */
+      throw std::runtime_error("ScaledModel::evaluate_constraint_jacobian not implemented");
    }
 
    void ScaledModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
+         Vector<double>& hessian_values) const {
       // scale the objective and constraint multipliers
       const double scaled_objective_multiplier = objective_multiplier*this->scaling.get_objective_scaling();
       for (size_t constraint_index: Range(this->number_constraints)) {
          this->scaled_multipliers[constraint_index] = this->scaling.get_constraint_scaling(constraint_index) * multipliers[constraint_index];
       }
-      this->model->evaluate_lagrangian_hessian(x, scaled_objective_multiplier, this->scaled_multipliers, hessian);
+      this->model->evaluate_lagrangian_hessian(x, scaled_objective_multiplier, this->scaled_multipliers, hessian_values);
    }
 
    void ScaledModel::compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,

@@ -60,10 +60,13 @@ namespace uno {
    double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
+      /*
       const double current_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints, this->progress_norm);
       const double trial_linearized_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints +
          step_length * (current_iterate.evaluations.constraint_jacobian * primal_direction), this->progress_norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
+      */
+      return 0.;
    }
 
    std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_objective_reduction(InequalityHandlingMethod& inequality_handling_method,

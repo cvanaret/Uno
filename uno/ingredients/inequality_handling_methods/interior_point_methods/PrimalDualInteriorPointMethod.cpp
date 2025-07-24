@@ -7,6 +7,7 @@
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "linear_algebra/SparseVector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
@@ -47,7 +48,7 @@ namespace uno {
 
       const Subproblem subproblem{barrier_problem, current_iterate, hessian_model, regularization_strategy,
          trust_region_radius};
-      this->linear_solver->initialize_memory(subproblem);
+      this->linear_solver->initialize(subproblem);
    }
 
    void PrimalDualInteriorPointMethod::initialize_statistics(Statistics& statistics, const Options& options) {

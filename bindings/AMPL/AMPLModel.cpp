@@ -143,65 +143,30 @@ namespace uno {
       }
    }
 
-   // sparse gradient
-   void AMPLModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
-      // compute the AMPL sparse gradient
-      fint error_flag = 0;
-      (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(constraint_index), const_cast<double*>(x.data()), this->asl_gradient.data(),
-         &error_flag);
-      if (0 < error_flag) {
-         throw GradientEvaluationError();
-      }
-
-      // construct the Uno sparse vector
-      gradient.clear();
-      cgrad* asl_variables_tmp = this->asl->i.Cgrad_[constraint_index];
-      size_t sparse_asl_index = 0;
-      while (asl_variables_tmp != nullptr) {
-         const size_t variable_index = static_cast<size_t>(asl_variables_tmp->varno);
-         gradient.insert(variable_index, this->asl_gradient[sparse_asl_index]);
-         asl_variables_tmp = asl_variables_tmp->next;
-         sparse_asl_index++;
-      }
-   }
-
-   void AMPLModel::evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
+   void AMPLModel::evaluate_constraint_jacobian(const Vector<double>& x, Vector<double>& jacobian_values) const {
       for (size_t constraint_index: Range(this->number_constraints)) {
-         constraint_jacobian[constraint_index].clear();
-         this->evaluate_constraint_gradient(x, constraint_index, constraint_jacobian[constraint_index]);
+         fint error_flag = 0;
+         (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(constraint_index), const_cast<double*>(x.data()),
+            jacobian_values.data(), &error_flag);
+         if (0 < error_flag) {
+            throw GradientEvaluationError();
+         }
       }
    }
+
+   // register the vector of variables
+   //(*(this->asl)->p.Xknown)(this->asl, const_cast<double*>(x.data()), nullptr);
+   // unregister the vector of variables
+   //this->asl->i.x_known = 0;
 
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& /*x*/, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
+         Vector<double>& hessian_values) const {
       assert(hessian.capacity() >= this->number_asl_hessian_nonzeros);
 
-      // register the vector of variables
-      //(*(this->asl)->p.Xknown)(this->asl, const_cast<double*>(x.data()), nullptr);
-
-      // evaluate the Hessian: store the matrix in a preallocated array this->asl_hessian
-      const int objective_number = -1;
+      // evaluate the Hessian
       objective_multiplier *= this->objective_sign;
-      (*(this->asl)->p.Sphes)(this->asl, nullptr, this->asl_hessian.data(), objective_number, &objective_multiplier,
+      (*(this->asl)->p.Sphes)(this->asl, nullptr, hessian_values.data(), -1, &objective_multiplier,
          const_cast<double*>(multipliers.data()));
-
-      // generate the sparsity pattern in the right sparse format
-      const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
-      const fint* asl_row_index = this->asl->i.sputinfo_->hrownos;
-      // check that the column pointers are sorted in increasing order
-      assert(in_increasing_order(asl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
-
-      // copy the nonzeros in the Hessian
-      for (size_t column_index: Range(this->number_variables)) {
-         for (size_t k: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
-            const size_t row_index = static_cast<size_t>(asl_row_index[k]);
-            const double entry = this->asl_hessian[k];
-            hessian.insert(row_index, column_index, entry);
-         }
-         hessian.finalize_column(column_index);
-      }
-      // unregister the vector of variables
-      //this->asl->i.x_known = 0;
    }
 
    void AMPLModel::compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
@@ -383,7 +348,6 @@ namespace uno {
       // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
       const int upper_triangular = 1;
       this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, -1, 1, 1, upper_triangular));
-      this->asl_hessian.reserve(this->number_asl_hessian_nonzeros);
 
       // sparsity pattern
       [[maybe_unused]] const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;

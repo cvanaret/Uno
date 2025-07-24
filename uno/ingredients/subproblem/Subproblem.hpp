@@ -33,18 +33,17 @@ namespace uno {
       // constraints, objective gradient and Jacobian
       void evaluate_objective_gradient(Vector<double>& linear_objective) const;
       void evaluate_constraints(std::vector<double>& constraints) const;
-      void evaluate_jacobian(RectangularMatrix<double>& constraint_jacobian) const;
+      void evaluate_jacobian(Vector<double>& jacobian_values) const;
 
       // regularized Hessian
       void compute_regularized_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const;
-      void compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian) const;
+      void compute_regularized_hessian(Statistics& statistics, Vector<double>& /*hessian_values*/) const;
       void compute_hessian_vector_product(const double* vector, double* result) const;
 
       // augmented system
       void compute_regularized_augmented_matrix_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const;
-      void assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
-         RectangularMatrix<double>& constraint_jacobian) const;
-      void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
+      void assemble_augmented_matrix(Statistics& statistics, Vector<double>& augmented_matrix_values) const;
+      void regularize_augmented_matrix(Statistics& statistics, Vector<double>& augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const;
       void assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
          RectangularMatrix<double>& constraint_jacobian, Vector<double>& rhs) const;

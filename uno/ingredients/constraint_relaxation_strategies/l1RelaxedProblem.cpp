@@ -116,26 +116,27 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
-      iterate.evaluate_constraint_jacobian(this->model);
+   void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, Vector<double>& jacobian_values) const {
+      //iterate.evaluate_constraint_jacobian(this->model);
       // TODO change this
-      constraint_jacobian = iterate.evaluations.constraint_jacobian;
+      //constraint_jacobian = iterate.evaluations.constraint_jacobian;
+      this->model.evaluate_constraint_jacobian(iterate.primals, jacobian_values);
 
       // add the contribution of the elastic variables
-      size_t elastic_index = this->model.number_variables;
+      size_t nonzero_index = this->model.number_jacobian_nonzeros();
       for (size_t inequality_index: this->model.get_inequality_constraints()) {
          if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
-            constraint_jacobian[inequality_index].insert(elastic_index, 1.);
+            jacobian_values[nonzero_index] = 1.;
          }
          else { // positive part
-            constraint_jacobian[inequality_index].insert(elastic_index, -1.);
+            jacobian_values[nonzero_index] = -1.;
          }
-         elastic_index++;
+         ++nonzero_index;
       }
-      for (size_t equality_index: this->model.get_equality_constraints()) {
-         constraint_jacobian[equality_index].insert(elastic_index, 1.);
-         constraint_jacobian[equality_index].insert(elastic_index + 1, -1.);
-         elastic_index += 2;
+      for (size_t _: this->model.get_equality_constraints()) {
+         jacobian_values[nonzero_index] = 1.;
+         jacobian_values[nonzero_index + 1] = -1.;
+         nonzero_index += 2;
       }
    }
 
@@ -149,6 +150,7 @@ namespace uno {
       lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
 
       // constraints
+      /*
       for (size_t constraint_index: Range(this->number_constraints)) {
          if (multipliers.constraints[constraint_index] != 0.) {
             for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
@@ -156,6 +158,7 @@ namespace uno {
             }
          }
       }
+      */
 
       // bound constraints of original variables
       for (size_t variable_index: Range(this->model.number_variables)) {
@@ -202,15 +205,18 @@ namespace uno {
    }
 
    void l1RelaxedProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
-      hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(), multipliers.constraints, hessian);
+         const Multipliers& multipliers, Vector<double>& hessian_values) const {
+      hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(),
+         multipliers.constraints, hessian_values);
 
       // proximal contribution
+      size_t nonzero_index = hessian_model.number_nonzeros(this->model);
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
             const double proximal_term = this->proximal_coefficient * scaling * scaling;
-            hessian.insert(variable_index, variable_index, proximal_term);
+            hessian_values[nonzero_index] = proximal_term;
+            ++nonzero_index;
          }
       }
    }

@@ -123,7 +123,7 @@ namespace uno {
       this->workspace.icntl[eICNTL::LDIAG] = 0;
    }
 
-   void MA27Solver::initialize_memory(const Subproblem& subproblem) {
+   void MA27Solver::initialize(const Subproblem& subproblem) {
       const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
       this->workspace.n = static_cast<int>(dimension);
 
