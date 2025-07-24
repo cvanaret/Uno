@@ -19,9 +19,8 @@ env:
   BUILD_TYPE: Debug
 
 jobs:
-  build:
+  compilation-uno-hsl:
     runs-on: self-hosted
-
     steps:
     - uses: actions/checkout@v4
 
@@ -83,6 +82,12 @@ jobs:
         rm -rf /scratch/github-actions/actions_runner_uno/Uno_jll.jl/override/bin/uno_ampl
         cp ${{github.workspace}}/build/uno_ampl /scratch/github-actions/actions_runner_uno/Uno_jll.jl/override/bin
 
+  preset-ipopt-ma27:
+    needs: compilation-uno-hsl
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v4
+
     - name: Run Julia tests for the preset Ipopt with MA27
       shell: julia --color=yes --project=.github/julia {0}
       run: |
@@ -90,6 +95,12 @@ jobs:
         Pkg.instantiate()
         Pkg.develop(path="/scratch/github-actions/actions_runner_uno/Uno_jll.jl")
         include("/scratch/github-actions/actions_runner_uno/_work/Uno/Uno/.github/julia/runtests_uno_ipopt_ma27.jl")
+
+  preset-ipopt-ma57:
+    needs: compilation-uno-hsl
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v4
 
     - name: Run Julia tests for the preset Ipopt with MA57
       shell: julia --color=yes --project=.github/julia {0}
