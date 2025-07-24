@@ -126,7 +126,7 @@ namespace uno {
       rhs.fill(0.);
 
       // objective gradient
-      rhs = -objective_gradient;
+      view(rhs, 0, this->number_variables) = -objective_gradient;
 
       // constraint: evaluations and gradients
       for (size_t constraint_index: Range(this->number_constraints)) {
