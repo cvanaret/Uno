@@ -72,7 +72,7 @@ jobs:
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                                              -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
                                              -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
-                                             -DHSL=${LIHSL_PATH} \
+                                             -DHSL=${LIBHSL_PATH} \
                                              -DAMPLSOLVER=${LIBAMPL_PATH}
 
     - name: Build -- Uno
