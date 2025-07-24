@@ -213,7 +213,7 @@ jobs:
       - name: Upload Linux (aarch64) artifact
         run: |
           gh release upload ${{ github.ref_name }} \
-            Uno_binaries.${{ github.ref_name }}.aarch64-linux-gnu-cxx11.tar.gz/Uno_binaries.${{ github.ref_name }}.x86_64-linux-gnu-cxx11.tar.gz#Uno.${{ github.ref_name }}.linux.aarch64.tar.gz
+            Uno_binaries.${{ github.ref_name }}.aarch64-linux-gnu-cxx11.tar.gz/Uno_binaries.${{ github.ref_name }}.aarch64-linux-gnu-cxx11.tar.gz#Uno.${{ github.ref_name }}.linux.aarch64.tar.gz
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
