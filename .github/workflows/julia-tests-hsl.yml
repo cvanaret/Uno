@@ -29,6 +29,7 @@ jobs:
       run: |
         pip install meson==1.7.1
         pip install ninja
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - name: Compile BLAS and LAPACK
       run: |
@@ -48,13 +49,13 @@ jobs:
         LAPACK_PATH="/scratch/github-actions/actions_runner_uno/lapack/builddir/lib"
         cd /scratch/github-actions/actions_runner_uno/libhsl
         rm -rf builddir
-        /home/amontoison/.local/bin/meson setup builddir --buildtype=debug \
-                                                         -Dlibblas=blas \
-                                                         -Dliblapack=lapack \
-                                                         -Dlibblas_path=${BLAS_PATH} \
-                                                         -Dliblapack_path=${LAPACK_PATH} \
-                                                         -Ddefault_library=static
-        /home/amontoison/.local/bin/meson compile -C builddir
+        meson setup builddir --buildtype=debug \
+                             -Dlibblas=blas \
+                             -Dliblapack=lapack \
+                             -Dlibblas_path=${BLAS_PATH} \
+                             -Dliblapack_path=${LAPACK_PATH} \
+                             -Ddefault_library=static
+        meson compile -C builddir
 
     - name: Compile AMPL
       run: |
