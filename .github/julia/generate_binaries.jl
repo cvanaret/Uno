@@ -6,7 +6,7 @@ package = "Uno"
 
 platforms = [
    ("aarch64-apple-darwin-cxx11"  , "lib", "dylib"),
-#  ("aarch64-linux-gnu-cxx11"     , "lib", "so"   ),
+   ("aarch64-linux-gnu-cxx11"     , "lib", "so"   ),
 #  ("aarch64-linux-musl-cxx11"    , "lib", "so"   ),
 #  ("powerpc64le-linux-gnu-cxx11" , "lib", "so"   ),
    ("x86_64-apple-darwin-cxx11"   , "lib", "dylib"),
@@ -69,7 +69,7 @@ for (platform, libdir, ext) in platforms
     else
       @warn("The tarball deps.tar.gz is missing in $(tarball_name)!")
     end
-  else
-    @warn("The tarball for the platform $platform was not generated!")
+  # else
+  #   @warn("The tarball for the platform $platform was not generated!")
   end
 end
