@@ -205,14 +205,14 @@ namespace uno {
 
          if (this->workspace.info[eINFO::IFLAG] == eIFLAG::INSUFFICIENTINTEGER) {
             DEBUG << "MA27: insufficient integer workspace, resizing and retrying. \n";
-            // increase the size of iw
-            this->workspace.iw.resize(static_cast<size_t>(this->workspace.info[eINFO::IERROR]));
+            // increase the size of iw by 50%
+            this->workspace.iw.resize(static_cast<size_t>(3 * this->workspace.info[eINFO::IERROR] / 2));
             factorization_done = false;
          }
          if (this->workspace.info[eINFO::IFLAG] == eIFLAG::INSUFFICIENTREAL) {
             DEBUG << "MA27: insufficient real workspace, resizing and retrying. \n";
-            // increase the size of factor
-            this->workspace.factor.resize(static_cast<size_t>(this->workspace.info[eINFO::IERROR]));
+            // increase the size of factor by 50%
+            this->workspace.factor.resize(static_cast<size_t>(3 * this->workspace.info[eINFO::IERROR] / 2));
             factorization_done = false;
          }
       }
