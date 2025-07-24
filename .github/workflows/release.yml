@@ -1,16 +1,19 @@
 name: Release
+
 on:
   push:
     # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v2023.11.15
+
 jobs:
-  build:
-    name: Uno -- Release ${{ github.ref_name }}
+  build-linux-x64:
+    name: Uno -- Linux (x86_64) -- Release ${{ github.ref_name }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Uno
         uses: actions/checkout@v4
+
       - name: Install Julia
         uses: julia-actions/setup-julia@v2
         with:
@@ -29,28 +32,167 @@ jobs:
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
           julia --color=yes .github/julia/build_tarballs_release.jl x86_64-linux-gnu-cxx11 --verbose
-          rm -r ~/.julia
+
+      - name: Archive artifact
+        run: julia --color=yes .github/julia/generate_binaries.jl
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Uno_binaries.${{ github.ref_name }}.x86_64-linux-gnu-cxx11.tar.gz
+          path: ./Uno_binaries.${{ github.ref_name }}.x86_64-linux-gnu-cxx11.tar.gz
+
+  build-linux-aarch64:
+    name: Uno -- Linux (aarch64) -- Release ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Uno
+        uses: actions/checkout@v4
+
+      - name: Install Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.7"
+          arch: x64
+
+      - name: Set the environment variables BINARYBUILDER_AUTOMATIC_APPLE, UNO_RELEASE, UNO_COMMIT
+        shell: bash
+        run: |
+          echo "BINARYBUILDER_AUTOMATIC_APPLE=true" >> $GITHUB_ENV
+          echo "UNO_RELEASE=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
+          echo "UNO_URL=https://github.com/${{ github.repository }}.git" >> $GITHUB_ENV
+
+      - name: Cross-compilation of Uno -- aarch64-linux-gnu-cxx11
+        run: |
+          julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
+          julia --color=yes .github/julia/build_tarballs_release.jl aarch64-linux-gnu-cxx11 --verbose
+
+      - name: Archive artifact
+        run: julia --color=yes .github/julia/generate_binaries.jl
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Uno_binaries.${{ github.ref_name }}.aarch64-linux-gnu-cxx11.tar.gz
+          path: ./Uno_binaries.${{ github.ref_name }}.aarch64-linux-gnu-cxx11.tar.gz
+
+  build-windows-x64:
+    name: Uno -- Windows (x86_64) -- Release ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Uno
+        uses: actions/checkout@v4
+
+      - name: Install Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.7"
+          arch: x64
+
+      - name: Set the environment variables BINARYBUILDER_AUTOMATIC_APPLE, UNO_RELEASE, UNO_COMMIT
+        shell: bash
+        run: |
+          echo "BINARYBUILDER_AUTOMATIC_APPLE=true" >> $GITHUB_ENV
+          echo "UNO_RELEASE=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
+          echo "UNO_URL=https://github.com/${{ github.repository }}.git" >> $GITHUB_ENV
 
       - name: Cross-compilation of Uno -- x86_64-w64-mingw32-cxx11
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
           julia --color=yes .github/julia/build_tarballs_release.jl x86_64-w64-mingw32-cxx11 --verbose
-          rm -r ~/.julia
+      - name: Archive artifact
+        run: julia --color=yes .github/julia/generate_binaries.jl
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Uno_binaries.${{ github.ref_name }}.x86_64-w64-mingw32-cxx11.zip
+          path: ./Uno_binaries.${{ github.ref_name }}.x86_64-w64-mingw32-cxx11.zip
+
+  build-mac-x64:
+    name: Uno -- macOS (x86_64) -- Release ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Uno
+        uses: actions/checkout@v4
+
+      - name: Install Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.7"
+          arch: x64
+
+      - name: Set the environment variables BINARYBUILDER_AUTOMATIC_APPLE, UNO_RELEASE, UNO_COMMIT
+        shell: bash
+        run: |
+          echo "BINARYBUILDER_AUTOMATIC_APPLE=true" >> $GITHUB_ENV
+          echo "UNO_RELEASE=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
+          echo "UNO_URL=https://github.com/${{ github.repository }}.git" >> $GITHUB_ENV
 
       - name: Cross-compilation of Uno -- x86_64-apple-darwin-cxx11
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
           julia --color=yes .github/julia/build_tarballs_release.jl x86_64-apple-darwin-cxx11 --verbose
-          rm -r ~/.julia
+
+      - name: Archive artifact
+        run: julia --color=yes .github/julia/generate_binaries.jl
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Uno_binaries.${{ github.ref_name }}.x86_64-apple-darwin-cxx11.tar.gz
+          path: ./Uno_binaries.${{ github.ref_name }}.x86_64-apple-darwin-cxx11.tar.gz
+
+  build-mac-aarch64:
+    name: Uno -- macOS (aarch64) -- Release ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Uno
+        uses: actions/checkout@v4
+
+      - name: Install Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.7"
+          arch: x64
+
+      - name: Set the environment variables BINARYBUILDER_AUTOMATIC_APPLE, UNO_RELEASE, UNO_COMMIT
+        shell: bash
+        run: |
+          echo "BINARYBUILDER_AUTOMATIC_APPLE=true" >> $GITHUB_ENV
+          echo "UNO_RELEASE=${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
+          echo "UNO_URL=https://github.com/${{ github.repository }}.git" >> $GITHUB_ENV
 
       - name: Cross-compilation of Uno -- aarch64-apple-darwin-cxx11
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
           julia --color=yes .github/julia/build_tarballs_release.jl aarch64-apple-darwin-cxx11 --verbose
-          rm -r ~/.julia
 
-      - name: Generate the binaries
+      - name: Archive artifact
         run: julia --color=yes .github/julia/generate_binaries.jl
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Uno_binaries.${{ github.ref_name }}.aarch64-apple-darwin-cxx11.tar.gz
+          path: ./Uno_binaries.${{ github.ref_name }}.aarch64-apple-darwin-cxx11.tar.gz
+
+  release:
+    name: Create Release and Upload Binaries
+    needs: [build-windows-x64, build-linux-x64, build-linux-aarch64, build-mac-x64, build-mac-aarch64]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Uno
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: .
 
       - name: Create GitHub Release
         run: |
@@ -61,30 +203,37 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Linux artifact
+      - name: Upload Linux (x86_64) artifact
         run: |
           gh release upload ${{ github.ref_name }} \
-            Uno_binaries.${{ github.ref_name }}.x86_64-linux-gnu-cxx11.tar.gz#Uno.${{ github.ref_name }}.linux.tar.gz
+            Uno_binaries.${{ github.ref_name }}.x86_64-linux-gnu-cxx11.tar.gz/Uno_binaries.${{ github.ref_name }}.x86_64-linux-gnu-cxx11.tar.gz#Uno.${{ github.ref_name }}.linux.x86_64.tar.gz
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Mac (Intel) artifact
+      - name: Upload Linux (aarch64) artifact
         run: |
           gh release upload ${{ github.ref_name }} \
-            Uno_binaries.${{ github.ref_name }}.x86_64-apple-darwin-cxx11.tar.gz#Uno.${{ github.ref_name }}.mac-intel.tar.gz
+            Uno_binaries.${{ github.ref_name }}.aarch64-linux-gnu-cxx11.tar.gz/Uno_binaries.${{ github.ref_name }}.aarch64-linux-gnu-cxx11.tar.gz#Uno.${{ github.ref_name }}.linux.aarch64.tar.gz
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Mac (ARM) artifact
+      - name: Upload Mac (x86_64) artifact
         run: |
           gh release upload ${{ github.ref_name }} \
-            Uno_binaries.${{ github.ref_name }}.aarch64-apple-darwin-cxx11.tar.gz#Uno.${{ github.ref_name }}.mac-arm.tar.gz
+            Uno_binaries.${{ github.ref_name }}.x86_64-apple-darwin-cxx11.tar.gz/Uno_binaries.${{ github.ref_name }}.x86_64-apple-darwin-cxx11.tar.gz#Uno.${{ github.ref_name }}.mac.x86_64.tar.gz
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Windows artifact
+      - name: Upload Mac (aarch64) artifact
         run: |
           gh release upload ${{ github.ref_name }} \
-            Uno_binaries.${{ github.ref_name }}.x86_64-w64-mingw32-cxx11.zip#Uno.${{ github.ref_name }}.windows.zip
+            Uno_binaries.${{ github.ref_name }}.aarch64-apple-darwin-cxx11.tar.gz/Uno_binaries.${{ github.ref_name }}.aarch64-apple-darwin-cxx11.tar.gz#Uno.${{ github.ref_name }}.mac.aarch64.tar.gz
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows (x86_64) artifact
+        run: |
+          gh release upload ${{ github.ref_name }} \
+            Uno_binaries.${{ github.ref_name }}.x86_64-w64-mingw32-cxx11.zip/Uno_binaries.${{ github.ref_name }}.x86_64-w64-mingw32-cxx11.zip#Uno.${{ github.ref_name }}.windows.x86_64.zip
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
