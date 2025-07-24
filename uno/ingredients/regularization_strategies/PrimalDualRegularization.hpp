@@ -24,15 +24,15 @@ namespace uno {
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
-      void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, SymmetricMatrix<size_t, ElementType>& hessian,
+      void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, Vector<double>& hessian_values,
          const Inertia& expected_inertia) override;
-      void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, SymmetricMatrix<size_t, ElementType>& hessian,
+      void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, Vector<double>& hessian_values,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         SymmetricMatrix<size_t, ElementType>& augmented_matrix, ElementType dual_regularization_parameter,
+         Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         SymmetricMatrix<size_t, ElementType>& augmented_matrix, ElementType dual_regularization_parameter,
+         Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
 
       [[nodiscard]] bool performs_primal_regularization() const override;
@@ -82,7 +82,7 @@ namespace uno {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize_memory(subproblem);
+         this->optional_linear_solver->initialize(subproblem);
       }
       this->regularize_hessian(statistics, subproblem, hessian, expected_inertia, *this->optional_linear_solver);
    }
@@ -103,7 +103,7 @@ namespace uno {
          const Inertia& expected_inertia) {
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize_memory(subproblem);
+         this->optional_linear_solver->initialize(subproblem);
       }
       this->regularize_augmented_matrix(statistics, subproblem, augmented_matrix, dual_regularization_parameter,
          expected_inertia, *this->optional_linear_solver);

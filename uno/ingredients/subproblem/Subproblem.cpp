@@ -25,8 +25,8 @@ namespace uno {
       this->problem.evaluate_constraints(this->current_iterate, constraints);
    }
 
-   void Subproblem::evaluate_jacobian(RectangularMatrix<double>& constraint_jacobian) const {
-      this->problem.evaluate_constraint_jacobian(this->current_iterate, constraint_jacobian);
+   void Subproblem::evaluate_jacobian(Vector<double>& jacobian_values) const {
+      this->problem.evaluate_constraint_jacobian(this->current_iterate, jacobian_values);
    }
 
    void Subproblem::compute_regularized_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
@@ -42,16 +42,16 @@ namespace uno {
       }
    }
 
-   void Subproblem::compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian) const {
+   void Subproblem::compute_regularized_hessian(Statistics& statistics, Vector<double>& hessian_values) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
-         this->current_multipliers, hessian);
+         this->current_multipliers, hessian_values);
 
       // regularize the Hessian only if required
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
          const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
             this->problem.number_variables - this->problem.get_number_original_variables()};
-         this->regularization_strategy.regularize_hessian(statistics, *this, hessian, expected_inertia);
+         this->regularization_strategy.regularize_hessian(statistics, *this, hessian_values, expected_inertia);
       }
    }
 
@@ -75,8 +75,9 @@ namespace uno {
       // Jacobian of general constraints: to get the transpose, switch the order of the vectors
       this->problem.compute_jacobian_structure(column_indices, row_indices);
       // shift the column indices of the Jacobian
+      const size_t column_offset = this->problem.number_hessian_nonzeros(this->hessian_model);
       for (size_t nnz_index: Range(this->problem.number_jacobian_nonzeros())) {
-         column_indices[this->problem.number_hessian_nonzeros(this->hessian_model) + nnz_index] += this->problem.number_variables;
+         column_indices[column_offset + nnz_index] += this->problem.number_variables;
       }
 
       // regularize the augmented matrix only if required (diagonal regularization)
@@ -95,25 +96,19 @@ namespace uno {
       }
    }
 
-   void Subproblem::assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
-         RectangularMatrix<double>& constraint_jacobian) const {
+   void Subproblem::assemble_augmented_matrix(Statistics& statistics, Vector<double>& augmented_matrix_values) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
-         this->current_multipliers, augmented_matrix);
+         this->current_multipliers, augmented_matrix_values);
 
       // Jacobian of general constraints
-      for (size_t column_index: Range(this->problem.number_constraints)) {
-         for (const auto [row_index, derivative]: constraint_jacobian[column_index]) {
-            augmented_matrix.insert(row_index, this->problem.number_variables + column_index, derivative);
-         }
-         augmented_matrix.finalize_column(column_index);
-      }
+      this->problem.evaluate_constraint_jacobian(this->current_iterate, augmented_matrix_values);
    }
 
-   void Subproblem::regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
+   void Subproblem::regularize_augmented_matrix(Statistics& statistics, Vector<double>& augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const {
       const Inertia expected_inertia{this->number_variables, this->number_constraints, 0};
-      this->regularization_strategy.regularize_augmented_matrix(statistics, *this, augmented_matrix,
+      this->regularization_strategy.regularize_augmented_matrix(statistics, *this, augmented_matrix_values,
          dual_regularization_parameter, expected_inertia, linear_solver);
    }
 

@@ -54,7 +54,7 @@ namespace uno {
       MA57Solver();
       ~MA57Solver() override = default;
 
-      void initialize_memory(const Subproblem& subproblem) override;
+      void initialize(const Subproblem& subproblem) override;
 
       void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
       void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
@@ -70,9 +70,6 @@ namespace uno {
 
    private:
       size_t dimension{};
-      // internal matrix representation
-      std::vector<int> row_indices;
-      std::vector<int> column_indices;
       MA57Workspace workspace{};
 
       // evaluations
@@ -81,7 +78,9 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 
       // augmented system
-      SparseSymmetricMatrix<COOFormat<size_t, double>> augmented_matrix{};
+      std::vector<int> row_indices;
+      std::vector<int> column_indices;
+      Vector<double> matrix_values;
       Vector<double> rhs{};
       Vector<double> solution{};
 

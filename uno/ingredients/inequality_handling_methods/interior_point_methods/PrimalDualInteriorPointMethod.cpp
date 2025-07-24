@@ -46,7 +46,7 @@ namespace uno {
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
       const Subproblem subproblem{barrier_problem, current_iterate, current_multipliers, hessian_model, regularization_strategy,
          trust_region_radius};
-      this->linear_solver->initialize_memory(subproblem);
+      this->linear_solver->initialize(subproblem);
    }
 
    void PrimalDualInteriorPointMethod::initialize_statistics(Statistics& statistics, const Options& options) {

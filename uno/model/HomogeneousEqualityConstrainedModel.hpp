@@ -31,10 +31,9 @@ namespace uno {
       void compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const override;
 
       // numerical evaluations of Jacobian and Hessian
-      void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
-      void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
+      void evaluate_constraint_jacobian(const Vector<double>& x, Vector<double>& jacobian_values) const override;
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const override;
+         Vector<double>& hessian_values) const override;
       void compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
          double* result) const override;
 
