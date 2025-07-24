@@ -46,15 +46,15 @@ jobs:
         LAPACK_PATH="/scratch/github-actions/actions_runner_uno/lapack/builddir/lib"
         cd /scratch/github-actions/actions_runner_uno/libhsl
         rm -rf builddir
-        meson setup builddir --buildtype=debug \
-                             -Dlibblas=blas \
-                             -Dliblapack=lapack \
-                             -Dlibblas_path=${BLAS_PATH} \
-                             -Dliblapack_path=${LAPACK_PATH} \
-                             -Dquadruple=false \
-                             -Ddefault_library=static \
-                             -Dint64=false
-        meson compile -C builddir
+        /home/amontoison/.local/bin/meson setup builddir --buildtype=debug \
+                                                         -Dlibblas=blas \
+                                                         -Dliblapack=lapack \
+                                                         -Dlibblas_path=${BLAS_PATH} \
+                                                         -Dliblapack_path=${LAPACK_PATH} \
+                                                         -Dquadruple=false \
+                                                         -Ddefault_library=static \
+                                                         -Dint64=false
+        /home/amontoison/.local/bin/meson compile -C builddir
 
     - name: Compile AMPL
       run: |
