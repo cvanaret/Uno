@@ -51,9 +51,7 @@ jobs:
                                                          -Dliblapack=lapack \
                                                          -Dlibblas_path=${BLAS_PATH} \
                                                          -Dliblapack_path=${LAPACK_PATH} \
-                                                         -Dquadruple=false \
-                                                         -Ddefault_library=static \
-                                                         -Dint64=false
+                                                         -Ddefault_library=static
         /home/amontoison/.local/bin/meson compile -C builddir
 
     - name: Compile AMPL
