@@ -150,6 +150,7 @@ namespace uno {
       lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
 
       // constraints
+      /*
       for (size_t constraint_index: Range(this->number_constraints)) {
          if (multipliers.constraints[constraint_index] != 0.) {
             for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
@@ -157,6 +158,7 @@ namespace uno {
             }
          }
       }
+      */
 
       // bound constraints of original variables
       for (size_t variable_index: Range(this->model.number_variables)) {
