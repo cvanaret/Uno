@@ -28,7 +28,7 @@ jobs:
     - name: Install Meson and Ninja
       run: |
         pip install meson==1.7.1
-        sudo apt-get install -y ninja-build
+        pip install ninja
 
     - name: Compile BLAS and LAPACK
       run: |
