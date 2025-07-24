@@ -1,0 +1,111 @@
+name: Julia tests for HSL linear solvers
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Debug
+
+jobs:
+  compilation-uno-hsl:
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Meson and Ninja
+      run: |
+        pip install meson==1.7.1
+        pip install ninja
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Compile BLAS and LAPACK
+      run: |
+        cd /scratch/github-actions/actions_runner_uno/lapack
+        rm -rf builddir
+        mkdir builddir && cd builddir
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DBUILD_INDEX64_EXT_API=OFF \
+          -DTEST_FORTRAN_COMPILER=OFF
+        make -j4
+
+    - name: Compile libHSL
+      run: |
+        BLAS_PATH="/scratch/github-actions/actions_runner_uno/lapack/builddir/lib"
+        LAPACK_PATH="/scratch/github-actions/actions_runner_uno/lapack/builddir/lib"
+        cd /scratch/github-actions/actions_runner_uno/libhsl
+        rm -rf builddir
+        meson setup builddir --buildtype=debug \
+                             -Dlibblas=blas \
+                             -Dliblapack=lapack \
+                             -Dlibblas_path=${BLAS_PATH} \
+                             -Dliblapack_path=${LAPACK_PATH} \
+                             -Ddefault_library=static
+        meson compile -C builddir
+
+    - name: Compile AMPL
+      run: |
+        cd /scratch/github-actions/actions_runner_uno/ampl
+        make -f makefile.u clean
+        make -f makefile.u CC=gcc CFLAGS="-O2 -fPIC"
+
+    - name: Configure CMake -- Uno
+      run: |
+        LIBBLAS_PATH="/scratch/github-actions/actions_runner_uno/lapack/builddir/lib/libblas.a"
+        LIBLAPACK_PATH="/scratch/github-actions/actions_runner_uno/lapack/builddir/lib/liblapack.a"
+        LIBHSL_PATH="/scratch/github-actions/actions_runner_uno/libhsl/builddir/libhsl.a"
+        LIBAMPL_PATH="/scratch/github-actions/actions_runner_uno/ampl/amplsolver.a"
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                                             -DBLAS_LIBRARIES=${LIBBLAS_PATH} \
+                                             -DLAPACK_LIBRARIES=${LIBLAPACK_PATH} \
+                                             -DHSL=${LIBHSL_PATH} \
+                                             -DAMPLSOLVER=${LIBAMPL_PATH}
+
+    - name: Build -- Uno
+      run: cmake --build ${{github.workspace}}/build --target uno_ampl --config ${{env.BUILD_TYPE}}
+
+    - name: Install -- Uno
+      run: |
+        rm -rf /scratch/github-actions/actions_runner_uno/Uno_jll.jl/override/bin/uno_ampl
+        cp ${{github.workspace}}/build/uno_ampl /scratch/github-actions/actions_runner_uno/Uno_jll.jl/override/bin
+
+  preset-ipopt-ma27:
+    needs: compilation-uno-hsl
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Run Julia tests for the preset Ipopt with MA27
+      shell: julia --color=yes --project=.github/julia {0}
+      run: |
+        using Pkg
+        Pkg.instantiate()
+        Pkg.develop(path="/scratch/github-actions/actions_runner_uno/Uno_jll.jl")
+        include("/scratch/github-actions/actions_runner_uno/_work/Uno/Uno/.github/julia/runtests_uno_ipopt_ma27.jl")
+
+  preset-ipopt-ma57:
+    needs: compilation-uno-hsl
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Run Julia tests for the preset Ipopt with MA57
+      shell: julia --color=yes --project=.github/julia {0}
+      run: |
+        using Pkg
+        Pkg.instantiate()
+        Pkg.develop(path="/scratch/github-actions/actions_runner_uno/Uno_jll.jl")
+        include("/scratch/github-actions/actions_runner_uno/_work/Uno/Uno/.github/julia/runtests_uno_ipopt_ma57.jl")
