@@ -25,13 +25,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install Meson
+      run: pip install meson
+
     - name: Compile BLAS and LAPACK
       run: |
         cd /scratch/github-actions/actions_runner_uno/lapack
         rm -rf builddir
         mkdir builddir && cd builddir
         cmake .. \
-          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DBUILD_SHARED_LIBS=OFF \
           -DBUILD_INDEX64_EXT_API=OFF \
           -DTEST_FORTRAN_COMPILER=OFF
