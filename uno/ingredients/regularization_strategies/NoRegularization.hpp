@@ -28,13 +28,15 @@ namespace uno {
 
       void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
             const Vector<double>& /*augmented_matrix_values*/, ElementType /*dual_regularization_parameter*/,
-            const Inertia& /*expected_inertia*/) override {
+            const Inertia& /*expected_inertia*/, VectorView<Vector<double>&> /*primal_regularization_values*/,
+            VectorView<Vector<double>&> /*dual_regularization_values*/) override {
          // do nothing
       }
 
       void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
             const Vector<double>& /*augmented_matrix_values*/, ElementType /*dual_regularization_parameter*/,
-            const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) override {
+            const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/,
+            VectorView<Vector<double>&> /*primal_regularization_values*/, VectorView<Vector<double>&> /*dual_regularization_values*/) override {
          // do nothing
       }
 

@@ -161,9 +161,6 @@ namespace uno {
 
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& /*x*/, double objective_multiplier, const Vector<double>& multipliers,
          Vector<double>& hessian_values) const {
-      assert(hessian.capacity() >= this->number_asl_hessian_nonzeros);
-
-      // evaluate the Hessian
       objective_multiplier *= this->objective_sign;
       (*(this->asl)->p.Sphes)(this->asl, nullptr, hessian_values.data(), -1, &objective_multiplier,
          const_cast<double*>(multipliers.data()));
