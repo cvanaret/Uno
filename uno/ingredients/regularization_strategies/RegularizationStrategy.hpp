@@ -38,12 +38,12 @@ namespace uno {
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia, VectorView<Vector<double>&> primal_regularization,
-         VectorView<Vector<double>&> dual_regularization) = 0;
+         const Inertia& expected_inertia, VectorView<Vector<double>&> primal_regularization_values,
+         VectorView<Vector<double>&> dual_regularization_values) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
-         VectorView<Vector<double>&> primal_regularization, VectorView<Vector<double>&> dual_regularization) = 0;
+         VectorView<Vector<double>&> primal_regularization_values, VectorView<Vector<double>&> dual_regularization_values) = 0;
 
       [[nodiscard]] virtual bool performs_primal_regularization() const = 0;
       [[nodiscard]] virtual bool performs_dual_regularization() const = 0;

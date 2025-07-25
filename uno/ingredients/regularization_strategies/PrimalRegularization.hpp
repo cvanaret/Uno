@@ -12,6 +12,7 @@
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "options/Options.hpp"
+#include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
@@ -29,10 +30,13 @@ namespace uno {
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia) override;
+         const Inertia& expected_inertia, VectorView<Vector<double>&> primal_regularization_values,
+         VectorView<Vector<double>&> dual_regularization_values) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+         VectorView<Vector<double>&> primal_regularization_values,
+         VectorView<Vector<double>&> dual_regularization_values) override;
 
       [[nodiscard]] bool performs_primal_regularization() const override;
       [[nodiscard]] bool performs_dual_regularization() const override;
@@ -123,20 +127,22 @@ namespace uno {
    template <typename ElementType>
    void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia) {
+         const Inertia& expected_inertia, VectorView<Vector<double>&> primal_regularization_values,
+         VectorView<Vector<double>&> dual_regularization_values) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
          this->optional_linear_solver->initialize(subproblem);
       }
       this->regularize_augmented_matrix(statistics, subproblem, augmented_matrix_values, dual_regularization_parameter,
-         expected_inertia, *this->optional_linear_solver);
+         expected_inertia, *this->optional_linear_solver, primal_regularization_values, dual_regularization_values);
    }
 
    template <typename ElementType>
    void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const Vector<double>& augmented_matrix_values, ElementType /*dual_regularization_parameter*/,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) {
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+         VectorView<Vector<double>&> primal_regularization_values, VectorView<Vector<double>&> dual_regularization_values) {
       this->regularize_hessian(statistics, subproblem, augmented_matrix_values, expected_inertia, linear_solver);
    }
 

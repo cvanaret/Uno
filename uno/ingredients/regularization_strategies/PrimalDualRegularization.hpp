@@ -30,12 +30,12 @@ namespace uno {
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia, VectorView<Vector<double>&> primal_regularization,
-         VectorView<Vector<double>&> dual_regularization) override;
+         const Inertia& expected_inertia, VectorView<Vector<double>&> primal_regularization_values,
+         VectorView<Vector<double>&> dual_regularization_values) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
-         VectorView<Vector<double>&> primal_regularization, VectorView<Vector<double>&> dual_regularization) override;
+         VectorView<Vector<double>&> primal_regularization_values, VectorView<Vector<double>&> dual_regularization_values) override;
 
       [[nodiscard]] bool performs_primal_regularization() const override;
       [[nodiscard]] bool performs_dual_regularization() const override;
@@ -116,7 +116,7 @@ namespace uno {
    void PrimalDualRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
-         VectorView<Vector<double>&> primal_regularization, VectorView<Vector<double>&> dual_regularization) {
+         VectorView<Vector<double>&> primal_regularization_values, VectorView<Vector<double>&> dual_regularization_values) {
       DEBUG2 << "Original matrix values\n" << augmented_matrix_values << '\n';
 
       this->primal_regularization = ElementType(0);
@@ -160,10 +160,10 @@ namespace uno {
 
       // regularize the augmented matrix
       for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
-         primal_regularization[index] = this->primal_regularization;
+         primal_regularization_values[index] = this->primal_regularization;
       }
       for (size_t index: Range(subproblem.get_dual_regularization_constraints().size())) {
-         dual_regularization[index] = -this->dual_regularization;
+         dual_regularization_values[index] = -this->dual_regularization;
       }
 
       bool good_inertia = false;
@@ -196,10 +196,10 @@ namespace uno {
             if (this->primal_regularization <= this->regularization_failure_threshold) {
                // regularize the augmented matrix
                for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
-                  primal_regularization[index] = this->primal_regularization;
+                  primal_regularization_values[index] = this->primal_regularization;
                }
                for (size_t index: Range(subproblem.get_dual_regularization_constraints().size())) {
-                  dual_regularization[index] = -this->dual_regularization;
+                  dual_regularization_values[index] = -this->dual_regularization;
                }
             }
             else {
