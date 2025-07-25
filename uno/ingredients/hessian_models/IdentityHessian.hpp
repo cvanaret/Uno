@@ -15,7 +15,10 @@ namespace uno {
       [[nodiscard]] bool has_explicit_representation() const override;
 
       void initialize(const Model& model) override;
+
       [[nodiscard]] size_t number_nonzeros(const Model& model) const override;
+      void compute_structure(const Model& model, Vector<size_t>& row_indices, Vector<size_t>& column_indices) const override;
+
       [[nodiscard]] bool is_positive_definite() const override;
       void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) override;

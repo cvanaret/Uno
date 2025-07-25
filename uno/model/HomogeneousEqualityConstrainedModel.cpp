@@ -57,10 +57,6 @@ namespace uno {
       return this->model->evaluate_objective(x);
    }
 
-   void HomogeneousEqualityConstrainedModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
-      this->model->evaluate_objective_gradient(x, gradient);
-   }
-
    void HomogeneousEqualityConstrainedModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
       this->model->evaluate_constraints(x, constraints);
       // inequality constraints: add the slacks
@@ -74,9 +70,28 @@ namespace uno {
       }
    }
 
+   void HomogeneousEqualityConstrainedModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
+      this->model->evaluate_objective_gradient(x, gradient);
+   }
+
+   void HomogeneousEqualityConstrainedModel::compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      this->model->compute_jacobian_structure(row_indices, column_indices);
+
+      // add the slack contributions
+      for (const auto [constraint_index, slack_index]: this->get_slacks()) {
+         row_indices.emplace_back(constraint_index);
+         column_indices.emplace_back(slack_index);
+      }
+   }
+
+   void HomogeneousEqualityConstrainedModel::compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      this->model->compute_hessian_structure(row_indices, column_indices);
+   }
+
    void HomogeneousEqualityConstrainedModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index,
          SparseVector<double>& gradient) const {
       this->model->evaluate_constraint_gradient(x, constraint_index, gradient);
+
       // if the original constraint is an inequality, add the slack contribution
       if (this->model->constraint_lower_bound(constraint_index) != this->model->constraint_upper_bound(constraint_index)) {
          const size_t slack_variable_index = this->slack_index_of_constraint_index[constraint_index];
@@ -86,6 +101,7 @@ namespace uno {
 
    void HomogeneousEqualityConstrainedModel::evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
       this->model->evaluate_constraint_jacobian(x, constraint_jacobian);
+
       // add the slack contributions
       for (const auto [constraint_index, slack_index]: this->get_slacks()) {
          constraint_jacobian[constraint_index].insert(slack_index, -1.);

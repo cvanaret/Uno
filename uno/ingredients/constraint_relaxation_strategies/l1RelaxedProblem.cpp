@@ -37,6 +37,27 @@ namespace uno {
       return this->objective_multiplier;
    }
 
+   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+      iterate.evaluate_constraints(this->model);
+      constraints = iterate.evaluations.constraints;
+
+      // add the contribution of the elastic variables
+      size_t elastic_index = this->model.number_variables;
+      for (size_t inequality_index: this->model.get_inequality_constraints()) {
+         if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
+            constraints[inequality_index] += iterate.primals[elastic_index];
+         }
+         else { // positive part
+            constraints[inequality_index] -= iterate.primals[elastic_index];
+         }
+         elastic_index++;
+      }
+      for (size_t equality_index: this->model.get_equality_constraints()) {
+         constraints[equality_index] += (iterate.primals[elastic_index] - iterate.primals[elastic_index + 1]);
+         elastic_index += 2;
+      }
+   }
+
    void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
       // scale nabla f(x) by rho
       if (this->objective_multiplier != 0.) {
@@ -64,24 +85,35 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
-      iterate.evaluate_constraints(this->model);
-      constraints = iterate.evaluations.constraints;
+   void l1RelaxedProblem::compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+      this->model.compute_jacobian_structure(row_indices, column_indices);
 
       // add the contribution of the elastic variables
       size_t elastic_index = this->model.number_variables;
       for (size_t inequality_index: this->model.get_inequality_constraints()) {
-         if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
-            constraints[inequality_index] += iterate.primals[elastic_index];
-         }
-         else { // positive part
-            constraints[inequality_index] -= iterate.primals[elastic_index];
-         }
+         row_indices.emplace_back(inequality_index);
+         column_indices.emplace_back(elastic_index);
          elastic_index++;
       }
       for (size_t equality_index: this->model.get_equality_constraints()) {
-         constraints[equality_index] += (iterate.primals[elastic_index] - iterate.primals[elastic_index+1]);
+         row_indices.emplace_back(equality_index);
+         column_indices.emplace_back(elastic_index);
+         row_indices.emplace_back(equality_index);
+         column_indices.emplace_back(elastic_index + 1);
          elastic_index += 2;
+      }
+   }
+
+   void l1RelaxedProblem::compute_hessian_structure(const HessianModel& hessian_model, Vector<size_t>& row_indices,
+         Vector<size_t>& column_indices) const {
+      hessian_model.compute_structure(this->model, row_indices, column_indices);
+
+      // diagonal proximal contribution
+      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+         for (size_t variable_index: Range(this->model.number_variables)) {
+            row_indices.emplace_back(variable_index);
+            column_indices.emplace_back(variable_index);
+         }
       }
    }
 
@@ -103,7 +135,7 @@ namespace uno {
       }
       for (size_t equality_index: this->model.get_equality_constraints()) {
          constraint_jacobian[equality_index].insert(elastic_index, 1.);
-         constraint_jacobian[equality_index].insert(elastic_index+1, -1.);
+         constraint_jacobian[equality_index].insert(elastic_index + 1, -1.);
          elastic_index += 2;
       }
    }
@@ -176,7 +208,7 @@ namespace uno {
       for ([[maybe_unused]] size_t equality_index: this->model.get_equality_constraints()) {
          /*
          lagrangian_gradient.constraints_contribution[elastic_index] += 2*this->constraint_violation_coefficient -
-            multipliers.lower_bounds[elastic_index] - multipliers.lower_bounds[elastic_index+1];
+            multipliers.lower_bounds[elastic_index] - multipliers.lower_bounds[elastic_index + 1];
          elastic_index += 2;
          */
          lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
@@ -292,7 +324,7 @@ namespace uno {
       }
       for (size_t equality_index: this->model.get_equality_constraints()) {
          elastic_setting_function(iterate, equality_index, elastic_index, 1.);
-         elastic_setting_function(iterate, equality_index, elastic_index+1, -1.);
+         elastic_setting_function(iterate, equality_index, elastic_index + 1, -1.);
          elastic_index += 2;
       }
    }

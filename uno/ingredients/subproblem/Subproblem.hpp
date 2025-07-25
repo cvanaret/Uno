@@ -39,10 +39,12 @@ namespace uno {
       void evaluate_jacobian(RectangularMatrix<double>& constraint_jacobian) const;
 
       // regularized Hessian
+      void compute_regularized_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const;
       void compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian) const;
       void compute_hessian_vector_product(const double* vector, double* result) const;
 
       // augmented system
+      void compute_regularized_augmented_matrix_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const;
       void assemble_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
          RectangularMatrix<double>& constraint_jacobian) const;
       void regularize_augmented_matrix(Statistics& statistics, SymmetricMatrix<size_t, double>& augmented_matrix,
@@ -61,6 +63,15 @@ namespace uno {
 
       [[nodiscard]] bool has_implicit_hessian_representation() const;
       [[nodiscard]] bool has_explicit_hessian_representation() const;
+
+      [[nodiscard]] bool performs_primal_regularization() const;
+      [[nodiscard]] bool performs_dual_regularization() const;
+
+      [[nodiscard]] const Collection<size_t>& get_primal_regularization_variables() const;
+      [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const;
+
+      [[nodiscard]] size_t number_augmented_system_nonzeros() const;
+      [[nodiscard]] size_t regularization_size() const;
 
       [[nodiscard]] double dual_regularization_factor() const;
 
