@@ -27,7 +27,7 @@ namespace uno {
       this->first_reformulation.evaluate_constraints(iterate, constraints);
    }
 
-   void PrimalDualInteriorPointProblem::compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+   void PrimalDualInteriorPointProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const {
       this->first_reformulation.compute_jacobian_structure(row_indices, column_indices);
    }
 
@@ -55,23 +55,25 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::compute_hessian_structure(const HessianModel& hessian_model, Vector<size_t>& row_indices,
-         Vector<size_t>& column_indices) const {
+   void PrimalDualInteriorPointProblem::compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
+         size_t* column_indices) const {
       // original Lagrangian Hessian
       this->first_reformulation.compute_hessian_structure(hessian_model, row_indices, column_indices);
 
       // diagonal barrier terms
+      size_t current_index = this->first_reformulation.number_hessian_nonzeros(hessian_model);
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
          const bool finite_lower_bound = is_finite(this->first_reformulation.variable_lower_bound(variable_index));
          const bool finite_upper_bound = is_finite(this->first_reformulation.variable_upper_bound(variable_index));
          if (finite_lower_bound || finite_upper_bound) {
-            row_indices.emplace_back(variable_index);
-            column_indices.emplace_back(variable_index);
+            row_indices[current_index] = variable_index;
+            column_indices[current_index] = variable_index;
+            ++current_index;
          }
       }
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_constraint_jacobian(Iterate& iterate, Vector<double>& jacobian_values) const {
+   void PrimalDualInteriorPointProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
       this->first_reformulation.evaluate_constraint_jacobian(iterate, jacobian_values);
    }
 

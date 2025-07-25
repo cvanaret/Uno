@@ -140,7 +140,7 @@ namespace uno {
       this->column_indices.resize(number_nonzeros);
       Vector<size_t> tmp_row_indices(number_nonzeros);
       Vector<size_t> tmp_column_indices(number_nonzeros);
-      subproblem.compute_regularized_augmented_matrix_structure(tmp_row_indices, tmp_column_indices);
+      subproblem.compute_regularized_augmented_matrix_structure(tmp_row_indices.data(), tmp_column_indices.data());
       // build vectors of int
       for (size_t nonzero_index: Range(number_nonzeros)) {
          this->row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);

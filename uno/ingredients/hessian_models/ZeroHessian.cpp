@@ -22,7 +22,7 @@ namespace uno {
       return 0;
    }
 
-   void ZeroHessian::compute_structure(const Model& /*model*/, Vector<size_t>& /*row_indices*/, Vector<size_t>& /*column_indices*/) const {
+   void ZeroHessian::compute_structure(const Model& /*model*/, size_t* /*row_indices*/, size_t* /*column_indices*/) const {
       // empty structure
    }
 

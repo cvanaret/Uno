@@ -91,23 +91,29 @@ namespace uno {
       this->workspace.icntl[8] = 1;
    }
 
-   void MA57Solver::initialize_memory(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros,
-         size_t regularization_size) {
-      const size_t dimension = number_variables + number_constraints;
-      const size_t number_nonzeros = number_hessian_nonzeros + regularization_size;
-      this->dimension = dimension;
-
-      // reserve the COO sparse representation
-      this->row_indices.reserve(number_nonzeros);
-      this->column_indices.reserve(number_nonzeros);
+   void MA57Solver::initialize(const Subproblem& subproblem) {
+      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
 
       // evaluations
-      this->objective_gradient.resize(number_variables);
-      this->constraints.resize(number_constraints);
-      this->constraint_jacobian.resize(number_constraints, number_variables);
+      this->objective_gradient.resize(subproblem.number_variables);
+      this->constraints.resize(subproblem.number_constraints);
+      this->constraint_jacobian.resize(subproblem.number_constraints, subproblem.number_variables);
 
       // augmented system
-      this->augmented_matrix = SparseSymmetricMatrix<COOFormat<size_t, double>>(dimension, number_hessian_nonzeros, regularization_size);
+      const size_t number_augmented_system_nonzeros = subproblem.number_augmented_system_nonzeros();
+      const size_t regularization_size = subproblem.regularization_size();
+      const size_t number_nonzeros = number_augmented_system_nonzeros + regularization_size;
+      // reserve the COO representation
+      this->row_indices.resize(number_nonzeros);
+      this->column_indices.resize(number_nonzeros);
+      Vector<size_t> tmp_row_indices(number_nonzeros);
+      Vector<size_t> tmp_column_indices(number_nonzeros);
+      subproblem.compute_regularized_augmented_matrix_structure(tmp_row_indices.data(), tmp_column_indices.data());
+      // build vectors of int
+      for (size_t nonzero_index: Range(number_nonzeros)) {
+         this->row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
+         this->column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
+      }
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
 
@@ -122,21 +128,11 @@ namespace uno {
       this->workspace.residuals.resize(dimension);
    }
 
-   void MA57Solver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
-      assert(matrix.dimension() <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(matrix.number_nonzeros() <= this->row_indices.capacity() &&
-         "MA57Solver: the number of nonzeros of the matrix is larger than the preallocated size");
-
-      // build the internal matrix representation
-      this->save_sparsity_pattern_internally(matrix);
-
-      const int n = static_cast<int>(matrix.dimension());
-      const int nnz = static_cast<int>(matrix.number_nonzeros());
-
+   void MA57Solver::do_symbolic_analysis() {
       // symbolic analysis
-      MA57_symbolic_analysis(&n, &nnz, this->row_indices.data(), this->column_indices.data(), &this->workspace.lkeep,
-         this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.info.data(),
-         this->workspace.rinfo.data());
+      MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->row_indices.data(), this->column_indices.data(),
+         &this->workspace.lkeep, this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
+         this->workspace.info.data(), this->workspace.rinfo.data());
 
       assert(0 <= this->workspace.info[0] && "MA57: the symbolic analysis failed");
       if (0 < this->workspace.info[0]) {
@@ -149,26 +145,18 @@ namespace uno {
       this->workspace.fact.resize(static_cast<size_t>(lfact));
       this->workspace.ifact.resize(static_cast<size_t>(lifact));
       // store the sizes of the symbolic analysis
-      this->workspace.n = n;
-      this->workspace.nnz = nnz;
       this->workspace.lfact = lfact;
       this->workspace.lifact = lifact;
    }
 
-   void MA57Solver::do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) {
-      assert(matrix.dimension() <= this->dimension && "MA57Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(this->workspace.nnz == static_cast<int>(matrix.number_nonzeros()) && "MA57Solver: the numbers of nonzeros do not match");
-
-      const int n = static_cast<int>(matrix.dimension());
-      int nnz = static_cast<int>(matrix.number_nonzeros());
-
+   void MA57Solver::do_numerical_factorization(const Vector<double>& matrix_values) {
       bool factorization_done = false;
       while (!factorization_done) {
          // numerical factorization
-         MA57_numerical_factorization(&n, &nnz, matrix.data_pointer(), this->workspace.fact.data(), &this->workspace.lfact,
-            this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.lkeep, this->workspace.keep.data(),
-            this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(),
-            this->workspace.rinfo.data());
+         MA57_numerical_factorization(&this->workspace.n, &this->workspace.nnz, matrix_values.data(), this->workspace.fact.data(),
+            &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.lkeep,
+            this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.cntl.data(),
+            this->workspace.info.data(), this->workspace.rinfo.data());
 
          if (is_error_code_insufficient_real_workspace(this->workspace.info[0]) ||
              is_error_code_insufficient_integer_workspace(this->workspace.info[0])) {
@@ -180,9 +168,9 @@ namespace uno {
             std::vector<int> newifact(lnewifact);
             const int enlarge_target = is_real_workspace ? 0 : 1;
 
-            MA57_enlarge_workspace(&n, &enlarge_target, this->workspace.keep.data(), this->workspace.fact.data(), &this->workspace.lfact,
-               newfact.data(), &lnewfact, this->workspace.ifact.data(), &this->workspace.lifact, newifact.data(), &lnewifact,
-               this->workspace.info.data());
+            MA57_enlarge_workspace(&this->workspace.n, &enlarge_target, this->workspace.keep.data(), this->workspace.fact.data(),
+               &this->workspace.lfact, newfact.data(), &lnewfact, this->workspace.ifact.data(), &this->workspace.lifact,
+               newifact.data(), &lnewifact, this->workspace.info.data());
 
             if (is_real_workspace) {
                this->workspace.fact = std::move(newfact);
@@ -197,27 +185,26 @@ namespace uno {
       }
    }
 
-   void MA57Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) {
+   void MA57Solver::solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) {
       // solve
-      const int n = static_cast<int>(matrix.dimension());
-      int nnz = static_cast<int>(matrix.number_nonzeros());
-      const int lrhs = n; // integer, length of rhs
+      const int lrhs = this->workspace.n; // integer, length of rhs
 
       // solve the linear system
       if (this->use_iterative_refinement) {
-         MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &n, &nnz, matrix.data_pointer(), this->row_indices.data(),
-            this->column_indices.data(), this->workspace.fact.data(), &this->workspace.lfact, this->workspace.ifact.data(),
-            &this->workspace.lifact, rhs.data(), result.data(), this->workspace.residuals.data(), this->workspace.work.data(),
-            this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(),
-            this->workspace.rinfo.data());
+         MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz, matrix_values.data(),
+            this->row_indices.data(), this->column_indices.data(), this->workspace.fact.data(), &this->workspace.lfact,
+            this->workspace.ifact.data(), &this->workspace.lifact, rhs.data(), result.data(), this->workspace.residuals.data(),
+            this->workspace.work.data(), this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.cntl.data(),
+            this->workspace.info.data(), this->workspace.rinfo.data());
       }
       else {
          // copy rhs into result (overwritten by MA57)
          result = rhs;
 
-         MA57_linear_solve(&this->workspace.job, &n, this->workspace.fact.data(), &this->workspace.lfact, this->workspace.ifact.data(),
-            &this->workspace.lifact, &this->workspace.nrhs, result.data(), &lrhs, this->workspace.work.data(), &this->workspace.lwork,
-            this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.info.data());
+         MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
+            this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.nrhs, result.data(), &lrhs,
+            this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
+            this->workspace.info.data());
       }
    }
 
@@ -229,20 +216,19 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         subproblem.evaluate_jacobian(this->constraint_jacobian);
+         // subproblem.evaluate_jacobian(this->constraint_jacobian);
       }
 
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // assemble the augmented matrix
-         this->augmented_matrix.reset();
-         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix, this->constraint_jacobian);
+         subproblem.assemble_augmented_matrix(statistics, this->matrix_values);
          // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix, subproblem.dual_regularization_factor(), *this);
+         subproblem.regularize_augmented_matrix(statistics, this->matrix_values, subproblem.dual_regularization_factor(), *this);
 
          // assemble the RHS
          subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);
       }
-      this->solve_indefinite_system(this->augmented_matrix, this->rhs, this->solution);
+      this->solve_indefinite_system(this->matrix_values, this->rhs, this->solution);
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(this->solution, direction);
       if (this->matrix_is_singular()) {
@@ -277,17 +263,5 @@ namespace uno {
 
    size_t MA57Solver::rank() const {
       return static_cast<size_t>(this->workspace.info[24]);
-   }
-
-   // protected member functions
-
-   void MA57Solver::save_sparsity_pattern_internally(const SymmetricMatrix<size_t, double>& matrix) {
-      // build the internal matrix representation
-      this->row_indices.clear();
-      this->column_indices.clear();
-      for (const auto [row_index, column_index, _]: matrix) {
-         this->row_indices.emplace_back(static_cast<int>(row_index + MA57Solver::fortran_shift));
-         this->column_indices.emplace_back(static_cast<int>(column_index + MA57Solver::fortran_shift));
-      }
    }
 } // namespace

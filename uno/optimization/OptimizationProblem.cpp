@@ -33,16 +33,16 @@ namespace uno {
       objective_gradient = iterate.evaluations.objective_gradient;
    }
 
-   void OptimizationProblem::compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+   void OptimizationProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const {
       this->model.compute_jacobian_structure(row_indices, column_indices);
    }
 
-   void OptimizationProblem::compute_hessian_structure(const HessianModel& hessian_model, Vector<size_t>& row_indices,
-         Vector<size_t>& column_indices) const {
+   void OptimizationProblem::compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
+         size_t* column_indices) const {
       hessian_model.compute_structure(this->model, row_indices, column_indices);
    }
 
-   void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, Vector<double>& jacobian_values) const {
+   void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
       //iterate.evaluate_constraint_jacobian(this->model);
       // TODO change this
       //constraint_jacobian = iterate.evaluations.constraint_jacobian;
@@ -172,7 +172,7 @@ namespace uno {
       const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
       return norm(residual_norm, scaled_lagrangian);
    }
-
+   
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints

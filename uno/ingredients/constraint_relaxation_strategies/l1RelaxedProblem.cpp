@@ -84,39 +84,45 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+   void l1RelaxedProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const {
       this->model.compute_jacobian_structure(row_indices, column_indices);
 
       // add the contribution of the elastic variables
       size_t elastic_index = this->model.number_variables;
+      size_t current_index = this->model.number_jacobian_nonzeros();
       for (size_t inequality_index: this->model.get_inequality_constraints()) {
-         row_indices.emplace_back(inequality_index);
-         column_indices.emplace_back(elastic_index);
-         elastic_index++;
+         row_indices[current_index] = inequality_index;
+         column_indices[current_index] = elastic_index;
+         ++elastic_index;
+         ++current_index;
       }
       for (size_t equality_index: this->model.get_equality_constraints()) {
-         row_indices.emplace_back(equality_index);
-         column_indices.emplace_back(elastic_index);
-         row_indices.emplace_back(equality_index);
-         column_indices.emplace_back(elastic_index + 1);
+         row_indices[current_index] = equality_index;
+         column_indices[current_index] = elastic_index;
+         ++current_index;
+         row_indices[current_index] = equality_index;
+         column_indices[current_index] = elastic_index + 1;
          elastic_index += 2;
+         ++current_index;
       }
    }
 
-   void l1RelaxedProblem::compute_hessian_structure(const HessianModel& hessian_model, Vector<size_t>& row_indices,
-         Vector<size_t>& column_indices) const {
+   void l1RelaxedProblem::compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
+         size_t* column_indices) const {
       hessian_model.compute_structure(this->model, row_indices, column_indices);
 
       // diagonal proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+         size_t current_index = hessian_model.number_nonzeros(this->model);
          for (size_t variable_index: Range(this->model.number_variables)) {
-            row_indices.emplace_back(variable_index);
-            column_indices.emplace_back(variable_index);
+            row_indices[current_index] = variable_index;
+            column_indices[current_index] = variable_index;
+            ++current_index;
          }
       }
    }
 
-   void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, Vector<double>& jacobian_values) const {
+   void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
       //iterate.evaluate_constraint_jacobian(this->model);
       // TODO change this
       //constraint_jacobian = iterate.evaluations.constraint_jacobian;
@@ -143,6 +149,7 @@ namespace uno {
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
    void l1RelaxedProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
          const Multipliers& multipliers) const {
+      //throw std::runtime_error("l1RelaxedProblem::evaluate_lagrangian_gradient not implemented yet");
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
 

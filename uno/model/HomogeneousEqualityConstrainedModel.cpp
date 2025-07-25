@@ -74,21 +74,23 @@ namespace uno {
       this->model->evaluate_objective_gradient(x, gradient);
    }
 
-   void HomogeneousEqualityConstrainedModel::compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+   void HomogeneousEqualityConstrainedModel::compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const {
       this->model->compute_jacobian_structure(row_indices, column_indices);
 
       // add the slack contributions
+      size_t current_index = this->model->number_jacobian_nonzeros();
       for (const auto [constraint_index, slack_index]: this->get_slacks()) {
-         row_indices.emplace_back(constraint_index);
-         column_indices.emplace_back(slack_index);
+         row_indices[current_index] = constraint_index;
+         column_indices[current_index] = slack_index;
+         ++current_index;
       }
    }
 
-   void HomogeneousEqualityConstrainedModel::compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+   void HomogeneousEqualityConstrainedModel::compute_hessian_structure(size_t* row_indices, size_t* column_indices) const {
       this->model->compute_hessian_structure(row_indices, column_indices);
    }
 
-   void HomogeneousEqualityConstrainedModel::evaluate_constraint_jacobian(const Vector<double>& x, Vector<double>& jacobian_values) const {
+   void HomogeneousEqualityConstrainedModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
       this->model->evaluate_constraint_jacobian(x, jacobian_values);
 
       // add the slack contributions

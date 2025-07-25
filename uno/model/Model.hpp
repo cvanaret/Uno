@@ -42,11 +42,11 @@ namespace uno {
       virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
 
       // structures of Jacobian and Hessian
-      virtual void compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const = 0;
-      virtual void compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const = 0;
+      virtual void compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const = 0;
+      virtual void compute_hessian_structure(size_t* row_indices, size_t* column_indices) const = 0;
 
       // numerical evaluations of Jacobian and Hessian
-      virtual void evaluate_constraint_jacobian(const Vector<double>& x, Vector<double>& jacobian_values) const = 0;
+      virtual void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const = 0;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          Vector<double>& hessian_values) const = 0;
       // here we use pointers, since the vector and the result may be provided by a low-level subproblem solver

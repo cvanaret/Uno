@@ -119,35 +119,39 @@ namespace uno {
       gradient.scale(this->objective_sign);
    }
 
-   void AMPLModel::compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+   void AMPLModel::compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const {
+      size_t current_index = 0;
       for (size_t constraint_index: Range(this->number_constraints)) {
          cgrad* asl_variables_tmp = this->asl->i.Cgrad_[constraint_index];
          while (asl_variables_tmp != nullptr) {
             const size_t variable_index = static_cast<size_t>(asl_variables_tmp->varno);
-            row_indices.emplace_back(constraint_index);
-            column_indices.emplace_back(variable_index);
+            row_indices[current_index] = constraint_index;
+            column_indices[current_index] = variable_index;
             asl_variables_tmp = asl_variables_tmp->next;
+            ++current_index;
          }
       }
    }
 
-   void AMPLModel::compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+   void AMPLModel::compute_hessian_structure(size_t* row_indices, size_t* column_indices) const {
       const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
       const fint* asl_row_index = this->asl->i.sputinfo_->hrownos;
+      size_t current_index = 0;
       for (size_t column_index: Range(this->number_variables)) {
          for (size_t nonzero_index: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
             const size_t row_index = static_cast<size_t>(asl_row_index[nonzero_index]);
-            row_indices.emplace_back(row_index);
-            column_indices.emplace_back(column_index);
+            row_indices[current_index] = row_index;
+            column_indices[current_index] = column_index;
+            ++current_index;
          }
       }
    }
 
-   void AMPLModel::evaluate_constraint_jacobian(const Vector<double>& x, Vector<double>& jacobian_values) const {
+   void AMPLModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
       for (size_t constraint_index: Range(this->number_constraints)) {
          fint error_flag = 0;
          (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(constraint_index), const_cast<double*>(x.data()),
-            jacobian_values.data(), &error_flag);
+            jacobian_values, &error_flag);
          if (0 < error_flag) {
             throw GradientEvaluationError();
          }

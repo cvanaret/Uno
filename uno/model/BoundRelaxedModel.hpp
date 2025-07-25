@@ -27,15 +27,15 @@ namespace uno {
       }
 
       // structures of Jacobian and Hessian
-      void compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const override {
+      void compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const override {
          this->model->compute_jacobian_structure(row_indices, column_indices);
       }
 
-      void compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const override {
+      void compute_hessian_structure(size_t* row_indices, size_t* column_indices) const override {
          this->model->compute_hessian_structure(row_indices, column_indices);
       }
 
-      void evaluate_constraint_jacobian(const Vector<double>& x, Vector<double>& jacobian_values) const override {
+      void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override {
          this->model->evaluate_constraint_jacobian(x, jacobian_values);
       }
 

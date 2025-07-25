@@ -61,7 +61,7 @@ namespace uno {
    void Iterate::evaluate_constraint_jacobian(const Model& model) {
       if (!this->is_constraint_jacobian_computed) {
          if (model.is_constrained()) {
-            model.evaluate_constraint_jacobian(this->primals, this->evaluations.jacobian_values);
+            model.evaluate_constraint_jacobian(this->primals, this->evaluations.jacobian_values.data());
             Iterate::number_eval_jacobian++;
          }
          this->is_constraint_jacobian_computed = true;
