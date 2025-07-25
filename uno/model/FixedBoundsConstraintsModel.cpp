@@ -47,24 +47,26 @@ namespace uno {
       this->model->evaluate_objective_gradient(x, gradient);
    }
 
-   void FixedBoundsConstraintsModel::compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+   void FixedBoundsConstraintsModel::compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const {
       // original constraints
       this->model->compute_jacobian_structure(row_indices, column_indices);
 
       // fixed variables (as linear constraints)
       size_t constraint_index = this->model->number_constraints;
+      size_t current_index = this->model->number_jacobian_nonzeros();
       for (size_t fixed_variable_index: this->model->get_fixed_variables()) {
-         row_indices.emplace_back(constraint_index);
-         column_indices.emplace_back(fixed_variable_index);
-         constraint_index++;
+         row_indices[current_index] = constraint_index;
+         column_indices[current_index] = fixed_variable_index;
+         ++constraint_index;
+         ++current_index;
       }
    }
 
-   void FixedBoundsConstraintsModel::compute_hessian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const {
+   void FixedBoundsConstraintsModel::compute_hessian_structure(size_t* row_indices, size_t* column_indices) const {
       this->model->compute_hessian_structure(row_indices, column_indices);
    }
 
-   void FixedBoundsConstraintsModel::evaluate_constraint_jacobian(const Vector<double>& x, Vector<double>& jacobian_values) const {
+   void FixedBoundsConstraintsModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
       this->model->evaluate_constraint_jacobian(x, jacobian_values);
       // add the fixed variables
       size_t nonzero_index = this->model->number_jacobian_nonzeros();

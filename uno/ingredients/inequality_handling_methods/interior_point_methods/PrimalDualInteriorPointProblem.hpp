@@ -20,15 +20,15 @@ namespace uno {
       void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
 
       // dense objective gradient
-      void compute_jacobian_structure(Vector<size_t>& row_indices, Vector<size_t>& column_indices) const override;
+      void compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const override;
       void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const override;
 
       // structures of Jacobian and Hessian
-      void compute_hessian_structure(const HessianModel& hessian_model, Vector<size_t>& row_indices,
-         Vector<size_t>& column_indices) const override;
+      void compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
+         size_t* column_indices) const override;
 
       // numerical evaluations of Jacobian and Hessian
-      void evaluate_constraint_jacobian(Iterate& iterate, Vector<double>& jacobian_values) const override;
+      void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, Vector<double>& hessian_values) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* vector, const Multipliers& multipliers,

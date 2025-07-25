@@ -70,11 +70,9 @@ namespace uno {
       this->lower_bounds.resize(subproblem.number_variables + subproblem.number_constraints);
       this->upper_bounds.resize(subproblem.number_variables + subproblem.number_constraints);
       this->constraints.resize(subproblem.number_constraints);
-      this->linear_objective.resize(subproblem.number_variables);
-      this->constraint_jacobian.resize(subproblem.number_constraints, subproblem.number_variables);
       // Jacobian + objective gradient
-      this->bqpd_jacobian.resize(subproblem.number_jacobian_nonzeros() + subproblem.number_variables);
-      this->bqpd_jacobian_sparsity.resize(subproblem.number_jacobian_nonzeros() + subproblem.number_variables +
+      this->gradients.resize(subproblem.number_jacobian_nonzeros() + subproblem.number_variables);
+      this->gradient_structure.resize(subproblem.number_jacobian_nonzeros() + subproblem.number_variables +
          subproblem.number_constraints + 3);
       // default active set
       this->active_set.resize(subproblem.number_variables + subproblem.number_constraints);
@@ -94,7 +92,7 @@ namespace uno {
          this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_values.resize(number_regularized_hessian_nonzeros);
-         subproblem.compute_regularized_hessian_structure(this->hessian_row_indices, this->hessian_column_indices);
+         subproblem.compute_regularized_hessian_structure(this->hessian_row_indices.data(), this->hessian_column_indices.data());
       }
 
       // allocation of integer and real workspaces
@@ -133,12 +131,13 @@ namespace uno {
       WSC.mxlws = static_cast<int>(this->mxlws);
 
       // evaluate the functions based on warmstart information
+      // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
       if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->linear_objective);
+         subproblem.evaluate_objective_gradient(this->gradients);
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         // TODO subproblem.evaluate_jacobian(this->constraint_jacobian);
+         subproblem.evaluate_jacobian(this->gradients.data() + subproblem.number_variables);
       }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->evaluate_hessian = true;
@@ -164,17 +163,17 @@ namespace uno {
 
       // save objective gradient and constraint Jacobian into BQPD workspace
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->save_gradients_into_workspace(subproblem.number_variables, subproblem.number_constraints);
+         this->compute_gradient_structure(subproblem);
       }
       this->hide_pointers_in_workspace(statistics, subproblem);
    }
 
    void BQPDSolver::display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const {
       DEBUG << "Subproblem:\n";
-      DEBUG << "Hessian values: " << this->hessian_values;
-      DEBUG << "objective gradient: " << this->linear_objective;
+      DEBUG << "Hessian values: " << this->hessian_values << '\n';
+      DEBUG << "objective gradient: " << view(this->gradients, 0, subproblem.number_variables) << '\n';
       for (size_t constraint_index: Range(subproblem.number_constraints)) {
-         DEBUG << "gradient c" << constraint_index << ": " << this->constraint_jacobian[constraint_index];
+         //DEBUG << "gradient c" << constraint_index << ": " << this->constraint_jacobian[constraint_index];
       }
       for (size_t variable_index: Range(subproblem.number_variables)) {
          DEBUG << "d" << variable_index << " in [" << this->lower_bounds[variable_index] << ", " << this->upper_bounds[variable_index] << "]\n";
@@ -223,7 +222,7 @@ namespace uno {
       bool termination = false;
       while (!termination) {
          DEBUG2 << "Running BQPD\n";
-         BQPD(&n, &m, &this->k, &this->kmax, this->bqpd_jacobian.data(), this->bqpd_jacobian_sparsity.data(), direction.primals.data(),
+         BQPD(&n, &m, &this->k, &this->kmax, this->gradients.data(), this->gradient_structure.data(), direction.primals.data(),
             this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
             this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp,
             &this->peq_solution, this->ws.data(), this->lws.data(), &mode_integer, &this->ifail, this->info.data(),
@@ -274,36 +273,37 @@ namespace uno {
       WSC.ll += sizeof(intptr_t);
    }
 
-   void BQPDSolver::save_gradients_into_workspace(size_t number_variables, size_t number_constraints) {
-      size_t current_index = 0;
-      for (size_t variable_index: Range(number_variables)) {
-         assert(current_index < this->bqpd_jacobian.size() && "The allocation of bqpd_jacobian was not sufficient");
-         assert(current_index + 1 < this->bqpd_jacobian_sparsity.size() && "The allocation of bqpd_jacobian_sparsity was not sufficient");
-         this->bqpd_jacobian[current_index] = this->linear_objective[variable_index];
-         this->bqpd_jacobian_sparsity[current_index + 1] = static_cast<int>(variable_index) + this->fortran_shift;
+   void BQPDSolver::compute_gradient_structure(const Subproblem& subproblem) {
+      // leave first element free
+      size_t current_index = 1;
+      for (size_t variable_index: Range(subproblem.number_variables)) {
+         this->gradient_structure[current_index] = static_cast<int>(variable_index) + this->fortran_shift;
          current_index++;
       }
-      for (size_t constraint_index: Range(number_constraints)) {
+      // get the sparsity in COO format
+      Vector<size_t> coo_row_indices(subproblem.number_jacobian_nonzeros());
+      Vector<size_t> coo_column_indices(subproblem.number_jacobian_nonzeros());
+      subproblem.compute_jacobian_structure(coo_row_indices.data(), coo_column_indices.data());
+      for (size_t constraint_index: Range(subproblem.number_constraints)) {
+         /*
          for (const auto [variable_index, derivative]: this->constraint_jacobian[constraint_index]) {
-            assert(current_index < this->bqpd_jacobian.size() && "The allocation of bqpd_jacobian was not sufficient");
-            assert(current_index + 1 < this->bqpd_jacobian_sparsity.size() && "The allocation of bqpd_jacobian_sparsity was not sufficient");
-            this->bqpd_jacobian[current_index] = derivative;
-            this->bqpd_jacobian_sparsity[current_index + 1] = static_cast<int>(variable_index) + this->fortran_shift;
+            this->gradient_structure[current_index] = static_cast<int>(variable_index) + this->fortran_shift;
             current_index++;
          }
+         */
       }
       current_index++;
-      this->bqpd_jacobian_sparsity[0] = static_cast<int>(current_index);
+      this->gradient_structure[0] = static_cast<int>(current_index);
       // header
       size_t size = 1;
-      this->bqpd_jacobian_sparsity[current_index] = static_cast<int>(size);
+      this->gradient_structure[current_index] = static_cast<int>(size);
       current_index++;
-      size += this->linear_objective.size();
-      this->bqpd_jacobian_sparsity[current_index] = static_cast<int>(size);
+      size += subproblem.number_variables;
+      this->gradient_structure[current_index] = static_cast<int>(size);
       current_index++;
-      for (size_t constraint_index: Range(number_constraints)) {
-         size += this->constraint_jacobian[constraint_index].size();
-         this->bqpd_jacobian_sparsity[current_index] = static_cast<int>(size);
+      for (size_t constraint_index: Range(subproblem.number_constraints)) {
+         // TODO size += this->constraint_jacobian[constraint_index].size();
+         this->gradient_structure[current_index] = static_cast<int>(size);
          current_index++;
       }
    }
