@@ -18,36 +18,33 @@ namespace uno {
       this->highs_solver.setOptionValue("output_flag", "false");
    }
 
-   void HiGHSSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         const RegularizationStrategy<double>& regularization_strategy) {
+   void HiGHSSolver::initialize_memory(const Subproblem& subproblem) {
       // determine whether the subproblem has curvature. For the moment, HiGHS can only solve LPs
-      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
-      const bool regularize = !hessian_model.is_positive_definite() && regularization_strategy.performs_primal_regularization();
-      const size_t regularization_size = problem.get_number_original_variables();
-      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros +
-         (regularize ? regularization_size : 0);
+      const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+      const size_t regularization_size = subproblem.regularization_size();
+      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
       if (0 < number_regularized_hessian_nonzeros) {
          throw std::runtime_error("The subproblem has curvature. For the moment, HiGHS can only solve LPs");
       }
 
-      this->constraints.resize(problem.number_constraints);
-      this->linear_objective.resize(problem.number_variables);
-      this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
+      this->constraints.resize(subproblem.number_constraints);
+      this->linear_objective.resize(subproblem.number_variables);
+      this->constraint_jacobian.resize(subproblem.number_constraints, subproblem.number_variables);
       this->model.lp_.sense_ = ObjSense::kMinimize;
       this->model.lp_.offset_ = 0.;
       // the linear part of the objective is a dense vector
-      this->model.lp_.col_cost_.resize(problem.number_variables);
+      this->model.lp_.col_cost_.resize(subproblem.number_variables);
       // variable bounds
-      this->model.lp_.col_lower_.resize(problem.number_variables);
-      this->model.lp_.col_upper_.resize(problem.number_variables);
+      this->model.lp_.col_lower_.resize(subproblem.number_variables);
+      this->model.lp_.col_upper_.resize(subproblem.number_variables);
       // constraint bounds
-      this->model.lp_.row_lower_.resize(problem.number_constraints);
-      this->model.lp_.row_upper_.resize(problem.number_constraints);
+      this->model.lp_.row_lower_.resize(subproblem.number_constraints);
+      this->model.lp_.row_upper_.resize(subproblem.number_constraints);
       // constraint matrix in CSR format (each row is a constraint gradient)
       this->model.lp_.a_matrix_.format_ = MatrixFormat::kRowwise;
-      this->model.lp_.a_matrix_.value_.reserve(problem.number_jacobian_nonzeros());
-      this->model.lp_.a_matrix_.index_.reserve(problem.number_jacobian_nonzeros());
-      this->model.lp_.a_matrix_.start_.reserve(problem.number_variables + 1);
+      this->model.lp_.a_matrix_.value_.reserve(subproblem.number_jacobian_nonzeros());
+      this->model.lp_.a_matrix_.index_.reserve(subproblem.number_jacobian_nonzeros());
+      this->model.lp_.a_matrix_.start_.reserve(subproblem.number_variables + 1);
       // TODO Hessian
       // this->hessian = SymmetricMatrix<size_t, double>("CSC", problem.number_variables, 0, 0); // TODO
    }
@@ -72,12 +69,11 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         subproblem.evaluate_jacobian(this->constraint_jacobian);
+         // TODO subproblem.evaluate_jacobian(this->constraint_jacobian);
       }
       // evaluate the Hessian and regularize it TODO: store it in HiGHS format
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->hessian.reset();
-         subproblem.compute_regularized_hessian(statistics, this->hessian);
+         // subproblem.compute_regularized_hessian(statistics, this->hessian);
       }
 
       // variable bounds

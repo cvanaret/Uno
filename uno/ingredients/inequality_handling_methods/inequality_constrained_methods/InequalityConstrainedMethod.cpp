@@ -18,9 +18,9 @@ namespace uno {
          InequalityHandlingMethod(), options(options) {
    }
 
-   void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, Iterate& /*current_iterate*/,
-         const Multipliers& /*current_multipliers*/, HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy, double /*trust_region_radius*/) {
+   void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
       this->initial_point.resize(problem.number_variables);
 
       // allocate the LP/QP solver, depending on the presence of curvature in the subproblem
@@ -36,7 +36,9 @@ namespace uno {
          DEBUG << "Curvature in the subproblems, allocating a QP solver\n";
          this->solver = QPSolverFactory::create(this->options);
       }
-      this->solver->initialize_memory(problem, hessian_model, regularization_strategy);
+      const Subproblem subproblem{problem, current_iterate, current_multipliers, hessian_model, regularization_strategy,
+         trust_region_radius};
+      this->solver->initialize_memory(subproblem);
    }
 
    void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {

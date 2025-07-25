@@ -16,24 +16,24 @@ namespace uno {
          // do nothing
       }
 
-      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, Vector<double>& /*hessian_values*/,
+      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, const Vector<double>& /*hessian_values*/,
             const Inertia& /*expected_inertia*/) override {
          // do nothing
       }
 
-      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, Vector<double>& /*hessian_values*/,
+      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, const Vector<double>& /*hessian_values*/,
             const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) override {
          // do nothing
       }
 
       void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
-            Vector<double>& /*augmented_matrix_values*/, ElementType /*dual_regularization_parameter*/,
+            const Vector<double>& /*augmented_matrix_values*/, ElementType /*dual_regularization_parameter*/,
             const Inertia& /*expected_inertia*/) override {
          // do nothing
       }
 
       void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
-            Vector<double>& /*augmented_matrix_values*/, ElementType /*dual_regularization_parameter*/,
+            const Vector<double>& /*augmented_matrix_values*/, ElementType /*dual_regularization_parameter*/,
             const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) override {
          // do nothing
       }

@@ -9,9 +9,7 @@
 #include <vector>
 #include "ingredients/subproblem_solvers/QPSolver.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
-#include "linear_algebra/COOFormat.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -49,8 +47,7 @@ namespace uno {
    public:
       explicit BQPDSolver(const Options& options);
 
-      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         const RegularizationStrategy<double>& regularization_strategy) override;
+      void initialize_memory(const Subproblem& subproblem) override;
 
       void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override;
@@ -64,7 +61,10 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian{};
       std::vector<double> bqpd_jacobian{};
       std::vector<int> bqpd_jacobian_sparsity{};
-      SparseSymmetricMatrix<COOFormat<size_t, double>> hessian{};
+      // sparse COO matrix
+      Vector<size_t> hessian_row_indices{};
+      Vector<size_t> hessian_column_indices{};
+      Vector<double> hessian_values{};
 
       int kmax{0};
       int mlp{1000};

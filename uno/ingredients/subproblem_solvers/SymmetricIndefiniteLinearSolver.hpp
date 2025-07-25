@@ -11,8 +11,6 @@ namespace uno {
    class Direction;
    class Statistics;
    class Subproblem;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
    class WarmstartInformation;
@@ -25,7 +23,7 @@ namespace uno {
 
       virtual void initialize(const Subproblem& subproblem) = 0;
 
-      virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
+      virtual void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<ElementType>& rhs,
          Vector<ElementType>& result) = 0;
       virtual void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) = 0;

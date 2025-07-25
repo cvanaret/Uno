@@ -7,9 +7,7 @@
 #include <array>
 #include <vector>
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/COOFormat.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -43,12 +41,6 @@ namespace uno {
       MA57Workspace() = default;
    };
 
-   /*! \class MA57Solver
-    * \brief Interface for MA57
-    * see https://github.com/YimingYAN/linSolve
-    *
-    *  Interface to the symmetric indefinite linear solver MA57
-    */
    class MA57Solver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
       MA57Solver();
@@ -56,9 +48,9 @@ namespace uno {
 
       void initialize(const Subproblem& subproblem) override;
 
-      void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
-      void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
-      void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
+      void do_symbolic_analysis() override;
+      void do_numerical_factorization(const Vector<double>& matrix_values) override;
+      void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) override;
       void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) override;
 
@@ -69,7 +61,6 @@ namespace uno {
       [[nodiscard]] size_t rank() const override;
 
    private:
-      size_t dimension{};
       MA57Workspace workspace{};
 
       // evaluations
@@ -78,16 +69,15 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 
       // augmented system
-      std::vector<int> row_indices;
-      std::vector<int> column_indices;
-      Vector<double> matrix_values;
+      std::vector<int> row_indices{};
+      std::vector<int> column_indices{};
+      Vector<double> matrix_values{};
       Vector<double> rhs{};
       Vector<double> solution{};
 
       static constexpr size_t fortran_shift{1};
 
       bool use_iterative_refinement{false};
-      void save_sparsity_pattern_internally(const SymmetricMatrix<size_t, double>& matrix);
    };
 } // namespace
 

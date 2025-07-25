@@ -7,9 +7,7 @@
 #include <vector>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "dmumps_c.h"
-#include "linear_algebra/COOFormat.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -20,9 +18,9 @@ namespace uno {
 
       void initialize(const Subproblem& subproblem) override;
 
-      void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
-      void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
-      void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
+      void do_symbolic_analysis() override;
+      void do_numerical_factorization(const Vector<double>& matrix_values) override;
+      void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) override;
       void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) override;
 
@@ -34,12 +32,7 @@ namespace uno {
       [[nodiscard]] size_t rank() const override;
 
    protected:
-      DMUMPS_STRUC_C mumps_structure{};
-      size_t dimension{};
-
-      // internal matrix representation
-      std::vector<int> row_indices{};
-      std::vector<int> column_indices{};
+      DMUMPS_STRUC_C workspace{};
 
       // evaluations
       Vector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
@@ -47,7 +40,9 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 
       // augmented system
-      SparseSymmetricMatrix<COOFormat<size_t, double>> augmented_matrix{};
+      std::vector<int> row_indices{};
+      std::vector<int> column_indices{};
+      Vector<double> matrix_values{};
       Vector<double> rhs{};
       Vector<double> solution{};
 
@@ -60,7 +55,6 @@ namespace uno {
       static const int GENERAL_SYMMETRIC = 2;
 
       const size_t fortran_shift{1};
-      void save_sparsity_to_local_format(const SymmetricMatrix<size_t, double>& matrix);
    };
 } // namespace
 

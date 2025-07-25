@@ -8,7 +8,6 @@
 #include "Highs.h"
 #include "linear_algebra/COOFormat.hpp"
 #include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -19,8 +18,7 @@ namespace uno {
    public:
       explicit HiGHSSolver(const Options& options);
 
-      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         const RegularizationStrategy<double>& regularization_strategy) override;
+      void initialize_memory(const Subproblem& subproblem) override;
 
       void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override;
@@ -33,7 +31,6 @@ namespace uno {
       std::vector<double> constraints{};
       Vector<double> linear_objective{};
       RectangularMatrix<double> constraint_jacobian{};
-      SparseSymmetricMatrix<COOFormat<size_t, double>> hessian{};
 
       const bool print_subproblem;
 
