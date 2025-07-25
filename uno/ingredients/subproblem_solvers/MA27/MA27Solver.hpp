@@ -44,9 +44,9 @@ namespace uno {
 
       void initialize(const Subproblem& subproblem) override;
 
-      void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
-      void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
-      void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
+      void do_symbolic_analysis() override;
+      void do_numerical_factorization(const Vector<double>& matrix_values) override;
+      void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) override;
       void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) override;
 
@@ -57,9 +57,6 @@ namespace uno {
       [[nodiscard]] size_t rank() const override;
 
    private:
-      // internal matrix representation
-      std::vector<int> row_indices{};          // row index of input
-      std::vector<int> column_indices{};          // col index of input
       MA27Workspace workspace{};
 
       // evaluations
@@ -68,14 +65,15 @@ namespace uno {
       RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 
       // augmented system
-      SparseSymmetricMatrix<COOFormat<size_t, double>> augmented_matrix{};
+      std::vector<int> row_indices{};          // row index of input
+      std::vector<int> column_indices{};          // col index of input
+      Vector<double> matrix_values{};
       Vector<double> rhs{};
       Vector<double> solution{};
 
       static constexpr size_t fortran_shift{1};
 
       // bool use_iterative_refinement{false}; // Not sure how to do this with ma27
-      void save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix);
       void check_factorization_status();
    };
 } // namespace

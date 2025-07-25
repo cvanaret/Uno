@@ -91,32 +91,23 @@ namespace uno {
       this->workspace.icntl[8] = 1;
    }
 
-   void MA57Solver::initialize(const Subproblem& subproblem) {
-      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
+   void MA57Solver::initialize_memory(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros,
+         size_t regularization_size) {
+      const size_t dimension = number_variables + number_constraints;
+      const size_t number_nonzeros = number_hessian_nonzeros + regularization_size;
       this->dimension = dimension;
 
-      // evaluations
-      this->objective_gradient.resize(subproblem.number_variables);
-      this->constraints.resize(subproblem.number_constraints);
-      this->constraint_jacobian.resize(subproblem.number_constraints, subproblem.number_variables);
-
-      // augmented system
-      const size_t number_augmented_system_nonzeros = subproblem.number_augmented_system_nonzeros();
-      const size_t regularization_size = subproblem.regularization_size();
-      const size_t number_nonzeros = number_augmented_system_nonzeros + regularization_size;
-      // compute the COO sparse representation
+      // reserve the COO sparse representation
       this->row_indices.reserve(number_nonzeros);
       this->column_indices.reserve(number_nonzeros);
-      // use temporary vectors of size_t
-      Vector<size_t> tmp_row_indices(number_nonzeros);
-      Vector<size_t> tmp_column_indices(number_nonzeros);
-      subproblem.compute_regularized_augmented_matrix_structure(tmp_row_indices, tmp_column_indices);
-      // build vectors of int
-      for (size_t nonzero_index: Range(number_nonzeros)) {
-         this->row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
-      }
-      this->matrix_values.resize(number_nonzeros);
+
+      // evaluations
+      this->objective_gradient.resize(number_variables);
+      this->constraints.resize(number_constraints);
+      this->constraint_jacobian.resize(number_constraints, number_variables);
+
+      // augmented system
+      this->augmented_matrix = SparseSymmetricMatrix<COOFormat<size_t, double>>(dimension, number_hessian_nonzeros, regularization_size);
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
 
@@ -238,13 +229,15 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
+         subproblem.evaluate_jacobian(this->constraint_jacobian);
       }
 
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // assemble the augmented matrix
-         subproblem.assemble_augmented_matrix(statistics, this->matrix_values);
+         this->augmented_matrix.reset();
+         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix, this->constraint_jacobian);
          // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, this->matrix_values, subproblem.dual_regularization_factor(), *this);
+         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix, subproblem.dual_regularization_factor(), *this);
 
          // assemble the RHS
          subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);

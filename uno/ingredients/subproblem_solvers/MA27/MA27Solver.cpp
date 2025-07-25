@@ -125,7 +125,6 @@ namespace uno {
 
    void MA27Solver::initialize(const Subproblem& subproblem) {
       const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
-      this->workspace.n = static_cast<int>(dimension);
 
       // evaluations
       this->objective_gradient.resize(subproblem.number_variables);
@@ -139,29 +138,26 @@ namespace uno {
       // reserve the COO representation
       this->row_indices.resize(number_nonzeros);
       this->column_indices.resize(number_nonzeros);
-      this->workspace.nnz = static_cast<int>(number_nonzeros);
-      this->augmented_matrix = SparseSymmetricMatrix<COOFormat<size_t, double>>(dimension, number_augmented_system_nonzeros,
-         regularization_size);
+      Vector<size_t> tmp_row_indices(number_nonzeros);
+      Vector<size_t> tmp_column_indices(number_nonzeros);
+      subproblem.compute_regularized_augmented_matrix_structure(tmp_row_indices, tmp_column_indices);
+      // build vectors of int
+      for (size_t nonzero_index: Range(number_nonzeros)) {
+         this->row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
+         this->column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
+      }
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
 
+      // workspace
+      this->workspace.n = static_cast<int>(dimension);
+      this->workspace.nnz = static_cast<int>(number_nonzeros);
       this->workspace.iw.resize((2 * number_nonzeros + 3 * dimension + 1) * 6 / 5); // 20% more than 2*nnz + 3*n + 1
       this->workspace.ikeep.resize(3 * dimension);
       this->workspace.iw1.resize(2 * dimension);
    }
 
-   void MA27Solver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
-      assert(matrix.dimension() <= this->workspace.iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(matrix.number_nonzeros() <= this->row_indices.capacity() &&
-         "MA27Solver: the number of nonzeros of the matrix is larger than the preallocated size");
-
-      // build the internal matrix representation
-      save_matrix_to_local_format(matrix);
-
-      this->workspace.n = static_cast<int>(matrix.dimension());
-      this->workspace.nnz = static_cast<int>(matrix.number_nonzeros());
-
-      // symbolic analysis
+   void MA27Solver::do_symbolic_analysis() {
       int liw = static_cast<int>(this->workspace.iw.size());
       MA27_symbolic_analysis(&this->workspace.n, &this->workspace.nnz,              /* size info */
          this->row_indices.data(), this->column_indices.data(),                     /* matrix indices */
@@ -179,12 +175,9 @@ namespace uno {
       }
    }
 
-   void MA27Solver::do_numerical_factorization([[maybe_unused]] const SymmetricMatrix<size_t, double>& matrix) {
-      assert(matrix.dimension() <= this->workspace.iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(this->workspace.nnz == static_cast<int>(matrix.number_nonzeros()) && "MA27Solver: the numbers of nonzeros do not match");
-
+   void MA27Solver::do_numerical_factorization(const Vector<double>& matrix_values) {
       // initialize factor with the entries of the matrix. It will be modified by MA27BD
-      std::copy(matrix.data_pointer(), matrix.data_pointer() + matrix.number_nonzeros(), this->workspace.factor.begin());
+      std::copy_n(matrix_values.data(), this->workspace.nnz, this->workspace.factor.begin());
 
       // numerical factorization
       // may fail because of insufficient space. In this case, more memory is allocated and the factorization tried again
@@ -221,7 +214,7 @@ namespace uno {
       this->check_factorization_status();
    }
 
-   void MA27Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& /*matrix*/, const Vector<double>& rhs,
+   void MA27Solver::solve_indefinite_system(const Vector<double>& /*matrix_values*/, const Vector<double>& rhs,
          Vector<double>& result) {
       int la = static_cast<int>(this->workspace.factor.size());
       int liw = static_cast<int>(this->workspace.iw.size());
@@ -247,20 +240,19 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         subproblem.evaluate_jacobian(this->constraint_jacobian);
+         // TODO subproblem.evaluate_jacobian(this->constraint_jacobian);
       }
 
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // assemble the augmented matrix
-         this->augmented_matrix.reset();
-         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix, this->constraint_jacobian);
+         subproblem.assemble_augmented_matrix(statistics, this->matrix_values);
          // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix, subproblem.dual_regularization_factor(), *this);
+         subproblem.regularize_augmented_matrix(statistics, this->matrix_values, subproblem.dual_regularization_factor(), *this);
 
          // assemble the RHS
          subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);
       }
-      this->solve_indefinite_system(this->augmented_matrix, this->rhs, this->solution);
+      this->solve_indefinite_system(this->matrix_values, this->rhs, this->solution);
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(this->solution, direction);
       if (this->matrix_is_singular()) {
@@ -290,18 +282,6 @@ namespace uno {
       return (this->workspace.info[eINFO::IFLAG] == eIFLAG::RANK_DEFICIENT) ?
          static_cast<size_t>(this->workspace.info[eINFO::IERROR]) :
          static_cast<size_t>(this->workspace.n);
-   }
-
-   void MA27Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
-      // build the internal matrix representation
-      this->row_indices.clear();
-      this->column_indices.clear();
-      this->workspace.factor.clear();
-      for (const auto [row_index, column_index, element]: matrix) {
-         this->row_indices.emplace_back(static_cast<int>(row_index + MA27Solver::fortran_shift));
-         this->column_indices.emplace_back(static_cast<int>(column_index + MA27Solver::fortran_shift));
-         this->workspace.factor.emplace_back(element);
-      }
    }
 
    void MA27Solver::check_factorization_status() {

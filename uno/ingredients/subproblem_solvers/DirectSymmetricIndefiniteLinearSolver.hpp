@@ -14,8 +14,8 @@ namespace uno {
       DirectSymmetricIndefiniteLinearSolver() = default;
       ~DirectSymmetricIndefiniteLinearSolver() override = default;
 
-      virtual void do_symbolic_analysis(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
-      virtual void do_numerical_factorization(const SymmetricMatrix<IndexType, ElementType>& matrix) = 0;
+      virtual void do_symbolic_analysis() = 0;
+      virtual void do_numerical_factorization(const Vector<double>& matrix_values) = 0;
 
       [[nodiscard]] virtual Inertia get_inertia() const = 0;
       [[nodiscard]] virtual size_t number_negative_eigenvalues() const = 0;

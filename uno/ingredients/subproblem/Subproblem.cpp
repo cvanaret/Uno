@@ -111,8 +111,13 @@ namespace uno {
    void Subproblem::regularize_augmented_matrix(Statistics& statistics, Vector<double>& augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const {
       const Inertia expected_inertia{this->number_variables, this->number_constraints, 0};
+      const size_t number_hessian_nonzeros = this->problem.number_hessian_nonzeros(this->hessian_model);
+      auto primal_regularization = view(augmented_matrix_values, number_hessian_nonzeros,
+         number_hessian_nonzeros + this->get_primal_regularization_variables().size());
+      auto dual_regularization = view(augmented_matrix_values, number_hessian_nonzeros + this->get_primal_regularization_variables().size(),
+         number_hessian_nonzeros + this->get_primal_regularization_variables().size() + this->get_dual_regularization_constraints().size());
       this->regularization_strategy.regularize_augmented_matrix(statistics, *this, augmented_matrix_values,
-         dual_regularization_parameter, expected_inertia, linear_solver);
+         dual_regularization_parameter, expected_inertia, linear_solver, primal_regularization, dual_regularization);
    }
 
    void Subproblem::assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
@@ -194,6 +199,14 @@ namespace uno {
 
    const Collection<size_t>& Subproblem::get_dual_regularization_constraints() const {
       return this->problem.get_dual_regularization_constraints();
+   }
+
+   size_t Subproblem::number_jacobian_nonzeros() const {
+      return this->problem.number_jacobian_nonzeros();
+   }
+
+   size_t Subproblem::number_hessian_nonzeros() const {
+      return this->problem.number_hessian_nonzeros(this->hessian_model);
    }
 
    size_t Subproblem::number_augmented_system_nonzeros() const {

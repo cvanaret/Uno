@@ -157,10 +157,13 @@ namespace uno {
 
    bool FeasibilityRestoration::can_switch_to_optimality_phase(const Iterate& current_iterate, const GlobalizationStrategy& globalization_strategy,
          const Model& model, const Iterate& trial_iterate, const Direction& direction, double step_length) const {
+      /*
       return globalization_strategy.is_infeasibility_sufficiently_reduced(this->reference_optimality_progress, trial_iterate.progress) &&
-         (!this->switch_to_optimality_requires_linearized_feasibility /*||
+         (!this->switch_to_optimality_requires_linearized_feasibility ||
          model.constraint_violation(current_iterate.evaluations.constraints + step_length*(current_iterate.evaluations.constraint_jacobian *
-         direction.primals), this->residual_norm) <= this->linear_feasibility_tolerance*/);
+         direction.primals), this->residual_norm) <= this->linear_feasibility_tolerance);
+         */
+      throw std::runtime_error("FeasibilityRestoration::can_switch_to_optimality_phase not implemented");
    }
 
    void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy,

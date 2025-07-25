@@ -52,6 +52,8 @@ namespace uno {
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
    void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
          const Multipliers& multipliers) const {
+      throw std::runtime_error("OptimizationProblem::evaluate_lagrangian_gradient not implemented");
+      /*
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
 
@@ -67,13 +69,13 @@ namespace uno {
             }
          }
       }
-      */
 
       // bound constraints of original variables
       for (size_t variable_index: Range(this->number_variables)) {
          lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
                                                                           multipliers.upper_bounds[variable_index]);
       }
+      */
    }
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,

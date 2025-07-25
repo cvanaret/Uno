@@ -21,6 +21,8 @@ namespace uno {
    class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
+   template <typename Array>
+   class VectorView;
 
    template <typename ElementType>
    class RegularizationStrategy {
@@ -30,16 +32,18 @@ namespace uno {
 
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
 
-      virtual void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, Vector<double>& hessian_values,
+      virtual void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const Vector<double>& hessian_values,
          const Inertia& expected_inertia) = 0;
-      virtual void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, Vector<double>& hessian_values,
+      virtual void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const Vector<double>& hessian_values,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia) = 0;
+         const Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
+         const Inertia& expected_inertia, VectorView<Vector<double>&> primal_regularization,
+         VectorView<Vector<double>&> dual_regularization) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) = 0;
+         const Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+         VectorView<Vector<double>&> primal_regularization, VectorView<Vector<double>&> dual_regularization) = 0;
 
       [[nodiscard]] virtual bool performs_primal_regularization() const = 0;
       [[nodiscard]] virtual bool performs_dual_regularization() const = 0;

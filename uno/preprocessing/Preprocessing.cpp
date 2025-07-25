@@ -16,12 +16,13 @@ namespace uno {
    // compute a least-square approximation of the multipliers by solving a linear system
    void Preprocessing::compute_least_square_multipliers(const Model& model, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
          Iterate& current_iterate, Vector<double>& multipliers, double multiplier_max_norm) {
+      /*
       current_iterate.evaluate_objective_gradient(model);
       current_iterate.evaluate_constraint_jacobian(model);
       DEBUG << "Computing least-square multipliers\n";
       DEBUG2 << "Current primals: " << current_iterate.primals << '\n';
 
-      /* generate the right-hand side */
+      // generate the right-hand side
       Vector<double> rhs(model.number_variables + model.number_constraints);
       // objective gradient
       rhs = model.objective_sign * current_iterate.evaluations.objective_gradient;
@@ -38,7 +39,10 @@ namespace uno {
          return;
       }
 
-      /* build the symmetric matrix */
+      // build the symmetric matrix
+      Vector<double> row_indices;
+      Vector<double> column_indices;
+      Vector<double> matrix_values;
       SparseSymmetricMatrix<COOFormat<size_t, double>> matrix(model.number_variables + model.number_constraints,
          model.number_variables + model.number_jacobian_nonzeros(), 0);
       // identity block
@@ -48,16 +52,14 @@ namespace uno {
       }
       // Jacobian of general constraints
       for (size_t constraint_index: Range(model.number_constraints)) {
-         /*
          for (const auto [variable_index, derivative]: current_iterate.evaluations.constraint_jacobian[constraint_index]) {
             matrix.insert(variable_index, model.number_variables + constraint_index, derivative);
          }
-         */
          matrix.finalize_column(model.number_variables + constraint_index);
       }
       DEBUG2 << "Matrix for least-square multipliers:\n" << matrix << '\n';
 
-      /* solve the system */
+      // solve the system
       Vector<double> solution(matrix.dimension());
       linear_solver.do_symbolic_analysis(matrix);
       linear_solver.do_numerical_factorization(matrix);
@@ -73,6 +75,7 @@ namespace uno {
          DEBUG << "Ignoring the least-square multipliers\n";
       }
       DEBUG << '\n';
+      */
    }
 
    size_t count_infeasible_linear_constraints(const Model& model, const std::vector<double>& constraint_values) {

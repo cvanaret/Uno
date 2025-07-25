@@ -2,15 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
+#include <cstdint>
 #include "BQPDSolver.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
-#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
@@ -62,53 +61,50 @@ namespace uno {
          print_subproblem(options.get_bool("print_subproblem")) {
    }
 
-   void BQPDSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         const RegularizationStrategy<double>& regularization_strategy) {
-      if (!hessian_model.has_implicit_representation() && !hessian_model.has_explicit_representation()) {
-         throw std::runtime_error("Hessian model cannot be evaluated");
-      }
+   void BQPDSolver::initialize_memory(const Subproblem& subproblem) {
+      this->w.resize(subproblem.number_variables + subproblem.number_constraints);
+      this->gradient_solution.resize(subproblem.number_variables);
+      this->residuals.resize(subproblem.number_variables + subproblem.number_constraints);
+      this->e.resize(subproblem.number_variables + subproblem.number_constraints);
 
-      this->w.resize(problem.number_variables + problem.number_constraints);
-      this->gradient_solution.resize(problem.number_variables);
-      this->residuals.resize(problem.number_variables + problem.number_constraints);
-      this->e.resize(problem.number_variables + problem.number_constraints);
-
-      this->lower_bounds.resize(problem.number_variables + problem.number_constraints);
-      this->upper_bounds.resize(problem.number_variables + problem.number_constraints);
-      this->constraints.resize(problem.number_constraints);
-      this->linear_objective.resize(problem.number_variables);
-      this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
+      this->lower_bounds.resize(subproblem.number_variables + subproblem.number_constraints);
+      this->upper_bounds.resize(subproblem.number_variables + subproblem.number_constraints);
+      this->constraints.resize(subproblem.number_constraints);
+      this->linear_objective.resize(subproblem.number_variables);
+      this->constraint_jacobian.resize(subproblem.number_constraints, subproblem.number_variables);
       // Jacobian + objective gradient
-      this->bqpd_jacobian.resize(problem.number_jacobian_nonzeros() + problem.number_variables);
-      this->bqpd_jacobian_sparsity.resize(problem.number_jacobian_nonzeros() + problem.number_variables +
-         problem.number_constraints + 3);
+      this->bqpd_jacobian.resize(subproblem.number_jacobian_nonzeros() + subproblem.number_variables);
+      this->bqpd_jacobian_sparsity.resize(subproblem.number_jacobian_nonzeros() + subproblem.number_variables +
+         subproblem.number_constraints + 3);
       // default active set
-      this->active_set.resize(problem.number_variables + problem.number_constraints);
-      for (size_t variable_index: Range(problem.number_variables + problem.number_constraints)) {
+      this->active_set.resize(subproblem.number_variables + subproblem.number_constraints);
+      for (size_t variable_index: Range(subproblem.number_variables + subproblem.number_constraints)) {
          this->active_set[variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
       }
 
-      // Hessian: determine whether the subproblem has curvature
-      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
-      const size_t regularization_size = (!hessian_model.is_positive_definite() &&
-         regularization_strategy.performs_primal_regularization()) ? problem.get_number_original_variables() : 0;
-      // if the Hessian model only has an explicit representation, allocate an explicit Hessian matrix
-      if (!hessian_model.has_implicit_representation() && hessian_model.has_explicit_representation()) {
-         this->hessian = SparseSymmetricMatrix<COOFormat<size_t, double>>(problem.number_variables,
-            number_hessian_nonzeros, regularization_size);
-      }
+      // determine whether the subproblem has curvature
+      const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+      const size_t regularization_size = subproblem.regularization_size();
       const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
-      this->kmax = (0 < number_regularized_hessian_nonzeros) ? pick_kmax_heuristically(problem.number_variables,
-         problem.number_constraints) : 0;
+      this->kmax = (0 < number_regularized_hessian_nonzeros) ? pick_kmax_heuristically(subproblem.number_variables,
+         subproblem.number_constraints) : 0;
+
+      // if the Hessian model only has an explicit representation, allocate an explicit Hessian matrix
+      if (!subproblem.has_implicit_hessian_representation() && subproblem.has_explicit_hessian_representation()) {
+         this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
+         this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
+         this->hessian_values.resize(number_regularized_hessian_nonzeros);
+         subproblem.compute_regularized_hessian_structure(this->hessian_row_indices, this->hessian_column_indices);
+      }
 
       // allocation of integer and real workspaces
-      this->mxws = static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * problem.number_variables +
-         problem.number_constraints /* (required by bqpd.f) */ + 5 * problem.number_variables + this->nprof /* (required
+      this->mxws = static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * subproblem.number_variables +
+         subproblem.number_constraints /* (required by bqpd.f) */ + 5 * subproblem.number_variables + this->nprof /* (required
          by sparseL.f) */;
       // 4 pointers hidden in lws
       constexpr size_t hidden_pointers_size = 4*sizeof(intptr_t);
       this->mxlws = hidden_pointers_size + static_cast<size_t>(this->kmax) /* (required by bqpd.f) */ +
-         9 * problem.number_variables + problem.number_constraints /* (required by sparseL.f) */;
+         9 * subproblem.number_variables + subproblem.number_constraints /* (required by sparseL.f) */;
       this->ws.resize(this->mxws);
       this->lws.resize(this->mxlws);
    }
@@ -123,7 +119,8 @@ namespace uno {
    }
 
    double BQPDSolver::hessian_quadratic_product(const Vector<double>& vector) const {
-      return this->hessian.quadratic_product(vector, vector);
+      throw std::runtime_error("BQPDSolver::hessian_quadratic_product not implemented");
+      // return this->hessian.quadratic_product(vector, vector);
    }
 
    // protected member functions
@@ -141,7 +138,7 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         subproblem.evaluate_jacobian(this->constraint_jacobian);
+         // TODO subproblem.evaluate_jacobian(this->constraint_jacobian);
       }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->evaluate_hessian = true;
@@ -174,7 +171,7 @@ namespace uno {
 
    void BQPDSolver::display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const {
       DEBUG << "Subproblem:\n";
-      DEBUG << "Hessian: " << this->hessian;
+      DEBUG << "Hessian values: " << this->hessian_values;
       DEBUG << "objective gradient: " << this->linear_objective;
       for (size_t constraint_index: Range(subproblem.number_constraints)) {
          DEBUG << "gradient c" << constraint_index << ": " << this->constraint_jacobian[constraint_index];
@@ -273,7 +270,7 @@ namespace uno {
       WSC.ll += sizeof(intptr_t);
       hide_pointer(2, this->lws.data(), subproblem);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(3, this->lws.data(), this->hessian);
+      hide_pointer(3, this->lws.data(), this->hessian_values);
       WSC.ll += sizeof(intptr_t);
    }
 
@@ -393,11 +390,11 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
    bool* evaluate_hessian = uno::retrieve_pointer<bool>(0, lws);
    uno::Statistics* statistics = uno::retrieve_pointer<uno::Statistics>(1, lws);
    uno::Subproblem* subproblem = uno::retrieve_pointer<uno::Subproblem>(2, lws);
-   uno::SymmetricMatrix<size_t, double>* hessian = uno::retrieve_pointer<uno::SymmetricMatrix<size_t, double>>(3, lws);
+   uno::Vector<double>* hessian_values = uno::retrieve_pointer<uno::Vector<double>>(3, lws);
    assert(evaluate_hessian != nullptr && "BQPD's hessian_vector_product: the flag evaluate_hessian is NULL");
    assert(statistics != nullptr && "BQPD's hessian_vector_product: statistics is NULL");
    assert(subproblem != nullptr && "BQPD's hessian_vector_product: subproblem is NULL");
-   assert(hessian != nullptr && "BQPD's hessian_vector_product: hessian is NULL");
+   assert(hessian_values != nullptr && "BQPD's hessian_vector_product: hessian_values is NULL");
 
    // by default, try to perform a Hessian-vector product if possible
    if (subproblem->has_implicit_hessian_representation()) {
@@ -407,10 +404,10 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
    else if (subproblem->has_explicit_hessian_representation()) {
       // if the Hessian has not been evaluated at the current point, evaluate it
       if (*evaluate_hessian) {
-         hessian->reset();
-         subproblem->compute_regularized_hessian(*statistics, *hessian);
+         subproblem->compute_regularized_hessian(*statistics, *hessian_values);
          *evaluate_hessian = false;
       }
-      hessian->product(vector, result);
+      throw std::runtime_error("BQPD hessian_vector_product: explicit not implemented");
+      // hessian->product(vector, result);
    }
 }

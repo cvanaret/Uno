@@ -7,10 +7,6 @@
 namespace uno {
    // forward declarations
    class Direction;
-   class HessianModel;
-   class OptimizationProblem;
-   template <typename ElementType>
-   class RegularizationStrategy;
    class Statistics;
    class Subproblem;
    template <typename ElementType>
@@ -22,8 +18,7 @@ namespace uno {
       LPSolver() = default;
       virtual ~LPSolver() = default;
 
-      virtual void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         const RegularizationStrategy<double>& regularization_strategy) = 0;
+      virtual void initialize_memory(const Subproblem& subproblem) = 0;
 
       virtual void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) = 0;
