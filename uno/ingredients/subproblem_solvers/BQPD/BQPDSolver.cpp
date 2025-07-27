@@ -81,9 +81,7 @@ namespace uno {
       }
 
       // determine whether the subproblem has curvature
-      const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-      const size_t regularization_size = subproblem.regularization_size();
-      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
+      const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
       this->kmax = (0 < number_regularized_hessian_nonzeros) ? pick_kmax_heuristically(subproblem.number_variables,
          subproblem.number_constraints) : 0;
 
