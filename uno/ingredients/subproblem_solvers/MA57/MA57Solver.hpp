@@ -7,7 +7,6 @@
 #include <array>
 #include <vector>
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -66,12 +65,15 @@ namespace uno {
       // evaluations
       Vector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-      RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
+
+      // Jacobian
+      std::vector<size_t> jacobian_row_indices{};
+      std::vector<size_t> jacobian_column_indices{};
 
       // augmented system
-      std::vector<int> row_indices{};
-      std::vector<int> column_indices{};
-      Vector<double> matrix_values{};
+      std::vector<int> augmented_matrix_row_indices{};
+      std::vector<int> augmented_matrix_column_indices{};
+      Vector<double> augmented_matrix_values{};
       Vector<double> rhs{};
       Vector<double> solution{};
 

@@ -5,6 +5,7 @@
 #define UNO_COOMATRIX_H
 
 #include <iostream>
+#include <tuple>
 #include "symbolic/VectorView.hpp"
 
 namespace uno {
@@ -17,6 +18,10 @@ namespace uno {
 
       COOMatrix(IndexType* row_indices, IndexType* column_indices, double* values):
          row_indices(row_indices), column_indices(column_indices), values(values) { }
+
+      std::tuple<IndexType, IndexType, double> operator[](size_t nonzero_index) const {
+         return {this->row_indices[nonzero_index], this->column_indices[nonzero_index], this->values[nonzero_index]};
+      }
    };
 
    template <typename IndexType>
