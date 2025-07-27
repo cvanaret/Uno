@@ -43,6 +43,8 @@ namespace uno {
          model->project_onto_variable_bounds(initial_iterate.primals);
          model->initial_dual_point(initial_iterate.multipliers.constraints);
          initial_iterate.feasibility_multipliers.reset();
+         initial_iterate.multipliers.constraints[0] = -668.;
+         initial_iterate.multipliers.constraints[1] = -934.666666667;
 
          // solve the instance
          Uno uno{model->number_constraints, options};

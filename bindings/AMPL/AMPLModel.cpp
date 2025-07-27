@@ -119,29 +119,32 @@ namespace uno {
       gradient.scale(this->objective_sign);
    }
 
-   void AMPLModel::compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const {
+   void AMPLModel::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
+      const size_t indexing = static_cast<size_t>(solver_indexing);
       size_t current_index = 0;
       for (size_t constraint_index: Range(this->number_constraints)) {
-         cgrad* asl_variables_tmp = this->asl->i.Cgrad_[constraint_index];
-         while (asl_variables_tmp != nullptr) {
-            const size_t variable_index = static_cast<size_t>(asl_variables_tmp->varno);
-            row_indices[asl_variables_tmp->goff] = constraint_index;
-            column_indices[asl_variables_tmp->goff] = variable_index;
-            asl_variables_tmp = asl_variables_tmp->next;
+         cgrad* constraint_gradient = this->asl->i.Cgrad_[constraint_index];
+         while (constraint_gradient != nullptr) {
+            const size_t variable_index = static_cast<size_t>(constraint_gradient->varno);
+            // at the moment, the Jacobian is stored column-wise (that is, ordered by variables)
+            row_indices[constraint_gradient->goff] = constraint_index + indexing;
+            column_indices[constraint_gradient->goff] = variable_index + indexing;
+            constraint_gradient = constraint_gradient->next;
             ++current_index;
          }
       }
    }
 
-   void AMPLModel::compute_hessian_structure(size_t* row_indices, size_t* column_indices) const {
+   void AMPLModel::compute_hessian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
+      const size_t indexing = static_cast<size_t>(solver_indexing);
       const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
       const fint* asl_row_index = this->asl->i.sputinfo_->hrownos;
       size_t current_index = 0;
       for (size_t column_index: Range(this->number_variables)) {
          for (size_t nonzero_index: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
             const size_t row_index = static_cast<size_t>(asl_row_index[nonzero_index]);
-            row_indices[current_index] = row_index;
-            column_indices[current_index] = column_index;
+            row_indices[current_index] = row_index + indexing;
+            column_indices[current_index] = column_index + indexing;
             ++current_index;
          }
       }

@@ -7,9 +7,7 @@
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/UnaryNegation.hpp"
 #include "symbolic/VectorView.hpp"
-#include "tools/Logger.hpp"
 
 namespace uno {
    Subproblem::Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
@@ -17,6 +15,59 @@ namespace uno {
          number_variables(problem.number_variables), number_constraints(problem.number_constraints),
          problem(problem), current_iterate(current_iterate), current_multipliers(current_multipliers), hessian_model(hessian_model),
          regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius) {
+   }
+
+   void Subproblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
+      this->problem.compute_jacobian_structure(row_indices, column_indices, solver_indexing);
+   }
+
+   void Subproblem::compute_regularized_hessian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
+      // structure of original Lagrangian Hessian
+      this->problem.compute_hessian_structure(this->hessian_model, row_indices, column_indices, solver_indexing);
+
+      // regularize the Hessian only if required (diagonal regularization)
+      if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
+         size_t current_index = this->number_hessian_nonzeros();
+         const size_t indexing = static_cast<size_t>(solver_indexing);
+         for (size_t variable_index: this->get_primal_regularization_variables()) {
+            row_indices[current_index ] = variable_index + indexing;
+            column_indices[current_index] = variable_index + indexing;
+            ++current_index;
+         }
+      }
+   }
+
+   void Subproblem::compute_regularized_augmented_matrix_structure(size_t* row_indices, size_t* column_indices,
+         Indexing solver_indexing) const {
+      // structure of original Lagrangian Hessian
+      this->problem.compute_hessian_structure(this->hessian_model, row_indices, column_indices, solver_indexing);
+
+      // Jacobian of general constraints: to get the transpose, switch the order of the vectors
+      const size_t hessian_offset = this->number_hessian_nonzeros();
+      this->problem.compute_jacobian_structure(column_indices + hessian_offset, row_indices + hessian_offset, solver_indexing);
+      // shift the column indices of the Jacobian
+      for (size_t nnz_index: Range(this->problem.number_jacobian_nonzeros())) {
+         column_indices[hessian_offset + nnz_index] += this->problem.number_variables;
+      }
+
+      // regularize the augmented matrix only if required (diagonal regularization)
+      size_t current_index = hessian_offset + this->problem.number_jacobian_nonzeros();
+      const size_t indexing = static_cast<size_t>(solver_indexing);
+      if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
+         for (size_t variable_index: this->get_primal_regularization_variables()) {
+            row_indices[current_index] = variable_index + indexing;
+            column_indices[current_index] = variable_index + indexing;
+            ++current_index;
+         }
+      }
+      if (this->regularization_strategy.performs_dual_regularization()) {
+         for (size_t constraint_index: this->get_dual_regularization_constraints()) {
+            const size_t shifted_constraint_index = this->number_variables + constraint_index;
+            row_indices[current_index] = shifted_constraint_index + indexing;
+            column_indices[current_index] = shifted_constraint_index + indexing;
+            ++current_index;
+         }
+      }
    }
 
    void Subproblem::evaluate_objective_gradient(Vector<double>& linear_objective) const {
@@ -27,27 +78,8 @@ namespace uno {
       this->problem.evaluate_constraints(this->current_iterate, constraints);
    }
 
-   void Subproblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const {
-      this->problem.compute_jacobian_structure(row_indices, column_indices);
-   }
-
    void Subproblem::evaluate_jacobian(double* jacobian_values) const {
       this->problem.evaluate_constraint_jacobian(this->current_iterate, jacobian_values);
-   }
-
-   void Subproblem::compute_regularized_hessian_structure(size_t* row_indices, size_t* column_indices) const {
-      // structure of original Lagrangian Hessian
-      this->problem.compute_hessian_structure(this->hessian_model, row_indices, column_indices);
-
-      // regularize the Hessian only if required (diagonal regularization)
-      if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
-         size_t current_index = this->number_hessian_nonzeros();
-         for (size_t variable_index: this->get_primal_regularization_variables()) {
-            row_indices[current_index] = variable_index;
-            column_indices[current_index] = variable_index;
-            ++current_index;
-         }
-      }
    }
 
    void Subproblem::compute_regularized_hessian(Statistics& statistics, Vector<double>& hessian_values) const {
@@ -76,37 +108,6 @@ namespace uno {
       }
    }
 
-   void Subproblem::compute_regularized_augmented_matrix_structure(size_t* row_indices, size_t* column_indices) const {
-      // structure of original Lagrangian Hessian
-      this->problem.compute_hessian_structure(this->hessian_model, row_indices, column_indices);
-
-      // Jacobian of general constraints: to get the transpose, switch the order of the vectors
-      const size_t hessian_offset = this->number_hessian_nonzeros();
-      this->problem.compute_jacobian_structure(column_indices + hessian_offset, row_indices + hessian_offset);
-      // shift the column indices of the Jacobian
-      for (size_t nnz_index: Range(this->problem.number_jacobian_nonzeros())) {
-         column_indices[hessian_offset + nnz_index] += this->problem.number_variables;
-      }
-
-      // regularize the augmented matrix only if required (diagonal regularization)
-      size_t current_index = hessian_offset + this->problem.number_jacobian_nonzeros();
-      if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
-         for (size_t variable_index: this->get_primal_regularization_variables()) {
-            row_indices[current_index] = variable_index;
-            column_indices[current_index] = variable_index;
-            ++current_index;
-         }
-      }
-      if (this->regularization_strategy.performs_dual_regularization()) {
-         for (size_t constraint_index: this->get_dual_regularization_constraints()) {
-            const size_t shifted_constraint_index = this->number_variables + constraint_index;
-            row_indices[current_index] = shifted_constraint_index;
-            column_indices[current_index] = shifted_constraint_index;
-            ++current_index;
-         }
-      }
-   }
-
    void Subproblem::assemble_augmented_matrix(Statistics& statistics, Vector<double>& augmented_matrix_values) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
@@ -129,27 +130,6 @@ namespace uno {
          offset + this->get_primal_regularization_variables().size() + this->get_dual_regularization_constraints().size());
       this->regularization_strategy.regularize_augmented_matrix(statistics, *this, augmented_matrix_values,
          dual_regularization_parameter, expected_inertia, linear_solver, primal_regularization, dual_regularization);
-   }
-
-   void Subproblem::assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
-         RectangularMatrix<double>& constraint_jacobian, Vector<double>& rhs) const {
-      rhs.fill(0.);
-
-      // objective gradient
-      view(rhs, 0, this->number_variables) = -objective_gradient;
-
-      // constraint: evaluations and gradients
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         // Lagrangian
-         if (this->current_multipliers.constraints[constraint_index] != 0.) {
-            for (const auto [variable_index, derivative]: constraint_jacobian[constraint_index]) {
-               rhs[variable_index] += this->current_multipliers.constraints[constraint_index] * derivative;
-            }
-         }
-         // constraints
-         rhs[this->number_variables + constraint_index] = -constraints[constraint_index];
-      }
-      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints)); DEBUG << '\n';
    }
 
    void Subproblem::assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const {

@@ -92,7 +92,8 @@ namespace uno {
          this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_values.resize(number_regularized_hessian_nonzeros);
-         subproblem.compute_regularized_hessian_structure(this->hessian_row_indices.data(), this->hessian_column_indices.data());
+         subproblem.compute_regularized_hessian_structure(this->hessian_row_indices.data(), this->hessian_column_indices.data(),
+            Indexing::C_indexing); // the Hessian is handled only by Uno, not by BQPD
       }
 
       // allocation of integer and real workspaces
@@ -283,7 +284,7 @@ namespace uno {
       // get the sparsity in COO format
       Vector<size_t> coo_row_indices(subproblem.number_jacobian_nonzeros());
       Vector<size_t> coo_column_indices(subproblem.number_jacobian_nonzeros());
-      subproblem.compute_jacobian_structure(coo_row_indices.data(), coo_column_indices.data());
+      subproblem.compute_jacobian_structure(coo_row_indices.data(), coo_column_indices.data(), Indexing::Fortran_indexing);
       for (size_t constraint_index: Range(subproblem.number_constraints)) {
          /*
          for (const auto [variable_index, derivative]: this->constraint_jacobian[constraint_index]) {
