@@ -99,26 +99,31 @@ namespace uno {
       // evaluations
       this->objective_gradient.resize(subproblem.number_variables);
       this->constraints.resize(subproblem.number_constraints);
-      this->constraint_jacobian.resize(subproblem.number_constraints, subproblem.number_variables);
+
+      // Jacobian
+      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
+      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
+      subproblem.compute_jacobian_structure(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+         Indexing::C_indexing);
 
       // augmented system
       const size_t number_augmented_system_nonzeros = subproblem.number_augmented_system_nonzeros();
       const size_t regularization_size = subproblem.regularization_size();
       const size_t number_nonzeros = number_augmented_system_nonzeros + regularization_size;
+      this->augmented_matrix_row_indices.resize(number_nonzeros);
+      this->augmented_matrix_column_indices.resize(number_nonzeros);
       // compute the COO sparse representation: use temporary vectors of size_t
-      this->row_indices.resize(number_nonzeros);
-      this->column_indices.resize(number_nonzeros);
       Vector<size_t> tmp_row_indices(number_nonzeros);
       Vector<size_t> tmp_column_indices(number_nonzeros);
       subproblem.compute_regularized_augmented_matrix_structure(tmp_row_indices.data(), tmp_column_indices.data(),
-         Indexing::Fortran_indexing);
-      std::cout << "MA57 rows: " << tmp_row_indices << '\n';
-      std::cout << "MA57 cols: " << tmp_column_indices << '\n';
+         this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), Indexing::Fortran_indexing);
       // build vectors of int
       for (size_t nonzero_index: Range(number_nonzeros)) {
-         this->row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
+         this->augmented_matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
+         this->augmented_matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
       }
+      this->augmented_matrix_values.resize(number_nonzeros);
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
 
@@ -140,7 +145,7 @@ namespace uno {
 
    void MA57Solver::do_symbolic_analysis() {
       // symbolic analysis
-      MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->row_indices.data(), this->column_indices.data(),
+      MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->augmented_matrix_row_indices.data(), this->augmented_matrix_column_indices.data(),
          &this->workspace.lkeep, this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
          this->workspace.info.data(), this->workspace.rinfo.data());
 
@@ -201,11 +206,11 @@ namespace uno {
 
       // solve the linear system
       if (this->use_iterative_refinement) {
-         MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz, matrix_values.data(),
-            this->row_indices.data(), this->column_indices.data(), this->workspace.fact.data(), &this->workspace.lfact,
-            this->workspace.ifact.data(), &this->workspace.lifact, rhs.data(), result.data(), this->workspace.residuals.data(),
-            this->workspace.work.data(), this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.cntl.data(),
-            this->workspace.info.data(), this->workspace.rinfo.data());
+         MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz,
+            matrix_values.data(), this->augmented_matrix_row_indices.data(), this->augmented_matrix_column_indices.data(), this->workspace.fact.data(),
+            &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact, rhs.data(), result.data(),
+            this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
+            this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
       }
       else {
          // copy rhs into result (overwritten by MA57)
@@ -231,33 +236,16 @@ namespace uno {
 
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // assemble the augmented matrix
-         subproblem.assemble_augmented_matrix(statistics, this->matrix_values);
+         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix_values);
          // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, this->matrix_values, subproblem.dual_regularization_factor(), *this);
+         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix_values, subproblem.dual_regularization_factor(), *this);
 
          // assemble the RHS
-         Vector<size_t> jacobian_row_indices(subproblem.number_jacobian_nonzeros());
-         Vector<size_t> jacobian_column_indices(subproblem.number_jacobian_nonzeros());
-         Vector<double> jacobian_values(subproblem.number_jacobian_nonzeros());
-         subproblem.compute_jacobian_structure(jacobian_row_indices.data(), jacobian_column_indices.data(), Indexing::C_indexing);
-         subproblem.evaluate_jacobian(jacobian_values.data());
-         const COOMatrix jacobian{jacobian_row_indices.data(), jacobian_column_indices.data(), jacobian_values.data()};
-         std::cout << "MA57 JAC rows: ";
-         for (size_t nonzero_index: Range(subproblem.number_jacobian_nonzeros())) {
-            std::cout << jacobian.row_indices[nonzero_index] << " ";
-         }
-         std::cout << "\nMA57 JAC cols: ";
-         for (size_t nonzero_index: Range(subproblem.number_jacobian_nonzeros())) {
-            std::cout << jacobian.column_indices[nonzero_index] << " ";
-         }
-         std::cout << "\nMA57 JAC vals: ";
-         for (size_t nonzero_index: Range(subproblem.number_jacobian_nonzeros())) {
-            std::cout << jacobian.values[nonzero_index] << " ";
-         }
-         std::cout << '\n';
+         const COOMatrix jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+            this->augmented_matrix_values.data() + subproblem.number_hessian_nonzeros()};
          subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, jacobian, this->rhs);
       }
-      this->solve_indefinite_system(this->matrix_values, this->rhs, this->solution);
+      this->solve_indefinite_system(this->augmented_matrix_values, this->rhs, this->solution);
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(this->solution, direction);
       if (this->matrix_is_singular()) {

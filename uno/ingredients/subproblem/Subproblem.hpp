@@ -38,7 +38,8 @@ namespace uno {
       // structure
       void compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const;
       void compute_regularized_hessian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const;
-      void compute_regularized_augmented_matrix_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const;
+      void compute_regularized_augmented_matrix_structure(size_t* row_indices, size_t* column_indices, const size_t* jacobian_row_indices,
+         const size_t* jacobian_column_indices, Indexing solver_indexing) const;
 
       // constraints, objective gradient and Jacobian
       void evaluate_objective_gradient(Vector<double>& linear_objective) const;
@@ -46,7 +47,6 @@ namespace uno {
       void evaluate_jacobian(double* jacobian_values) const;
 
       // regularized Hessian
-
       void compute_regularized_hessian(Statistics& statistics, Vector<double>& /*hessian_values*/) const;
       void compute_hessian_vector_product(const double* vector, double* result) const;
 
@@ -102,9 +102,7 @@ namespace uno {
 
       // Jacobian
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
-         const size_t constraint_index = constraint_jacobian.row_indices[nonzero_index];
-         const size_t variable_index = constraint_jacobian.column_indices[nonzero_index];
-         const double derivative = constraint_jacobian.values[nonzero_index];
+         const auto [constraint_index, variable_index, derivative] = constraint_jacobian[nonzero_index];
          rhs[variable_index] += this->current_multipliers.constraints[constraint_index] * derivative;
       }
       // constraints

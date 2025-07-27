@@ -117,10 +117,15 @@ namespace uno {
          const Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
          VectorView<Vector<double>&> primal_regularization_values, VectorView<Vector<double>&> dual_regularization_values) {
-      DEBUG2 << "Original matrix values\n" << augmented_matrix_values << '\n';
-
       this->primal_regularization = ElementType(0);
       this->dual_regularization = ElementType(0);
+      for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
+         primal_regularization_values[index] = this->primal_regularization;
+      }
+      for (size_t index: Range(subproblem.get_dual_regularization_constraints().size())) {
+         dual_regularization_values[index] = -this->dual_regularization;
+      }
+      DEBUG2 << "Original matrix values\n" << augmented_matrix_values << '\n';
       DEBUG << "Testing factorization with regularization factors (0, 0)\n";
       size_t number_attempts = 1;
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";

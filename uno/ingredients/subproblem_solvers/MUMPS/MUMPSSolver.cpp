@@ -54,24 +54,31 @@ namespace uno {
       // evaluations
       this->objective_gradient.resize(subproblem.number_variables);
       this->constraints.resize(subproblem.number_constraints);
-      this->constraint_jacobian.resize(subproblem.number_constraints, subproblem.number_variables);
+
+      // Jacobian
+      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
+      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
+      subproblem.compute_jacobian_structure(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+         Indexing::C_indexing);
 
       // augmented system
       const size_t number_augmented_system_nonzeros = subproblem.number_augmented_system_nonzeros();
       const size_t regularization_size = subproblem.regularization_size();
       const size_t number_nonzeros = number_augmented_system_nonzeros + regularization_size;
-      // reserve the COO sparse representation
-      this->row_indices.reserve(number_nonzeros);
-      this->column_indices.reserve(number_nonzeros);
+      this->augmented_matrix_row_indices.resize(number_nonzeros);
+      this->augmented_matrix_column_indices.resize(number_nonzeros);
+      // compute the COO sparse representation: use temporary vectors of size_t
       Vector<size_t> tmp_row_indices(number_nonzeros);
       Vector<size_t> tmp_column_indices(number_nonzeros);
       subproblem.compute_regularized_augmented_matrix_structure(tmp_row_indices.data(), tmp_column_indices.data(),
-         Indexing::Fortran_indexing);
+         this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), Indexing::Fortran_indexing);
       // build vectors of int
       for (size_t nonzero_index: Range(number_nonzeros)) {
-         this->row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
+         this->augmented_matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
+         this->augmented_matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
       }
+      this->augmented_matrix_values.resize(number_nonzeros);
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
 
@@ -83,8 +90,8 @@ namespace uno {
    void MUMPSSolver::do_symbolic_analysis() {
       this->workspace.job = MUMPSSolver::JOB_ANALYSIS;
       // connect the local sparsity with the pointers in the structure
-      this->workspace.irn = this->row_indices.data();
-      this->workspace.jcn = this->column_indices.data();
+      this->workspace.irn = this->augmented_matrix_row_indices.data();
+      this->workspace.jcn = this->augmented_matrix_column_indices.data();
       dmumps_c(&this->workspace);
       this->workspace.icntl[7] = 8; // ICNTL(8) = 8: recompute scaling before factorization
    }
@@ -110,19 +117,20 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         // TODO subproblem.evaluate_jacobian(this->constraint_jacobian);
       }
 
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // assemble the augmented matrix
-         subproblem.assemble_augmented_matrix(statistics, this->matrix_values);
+         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix_values);
          // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, this->matrix_values, subproblem.dual_regularization_factor(), *this);
+         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix_values, subproblem.dual_regularization_factor(), *this);
 
          // assemble the RHS
-         //subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);
+         const COOMatrix jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+            this->augmented_matrix_values.data() + subproblem.number_hessian_nonzeros()};
+         subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, jacobian, this->rhs);;
       }
-      this->solve_indefinite_system(this->matrix_values, this->rhs, this->solution);
+      this->solve_indefinite_system(this->augmented_matrix_values, this->rhs, this->solution);
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(this->solution, direction);
       if (this->matrix_is_singular()) {
@@ -131,6 +139,8 @@ namespace uno {
    }
 
    Inertia MUMPSSolver::get_inertia() const {
+      // rank = number_positive_eigenvalues + number_negative_eigenvalues
+      // n = rank + number_zero_eigenvalues
       const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
       const size_t number_zero_eigenvalues = this->number_zero_eigenvalues();
       const size_t number_positive_eigenvalues = static_cast<size_t>(this->workspace.n) - (number_negative_eigenvalues + number_zero_eigenvalues);

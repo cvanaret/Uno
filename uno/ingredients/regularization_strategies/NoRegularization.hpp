@@ -33,11 +33,16 @@ namespace uno {
          // do nothing
       }
 
-      void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
+      void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& subproblem,
             const Vector<double>& /*augmented_matrix_values*/, ElementType /*dual_regularization_parameter*/,
             const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/,
-            VectorView<Vector<double>&> /*primal_regularization_values*/, VectorView<Vector<double>&> /*dual_regularization_values*/) override {
-         // do nothing
+            VectorView<Vector<double>&> primal_regularization_values, VectorView<Vector<double>&> dual_regularization_values) override {
+         for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
+            primal_regularization_values[index] = 0.;
+         }
+         for (size_t index: Range(subproblem.get_dual_regularization_constraints().size())) {
+            dual_regularization_values[index] = 0.;
+         }
       }
 
       [[nodiscard]] bool performs_primal_regularization() const override {
