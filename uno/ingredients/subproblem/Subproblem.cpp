@@ -199,8 +199,16 @@ namespace uno {
       return this->problem.number_hessian_nonzeros(this->hessian_model);
    }
 
-   size_t Subproblem::number_augmented_system_nonzeros() const {
-      return this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
+   size_t Subproblem::number_regularized_hessian_nonzeros() const {
+      return this->number_hessian_nonzeros() + this->regularization_size();
+   }
+
+   size_t Subproblem::number_regularized_augmented_system_nonzeros() const {
+      return this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros() + this->regularization_size();
+   }
+
+   double Subproblem::dual_regularization_factor() const {
+      return this->problem.dual_regularization_factor();
    }
 
    size_t Subproblem::regularization_size() const {
@@ -210,9 +218,5 @@ namespace uno {
          (this->performs_primal_regularization() ? primal_regularization_size : 0) +
          (this->performs_dual_regularization() ? dual_regularization_size : 0);
       return regularization_size;
-   }
-
-   double Subproblem::dual_regularization_factor() const {
-      return this->problem.dual_regularization_factor();
    }
 } // namespace

@@ -78,8 +78,8 @@ namespace uno {
 
       [[nodiscard]] size_t number_jacobian_nonzeros() const;
       [[nodiscard]] size_t number_hessian_nonzeros() const;
-      [[nodiscard]] size_t number_augmented_system_nonzeros() const;
-      [[nodiscard]] size_t regularization_size() const;
+      [[nodiscard]] size_t number_regularized_hessian_nonzeros() const;
+      [[nodiscard]] size_t number_regularized_augmented_system_nonzeros() const;
 
       [[nodiscard]] double dual_regularization_factor() const;
 
@@ -89,6 +89,8 @@ namespace uno {
       HessianModel& hessian_model;
       RegularizationStrategy<double>& regularization_strategy;
       const double trust_region_radius;
+
+      [[nodiscard]] size_t regularization_size() const;
    };
 
    template <typename IndexType>

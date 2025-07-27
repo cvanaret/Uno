@@ -63,9 +63,7 @@ namespace uno {
          Indexing::C_indexing);
 
       // augmented system
-      const size_t number_augmented_system_nonzeros = subproblem.number_augmented_system_nonzeros();
-      const size_t regularization_size = subproblem.regularization_size();
-      const size_t number_nonzeros = number_augmented_system_nonzeros + regularization_size;
+      const size_t number_nonzeros = subproblem.number_regularized_augmented_system_nonzeros();
       this->augmented_matrix_row_indices.resize(number_nonzeros);
       this->augmented_matrix_column_indices.resize(number_nonzeros);
       // compute the COO sparse representation: use temporary vectors of size_t

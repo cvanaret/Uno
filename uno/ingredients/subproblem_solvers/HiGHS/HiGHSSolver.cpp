@@ -20,9 +20,7 @@ namespace uno {
 
    void HiGHSSolver::initialize_memory(const Subproblem& subproblem) {
       // determine whether the subproblem has curvature. For the moment, HiGHS can only solve LPs
-      const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-      const size_t regularization_size = subproblem.regularization_size();
-      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
+      const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
       if (0 < number_regularized_hessian_nonzeros) {
          throw std::runtime_error("The subproblem has curvature. For the moment, HiGHS can only solve LPs");
       }
