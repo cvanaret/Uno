@@ -125,8 +125,8 @@ namespace uno {
          cgrad* asl_variables_tmp = this->asl->i.Cgrad_[constraint_index];
          while (asl_variables_tmp != nullptr) {
             const size_t variable_index = static_cast<size_t>(asl_variables_tmp->varno);
-            row_indices[current_index] = constraint_index;
-            column_indices[current_index] = variable_index;
+            row_indices[asl_variables_tmp->goff] = constraint_index;
+            column_indices[asl_variables_tmp->goff] = variable_index;
             asl_variables_tmp = asl_variables_tmp->next;
             ++current_index;
          }
@@ -148,13 +148,10 @@ namespace uno {
    }
 
    void AMPLModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         fint error_flag = 0;
-         (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(constraint_index), const_cast<double*>(x.data()),
-            jacobian_values, &error_flag);
-         if (0 < error_flag) {
-            throw GradientEvaluationError();
-         }
+      fint error_flag = 0;
+      (*(this->asl)->p.Jacval)(this->asl, const_cast<double*>(x.data()), jacobian_values, &error_flag);
+      if (0 < error_flag) {
+         throw GradientEvaluationError();
       }
    }
 

@@ -5,7 +5,6 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/UnaryNegation.hpp"
@@ -42,7 +41,7 @@ namespace uno {
 
       // regularize the Hessian only if required (diagonal regularization)
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
-         size_t current_index = this->problem.number_hessian_nonzeros(this->hessian_model);
+         size_t current_index = this->number_hessian_nonzeros();
          for (size_t variable_index: this->get_primal_regularization_variables()) {
             row_indices[current_index] = variable_index;
             column_indices[current_index] = variable_index;
@@ -82,16 +81,15 @@ namespace uno {
       this->problem.compute_hessian_structure(this->hessian_model, row_indices, column_indices);
 
       // Jacobian of general constraints: to get the transpose, switch the order of the vectors
-      this->problem.compute_jacobian_structure(column_indices, row_indices);
+      const size_t hessian_offset = this->number_hessian_nonzeros();
+      this->problem.compute_jacobian_structure(column_indices + hessian_offset, row_indices + hessian_offset);
       // shift the column indices of the Jacobian
-      const size_t column_offset = this->problem.number_hessian_nonzeros(this->hessian_model);
       for (size_t nnz_index: Range(this->problem.number_jacobian_nonzeros())) {
-         column_indices[column_offset + nnz_index] += this->problem.number_variables;
+         column_indices[hessian_offset + nnz_index] += this->problem.number_variables;
       }
 
       // regularize the augmented matrix only if required (diagonal regularization)
-      size_t current_index = this->problem.number_hessian_nonzeros(this->hessian_model) +
-         this->problem.number_jacobian_nonzeros();
+      size_t current_index = hessian_offset + this->problem.number_jacobian_nonzeros();
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
          for (size_t variable_index: this->get_primal_regularization_variables()) {
             row_indices[current_index] = variable_index;
@@ -115,17 +113,20 @@ namespace uno {
          this->current_iterate.multipliers, augmented_matrix_values);
 
       // Jacobian of general constraints
-      this->problem.evaluate_constraint_jacobian(this->current_iterate, augmented_matrix_values.data());
+      this->problem.evaluate_constraint_jacobian(this->current_iterate, augmented_matrix_values.data() + this->number_hessian_nonzeros());
    }
 
    void Subproblem::regularize_augmented_matrix(Statistics& statistics, Vector<double>& augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const {
       const Inertia expected_inertia{this->number_variables, this->number_constraints, 0};
-      const size_t number_hessian_nonzeros = this->problem.number_hessian_nonzeros(this->hessian_model);
-      auto primal_regularization = view(augmented_matrix_values, number_hessian_nonzeros,
-         number_hessian_nonzeros + this->get_primal_regularization_variables().size());
-      auto dual_regularization = view(augmented_matrix_values, number_hessian_nonzeros + this->get_primal_regularization_variables().size(),
-         number_hessian_nonzeros + this->get_primal_regularization_variables().size() + this->get_dual_regularization_constraints().size());
+      const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
+      const size_t number_jacobian_nonzeros = this->problem.number_jacobian_nonzeros();
+      const size_t offset = number_hessian_nonzeros + number_jacobian_nonzeros;
+
+      auto primal_regularization = view(augmented_matrix_values, offset,
+         offset + this->get_primal_regularization_variables().size());
+      auto dual_regularization = view(augmented_matrix_values, offset + this->get_primal_regularization_variables().size(),
+         offset + this->get_primal_regularization_variables().size() + this->get_dual_regularization_constraints().size());
       this->regularization_strategy.regularize_augmented_matrix(statistics, *this, augmented_matrix_values,
          dual_regularization_parameter, expected_inertia, linear_solver, primal_regularization, dual_regularization);
    }
@@ -220,7 +221,7 @@ namespace uno {
    }
 
    size_t Subproblem::number_augmented_system_nonzeros() const {
-      return this->problem.number_hessian_nonzeros(this->hessian_model) + this->problem.number_jacobian_nonzeros();
+      return this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
    }
 
    size_t Subproblem::regularization_size() const {

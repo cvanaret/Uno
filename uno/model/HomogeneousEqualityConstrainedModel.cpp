@@ -78,11 +78,11 @@ namespace uno {
       this->model->compute_jacobian_structure(row_indices, column_indices);
 
       // add the slack contributions
-      size_t current_index = this->model->number_jacobian_nonzeros();
+      size_t nonzero_index = this->model->number_jacobian_nonzeros();
       for (const auto [constraint_index, slack_index]: this->get_slacks()) {
-         row_indices[current_index] = constraint_index;
-         column_indices[current_index] = slack_index;
-         ++current_index;
+         row_indices[nonzero_index] = constraint_index;
+         column_indices[nonzero_index] = slack_index;
+         ++nonzero_index;
       }
    }
 

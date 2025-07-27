@@ -103,7 +103,7 @@ namespace uno {
       const size_t number_augmented_system_nonzeros = subproblem.number_augmented_system_nonzeros();
       const size_t regularization_size = subproblem.regularization_size();
       const size_t number_nonzeros = number_augmented_system_nonzeros + regularization_size;
-      // reserve the COO representation
+      // compute the COO sparse representation: use temporary vectors of size_t
       this->row_indices.resize(number_nonzeros);
       this->column_indices.resize(number_nonzeros);
       Vector<size_t> tmp_row_indices(number_nonzeros);
@@ -111,8 +111,8 @@ namespace uno {
       subproblem.compute_regularized_augmented_matrix_structure(tmp_row_indices.data(), tmp_column_indices.data());
       // build vectors of int
       for (size_t nonzero_index: Range(number_nonzeros)) {
-         this->row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
+         this->row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index] + MA57Solver::fortran_shift);
+         this->column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index] + MA57Solver::fortran_shift);
       }
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
