@@ -6,7 +6,7 @@
 
 #include "linear_algebra/COOMatrix.hpp"
 #include "linear_algebra/Indexing.hpp"
-#include "optimization/Multipliers.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/UnaryNegation.hpp"
@@ -17,7 +17,6 @@ namespace uno {
    template <typename IndexType, typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
    class HessianModel;
-   class Iterate;
    template <typename ElementType>
    class RectangularMatrix;
    template <typename ElementType>
@@ -103,7 +102,7 @@ namespace uno {
       // Jacobian
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
          const auto [constraint_index, variable_index, derivative] = constraint_jacobian[nonzero_index];
-         rhs[variable_index] += this->current_multipliers.constraints[constraint_index] * derivative;
+         rhs[variable_index] += this->current_iterate.multipliers.constraints[constraint_index] * derivative;
       }
       // constraints
       for (size_t constraint_index: Range(this->number_constraints)) {
