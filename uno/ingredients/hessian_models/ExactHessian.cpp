@@ -24,9 +24,9 @@ namespace uno {
       return model.number_hessian_nonzeros();
    }
 
-   void ExactHessian::compute_structure(const Model& model, size_t* row_indices, size_t* column_indices) const {
+   void ExactHessian::compute_structure(const Model& model, size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
       // Hessian structure of the model
-      model.compute_hessian_structure(row_indices, column_indices);
+      model.compute_hessian_structure(row_indices, column_indices, solver_indexing);
    }
 
    bool ExactHessian::is_positive_definite() const {

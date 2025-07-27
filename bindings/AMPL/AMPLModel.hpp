@@ -33,8 +33,8 @@ namespace uno {
       void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
 
       // structures of Jacobian and Hessian
-      void compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const override;
-      void compute_hessian_structure(size_t* row_indices, size_t* column_indices) const override;
+      void compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const override;
+      void compute_hessian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
       void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override;

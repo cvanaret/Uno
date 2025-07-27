@@ -65,7 +65,8 @@ namespace uno {
       this->column_indices.reserve(number_nonzeros);
       Vector<size_t> tmp_row_indices(number_nonzeros);
       Vector<size_t> tmp_column_indices(number_nonzeros);
-      subproblem.compute_regularized_augmented_matrix_structure(tmp_row_indices.data(), tmp_column_indices.data());
+      subproblem.compute_regularized_augmented_matrix_structure(tmp_row_indices.data(), tmp_column_indices.data(),
+         Indexing::Fortran_indexing);
       // build vectors of int
       for (size_t nonzero_index: Range(number_nonzeros)) {
          this->row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
@@ -119,7 +120,7 @@ namespace uno {
          subproblem.regularize_augmented_matrix(statistics, this->matrix_values, subproblem.dual_regularization_factor(), *this);
 
          // assemble the RHS
-         subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);
+         //subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);
       }
       this->solve_indefinite_system(this->matrix_values, this->rhs, this->solution);
       // assemble the full primal-dual direction

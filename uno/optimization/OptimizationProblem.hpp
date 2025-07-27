@@ -5,6 +5,7 @@
 #define UNO_OPTIMIZATIONPROBLEM_H
 
 #include <vector>
+#include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "model/Model.hpp"
 #include "optimization/IterateStatus.hpp"
@@ -39,9 +40,9 @@ namespace uno {
       virtual void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const;
 
       // structures of Jacobian and Hessian
-      virtual void compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const;
+      virtual void compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const;
       virtual void compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
-         size_t* column_indices) const;
+         size_t* column_indices, Indexing solver_indexing) const;
 
       // numerical evaluations of Jacobian and Hessian
       virtual void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const;

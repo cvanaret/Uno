@@ -4,8 +4,13 @@
 #ifndef UNO_SUBPROBLEM_H
 #define UNO_SUBPROBLEM_H
 
+#include "linear_algebra/COOMatrix.hpp"
+#include "linear_algebra/Indexing.hpp"
+#include "optimization/Multipliers.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
+#include "symbolic/UnaryNegation.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    // forward declarations
@@ -30,24 +35,28 @@ namespace uno {
       Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
 
+      // structure
+      void compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const;
+      void compute_regularized_hessian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const;
+      void compute_regularized_augmented_matrix_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const;
+
       // constraints, objective gradient and Jacobian
       void evaluate_objective_gradient(Vector<double>& linear_objective) const;
       void evaluate_constraints(std::vector<double>& constraints) const;
-      void compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const;
       void evaluate_jacobian(double* jacobian_values) const;
 
       // regularized Hessian
-      void compute_regularized_hessian_structure(size_t* row_indices, size_t* column_indices) const;
+
       void compute_regularized_hessian(Statistics& statistics, Vector<double>& /*hessian_values*/) const;
       void compute_hessian_vector_product(const double* vector, double* result) const;
 
       // augmented system
-      void compute_regularized_augmented_matrix_structure(size_t* row_indices, size_t* column_indices) const;
       void assemble_augmented_matrix(Statistics& statistics, Vector<double>& augmented_matrix_values) const;
       void regularize_augmented_matrix(Statistics& statistics, Vector<double>& augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const;
+      template <typename IndexType>
       void assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
-         RectangularMatrix<double>& constraint_jacobian, Vector<double>& rhs) const;
+         const COOMatrix<IndexType>& constraint_jacobian, Vector<double>& rhs) const;
       void assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const;
 
       // variables bounds
@@ -82,6 +91,28 @@ namespace uno {
       RegularizationStrategy<double>& regularization_strategy;
       const double trust_region_radius;
    };
+
+   template <typename IndexType>
+   void Subproblem::assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
+         const COOMatrix<IndexType>& constraint_jacobian, Vector<double>& rhs) const {
+      rhs.fill(0.);
+
+      // objective gradient
+      view(rhs, 0, this->number_variables) = -objective_gradient;
+
+      // Jacobian
+      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
+         const size_t constraint_index = constraint_jacobian.row_indices[nonzero_index];
+         const size_t variable_index = constraint_jacobian.column_indices[nonzero_index];
+         const double derivative = constraint_jacobian.values[nonzero_index];
+         rhs[variable_index] += this->current_multipliers.constraints[constraint_index] * derivative;
+      }
+      // constraints
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         rhs[this->number_variables + constraint_index] = -constraints[constraint_index];
+      }
+      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints)); DEBUG << '\n';
+   }
 
    template <typename Array>
    void Subproblem::set_constraints_bounds(Array& constraints_lower_bounds, Array& constraints_upper_bounds,

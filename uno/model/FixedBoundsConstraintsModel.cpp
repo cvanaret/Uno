@@ -47,23 +47,24 @@ namespace uno {
       this->model->evaluate_objective_gradient(x, gradient);
    }
 
-   void FixedBoundsConstraintsModel::compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const {
+   void FixedBoundsConstraintsModel::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
       // original constraints
-      this->model->compute_jacobian_structure(row_indices, column_indices);
+      this->model->compute_jacobian_structure(row_indices, column_indices, solver_indexing);
 
       // fixed variables (as linear constraints)
+      const size_t indexing = static_cast<size_t>(solver_indexing);
       size_t constraint_index = this->model->number_constraints;
       size_t current_index = this->model->number_jacobian_nonzeros();
       for (size_t fixed_variable_index: this->model->get_fixed_variables()) {
-         row_indices[current_index] = constraint_index;
-         column_indices[current_index] = fixed_variable_index;
+         row_indices[current_index] = constraint_index + indexing;
+         column_indices[current_index] = fixed_variable_index + indexing;
          ++constraint_index;
          ++current_index;
       }
    }
 
-   void FixedBoundsConstraintsModel::compute_hessian_structure(size_t* row_indices, size_t* column_indices) const {
-      this->model->compute_hessian_structure(row_indices, column_indices);
+   void FixedBoundsConstraintsModel::compute_hessian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
+      this->model->compute_hessian_structure(row_indices, column_indices, solver_indexing);
    }
 
    void FixedBoundsConstraintsModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {

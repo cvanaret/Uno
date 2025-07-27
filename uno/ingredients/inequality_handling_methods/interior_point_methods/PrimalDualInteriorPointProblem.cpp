@@ -27,10 +27,6 @@ namespace uno {
       this->first_reformulation.evaluate_constraints(iterate, constraints);
    }
 
-   void PrimalDualInteriorPointProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const {
-      this->first_reformulation.compute_jacobian_structure(row_indices, column_indices);
-   }
-
    void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
       this->first_reformulation.evaluate_objective_gradient(iterate, objective_gradient);
 
@@ -55,19 +51,24 @@ namespace uno {
       }
    }
 
+   void PrimalDualInteriorPointProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
+      this->first_reformulation.compute_jacobian_structure(row_indices, column_indices, solver_indexing);
+   }
+
    void PrimalDualInteriorPointProblem::compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
-         size_t* column_indices) const {
+         size_t* column_indices, Indexing solver_indexing) const {
       // original Lagrangian Hessian
-      this->first_reformulation.compute_hessian_structure(hessian_model, row_indices, column_indices);
+      this->first_reformulation.compute_hessian_structure(hessian_model, row_indices, column_indices, solver_indexing);
 
       // diagonal barrier terms
+      const size_t indexing = static_cast<size_t>(solver_indexing);
       size_t current_index = this->first_reformulation.number_hessian_nonzeros(hessian_model);
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
          const bool finite_lower_bound = is_finite(this->first_reformulation.variable_lower_bound(variable_index));
          const bool finite_upper_bound = is_finite(this->first_reformulation.variable_upper_bound(variable_index));
          if (finite_lower_bound || finite_upper_bound) {
-            row_indices[current_index] = variable_index;
-            column_indices[current_index] = variable_index;
+            row_indices[current_index] = variable_index + indexing;
+            column_indices[current_index] = variable_index + indexing;
             ++current_index;
          }
       }

@@ -23,11 +23,12 @@ namespace uno {
       return model.number_variables;
    }
 
-   void IdentityHessian::compute_structure(const Model& model, size_t* row_indices, size_t* column_indices) const {
+   void IdentityHessian::compute_structure(const Model& model, size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
       // diagonal structure
+      const size_t indexing = static_cast<size_t>(solver_indexing);
       for (size_t variable_index: Range(model.number_variables)) {
-         row_indices[variable_index] = variable_index;
-         column_indices[variable_index] = variable_index;
+         row_indices[variable_index] = variable_index + indexing;
+         column_indices[variable_index] = variable_index + indexing;
       }
    }
 

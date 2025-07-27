@@ -34,13 +34,13 @@ namespace uno {
       objective_gradient = iterate.evaluations.objective_gradient;
    }
 
-   void OptimizationProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const {
-      this->model.compute_jacobian_structure(row_indices, column_indices);
+   void OptimizationProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
+      this->model.compute_jacobian_structure(row_indices, column_indices, solver_indexing);
    }
 
    void OptimizationProblem::compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
-         size_t* column_indices) const {
-      hessian_model.compute_structure(this->model, row_indices, column_indices);
+         size_t* column_indices, Indexing solver_indexing) const {
+      hessian_model.compute_structure(this->model, row_indices, column_indices, solver_indexing);
    }
 
    void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
@@ -175,6 +175,39 @@ namespace uno {
       return norm(residual_norm, scaled_lagrangian);
    }
 
+<<<<<<< HEAD
+=======
+   // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
+   void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
+         const Multipliers& multipliers) const {
+      lagrangian_gradient.objective_contribution.fill(0.);
+      lagrangian_gradient.constraints_contribution.fill(0.);
+
+      // objective gradient
+      this->evaluate_objective_gradient(iterate, lagrangian_gradient.objective_contribution);
+      // lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
+
+      // constraints
+      Vector<size_t> row_indices(this->number_jacobian_nonzeros());
+      Vector<size_t> column_indices(this->number_jacobian_nonzeros());
+      Vector<double> jacobian_values(this->number_jacobian_nonzeros());
+      this->compute_jacobian_structure(row_indices.data(), column_indices.data(), Indexing::C_indexing);
+      this->evaluate_constraint_jacobian(iterate, jacobian_values.data());
+      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
+         const size_t constraint_index = row_indices[nonzero_index];
+         const size_t variable_index = column_indices[nonzero_index];
+         const double derivative = jacobian_values[nonzero_index];
+         lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
+      }
+
+      // bound constraints of original variables
+      for (size_t variable_index: Range(this->number_variables)) {
+         lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
+            multipliers.upper_bounds[variable_index]);
+      }
+   }
+
+>>>>>>> e981d438 (Passed the ordering as parameter of structure functions + fixed a few bugs)
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints

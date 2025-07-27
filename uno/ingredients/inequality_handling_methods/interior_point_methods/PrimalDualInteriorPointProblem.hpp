@@ -20,12 +20,12 @@ namespace uno {
       void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
 
       // dense objective gradient
-      void compute_jacobian_structure(size_t* row_indices, size_t* column_indices) const override;
       void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const override;
 
       // structures of Jacobian and Hessian
+      void compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const override;
       void compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
-         size_t* column_indices) const override;
+         size_t* column_indices, Indexing solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
       void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const override;
