@@ -6,7 +6,6 @@
 
 #include <string>
 #include <vector>
-#include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "optimization/IterateStatus.hpp"
 #include "symbolic/VectorExpression.hpp"
@@ -43,8 +42,8 @@ namespace uno {
       virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
 
       // structures of Jacobian and Hessian
-      virtual void compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const = 0;
-      virtual void compute_hessian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const = 0;
+      virtual void compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const = 0;
+      virtual void compute_hessian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const = 0;
 
       // numerical evaluations of Jacobian and Hessian
       virtual void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const = 0;

@@ -27,11 +27,11 @@ namespace uno {
       }
 
       // structures of Jacobian and Hessian
-      void compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const override {
+      void compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const override {
          this->model->compute_jacobian_structure(row_indices, column_indices, solver_indexing);
       }
 
-      void compute_hessian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const override {
+      void compute_hessian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const override {
          this->model->compute_hessian_structure(row_indices, column_indices, solver_indexing);
       }
 

@@ -6,7 +6,6 @@
 
 #include <cstddef>
 #include <string>
-#include "linear_algebra/Indexing.hpp"
 
 namespace uno {
    // forward declarations
@@ -28,7 +27,7 @@ namespace uno {
       virtual void initialize(const Model& model) = 0;
 
       [[nodiscard]] virtual size_t number_nonzeros(const Model& model) const = 0;
-      virtual void compute_structure(const Model& model, size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const = 0;
+      virtual void compute_structure(const Model& model, size_t* row_indices, size_t* column_indices, size_t solver_indexing) const = 0;
 
       [[nodiscard]] virtual bool is_positive_definite() const = 0;
       virtual void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,

@@ -119,32 +119,30 @@ namespace uno {
       gradient.scale(this->objective_sign);
    }
 
-   void AMPLModel::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
-      const size_t indexing = static_cast<size_t>(solver_indexing);
+   void AMPLModel::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       size_t current_index = 0;
       for (size_t constraint_index: Range(this->number_constraints)) {
          cgrad* constraint_gradient = this->asl->i.Cgrad_[constraint_index];
          while (constraint_gradient != nullptr) {
             const size_t variable_index = static_cast<size_t>(constraint_gradient->varno);
             // at the moment, the Jacobian is stored column-wise (that is, ordered by variables)
-            row_indices[constraint_gradient->goff] = constraint_index + indexing;
-            column_indices[constraint_gradient->goff] = variable_index + indexing;
+            row_indices[constraint_gradient->goff] = constraint_index + solver_indexing;
+            column_indices[constraint_gradient->goff] = variable_index + solver_indexing;
             constraint_gradient = constraint_gradient->next;
             ++current_index;
          }
       }
    }
 
-   void AMPLModel::compute_hessian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
-      const size_t indexing = static_cast<size_t>(solver_indexing);
+   void AMPLModel::compute_hessian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
       const fint* asl_row_index = this->asl->i.sputinfo_->hrownos;
       size_t current_index = 0;
       for (size_t column_index: Range(this->number_variables)) {
          for (size_t nonzero_index: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
             const size_t row_index = static_cast<size_t>(asl_row_index[nonzero_index]);
-            row_indices[current_index] = row_index + indexing;
-            column_indices[current_index] = column_index + indexing;
+            row_indices[current_index] = row_index + solver_indexing;
+            column_indices[current_index] = column_index + solver_indexing;
             ++current_index;
          }
       }

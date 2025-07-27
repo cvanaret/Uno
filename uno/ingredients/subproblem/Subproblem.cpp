@@ -17,28 +17,27 @@ namespace uno {
          regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius) {
    }
 
-   void Subproblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
+   void Subproblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       this->problem.compute_jacobian_structure(row_indices, column_indices, solver_indexing);
    }
 
-   void Subproblem::compute_regularized_hessian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
+   void Subproblem::compute_regularized_hessian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       // structure of original Lagrangian Hessian
       this->problem.compute_hessian_structure(this->hessian_model, row_indices, column_indices, solver_indexing);
 
       // regularize the Hessian only if required (diagonal regularization)
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
          size_t current_index = this->number_hessian_nonzeros();
-         const size_t indexing = static_cast<size_t>(solver_indexing);
          for (size_t variable_index: this->get_primal_regularization_variables()) {
-            row_indices[current_index ] = variable_index + indexing;
-            column_indices[current_index] = variable_index + indexing;
+            row_indices[current_index ] = variable_index + solver_indexing;
+            column_indices[current_index] = variable_index + solver_indexing;
             ++current_index;
          }
       }
    }
 
    void Subproblem::compute_regularized_augmented_matrix_structure(size_t* row_indices, size_t* column_indices,
-         const size_t* jacobian_row_indices, const size_t* jacobian_column_indices, Indexing solver_indexing) const {
+         const size_t* jacobian_row_indices, const size_t* jacobian_column_indices, size_t solver_indexing) const {
       const size_t indexing = static_cast<size_t>(solver_indexing);
 
       // structure of original Lagrangian Hessian in the (1, 1) block
