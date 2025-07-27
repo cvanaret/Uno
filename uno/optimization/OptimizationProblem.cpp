@@ -4,6 +4,7 @@
 #include <iostream>
 #include "OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "linear_algebra/Indexing.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Expression.hpp"
 #include "tools/Logger.hpp"
@@ -34,12 +35,12 @@ namespace uno {
       objective_gradient = iterate.evaluations.objective_gradient;
    }
 
-   void OptimizationProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
+   void OptimizationProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       this->model.compute_jacobian_structure(row_indices, column_indices, solver_indexing);
    }
 
    void OptimizationProblem::compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
-         size_t* column_indices, Indexing solver_indexing) const {
+         size_t* column_indices, size_t solver_indexing) const {
       hessian_model.compute_structure(this->model, row_indices, column_indices, solver_indexing);
    }
 

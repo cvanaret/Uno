@@ -5,9 +5,9 @@
 #define UNO_INDEXING_H
 
 namespace uno {
-   enum class Indexing {
-      C_indexing = 0,
-      Fortran_indexing = 1
+   struct Indexing {
+      static constexpr size_t C_indexing = 0;
+      static constexpr size_t Fortran_indexing = 1;
    };
 } // namespace
 

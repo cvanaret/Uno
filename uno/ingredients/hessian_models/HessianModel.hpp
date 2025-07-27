@@ -6,7 +6,6 @@
 
 #include <cstddef>
 #include <string>
-#include "linear_algebra/Indexing.hpp"
 
 namespace uno {
    // forward declarations
@@ -26,7 +25,7 @@ namespace uno {
       [[nodiscard]] virtual bool has_explicit_representation() const = 0;
       [[nodiscard]] virtual bool has_curvature(const Model& model) const = 0;
       [[nodiscard]] virtual size_t number_nonzeros(const Model& model) const = 0;
-      virtual void compute_structure(const Model& model, size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const = 0;
+      virtual void compute_structure(const Model& model, size_t* row_indices, size_t* column_indices, size_t solver_indexing) const = 0;
       [[nodiscard]] virtual bool is_positive_definite() const = 0;
 
       virtual void initialize(const Model& model) = 0;

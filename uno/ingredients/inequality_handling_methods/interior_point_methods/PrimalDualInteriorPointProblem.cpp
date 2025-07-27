@@ -51,24 +51,23 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
+   void PrimalDualInteriorPointProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       this->first_reformulation.compute_jacobian_structure(row_indices, column_indices, solver_indexing);
    }
 
    void PrimalDualInteriorPointProblem::compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
-         size_t* column_indices, Indexing solver_indexing) const {
+         size_t* column_indices, size_t solver_indexing) const {
       // original Lagrangian Hessian
       this->first_reformulation.compute_hessian_structure(hessian_model, row_indices, column_indices, solver_indexing);
 
       // diagonal barrier terms
-      const size_t indexing = static_cast<size_t>(solver_indexing);
       size_t current_index = this->first_reformulation.number_hessian_nonzeros(hessian_model);
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
          const bool finite_lower_bound = is_finite(this->first_reformulation.variable_lower_bound(variable_index));
          const bool finite_upper_bound = is_finite(this->first_reformulation.variable_upper_bound(variable_index));
          if (finite_lower_bound || finite_upper_bound) {
-            row_indices[current_index] = variable_index + indexing;
-            column_indices[current_index] = variable_index + indexing;
+            row_indices[current_index] = variable_index + solver_indexing;
+            column_indices[current_index] = variable_index + solver_indexing;
             ++current_index;
          }
       }

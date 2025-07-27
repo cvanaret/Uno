@@ -24,7 +24,7 @@ namespace uno {
       return model.number_hessian_nonzeros();
    }
 
-   void ExactHessian::compute_structure(const Model& model, size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
+   void ExactHessian::compute_structure(const Model& model, size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       // Hessian structure of the model
       model.compute_hessian_structure(row_indices, column_indices, solver_indexing);
    }

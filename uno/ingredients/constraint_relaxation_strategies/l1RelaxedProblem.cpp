@@ -84,41 +84,39 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, Indexing solver_indexing) const {
+   void l1RelaxedProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       this->model.compute_jacobian_structure(row_indices, column_indices, solver_indexing);
 
       // add the contribution of the elastic variables
-      const size_t indexing = static_cast<size_t>(solver_indexing);
       size_t elastic_index = this->model.number_variables;
       size_t current_index = this->model.number_jacobian_nonzeros();
       for (size_t inequality_index: this->model.get_inequality_constraints()) {
-         row_indices[current_index] = inequality_index + indexing;
-         column_indices[current_index] = elastic_index + indexing;
+         row_indices[current_index] = inequality_index + solver_indexing;
+         column_indices[current_index] = elastic_index + solver_indexing;
          ++elastic_index;
          ++current_index;
       }
       for (size_t equality_index: this->model.get_equality_constraints()) {
-         row_indices[current_index] = equality_index + indexing;
-         column_indices[current_index] = elastic_index + indexing;
+         row_indices[current_index] = equality_index + solver_indexing;
+         column_indices[current_index] = elastic_index + solver_indexing;
          ++current_index;
-         row_indices[current_index] = equality_index + indexing;
-         column_indices[current_index] = elastic_index + 1 + indexing;
+         row_indices[current_index] = equality_index + solver_indexing;
+         column_indices[current_index] = elastic_index + 1 + solver_indexing;
          elastic_index += 2;
          ++current_index;
       }
    }
 
    void l1RelaxedProblem::compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
-         size_t* column_indices, Indexing solver_indexing) const {
+         size_t* column_indices, size_t solver_indexing) const {
       hessian_model.compute_structure(this->model, row_indices, column_indices, solver_indexing);
 
       // diagonal proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
-         const size_t indexing = static_cast<size_t>(solver_indexing);
          size_t current_index = hessian_model.number_nonzeros(this->model);
          for (size_t variable_index: Range(this->model.number_variables)) {
-            row_indices[current_index] = variable_index + indexing;
-            column_indices[current_index] = variable_index + indexing;
+            row_indices[current_index] = variable_index + solver_indexing;
+            column_indices[current_index] = variable_index + solver_indexing;
             ++current_index;
          }
       }
