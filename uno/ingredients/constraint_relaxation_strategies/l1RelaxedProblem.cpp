@@ -6,9 +6,9 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/LagrangianGradient.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "tools/Infinity.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
