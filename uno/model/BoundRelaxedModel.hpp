@@ -26,13 +26,13 @@ namespace uno {
          this->model->evaluate_objective_gradient(x, gradient);
       }
 
-      // structures of Jacobian and Hessian
-      void compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const override {
-         this->model->compute_jacobian_structure(row_indices, column_indices, solver_indexing);
+      // sparsity patterns of Jacobian and Hessian
+      void compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const override {
+         this->model->compute_jacobian_sparsity(row_indices, column_indices, solver_indexing);
       }
 
-      void compute_hessian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const override {
-         this->model->compute_hessian_structure(row_indices, column_indices, solver_indexing);
+      void compute_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const override {
+         this->model->compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
       }
 
       void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override {

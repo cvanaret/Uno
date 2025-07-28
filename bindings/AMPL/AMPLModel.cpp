@@ -116,7 +116,7 @@ namespace uno {
       gradient.scale(this->objective_sign);
    }
 
-   void AMPLModel::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+   void AMPLModel::compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       size_t current_index = 0;
       for (size_t constraint_index: Range(this->number_constraints)) {
          cgrad* constraint_gradient = this->asl->i.Cgrad_[constraint_index];
@@ -131,7 +131,7 @@ namespace uno {
       }
    }
 
-   void AMPLModel::compute_hessian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+   void AMPLModel::compute_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
       const fint* asl_row_index = this->asl->i.sputinfo_->hrownos;
       size_t current_index = 0;

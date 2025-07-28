@@ -17,13 +17,13 @@ namespace uno {
          regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius) {
    }
 
-   void Subproblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
-      this->problem.compute_jacobian_structure(row_indices, column_indices, solver_indexing);
+   void Subproblem::compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+      this->problem.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing);
    }
 
-   void Subproblem::compute_regularized_hessian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
-      // structure of original Lagrangian Hessian
-      this->problem.compute_hessian_structure(this->hessian_model, row_indices, column_indices, solver_indexing);
+   void Subproblem::compute_regularized_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+      // sparsity of original Lagrangian Hessian
+      this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
       // regularize the Hessian only if required (diagonal regularization)
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
@@ -36,12 +36,12 @@ namespace uno {
       }
    }
 
-   void Subproblem::compute_regularized_augmented_matrix_structure(size_t* row_indices, size_t* column_indices,
+   void Subproblem::compute_regularized_augmented_matrix_sparsity(size_t* row_indices, size_t* column_indices,
          const size_t* jacobian_row_indices, const size_t* jacobian_column_indices, size_t solver_indexing) const {
       const size_t indexing = static_cast<size_t>(solver_indexing);
 
-      // structure of original Lagrangian Hessian in the (1, 1) block
-      this->problem.compute_hessian_structure(this->hessian_model, row_indices, column_indices, solver_indexing);
+      // sparsity of original Lagrangian Hessian in the (1, 1) block
+      this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
       // copy Jacobian of general constraints into the (1, 2) block
       const size_t hessian_offset = this->number_hessian_nonzeros();

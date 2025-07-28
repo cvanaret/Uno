@@ -23,7 +23,7 @@ namespace uno {
       return model.number_variables;
    }
 
-   void IdentityHessian::compute_structure(const Model& model, size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+   void IdentityHessian::compute_sparsity(const Model& model, size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       // diagonal structure
       for (size_t variable_index: Range(model.number_variables)) {
          row_indices[variable_index] = variable_index + solver_indexing;
