@@ -5,8 +5,8 @@
 #define UNO_SUBPROBLEM_H
 
 #include "linear_algebra/COOMatrix.hpp"
-#include "linear_algebra/Indexing.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/Multipliers.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/UnaryNegation.hpp"
