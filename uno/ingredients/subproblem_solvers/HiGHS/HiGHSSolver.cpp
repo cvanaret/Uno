@@ -47,9 +47,9 @@ namespace uno {
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       this->jacobian_values.resize(number_jacobian_nonzeros);
-      subproblem.compute_jacobian_structure(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
          Indexing::C_indexing);
-      // TODO convert COO structure to CSC structure
+      // TODO convert COO format to CSC format
       throw std::runtime_error("HiGHSSolver not implemented yet");
 
       // TODO Hessian

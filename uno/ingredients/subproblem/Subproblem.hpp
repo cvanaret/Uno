@@ -30,10 +30,10 @@ namespace uno {
       Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
 
-      // structure
-      void compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const;
-      void compute_regularized_hessian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const;
-      void compute_regularized_augmented_matrix_structure(size_t* row_indices, size_t* column_indices, const size_t* jacobian_row_indices,
+      // sparsity patterns
+      void compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const;
+      void compute_regularized_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const;
+      void compute_regularized_augmented_matrix_sparsity(size_t* row_indices, size_t* column_indices, const size_t* jacobian_row_indices,
          const size_t* jacobian_column_indices, size_t solver_indexing) const;
 
       // constraints, objective gradient and Jacobian

@@ -17,7 +17,7 @@ namespace uno {
       this->workspace.sym = MUMPSSolver::GENERAL_SYMMETRIC;
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
       // TODO load number of processes from option file
-      this->mumps_structure.par = 1;
+      this->workspace.par = 1;
 #else
       this->workspace.par = 1;
 #endif
@@ -37,9 +37,9 @@ namespace uno {
 
       /*
       // debug for MUMPS team
-      this->mumps_structure.icntl[1] = 6; // ICNTL(2)=6
-      this->mumps_structure.icntl[2] = 6; // ICNTL(3)=6
-      this->mumps_structure.icntl[3] = 6; // ICNTL(4)=2
+      this->workspace.icntl[1] = 6; // ICNTL(2)=6
+      this->workspace.icntl[2] = 6; // ICNTL(3)=6
+      this->workspace.icntl[3] = 6; // ICNTL(4)=2
        */
    }
 
@@ -59,7 +59,7 @@ namespace uno {
       const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
-      subproblem.compute_jacobian_structure(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
          Indexing::C_indexing);
 
       // augmented system
@@ -69,7 +69,7 @@ namespace uno {
       // compute the COO sparse representation: use temporary vectors of size_t
       Vector<size_t> tmp_row_indices(number_nonzeros);
       Vector<size_t> tmp_column_indices(number_nonzeros);
-      subproblem.compute_regularized_augmented_matrix_structure(tmp_row_indices.data(), tmp_column_indices.data(),
+      subproblem.compute_regularized_augmented_matrix_sparsity(tmp_row_indices.data(), tmp_column_indices.data(),
          this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), Indexing::Fortran_indexing);
       // build vectors of int
       for (size_t nonzero_index: Range(number_nonzeros)) {
@@ -87,7 +87,7 @@ namespace uno {
 
    void MUMPSSolver::do_symbolic_analysis() {
       this->workspace.job = MUMPSSolver::JOB_ANALYSIS;
-      // connect the local sparsity with the pointers in the structure
+      // connect the local sparsity with the pointers in the workspace
       this->workspace.irn = this->augmented_matrix_row_indices.data();
       this->workspace.jcn = this->augmented_matrix_column_indices.data();
       dmumps_c(&this->workspace);

@@ -84,8 +84,8 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
-      this->model.compute_jacobian_structure(row_indices, column_indices, solver_indexing);
+   void l1RelaxedProblem::compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+      this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing);
 
       // add the contribution of the elastic variables
       size_t elastic_index = this->model.number_variables;
@@ -107,9 +107,9 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
+   void l1RelaxedProblem::compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
          size_t* column_indices, size_t solver_indexing) const {
-      hessian_model.compute_structure(this->model, row_indices, column_indices, solver_indexing);
+      hessian_model.compute_sparsity(this->model, row_indices, column_indices, solver_indexing);
 
       // diagonal proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {

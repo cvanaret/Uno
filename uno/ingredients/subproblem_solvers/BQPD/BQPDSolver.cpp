@@ -70,10 +70,12 @@ namespace uno {
       this->lower_bounds.resize(subproblem.number_variables + subproblem.number_constraints);
       this->upper_bounds.resize(subproblem.number_variables + subproblem.number_constraints);
       this->constraints.resize(subproblem.number_constraints);
+
       // Jacobian + objective gradient
       this->gradients.resize(subproblem.number_jacobian_nonzeros() + subproblem.number_variables);
-      this->gradient_structure.resize(subproblem.number_jacobian_nonzeros() + subproblem.number_variables +
+      this->gradient_sparsity.resize(subproblem.number_jacobian_nonzeros() + subproblem.number_variables +
          subproblem.number_constraints + 3);
+
       // default active set
       this->active_set.resize(subproblem.number_variables + subproblem.number_constraints);
       for (size_t variable_index: Range(subproblem.number_variables + subproblem.number_constraints)) {
@@ -90,7 +92,7 @@ namespace uno {
          this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_values.resize(number_regularized_hessian_nonzeros);
-         subproblem.compute_regularized_hessian_structure(this->hessian_row_indices.data(), this->hessian_column_indices.data(),
+         subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(), this->hessian_column_indices.data(),
             Indexing::C_indexing); // the Hessian is handled only by Uno, not by BQPD
       }
 
@@ -160,9 +162,9 @@ namespace uno {
          this->upper_bounds[variable_index] = std::min(BIG, this->upper_bounds[variable_index]);
       }
 
-      // save objective gradient and constraint Jacobian into BQPD workspace
+      // save sparsity patterns of objective gradient and constraint Jacobian into BQPD workspace
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->compute_gradient_structure(subproblem);
+         this->compute_gradient_sparsity(subproblem);
       }
       this->hide_pointers_in_workspace(statistics, subproblem);
    }
@@ -221,7 +223,7 @@ namespace uno {
       bool termination = false;
       while (!termination) {
          DEBUG2 << "Running BQPD\n";
-         BQPD(&n, &m, &this->k, &this->kmax, this->gradients.data(), this->gradient_structure.data(), direction.primals.data(),
+         BQPD(&n, &m, &this->k, &this->kmax, this->gradients.data(), this->gradient_sparsity.data(), direction.primals.data(),
             this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
             this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp,
             &this->peq_solution, this->ws.data(), this->lws.data(), &mode_integer, &this->ifail, this->info.data(),
@@ -272,37 +274,37 @@ namespace uno {
       WSC.ll += sizeof(intptr_t);
    }
 
-   void BQPDSolver::compute_gradient_structure(const Subproblem& subproblem) {
+   void BQPDSolver::compute_gradient_sparsity(const Subproblem& subproblem) {
       // leave first element free
       size_t current_index = 1;
       for (size_t variable_index: Range(subproblem.number_variables)) {
-         this->gradient_structure[current_index] = static_cast<int>(variable_index) + this->fortran_shift;
+         this->gradient_sparsity[current_index] = static_cast<int>(variable_index) + this->fortran_shift;
          current_index++;
       }
       // get the sparsity in COO format
       Vector<size_t> coo_row_indices(subproblem.number_jacobian_nonzeros());
       Vector<size_t> coo_column_indices(subproblem.number_jacobian_nonzeros());
-      subproblem.compute_jacobian_structure(coo_row_indices.data(), coo_column_indices.data(), Indexing::Fortran_indexing);
+      subproblem.compute_jacobian_sparsity(coo_row_indices.data(), coo_column_indices.data(), Indexing::Fortran_indexing);
       for (size_t constraint_index: Range(subproblem.number_constraints)) {
          /*
          for (const auto [variable_index, derivative]: this->constraint_jacobian[constraint_index]) {
-            this->gradient_structure[current_index] = static_cast<int>(variable_index) + this->fortran_shift;
+            this->gradient_sparsity[current_index] = static_cast<int>(variable_index) + this->fortran_shift;
             current_index++;
          }
          */
       }
       current_index++;
-      this->gradient_structure[0] = static_cast<int>(current_index);
+      this->gradient_sparsity[0] = static_cast<int>(current_index);
       // header
       size_t size = 1;
-      this->gradient_structure[current_index] = static_cast<int>(size);
+      this->gradient_sparsity[current_index] = static_cast<int>(size);
       current_index++;
       size += subproblem.number_variables;
-      this->gradient_structure[current_index] = static_cast<int>(size);
+      this->gradient_sparsity[current_index] = static_cast<int>(size);
       current_index++;
       for (size_t constraint_index: Range(subproblem.number_constraints)) {
          // TODO size += this->constraint_jacobian[constraint_index].size();
-         this->gradient_structure[current_index] = static_cast<int>(size);
+         this->gradient_sparsity[current_index] = static_cast<int>(size);
          current_index++;
       }
    }

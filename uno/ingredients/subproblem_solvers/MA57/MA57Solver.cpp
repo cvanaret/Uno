@@ -103,7 +103,7 @@ namespace uno {
       const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
-      subproblem.compute_jacobian_structure(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
          Indexing::C_indexing);
 
       // augmented system
@@ -113,7 +113,7 @@ namespace uno {
       // compute the COO sparse representation: use temporary vectors of size_t
       Vector<size_t> tmp_row_indices(number_nonzeros);
       Vector<size_t> tmp_column_indices(number_nonzeros);
-      subproblem.compute_regularized_augmented_matrix_structure(tmp_row_indices.data(), tmp_column_indices.data(),
+      subproblem.compute_regularized_augmented_matrix_sparsity(tmp_row_indices.data(), tmp_column_indices.data(),
          this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), Indexing::Fortran_indexing);
       // build vectors of int
       for (size_t nonzero_index: Range(number_nonzeros)) {

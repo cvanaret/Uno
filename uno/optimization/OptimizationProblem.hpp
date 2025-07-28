@@ -40,9 +40,9 @@ namespace uno {
       // dense objective gradient
       virtual void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const;
 
-      // structures of Jacobian and Hessian
-      virtual void compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const;
-      virtual void compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
+      // sparsity patterns of Jacobian and Hessian
+      virtual void compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const;
+      virtual void compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
          size_t* column_indices, size_t solver_indexing) const;
 
       // numerical evaluations of Jacobian and Hessian

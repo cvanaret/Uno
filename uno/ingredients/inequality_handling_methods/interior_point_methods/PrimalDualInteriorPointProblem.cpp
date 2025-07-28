@@ -49,14 +49,14 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
-      this->first_reformulation.compute_jacobian_structure(row_indices, column_indices, solver_indexing);
+   void PrimalDualInteriorPointProblem::compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+      this->first_reformulation.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing);
    }
 
-   void PrimalDualInteriorPointProblem::compute_hessian_structure(const HessianModel& hessian_model, size_t* row_indices,
+   void PrimalDualInteriorPointProblem::compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
          size_t* column_indices, size_t solver_indexing) const {
       // original Lagrangian Hessian
-      this->first_reformulation.compute_hessian_structure(hessian_model, row_indices, column_indices, solver_indexing);
+      this->first_reformulation.compute_hessian_sparsity(hessian_model, row_indices, column_indices, solver_indexing);
 
       // diagonal barrier terms
       size_t current_index = this->first_reformulation.number_hessian_nonzeros(hessian_model);

@@ -47,9 +47,9 @@ namespace uno {
       this->model->evaluate_objective_gradient(x, gradient);
    }
 
-   void FixedBoundsConstraintsModel::compute_jacobian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+   void FixedBoundsConstraintsModel::compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       // original constraints
-      this->model->compute_jacobian_structure(row_indices, column_indices, solver_indexing);
+      this->model->compute_jacobian_sparsity(row_indices, column_indices, solver_indexing);
 
       // fixed variables (as linear constraints)
       size_t constraint_index = this->model->number_constraints;
@@ -62,8 +62,8 @@ namespace uno {
       }
    }
 
-   void FixedBoundsConstraintsModel::compute_hessian_structure(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
-      this->model->compute_hessian_structure(row_indices, column_indices, solver_indexing);
+   void FixedBoundsConstraintsModel::compute_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+      this->model->compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
    }
 
    void FixedBoundsConstraintsModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
