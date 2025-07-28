@@ -46,7 +46,6 @@ namespace uno {
          Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), (asl->i.objtype_[0] == 1) ? -1. : 1.),
          asl(asl),
          write_solution_to_file(options.get_bool("AMPL_write_solution_to_file")),
-         asl_gradient(this->number_variables),
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
@@ -349,6 +348,7 @@ namespace uno {
       // sparsity pattern
       [[maybe_unused]] const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
       // check that the column pointers are sorted in increasing order
-      assert(in_increasing_order(asl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
+      assert(in_increasing_order(asl_column_start, this->number_variables + 1) &&
+         "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
    }
 } // namespace
