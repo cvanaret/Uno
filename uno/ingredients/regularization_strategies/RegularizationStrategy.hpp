@@ -17,8 +17,6 @@ namespace uno {
    class Options;
    class Statistics;
    class Subproblem;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
    template <typename Array>

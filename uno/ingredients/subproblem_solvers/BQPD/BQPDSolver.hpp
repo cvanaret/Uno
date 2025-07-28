@@ -16,8 +16,6 @@ namespace uno {
    class Multipliers;
    class Options;
    class Subproblem;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
 
    // see bqpd.f
    enum class BQPDStatus {

@@ -5,7 +5,6 @@
 #include <cassert>
 #include <stdexcept>
 #include "AMPLModel.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"

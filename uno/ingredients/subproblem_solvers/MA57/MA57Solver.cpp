@@ -8,14 +8,12 @@
 #include <vector>
 #include "MA57Solver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 #include "linear_algebra/COOMatrix.hpp"
-#include "symbolic/VectorView.hpp"
 
 #define MA57_set_default_parameters FC_GLOBAL(ma57id, MA57ID)
 #define MA57_symbolic_analysis FC_GLOBAL(ma57ad, MA57AD)
@@ -109,7 +107,6 @@ namespace uno {
 
       // augmented system
       const size_t number_nonzeros = subproblem.number_regularized_augmented_system_nonzeros();
-      std::cout << "MA57 nnz: " << number_nonzeros << '\n';
       this->augmented_matrix_row_indices.resize(number_nonzeros);
       this->augmented_matrix_column_indices.resize(number_nonzeros);
       // compute the COO sparse representation: use temporary vectors of size_t
@@ -125,11 +122,6 @@ namespace uno {
       this->augmented_matrix_values.resize(number_nonzeros);
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
-
-      // matrix views
-      //COOMatrix augmented_system(this->row_indices.data(), this->column_indices.data(), this->matrix_values.data());
-      //COOMatrixView hessian = view(augmented_system, 0, subproblem.number_hessian_nonzeros());
-      //std::cout << "HESSIAN ROW INDICES: "; hessian.print();
 
       // workspace
       this->workspace.n = static_cast<int>(dimension);

@@ -49,7 +49,7 @@ namespace uno {
       this->model.evaluate_constraint_jacobian(iterate.primals, jacobian_values);
    }
 
-// Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
+   // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
    // split in two parts: objective contribution and constraints' contribution
    void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
          const Multipliers& multipliers/*, const COOMatrix<size_t>& jacobian*/) const {
