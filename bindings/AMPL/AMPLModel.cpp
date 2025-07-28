@@ -275,7 +275,9 @@ namespace uno {
          }
 
          // flip the signs of the multipliers and the objective if we maximize
-         iterate.multipliers.constraints *= this->objective_sign;
+         // note: due to the different sign convention for the Lagrangian between ASL and Uno,
+         // we need to flip the signs of the constraint multipliers when minimizing
+         iterate.multipliers.constraints *= -this->objective_sign;
          iterate.multipliers.lower_bounds *= this->objective_sign;
          iterate.multipliers.upper_bounds *= this->objective_sign;
          iterate.evaluations.objective *= this->objective_sign;
@@ -294,8 +296,8 @@ namespace uno {
          message.append(Uno::current_version()).append(": ").append(iterate_status_to_message(iterate_status));
          write_sol_ASL(this->asl, message.data(), iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
 
-         // flip the signs of the multipliers and the objective back if we maximize
-         iterate.multipliers.constraints *= this->objective_sign;
+         // flip back the signs of the multipliers and the objective back if we maximize
+         iterate.multipliers.constraints *= -this->objective_sign;
          iterate.multipliers.lower_bounds *= this->objective_sign;
          iterate.multipliers.upper_bounds *= this->objective_sign;
          iterate.evaluations.objective *= this->objective_sign;
