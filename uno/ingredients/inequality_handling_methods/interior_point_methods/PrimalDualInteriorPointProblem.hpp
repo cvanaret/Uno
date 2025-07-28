@@ -22,13 +22,19 @@ namespace uno {
       // dense objective gradient
       void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const override;
 
-      // structures of Jacobian and Hessian
+      // sparsity patterns of Jacobian and Hessian
+
       void compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const override;
       void compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
          size_t* column_indices, size_t solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
+      [[nodiscard]] size_t number_jacobian_nonzeros() const override;
+      [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
+      [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
       void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const override;
+      void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
+         const Multipliers& multipliers) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, Vector<double>& hessian_values) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* vector, const Multipliers& multipliers,
@@ -49,16 +55,10 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
 
-      [[nodiscard]] size_t number_jacobian_nonzeros() const override;
-      [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
-      [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
-
       void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const override;
 
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
       void set_auxiliary_measure(Iterate& iterate) const;
-      void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-         const Multipliers& multipliers) const override;
       [[nodiscard]] double dual_regularization_factor() const override;
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;

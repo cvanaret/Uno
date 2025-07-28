@@ -25,7 +25,10 @@ namespace uno {
       // dense objective gradient
       void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const override;
 
-      // structures of Jacobian and Hessian
+      // sparsity patterns of Jacobian and Hessian
+      [[nodiscard]] size_t number_jacobian_nonzeros() const override;
+      [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
+      [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
       void compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const override;
       void compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
          size_t* column_indices, size_t solver_indexing) const override;
@@ -53,10 +56,6 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
-
-      [[nodiscard]] size_t number_jacobian_nonzeros() const override;
-      [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
-      [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
 
       [[nodiscard]] IterateStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const;

@@ -83,6 +83,24 @@ namespace uno {
       }
    }
 
+   size_t l1RelaxedProblem::number_jacobian_nonzeros() const {
+      return this->model.number_jacobian_nonzeros() + this->number_elastic_variables;
+   }
+
+   bool l1RelaxedProblem::has_curvature(const HessianModel& hessian_model) const {
+      // the l1 relaxation does not introduce curvature
+      return hessian_model.has_curvature(this->model);
+   }
+
+   size_t l1RelaxedProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
+      size_t number_nonzeros = hessian_model.number_nonzeros(this->model);
+      // proximal contribution
+      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+         number_nonzeros += this->model.number_variables;
+      }
+      return number_nonzeros;
+   }
+
    void l1RelaxedProblem::compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing);
 
@@ -319,24 +337,6 @@ namespace uno {
 
    const Collection<size_t>& l1RelaxedProblem::get_dual_regularization_constraints() const {
       return this->dual_regularization_constraints;
-   }
-
-   size_t l1RelaxedProblem::number_jacobian_nonzeros() const {
-      return this->model.number_jacobian_nonzeros() + this->number_elastic_variables;
-   }
-
-   bool l1RelaxedProblem::has_curvature(const HessianModel& hessian_model) const {
-      // the l1 relaxation does not introduce curvature
-      return hessian_model.has_curvature(this->model);
-   }
-
-   size_t l1RelaxedProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
-      size_t number_nonzeros = hessian_model.number_nonzeros(this->model);
-      // proximal contribution
-      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
-         number_nonzeros += this->model.number_variables;
-      }
-      return number_nonzeros;
    }
 
    void l1RelaxedProblem::set_proximal_multiplier(double new_proximal_coefficient) {

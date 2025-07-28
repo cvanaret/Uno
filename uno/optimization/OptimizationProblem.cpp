@@ -35,6 +35,18 @@ namespace uno {
       objective_gradient = iterate.evaluations.objective_gradient;
    }
 
+   size_t OptimizationProblem::number_jacobian_nonzeros() const {
+      return this->model.number_jacobian_nonzeros();
+   }
+
+   bool OptimizationProblem::has_curvature(const HessianModel& hessian_model) const {
+      return hessian_model.has_curvature(this->model);
+   }
+
+   size_t OptimizationProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
+      return hessian_model.number_nonzeros(this->model);
+   }
+
    void OptimizationProblem::compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing);
    }
@@ -84,7 +96,7 @@ namespace uno {
             multipliers.upper_bounds[variable_index]);
       }
    }
-   
+
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
          const Vector<double>& primal_variables, const Multipliers& multipliers, Vector<double>& hessian_values) const {
       hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(),
@@ -152,21 +164,9 @@ namespace uno {
       return this->dual_regularization_constraints;
    }
 
-   size_t OptimizationProblem::number_jacobian_nonzeros() const {
-      return this->model.number_jacobian_nonzeros();
-   }
-
-   bool OptimizationProblem::has_curvature(const HessianModel& hessian_model) const {
-      return hessian_model.has_curvature(this->model);
-   }
-
-   size_t OptimizationProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
-      return hessian_model.number_nonzeros(this->model);
-   }
 
    void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& /*solution*/,
          Direction& /*direction*/) const {
-      // do nothing
    }
 
    double OptimizationProblem::dual_regularization_factor() const {
