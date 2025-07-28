@@ -35,6 +35,14 @@ namespace uno {
       objective_gradient = iterate.evaluations.objective_gradient;
    }
 
+   size_t OptimizationProblem::number_jacobian_nonzeros() const {
+      return this->model.number_jacobian_nonzeros();
+   }
+
+   size_t OptimizationProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
+      return hessian_model.number_nonzeros(this->model);
+   }
+
    void OptimizationProblem::compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing);
    }
@@ -46,6 +54,43 @@ namespace uno {
 
    void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
       this->model.evaluate_constraint_jacobian(iterate.primals, jacobian_values);
+   }
+
+   // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
+   // split in two parts: objective contribution and constraints' contribution
+   void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
+         const Multipliers& multipliers/*, const COOMatrix<size_t>& jacobian*/) const {
+      lagrangian_gradient.objective_contribution.fill(0.);
+      lagrangian_gradient.constraints_contribution.fill(0.);
+
+      // ∇f(x_k)
+      this->evaluate_objective_gradient(iterate, lagrangian_gradient.objective_contribution);
+
+      // ∇c(x_k) λ_k
+      /*
+      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
+         const auto [constraint_index, variable_index, derivative] = jacobian[nonzero_index];
+         lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
+      }
+      */
+      Vector<size_t> row_indices(this->number_jacobian_nonzeros());
+      Vector<size_t> column_indices(this->number_jacobian_nonzeros());
+      Vector<double> jacobian_values(this->number_jacobian_nonzeros());
+      this->compute_jacobian_sparsity(row_indices.data(), column_indices.data(), Indexing::C_indexing);
+      this->evaluate_constraint_jacobian(iterate, jacobian_values.data());
+
+      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
+         const size_t constraint_index = row_indices[nonzero_index];
+         const size_t variable_index = column_indices[nonzero_index];
+         const double derivative = jacobian_values[nonzero_index];
+         lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
+      }
+
+      // z_k
+      for (size_t variable_index: Range(this->number_variables)) {
+         lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
+            multipliers.upper_bounds[variable_index]);
+      }
    }
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
@@ -115,14 +160,6 @@ namespace uno {
       return this->dual_regularization_constraints;
    }
 
-   size_t OptimizationProblem::number_jacobian_nonzeros() const {
-      return this->model.number_jacobian_nonzeros();
-   }
-
-   size_t OptimizationProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
-      return hessian_model.number_nonzeros(this->model);
-   }
-
    void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Multipliers& /*current_multipliers*/,
          const Vector<double>& /*solution*/, Direction& /*direction*/) const {
       // do nothing
@@ -137,43 +174,6 @@ namespace uno {
       // norm of the scaled Lagrangian gradient
       const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
       return norm(residual_norm, scaled_lagrangian);
-   }
-
-   // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
-   // split in two parts: objective contribution and constraints' contribution
-   void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-         const Multipliers& multipliers/*, const COOMatrix<size_t>& jacobian*/) const {
-      lagrangian_gradient.objective_contribution.fill(0.);
-      lagrangian_gradient.constraints_contribution.fill(0.);
-
-      // ∇f(x_k)
-      this->evaluate_objective_gradient(iterate, lagrangian_gradient.objective_contribution);
-
-      // ∇c(x_k) λ_k
-      /*
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
-         const auto [constraint_index, variable_index, derivative] = jacobian[nonzero_index];
-         lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
-      }
-      */
-      Vector<size_t> row_indices(this->number_jacobian_nonzeros());
-      Vector<size_t> column_indices(this->number_jacobian_nonzeros());
-      Vector<double> jacobian_values(this->number_jacobian_nonzeros());
-      this->compute_jacobian_sparsity(row_indices.data(), column_indices.data(), Indexing::C_indexing);
-      this->evaluate_constraint_jacobian(iterate, jacobian_values.data());
-
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
-         const size_t constraint_index = row_indices[nonzero_index];
-         const size_t variable_index = column_indices[nonzero_index];
-         const double derivative = jacobian_values[nonzero_index];
-         lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
-      }
-
-      // z_k
-      for (size_t variable_index: Range(this->number_variables)) {
-         lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
-            multipliers.upper_bounds[variable_index]);
-      }
    }
 
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
