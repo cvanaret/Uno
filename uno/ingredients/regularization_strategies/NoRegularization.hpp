@@ -17,12 +17,13 @@ namespace uno {
       }
 
       void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, const Vector<double>& /*hessian_values*/,
-            const Inertia& /*expected_inertia*/) override {
+            const Inertia& /*expected_inertia*/, VectorView<Vector<double>&> /*primal_regularization_values*/) override {
          // do nothing
       }
 
       void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, const Vector<double>& /*hessian_values*/,
-            const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) override {
+            const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/,
+            VectorView<Vector<double>&> /*primal_regularization_values*/) override {
          // do nothing
       }
 

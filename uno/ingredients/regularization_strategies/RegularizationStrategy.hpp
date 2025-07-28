@@ -31,9 +31,10 @@ namespace uno {
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
 
       virtual void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const Vector<double>& hessian_values,
-         const Inertia& expected_inertia) = 0;
+         const Inertia& expected_inertia, VectorView<Vector<double>&> primal_regularization_values) = 0;
       virtual void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const Vector<double>& hessian_values,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) = 0;
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+         VectorView<Vector<double>&> primal_regularization_values) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia, VectorView<Vector<double>&> primal_regularization_values,

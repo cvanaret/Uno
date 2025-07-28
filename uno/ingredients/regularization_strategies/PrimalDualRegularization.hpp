@@ -25,9 +25,10 @@ namespace uno {
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
       void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const Vector<double>& hessian_values,
-         const Inertia& expected_inertia) override;
+         const Inertia& expected_inertia, VectorView<Vector<double>&> primal_regularization_values) override;
       void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const Vector<double>& hessian_values,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) override;
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+         VectorView<Vector<double>&> primal_regularization_values) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const Vector<double>& augmented_matrix_values, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia, VectorView<Vector<double>&> primal_regularization_values,
@@ -80,19 +81,21 @@ namespace uno {
 
    template <typename ElementType>
    void PrimalDualRegularization<ElementType>::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
-         const Vector<double>& hessian_values, const Inertia& expected_inertia) {
+         const Vector<double>& hessian_values, const Inertia& expected_inertia, VectorView<Vector<double>&> primal_regularization_values) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
          this->optional_linear_solver->initialize(subproblem);
       }
-      this->regularize_hessian(statistics, subproblem, hessian_values, expected_inertia, *this->optional_linear_solver);
+      this->regularize_hessian(statistics, subproblem, hessian_values, expected_inertia, *this->optional_linear_solver,
+         primal_regularization_values);
    }
 
    template <typename ElementType>
    void PrimalDualRegularization<ElementType>::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
          const Vector<double>& /*hessian_values*/, const Inertia& /*expected_inertia*/,
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) {
+         DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/,
+         VectorView<Vector<double>&> /*primal_regularization_values*/) {
       // to regularize the Hessian only, call the function for the augmented matrix with no dual part
       // TODO fix
       throw std::runtime_error("PrimalDualRegularization::regularize_hessian not implemented yet");
