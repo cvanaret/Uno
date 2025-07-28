@@ -5,7 +5,6 @@
 #define UNO_EVALUATIONS_H
 
 #include <vector>
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "tools/Infinity.hpp"
 

@@ -14,6 +14,8 @@ namespace uno {
    // forward declarations
    template <typename ElementType>
    class Collection;
+   template <typename IndexType>
+   class COOMatrix;
    class Direction;
    class HessianModel;
    class Iterate;
@@ -46,7 +48,7 @@ namespace uno {
       // numerical evaluations of Jacobian and Hessian
       virtual void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const;
       virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-         const Multipliers& multipliers) const;
+         const Multipliers& multipliers/*, const COOMatrix<size_t>& jacobian*/) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, Vector<double>& hessian_values) const;
       virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,

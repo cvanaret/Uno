@@ -20,8 +20,6 @@ namespace uno {
    class Iterate;
    class Multipliers;
    template <typename ElementType>
-   class RectangularMatrix;
-   template <typename ElementType>
    class RegularizationStrategy;
    template <typename ElementType>
    class SparseVector;

@@ -5,6 +5,7 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "linear_algebra/Indexing.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -27,7 +28,6 @@ namespace uno {
 
       this->constraints.resize(subproblem.number_constraints);
       this->linear_objective.resize(subproblem.number_variables);
-      this->constraint_jacobian.resize(subproblem.number_constraints, subproblem.number_variables);
       this->model.lp_.sense_ = ObjSense::kMinimize;
       this->model.lp_.offset_ = 0.;
       // the linear part of the objective is a dense vector
@@ -38,11 +38,22 @@ namespace uno {
       // constraint bounds
       this->model.lp_.row_lower_.resize(subproblem.number_constraints);
       this->model.lp_.row_upper_.resize(subproblem.number_constraints);
+
       // constraint matrix in CSR format (each row is a constraint gradient)
       this->model.lp_.a_matrix_.format_ = MatrixFormat::kRowwise;
-      this->model.lp_.a_matrix_.value_.reserve(subproblem.number_jacobian_nonzeros());
-      this->model.lp_.a_matrix_.index_.reserve(subproblem.number_jacobian_nonzeros());
+      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+      this->model.lp_.a_matrix_.value_.reserve(number_jacobian_nonzeros);
+      this->model.lp_.a_matrix_.index_.reserve(number_jacobian_nonzeros);
       this->model.lp_.a_matrix_.start_.reserve(subproblem.number_variables + 1);
+      // Jacobian in COO format
+      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
+      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
+      this->jacobian_values.resize(number_jacobian_nonzeros);
+      subproblem.compute_jacobian_structure(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+         Indexing::C_indexing);
+      // TODO convert COO structure to CSC structure
+      throw std::runtime_error("HiGHSSolver not implemented yet");
+
       // TODO Hessian
       // this->hessian = SymmetricMatrix<size_t, double>("CSC", problem.number_variables, 0, 0); // TODO
    }
@@ -96,11 +107,14 @@ namespace uno {
       size_t number_nonzeros = 0;
       this->model.lp_.a_matrix_.start_.emplace_back(number_nonzeros);
       for (size_t constraint_index: Range(subproblem.number_constraints)) {
+         /*
+         TODO
          for (const auto [variable_index, value]: this->constraint_jacobian[constraint_index]) {
             this->model.lp_.a_matrix_.value_.emplace_back(value);
             this->model.lp_.a_matrix_.index_.emplace_back(variable_index);
             number_nonzeros++;
          }
+         */
          this->model.lp_.a_matrix_.start_.emplace_back(number_nonzeros);
       }
 

@@ -7,9 +7,6 @@
 #include <array>
 #include <vector>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/COOFormat.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
