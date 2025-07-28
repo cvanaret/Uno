@@ -72,7 +72,6 @@ namespace uno {
       // mutable: can be modified by const methods (internal state not seen by user)
       mutable ASL* asl; /*!< Instance of the AMPL Solver Library class */
       const bool write_solution_to_file;
-      mutable std::vector<double> asl_gradient{};
       size_t number_asl_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
 
       // lists of variables and constraints + corresponding collection objects
