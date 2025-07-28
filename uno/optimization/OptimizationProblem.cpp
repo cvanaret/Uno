@@ -4,7 +4,6 @@
 #include <iostream>
 #include "OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
-#include "linear_algebra/COOMatrix.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Expression.hpp"
