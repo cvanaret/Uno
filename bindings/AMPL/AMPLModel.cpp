@@ -13,8 +13,6 @@
 #include "tools/Infinity.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Concatenation.hpp"
-#include "symbolic/UnaryNegation.hpp"
-#include "symbolic/VectorView.hpp"
 #include "Uno.hpp"
 
 namespace uno {
@@ -35,6 +33,10 @@ namespace uno {
 
       // read the file_name.nl file
       pfgh_read_ASL(asl, nl, ASL_findgroups | ASL_return_read_err);
+
+      // set the sign convention for the Lagrangian: Uno uses ∇²L(x, y) = ∇²f(x) - \sum_j y_j ∇²c_j(x)
+      fint error_flag{0};
+      lagscale_ASL(asl, -1., &error_flag);
       return asl;
    }
 
@@ -46,9 +48,7 @@ namespace uno {
          Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), (asl->i.objtype_[0] == 1) ? -1. : 1.),
          asl(asl),
          write_solution_to_file(options.get_bool("AMPL_write_solution_to_file")),
-         // allocate vectors
          asl_gradient(this->number_variables),
-         multipliers_with_flipped_sign(this->number_constraints),
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
@@ -158,11 +158,8 @@ namespace uno {
       // evaluate the Hessian: store the matrix in a preallocated array this->asl_hessian
       const int objective_number = -1;
       objective_multiplier *= this->objective_sign;
-      // flip the signs of the multipliers: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
-      // note: multipliers may be larger than multipliers_with_flipped_sign, therefore we create a view
-      this->multipliers_with_flipped_sign = -view(multipliers, 0, this->number_constraints);
       (*(this->asl)->p.Sphes)(this->asl, nullptr, this->asl_hessian.data(), objective_number, &objective_multiplier,
-         this->multipliers_with_flipped_sign.data());
+         const_cast<double*>(multipliers.data()));
 
       // generate the sparsity pattern in the right sparse format
       const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
@@ -187,13 +184,10 @@ namespace uno {
          double* result) const {
       // scale by the objective sign
       objective_multiplier *= this->objective_sign;
-      // flip the signs of the multipliers: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
-      // note: multipliers may be larger than multipliers_with_flipped_sign, therefore we create a view
-      this->multipliers_with_flipped_sign = -view(multipliers, 0, this->number_constraints);
 
       // compute the Hessian-vector product
       (this->asl->p.Hvcomp)(this->asl, result, const_cast<double*>(vector), -1, &objective_multiplier,
-         this->multipliers_with_flipped_sign.data());
+         const_cast<double*>(multipliers.data()));
    }
 
    double AMPLModel::variable_lower_bound(size_t variable_index) const {
@@ -281,7 +275,9 @@ namespace uno {
          }
 
          // flip the signs of the multipliers and the objective if we maximize
-         iterate.multipliers.constraints *= this->objective_sign;
+         // note: due to the different sign convention for the Lagrangian between ASL and Uno,
+         // we need to flip the signs of the constraint multipliers when minimizing
+         iterate.multipliers.constraints *= -this->objective_sign;
          iterate.multipliers.lower_bounds *= this->objective_sign;
          iterate.multipliers.upper_bounds *= this->objective_sign;
          iterate.evaluations.objective *= this->objective_sign;
@@ -300,8 +296,8 @@ namespace uno {
          message.append(Uno::current_version()).append(": ").append(iterate_status_to_message(iterate_status));
          write_sol_ASL(this->asl, message.data(), iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
 
-         // flip the signs of the multipliers and the objective back if we maximize
-         iterate.multipliers.constraints *= this->objective_sign;
+         // flip back the signs of the multipliers and the objective back if we maximize
+         iterate.multipliers.constraints *= -this->objective_sign;
          iterate.multipliers.lower_bounds *= this->objective_sign;
          iterate.multipliers.upper_bounds *= this->objective_sign;
          iterate.evaluations.objective *= this->objective_sign;

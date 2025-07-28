@@ -68,8 +68,6 @@ namespace uno {
       mutable std::vector<double> asl_hessian{};
       size_t number_asl_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
 
-      mutable Vector<double> multipliers_with_flipped_sign;
-
       // lists of variables and constraints + corresponding collection objects
       ForwardRange linear_constraints;
       std::vector<size_t> equality_constraints{};
