@@ -3,8 +3,6 @@
 
 #include "MUMPSSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
-#include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"

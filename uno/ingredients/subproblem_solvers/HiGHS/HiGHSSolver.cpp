@@ -55,7 +55,6 @@ namespace uno {
       throw std::runtime_error("HiGHSSolver not implemented yet");
 
       // TODO Hessian
-      // this->hessian = SymmetricMatrix<size_t, double>("CSC", problem.number_variables, 0, 0); // TODO
    }
 
    void HiGHSSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& /*initial_point*/,

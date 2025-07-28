@@ -24,8 +24,6 @@ namespace uno {
    template <typename ElementType>
    class SparseVector;
    class Statistics;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
 
