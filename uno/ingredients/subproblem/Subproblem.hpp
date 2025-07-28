@@ -18,8 +18,6 @@ namespace uno {
    class DirectSymmetricIndefiniteLinearSolver;
    class HessianModel;
    template <typename ElementType>
-   class RectangularMatrix;
-   template <typename ElementType>
    class RegularizationStrategy;
    class Statistics;
    template <typename IndexType, typename ElementType>

@@ -6,8 +6,6 @@
 
 #include "ingredients/subproblem_solvers/LPSolver.hpp"
 #include "Highs.h"
-#include "linear_algebra/COOFormat.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -30,7 +28,10 @@ namespace uno {
       Highs highs_solver;
       std::vector<double> constraints{};
       Vector<double> linear_objective{};
-      RectangularMatrix<double> constraint_jacobian{};
+      // Jacobian
+      Vector<size_t> jacobian_row_indices{};
+      Vector<size_t> jacobian_column_indices{};
+      Vector<double> jacobian_values{};
 
       const bool print_subproblem;
 

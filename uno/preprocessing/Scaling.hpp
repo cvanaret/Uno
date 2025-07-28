@@ -9,15 +9,15 @@
 
 namespace uno {
    // forward declarations
-   template <typename ElementType>
-   class RectangularMatrix;
+   template <typename IndexType>
+   class COOMatrix;
    template <typename ElementType>
    class Vector;
 
    class Scaling {
    public:
       Scaling(size_t number_constraints, double gradient_threshold);
-      void compute(const Vector<double>& objective_gradient, const RectangularMatrix<double>& constraint_jacobian);
+      void compute(const Vector<double>& objective_gradient, const COOMatrix<size_t>& constraint_jacobian);
       [[nodiscard]] double get_objective_scaling() const;
       [[nodiscard]] double get_constraint_scaling(size_t constraint_index) const;
 
