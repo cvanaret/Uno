@@ -45,7 +45,7 @@ Uno implements **presets**, that is strategy combinations that correspond to exi
 
 ## Installation instructions
 
-See the [INSTALL](INSTALL.md) file.
+See the [INSTALL](INSTALL.md) file for instructions on how to compile Uno from source or use the precompiled libraries and executables.
 
 ## Solving a problem with Uno
 
