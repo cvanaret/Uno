@@ -24,6 +24,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Setup Julia
+      run: source $HOME/.bashrc
+
     - name: Install Meson and Ninja
       run: |
         pip install meson==1.7.1
