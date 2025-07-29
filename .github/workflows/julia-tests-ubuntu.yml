@@ -18,12 +18,9 @@ permissions:
   actions: write
   contents: read
 jobs:
-  test:
+  cross-compilation-linux:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        UNO_PRESET: [uno_filtersqp_bqpd, uno_ipopt_mumps, uno_filterslp_highs]
-    name: Julia tests of ${{matrix.UNO_PRESET}} - ${{ github.event_name }}
+    name: Build on x86_64-linux-gnu-cxx11
     
     steps:
       - uses: actions/checkout@v4
@@ -50,12 +47,23 @@ jobs:
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
           julia --color=yes .github/julia/build_tarballs_yggdrasil.jl x86_64-linux-gnu-cxx11 --verbose --deploy="local"
+
+  julia-test:
+    needs: cross-compilation-linux
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        UNO_PRESET: [uno_filtersqp_bqpd, uno_ipopt_mumps, uno_filterslp_highs]
+    name: Julia tests of ${{matrix.UNO_PRESET}}
+    steps:
+      - uses: actions/checkout@v4
       # Now install a newer version of Julia to actually test Uno_jll.jl.
       # We choose v1.10 because it is the current Long-Term Support (LTS).
       - uses: julia-actions/setup-julia@v2
         with:
           version: "1.10"
           arch: x64
+
       - name: Test ${{matrix.UNO_PRESET}} preset on .github/julia/runtests.jl
         shell: julia --color=yes --project=.github/julia {0}
         run: |
