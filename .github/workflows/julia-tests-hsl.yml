@@ -88,7 +88,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Run Julia tests for the preset Ipopt with MA27
+    - name: Run Julia tests for the ipopt preset with MA27
       shell: julia --color=yes --project=.github/julia {0}
       run: |
         using Pkg
@@ -102,7 +102,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Run Julia tests for the preset Ipopt with MA57
+    - name: Run Julia tests for the ipopt preset with MA57
       shell: julia --color=yes --project=.github/julia {0}
       run: |
         using Pkg

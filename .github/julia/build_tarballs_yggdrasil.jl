@@ -42,7 +42,7 @@ cmake \
     -DCMAKE_INSTALL_PREFIX=${prefix} \
     -DCMAKE_PREFIX_PATH=${libdir} \
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
-    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_BUILD_TYPE=Debug \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
     -DHIGHS_DIR=${HIGHS_DIR} \
     -DBQPD=${prefix}/lib/libbqpd.a \

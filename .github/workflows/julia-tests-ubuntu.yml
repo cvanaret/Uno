@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        UNO_PRESET: [uno_filtersqp, uno_ipopt, uno_filterslp]
+        UNO_PRESET: [uno_filtersqp_bqpd, uno_ipopt_mumps, uno_filterslp_highs]
     name: Julia tests of ${{matrix.UNO_PRESET}} - ${{ github.event_name }}
     
     steps:
