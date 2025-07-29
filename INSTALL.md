@@ -94,7 +94,7 @@ make run_unotest -jn
 
 ### Precompiled libraries and executables
 
-We provide precompiled Uno libraries and executables in the [releases tab](https://github.com/cvanaret/Uno/releases/latest/) for Linux, macOS (Intel & Silicon), and Windows.
+We provide precompiled Uno libraries and executables in the [releases tab](https://github.com/cvanaret/Uno/releases/latest/) for Linux (x64 and aarch64), macOS (x64 and aarch64), and Windows (x64).
 
 On some platforms, the dynamic linker needs to know where to look for libraries at runtime.
 You might need to set the following environment variables:
@@ -113,4 +113,6 @@ export LD_LIBRARY_PATH=/path/to/extracted/Uno/lib:$LD_LIBRARY_PATH
 export PATH=/path/to/extracted/Uno/bin:$PATH
 ```
 
-Note: The provided shared library `libhsl.so` / `libhsl.dylib` / `libhsl.dll` in the precompiled archive does not contain the HSL solvers like MA57 but can be replaced with the official version without the need to recompile anything.
+Note: The shared library `libhsl.so` / `libhsl.dylib` / `libhsl.dll` provided in the precompiled archive is a dummy version that does not include the official HSL linear solvers such as `MA27` or `MA57`.
+However, it can be safely replaced with the official precompiled [libHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) library without the need to recompile anything.
+The routine symbols are identical, allowing seamless hot-swapping of the library.
