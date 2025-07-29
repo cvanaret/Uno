@@ -82,38 +82,23 @@ jobs:
         rm -rf /scratch/github-actions/actions_runner_uno/Uno_jll.jl/override/bin/uno_ampl
         cp ${{github.workspace}}/build/uno_ampl /scratch/github-actions/actions_runner_uno/Uno_jll.jl/override/bin
 
-  preset-ipopt-ma27:
+  preset-ipopt:
     needs: compilation-uno-hsl
     runs-on: self-hosted
+    strategy:
+      matrix:
+        HSL_SOLVER: [ma27, ma57]
+    name: Run Julia tests for the ipopt preset with ${{HSL_SOLVER}}
     steps:
     - uses: actions/checkout@v4
-
-    - name: Run Julia tests for the ipopt preset with MA27
 
     - name: Install Julia
       uses: julia-actions/setup-julia@v2
 
+    - name: Run runtests_uno_ipopt_${{HSL_SOLVER}}.jl
       shell: julia --color=yes --project=.github/julia {0}
       run: |
         using Pkg
         Pkg.instantiate()
         Pkg.develop(path="/scratch/github-actions/actions_runner_uno/Uno_jll.jl")
-        include("/scratch/github-actions/actions_runner_uno/_work/Uno/Uno/.github/julia/runtests_uno_ipopt_ma27.jl")
-
-  preset-ipopt-ma57:
-    needs: compilation-uno-hsl
-    runs-on: self-hosted
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Run Julia tests for the ipopt preset with MA57
-
-    - name: Install Julia
-      uses: julia-actions/setup-julia@v2
-
-      shell: julia --color=yes --project=.github/julia {0}
-      run: |
-        using Pkg
-        Pkg.instantiate()
-        Pkg.develop(path="/scratch/github-actions/actions_runner_uno/Uno_jll.jl")
-        include("/scratch/github-actions/actions_runner_uno/_work/Uno/Uno/.github/julia/runtests_uno_ipopt_ma57.jl")
+        include("/scratch/github-actions/actions_runner_uno/_work/Uno/Uno/.github/julia/runtests_uno_ipopt_${{HSL_SOLVER}}.jl")
