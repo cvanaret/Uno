@@ -10,8 +10,9 @@
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
-   // forward declaration
+   // forward declarations
    class Statistics;
+   class Subproblem;
 
    struct MA57Workspace {
       int n{};
@@ -59,6 +60,9 @@ namespace uno {
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
 
+      void compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      void compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+
    private:
       MA57Workspace workspace{};
 
@@ -67,10 +71,12 @@ namespace uno {
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
 
       // Jacobian
+      size_t number_jacobian_nonzeros{};
       std::vector<size_t> jacobian_row_indices{};
       std::vector<size_t> jacobian_column_indices{};
 
       // augmented system
+      size_t number_hessian_nonzeros{};
       std::vector<int> augmented_matrix_row_indices{};
       std::vector<int> augmented_matrix_column_indices{};
       Vector<double> augmented_matrix_values{};

@@ -4,47 +4,44 @@
 #ifndef UNO_COOMATRIX_H
 #define UNO_COOMATRIX_H
 
-#include <iostream>
 #include <tuple>
-#include "symbolic/VectorView.hpp"
+#include "Matrix.hpp"
 
 namespace uno {
+   /*
    template <typename IndexType>
-   class COOMatrix {
+   class COOMatrix: public Matrix<IndexType> {
+   public:
+      const size_t dimension{};
+      Vector<IndexType> row_indices{};
+      Vector<IndexType> column_indices{};
+      Vector<double> values{};
+
+      COOMatrix() = default;
+
+      COOMatrix(size_t dimension, size_t number_nonzeros):
+         dimension(dimension), row_indices(number_nonzeros), column_indices(number_nonzeros), values(number_nonzeros) { }
+
+      std::tuple<IndexType, IndexType, double> operator[](size_t nonzero_index) const override {
+         return {this->row_indices[nonzero_index], this->column_indices[nonzero_index], this->values[nonzero_index]};
+      }
+   };
+   */
+
+   template <typename IndexType>
+   class COOMatrixView: public Matrix<IndexType> {
    public:
       IndexType* row_indices;
       IndexType* column_indices;
       double* values;
 
-      COOMatrix(IndexType* row_indices, IndexType* column_indices, double* values):
+      COOMatrixView(IndexType* row_indices, IndexType* column_indices, double* values):
          row_indices(row_indices), column_indices(column_indices), values(values) { }
 
-      std::tuple<IndexType, IndexType, double> operator[](size_t nonzero_index) const {
+      std::tuple<IndexType, IndexType, double> operator[](size_t nonzero_index) const override {
          return {this->row_indices[nonzero_index], this->column_indices[nonzero_index], this->values[nonzero_index]};
       }
    };
-
-   template <typename IndexType>
-   class COOMatrixView {
-   public:
-      COOMatrixView(COOMatrix<IndexType>& matrix, size_t start, size_t end):
-         matrix(matrix), start(start), end(end) { }
-
-      void print() const {
-         std::cout << view(this->matrix.row_indices, this->start, this->end) << '\n';
-         std::cout << view(this->matrix.column_indices, this->start, this->end) << '\n';
-         std::cout << view(this->matrix.values, this->start, this->end) << '\n';
-      }
-
-   protected:
-      COOMatrix<IndexType> matrix;
-      const size_t start, end;
-   };
-
-   template <typename IndexType>
-   COOMatrixView<IndexType> view(COOMatrix<IndexType>& matrix, size_t start, size_t end) {
-      return {matrix, start, end};
-   }
 } // namespace
 
 #endif // UNO_COOMATRIX_H

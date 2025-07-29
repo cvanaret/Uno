@@ -67,8 +67,8 @@ namespace uno {
 
       void set_objective_measure(const Model& model, Iterate& iterate) const;
       void set_infeasibility_measure(const Model& model, Iterate& iterate) const;
-      [[nodiscard]] double compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const;
+      [[nodiscard]] double compute_predicted_infeasibility_reduction(InequalityHandlingMethod& inequality_handling_method,
+         const Model& model, const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const;
       [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(InequalityHandlingMethod& inequality_handling_method,
          const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const;
       void compute_progress_measures(InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,

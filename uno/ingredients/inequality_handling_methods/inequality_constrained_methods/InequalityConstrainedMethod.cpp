@@ -88,8 +88,16 @@ namespace uno {
       return 0.;
    }
 
-   double InequalityConstrainedMethod::hessian_quadratic_product(const Vector<double>& vector) const {
-      return this->solver->hessian_quadratic_product(vector);
+   void InequalityConstrainedMethod::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      this->solver->compute_jacobian_vector_product(vector, result);
+   }
+
+   void InequalityConstrainedMethod::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      this->solver->compute_jacobian_transposed_vector_product(vector, result);
+   }
+
+   double InequalityConstrainedMethod::compute_hessian_quadratic_product(const Vector<double>& vector) const {
+      return this->solver->compute_hessian_quadratic_product(vector);
    }
 
    // compute dual *displacements*

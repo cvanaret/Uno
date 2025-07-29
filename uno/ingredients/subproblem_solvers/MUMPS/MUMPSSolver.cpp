@@ -3,8 +3,9 @@
 
 #include "MUMPSSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "optimization/Direction.hpp"
+#include "linear_algebra/COOMatrix.hpp"
 #include "linear_algebra/Indexing.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"
@@ -56,13 +57,14 @@ namespace uno {
       this->constraints.resize(subproblem.number_constraints);
 
       // Jacobian
-      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+      this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
          Indexing::C_indexing);
 
       // augmented system
+      this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
       const size_t number_nonzeros = subproblem.number_regularized_augmented_system_nonzeros();
       this->augmented_matrix_row_indices.resize(number_nonzeros);
       this->augmented_matrix_column_indices.resize(number_nonzeros);
@@ -124,8 +126,8 @@ namespace uno {
          subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix_values, subproblem.dual_regularization_factor(), *this);
 
          // assemble the RHS
-         const COOMatrix jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-            this->augmented_matrix_values.data() + subproblem.number_hessian_nonzeros()};
+         const COOMatrixView jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+            this->augmented_matrix_values.data() + this->number_hessian_nonzeros};
          subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, jacobian, this->rhs);;
       }
       this->solve_indefinite_system(this->augmented_matrix_values, this->rhs, this->solution);
@@ -161,5 +163,27 @@ namespace uno {
 
    size_t MUMPSSolver::rank() const {
       return this->workspace.n - this->number_zero_eigenvalues();
+   }
+
+   void MUMPSSolver::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      result.fill(0.);
+      const size_t offset = this->number_hessian_nonzeros;
+      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
+         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
+         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
+         const double derivative = this->augmented_matrix_values[offset + nonzero_index];
+         result[constraint_index] += derivative * vector[variable_index];
+      }
+   }
+
+   void MUMPSSolver::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      result.fill(0.);
+      const size_t offset = this->number_hessian_nonzeros;
+      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
+         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
+         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
+         const double derivative = this->augmented_matrix_values[offset + nonzero_index];
+         result[variable_index] += derivative * vector[constraint_index];
+      }
    }
 } // namespace

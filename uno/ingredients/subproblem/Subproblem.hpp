@@ -4,12 +4,13 @@
 #ifndef UNO_SUBPROBLEM_H
 #define UNO_SUBPROBLEM_H
 
-#include "linear_algebra/COOMatrix.hpp"
 #include "optimization/Iterate.hpp"
+#include "linear_algebra/Matrix.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/UnaryNegation.hpp"
+#include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -51,7 +52,7 @@ namespace uno {
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const;
       template <typename IndexType>
       void assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
-         const COOMatrix<IndexType>& constraint_jacobian, Vector<double>& rhs) const;
+         const Matrix<IndexType>& constraint_jacobian, Vector<double>& rhs) const;
       void assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const;
 
       // variables bounds
@@ -91,7 +92,7 @@ namespace uno {
 
    template <typename IndexType>
    void Subproblem::assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
-         const COOMatrix<IndexType>& constraint_jacobian, Vector<double>& rhs) const {
+         const Matrix<IndexType>& constraint_jacobian, Vector<double>& rhs) const {
       rhs.fill(0.);
 
       // objective gradient

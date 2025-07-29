@@ -57,16 +57,18 @@ namespace uno {
       };
    }
 
-   double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const {
+   double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(InequalityHandlingMethod& inequality_handling_method,
+         const Model& model, const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
-      /*
       const double current_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints, this->progress_norm);
+      Vector<double> result(model.number_constraints);
+      std::cout << "primal_direction has size " << primal_direction.size() << '\n';
+      std::cout << "current_iterate.evaluations.constraints has size " << current_iterate.evaluations.constraints.size() << '\n';
+      std::cout << "result has size " << result.size() << '\n';
+      inequality_handling_method.compute_jacobian_transposed_vector_product(primal_direction, result);
       const double trial_linearized_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints +
-         step_length * (current_iterate.evaluations.constraint_jacobian * primal_direction), this->progress_norm);
+         step_length * result, this->progress_norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
-      */
-      return 0.;
    }
 
    std::function<double(double)> ConstraintRelaxationStrategy::compute_predicted_objective_reduction(InequalityHandlingMethod& inequality_handling_method,
@@ -74,7 +76,7 @@ namespace uno {
       // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
       const double directional_derivative = dot(primal_direction, current_iterate.evaluations.objective_gradient);
       const double quadratic_term = this->first_order_predicted_reduction ? 0. :
-         inequality_handling_method.hessian_quadratic_product(primal_direction);
+         inequality_handling_method.compute_hessian_quadratic_product(primal_direction);
       return [=](double objective_multiplier) {
          return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
       };
@@ -95,7 +97,7 @@ namespace uno {
    ProgressMeasures ConstraintRelaxationStrategy::compute_predicted_reductions(InequalityHandlingMethod& inequality_handling_method,
          const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction, double step_length) const {
       return {
-         this->compute_predicted_infeasibility_reduction(problem.model, current_iterate, direction.primals, step_length),
+         this->compute_predicted_infeasibility_reduction(inequality_handling_method, problem.model, current_iterate, direction.primals, step_length),
          this->compute_predicted_objective_reduction(inequality_handling_method, current_iterate, direction.primals, step_length),
          inequality_handling_method.compute_predicted_auxiliary_reduction_model(problem, current_iterate, direction.primals, step_length)
       };

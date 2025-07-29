@@ -117,7 +117,15 @@ namespace uno {
       this->solve_subproblem(subproblem, initial_point, direction, warmstart_information);
    }
 
-   double BQPDSolver::hessian_quadratic_product(const Vector<double>& vector) const {
+   void BQPDSolver::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      throw std::runtime_error("BQPDSolver::compute_jacobian_vector_product not implemented");
+   }
+
+   void BQPDSolver::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      throw std::runtime_error("BQPDSolver::compute_jacobian_transposed_vector_product not implemented");
+   }
+
+   double BQPDSolver::compute_hessian_quadratic_product(const Vector<double>& vector) const {
       throw std::runtime_error("BQPDSolver::hessian_quadratic_product not implemented");
       // return this->hessian.quadratic_product(vector, vector);
    }

@@ -27,6 +27,9 @@ namespace uno {
          Vector<ElementType>& result) = 0;
       virtual void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) = 0;
+
+      virtual void compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
+      virtual void compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
    };
 } // namespace
 

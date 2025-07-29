@@ -28,8 +28,12 @@ namespace uno {
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
+      // matrix computations
+      void compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      void compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      [[nodiscard]] double compute_hessian_quadratic_product(const Vector<double>& vector) const override;
+
       // progress measures
-      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
       void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem, const Iterate&,
          const Vector<double>&, double) const override;

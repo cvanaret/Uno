@@ -61,7 +61,15 @@ namespace uno {
       this->solve_subproblem(subproblem, direction);
    }
 
-   double HiGHSSolver::hessian_quadratic_product(const Vector<double>& /*vector*/) const {
+   void HiGHSSolver::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      throw std::runtime_error("HiGHSSolver::compute_jacobian_vector_product not implemented");
+   }
+
+   void HiGHSSolver::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      throw std::runtime_error("HiGHSSolver::compute_jacobian_transposed_vector_product not implemented");
+   }
+
+   double HiGHSSolver::compute_hessian_quadratic_product(const Vector<double>& /*vector*/) const {
       return 0.;
    }
 

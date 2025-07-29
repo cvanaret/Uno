@@ -101,10 +101,6 @@ namespace uno {
       }
    }
 
-   double PrimalDualInteriorPointMethod::barrier_parameter() const {
-      return this->barrier_parameter_update_strategy.get_barrier_parameter();
-   }
-
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information) {
@@ -147,8 +143,8 @@ namespace uno {
       }
    }
 
-   double PrimalDualInteriorPointMethod::hessian_quadratic_product(const Vector<double>& /*vector*/) const {
-      return 0.; // TODO
+   double PrimalDualInteriorPointMethod::barrier_parameter() const {
+      return this->barrier_parameter_update_strategy.get_barrier_parameter();
    }
 
    void PrimalDualInteriorPointMethod::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& current_iterate) {
@@ -219,6 +215,18 @@ namespace uno {
 
    double PrimalDualInteriorPointMethod::proximal_coefficient() const {
       return std::sqrt(this->barrier_parameter());
+   }
+
+   void PrimalDualInteriorPointMethod::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      this->linear_solver->compute_jacobian_vector_product(vector, result);
+   }
+
+   void PrimalDualInteriorPointMethod::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      this->linear_solver->compute_jacobian_transposed_vector_product(vector, result);
+   }
+
+   double PrimalDualInteriorPointMethod::compute_hessian_quadratic_product(const Vector<double>& /*vector*/) const {
+      return 0.; // TODO
    }
 
    void PrimalDualInteriorPointMethod::set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) {
