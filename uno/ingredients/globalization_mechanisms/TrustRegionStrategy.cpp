@@ -152,12 +152,12 @@ namespace uno {
       // terminate with a feasible point
       if (trial_iterate.progress.infeasibility <= this->tolerance) {
          trial_iterate.status = IterateStatus::FEASIBLE_SMALL_STEP;
-         constraint_relaxation_strategy.compute_primal_dual_residuals(model, trial_iterate);
+         // TODO constraint_relaxation_strategy.compute_primal_dual_residuals(model, trial_iterate);
          return true;
       }
       else if (constraint_relaxation_strategy.solving_feasibility_problem()) { // terminate with an infeasible point
          trial_iterate.status = IterateStatus::INFEASIBLE_SMALL_STEP;
-         constraint_relaxation_strategy.compute_primal_dual_residuals(model, trial_iterate);
+         // TODO constraint_relaxation_strategy.compute_primal_dual_residuals(model, trial_iterate);
          return true;
       }
       else { // do not terminate, infeasible non stationary

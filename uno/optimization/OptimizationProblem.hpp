@@ -7,6 +7,7 @@
 #include <vector>
 #include "linear_algebra/Norm.hpp"
 #include "model/Model.hpp"
+#include "optimization/IterateStatus.hpp"
 #include "optimization/LagrangianGradient.hpp"
 
 namespace uno {
@@ -66,13 +67,15 @@ namespace uno {
 
       virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const Multipliers& current_multipliers,
          const Vector<double>& solution, Direction& direction) const;
+      [[nodiscard]] virtual double dual_regularization_factor() const;
 
       [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
          Norm residual_norm);
       virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate, const Multipliers& multipliers) const;
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
-      [[nodiscard]] virtual double dual_regularization_factor() const;
+
+      [[nodiscard]] IterateStatus check_first_order_convergence(const Iterate& current_iterate, double tolerance) const;
 
    protected:
       const ForwardRange primal_regularization_variables;

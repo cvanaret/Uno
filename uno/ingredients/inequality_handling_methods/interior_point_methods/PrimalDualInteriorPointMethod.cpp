@@ -120,10 +120,9 @@ namespace uno {
 
 
       // possibly update the barrier parameter
-      const auto& residuals = this->solving_feasibility_problem ? current_iterate.feasibility_residuals : current_iterate.residuals;
       if (!this->first_feasibility_iteration) {
          const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-         this->update_barrier_parameter(barrier_problem, current_iterate, current_multipliers, residuals);
+         this->update_barrier_parameter(barrier_problem, current_iterate, current_multipliers, current_iterate.residuals);
       }
       else {
          this->first_feasibility_iteration = false;

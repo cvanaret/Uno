@@ -8,6 +8,7 @@
 #include <functional>
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/Norm.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/IterateStatus.hpp"
 
 namespace uno {
@@ -15,7 +16,6 @@ namespace uno {
    class Direction;
    class GlobalizationStrategy;
    class InequalityHandlingMethod;
-   class Iterate;
    class Model;
    class Multipliers;
    class OptimizationProblem;
@@ -51,10 +51,9 @@ namespace uno {
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
-      [[nodiscard]] IterateStatus check_termination(const Model& model, Iterate& iterate);
+      [[nodiscard]] virtual IterateStatus check_termination(const Model& model, Iterate& iterate) = 0;
 
       // primal-dual residuals
-      virtual void compute_primal_dual_residuals(const Model& model, Iterate& iterate) = 0;
       virtual void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
@@ -90,17 +89,47 @@ namespace uno {
       virtual void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
          const OptimizationProblem& problem, Iterate& iterate) const = 0;
 
-      void compute_primal_dual_residuals(const Model& model, const OptimizationProblem& optimality_problem,
-         const OptimizationProblem& feasibility_problem, Iterate& iterate) const;
-
+      void compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate, const Multipliers& multipliers) const;
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;
 
-      [[nodiscard]] IterateStatus check_first_order_convergence(const Model& model, Iterate& current_iterate, double tolerance) const;
+      template <typename Problem>
+      [[nodiscard]] IterateStatus check_termination(const Problem& problem, Iterate& iterate);
 
       void set_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const;
       void set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const;
    };
+
+   template <typename Problem>
+   IterateStatus ConstraintRelaxationStrategy::check_termination(const Problem& problem, Iterate& iterate) {
+      if (iterate.is_objective_computed && iterate.evaluations.objective < this->unbounded_objective_threshold) {
+         return IterateStatus::UNBOUNDED;
+      }
+
+      // test convergence wrt the tight tolerance
+      const IterateStatus status_tight_tolerance = problem.check_first_order_convergence(iterate, this->tight_tolerance);
+      if (status_tight_tolerance != IterateStatus::NOT_OPTIMAL || this->loose_tolerance <= this->tight_tolerance) {
+         return status_tight_tolerance;
+      }
+
+      // if not converged, check convergence wrt loose tolerance (provided it is strictly looser than the tight tolerance)
+      const IterateStatus status_loose_tolerance = problem.check_first_order_convergence(iterate, this->loose_tolerance);
+      // if converged, keep track of the number of consecutive iterations
+      if (status_loose_tolerance != IterateStatus::NOT_OPTIMAL) {
+         this->loose_tolerance_consecutive_iterations++;
+      }
+      else {
+         this->loose_tolerance_consecutive_iterations = 0;
+         return IterateStatus::NOT_OPTIMAL;
+      }
+      // check if loose tolerance achieved for enough consecutive iterations
+      if (this->loose_tolerance_consecutive_iteration_threshold <= this->loose_tolerance_consecutive_iterations) {
+         return status_loose_tolerance;
+      }
+      else {
+         return IterateStatus::NOT_OPTIMAL;
+      }
+   }
 } // namespace
 
 #endif //UNO_CONSTRAINTRELAXATIONSTRATEGY_H

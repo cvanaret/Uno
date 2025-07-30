@@ -17,7 +17,7 @@ namespace uno {
    Iterate::Iterate(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
          primals(number_variables), multipliers(number_variables, number_constraints), feasibility_multipliers(number_variables, number_constraints),
-         evaluations(number_variables, number_constraints), residuals(number_variables), feasibility_residuals(number_variables) {
+         evaluations(number_variables, number_constraints), residuals(number_variables) {
    }
 
    void Iterate::evaluate_objective(const Model& model) {
@@ -93,9 +93,6 @@ namespace uno {
       stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';
       stream << "Residuals │ Complementarity: " << iterate.residuals.complementarity << '\n';
       stream << "          └ Lagrangian gradient: " << iterate.residuals.lagrangian_gradient;
-      stream << "Feasibility residuals ┌ Stationarity: " << iterate.feasibility_residuals.stationarity << '\n';
-      stream << "                      │ Complementarity: " << iterate.feasibility_residuals.complementarity << '\n';
-      stream << "                      └ Lagrangian gradient: " << iterate.feasibility_residuals.lagrangian_gradient;
 
       stream << "                  ┌ Infeasibility: " << iterate.progress.infeasibility << '\n';
       stream << "Progress measures │ Optimality: " << iterate.progress.objective(1.) << '\n';

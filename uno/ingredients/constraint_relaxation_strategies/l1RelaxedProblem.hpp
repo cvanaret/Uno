@@ -45,6 +45,7 @@ namespace uno {
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
 
       void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate, const Multipliers& multipliers) const override;
+      [[nodiscard]] IterateStatus check_first_order_convergence(const Iterate& current_iterate, double tolerance) const;
 
       // parameterization
       void set_proximal_multiplier(double new_proximal_coefficient);

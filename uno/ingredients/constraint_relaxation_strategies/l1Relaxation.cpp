@@ -75,13 +75,12 @@ namespace uno {
       statistics.set("penalty", this->penalty_parameter);
 
       // initial iterate
-      initial_iterate.feasibility_residuals.lagrangian_gradient.resize(l1_relaxed_problem.number_variables);
       initial_iterate.feasibility_multipliers.lower_bounds.resize(l1_relaxed_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(l1_relaxed_problem.number_variables);
       this->inequality_handling_method->set_elastic_variable_values(l1_relaxed_problem, initial_iterate);
       this->inequality_handling_method->generate_initial_iterate(l1_relaxed_problem, initial_iterate);
       this->evaluate_progress_measures(*this->inequality_handling_method, l1_relaxed_problem, initial_iterate);
-      this->compute_primal_dual_residuals(model, initial_iterate);
+      this->compute_primal_dual_residuals(l1_relaxed_problem, initial_iterate, initial_iterate.multipliers);
       this->set_statistics(statistics, model, initial_iterate);
    }
 
@@ -204,7 +203,8 @@ namespace uno {
    double l1Relaxation::compute_infeasible_dual_error(const Model& model, Iterate& current_iterate) const {
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
       // stationarity error
-      feasibility_problem.evaluate_lagrangian_gradient(current_iterate.feasibility_residuals.lagrangian_gradient, current_iterate, this->trial_multipliers);
+      // TODO correct residuals?
+      feasibility_problem.evaluate_lagrangian_gradient(current_iterate.residuals.lagrangian_gradient, current_iterate, this->trial_multipliers);
       double error = norm_1(current_iterate.residuals.lagrangian_gradient.constraints_contribution);
 
       // complementarity error
@@ -284,10 +284,9 @@ namespace uno {
       return accept_iterate;
    }
 
-   void l1Relaxation::compute_primal_dual_residuals(const Model& model, Iterate& iterate) {
-      const l1RelaxedProblem l1_relaxed_problem{model, this->penalty_parameter, this->constraint_violation_coefficient};
-      const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, l1_relaxed_problem, feasibility_problem, iterate);
+   IterateStatus l1Relaxation::check_termination(const Model& model, Iterate& iterate) {
+      // ConstraintRelaxationStrategy::compute_primal_dual_residuals(problem, iterate, iterate.multipliers);
+      throw std::runtime_error("l1Relaxation::check_termination not implemented yet");
    }
 
    void l1Relaxation::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,

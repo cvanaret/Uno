@@ -66,12 +66,11 @@ namespace uno {
       statistics.set("phase", "OPT");
 
       // initial iterate
-      initial_iterate.feasibility_residuals.lagrangian_gradient.resize(feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.lower_bounds.resize(feasibility_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(feasibility_problem.number_variables);
       this->optimality_inequality_handling_method->generate_initial_iterate(optimality_problem, initial_iterate);
       this->evaluate_progress_measures(*this->optimality_inequality_handling_method, optimality_problem, initial_iterate);
-      this->compute_primal_dual_residuals(model, initial_iterate);
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(optimality_problem, initial_iterate, initial_iterate.multipliers);
       this->set_statistics(statistics, model, initial_iterate);
    }
 
@@ -206,10 +205,17 @@ namespace uno {
       return accept_iterate;
    }
 
-   void FeasibilityRestoration::compute_primal_dual_residuals(const Model& model, Iterate& iterate) {
-      const OptimizationProblem optimality_problem{model};
-      const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, optimality_problem, feasibility_problem, iterate);
+   IterateStatus FeasibilityRestoration::check_termination(const Model& model, Iterate& iterate) {
+      if (this->current_phase == Phase::OPTIMALITY) {
+         const OptimizationProblem optimality_problem{model};
+         ConstraintRelaxationStrategy::compute_primal_dual_residuals(optimality_problem, iterate, iterate.multipliers);
+         return ConstraintRelaxationStrategy::check_termination(optimality_problem, iterate);
+      }
+      else {
+         const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
+         ConstraintRelaxationStrategy::compute_primal_dual_residuals(feasibility_problem, iterate, iterate.multipliers);
+         return ConstraintRelaxationStrategy::check_termination(feasibility_problem, iterate);
+      }
    }
 
    void FeasibilityRestoration::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
@@ -220,9 +226,8 @@ namespace uno {
    }
 
    void FeasibilityRestoration::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-      const auto& residuals = (this->current_phase == Phase::OPTIMALITY) ? iterate.residuals : iterate.feasibility_residuals;
-      statistics.set("stationarity", residuals.stationarity);
-      statistics.set("complementarity", residuals.complementarity);
+      statistics.set("stationarity", iterate.residuals.stationarity);
+      statistics.set("complementarity", iterate.residuals.complementarity);
    }
 
    std::string FeasibilityRestoration::get_name() const {

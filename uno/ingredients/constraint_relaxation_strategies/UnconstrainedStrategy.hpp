@@ -29,9 +29,9 @@ namespace uno {
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+      [[nodiscard]] IterateStatus check_termination(const Model& model, Iterate& iterate) override;
 
       // primal-dual residuals
-      void compute_primal_dual_residuals(const Model& model, Iterate& iterate) override;
       void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
 
       [[nodiscard]] std::string get_name() const override;

@@ -5,6 +5,7 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Expression.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    OptimizationProblem::OptimizationProblem(const Model& model):
@@ -117,6 +118,10 @@ namespace uno {
       // do nothing
    }
 
+   double OptimizationProblem::dual_regularization_factor() const {
+      return 0.;
+   }
+
    double OptimizationProblem::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
          Norm residual_norm) {
       // norm of the scaled Lagrangian gradient
@@ -178,7 +183,21 @@ namespace uno {
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
    }
 
-   double OptimizationProblem::dual_regularization_factor() const {
-      return 0.;
+   IterateStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double tolerance) const {
+      // evaluate termination conditions based on optimality conditions
+      const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
+      const bool primal_feasibility = (current_iterate.primal_feasibility <= tolerance);
+      const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
+
+      DEBUG << "\nTermination criteria for tolerance = " << tolerance << ":\n";
+      DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
+      DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
+      DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
+
+      if (stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
+         // feasible regular stationary point
+         return IterateStatus::FEASIBLE_KKT_POINT;
+      }
+      return IterateStatus::NOT_OPTIMAL;
    }
 } // namespace

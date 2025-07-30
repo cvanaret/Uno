@@ -198,6 +198,27 @@ namespace uno {
       }
    }
 
+   IterateStatus l1RelaxedProblem::check_first_order_convergence(const Iterate& current_iterate, double tolerance) const {
+      // evaluate termination conditions based on optimality conditions
+      const bool feasibility_stationarity = (current_iterate.residuals.stationarity <= tolerance);
+      const bool primal_feasibility = (current_iterate.primal_feasibility <= tolerance);
+      const bool feasibility_complementarity = (current_iterate.residuals.complementarity <= tolerance);
+      const bool no_trivial_duals = current_iterate.feasibility_multipliers.not_all_zero(this->model.number_variables, tolerance);
+
+      DEBUG << "\nTermination criteria for tolerance = " << tolerance << ":\n";
+      DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
+      DEBUG << "Feasibility stationarity: " << std::boolalpha << feasibility_stationarity << '\n';
+      DEBUG << "Feasibility complementarity: " << std::boolalpha << feasibility_complementarity << '\n';
+      DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
+
+      if (this->model.is_constrained() && feasibility_stationarity && !primal_feasibility && feasibility_complementarity &&
+            no_trivial_duals) {
+         // no primal feasibility, stationary point of constraint violation
+         return IterateStatus::INFEASIBLE_STATIONARY_POINT;
+      }
+      return IterateStatus::NOT_OPTIMAL;
+   }
+
    double l1RelaxedProblem::variable_lower_bound(size_t variable_index) const {
       if (variable_index < this->model.number_variables) { // model variable
          return this->model.variable_lower_bound(variable_index);
