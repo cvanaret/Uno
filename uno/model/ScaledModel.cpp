@@ -17,11 +17,11 @@ namespace uno {
          // evaluate the gradients at the current point
          initial_iterate.evaluate_objective_gradient(*this->model);
          initial_iterate.evaluate_constraint_jacobian(*this->model);
-         this->scaling.compute(initial_iterate.evaluations.objective_gradient, initial_iterate.evaluations.constraint_jacobian);
+         this->scaling.compute(initial_iterate.model_evaluations.objective_gradient, initial_iterate.model_evaluations.constraint_jacobian);
          // scale the gradients
-         initial_iterate.evaluations.objective_gradient.scale(this->scaling.get_objective_scaling());
+         initial_iterate.model_evaluations.objective_gradient.scale(this->scaling.get_objective_scaling());
          for (size_t constraint_index: Range(this->model->number_constraints)) {
-            scale(initial_iterate.evaluations.constraint_jacobian[constraint_index], this->scaling.get_constraint_scaling(constraint_index));
+            scale(initial_iterate.model_evaluations.constraint_jacobian[constraint_index], this->scaling.get_constraint_scaling(constraint_index));
          }
          // since the definition of the constraints changed, reset the evaluation flags
          initial_iterate.is_objective_gradient_computed = false;
@@ -44,7 +44,7 @@ namespace uno {
       gradient.scale(this->scaling.get_objective_scaling());
    }
 
-   void ScaledModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
+   void ScaledModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       this->model->evaluate_constraints(x, constraints);
       for (size_t constraint_index: Range(this->number_constraints)) {
          constraints[constraint_index] *= this->scaling.get_constraint_scaling(constraint_index);
@@ -146,7 +146,7 @@ namespace uno {
    void ScaledModel::postprocess_solution(Iterate& iterate, IterateStatus termination_status) const {
       // unscale the objective value
       if (iterate.is_objective_computed) {
-         iterate.evaluations.objective /= this->scaling.get_objective_scaling();
+         iterate.model_evaluations.objective /= this->scaling.get_objective_scaling();
       }
 
       // unscale the constraint multipliers
@@ -162,12 +162,12 @@ namespace uno {
       this->model->postprocess_solution(iterate, termination_status);
    }
 
-   size_t ScaledModel::number_jacobian_nonzeros() const {
-      return this->model->number_jacobian_nonzeros();
+   size_t ScaledModel::get_number_jacobian_nonzeros() const {
+      return this->model->get_number_jacobian_nonzeros();
    }
 
-   size_t ScaledModel::number_hessian_nonzeros() const {
-      return this->model->number_hessian_nonzeros();
+   size_t ScaledModel::get_number_hessian_nonzeros() const {
+      return this->model->get_number_hessian_nonzeros();
    }
 } // namespace
 

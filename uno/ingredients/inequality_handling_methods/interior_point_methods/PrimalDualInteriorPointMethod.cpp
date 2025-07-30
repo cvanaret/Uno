@@ -83,7 +83,7 @@ namespace uno {
          initial_iterate.evaluate_constraints(problem.model);
          for (const auto [constraint_index, slack_index]: problem.model.get_slacks()) {
             initial_iterate.primals[slack_index] =
-               barrier_problem.push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index],
+               barrier_problem.push_variable_to_interior(initial_iterate.model_evaluations.constraints[constraint_index],
                problem.variable_lower_bound(slack_index), problem.variable_upper_bound(slack_index));
          }
          // since the slacks have been set, the function evaluations should also be updated

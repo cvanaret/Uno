@@ -27,7 +27,7 @@ namespace uno {
 
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
       void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
-      void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override;
+      void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override;
       void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
       void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
@@ -54,8 +54,8 @@ namespace uno {
       void initial_dual_point(Vector<double>& multipliers) const override;
       void postprocess_solution(Iterate& iterate, IterateStatus iterate_status) const override;
 
-      [[nodiscard]] size_t number_jacobian_nonzeros() const override;
-      [[nodiscard]] size_t number_hessian_nonzeros() const override;
+      [[nodiscard]] size_t get_number_jacobian_nonzeros() const override;
+      [[nodiscard]] size_t get_number_hessian_nonzeros() const override;
 
    private:
       // private constructor to pass the dimensions to the Model base constructor
@@ -85,8 +85,6 @@ namespace uno {
       CollectionAdapter<std::vector<size_t>&> single_upper_bounded_variables_collection;
       Vector<size_t> fixed_variables;
 
-      void partition_variables();
-      void partition_constraints();
       void compute_lagrangian_hessian_sparsity();
    };
 

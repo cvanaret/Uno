@@ -145,7 +145,7 @@ namespace uno {
    void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction,
          double primal_dual_step_length, size_t number_iterations) const {
       if (trial_iterate.is_objective_computed) {
-         statistics.set("objective", trial_iterate.evaluations.objective);
+         statistics.set("objective", trial_iterate.model_evaluations.objective);
       }
       statistics.set("step norm", primal_dual_step_length * direction.norm);
       this->set_statistics(statistics, number_iterations);
