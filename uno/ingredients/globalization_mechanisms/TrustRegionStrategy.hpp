@@ -38,11 +38,9 @@ namespace uno {
       void decrease_radius_aggressively();
       void reset_radius();
       void reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
-      bool check_termination_with_small_step(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Model& model,
+      bool check_termination_with_small_step(const ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Model& model,
          Iterate& trial_iterate) const;
-      void set_trust_region_statistics(Statistics& statistics, size_t number_iterations) const;
-      void set_statistics(Statistics& statistics, const Direction& direction) const;
-      void set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction) const;
+      void set_TR_statistics(Statistics& statistics, size_t number_iterations) const;
    };
 } // namespace
 

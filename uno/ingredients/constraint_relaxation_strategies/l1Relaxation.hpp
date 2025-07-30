@@ -39,9 +39,6 @@ namespace uno {
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
       [[nodiscard]] IterateStatus check_termination(const Model& model, Iterate& iterate) override;
 
-      // primal-dual residuals
-      void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const override;
-
       [[nodiscard]] std::string get_name() const override;
       [[nodiscard]] size_t get_hessian_evaluation_count() const override;
       [[nodiscard]] size_t get_number_subproblems_solved() const override;

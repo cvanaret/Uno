@@ -38,11 +38,6 @@ namespace uno {
       virtual void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) = 0;
-      /*
-      void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, Direction& direction, const Vector<double>& initial_point, double trust_region_radius,
-         WarmstartInformation& warmstart_information);
-      */
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
       virtual void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, WarmstartInformation& warmstart_information) = 0;
@@ -52,9 +47,6 @@ namespace uno {
          const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
       [[nodiscard]] virtual IterateStatus check_termination(const Model& model, Iterate& iterate) = 0;
-
-      // primal-dual residuals
-      virtual void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
@@ -95,9 +87,6 @@ namespace uno {
 
       template <typename Problem>
       [[nodiscard]] IterateStatus check_termination(const Problem& problem, Iterate& iterate);
-
-      void set_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const;
-      void set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const;
    };
 
    template <typename Problem>

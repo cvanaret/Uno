@@ -186,16 +186,4 @@ namespace uno {
          return std::max(1., bound_multiplier_norm / scaling_factor);
       }
    }
-
-   void ConstraintRelaxationStrategy::set_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const {
-      this->set_primal_statistics(statistics, model, iterate);
-      this->set_dual_residuals_statistics(statistics, iterate);
-   }
-
-   void ConstraintRelaxationStrategy::set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) const {
-      statistics.set("objective", iterate.evaluations.objective);
-      if (model.is_constrained()) {
-         statistics.set("primal feas", iterate.progress.infeasibility);
-      }
-   }
 } // namespace

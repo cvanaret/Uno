@@ -81,7 +81,6 @@ namespace uno {
       this->inequality_handling_method->generate_initial_iterate(l1_relaxed_problem, initial_iterate);
       this->evaluate_progress_measures(*this->inequality_handling_method, l1_relaxed_problem, initial_iterate);
       this->compute_primal_dual_residuals(l1_relaxed_problem, initial_iterate, initial_iterate.multipliers);
-      this->set_statistics(statistics, model, initial_iterate);
    }
 
    void l1Relaxation::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& /*globalization_strategy*/, const Model& model,
@@ -279,7 +278,6 @@ namespace uno {
       if (accept_iterate) {
          this->check_exact_relaxation(trial_iterate);
       }
-      ConstraintRelaxationStrategy::set_primal_statistics(statistics, model, trial_iterate);
       warmstart_information.no_changes();
       return accept_iterate;
    }
@@ -302,11 +300,6 @@ namespace uno {
       if (0. < norm_inf_multipliers && this->penalty_parameter <= 1./norm_inf_multipliers) {
          DEBUG << "The value of the penalty parameter is consistent with an exact relaxation\n\n";
       }
-   }
-
-   void l1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-      statistics.set("stationarity", iterate.residuals.stationarity);
-      statistics.set("complementarity", iterate.residuals.complementarity);
    }
 
    std::string l1Relaxation::get_name() const {

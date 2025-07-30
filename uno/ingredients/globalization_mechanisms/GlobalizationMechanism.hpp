@@ -28,6 +28,9 @@ namespace uno {
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
 
+      static void set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate);
+      static void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate);
+
       [[nodiscard]] virtual std::string get_name() const = 0;
 
    protected:

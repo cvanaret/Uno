@@ -69,6 +69,7 @@ namespace uno {
                this->globalization_mechanism->compute_next_iterate(statistics, *this->constraint_relaxation_strategy,
                   *this->globalization_strategy, model, current_iterate, trial_iterate, this->direction, warmstart_information,
                   user_callbacks);
+               GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
                termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration(), optimization_status);
                user_callbacks.notify_new_primals(trial_iterate.primals);
                user_callbacks.notify_new_multipliers(trial_iterate.multipliers);
@@ -102,6 +103,8 @@ namespace uno {
       statistics.set("iter", 0);
       statistics.set("status", "initial point");
       this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, options);
+      GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate);
+      GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
       this->globalization_strategy->initialize(statistics, current_iterate, options);
       this->globalization_mechanism->initialize(statistics, options);
       options.print_used();
@@ -149,7 +152,7 @@ namespace uno {
    }
 
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate, size_t major_iterations,
-         const Timer& timer) {
+         const Timer& timer) const {
       const size_t number_subproblems_solved = this->constraint_relaxation_strategy->get_number_subproblems_solved();
       const size_t number_hessian_evaluations = this->constraint_relaxation_strategy->get_hessian_evaluation_count();
       return {optimization_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,

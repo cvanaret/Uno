@@ -45,10 +45,10 @@ namespace uno {
       void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options);
       [[nodiscard]] static Statistics create_statistics(const Model& model, const Options& options);
       [[nodiscard]] bool termination_criteria(IterateStatus current_status, size_t iteration, double current_time,
-            OptimizationStatus& optimization_status) const;
+         OptimizationStatus& optimization_status) const;
       static void postprocess_iterate(const Model& model, Iterate& iterate, IterateStatus termination_status);
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate,
-            size_t major_iterations, const Timer& timer);
+         size_t major_iterations, const Timer& timer) const;
    };
 } // namespace
 

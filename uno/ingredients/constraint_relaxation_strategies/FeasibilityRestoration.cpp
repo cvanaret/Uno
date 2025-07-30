@@ -71,7 +71,6 @@ namespace uno {
       this->optimality_inequality_handling_method->generate_initial_iterate(optimality_problem, initial_iterate);
       this->evaluate_progress_measures(*this->optimality_inequality_handling_method, optimality_problem, initial_iterate);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(optimality_problem, initial_iterate, initial_iterate.multipliers);
-      this->set_statistics(statistics, model, initial_iterate);
    }
 
    void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -201,7 +200,6 @@ namespace uno {
       else {
          warmstart_information.no_changes();
       }
-      ConstraintRelaxationStrategy::set_primal_statistics(statistics, model, trial_iterate);
       return accept_iterate;
    }
 
@@ -223,11 +221,6 @@ namespace uno {
       this->set_infeasibility_measure(problem.model, iterate);
       this->set_objective_measure(problem.model, iterate);
       inequality_handling_method.set_auxiliary_measure(problem, iterate);
-   }
-
-   void FeasibilityRestoration::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-      statistics.set("stationarity", iterate.residuals.stationarity);
-      statistics.set("complementarity", iterate.residuals.complementarity);
    }
 
    std::string FeasibilityRestoration::get_name() const {
