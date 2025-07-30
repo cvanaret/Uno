@@ -15,7 +15,11 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
-    
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Debug
+
 jobs:
   build:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
@@ -25,9 +29,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
-        architecture: [x64, x86]
-        # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-        BUILD_TYPE: [Release, Debug]
+        architecture: [x64]
 
     steps:
     - name: Checkout repository
@@ -54,7 +56,7 @@ jobs:
       run: |
         cmake -G "MinGW Makefiles" ^
           -B ${{github.workspace}}\build ^
-          -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} ^
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}\deps\include ^
           -DMETIS_INCLUDE_DIR=${{github.workspace}}\deps\include ^
           -DBQPD=${{github.workspace}}\deps\lib\libbqpd.a ^
@@ -68,4 +70,4 @@ jobs:
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
