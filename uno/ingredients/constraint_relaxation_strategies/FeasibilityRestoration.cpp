@@ -184,7 +184,7 @@ namespace uno {
             trial_iterate.multipliers, direction, step_length, user_callbacks);
       }
       else {
-         const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
+         const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
             feasibility_problem, *this->feasibility_inequality_handling_method, current_iterate, trial_iterate,
             trial_iterate.feasibility_multipliers, direction, step_length, user_callbacks);
@@ -210,7 +210,7 @@ namespace uno {
          return ConstraintRelaxationStrategy::check_termination(optimality_problem, iterate);
       }
       else {
-         const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
+         const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
          ConstraintRelaxationStrategy::compute_primal_dual_residuals(feasibility_problem, iterate, iterate.feasibility_multipliers);
          return ConstraintRelaxationStrategy::check_termination(feasibility_problem, iterate);
       }

@@ -5,6 +5,7 @@
 #define UNO_BQPDSOLVER_H
 
 #include <array>
+#include <memory>
 #include <vector>
 #include "ingredients/subproblem_solvers/QPSolver.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"

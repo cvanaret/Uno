@@ -12,7 +12,6 @@
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Statistics.hpp"
 
 namespace uno {
    UnconstrainedStrategy::UnconstrainedStrategy(const Options& options) :

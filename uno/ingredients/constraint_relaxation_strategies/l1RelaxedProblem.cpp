@@ -8,7 +8,6 @@
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/LagrangianGradient.hpp"
-#include "symbolic/VectorExpression.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "tools/Infinity.hpp"
 

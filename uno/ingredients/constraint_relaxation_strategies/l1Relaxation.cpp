@@ -209,7 +209,7 @@ namespace uno {
       // complementarity error
       constexpr double shift_value = 0.;
       error += feasibility_problem.complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints,
-            this->trial_multipliers, shift_value, Norm::L1);
+         this->trial_multipliers, shift_value, Norm::L1);
       return error;
    }
 
@@ -283,8 +283,18 @@ namespace uno {
    }
 
    IterateStatus l1Relaxation::check_termination(const Model& model, Iterate& iterate) {
-      // ConstraintRelaxationStrategy::compute_primal_dual_residuals(problem, iterate, iterate.multipliers);
-      throw std::runtime_error("l1Relaxation::check_termination not implemented yet");
+      // first test termination wrt to the original problem
+      const OptimizationProblem original_problem{model};
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(original_problem, iterate, iterate.multipliers);
+      IterateStatus status = ConstraintRelaxationStrategy::check_termination(original_problem, iterate);
+      //if (status != IterateStatus::NOT_OPTIMAL) {
+         return status;
+      //}
+
+      // then test termination wrt the feasibility problem
+      const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(feasibility_problem, iterate, iterate.feasibility_multipliers);
+      return ConstraintRelaxationStrategy::check_termination(feasibility_problem, iterate);
    }
 
    void l1Relaxation::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
