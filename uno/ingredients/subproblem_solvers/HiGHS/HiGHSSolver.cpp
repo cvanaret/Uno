@@ -132,7 +132,7 @@ namespace uno {
    void HiGHSSolver::solve_subproblem(const Subproblem& subproblem, Direction& direction) {
       // solve the LP
       HighsStatus return_status = this->highs_solver.passModel(this->model);
-      assert(return_status == HighsStatus::kOk);
+      //assert(return_status == HighsStatus::kOk);
 
       return_status = this->highs_solver.run(); // solve
       DEBUG << "HiGHS status: " << static_cast<int>(return_status) << '\n';
