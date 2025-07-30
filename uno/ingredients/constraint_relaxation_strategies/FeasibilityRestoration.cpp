@@ -213,7 +213,7 @@ namespace uno {
       }
       else {
          const l1RelaxedProblem feasibility_problem{model, 0, this->constraint_violation_coefficient};
-         ConstraintRelaxationStrategy::compute_primal_dual_residuals(feasibility_problem, iterate, iterate.multipliers);
+         ConstraintRelaxationStrategy::compute_primal_dual_residuals(feasibility_problem, iterate, iterate.feasibility_multipliers);
          return ConstraintRelaxationStrategy::check_termination(feasibility_problem, iterate);
       }
    }
