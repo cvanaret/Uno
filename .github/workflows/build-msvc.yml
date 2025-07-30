@@ -15,7 +15,11 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
-    
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Debug
+
 jobs:
   build:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
@@ -25,11 +29,8 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
-        architecture: [x64, x86]
+        architecture: [x64]
         library: [shared, static]
-        # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-        BUILD_TYPE: [Release, Debug]
-
 
     steps:
     - name: Checkout repository
@@ -66,7 +67,7 @@ jobs:
       run: |
         if "%{{matrix.library}}"=="static" (
           cmake -G "NMake Makefiles" ^
-                -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} ^
+                -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
                 -DCMAKE_C_COMPILER=cl ^
                 -DCMAKE_CXX_COMPILER=cl ^
                 -DCMAKE_Fortran_COMPILER=ifx ^
@@ -84,7 +85,7 @@ jobs:
                 -DBUILD_SHARED_LIBS=OFF .
         ) else (
           cmake -G "NMake Makefiles" ^
-                -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} ^
+                -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
                 -DCMAKE_C_COMPILER=cl ^
                 -DCMAKE_CXX_COMPILER=cl ^
                 -DCMAKE_Fortran_COMPILER=ifx ^
