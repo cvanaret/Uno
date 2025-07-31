@@ -62,9 +62,6 @@ namespace uno {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
       const double current_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints, this->progress_norm);
       Vector<double> result(model.number_constraints);
-      std::cout << "primal_direction has size " << primal_direction.size() << '\n';
-      std::cout << "current_iterate.evaluations.constraints has size " << current_iterate.evaluations.constraints.size() << '\n';
-      std::cout << "result has size " << result.size() << '\n';
       inequality_handling_method.compute_jacobian_transposed_vector_product(primal_direction, result);
       const double trial_linearized_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints +
          step_length * result, this->progress_norm);

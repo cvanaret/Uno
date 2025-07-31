@@ -172,7 +172,9 @@ namespace uno {
          const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
          const size_t variable_index = this->jacobian_column_indices[nonzero_index];
          const double derivative = this->augmented_matrix_values[offset + nonzero_index];
-         result[constraint_index] += derivative * vector[variable_index];
+         if (constraint_index < result.size()) {
+            result[constraint_index] += derivative * vector[variable_index];
+         }
       }
    }
 
@@ -183,7 +185,9 @@ namespace uno {
          const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
          const size_t variable_index = this->jacobian_column_indices[nonzero_index];
          const double derivative = this->augmented_matrix_values[offset + nonzero_index];
-         result[variable_index] += derivative * vector[constraint_index];
+         if (variable_index < result.size()) {
+            result[variable_index] += derivative * vector[constraint_index];
+         }
       }
    }
 } // namespace
