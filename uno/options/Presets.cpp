@@ -29,7 +29,6 @@ namespace uno {
          else if constexpr (0 < LPSolverFactory::available_solvers.size()) {
             Presets::set(options, "filterslp");
          }
-         // note: byrd is not very robust and is not considered as a default preset
       }
       return options;
    }
@@ -83,26 +82,6 @@ namespace uno {
          options["loose_tolerance"] = "1e-6";
          options["TR_min_radius"] = "1e-8";
          options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
-         options["protect_actual_reduction_against_roundoff"] = "no";
-      }
-      else if (preset_name == "byrd") {
-         options["constraint_relaxation_strategy"] = "l1_relaxation";
-         options["inequality_handling_method"] = "inequality_constrained";
-         options["hessian_model"] = "exact";
-         options["regularization_strategy"] = "primal";
-         options["globalization_mechanism"] = "LS";
-         options["globalization_strategy"] = "l1_merit";
-         options["l1_relaxation_initial_parameter"] = "1";
-         options["LS_backtracking_ratio"] = "0.5";
-         options["armijo_decrease_fraction"] = "1e-8";
-         options["l1_relaxation_epsilon1"] = "0.1";
-         options["l1_relaxation_epsilon2"] = "0.1";
-         options["l1_constraint_violation_coefficient"] = "1.";
-         options["tolerance"] = "1e-6";
-         options["loose_tolerance"] = "1e-6";
-         options["progress_norm"] = "L1";
-         options["residual_norm"] = "L1";
-         options["LS_scale_duals_with_step_length"] = "no";
          options["protect_actual_reduction_against_roundoff"] = "no";
       }
       else if (preset_name == "funnelsqp") {

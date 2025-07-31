@@ -139,26 +139,10 @@ namespace uno {
       // force QP convexification when in a trust-region setting
       options["convexify_QP"] = "false";
 
-      /** constraint relaxation options **/
-      // l1 relaxation options //
-      // initial value of the penalty parameter
-      options["l1_relaxation_initial_parameter"] = "1.";
-      // use a fixed parameter (yes|no)
-      options["l1_relaxation_fixed_parameter"] = "no";
-      // decrease (multiplicative) factor of penalty parameter
-      options["l1_relaxation_decrease_factor"] = "10.";
-      // epsilon constants in Byrd's article
-      options["l1_relaxation_epsilon1"] = "0.1";
-      options["l1_relaxation_epsilon2"] = "0.1";
-      options["l1_relaxation_residual_small_threshold"] = "1e-12";
-      // coefficient of constraint violation
-      options["l1_constraint_violation_coefficient"] = "1";
-      // threshold for determining if duals have a zero norm
-      options["l1_small_duals_threshold"] = "1e-10";
-
       /** feasibility restoration options **/
       // test linearized feasibility when switching back to the optimality phase
       options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
+      options["l1_constraint_violation_coefficient"] = "1";
 
       /** barrier subproblem options **/
       options["barrier_initial_parameter"] = "0.1";
