@@ -7,18 +7,16 @@
 #include "linear_algebra/LAPACK.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Expression.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   LBFGSHessian::LBFGSHessian(std::optional<double> fixed_objective_multiplier, const Options& options):
+   LBFGSHessian::LBFGSHessian(double objective_multiplier, const Options& options):
          HessianModel(),
-         fixed_objective_multiplier(fixed_objective_multiplier),
+         objective_multiplier(objective_multiplier),
          memory_size(options.get_unsigned_int("quasi_newton_memory_size")) {
-      if (fixed_objective_multiplier.has_value()) {
-         DEBUG << "L-BFGS Hessian model was declared with a fixed objective multiplier of " << *fixed_objective_multiplier << '\n';
-      }
    }
 
    bool LBFGSHessian::has_implicit_representation() const {
@@ -71,8 +69,11 @@ namespace uno {
 
    // Hessian-vector product where the Hessian approximation is Bk = B0 - U U^T + V V^T and B0 = delta I
    // Bk v = (B0 - U U^T + V V^T) v = delta v - U U^T x + V V^T x
-   void LBFGSHessian::compute_hessian_vector_product(const Model& model, const double* vector, double /*objective_multiplier*/,
+   void LBFGSHessian::compute_hessian_vector_product(const Model& model, const double* vector, double objective_multiplier,
          const Vector<double>& /*constraint_multipliers*/, double* result) {
+      assert(objective_multiplier == this->objective_multiplier &&
+         "The L-BFGS Hessian model was initialized with a different objective multiplier");
+
       if (this->hessian_recomputation_required) {
          this->recompute_hessian_representation();
          this->hessian_recomputation_required = false;
@@ -140,23 +141,21 @@ namespace uno {
    // fill the Y matrix: y = \nabla L(x_k, y_k, z_k) - \nabla L(x_{k-1}, y_k, z_k)
    void LBFGSHessian::update_Y_matrix(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
       // evaluate Lagrangian gradients at the current and trial iterates, both with the trial multipliers
-      // TODO objective multiplier is hardcoded for the moment
-      if (this->fixed_objective_multiplier.has_value()) {
-         current_iterate.evaluate_objective_gradient(model);
-         current_iterate.evaluate_constraint_jacobian(model);
-         trial_iterate.evaluate_objective_gradient(model);
-         trial_iterate.evaluate_constraint_jacobian(model);
-         // TODO preallocate
-         Vector<double> current_lagrangian_gradient(this->dimension);
-         Vector<double> trial_lagrangian_gradient(this->dimension);
-         const double objective_multiplier = *this->fixed_objective_multiplier;
-         model.evaluate_lagrangian_gradient(current_lagrangian_gradient, current_iterate, trial_iterate.multipliers, objective_multiplier);
-         model.evaluate_lagrangian_gradient(trial_lagrangian_gradient, trial_iterate, trial_iterate.multipliers, objective_multiplier);
-         this->Y_matrix.column(this->current_memory_slot) = trial_lagrangian_gradient - current_lagrangian_gradient;
-      }
-      else {
-         throw std::runtime_error("LBFGSHessian::update_Y_matrix: the objective multiplier varies. This is not implemented yet");
-      }
+      current_iterate.evaluate_objective_gradient(model);
+      current_iterate.evaluate_constraint_jacobian(model);
+      trial_iterate.evaluate_objective_gradient(model);
+      trial_iterate.evaluate_constraint_jacobian(model);
+      // TODO preallocate
+      LagrangianGradient<double> current_split_lagrangian_gradient(this->dimension);
+      LagrangianGradient<double> trial_split_lagrangian_gradient(this->dimension);
+      const OptimizationProblem problem{model};
+      problem.evaluate_lagrangian_gradient(current_split_lagrangian_gradient, current_iterate, trial_iterate.multipliers);
+      problem.evaluate_lagrangian_gradient(trial_split_lagrangian_gradient, trial_iterate, trial_iterate.multipliers);
+      const auto current_lagrangian_gradient = this->objective_multiplier * current_split_lagrangian_gradient.objective_contribution
+         + current_split_lagrangian_gradient.constraints_contribution;
+      const auto trial_lagrangian_gradient = this->objective_multiplier * trial_split_lagrangian_gradient.objective_contribution
+         + trial_split_lagrangian_gradient.constraints_contribution;
+      this->Y_matrix.column(this->current_memory_slot) = trial_lagrangian_gradient - current_lagrangian_gradient;
    }
 
    void LBFGSHessian::update_D_matrix() {
