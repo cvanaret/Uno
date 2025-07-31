@@ -5,7 +5,6 @@
 #define UNO_HESSIANMODELFACTORY_H
 
 #include <memory>
-#include <optional>
 
 namespace uno {
    // forward declarations
@@ -15,8 +14,7 @@ namespace uno {
 
    class HessianModelFactory {
    public:
-      static std::unique_ptr<HessianModel> create(const Model& model, std::optional<double> fixed_objective_multiplier,
-         const Options& options);
+      static std::unique_ptr<HessianModel> create(const Model& model, double fixed_objective_multiplier, const Options& options);
    };
 } // namespace
 

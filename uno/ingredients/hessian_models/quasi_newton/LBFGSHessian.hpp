@@ -4,7 +4,6 @@
 #ifndef UNO_LBFGSHESSIAN_H
 #define UNO_LBFGSHESSIAN_H
 
-#include <optional>
 #include <vector>
 #include "../HessianModel.hpp"
 #include "linear_algebra/DenseMatrix.hpp"
@@ -19,7 +18,7 @@ namespace uno {
    // J J^T = M = Sk^T B0 Sk + Lk Dk^(-1) Lk^T
    class LBFGSHessian: public HessianModel {
    public:
-      LBFGSHessian(std::optional<double> fixed_objective_multiplier, const Options& options);
+      LBFGSHessian(double objective_multiplier, const Options& options);
       ~LBFGSHessian() override = default;
 
       [[nodiscard]] bool has_implicit_representation() const override;
@@ -39,7 +38,7 @@ namespace uno {
 
    protected:
       size_t dimension{};
-      std::optional<double> fixed_objective_multiplier;
+      const double objective_multiplier;
       const size_t memory_size; // user defined
       size_t number_entries_in_memory{0}; // 0 <= used_memory_size <= memory_size
       size_t current_memory_slot{0}; // 0 <= current_available_slot < memory_size
