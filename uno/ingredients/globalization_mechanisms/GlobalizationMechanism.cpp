@@ -6,6 +6,7 @@
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Expression.hpp"
+#include "tools/Statistics.hpp"
 
 namespace uno {
    void GlobalizationMechanism::assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
@@ -28,5 +29,19 @@ namespace uno {
       trial_iterate.are_constraints_computed = false;
       trial_iterate.is_constraint_jacobian_computed = false;
       trial_iterate.status = IterateStatus::NOT_OPTIMAL;
+   }
+
+   void GlobalizationMechanism::set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) {
+      if (iterate.is_objective_computed) {
+         statistics.set("objective", iterate.evaluations.objective);
+      }
+      if (model.is_constrained()) {
+         statistics.set("primal feas", iterate.progress.infeasibility);
+      }
+   }
+
+   void GlobalizationMechanism::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) {
+      statistics.set("stationarity", iterate.residuals.stationarity);
+      statistics.set("complementarity", iterate.residuals.complementarity);
    }
 } // namespace

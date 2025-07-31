@@ -21,6 +21,8 @@ namespace uno {
       void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const override;
       void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
       void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
+      void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
+         const Multipliers& multipliers) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* vector, const Multipliers& multipliers,
@@ -44,7 +46,7 @@ namespace uno {
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
 
-      void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate, const Multipliers& multipliers) const override;
+      [[nodiscard]] IterateStatus check_first_order_convergence(const Iterate& current_iterate, double tolerance) const;
 
       // parameterization
       void set_proximal_multiplier(double new_proximal_coefficient);

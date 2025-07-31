@@ -75,14 +75,12 @@ namespace uno {
       statistics.set("penalty", this->penalty_parameter);
 
       // initial iterate
-      initial_iterate.feasibility_residuals.lagrangian_gradient.resize(l1_relaxed_problem.number_variables);
       initial_iterate.feasibility_multipliers.lower_bounds.resize(l1_relaxed_problem.number_variables);
       initial_iterate.feasibility_multipliers.upper_bounds.resize(l1_relaxed_problem.number_variables);
       this->inequality_handling_method->set_elastic_variable_values(l1_relaxed_problem, initial_iterate);
       this->inequality_handling_method->generate_initial_iterate(l1_relaxed_problem, initial_iterate);
       this->evaluate_progress_measures(*this->inequality_handling_method, l1_relaxed_problem, initial_iterate);
-      this->compute_primal_dual_residuals(model, initial_iterate);
-      this->set_statistics(statistics, model, initial_iterate);
+      this->compute_primal_dual_residuals(l1_relaxed_problem, initial_iterate, initial_iterate.multipliers);
    }
 
    void l1Relaxation::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& /*globalization_strategy*/, const Model& model,
@@ -204,13 +202,18 @@ namespace uno {
    double l1Relaxation::compute_infeasible_dual_error(const Model& model, Iterate& current_iterate) const {
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
       // stationarity error
-      feasibility_problem.evaluate_lagrangian_gradient(current_iterate.feasibility_residuals.lagrangian_gradient, current_iterate, this->trial_multipliers);
-      double error = norm_1(current_iterate.residuals.lagrangian_gradient.constraints_contribution);
+      // TODO preallocate
+      LagrangianGradient<double> feasibility_lagrangian(feasibility_problem.number_variables);
+      feasibility_problem.evaluate_lagrangian_gradient(feasibility_lagrangian, current_iterate, this->trial_multipliers);
+      double error = norm_1(feasibility_lagrangian.constraints_contribution);
 
       // complementarity error
       constexpr double shift_value = 0.;
-      error += feasibility_problem.complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints,
-            this->trial_multipliers, shift_value, Norm::L1);
+      // TODO preallocate
+      std::vector<double> l1_constraints(feasibility_problem.number_constraints);
+      feasibility_problem.evaluate_constraints(current_iterate, l1_constraints);
+      error += feasibility_problem.complementarity_error(current_iterate.primals, l1_constraints,
+         this->trial_multipliers, shift_value, Norm::L1);
       return error;
    }
 
@@ -279,15 +282,23 @@ namespace uno {
       if (accept_iterate) {
          this->check_exact_relaxation(trial_iterate);
       }
-      ConstraintRelaxationStrategy::set_primal_statistics(statistics, model, trial_iterate);
       warmstart_information.no_changes();
       return accept_iterate;
    }
 
-   void l1Relaxation::compute_primal_dual_residuals(const Model& model, Iterate& iterate) {
-      const l1RelaxedProblem l1_relaxed_problem{model, this->penalty_parameter, this->constraint_violation_coefficient};
+   IterateStatus l1Relaxation::check_termination(const Model& model, Iterate& iterate) {
+      // first test termination wrt to the original problem
+      const OptimizationProblem original_problem{model};
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(original_problem, iterate, iterate.multipliers);
+      IterateStatus status = ConstraintRelaxationStrategy::check_termination(original_problem, iterate);
+      //if (status != IterateStatus::NOT_OPTIMAL) {
+         return status;
+      //}
+
+      // then test termination wrt the feasibility problem
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, l1_relaxed_problem, feasibility_problem, iterate);
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(feasibility_problem, iterate, iterate.feasibility_multipliers);
+      return ConstraintRelaxationStrategy::check_termination(feasibility_problem, iterate);
    }
 
    void l1Relaxation::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
@@ -303,11 +314,6 @@ namespace uno {
       if (0. < norm_inf_multipliers && this->penalty_parameter <= 1./norm_inf_multipliers) {
          DEBUG << "The value of the penalty parameter is consistent with an exact relaxation\n\n";
       }
-   }
-
-   void l1Relaxation::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-      statistics.set("stationarity", iterate.residuals.stationarity);
-      statistics.set("complementarity", iterate.residuals.complementarity);
    }
 
    std::string l1Relaxation::get_name() const {

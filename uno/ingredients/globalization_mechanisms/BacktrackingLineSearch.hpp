@@ -26,14 +26,13 @@ namespace uno {
 
       void backtrack_along_direction(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
+         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const;
       [[nodiscard]] static bool terminate_with_small_step_length(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          const Model& model, Iterate& trial_iterate);
       [[nodiscard]] double decrease_step_length(double step_length) const;
       static void check_unboundedness(const Direction& direction);
-      void set_statistics(Statistics& statistics, size_t number_iterations) const;
-      void set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction, double primal_dual_step_length,
-         size_t number_iterations) const;
+
+      static void set_LS_statistics(Statistics& statistics, size_t number_iterations);
    };
 } // namespace
 

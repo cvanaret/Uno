@@ -5,6 +5,7 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Expression.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    OptimizationProblem::OptimizationProblem(const Model& model):
@@ -36,6 +37,31 @@ namespace uno {
       iterate.evaluate_constraint_jacobian(this->model);
       // TODO change this
       constraint_jacobian = iterate.evaluations.constraint_jacobian;
+   }
+
+   // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
+   void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
+         const Multipliers& multipliers) const {
+      lagrangian_gradient.objective_contribution.fill(0.);
+      lagrangian_gradient.constraints_contribution.fill(0.);
+
+      // objective gradient
+      lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
+
+      // constraints
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         if (multipliers.constraints[constraint_index] != 0.) {
+            for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
+               lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
+            }
+         }
+      }
+
+      // bound constraints of original variables
+      for (size_t variable_index: Range(this->number_variables)) {
+         lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
+                                                                          multipliers.upper_bounds[variable_index]);
+      }
    }
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
@@ -117,6 +143,10 @@ namespace uno {
       // do nothing
    }
 
+   double OptimizationProblem::dual_regularization_factor() const {
+      return 0.;
+   }
+
    double OptimizationProblem::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
          Norm residual_norm) {
       // norm of the scaled Lagrangian gradient
@@ -124,35 +154,10 @@ namespace uno {
       return norm(residual_norm, scaled_lagrangian);
    }
 
-   // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
-   void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-         const Multipliers& multipliers) const {
-      lagrangian_gradient.objective_contribution.fill(0.);
-      lagrangian_gradient.constraints_contribution.fill(0.);
-
-      // objective gradient
-      lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
-
-      // constraints
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         if (multipliers.constraints[constraint_index] != 0.) {
-            for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
-               lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
-            }
-         }
-      }
-
-      // bound constraints of original variables
-      for (size_t variable_index: Range(this->number_variables)) {
-         lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
-                                                                          multipliers.upper_bounds[variable_index]);
-      }
-   }
-
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
-      const Range variables_range = Range(std::min(this->number_variables, primals.size()));
+      const Range variables_range = Range(this->number_variables);
       const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
          if (0. < multipliers.lower_bounds[variable_index]) {
             return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index)) - shift_value;
@@ -178,7 +183,21 @@ namespace uno {
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
    }
 
-   double OptimizationProblem::dual_regularization_factor() const {
-      return 0.;
+   IterateStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double tolerance) const {
+      // evaluate termination conditions based on optimality conditions
+      const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
+      const bool primal_feasibility = (current_iterate.primal_feasibility <= tolerance);
+      const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
+
+      DEBUG << "\nTermination criteria for tolerance = " << tolerance << ":\n";
+      DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
+      DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
+      DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';
+
+      if (stationarity && primal_feasibility && 0. < current_iterate.objective_multiplier && complementarity) {
+         // feasible regular stationary point
+         return IterateStatus::FEASIBLE_KKT_POINT;
+      }
+      return IterateStatus::NOT_OPTIMAL;
    }
 } // namespace

@@ -5,7 +5,6 @@
 #define UNO_SPARSESYMMETRICMATRIX_H
 
 #include <algorithm>
-#include <memory>
 #include <vector>
 #include "SymmetricMatrix.hpp"
 

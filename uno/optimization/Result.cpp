@@ -18,9 +18,6 @@ namespace uno {
       DISCRETE << "┌ Stationarity residual:\t\t" << this->solution.residuals.stationarity << '\n';
       DISCRETE << "└ Complementarity residual:\t\t" << this->solution.residuals.complementarity << '\n';
 
-      DISCRETE << "┌ Feasibility stationarity residual:\t" << this->solution.residuals.stationarity << '\n';
-      DISCRETE << "└ Feasibility complementarity residual:\t" << this->solution.residuals.complementarity << '\n';
-
       DISCRETE << "┌ Infeasibility measure:\t\t" << this->solution.progress.infeasibility << '\n';
       DISCRETE << "│ Objective measure:\t\t\t" << this->solution.progress.objective(1.) << '\n';
       DISCRETE << "└ Auxiliary measure:\t\t\t" << this->solution.progress.auxiliary << '\n';

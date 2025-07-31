@@ -12,7 +12,6 @@
 #include "optimization/WarmstartInformation.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
-#include "tools/Statistics.hpp"
 
 namespace uno {
    UnconstrainedStrategy::UnconstrainedStrategy(const Options& options) :
@@ -38,8 +37,7 @@ namespace uno {
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(problem, initial_iterate);
       this->evaluate_progress_measures(*this->inequality_handling_method, problem, initial_iterate);
-      this->compute_primal_dual_residuals(model, initial_iterate);
-      this->set_statistics(statistics, model, initial_iterate);
+      this->compute_primal_dual_residuals(problem, initial_iterate, initial_iterate.multipliers);
    }
 
    void UnconstrainedStrategy::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& /*globalization_strategy*/,
@@ -78,14 +76,14 @@ namespace uno {
       const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
          problem, *this->inequality_handling_method, current_iterate, trial_iterate, trial_iterate.multipliers,
          direction, step_length, user_callbacks);
-      ConstraintRelaxationStrategy::set_primal_statistics(statistics, model, trial_iterate);
       warmstart_information.no_changes();
       return accept_iterate;
    }
 
-   void UnconstrainedStrategy::compute_primal_dual_residuals(const Model& model, Iterate& iterate) {
+   IterateStatus UnconstrainedStrategy::check_termination(const Model& model, Iterate& iterate) {
       const OptimizationProblem problem{model};
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(model, problem, problem, iterate);
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(problem, iterate, iterate.multipliers);
+      return ConstraintRelaxationStrategy::check_termination(problem, iterate);
    }
 
    void UnconstrainedStrategy::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
@@ -93,11 +91,6 @@ namespace uno {
       this->set_infeasibility_measure(problem.model, iterate);
       this->set_objective_measure(problem.model, iterate);
       inequality_handling_method.set_auxiliary_measure(problem, iterate);
-   }
-
-   void UnconstrainedStrategy::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) const {
-      statistics.set("stationarity", iterate.residuals.stationarity);
-      statistics.set("complementarity", iterate.residuals.complementarity);
    }
 
    std::string UnconstrainedStrategy::get_name() const {

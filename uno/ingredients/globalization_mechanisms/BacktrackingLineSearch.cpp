@@ -50,7 +50,7 @@ namespace uno {
    // go a fraction along the direction by finding an acceptable step length
    void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const {
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
@@ -67,19 +67,20 @@ namespace uno {
                step_length,
                // scale or not the constraint dual direction with the LS step length
                this->scale_duals_with_step_length ? step_length : 1.);
+            statistics.set("step norm", step_length * direction.norm);
 
             is_acceptable = constraint_relaxation_strategy.is_iterate_acceptable(statistics, globalization_strategy, model, current_iterate,
                trial_iterate, direction, step_length, warmstart_information, user_callbacks);
-            this->set_statistics(statistics, trial_iterate, direction, step_length, number_iterations);
+            GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate);
          }
          catch (const EvaluationError&) {
-            this->set_statistics(statistics, number_iterations);
             statistics.set("status", "eval. error");
          }
+         BacktrackingLineSearch::set_LS_statistics(statistics, number_iterations);
 
          if (is_acceptable) {
             trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
-            constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
+            GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
             termination = true;
             if (Logger::level == INFO) statistics.print_current_line();
          }
@@ -118,7 +119,7 @@ namespace uno {
       trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
       if (trial_iterate.status != IterateStatus::NOT_OPTIMAL) {
          statistics.set("status", "accepted (small step length)");
-         constraint_relaxation_strategy.set_dual_residuals_statistics(statistics, trial_iterate);
+         GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
          termination = true;
       }
       return termination;
@@ -138,16 +139,7 @@ namespace uno {
       }
    }
 
-   void BacktrackingLineSearch::set_statistics(Statistics& statistics, size_t number_iterations) const {
+   void BacktrackingLineSearch::set_LS_statistics(Statistics& statistics, size_t number_iterations) {
       statistics.set("LS iter", number_iterations);
-   }
-
-   void BacktrackingLineSearch::set_statistics(Statistics& statistics, const Iterate& trial_iterate, const Direction& direction,
-         double primal_dual_step_length, size_t number_iterations) const {
-      if (trial_iterate.is_objective_computed) {
-         statistics.set("objective", trial_iterate.evaluations.objective);
-      }
-      statistics.set("step norm", primal_dual_step_length * direction.norm);
-      this->set_statistics(statistics, number_iterations);
    }
 } // namespace
