@@ -18,8 +18,7 @@ namespace uno {
 
    void Model::project_onto_variable_bounds(Vector<double>& x) const {
       for (size_t variable_index: Range(this->number_variables)) {
-         x[variable_index] = std::max(std::min(x[variable_index], this->variable_upper_bound(variable_index)),
-            this->variable_lower_bound(variable_index));
+         x[variable_index] = std::max(std::min(x[variable_index], this->variable_upper_bound(variable_index)), this->variable_lower_bound(variable_index));
       }
    }
 
