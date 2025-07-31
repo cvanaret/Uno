@@ -47,7 +47,7 @@ namespace uno {
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       this->jacobian_values.resize(number_jacobian_nonzeros);
-      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+      subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
          Indexing::C_indexing);
       // TODO convert COO format to CSC format
       throw std::runtime_error("HiGHSSolver not implemented yet");
@@ -61,12 +61,12 @@ namespace uno {
       this->solve_subproblem(subproblem, direction);
    }
 
-   void HiGHSSolver::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      throw std::runtime_error("HiGHSSolver::compute_jacobian_vector_product not implemented");
+   void HiGHSSolver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      throw std::runtime_error("HiGHSSolver::compute_constraint_jacobian_vector_product not implemented");
    }
 
-   void HiGHSSolver::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      throw std::runtime_error("HiGHSSolver::compute_jacobian_transposed_vector_product not implemented");
+   void HiGHSSolver::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      throw std::runtime_error("HiGHSSolver::compute_constraint_jacobian_transposed_vector_product not implemented");
    }
 
    double HiGHSSolver::compute_hessian_quadratic_product(const Vector<double>& /*vector*/) const {
@@ -83,7 +83,7 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         // TODO subproblem.evaluate_jacobian(this->constraint_jacobian);
+         // TODO subproblem.evaluate_constraint_jacobian(this->constraint_jacobian);
       }
       // evaluate the Hessian and regularize it TODO: store it in HiGHS format
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
