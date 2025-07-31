@@ -116,7 +116,7 @@ namespace uno {
       gradient.scale(this->objective_sign);
    }
 
-   void AMPLModel::compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+   void AMPLModel::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       size_t current_index = 0;
       for (size_t constraint_index: Range(this->number_constraints)) {
          cgrad* constraint_gradient = this->asl->i.Cgrad_[constraint_index];

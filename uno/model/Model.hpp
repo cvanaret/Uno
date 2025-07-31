@@ -42,7 +42,7 @@ namespace uno {
       virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
 
       // sparsity patterns of Jacobian and Hessian
-      virtual void compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const = 0;
+      virtual void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const = 0;
       virtual void compute_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const = 0;
 
       // numerical evaluations of Jacobian and Hessian

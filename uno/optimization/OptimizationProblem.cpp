@@ -47,8 +47,8 @@ namespace uno {
       return hessian_model.number_nonzeros(this->model);
    }
 
-   void OptimizationProblem::compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
-      this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing);
+   void OptimizationProblem::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+      this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing);
    }
 
    void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
@@ -80,7 +80,7 @@ namespace uno {
       Vector<size_t> row_indices(this->number_jacobian_nonzeros());
       Vector<size_t> column_indices(this->number_jacobian_nonzeros());
       Vector<double> jacobian_values(this->number_jacobian_nonzeros());
-      this->compute_jacobian_sparsity(row_indices.data(), column_indices.data(), Indexing::C_indexing);
+      this->compute_constraint_jacobian_sparsity(row_indices.data(), column_indices.data(), Indexing::C_indexing);
       this->evaluate_constraint_jacobian(iterate, jacobian_values.data());
 
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {

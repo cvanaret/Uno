@@ -163,7 +163,7 @@ namespace uno {
          // compute the linearized constraint violation
          // TODO preallocate
          Vector<double> result(model.number_constraints);
-         this->feasibility_inequality_handling_method->compute_jacobian_transposed_vector_product(direction.primals, result);
+         this->feasibility_inequality_handling_method->compute_constraint_jacobian_transposed_vector_product(direction.primals, result);
          const double trial_linearized_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints +
             step_length * result, this->residual_norm);
          return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);

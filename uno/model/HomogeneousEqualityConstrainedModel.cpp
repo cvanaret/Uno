@@ -73,9 +73,9 @@ namespace uno {
       this->model->evaluate_objective_gradient(x, gradient);
    }
 
-   void HomogeneousEqualityConstrainedModel::compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices,
+   void HomogeneousEqualityConstrainedModel::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices,
          size_t solver_indexing) const {
-      this->model->compute_jacobian_sparsity(row_indices, column_indices, solver_indexing);
+      this->model->compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing);
 
       // add the slack contributions
       size_t nonzero_index = this->model->number_jacobian_nonzeros();

@@ -30,8 +30,8 @@ namespace uno {
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
 
-      void compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
-      void compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
 
    protected:
       DMUMPS_STRUC_C workspace{};

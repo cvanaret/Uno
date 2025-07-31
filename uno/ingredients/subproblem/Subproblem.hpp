@@ -32,7 +32,7 @@ namespace uno {
          RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
 
       // sparsity patterns
-      void compute_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const;
+      void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const;
       void compute_regularized_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const;
       void compute_regularized_augmented_matrix_sparsity(size_t* row_indices, size_t* column_indices, const size_t* jacobian_row_indices,
          const size_t* jacobian_column_indices, size_t solver_indexing) const;
@@ -40,7 +40,7 @@ namespace uno {
       // constraints, objective gradient and Jacobian
       void evaluate_objective_gradient(Vector<double>& linear_objective) const;
       void evaluate_constraints(std::vector<double>& constraints) const;
-      void evaluate_jacobian(double* jacobian_values) const;
+      void evaluate_constraint_jacobian(double* jacobian_values) const;
 
       // regularized Hessian
       void compute_regularized_hessian(Statistics& statistics, Vector<double>& /*hessian_values*/) const;

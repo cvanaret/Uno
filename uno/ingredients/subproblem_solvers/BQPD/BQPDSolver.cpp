@@ -117,12 +117,12 @@ namespace uno {
       this->solve_subproblem(subproblem, initial_point, direction, warmstart_information);
    }
 
-   void BQPDSolver::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      throw std::runtime_error("BQPDSolver::compute_jacobian_vector_product not implemented");
+   void BQPDSolver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      throw std::runtime_error("BQPDSolver::compute_constraint_jacobian_vector_product not implemented");
    }
 
-   void BQPDSolver::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      throw std::runtime_error("BQPDSolver::compute_jacobian_transposed_vector_product not implemented");
+   void BQPDSolver::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      throw std::runtime_error("BQPDSolver::compute_constraint_jacobian_transposed_vector_product not implemented");
    }
 
    double BQPDSolver::compute_hessian_quadratic_product(const Vector<double>& vector) const {
@@ -146,7 +146,7 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         subproblem.evaluate_jacobian(this->gradients.data() + subproblem.number_variables);
+         subproblem.evaluate_constraint_jacobian(this->gradients.data() + subproblem.number_variables);
       }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->evaluate_hessian = true;
@@ -292,7 +292,7 @@ namespace uno {
       // get the sparsity in COO format
       Vector<size_t> coo_row_indices(subproblem.number_jacobian_nonzeros());
       Vector<size_t> coo_column_indices(subproblem.number_jacobian_nonzeros());
-      subproblem.compute_jacobian_sparsity(coo_row_indices.data(), coo_column_indices.data(), Indexing::Fortran_indexing);
+      subproblem.compute_constraint_jacobian_sparsity(coo_row_indices.data(), coo_column_indices.data(), Indexing::Fortran_indexing);
       for (size_t constraint_index: Range(subproblem.number_constraints)) {
          /*
          for (const auto [variable_index, derivative]: this->constraint_jacobian[constraint_index]) {

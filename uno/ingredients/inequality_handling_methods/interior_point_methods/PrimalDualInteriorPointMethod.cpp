@@ -217,12 +217,12 @@ namespace uno {
       return std::sqrt(this->barrier_parameter());
    }
 
-   void PrimalDualInteriorPointMethod::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      this->linear_solver->compute_jacobian_vector_product(vector, result);
+   void PrimalDualInteriorPointMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      this->linear_solver->compute_constraint_jacobian_vector_product(vector, result);
    }
 
-   void PrimalDualInteriorPointMethod::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      this->linear_solver->compute_jacobian_transposed_vector_product(vector, result);
+   void PrimalDualInteriorPointMethod::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      this->linear_solver->compute_constraint_jacobian_transposed_vector_product(vector, result);
    }
 
    double PrimalDualInteriorPointMethod::compute_hessian_quadratic_product(const Vector<double>& /*vector*/) const {

@@ -136,7 +136,7 @@ namespace uno {
       this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
-      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+      subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
          Indexing::C_indexing);
 
       // augmented system
@@ -294,7 +294,7 @@ namespace uno {
          static_cast<size_t>(this->workspace.n);
    }
 
-   void MA27Solver::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+   void MA27Solver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
       const size_t offset = this->number_hessian_nonzeros;
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
@@ -307,7 +307,7 @@ namespace uno {
       }
    }
 
-   void MA27Solver::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+   void MA27Solver::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
       const size_t offset = this->number_hessian_nonzeros;
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
