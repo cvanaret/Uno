@@ -16,7 +16,7 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   std::unique_ptr<HessianModel> HessianModelFactory::create(const Model& model, double objective_multiplier,
+   std::unique_ptr<HessianModel> HessianModelFactory::create(const Model& model, [[maybe_unused]] double objective_multiplier,
          const Options& options) {
       const std::string& hessian_model = options.get_string("hessian_model");
       if (hessian_model == "exact") {
