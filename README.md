@@ -40,8 +40,7 @@ The following graph gives an overview of state-of-the-art strategies:
 
 Uno implements **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
-* `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual regularization);
-* `byrd` mimics Byrd's S $\ell_1$ QP (line-search $\ell_1$ merit S $\ell_1$ QP method with exact Hessian and primal regularization).
+* `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual regularization).
 
 ## Installation instructions
 
@@ -53,7 +52,7 @@ See the [INSTALL](INSTALL.md) file for instructions on how to compile Uno from s
 
 Options can be set in three different ways (with decreasing precedence):
 - passing an option file (`option_file=file`) that contains `option value` on each line;
-- setting a preset that mimics an existing solver (`preset=[filtersqp|ipopt|byrd]`);
+- setting a preset that mimics an existing solver (`preset=[filtersqp|ipopt]`);
 - setting individual options (see the [default options](https://github.com/cvanaret/Uno/blob/main/uno/options/DefaultOptions.cpp)).
 
 ### Interfaces
