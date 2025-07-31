@@ -29,7 +29,7 @@ namespace uno {
       const double radius_reset_threshold;
       const double tolerance;
 
-      bool is_iterate_acceptable(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
       void possibly_increase_radius(double step_norm);
@@ -38,8 +38,7 @@ namespace uno {
       void decrease_radius_aggressively();
       void reset_radius();
       void reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const;
-      bool check_termination_with_small_step(const ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Model& model,
-         Iterate& trial_iterate) const;
+      [[nodiscard]] bool check_termination_with_small_step(Iterate& trial_iterate) const;
       void set_TR_statistics(Statistics& statistics, size_t number_iterations) const;
    };
 } // namespace

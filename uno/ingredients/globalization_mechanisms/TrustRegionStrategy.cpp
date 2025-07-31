@@ -142,22 +142,20 @@ namespace uno {
          this->possibly_increase_radius(direction.norm);
       }
       else if (this->radius < this->minimum_radius) { // rejected, but small radius
-         accept_iterate = this->check_termination_with_small_step(constraint_relaxation_strategy, model, trial_iterate);
+         accept_iterate = this->check_termination_with_small_step(trial_iterate);
       }
       return accept_iterate;
    }
 
-   bool TrustRegionStrategy::check_termination_with_small_step(const ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-         const Model& /*model*/, Iterate& trial_iterate) const {
+   // check whether a rejected step with very small norm can be tolerated
+   bool TrustRegionStrategy::check_termination_with_small_step(Iterate& trial_iterate) const {
       // terminate with a feasible point
       if (trial_iterate.progress.infeasibility <= this->tolerance) {
          trial_iterate.status = IterateStatus::FEASIBLE_SMALL_STEP;
-         // TODO constraint_relaxation_strategy.compute_primal_dual_residuals(model, trial_iterate);
          return true;
       }
-      else if (constraint_relaxation_strategy.solving_feasibility_problem()) { // terminate with an infeasible point
+      else if (trial_iterate.objective_multiplier == 0.) { // terminate with an infeasible point
          trial_iterate.status = IterateStatus::INFEASIBLE_SMALL_STEP;
-         // TODO constraint_relaxation_strategy.compute_primal_dual_residuals(model, trial_iterate);
          return true;
       }
       else { // do not terminate, infeasible non stationary

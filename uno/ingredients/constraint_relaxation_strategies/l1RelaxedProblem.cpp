@@ -107,6 +107,56 @@ namespace uno {
       }
    }
 
+   // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
+   void l1RelaxedProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
+         const Multipliers& multipliers) const {
+      lagrangian_gradient.objective_contribution.fill(0.);
+      lagrangian_gradient.constraints_contribution.fill(0.);
+
+      // objective gradient
+      lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
+
+      // constraints
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         if (multipliers.constraints[constraint_index] != 0.) {
+            for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
+               lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
+            }
+         }
+      }
+
+      // bound constraints of original variables
+      for (size_t variable_index: Range(this->model.number_variables)) {
+         lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
+            multipliers.upper_bounds[variable_index]);
+      }
+
+      // elastic variables
+      size_t elastic_index = this->model.number_variables;
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         if (is_finite(this->model.constraint_lower_bound(constraint_index))) { // negative part
+            lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
+               multipliers.constraints[constraint_index] - multipliers.lower_bounds[elastic_index];
+            elastic_index++;
+         }
+         if (is_finite(this->model.constraint_upper_bound(constraint_index))) { // positive part
+            lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
+               multipliers.constraints[constraint_index] - multipliers.lower_bounds[elastic_index];
+            elastic_index++;
+         }
+      }
+
+      // proximal contribution
+      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+         for (size_t variable_index: Range(this->model.number_variables)) {
+            const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
+            const double proximal_term = this->proximal_coefficient * scaling * scaling;
+            lagrangian_gradient.constraints_contribution[variable_index] += proximal_term * (iterate.primals[variable_index] -
+               this->proximal_center[variable_index]);
+         }
+      }
+   }
+
    void l1RelaxedProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
       hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(), multipliers.constraints, hessian);
@@ -131,68 +181,6 @@ namespace uno {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
             const double proximal_term = this->proximal_coefficient * scaling * scaling;
             result[variable_index] += proximal_term * vector[variable_index];
-         }
-      }
-   }
-
-   // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
-   void l1RelaxedProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-         const Multipliers& multipliers) const {
-      lagrangian_gradient.objective_contribution.fill(0.);
-      lagrangian_gradient.constraints_contribution.fill(0.);
-
-      // objective gradient
-      lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
-
-      // constraints
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         if (multipliers.constraints[constraint_index] != 0.) {
-            for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
-               lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
-            }
-         }
-      }
-
-      // bound constraints of original variables
-      for (size_t variable_index: Range(this->model.number_variables)) {
-         lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
-                                                                          multipliers.upper_bounds[variable_index]);
-      }
-
-      // elastic variables
-      size_t elastic_index = this->model.number_variables;
-      for (size_t inequality_index: this->model.get_inequality_constraints()) {
-         if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
-            lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
-               multipliers.constraints[inequality_index] - multipliers.lower_bounds[elastic_index];
-         }
-         else { // positive part
-            lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
-               multipliers.constraints[inequality_index] - multipliers.lower_bounds[elastic_index];
-         }
-         elastic_index++;
-      }
-      for ([[maybe_unused]] size_t equality_index: this->model.get_equality_constraints()) {
-         /*
-         lagrangian_gradient.constraints_contribution[elastic_index] += 2*this->constraint_violation_coefficient -
-            multipliers.lower_bounds[elastic_index] - multipliers.lower_bounds[elastic_index+1];
-         elastic_index += 2;
-         */
-         lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
-               multipliers.constraints[equality_index] - multipliers.lower_bounds[elastic_index];
-         elastic_index++;
-         lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
-               multipliers.constraints[equality_index] - multipliers.lower_bounds[elastic_index];
-         elastic_index++;
-      }
-
-      // proximal contribution
-      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
-         for (size_t variable_index: Range(this->model.number_variables)) {
-            const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
-            const double proximal_term = this->proximal_coefficient * scaling * scaling;
-            lagrangian_gradient.constraints_contribution[variable_index] += proximal_term * (iterate.primals[variable_index] -
-               this->proximal_center[variable_index]);
          }
       }
    }

@@ -138,7 +138,7 @@ namespace uno {
 
       problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, iterate, multipliers);
       iterate.residuals.stationarity = OptimizationProblem::stationarity_error(iterate.residuals.lagrangian_gradient,
-         iterate.objective_multiplier, this->residual_norm);
+         problem.get_objective_multiplier(), this->residual_norm);
 
       // constraint violation of the original problem
       iterate.primal_feasibility = problem.model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);

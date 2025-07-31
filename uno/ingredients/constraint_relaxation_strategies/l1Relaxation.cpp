@@ -202,13 +202,17 @@ namespace uno {
    double l1Relaxation::compute_infeasible_dual_error(const Model& model, Iterate& current_iterate) const {
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
       // stationarity error
-      // TODO correct residuals?
-      feasibility_problem.evaluate_lagrangian_gradient(current_iterate.residuals.lagrangian_gradient, current_iterate, this->trial_multipliers);
-      double error = norm_1(current_iterate.residuals.lagrangian_gradient.constraints_contribution);
+      // TODO preallocate
+      LagrangianGradient<double> feasibility_lagrangian(feasibility_problem.number_variables);
+      feasibility_problem.evaluate_lagrangian_gradient(feasibility_lagrangian, current_iterate, this->trial_multipliers);
+      double error = norm_1(feasibility_lagrangian.constraints_contribution);
 
       // complementarity error
       constexpr double shift_value = 0.;
-      error += feasibility_problem.complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints,
+      // TODO preallocate
+      std::vector<double> l1_constraints(feasibility_problem.number_constraints);
+      feasibility_problem.evaluate_constraints(current_iterate, l1_constraints);
+      error += feasibility_problem.complementarity_error(current_iterate.primals, l1_constraints,
          this->trial_multipliers, shift_value, Norm::L1);
       return error;
    }
