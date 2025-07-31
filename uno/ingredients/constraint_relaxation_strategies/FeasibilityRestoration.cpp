@@ -16,6 +16,7 @@
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Expression.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
@@ -155,13 +156,19 @@ namespace uno {
 
    bool FeasibilityRestoration::can_switch_to_optimality_phase(const Iterate& current_iterate, const GlobalizationStrategy& globalization_strategy,
          const Model& model, const Iterate& trial_iterate, const Direction& direction, double step_length) const {
-      /*
-      return globalization_strategy.is_infeasibility_sufficiently_reduced(this->reference_optimality_progress, trial_iterate.progress) &&
-         (!this->switch_to_optimality_requires_linearized_feasibility ||
-         model.constraint_violation(current_iterate.evaluations.constraints + step_length*(current_iterate.evaluations.constraint_jacobian *
-         direction.primals), this->residual_norm) <= this->linear_feasibility_tolerance);
-         */
-      throw std::runtime_error("FeasibilityRestoration::can_switch_to_optimality_phase not implemented");
+      if (globalization_strategy.is_infeasibility_sufficiently_reduced(this->reference_optimality_progress, trial_iterate.progress)) {
+         if (!this->switch_to_optimality_requires_linearized_feasibility) {
+            return true;
+         }
+         // compute the linearized constraint violation
+         // TODO preallocate
+         Vector<double> result(model.number_constraints);
+         this->feasibility_inequality_handling_method->compute_jacobian_transposed_vector_product(direction.primals, result);
+         const double trial_linearized_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints +
+            step_length * result, this->residual_norm);
+         return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
+      }
+      return false;
    }
 
    void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy,
