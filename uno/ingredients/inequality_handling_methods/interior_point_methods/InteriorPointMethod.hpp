@@ -11,7 +11,6 @@
 #include "InteriorPointParameters.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
-#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -42,7 +41,7 @@ namespace uno {
       void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
       [[nodiscard]] double proximal_coefficient() const override;
-
+      
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information) override;
@@ -264,7 +263,7 @@ namespace uno {
          }
       }
 
-      // c(x) - p + n = 0
+      // c(x) - p + n override
       // analytical expression for p and n:
       // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
       // where jacobian_coefficient = -1 for p, +1 for n
