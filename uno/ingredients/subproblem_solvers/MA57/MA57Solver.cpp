@@ -25,32 +25,26 @@
 
 namespace uno {
    extern "C" {
-   // MA57
-   // default values of controlling parameters
-   void MA57_set_default_parameters(double cntl[], int icntl[]);
+      void MA57_set_default_parameters(double cntl[], int icntl[]);
 
-   // symbolic analysis
-   void MA57_symbolic_analysis(const int* n, const int* ne, const int irn[], const int jcn[], const int* lkeep,
-      /*const*/ int keep[], int iwork[], /* const */ int icntl[], int info[], double rinfo[]);
+      void MA57_symbolic_analysis(const int* n, const int* ne, const int irn[], const int jcn[], const int* lkeep,
+         /*const*/ int keep[], int iwork[], /* const */ int icntl[], int info[], double rinfo[]);
 
-   // numerical factorization
-   void MA57_numerical_factorization(const int* n, int* ne, const double a[], double fact[], const int* lfact,
-      int ifact[], const int* lifact, const int* lkeep, const int keep[], int iwork[], int icntl[], double cntl[],
-      int info[], double rinfo[]);
+      void MA57_numerical_factorization(const int* n, int* ne, const double a[], double fact[], const int* lfact,
+         int ifact[], const int* lifact, const int* lkeep, const int keep[], int iwork[], int icntl[], double cntl[],
+         int info[], double rinfo[]);
 
-   // linear system solve without iterative refinement
-   void MA57_linear_solve(const int* job, const int* n, double fact[], int* lfact, int ifact[], int* lifact, const int* nrhs,
-      double rhs[], const int* lrhs, double work[], int* lwork, int iwork[], int icntl[], int info[]);
+      void MA57_linear_solve(const int* job, const int* n, double fact[], int* lfact, int ifact[], int* lifact, const int* nrhs,
+         double rhs[], const int* lrhs, double work[], int* lwork, int iwork[], int icntl[], int info[]);
 
-   // linear system solve with iterative refinement
-   void MA57_linear_solve_with_iterative_refinement(const int* job, const int* n, int* ne, const double a[], const int irn[],
-      const int jcn[], double fact[], int* lfact, int ifact[], int* lifact, const double rhs[], double x[], double resid[],
-      double work[], int iwork[], int icntl[], double cntl[], int info[], double rinfo[]);
+      void MA57_linear_solve_with_iterative_refinement(const int* job, const int* n, int* ne, const double a[], const int irn[],
+         const int jcn[], double fact[], int* lfact, int ifact[], int* lifact, const double rhs[], double x[], double resid[],
+         double work[], int iwork[], int icntl[], double cntl[], int info[], double rinfo[]);
 
-   // enlarging of workspaces when numerical factorization runs out of memory
-   void MA57_enlarge_workspace(const int* n, const int* ic, int keep[], const double fact[], const int* lfact,
-      double newfac[], const int* lnew, const int ifact[], const int* lifact, int newifc[], const int* linew,
-      int info[]);
+      // enlarging of workspaces when numerical factorization runs out of memory
+      void MA57_enlarge_workspace(const int* n, const int* ic, int keep[], const double fact[], const int* lfact,
+         double newfac[], const int* lnew, const int ifact[], const int* lifact, int newifc[], const int* linew,
+         int info[]);
    }
 
    namespace {
