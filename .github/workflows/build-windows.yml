@@ -61,26 +61,30 @@ jobs:
     - name: add MinGW64 directory to path
       run: echo "C:\tools\msys64\mingw64\bin" >> "$GITHUB_PATH"
 
+    - name: add WORKSPACE directory to path
+      run: echo "WORKSPACE=D:/a/Uno/Uno" >> "$GITHUB_PATH"
+
     - name: Configure CMake
       shell: bash
       run: |
         cmake -G "MinGW Makefiles" \
-          -B "${{github.workspace}}/build" \
+          -B "${WORKSPACE}/build" \
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-          -DMUMPS_INCLUDE_DIR="${{github.workspace}}/deps/include" \
-          -DMETIS_INCLUDE_DIR="${{github.workspace}}/deps/include" \
-          -DBQPD="${{github.workspace}}/deps/lib/libbqpd.a" \
-          -DMETIS_LIBRARY="${{github.workspace}}/deps/lib/libmetis.a" \
-          -DMUMPS_LIBRARY="${{github.workspace}}/deps/lib/libdmumps.a" \
-          -DMUMPS_COMMON_LIBRARY="${{github.workspace}}/deps/lib/libmumps_common.a" \
-          -DMUMPS_PORD_LIBRARY="${{github.workspace}}/deps/lib/libpord.a" \
-          -DMUMPS_MPISEQ_LIBRARY="${{github.workspace}}/deps/lib/libmpiseq.a" \
-          -DBLAS_LIBRARIES="${{github.workspace}}/deps/lib/libblas.a" \
-          -DLAPACK_LIBRARIES="${{github.workspace}}/deps/lib/liblapack.a" \
-          -DHIGHS_DIR="${{github.workspace}}/deps/highs/lib/cmake/highs" \
+          -DMUMPS_INCLUDE_DIR="${WORKSPACE}/deps/include" \
+          -DMETIS_INCLUDE_DIR="${WORKSPACE}/deps/include" \
+          -DBQPD="${WORKSPACE}/deps/lib/libbqpd.a" \
+          -DMETIS_LIBRARY="${WORKSPACE}/deps/lib/libmetis.a" \
+          -DMUMPS_LIBRARY="${WORKSPACE}/deps/lib/libdmumps.a" \
+          -DMUMPS_COMMON_LIBRARY="${WORKSPACE}/deps/lib/libmumps_common.a" \
+          -DMUMPS_PORD_LIBRARY="${WORKSPACE}/deps/lib/libpord.a" \
+          -DMUMPS_MPISEQ_LIBRARY="${WORKSPACE}/deps/lib/libmpiseq.a" \
+          -DBLAS_LIBRARIES="${WORKSPACE}/deps/lib/libblas.a" \
+          -DLAPACK_LIBRARIES="${WORKSPACE}/deps/lib/liblapack.a" \
+          -DHIGHS_DIR="${WORKSPACE}/deps/highs/lib/cmake/highs" \
           -DBUILD_STATIC_LIBS=ON \
           -DBUILD_SHARED_LIBS=ON .
 
     - name: Build
+      shell: bash
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${WORKSPACE}/build --config ${{env.BUILD_TYPE}}
