@@ -27,9 +27,11 @@ jobs:
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest]
         architecture: [x64]
+        compiler: [mingw]
 
     steps:
     - name: Checkout repository
@@ -40,13 +42,21 @@ jobs:
       run: |
         VERSION_BQPD="1.0.0"
         VERSION_MUMPS="5.8.0"
-        PLATFORM="x86_64-w64-mingw32"
+        VERSION_HIGHS="1.11.0"
+        if [[ "${{matrix.architecture}}" == "x64" ]]; then
+          PLATFORM="x86_64-w64-mingw32"
+        else
+          PLATFORM="i686-w64-mingw32"
+        fi
         choco install wget
         wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
         wget https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/MUMPS_static-v${VERSION_MUMPS}%2B0/MUMPS_static.v${VERSION_MUMPS}.$PLATFORM-libgfortran5.tar.gz
+        wget https://github.com/amontoison/HiGHS_static_jll.jl/releases/download/HiGHS_static-v${VERSION_HIGHS}%2B0/HiGHS_static.v${VERSION_HIGHS}.$PLATFORM-libgfortran5.tar.gz
         mkdir deps
+        mkdir deps/highs
         tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
         tar -xzvf MUMPS_static.v${VERSION_MUMPS}.$PLATFORM-libgfortran5.tar.gz -C deps
+        tar -xzvf HiGHS_static.v${VERSION_HIGHS}.$PLATFORM-libgfortran5.tar.gz -C deps/highs
 
     - name: add MinGW64 directory to path
       run: echo "C:\tools\msys64\mingw64\bin" >> "$GITHUB_PATH"
@@ -66,7 +76,10 @@ jobs:
           -DMUMPS_PORD_LIBRARY=${{github.workspace}}\deps\lib\libpord.a ^
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\deps\lib\libmpiseq.a ^
           -DBLAS_LIBRARIES=${{github.workspace}}\deps\lib\libblas.a ^
-          -DLAPACK_LIBRARIES=${{github.workspace}}\deps\lib\liblapack.a .
+          -DLAPACK_LIBRARIES=${{github.workspace}}\deps\lib\liblapack.a ^
+          -DHIGHS_DIR=${{github.workspace}}\deps\highs\lib\cmake\highs ^
+          -DBUILD_STATIC_LIBS=ON ^
+          -DBUILD_SHARED_LIBS=ON .
 
     - name: Build
       # Build your program with the given configuration
