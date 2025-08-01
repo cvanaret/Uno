@@ -11,7 +11,6 @@
 #include "InteriorPointParameters.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
-#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -42,10 +41,16 @@ namespace uno {
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
+      // matrix computations
+      void evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) override;
+      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      [[nodiscard]] double compute_hessian_quadratic_product(const Vector<double>& vector) const override;
+
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information) override;
-      [[nodiscard]] double compute_hessian_quadratic_product(const Vector<double>& vector) const override;
 
       void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem, const Iterate& current_iterate,
@@ -101,16 +106,8 @@ namespace uno {
          throw std::runtime_error("The problem has fixed variables. Move them to the set of general constraints.");
       }
       const BarrierProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-
-      const size_t primal_regularization_size = problem.get_number_original_variables();
-      const size_t dual_regularization_size = problem.get_equality_constraints().size();
-      const size_t regularization_size =
-         (regularization_strategy.performs_primal_regularization() ? primal_regularization_size : 0) +
-         (regularization_strategy.performs_dual_regularization() ? dual_regularization_size : 0);
-      const size_t number_augmented_system_nonzeros = barrier_problem.number_hessian_nonzeros(hessian_model) +
-         barrier_problem.number_jacobian_nonzeros();
-      this->linear_solver->initialize(barrier_problem.number_variables, barrier_problem.number_constraints,
-         number_augmented_system_nonzeros, regularization_size);
+      const Subproblem subproblem{problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
+      this->linear_solver->initialize(subproblem);
    }
 
    template <typename BarrierProblem>
@@ -262,7 +259,7 @@ namespace uno {
          current_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
       }
 
-      // c(x) - p + n = 0
+      // c(x) - p + n override
       // analytical expression for p and n:
       // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
       // where jacobian_coefficient = -1 for p, +1 for n
