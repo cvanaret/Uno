@@ -1,4 +1,4 @@
-// Copyright (c) 2024 Charlie Vanaret
+// Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ExponentialBarrierProblem.hpp"
@@ -13,10 +13,10 @@
 namespace uno {
    ExponentialBarrierProblem::ExponentialBarrierProblem(const OptimizationProblem& problem, double barrier_parameter,
       const InteriorPointParameters &parameters):
-         // no slacks: as many constraints as the number of equality constraints of the problem
-         BarrierProblem(problem.model, problem.number_variables, problem.get_equality_constraints().size()),
+         BarrierProblem(problem.model, problem.number_variables, problem.number_constraints),
          first_reformulation(problem), barrier_parameter(barrier_parameter),
-         parameters(parameters), equality_constraints(problem.number_constraints) { }
+         parameters(parameters), equality_constraints(problem.number_constraints) {
+   }
 
    double ExponentialBarrierProblem::get_objective_multiplier() const {
       return this->first_reformulation.get_objective_multiplier();
@@ -139,7 +139,7 @@ namespace uno {
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_equality_constraints() const {
-      return this->first_reformulation.get_equality_constraints();
+      return this->equality_constraints;
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_inequality_constraints() const {
@@ -152,7 +152,7 @@ namespace uno {
          // reformulation (e.g. l1 relaxation). In that case, we stick to an empty set
          return this->first_reformulation.get_dual_regularization_constraints();
       }
-      // otherwise, we pick the set of equality constraints
+      // otherwise, we pick the set of equality constraints, since the inequality constraints have slacks
       return this->first_reformulation.get_equality_constraints();
    }
 
@@ -241,11 +241,6 @@ namespace uno {
          // the objective contribution of the Lagrangian gradient may be scaled. Barrier terms go into the constraint contribution
          lagrangian_gradient.constraints_contribution[variable_index] += barrier_term;
       }
-   }
-
-   double ExponentialBarrierProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
-         const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
-      return this->first_reformulation.complementarity_error(primals, constraints, multipliers, shift_value, residual_norm);
    }
 
    double ExponentialBarrierProblem::dual_regularization_factor() const {
