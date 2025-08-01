@@ -5,6 +5,7 @@
 #define UNO_OPTIMIZATIONPROBLEM_H
 
 #include <vector>
+#include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "model/Model.hpp"
 #include "optimization/IterateStatus.hpp"
@@ -44,7 +45,8 @@ namespace uno {
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
       [[nodiscard]] virtual bool has_curvature(const HessianModel& hessian_model) const;
       [[nodiscard]] virtual size_t number_hessian_nonzeros(const HessianModel& hessian_model) const;
-      virtual void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const;
+      virtual void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+         MatrixOrder matrix_order) const;
       virtual void compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
          size_t* column_indices, size_t solver_indexing) const;
 

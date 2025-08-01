@@ -47,9 +47,10 @@ namespace uno {
       this->model->evaluate_objective_gradient(x, gradient);
    }
 
-   void FixedBoundsConstraintsModel::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+   void FixedBoundsConstraintsModel::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices,
+         size_t solver_indexing, MatrixOrder matrix_order) const {
       // original constraints
-      this->model->compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing);
+      this->model->compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
 
       // fixed variables (as linear constraints)
       size_t constraint_index = this->model->number_constraints;

@@ -8,6 +8,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/COOMatrix.hpp"
 #include "linear_algebra/Indexing.hpp"
+#include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -137,7 +138,7 @@ namespace uno {
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-         Indexing::C_indexing);
+         Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
 
       // augmented system
       this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();

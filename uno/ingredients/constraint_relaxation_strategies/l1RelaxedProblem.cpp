@@ -101,8 +101,9 @@ namespace uno {
       return number_nonzeros;
    }
 
-   void l1RelaxedProblem::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
-      this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing);
+   void l1RelaxedProblem::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+         MatrixOrder matrix_order) const {
+      this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
 
       // add the contribution of the elastic variables
       size_t elastic_index = this->model.number_variables;

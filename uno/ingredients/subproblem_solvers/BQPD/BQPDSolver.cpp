@@ -292,7 +292,8 @@ namespace uno {
       // get the sparsity in COO format
       Vector<size_t> coo_row_indices(subproblem.number_jacobian_nonzeros());
       Vector<size_t> coo_column_indices(subproblem.number_jacobian_nonzeros());
-      subproblem.compute_constraint_jacobian_sparsity(coo_row_indices.data(), coo_column_indices.data(), Indexing::Fortran_indexing);
+      subproblem.compute_constraint_jacobian_sparsity(coo_row_indices.data(), coo_column_indices.data(),
+         Indexing::Fortran_indexing, MatrixOrder::ROW_MAJOR);
       for (size_t constraint_index: Range(subproblem.number_constraints)) {
          /*
          for (const auto [variable_index, derivative]: this->constraint_jacobian[constraint_index]) {

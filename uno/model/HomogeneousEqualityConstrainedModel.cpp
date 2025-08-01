@@ -74,8 +74,8 @@ namespace uno {
    }
 
    void HomogeneousEqualityConstrainedModel::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices,
-         size_t solver_indexing) const {
-      this->model->compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing);
+         size_t solver_indexing, MatrixOrder matrix_order) const {
+      this->model->compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
 
       // add the slack contributions
       size_t nonzero_index = this->model->number_jacobian_nonzeros();
