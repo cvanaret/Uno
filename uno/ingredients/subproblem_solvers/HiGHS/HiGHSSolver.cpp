@@ -37,19 +37,20 @@ namespace uno {
       this->model.lp_.row_lower_.resize(subproblem.number_constraints);
       this->model.lp_.row_upper_.resize(subproblem.number_constraints);
 
-      // constraint matrix in CSR format (each row is a constraint gradient)
+      // constraint Jacobian
       this->model.lp_.a_matrix_.format_ = MatrixFormat::kRowwise;
       const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
-      this->model.lp_.a_matrix_.value_.reserve(number_jacobian_nonzeros);
-      this->model.lp_.a_matrix_.index_.reserve(number_jacobian_nonzeros);
-      this->model.lp_.a_matrix_.start_.reserve(subproblem.number_variables + 1);
-      // Jacobian in COO format
+      // compute the COO sparsity pattern
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       this->jacobian_values.resize(number_jacobian_nonzeros);
       subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
          Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
       // TODO convert COO format to CSC format
+      // HiGHS matrix in CSR format (each row is a constraint gradient)
+      this->model.lp_.a_matrix_.index_.reserve(number_jacobian_nonzeros);
+      this->model.lp_.a_matrix_.start_.reserve(subproblem.number_variables + 1);
+      this->model.lp_.a_matrix_.value_.reserve(number_jacobian_nonzeros);
       throw std::runtime_error("HiGHSSolver not implemented yet");
 
       // TODO Hessian
