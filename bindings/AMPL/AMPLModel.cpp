@@ -54,8 +54,7 @@ namespace uno {
          upper_bounded_variables_collection(this->upper_bounded_variables),
          single_lower_bounded_variables_collection(this->single_lower_bounded_variables),
          single_upper_bounded_variables_collection(this->single_upper_bounded_variables) {
-      // evaluate the constraint Jacobian in sparse mode
-      this->asl->i.congrd_mode = 1;
+      this->asl->i.congrd_mode = 2;
 
       // variables
       this->lower_bounded_variables.reserve(this->number_variables);
@@ -116,7 +115,22 @@ namespace uno {
       gradient.scale(this->objective_sign);
    }
 
-   void AMPLModel::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+   void AMPLModel::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+         MatrixOrder matrix_order) const {
+      // by default, AMPLModel computes the Jacobian in a column-wise order (variable by variable).
+      // if a row-wise evaluation is wished, modify the goff fields of the ASL "Cgrad" structures
+      if (matrix_order == MatrixOrder::ROW_MAJOR) {
+         int nonzero_index = 0;
+         for (size_t constraint_index: Range(this->number_constraints)) {
+            cgrad* constraint_gradient = this->asl->i.Cgrad_[constraint_index];
+            while (constraint_gradient != nullptr) {
+               constraint_gradient->goff = nonzero_index;
+               ++nonzero_index;
+               constraint_gradient = constraint_gradient->next;
+            }
+         }
+      }
+
       size_t current_index = 0;
       for (size_t constraint_index: Range(this->number_constraints)) {
          cgrad* constraint_gradient = this->asl->i.Cgrad_[constraint_index];

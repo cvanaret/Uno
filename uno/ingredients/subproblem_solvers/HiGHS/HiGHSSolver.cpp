@@ -48,7 +48,7 @@ namespace uno {
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       this->jacobian_values.resize(number_jacobian_nonzeros);
       subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-         Indexing::C_indexing);
+         Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
       // TODO convert COO format to CSC format
       throw std::runtime_error("HiGHSSolver not implemented yet");
 

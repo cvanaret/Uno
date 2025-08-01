@@ -5,6 +5,7 @@
 #define UNO_SUBPROBLEM_H
 
 #include "linear_algebra/Matrix.hpp"
+#include "linear_algebra/MatrixOrder.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
@@ -35,7 +36,8 @@ namespace uno {
          HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
 
       // sparsity patterns
-      void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const;
+      void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+         MatrixOrder matrix_order) const;
       void compute_regularized_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const;
       void compute_regularized_augmented_matrix_sparsity(size_t* row_indices, size_t* column_indices, const size_t* jacobian_row_indices,
          const size_t* jacobian_column_indices, size_t solver_indexing) const;

@@ -17,8 +17,9 @@ namespace uno {
          regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius) {
    }
 
-   void Subproblem::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
-      this->problem.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing);
+   void Subproblem::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+         MatrixOrder matrix_order) const {
+      this->problem.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
    void Subproblem::compute_regularized_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
