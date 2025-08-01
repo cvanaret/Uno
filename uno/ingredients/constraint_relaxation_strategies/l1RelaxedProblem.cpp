@@ -128,22 +128,34 @@ namespace uno {
       // bound constraints of original variables
       for (size_t variable_index: Range(this->model.number_variables)) {
          lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
-            multipliers.upper_bounds[variable_index]);
+                                                                          multipliers.upper_bounds[variable_index]);
       }
 
       // elastic variables
       size_t elastic_index = this->model.number_variables;
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         if (is_finite(this->model.constraint_lower_bound(constraint_index))) { // negative part
+      for (size_t inequality_index: this->model.get_inequality_constraints()) {
+         if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
             lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
-               multipliers.constraints[constraint_index] - multipliers.lower_bounds[elastic_index];
-            elastic_index++;
+               multipliers.constraints[inequality_index] - multipliers.lower_bounds[elastic_index];
          }
-         if (is_finite(this->model.constraint_upper_bound(constraint_index))) { // positive part
+         else { // positive part
             lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
-               multipliers.constraints[constraint_index] - multipliers.lower_bounds[elastic_index];
-            elastic_index++;
+               multipliers.constraints[inequality_index] - multipliers.lower_bounds[elastic_index];
          }
+         elastic_index++;
+      }
+      for ([[maybe_unused]] size_t equality_index: this->model.get_equality_constraints()) {
+         /*
+         lagrangian_gradient.constraints_contribution[elastic_index] += 2*this->constraint_violation_coefficient -
+            multipliers.lower_bounds[elastic_index] - multipliers.lower_bounds[elastic_index+1];
+         elastic_index += 2;
+         */
+         lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
+               multipliers.constraints[equality_index] - multipliers.lower_bounds[elastic_index];
+         elastic_index++;
+         lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
+               multipliers.constraints[equality_index] - multipliers.lower_bounds[elastic_index];
+         elastic_index++;
       }
 
       // proximal contribution
