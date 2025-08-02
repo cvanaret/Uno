@@ -3,10 +3,9 @@
 
 #include "HiGHSSolver.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
-#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "linear_algebra/Indexing.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
@@ -18,38 +17,42 @@ namespace uno {
       this->highs_solver.setOptionValue("output_flag", "false");
    }
 
-   void HiGHSSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         const RegularizationStrategy<double>& regularization_strategy) {
+   void HiGHSSolver::initialize_memory(const Subproblem& subproblem) {
       // determine whether the subproblem has curvature. For the moment, HiGHS can only solve LPs
-      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
-      const bool regularize = !hessian_model.is_positive_definite() && regularization_strategy.performs_primal_regularization();
-      const size_t regularization_size = problem.get_number_original_variables();
-      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros +
-         (regularize ? regularization_size : 0);
+      const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
       if (0 < number_regularized_hessian_nonzeros) {
          throw std::runtime_error("The subproblem has curvature. For the moment, HiGHS can only solve LPs");
       }
 
-      this->constraints.resize(problem.number_constraints);
-      this->linear_objective.resize(problem.number_variables);
-      this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
+      this->constraints.resize(subproblem.number_constraints);
+      this->linear_objective.resize(subproblem.number_variables);
       this->model.lp_.sense_ = ObjSense::kMinimize;
       this->model.lp_.offset_ = 0.;
       // the linear part of the objective is a dense vector
-      this->model.lp_.col_cost_.resize(problem.number_variables);
+      this->model.lp_.col_cost_.resize(subproblem.number_variables);
       // variable bounds
-      this->model.lp_.col_lower_.resize(problem.number_variables);
-      this->model.lp_.col_upper_.resize(problem.number_variables);
+      this->model.lp_.col_lower_.resize(subproblem.number_variables);
+      this->model.lp_.col_upper_.resize(subproblem.number_variables);
       // constraint bounds
-      this->model.lp_.row_lower_.resize(problem.number_constraints);
-      this->model.lp_.row_upper_.resize(problem.number_constraints);
+      this->model.lp_.row_lower_.resize(subproblem.number_constraints);
+      this->model.lp_.row_upper_.resize(subproblem.number_constraints);
+
       // constraint matrix in CSR format (each row is a constraint gradient)
       this->model.lp_.a_matrix_.format_ = MatrixFormat::kRowwise;
-      this->model.lp_.a_matrix_.value_.reserve(problem.number_jacobian_nonzeros());
-      this->model.lp_.a_matrix_.index_.reserve(problem.number_jacobian_nonzeros());
-      this->model.lp_.a_matrix_.start_.reserve(problem.number_variables + 1);
+      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+      this->model.lp_.a_matrix_.value_.reserve(number_jacobian_nonzeros);
+      this->model.lp_.a_matrix_.index_.reserve(number_jacobian_nonzeros);
+      this->model.lp_.a_matrix_.start_.reserve(subproblem.number_variables + 1);
+      // Jacobian in COO format
+      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
+      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
+      this->jacobian_values.resize(number_jacobian_nonzeros);
+      subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+         Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
+      // TODO convert COO format to CSC format
+      throw std::runtime_error("HiGHSSolver not implemented yet");
+
       // TODO Hessian
-      // this->hessian = SymmetricMatrix<size_t, double>("CSC", problem.number_variables, 0, 0); // TODO
    }
 
    void HiGHSSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& /*initial_point*/,
@@ -58,7 +61,15 @@ namespace uno {
       this->solve_subproblem(subproblem, direction);
    }
 
-   double HiGHSSolver::hessian_quadratic_product(const Vector<double>& /*vector*/) const {
+   void HiGHSSolver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      throw std::runtime_error("HiGHSSolver::compute_constraint_jacobian_vector_product not implemented");
+   }
+
+   void HiGHSSolver::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      throw std::runtime_error("HiGHSSolver::compute_constraint_jacobian_transposed_vector_product not implemented");
+   }
+
+   double HiGHSSolver::compute_hessian_quadratic_product(const Vector<double>& /*vector*/) const {
       return 0.;
    }
 
@@ -72,12 +83,11 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         subproblem.evaluate_jacobian(this->constraint_jacobian);
+         // TODO subproblem.evaluate_constraint_jacobian(this->constraint_jacobian);
       }
       // evaluate the Hessian and regularize it TODO: store it in HiGHS format
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->hessian.reset();
-         subproblem.compute_regularized_hessian(statistics, this->hessian);
+         // subproblem.compute_regularized_hessian(statistics, this->hessian);
       }
 
       // variable bounds
@@ -102,11 +112,14 @@ namespace uno {
       size_t number_nonzeros = 0;
       this->model.lp_.a_matrix_.start_.emplace_back(number_nonzeros);
       for (size_t constraint_index: Range(subproblem.number_constraints)) {
+         /*
+         TODO
          for (const auto [variable_index, value]: this->constraint_jacobian[constraint_index]) {
             this->model.lp_.a_matrix_.value_.emplace_back(value);
             this->model.lp_.a_matrix_.index_.emplace_back(variable_index);
             number_nonzeros++;
          }
+         */
          this->model.lp_.a_matrix_.start_.emplace_back(number_nonzeros);
       }
 

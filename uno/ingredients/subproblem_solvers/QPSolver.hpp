@@ -12,8 +12,7 @@ namespace uno {
       QPSolver(): LPSolver() { }
       ~QPSolver() override = default;
 
-      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         const RegularizationStrategy<double>& regularization_strategy) override = 0;
+      void initialize_memory(const Subproblem& subproblem) override = 0;
 
       void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override = 0;

@@ -21,6 +21,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         UNO_PRESET: [uno_filtersqp_bqpd, uno_ipopt_mumps, uno_filterslp_highs]
     name: Julia tests of ${{matrix.UNO_PRESET}} - ${{ github.event_name }}

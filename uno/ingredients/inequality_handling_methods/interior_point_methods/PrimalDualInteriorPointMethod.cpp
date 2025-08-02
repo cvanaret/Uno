@@ -5,9 +5,9 @@
 #include "PrimalDualInteriorPointMethod.hpp"
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
-#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "linear_algebra/SparseVector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
@@ -35,8 +35,9 @@ namespace uno {
          l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
    }
 
-   void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy) {
+   void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
+         const Multipliers& current_multipliers, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
       if (!problem.get_inequality_constraints().empty()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
@@ -44,17 +45,9 @@ namespace uno {
          throw std::runtime_error("The problem has fixed variables. Move them to the set of general constraints.");
       }
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-      regularization_strategy.initialize_memory(barrier_problem, hessian_model);
-
-      const size_t primal_regularization_size = problem.get_number_original_variables();
-      const size_t dual_regularization_size = problem.get_equality_constraints().size();
-      const size_t regularization_size =
-         (regularization_strategy.performs_primal_regularization() ? primal_regularization_size : 0) +
-         (regularization_strategy.performs_dual_regularization() ? dual_regularization_size : 0);
-      const size_t number_augmented_system_nonzeros = barrier_problem.number_hessian_nonzeros(hessian_model) +
-         barrier_problem.number_jacobian_nonzeros();
-      this->linear_solver->initialize_memory(barrier_problem.number_variables, barrier_problem.number_constraints,
-         number_augmented_system_nonzeros, regularization_size);
+      const Subproblem subproblem{barrier_problem, current_iterate, current_multipliers, hessian_model, regularization_strategy,
+         trust_region_radius};
+      this->linear_solver->initialize(subproblem);
    }
 
    void PrimalDualInteriorPointMethod::initialize_statistics(Statistics& statistics, const Options& options) {
@@ -107,10 +100,6 @@ namespace uno {
       }
    }
 
-   double PrimalDualInteriorPointMethod::barrier_parameter() const {
-      return this->barrier_parameter_update_strategy.get_barrier_parameter();
-   }
-
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
          RegularizationStrategy<double>& regularization_strategy, double trust_region_radius, WarmstartInformation& warmstart_information) {
@@ -153,8 +142,8 @@ namespace uno {
       }
    }
 
-   double PrimalDualInteriorPointMethod::hessian_quadratic_product(const Vector<double>& /*vector*/) const {
-      return 0.; // TODO
+   double PrimalDualInteriorPointMethod::barrier_parameter() const {
+      return this->barrier_parameter_update_strategy.get_barrier_parameter();
    }
 
    void PrimalDualInteriorPointMethod::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& current_iterate) {
@@ -225,6 +214,18 @@ namespace uno {
 
    double PrimalDualInteriorPointMethod::proximal_coefficient() const {
       return std::sqrt(this->barrier_parameter());
+   }
+
+   void PrimalDualInteriorPointMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      this->linear_solver->compute_constraint_jacobian_vector_product(vector, result);
+   }
+
+   void PrimalDualInteriorPointMethod::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      this->linear_solver->compute_constraint_jacobian_transposed_vector_product(vector, result);
+   }
+
+   double PrimalDualInteriorPointMethod::compute_hessian_quadratic_product(const Vector<double>& /*vector*/) const {
+      return 0.; // TODO
    }
 
    void PrimalDualInteriorPointMethod::set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) {

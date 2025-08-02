@@ -16,7 +16,7 @@ namespace uno {
 
    class Iterate {
    public:
-      Iterate(size_t number_variables, size_t number_constraints);
+      Iterate(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzero);
       Iterate(const Iterate& other) = default;
       Iterate(Iterate&& other) = default;
       Iterate& operator=(Iterate&& other) = default;

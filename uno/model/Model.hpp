@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "optimization/IterateStatus.hpp"
 #include "symbolic/VectorExpression.hpp"
@@ -15,11 +16,7 @@ namespace uno {
    template <typename ElementType>
    class Collection;
    template <typename ElementType>
-   class RectangularMatrix;
-   template <typename ElementType>
    class SparseVector;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
 
@@ -28,11 +25,6 @@ namespace uno {
    // forward declaration
    class Iterate;
 
-   /*! \class Problem
-    * \brief Optimization problem
-    *
-    *  Description of an optimization problem
-    */
    class Model {
    public:
       Model(std::string name, size_t number_variables, size_t number_constraints, double objective_sign);
@@ -43,13 +35,22 @@ namespace uno {
       const size_t number_constraints; /*!< Number of constraints */
       const double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
 
+      // function evaluations
       [[nodiscard]] virtual double evaluate_objective(const Vector<double>& x) const = 0;
-      virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
       virtual void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const = 0;
-      virtual void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const = 0;
-      virtual void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const = 0;
+
+      // dense objective gradient
+      virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
+
+      // sparsity patterns of Jacobian and Hessian
+      virtual void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+         MatrixOrder matrix_format) const = 0;
+      virtual void compute_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const = 0;
+
+      // numerical evaluations of Jacobian and Hessian
+      virtual void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const = 0;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const = 0;
+         Vector<double>& hessian_values) const = 0;
       // here we use pointers, since the vector and the result may be provided by a low-level subproblem solver
       virtual void compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
          double* result) const = 0;

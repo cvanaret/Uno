@@ -11,7 +11,6 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategyFactory.hpp"
 #include "ingredients/regularization_strategies/UnstableRegularization.hpp"
-#include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
@@ -37,7 +36,7 @@ namespace uno {
    }
 
    void FeasibilityRestoration::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
-         Direction& direction, const Options& options) {
+         Direction& direction, double trust_region_radius, const Options& options) {
       const OptimizationProblem optimality_problem{model};
       l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
       this->reference_optimality_primals.resize(optimality_problem.number_variables);
@@ -48,10 +47,10 @@ namespace uno {
       // TODO allocate the feasibility phase only when entering the first time?
       this->optimality_hessian_model->initialize(model);
       this->feasibility_hessian_model->initialize(model);
-      this->optimality_inequality_handling_method->initialize(optimality_problem, *this->optimality_hessian_model,
-         *this->optimality_regularization_strategy);
-      this->feasibility_inequality_handling_method->initialize(feasibility_problem, *this->feasibility_hessian_model,
-         *this->feasibility_regularization_strategy);
+      this->optimality_inequality_handling_method->initialize(optimality_problem, initial_iterate, initial_iterate.multipliers,
+         *this->optimality_hessian_model, *this->optimality_regularization_strategy, trust_region_radius);
+      this->feasibility_inequality_handling_method->initialize(feasibility_problem, initial_iterate, initial_iterate.feasibility_multipliers,
+         *this->feasibility_hessian_model, *this->feasibility_regularization_strategy, trust_region_radius);
       direction = Direction(
          std::max(optimality_problem.number_variables, feasibility_problem.number_variables),
          std::max(optimality_problem.number_constraints, feasibility_problem.number_constraints)
@@ -153,10 +152,19 @@ namespace uno {
 
    bool FeasibilityRestoration::can_switch_to_optimality_phase(const Iterate& current_iterate, const GlobalizationStrategy& globalization_strategy,
          const Model& model, const Iterate& trial_iterate, const Direction& direction, double step_length) const {
-      return globalization_strategy.is_infeasibility_sufficiently_reduced(this->reference_optimality_progress, trial_iterate.progress) &&
-         (!this->switch_to_optimality_requires_linearized_feasibility ||
-         model.constraint_violation(current_iterate.evaluations.constraints + step_length*(current_iterate.evaluations.constraint_jacobian *
-         direction.primals), this->residual_norm) <= this->linear_feasibility_tolerance);
+      if (globalization_strategy.is_infeasibility_sufficiently_reduced(this->reference_optimality_progress, trial_iterate.progress)) {
+         if (!this->switch_to_optimality_requires_linearized_feasibility) {
+            return true;
+         }
+         // compute the linearized constraint violation
+         // TODO preallocate
+         Vector<double> result(model.number_constraints);
+         this->feasibility_inequality_handling_method->compute_constraint_jacobian_transposed_vector_product(direction.primals, result);
+         const double trial_linearized_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints +
+            step_length * result, this->residual_norm);
+         return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
+      }
+      return false;
    }
 
    void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy,

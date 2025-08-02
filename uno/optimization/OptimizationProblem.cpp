@@ -1,8 +1,11 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <iostream>
 #include "OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "linear_algebra/Indexing.hpp"
+#include "linear_algebra/MatrixOrder.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Expression.hpp"
 #include "tools/Logger.hpp"
@@ -22,51 +25,81 @@ namespace uno {
       return 1.;
    }
 
+   void OptimizationProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+      iterate.evaluate_constraints(this->model);
+      constraints = iterate.evaluations.constraints;
+   }
+
    void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
       iterate.evaluate_objective_gradient(this->model);
       // TODO change this
       objective_gradient = iterate.evaluations.objective_gradient;
    }
 
-   void OptimizationProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
-      iterate.evaluate_constraints(this->model);
-      constraints = iterate.evaluations.constraints;
+   size_t OptimizationProblem::number_jacobian_nonzeros() const {
+      return this->model.number_jacobian_nonzeros();
    }
 
-   void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
-      iterate.evaluate_constraint_jacobian(this->model);
-      // TODO change this
-      constraint_jacobian = iterate.evaluations.constraint_jacobian;
+   size_t OptimizationProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
+      return hessian_model.number_nonzeros(this->model);
    }
 
-   // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
+   void OptimizationProblem::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+         MatrixOrder matrix_order) const {
+      this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+   }
+
+   void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
+         size_t* column_indices, size_t solver_indexing) const {
+      hessian_model.compute_sparsity(this->model, row_indices, column_indices, solver_indexing);
+   }
+
+   void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
+      this->model.evaluate_constraint_jacobian(iterate.primals, jacobian_values);
+   }
+
+   // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
+   // split in two parts: objective contribution and constraints' contribution
    void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-         const Multipliers& multipliers) const {
+         const Multipliers& multipliers/*, const COOMatrix<size_t>& jacobian*/) const {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
 
-      // objective gradient
-      lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
+      // ∇f(x_k)
+      this->evaluate_objective_gradient(iterate, lagrangian_gradient.objective_contribution);
 
-      // constraints
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         if (multipliers.constraints[constraint_index] != 0.) {
-            for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
-               lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
-            }
-         }
+      // ∇c(x_k) λ_k
+      /*
+      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
+         const auto [constraint_index, variable_index, derivative] = jacobian[nonzero_index];
+         lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
+      }
+      */
+      Vector<size_t> row_indices(this->number_jacobian_nonzeros());
+      Vector<size_t> column_indices(this->number_jacobian_nonzeros());
+      Vector<double> jacobian_values(this->number_jacobian_nonzeros());
+      this->compute_constraint_jacobian_sparsity(row_indices.data(), column_indices.data(), Indexing::C_indexing,
+         MatrixOrder::COLUMN_MAJOR);
+      this->evaluate_constraint_jacobian(iterate, jacobian_values.data());
+
+      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
+         const size_t constraint_index = row_indices[nonzero_index];
+         const size_t variable_index = column_indices[nonzero_index];
+         const double derivative = jacobian_values[nonzero_index];
+         lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
       }
 
-      // bound constraints of original variables
+      // z_k
       for (size_t variable_index: Range(this->number_variables)) {
          lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
-                                                                          multipliers.upper_bounds[variable_index]);
+            multipliers.upper_bounds[variable_index]);
       }
    }
 
-   void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
-      hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(), multipliers.constraints, hessian);
+   void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
+         const Vector<double>& primal_variables, const Multipliers& multipliers, Vector<double>& hessian_values) const {
+      hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(),
+         multipliers.constraints, hessian_values);
    }
 
    void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector, const Multipliers& multipliers,
@@ -128,14 +161,6 @@ namespace uno {
 
    const Collection<size_t>& OptimizationProblem::get_dual_regularization_constraints() const {
       return this->dual_regularization_constraints;
-   }
-
-   size_t OptimizationProblem::number_jacobian_nonzeros() const {
-      return this->model.number_jacobian_nonzeros();
-   }
-
-   size_t OptimizationProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
-      return hessian_model.number_nonzeros(this->model);
    }
 
    void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Multipliers& /*current_multipliers*/,

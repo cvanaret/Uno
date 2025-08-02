@@ -32,7 +32,7 @@ namespace uno {
       virtual ~ConstraintRelaxationStrategy();
 
       virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         const Options& options) = 0;
+         double trust_region_radius, const Options& options) = 0;
 
       // direction computation
       virtual void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -66,8 +66,8 @@ namespace uno {
 
       void set_objective_measure(const Model& model, Iterate& iterate) const;
       void set_infeasibility_measure(const Model& model, Iterate& iterate) const;
-      [[nodiscard]] double compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const;
+      [[nodiscard]] double compute_predicted_infeasibility_reduction(InequalityHandlingMethod& inequality_handling_method,
+         const Model& model, const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const;
       [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(InequalityHandlingMethod& inequality_handling_method,
          const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const;
       void compute_progress_measures(InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,

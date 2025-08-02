@@ -12,36 +12,38 @@ namespace uno {
    public:
       explicit NoRegularization() = default;
 
-      void initialize_memory(const OptimizationProblem& /*problem*/, const HessianModel& /*hessian_model*/) override {
-         // do nothing
-      }
-
       void initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) override {
          // do nothing
       }
 
-      void regularize_hessian(Statistics& /*statistics*/, SymmetricMatrix<size_t, ElementType>& /*hessian*/,
-            const Collection<size_t>& /*variable_block*/, const Inertia& /*expected_inertia*/) override {
+      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, const Vector<double>& /*hessian_values*/,
+            const Inertia& /*expected_inertia*/, VectorView<Vector<double>&> /*primal_regularization_values*/) override {
          // do nothing
       }
 
-      void regularize_hessian(Statistics& /*statistics*/, SymmetricMatrix<size_t, ElementType>& /*hessian*/,
-            const Collection<size_t>& /*variable_block*/, const Inertia& /*expected_inertia*/,
-            DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) override {
+      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, const Vector<double>& /*hessian_values*/,
+            const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/,
+            VectorView<Vector<double>&> /*primal_regularization_values*/) override {
          // do nothing
       }
 
-      void regularize_augmented_matrix(Statistics& /*statistics*/, SymmetricMatrix<size_t, ElementType>& /*augmented_matrix*/,
-            const Collection<size_t>& /*primal_indices*/, const Collection<size_t>& /*dual_indices*/,
-            ElementType /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/) override {
+      void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
+            const Vector<double>& /*augmented_matrix_values*/, ElementType /*dual_regularization_parameter*/,
+            const Inertia& /*expected_inertia*/, VectorView<Vector<double>&> /*primal_regularization_values*/,
+            VectorView<Vector<double>&> /*dual_regularization_values*/) override {
          // do nothing
       }
 
-      void regularize_augmented_matrix(Statistics& /*statistics*/, SymmetricMatrix<size_t, ElementType>& /*augmented_matrix*/,
-            const Collection<size_t>& /*primal_indices*/, const Collection<size_t>& /*dual_indices*/,
-            ElementType /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/,
-            DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/) override {
-         // do nothing
+      void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& subproblem,
+            const Vector<double>& /*augmented_matrix_values*/, ElementType /*dual_regularization_parameter*/,
+            const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/,
+            VectorView<Vector<double>&> primal_regularization_values, VectorView<Vector<double>&> dual_regularization_values) override {
+         for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
+            primal_regularization_values[index] = 0.;
+         }
+         for (size_t index: Range(subproblem.get_dual_regularization_constraints().size())) {
+            dual_regularization_values[index] = 0.;
+         }
       }
 
       [[nodiscard]] bool performs_primal_regularization() const override {
