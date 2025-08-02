@@ -69,7 +69,7 @@ Uno can be installed in Julia via [Uno_jll.jl](https://github.com/JuliaBinaryWra
 ### Combining strategies on the fly
 
 For an overview of the available strategies, type: ```./uno_ampl --strategies```:
-- to pick a constraint relaxation strategy, use the argument: ```constraint_relaxation_strategy=[feasibility_restoration|l1_relaxation]```  
+- to pick a constraint relaxation strategy, use the argument: ```constraint_relaxation_strategy=[feasibility_restoration]```  
 - to pick an inequality handling method, use the argument: ```inequality_handling_method=[inequality_constrained|primal_dual_interior_point]``` 
 - to pick a Hessian model, use the argument: ```hessian_model=[exact|identity|zero]``` 
 - to pick a regularization strategy, use the argument: ```regularization_strategy=[primal|primal_dual|none]``` 
