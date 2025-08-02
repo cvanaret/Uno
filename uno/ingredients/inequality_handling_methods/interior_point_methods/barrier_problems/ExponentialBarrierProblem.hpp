@@ -1,17 +1,17 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
-#define UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
+#ifndef UNO_EXPONENTIALBARRIERPROBLEM_H
+#define UNO_EXPONENTIALBARRIERPROBLEM_H
 
-#include "InteriorPointParameters.hpp"
-#include "optimization/OptimizationProblem.hpp"
+#include "../InteriorPointParameters.hpp"
+#include "../BarrierProblem.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
-   class PrimalDualInteriorPointProblem : public OptimizationProblem {
+   class ExponentialBarrierProblem : public BarrierProblem {
    public:
-      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter,
+      ExponentialBarrierProblem(const OptimizationProblem& problem, double barrier_parameter,
          const InteriorPointParameters &parameters);
 
       // function evaluations
@@ -54,7 +54,7 @@ namespace uno {
          const Vector<double>& primal_direction) const;
       void postprocess_iterate(Vector<double>& primals, Multipliers& multipliers) const;
       [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
-         double barrier_parameter) const;
+         double barrier_parameter) const override;
 
    protected:
       const OptimizationProblem& first_reformulation;
@@ -73,4 +73,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
+#endif // UNO_EXPONENTIALBARRIERPROBLEM_H
