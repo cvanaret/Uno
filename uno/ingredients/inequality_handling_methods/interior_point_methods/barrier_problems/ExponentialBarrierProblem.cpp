@@ -75,27 +75,6 @@ namespace uno {
    void ExponentialBarrierProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
          const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const {
       this->reformulated_problem.evaluate_lagrangian_gradient(lagrangian_gradient, inequality_handling_method, iterate);
-
-      // barrier terms
-      for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {
-         double barrier_term = 0.;
-         if (is_finite(reformulated_problem.variable_lower_bound(variable_index))) { // lower bounded
-            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - reformulated_problem.variable_lower_bound(variable_index));
-            // damping
-            if (!is_finite(reformulated_problem.variable_upper_bound(variable_index))) {
-               barrier_term += this->parameters.damping_factor * this->barrier_parameter;
-            }
-         }
-         if (is_finite(reformulated_problem.variable_upper_bound(variable_index))) { // upper bounded
-            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - reformulated_problem.variable_upper_bound(variable_index));
-            // damping
-            if (!is_finite(reformulated_problem.variable_lower_bound(variable_index))) {
-               barrier_term -= this->parameters.damping_factor * this->barrier_parameter;
-            }
-         }
-         // the objective contribution of the Lagrangian gradient may be scaled. Barrier terms go into the constraint contribution
-         lagrangian_gradient.constraints_contribution[variable_index] += barrier_term;
-      }
    }
    
    void ExponentialBarrierProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
@@ -126,24 +105,6 @@ namespace uno {
          const Multipliers& multipliers, double* result) const {
       // original Lagrangian Hessian
       this->reformulated_problem.compute_hessian_vector_product(hessian_model, vector, multipliers, result);
-
-      // barrier terms
-      for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {
-         const bool finite_lower_bound = is_finite(this->reformulated_problem.variable_lower_bound(variable_index));
-         const bool finite_upper_bound = is_finite(this->reformulated_problem.variable_upper_bound(variable_index));
-         if (finite_lower_bound || finite_upper_bound) {
-            double diagonal_barrier_term = 0.;
-            if (finite_lower_bound) { // lower bounded
-               const double distance_to_bound = vector[variable_index] - this->reformulated_problem.variable_lower_bound(variable_index);
-               diagonal_barrier_term += multipliers.lower_bounds[variable_index] / distance_to_bound;
-            }
-            if (finite_upper_bound) { // upper bounded
-               const double distance_to_bound = vector[variable_index] - this->reformulated_problem.variable_upper_bound(variable_index);
-               diagonal_barrier_term += multipliers.upper_bounds[variable_index] / distance_to_bound;
-            }
-            result[variable_index] += diagonal_barrier_term * vector[variable_index];
-         }
-      }
    }
 
    double ExponentialBarrierProblem::variable_lower_bound(size_t /*variable_index*/) const {
@@ -191,7 +152,7 @@ namespace uno {
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_inequality_constraints() const {
-      return this->reformulated_problem.get_inequality_constraints();
+      return this->inequality_constraints;
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_dual_regularization_constraints() const {
@@ -211,22 +172,10 @@ namespace uno {
       // retrieve the duals with correct signs (note the minus sign)
       direction.multipliers.constraints = view(-solution, this->reformulated_problem.number_variables,
          this->reformulated_problem.number_variables + this->reformulated_problem.number_constraints);
-      this->compute_bound_dual_direction(current_iterate, direction);
+   }
 
-      // "fraction-to-boundary" rule for primal variables and constraints multipliers
-      const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter);
-      const double primal_step_length = ExponentialBarrierProblem::primal_fraction_to_boundary(current_iterate.primals,
-         direction.primals, tau);
-      const double bound_dual_step_length = ExponentialBarrierProblem::dual_fraction_to_boundary(current_iterate.multipliers,
-         direction.multipliers, tau);
-      DEBUG << "Fraction-to-boundary rules:\n";
-      DEBUG << "primal step length = " << primal_step_length << '\n';
-      DEBUG << "bound dual step length = " << bound_dual_step_length << "\n\n";
-      // scale the primal-dual variables
-      direction.primals.scale(primal_step_length);
-      direction.multipliers.constraints.scale(primal_step_length);
-      direction.multipliers.lower_bounds.scale(bound_dual_step_length);
-      direction.multipliers.upper_bounds.scale(bound_dual_step_length);
+   double ExponentialBarrierProblem::push_variable_to_interior(double variable_value, double /*lower_bound*/, double /*upper_bound*/) const {
+      return variable_value;
    }
 
    void ExponentialBarrierProblem::set_auxiliary_measure(Iterate& iterate) const {
@@ -263,81 +212,6 @@ namespace uno {
 
    // protected member functions
 
-   double ExponentialBarrierProblem::push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const {
-      const double range = upper_bound - lower_bound;
-      const double perturbation_lb = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(lower_bound)),
-         this->parameters.push_variable_to_interior_k2 * range);
-      const double perturbation_ub = std::min(this->parameters.push_variable_to_interior_k1 * std::max(1., std::abs(upper_bound)),
-         this->parameters.push_variable_to_interior_k2 * range);
-      variable_value = std::max(variable_value, lower_bound + perturbation_lb);
-      variable_value = std::min(variable_value, upper_bound - perturbation_ub);
-      return variable_value;
-   }
-   
-   void ExponentialBarrierProblem::compute_bound_dual_direction(const Iterate& current_iterate, Direction& direction) const {
-      direction.multipliers.lower_bounds.fill(0.);
-      direction.multipliers.upper_bounds.fill(0.);
-      for (const size_t variable_index: this->reformulated_problem.get_lower_bounded_variables()) {
-         const double distance_to_bound = current_iterate.primals[variable_index] - this->reformulated_problem.variable_lower_bound(variable_index);
-         direction.multipliers.lower_bounds[variable_index] = (this->barrier_parameter - direction.primals[variable_index] *
-            current_iterate.multipliers.lower_bounds[variable_index]) / distance_to_bound - current_iterate.multipliers.lower_bounds[variable_index];
-         assert(is_finite(direction.multipliers.lower_bounds[variable_index]) && "The lower bound dual is infinite");
-      }
-      for (const size_t variable_index: this->reformulated_problem.get_upper_bounded_variables()) {
-         const double distance_to_bound = current_iterate.primals[variable_index] - this->reformulated_problem.variable_upper_bound(variable_index);
-         direction.multipliers.upper_bounds[variable_index] = (this->barrier_parameter - direction.primals[variable_index] *
-            current_iterate.multipliers.upper_bounds[variable_index]) / distance_to_bound - current_iterate.multipliers.upper_bounds[variable_index];
-         assert(is_finite(direction.multipliers.upper_bounds[variable_index]) && "The upper bound dual is infinite");
-      }
-   }
-
-   // TODO use a single function for primal and dual fraction-to-boundary rules
-   double ExponentialBarrierProblem::primal_fraction_to_boundary(const Vector<double>& current_primals,
-         const Vector<double>& primal_direction, double tau) const {
-      double step_length = 1.;
-      for (const size_t variable_index: this->reformulated_problem.get_lower_bounded_variables()) {
-         if (primal_direction[variable_index] < 0.) {
-            const double distance = -tau * (current_primals[variable_index] - this->reformulated_problem.variable_lower_bound(variable_index)) / primal_direction[variable_index];
-            if (0. < distance) {
-               step_length = std::min(step_length, distance);
-            }
-         }
-      }
-      for (const size_t variable_index: this->reformulated_problem.get_upper_bounded_variables()) {
-         if (0. < primal_direction[variable_index]) {
-            const double distance = -tau * (current_primals[variable_index] - this->reformulated_problem.variable_upper_bound(variable_index)) / primal_direction[variable_index];
-            if (0. < distance) {
-               step_length = std::min(step_length, distance);
-            }
-         }
-      }
-      assert(0. < step_length && step_length <= 1. && "The primal fraction-to-boundary step length is not in (0, 1]");
-      return step_length;
-   }
-
-   double ExponentialBarrierProblem::dual_fraction_to_boundary(const Multipliers& current_multipliers,
-         const Multipliers& direction_multipliers, double tau) const {
-      double step_length = 1.;
-      for (const size_t variable_index: this->reformulated_problem.get_lower_bounded_variables()) {
-         if (direction_multipliers.lower_bounds[variable_index] < 0.) {
-            const double distance = -tau * current_multipliers.lower_bounds[variable_index] / direction_multipliers.lower_bounds[variable_index];
-            if (0. < distance) {
-               step_length = std::min(step_length, distance);
-            }
-         }
-      }
-      for (const size_t variable_index: this->reformulated_problem.get_upper_bounded_variables()) {
-         if (0. < direction_multipliers.upper_bounds[variable_index]) {
-            const double distance = -tau * current_multipliers.upper_bounds[variable_index] / direction_multipliers.upper_bounds[variable_index];
-            if (0. < distance) {
-               step_length = std::min(step_length, distance);
-            }
-         }
-      }
-      assert(0. < step_length && step_length <= 1. && "The dual fraction-to-boundary step length is not in (0, 1]");
-      return step_length;
-   }
-
    double ExponentialBarrierProblem::compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const {
       double directional_derivative = 0.;
@@ -359,47 +233,8 @@ namespace uno {
       return directional_derivative;
    }
 
-   void ExponentialBarrierProblem::postprocess_iterate(Iterate& iterate) const {
-      // rescale the bound multipliers (Eq. 16 in Ipopt paper)
-      for (const size_t variable_index: this->reformulated_problem.get_lower_bounded_variables()) {
-         const double coefficient = this->barrier_parameter / (iterate.primals[variable_index] - this->reformulated_problem.variable_lower_bound(variable_index));
-         if (is_finite(coefficient)) {
-            const double lb = coefficient / this->parameters.k_sigma;
-            const double ub = coefficient * this->parameters.k_sigma;
-            assert(lb <= ub && "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset");
-            if (lb <= ub) {
-               const double current_value = iterate.multipliers.lower_bounds[variable_index];
-               iterate.multipliers.lower_bounds[variable_index] = std::max(std::min(iterate.multipliers.lower_bounds[variable_index], ub), lb);
-               if (iterate.multipliers.lower_bounds[variable_index] != current_value) {
-                  DEBUG << "Multiplier for lower bound " << variable_index << " rescaled from " << current_value << " to " <<
-                     iterate.multipliers.lower_bounds[variable_index] << '\n';
-               }
-            }
-            else {
-               WARNING << "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset\n";
-            }
-         }
-
-      }
-      for (const size_t variable_index: this->reformulated_problem.get_upper_bounded_variables()) {
-         const double coefficient = this->barrier_parameter / (iterate.primals[variable_index] - this->reformulated_problem.variable_upper_bound(variable_index));
-         if (is_finite(coefficient)) {
-            const double lb = coefficient * this->parameters.k_sigma;
-            const double ub = coefficient / this->parameters.k_sigma;
-            assert(lb <= ub && "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset");
-            if (lb <= ub) {
-               const double current_value = iterate.multipliers.upper_bounds[variable_index];
-               iterate.multipliers.upper_bounds[variable_index] = std::max(std::min(iterate.multipliers.upper_bounds[variable_index], ub), lb);
-               if (iterate.multipliers.upper_bounds[variable_index] != current_value) {
-                  DEBUG << "Multiplier for upper bound " << variable_index << " rescaled from " << current_value << " to " <<
-                     iterate.multipliers.upper_bounds[variable_index] << '\n';
-               }
-            }
-            else {
-               WARNING << "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset\n";
-            }
-         }
-      }
+   void ExponentialBarrierProblem::postprocess_iterate(Iterate& /*iterate*/) const {
+      // do nothing
    }
 
    double ExponentialBarrierProblem::compute_centrality_error(const Vector<double>& primals,
