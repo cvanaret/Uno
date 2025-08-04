@@ -58,8 +58,8 @@ Options can be set in three different ways (with decreasing precedence):
 ### Interfaces
 
 #### AMPL/nl files
-To solve an AMPL model in the [.nl format](https://en.wikipedia.org/wiki/Nl_(format)), type in the `build` directory: ```./uno_ampl model.nl -AMPL [option=value ...]```  
-where ```[option=value ...]``` is a list of options separated by spaces. 
+To solve an AMPL model in the [.nl format](https://en.wikipedia.org/wiki/Nl_(format)), type in the `build` directory: ```./uno_ampl model.nl [-AMPL] [option=value ...]```  
+where ```[option=value ...]``` is a list of options separated by spaces. If the `-AMPL` flag is supplied, the solution is written to the AMPL solution file `model.sol`.
 
 A couple of CUTEst instances are available in the `/examples` directory.
 

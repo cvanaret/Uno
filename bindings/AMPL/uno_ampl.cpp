@@ -82,48 +82,43 @@ int main(int argc, char* argv[]) {
       if (argc == 1) {
          print_uno_instructions();
       }
-      else if (argc == 2) {
-         if (std::string(argv[1]) == "--v") {
-            print_uno_instructions();
-         }
-         else if (std::string(argv[1]) == "--strategies") {
-            Uno::print_available_strategies();
-         }
-         else {
-            throw std::runtime_error("The second command line argument should be -AMPL");
-         }
+      else if (argc == 2 && std::string(argv[1]) == "--v") {
+         print_uno_instructions();
       }
-      else if (argc >= 3) {
-         // AMPL expects: ./uno_ampl model.nl -AMPL [option_name=option_value, ...]
+      else if (argc == 2 && std::string(argv[1]) == "--strategies") {
+         Uno::print_available_strategies();
+      }
+      else {
+         // AMPL expects: ./uno_ampl model.nl [-AMPL] [option_name=option_value, ...]
          // model name
          std::string model_name = std::string(argv[1]);
 
-         // -AMPL
-         if (std::string(argv[2]) != "-AMPL") {
-            throw std::runtime_error("The second command line argument should be -AMPL");
-         }
-
+         // gather the options
          Options options = DefaultOptions::load();
-
          // determine the default solvers based on the available libraries
          Options solvers_options = DefaultOptions::determine_solvers();
          options.overwrite_with(solvers_options);
-
-         // get the command line arguments (options start at index 3)
-         Options command_line_options = Options::get_command_line_options(argc, argv, 3);
-
+         // the -AMPL flag indicates that the solution should be written to the AMPL solution file
+         size_t offset = 2;
+         if (std::string(argv[2]) == "-AMPL") {
+            options["AMPL_write_solution_to_file"] = "yes";
+            ++offset;
+         }
+         else {
+            options["AMPL_write_solution_to_file"] = "no";
+         }
+         // get the command line arguments (options start at index offset)
+         Options command_line_options = Options::get_command_line_options(argc, argv, offset);
          // possibly set options from an option file
          const auto optional_option_file = command_line_options.get_string_optional("option_file");
          if (optional_option_file.has_value()) {
             Options file_options = Options::load_option_file(*optional_option_file);
             options.overwrite_with(file_options);
          }
-
          // possibly set a preset
          const auto optional_preset = command_line_options.get_string_optional("preset");
          Options preset_options = Presets::get_preset_options(optional_preset);
          options.overwrite_with(preset_options);
-
          // overwrite the options with the command line arguments
          options.overwrite_with(command_line_options);
 

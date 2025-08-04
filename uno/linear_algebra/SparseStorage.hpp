@@ -4,8 +4,6 @@
 #ifndef UNO_SPARSESTORAGE_H
 #define UNO_SPARSESTORAGE_H
 
-#include <ostream>
-
 namespace uno {
    // forward declaration
    template <typename ElementType>

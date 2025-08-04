@@ -159,6 +159,10 @@ namespace uno {
       // bound constraints
       const Range variables_range = Range(this->number_variables);
       const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
+         assert(variable_index < primals.size());
+         assert(variable_index < multipliers.lower_bounds.size());
+         assert(variable_index < multipliers.upper_bounds.size());
+
          if (0. < multipliers.lower_bounds[variable_index]) {
             return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index)) - shift_value;
          }
@@ -170,11 +174,14 @@ namespace uno {
 
       // inequality constraints
       const VectorExpression constraint_complementarity{this->get_inequality_constraints(), [&](size_t constraint_index) {
+         assert(constraint_index < constraints.size());
+         assert(constraint_index < multipliers.constraints.size());
+
          if (0. < multipliers.constraints[constraint_index]) { // lower bound
             return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_lower_bound(constraint_index)) -
                shift_value;
          }
-         else if (multipliers.constraints[constraint_index] < 0.) { // upper bound
+         if (multipliers.constraints[constraint_index] < 0.) { // upper bound
             return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_upper_bound(constraint_index)) -
                shift_value;
          }
