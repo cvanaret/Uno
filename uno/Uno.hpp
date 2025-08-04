@@ -25,10 +25,11 @@ namespace uno {
       Uno(size_t number_constraints, const Options& options);
 
       // solve with or without user callbacks
-      Result solve(const Model& model, Iterate& initial_iterate, const Options& options);
-      Result solve(const Model& model, Iterate& initial_iterate, const Options& options, UserCallbacks& user_callbacks);
+      Result solve(const Model& model, Iterate& current_iterate, const Options& options);
+      Result solve(const Model& model, Iterate& current_iterate, const Options& options, UserCallbacks& user_callbacks);
 
       static std::string current_version();
+      static void print_instructions();
       static void print_available_strategies();
       void print_optimization_summary(const Result& result) const;
 

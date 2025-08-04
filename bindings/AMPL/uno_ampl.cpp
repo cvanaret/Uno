@@ -2,9 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <string>
-#include <stdexcept>
 #include "AMPLModel.hpp"
-#include "AMPLUserCallbacks.hpp"
 #include "model/ModelFactory.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Options.hpp"
@@ -46,8 +44,7 @@ namespace uno {
 
          // solve the instance
          Uno uno{model->number_constraints, options};
-         AMPLUserCallbacks user_callbacks{};
-         const Result result = uno.solve(*model, initial_iterate, options, user_callbacks);
+         const Result result = uno.solve(*model, initial_iterate, options);
          if (result.optimization_status == OptimizationStatus::SUCCESS) {
             // check result.solution.status
          }
@@ -60,30 +57,14 @@ namespace uno {
          DISCRETE << exception.what() << '\n';
       }
    }
-
-   void print_uno_instructions() {
-      std::cout << "Welcome in Uno " << Uno::current_version() << '\n';
-      std::cout << "To solve an AMPL model, type ./uno_ampl model.nl -AMPL [option_name=option_value ...]\n";
-      std::cout << "To choose a constraint relaxation strategy, use the argument constraint_relaxation_strategy="
-                   "[feasibility_restoration|l1_relaxation]\n";
-      std::cout << "To choose a subproblem method, use the argument subproblem=[QP|LP|primal_dual_interior_point]\n";
-      std::cout << "To choose a globalization mechanism, use the argument globalization_mechanism=[LS|TR]\n";
-      std::cout << "To choose a globalization strategy, use the argument globalization_strategy="
-                   "[l1_merit|fletcher_filter_method|waechter_filter_method]\n";
-      std::cout << "To choose a preset, use the argument preset=[filtersqp|ipopt|byrd]\n";
-      std::cout << "The options can be combined in the same command line.\n";
-   }
 } // namespace
 
 int main(int argc, char* argv[]) {
    using namespace uno;
 
    try {
-      if (argc == 1) {
-         print_uno_instructions();
-      }
-      else if (argc == 2 && std::string(argv[1]) == "--v") {
-         print_uno_instructions();
+      if (argc == 1 || (argc == 2 && std::string(argv[1]) == "--v")) {
+         Uno::print_instructions();
       }
       else if (argc == 2 && std::string(argv[1]) == "--strategies") {
          Uno::print_available_strategies();
