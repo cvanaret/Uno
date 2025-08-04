@@ -118,6 +118,7 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
+         this->evaluate_constraint_jacobian(subproblem);
       }
 
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
