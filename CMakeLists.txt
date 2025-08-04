@@ -21,7 +21,6 @@ if (MSVC)
    add_compile_options("$<$<COMPILE_LANGUAGE:C>:/utf-8>")
    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
    add_compile_options(/MT)
-   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
    # https://github.com/google/googletest/tree/main/googletest#visual-studio-dynamic-vs-static-runtimes
 	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 else()
