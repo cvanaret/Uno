@@ -28,7 +28,7 @@ namespace uno {
 
       virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
          Vector<ElementType>& result) = 0;
-      virtual void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
+      virtual void solve_equality_constrained_subproblem(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) = 0;
    };
 } // namespace
