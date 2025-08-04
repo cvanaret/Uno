@@ -1,0 +1,92 @@
+# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
+name: Unit tests on MSVC
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
+    # You can convert this to a matrix build if you need cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+        architecture: [x64]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up environment to compile C++ with MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+    
+    - uses: Bacondish2023/setup-googletest@v1
+      with:
+        tag: v1.14.0
+        build-type: ${{env.BUILD_TYPE}}
+
+    - name: Download dependencies (BQPD and MUMPS_static)
+      shell: bash
+      run: |
+        VERSION_BQPD="1.0.0"
+        VERSION_MUMPS="5.8.0"
+        PLATFORM="x86_64-linux-gnu"
+        choco install wget
+        wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
+        wget https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/MUMPS_static-v${VERSION_MUMPS}%2B0/MUMPS_static.v${VERSION_MUMPS}.$PLATFORM-libgfortran5.tar.gz
+        mkdir deps
+        tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
+        tar -xzvf MUMPS_static.v${VERSION_MUMPS}.$PLATFORM-libgfortran5.tar.gz -C deps
+
+    - name: Install Fortran compiler
+      uses: fortran-lang/setup-fortran@main
+      with:
+        compiler: 'intel'
+        version: '2025.0'
+
+    - name: Configure CMake
+      shell: cmd
+      run: |
+        cmake -G "MinGW Makefiles" ^
+                -B ${{github.workspace}}\build ^
+                -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
+                -DCMAKE_C_COMPILER=cl ^
+                -DCMAKE_CXX_COMPILER=cl ^
+                -DCMAKE_Fortran_COMPILER=ifx ^
+                -DMUMPS_INCLUDE_DIR=${{github.workspace}}\deps\include ^
+                -DMETIS_INCLUDE_DIR=${{github.workspace}}\deps\include ^
+                -DBQPD=${{github.workspace}}\deps\lib\libbqpd.a ^
+                -DMETIS_LIBRARY=${{github.workspace}}\deps\lib\libmetis.a ^
+                -DMUMPS_LIBRARY=${{github.workspace}}\deps\lib\libdmumps.a ^
+                -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\deps\lib\libmumps_common.a ^
+                -DMUMPS_PORD_LIBRARY=${{github.workspace}}\deps\lib\libpord.a ^
+                -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\deps\lib\libmpiseq.a ^
+                -DBLAS_LIBRARIES=${{github.workspace}}\deps\lib\libblas.a ^
+                -DLAPACK_LIBRARIES=${{github.workspace}}\deps\lib\liblapack.a ^
+                -DBUILD_STATIC_LIBS=ON ^
+                -DBUILD_SHARED_LIBS=OFF .
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build ${{github.workspace}}/build --target run_unotest --config ${{env.BUILD_TYPE}} -j4
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      # Execute unit tests
+      run: ./run_unotest

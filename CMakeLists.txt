@@ -20,15 +20,15 @@ set(CMAKE_CXX_STANDARD 17)
 if (MSVC)
    add_compile_options("$<$<COMPILE_LANGUAGE:C>:/utf-8>")
    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
+   # https://github.com/google/googletest/tree/main/googletest#visual-studio-dynamic-vs-static-runtimes
+	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 else()
    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
 endif()
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-	set(CMAKE_CXX_FLAGS_DEBUG "-pg")
-endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmaybe-uninitialized")
+   set(CMAKE_CXX_FLAGS_DEBUG "-pg")
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders)
@@ -84,7 +84,7 @@ file(GLOB UNO_SOURCE_FILES
 
 # unit test source files
 file(GLOB TESTS_UNO_SOURCE_FILES
-   unotest/unit_tests/unotest.cpp
+   unotest/unotest.cpp
    unotest/unit_tests/CollectionAdapterTests.cpp
    unotest/unit_tests/ConcatenationTests.cpp
    unotest/unit_tests/COOSparseStorageTests.cpp
@@ -248,6 +248,9 @@ endif()
 if(BUILD_STATIC_LIBS)
    # by default, the target to install is the static library
    set(DEFAULT_UNO_LIB uno_static)
+   if (MSVC)
+         add_compile_options(/MT)
+   endif()
 else()
    set(DEFAULT_UNO_LIB uno_shared)
 endif()
@@ -272,9 +275,13 @@ endif()
 ##################################
 find_package(GTest CONFIG)
 if(GTest_DIR)
+	message(STATUS "Found GoogleTest")
    add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
-   target_include_directories(run_unotest PUBLIC ${DIRECTORIES})
+   target_include_directories(run_unotest PUBLIC ${DIRECTORIES} ${GTEST_INCLUDE_DIR})
    target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES})
+   if (MSVC)
+      set_target_properties(run_unotest PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+	endif()
 endif()
 
 #########################################
