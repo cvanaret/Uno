@@ -5,6 +5,7 @@
 #define UNO_COOSPARSESTORAGE_H
 
 #include <cassert>
+#include <ostream>
 #include <vector>
 #include "SparseStorage.hpp"
 #include "symbolic/Range.hpp"
