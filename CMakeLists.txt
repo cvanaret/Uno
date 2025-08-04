@@ -249,7 +249,7 @@ if(BUILD_STATIC_LIBS)
    # by default, the target to install is the static library
    set(DEFAULT_UNO_LIB uno_static)
    if (MSVC)
-		add_compile_options(/MT)
+      add_compile_options(/MT)
    endif()
 else()
    set(DEFAULT_UNO_LIB uno_shared)
