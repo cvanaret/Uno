@@ -15,17 +15,13 @@ namespace uno {
          // no slacks: as many constraints as the number of equality constraints of the problem
          BarrierProblem(problem.model, problem.number_variables, problem.get_equality_constraints().size()),
          reformulated_problem(problem), barrier_parameter(barrier_parameter),
-         parameters(parameters), equality_constraints(problem.number_constraints) { }
+         parameters(parameters) { }
 
    double ExponentialBarrierProblem::get_objective_multiplier() const {
       return this->reformulated_problem.get_objective_multiplier();
    }
 
-   void ExponentialBarrierProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
-      this->reformulated_problem.evaluate_constraints(iterate, constraints);
-   }
-
-   void ExponentialBarrierProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
+   void ExponentialBarrierProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
       this->reformulated_problem.evaluate_objective_gradient(iterate, objective_gradient);
 
       // barrier terms
@@ -105,6 +101,23 @@ namespace uno {
 
       // barrier terms
       for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {
+   }
+
+   void ExponentialBarrierProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+      this->reformulated_problem.evaluate_constraints(iterate, constraints);
+   }
+
+   void ExponentialBarrierProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
+      this->reformulated_problem.evaluate_constraint_jacobian(iterate, constraint_jacobian);
+   }
+
+   void ExponentialBarrierProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
+         const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
+      // original Lagrangian Hessian
+      this->reformulated_problem.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian);
+
+      // barrier terms
+      for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {
          const bool finite_lower_bound = is_finite(this->reformulated_problem.variable_lower_bound(variable_index));
          const bool finite_upper_bound = is_finite(this->reformulated_problem.variable_upper_bound(variable_index));
          if (finite_lower_bound || finite_upper_bound) {
@@ -178,12 +191,12 @@ namespace uno {
 
    }
 
-   double ExponentialBarrierProblem::constraint_lower_bound(size_t /*constraint_index*/) const {
-      return 0.;
+   double ExponentialBarrierProblem::constraint_lower_bound(size_t constraint_index) const {
+      return this->reformulated_problem.constraint_lower_bound(constraint_index);
    }
 
-   double ExponentialBarrierProblem::constraint_upper_bound(size_t /*constraint_index*/) const {
-      return 0.;
+   double ExponentialBarrierProblem::constraint_upper_bound(size_t constraint_index) const {
+      return this->reformulated_problem.constraint_upper_bound(constraint_index);
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_equality_constraints() const {
@@ -191,7 +204,7 @@ namespace uno {
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_inequality_constraints() const {
-      return this->inequality_constraints;
+      return this->reformulated_problem.get_inequality_constraints();
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_dual_regularization_constraints() const {
@@ -202,6 +215,21 @@ namespace uno {
       }
       // otherwise, we pick the set of equality constraints
       return this->reformulated_problem.get_equality_constraints();
+   }
+
+   size_t ExponentialBarrierProblem::number_jacobian_nonzeros() const {
+      return this->reformulated_problem.number_jacobian_nonzeros();
+   }
+
+   size_t ExponentialBarrierProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
+      size_t number_nonzeros = this->reformulated_problem.number_hessian_nonzeros(hessian_model);
+      // barrier contribution: original variables
+      for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {
+         if (is_finite(this->reformulated_problem.variable_lower_bound(variable_index)) || is_finite(this->reformulated_problem.variable_upper_bound(variable_index))) {
+            number_nonzeros++;
+         }
+      }
+      return number_nonzeros;
    }
 
    void ExponentialBarrierProblem::assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution,
@@ -257,6 +285,32 @@ namespace uno {
       return this->reformulated_problem.complementarity_error(primals, constraints, multipliers, shift_value, residual_norm);
    }
 
+   void ExponentialBarrierProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
+         const Multipliers& multipliers) const {
+      this->reformulated_problem.evaluate_lagrangian_gradient(lagrangian_gradient, iterate, multipliers);
+
+      // barrier terms
+      for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {
+         double barrier_term = 0.;
+         if (is_finite(reformulated_problem.variable_lower_bound(variable_index))) { // lower bounded
+            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - reformulated_problem.variable_lower_bound(variable_index));
+            // damping
+            if (!is_finite(reformulated_problem.variable_upper_bound(variable_index))) {
+               barrier_term += this->parameters.damping_factor * this->barrier_parameter;
+            }
+         }
+         if (is_finite(reformulated_problem.variable_upper_bound(variable_index))) { // upper bounded
+            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - reformulated_problem.variable_upper_bound(variable_index));
+            // damping
+            if (!is_finite(reformulated_problem.variable_lower_bound(variable_index))) {
+               barrier_term -= this->parameters.damping_factor * this->barrier_parameter;
+            }
+         }
+         // the objective contribution of the Lagrangian gradient may be scaled. Barrier terms go into the constraint contribution
+         lagrangian_gradient.constraints_contribution[variable_index] += barrier_term;
+      }
+   }
+
    double ExponentialBarrierProblem::dual_regularization_factor() const {
       return std::pow(this->barrier_parameter, this->parameters.dual_regularization_exponent);
    }
@@ -273,7 +327,7 @@ namespace uno {
       variable_value = std::min(variable_value, upper_bound - perturbation_ub);
       return variable_value;
    }
-
+   
    void ExponentialBarrierProblem::compute_bound_dual_direction(const Iterate& current_iterate, Direction& direction) const {
       direction.multipliers.lower_bounds.fill(0.);
       direction.multipliers.upper_bounds.fill(0.);
