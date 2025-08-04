@@ -41,7 +41,7 @@ namespace uno {
       void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
       [[nodiscard]] double proximal_coefficient() const override;
-      
+
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
          Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information) override;
