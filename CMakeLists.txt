@@ -278,7 +278,6 @@ if(GTest_DIR)
    if (MSVC)
 		set_target_properties(run_unotest PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 	endif()
-)
 endif()
 
 #########################################
