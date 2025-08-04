@@ -1,6 +1,6 @@
 # This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
 # See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
-name: Unit tests on Ubuntu
+name: Unit tests on Linux
 
 on:
   push:
@@ -33,21 +33,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Install googletest
-      run: |
-        sudo apt-get install -y libgtest-dev cmake
-        mkdir -p $HOME/build
-        cd $HOME/build
-        sudo cmake /usr/src/googletest/googletest
-        sudo make
-        sudo cp lib/libgtest* /usr/lib/
-        cd ..
-        sudo rm -rf build
-        sudo mkdir /usr/local/lib/googletest
-        sudo ln -s /usr/lib/libgtest.a /usr/local/lib/googletest/libgtest.a
-        sudo ln -s /usr/lib/libgtest_main.a /usr/local/lib/googletest/libgtest_main.a
-
+    - uses: Bacondish2023/setup-googletest@v1
+      with:
+        tag: v1.14.0
+	
     - name: Download dependencies (BQPD and MUMPS_static)
       shell: bash
       run: |
