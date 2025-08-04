@@ -27,10 +27,10 @@ namespace uno {
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
-      void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+      void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
          MatrixOrder matrix_order) const override;
-      void compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
-         size_t* column_indices, size_t solver_indexing) const override;
+      void compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
+         int* column_indices, int solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
       void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const override;
@@ -75,8 +75,6 @@ namespace uno {
       const double barrier_parameter;
       const InteriorPointParameters& parameters;
       const Vector<size_t> fixed_variables{};
-      const ForwardRange equality_constraints;
-      const ForwardRange inequality_constraints{0};
 
       void compute_bound_dual_direction(const Iterate& current_iterate, Direction& direction) const;
       [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,

@@ -15,7 +15,7 @@ namespace uno {
          // no slacks: as many constraints as the number of equality constraints of the problem
          BarrierProblem(problem.model, problem.number_variables, problem.get_equality_constraints().size()),
          reformulated_problem(problem), barrier_parameter(barrier_parameter),
-         parameters(parameters), equality_constraints(problem.number_constraints) { }
+         parameters(parameters) { }
 
    double ExponentialBarrierProblem::get_objective_multiplier() const {
       return this->reformulated_problem.get_objective_multiplier();
@@ -54,7 +54,7 @@ namespace uno {
    }
 
    bool ExponentialBarrierProblem::has_curvature(const HessianModel& hessian_model) const {
-
+      return true;
    }
 
    size_t ExponentialBarrierProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
@@ -97,9 +97,9 @@ namespace uno {
          lagrangian_gradient.constraints_contribution[variable_index] += barrier_term;
       }
    }
-
-   void ExponentialBarrierProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
-         const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const {
+   
+   void ExponentialBarrierProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
+         const Multipliers& multipliers, double* hessian_values) const {
       // original Lagrangian Hessian
       this->reformulated_problem.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian_values);
 
@@ -178,12 +178,12 @@ namespace uno {
 
    }
 
-   double ExponentialBarrierProblem::constraint_lower_bound(size_t /*constraint_index*/) const {
-      return 0.;
+   double ExponentialBarrierProblem::constraint_lower_bound(size_t constraint_index) const {
+      return this->reformulated_problem.constraint_lower_bound(constraint_index);
    }
 
-   double ExponentialBarrierProblem::constraint_upper_bound(size_t /*constraint_index*/) const {
-      return 0.;
+   double ExponentialBarrierProblem::constraint_upper_bound(size_t constraint_index) const {
+      return this->reformulated_problem.constraint_upper_bound(constraint_index);
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_equality_constraints() const {
@@ -191,7 +191,7 @@ namespace uno {
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_inequality_constraints() const {
-      return this->inequality_constraints;
+      return this->reformulated_problem.get_inequality_constraints();
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_dual_regularization_constraints() const {
@@ -273,7 +273,7 @@ namespace uno {
       variable_value = std::min(variable_value, upper_bound - perturbation_ub);
       return variable_value;
    }
-
+   
    void ExponentialBarrierProblem::compute_bound_dual_direction(const Iterate& current_iterate, Direction& direction) const {
       direction.multipliers.lower_bounds.fill(0.);
       direction.multipliers.upper_bounds.fill(0.);
