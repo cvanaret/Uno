@@ -20,8 +20,9 @@ set(CMAKE_CXX_STANDARD 17)
 if (MSVC)
    add_compile_options("$<$<COMPILE_LANGUAGE:C>:/utf-8>")
    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
+   add_compile_options(/MT)
    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-   # https://chromium.googlesource.com/external/github.com/google/googletest/+/HEAD/googletest/README.md#visual-studio-dynamic-vs-static-runtimes
+   # https://github.com/google/googletest/tree/main/googletest#visual-studio-dynamic-vs-static-runtimes
 	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 else()
    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
