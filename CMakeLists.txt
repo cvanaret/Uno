@@ -20,6 +20,8 @@ set(CMAKE_CXX_STANDARD 17)
 if (MSVC)
    add_compile_options("$<$<COMPILE_LANGUAGE:C>:/utf-8>")
    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
+   # https://chromium.googlesource.com/external/github.com/google/googletest/+/HEAD/googletest/README.md#visual-studio-dynamic-vs-static-runtimes
+	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 else()
    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
@@ -271,9 +273,6 @@ endif()
 find_package(GTest CONFIG)
 if(GTest_DIR)
 	message(STATUS "Found GoogleTest")
-	# https://chromium.googlesource.com/external/github.com/google/googletest/+/HEAD/googletest/README.md#visual-studio-dynamic-vs-static-runtimes
-	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-	
    add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
    target_include_directories(run_unotest PUBLIC ${DIRECTORIES})
    target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES})
