@@ -23,7 +23,6 @@ namespace uno {
       void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const override;
 
       // sparsity patterns of Jacobian and Hessian
-
       void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
          MatrixOrder matrix_order) const override;
       void compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
@@ -64,7 +63,7 @@ namespace uno {
          double shift) const;
 
    protected:
-      const OptimizationProblem& first_reformulation;
+      const OptimizationProblem& reformulated_problem;
       const double barrier_parameter;
       const InteriorPointParameters& parameters;
       const Vector<size_t> fixed_variables{};
