@@ -6,6 +6,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
@@ -176,6 +177,9 @@ namespace uno {
       this->solve_indefinite_system(this->augmented_matrix, this->rhs, this->solution);
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(this->solution, direction);
+      if (this->matrix_is_singular()) {
+         direction.status = SubproblemStatus::INFEASIBLE;
+      }
    }
 
    Inertia MA57Solver::get_inertia() const {
