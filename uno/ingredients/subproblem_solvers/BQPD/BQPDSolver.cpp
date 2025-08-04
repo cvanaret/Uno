@@ -64,6 +64,10 @@ namespace uno {
 
    void BQPDSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
          const RegularizationStrategy<double>& regularization_strategy) {
+      if (!hessian_model.has_implicit_representation() && !hessian_model.has_explicit_representation()) {
+         throw std::runtime_error("Hessian model cannot be evaluated");
+      }
+
       this->w.resize(problem.number_variables + problem.number_constraints);
       this->gradient_solution.resize(problem.number_variables);
       this->residuals.resize(problem.number_variables + problem.number_constraints);
@@ -408,8 +412,5 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
          *evaluate_hessian = false;
       }
       hessian->product(vector, result);
-   }
-   else {
-      throw std::runtime_error("Hessian model cannot be evaluated");
    }
 }
