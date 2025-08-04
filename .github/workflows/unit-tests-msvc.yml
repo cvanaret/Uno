@@ -39,6 +39,7 @@ jobs:
     - uses: Bacondish2023/setup-googletest@v1
       with:
         tag: v1.14.0
+        build-type: ${{env.BUILD_TYPE}}
 
     - name: Download dependencies (BQPD and MUMPS_static)
       shell: bash
