@@ -1,7 +1,6 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-//#include <cmath>
 #include "Uno.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
@@ -162,6 +161,19 @@ namespace uno {
 
    std::string Uno::current_version() {
       return "2.0.1";
+   }
+
+   void Uno::print_instructions() {
+      std::cout << "Welcome in Uno " << Uno::current_version() << '\n';
+      std::cout << "To solve an AMPL model, type ./uno_ampl model.nl -AMPL [option_name=option_value ...]\n";
+      std::cout << "To choose a constraint relaxation strategy, use the argument constraint_relaxation_strategy="
+                   "[feasibility_restoration]\n";
+      std::cout << "To choose a subproblem method, use the argument subproblem=[QP|LP|primal_dual_interior_point]\n";
+      std::cout << "To choose a globalization mechanism, use the argument globalization_mechanism=[LS|TR]\n";
+      std::cout << "To choose a globalization strategy, use the argument globalization_strategy="
+                   "[l1_merit|fletcher_filter_method|waechter_filter_method]\n";
+      std::cout << "To choose a preset, use the argument preset=[filtersqp|ipopt|byrd]\n";
+      std::cout << "The options can be combined in the same command line.\n";
    }
 
    void Uno::print_available_strategies() {
