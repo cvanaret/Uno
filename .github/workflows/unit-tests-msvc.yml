@@ -62,7 +62,8 @@ jobs:
     - name: Configure CMake
       shell: cmd
       run: |
-        cmake -G "NMake Makefiles" ^
+        cmake -G "MinGW Makefiles" ^
+                -B ${{github.workspace}}\build ^
                 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
                 -DCMAKE_C_COMPILER=cl ^
                 -DCMAKE_CXX_COMPILER=cl ^
