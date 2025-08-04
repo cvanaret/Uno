@@ -179,11 +179,7 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-<<<<<<< HEAD
          this->evaluate_constraint_jacobian(subproblem);
-=======
-         subproblem.evaluate_constraint_jacobian(this->constraint_jacobian);
->>>>>>> ec47ca73 (Minor changes)
       }
       // evaluate the Hessian and regularize it
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
