@@ -75,8 +75,6 @@ namespace uno {
       const double barrier_parameter;
       const InteriorPointParameters& parameters;
       const Vector<size_t> fixed_variables{};
-      const ForwardRange equality_constraints;
-      const ForwardRange inequality_constraints{0};
 
       void compute_bound_dual_direction(const Iterate& current_iterate, Direction& direction) const;
       [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,
