@@ -30,7 +30,7 @@ jobs:
       matrix:
         os: [macos-latest]
         architecture: [arm64]
-        compiler: [gcc]
+        compiler: [clang]
 
     steps:
     - uses: actions/checkout@v4
