@@ -46,6 +46,7 @@ jobs:
         VERSION_BQPD="1.0.0"
         VERSION_MUMPS="5.8.0"
         PLATFORM="x86_64-linux-gnu"
+        choco install wget
         wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
         wget https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/MUMPS_static-v${VERSION_MUMPS}%2B0/MUMPS_static.v${VERSION_MUMPS}.$PLATFORM-libgfortran5.tar.gz
         mkdir deps
