@@ -272,6 +272,7 @@ endif()
 ##################################
 find_package(GTest CONFIG)
 if(GTest_DIR)
+	message(STATUS "Found GoogleTest")
    add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
    target_include_directories(run_unotest PUBLIC ${DIRECTORIES})
    target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES})
