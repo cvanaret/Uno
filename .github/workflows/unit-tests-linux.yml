@@ -63,7 +63,9 @@ jobs:
                                                 -DMUMPS_PORD_LIBRARY=${{github.workspace}}/deps/lib/libpord.a \
                                                 -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/deps/lib/libmpiseq.a \
                                                 -DBLAS_LIBRARIES=${{github.workspace}}/deps/lib/libblas.a \
-                                                -DLAPACK_LIBRARIES=${{github.workspace}}/deps/lib/liblapack.a
+                                                -DLAPACK_LIBRARIES=${{github.workspace}}/deps/lib/liblapack.a \
+                                                -DBUILD_STATIC_LIBS=ON \
+                                                -DBUILD_SHARED_LIBS=OFF .
 
     - name: Build
       # Build your program with the given configuration

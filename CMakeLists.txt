@@ -84,7 +84,7 @@ file(GLOB UNO_SOURCE_FILES
 
 # unit test source files
 file(GLOB TESTS_UNO_SOURCE_FILES
-   unotest/unit_tests/unotest.cpp
+   unotest/unotest.cpp
    unotest/unit_tests/CollectionAdapterTests.cpp
    unotest/unit_tests/ConcatenationTests.cpp
    unotest/unit_tests/COOSparseStorageTests.cpp
