@@ -23,16 +23,8 @@ namespace uno {
       this->initial_point.resize(problem.number_variables);
 
       // allocate the LP/QP solver, depending on the presence of curvature in the subproblem
-      bool subproblem_has_curvature = problem.has_curvature(hessian_model);
-      if (!subproblem_has_curvature) {
-         if (!hessian_model.is_positive_definite() && regularization_strategy.performs_primal_regularization()) {
-            subproblem_has_curvature = !problem.get_primal_regularization_variables().empty();
-         }
-         else {
-            subproblem_has_curvature = false;
-         }
-      }
-      if (!subproblem_has_curvature) {
+      const Subproblem subproblem{problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
+      if (!subproblem.has_curvature()) {
          DEBUG << "No curvature in the subproblems, allocating an LP solver\n";
          this->solver = LPSolverFactory::create(this->options);
       }
@@ -40,7 +32,6 @@ namespace uno {
          DEBUG << "Curvature in the subproblems, allocating a QP solver\n";
          this->solver = QPSolverFactory::create(this->options);
       }
-      const Subproblem subproblem{problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
       this->solver->initialize_memory(subproblem);
    }
 
