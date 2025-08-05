@@ -16,7 +16,7 @@ namespace uno {
 
    Iterate::Iterate(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
-         primals(number_variables), multipliers(number_variables, number_constraints), //feasibility_multipliers(number_variables, number_constraints),
+         primals(number_variables), multipliers(number_variables, number_constraints),
          evaluations(number_variables, number_constraints), residuals(number_variables) {
    }
 
