@@ -18,8 +18,6 @@ namespace uno {
    class RectangularMatrix;
    template <typename ElementType>
    class RegularizationStrategy;
-   template <typename ElementType>
-   class SparseVector;
    class Statistics;
    template <typename IndexType, typename ElementType>
    class SymmetricMatrix;

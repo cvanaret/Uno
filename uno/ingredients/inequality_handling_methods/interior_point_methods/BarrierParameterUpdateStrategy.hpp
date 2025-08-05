@@ -9,11 +9,8 @@ namespace uno {
    class DualResiduals;
    class Iterate;
    class Multipliers;
-   class OptimizationProblem;
    class Options;
    class PrimalDualInteriorPointProblem;
-   template <typename ElementType>
-   class Vector;
 
    struct UpdateParameters {
       double k_mu;

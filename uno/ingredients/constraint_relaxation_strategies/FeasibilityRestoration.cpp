@@ -123,7 +123,7 @@ namespace uno {
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, WarmstartInformation& warmstart_information) {
-      DEBUG << "Switching from optimality to restoration phase\n";
+      DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       globalization_strategy.notify_switch_to_feasibility(current_iterate.progress);
       const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
