@@ -1,7 +1,11 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include <cassert>
+#include <optional>
+#include <utility>
+#include <vector>
 #include "MA57Solver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
@@ -16,6 +20,7 @@
 #define MA57_numerical_factorization FC_GLOBAL(ma57bd, MA57BD)
 #define MA57_linear_solve FC_GLOBAL(ma57cd, MA57CD)
 #define MA57_linear_solve_with_iterative_refinement FC_GLOBAL(ma57dd, MA57DD)
+#define MA57_enlarge_workspace FC_GLOBAL(ma57ed, MA57ED)
 
 namespace uno {
    extern "C" {
@@ -40,7 +45,42 @@ namespace uno {
    void MA57_linear_solve_with_iterative_refinement(const int* job, const int* n, int* ne, const double a[], const int irn[],
       const int jcn[], double fact[], int* lfact, int ifact[], int* lifact, const double rhs[], double x[], double resid[],
       double work[], int iwork[], int icntl[], double cntl[], int info[], double rinfo[]);
+
+   // enlarging of workspaces when numerical factorization runs out of memory
+   void MA57_enlarge_workspace(const int* n, const int* ic, int keep[], const double fact[], const int* lfact,
+      double newfac[], const int* lnew, const int ifact[], const int* lifact, int newifc[], const int* linew,
+      int info[]);
    }
+
+   namespace {
+      bool is_error_code_insufficient_real_workspace(int error_code) {
+         return error_code == 10 || error_code == -3;
+      }
+
+      bool is_error_code_insufficient_integer_workspace(int error_code) {
+         return error_code == 11 || error_code == -4;
+      }
+
+      int get_larger_workspace_size(int size_current, std::optional<int> size_estimate) {
+         const int size_new = std::max(size_current + 1, size_estimate.value_or(size_current));
+         const int oversize_denominator_with_estimate = 5;  // add 20% on top of the estimate
+         const int oversize_denominator_without_estimate = 2;  // grow by 50% if we don't have an estimate
+         const int oversize_denominator = size_estimate.has_value() ? oversize_denominator_with_estimate : oversize_denominator_without_estimate;
+         return size_new + size_new / oversize_denominator;
+      }
+
+      int get_larger_real_workspace_size(const MA57Workspace& workspace) {
+         const bool have_estimate = (workspace.info[0] == -3);
+         const auto lfact_estimate = have_estimate ? std::optional<int>{workspace.info[16]} : std::nullopt;
+         return get_larger_workspace_size(workspace.lfact, lfact_estimate);
+      }
+
+      int get_larger_integer_workspace_size(const MA57Workspace& workspace) {
+         const bool have_estimate = (workspace.info[0] == -4);
+         const auto lifact_estimate = have_estimate ? std::optional<int>{workspace.info[17]} : std::nullopt;
+         return get_larger_workspace_size(workspace.lifact, lifact_estimate);
+      }
+   }  // anonymous namespace
 
    MA57Solver::MA57Solver(): DirectSymmetricIndefiniteLinearSolver() {
       // set the default values of the controlling parameters
@@ -122,11 +162,39 @@ namespace uno {
       const int n = static_cast<int>(matrix.dimension());
       int nnz = static_cast<int>(matrix.number_nonzeros());
 
-      // numerical factorization
-      MA57_numerical_factorization(&n, &nnz, matrix.data_pointer(), this->workspace.fact.data(), &this->workspace.lfact,
-         this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.lkeep, this->workspace.keep.data(),
-         this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(),
-         this->workspace.rinfo.data());
+      bool factorization_done = false;
+      while (!factorization_done) {
+         // numerical factorization
+         MA57_numerical_factorization(&n, &nnz, matrix.data_pointer(), this->workspace.fact.data(), &this->workspace.lfact,
+            this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.lkeep, this->workspace.keep.data(),
+            this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(),
+            this->workspace.rinfo.data());
+
+         if (is_error_code_insufficient_real_workspace(this->workspace.info[0]) ||
+             is_error_code_insufficient_integer_workspace(this->workspace.info[0])) {
+            const bool is_real_workspace = is_error_code_insufficient_real_workspace(this->workspace.info[0]);
+
+            const int lnewfact = !is_real_workspace ? 0 : get_larger_real_workspace_size(this->workspace);
+            const int lnewifact = is_real_workspace ? 0 : get_larger_integer_workspace_size(this->workspace);
+            std::vector<double> newfact(lnewfact);
+            std::vector<int> newifact(lnewifact);
+            const int enlarge_target = is_real_workspace ? 0 : 1;
+
+            MA57_enlarge_workspace(&n, &enlarge_target, this->workspace.keep.data(), this->workspace.fact.data(), &this->workspace.lfact,
+               newfact.data(), &lnewfact, this->workspace.ifact.data(), &this->workspace.lifact, newifact.data(), &lnewifact,
+               this->workspace.info.data());
+
+            if (is_real_workspace) {
+               this->workspace.fact = std::move(newfact);
+               this->workspace.lfact = lnewfact;
+            } else {
+               this->workspace.ifact = std::move(newifact);
+               this->workspace.lifact = lnewifact;
+            }
+         } else {
+            factorization_done = true;
+         }
+      }
    }
 
    void MA57Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) {
