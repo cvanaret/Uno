@@ -16,7 +16,7 @@ namespace uno {
 
    Iterate::Iterate(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
-         primals(number_variables), multipliers(number_variables, number_constraints), feasibility_multipliers(number_variables, number_constraints),
+         primals(number_variables), multipliers(number_variables, number_constraints),
          evaluations(number_variables, number_constraints), residuals(number_variables) {
    }
 
@@ -73,8 +73,6 @@ namespace uno {
    void Iterate::set_number_variables(size_t new_number_variables) {
       this->number_variables = new_number_variables;
       this->primals.resize(new_number_variables);
-      this->multipliers.lower_bounds.resize(new_number_variables);
-      this->multipliers.upper_bounds.resize(new_number_variables);
       this->evaluations.objective_gradient.reserve(new_number_variables);
       this->residuals.lagrangian_gradient.resize(new_number_variables);
    }
@@ -84,9 +82,6 @@ namespace uno {
       stream << "            ┌ Constraint: " << iterate.multipliers.constraints << '\n';
       stream << "Multipliers │ Lower bound: " << iterate.multipliers.lower_bounds << '\n';
       stream << "            └ Upper bound: " << iterate.multipliers.upper_bounds << '\n';
-      stream << "                        ┌ Constraint: " << iterate.feasibility_multipliers.constraints << '\n';
-      stream << "Feasibility multipliers │ Lower bound: " << iterate.feasibility_multipliers.lower_bounds << '\n';
-      stream << "                        └ Upper bound: " << iterate.feasibility_multipliers.upper_bounds << '\n';
       stream << "Objective value: " << iterate.evaluations.objective << '\n';
       stream << "Primal feasibility: " << iterate.primal_feasibility << '\n';
 

@@ -40,7 +40,6 @@ namespace uno {
          model->initial_primal_point(initial_iterate.primals);
          model->project_onto_variable_bounds(initial_iterate.primals);
          model->initial_dual_point(initial_iterate.multipliers.constraints);
-         initial_iterate.feasibility_multipliers.reset();
 
          // solve the instance
          Uno uno{model->number_constraints, options};

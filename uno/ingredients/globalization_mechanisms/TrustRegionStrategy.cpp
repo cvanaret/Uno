@@ -119,12 +119,10 @@ namespace uno {
          if (std::abs(direction.primals[variable_index] + this->radius) <= this->activity_tolerance &&
                this->activity_tolerance < std::abs(trial_iterate.primals[variable_index] - model.variable_lower_bound(variable_index))) {
             trial_iterate.multipliers.lower_bounds[variable_index] = 0.;
-            trial_iterate.feasibility_multipliers.lower_bounds[variable_index] = 0.;
          }
          if (std::abs(direction.primals[variable_index] - this->radius) <= this->activity_tolerance &&
                this->activity_tolerance < std::abs(model.variable_upper_bound(variable_index) - trial_iterate.primals[variable_index])) {
             trial_iterate.multipliers.upper_bounds[variable_index] = 0.;
-            trial_iterate.feasibility_multipliers.upper_bounds[variable_index] = 0.;
          }
       }
    }

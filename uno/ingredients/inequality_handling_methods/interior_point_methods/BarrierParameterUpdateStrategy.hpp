@@ -9,11 +9,8 @@ namespace uno {
    class DualResiduals;
    class Iterate;
    class Multipliers;
-   class OptimizationProblem;
    class Options;
    class PrimalDualInteriorPointProblem;
-   template <typename ElementType>
-   class Vector;
 
    struct UpdateParameters {
       double k_mu;
@@ -28,7 +25,7 @@ namespace uno {
       [[nodiscard]] double get_barrier_parameter() const;
       void set_barrier_parameter(double new_barrier_parameter);
       [[nodiscard]] bool update_barrier_parameter(const PrimalDualInteriorPointProblem& barrier_problem,
-         const Iterate& current_iterate, const Multipliers& current_multipliers, const DualResiduals& residuals);
+         const Iterate& current_iterate, const DualResiduals& residuals);
 
    protected:
       double barrier_parameter;

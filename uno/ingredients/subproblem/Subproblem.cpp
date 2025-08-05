@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
 #include "Subproblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
@@ -10,10 +13,10 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   Subproblem::Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-      HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius):
+   Subproblem::Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
+      RegularizationStrategy<double>& regularization_strategy, double trust_region_radius):
          number_variables(problem.number_variables), number_constraints(problem.number_constraints),
-         problem(problem), current_iterate(current_iterate), current_multipliers(current_multipliers), hessian_model(hessian_model),
+         problem(problem), current_iterate(current_iterate), hessian_model(hessian_model),
          regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius) {
    }
 
@@ -32,7 +35,7 @@ namespace uno {
    void Subproblem::compute_regularized_hessian(Statistics& statistics, SymmetricMatrix<size_t, double>& hessian) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
-         this->current_multipliers, hessian);
+         this->current_iterate.multipliers, hessian);
       // regularize the Hessian only if necessary
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
          const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
@@ -44,7 +47,7 @@ namespace uno {
 
    void Subproblem::compute_hessian_vector_product(const double* vector, double* result) const {
       // unregularized Hessian-vector product
-      this->problem.compute_hessian_vector_product(this->hessian_model, vector, this->current_multipliers, result);
+      this->problem.compute_hessian_vector_product(this->hessian_model, vector, this->current_iterate.multipliers, result);
       // contribution of the regularization strategy
       const double regularization_factor = this->regularization_strategy.get_primal_regularization_factor();
       if (0. < regularization_factor) {
@@ -58,7 +61,7 @@ namespace uno {
          RectangularMatrix<double>& constraint_jacobian) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
-         this->current_multipliers, augmented_matrix);
+         this->current_iterate.multipliers, augmented_matrix);
 
       // Jacobian of general constraints
       for (size_t column_index: Range(this->problem.number_constraints)) {
@@ -87,9 +90,9 @@ namespace uno {
       // constraint: evaluations and gradients
       for (size_t constraint_index: Range(this->number_constraints)) {
          // Lagrangian
-         if (this->current_multipliers.constraints[constraint_index] != 0.) {
+         if (this->current_iterate.multipliers.constraints[constraint_index] != 0.) {
             for (const auto [variable_index, derivative]: constraint_jacobian[constraint_index]) {
-               rhs[variable_index] += this->current_multipliers.constraints[constraint_index] * derivative;
+               rhs[variable_index] += this->current_iterate.multipliers.constraints[constraint_index] * derivative;
             }
          }
          // constraints
@@ -99,7 +102,7 @@ namespace uno {
    }
 
    void Subproblem::assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const {
-      this->problem.assemble_primal_dual_direction(this->current_iterate, this->current_multipliers, solution, direction);
+      this->problem.assemble_primal_dual_direction(this->current_iterate, solution, direction);
    }
 
    void Subproblem::set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds) const {

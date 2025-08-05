@@ -31,7 +31,7 @@ namespace uno {
    }
 
    bool BarrierParameterUpdateStrategy::update_barrier_parameter(const PrimalDualInteriorPointProblem& barrier_problem,
-         const Iterate& current_iterate, const Multipliers& current_multipliers, const DualResiduals& residuals) {
+         const Iterate& current_iterate, const DualResiduals& residuals) {
       // primal-dual errors
       const double scaled_stationarity = residuals.stationarity / residuals.stationarity_scaling;
       const double primal_feasibility = (barrier_problem.get_objective_multiplier() == 0.) ? 0. : current_iterate.primal_feasibility;
@@ -51,7 +51,7 @@ namespace uno {
          DEBUG << "Barrier parameter mu updated to " << this->barrier_parameter << '\n';
          // update complementarity error
          double scaled_complementarity_error = barrier_problem.compute_centrality_error(current_iterate.primals,
-            current_multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
+            current_iterate.multipliers, this->barrier_parameter) / residuals.complementarity_scaling;
          primal_dual_error = std::max({
             scaled_stationarity,
             primal_feasibility,

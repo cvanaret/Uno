@@ -34,9 +34,8 @@ namespace uno {
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
       virtual void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) = 0;
       virtual void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
-         WarmstartInformation& warmstart_information) = 0;
+         Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
+         double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
 
       virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
       virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;

@@ -66,8 +66,6 @@ namespace uno {
       statistics.set("phase", "OPT");
 
       // initial iterate
-      initial_iterate.feasibility_multipliers.lower_bounds.resize(feasibility_problem.number_variables);
-      initial_iterate.feasibility_multipliers.upper_bounds.resize(feasibility_problem.number_variables);
       this->optimality_inequality_handling_method->generate_initial_iterate(optimality_problem, initial_iterate);
       this->evaluate_progress_measures(*this->optimality_inequality_handling_method, optimality_problem, initial_iterate);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(optimality_problem, initial_iterate, initial_iterate.multipliers);
@@ -84,8 +82,8 @@ namespace uno {
             DEBUG << "Solving the optimality subproblem\n";
             const OptimizationProblem optimality_problem{model};
             this->solve_subproblem(statistics, *this->optimality_inequality_handling_method, optimality_problem, current_iterate,
-               current_iterate.multipliers, direction, *this->optimality_hessian_model, *this->optimality_regularization_strategy,
-               trust_region_radius, warmstart_information);
+               direction, *this->optimality_hessian_model, *this->optimality_regularization_strategy, trust_region_radius,
+               warmstart_information);
             if (direction.status == SubproblemStatus::INFEASIBLE) {
                // switch to the feasibility problem, starting from the current direction
                statistics.set("status", std::string("infeasible subproblem"));
@@ -111,9 +109,8 @@ namespace uno {
       feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
       feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
       this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method, feasibility_problem, current_iterate,
-         current_iterate.feasibility_multipliers, direction, *this->feasibility_hessian_model,
-         *this->feasibility_regularization_strategy, trust_region_radius, warmstart_information);
-      std::swap(direction.multipliers, direction.feasibility_multipliers);
+         direction, *this->feasibility_hessian_model, *this->feasibility_regularization_strategy, trust_region_radius,
+         warmstart_information);
    }
 
    bool FeasibilityRestoration::solving_feasibility_problem() const {
@@ -123,17 +120,24 @@ namespace uno {
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, WarmstartInformation& warmstart_information) {
-      DEBUG << "Switching from optimality to restoration phase\n";
+      DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       globalization_strategy.notify_switch_to_feasibility(current_iterate.progress);
-      const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
-      this->feasibility_inequality_handling_method->initialize_feasibility_problem(feasibility_problem, current_iterate);
+
       // save the current point (progress and primals) upon switching
       this->reference_optimality_progress = current_iterate.progress;
       this->reference_optimality_primals = current_iterate.primals;
 
+      const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
       current_iterate.set_number_variables(feasibility_problem.number_variables);
+      // swap the iterate's multipliers and the feasibility multipliers maintained by the class
+      this->other_phase_multipliers.constraints.resize(feasibility_problem.number_constraints);
+      this->other_phase_multipliers.lower_bounds.resize(feasibility_problem.number_variables);
+      this->other_phase_multipliers.upper_bounds.resize(feasibility_problem.number_variables);
+      std::swap(current_iterate.multipliers, this->other_phase_multipliers);
       this->feasibility_inequality_handling_method->set_elastic_variable_values(feasibility_problem, current_iterate);
+      this->feasibility_inequality_handling_method->initialize_feasibility_problem(feasibility_problem, current_iterate);
+
       DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
       if (Logger::level == INFO) statistics.print_current_line();
@@ -141,12 +145,12 @@ namespace uno {
    }
 
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
-         const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers, Direction& direction,
-         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
+         const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
          WarmstartInformation& warmstart_information) {
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      inequality_handling_method.solve(statistics, problem, current_iterate, current_multipliers, direction,
-         hessian_model, regularization_strategy, trust_region_radius, warmstart_information);
+      inequality_handling_method.solve(statistics, problem, current_iterate, direction, hessian_model, regularization_strategy,
+         trust_region_radius, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
    }
@@ -166,6 +170,8 @@ namespace uno {
       globalization_strategy.notify_switch_to_optimality(current_iterate.progress);
       const OptimizationProblem optimality_problem{model};
       current_iterate.set_number_variables(optimality_problem.number_variables);
+      // swap the iterate's multipliers and the optimality multipliers maintained by the class
+      std::swap(current_iterate.multipliers, this->other_phase_multipliers);
       trial_iterate.set_number_variables(optimality_problem.number_variables);
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
 
@@ -187,7 +193,7 @@ namespace uno {
          const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
             feasibility_problem, *this->feasibility_inequality_handling_method, current_iterate, trial_iterate,
-            trial_iterate.feasibility_multipliers, direction, step_length, user_callbacks);
+            trial_iterate.multipliers, direction, step_length, user_callbacks);
       }
 
       // possibly go from restoration phase to optimality phase
@@ -211,7 +217,7 @@ namespace uno {
       }
       else {
          const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
-         ConstraintRelaxationStrategy::compute_primal_dual_residuals(feasibility_problem, iterate, iterate.feasibility_multipliers);
+         ConstraintRelaxationStrategy::compute_primal_dual_residuals(feasibility_problem, iterate, iterate.multipliers);
          return ConstraintRelaxationStrategy::check_termination(feasibility_problem, iterate);
       }
    }

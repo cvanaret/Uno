@@ -20,7 +20,6 @@ namespace uno {
 
       Vector<double> primals{}; /*!< Primal variables */
       Multipliers multipliers{}; /*!< Multipliers */
-      Multipliers feasibility_multipliers{}; /*!< Multipliers */
 
       SubproblemStatus status{SubproblemStatus::OPTIMAL}; /*!< Status of the solution */
 
