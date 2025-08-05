@@ -83,12 +83,12 @@ namespace uno {
       }
 
       // determine whether the subproblem has curvature
-      const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
-      this->kmax = (0 < number_regularized_hessian_nonzeros) ? pick_kmax_heuristically(subproblem.number_variables,
+      this->kmax = subproblem.has_curvature() ? pick_kmax_heuristically(subproblem.number_variables,
          subproblem.number_constraints) : 0;
 
       // if the Hessian model only has an explicit representation, allocate an explicit Hessian matrix
       if (!subproblem.has_implicit_hessian_representation() && subproblem.has_explicit_hessian_representation()) {
+         const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
          this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_values.resize(number_regularized_hessian_nonzeros);
