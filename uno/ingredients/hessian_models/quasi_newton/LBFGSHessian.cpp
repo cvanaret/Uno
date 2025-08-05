@@ -50,7 +50,7 @@ namespace uno {
       this->V_matrix = DenseMatrix<double>(this->dimension, this->memory_size);
       this->Hessian_approximation = DenseMatrix<double>(this->dimension, this->dimension);
    }
-   
+
    void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
       statistics.add_column("QN |memory|", Statistics::double_width - 4, options.get_int("statistics_quasi_newton_memory_size"));
    }
