@@ -80,7 +80,7 @@ namespace uno {
       for (size_t variable_index: Range(subproblem.number_variables + subproblem.number_constraints)) {
          this->active_set[variable_index] = static_cast<int>(variable_index + Indexing::Fortran_indexing);
       }
-
+      
       // determine whether the subproblem has curvature
       this->kmax = subproblem.has_curvature() ? pick_kmax_heuristically(subproblem.number_variables,
          subproblem.number_constraints) : 0;
