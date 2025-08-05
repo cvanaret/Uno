@@ -42,8 +42,7 @@ namespace uno {
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
 
-      void assemble_primal_dual_direction(const Iterate& current_iterate, const Multipliers& current_multipliers,
-         const Vector<double>& solution, Direction& direction) const override;
+      void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const override;
 
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
       void set_auxiliary_measure(Iterate& iterate) const;
@@ -64,8 +63,7 @@ namespace uno {
       const ForwardRange equality_constraints;
       const ForwardRange inequality_constraints{0};
 
-      void compute_bound_dual_direction(const Vector<double>& current_primals, const Multipliers& current_multipliers,
-         const Vector<double>& primal_direction, Multipliers& direction_multipliers) const;
+      void compute_bound_dual_direction(const Iterate& current_iterate, Direction& direction) const;
       [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,
          double tau) const;
       [[nodiscard]] double dual_fraction_to_boundary(const Multipliers& current_multipliers, const Multipliers& direction_multipliers,

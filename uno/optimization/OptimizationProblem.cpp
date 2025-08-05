@@ -138,8 +138,8 @@ namespace uno {
       return hessian_model.number_nonzeros(this->model);
    }
 
-   void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Multipliers& /*current_multipliers*/,
-         const Vector<double>& /*solution*/, Direction& /*direction*/) const {
+   void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& /*solution*/,
+         Direction& /*direction*/) const {
       // do nothing
    }
 

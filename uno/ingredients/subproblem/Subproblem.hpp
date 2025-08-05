@@ -13,7 +13,6 @@ namespace uno {
    class DirectSymmetricIndefiniteLinearSolver;
    class HessianModel;
    class Iterate;
-   class Multipliers;
    template <typename ElementType>
    class RectangularMatrix;
    template <typename ElementType>
@@ -28,8 +27,8 @@ namespace uno {
    public:
       const size_t number_variables, number_constraints;
 
-      Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, const Multipliers& current_multipliers,
-         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
+      Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
+         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
 
       // constraints, objective gradient and Jacobian
       void evaluate_objective_gradient(Vector<double>& linear_objective) const;
@@ -65,7 +64,6 @@ namespace uno {
    protected:
       const OptimizationProblem& problem;
       Iterate& current_iterate;
-      const Multipliers& current_multipliers;
       HessianModel& hessian_model;
       RegularizationStrategy<double>& regularization_strategy;
       const double trust_region_radius;

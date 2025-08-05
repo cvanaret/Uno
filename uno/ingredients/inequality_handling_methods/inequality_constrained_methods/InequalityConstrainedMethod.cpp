@@ -52,13 +52,12 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius, WarmstartInformation& warmstart_information) {
+         Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
+         double trust_region_radius, WarmstartInformation& warmstart_information) {
       // create the subproblem and solve it
-      Subproblem subproblem{problem, current_iterate, current_multipliers, hessian_model, regularization_strategy,
-         trust_region_radius};
+      Subproblem subproblem{problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
       this->solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
-      InequalityConstrainedMethod::compute_dual_displacements(current_multipliers, direction.multipliers);
+      InequalityConstrainedMethod::compute_dual_displacements(current_iterate.multipliers, direction.multipliers);
       this->number_subproblems_solved++;
       // reset the initial point
       this->initial_point.fill(0.);
@@ -75,8 +74,8 @@ namespace uno {
    void InequalityConstrainedMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
       problem.set_elastic_variable_values(current_iterate, [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
          iterate.primals[elastic_index] = 0.;
-         iterate.feasibility_multipliers.lower_bounds[elastic_index] = 1.;
-         iterate.feasibility_multipliers.upper_bounds[elastic_index] = 0.;
+         iterate.multipliers.lower_bounds[elastic_index] = 1.;
+         iterate.multipliers.upper_bounds[elastic_index] = 0.;
       });
    }
 

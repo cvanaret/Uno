@@ -30,9 +30,9 @@ namespace uno {
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
-      void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,  const Multipliers& current_multipliers,
-         Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
-         double trust_region_radius, WarmstartInformation& warmstart_information) override;
+      void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
+         WarmstartInformation& warmstart_information) override;
       [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
 
       void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) override;
@@ -57,7 +57,7 @@ namespace uno {
 
       [[nodiscard]] double barrier_parameter() const;
       void update_barrier_parameter(const PrimalDualInteriorPointProblem& barrier_problem, const Iterate& current_iterate,
-         const Multipliers& current_multipliers, const DualResiduals& residuals);
+         const DualResiduals& residuals);
       [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
       [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
    };

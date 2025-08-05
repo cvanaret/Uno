@@ -29,11 +29,6 @@ namespace uno {
                this->number_variables));
          DISCRETE << "└ Upper bound multipliers:\t\t"; print_vector(DISCRETE, view(this->solution.multipliers.upper_bounds, 0,
                this->number_variables));
-         DISCRETE << "┌ Constraint feasibility multipliers:\t"; print_vector(DISCRETE, this->solution.feasibility_multipliers.constraints);
-         DISCRETE << "│ Lower bound feasibility multipliers:\t"; print_vector(DISCRETE, view(this->solution.feasibility_multipliers.lower_bounds, 0,
-               this->number_variables));
-         DISCRETE << "└ Upper bound feasibility multipliers:\t"; print_vector(DISCRETE, view(this->solution.feasibility_multipliers.upper_bounds, 0,
-               this->number_variables));
          DISCRETE << "Objective multiplier:\t\t\t" << this->solution.objective_multiplier << '\n';
       }
 

@@ -8,8 +8,9 @@
 namespace uno {
    Direction::Direction(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
-         primals(number_variables), multipliers(number_variables, number_constraints),
-         feasibility_multipliers(number_variables, number_constraints)  {
+         primals(number_variables), multipliers(number_variables, number_constraints)
+         //feasibility_multipliers(number_variables, number_constraints)
+         {
    }
 
    void Direction::set_dimensions(size_t new_number_variables, size_t new_number_constraints) {
@@ -20,7 +21,7 @@ namespace uno {
    void Direction::reset() {
       this->primals.fill(0.);
       this->multipliers.reset();
-      this->feasibility_multipliers.reset();
+      //this->feasibility_multipliers.reset();
    }
 
    std::string status_to_string(SubproblemStatus status) {
@@ -40,21 +41,15 @@ namespace uno {
       stream << "Direction:\n";
       stream << "│ status: " << status_to_string(direction.status) << '\n';
 
-      stream << "│ primals = ";
-      print_vector(stream, view(direction.primals, 0, direction.number_variables));
-      stream << "│ constraint multipliers = ";
-      print_vector(stream, direction.multipliers.constraints);
-      stream << "│ lower bound multipliers = ";
-      print_vector(stream, direction.multipliers.lower_bounds);
-      stream << "│ upper bound multipliers = ";
-      print_vector(stream, direction.multipliers.upper_bounds);
-      stream << "│ feasibility constraint multipliers = ";
-      print_vector(stream, direction.feasibility_multipliers.constraints);
-      stream << "│ feasibility lower bound multipliers = ";
-      print_vector(stream, direction.feasibility_multipliers.lower_bounds);
-      stream << "│ feasibility upper bound multipliers = ";
-      print_vector(stream, direction.feasibility_multipliers.upper_bounds);
-
+      stream << "│ primals = "; print_vector(stream, view(direction.primals, 0, direction.number_variables));
+      stream << "│ constraint multipliers = "; print_vector(stream, direction.multipliers.constraints);
+      stream << "│ lower bound multipliers = "; print_vector(stream, direction.multipliers.lower_bounds);
+      stream << "│ upper bound multipliers = "; print_vector(stream, direction.multipliers.upper_bounds);
+      /*
+      stream << "│ feasibility constraint multipliers = "; print_vector(stream, direction.feasibility_multipliers.constraints);
+      stream << "│ feasibility lower bound multipliers = "; print_vector(stream, direction.feasibility_multipliers.lower_bounds);
+      stream << "│ feasibility upper bound multipliers = "; print_vector(stream, direction.feasibility_multipliers.upper_bounds);
+*/
       stream << "│ objective = " << direction.subproblem_objective << '\n';
       stream << "│ norm = " << direction.norm << '\n';
       return stream;

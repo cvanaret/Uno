@@ -25,7 +25,6 @@ namespace uno {
       size_t number_constraints;
       Vector<double> primals;
       Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
-      Multipliers feasibility_multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
       double objective_multiplier{1.};
 
       // evaluations

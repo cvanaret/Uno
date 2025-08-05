@@ -112,8 +112,8 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius, WarmstartInformation& warmstart_information) {
+         Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
+         double trust_region_radius, WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet");
       }
@@ -122,7 +122,7 @@ namespace uno {
       // possibly update the barrier parameter
       if (!this->first_feasibility_iteration) {
          const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-         this->update_barrier_parameter(barrier_problem, current_iterate, current_multipliers, current_iterate.residuals);
+         this->update_barrier_parameter(barrier_problem, current_iterate, current_iterate.residuals);
       }
       else {
          this->first_feasibility_iteration = false;
@@ -131,7 +131,7 @@ namespace uno {
 
       // crate the subproblem
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-      const Subproblem subproblem{barrier_problem, current_iterate, current_multipliers, hessian_model, regularization_strategy,
+      const Subproblem subproblem{barrier_problem, current_iterate, hessian_model, regularization_strategy,
          trust_region_radius};
 
       // compute the primal-dual solution
@@ -171,10 +171,10 @@ namespace uno {
       // set the bound multipliers
       /*
       for (const size_t variable_index: problem.get_lower_bounded_variables()) {
-         current_iterate.feasibility_multipliers.lower_bounds[variable_index] = std::min(this->default_multiplier, problem.constraint_violation_coefficient);
+         current_iterate.multipliers.lower_bounds[variable_index] = std::min(this->default_multiplier, problem.constraint_violation_coefficient);
       }
       for (const size_t variable_index: problem.get_upper_bounded_variables()) {
-         current_iterate.feasibility_multipliers.upper_bounds[variable_index] = -this->default_multiplier;
+         current_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
       }
        */
    }
@@ -194,10 +194,10 @@ namespace uno {
       DEBUG << "IPM: setting the elastic variables and their duals\n";
 
       for (const size_t variable_index: problem.get_lower_bounded_variables()) {
-         current_iterate.feasibility_multipliers.lower_bounds[variable_index] = this->default_multiplier;
+         current_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
       }
       for (const size_t variable_index: problem.get_upper_bounded_variables()) {
-         current_iterate.feasibility_multipliers.upper_bounds[variable_index] = -this->default_multiplier;
+         current_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
       }
 
       // c(x) - p + n = 0
@@ -215,10 +215,10 @@ namespace uno {
          const double sqrt_radical = std::sqrt(radical);
 
          iterate.primals[elastic_index] = (mu_over_rho - jacobian_coefficient * constraint_j + sqrt_radical) / 2.;
-         iterate.feasibility_multipliers.lower_bounds[elastic_index] = mu / iterate.primals[elastic_index];
-         iterate.feasibility_multipliers.upper_bounds[elastic_index] = 0.;
+         iterate.multipliers.lower_bounds[elastic_index] = mu / iterate.primals[elastic_index];
+         iterate.multipliers.upper_bounds[elastic_index] = 0.;
          assert(0. < iterate.primals[elastic_index] && "The elastic variable is not strictly positive.");
-         assert(0. < iterate.feasibility_multipliers.lower_bounds[elastic_index] && "The elastic dual is not strictly positive.");
+         assert(0. < iterate.multipliers.lower_bounds[elastic_index] && "The elastic dual is not strictly positive.");
       };
       problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
    }
@@ -242,9 +242,9 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::update_barrier_parameter(const PrimalDualInteriorPointProblem& barrier_problem,
-         const Iterate& current_iterate, const Multipliers& current_multipliers, const DualResiduals& residuals) {
+         const Iterate& current_iterate, const DualResiduals& residuals) {
       const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(barrier_problem,
-         current_iterate, current_multipliers, residuals);
+         current_iterate, residuals);
       // the barrier parameter may have been changed earlier when entering restoration
       this->subproblem_definition_changed = this->subproblem_definition_changed || barrier_parameter_updated;
    }

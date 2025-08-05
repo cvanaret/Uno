@@ -47,14 +47,17 @@ namespace uno {
       std::unique_ptr<RegularizationStrategy<double>> feasibility_regularization_strategy;
       std::unique_ptr<InequalityHandlingMethod> optimality_inequality_handling_method;
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
+      // the class maintains multipliers for the other phase (feasibility multipliers if we are in the optimality phase,
+      // and vice versa). These multipliers and those of the iterate are swapped whenever we switch phases.
+      Multipliers other_phase_multipliers;
       const double linear_feasibility_tolerance;
       const bool switch_to_optimality_requires_linearized_feasibility;
       ProgressMeasures reference_optimality_progress{};
       Vector<double> reference_optimality_primals{};
 
       void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         Iterate& current_iterate, const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius, WarmstartInformation& warmstart_information);
+         Iterate& current_iterate, Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
+         double trust_region_radius, WarmstartInformation& warmstart_information);
       void switch_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy, const Model& model,
          Iterate& trial_iterate);
 

@@ -202,7 +202,7 @@ namespace uno {
       const bool feasibility_stationarity = (current_iterate.residuals.stationarity <= tolerance);
       const bool primal_feasibility = (current_iterate.primal_feasibility <= tolerance);
       const bool feasibility_complementarity = (current_iterate.residuals.complementarity <= tolerance);
-      const bool no_trivial_duals = current_iterate.feasibility_multipliers.not_all_zero(this->model.number_variables, tolerance);
+      const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(this->model.number_variables, tolerance);
 
       DEBUG << "Termination criteria for tolerance = " << tolerance << ":\n";
       DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';

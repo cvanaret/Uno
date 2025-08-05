@@ -46,8 +46,7 @@ namespace uno {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
       const OptimizationProblem problem{model};
-      this->solve_subproblem(statistics, problem, current_iterate, current_iterate.multipliers, direction, trust_region_radius,
-         warmstart_information);
+      this->solve_subproblem(statistics, problem, current_iterate, direction, trust_region_radius, warmstart_information);
       warmstart_information.no_changes();
    }
 
@@ -61,10 +60,10 @@ namespace uno {
    }
 
    void UnconstrainedStrategy::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
+         Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      this->inequality_handling_method->solve(statistics, problem, current_iterate, current_multipliers, direction,
-         *this->hessian_model, *this->regularization_strategy, trust_region_radius, warmstart_information);
+      this->inequality_handling_method->solve(statistics, problem, current_iterate, direction, *this->hessian_model,
+         *this->regularization_strategy, trust_region_radius, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
    }
