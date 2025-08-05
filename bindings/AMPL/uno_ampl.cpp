@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
          options.overwrite_with(solvers_options);
          // the -AMPL flag indicates that the solution should be written to the AMPL solution file
          size_t offset = 2;
-         if (std::string(argv[2]) == "-AMPL") {
+         if (argc > 2 && std::string(argv[2]) == "-AMPL") {
             options["AMPL_write_solution_to_file"] = "yes";
             ++offset;
          }
