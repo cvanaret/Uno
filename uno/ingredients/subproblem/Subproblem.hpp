@@ -58,6 +58,7 @@ namespace uno {
 
       [[nodiscard]] bool has_implicit_hessian_representation() const;
       [[nodiscard]] bool has_explicit_hessian_representation() const;
+      [[nodiscard]] bool has_curvature() const;
 
       [[nodiscard]] double dual_regularization_factor() const;
 

@@ -128,6 +128,21 @@ namespace uno {
       return this->hessian_model.has_explicit_representation();
    }
 
+   // two sources of curvature: the problem and the regularization strategy
+   bool Subproblem::has_curvature() const {
+      // the problem may have some curvature
+      if (this->problem.has_curvature(this->hessian_model)) {
+         return true;
+      }
+      else {
+         // otherwise, the regularization strategy may introduce curvature
+         if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
+            return !this->problem.get_primal_regularization_variables().empty();
+         }
+         return false;
+      }
+   }
+
    double Subproblem::dual_regularization_factor() const {
       return this->problem.dual_regularization_factor();
    }

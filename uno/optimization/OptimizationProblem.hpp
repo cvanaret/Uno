@@ -65,6 +65,7 @@ namespace uno {
       [[nodiscard]] virtual const Collection<size_t>& get_dual_regularization_constraints() const;
 
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
+      [[nodiscard]] virtual bool has_curvature(const HessianModel& hessian_model) const;
       [[nodiscard]] virtual size_t number_hessian_nonzeros(const HessianModel& hessian_model) const;
 
       virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;

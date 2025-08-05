@@ -280,6 +280,11 @@ namespace uno {
       return this->model.number_jacobian_nonzeros() + this->number_elastic_variables;
    }
 
+   bool l1RelaxedProblem::has_curvature(const HessianModel& hessian_model) const {
+      // the l1 relaxation does not introduce curvature
+      return hessian_model.has_curvature(this->model);
+   }
+
    size_t l1RelaxedProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
       size_t number_nonzeros = hessian_model.number_nonzeros(this->model);
       // proximal contribution

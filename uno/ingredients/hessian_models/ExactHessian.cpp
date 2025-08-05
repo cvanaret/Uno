@@ -17,7 +17,8 @@ namespace uno {
       return true;
    }
 
-   void ExactHessian::initialize(const Model& /*model*/) {
+   bool ExactHessian::has_curvature(const Model& model) const {
+      return (0 < model.number_hessian_nonzeros());
    }
 
    size_t ExactHessian::number_nonzeros(const Model& model) const {
@@ -26,6 +27,9 @@ namespace uno {
 
    bool ExactHessian::is_positive_definite() const {
       return false;
+   }
+
+   void ExactHessian::initialize(const Model& /*model*/) {
    }
 
    void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& primal_variables,
