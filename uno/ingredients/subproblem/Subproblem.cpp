@@ -128,6 +128,29 @@ namespace uno {
       }
    }
 
+   void Subproblem::assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
+         RectangularMatrix<double>& constraint_jacobian, Vector<double>& rhs) const {
+      rhs.fill(0.);
+
+      // objective gradient
+      rhs = -objective_gradient;
+
+      // constraint: evaluations and gradients
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         // Lagrangian
+         if (this->current_iterate.multipliers.constraints[constraint_index] != 0.) {
+            for (const auto [variable_index, derivative]: constraint_jacobian[constraint_index]) {
+               rhs[variable_index] += this->current_iterate.multipliers.constraints[constraint_index] * derivative;
+            }
+         }
+         // equality constraints
+         assert(this->problem.constraint_lower_bound(constraint_index) == this->problem.constraint_upper_bound(constraint_index));
+         // transform c(x) = a into c(x) - a = 0
+         rhs[this->number_variables + constraint_index] = -(constraints[constraint_index] - this->problem.constraint_lower_bound(constraint_index));
+      }
+      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints)); DEBUG << '\n';
+   }
+
    void Subproblem::assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const {
       this->problem.assemble_primal_dual_direction(this->current_iterate, solution, direction);
    }
