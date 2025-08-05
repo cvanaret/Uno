@@ -134,6 +134,10 @@ namespace uno {
       return this->model.number_jacobian_nonzeros();
    }
 
+   bool OptimizationProblem::has_curvature(const HessianModel& hessian_model) const {
+      return hessian_model.has_curvature(this->model);
+   }
+
    size_t OptimizationProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
       return hessian_model.number_nonzeros(this->model);
    }

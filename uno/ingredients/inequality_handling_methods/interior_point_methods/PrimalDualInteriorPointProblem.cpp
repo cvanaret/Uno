@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "PrimalDualInteriorPointProblem.hpp"
+
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
@@ -157,6 +159,21 @@ namespace uno {
 
    size_t PrimalDualInteriorPointProblem::number_jacobian_nonzeros() const {
       return this->first_reformulation.number_jacobian_nonzeros();
+   }
+
+   bool PrimalDualInteriorPointProblem::has_curvature(const HessianModel& hessian_model) const {
+      if (hessian_model.has_curvature(this->model)) {
+         return true;
+      }
+      else {
+         // barrier terms
+         for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
+            if (is_finite(this->first_reformulation.variable_lower_bound(variable_index)) || is_finite(this->first_reformulation.variable_upper_bound(variable_index))) {
+               return true;
+            }
+         }
+         return false;
+      }
    }
 
    size_t PrimalDualInteriorPointProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {

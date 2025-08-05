@@ -16,8 +16,8 @@ namespace uno {
       return true;
    }
 
-   void IdentityHessian::initialize(const Model& /*model*/) {
-      // do nothing
+   bool IdentityHessian::has_curvature(const Model& /*model*/) const {
+      return true;
    }
 
    size_t IdentityHessian::number_nonzeros(const Model& model) const {
@@ -26,6 +26,10 @@ namespace uno {
 
    bool IdentityHessian::is_positive_definite() const {
       return true;
+   }
+
+   void IdentityHessian::initialize(const Model& /*model*/) {
+      // do nothing
    }
 
    void IdentityHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,

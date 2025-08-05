@@ -15,7 +15,8 @@ namespace uno {
       return true;
    }
 
-   void ZeroHessian::initialize(const Model& /*model*/) {
+   bool ZeroHessian::has_curvature(const Model& /*model*/) const {
+      return false;
    }
 
    size_t ZeroHessian::number_nonzeros(const Model& /*model*/) const {
@@ -24,6 +25,9 @@ namespace uno {
 
    bool ZeroHessian::is_positive_definite() const {
       return false;
+   }
+
+   void ZeroHessian::initialize(const Model& /*model*/) {
    }
 
    void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
