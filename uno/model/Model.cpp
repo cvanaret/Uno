@@ -5,11 +5,8 @@
 #include <utility>
 #include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
-<<<<<<< HEAD
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
-=======
->>>>>>> 0fd84b79 (Fixed errors after merge + wrote dot() function taking a double* as second parameter)
 
 namespace uno {
    // abstract Problem class
