@@ -14,8 +14,11 @@ namespace uno {
       const InteriorPointParameters& parameters):
          // no slacks: as many constraints as the number of equality constraints of the problem
          BarrierProblem(problem.model, problem.number_variables, problem.get_equality_constraints().size()),
-         reformulated_problem(problem), barrier_parameter(barrier_parameter),
-         parameters(parameters) { }
+         reformulated_problem(problem), barrier_parameter(barrier_parameter), parameters(parameters) {
+      if (!this->reformulated_problem.get_inequality_constraints().empty()) {
+         throw std::runtime_error("ExponentialBarrierProblem does not support inequality constraints yet");
+      }
+   }
 
    double ExponentialBarrierProblem::get_objective_multiplier() const {
       return this->reformulated_problem.get_objective_multiplier();
@@ -54,17 +57,11 @@ namespace uno {
    }
 
    bool ExponentialBarrierProblem::has_curvature(const HessianModel& hessian_model) const {
-      return true;
+
    }
 
    size_t ExponentialBarrierProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
       size_t number_nonzeros = this->reformulated_problem.number_hessian_nonzeros(hessian_model);
-      // barrier contribution: original variables
-      for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {
-         if (is_finite(this->reformulated_problem.variable_lower_bound(variable_index)) || is_finite(this->reformulated_problem.variable_upper_bound(variable_index))) {
-            number_nonzeros++;
-         }
-      }
       return number_nonzeros;
    }
 
@@ -181,23 +178,6 @@ namespace uno {
    void ExponentialBarrierProblem::set_auxiliary_measure(Iterate& iterate) const {
       // auxiliary measure: barrier terms
       double barrier_terms = 0.;
-      for (const size_t variable_index: this->reformulated_problem.get_lower_bounded_variables()) {
-         barrier_terms -= std::log(iterate.primals[variable_index] - this->reformulated_problem.variable_lower_bound(variable_index));
-      }
-      for (const size_t variable_index: this->reformulated_problem.get_upper_bounded_variables()) {
-         barrier_terms -= std::log(this->reformulated_problem.variable_upper_bound(variable_index) - iterate.primals[variable_index]);
-      }
-      // damping
-      for (const size_t variable_index: this->reformulated_problem.get_single_lower_bounded_variables()) {
-         barrier_terms += this->parameters.damping_factor*(iterate.primals[variable_index] -
-            this->reformulated_problem.variable_lower_bound(variable_index));
-      }
-      for (const size_t variable_index: this->reformulated_problem.get_single_upper_bounded_variables()) {
-         barrier_terms += this->parameters.damping_factor*(this->reformulated_problem.variable_upper_bound(variable_index) -
-            iterate.primals[variable_index]);
-      }
-      barrier_terms *= this->barrier_parameter;
-      assert(!std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
       iterate.progress.auxiliary = barrier_terms;
    }
 
@@ -222,13 +202,6 @@ namespace uno {
       for (const size_t variable_index: this->reformulated_problem.get_upper_bounded_variables()) {
          directional_derivative += -this->barrier_parameter / (current_iterate.primals[variable_index] -
             this->reformulated_problem.variable_upper_bound(variable_index)) * primal_direction[variable_index];
-      }
-      // damping
-      for (const size_t variable_index: this->reformulated_problem.get_single_lower_bounded_variables()) {
-         directional_derivative += this->parameters.damping_factor * this->barrier_parameter * primal_direction[variable_index];
-      }
-      for (const size_t variable_index: this->reformulated_problem.get_single_upper_bounded_variables()) {
-         directional_derivative -= this->parameters.damping_factor * this->barrier_parameter * primal_direction[variable_index];
       }
       return directional_derivative;
    }
