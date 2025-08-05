@@ -14,6 +14,10 @@ namespace uno {
       ExponentialBarrierProblem(const OptimizationProblem& problem, double barrier_parameter,
          const InteriorPointParameters &parameters);
 
+      // sparsity
+      [[nodiscard]] size_t number_jacobian_nonzeros() const override;
+      [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
+
       // function evaluations
       [[nodiscard]] double get_objective_multiplier() const override;
 
