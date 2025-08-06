@@ -34,8 +34,8 @@ namespace uno {
       [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
       void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const override;
-      void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-         const Multipliers& multipliers) const override;
+      void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
+         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, Vector<double>& hessian_values) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* vector, const Multipliers& multipliers,

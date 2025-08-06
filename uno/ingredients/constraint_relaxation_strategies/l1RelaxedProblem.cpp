@@ -4,9 +4,11 @@
 #include <cassert>
 #include "l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Concatenation.hpp"
+#include "symbolic/UnaryNegation.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
@@ -166,30 +168,23 @@ namespace uno {
    }
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
-   void l1RelaxedProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-         const Multipliers& multipliers) const {
-      //throw std::runtime_error("l1RelaxedProblem::evaluate_lagrangian_gradient not implemented yet");
+   void l1RelaxedProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
+         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // objective gradient
       lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
 
-      // constraints
-      /*
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         if (multipliers.constraints[constraint_index] != 0.) {
-            for (auto [variable_index, derivative]: iterate.evaluations.constraint_jacobian[constraint_index]) {
-               lagrangian_gradient.constraints_contribution[variable_index] -= multipliers.constraints[constraint_index] * derivative;
-            }
-         }
-      }
-      */
+      // ∇c(x_k) λ_k
+      inequality_handling_method.compute_constraint_jacobian_transposed_vector_product(iterate.multipliers.constraints,
+         lagrangian_gradient.constraints_contribution);
+      lagrangian_gradient.constraints_contribution = -lagrangian_gradient.constraints_contribution;
 
       // bound constraints of original variables
       for (size_t variable_index: Range(this->model.number_variables)) {
-         lagrangian_gradient.constraints_contribution[variable_index] -= (multipliers.lower_bounds[variable_index] +
-                                                                          multipliers.upper_bounds[variable_index]);
+         lagrangian_gradient.constraints_contribution[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
+            iterate.multipliers.upper_bounds[variable_index]);
       }
 
       // elastic variables
@@ -197,25 +192,20 @@ namespace uno {
       for (size_t inequality_index: this->model.get_inequality_constraints()) {
          if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
             lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
-               multipliers.constraints[inequality_index] - multipliers.lower_bounds[elastic_index];
+               iterate.multipliers.constraints[inequality_index] - iterate.multipliers.lower_bounds[elastic_index];
          }
          else { // positive part
             lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
-               multipliers.constraints[inequality_index] - multipliers.lower_bounds[elastic_index];
+               iterate.multipliers.constraints[inequality_index] - iterate.multipliers.lower_bounds[elastic_index];
          }
          elastic_index++;
       }
       for ([[maybe_unused]] size_t equality_index: this->model.get_equality_constraints()) {
-         /*
-         lagrangian_gradient.constraints_contribution[elastic_index] += 2*this->constraint_violation_coefficient -
-            multipliers.lower_bounds[elastic_index] - multipliers.lower_bounds[elastic_index+1];
-         elastic_index += 2;
-         */
          lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
-               multipliers.constraints[equality_index] - multipliers.lower_bounds[elastic_index];
+            iterate.multipliers.constraints[equality_index] - iterate.multipliers.lower_bounds[elastic_index];
          elastic_index++;
          lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
-               multipliers.constraints[equality_index] - multipliers.lower_bounds[elastic_index];
+            iterate.multipliers.constraints[equality_index] - iterate.multipliers.lower_bounds[elastic_index];
          elastic_index++;
       }
 

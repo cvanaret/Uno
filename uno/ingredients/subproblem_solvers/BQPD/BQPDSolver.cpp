@@ -180,15 +180,11 @@ namespace uno {
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
          subproblem.evaluate_constraint_jacobian(this->jacobian_values.data());
-         //std::cout << "Unsorted Jacobian: " << this->jacobian_values << '\n';
          // copy the Jacobian with permutation into &this->gradients[subproblem.number_variables]
-         //std::cout << "Permutation vector: " << this->permutation_vector << '\n';
          for (size_t nonzero_index: Range(subproblem.number_jacobian_nonzeros())) {
             const size_t permutated_nonzero_index = this->permutation_vector[nonzero_index];
             this->gradients[subproblem.number_variables + nonzero_index] = this->jacobian_values[permutated_nonzero_index];
          }
-         //std::cout << "Sorted Jacobian:   " << view(this->gradients, subproblem.number_variables,
-         //   subproblem.number_variables + subproblem.number_jacobian_nonzeros()) << '\n';
       }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->evaluate_hessian = true;
@@ -270,8 +266,6 @@ namespace uno {
       bool termination = false;
       while (!termination) {
          DEBUG2 << "Running BQPD\n";
-         std::cout << "this->bqpd_jacobian = "; print_vector(std::cout, this->gradients);
-         std::cout << "this->bqpd_jacobian_sparsity = "; print_vector(std::cout, this->gradient_sparsity);
          BQPD(&n, &m, &this->k, &this->kmax, this->gradients.data(), this->gradient_sparsity.data(), direction.primals.data(),
             this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
             this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp,

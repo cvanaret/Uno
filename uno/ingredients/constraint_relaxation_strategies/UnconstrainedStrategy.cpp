@@ -38,7 +38,7 @@ namespace uno {
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(problem, initial_iterate);
       this->evaluate_progress_measures(*this->inequality_handling_method, problem, initial_iterate);
-      this->compute_primal_dual_residuals(problem, initial_iterate, initial_iterate.multipliers);
+      this->compute_primal_dual_residuals(problem, *this->inequality_handling_method, initial_iterate);
    }
 
    void UnconstrainedStrategy::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& /*globalization_strategy*/,
@@ -83,7 +83,7 @@ namespace uno {
 
    IterateStatus UnconstrainedStrategy::check_termination(const Model& model, Iterate& iterate) {
       const OptimizationProblem problem{model};
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(problem, iterate, iterate.multipliers);
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(problem, *this->inequality_handling_method, iterate);
       return ConstraintRelaxationStrategy::check_termination(problem, iterate);
    }
 

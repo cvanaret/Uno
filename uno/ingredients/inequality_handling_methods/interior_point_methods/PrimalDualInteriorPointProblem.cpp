@@ -106,9 +106,9 @@ namespace uno {
       this->first_reformulation.evaluate_constraint_jacobian(iterate, jacobian_values);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-         const Multipliers& multipliers) const {
-      this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, iterate, multipliers);
+   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
+         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const {
+      this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, inequality_handling_method, iterate);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {

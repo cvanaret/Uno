@@ -134,12 +134,12 @@ namespace uno {
    // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
 
    void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& problem,
-         Iterate& iterate, const Multipliers& multipliers) const {
+         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const {
       iterate.evaluate_objective_gradient(problem.model);
       iterate.evaluate_constraints(problem.model);
       iterate.evaluate_constraint_jacobian(problem.model);
 
-      problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, iterate, multipliers);
+      problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, inequality_handling_method, iterate);
       iterate.residuals.stationarity = OptimizationProblem::stationarity_error(iterate.residuals.lagrangian_gradient,
          problem.get_objective_multiplier(), this->residual_norm);
 
@@ -152,11 +152,11 @@ namespace uno {
       std::vector<double> constraints(problem.number_constraints);
       problem.evaluate_constraints(iterate, constraints);
       iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, constraints,
-         multipliers, shift_value, this->residual_norm);
+         iterate.multipliers, shift_value, this->residual_norm);
 
       // scaling factors
-      iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(problem.model, multipliers);
-      iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(problem.model, multipliers);
+      iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(problem.model, iterate.multipliers);
+      iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(problem.model, iterate.multipliers);
    }
 
    double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const {
