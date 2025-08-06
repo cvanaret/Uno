@@ -58,7 +58,10 @@ namespace uno {
       std::vector<double> constraints{};
       Vector<double> gradients{};
       Vector<int> gradient_sparsity{};
-      // sparse COO matrix
+      // COO constraint Jacobian
+      Vector<size_t> jacobian_row_indices;
+      Vector<size_t> jacobian_column_indices;
+      // COO Hessian
       Vector<size_t> hessian_row_indices{};
       Vector<size_t> hessian_column_indices{};
       Vector<double> hessian_values{};

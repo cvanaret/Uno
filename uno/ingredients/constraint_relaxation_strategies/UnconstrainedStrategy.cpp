@@ -56,7 +56,8 @@ namespace uno {
    }
 
    void UnconstrainedStrategy::switch_to_feasibility_problem(Statistics& /*statistics*/, GlobalizationStrategy& /*globalization_strategy*/,
-         const Model& /*model*/, Iterate& /*current_iterate*/, WarmstartInformation& /*warmstart_information*/) {
+         const Model& /*model*/, Iterate& /*current_iterate*/, double /*trust_region_radius*/,
+         WarmstartInformation& /*warmstart_information*/) {
       throw std::runtime_error("The problem is unconstrained, switching to the feasibility problem should not happen");
    }
 

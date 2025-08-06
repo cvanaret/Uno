@@ -44,13 +44,9 @@ namespace uno {
       feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
 
       // memory allocation
-      // TODO allocate the feasibility phase only when entering the first time?
       this->optimality_hessian_model->initialize(model);
-      this->feasibility_hessian_model->initialize(model);
       this->optimality_inequality_handling_method->initialize(optimality_problem, initial_iterate,
          *this->optimality_hessian_model, *this->optimality_regularization_strategy, trust_region_radius);
-      this->feasibility_inequality_handling_method->initialize(feasibility_problem, initial_iterate,
-         *this->feasibility_hessian_model, *this->feasibility_regularization_strategy, trust_region_radius);
       direction = Direction(
          std::max(optimality_problem.number_variables, feasibility_problem.number_variables),
          std::max(optimality_problem.number_constraints, feasibility_problem.number_constraints)
@@ -58,8 +54,8 @@ namespace uno {
 
       // statistics
       this->optimality_regularization_strategy->initialize_statistics(statistics, options);
-      this->feasibility_regularization_strategy->initialize_statistics(statistics, options);
       this->optimality_inequality_handling_method->initialize_statistics(statistics, options);
+      this->feasibility_regularization_strategy->initialize_statistics(statistics, options);
       this->feasibility_inequality_handling_method->initialize_statistics(statistics, options);
       statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
       statistics.set("phase", "OPT");
@@ -87,7 +83,8 @@ namespace uno {
                // switch to the feasibility problem, starting from the current direction
                statistics.set("status", std::string("infeasible subproblem"));
                DEBUG << "/!\\ The subproblem is infeasible\n";
-               this->switch_to_feasibility_problem(statistics, globalization_strategy, model, current_iterate, warmstart_information);
+               this->switch_to_feasibility_problem(statistics, globalization_strategy, model, current_iterate,
+                  trust_region_radius, warmstart_information);
                this->feasibility_inequality_handling_method->set_initial_point(direction.primals);
             }
             else {
@@ -96,7 +93,8 @@ namespace uno {
             }
          }
          catch (const UnstableRegularization&) {
-            this->switch_to_feasibility_problem(statistics, globalization_strategy, model, current_iterate, warmstart_information);
+            this->switch_to_feasibility_problem(statistics, globalization_strategy, model, current_iterate,
+               trust_region_radius, warmstart_information);
          }
       }
 
@@ -118,7 +116,7 @@ namespace uno {
 
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, WarmstartInformation& warmstart_information) {
+         const Model& model, Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       globalization_strategy.notify_switch_to_feasibility(current_iterate.progress);
@@ -138,6 +136,15 @@ namespace uno {
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(feasibility_problem, current_iterate);
 
       DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
+
+      // initialize the feasibility ingredients upon the first switch to feasibility restoration
+      if (this->first_switch_to_feasibility) {
+         this->feasibility_inequality_handling_method->initialize(feasibility_problem, current_iterate,
+            *this->feasibility_hessian_model, *this->feasibility_regularization_strategy, trust_region_radius);
+         this->feasibility_hessian_model->initialize(model);
+
+         this->first_switch_to_feasibility = false;
+      }
 
       if (Logger::level == INFO) statistics.print_current_line();
       warmstart_information.whole_problem_changed();
@@ -163,7 +170,7 @@ namespace uno {
          // compute the linearized constraint violation
          // TODO preallocate
          Vector<double> result(model.number_constraints);
-         this->feasibility_inequality_handling_method->compute_constraint_jacobian_transposed_vector_product(direction.primals, result);
+         this->feasibility_inequality_handling_method->compute_constraint_jacobian_vector_product(direction.primals, result);
          const double trial_linearized_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints +
             step_length * result, this->residual_norm);
          return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);

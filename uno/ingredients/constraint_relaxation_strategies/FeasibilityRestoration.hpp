@@ -26,7 +26,7 @@ namespace uno {
          Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
+         Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) override;
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -54,6 +54,7 @@ namespace uno {
       const bool switch_to_optimality_requires_linearized_feasibility;
       ProgressMeasures reference_optimality_progress{};
       Vector<double> reference_optimality_primals{};
+      bool first_switch_to_feasibility{true};
 
       void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
          Iterate& current_iterate, Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
