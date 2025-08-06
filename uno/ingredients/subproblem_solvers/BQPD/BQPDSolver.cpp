@@ -1,8 +1,9 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include <cassert>
-#include <cstdint>
+#include <numeric>
 #include "BQPDSolver.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
@@ -72,9 +73,9 @@ namespace uno {
       this->constraints.resize(subproblem.number_constraints);
 
       // Jacobian + objective gradient
-      this->gradients.resize(subproblem.number_jacobian_nonzeros() + subproblem.number_variables);
-      this->gradient_sparsity.resize(subproblem.number_jacobian_nonzeros() + subproblem.number_variables +
-         subproblem.number_constraints + 3);
+      this->gradients.resize(subproblem.number_variables + subproblem.number_jacobian_nonzeros());
+      this->gradient_sparsity.resize(1 + subproblem.number_variables + subproblem.number_jacobian_nonzeros() +
+         1 + subproblem.number_constraints + 1);
 
       // default active set
       this->active_set.resize(subproblem.number_variables + subproblem.number_constraints);
@@ -83,7 +84,7 @@ namespace uno {
       }
 
       // save sparsity patterns of objective gradient and constraint Jacobian into BQPD workspace
-      this->compute_gradient_sparsity(subproblem);
+      this->compute_gradients_sparsity(subproblem);
 
       // determine whether the subproblem has curvature
       this->kmax = subproblem.has_curvature() ? pick_kmax_heuristically(subproblem.number_variables,
@@ -96,7 +97,7 @@ namespace uno {
          this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_values.resize(number_regularized_hessian_nonzeros);
          subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(), this->hessian_column_indices.data(),
-            Indexing::C_indexing); // the Hessian is handled only by Uno, not by BQPD
+            Indexing::C_indexing);
       }
 
       // allocation of integer and real workspaces
@@ -178,7 +179,12 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         subproblem.evaluate_constraint_jacobian(this->gradients.data() + subproblem.number_variables);
+         subproblem.evaluate_constraint_jacobian(this->jacobian_values.data());
+         // copy the Jacobian with permutation into &this->gradients[subproblem.number_variables]
+         for (size_t nonzero_index: Range(subproblem.number_jacobian_nonzeros())) {
+            const size_t permutated_nonzero_index = this->permutation_vector[nonzero_index];
+            this->gradients[subproblem.number_variables + nonzero_index] = this->jacobian_values[permutated_nonzero_index];
+         }
       }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->evaluate_hessian = true;
@@ -316,7 +322,7 @@ namespace uno {
    }
 
    // objective gradient + row-major constraint Jacobian
-   void BQPDSolver::compute_gradient_sparsity(const Subproblem& subproblem) {
+   void BQPDSolver::compute_gradients_sparsity(const Subproblem& subproblem) {
       const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
 
       // header
@@ -336,44 +342,41 @@ namespace uno {
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
          Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
-      std::cout << "Jacobian coo_row_indices:    " << this->jacobian_row_indices << '\n';
-      std::cout << "Jacobian coo_column_indices: " << this->jacobian_column_indices << '\n';
 
-      // TODO sort the sparsity
-      // for the moment, we fail when the row indices are not increasing
-      size_t previous_constraint = 0;
-      for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[jacobian_nonzero_index];
-         if (constraint_index < previous_constraint) {
-            throw std::runtime_error("BQPD: columns are not ordered in the Jacobian");
-         }
-         previous_constraint = constraint_index;
-      }
+      // BQPD (sparse) requires a (weak) CSR Jacobian: the entries should be in increasing constraint indices.
+      // Since the COO format does not require this, we need to convert from COO to CSR by permutating the entries. To
+      // this end, we compute a permutation vector once and for all that contains the correct order of terms.
+      // The permutation vector is initially filled with [0, 1, ..., number_jacobian_nonzeros-1]
+      this->permutation_vector.resize(number_jacobian_nonzeros);
+      std::iota(this->permutation_vector.begin(), this->permutation_vector.end(), 0);
+      // sort the permutation vector such that the row indices (constraints) of the Jacobian sparsity are in increasing order
+      std::sort(this->permutation_vector.begin(), this->permutation_vector.end(),
+          [&](const size_t& i, const size_t& j) {
+              return (this->jacobian_row_indices[i] < this->jacobian_row_indices[j]);
+          }
+      );
 
       // copy the COO format into BQPD's CSR format
-      size_t current_constraint = Indexing::C_indexing;
-      std::cout << "STARTING WITH CONSTRAINT " << current_constraint << '\n';
+      size_t current_constraint = 0;
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
+         const size_t permutated_nonzero_index = this->permutation_vector[jacobian_nonzero_index];
          // variable index
-         const size_t variable_index = this->jacobian_column_indices[jacobian_nonzero_index];
-         this->gradient_sparsity[1 + subproblem.number_variables + jacobian_nonzero_index] =
+         const size_t variable_index = this->jacobian_column_indices[permutated_nonzero_index];
+         this->gradient_sparsity[1 + subproblem.number_variables + permutated_nonzero_index] =
             static_cast<int>(1 + variable_index);
 
          // constraint index
-         const size_t constraint_index = this->jacobian_row_indices[jacobian_nonzero_index];
+         const size_t constraint_index = this->jacobian_row_indices[permutated_nonzero_index];
          while (current_constraint < constraint_index) {
-            std::cout << "MOVING TO CONSTRAINT " << constraint_index << '\n';
-            std::cout << "SETTING row starts at index " << (1 + subproblem.number_variables + number_jacobian_nonzeros +
-               1 + constraint_index) << '\n';
             this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + constraint_index] =
-               static_cast<int>(1 + subproblem.number_variables + jacobian_nonzero_index);
+               static_cast<int>(1 + subproblem.number_variables + permutated_nonzero_index);
             ++current_constraint;
          }
       }
       this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + subproblem.number_constraints] =
          static_cast<int>(1 + subproblem.number_variables + number_jacobian_nonzeros);
-
-      std::cout << "BQPD gradient_sparsity: " << this->gradient_sparsity << '\n';
+      // the Jacobian will be evaluated in this vector, and copied with permutation into this->gradients
+      this->jacobian_values.resize(number_jacobian_nonzeros);
    }
 
    void BQPDSolver::set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const {

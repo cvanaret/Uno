@@ -61,6 +61,8 @@ namespace uno {
       // COO constraint Jacobian
       Vector<size_t> jacobian_row_indices;
       Vector<size_t> jacobian_column_indices;
+      Vector<double> jacobian_values;
+      Vector<size_t> permutation_vector;
       // COO Hessian
       Vector<size_t> hessian_row_indices{};
       Vector<size_t> hessian_column_indices{};
@@ -92,7 +94,7 @@ namespace uno {
          const WarmstartInformation& warmstart_information);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
       void hide_pointers_in_workspace(Statistics& statistics, const Subproblem& subproblem);
-      void compute_gradient_sparsity(const Subproblem& subproblem);
+      void compute_gradients_sparsity(const Subproblem& subproblem);
       void set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const;
       [[nodiscard]] static BQPDStatus bqpd_status_from_int(int ifail);
       [[nodiscard]] bool check_sufficient_workspace_size(BQPDStatus bqpd_status);
