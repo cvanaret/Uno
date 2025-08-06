@@ -30,10 +30,9 @@ namespace uno {
       Highs highs_solver;
       std::vector<double> constraints{};
       Vector<double> linear_objective{};
-      // Jacobian
+      // constraint Jacobian in COO format
       Vector<size_t> jacobian_row_indices{};
       Vector<size_t> jacobian_column_indices{};
-      Vector<double> jacobian_values{};
 
       const bool print_subproblem;
 
