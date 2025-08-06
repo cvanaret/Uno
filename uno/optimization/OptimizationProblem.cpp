@@ -8,6 +8,7 @@
 #include "linear_algebra/MatrixOrder.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Expression.hpp"
+#include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -32,8 +33,7 @@ namespace uno {
 
    void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
       iterate.evaluate_objective_gradient(this->model);
-      // TODO change this
-      objective_gradient = iterate.evaluations.objective_gradient;
+      view(objective_gradient, 0, this->number_variables) = iterate.evaluations.objective_gradient;
    }
 
    size_t OptimizationProblem::number_jacobian_nonzeros() const {

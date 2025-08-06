@@ -7,6 +7,7 @@
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Concatenation.hpp"
+#include "symbolic/VectorView.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
@@ -61,7 +62,7 @@ namespace uno {
       if (this->objective_multiplier != 0.) {
          iterate.evaluate_objective_gradient(this->model);
          // TODO change this
-         objective_gradient = iterate.evaluations.objective_gradient;
+         view(objective_gradient, 0, this->get_number_original_variables()) = iterate.evaluations.objective_gradient;
          objective_gradient.scale(this->objective_multiplier);
       }
       else {
