@@ -114,6 +114,6 @@ To mention Uno on LinkedIn, use [#unosolver](https://www.linkedin.com/feed/hasht
 The theoretical abstract framework for unifying nonlinearly constrained optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory). Uno was designed and implemented by Charlie Vanaret. It is released under the MIT license (see the [license file](LICENSE)).
 
 The contributors are (in alphabetical order):
-Oscar Dowson [@odow](https://github.com/odow), David Kiessling [@david0oo](https://github.com/david0oo), Alexis Montoison [@amontoison](https://github.com/amontoison), Manuel Schaich [@worc4021](https://github.com/worc4021), Silvio Traversaro [@traversaro](https://github.com/traversaro), Rujia Liu [@rujialiu](https://github.com/rujialiu).
+[Oscar Dowson](https://github.com/odow), [Marcel Jacobse](https://github.com/mjacobse), [David Kiessling](https://github.com/david0oo), [Alexis Montoison](https://github.com/amontoison), [Rujia Liu](https://github.com/rujialiu), [Manuel Schaich](https://github.com/worc4021), [Silvio Traversaro](https://github.com/traversaro).
 
 The Uno logo was created by Charlie Vanaret based on a [saddle point icon by luimonts](https://thenounproject.com/icon/saddle-point-258207/) (CC BY 3.0).
