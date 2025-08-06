@@ -126,7 +126,7 @@ namespace uno {
       for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
          const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
          const size_t variable_index = this->jacobian_column_indices[nonzero_index];
-         const double derivative = this->gradients[vector.size() + nonzero_index];
+         const double derivative = this->jacobian_values[nonzero_index];
 
          if (variable_index < vector.size() && constraint_index < result.size()) {
             result[constraint_index] += derivative * vector[variable_index];
@@ -139,7 +139,7 @@ namespace uno {
       for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
          const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
          const size_t variable_index = this->jacobian_column_indices[nonzero_index];
-         const double derivative = this->gradients[vector.size() + nonzero_index];
+         const double derivative = this->jacobian_values[nonzero_index];
          assert(constraint_index < vector.size());
          assert(variable_index < result.size());
 
@@ -350,6 +350,7 @@ namespace uno {
       this->permutation_vector.resize(number_jacobian_nonzeros);
       std::iota(this->permutation_vector.begin(), this->permutation_vector.end(), 0);
       // sort the permutation vector such that the row indices (constraints) of the Jacobian sparsity are in increasing order
+      // see https://stackoverflow.com/questions/17554242/how-to-obtain-the-index-permutation-after-the-sorting
       std::sort(this->permutation_vector.begin(), this->permutation_vector.end(),
           [&](const size_t& i, const size_t& j) {
               return (this->jacobian_row_indices[i] < this->jacobian_row_indices[j]);
