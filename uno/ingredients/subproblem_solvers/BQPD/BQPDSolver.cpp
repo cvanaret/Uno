@@ -128,6 +128,7 @@ namespace uno {
          const size_t variable_index = this->jacobian_column_indices[nonzero_index];
          const double derivative = this->jacobian_values[nonzero_index];
 
+         // a safeguard to make sure we take only the correct part of the Jacobian
          if (variable_index < vector.size() && constraint_index < result.size()) {
             result[constraint_index] += derivative * vector[variable_index];
          }
@@ -364,19 +365,19 @@ namespace uno {
          // variable index
          const size_t variable_index = this->jacobian_column_indices[permutated_nonzero_index];
          this->gradient_sparsity[1 + subproblem.number_variables + jacobian_nonzero_index] =
-            static_cast<int>(1 + variable_index);
+            static_cast<int>(variable_index + Indexing::Fortran_indexing);
 
          // constraint index
          const size_t constraint_index = this->jacobian_row_indices[permutated_nonzero_index];
          assert(current_constraint <= constraint_index);
          while (current_constraint < constraint_index) {
             this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + constraint_index] =
-               static_cast<int>(1 + subproblem.number_variables + jacobian_nonzero_index);
+               static_cast<int>(subproblem.number_variables + jacobian_nonzero_index + Indexing::Fortran_indexing);
             ++current_constraint;
          }
       }
       this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + subproblem.number_constraints] =
-         static_cast<int>(1 + subproblem.number_variables + number_jacobian_nonzeros);
+         static_cast<int>(subproblem.number_variables + number_jacobian_nonzeros + Indexing::Fortran_indexing);
       // the Jacobian will be evaluated in this vector, and copied with permutation into this->gradients
       this->jacobian_values.resize(number_jacobian_nonzeros);
    }
