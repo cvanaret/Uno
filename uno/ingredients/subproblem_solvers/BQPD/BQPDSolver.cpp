@@ -371,9 +371,9 @@ namespace uno {
          const size_t constraint_index = this->jacobian_row_indices[permutated_nonzero_index];
          assert(current_constraint <= constraint_index);
          while (current_constraint < constraint_index) {
-            this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + constraint_index] =
-               static_cast<int>(subproblem.number_variables + jacobian_nonzero_index + Indexing::Fortran_indexing);
             ++current_constraint;
+            this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + current_constraint] =
+               static_cast<int>(subproblem.number_variables + jacobian_nonzero_index + Indexing::Fortran_indexing);
          }
       }
       this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + subproblem.number_constraints] =
