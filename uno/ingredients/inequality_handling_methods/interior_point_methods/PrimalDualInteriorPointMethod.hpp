@@ -44,7 +44,7 @@ namespace uno {
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem, const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const override;
 
-      void postprocess_iterate(const OptimizationProblem& problem, Vector<double>& primals, Multipliers& multipliers) override;
+      void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) override;
 
       void set_initial_point(const Vector<double>& point) override;
 

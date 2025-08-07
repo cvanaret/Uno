@@ -115,7 +115,7 @@ namespace uno {
       return 0.;
    }
 
-   void InequalityConstrainedMethod::postprocess_iterate(const OptimizationProblem& /*problem*/, Vector<double>& /*primals*/, Multipliers& /*multipliers*/) {
+   void InequalityConstrainedMethod::postprocess_iterate(const OptimizationProblem& /*problem*/, Iterate& /*iterate*/) {
       // do nothing
    }
 

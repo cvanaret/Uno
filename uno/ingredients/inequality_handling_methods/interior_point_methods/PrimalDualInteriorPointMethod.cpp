@@ -271,10 +271,9 @@ namespace uno {
       return 0.; // TODO (only used in l1Relaxation at the moment)
    }
 
-   void PrimalDualInteriorPointMethod::postprocess_iterate(const OptimizationProblem& problem, Vector<double>& primals,
-         Multipliers& multipliers) {
+   void PrimalDualInteriorPointMethod::postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) {
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-      barrier_problem.postprocess_iterate(primals, multipliers);
+      barrier_problem.postprocess_iterate(iterate);
    }
 
    void PrimalDualInteriorPointMethod::set_initial_point(const Vector<double>& /*point*/) {

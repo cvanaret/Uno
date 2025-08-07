@@ -192,6 +192,7 @@ namespace uno {
       DEBUG << "Switching from restoration to optimality phase\n";
       this->current_phase = Phase::OPTIMALITY;
       globalization_strategy.notify_switch_to_optimality(current_iterate.progress);
+
       const OptimizationProblem optimality_problem{model};
       current_iterate.set_number_variables(optimality_problem.number_variables);
       // swap the iterate's multipliers and the optimality multipliers maintained by the class
@@ -211,13 +212,13 @@ namespace uno {
          const OptimizationProblem optimality_problem{model};
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
             optimality_problem, *this->optimality_inequality_handling_method, current_iterate, trial_iterate,
-            trial_iterate.multipliers, direction, step_length, user_callbacks);
+            direction, step_length, user_callbacks);
       }
       else {
          const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
             feasibility_problem, *this->feasibility_inequality_handling_method, current_iterate, trial_iterate,
-            trial_iterate.multipliers, direction, step_length, user_callbacks);
+            direction, step_length, user_callbacks);
       }
       trial_iterate.status = this->check_termination(model, trial_iterate);
 

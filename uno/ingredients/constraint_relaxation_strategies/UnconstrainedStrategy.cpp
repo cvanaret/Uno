@@ -53,7 +53,11 @@ namespace uno {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
       const OptimizationProblem problem{model};
-      this->solve_subproblem(statistics, problem, current_iterate, direction, trust_region_radius, warmstart_information);
+      direction.set_dimensions(problem.number_variables, problem.number_constraints);
+      this->inequality_handling_method->solve(statistics, problem, current_iterate, direction, *this->hessian_model,
+         *this->regularization_strategy, trust_region_radius, warmstart_information);
+      direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
+      DEBUG3 << direction << '\n';
       warmstart_information.no_changes();
    }
 
@@ -67,22 +71,12 @@ namespace uno {
       throw std::runtime_error("The problem is unconstrained, switching to the feasibility problem should not happen");
    }
 
-   void UnconstrainedStrategy::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
-      direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      this->inequality_handling_method->solve(statistics, problem, current_iterate, direction, *this->hessian_model,
-         *this->regularization_strategy, trust_region_radius, warmstart_information);
-      direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
-      DEBUG3 << direction << '\n';
-   }
-
    bool UnconstrainedStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const OptimizationProblem problem{model};
       const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
-         problem, *this->inequality_handling_method, current_iterate, trial_iterate, trial_iterate.multipliers,
-         direction, step_length, user_callbacks);
+         problem, *this->inequality_handling_method, current_iterate, trial_iterate, direction, step_length, user_callbacks);
       trial_iterate.status = this->check_termination(model, trial_iterate);
       warmstart_information.no_changes();
       return accept_iterate;

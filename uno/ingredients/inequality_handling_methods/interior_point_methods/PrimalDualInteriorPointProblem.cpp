@@ -387,19 +387,20 @@ namespace uno {
       return directional_derivative;
    }
 
-   void PrimalDualInteriorPointProblem::postprocess_iterate(Vector<double>& primals, Multipliers& multipliers) const {
+   void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate) const {
       // rescale the bound multipliers (Eq. 16 in Ipopt paper)
       for (const size_t variable_index: this->first_reformulation.get_lower_bounded_variables()) {
-         const double coefficient = this->barrier_parameter / (primals[variable_index] - this->first_reformulation.variable_lower_bound(variable_index));
+         const double coefficient = this->barrier_parameter / (iterate.primals[variable_index] - this->first_reformulation.variable_lower_bound(variable_index));
          if (is_finite(coefficient)) {
             const double lb = coefficient / this->parameters.k_sigma;
             const double ub = coefficient * this->parameters.k_sigma;
             assert(lb <= ub && "Barrier subproblem: the bounds are in the wrong order in the lower bound multiplier reset");
             if (lb <= ub) {
-               const double current_value = multipliers.lower_bounds[variable_index];
-               multipliers.lower_bounds[variable_index] = std::max(std::min(multipliers.lower_bounds[variable_index], ub), lb);
-               if (multipliers.lower_bounds[variable_index] != current_value) {
-                  DEBUG << "Multiplier for lower bound " << variable_index << " rescaled from " << current_value << " to " << multipliers.lower_bounds[variable_index] << '\n';
+               const double current_value = iterate.multipliers.lower_bounds[variable_index];
+               iterate.multipliers.lower_bounds[variable_index] = std::max(std::min(iterate.multipliers.lower_bounds[variable_index], ub), lb);
+               if (iterate.multipliers.lower_bounds[variable_index] != current_value) {
+                  DEBUG << "Multiplier for lower bound " << variable_index << " rescaled from " << current_value << " to " <<
+                     iterate.multipliers.lower_bounds[variable_index] << '\n';
                }
             }
             else {
@@ -409,16 +410,17 @@ namespace uno {
 
       }
       for (const size_t variable_index: this->first_reformulation.get_upper_bounded_variables()) {
-         const double coefficient = this->barrier_parameter / (primals[variable_index] - this->first_reformulation.variable_upper_bound(variable_index));
+         const double coefficient = this->barrier_parameter / (iterate.primals[variable_index] - this->first_reformulation.variable_upper_bound(variable_index));
          if (is_finite(coefficient)) {
             const double lb = coefficient * this->parameters.k_sigma;
             const double ub = coefficient / this->parameters.k_sigma;
             assert(lb <= ub && "Barrier subproblem: the bounds are in the wrong order in the upper bound multiplier reset");
             if (lb <= ub) {
-               const double current_value = multipliers.upper_bounds[variable_index];
-               multipliers.upper_bounds[variable_index] = std::max(std::min(multipliers.upper_bounds[variable_index], ub), lb);
-               if (multipliers.upper_bounds[variable_index] != current_value) {
-                  DEBUG << "Multiplier for upper bound " << variable_index << " rescaled from " << current_value << " to " << multipliers.upper_bounds[variable_index] << '\n';
+               const double current_value = iterate.multipliers.upper_bounds[variable_index];
+               iterate.multipliers.upper_bounds[variable_index] = std::max(std::min(iterate.multipliers.upper_bounds[variable_index], ub), lb);
+               if (iterate.multipliers.upper_bounds[variable_index] != current_value) {
+                  DEBUG << "Multiplier for upper bound " << variable_index << " rescaled from " << current_value << " to " <<
+                     iterate.multipliers.upper_bounds[variable_index] << '\n';
                }
             }
             else {
