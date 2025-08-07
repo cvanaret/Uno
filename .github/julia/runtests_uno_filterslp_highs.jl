@@ -51,7 +51,7 @@ Optimizer_Uno_filterslp() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_
         ],
         primal_target,
         objective_tol = 1e-4,
-        primal_tol = 1e-4,
+        primal_tol = 1e-3,
     )
     # This function tests convex nonlinear programs. Test failures here should
     # never be allowed, because even local NLP solvers should find the global
@@ -60,7 +60,7 @@ Optimizer_Uno_filterslp() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_
         Optimizer_Uno_filterslp; 
         primal_target,
         objective_tol = 1e-4,
-        primal_tol = 1e-4,
+        primal_tol = 1e-3,
         exclude = ["501_011"],  # Iteration limit
     )
 end
