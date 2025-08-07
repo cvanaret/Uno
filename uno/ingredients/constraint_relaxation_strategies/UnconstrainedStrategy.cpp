@@ -83,16 +83,16 @@ namespace uno {
       const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
          problem, *this->inequality_handling_method, current_iterate, trial_iterate, trial_iterate.multipliers,
          direction, step_length, user_callbacks);
+      trial_iterate.status = this->check_termination(model, trial_iterate);
       warmstart_information.no_changes();
       return accept_iterate;
    }
 
    IterateStatus UnconstrainedStrategy::check_termination(const Model& model, Iterate& iterate) {
-      const OptimizationProblem problem{model};
       iterate.evaluate_objective_gradient(model);
       iterate.evaluate_constraints(model);
-      this->inequality_handling_method->evaluate_constraint_jacobian(problem, iterate,
-         *this->hessian_model, *this->regularization_strategy, INF<double>);
+
+      const OptimizationProblem problem{model};
       problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, *this->inequality_handling_method,
             iterate);
       problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, *this->inequality_handling_method, iterate);
