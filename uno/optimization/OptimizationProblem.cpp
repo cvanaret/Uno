@@ -211,7 +211,7 @@ namespace uno {
       const bool primal_feasibility = (current_iterate.primal_feasibility <= primal_tolerance);
       const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= dual_tolerance);
 
-      DEBUG << "Termination criteria for primal-dual tolerances = (" << primal_tolerance << ", " << dual_tolerance << "):\n";
+      DEBUG << "\nTermination criteria for primal-dual tolerances = (" << primal_tolerance << ", " << dual_tolerance << "):\n";
       DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
       DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
       DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';

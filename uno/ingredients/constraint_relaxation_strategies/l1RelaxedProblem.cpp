@@ -259,7 +259,7 @@ namespace uno {
       const bool feasibility_complementarity = (current_iterate.residuals.complementarity <= dual_tolerance);
       const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(this->model.number_variables, dual_tolerance);
 
-      DEBUG << "Termination criteria for primal-dual tolerances = (" << primal_tolerance << ", " << dual_tolerance << "):\n";
+      DEBUG << "\nTermination criteria for primal-dual tolerances = (" << primal_tolerance << ", " << dual_tolerance << "):\n";
       DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
       DEBUG << "Feasibility stationarity: " << std::boolalpha << feasibility_stationarity << '\n';
       DEBUG << "Feasibility complementarity: " << std::boolalpha << feasibility_complementarity << '\n';
