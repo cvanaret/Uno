@@ -22,7 +22,7 @@ function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_Uno_filterslp() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_solver=BQPD", "max_iterations=10000", "unbounded_objective_threshold=-1e15", "dual_tolerance=1e-6"])
+Optimizer_Uno_filterslp() = Optimizer(["logger=SILENT", "preset=filterslp", "LP_solver=BQPD", "max_iterations=10000", "unbounded_objective_threshold=-1e15", "primal_tolerance=1e-7"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
