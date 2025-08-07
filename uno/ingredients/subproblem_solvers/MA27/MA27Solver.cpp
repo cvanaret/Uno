@@ -295,6 +295,10 @@ namespace uno {
          static_cast<size_t>(this->workspace.n);
    }
 
+   void MA27Solver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
+      subproblem.evaluate_constraint_jacobian(this->augmented_matrix_values.data() + this->number_hessian_nonzeros);
+   }
+
    void MA27Solver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
       const size_t offset = this->number_hessian_nonzeros;

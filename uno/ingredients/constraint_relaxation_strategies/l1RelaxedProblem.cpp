@@ -144,9 +144,6 @@ namespace uno {
    }
 
    void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
-      //iterate.evaluate_constraint_jacobian(this->model);
-      // TODO change this
-      //constraint_jacobian = iterate.evaluations.constraint_jacobian;
       this->model.evaluate_constraint_jacobian(iterate.primals, jacobian_values);
 
       // add the contribution of the elastic variables
@@ -200,7 +197,7 @@ namespace uno {
          }
          elastic_index++;
       }
-      for ([[maybe_unused]] size_t equality_index: this->model.get_equality_constraints()) {
+      for (size_t equality_index: this->model.get_equality_constraints()) {
          lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
             iterate.multipliers.constraints[equality_index] - iterate.multipliers.lower_bounds[elastic_index];
          elastic_index++;

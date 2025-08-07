@@ -6,6 +6,8 @@
 
 #include <string>
 
+#include "optimization/OptimizationProblem.hpp"
+
 namespace uno {
    // forward declarations
    class Direction;
@@ -42,6 +44,8 @@ namespace uno {
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 
       // matrix computations
+      virtual void evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) = 0;
       virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
       virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
       [[nodiscard]] virtual double compute_hessian_quadratic_product(const Vector<double>& vector) const = 0;

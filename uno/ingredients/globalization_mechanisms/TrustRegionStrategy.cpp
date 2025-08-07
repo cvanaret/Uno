@@ -135,7 +135,7 @@ namespace uno {
          current_iterate, trial_iterate, direction, 1., warmstart_information, user_callbacks);
       this->set_primal_statistics(statistics, model, trial_iterate);
       if (accept_iterate) {
-         trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
+         // trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
          // possibly increase the radius if trust region is active
          this->possibly_increase_radius(direction.norm);
       }

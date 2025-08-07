@@ -82,8 +82,7 @@ namespace uno {
       virtual void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
          const OptimizationProblem& problem, Iterate& iterate) const = 0;
 
-      void compute_primal_dual_residuals(const OptimizationProblem& problem, const InequalityHandlingMethod& inequality_handling_method,
-         Iterate& iterate) const;
+      void compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate) const;
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;
 

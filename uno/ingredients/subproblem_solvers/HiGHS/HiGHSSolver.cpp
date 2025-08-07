@@ -74,6 +74,10 @@ namespace uno {
       this->solve_subproblem(subproblem, direction);
    }
 
+   void HiGHSSolver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
+      subproblem.evaluate_constraint_jacobian(this->model.lp_.a_matrix_.value_.data());
+   }
+
    void HiGHSSolver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
       for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
@@ -115,7 +119,7 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         subproblem.evaluate_constraint_jacobian(this->model.lp_.a_matrix_.value_.data());
+         this->evaluate_constraint_jacobian(subproblem);
       }
       // evaluate the Hessian and regularize it TODO: store it in HiGHS format
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {

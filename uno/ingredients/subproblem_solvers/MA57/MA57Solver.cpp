@@ -269,6 +269,10 @@ namespace uno {
       return static_cast<size_t>(this->workspace.info[24]);
    }
 
+   void MA57Solver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
+      subproblem.evaluate_constraint_jacobian(this->augmented_matrix_values.data() + this->number_hessian_nonzeros);
+   }
+
    void MA57Solver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
       const size_t offset = this->number_hessian_nonzeros;
@@ -276,7 +280,8 @@ namespace uno {
          const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
          const size_t variable_index = this->jacobian_column_indices[nonzero_index];
          const double derivative = this->augmented_matrix_values[offset + nonzero_index];
-         if (constraint_index < result.size()) {
+
+         if (constraint_index < result.size() && variable_index < vector.size()) {
             result[constraint_index] += derivative * vector[variable_index];
          }
       }
@@ -289,7 +294,8 @@ namespace uno {
          const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
          const size_t variable_index = this->jacobian_column_indices[nonzero_index];
          const double derivative = this->augmented_matrix_values[offset + nonzero_index];
-         if (variable_index < result.size()) {
+
+         if (variable_index < result.size() && constraint_index < vector.size()) {
             result[variable_index] += derivative * vector[constraint_index];
          }
       }

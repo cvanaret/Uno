@@ -166,6 +166,10 @@ namespace uno {
       return this->workspace.n - this->number_zero_eigenvalues();
    }
 
+   void MUMPSSolver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
+      subproblem.evaluate_constraint_jacobian(this->augmented_matrix_values.data() + this->number_hessian_nonzeros);
+   }
+
    void MUMPSSolver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
       const size_t offset = this->number_hessian_nonzeros;

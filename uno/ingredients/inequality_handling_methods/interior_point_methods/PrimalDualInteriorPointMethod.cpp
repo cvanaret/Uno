@@ -116,7 +116,7 @@ namespace uno {
       }
       statistics.set("barrier", this->barrier_parameter());
 
-      // crate the subproblem
+      // create the subproblem
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
       const Subproblem subproblem{barrier_problem, current_iterate, hessian_model, regularization_strategy,
          trust_region_radius};
@@ -212,6 +212,14 @@ namespace uno {
 
    double PrimalDualInteriorPointMethod::proximal_coefficient() const {
       return std::sqrt(this->barrier_parameter());
+   }
+
+   void PrimalDualInteriorPointMethod::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
+      // create the subproblem
+      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
+      const Subproblem subproblem{barrier_problem, iterate, hessian_model, regularization_strategy, trust_region_radius};
+      this->linear_solver->evaluate_constraint_jacobian(subproblem);
    }
 
    void PrimalDualInteriorPointMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {

@@ -133,13 +133,7 @@ namespace uno {
    // - for FJ conditions: with standard multipliers and 0 objective multiplier
    // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
 
-   void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& problem,
-         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const {
-      iterate.evaluate_objective_gradient(problem.model);
-      iterate.evaluate_constraints(problem.model);
-      iterate.evaluate_constraint_jacobian(problem.model);
-
-      problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, inequality_handling_method, iterate);
+   void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate) const {
       iterate.residuals.stationarity = OptimizationProblem::stationarity_error(iterate.residuals.lagrangian_gradient,
          problem.get_objective_multiplier(), this->residual_norm);
 

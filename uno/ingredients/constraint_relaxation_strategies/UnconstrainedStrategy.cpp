@@ -38,7 +38,13 @@ namespace uno {
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(problem, initial_iterate);
       this->evaluate_progress_measures(*this->inequality_handling_method, problem, initial_iterate);
-      this->compute_primal_dual_residuals(problem, *this->inequality_handling_method, initial_iterate);
+      initial_iterate.evaluate_objective_gradient(model);
+      initial_iterate.evaluate_constraints(model);
+      this->inequality_handling_method->evaluate_constraint_jacobian(problem, initial_iterate,
+         *this->hessian_model, *this->regularization_strategy, INF<double>);
+      problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, *this->inequality_handling_method,
+         initial_iterate);
+      this->compute_primal_dual_residuals(problem, initial_iterate);
    }
 
    void UnconstrainedStrategy::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& /*globalization_strategy*/,
@@ -83,7 +89,14 @@ namespace uno {
 
    IterateStatus UnconstrainedStrategy::check_termination(const Model& model, Iterate& iterate) {
       const OptimizationProblem problem{model};
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(problem, *this->inequality_handling_method, iterate);
+      iterate.evaluate_objective_gradient(model);
+      iterate.evaluate_constraints(model);
+      this->inequality_handling_method->evaluate_constraint_jacobian(problem, iterate,
+         *this->hessian_model, *this->regularization_strategy, INF<double>);
+      problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, *this->inequality_handling_method,
+            iterate);
+      problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, *this->inequality_handling_method, iterate);
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(problem, iterate);
       return ConstraintRelaxationStrategy::check_termination(problem, iterate);
    }
 

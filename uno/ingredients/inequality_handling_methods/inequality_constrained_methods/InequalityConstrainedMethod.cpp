@@ -78,6 +78,12 @@ namespace uno {
       return 0.;
    }
 
+   void InequalityConstrainedMethod::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
+      const Subproblem subproblem{problem, iterate, hessian_model, regularization_strategy, trust_region_radius};
+      this->solver->evaluate_constraint_jacobian(subproblem);
+   }
+
    void InequalityConstrainedMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       this->solver->compute_constraint_jacobian_vector_product(vector, result);
    }

@@ -121,6 +121,16 @@ namespace uno {
       this->solve_subproblem(subproblem, initial_point, direction, warmstart_information);
    }
 
+   void BQPDSolver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
+      subproblem.evaluate_constraint_jacobian(this->jacobian_values.data());
+
+      // copy the Jacobian with permutation into &this->gradients[subproblem.number_variables]
+      for (size_t nonzero_index: Range(subproblem.number_jacobian_nonzeros())) {
+         const size_t permutated_nonzero_index = this->permutation_vector[nonzero_index];
+         this->gradients[subproblem.number_variables + nonzero_index] = this->jacobian_values[permutated_nonzero_index];
+      }
+   }
+
    void BQPDSolver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
       for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
@@ -180,12 +190,7 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         subproblem.evaluate_constraint_jacobian(this->jacobian_values.data());
-         // copy the Jacobian with permutation into &this->gradients[subproblem.number_variables]
-         for (size_t nonzero_index: Range(subproblem.number_jacobian_nonzeros())) {
-            const size_t permutated_nonzero_index = this->permutation_vector[nonzero_index];
-            this->gradients[subproblem.number_variables + nonzero_index] = this->jacobian_values[permutated_nonzero_index];
-         }
+         this->evaluate_constraint_jacobian(subproblem);
       }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->evaluate_hessian = true;
