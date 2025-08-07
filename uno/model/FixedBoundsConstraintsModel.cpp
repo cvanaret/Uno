@@ -33,10 +33,6 @@ namespace uno {
       return this->model->evaluate_objective(x);
    }
 
-   void FixedBoundsConstraintsModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
-      this->model->evaluate_objective_gradient(x, gradient);
-   }
-
    void FixedBoundsConstraintsModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
       this->model->evaluate_constraints(x, constraints);
       // add the fixed variables
@@ -47,31 +43,43 @@ namespace uno {
       }
    }
 
-   void FixedBoundsConstraintsModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
-      if (constraint_index < this->model->number_constraints) {
-         // original constraint
-         this->model->evaluate_constraint_gradient(x, constraint_index, gradient);
-      }
-      else {
-         // fixed variable
-         const size_t variable_index = this->model->get_fixed_variables()[constraint_index - this->model->number_constraints];
-         gradient.insert(variable_index, 1.);
+   void FixedBoundsConstraintsModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
+      this->model->evaluate_objective_gradient(x, gradient);
+   }
+
+   void FixedBoundsConstraintsModel::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices,
+         size_t solver_indexing, MatrixOrder matrix_order) const {
+      // original constraints
+      this->model->compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+
+      // fixed variables (as linear constraints)
+      size_t constraint_index = this->model->number_constraints;
+      size_t current_index = this->model->number_jacobian_nonzeros();
+      for (size_t fixed_variable_index: this->model->get_fixed_variables()) {
+         row_indices[current_index] = constraint_index + solver_indexing;
+         column_indices[current_index] = fixed_variable_index + solver_indexing;
+         ++constraint_index;
+         ++current_index;
       }
    }
 
-   void FixedBoundsConstraintsModel::evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
-      this->model->evaluate_constraint_jacobian(x, constraint_jacobian);
+   void FixedBoundsConstraintsModel::compute_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+      this->model->compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
+   }
+
+   void FixedBoundsConstraintsModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
+      this->model->evaluate_constraint_jacobian(x, jacobian_values);
       // add the fixed variables
-      size_t current_constraint = this->model->number_constraints;
-      for (size_t fixed_variable_index: this->model->get_fixed_variables()) {
-         constraint_jacobian[current_constraint].insert(fixed_variable_index, 1.);
-         current_constraint++;
+      size_t nonzero_index = this->model->number_jacobian_nonzeros();
+      for ([[maybe_unused]] size_t _: this->model->get_fixed_variables()) {
+         jacobian_values[nonzero_index] = 1.;
+         ++nonzero_index;
       }
    }
 
    void FixedBoundsConstraintsModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
-      this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
+         Vector<double>& hessian_values) const {
+      this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
    }
 
    void FixedBoundsConstraintsModel::compute_hessian_vector_product(const double* vector, double objective_multiplier,

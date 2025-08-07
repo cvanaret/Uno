@@ -3,7 +3,6 @@
 
 #include <gtest/gtest.h>
 #include "ingredients/subproblem_solvers/MA27/MA27Solver.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 
 using namespace uno;
 

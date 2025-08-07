@@ -5,8 +5,6 @@
 #include <cassert>
 #include <stdexcept>
 #include "AMPLModel.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
@@ -48,7 +46,6 @@ namespace uno {
          Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), (asl->i.objtype_[0] == 1) ? -1. : 1.),
          asl(asl),
          write_solution_to_file(options.get_bool("AMPL_write_solution_to_file")),
-         asl_gradient(this->number_variables),
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
@@ -57,8 +54,7 @@ namespace uno {
          upper_bounded_variables_collection(this->upper_bounded_variables),
          single_lower_bounded_variables_collection(this->single_lower_bounded_variables),
          single_upper_bounded_variables_collection(this->single_upper_bounded_variables) {
-      // evaluate the constraint Jacobian in sparse mode
-      this->asl->i.congrd_mode = 1;
+      this->asl->i.congrd_mode = 2;
 
       // variables
       this->lower_bounded_variables.reserve(this->number_variables);
@@ -90,16 +86,6 @@ namespace uno {
       return result;
    }
 
-   // sparse gradient
-   void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
-      fint error_flag = 0;
-      (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), gradient.data(), &error_flag);
-      if (0 < error_flag) {
-         throw GradientEvaluationError();
-      }
-      gradient.scale(this->objective_sign);
-   }
-
    /*
    double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const {
       fint error_flag = 0;
@@ -119,65 +105,78 @@ namespace uno {
       }
    }
 
-   // sparse gradient
-   void AMPLModel::evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const {
-      // compute the AMPL sparse gradient
+   // dense gradient
+   void AMPLModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       fint error_flag = 0;
-      (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(constraint_index), const_cast<double*>(x.data()), this->asl_gradient.data(),
-         &error_flag);
+      (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), gradient.data(), &error_flag);
       if (0 < error_flag) {
          throw GradientEvaluationError();
       }
-
-      // construct the Uno sparse vector
-      gradient.clear();
-      cgrad* asl_variables_tmp = this->asl->i.Cgrad_[constraint_index];
-      size_t sparse_asl_index = 0;
-      while (asl_variables_tmp != nullptr) {
-         const size_t variable_index = static_cast<size_t>(asl_variables_tmp->varno);
-         gradient.insert(variable_index, this->asl_gradient[sparse_asl_index]);
-         asl_variables_tmp = asl_variables_tmp->next;
-         sparse_asl_index++;
-      }
+      gradient.scale(this->objective_sign);
    }
 
-   void AMPLModel::evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
+   void AMPLModel::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+         MatrixOrder matrix_order) const {
+      // by default, AMPLModel computes the Jacobian in a column-wise order (variable by variable).
+      // if a row-wise evaluation is wished, modify the goff fields of the ASL "Cgrad" structures
+      if (matrix_order == MatrixOrder::ROW_MAJOR) {
+         int nonzero_index = 0;
+         for (size_t constraint_index: Range(this->number_constraints)) {
+            cgrad* constraint_gradient = this->asl->i.Cgrad_[constraint_index];
+            while (constraint_gradient != nullptr) {
+               constraint_gradient->goff = nonzero_index;
+               ++nonzero_index;
+               constraint_gradient = constraint_gradient->next;
+            }
+         }
+      }
+
+      size_t current_index = 0;
       for (size_t constraint_index: Range(this->number_constraints)) {
-         constraint_jacobian[constraint_index].clear();
-         this->evaluate_constraint_gradient(x, constraint_index, constraint_jacobian[constraint_index]);
+         cgrad* constraint_gradient = this->asl->i.Cgrad_[constraint_index];
+         while (constraint_gradient != nullptr) {
+            const size_t variable_index = static_cast<size_t>(constraint_gradient->varno);
+            // at the moment, the Jacobian is stored column-wise (that is, ordered by variables)
+            row_indices[constraint_gradient->goff] = constraint_index + solver_indexing;
+            column_indices[constraint_gradient->goff] = variable_index + solver_indexing;
+            constraint_gradient = constraint_gradient->next;
+            ++current_index;
+         }
       }
    }
 
-   void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& /*x*/, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
-      assert(hessian.capacity() >= this->number_asl_hessian_nonzeros);
-
-      // register the vector of variables
-      //(*(this->asl)->p.Xknown)(this->asl, const_cast<double*>(x.data()), nullptr);
-
-      // evaluate the Hessian: store the matrix in a preallocated array this->asl_hessian
-      const int objective_number = -1;
-      objective_multiplier *= this->objective_sign;
-      (*(this->asl)->p.Sphes)(this->asl, nullptr, this->asl_hessian.data(), objective_number, &objective_multiplier,
-         const_cast<double*>(multipliers.data()));
-
-      // generate the sparsity pattern in the right sparse format
+   void AMPLModel::compute_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
       const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
       const fint* asl_row_index = this->asl->i.sputinfo_->hrownos;
-      // check that the column pointers are sorted in increasing order
-      assert(in_increasing_order(asl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
-
-      // copy the nonzeros in the Hessian
+      size_t current_index = 0;
       for (size_t column_index: Range(this->number_variables)) {
-         for (size_t k: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
-            const size_t row_index = static_cast<size_t>(asl_row_index[k]);
-            const double entry = this->asl_hessian[k];
-            hessian.insert(row_index, column_index, entry);
+         for (size_t nonzero_index: Range(static_cast<size_t>(asl_column_start[column_index]), static_cast<size_t>(asl_column_start[column_index + 1]))) {
+            const size_t row_index = static_cast<size_t>(asl_row_index[nonzero_index]);
+            row_indices[current_index] = row_index + solver_indexing;
+            column_indices[current_index] = column_index + solver_indexing;
+            ++current_index;
          }
-         hessian.finalize_column(column_index);
       }
-      // unregister the vector of variables
-      //this->asl->i.x_known = 0;
+   }
+
+   void AMPLModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
+      fint error_flag = 0;
+      (*(this->asl)->p.Jacval)(this->asl, const_cast<double*>(x.data()), jacobian_values, &error_flag);
+      if (0 < error_flag) {
+         throw GradientEvaluationError();
+      }
+   }
+
+   // register the vector of variables
+   //(*(this->asl)->p.Xknown)(this->asl, const_cast<double*>(x.data()), nullptr);
+   // unregister the vector of variables
+   //this->asl->i.x_known = 0;
+
+   void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& /*x*/, double objective_multiplier, const Vector<double>& multipliers,
+         Vector<double>& hessian_values) const {
+      objective_multiplier *= this->objective_sign;
+      (*(this->asl)->p.Sphes)(this->asl, nullptr, hessian_values.data(), -1, &objective_multiplier,
+         const_cast<double*>(multipliers.data()));
    }
 
    void AMPLModel::compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
@@ -359,11 +358,11 @@ namespace uno {
       // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
       const int upper_triangular = 1;
       this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, -1, 1, 1, upper_triangular));
-      this->asl_hessian.reserve(this->number_asl_hessian_nonzeros);
 
       // sparsity pattern
       [[maybe_unused]] const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
       // check that the column pointers are sorted in increasing order
-      assert(in_increasing_order(asl_column_start, this->number_variables + 1) && "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
+      assert(in_increasing_order(asl_column_start, this->number_variables + 1) &&
+         "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
    }
 } // namespace

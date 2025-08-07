@@ -5,7 +5,6 @@
 #define UNO_EVALUATIONS_H
 
 #include <vector>
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "tools/Infinity.hpp"
 
@@ -13,13 +12,13 @@ namespace uno {
    struct Evaluations {
       double objective{INF<double>}; /*!< Objective value */
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+      std::vector<double> linearized_constraints;
       Vector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
-      RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
 
       Evaluations(size_t number_variables, size_t number_constraints):
             constraints(number_constraints),
-            objective_gradient(number_variables),
-            constraint_jacobian(number_constraints, number_variables) {
+            linearized_constraints(number_constraints),
+            objective_gradient(number_variables) {
       }
    };
 } // namespace

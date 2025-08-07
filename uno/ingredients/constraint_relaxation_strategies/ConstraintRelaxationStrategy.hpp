@@ -32,7 +32,7 @@ namespace uno {
       virtual ~ConstraintRelaxationStrategy();
 
       virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         const Options& options) = 0;
+         double trust_region_radius, const Options& options) = 0;
 
       // direction computation
       virtual void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -40,7 +40,7 @@ namespace uno {
          WarmstartInformation& warmstart_information) = 0;
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
       virtual void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, WarmstartInformation& warmstart_information) = 0;
+         const Model& model, Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
 
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -67,8 +67,8 @@ namespace uno {
 
       void set_objective_measure(const Model& model, Iterate& iterate) const;
       void set_infeasibility_measure(const Model& model, Iterate& iterate) const;
-      [[nodiscard]] double compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const;
+      [[nodiscard]] double compute_predicted_infeasibility_reduction(InequalityHandlingMethod& inequality_handling_method,
+         const Model& model, const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const;
       [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(InequalityHandlingMethod& inequality_handling_method,
          const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const;
       void compute_progress_measures(InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
@@ -77,12 +77,11 @@ namespace uno {
          const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction, double step_length) const;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method, Iterate& current_iterate,
-         Iterate& trial_iterate, Multipliers& trial_multipliers, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) const;
+         Iterate& trial_iterate, const Direction& direction, double step_length, UserCallbacks& user_callbacks) const;
       virtual void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
          const OptimizationProblem& problem, Iterate& iterate) const = 0;
 
-      void compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate, const Multipliers& multipliers) const;
+      void compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate) const;
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;
 

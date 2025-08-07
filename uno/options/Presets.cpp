@@ -127,7 +127,7 @@ namespace uno {
          options["TR_radius"] = "10";
          options["l1_constraint_violation_coefficient"] = "1.";
          options["enforce_linear_constraints"] = "yes";
-         options["primal_tolerance"] = "1e-5";
+         options["primal_tolerance"] = "1e-6";
          options["dual_tolerance"] = "1e-5";
          options["loose_dual_tolerance"] = "1e-4";
          options["TR_min_radius"] = "1e-8";

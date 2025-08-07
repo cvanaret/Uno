@@ -1,11 +1,14 @@
 // Copyright (c) 2024 Manuel Schaich
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include <cassert>
 #include <stdexcept>
 #include "MA27Solver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
+#include "linear_algebra/COOMatrix.hpp"
+#include "linear_algebra/Indexing.hpp"
+#include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -123,48 +126,51 @@ namespace uno {
       this->workspace.icntl[eICNTL::LDIAG] = 0;
    }
 
-   void MA27Solver::initialize_memory(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros,
-         size_t regularization_size) {
-      const size_t dimension = number_variables + number_constraints;
-      const size_t number_nonzeros = number_hessian_nonzeros + regularization_size;
-      this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(number_nonzeros);
-
-      // reserve the COO representation
-      this->row_indices.resize(number_nonzeros);
-      this->column_indices.resize(number_nonzeros);
+   void MA27Solver::initialize(const Subproblem& subproblem) {
+      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
 
       // evaluations
-      this->objective_gradient.resize(number_variables);
-      this->constraints.resize(number_constraints);
-      this->constraint_jacobian.resize(number_constraints, number_variables);
+      this->objective_gradient.resize(subproblem.number_variables);
+      this->constraints.resize(subproblem.number_constraints);
+
+      // Jacobian
+      this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
+      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
+      subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+         Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
 
       // augmented system
-      this->augmented_matrix = SparseSymmetricMatrix<COOFormat<size_t, double>>(dimension, number_hessian_nonzeros,
-         regularization_size);
+      this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+      const size_t number_nonzeros = subproblem.number_regularized_augmented_system_nonzeros();
+      this->augmented_matrix_row_indices.resize(number_nonzeros);
+      this->augmented_matrix_column_indices.resize(number_nonzeros);
+      // compute the COO sparse representation: use temporary vectors of size_t
+      Vector<size_t> tmp_row_indices(number_nonzeros);
+      Vector<size_t> tmp_column_indices(number_nonzeros);
+      subproblem.compute_regularized_augmented_matrix_sparsity(tmp_row_indices.data(), tmp_column_indices.data(),
+         this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), Indexing::Fortran_indexing);
+      // build vectors of int
+      for (size_t nonzero_index: Range(number_nonzeros)) {
+         this->augmented_matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
+         this->augmented_matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
+      }
+      this->augmented_matrix_values.resize(number_nonzeros);
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
 
+      // workspace
+      this->workspace.n = static_cast<int>(dimension);
+      this->workspace.nnz = static_cast<int>(number_nonzeros);
       this->workspace.iw.resize((2 * number_nonzeros + 3 * dimension + 1) * 6 / 5); // 20% more than 2*nnz + 3*n + 1
       this->workspace.ikeep.resize(3 * dimension);
       this->workspace.iw1.resize(2 * dimension);
    }
 
-   void MA27Solver::do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) {
-      assert(matrix.dimension() <= this->workspace.iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(matrix.number_nonzeros() <= this->row_indices.capacity() &&
-         "MA27Solver: the number of nonzeros of the matrix is larger than the preallocated size");
-
-      // build the internal matrix representation
-      save_matrix_to_local_format(matrix);
-
-      this->workspace.n = static_cast<int>(matrix.dimension());
-      this->workspace.nnz = static_cast<int>(matrix.number_nonzeros());
-
-      // symbolic analysis
+   void MA27Solver::do_symbolic_analysis() {
       int liw = static_cast<int>(this->workspace.iw.size());
       MA27_symbolic_analysis(&this->workspace.n, &this->workspace.nnz,              /* size info */
-         this->row_indices.data(), this->column_indices.data(),                     /* matrix indices */
+         this->augmented_matrix_row_indices.data(), this->augmented_matrix_column_indices.data(),                     /* matrix indices */
          this->workspace.iw.data(), &liw, this->workspace.ikeep.data(), this->workspace.iw1.data(),  /* solver workspace */
          &this->workspace.nsteps, &this->workspace.iflag, this->workspace.icntl.data(), this->workspace.cntl.data(),
          this->workspace.info.data(), &this->workspace.ops);
@@ -179,12 +185,9 @@ namespace uno {
       }
    }
 
-   void MA27Solver::do_numerical_factorization([[maybe_unused]] const SymmetricMatrix<size_t, double>& matrix) {
-      assert(matrix.dimension() <= this->workspace.iw1.capacity() && "MA27Solver: the dimension of the matrix is larger than the preallocated size");
-      assert(this->workspace.nnz == static_cast<int>(matrix.number_nonzeros()) && "MA27Solver: the numbers of nonzeros do not match");
-
+   void MA27Solver::do_numerical_factorization(const Vector<double>& matrix_values) {
       // initialize factor with the entries of the matrix. It will be modified by MA27BD
-      std::copy(matrix.data_pointer(), matrix.data_pointer() + matrix.number_nonzeros(), this->workspace.factor.begin());
+      std::copy_n(matrix_values.data(), this->workspace.nnz, this->workspace.factor.begin());
 
       // numerical factorization
       // may fail because of insufficient space. In this case, more memory is allocated and the factorization tried again
@@ -198,8 +201,8 @@ namespace uno {
 
          int la = static_cast<int>(this->workspace.factor.size());
          int liw = static_cast<int>(this->workspace.iw.size());
-         MA27_numerical_factorization(&this->workspace.n, &this->workspace.nnz, this->row_indices.data(),
-            this->column_indices.data(), this->workspace.factor.data(), &la, this->workspace.iw.data(), &liw,
+         MA27_numerical_factorization(&this->workspace.n, &this->workspace.nnz, this->augmented_matrix_row_indices.data(),
+            this->augmented_matrix_column_indices.data(), this->workspace.factor.data(), &la, this->workspace.iw.data(), &liw,
             this->workspace.ikeep.data(), &this->workspace.nsteps, &this->workspace.maxfrt, this->workspace.iw1.data(),
             this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data());
          factorization_done = true;
@@ -221,7 +224,7 @@ namespace uno {
       this->check_factorization_status();
    }
 
-   void MA27Solver::solve_indefinite_system(const SymmetricMatrix<size_t, double>& /*matrix*/, const Vector<double>& rhs,
+   void MA27Solver::solve_indefinite_system(const Vector<double>& /*matrix_values*/, const Vector<double>& rhs,
          Vector<double>& result) {
       int la = static_cast<int>(this->workspace.factor.size());
       int liw = static_cast<int>(this->workspace.iw.size());
@@ -247,20 +250,20 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         subproblem.evaluate_jacobian(this->constraint_jacobian);
       }
 
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // assemble the augmented matrix
-         this->augmented_matrix.reset();
-         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix, this->constraint_jacobian);
+         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix_values);
          // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix, subproblem.dual_regularization_factor(), *this);
+         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix_values, subproblem.dual_regularization_factor(), *this);
 
          // assemble the RHS
-         subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, this->constraint_jacobian, this->rhs);
+         const COOMatrix jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+            this->augmented_matrix_values.data() + this->number_hessian_nonzeros};
+         subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, jacobian, this->rhs);
       }
-      this->solve_indefinite_system(this->augmented_matrix, this->rhs, this->solution);
+      this->solve_indefinite_system(this->augmented_matrix_values, this->rhs, this->solution);
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(this->solution, direction);
       if (this->matrix_is_singular()) {
@@ -271,11 +274,11 @@ namespace uno {
    Inertia MA27Solver::get_inertia() const {
       // rank = number_positive_eigenvalues + number_negative_eigenvalues
       // n = rank + number_zero_eigenvalues
-      const size_t rankA = rank();
-      const size_t num_negative_eigenvalues = number_negative_eigenvalues();
-      const size_t num_positive_eigenvalues = rankA - num_negative_eigenvalues;
-      const size_t num_zero_eigenvalues = static_cast<size_t>(this->workspace.n) - rankA;
-      return {num_positive_eigenvalues, num_negative_eigenvalues, num_zero_eigenvalues};
+      const size_t rank = this->rank();
+      const size_t number_negative_eigenvalues = this->number_negative_eigenvalues();
+      const size_t number_positive_eigenvalues = rank - number_negative_eigenvalues;
+      const size_t number_zero_eigenvalues = static_cast<size_t>(this->workspace.n) - rank;
+      return {number_positive_eigenvalues, number_negative_eigenvalues, number_zero_eigenvalues};
    }
 
    size_t MA27Solver::number_negative_eigenvalues() const {
@@ -292,15 +295,33 @@ namespace uno {
          static_cast<size_t>(this->workspace.n);
    }
 
-   void MA27Solver::save_matrix_to_local_format(const SymmetricMatrix<size_t, double>& matrix) {
-      // build the internal matrix representation
-      this->row_indices.clear();
-      this->column_indices.clear();
-      this->workspace.factor.clear();
-      for (const auto [row_index, column_index, element]: matrix) {
-         this->row_indices.emplace_back(static_cast<int>(row_index + MA27Solver::fortran_shift));
-         this->column_indices.emplace_back(static_cast<int>(column_index + MA27Solver::fortran_shift));
-         this->workspace.factor.emplace_back(element);
+   void MA27Solver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
+      subproblem.evaluate_constraint_jacobian(this->augmented_matrix_values.data() + this->number_hessian_nonzeros);
+   }
+
+   void MA27Solver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      result.fill(0.);
+      const size_t offset = this->number_hessian_nonzeros;
+      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
+         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
+         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
+         const double derivative = this->augmented_matrix_values[offset + nonzero_index];
+         if (constraint_index < result.size()) {
+            result[constraint_index] += derivative * vector[variable_index];
+         }
+      }
+   }
+
+   void MA27Solver::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      result.fill(0.);
+      const size_t offset = this->number_hessian_nonzeros;
+      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
+         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
+         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
+         const double derivative = this->augmented_matrix_values[offset + nonzero_index];
+         if (variable_index < result.size()) {
+            result[variable_index] += derivative * vector[constraint_index];
+         }
       }
    }
 

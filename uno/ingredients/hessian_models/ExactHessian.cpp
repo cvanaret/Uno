@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ExactHessian.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 #include "model/Model.hpp"
 
 namespace uno {
@@ -25,6 +24,11 @@ namespace uno {
       return model.number_hessian_nonzeros();
    }
 
+   void ExactHessian::compute_sparsity(const Model& model, size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+      // Hessian sparsity of the model
+      model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
+   }
+
    bool ExactHessian::is_positive_definite() const {
       return false;
    }
@@ -33,8 +37,8 @@ namespace uno {
    }
 
    void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& primal_variables,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, SymmetricMatrix<size_t, double>& hessian) {
-      model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, hessian);
+         double objective_multiplier, const Vector<double>& constraint_multipliers, Vector<double>& hessian_values) {
+      model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, hessian_values);
       this->evaluation_count++;
    }
 

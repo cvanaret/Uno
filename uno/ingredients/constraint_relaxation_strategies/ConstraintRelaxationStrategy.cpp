@@ -57,12 +57,14 @@ namespace uno {
       };
    }
 
-   double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const {
+   double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(InequalityHandlingMethod& inequality_handling_method,
+         const Model& model, const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
       const double current_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints, this->progress_norm);
+      Vector<double> result(model.number_constraints);
+      inequality_handling_method.compute_constraint_jacobian_vector_product(primal_direction, result);
       const double trial_linearized_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints +
-         step_length * (current_iterate.evaluations.constraint_jacobian * primal_direction), this->progress_norm);
+         step_length * result, this->progress_norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
    }
 
@@ -71,7 +73,7 @@ namespace uno {
       // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
       const double directional_derivative = dot(primal_direction, current_iterate.evaluations.objective_gradient);
       const double quadratic_term = this->first_order_predicted_reduction ? 0. :
-         inequality_handling_method.hessian_quadratic_product(primal_direction);
+         inequality_handling_method.compute_hessian_quadratic_product(primal_direction);
       return [=](double objective_multiplier) {
          return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
       };
@@ -92,7 +94,7 @@ namespace uno {
    ProgressMeasures ConstraintRelaxationStrategy::compute_predicted_reductions(InequalityHandlingMethod& inequality_handling_method,
          const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction, double step_length) const {
       return {
-         this->compute_predicted_infeasibility_reduction(problem.model, current_iterate, direction.primals, step_length),
+         this->compute_predicted_infeasibility_reduction(inequality_handling_method, problem.model, current_iterate, direction.primals, step_length),
          this->compute_predicted_objective_reduction(inequality_handling_method, current_iterate, direction.primals, step_length),
          inequality_handling_method.compute_predicted_auxiliary_reduction_model(problem, current_iterate, direction.primals, step_length)
       };
@@ -100,9 +102,8 @@ namespace uno {
 
    bool ConstraintRelaxationStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method, Iterate& current_iterate,
-         Iterate& trial_iterate, Multipliers& trial_multipliers, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) const {
-      inequality_handling_method.postprocess_iterate(problem, trial_iterate.primals, trial_multipliers);
+         Iterate& trial_iterate, const Direction& direction, double step_length, UserCallbacks& user_callbacks) const {
+      inequality_handling_method.postprocess_iterate(problem, trial_iterate);
       const double objective_multiplier = problem.get_objective_multiplier();
       trial_iterate.objective_multiplier = objective_multiplier;
       this->compute_progress_measures(inequality_handling_method, problem, globalization_strategy, current_iterate, trial_iterate);
@@ -115,13 +116,13 @@ namespace uno {
          statistics.set("status", "0 primal step");
       }
       else {
-         const ProgressMeasures predicted_reduction = ConstraintRelaxationStrategy::compute_predicted_reductions(inequality_handling_method,
+         const ProgressMeasures predicted_reductions = ConstraintRelaxationStrategy::compute_predicted_reductions(inequality_handling_method,
             problem, current_iterate, direction, step_length);
          accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
-            predicted_reduction, objective_multiplier);
+            predicted_reductions, objective_multiplier);
       }
       if (accept_iterate) {
-         user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_multipliers, objective_multiplier);
+         user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, objective_multiplier);
       }
       return accept_iterate;
    }
@@ -131,13 +132,7 @@ namespace uno {
    // - for FJ conditions: with standard multipliers and 0 objective multiplier
    // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
 
-   void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& problem,
-         Iterate& iterate, const Multipliers& multipliers) const {
-      iterate.evaluate_objective_gradient(problem.model);
-      iterate.evaluate_constraints(problem.model);
-      iterate.evaluate_constraint_jacobian(problem.model);
-
-      problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, iterate, multipliers);
+   void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate) const {
       iterate.residuals.stationarity = OptimizationProblem::stationarity_error(iterate.residuals.lagrangian_gradient,
          problem.get_objective_multiplier(), this->residual_norm);
 
@@ -150,11 +145,11 @@ namespace uno {
       std::vector<double> constraints(problem.number_constraints);
       problem.evaluate_constraints(iterate, constraints);
       iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, constraints,
-         multipliers, shift_value, this->residual_norm);
+         iterate.multipliers, shift_value, this->residual_norm);
 
       // scaling factors
-      iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(problem.model, multipliers);
-      iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(problem.model, multipliers);
+      iterate.residuals.stationarity_scaling = this->compute_stationarity_scaling(problem.model, iterate.multipliers);
+      iterate.residuals.complementarity_scaling = this->compute_complementarity_scaling(problem.model, iterate.multipliers);
    }
 
    double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const {

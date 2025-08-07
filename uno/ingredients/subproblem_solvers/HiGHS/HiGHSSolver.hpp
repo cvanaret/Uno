@@ -6,9 +6,6 @@
 
 #include "ingredients/subproblem_solvers/LPSolver.hpp"
 #include "Highs.h"
-#include "linear_algebra/COOFormat.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -19,21 +16,24 @@ namespace uno {
    public:
       explicit HiGHSSolver(const Options& options);
 
-      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         const RegularizationStrategy<double>& regularization_strategy) override;
+      void initialize_memory(const Subproblem& subproblem) override;
 
       void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override;
 
-      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
+      void evaluate_constraint_jacobian(const Subproblem& subproblem) override;
+      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      [[nodiscard]] double compute_hessian_quadratic_product(const Vector<double>& vector) const override;
 
    protected:
       HighsModel model;
       Highs highs_solver;
       std::vector<double> constraints{};
       Vector<double> linear_objective{};
-      RectangularMatrix<double> constraint_jacobian{};
-      SparseSymmetricMatrix<COOFormat<size_t, double>> hessian{};
+      // constraint Jacobian in COO format
+      Vector<size_t> jacobian_row_indices{};
+      Vector<size_t> jacobian_column_indices{};
 
       const bool print_subproblem;
 

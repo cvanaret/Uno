@@ -61,7 +61,7 @@ namespace uno {
                major_iterations++;
                statistics.start_new_line();
                statistics.set("iter", major_iterations);
-               DEBUG << "### Outer iteration " << major_iterations << '\n';
+               DEBUG << "\n### Outer iteration " << major_iterations << '\n';
 
                // compute an acceptable iterate by solving a subproblem at the current point
                warmstart_information.iterate_changed();
@@ -101,7 +101,8 @@ namespace uno {
       statistics.start_new_line();
       statistics.set("iter", 0);
       statistics.set("status", "initial point");
-      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, options);
+      // TODO here we don't know if there's a trust-region radius yet!
+      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, INF<double>, options);
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate);
       GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
       this->globalization_strategy->initialize(statistics, current_iterate, options);

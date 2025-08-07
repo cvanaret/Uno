@@ -19,13 +19,22 @@ namespace uno {
    public:
       explicit HomogeneousEqualityConstrainedModel(std::unique_ptr<Model> original_model);
 
+      // function evaluations
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
-      void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
       void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override;
-      void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override;
-      void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override;
+
+      // dense objective gradient
+      void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
+
+      // sparsity patterns of Jacobian and Hessian
+      void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+         MatrixOrder matrix_order) const override;
+      void compute_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const override;
+
+      // numerical evaluations of Jacobian and Hessian
+      void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override;
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const override;
+         Vector<double>& hessian_values) const override;
       void compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
          double* result) const override;
 

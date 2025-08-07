@@ -3,10 +3,9 @@
 
 #include "HiGHSSolver.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
-#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "linear_algebra/Indexing.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
@@ -18,38 +17,55 @@ namespace uno {
       this->highs_solver.setOptionValue("output_flag", "false");
    }
 
-   void HiGHSSolver::initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         const RegularizationStrategy<double>& regularization_strategy) {
+   void HiGHSSolver::initialize_memory(const Subproblem& subproblem) {
       // determine whether the subproblem has curvature. For the moment, HiGHS can only solve LPs
-      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
-      const bool regularize = !hessian_model.is_positive_definite() && regularization_strategy.performs_primal_regularization();
-      const size_t regularization_size = problem.get_number_original_variables();
-      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros +
-         (regularize ? regularization_size : 0);
-      if (0 < number_regularized_hessian_nonzeros) {
+      if (subproblem.has_curvature()) {
          throw std::runtime_error("The subproblem has curvature. For the moment, HiGHS can only solve LPs");
       }
 
-      this->constraints.resize(problem.number_constraints);
-      this->linear_objective.resize(problem.number_variables);
-      this->constraint_jacobian.resize(problem.number_constraints, problem.number_variables);
+      this->constraints.resize(subproblem.number_constraints);
+      this->linear_objective.resize(subproblem.number_variables);
       this->model.lp_.sense_ = ObjSense::kMinimize;
       this->model.lp_.offset_ = 0.;
       // the linear part of the objective is a dense vector
-      this->model.lp_.col_cost_.resize(problem.number_variables);
+      this->model.lp_.col_cost_.resize(subproblem.number_variables);
       // variable bounds
-      this->model.lp_.col_lower_.resize(problem.number_variables);
-      this->model.lp_.col_upper_.resize(problem.number_variables);
+      this->model.lp_.col_lower_.resize(subproblem.number_variables);
+      this->model.lp_.col_upper_.resize(subproblem.number_variables);
       // constraint bounds
-      this->model.lp_.row_lower_.resize(problem.number_constraints);
-      this->model.lp_.row_upper_.resize(problem.number_constraints);
-      // constraint matrix in CSR format (each row is a constraint gradient)
-      this->model.lp_.a_matrix_.format_ = MatrixFormat::kRowwise;
-      this->model.lp_.a_matrix_.value_.reserve(problem.number_jacobian_nonzeros());
-      this->model.lp_.a_matrix_.index_.reserve(problem.number_jacobian_nonzeros());
-      this->model.lp_.a_matrix_.start_.reserve(problem.number_variables + 1);
+      this->model.lp_.row_lower_.resize(subproblem.number_constraints);
+      this->model.lp_.row_upper_.resize(subproblem.number_constraints);
+
+      // constraint Jacobian
+      this->model.lp_.a_matrix_.format_ = MatrixFormat::kColwise;
+      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+      // compute the COO sparsity pattern
+      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
+      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
+      subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+         Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
+      // HiGHS matrix in CSC format (variable after variable)
+      this->model.lp_.a_matrix_.index_.resize(number_jacobian_nonzeros); // constraint indices
+      this->model.lp_.a_matrix_.start_.resize(subproblem.number_variables + 1);
+      this->model.lp_.a_matrix_.value_.resize(number_jacobian_nonzeros);
+
+      size_t current_variable = 0;
+      for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
+         // constraint index
+         const size_t constraint_index = this->jacobian_row_indices[jacobian_nonzero_index];
+         this->model.lp_.a_matrix_.index_[jacobian_nonzero_index] = static_cast<HighsInt>(constraint_index);
+
+         // variable index
+         const size_t variable_index = this->jacobian_column_indices[jacobian_nonzero_index];
+         assert(current_variable <= variable_index);
+         while (current_variable < variable_index) {
+            ++current_variable;
+            this->model.lp_.a_matrix_.start_[current_variable] = static_cast<HighsInt>(jacobian_nonzero_index);
+         }
+      }
+      this->model.lp_.a_matrix_.start_[subproblem.number_variables] = static_cast<HighsInt>(number_jacobian_nonzeros);
+
       // TODO Hessian
-      // this->hessian = SymmetricMatrix<size_t, double>("CSC", problem.number_variables, 0, 0); // TODO
    }
 
    void HiGHSSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& /*initial_point*/,
@@ -58,11 +74,42 @@ namespace uno {
       this->solve_subproblem(subproblem, direction);
    }
 
-   double HiGHSSolver::hessian_quadratic_product(const Vector<double>& /*vector*/) const {
+   void HiGHSSolver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
+      subproblem.evaluate_constraint_jacobian(this->model.lp_.a_matrix_.value_.data());
+   }
+
+   void HiGHSSolver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
+      for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
+         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
+         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
+         const double derivative = this->model.lp_.a_matrix_.value_[nonzero_index];
+
+         // a safeguard to make sure we take only the correct part of the Jacobian
+         if (variable_index < vector.size() && constraint_index < result.size()) {
+            result[constraint_index] += derivative * vector[variable_index];
+         }
+      }
+   }
+
+   void HiGHSSolver::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
+      for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
+         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
+         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
+         const double derivative = this->model.lp_.a_matrix_.value_[nonzero_index];
+         assert(constraint_index < vector.size());
+         assert(variable_index < result.size());
+
+         result[variable_index] += derivative * vector[constraint_index];
+      }
+   }
+
+   double HiGHSSolver::compute_hessian_quadratic_product(const Vector<double>& /*vector*/) const {
       return 0.;
    }
 
-   void HiGHSSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information) {
+   void HiGHSSolver::set_up_subproblem(Statistics& /*statistics*/, const Subproblem& subproblem, const WarmstartInformation& warmstart_information) {
       this->model.lp_.num_col_ = static_cast<HighsInt>(subproblem.number_variables);
       this->model.lp_.num_row_ = static_cast<HighsInt>(subproblem.number_constraints);
 
@@ -72,12 +119,11 @@ namespace uno {
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
-         subproblem.evaluate_jacobian(this->constraint_jacobian);
+         this->evaluate_constraint_jacobian(subproblem);
       }
       // evaluate the Hessian and regularize it TODO: store it in HiGHS format
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->hessian.reset();
-         subproblem.compute_regularized_hessian(statistics, this->hessian);
+         // subproblem.compute_regularized_hessian(statistics, this->hessian);
       }
 
       // variable bounds
@@ -93,21 +139,6 @@ namespace uno {
       // copy the linear objective into the HiGHS vector
       for (size_t variable_index: Range(subproblem.number_variables)) {
          this->model.lp_.col_cost_[variable_index] = this->linear_objective[variable_index];
-      }
-
-      // copy the constraint matrix into the HiGHS structure
-      this->model.lp_.a_matrix_.value_.clear();
-      this->model.lp_.a_matrix_.index_.clear();
-      this->model.lp_.a_matrix_.start_.clear();
-      size_t number_nonzeros = 0;
-      this->model.lp_.a_matrix_.start_.emplace_back(number_nonzeros);
-      for (size_t constraint_index: Range(subproblem.number_constraints)) {
-         for (const auto [variable_index, value]: this->constraint_jacobian[constraint_index]) {
-            this->model.lp_.a_matrix_.value_.emplace_back(value);
-            this->model.lp_.a_matrix_.index_.emplace_back(variable_index);
-            number_nonzeros++;
-         }
-         this->model.lp_.a_matrix_.start_.emplace_back(number_nonzeros);
       }
 
       if (this->print_subproblem) {

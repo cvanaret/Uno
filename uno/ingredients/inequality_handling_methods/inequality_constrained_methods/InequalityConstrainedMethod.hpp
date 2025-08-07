@@ -15,8 +15,8 @@ namespace uno {
       explicit InequalityConstrainedMethod(const Options& options);
       ~InequalityConstrainedMethod() override = default;
 
-      void initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy) override;
+      void initialize(const OptimizationProblem& problem, Iterate& current_iterate,
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
       void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
@@ -28,13 +28,19 @@ namespace uno {
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
+      // matrix computations
+      void evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) override;
+      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      [[nodiscard]] double compute_hessian_quadratic_product(const Vector<double>& vector) const override;
+
       // progress measures
-      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
       void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem, const Iterate&,
          const Vector<double>&, double) const override;
 
-      void postprocess_iterate(const OptimizationProblem& model, Vector<double>& primals, Multipliers& multipliers) override;
+      void postprocess_iterate(const OptimizationProblem& model, Iterate& iterate) override;
 
       void set_initial_point(const Vector<double>& point) override;
 

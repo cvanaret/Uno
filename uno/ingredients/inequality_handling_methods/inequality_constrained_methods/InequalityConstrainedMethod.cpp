@@ -5,7 +5,6 @@
 #include "optimization/Iterate.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
-#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
@@ -18,22 +17,13 @@ namespace uno {
          InequalityHandlingMethod(), options(options) {
    }
 
-   void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy) {
+   void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
       this->initial_point.resize(problem.number_variables);
-      regularization_strategy.initialize_memory(problem, hessian_model);
 
       // allocate the LP/QP solver, depending on the presence of curvature in the subproblem
-      bool subproblem_has_curvature = problem.has_curvature(hessian_model);
-      if (!subproblem_has_curvature) {
-         if (!hessian_model.is_positive_definite() && regularization_strategy.performs_primal_regularization()) {
-            subproblem_has_curvature = !problem.get_primal_regularization_variables().empty();
-         }
-         else {
-            subproblem_has_curvature = false;
-         }
-      }
-      if (!subproblem_has_curvature) {
+      const Subproblem subproblem{problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
+      if (!subproblem.has_curvature()) {
          DEBUG << "No curvature in the subproblems, allocating an LP solver\n";
          this->solver = LPSolverFactory::create(this->options);
       }
@@ -41,7 +31,7 @@ namespace uno {
          DEBUG << "Curvature in the subproblems, allocating a QP solver\n";
          this->solver = QPSolverFactory::create(this->options);
       }
-      this->solver->initialize_memory(problem, hessian_model, regularization_strategy);
+      this->solver->initialize_memory(subproblem);
    }
 
    void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
@@ -49,11 +39,7 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
-      /*
-      if (this->enforce_linear_constraints_at_initial_iterate) {
-         Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, *this->solver);
-      }
-      */
+      // TODO enforce linear constraints
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
@@ -88,8 +74,22 @@ namespace uno {
       return 0.;
    }
 
-   double InequalityConstrainedMethod::hessian_quadratic_product(const Vector<double>& vector) const {
-      return this->solver->hessian_quadratic_product(vector);
+   void InequalityConstrainedMethod::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
+      const Subproblem subproblem{problem, iterate, hessian_model, regularization_strategy, trust_region_radius};
+      this->solver->evaluate_constraint_jacobian(subproblem);
+   }
+
+   void InequalityConstrainedMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      this->solver->compute_constraint_jacobian_vector_product(vector, result);
+   }
+
+   void InequalityConstrainedMethod::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      this->solver->compute_constraint_jacobian_transposed_vector_product(vector, result);
+   }
+
+   double InequalityConstrainedMethod::compute_hessian_quadratic_product(const Vector<double>& vector) const {
+      return this->solver->compute_hessian_quadratic_product(vector);
    }
 
    // compute dual *displacements*
@@ -111,7 +111,7 @@ namespace uno {
       return 0.;
    }
 
-   void InequalityConstrainedMethod::postprocess_iterate(const OptimizationProblem& /*problem*/, Vector<double>& /*primals*/, Multipliers& /*multipliers*/) {
+   void InequalityConstrainedMethod::postprocess_iterate(const OptimizationProblem& /*problem*/, Iterate& /*iterate*/) {
       // do nothing
    }
 

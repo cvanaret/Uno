@@ -11,8 +11,6 @@ namespace uno {
    class Direction;
    class Statistics;
    class Subproblem;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
    template <typename ElementType>
    class Vector;
    class WarmstartInformation;
@@ -23,13 +21,16 @@ namespace uno {
       SymmetricIndefiniteLinearSolver() = default;
       virtual ~SymmetricIndefiniteLinearSolver() = default;
 
-      virtual void initialize_memory(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros,
-         size_t regularization_size) = 0;
+      virtual void initialize(const Subproblem& subproblem) = 0;
 
-      virtual void solve_indefinite_system(const SymmetricMatrix<IndexType, ElementType>& matrix, const Vector<ElementType>& rhs,
+      virtual void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<ElementType>& rhs,
          Vector<ElementType>& result) = 0;
       virtual void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) = 0;
+
+      virtual void evaluate_constraint_jacobian(const Subproblem& subproblem) = 0;
+      virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
+      virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
    };
 } // namespace
 

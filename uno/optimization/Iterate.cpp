@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include "Iterate.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
@@ -56,17 +55,6 @@ namespace uno {
          model.evaluate_objective_gradient(this->primals, this->evaluations.objective_gradient);
          this->is_objective_gradient_computed = true;
          Iterate::number_eval_objective_gradient++;
-      }
-   }
-
-   void Iterate::evaluate_constraint_jacobian(const Model& model) {
-      if (!this->is_constraint_jacobian_computed) {
-         this->evaluations.constraint_jacobian.clear();
-         if (model.is_constrained()) {
-            model.evaluate_constraint_jacobian(this->primals, this->evaluations.constraint_jacobian);
-            Iterate::number_eval_jacobian++;
-         }
-         this->is_constraint_jacobian_computed = true;
       }
    }
 

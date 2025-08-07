@@ -18,13 +18,28 @@ namespace uno {
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
 
       [[nodiscard]] double get_objective_multiplier() const override;
-      void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const override;
+
+      // constraint evaluations
       void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
-      void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const override;
-      void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-         const Multipliers& multipliers) const override;
+
+      // dense objective gradient
+      void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const override;
+
+      // sparsity patterns of Jacobian and Hessian
+      [[nodiscard]] size_t number_jacobian_nonzeros() const override;
+      [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
+      [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
+      void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+         MatrixOrder matrix_order) const override;
+      void compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
+         size_t* column_indices, size_t solver_indexing) const override;
+
+      // numerical evaluations of Jacobian and Hessian
+      void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const override;
+      void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
+         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const override;
+         const Multipliers& multipliers, Vector<double>& hessian_values) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* vector, const Multipliers& multipliers,
          double* result) const override;
 
@@ -42,10 +57,6 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
-
-      [[nodiscard]] size_t number_jacobian_nonzeros() const override;
-      [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
-      [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
 
       [[nodiscard]] IterateStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const;

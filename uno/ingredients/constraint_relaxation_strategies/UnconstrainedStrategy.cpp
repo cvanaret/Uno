@@ -22,12 +22,13 @@ namespace uno {
    }
 
    void UnconstrainedStrategy::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
-         Direction& direction, const Options& options) {
+         Direction& direction, double trust_region_radius, const Options& options) {
       const OptimizationProblem problem{model};
 
       // memory allocation
       this->hessian_model->initialize(model);
-      this->inequality_handling_method->initialize(problem, *this->hessian_model, *this->regularization_strategy);
+      this->inequality_handling_method->initialize(problem, initial_iterate, *this->hessian_model,
+         *this->regularization_strategy, trust_region_radius);
       direction = Direction(problem.number_variables, problem.number_constraints);
 
       // statistics
@@ -37,7 +38,13 @@ namespace uno {
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(problem, initial_iterate);
       this->evaluate_progress_measures(*this->inequality_handling_method, problem, initial_iterate);
-      this->compute_primal_dual_residuals(problem, initial_iterate, initial_iterate.multipliers);
+      initial_iterate.evaluate_objective_gradient(model);
+      initial_iterate.evaluate_constraints(model);
+      this->inequality_handling_method->evaluate_constraint_jacobian(problem, initial_iterate,
+         *this->hessian_model, *this->regularization_strategy, INF<double>);
+      problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, *this->inequality_handling_method,
+         initial_iterate);
+      this->compute_primal_dual_residuals(problem, initial_iterate);
    }
 
    void UnconstrainedStrategy::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& /*globalization_strategy*/,
@@ -46,7 +53,11 @@ namespace uno {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
       const OptimizationProblem problem{model};
-      this->solve_subproblem(statistics, problem, current_iterate, direction, trust_region_radius, warmstart_information);
+      direction.set_dimensions(problem.number_variables, problem.number_constraints);
+      this->inequality_handling_method->solve(statistics, problem, current_iterate, direction, *this->hessian_model,
+         *this->regularization_strategy, trust_region_radius, warmstart_information);
+      direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
+      DEBUG3 << direction << '\n';
       warmstart_information.no_changes();
    }
 
@@ -55,17 +66,9 @@ namespace uno {
    }
 
    void UnconstrainedStrategy::switch_to_feasibility_problem(Statistics& /*statistics*/, GlobalizationStrategy& /*globalization_strategy*/,
-         const Model& /*model*/, Iterate& /*current_iterate*/, WarmstartInformation& /*warmstart_information*/) {
+         const Model& /*model*/, Iterate& /*current_iterate*/, double /*trust_region_radius*/,
+         WarmstartInformation& /*warmstart_information*/) {
       throw std::runtime_error("The problem is unconstrained, switching to the feasibility problem should not happen");
-   }
-
-   void UnconstrainedStrategy::solve_subproblem(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
-      direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      this->inequality_handling_method->solve(statistics, problem, current_iterate, direction, *this->hessian_model,
-         *this->regularization_strategy, trust_region_radius, warmstart_information);
-      direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
-      DEBUG3 << direction << '\n';
    }
 
    bool UnconstrainedStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -73,15 +76,19 @@ namespace uno {
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const OptimizationProblem problem{model};
       const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
-         problem, *this->inequality_handling_method, current_iterate, trial_iterate, trial_iterate.multipliers,
-         direction, step_length, user_callbacks);
+         problem, *this->inequality_handling_method, current_iterate, trial_iterate, direction, step_length, user_callbacks);
+      trial_iterate.status = this->check_termination(model, trial_iterate);
       warmstart_information.no_changes();
       return accept_iterate;
    }
 
    IterateStatus UnconstrainedStrategy::check_termination(const Model& model, Iterate& iterate) {
+      iterate.evaluate_objective_gradient(model);
+      iterate.evaluate_constraints(model);
+
       const OptimizationProblem problem{model};
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(problem, iterate, iterate.multipliers);
+      problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, *this->inequality_handling_method, iterate);
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(problem, iterate);
       return ConstraintRelaxationStrategy::check_termination(problem, iterate);
    }
 

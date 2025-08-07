@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "IdentityHessian.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "tools/Logger.hpp"
@@ -24,6 +23,14 @@ namespace uno {
       return model.number_variables;
    }
 
+   void IdentityHessian::compute_sparsity(const Model& model, size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+      // diagonal structure
+      for (size_t variable_index: Range(model.number_variables)) {
+         row_indices[variable_index] = variable_index + solver_indexing;
+         column_indices[variable_index] = variable_index + solver_indexing;
+      }
+   }
+
    bool IdentityHessian::is_positive_definite() const {
       return true;
    }
@@ -33,12 +40,10 @@ namespace uno {
    }
 
    void IdentityHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& hessian) {
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, Vector<double>& hessian_values) {
       DEBUG << "Setting identity Hessian\n";
-      hessian.reset();
       for (size_t variable_index: Range(model.number_variables)) {
-         hessian.insert(variable_index, variable_index, 1.);
-         hessian.finalize_column(variable_index);
+         hessian_values[variable_index] = 1.;
       }
    }
 

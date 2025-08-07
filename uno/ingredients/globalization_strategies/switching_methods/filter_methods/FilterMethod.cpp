@@ -6,7 +6,6 @@
 #include "filters/FilterFactory.hpp"
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
-#include "tools/Statistics.hpp"
 
 namespace uno {
    FilterMethod::FilterMethod(const Options& options) :

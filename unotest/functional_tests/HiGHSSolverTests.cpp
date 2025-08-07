@@ -3,7 +3,6 @@
 
 #include <gtest/gtest.h>
 #include "ingredients/subproblem_solvers/HiGHS/HiGHSSolver.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"

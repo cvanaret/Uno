@@ -6,7 +6,7 @@
 
 namespace uno {
    // span of an arbitrary container: allocation-free view of a certain length
-   template <typename Expression>
+   template <typename Vector>
    class VectorView {
    public:
       /*
@@ -30,25 +30,35 @@ namespace uno {
          size_t index;
       };
    */
-      using value_type = typename std::remove_reference_t<Expression>::value_type;
+      using value_type = typename std::remove_reference_t<Vector>::value_type;
 
-      VectorView(Expression&& expression, size_t start, size_t end):
-            expression(std::forward<Expression>(expression)), start(start), end(std::min(end, expression.size())) {
+      VectorView(Vector&& vector, size_t start, size_t end):
+            vector(std::forward<Vector>(vector)), start(start), end(std::min(end, vector.size())) {
          if (end < start) {
             throw std::runtime_error("The view ends before its starting point");
          }
       }
 
+      template <typename E>
+      VectorView& operator=(const E& expression) {
+         assert(this->size() == expression.size() && "The view and the expression have different sizes");
+
+         for (size_t index: Range(this->size())) {
+            this->vector[this->start + index] = expression[index];
+         }
+         return *this;
+      }
+
       // preconditions: expression != nullptr, i < length
-      [[nodiscard]] value_type& operator[](size_t index) noexcept { return this->expression[this->start + index]; }
-      [[nodiscard]] value_type operator[](size_t index) const noexcept { return this->expression[this->start + index]; }
+      [[nodiscard]] value_type& operator[](size_t index) noexcept { return this->vector[this->start + index]; }
+      [[nodiscard]] value_type operator[](size_t index) const noexcept { return this->vector[this->start + index]; }
       [[nodiscard]] size_t size() const noexcept { return this->end - this->start; }
 
       // [[nodiscard]] iterator begin() const noexcept { return iterator(*this, 0); }
       // [[nodiscard]] iterator end() const noexcept { return iterator(*this, this->length); }
 
    protected:
-      Expression expression;
+      Vector vector;
       const size_t start;
       const size_t end;
    };
@@ -64,7 +74,6 @@ namespace uno {
       for (size_t index: Range(view.size())) {
          stream << view[index] << " ";
       }
-      stream << '\n';
       return stream;
    }
 } // namespace

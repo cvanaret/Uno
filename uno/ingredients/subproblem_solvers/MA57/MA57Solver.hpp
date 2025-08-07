@@ -7,14 +7,12 @@
 #include <array>
 #include <vector>
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/COOFormat.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
-   // forward declaration
+   // forward declarations
    class Statistics;
+   class Subproblem;
 
    struct MA57Workspace {
       int n{};
@@ -43,23 +41,16 @@ namespace uno {
       MA57Workspace() = default;
    };
 
-   /*! \class MA57Solver
-    * \brief Interface for MA57
-    * see https://github.com/YimingYAN/linSolve
-    *
-    *  Interface to the symmetric indefinite linear solver MA57
-    */
    class MA57Solver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
    public:
       MA57Solver();
       ~MA57Solver() override = default;
 
-      void initialize_memory(size_t number_variables, size_t number_constraints, size_t number_hessian_nonzeros,
-         size_t regularization_size) override;
+      void initialize(const Subproblem& subproblem) override;
 
-      void do_symbolic_analysis(const SymmetricMatrix<size_t, double>& matrix) override;
-      void do_numerical_factorization(const SymmetricMatrix<size_t, double>& matrix) override;
-      void solve_indefinite_system(const SymmetricMatrix<size_t, double>& matrix, const Vector<double>& rhs, Vector<double>& result) override;
+      void do_symbolic_analysis() override;
+      void do_numerical_factorization(const Vector<double>& matrix_values) override;
+      void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) override;
       void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) override;
 
@@ -69,27 +60,33 @@ namespace uno {
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
 
+      void evaluate_constraint_jacobian(const Subproblem& subproblem) override;
+      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+
    private:
-      size_t dimension{};
-      // internal matrix representation
-      std::vector<int> row_indices;
-      std::vector<int> column_indices;
       MA57Workspace workspace{};
 
       // evaluations
       Vector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-      RectangularMatrix<double> constraint_jacobian; /*!< Sparse Jacobian of the constraints */
+
+      // Jacobian
+      size_t number_jacobian_nonzeros{};
+      std::vector<size_t> jacobian_row_indices{};
+      std::vector<size_t> jacobian_column_indices{};
 
       // augmented system
-      SparseSymmetricMatrix<COOFormat<size_t, double>> augmented_matrix{};
+      size_t number_hessian_nonzeros{};
+      std::vector<int> augmented_matrix_row_indices{};
+      std::vector<int> augmented_matrix_column_indices{};
+      Vector<double> augmented_matrix_values{};
       Vector<double> rhs{};
       Vector<double> solution{};
 
       static constexpr size_t fortran_shift{1};
 
       bool use_iterative_refinement{false};
-      void save_sparsity_pattern_internally(const SymmetricMatrix<size_t, double>& matrix);
    };
 } // namespace
 

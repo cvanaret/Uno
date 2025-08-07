@@ -15,23 +15,36 @@ namespace uno {
    public:
       BoundRelaxedModel(std::unique_ptr<Model> original_model, const Options& options);
 
+      // function evaluations
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override { return this->model->evaluate_objective(x); }
-      void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override {
-         this->model->evaluate_objective_gradient(x, gradient);
-      }
       void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override {
          this->model->evaluate_constraints(x, constraints);
       }
-      void evaluate_constraint_gradient(const Vector<double>& x, size_t constraint_index, SparseVector<double>& gradient) const override {
-         this->model->evaluate_constraint_gradient(x, constraint_index, gradient);
+
+      // dense objective gradient
+      void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override {
+         this->model->evaluate_objective_gradient(x, gradient);
       }
-      void evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const override {
-         this->model->evaluate_constraint_jacobian(x, constraint_jacobian);
+
+      // sparsity patterns of Jacobian and Hessian
+      void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+            MatrixOrder matrix_order) const override {
+         this->model->compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
       }
+
+      void compute_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const override {
+         this->model->compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
+      }
+
+      void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override {
+         this->model->evaluate_constraint_jacobian(x, jacobian_values);
+      }
+
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-            SymmetricMatrix<size_t, double>& hessian) const override {
-         this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian);
+            Vector<double>& hessian_values) const override {
+         this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
       }
+
       void compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
             double* result) const override {
          this->model->compute_hessian_vector_product(vector, objective_multiplier, multipliers, result);

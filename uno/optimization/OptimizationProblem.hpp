@@ -5,6 +5,7 @@
 #define UNO_OPTIMIZATIONPROBLEM_H
 
 #include <vector>
+#include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "model/Model.hpp"
 #include "optimization/IterateStatus.hpp"
@@ -14,17 +15,14 @@ namespace uno {
    // forward declarations
    template <typename ElementType>
    class Collection;
+   template <typename IndexType>
+   class COOMatrix;
    class Direction;
    class HessianModel;
+   class InequalityHandlingMethod;
    class Iterate;
    class Multipliers;
-   template <typename ElementType>
-   class RectangularMatrix;
-   template <typename ElementType>
-   class SparseVector;
    class Statistics;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
 
    class OptimizationProblem {
    public:
@@ -36,15 +34,29 @@ namespace uno {
       const size_t number_variables; /*!< Number of variables */
       const size_t number_constraints; /*!< Number of constraints */
 
-      // function evaluations
       [[nodiscard]] virtual double get_objective_multiplier() const;
-      virtual void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const;
+
+      // constraint evaluations
       virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const;
-      virtual void evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const;
-      virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient, Iterate& iterate,
-         const Multipliers& multipliers) const;
+
+      // dense objective gradient
+      virtual void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const;
+
+      // sparsity patterns of Jacobian and Hessian
+      [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
+      [[nodiscard]] virtual bool has_curvature(const HessianModel& hessian_model) const;
+      [[nodiscard]] virtual size_t number_hessian_nonzeros(const HessianModel& hessian_model) const;
+      virtual void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+         MatrixOrder matrix_order) const;
+      virtual void compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
+         size_t* column_indices, size_t solver_indexing) const;
+
+      // numerical evaluations of Jacobian and Hessian
+      virtual void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const;
+      virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
+         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const;
+         const Multipliers& multipliers, Vector<double>& hessian_values) const;
       virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,
          const Multipliers& multipliers, double* result) const;
 
@@ -63,10 +75,6 @@ namespace uno {
       [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const;
       [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const;
       [[nodiscard]] virtual const Collection<size_t>& get_dual_regularization_constraints() const;
-
-      [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
-      [[nodiscard]] virtual bool has_curvature(const HessianModel& hessian_model) const;
-      [[nodiscard]] virtual size_t number_hessian_nonzeros(const HessianModel& hessian_model) const;
 
       virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
       [[nodiscard]] virtual double dual_regularization_factor() const;

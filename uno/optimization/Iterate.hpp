@@ -52,7 +52,6 @@ namespace uno {
       void evaluate_objective(const Model& model);
       void evaluate_constraints(const Model& model);
       void evaluate_objective_gradient(const Model& model);
-      void evaluate_constraint_jacobian(const Model& model);
 
       void set_number_variables(size_t number_variables);
 

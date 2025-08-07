@@ -9,9 +9,6 @@
 #include <vector>
 #include "ingredients/subproblem_solvers/QPSolver.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
-#include "linear_algebra/COOFormat.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
-#include "linear_algebra/SparseSymmetricMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -19,8 +16,6 @@ namespace uno {
    class Multipliers;
    class Options;
    class Subproblem;
-   template <typename IndexType, typename ElementType>
-   class SymmetricMatrix;
 
    // see bqpd.f
    enum class BQPDStatus {
@@ -49,22 +44,30 @@ namespace uno {
    public:
       explicit BQPDSolver(const Options& options);
 
-      void initialize_memory(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         const RegularizationStrategy<double>& regularization_strategy) override;
+      void initialize_memory(const Subproblem& subproblem) override;
 
       void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override;
 
-      [[nodiscard]] double hessian_quadratic_product(const Vector<double>& vector) const override;
+      void evaluate_constraint_jacobian(const Subproblem& subproblem) override;
+      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      [[nodiscard]] double compute_hessian_quadratic_product(const Vector<double>& vector) const override;
 
    private:
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
       std::vector<double> constraints{};
-      Vector<double> linear_objective{};
-      RectangularMatrix<double> constraint_jacobian{};
-      std::vector<double> bqpd_jacobian{};
-      std::vector<int> bqpd_jacobian_sparsity{};
-      SparseSymmetricMatrix<COOFormat<size_t, double>> hessian{};
+      Vector<double> gradients{};
+      Vector<int> gradient_sparsity{};
+      // COO constraint Jacobian
+      Vector<size_t> jacobian_row_indices;
+      Vector<size_t> jacobian_column_indices;
+      Vector<double> jacobian_values;
+      Vector<size_t> permutation_vector;
+      // COO Hessian
+      Vector<size_t> hessian_row_indices{};
+      Vector<size_t> hessian_column_indices{};
+      Vector<double> hessian_values{};
 
       int kmax{0};
       int mlp{1000};
@@ -92,7 +95,7 @@ namespace uno {
          const WarmstartInformation& warmstart_information);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
       void hide_pointers_in_workspace(Statistics& statistics, const Subproblem& subproblem);
-      void save_gradients_into_workspace(size_t number_variables, size_t number_constraints);
+      void compute_gradients_sparsity(const Subproblem& subproblem);
       void set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const;
       [[nodiscard]] static BQPDStatus bqpd_status_from_int(int ifail);
       [[nodiscard]] bool check_sufficient_workspace_size(BQPDStatus bqpd_status);
