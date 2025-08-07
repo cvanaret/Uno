@@ -116,10 +116,10 @@ namespace uno {
          statistics.set("status", "0 primal step");
       }
       else {
-         const ProgressMeasures predicted_reduction = ConstraintRelaxationStrategy::compute_predicted_reductions(inequality_handling_method,
+         const ProgressMeasures predicted_reductions = ConstraintRelaxationStrategy::compute_predicted_reductions(inequality_handling_method,
             problem, current_iterate, direction, step_length);
          accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
-            predicted_reduction, objective_multiplier);
+            predicted_reductions, objective_multiplier);
       }
       if (accept_iterate) {
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, objective_multiplier);
