@@ -56,7 +56,7 @@ namespace uno {
       return this->reformulated_problem.number_jacobian_nonzeros();
    }
 
-   bool ExponentialBarrierProblem::has_curvature(const HessianModel& hessian_model) const {
+   bool ExponentialBarrierProblem::has_curvature(const HessianModel& /*hessian_model*/) const {
       return true; // TODO
    }
 
@@ -123,7 +123,7 @@ namespace uno {
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_primal_regularization_variables() const {
-
+      return this->reformulated_problem.get_primal_regularization_variables();
    }
 
    double ExponentialBarrierProblem::constraint_lower_bound(size_t constraint_index) const {
