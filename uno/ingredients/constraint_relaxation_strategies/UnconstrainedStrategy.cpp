@@ -93,8 +93,6 @@ namespace uno {
       iterate.evaluate_constraints(model);
 
       const OptimizationProblem problem{model};
-      problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, *this->inequality_handling_method,
-            iterate);
       problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, *this->inequality_handling_method, iterate);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(problem, iterate);
       return ConstraintRelaxationStrategy::check_termination(problem, iterate);
