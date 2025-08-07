@@ -259,7 +259,7 @@ namespace uno {
          subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix_values, subproblem.dual_regularization_factor(), *this);
 
          // assemble the RHS
-         const COOMatrixView jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+         const COOMatrix jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
             this->augmented_matrix_values.data() + this->number_hessian_nonzeros};
          subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, jacobian, this->rhs);
       }

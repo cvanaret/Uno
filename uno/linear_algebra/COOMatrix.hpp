@@ -29,13 +29,13 @@ namespace uno {
    */
 
    template <typename IndexType>
-   class COOMatrixView: public Matrix<IndexType> {
+   class COOMatrix: public Matrix<IndexType> {
    public:
       IndexType* row_indices;
       IndexType* column_indices;
       double* values;
 
-      COOMatrixView(IndexType* row_indices, IndexType* column_indices, double* values):
+      COOMatrix(IndexType* row_indices, IndexType* column_indices, double* values):
          row_indices(row_indices), column_indices(column_indices), values(values) { }
 
       std::tuple<IndexType, IndexType, double> operator[](size_t nonzero_index) const override {

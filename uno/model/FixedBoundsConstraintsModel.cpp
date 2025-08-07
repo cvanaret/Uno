@@ -71,7 +71,7 @@ namespace uno {
       this->model->evaluate_constraint_jacobian(x, jacobian_values);
       // add the fixed variables
       size_t nonzero_index = this->model->number_jacobian_nonzeros();
-      for (size_t _: this->model->get_fixed_variables()) {
+      for ([[maybe_unused]] size_t _: this->model->get_fixed_variables()) {
          jacobian_values[nonzero_index] = 1.;
          ++nonzero_index;
       }

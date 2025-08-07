@@ -95,7 +95,7 @@ namespace uno {
 
       // add the slack contributions
       size_t nonzero_index = this->model->number_jacobian_nonzeros();
-      for (const auto _: this->get_slacks()) {
+      for ([[maybe_unused]] const auto _: this->get_slacks()) {
          jacobian_values[nonzero_index] = -1.;
          ++nonzero_index;
       }

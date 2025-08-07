@@ -1,11 +1,9 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <iostream>
 #include "OptimizationProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
-#include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Expression.hpp"

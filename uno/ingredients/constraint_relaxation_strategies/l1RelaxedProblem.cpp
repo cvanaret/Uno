@@ -157,7 +157,7 @@ namespace uno {
          }
          ++nonzero_index;
       }
-      for (size_t _: this->model.get_equality_constraints()) {
+      for ([[maybe_unused]] size_t _: this->model.get_equality_constraints()) {
          jacobian_values[nonzero_index] = 1.;
          jacobian_values[nonzero_index + 1] = -1.;
          nonzero_index += 2;
