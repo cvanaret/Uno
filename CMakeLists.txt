@@ -77,7 +77,6 @@ file(GLOB UNO_SOURCE_FILES
    uno/model/*.cpp
    uno/optimization/*.cpp
    uno/options/*.cpp
-   uno/preprocessing/*.cpp
    uno/tools/*.cpp
 )
 

@@ -11,7 +11,6 @@
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
-#include "preprocessing/Preprocessing.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
@@ -54,9 +53,6 @@ namespace uno {
 
    void PrimalDualInteriorPointMethod::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
       // TODO: enforce linear constraints at initial point
-      //if (options.get_bool("enforce_linear_constraints")) {
-      //   Preprocessing::enforce_linear_constraints(problem.model, initial_iterate.primals, initial_iterate.multipliers, this->solver);
-      //}
 
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
 
@@ -91,10 +87,8 @@ namespace uno {
          initial_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
       }
 
-      // compute least-square multipliers
       if (0 < problem.number_constraints) {
-         Preprocessing::compute_least_square_multipliers(problem.model, *this->linear_solver, initial_iterate,
-            initial_iterate.multipliers.constraints, this->least_square_multiplier_max_norm);
+         // TODO compute least-square multipliers
       }
    }
 
@@ -170,10 +164,7 @@ namespace uno {
       //assert(this->solving_feasibility_problem && "The barrier subproblem did not know it was solving the feasibility problem.");
       this->barrier_parameter_update_strategy.set_barrier_parameter(this->previous_barrier_parameter);
       this->solving_feasibility_problem = false;
-      /*
-      Preprocessing::compute_least_square_multipliers(problem.model, *this->linear_solver, trial_iterate,
-         trial_iterate.multipliers.constraints, this->least_square_multiplier_max_norm);
-      */
+      // TODO compute least-square multipliers
    }
 
    // set the elastic variables of the current iterate
