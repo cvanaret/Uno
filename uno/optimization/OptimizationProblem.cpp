@@ -194,13 +194,14 @@ namespace uno {
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
    }
 
-   IterateStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double tolerance) const {
+   IterateStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
+         double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions
-      const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= tolerance);
-      const bool primal_feasibility = (current_iterate.primal_feasibility <= tolerance);
-      const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= tolerance);
+      const bool stationarity = (current_iterate.residuals.stationarity / current_iterate.residuals.stationarity_scaling <= dual_tolerance);
+      const bool primal_feasibility = (current_iterate.primal_feasibility <= primal_tolerance);
+      const bool complementarity = (current_iterate.residuals.complementarity / current_iterate.residuals.complementarity_scaling <= dual_tolerance);
 
-      DEBUG << "Termination criteria for tolerance = " << tolerance << ":\n";
+      DEBUG << "Termination criteria for primal-dual tolerances = (" << primal_tolerance << ", " << dual_tolerance << "):\n";
       DEBUG << "Stationarity: " << std::boolalpha << stationarity << '\n';
       DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
       DEBUG << "Complementarity: " << std::boolalpha << complementarity << '\n';

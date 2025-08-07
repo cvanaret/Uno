@@ -21,8 +21,9 @@ namespace uno {
          progress_norm(norm_from_string(options.get_string("progress_norm"))),
          residual_norm(norm_from_string(options.get_string("residual_norm"))),
          residual_scaling_threshold(options.get_double("residual_scaling_threshold")),
-         tight_tolerance(options.get_double("tolerance")),
-         loose_tolerance(options.get_double("loose_tolerance")),
+         primal_tolerance(options.get_double("primal_tolerance")),
+         dual_tolerance(options.get_double("dual_tolerance")),
+         loose_dual_tolerance(options.get_double("loose_dual_tolerance")),
          loose_tolerance_consecutive_iteration_threshold(options.get_unsigned_int("loose_tolerance_consecutive_iteration_threshold")),
          unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")),
          first_order_predicted_reduction(options.get_string("globalization_mechanism") == "LS") {

@@ -32,7 +32,7 @@ namespace uno {
          feasibility_regularization_strategy(RegularizationStrategyFactory::create(options)),
          optimality_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
          feasibility_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
-         linear_feasibility_tolerance(options.get_double("tolerance")),
+         linear_feasibility_tolerance(options.get_double("primal_tolerance")),
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
    }
 

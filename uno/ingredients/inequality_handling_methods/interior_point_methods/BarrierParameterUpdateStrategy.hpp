@@ -29,7 +29,7 @@ namespace uno {
 
    protected:
       double barrier_parameter;
-      const double tolerance;
+      const double dual_tolerance;
       const UpdateParameters parameters;
    };
 } // namespace

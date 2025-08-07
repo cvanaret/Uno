@@ -25,7 +25,7 @@ namespace uno {
          activity_tolerance(options.get_double("TR_activity_tolerance")),
          minimum_radius(options.get_double("TR_min_radius")),
          radius_reset_threshold(options.get_double("TR_radius_reset_threshold")),
-         tolerance(options.get_double("tolerance")) {
+         primal_tolerance(options.get_double("primal_tolerance")) {
       assert(0 < this->radius && "The trust-region radius should be positive");
       assert(1. < this->increase_factor && "The trust-region increase factor should be > 1");
       assert(1. < this->decrease_factor && "The trust-region decrease factor should be > 1");
@@ -148,7 +148,7 @@ namespace uno {
    // check whether a rejected step with very small norm can be tolerated
    bool TrustRegionStrategy::check_termination_with_small_step(Iterate& trial_iterate) const {
       // terminate with a feasible point
-      if (trial_iterate.progress.infeasibility <= this->tolerance) {
+      if (trial_iterate.progress.infeasibility <= this->primal_tolerance) {
          trial_iterate.status = IterateStatus::FEASIBLE_SMALL_STEP;
          return true;
       }

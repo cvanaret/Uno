@@ -11,10 +11,12 @@ namespace uno {
       Options options(true);
 
       /** termination **/
-      // (tight) tolerance
-      options["tolerance"] = "1e-8";
-      // loose tolerance used if tight tolerance cannot be reached
-      options["loose_tolerance"] = "1e-6";
+      // primal tolerance (constraint violation)
+      options["primal_tolerance"] = "1e-8";
+      // dual tolerance (stationarity and complementarity)
+      options["dual_tolerance"] = "1e-8";
+      // loose tolerance used if dual tolerance cannot be reached
+      options["loose_dual_tolerance"] = "1e-6";
       // number of iterations during which the loose tolerance is monitored
       options["loose_tolerance_consecutive_iteration_threshold"] = "15";
       // maximum outer iterations

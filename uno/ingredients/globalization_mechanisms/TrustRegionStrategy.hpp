@@ -27,7 +27,7 @@ namespace uno {
       const double activity_tolerance;
       const double minimum_radius;
       const double radius_reset_threshold;
-      const double tolerance;
+      const double primal_tolerance;
 
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,

@@ -56,8 +56,9 @@ namespace uno {
       const Norm progress_norm;
       const Norm residual_norm;
       const double residual_scaling_threshold;
-      const double tight_tolerance; /*!< Tight tolerance of the termination criteria */
-      const double loose_tolerance; /*!< Loose tolerance of the termination criteria */
+      const double primal_tolerance;
+      const double dual_tolerance;
+      const double loose_dual_tolerance;
       size_t loose_tolerance_consecutive_iterations{0};
       const size_t loose_tolerance_consecutive_iteration_threshold;
       const double unbounded_objective_threshold;
@@ -96,13 +97,15 @@ namespace uno {
       }
 
       // test convergence wrt the tight tolerance
-      const IterateStatus status_tight_tolerance = problem.check_first_order_convergence(iterate, this->tight_tolerance);
-      if (status_tight_tolerance != IterateStatus::NOT_OPTIMAL || this->loose_tolerance <= this->tight_tolerance) {
+      const IterateStatus status_tight_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
+         this->dual_tolerance);
+      if (status_tight_tolerance != IterateStatus::NOT_OPTIMAL || this->loose_dual_tolerance <= this->primal_tolerance) {
          return status_tight_tolerance;
       }
 
       // if not converged, check convergence wrt loose tolerance (provided it is strictly looser than the tight tolerance)
-      const IterateStatus status_loose_tolerance = problem.check_first_order_convergence(iterate, this->loose_tolerance);
+      const IterateStatus status_loose_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
+         this->loose_dual_tolerance);
       // if converged, keep track of the number of consecutive iterations
       if (status_loose_tolerance != IterateStatus::NOT_OPTIMAL) {
          this->loose_tolerance_consecutive_iterations++;
