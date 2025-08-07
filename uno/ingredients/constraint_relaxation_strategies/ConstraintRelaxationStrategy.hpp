@@ -77,8 +77,7 @@ namespace uno {
          const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction, double step_length) const;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method, Iterate& current_iterate,
-         Iterate& trial_iterate, Multipliers& trial_multipliers, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) const;
+         Iterate& trial_iterate, const Direction& direction, double step_length, UserCallbacks& user_callbacks) const;
       virtual void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
          const OptimizationProblem& problem, Iterate& iterate) const = 0;
 

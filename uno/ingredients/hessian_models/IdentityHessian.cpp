@@ -29,7 +29,12 @@ namespace uno {
    }
 
    void IdentityHessian::initialize(const Model& /*model*/) {
-      // do nothing
+   }
+
+   void IdentityHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+   }
+
+   void IdentityHessian::notify_accepted_iterate(const Model& /*model*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
    }
 
    void IdentityHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,

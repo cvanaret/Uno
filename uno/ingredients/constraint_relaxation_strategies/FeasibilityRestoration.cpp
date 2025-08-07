@@ -26,8 +26,8 @@ namespace uno {
    FeasibilityRestoration::FeasibilityRestoration(const Options& options) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         optimality_hessian_model(HessianModelFactory::create(options)),
-         feasibility_hessian_model(HessianModelFactory::create(options)),
+         optimality_hessian_model(HessianModelFactory::create(1., options)),
+         feasibility_hessian_model(HessianModelFactory::create(0., options)),
          optimality_regularization_strategy(RegularizationStrategyFactory::create(options)),
          feasibility_regularization_strategy(RegularizationStrategyFactory::create(options)),
          optimality_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
@@ -58,6 +58,8 @@ namespace uno {
       );
 
       // statistics
+      this->optimality_hessian_model->initialize_statistics(statistics, options);
+      this->feasibility_hessian_model->initialize_statistics(statistics, options);
       this->optimality_regularization_strategy->initialize_statistics(statistics, options);
       this->feasibility_regularization_strategy->initialize_statistics(statistics, options);
       this->optimality_inequality_handling_method->initialize_statistics(statistics, options);
@@ -187,13 +189,19 @@ namespace uno {
          const OptimizationProblem optimality_problem{model};
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
             optimality_problem, *this->optimality_inequality_handling_method, current_iterate, trial_iterate,
-            trial_iterate.multipliers, direction, step_length, user_callbacks);
+            direction, step_length, user_callbacks);
+         if (accept_iterate) {
+            this->optimality_hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
+         }
       }
       else {
          const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
             feasibility_problem, *this->feasibility_inequality_handling_method, current_iterate, trial_iterate,
-            trial_iterate.multipliers, direction, step_length, user_callbacks);
+            direction, step_length, user_callbacks);
+         if (accept_iterate) {
+            this->feasibility_hessian_model->notify_accepted_iterate(model, current_iterate, trial_iterate);
+         }
       }
 
       // possibly go from restoration phase to optimality phase

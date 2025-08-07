@@ -100,9 +100,9 @@ namespace uno {
 
    bool ConstraintRelaxationStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method, Iterate& current_iterate,
-         Iterate& trial_iterate, Multipliers& trial_multipliers, const Direction& direction, double step_length,
+         Iterate& trial_iterate, const Direction& direction, double step_length,
          UserCallbacks& user_callbacks) const {
-      inequality_handling_method.postprocess_iterate(problem, trial_iterate.primals, trial_multipliers);
+      inequality_handling_method.postprocess_iterate(problem, trial_iterate.primals, trial_iterate.multipliers);
       const double objective_multiplier = problem.get_objective_multiplier();
       trial_iterate.objective_multiplier = objective_multiplier;
       this->compute_progress_measures(inequality_handling_method, problem, globalization_strategy, current_iterate, trial_iterate);
@@ -121,7 +121,7 @@ namespace uno {
             predicted_reduction, objective_multiplier);
       }
       if (accept_iterate) {
-         user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_multipliers, objective_multiplier);
+         user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, objective_multiplier);
       }
       return accept_iterate;
    }

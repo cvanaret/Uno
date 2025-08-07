@@ -89,17 +89,25 @@ namespace uno {
       }
 
       // Hessian: determine whether the subproblem has curvature
-      const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
-      const size_t regularization_size = (!hessian_model.is_positive_definite() &&
-         regularization_strategy.performs_primal_regularization()) ? problem.get_number_original_variables() : 0;
+      bool subproblem_has_curvature = problem.has_curvature(hessian_model);
+      if (!subproblem_has_curvature) {
+         if (!hessian_model.is_positive_definite() && regularization_strategy.performs_primal_regularization()) {
+            subproblem_has_curvature = !problem.get_primal_regularization_variables().empty();
+         }
+         else {
+            subproblem_has_curvature = false;
+         }
+      }
+      this->kmax = subproblem_has_curvature ? pick_kmax_heuristically(problem.number_variables, problem.number_constraints) : 0;
+
       // if the Hessian model only has an explicit representation, allocate an explicit Hessian matrix
-      if (!hessian_model.has_implicit_representation() && hessian_model.has_explicit_representation()) {
+      if (subproblem_has_curvature && !hessian_model.has_implicit_representation() && hessian_model.has_explicit_representation()) {
+         const size_t number_hessian_nonzeros = problem.number_hessian_nonzeros(hessian_model);
+         const size_t regularization_size = (!hessian_model.is_positive_definite() &&
+            regularization_strategy.performs_primal_regularization()) ? problem.get_number_original_variables() : 0;
          this->hessian = SparseSymmetricMatrix<COOFormat<size_t, double>>(problem.number_variables,
             number_hessian_nonzeros, regularization_size);
       }
-      const size_t number_regularized_hessian_nonzeros = number_hessian_nonzeros + regularization_size;
-      this->kmax = (0 < number_regularized_hessian_nonzeros) ? pick_kmax_heuristically(problem.number_variables,
-         problem.number_constraints) : 0;
 
       // allocation of integer and real workspaces
       this->mxws = static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * problem.number_variables +
