@@ -36,7 +36,7 @@ namespace uno {
             " equality, " << model->get_inequality_constraints().size() << " inequality)\n";
 
          // initialize initial primal and dual points
-         Iterate initial_iterate(model->number_variables, model->number_constraints, model->number_jacobian_nonzeros());
+         Iterate initial_iterate(model->number_variables, model->number_constraints);
          model->initial_primal_point(initial_iterate.primals);
          model->project_onto_variable_bounds(initial_iterate.primals);
          model->initial_dual_point(initial_iterate.multipliers.constraints);

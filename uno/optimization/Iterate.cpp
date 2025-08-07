@@ -13,10 +13,10 @@ namespace uno {
    size_t Iterate::number_eval_objective_gradient = 0;
    size_t Iterate::number_eval_jacobian = 0;
 
-   Iterate::Iterate(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzero) :
+   Iterate::Iterate(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
          primals(number_variables), multipliers(number_variables, number_constraints),
-         evaluations(number_variables, number_constraints, number_jacobian_nonzero), residuals(number_variables) {
+         evaluations(number_variables, number_constraints), residuals(number_variables) {
    }
 
    void Iterate::evaluate_objective(const Model& model) {
@@ -55,16 +55,6 @@ namespace uno {
          model.evaluate_objective_gradient(this->primals, this->evaluations.objective_gradient);
          this->is_objective_gradient_computed = true;
          Iterate::number_eval_objective_gradient++;
-      }
-   }
-
-   void Iterate::evaluate_constraint_jacobian(const Model& model) {
-      if (!this->is_constraint_jacobian_computed) {
-         if (model.is_constrained()) {
-            model.evaluate_constraint_jacobian(this->primals, this->evaluations.jacobian_values.data());
-            Iterate::number_eval_jacobian++;
-         }
-         this->is_constraint_jacobian_computed = true;
       }
    }
 

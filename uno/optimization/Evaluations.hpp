@@ -14,13 +14,11 @@ namespace uno {
       std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
       std::vector<double> linearized_constraints;
       Vector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
-      Vector<double> jacobian_values; /*!< Sparse Jacobian of the constraints */
 
-      Evaluations(size_t number_variables, size_t number_constraints, size_t number_jacobian_nonzeros):
+      Evaluations(size_t number_variables, size_t number_constraints):
             constraints(number_constraints),
             linearized_constraints(number_constraints),
-            objective_gradient(number_variables),
-            jacobian_values(number_jacobian_nonzeros) {
+            objective_gradient(number_variables) {
       }
    };
 } // namespace
