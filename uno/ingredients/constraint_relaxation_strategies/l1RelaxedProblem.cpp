@@ -197,14 +197,15 @@ namespace uno {
       }
    }
 
-   IterateStatus l1RelaxedProblem::check_first_order_convergence(const Iterate& current_iterate, double tolerance) const {
+   IterateStatus l1RelaxedProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
+         double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions
-      const bool feasibility_stationarity = (current_iterate.residuals.stationarity <= tolerance);
-      const bool primal_feasibility = (current_iterate.primal_feasibility <= tolerance);
-      const bool feasibility_complementarity = (current_iterate.residuals.complementarity <= tolerance);
-      const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(this->model.number_variables, tolerance);
+      const bool feasibility_stationarity = (current_iterate.residuals.stationarity <= dual_tolerance);
+      const bool primal_feasibility = (current_iterate.primal_feasibility <= primal_tolerance);
+      const bool feasibility_complementarity = (current_iterate.residuals.complementarity <= dual_tolerance);
+      const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(this->model.number_variables, dual_tolerance);
 
-      DEBUG << "Termination criteria for tolerance = " << tolerance << ":\n";
+      DEBUG << "Termination criteria for primal-dual tolerances = (" << primal_tolerance << ", " << dual_tolerance << "):\n";
       DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
       DEBUG << "Feasibility stationarity: " << std::boolalpha << feasibility_stationarity << '\n';
       DEBUG << "Feasibility complementarity: " << std::boolalpha << feasibility_complementarity << '\n';

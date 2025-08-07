@@ -76,7 +76,8 @@ namespace uno {
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
 
-      [[nodiscard]] IterateStatus check_first_order_convergence(const Iterate& current_iterate, double tolerance) const;
+      [[nodiscard]] IterateStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
+         double dual_tolerance) const;
 
    protected:
       const ForwardRange primal_regularization_variables;

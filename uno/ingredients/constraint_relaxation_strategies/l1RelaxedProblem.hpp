@@ -47,7 +47,8 @@ namespace uno {
       [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
 
-      [[nodiscard]] IterateStatus check_first_order_convergence(const Iterate& current_iterate, double tolerance) const;
+      [[nodiscard]] IterateStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
+         double dual_tolerance) const;
 
       // parameterization
       void set_proximal_multiplier(double new_proximal_coefficient);

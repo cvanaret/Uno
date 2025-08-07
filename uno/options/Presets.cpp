@@ -58,8 +58,9 @@ namespace uno {
          options["progress_norm"] = "L1";
          options["residual_norm"] = "INF";
          options["scale_functions"] = "yes";
-         options["tolerance"] = "1e-8";
-         options["loose_tolerance"] = "1e-6";
+         options["primal_tolerance"] = "1e-8";
+         options["dual_tolerance"] = "1e-8";
+         options["loose_dual_tolerance"] = "1e-6";
          options["loose_tolerance_consecutive_iteration_threshold"] = "15";
          options["switch_to_optimality_requires_linearized_feasibility"] = "no";
          options["LS_scale_duals_with_step_length"] = "yes";
@@ -78,8 +79,9 @@ namespace uno {
          options["TR_radius"] = "10";
          options["l1_constraint_violation_coefficient"] = "1.";
          options["enforce_linear_constraints"] = "yes";
-         options["tolerance"] = "1e-6";
-         options["loose_tolerance"] = "1e-6";
+         options["primal_tolerance"] = "1e-6";
+         options["dual_tolerance"] = "1e-6";
+         options["loose_dual_tolerance"] = "1e-6";
          options["TR_min_radius"] = "1e-8";
          options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
          options["protect_actual_reduction_against_roundoff"] = "no";
@@ -96,8 +98,9 @@ namespace uno {
          options["TR_radius"] = "10";
          options["l1_constraint_violation_coefficient"] = "1.";
          options["enforce_linear_constraints"] = "yes";
-         options["tolerance"] = "1e-6";
-         options["loose_tolerance"] = "1e-6";
+         options["primal_tolerance"] = "1e-6";
+         options["dual_tolerance"] = "1e-6";
+         options["loose_dual_tolerance"] = "1e-6";
          options["TR_min_radius"] = "1e-8";
          options["switch_to_optimality_requires_acceptance"] = "no";
          options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
@@ -124,8 +127,9 @@ namespace uno {
          options["TR_radius"] = "10";
          options["l1_constraint_violation_coefficient"] = "1.";
          options["enforce_linear_constraints"] = "yes";
-         options["tolerance"] = "1e-5";
-         options["loose_tolerance"] = "1e-4";
+         options["primal_tolerance"] = "1e-5";
+         options["dual_tolerance"] = "1e-5";
+         options["loose_dual_tolerance"] = "1e-4";
          options["TR_min_radius"] = "1e-8";
          options["switch_to_optimality_requires_linearized_feasibility"] = "yes";
          options["protect_actual_reduction_against_roundoff"] = "no";

@@ -10,7 +10,7 @@ namespace uno {
          Model(original_model->name + " -> bounds relaxed", original_model->number_variables, original_model->number_constraints,
                original_model->objective_sign),
          model(std::move(original_model)),
-         relaxation_factor(options.get_double("tolerance")) {
+         relaxation_factor(options.get_double("primal_tolerance")) {
    }
 
    double BoundRelaxedModel::variable_lower_bound(size_t variable_index) const {
