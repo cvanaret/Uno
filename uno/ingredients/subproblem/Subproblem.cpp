@@ -39,8 +39,6 @@ namespace uno {
 
    void Subproblem::compute_regularized_augmented_matrix_sparsity(size_t* row_indices, size_t* column_indices,
          const size_t* jacobian_row_indices, const size_t* jacobian_column_indices, size_t solver_indexing) const {
-      const size_t indexing = static_cast<size_t>(solver_indexing);
-
       // sparsity of original Lagrangian Hessian in the (1, 1) block
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
@@ -48,24 +46,24 @@ namespace uno {
       const size_t hessian_offset = this->number_hessian_nonzeros();
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
          // to get the transpose, switch the order of the row/column vectors
-         row_indices[hessian_offset + nonzero_index] = jacobian_column_indices[nonzero_index] + indexing;
-         column_indices[hessian_offset + nonzero_index] = this->problem.number_variables + jacobian_row_indices[nonzero_index] + indexing;
+         row_indices[hessian_offset + nonzero_index] = jacobian_column_indices[nonzero_index] + solver_indexing;
+         column_indices[hessian_offset + nonzero_index] = this->problem.number_variables + jacobian_row_indices[nonzero_index] + solver_indexing;
       }
 
       // regularize the augmented matrix only if required (diagonal regularization)
       size_t current_index = hessian_offset + this->problem.number_jacobian_nonzeros();
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
          for (size_t variable_index: this->get_primal_regularization_variables()) {
-            row_indices[current_index] = variable_index + indexing;
-            column_indices[current_index] = variable_index + indexing;
+            row_indices[current_index] = variable_index + solver_indexing;
+            column_indices[current_index] = variable_index + solver_indexing;
             ++current_index;
          }
       }
       if (this->regularization_strategy.performs_dual_regularization()) {
          for (size_t constraint_index: this->get_dual_regularization_constraints()) {
             const size_t shifted_constraint_index = this->number_variables + constraint_index;
-            row_indices[current_index] = shifted_constraint_index + indexing;
-            column_indices[current_index] = shifted_constraint_index + indexing;
+            row_indices[current_index] = shifted_constraint_index + solver_indexing;
+            column_indices[current_index] = shifted_constraint_index + solver_indexing;
             ++current_index;
          }
       }
@@ -126,9 +124,7 @@ namespace uno {
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const {
       const Inertia expected_inertia{this->number_variables, this->number_constraints, 0};
 
-      const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
-      const size_t number_jacobian_nonzeros = this->problem.number_jacobian_nonzeros();
-      const size_t offset = number_hessian_nonzeros + number_jacobian_nonzeros;
+      const size_t offset = this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
       const auto primal_regularization_values = view(augmented_matrix_values, offset,
          offset + this->get_primal_regularization_variables().size());
       const auto dual_regularization_values = view(augmented_matrix_values, offset + this->get_primal_regularization_variables().size(),
