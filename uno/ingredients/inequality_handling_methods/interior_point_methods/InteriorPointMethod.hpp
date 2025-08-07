@@ -9,6 +9,7 @@
 #include "../InequalityHandlingMethod.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 #include "InteriorPointParameters.hpp"
+#include "barrier_problems/PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
