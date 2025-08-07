@@ -9,6 +9,7 @@
 #include "../InequalityHandlingMethod.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 #include "InteriorPointParameters.hpp"
+#include "barrier_problems/PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
@@ -106,7 +107,7 @@ namespace uno {
          throw std::runtime_error("The problem has fixed variables. Move them to the set of general constraints.");
       }
       const BarrierProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-      const Subproblem subproblem{problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
+      const Subproblem subproblem{barrier_problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
       this->linear_solver->initialize(subproblem);
    }
 
@@ -285,6 +286,27 @@ namespace uno {
    template <typename BarrierProblem>
    double InteriorPointMethod<BarrierProblem>::proximal_coefficient() const {
       return std::sqrt(this->barrier_parameter());
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
+      // create the subproblem
+      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
+      const Subproblem subproblem{barrier_problem, iterate, hessian_model, regularization_strategy, trust_region_radius};
+      this->linear_solver->evaluate_constraint_jacobian(subproblem);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::compute_constraint_jacobian_vector_product(const Vector<double>& vector,
+         Vector<double>& result) const {
+      this->linear_solver->compute_constraint_jacobian_vector_product(vector, result);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector,
+         Vector<double>& result) const {
+      this->linear_solver->compute_constraint_jacobian_transposed_vector_product(vector, result);
    }
 
    template <typename BarrierProblem>

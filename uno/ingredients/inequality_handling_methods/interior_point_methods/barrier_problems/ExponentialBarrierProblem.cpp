@@ -20,19 +20,6 @@ namespace uno {
       }
    }
 
-   size_t ExponentialBarrierProblem::number_jacobian_nonzeros() const {
-      return this->reformulated_problem.number_jacobian_nonzeros();
-   }
-
-   bool ExponentialBarrierProblem::has_curvature(const HessianModel& hessian_model) const {
-
-   }
-
-   size_t ExponentialBarrierProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
-      size_t number_nonzeros = this->reformulated_problem.number_hessian_nonzeros(hessian_model);
-      return number_nonzeros;
-   }
-
    double ExponentialBarrierProblem::get_objective_multiplier() const {
       return this->reformulated_problem.get_objective_multiplier();
    }
@@ -61,15 +48,25 @@ namespace uno {
       }
    }
 
+   size_t ExponentialBarrierProblem::number_jacobian_nonzeros() const {
+      return this->reformulated_problem.number_jacobian_nonzeros();
+   }
+
+   bool ExponentialBarrierProblem::has_curvature(const HessianModel& hessian_model) const {
+      return true; // TODO
+   }
+
    size_t ExponentialBarrierProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
       size_t number_nonzeros = this->reformulated_problem.number_hessian_nonzeros(hessian_model);
-      // barrier contribution: original variables
-      for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {
-         if (is_finite(this->reformulated_problem.variable_lower_bound(variable_index)) || is_finite(this->reformulated_problem.variable_upper_bound(variable_index))) {
-            number_nonzeros++;
-         }
-      }
       return number_nonzeros;
+   }
+
+   void ExponentialBarrierProblem::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices,
+         size_t solver_indexing, MatrixOrder matrix_order) const {
+   }
+
+   void ExponentialBarrierProblem::compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
+      size_t* column_indices, size_t solver_indexing) const {
    }
 
    void ExponentialBarrierProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
@@ -89,16 +86,6 @@ namespace uno {
 
    void ExponentialBarrierProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
       this->reformulated_problem.evaluate_constraints(iterate, constraints);
-   }
-
-   void ExponentialBarrierProblem::evaluate_constraint_jacobian(Iterate& iterate, RectangularMatrix<double>& constraint_jacobian) const {
-      this->reformulated_problem.evaluate_constraint_jacobian(iterate, constraint_jacobian);
-   }
-
-   void ExponentialBarrierProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, SymmetricMatrix<size_t, double>& hessian) const {
-      // original Lagrangian Hessian
-      this->reformulated_problem.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian);
    }
 
    void ExponentialBarrierProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,

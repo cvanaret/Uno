@@ -39,8 +39,6 @@ namespace uno {
          Direction& direction, double trust_region_radius, const Options& options) {
       const OptimizationProblem optimality_problem{model};
       l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
-      feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
-      feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
       this->reference_optimality_primals.resize(optimality_problem.number_variables);
       feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
       feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
@@ -133,9 +131,7 @@ namespace uno {
       this->reference_optimality_progress = current_iterate.progress;
       this->reference_optimality_primals = current_iterate.primals;
 
-      l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
-      feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
-      feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
+      const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
       current_iterate.set_number_variables(feasibility_problem.number_variables);
       // swap the iterate's multipliers and the feasibility multipliers maintained by the class
       this->other_phase_multipliers.constraints.resize(feasibility_problem.number_constraints);
@@ -219,9 +215,7 @@ namespace uno {
             direction, step_length, user_callbacks);
       }
       else {
-         l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
-         feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
-         feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
+         const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
             feasibility_problem, *this->feasibility_inequality_handling_method, current_iterate, trial_iterate,
             direction, step_length, user_callbacks);
@@ -253,9 +247,7 @@ namespace uno {
          return ConstraintRelaxationStrategy::check_termination(optimality_problem, iterate);
       }
       else {
-         l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
-         feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
-         feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
+         const l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
          feasibility_problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient,
             *this->feasibility_inequality_handling_method, iterate);
          ConstraintRelaxationStrategy::compute_primal_dual_residuals(feasibility_problem, iterate);
