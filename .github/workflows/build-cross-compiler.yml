@@ -3,16 +3,22 @@ name: BinaryBuilder.jl
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - '*.md'
-      - 'LICENSE'
-      - '*.cff'
+    paths:
+      - ''
+      - '!*.md'
+      - '!LICENSE'
+      - '!*.cff'
+      - '!.github/workflows/'
+      - '.github/workflows/build-cross-compiler.yml'
   pull_request:
     branches: [main]
-    paths-ignore:
-      - '*.md'
-      - 'LICENSE'
-      - '*.cff'
+    paths:
+      - ''
+      - '!*.md'
+      - '!LICENSE'
+      - '!*.cff'
+      - '!.github/workflows/'
+      - '.github/workflows/build-cross-compiler.yml'
 
 permissions:
   actions: write
