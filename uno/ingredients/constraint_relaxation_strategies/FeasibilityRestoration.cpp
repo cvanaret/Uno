@@ -39,8 +39,6 @@ namespace uno {
          Direction& direction, double trust_region_radius, const Options& options) {
       const OptimizationProblem optimality_problem{model};
       l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient};
-      feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
-      feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
       this->reference_optimality_primals.resize(optimality_problem.number_variables);
       feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
       feasibility_problem.set_proximal_multiplier(this->feasibility_inequality_handling_method->proximal_coefficient());
