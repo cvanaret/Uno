@@ -221,11 +221,13 @@ namespace uno {
    }
 
    void HiGHSSolver::solve_subproblem(const Subproblem& subproblem, Direction& direction) {
-      // solve the LP
+      // solve the subproblem
       HighsStatus return_status = this->highs_solver.passModel(this->model);
       //assert(return_status == HighsStatus::kOk);
 
+      DEBUG2 << "Running HiGHS\n";
       return_status = this->highs_solver.run(); // solve
+      DEBUG2 << "Ran HiGHS\n";
       DEBUG << "HiGHS status: " << static_cast<int>(return_status) << '\n';
 
       // if HiGHS could not optimize (e.g. because of indefinite Hessian), return an error
