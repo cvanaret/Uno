@@ -40,17 +40,17 @@ namespace uno {
          const size_t* jacobian_column_indices, size_t solver_indexing) const;
 
       // constraints, objective gradient and Jacobian
-      void evaluate_objective_gradient(Vector<double>& linear_objective) const;
+      void evaluate_objective_gradient(double* objective_gradient) const;
       void evaluate_constraints(std::vector<double>& constraints) const;
       void evaluate_constraint_jacobian(double* jacobian_values) const;
 
       // regularized Hessian
-      void compute_regularized_hessian(Statistics& statistics, Vector<double>& /*hessian_values*/) const;
+      void compute_regularized_hessian(Statistics& statistics, double* hessian_values) const;
       void compute_hessian_vector_product(const double* vector, double* result) const;
 
       // augmented system
-      void assemble_augmented_matrix(Statistics& statistics, Vector<double>& augmented_matrix_values) const;
-      void regularize_augmented_matrix(Statistics& statistics, Vector<double>& augmented_matrix_values,
+      void assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values) const;
+      void regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const;
       template <typename IndexType>
       void assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,

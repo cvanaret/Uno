@@ -30,9 +30,11 @@ namespace uno {
       constraints = iterate.evaluations.constraints;
    }
 
-   void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
+   void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
       iterate.evaluate_objective_gradient(this->model);
-      view(objective_gradient, 0, this->number_variables) = iterate.evaluations.objective_gradient;
+      for (size_t index: Range(this->number_variables)) {
+         objective_gradient[index] = iterate.evaluations.objective_gradient[index];
+      }
    }
 
    size_t OptimizationProblem::number_jacobian_nonzeros() const {
@@ -69,7 +71,7 @@ namespace uno {
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // ∇f(x_k)
-      this->evaluate_objective_gradient(iterate, lagrangian_gradient.objective_contribution);
+      this->evaluate_objective_gradient(iterate, lagrangian_gradient.objective_contribution.data());
 
       // ∇c(x_k) λ_k
       inequality_handling_method.compute_constraint_jacobian_transposed_vector_product(iterate.multipliers.constraints,
@@ -84,7 +86,7 @@ namespace uno {
    }
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
-         const Vector<double>& primal_variables, const Multipliers& multipliers, Vector<double>& hessian_values) const {
+         const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const {
       hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(),
          multipliers.constraints, hessian_values);
    }

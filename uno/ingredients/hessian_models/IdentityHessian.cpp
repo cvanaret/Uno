@@ -40,7 +40,7 @@ namespace uno {
    }
 
    void IdentityHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, Vector<double>& hessian_values) {
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* hessian_values) {
       DEBUG << "Setting identity Hessian\n";
       for (size_t variable_index: Range(model.number_variables)) {
          hessian_values[variable_index] = 1.;

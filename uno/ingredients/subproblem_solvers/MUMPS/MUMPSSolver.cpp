@@ -97,9 +97,9 @@ namespace uno {
       this->workspace.icntl[7] = 8; // ICNTL(8) = 8: recompute scaling before factorization
    }
 
-   void MUMPSSolver::do_numerical_factorization(const Vector<double>& matrix_values) {
+   void MUMPSSolver::do_numerical_factorization(const double* matrix_values) {
       this->workspace.job = MUMPSSolver::JOB_FACTORIZATION;
-      this->workspace.a = const_cast<double*>(matrix_values.data());
+      this->workspace.a = const_cast<double*>(matrix_values);
       dmumps_c(&this->workspace);
    }
 
@@ -114,7 +114,7 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->objective_gradient);
+         subproblem.evaluate_objective_gradient(this->objective_gradient.data());
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
@@ -122,9 +122,10 @@ namespace uno {
 
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // assemble the augmented matrix
-         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix_values);
+         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix_values.data());
          // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix_values, subproblem.dual_regularization_factor(), *this);
+         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix_values.data(),
+            subproblem.dual_regularization_factor(), *this);
 
          // assemble the RHS
          const COOMatrix jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),

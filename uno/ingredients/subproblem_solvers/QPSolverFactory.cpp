@@ -10,6 +10,9 @@
 #ifdef HAS_BQPD
 #include "ingredients/subproblem_solvers/BQPD/BQPDSolver.hpp"
 #endif
+#ifdef HAS_HIGHS
+#include "ingredients/subproblem_solvers/HiGHS/HiGHSSolver.hpp"
+#endif
 
 namespace uno {
    std::unique_ptr<QPSolver> QPSolverFactory::create([[maybe_unused]] const Options& options) {
@@ -18,6 +21,11 @@ namespace uno {
 #ifdef HAS_BQPD
          if (QP_solver_name == "BQPD") {
             return std::make_unique<BQPDSolver>(options);
+         }
+#endif
+#ifdef HAS_HIGHS
+         if (QP_solver_name == "HiGHS") {
+            return std::make_unique<HiGHSSolver>(options);
          }
 #endif
          std::string message = "The QP solver ";

@@ -185,9 +185,9 @@ namespace uno {
       }
    }
 
-   void MA27Solver::do_numerical_factorization(const Vector<double>& matrix_values) {
+   void MA27Solver::do_numerical_factorization(const double* matrix_values) {
       // initialize factor with the entries of the matrix. It will be modified by MA27BD
-      std::copy_n(matrix_values.data(), this->workspace.nnz, this->workspace.factor.begin());
+      std::copy_n(matrix_values, this->workspace.nnz, this->workspace.factor.begin());
 
       // numerical factorization
       // may fail because of insufficient space. In this case, more memory is allocated and the factorization tried again
@@ -246,7 +246,7 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->objective_gradient);
+         subproblem.evaluate_objective_gradient(this->objective_gradient.data());
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
@@ -254,9 +254,10 @@ namespace uno {
 
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // assemble the augmented matrix
-         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix_values);
+         subproblem.assemble_augmented_matrix(statistics, this->augmented_matrix_values.data());
          // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix_values, subproblem.dual_regularization_factor(), *this);
+         subproblem.regularize_augmented_matrix(statistics, this->augmented_matrix_values.data(),
+            subproblem.dual_regularization_factor(), *this);
 
          // assemble the RHS
          const COOMatrix jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),

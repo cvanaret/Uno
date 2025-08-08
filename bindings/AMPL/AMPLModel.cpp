@@ -157,6 +157,26 @@ namespace uno {
             ++current_index;
          }
       }
+      std::cout << "ASL Hessian rows (CSC):      ";
+      for (size_t index: Range(this->number_hessian_nonzeros())) {
+         std::cout << this->asl->i.sputinfo_->hrownos[index] << ' ';
+      }
+      std::cout << '\n';
+      std::cout << "ASL Hessian colstarts (CSC): ";
+      for (size_t index: Range(this->number_hessian_nonzeros())) {
+         std::cout << this->asl->i.sputinfo_->hcolstarts[index] << ' ';
+      }
+      std::cout << '\n';
+      std::cout << "ASL Hessian rows (COO): ";
+      for (size_t index: Range(this->number_hessian_nonzeros())) {
+         std::cout << row_indices[index] << ' ';
+      }
+      std::cout << '\n';
+      std::cout << "ASL Hessian cols (COO): ";
+      for (size_t index: Range(this->number_hessian_nonzeros())) {
+         std::cout << column_indices[index] << ' ';
+      }
+      std::cout << '\n';
    }
 
    void AMPLModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
@@ -173,9 +193,9 @@ namespace uno {
    //this->asl->i.x_known = 0;
 
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& /*x*/, double objective_multiplier, const Vector<double>& multipliers,
-         Vector<double>& hessian_values) const {
+         double* hessian_values) const {
       objective_multiplier *= this->objective_sign;
-      (*(this->asl)->p.Sphes)(this->asl, nullptr, hessian_values.data(), -1, &objective_multiplier,
+      (*(this->asl)->p.Sphes)(this->asl, nullptr, hessian_values, -1, &objective_multiplier,
          const_cast<double*>(multipliers.data()));
    }
 
@@ -356,7 +376,7 @@ namespace uno {
    void AMPLModel::compute_lagrangian_hessian_sparsity() {
       // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
       // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
-      const int upper_triangular = 1;
+      const int upper_triangular = 2;
       this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, -1, 1, 1, upper_triangular));
 
       // sparsity pattern

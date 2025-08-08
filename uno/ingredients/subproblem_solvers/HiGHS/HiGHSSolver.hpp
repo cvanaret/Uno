@@ -4,7 +4,7 @@
 #ifndef UNO_HIGHSSOLVER_H
 #define UNO_HIGHSSOLVER_H
 
-#include "ingredients/subproblem_solvers/LPSolver.hpp"
+#include "ingredients/subproblem_solvers/QPSolver.hpp"
 #include "Highs.h"
 #include "linear_algebra/Vector.hpp"
 
@@ -12,7 +12,7 @@ namespace uno {
    // forward declaration
    class Options;
 
-   class HiGHSSolver : public LPSolver {
+   class HiGHSSolver : public QPSolver {
    public:
       explicit HiGHSSolver(const Options& options);
 

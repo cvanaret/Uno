@@ -186,7 +186,7 @@ namespace uno {
       // evaluate the functions based on warmstart information
       // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
       if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->gradients);
+         subproblem.evaluate_objective_gradient(this->gradients.data());
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
@@ -487,7 +487,7 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
    else if (subproblem->has_explicit_hessian_representation()) {
       // if the Hessian has not been evaluated at the current point, evaluate it
       if (*evaluate_hessian) {
-         subproblem->compute_regularized_hessian(*statistics, *hessian_values);
+         subproblem->compute_regularized_hessian(*statistics, hessian_values->data());
          *evaluate_hessian = false;
       }
       // Hessian-vector product

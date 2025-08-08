@@ -41,7 +41,7 @@ namespace uno {
       }
 
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-            Vector<double>& hessian_values) const override {
+            double* hessian_values) const override {
          this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
       }
 
