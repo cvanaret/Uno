@@ -24,7 +24,7 @@ end
 
 # Note: the HiGHS QP solver tolerates only positive semi-definite Hessians.
 # We therefore run only on convex instances (for now)
-Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "QP_solver=HiGHS", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
+Optimizer_Uno_filtersqp() = Optimizer(["logger=INFO", "preset=filtersqp", "QP_solver=HiGHS", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
