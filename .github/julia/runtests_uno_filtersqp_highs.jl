@@ -24,7 +24,7 @@ end
 
 # Note: the HiGHS QP solver tolerates only positive semi-definite Hessians.
 # We therefore run only on convex instances (for now)
-Optimizer_Uno_filtersqp() = Optimizer(["logger=INFO", "preset=filtersqp", "QP_solver=HiGHS", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
+Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "QP_solver=HiGHS", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
@@ -40,7 +40,7 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=INFO", "preset=filtersqp", "QP_so
     MINLPTests.test_nlp_cvx_expr(Optimizer_Uno_filtersqp;
         exclude = [
             "102_010", "105_010", "201_011", "501_010", # negative curvature
-            "110_010" # HiGHS cannot solve the first QP (https://github.com/jump-dev/HiGHS.jl/issues/296)
+            "110_010" # HiGHS cannot solve the first QP (https://github.com/ERGO-Code/HiGHS/issues/2489)
         ],
         primal_target,
         primal_tol,
