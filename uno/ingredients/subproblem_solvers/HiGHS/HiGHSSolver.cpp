@@ -8,7 +8,6 @@
 #include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
-#include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -184,7 +183,13 @@ namespace uno {
       }
       // evaluate the Hessian and regularize it
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         subproblem.compute_regularized_hessian(statistics, this->model.hessian_.value_.data());
+         subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data());
+         // copy the Hessian with permutation into this->model.hessian_.value_
+         for (size_t nonzero_index: Range(subproblem.number_regularized_hessian_nonzeros())) {
+            const size_t permutated_nonzero_index = this->permutation_vector[nonzero_index];
+            this->model.hessian_.value_[nonzero_index] = this->hessian_values[permutated_nonzero_index];
+         }
+         subproblem.regularize_lagrangian_hessian(statistics, this->model.hessian_.value_.data());
       }
 
       // variable bounds
@@ -199,8 +204,8 @@ namespace uno {
 
       if (this->print_subproblem) {
          DEBUG << "Subproblem:\n";
-         DEBUG << "Linear objective part: "; print_vector(DEBUG, view(this->model.lp_.col_cost_, 0, subproblem.number_variables));
          DEBUG << "Hessian: "; print_vector(DEBUG, this->model.hessian_.value_);
+         DEBUG << "Linear objective part: "; print_vector(DEBUG, this->model.lp_.col_cost_);
          DEBUG << "Jacobian: "; print_vector(DEBUG, this->model.lp_.a_matrix_.value_);
          // DEBUG << "with column start: "; print_vector(DEBUG, this->model.lp_.a_matrix_.start_);
          // DEBUG << "and row index: "; print_vector(DEBUG, this->model.lp_.a_matrix_.index_);
