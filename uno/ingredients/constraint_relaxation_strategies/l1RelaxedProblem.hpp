@@ -23,7 +23,7 @@ namespace uno {
       void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
 
       // dense objective gradient
-      void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const override;
+      void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const override;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
@@ -39,7 +39,7 @@ namespace uno {
       void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
          const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, Vector<double>& hessian_values) const override;
+         const Multipliers& multipliers, double* hessian_values) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* vector, const Multipliers& multipliers,
          double* result) const override;
 

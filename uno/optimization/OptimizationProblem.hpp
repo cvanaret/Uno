@@ -40,7 +40,7 @@ namespace uno {
       virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const;
 
       // dense objective gradient
-      virtual void evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const;
+      virtual void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
@@ -56,7 +56,7 @@ namespace uno {
       virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
          const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, Vector<double>& hessian_values) const;
+         const Multipliers& multipliers, double* hessian_values) const;
       virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,
          const Multipliers& multipliers, double* result) const;
 

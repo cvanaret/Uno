@@ -69,8 +69,8 @@ namespace uno {
       }
    }
 
-   void Subproblem::evaluate_objective_gradient(Vector<double>& linear_objective) const {
-      this->problem.evaluate_objective_gradient(this->current_iterate, linear_objective);
+   void Subproblem::evaluate_objective_gradient(double* objective_gradient) const {
+      this->problem.evaluate_objective_gradient(this->current_iterate, objective_gradient);
    }
 
    void Subproblem::evaluate_constraints(std::vector<double>& constraints) const {
@@ -81,18 +81,19 @@ namespace uno {
       this->problem.evaluate_constraint_jacobian(this->current_iterate, jacobian_values);
    }
 
-   void Subproblem::compute_regularized_hessian(Statistics& statistics, Vector<double>& hessian_values) const {
+   void Subproblem::evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
          this->current_iterate.multipliers, hessian_values);
+   }
 
+   void Subproblem::regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
       // regularize the Hessian only if necessary
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
          const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
             this->problem.number_variables - this->problem.get_number_original_variables()};
          const size_t offset = this->number_hessian_nonzeros();
-         const auto primal_regularization_values = view(hessian_values, offset,
-            offset + this->get_primal_regularization_variables().size());
+         double* primal_regularization_values = hessian_values + offset;
          this->regularization_strategy.regularize_hessian(statistics, *this, hessian_values, expected_inertia,
             primal_regularization_values);
       }
@@ -111,24 +112,22 @@ namespace uno {
       }
    }
 
-   void Subproblem::assemble_augmented_matrix(Statistics& statistics, Vector<double>& augmented_matrix_values) const {
+   void Subproblem::assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
          this->current_iterate.multipliers, augmented_matrix_values);
 
       // Jacobian of general constraints
-      this->problem.evaluate_constraint_jacobian(this->current_iterate, augmented_matrix_values.data() + this->number_hessian_nonzeros());
+      this->problem.evaluate_constraint_jacobian(this->current_iterate, augmented_matrix_values + this->number_hessian_nonzeros());
    }
 
-   void Subproblem::regularize_augmented_matrix(Statistics& statistics, Vector<double>& augmented_matrix_values,
+   void Subproblem::regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const {
       const Inertia expected_inertia{this->number_variables, this->number_constraints, 0};
 
       const size_t offset = this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
-      const auto primal_regularization_values = view(augmented_matrix_values, offset,
-         offset + this->get_primal_regularization_variables().size());
-      const auto dual_regularization_values = view(augmented_matrix_values, offset + this->get_primal_regularization_variables().size(),
-         offset + this->get_primal_regularization_variables().size() + this->get_dual_regularization_constraints().size());
+      double* primal_regularization_values = augmented_matrix_values + offset;
+      double* dual_regularization_values = augmented_matrix_values + offset + this->get_primal_regularization_variables().size();
       this->regularization_strategy.regularize_augmented_matrix(statistics, *this, augmented_matrix_values,
          dual_regularization_parameter, expected_inertia, linear_solver, primal_regularization_values, dual_regularization_values);
    }

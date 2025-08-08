@@ -60,10 +60,10 @@ namespace uno {
       Vector<double> gradients{};
       Vector<int> gradient_sparsity{};
       // COO constraint Jacobian
-      Vector<size_t> jacobian_row_indices;
-      Vector<size_t> jacobian_column_indices;
-      Vector<double> jacobian_values;
-      Vector<size_t> permutation_vector;
+      Vector<size_t> jacobian_row_indices{};
+      Vector<size_t> jacobian_column_indices{};
+      Vector<double> jacobian_values{};
+      Vector<size_t> permutation_vector{};
       // COO Hessian
       Vector<size_t> hessian_row_indices{};
       Vector<size_t> hessian_column_indices{};

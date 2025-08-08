@@ -37,7 +37,7 @@ namespace uno {
    }
 
    void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& primal_variables,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, Vector<double>& hessian_values) {
+         double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) {
       model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, hessian_values);
       this->evaluation_count++;
    }

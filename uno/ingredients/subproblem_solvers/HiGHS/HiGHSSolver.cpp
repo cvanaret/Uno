@@ -1,4 +1,4 @@
-// Copyright (c) 2024 Charlie Vanaret
+// Copyright (c) 2024-2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "HiGHSSolver.hpp"
@@ -8,21 +8,16 @@
 #include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
-#include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
    HiGHSSolver::HiGHSSolver(const Options& options):
-         LPSolver(), print_subproblem(options.get_bool("print_subproblem")) {
+         QPSolver(), print_subproblem(options.get_bool("print_subproblem")) {
       this->highs_solver.setOptionValue("output_flag", "false");
    }
 
    void HiGHSSolver::initialize_memory(const Subproblem& subproblem) {
       // determine whether the subproblem has curvature. For the moment, HiGHS can only solve LPs
-      if (subproblem.has_curvature()) {
-         throw std::runtime_error("The subproblem has curvature. For the moment, HiGHS can only solve LPs");
-      }
-
       this->constraints.resize(subproblem.number_constraints);
       this->linear_objective.resize(subproblem.number_variables);
       this->model.lp_.sense_ = ObjSense::kMinimize;
@@ -36,7 +31,7 @@ namespace uno {
       this->model.lp_.row_lower_.resize(subproblem.number_constraints);
       this->model.lp_.row_upper_.resize(subproblem.number_constraints);
 
-      // constraint Jacobian
+      // column-wise constraint Jacobian
       this->model.lp_.a_matrix_.format_ = MatrixFormat::kColwise;
       const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
       // compute the COO sparsity pattern
@@ -48,14 +43,13 @@ namespace uno {
       this->model.lp_.a_matrix_.index_.resize(number_jacobian_nonzeros); // constraint indices
       this->model.lp_.a_matrix_.start_.resize(subproblem.number_variables + 1);
       this->model.lp_.a_matrix_.value_.resize(number_jacobian_nonzeros);
-
       size_t current_variable = 0;
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
-         // constraint index
+         // constraint index is used as is
          const size_t constraint_index = this->jacobian_row_indices[jacobian_nonzero_index];
          this->model.lp_.a_matrix_.index_[jacobian_nonzero_index] = static_cast<HighsInt>(constraint_index);
 
-         // variable index
+         // variable index is used to build the pointers to the column starts
          const size_t variable_index = this->jacobian_column_indices[jacobian_nonzero_index];
          assert(current_variable <= variable_index);
          while (current_variable < variable_index) {
@@ -65,7 +59,8 @@ namespace uno {
       }
       this->model.lp_.a_matrix_.start_[subproblem.number_variables] = static_cast<HighsInt>(number_jacobian_nonzeros);
 
-      // TODO Hessian
+      // Lagrangian Hessian
+      this->compute_hessian_sparsity(subproblem);
    }
 
    void HiGHSSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& /*initial_point*/,
@@ -109,21 +104,92 @@ namespace uno {
       return 0.;
    }
 
-   void HiGHSSolver::set_up_subproblem(Statistics& /*statistics*/, const Subproblem& subproblem, const WarmstartInformation& warmstart_information) {
+   // protected member functions
+
+   // column-wise lower triangular Lagrangian Hessian
+   void HiGHSSolver::compute_hessian_sparsity(const Subproblem& subproblem) {
+      const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
+      this->model.hessian_.dim_ = static_cast<HighsInt>(subproblem.number_variables);
+      this->model.hessian_.format_ = HessianFormat::kTriangular;
+      this->model.hessian_.index_.resize(number_regularized_hessian_nonzeros);
+      this->model.hessian_.start_.resize(subproblem.number_variables + 1);
+      this->model.hessian_.value_.resize(number_regularized_hessian_nonzeros);
+
+      // get the Jacobian sparsity in COO format
+      this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
+      this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
+      subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(), this->hessian_column_indices.data(),
+         Indexing::C_indexing);
+
+      // HiGHS requires a lower-triangular CSC Hessian: the entries should be in increasing column indices.
+      // Since the COO format does not require this, we need to convert from COO to CSC by permutating the entries. To
+      // this end, we compute a permutation vector once and for all that contains the correct ordering of terms.
+      // The permutation vector is initially filled with [0, 1, ..., number_regularized_hessian_nonzeros-1]
+      this->permutation_vector.resize(number_regularized_hessian_nonzeros);
+      std::iota(this->permutation_vector.begin(), this->permutation_vector.end(), 0);
+      // sort the permutation vector such that the column indices are in increasing order
+      // see https://stackoverflow.com/questions/17554242/how-to-obtain-the-index-permutation-after-the-sorting
+      std::sort(this->permutation_vector.begin(), this->permutation_vector.end(),
+          [&](const size_t& i, const size_t& j) {
+             if (this->hessian_column_indices[i] < this->hessian_column_indices[j]) {
+                return true;
+             }
+             // within a given column, have the row indices in increasing order
+             else if (this->hessian_column_indices[i] == this->hessian_column_indices[j]) {
+               return (this->hessian_row_indices[i] < this->hessian_row_indices[j]);
+             }
+             return false;
+          }
+      );
+
+      // copy the COO format into HiGHS' CSC format
+      this->model.hessian_.start_[0] = 0;
+      size_t current_column = 0;
+      for (size_t hessian_nonzero_index: Range(number_regularized_hessian_nonzeros)) {
+         const size_t permutated_nonzero_index = this->permutation_vector[hessian_nonzero_index];
+         // row index
+         const size_t row_index = this->hessian_row_indices[permutated_nonzero_index];
+         this->model.hessian_.index_[hessian_nonzero_index] = static_cast<HighsInt>(row_index);
+
+         // column index
+         const size_t column_index = this->hessian_column_indices[permutated_nonzero_index];
+         assert(current_column <= column_index);
+         while (current_column < column_index) {
+            ++current_column;
+            this->model.hessian_.start_[current_column] = static_cast<HighsInt>(hessian_nonzero_index);
+         }
+      }
+      // fill the remaining empty columns
+      while (current_column < subproblem.number_variables) {
+         ++current_column;
+         this->model.hessian_.start_[current_column] = static_cast<HighsInt>(number_regularized_hessian_nonzeros);
+      }
+
+      // the Hessian will be evaluated in this vector, and copied with permutation into this->model.hessian_.value_
+      this->hessian_values.resize(number_regularized_hessian_nonzeros);
+   }
+
+   void HiGHSSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information) {
       this->model.lp_.num_col_ = static_cast<HighsInt>(subproblem.number_variables);
       this->model.lp_.num_row_ = static_cast<HighsInt>(subproblem.number_constraints);
 
       // evaluate the functions based on warmstart information
       if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->linear_objective);
+         subproblem.evaluate_objective_gradient(this->model.lp_.col_cost_.data());
       }
       if (warmstart_information.constraints_changed) {
          subproblem.evaluate_constraints(this->constraints);
          this->evaluate_constraint_jacobian(subproblem);
       }
-      // evaluate the Hessian and regularize it TODO: store it in HiGHS format
+      // evaluate the Hessian and regularize it
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         // subproblem.compute_regularized_hessian(statistics, this->hessian);
+         subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data());
+         // copy the Hessian with permutation into this->model.hessian_.value_
+         for (size_t nonzero_index: Range(subproblem.number_regularized_hessian_nonzeros())) {
+            const size_t permutated_nonzero_index = this->permutation_vector[nonzero_index];
+            this->model.hessian_.value_[nonzero_index] = this->hessian_values[permutated_nonzero_index];
+         }
+         subproblem.regularize_lagrangian_hessian(statistics, this->model.hessian_.value_.data());
       }
 
       // variable bounds
@@ -136,18 +202,13 @@ namespace uno {
          subproblem.set_constraints_bounds(this->model.lp_.row_lower_, this->model.lp_.row_upper_, this->constraints);
       }
 
-      // copy the linear objective into the HiGHS vector
-      for (size_t variable_index: Range(subproblem.number_variables)) {
-         this->model.lp_.col_cost_[variable_index] = this->linear_objective[variable_index];
-      }
-
       if (this->print_subproblem) {
-         DEBUG << "LP:\n";
-         DEBUG << "Linear objective part: "; print_vector(DEBUG, view(this->model.lp_.col_cost_, 0, subproblem.number_variables));
-         DEBUG << "Jacobian:\n";
-         DEBUG << "J = "; print_vector(DEBUG, this->model.lp_.a_matrix_.value_);
-         DEBUG << "with column start: "; print_vector(DEBUG, this->model.lp_.a_matrix_.start_);
-         DEBUG << "and row index: "; print_vector(DEBUG, this->model.lp_.a_matrix_.index_);
+         DEBUG << "Subproblem:\n";
+         DEBUG << "Hessian: "; print_vector(DEBUG, this->model.hessian_.value_);
+         DEBUG << "Linear objective part: "; print_vector(DEBUG, this->model.lp_.col_cost_);
+         DEBUG << "Jacobian: "; print_vector(DEBUG, this->model.lp_.a_matrix_.value_);
+         // DEBUG << "with column start: "; print_vector(DEBUG, this->model.lp_.a_matrix_.start_);
+         // DEBUG << "and row index: "; print_vector(DEBUG, this->model.lp_.a_matrix_.index_);
          for (size_t variable_index = 0; variable_index < subproblem.number_variables; variable_index++) {
             DEBUG << "d" << variable_index << " in [" << this->model.lp_.col_lower_[variable_index] << ", " <<
                this->model.lp_.col_upper_[variable_index] << "]\n";
@@ -169,8 +230,7 @@ namespace uno {
 
       // if HiGHS could not optimize (e.g. because of indefinite Hessian), return an error
       if (return_status == HighsStatus::kError) {
-         direction.status = SubproblemStatus::ERROR;
-         return;
+         throw std::runtime_error("HiGHS encountered negative curvature, which it cannot handle. Terminating.");
       }
       HighsModelStatus model_status = highs_solver.getModelStatus();
       DEBUG << "HiGHS model status: " << static_cast<int>(model_status) << '\n';

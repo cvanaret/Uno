@@ -102,7 +102,7 @@ namespace uno {
    }
 
    void HomogeneousEqualityConstrainedModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier,
-         const Vector<double>& multipliers, Vector<double>& hessian_values) const {
+         const Vector<double>& multipliers, double* hessian_values) const {
       this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
    }
 

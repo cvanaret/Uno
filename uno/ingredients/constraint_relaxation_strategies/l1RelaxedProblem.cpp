@@ -59,16 +59,19 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, Vector<double>& objective_gradient) const {
+   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
       // scale nabla f(x) by rho
       if (this->objective_multiplier != 0.) {
          iterate.evaluate_objective_gradient(this->model);
          // TODO change this
-         view(objective_gradient, 0, this->get_number_original_variables()) = iterate.evaluations.objective_gradient;
-         objective_gradient.scale(this->objective_multiplier);
+         for (size_t index: Range(this->model.number_variables)) {
+            objective_gradient[index] = this->objective_multiplier * iterate.evaluations.objective_gradient[index];
+         }
       }
       else {
-         objective_gradient.fill(0.);
+         for (size_t index: Range(this->model.number_variables)) {
+            objective_gradient[index] = 0.;
+         }
       }
 
       // constraint violation (through elastic variables) contribution
@@ -218,7 +221,7 @@ namespace uno {
    }
 
    void l1RelaxedProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, Vector<double>& hessian_values) const {
+         const Multipliers& multipliers, double* hessian_values) const {
       hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(),
          multipliers.constraints, hessian_values);
 

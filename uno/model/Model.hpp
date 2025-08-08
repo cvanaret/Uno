@@ -50,7 +50,7 @@ namespace uno {
       // numerical evaluations of Jacobian and Hessian
       virtual void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const = 0;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         Vector<double>& hessian_values) const = 0;
+         double* hessian_values) const = 0;
       // here we use pointers, since the vector and the result may be provided by a low-level subproblem solver
       virtual void compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
          double* result) const = 0;
