@@ -21,6 +21,10 @@ namespace uno {
       return this->reformulated_problem.get_objective_multiplier();
    }
 
+   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+      this->reformulated_problem.evaluate_constraints(iterate, constraints);
+   }
+
    void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
       this->reformulated_problem.evaluate_objective_gradient(iterate, objective_gradient);
 
