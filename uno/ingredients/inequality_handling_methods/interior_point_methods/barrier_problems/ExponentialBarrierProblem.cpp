@@ -82,8 +82,8 @@ namespace uno {
       this->reformulated_problem.evaluate_lagrangian_gradient(lagrangian_gradient, inequality_handling_method, iterate);
    }
    
-   void ExponentialBarrierProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, double* hessian_values) const {
+   void ExponentialBarrierProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
+         const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const {
       // original Lagrangian Hessian
       this->reformulated_problem.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian_values);
    }
