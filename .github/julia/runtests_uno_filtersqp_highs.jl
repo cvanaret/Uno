@@ -39,7 +39,7 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=INFO", "preset=filtersqp", "QP_so
     # optimum.
     MINLPTests.test_nlp_cvx_expr(Optimizer_Uno_filtersqp;
         exclude = [
-            "102_010", "105_010", # negative curvature
+            "102_010", "105_010", "201_011", "501_010", # negative curvature
             "110_010" # HiGHS cannot solve the first QP (https://github.com/jump-dev/HiGHS.jl/issues/296)
         ],
         primal_target,
