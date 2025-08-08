@@ -6,6 +6,7 @@
 
 #include "ingredients/subproblem_solvers/QPSolver.hpp"
 #include "Highs.h"
+#include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -34,9 +35,15 @@ namespace uno {
       // constraint Jacobian in COO format
       Vector<size_t> jacobian_row_indices{};
       Vector<size_t> jacobian_column_indices{};
+      // Lagrangian Hessian in COO format
+      Vector<size_t> hessian_row_indices{};
+      Vector<size_t> hessian_column_indices{};
+      Vector<double> hessian_values{};
+      Vector<size_t> permutation_vector{};
 
       const bool print_subproblem;
 
+      void compute_hessian_sparsity(const Subproblem& subproblem);
       void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information);
       void solve_subproblem(const Subproblem& subproblem, Direction& direction);
    };

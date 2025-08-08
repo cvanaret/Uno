@@ -351,7 +351,7 @@ namespace uno {
 
       // BQPD (sparse) requires a (weak) CSR Jacobian: the entries should be in increasing constraint indices.
       // Since the COO format does not require this, we need to convert from COO to CSR by permutating the entries. To
-      // this end, we compute a permutation vector once and for all that contains the correct order of terms.
+      // this end, we compute a permutation vector once and for all that contains the correct ordering of terms.
       // The permutation vector is initially filled with [0, 1, ..., number_jacobian_nonzeros-1]
       this->permutation_vector.resize(number_jacobian_nonzeros);
       std::iota(this->permutation_vector.begin(), this->permutation_vector.end(), 0);
@@ -359,7 +359,7 @@ namespace uno {
       // see https://stackoverflow.com/questions/17554242/how-to-obtain-the-index-permutation-after-the-sorting
       std::sort(this->permutation_vector.begin(), this->permutation_vector.end(),
           [&](const size_t& i, const size_t& j) {
-              return (this->jacobian_row_indices[i] < this->jacobian_row_indices[j]);
+             return (this->jacobian_row_indices[i] < this->jacobian_row_indices[j]);
           }
       );
 
@@ -381,8 +381,10 @@ namespace uno {
                static_cast<int>(subproblem.number_variables + jacobian_nonzero_index + Indexing::Fortran_indexing);
          }
       }
+      // since there cannot be empty rows, we don't need to loop over empty rows like we do for the HiGHS Hessian
       this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + subproblem.number_constraints] =
          static_cast<int>(subproblem.number_variables + number_jacobian_nonzeros + Indexing::Fortran_indexing);
+
       // the Jacobian will be evaluated in this vector, and copied with permutation into this->gradients
       this->jacobian_values.resize(number_jacobian_nonzeros);
    }

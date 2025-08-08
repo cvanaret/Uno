@@ -60,13 +60,8 @@ namespace uno {
       }
       this->model.lp_.a_matrix_.start_[subproblem.number_variables] = static_cast<HighsInt>(number_jacobian_nonzeros);
 
-      // column-wise lower triangular Lagrangian Hessian
-      const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
-      this->model.hessian_.dim_ = static_cast<HighsInt>(subproblem.number_variables);
-      this->model.hessian_.format_ = HessianFormat::kTriangular;
-      this->model.hessian_.index_.resize(number_regularized_hessian_nonzeros);
-      this->model.hessian_.start_.resize(number_regularized_hessian_nonzeros);
-      this->model.hessian_.value_.resize(number_regularized_hessian_nonzeros);
+      // Lagrangian Hessian
+      this->compute_hessian_sparsity(subproblem);
    }
 
    void HiGHSSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& /*initial_point*/,
@@ -108,6 +103,71 @@ namespace uno {
 
    double HiGHSSolver::compute_hessian_quadratic_product(const Vector<double>& /*vector*/) const {
       return 0.;
+   }
+
+   // protected member functions
+
+   // column-wise lower triangular Lagrangian Hessian
+   void HiGHSSolver::compute_hessian_sparsity(const Subproblem& subproblem) {
+      const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
+      this->model.hessian_.dim_ = static_cast<HighsInt>(subproblem.number_variables);
+      this->model.hessian_.format_ = HessianFormat::kTriangular;
+      this->model.hessian_.index_.resize(number_regularized_hessian_nonzeros);
+      this->model.hessian_.start_.resize(subproblem.number_variables + 1);
+      this->model.hessian_.value_.resize(number_regularized_hessian_nonzeros);
+
+      // get the Jacobian sparsity in COO format
+      this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
+      this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
+      subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(), this->hessian_column_indices.data(),
+         Indexing::C_indexing);
+
+      // HiGHS requires a lower-triangular CSC Hessian: the entries should be in increasing column indices.
+      // Since the COO format does not require this, we need to convert from COO to CSC by permutating the entries. To
+      // this end, we compute a permutation vector once and for all that contains the correct ordering of terms.
+      // The permutation vector is initially filled with [0, 1, ..., number_regularized_hessian_nonzeros-1]
+      this->permutation_vector.resize(number_regularized_hessian_nonzeros);
+      std::iota(this->permutation_vector.begin(), this->permutation_vector.end(), 0);
+      // sort the permutation vector such that the column indices are in increasing order
+      // see https://stackoverflow.com/questions/17554242/how-to-obtain-the-index-permutation-after-the-sorting
+      std::sort(this->permutation_vector.begin(), this->permutation_vector.end(),
+          [&](const size_t& i, const size_t& j) {
+             if (this->hessian_column_indices[i] < this->hessian_column_indices[j]) {
+                return true;
+             }
+             // within a given column, have the row indices in increasing order
+             else if (this->hessian_column_indices[i] == this->hessian_column_indices[j]) {
+               return (this->hessian_row_indices[i] < this->hessian_row_indices[j]);
+             }
+             return false;
+          }
+      );
+
+      // copy the COO format into HiGHS' CSC format
+      this->model.hessian_.start_[0] = 0;
+      size_t current_column = 0;
+      for (size_t hessian_nonzero_index: Range(number_regularized_hessian_nonzeros)) {
+         const size_t permutated_nonzero_index = this->permutation_vector[hessian_nonzero_index];
+         // row index
+         const size_t row_index = this->hessian_row_indices[permutated_nonzero_index];
+         this->model.hessian_.index_[hessian_nonzero_index] = static_cast<HighsInt>(row_index);
+
+         // column index
+         const size_t column_index = this->hessian_column_indices[permutated_nonzero_index];
+         assert(current_column <= column_index);
+         while (current_column < column_index) {
+            ++current_column;
+            this->model.hessian_.start_[current_column] = static_cast<HighsInt>(hessian_nonzero_index);
+         }
+      }
+      // fill the remaining empty columns
+      while (current_column < subproblem.number_variables) {
+         ++current_column;
+         this->model.hessian_.start_[current_column] = static_cast<HighsInt>(number_regularized_hessian_nonzeros);
+      }
+
+      // the Hessian will be evaluated in this vector, and copied with permutation into this->model.hessian_.value_
+      this->hessian_values.resize(number_regularized_hessian_nonzeros);
    }
 
    void HiGHSSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information) {

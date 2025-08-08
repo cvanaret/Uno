@@ -157,26 +157,6 @@ namespace uno {
             ++current_index;
          }
       }
-      std::cout << "ASL Hessian rows (CSC):      ";
-      for (size_t index: Range(this->number_hessian_nonzeros())) {
-         std::cout << this->asl->i.sputinfo_->hrownos[index] << ' ';
-      }
-      std::cout << '\n';
-      std::cout << "ASL Hessian colstarts (CSC): ";
-      for (size_t index: Range(this->number_hessian_nonzeros())) {
-         std::cout << this->asl->i.sputinfo_->hcolstarts[index] << ' ';
-      }
-      std::cout << '\n';
-      std::cout << "ASL Hessian rows (COO): ";
-      for (size_t index: Range(this->number_hessian_nonzeros())) {
-         std::cout << row_indices[index] << ' ';
-      }
-      std::cout << '\n';
-      std::cout << "ASL Hessian cols (COO): ";
-      for (size_t index: Range(this->number_hessian_nonzeros())) {
-         std::cout << column_indices[index] << ' ';
-      }
-      std::cout << '\n';
    }
 
    void AMPLModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
