@@ -87,11 +87,12 @@ namespace uno {
       this->compute_gradients_sparsity(subproblem);
 
       // determine whether the subproblem has curvature
-      this->kmax = subproblem.has_curvature() ? pick_kmax_heuristically(subproblem.number_variables,
+      const bool subproblem_has_curvature = subproblem.has_curvature();
+      this->kmax = subproblem_has_curvature ? pick_kmax_heuristically(subproblem.number_variables,
          subproblem.number_constraints) : 0;
 
       // if the Hessian model only has an explicit representation, allocate an explicit Hessian matrix
-      if (!subproblem.has_implicit_hessian_representation() && subproblem.has_explicit_hessian_representation()) {
+      if (subproblem_has_curvature && !subproblem.has_implicit_hessian_representation() && subproblem.has_explicit_hessian_representation()) {
          const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
          this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
@@ -218,13 +219,11 @@ namespace uno {
 
    void BQPDSolver::display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const {
       DEBUG << "Subproblem:\n";
-      DEBUG << "Hessian values: " << this->hessian_values << '\n';
-      DEBUG << "objective gradient: " << view(this->gradients, 0, subproblem.number_variables) << '\n';
-      /*
-      for (size_t constraint_index: Range(subproblem.number_constraints)) {
-         //DEBUG << "gradient c" << constraint_index << ": " << this->constraint_jacobian[constraint_index];
-      }
-      */
+      DEBUG << "Linear objective part: " << view(this->gradients, 0, subproblem.number_variables) << '\n';
+      // note: Hessian values may not be available yet
+      // DEBUG << "Hessian: " << this->hessian_values << '\n';
+      DEBUG << "Jacobian: " << view(this->gradients, subproblem.number_variables, subproblem.number_variables +
+         subproblem.number_jacobian_nonzeros()) << '\n';
       for (size_t variable_index: Range(subproblem.number_variables)) {
          DEBUG << "d" << variable_index << " in [" << this->lower_bounds[variable_index] << ", " << this->upper_bounds[variable_index] << "]\n";
       }
@@ -489,7 +488,8 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
    else if (subproblem->has_explicit_hessian_representation()) {
       // if the Hessian has not been evaluated at the current point, evaluate it
       if (*evaluate_hessian) {
-         subproblem->compute_regularized_hessian(*statistics, hessian_values->data());
+         subproblem->evaluate_lagrangian_hessian(*statistics, hessian_values->data());
+         subproblem->regularize_lagrangian_hessian(*statistics, hessian_values->data());
          *evaluate_hessian = false;
       }
       // Hessian-vector product

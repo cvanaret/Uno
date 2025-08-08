@@ -45,7 +45,8 @@ namespace uno {
       void evaluate_constraint_jacobian(double* jacobian_values) const;
 
       // regularized Hessian
-      void compute_regularized_hessian(Statistics& statistics, double* hessian_values) const;
+      void evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const;
+      void regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const;
       void compute_hessian_vector_product(const double* vector, double* result) const;
 
       // augmented system

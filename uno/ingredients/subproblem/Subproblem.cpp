@@ -81,11 +81,13 @@ namespace uno {
       this->problem.evaluate_constraint_jacobian(this->current_iterate, jacobian_values);
    }
 
-   void Subproblem::compute_regularized_hessian(Statistics& statistics, double* hessian_values) const {
+   void Subproblem::evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
          this->current_iterate.multipliers, hessian_values);
+   }
 
+   void Subproblem::regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
       // regularize the Hessian only if necessary
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
          const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
