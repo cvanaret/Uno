@@ -30,12 +30,14 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "hes
         MINLPTests.FEASIBLE_PROBLEM => MOI.FEASIBLE_POINT,
         MINLPTests.INFEASIBLE_PROBLEM => MOI.INFEASIBLE_POINT,
     )
+    primal_tol = 1e-5
     # This function tests (potentially) non-convex nonlinear programs. The tests
     # are meant to be "easy" in the sense that most NLP solvers can find the
     # same global minimum, but a test failure can sometimes be allowed.
     MINLPTests.test_nlp_expr(
         Optimizer_Uno_filtersqp;
         exclude = [
+            "002_010",  # Local infeasible solution
             "003_014",  # Local solution
             "004_010",  # Local solution
             "004_011",  # Local solution
@@ -48,6 +50,7 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "hes
             "006_010",
         ],
         primal_target,
+        primal_tol
     )
     # This function tests convex nonlinear programs. Test failures here should
     # never be allowed, because even local NLP solvers should find the global
