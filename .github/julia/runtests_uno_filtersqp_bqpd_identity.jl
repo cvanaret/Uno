@@ -40,6 +40,8 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "hes
             "003_014",  # Local solution
             "004_010",  # Local solution
             "004_011",  # Local solution
+            # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
+            "005_010",
             "007_010",
             "008_010",  # Local solution
             # Okay to exclude forever: AmplNLWriter does not support
