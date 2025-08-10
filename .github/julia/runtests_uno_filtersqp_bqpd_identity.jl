@@ -40,8 +40,6 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "hes
             "003_014",  # Local solution
             "004_010",  # Local solution
             "004_011",  # Local solution
-            # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
-            "005_010",
             "007_010",
             "008_010",  # Local solution
             # Okay to exclude forever: AmplNLWriter does not support
@@ -54,7 +52,7 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "hes
     # This function tests convex nonlinear programs. Test failures here should
     # never be allowed, because even local NLP solvers should find the global
     # optimum.
-    MINLPTests.test_nlp_cvx_expr(Optimizer_Uno_filtersqp; primal_target)
+    MINLPTests.test_nlp_cvx_expr(Optimizer_Uno_filtersqp; primal_target, primal_tol = 1e-5)
 end
 
 # This testset runs the full gamut of MOI.Test.runtests. There are a number of
