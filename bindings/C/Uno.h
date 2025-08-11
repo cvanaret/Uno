@@ -12,19 +12,19 @@ extern "C" {
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and
    // stores the objective value of "x" in "objective_value".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   int objective_function(const double* x, int number_variables, double* objective_value, void* user_data);
+   int objective_function(int number_variables, const double* x, double* objective_value, void* user_data);
 
    // constraints
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the constraint
    // values at "x" in the vector "constraint_values" of size "number_constraints".
    // - returns an integer that is 0 if the evaluations succeeded, and positive otherwise.
-   int constraints(const double* x, int number_variables, double* constraint_values, int number_constraints, void* user_data);
+   int constraints(int number_variables, int number_constraints, const double* x, double* constraint_values, void* user_data);
 
    // objective_gradient
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the dense objective
    // gradient at "x" in the vector "gradient" of size "number_variables".
    // - returns an integer that is 0 if the evaluations succeeded, and positive otherwise.
-   int objective_gradient(const double* x, int number_variables, double* gradient, void* user_data);
+   int objective_gradient(int number_variables, const double* x, double* gradient, void* user_data);
 
    // constraint_jacobian_sparsity
    // - takes as inputs two vectors "row_indices" and "column_indices", allocates memory for them, and stores the row and
@@ -41,7 +41,7 @@ extern "C" {
    // sparse constraint Jacobian in the vector "jacobian" of size "number_jacobian_nonzeros". The values should be in
    // the same order as the indices provided in "constraint_jacobian_sparsity".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   int constraint_jacobian(const double* x, int number_variables, double* jacobian, int number_jacobian_nonzeros,
+   int constraint_jacobian(int number_variables, int number_jacobian_nonzeros, const double* x, double* jacobian,
       void* user_data);
 
    // lagrangian_hessian
@@ -51,8 +51,8 @@ extern "C" {
    // the same order as the indices provided in "constraint_jacobian_sparsity".
    // Only the lower triangular part of the symmetric Lagrangian Hessian should be provided.
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   int lagrangian_hessian(const double* x, int number_variables, double objective_multiplier, const double* multipliers,
-      int number_constraints, double* hessian, int number_hessian_nonzeros, void* user_data);
+   int lagrangian_hessian(int number_variables, int number_constraints, int number_hessian_nonzeros, const double* x,
+      double objective_multiplier, const double* multipliers, double* hessian, void* user_data);
 
    // constraint_jacobian_vector_product
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
@@ -60,8 +60,8 @@ extern "C" {
    // of size "number_variables" and an object "user_data", and stores the Jacobian-vector product in the vector
    // "result" of size "number_constraints".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   int constraint_jacobian_vector_product(const double* x, int number_variables, bool evaluate_at_x,
-      const double* vector, double* result, int number_constraints, void* user_data);
+   int constraint_jacobian_vector_product(int number_variables, int number_constraints, const double* x,
+      bool evaluate_at_x, const double* vector, double* result, void* user_data);
 
    // constraint_jacobian_transposed_vector_product
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
@@ -69,8 +69,8 @@ extern "C" {
    // of size "number_constraints" and an object "user_data", and stores the Jacobian transposed-vector product in the
    // vector "result" of size "number_variables".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   int constraint_jacobian_transposed_vector_product(const double* x, int number_variables, bool evaluate_at_x,
-      const double* vector, int number_constraints, double* result, void* user_data);
+   int constraint_jacobian_transposed_vector_product(int number_variables, int number_constraints, const double* x,
+      bool evaluate_at_x, const double* vector, double* result, void* user_data);
 
    // lagrangian_hessian_vector_product
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
@@ -79,8 +79,8 @@ extern "C" {
    // size "number_variables", and an object "user_data", and stores the Hessian-vector product in the vector "result"
    // of size "number_variables".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   int lagrangian_hessian_vector_product(const double* x, int number_variables, bool evaluate_at_x,
-      double objective_multiplier, const double* multipliers, int number_constraints, const double* vector,
+   int lagrangian_hessian_vector_product(int number_variables, int number_constraints, const double* x,
+      bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
       double* result, void* user_data);
 
 #ifdef __cplusplus
