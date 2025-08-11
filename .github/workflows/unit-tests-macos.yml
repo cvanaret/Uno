@@ -1,6 +1,6 @@
 # This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
 # See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
-name: Build on macOS
+name: Unit tests on MacOS
 
 on:
   push:
@@ -18,7 +18,7 @@ on:
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Debug
+  BUILD_TYPE: Release
 
 jobs:
   build:
@@ -29,14 +29,17 @@ jobs:
     strategy:
       matrix:
         os: [macos-14]
-        architecture: [x64, arm64]
+        architecture: [arm64]
         compiler: [gcc]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    - uses: Bacondish2023/setup-googletest@v1
+      with:
+        tag: v1.14.0
+        build-type: ${{env.BUILD_TYPE}}
 
-    - name: Download dependencies
+    - name: Download dependencies (BQPD and MUMPS_static)
       shell: bash
       run: |
         VERSION_BQPD="1.0.0"
@@ -72,8 +75,15 @@ jobs:
                                                 -DMUMPS_PORD_LIBRARY=${{github.workspace}}/deps/lib/libpord.a \
                                                 -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/deps/lib/libmpiseq.a \
                                                 -DBLAS_LIBRARIES=${{github.workspace}}/deps/lib/libblas.a \
-                                                -DLAPACK_LIBRARIES=${{github.workspace}}/deps/lib/liblapack.a
+                                                -DLAPACK_LIBRARIES=${{github.workspace}}/deps/lib/liblapack.a \
+                                                -DBUILD_STATIC_LIBS=ON \
+                                                -DBUILD_SHARED_LIBS=OFF .
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j4
+      run: cmake --build ${{github.workspace}}/build --target run_unotest --config ${{env.BUILD_TYPE}} -j4
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      # Execute unit tests
+      run: ./run_unotest
