@@ -30,7 +30,7 @@ jobs:
       matrix:
         os: [macos-latest]
         architecture: [x64, arm64]
-        compiler: [gcc]
+        compiler: [clang]
 
     steps:
     - name: Checkout repository
