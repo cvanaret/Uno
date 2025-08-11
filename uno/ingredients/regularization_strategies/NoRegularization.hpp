@@ -22,7 +22,7 @@ namespace uno {
       }
 
       void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, const double* /*hessian_values*/,
-            const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/,
+            const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
             double* /*primal_regularization_values*/) override {
          // do nothing
       }
@@ -36,7 +36,7 @@ namespace uno {
 
       void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& subproblem,
             const double* /*augmented_matrix_values*/, ElementType /*dual_regularization_parameter*/,
-            const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<size_t, double>& /*linear_solver*/,
+            const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
             double* primal_regularization_values, double* dual_regularization_values) override {
          for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
             primal_regularization_values[index] = 0.;

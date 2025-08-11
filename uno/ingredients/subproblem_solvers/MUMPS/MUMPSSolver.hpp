@@ -10,12 +10,13 @@
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
-   class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
+   class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<double> {
    public:
       MUMPSSolver();
       ~MUMPSSolver() override;
 
-      void initialize(const Subproblem& subproblem) override;
+      void initialize_hessian(const Subproblem& subproblem) override;
+      void initialize_augmented_system(const Subproblem& subproblem) override;
 
       void do_symbolic_analysis() override;
       void do_numerical_factorization(const double* matrix_values) override;
@@ -48,9 +49,9 @@ namespace uno {
 
       // augmented system
       size_t number_hessian_nonzeros{};
-      std::vector<int> augmented_matrix_row_indices{};
-      std::vector<int> augmented_matrix_column_indices{};
-      Vector<double> augmented_matrix_values{};
+      std::vector<int> matrix_row_indices{};
+      std::vector<int> matrix_column_indices{};
+      Vector<double> matrix_values{};
       Vector<double> rhs{};
       Vector<double> solution{};
 

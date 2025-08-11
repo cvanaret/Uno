@@ -10,12 +10,12 @@
 
 namespace uno {
    // forward declaration
-   template <class IndexType, class ElementType>
+   template <class ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
 
    class SymmetricIndefiniteLinearSolverFactory {
    public:
-      static std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> create(const std::string& linear_solver);
+      static std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> create(const std::string& linear_solver);
 
       // return the list of available solvers
       static std::vector<std::string> available_solvers();

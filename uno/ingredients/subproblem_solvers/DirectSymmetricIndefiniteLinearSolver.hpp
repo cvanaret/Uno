@@ -8,8 +8,8 @@
 #include "ingredients/regularization_strategies/Inertia.hpp"
 
 namespace uno {
-   template <typename IndexType, typename ElementType>
-   class DirectSymmetricIndefiniteLinearSolver: public SymmetricIndefiniteLinearSolver<IndexType, ElementType> {
+   template <typename ElementType>
+   class DirectSymmetricIndefiniteLinearSolver: public SymmetricIndefiniteLinearSolver<ElementType> {
    public:
       DirectSymmetricIndefiniteLinearSolver() = default;
       ~DirectSymmetricIndefiniteLinearSolver() override = default;

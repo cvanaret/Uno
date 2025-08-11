@@ -122,7 +122,7 @@ namespace uno {
    }
 
    void Subproblem::regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
-         double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const {
+         double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const {
       const Inertia expected_inertia{this->number_variables, this->number_constraints, 0};
 
       const size_t offset = this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
