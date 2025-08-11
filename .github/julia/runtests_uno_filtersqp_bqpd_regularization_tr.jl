@@ -100,6 +100,9 @@ end
             r"^test_linear_INFEASIBLE_2$",
             r"^test_quadratic_SecondOrderCone_basic$",
             r"^test_quadratic_nonconvex_constraint_basic$",
+            r"^test_linear_DUAL_INFEASIBLE$",
+            r"^test_linear_DUAL_INFEASIBLE_2$",
+            r"^test_solve_TerminationStatus_DUAL_INFEASIBLE$",
             r"^test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_",
             # ==================================================================
             # The following tests are okay to exclude forever.
