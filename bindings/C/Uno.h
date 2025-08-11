@@ -73,12 +73,15 @@ extern "C" {
       const double* vector, int number_constraints, double* result, void* user_data);
 
    // lagrangian_hessian_vector_product
-   // - takes as inputs a vector "x" of size "number_variables", an objective multiplier, a vector "multipliers" of
-   // Lagrange multipliers of size "number_constraints", and an object "user_data", and stores the Lagrangian
-   // Hessian-vector product in the vector "result" of size "number_variables".
+   // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
+   // the Lagrangian Hessian should be evaluated at "x" (otherwise, the current Hessian is used), an objective
+   // multiplier, a vector "multipliers" of Lagrange multipliers of size "number_constraints", a vector "vector" of
+   // size "number_variables", and an object "user_data", and stores the Hessian-vector product in the vector "result"
+   // of size "number_variables".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   int lagrangian_hessian_vector_product(const double* x, int number_variables, double objective_multiplier,
-      const double* multipliers, int number_constraints, double* result, void* user_data);
+   int lagrangian_hessian_vector_product(const double* x, int number_variables, bool evaluate_at_x,
+      double objective_multiplier, const double* multipliers, int number_constraints, const double* vector,
+      double* result, void* user_data);
 
 #ifdef __cplusplus
 }
