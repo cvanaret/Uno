@@ -51,7 +51,7 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    protected:
-      const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> linear_solver;
+      const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
       double previous_barrier_parameter;
       const double default_multiplier;

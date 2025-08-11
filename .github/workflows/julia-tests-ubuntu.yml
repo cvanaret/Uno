@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        UNO_PRESET: [uno_filtersqp_bqpd, uno_filtersqp_highs, uno_filtersqp_bqpd_identity, uno_ipopt_mumps, uno_filterslp_bqpd, uno_filterslp_highs]
+        UNO_PRESET: [uno_filtersqp_bqpd, uno_filtersqp_highs, uno_filtersqp_bqpd_identity, uno_filtersqp_bqpd_regularization_tr, uno_filtersqp_bqpd_regularization_ls, uno_ipopt_mumps, uno_filterslp_bqpd, uno_filterslp_highs]
     name: Julia tests of ${{matrix.UNO_PRESET}} - ${{ github.event_name }}
     
     steps:

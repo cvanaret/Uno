@@ -41,12 +41,13 @@ namespace uno {
       MA57Workspace() = default;
    };
 
-   class MA57Solver : public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
+   class MA57Solver : public DirectSymmetricIndefiniteLinearSolver<double> {
    public:
       MA57Solver();
       ~MA57Solver() override = default;
 
-      void initialize(const Subproblem& subproblem) override;
+      void initialize_hessian(const Subproblem& subproblem) override;
+      void initialize_augmented_system(const Subproblem& subproblem) override;
 
       void do_symbolic_analysis() override;
       void do_numerical_factorization(const double* matrix_values) override;
@@ -76,11 +77,11 @@ namespace uno {
       std::vector<size_t> jacobian_row_indices{};
       std::vector<size_t> jacobian_column_indices{};
 
-      // augmented system
+      // matrix
       size_t number_hessian_nonzeros{};
-      std::vector<int> augmented_matrix_row_indices{};
-      std::vector<int> augmented_matrix_column_indices{};
-      Vector<double> augmented_matrix_values{};
+      std::vector<int> matrix_row_indices{};
+      std::vector<int> matrix_column_indices{};
+      Vector<double> matrix_values{};
       Vector<double> rhs{};
       Vector<double> solution{};
 

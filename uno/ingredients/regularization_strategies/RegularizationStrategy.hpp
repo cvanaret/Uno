@@ -10,7 +10,7 @@ namespace uno {
    // forward declarations
    template <typename ElementType>
    class Collection;
-   template <typename IndexType, typename ElementType>
+   template <typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
    class HessianModel;
    class OptimizationProblem;
@@ -31,7 +31,7 @@ namespace uno {
       virtual void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const double* hessian_values,
          const Inertia& expected_inertia, double* primal_regularization_values) = 0;
       virtual void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const double* hessian_values,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          double* primal_regularization_values) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const double* augmented_matrix_values, ElementType dual_regularization_parameter,
@@ -39,7 +39,7 @@ namespace uno {
          double* dual_regularization_values) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const double* augmented_matrix_values, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          double* primal_regularization_values, double* dual_regularization_values) = 0;
 
       [[nodiscard]] virtual bool performs_primal_regularization() const = 0;

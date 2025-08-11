@@ -16,7 +16,7 @@
 
 namespace uno {
    // forward declarations
-   template <typename IndexType, typename ElementType>
+   template <typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
    class HessianModel;
    template <typename ElementType>
@@ -52,7 +52,7 @@ namespace uno {
       // augmented system
       void assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values) const;
       void regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
-         double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver) const;
+         double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
       template <typename IndexType>
       void assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
          const Matrix<IndexType>& constraint_jacobian, Vector<double>& rhs) const;

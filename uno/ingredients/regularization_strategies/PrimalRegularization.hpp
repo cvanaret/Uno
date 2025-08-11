@@ -27,7 +27,7 @@ namespace uno {
       void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const double* hessian_values,
          const Inertia& expected_inertia, double* primal_regularization_values) override;
       void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const double* hessian_values,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          double* primal_regularization_values) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const double* augmented_matrix_values, ElementType dual_regularization_parameter,
@@ -35,7 +35,7 @@ namespace uno {
          double* dual_regularization_values) override;
       void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const double* augmented_matrix_values, ElementType dual_regularization_parameter,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          double* primal_regularization_values,
          double* dual_regularization_values) override;
 
@@ -46,7 +46,7 @@ namespace uno {
 
    protected:
       const std::string& optional_linear_solver_name;
-      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> optional_linear_solver{};
+      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> optional_linear_solver{};
       double regularization_factor{0.};
       const double regularization_initial_value{};
       const double regularization_increase_factor{};
@@ -75,7 +75,7 @@ namespace uno {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize(subproblem);
+         this->optional_linear_solver->initialize_hessian(subproblem);
       }
       this->regularize_hessian(statistics, subproblem, hessian_values, expected_inertia, *this->optional_linear_solver,
          primal_regularization_values);
@@ -84,7 +84,7 @@ namespace uno {
    template <typename ElementType>
    void PrimalRegularization<ElementType>::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
          const double* hessian_values, const Inertia& expected_inertia,
-         DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver, double* primal_regularization_values) {
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, double* primal_regularization_values) {
       DEBUG << "Current Hessian:\n" << hessian_values << '\n';
       const double smallest_diagonal_entry = 0.; // TODO hessian_values.smallest_diagonal_entry(expected_inertia.positive);
       DEBUG << "The minimal diagonal entry of the matrix is " << smallest_diagonal_entry << '\n';
@@ -131,7 +131,7 @@ namespace uno {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize(subproblem);
+         this->optional_linear_solver->initialize_hessian(subproblem);
       }
       this->regularize_augmented_matrix(statistics, subproblem, augmented_matrix_values, dual_regularization_parameter,
          expected_inertia, *this->optional_linear_solver, primal_regularization_values, dual_regularization_values);
@@ -140,7 +140,7 @@ namespace uno {
    template <typename ElementType>
    void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const double* augmented_matrix_values, ElementType /*dual_regularization_parameter*/,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<size_t, double>& linear_solver,
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          double* primal_regularization_values, double* /*dual_regularization_values*/) {
       this->regularize_hessian(statistics, subproblem, augmented_matrix_values, expected_inertia, linear_solver,
          primal_regularization_values);

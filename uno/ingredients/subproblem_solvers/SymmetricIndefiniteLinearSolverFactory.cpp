@@ -28,7 +28,7 @@ namespace uno {
 #endif
 
 namespace uno {
-   std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<size_t, double>> SymmetricIndefiniteLinearSolverFactory::create(const std::string& linear_solver) {
+   std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> SymmetricIndefiniteLinearSolverFactory::create(const std::string& linear_solver) {
 #if defined(HAS_HSL) || defined(HAS_MA57)
       if (linear_solver == "MA57"
    #ifdef HAS_HSL

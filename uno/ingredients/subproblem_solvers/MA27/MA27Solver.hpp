@@ -34,12 +34,13 @@ namespace uno {
       const size_t number_factorization_attempts{5};
    };
 
-   class MA27Solver: public DirectSymmetricIndefiniteLinearSolver<size_t, double> {
+   class MA27Solver: public DirectSymmetricIndefiniteLinearSolver<double> {
    public:
       MA27Solver();
       ~MA27Solver() override = default;
 
-      void initialize(const Subproblem& subproblem) override;
+      void initialize_hessian(const Subproblem& subproblem) override;
+      void initialize_augmented_system(const Subproblem& subproblem) override;
 
       void do_symbolic_analysis() override;
       void do_numerical_factorization(const double* matrix_values) override;
@@ -71,9 +72,9 @@ namespace uno {
 
       // augmented system
       size_t number_hessian_nonzeros{};
-      std::vector<int> augmented_matrix_row_indices{};          // row index of input
-      std::vector<int> augmented_matrix_column_indices{};          // col index of input
-      Vector<double> augmented_matrix_values{};
+      std::vector<int> matrix_row_indices{};          // row index of input
+      std::vector<int> matrix_column_indices{};          // col index of input
+      Vector<double> matrix_values{};
       Vector<double> rhs{};
       Vector<double> solution{};
 

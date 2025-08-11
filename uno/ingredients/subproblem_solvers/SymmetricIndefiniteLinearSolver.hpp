@@ -15,13 +15,14 @@ namespace uno {
    class Vector;
    class WarmstartInformation;
 
-   template <typename IndexType, typename ElementType>
+   template <typename ElementType>
    class SymmetricIndefiniteLinearSolver {
    public:
       SymmetricIndefiniteLinearSolver() = default;
       virtual ~SymmetricIndefiniteLinearSolver() = default;
 
-      virtual void initialize(const Subproblem& subproblem) = 0;
+      virtual void initialize_hessian(const Subproblem& subproblem) = 0;
+      virtual void initialize_augmented_system(const Subproblem& subproblem) = 0;
 
       virtual void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<ElementType>& rhs,
          Vector<ElementType>& result) = 0;
