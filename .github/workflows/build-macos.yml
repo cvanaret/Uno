@@ -28,9 +28,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest]
+        os: [macos-14]
         architecture: [x64, arm64]
-        compiler: [clang]
+        compiler: [gcc]
 
     steps:
     - name: Checkout repository
