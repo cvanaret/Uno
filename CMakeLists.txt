@@ -48,7 +48,6 @@ if(HSL OR MA57 OR MA27 OR BQPD)
    message(STATUS "Fortran compiler required")
    enable_language(Fortran)
    include(FortranCInterface)
-   FortranCInterface_VERIFY(CXX)
    FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
       MACRO_NAMESPACE "FC_"
       SYMBOL_NAMESPACE "FC_")
