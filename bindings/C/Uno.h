@@ -9,10 +9,48 @@ extern "C" {
 #endif
 
    // objective_function
-   // - takes as input a vector "x" of size "number_variables" and an object "user_data", and
-   // stores the objective value of "x" in "objective_value"
-   // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise
+   // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and
+   // stores the objective value of "x" in "objective_value".
+   // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
    int objective_function(const double* x, int number_variables, double* objective_value, void* user_data);
+
+   // constraints
+   // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the constraint
+   // values at "x" in the vector "constraint_values" of size "number_constraints".
+   // - returns an integer that is 0 if the evaluations succeeded, and positive otherwise.
+   int constraints(const double* x, int number_variables, double* constraint_values, int number_constraints, void* user_data);
+
+   // objective_gradient
+   // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the dense objective
+   // gradient at "x" in the vector "gradient" of size "number_variables".
+   // - returns an integer that is 0 if the evaluations succeeded, and positive otherwise.
+   int objective_gradient(const double* x, int number_variables, double* gradient, void* user_data);
+
+   // constraint_jacobian_sparsity
+   // - takes as inputs two vectors "row_indices" and "column_indices", allocates memory for them, and stores the row and
+   // column indices of the constraint Jacobian entries in coordinate (COO) format.
+   void constraint_jacobian_sparsity(int* row_indices, int* column_indices, void* user_data);
+
+   // lagrangian_hessian_sparsity
+   // - takes as inputs two vectors "row_indices" and "column_indices", allocates memory for them, and stores the row and
+   // column indices of the Lagrangian Hessian entries in coordinate (COO) format.
+   void lagrangian_hessian_sparsity(int* row_indices, int* column_indices, void* user_data);
+
+   // constraint_jacobian
+   // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the entries of the
+   // sparse constraint Jacobian in the vector "jacobian" of size "number_nonzeros". The values should be in the same
+   // order as the indices provided in "constraint_jacobian_sparsity".
+   int constraint_jacobian(const double* x, int number_variables, double* jacobian, int number_nonzeros,
+      void* user_data);
+
+   // lagrangian_hessian
+   // - takes as inputs a vector "x" of size "number_variables", an objective multiplier, a vector "multipliers" of
+   // Lagrange multipliers of size "number_constraints", and an object "user_data", and stores the entries of the
+   // sparse Lagrangian Hessian in the vector "hessian" of size "number_nonzeros". The values should be in the same
+   // order as the indices provided in "constraint_jacobian_sparsity".
+   // Only the lower triangular part of the symmetric Lagrangian Hessian should be provided.
+   int lagrangian_hessian(const double* x, int number_variables, double objective_multiplier, const double* multipliers,
+      int number_constraints, double* hessian, int number_nonzeros, void* user_data);
 
 #ifdef __cplusplus
 }
