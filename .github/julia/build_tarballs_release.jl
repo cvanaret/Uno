@@ -99,9 +99,6 @@ else
     OMP=gomp
 fi
 
-# FortranCInterface_VERIFY fails on macOS, but it's not actually needed for the current build
-sed -i 's/FortranCInterface_VERIFY(CXX)/# FortranCInterface_VERIFY(CXX)/g' ../CMakeLists.txt
-
 cmake \
     -DCMAKE_INSTALL_PREFIX=${prefix} \
     -DCMAKE_PREFIX_PATH=${libdir} \
