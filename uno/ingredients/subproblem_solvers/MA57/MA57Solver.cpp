@@ -8,7 +8,6 @@
 #include <vector>
 #include "MA57Solver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
 #include "tools/Logger.hpp"
