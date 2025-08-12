@@ -102,9 +102,9 @@ namespace uno {
          const auto [constraint_index, variable_index, derivative] = constraint_jacobian[nonzero_index];
          rhs[variable_index] += this->current_iterate.multipliers.constraints[constraint_index] * derivative;
       }
-      // constraints
+      // (equality) constraints
       for (size_t constraint_index: Range(this->number_constraints)) {
-         rhs[this->number_variables + constraint_index] = -constraints[constraint_index];
+         rhs[this->number_variables + constraint_index] = -(constraints[constraint_index] - this->problem.constraint_lower_bound(constraint_index));
       }
       DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints)); DEBUG << '\n';
    }
