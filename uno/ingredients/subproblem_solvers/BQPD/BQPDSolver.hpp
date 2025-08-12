@@ -8,8 +8,8 @@
 #include <memory>
 #include <vector>
 #include "ingredients/subproblem_solvers/QPSolver.hpp"
+#include "BQPDEvaluationSpace.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
-#include "linear_algebra/Vector.hpp"
 
 namespace uno {
    // forward declarations
@@ -50,25 +50,10 @@ namespace uno {
          Direction& direction, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] EvaluationSpace& get_evaluation_space() override;
-      void evaluate_constraint_jacobian(const Subproblem& subproblem) override;
-      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
-      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
-      [[nodiscard]] double compute_hessian_quadratic_product(const Vector<double>& vector) const override;
 
    private:
+      BQPDEvaluationSpace evaluation_space;
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
-      std::vector<double> constraints{};
-      Vector<double> gradients{};
-      Vector<int> gradient_sparsity{};
-      // COO constraint Jacobian
-      Vector<size_t> jacobian_row_indices{};
-      Vector<size_t> jacobian_column_indices{};
-      Vector<double> jacobian_values{};
-      Vector<size_t> permutation_vector{};
-      // COO Hessian
-      Vector<size_t> hessian_row_indices{};
-      Vector<size_t> hessian_column_indices{};
-      Vector<double> hessian_values{};
 
       int kmax{0};
       int mlp{1000};
@@ -85,7 +70,6 @@ namespace uno {
       int iprint{0}, nout{6};
       double fmin{-1e20};
       int peq_solution{0}, ifail{0};
-      bool evaluate_hessian{false};
       const int fortran_shift{1};
 
       const bool print_subproblem;

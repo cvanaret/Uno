@@ -16,13 +16,13 @@ namespace uno {
       ~COOEvaluationSpace() override = default;
 
       void evaluate_constraint_jacobian(const Subproblem& subproblem) override;
-
-      void set_up_linear_system(Statistics& statistics, const Subproblem& subproblem, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         const WarmstartInformation& warmstart_information) override;
       void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector,
          Vector<double>& result) const override;
       [[nodiscard]] double compute_hessian_quadratic_product(const Vector<double>& vector) const override;
+
+      void set_up_linear_system(Statistics& statistics, const Subproblem& subproblem, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         const WarmstartInformation& warmstart_information);
 
       Vector<double> objective_gradient{}; /*!< Sparse Jacobian of the objective */
       std::vector<double> constraints{}; /*!< Constraint values (size \f$m)\f$ */

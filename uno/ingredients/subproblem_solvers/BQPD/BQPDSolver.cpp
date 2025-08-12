@@ -70,11 +70,11 @@ namespace uno {
 
       this->lower_bounds.resize(subproblem.number_variables + subproblem.number_constraints);
       this->upper_bounds.resize(subproblem.number_variables + subproblem.number_constraints);
-      this->constraints.resize(subproblem.number_constraints);
+      this->evaluation_space.constraints.resize(subproblem.number_constraints);
 
       // Jacobian + objective gradient
-      this->gradients.resize(subproblem.number_variables + subproblem.number_jacobian_nonzeros());
-      this->gradient_sparsity.resize(1 + subproblem.number_variables + subproblem.number_jacobian_nonzeros() +
+      this->evaluation_space.gradients.resize(subproblem.number_variables + subproblem.number_jacobian_nonzeros());
+      this->evaluation_space.gradient_sparsity.resize(1 + subproblem.number_variables + subproblem.number_jacobian_nonzeros() +
          1 + subproblem.number_constraints + 1);
 
       // default active set
@@ -94,11 +94,11 @@ namespace uno {
       // if the Hessian model only has an explicit representation, allocate an explicit Hessian matrix
       if (subproblem_has_curvature && !subproblem.has_implicit_hessian_representation() && subproblem.has_explicit_hessian_representation()) {
          const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
-         this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
-         this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
-         this->hessian_values.resize(number_regularized_hessian_nonzeros);
-         subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(), this->hessian_column_indices.data(),
-            Indexing::C_indexing);
+         this->evaluation_space.hessian_row_indices.resize(number_regularized_hessian_nonzeros);
+         this->evaluation_space.hessian_column_indices.resize(number_regularized_hessian_nonzeros);
+         this->evaluation_space.hessian_values.resize(number_regularized_hessian_nonzeros);
+         subproblem.compute_regularized_hessian_sparsity(this->evaluation_space.hessian_row_indices.data(),
+            this->evaluation_space.hessian_column_indices.data(), Indexing::C_indexing);
       }
 
       // allocation of integer and real workspaces
@@ -123,60 +123,7 @@ namespace uno {
    }
 
    EvaluationSpace& BQPDSolver::get_evaluation_space() {
-
-   }
-
-   void BQPDSolver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
-      subproblem.evaluate_constraint_jacobian(this->jacobian_values.data());
-
-      // copy the Jacobian with permutation into &this->gradients[subproblem.number_variables]
-      for (size_t nonzero_index: Range(subproblem.number_jacobian_nonzeros())) {
-         const size_t permutated_nonzero_index = this->permutation_vector[nonzero_index];
-         this->gradients[subproblem.number_variables + nonzero_index] = this->jacobian_values[permutated_nonzero_index];
-      }
-   }
-
-   void BQPDSolver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
-      for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
-         const double derivative = this->jacobian_values[nonzero_index];
-
-         // a safeguard to make sure we take only the correct part of the Jacobian
-         if (variable_index < vector.size() && constraint_index < result.size()) {
-            result[constraint_index] += derivative * vector[variable_index];
-         }
-      }
-   }
-
-   void BQPDSolver::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
-      for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
-         const double derivative = this->jacobian_values[nonzero_index];
-         assert(constraint_index < vector.size());
-         assert(variable_index < result.size());
-
-         result[variable_index] += derivative * vector[constraint_index];
-      }
-   }
-
-   double BQPDSolver::compute_hessian_quadratic_product(const Vector<double>& vector) const {
-      double quadratic_product = 0.;
-      const size_t number_hessian_nonzeros = this->hessian_values.size();
-      for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
-         const size_t row_index = this->hessian_row_indices[nonzero_index];
-         const size_t column_index = this->hessian_column_indices[nonzero_index];
-         const double entry = this->hessian_values[nonzero_index];
-         assert(row_index < vector.size());
-         assert(column_index < vector.size());
-
-         const double factor = (row_index != column_index) ? 2. : 1.;
-         quadratic_product += factor * entry * vector[row_index] * vector[column_index];
-      }
-      return quadratic_product;
+      return this->evaluation_space;
    }
 
    // protected member functions
@@ -188,18 +135,8 @@ namespace uno {
       WSC.mxws = static_cast<int>(this->mxws);
       WSC.mxlws = static_cast<int>(this->mxlws);
 
-      // evaluate the functions based on warmstart information
-      // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
-      if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->gradients.data());
-      }
-      if (warmstart_information.constraints_changed) {
-         subproblem.evaluate_constraints(this->constraints);
-         this->evaluate_constraint_jacobian(subproblem);
-      }
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         this->evaluate_hessian = true;
-      }
+      // evaluate the functions and derivatives
+      this->evaluation_space.evaluate_functions(subproblem, warmstart_information);
 
       // variable bounds
       if (warmstart_information.variable_bounds_changed) {
@@ -210,7 +147,7 @@ namespace uno {
       if (warmstart_information.constraint_bounds_changed || warmstart_information.constraints_changed) {
          auto constraints_lower_bounds = view(this->lower_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
          auto constraints_upper_bounds = view(this->upper_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
-         subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, this->constraints);
+         subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, this->evaluation_space.constraints);
       }
 
       // replace INFs with large finite values (TODO: is that really useful?)
@@ -218,15 +155,16 @@ namespace uno {
          this->lower_bounds[variable_index] = std::max(-BIG, this->lower_bounds[variable_index]);
          this->upper_bounds[variable_index] = std::min(BIG, this->upper_bounds[variable_index]);
       }
+
       this->hide_pointers_in_workspace(statistics, subproblem);
    }
 
    void BQPDSolver::display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const {
       DEBUG << "Subproblem:\n";
-      DEBUG << "Linear objective part: " << view(this->gradients, 0, subproblem.number_variables) << '\n';
+      DEBUG << "Linear objective part: " << view(this->evaluation_space.gradients, 0, subproblem.number_variables) << '\n';
       // note: Hessian values may not be available yet
       // DEBUG << "Hessian: " << this->hessian_values << '\n';
-      DEBUG << "Jacobian: " << view(this->gradients, subproblem.number_variables, subproblem.number_variables +
+      DEBUG << "Jacobian: " << view(this->evaluation_space.gradients, subproblem.number_variables, subproblem.number_variables +
          subproblem.number_jacobian_nonzeros()) << '\n';
       for (size_t variable_index: Range(subproblem.number_variables)) {
          DEBUG << "d" << variable_index << " in [" << this->lower_bounds[variable_index] << ", " << this->upper_bounds[variable_index] << "]\n";
@@ -275,11 +213,11 @@ namespace uno {
       bool termination = false;
       while (!termination) {
          DEBUG2 << "Running BQPD\n";
-         BQPD(&n, &m, &this->k, &this->kmax, this->gradients.data(), this->gradient_sparsity.data(), direction.primals.data(),
-            this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
-            this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp,
-            &this->peq_solution, this->ws.data(), this->lws.data(), &mode_integer, &this->ifail, this->info.data(),
-            &this->iprint, &this->nout);
+         BQPD(&n, &m, &this->k, &this->kmax, this->evaluation_space.gradients.data(), this->evaluation_space.gradient_sparsity.data(),
+            direction.primals.data(), this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective,
+            &this->fmin, this->gradient_solution.data(), this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(),
+            this->alp.data(), this->lp.data(), &this->mlp, &this->peq_solution, this->ws.data(), this->lws.data(), &mode_integer,
+            &this->ifail, this->info.data(), &this->iprint, &this->nout);
          DEBUG2 << "Ran BQPD\n";
          const BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
          termination = this->check_sufficient_workspace_size(bqpd_status);
@@ -316,17 +254,17 @@ namespace uno {
       WSC.ll = 0; // length of lws that is used by gdotx
 
       // hide pointer to this->evaluate_hessian, statistics, subproblem and Hessian
-      hide_pointer(0, this->lws.data(), this->evaluate_hessian);
+      hide_pointer(0, this->lws.data(), this->evaluation_space.evaluate_hessian);
       WSC.ll += sizeof(intptr_t);
       hide_pointer(1, this->lws.data(), statistics);
       WSC.ll += sizeof(intptr_t);
       hide_pointer(2, this->lws.data(), subproblem);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(3, this->lws.data(), this->hessian_row_indices);
+      hide_pointer(3, this->lws.data(), this->evaluation_space.hessian_row_indices);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(4, this->lws.data(), this->hessian_column_indices);
+      hide_pointer(4, this->lws.data(), this->evaluation_space.hessian_column_indices);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(5, this->lws.data(), this->hessian_values);
+      hide_pointer(5, this->lws.data(), this->evaluation_space.hessian_values);
       WSC.ll += sizeof(intptr_t);
    }
 
@@ -336,60 +274,60 @@ namespace uno {
 
       // header
       const size_t position_of_row_starts = 1 + subproblem.number_variables + number_jacobian_nonzeros;
-      this->gradient_sparsity[0] = static_cast<int>(position_of_row_starts);
+      this->evaluation_space.gradient_sparsity[0] = static_cast<int>(position_of_row_starts);
 
       // dense objective gradient
       for (size_t variable_index: Range(subproblem.number_variables)) {
-         this->gradient_sparsity[1 + variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
+         this->evaluation_space.gradient_sparsity[1 + variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
       }
 
-      this->gradient_sparsity[position_of_row_starts] = 1; // always starts at 1
-      this->gradient_sparsity[position_of_row_starts + 1] = static_cast<int>(1 + subproblem.number_variables); // dense objective gradient
+      this->evaluation_space.gradient_sparsity[position_of_row_starts] = 1; // always starts at 1
+      this->evaluation_space.gradient_sparsity[position_of_row_starts + 1] = static_cast<int>(1 + subproblem.number_variables); // dense objective gradient
 
       // get the Jacobian sparsity in COO format
-      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
-      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
-      subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-         Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
+      this->evaluation_space.jacobian_row_indices.resize(number_jacobian_nonzeros);
+      this->evaluation_space.jacobian_column_indices.resize(number_jacobian_nonzeros);
+      subproblem.compute_constraint_jacobian_sparsity(this->evaluation_space.jacobian_row_indices.data(),
+         this->evaluation_space.jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
 
       // BQPD (sparse) requires a (weak) CSR Jacobian: the entries should be in increasing constraint indices.
       // Since the COO format does not require this, we need to convert from COO to CSR by permutating the entries. To
       // this end, we compute a permutation vector once and for all that contains the correct ordering of terms.
       // The permutation vector is initially filled with [0, 1, ..., number_jacobian_nonzeros-1]
-      this->permutation_vector.resize(number_jacobian_nonzeros);
-      std::iota(this->permutation_vector.begin(), this->permutation_vector.end(), 0);
+      this->evaluation_space.permutation_vector.resize(number_jacobian_nonzeros);
+      std::iota(this->evaluation_space.permutation_vector.begin(), this->evaluation_space.permutation_vector.end(), 0);
       // sort the permutation vector such that the row indices (constraints) of the Jacobian sparsity are in increasing order
       // see https://stackoverflow.com/questions/17554242/how-to-obtain-the-index-permutation-after-the-sorting
-      std::sort(this->permutation_vector.begin(), this->permutation_vector.end(),
+      std::sort(this->evaluation_space.permutation_vector.begin(), this->evaluation_space.permutation_vector.end(),
           [&](const size_t& i, const size_t& j) {
-             return (this->jacobian_row_indices[i] < this->jacobian_row_indices[j]);
+             return (this->evaluation_space.jacobian_row_indices[i] < this->evaluation_space.jacobian_row_indices[j]);
           }
       );
 
       // copy the COO format into BQPD's CSR format
       size_t current_constraint = 0;
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
-         const size_t permutated_nonzero_index = this->permutation_vector[jacobian_nonzero_index];
+         const size_t permutated_nonzero_index = this->evaluation_space.permutation_vector[jacobian_nonzero_index];
          // variable index
-         const size_t variable_index = this->jacobian_column_indices[permutated_nonzero_index];
-         this->gradient_sparsity[1 + subproblem.number_variables + jacobian_nonzero_index] =
+         const size_t variable_index = this->evaluation_space.jacobian_column_indices[permutated_nonzero_index];
+         this->evaluation_space.gradient_sparsity[1 + subproblem.number_variables + jacobian_nonzero_index] =
             static_cast<int>(variable_index + Indexing::Fortran_indexing);
 
          // constraint index
-         const size_t constraint_index = this->jacobian_row_indices[permutated_nonzero_index];
+         const size_t constraint_index = this->evaluation_space.jacobian_row_indices[permutated_nonzero_index];
          assert(current_constraint <= constraint_index);
          while (current_constraint < constraint_index) {
             ++current_constraint;
-            this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + current_constraint] =
+            this->evaluation_space.gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + current_constraint] =
                static_cast<int>(subproblem.number_variables + jacobian_nonzero_index + Indexing::Fortran_indexing);
          }
       }
       // since there cannot be empty rows, we don't need to loop over empty rows like we do for the HiGHS Hessian
-      this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + subproblem.number_constraints] =
+      this->evaluation_space.gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + subproblem.number_constraints] =
          static_cast<int>(subproblem.number_variables + number_jacobian_nonzeros + Indexing::Fortran_indexing);
 
       // the Jacobian will be evaluated in this vector, and copied with permutation into this->gradients
-      this->jacobian_values.resize(number_jacobian_nonzeros);
+      this->evaluation_space.jacobian_values.resize(number_jacobian_nonzeros);
    }
 
    void BQPDSolver::set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const {

@@ -20,9 +20,6 @@ namespace uno {
       virtual ~EvaluationSpace() = default;
 
       virtual void evaluate_constraint_jacobian(const Subproblem& subproblem) = 0;
-
-      virtual void set_up_linear_system(Statistics& statistics, const Subproblem& subproblem, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         const WarmstartInformation& warmstart_information) = 0;
       virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
       virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector,
          Vector<double>& result) const = 0;
