@@ -4,10 +4,67 @@
 #include "COOEvaluationSpace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/COOMatrix.hpp"
+#include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/WarmstartInformation.hpp"
 
 namespace uno {
+   void COOEvaluationSpace::initialize_hessian(const Subproblem& subproblem) {
+      const size_t dimension = subproblem.number_variables;
+
+      // Hessian
+      this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+      this->number_matrix_nonzeros = subproblem.number_regularized_hessian_nonzeros();
+      this->matrix_row_indices.resize(this->number_matrix_nonzeros);
+      this->matrix_column_indices.resize(this->number_matrix_nonzeros);
+      // compute the COO sparse representation: use temporary vectors of size_t
+      Vector<size_t> tmp_row_indices(this->number_matrix_nonzeros);
+      Vector<size_t> tmp_column_indices(this->number_matrix_nonzeros);
+      subproblem.compute_regularized_hessian_sparsity(tmp_row_indices.data(), tmp_column_indices.data(), Indexing::Fortran_indexing);
+      // build vectors of int
+      for (size_t nonzero_index: Range(this->number_matrix_nonzeros)) {
+         this->matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
+         this->matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
+      }
+      this->matrix_values.resize(this->number_matrix_nonzeros);
+      this->rhs.resize(dimension);
+      this->solution.resize(dimension);
+   }
+
+   void COOEvaluationSpace::initialize_augmented_system(const Subproblem& subproblem) {
+const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
+
+      // evaluations
+      this->objective_gradient.resize(subproblem.number_variables);
+      this->constraints.resize(subproblem.number_constraints);
+
+      // Jacobian
+      this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+      this->jacobian_row_indices.resize(this->number_jacobian_nonzeros);
+      this->jacobian_column_indices.resize(this->number_jacobian_nonzeros);
+      subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+         Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
+
+      // augmented system
+      this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+      this->number_matrix_nonzeros = subproblem.number_regularized_augmented_system_nonzeros();
+      this->matrix_row_indices.resize(this->number_matrix_nonzeros);
+      this->matrix_column_indices.resize(this->number_matrix_nonzeros);
+      // compute the COO sparse representation: use temporary vectors of size_t
+      Vector<size_t> tmp_row_indices(this->number_matrix_nonzeros);
+      Vector<size_t> tmp_column_indices(this->number_matrix_nonzeros);
+      subproblem.compute_regularized_augmented_matrix_sparsity(tmp_row_indices.data(), tmp_column_indices.data(),
+         this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), Indexing::Fortran_indexing);
+      // build vectors of int
+      for (size_t nonzero_index: Range(this->number_matrix_nonzeros)) {
+         this->matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
+         this->matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
+      }
+      this->matrix_values.resize(this->number_matrix_nonzeros);
+      this->rhs.resize(dimension);
+      this->solution.resize(dimension);
+   }
+
    void COOEvaluationSpace::evaluate_constraint_jacobian(const Subproblem& subproblem) {
       subproblem.evaluate_constraint_jacobian(this->matrix_values.data() + this->number_hessian_nonzeros);
    }

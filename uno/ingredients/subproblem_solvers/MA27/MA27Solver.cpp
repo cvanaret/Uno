@@ -125,73 +125,26 @@ namespace uno {
    }
 
    void MA27Solver::initialize_hessian(const Subproblem& subproblem) {
-      const size_t dimension = subproblem.number_variables;
-
-      // Hessian
-      this->evaluation_space.number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-      this->evaluation_space.number_matrix_nonzeros = subproblem.number_regularized_hessian_nonzeros();
-      this->evaluation_space.matrix_row_indices.resize(this->evaluation_space.number_matrix_nonzeros);
-      this->evaluation_space.matrix_column_indices.resize(this->evaluation_space.number_matrix_nonzeros);
-      // compute the COO sparse representation: use temporary vectors of size_t
-      Vector<size_t> tmp_row_indices(this->evaluation_space.number_matrix_nonzeros);
-      Vector<size_t> tmp_column_indices(this->evaluation_space.number_matrix_nonzeros);
-      subproblem.compute_regularized_hessian_sparsity(tmp_row_indices.data(), tmp_column_indices.data(), Indexing::Fortran_indexing);
-      // build vectors of int
-      for (size_t nonzero_index: Range(this->evaluation_space.number_matrix_nonzeros)) {
-         this->evaluation_space.matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->evaluation_space.matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
-      }
-      this->evaluation_space.matrix_values.resize(this->evaluation_space.number_matrix_nonzeros);
-      this->evaluation_space.rhs.resize(dimension);
-      this->evaluation_space.solution.resize(dimension);
+      this->evaluation_space.initialize_hessian(subproblem);
 
       // workspace
-      this->workspace.n = static_cast<int>(dimension);
+      this->workspace.n = static_cast<int>(subproblem.number_variables);
       this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
-      this->workspace.iw.resize((2 * this->evaluation_space.number_matrix_nonzeros + 3 * dimension + 1) * 6 / 5); // 20% more than 2*nnz + 3*n + 1
-      this->workspace.ikeep.resize(3 * dimension);
-      this->workspace.iw1.resize(2 * dimension);
+      // 20% more than 2*nnz + 3*n + 1
+      this->workspace.iw.resize((2 * this->evaluation_space.number_matrix_nonzeros + 3 * subproblem.number_variables + 1) * 6 / 5);
+      this->workspace.ikeep.resize(3 * subproblem.number_variables);
+      this->workspace.iw1.resize(2 * subproblem.number_variables);
    }
 
    void MA27Solver::initialize_augmented_system(const Subproblem& subproblem) {
-      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
-
-      // evaluations
-      this->evaluation_space.objective_gradient.resize(subproblem.number_variables);
-      this->evaluation_space.constraints.resize(subproblem.number_constraints);
-
-      // Jacobian
-      this->evaluation_space.number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
-      this->evaluation_space.jacobian_row_indices.resize(this->evaluation_space.number_jacobian_nonzeros);
-      this->evaluation_space.jacobian_column_indices.resize(this->evaluation_space.number_jacobian_nonzeros);
-      subproblem.compute_constraint_jacobian_sparsity(this->evaluation_space.jacobian_row_indices.data(), this->evaluation_space.jacobian_column_indices.data(),
-         Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
-
-      // augmented system
-      this->evaluation_space.number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-      this->evaluation_space.number_matrix_nonzeros = subproblem.number_regularized_augmented_system_nonzeros();
-      this->evaluation_space.matrix_row_indices.resize(this->evaluation_space.number_matrix_nonzeros);
-      this->evaluation_space.matrix_column_indices.resize(this->evaluation_space.number_matrix_nonzeros);
-      // compute the COO sparse representation: use temporary vectors of size_t
-      Vector<size_t> tmp_row_indices(this->evaluation_space.number_matrix_nonzeros);
-      Vector<size_t> tmp_column_indices(this->evaluation_space.number_matrix_nonzeros);
-      subproblem.compute_regularized_augmented_matrix_sparsity(tmp_row_indices.data(), tmp_column_indices.data(),
-         this->evaluation_space.jacobian_row_indices.data(), this->evaluation_space.jacobian_column_indices.data(), Indexing::Fortran_indexing);
-      // build vectors of int
-      for (size_t nonzero_index: Range(this->evaluation_space.number_matrix_nonzeros)) {
-         this->evaluation_space.matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->evaluation_space.matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
-      }
-      this->evaluation_space.matrix_values.resize(this->evaluation_space.number_matrix_nonzeros);
-      this->evaluation_space.rhs.resize(dimension);
-      this->evaluation_space.solution.resize(dimension);
+      this->evaluation_space.initialize_augmented_system(subproblem);
 
       // workspace
-      this->workspace.n = static_cast<int>(dimension);
+      this->workspace.n = static_cast<int>(subproblem.number_variables);
       this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
-      this->workspace.iw.resize((2 * this->evaluation_space.number_matrix_nonzeros + 3 * dimension + 1) * 6 / 5); // 20% more than 2*nnz + 3*n + 1
-      this->workspace.ikeep.resize(3 * dimension);
-      this->workspace.iw1.resize(2 * dimension);
+      this->workspace.iw.resize((2 * this->evaluation_space.number_matrix_nonzeros + 3 * subproblem.number_variables + 1) * 6 / 5); // 20% more than 2*nnz + 3*n + 1
+      this->workspace.ikeep.resize(3 * subproblem.number_variables);
+      this->workspace.iw1.resize(2 * subproblem.number_variables);
    }
 
    void MA27Solver::do_symbolic_analysis() {
