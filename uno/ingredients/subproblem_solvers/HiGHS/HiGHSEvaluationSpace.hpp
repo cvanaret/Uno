@@ -21,6 +21,8 @@ namespace uno {
       HiGHSEvaluationSpace() = default;
       ~HiGHSEvaluationSpace() override = default;
 
+      void initialize_memory(const Subproblem& subproblem);
+
       void evaluate_constraint_jacobian(const Subproblem& subproblem) override;
       void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector,
@@ -40,6 +42,9 @@ namespace uno {
       Vector<size_t> hessian_column_indices{};
       Vector<double> hessian_values{};
       Vector<size_t> permutation_vector{};
+
+   protected:
+      void compute_hessian_sparsity(const Subproblem& subproblem);
    };
 } // namespace
 

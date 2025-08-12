@@ -7,8 +7,6 @@
 #include "ingredients/subproblem_solvers/QPSolver.hpp"
 #include "Highs.h"
 #include "HiGHSEvaluationSpace.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/Vector.hpp"
 
 namespace uno {
    // forward declaration
@@ -31,7 +29,6 @@ namespace uno {
 
       const bool print_subproblem;
 
-      void compute_hessian_sparsity(const Subproblem& subproblem);
       void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information);
       void solve_subproblem(const Subproblem& subproblem, Direction& direction);
    };
