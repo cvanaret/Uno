@@ -90,6 +90,7 @@ namespace uno {
       const size_t dimension = subproblem.number_variables;
 
       // Hessian
+      this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
       this->number_matrix_nonzeros = subproblem.number_regularized_hessian_nonzeros();
       this->matrix_row_indices.resize(this->number_matrix_nonzeros);
       this->matrix_column_indices.resize(this->number_matrix_nonzeros);
@@ -132,6 +133,7 @@ namespace uno {
          Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
 
       // augmented system
+      this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
       this->number_matrix_nonzeros = subproblem.number_regularized_augmented_system_nonzeros();
       this->matrix_row_indices.resize(this->number_matrix_nonzeros);
       this->matrix_column_indices.resize(this->number_matrix_nonzeros);
@@ -260,7 +262,7 @@ namespace uno {
 
          // assemble the RHS
          const COOMatrix jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-            this->matrix_values.data() + this->number_matrix_nonzeros};
+            this->matrix_values.data() + this->number_hessian_nonzeros};
          subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, jacobian, this->rhs);
       }
       this->solve_indefinite_system(this->matrix_values, this->rhs, this->solution);
@@ -301,12 +303,12 @@ namespace uno {
    }
 
    void MA57Solver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
-      subproblem.evaluate_constraint_jacobian(this->matrix_values.data() + this->number_matrix_nonzeros);
+      subproblem.evaluate_constraint_jacobian(this->matrix_values.data() + this->number_hessian_nonzeros);
    }
 
    void MA57Solver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
-      const size_t offset = this->number_matrix_nonzeros;
+      const size_t offset = this->number_hessian_nonzeros;
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
          const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
          const size_t variable_index = this->jacobian_column_indices[nonzero_index];
@@ -320,7 +322,7 @@ namespace uno {
 
    void MA57Solver::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
-      const size_t offset = this->number_matrix_nonzeros;
+      const size_t offset = this->number_hessian_nonzeros;
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
          const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
          const size_t variable_index = this->jacobian_column_indices[nonzero_index];
