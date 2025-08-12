@@ -77,8 +77,8 @@ namespace uno {
       std::vector<size_t> jacobian_row_indices{};
       std::vector<size_t> jacobian_column_indices{};
 
-      // matrix
-      size_t number_hessian_nonzeros{};
+      // symmetric matrix (Hessian or augmented system)
+      size_t number_matrix_nonzeros{};
       std::vector<int> matrix_row_indices{};
       std::vector<int> matrix_column_indices{};
       Vector<double> matrix_values{};
