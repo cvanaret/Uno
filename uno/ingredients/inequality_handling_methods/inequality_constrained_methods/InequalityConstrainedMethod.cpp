@@ -87,17 +87,17 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      auto& evaluation_space = this->solver->get_evaluation_space();
+      const auto& evaluation_space = this->solver->get_evaluation_space();
       evaluation_space.compute_constraint_jacobian_vector_product(vector, result);
    }
 
    void InequalityConstrainedMethod::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      auto& evaluation_space = this->solver->get_evaluation_space();
+      const auto& evaluation_space = this->solver->get_evaluation_space();
       evaluation_space.compute_constraint_jacobian_transposed_vector_product(vector, result);
    }
 
    double InequalityConstrainedMethod::compute_hessian_quadratic_product(const Vector<double>& vector) const {
-      auto& evaluation_space = this->solver->get_evaluation_space();
+      const auto& evaluation_space = this->solver->get_evaluation_space();
       return evaluation_space.compute_hessian_quadratic_product(vector);
    }
 

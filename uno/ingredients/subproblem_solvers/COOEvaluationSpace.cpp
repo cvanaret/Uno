@@ -41,7 +41,7 @@ namespace uno {
    }
 
    double COOEvaluationSpace::compute_hessian_quadratic_product(const Vector<double>& /*vector*/) const {
-      throw std::runtime_error("COOEvaluationSpace::compute_hessian_quadratic_product not implemented");
+      return 0.;
    }
 
    void COOEvaluationSpace::set_up_linear_system(Statistics& statistics, const Subproblem& subproblem,
