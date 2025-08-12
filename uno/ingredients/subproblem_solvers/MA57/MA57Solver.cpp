@@ -88,30 +88,32 @@ namespace uno {
       this->evaluation_space.initialize_hessian(subproblem);
 
       // workspace
-      this->workspace.n = static_cast<int>(subproblem.number_variables);
+      const size_t dimension = subproblem.number_variables;
+      this->workspace.n = static_cast<int>(dimension);
       this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
-      this->workspace.lkeep = static_cast<int>(5 * subproblem.number_variables + this->evaluation_space.number_matrix_nonzeros +
-         std::max(subproblem.number_variables, this->evaluation_space.number_matrix_nonzeros) + 42);
+      this->workspace.lkeep = static_cast<int>(5 * dimension + this->evaluation_space.number_matrix_nonzeros +
+         std::max(dimension, this->evaluation_space.number_matrix_nonzeros) + 42);
       this->workspace.keep.resize(static_cast<size_t>(this->workspace.lkeep));
-      this->workspace.iwork.resize(5 * subproblem.number_variables);
-      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(subproblem.number_variables));
+      this->workspace.iwork.resize(5 * dimension);
+      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(dimension));
       this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
-      this->workspace.residuals.resize(subproblem.number_variables);
+      this->workspace.residuals.resize(dimension);
    }
 
    void MA57Solver::initialize_augmented_system(const Subproblem& subproblem) {
       this->evaluation_space.initialize_augmented_system(subproblem);
 
       // workspace
-      this->workspace.n = static_cast<int>(subproblem.number_variables);
+      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
+      this->workspace.n = static_cast<int>(dimension);
       this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
-      this->workspace.lkeep = static_cast<int>(5 * subproblem.number_variables + this->evaluation_space.number_matrix_nonzeros +
-         std::max(subproblem.number_variables, this->evaluation_space.number_matrix_nonzeros) + 42);
+      this->workspace.lkeep = static_cast<int>(5 * dimension + this->evaluation_space.number_matrix_nonzeros +
+         std::max(dimension, this->evaluation_space.number_matrix_nonzeros) + 42);
       this->workspace.keep.resize(static_cast<size_t>(this->workspace.lkeep));
-      this->workspace.iwork.resize(5 * subproblem.number_variables);
-      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(subproblem.number_variables));
+      this->workspace.iwork.resize(5 * dimension);
+      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(dimension));
       this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
-      this->workspace.residuals.resize(subproblem.number_variables);
+      this->workspace.residuals.resize(dimension);
    }
 
    void MA57Solver::do_symbolic_analysis() {

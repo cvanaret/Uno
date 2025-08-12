@@ -53,8 +53,9 @@ namespace uno {
    void MUMPSSolver::initialize_hessian(const Subproblem& subproblem) {
       this->evaluation_space.initialize_hessian(subproblem);
 
-      // workspace
-      this->workspace.n = static_cast<int>(subproblem.number_variables);
+      // workspace*
+      const size_t dimension = subproblem.number_variables;
+      this->workspace.n = static_cast<int>(dimension);
       this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
    }
 
@@ -62,7 +63,8 @@ namespace uno {
       this->evaluation_space.initialize_augmented_system(subproblem);
 
       // workspace
-      this->workspace.n = static_cast<int>(subproblem.number_variables);
+      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
+      this->workspace.n = static_cast<int>(dimension);
       this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
    }
 

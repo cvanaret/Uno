@@ -128,23 +128,26 @@ namespace uno {
       this->evaluation_space.initialize_hessian(subproblem);
 
       // workspace
-      this->workspace.n = static_cast<int>(subproblem.number_variables);
+      const size_t dimension = subproblem.number_variables;
+      this->workspace.n = static_cast<int>(dimension);
       this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
       // 20% more than 2*nnz + 3*n + 1
-      this->workspace.iw.resize((2 * this->evaluation_space.number_matrix_nonzeros + 3 * subproblem.number_variables + 1) * 6 / 5);
-      this->workspace.ikeep.resize(3 * subproblem.number_variables);
-      this->workspace.iw1.resize(2 * subproblem.number_variables);
+      this->workspace.iw.resize((2 * this->evaluation_space.number_matrix_nonzeros + 3 * dimension + 1) * 6 / 5);
+      this->workspace.ikeep.resize(3 * dimension);
+      this->workspace.iw1.resize(2 * dimension);
    }
 
    void MA27Solver::initialize_augmented_system(const Subproblem& subproblem) {
       this->evaluation_space.initialize_augmented_system(subproblem);
 
       // workspace
-      this->workspace.n = static_cast<int>(subproblem.number_variables);
+      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
+      this->workspace.n = static_cast<int>(dimension);
       this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
-      this->workspace.iw.resize((2 * this->evaluation_space.number_matrix_nonzeros + 3 * subproblem.number_variables + 1) * 6 / 5); // 20% more than 2*nnz + 3*n + 1
-      this->workspace.ikeep.resize(3 * subproblem.number_variables);
-      this->workspace.iw1.resize(2 * subproblem.number_variables);
+      // 20% more than 2*nnz + 3*n + 1
+      this->workspace.iw.resize((2 * this->evaluation_space.number_matrix_nonzeros + 3 * dimension + 1) * 6 / 5);
+      this->workspace.ikeep.resize(3 * dimension);
+      this->workspace.iw1.resize(2 * dimension);
    }
 
    void MA27Solver::do_symbolic_analysis() {
