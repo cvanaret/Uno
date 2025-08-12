@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <numeric>
 #include "BQPDSolver.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
@@ -63,6 +62,8 @@ namespace uno {
    }
 
    void BQPDSolver::initialize_memory(const Subproblem& subproblem) {
+      this->evaluation_space.initialize(subproblem);
+
       this->w.resize(subproblem.number_variables + subproblem.number_constraints);
       this->gradient_solution.resize(subproblem.number_variables);
       this->residuals.resize(subproblem.number_variables + subproblem.number_constraints);
@@ -70,36 +71,16 @@ namespace uno {
 
       this->lower_bounds.resize(subproblem.number_variables + subproblem.number_constraints);
       this->upper_bounds.resize(subproblem.number_variables + subproblem.number_constraints);
-      this->evaluation_space.constraints.resize(subproblem.number_constraints);
-
-      // Jacobian + objective gradient
-      this->evaluation_space.gradients.resize(subproblem.number_variables + subproblem.number_jacobian_nonzeros());
-      this->evaluation_space.gradient_sparsity.resize(1 + subproblem.number_variables + subproblem.number_jacobian_nonzeros() +
-         1 + subproblem.number_constraints + 1);
 
       // default active set
       this->active_set.resize(subproblem.number_variables + subproblem.number_constraints);
       for (size_t variable_index: Range(subproblem.number_variables + subproblem.number_constraints)) {
-         this->active_set[variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
+         this->active_set[variable_index] = static_cast<int>(variable_index + Indexing::Fortran_indexing);
       }
-
-      // save sparsity patterns of objective gradient and constraint Jacobian into BQPD workspace
-      this->compute_gradients_sparsity(subproblem);
 
       // determine whether the subproblem has curvature
-      const bool subproblem_has_curvature = subproblem.has_curvature();
-      this->kmax = subproblem_has_curvature ? pick_kmax_heuristically(subproblem.number_variables,
+      this->kmax = subproblem.has_curvature() ? pick_kmax_heuristically(subproblem.number_variables,
          subproblem.number_constraints) : 0;
-
-      // if the Hessian model only has an explicit representation, allocate an explicit Hessian matrix
-      if (subproblem_has_curvature && !subproblem.has_implicit_hessian_representation() && subproblem.has_explicit_hessian_representation()) {
-         const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
-         this->evaluation_space.hessian_row_indices.resize(number_regularized_hessian_nonzeros);
-         this->evaluation_space.hessian_column_indices.resize(number_regularized_hessian_nonzeros);
-         this->evaluation_space.hessian_values.resize(number_regularized_hessian_nonzeros);
-         subproblem.compute_regularized_hessian_sparsity(this->evaluation_space.hessian_row_indices.data(),
-            this->evaluation_space.hessian_column_indices.data(), Indexing::C_indexing);
-      }
 
       // allocation of integer and real workspaces
       this->mxws = static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * subproblem.number_variables +
@@ -268,73 +249,11 @@ namespace uno {
       WSC.ll += sizeof(intptr_t);
    }
 
-   // objective gradient + row-major constraint Jacobian
-   void BQPDSolver::compute_gradients_sparsity(const Subproblem& subproblem) {
-      const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
-
-      // header
-      const size_t position_of_row_starts = 1 + subproblem.number_variables + number_jacobian_nonzeros;
-      this->evaluation_space.gradient_sparsity[0] = static_cast<int>(position_of_row_starts);
-
-      // dense objective gradient
-      for (size_t variable_index: Range(subproblem.number_variables)) {
-         this->evaluation_space.gradient_sparsity[1 + variable_index] = static_cast<int>(variable_index) + this->fortran_shift;
-      }
-
-      this->evaluation_space.gradient_sparsity[position_of_row_starts] = 1; // always starts at 1
-      this->evaluation_space.gradient_sparsity[position_of_row_starts + 1] = static_cast<int>(1 + subproblem.number_variables); // dense objective gradient
-
-      // get the Jacobian sparsity in COO format
-      this->evaluation_space.jacobian_row_indices.resize(number_jacobian_nonzeros);
-      this->evaluation_space.jacobian_column_indices.resize(number_jacobian_nonzeros);
-      subproblem.compute_constraint_jacobian_sparsity(this->evaluation_space.jacobian_row_indices.data(),
-         this->evaluation_space.jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
-
-      // BQPD (sparse) requires a (weak) CSR Jacobian: the entries should be in increasing constraint indices.
-      // Since the COO format does not require this, we need to convert from COO to CSR by permutating the entries. To
-      // this end, we compute a permutation vector once and for all that contains the correct ordering of terms.
-      // The permutation vector is initially filled with [0, 1, ..., number_jacobian_nonzeros-1]
-      this->evaluation_space.permutation_vector.resize(number_jacobian_nonzeros);
-      std::iota(this->evaluation_space.permutation_vector.begin(), this->evaluation_space.permutation_vector.end(), 0);
-      // sort the permutation vector such that the row indices (constraints) of the Jacobian sparsity are in increasing order
-      // see https://stackoverflow.com/questions/17554242/how-to-obtain-the-index-permutation-after-the-sorting
-      std::sort(this->evaluation_space.permutation_vector.begin(), this->evaluation_space.permutation_vector.end(),
-          [&](const size_t& i, const size_t& j) {
-             return (this->evaluation_space.jacobian_row_indices[i] < this->evaluation_space.jacobian_row_indices[j]);
-          }
-      );
-
-      // copy the COO format into BQPD's CSR format
-      size_t current_constraint = 0;
-      for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
-         const size_t permutated_nonzero_index = this->evaluation_space.permutation_vector[jacobian_nonzero_index];
-         // variable index
-         const size_t variable_index = this->evaluation_space.jacobian_column_indices[permutated_nonzero_index];
-         this->evaluation_space.gradient_sparsity[1 + subproblem.number_variables + jacobian_nonzero_index] =
-            static_cast<int>(variable_index + Indexing::Fortran_indexing);
-
-         // constraint index
-         const size_t constraint_index = this->evaluation_space.jacobian_row_indices[permutated_nonzero_index];
-         assert(current_constraint <= constraint_index);
-         while (current_constraint < constraint_index) {
-            ++current_constraint;
-            this->evaluation_space.gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + current_constraint] =
-               static_cast<int>(subproblem.number_variables + jacobian_nonzero_index + Indexing::Fortran_indexing);
-         }
-      }
-      // since there cannot be empty rows, we don't need to loop over empty rows like we do for the HiGHS Hessian
-      this->evaluation_space.gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + subproblem.number_constraints] =
-         static_cast<int>(subproblem.number_variables + number_jacobian_nonzeros + Indexing::Fortran_indexing);
-
-      // the Jacobian will be evaluated in this vector, and copied with permutation into this->gradients
-      this->evaluation_space.jacobian_values.resize(number_jacobian_nonzeros);
-   }
-
    void BQPDSolver::set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const {
       direction_multipliers.reset();
       // active constraints
       for (size_t active_constraint_index: Range(number_variables - static_cast<size_t>(this->k))) {
-         const size_t index = static_cast<size_t>(std::abs(this->active_set[active_constraint_index]) - this->fortran_shift);
+         const size_t index = static_cast<size_t>(std::abs(this->active_set[active_constraint_index])) - Indexing::Fortran_indexing;
 
          // bound constraint
          if (index < number_variables) {

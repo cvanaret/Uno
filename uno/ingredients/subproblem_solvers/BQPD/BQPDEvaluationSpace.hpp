@@ -19,6 +19,8 @@ namespace uno {
       BQPDEvaluationSpace() = default;
       ~BQPDEvaluationSpace() override = default;
 
+      void initialize(const Subproblem& subproblem);
+
       void evaluate_constraint_jacobian(const Subproblem& subproblem) override;
       void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector,
@@ -40,6 +42,9 @@ namespace uno {
       Vector<size_t> hessian_column_indices{};
       Vector<double> hessian_values{};
       bool evaluate_hessian{false};
+
+   protected:
+      void compute_gradients_sparsity(const Subproblem& subproblem);
    };
 } // namespace
 
