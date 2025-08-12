@@ -27,14 +27,16 @@ extern "C" {
    int objective_gradient(int number_variables, const double* x, double* gradient, void* user_data);
 
    // constraint_jacobian_sparsity
-   // - takes as inputs two vectors "row_indices" and "column_indices", allocates memory for them, and stores the row and
-   // column indices of the constraint Jacobian entries in coordinate (COO) format.
-   void constraint_jacobian_sparsity(int* row_indices, int* column_indices, void* user_data);
+   // - takes as inputs two vectors "row_indices" and "column_indices", allocates memory for them with size
+   // "number_jacobian_nonzeros", and stores the row and column indices of the constraint Jacobian entries in
+   // coordinate (COO) format.
+   void constraint_jacobian_sparsity(int number_jacobian_nonzeros, int* row_indices, int* column_indices, void* user_data);
 
    // lagrangian_hessian_sparsity
-   // - takes as inputs two vectors "row_indices" and "column_indices", allocates memory for them, and stores the row and
-   // column indices of the Lagrangian Hessian entries in coordinate (COO) format.
-   void lagrangian_hessian_sparsity(int* row_indices, int* column_indices, void* user_data);
+   // - takes as inputs two vectors "row_indices" and "column_indices", allocates memory for them with size
+   // "number_hessian_nonzeros", and stores the row and column indices of the Lagrangian Hessian entries in
+   // coordinate (COO) format.
+   void lagrangian_hessian_sparsity(int number_hessian_nonzeros, int* row_indices, int* column_indices, void* user_data);
 
    // constraint_jacobian
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the entries of the
