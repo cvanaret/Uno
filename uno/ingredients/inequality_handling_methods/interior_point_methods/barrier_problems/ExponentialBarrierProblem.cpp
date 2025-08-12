@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ExponentialBarrierProblem.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/UnaryNegation.hpp"
@@ -30,34 +31,14 @@ namespace uno {
 
    void ExponentialBarrierProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
       this->reformulated_problem.evaluate_objective_gradient(iterate, objective_gradient);
-
-      // barrier terms
-      for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {
-         double barrier_term = 0.;
-         if (is_finite(reformulated_problem.variable_lower_bound(variable_index))) { // lower bounded
-            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - reformulated_problem.variable_lower_bound(variable_index));
-            // damping
-            if (!is_finite(reformulated_problem.variable_upper_bound(variable_index))) {
-               barrier_term += this->parameters.damping_factor * this->barrier_parameter;
-            }
-         }
-         if (is_finite(reformulated_problem.variable_upper_bound(variable_index))) { // upper bounded
-            barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - reformulated_problem.variable_upper_bound(variable_index));
-            // damping
-            if (!is_finite(reformulated_problem.variable_lower_bound(variable_index))) {
-               barrier_term -= this->parameters.damping_factor * this->barrier_parameter;
-            }
-         }
-         objective_gradient[variable_index] += barrier_term;
-      }
    }
 
    size_t ExponentialBarrierProblem::number_jacobian_nonzeros() const {
       return this->reformulated_problem.number_jacobian_nonzeros();
    }
 
-   bool ExponentialBarrierProblem::has_curvature(const HessianModel& /*hessian_model*/) const {
-      return true; // TODO
+   bool ExponentialBarrierProblem::has_curvature(const HessianModel& hessian_model) const {
+      return hessian_model.has_curvature(this->model);
    }
 
    size_t ExponentialBarrierProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
@@ -67,10 +48,13 @@ namespace uno {
 
    void ExponentialBarrierProblem::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices,
          size_t solver_indexing, MatrixOrder matrix_order) const {
+      this->reformulated_problem.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
    void ExponentialBarrierProblem::compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
-      size_t* column_indices, size_t solver_indexing) const {
+         size_t* column_indices, size_t solver_indexing) const {
+      // original Lagrangian Hessian
+      this->reformulated_problem.compute_hessian_sparsity(hessian_model, row_indices, column_indices, solver_indexing);
    }
 
    void ExponentialBarrierProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
@@ -159,6 +143,21 @@ namespace uno {
       // retrieve the duals with correct signs (note the minus sign)
       direction.multipliers.constraints = view(-solution, this->reformulated_problem.number_variables,
          this->reformulated_problem.number_variables + this->reformulated_problem.number_constraints);
+
+      // "fraction-to-boundary" rule for primal variables and constraints multipliers
+      const double tau = std::max(this->parameters.tau_min, 1. - this->barrier_parameter);
+      const double primal_step_length = ExponentialBarrierProblem::primal_fraction_to_boundary(current_iterate.primals,
+         direction.primals, tau);
+      const double bound_dual_step_length = ExponentialBarrierProblem::dual_fraction_to_boundary(current_iterate.multipliers,
+         direction.multipliers, tau);
+      DEBUG << "Fraction-to-boundary rules:\n";
+      DEBUG << "primal step length = " << primal_step_length << '\n';
+      DEBUG << "bound dual step length = " << bound_dual_step_length << "\n\n";
+      // scale the primal-dual variables
+      direction.primals.scale(primal_step_length);
+      direction.multipliers.constraints.scale(primal_step_length);
+      direction.multipliers.lower_bounds.scale(bound_dual_step_length);
+      direction.multipliers.upper_bounds.scale(bound_dual_step_length);
    }
 
    double ExponentialBarrierProblem::push_variable_to_interior(double variable_value, double /*lower_bound*/, double /*upper_bound*/) const {
@@ -182,18 +181,57 @@ namespace uno {
 
    // protected member functions
 
-   double ExponentialBarrierProblem::compute_barrier_term_directional_derivative(const Iterate& current_iterate,
-         const Vector<double>& primal_direction) const {
+   double ExponentialBarrierProblem::compute_barrier_term_directional_derivative(const Iterate& /*current_iterate*/,
+         const Vector<double>& /*primal_direction*/) const {
       double directional_derivative = 0.;
+      return directional_derivative;
+   }
+
+   // TODO use a single function for primal and dual fraction-to-boundary rules
+   double ExponentialBarrierProblem::primal_fraction_to_boundary(const Vector<double>& current_primals,
+         const Vector<double>& primal_direction, double tau) const {
+      double step_length = 1.;
       for (const size_t variable_index: this->reformulated_problem.get_lower_bounded_variables()) {
-         directional_derivative += -this->barrier_parameter / (current_iterate.primals[variable_index] -
-            this->reformulated_problem.variable_lower_bound(variable_index)) * primal_direction[variable_index];
+         if (primal_direction[variable_index] < 0.) {
+            const double distance = -tau * (current_primals[variable_index] - this->reformulated_problem.variable_lower_bound(variable_index)) / primal_direction[variable_index];
+            if (0. < distance) {
+               step_length = std::min(step_length, distance);
+            }
+         }
       }
       for (const size_t variable_index: this->reformulated_problem.get_upper_bounded_variables()) {
-         directional_derivative += -this->barrier_parameter / (current_iterate.primals[variable_index] -
-            this->reformulated_problem.variable_upper_bound(variable_index)) * primal_direction[variable_index];
+         if (0. < primal_direction[variable_index]) {
+            const double distance = -tau * (current_primals[variable_index] - this->reformulated_problem.variable_upper_bound(variable_index)) / primal_direction[variable_index];
+            if (0. < distance) {
+               step_length = std::min(step_length, distance);
+            }
+         }
       }
-      return directional_derivative;
+      assert(0. < step_length && step_length <= 1. && "The primal fraction-to-boundary step length is not in (0, 1]");
+      return step_length;
+   }
+
+   double ExponentialBarrierProblem::dual_fraction_to_boundary(const Multipliers& current_multipliers,
+         const Multipliers& direction_multipliers, double tau) const {
+      double step_length = 1.;
+      for (const size_t variable_index: this->reformulated_problem.get_lower_bounded_variables()) {
+         if (direction_multipliers.lower_bounds[variable_index] < 0.) {
+            const double distance = -tau * current_multipliers.lower_bounds[variable_index] / direction_multipliers.lower_bounds[variable_index];
+            if (0. < distance) {
+               step_length = std::min(step_length, distance);
+            }
+         }
+      }
+      for (const size_t variable_index: this->reformulated_problem.get_upper_bounded_variables()) {
+         if (0. < direction_multipliers.upper_bounds[variable_index]) {
+            const double distance = -tau * current_multipliers.upper_bounds[variable_index] / direction_multipliers.upper_bounds[variable_index];
+            if (0. < distance) {
+               step_length = std::min(step_length, distance);
+            }
+         }
+      }
+      assert(0. < step_length && step_length <= 1. && "The dual fraction-to-boundary step length is not in (0, 1]");
+      return step_length;
    }
 
    void ExponentialBarrierProblem::postprocess_iterate(Iterate& /*iterate*/) const {
