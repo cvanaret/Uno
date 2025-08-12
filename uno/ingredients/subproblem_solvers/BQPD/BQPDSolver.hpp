@@ -70,7 +70,6 @@ namespace uno {
       int iprint{0}, nout{6};
       double fmin{-1e20};
       int peq_solution{0}, ifail{0};
-      const int fortran_shift{1};
 
       const bool print_subproblem;
 
