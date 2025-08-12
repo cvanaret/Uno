@@ -77,10 +77,7 @@ namespace uno {
       const Vector<size_t> fixed_variables{};
       const ForwardRange inequality_constraints{0};
 
-      [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,
-         double tau) const;
-      [[nodiscard]] double dual_fraction_to_boundary(const Multipliers& current_multipliers, const Multipliers& direction_multipliers,
-         double tau) const;
+      [[nodiscard]] static size_t count_number_variables(const OptimizationProblem& problem);
    };
 } // namespace
 
