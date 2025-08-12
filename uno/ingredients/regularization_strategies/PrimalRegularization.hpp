@@ -128,7 +128,7 @@ namespace uno {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize_hessian(subproblem);
+         this->optional_linear_solver->initialize_augmented_system(subproblem);
          this->optional_linear_solver->do_symbolic_analysis();
       }
       this->regularize_augmented_matrix(statistics, subproblem, augmented_matrix_values, dual_regularization_parameter,
