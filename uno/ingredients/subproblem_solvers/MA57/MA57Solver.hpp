@@ -7,7 +7,7 @@
 #include <array>
 #include <vector>
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "linear_algebra/Vector.hpp"
+#include "ingredients/subproblem_solvers/COOEvaluationSpace.hpp"
 
 namespace uno {
    // forward declarations
@@ -61,30 +61,11 @@ namespace uno {
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
 
-      void evaluate_constraint_jacobian(const Subproblem& subproblem) override;
-      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
-      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
+      [[nodiscard]] EvaluationSpace& get_evaluation_space() override;
 
    private:
       MA57Workspace workspace{};
-
-      // evaluations
-      Vector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
-      std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
-
-      // Jacobian
-      size_t number_jacobian_nonzeros{};
-      std::vector<size_t> jacobian_row_indices{};
-      std::vector<size_t> jacobian_column_indices{};
-
-      // symmetric matrix (Hessian or augmented system)
-      size_t number_hessian_nonzeros{};
-      size_t number_matrix_nonzeros{};
-      std::vector<int> matrix_row_indices{};
-      std::vector<int> matrix_column_indices{};
-      Vector<double> matrix_values{};
-      Vector<double> rhs{};
-      Vector<double> solution{};
+      COOEvaluationSpace evaluation_space{};
 
       static constexpr size_t fortran_shift{1};
 

@@ -151,7 +151,9 @@ endif()
 # BQPD
 find_library(BQPD bqpd)
 if(BQPD)
-   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp)
+   list(APPEND UNO_SOURCE_FILES
+		uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
+		uno/ingredients/subproblem_solvers/BQPD/BQPDEvaluationSpace.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/BQPDSolverTests.cpp)
    link_to_uno(bqpd ${BQPD})
 endif()
@@ -159,7 +161,9 @@ endif()
 # HiGHS
 find_package(HIGHS)
 if(HIGHS_FOUND)
-   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp)
+   list(APPEND UNO_SOURCE_FILES
+		uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
+		uno/ingredients/subproblem_solvers/HiGHS/HiGHSEvaluationSpace.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
    list(APPEND LIBRARIES highs::highs)
    add_definitions("-D HAS_HIGHS")

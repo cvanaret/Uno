@@ -33,6 +33,7 @@ namespace uno {
       [[nodiscard]] double proximal_coefficient() const override;
 
       // matrix computations
+      [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
       void evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
          HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) override;
       void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;

@@ -5,12 +5,12 @@
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
 #include <string>
-
 #include "optimization/OptimizationProblem.hpp"
 
 namespace uno {
    // forward declarations
    class Direction;
+   class EvaluationSpace;
    class HessianModel;
    class Iterate;
    class l1RelaxedProblem;
@@ -44,6 +44,7 @@ namespace uno {
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 
       // matrix computations
+      [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() const = 0;
       virtual void evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
          HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) = 0;
       virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
