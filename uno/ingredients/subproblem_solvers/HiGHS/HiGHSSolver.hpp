@@ -22,6 +22,7 @@ namespace uno {
       void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override;
 
+      [[nodiscard]] EvaluationSpace& get_evaluation_space() override;
       void evaluate_constraint_jacobian(const Subproblem& subproblem) override;
       void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;

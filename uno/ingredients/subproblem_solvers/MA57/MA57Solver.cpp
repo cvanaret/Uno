@@ -8,11 +8,9 @@
 #include <vector>
 #include "MA57Solver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/COOMatrix.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 
@@ -90,27 +88,28 @@ namespace uno {
       const size_t dimension = subproblem.number_variables;
 
       // Hessian
-      this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-      this->number_matrix_nonzeros = subproblem.number_regularized_hessian_nonzeros();
-      this->matrix_row_indices.resize(this->number_matrix_nonzeros);
-      this->matrix_column_indices.resize(this->number_matrix_nonzeros);
+      this->evaluation_space.number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+      this->evaluation_space.number_matrix_nonzeros = subproblem.number_regularized_hessian_nonzeros();
+      this->evaluation_space.matrix_row_indices.resize(this->evaluation_space.number_matrix_nonzeros);
+      this->evaluation_space.matrix_column_indices.resize(this->evaluation_space.number_matrix_nonzeros);
       // compute the COO sparse representation: use temporary vectors of size_t
-      Vector<size_t> tmp_row_indices(this->number_matrix_nonzeros);
-      Vector<size_t> tmp_column_indices(this->number_matrix_nonzeros);
+      Vector<size_t> tmp_row_indices(this->evaluation_space.number_matrix_nonzeros);
+      Vector<size_t> tmp_column_indices(this->evaluation_space.number_matrix_nonzeros);
       subproblem.compute_regularized_hessian_sparsity(tmp_row_indices.data(), tmp_column_indices.data(), Indexing::Fortran_indexing);
       // build vectors of int
-      for (size_t nonzero_index: Range(this->number_matrix_nonzeros)) {
-         this->matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
+      for (size_t nonzero_index: Range(this->evaluation_space.number_matrix_nonzeros)) {
+         this->evaluation_space.matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
+         this->evaluation_space.matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
       }
-      this->matrix_values.resize(this->number_matrix_nonzeros);
-      this->rhs.resize(dimension);
-      this->solution.resize(dimension);
+      this->evaluation_space.matrix_values.resize(this->evaluation_space.number_matrix_nonzeros);
+      this->evaluation_space.rhs.resize(dimension);
+      this->evaluation_space.solution.resize(dimension);
 
       // workspace
       this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(this->number_matrix_nonzeros);
-      this->workspace.lkeep = static_cast<int>(5 * dimension + this->number_matrix_nonzeros + std::max(dimension, this->number_matrix_nonzeros) + 42);
+      this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
+      this->workspace.lkeep = static_cast<int>(5 * dimension + this->evaluation_space.number_matrix_nonzeros +
+         std::max(dimension, this->evaluation_space.number_matrix_nonzeros) + 42);
       this->workspace.keep.resize(static_cast<size_t>(this->workspace.lkeep));
       this->workspace.iwork.resize(5 * dimension);
       this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(dimension));
@@ -122,39 +121,41 @@ namespace uno {
       const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
 
       // evaluations
-      this->objective_gradient.resize(subproblem.number_variables);
-      this->constraints.resize(subproblem.number_constraints);
+      this->evaluation_space.objective_gradient.resize(subproblem.number_variables);
+      this->evaluation_space.constraints.resize(subproblem.number_constraints);
 
       // Jacobian
-      this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
-      this->jacobian_row_indices.resize(number_jacobian_nonzeros);
-      this->jacobian_column_indices.resize(number_jacobian_nonzeros);
-      subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-         Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
+      this->evaluation_space.number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
+      this->evaluation_space.jacobian_row_indices.resize(this->evaluation_space.number_jacobian_nonzeros);
+      this->evaluation_space.jacobian_column_indices.resize(this->evaluation_space.number_jacobian_nonzeros);
+      subproblem.compute_constraint_jacobian_sparsity(this->evaluation_space.jacobian_row_indices.data(),
+         this->evaluation_space.jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
 
       // augmented system
-      this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-      this->number_matrix_nonzeros = subproblem.number_regularized_augmented_system_nonzeros();
-      this->matrix_row_indices.resize(this->number_matrix_nonzeros);
-      this->matrix_column_indices.resize(this->number_matrix_nonzeros);
+      this->evaluation_space.number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+      this->evaluation_space.number_matrix_nonzeros = subproblem.number_regularized_augmented_system_nonzeros();
+      this->evaluation_space.matrix_row_indices.resize(this->evaluation_space.number_matrix_nonzeros);
+      this->evaluation_space.matrix_column_indices.resize(this->evaluation_space.number_matrix_nonzeros);
       // compute the COO sparse representation: use temporary vectors of size_t
-      Vector<size_t> tmp_row_indices(this->number_matrix_nonzeros);
-      Vector<size_t> tmp_column_indices(this->number_matrix_nonzeros);
+      Vector<size_t> tmp_row_indices(this->evaluation_space.number_matrix_nonzeros);
+      Vector<size_t> tmp_column_indices(this->evaluation_space.number_matrix_nonzeros);
       subproblem.compute_regularized_augmented_matrix_sparsity(tmp_row_indices.data(), tmp_column_indices.data(),
-         this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), Indexing::Fortran_indexing);
+         this->evaluation_space.jacobian_row_indices.data(), this->evaluation_space.jacobian_column_indices.data(),
+         Indexing::Fortran_indexing);
       // build vectors of int
-      for (size_t nonzero_index: Range(this->number_matrix_nonzeros)) {
-         this->matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
+      for (size_t nonzero_index: Range(this->evaluation_space.number_matrix_nonzeros)) {
+         this->evaluation_space.matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
+         this->evaluation_space.matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
       }
-      this->matrix_values.resize(this->number_matrix_nonzeros);
-      this->rhs.resize(dimension);
-      this->solution.resize(dimension);
+      this->evaluation_space.matrix_values.resize(this->evaluation_space.number_matrix_nonzeros);
+      this->evaluation_space.rhs.resize(dimension);
+      this->evaluation_space.solution.resize(dimension);
 
       // workspace
       this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(this->number_matrix_nonzeros);
-      this->workspace.lkeep = static_cast<int>(5 * dimension + this->number_matrix_nonzeros + std::max(dimension, this->number_matrix_nonzeros) + 42);
+      this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
+      this->workspace.lkeep = static_cast<int>(5 * dimension + this->evaluation_space.number_matrix_nonzeros +
+         std::max(dimension, this->evaluation_space.number_matrix_nonzeros) + 42);
       this->workspace.keep.resize(static_cast<size_t>(this->workspace.lkeep));
       this->workspace.iwork.resize(5 * dimension);
       this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(dimension));
@@ -164,9 +165,9 @@ namespace uno {
 
    void MA57Solver::do_symbolic_analysis() {
       // symbolic analysis
-      MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->matrix_row_indices.data(), this->matrix_column_indices.data(),
-         &this->workspace.lkeep, this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
-         this->workspace.info.data(), this->workspace.rinfo.data());
+      MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->evaluation_space.matrix_row_indices.data(),
+         this->evaluation_space.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
+         this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
       assert(0 <= this->workspace.info[0] && "MA57: the symbolic analysis failed");
       if (0 < this->workspace.info[0]) {
@@ -226,10 +227,10 @@ namespace uno {
       // solve the linear system
       if (this->use_iterative_refinement) {
          MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz,
-            matrix_values.data(), this->matrix_row_indices.data(), this->matrix_column_indices.data(), this->workspace.fact.data(),
-            &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact, rhs.data(), result.data(),
-            this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
-            this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
+            matrix_values.data(), this->evaluation_space.matrix_row_indices.data(), this->evaluation_space.matrix_column_indices.data(),
+            this->workspace.fact.data(), &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact,
+            rhs.data(), result.data(), this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(),
+            this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
       }
       else {
          // copy rhs into result (overwritten by MA57)
@@ -244,30 +245,12 @@ namespace uno {
 
    void MA57Solver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          const WarmstartInformation& warmstart_information) {
-      // evaluate the functions at the current iterate
-      if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->objective_gradient.data());
-      }
-      if (warmstart_information.constraints_changed) {
-         subproblem.evaluate_constraints(this->constraints);
-         // subproblem.evaluate_jacobian(this->constraint_jacobian);
-      }
-
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         // assemble the augmented matrix
-         subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data());
-         // regularize the augmented matrix (this calls the analysis and the factorization)
-         subproblem.regularize_augmented_matrix(statistics, this->matrix_values.data(),
-            subproblem.dual_regularization_factor(), *this);
-
-         // assemble the RHS
-         const COOMatrix jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-            this->matrix_values.data() + this->number_hessian_nonzeros};
-         subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, jacobian, this->rhs);
-      }
-      this->solve_indefinite_system(this->matrix_values, this->rhs, this->solution);
+      // set up the linear system by evaluating the functions at the current iterate
+      this->evaluation_space.set_up_linear_system(statistics, subproblem, *this, warmstart_information);
+      // solve the linear system
+      this->solve_indefinite_system(this->evaluation_space.matrix_values, this->evaluation_space.rhs, this->evaluation_space.solution);
       // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(this->solution, direction);
+      subproblem.assemble_primal_dual_direction(this->evaluation_space.solution, direction);
       if (this->matrix_is_singular()) {
          direction.status = SubproblemStatus::INFEASIBLE;
       }
@@ -302,35 +285,7 @@ namespace uno {
       return static_cast<size_t>(this->workspace.info[24]);
    }
 
-   void MA57Solver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
-      subproblem.evaluate_constraint_jacobian(this->matrix_values.data() + this->number_hessian_nonzeros);
-   }
-
-   void MA57Solver::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t offset = this->number_hessian_nonzeros;
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
-         const double derivative = this->matrix_values[offset + nonzero_index];
-
-         if (constraint_index < result.size() && variable_index < vector.size()) {
-            result[constraint_index] += derivative * vector[variable_index];
-         }
-      }
-   }
-
-   void MA57Solver::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t offset = this->number_hessian_nonzeros;
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
-         const double derivative = this->matrix_values[offset + nonzero_index];
-
-         if (variable_index < result.size() && constraint_index < vector.size()) {
-            result[variable_index] += derivative * vector[constraint_index];
-         }
-      }
+   EvaluationSpace& MA57Solver::get_evaluation_space() {
+      return this->evaluation_space;
    }
 } // namespace

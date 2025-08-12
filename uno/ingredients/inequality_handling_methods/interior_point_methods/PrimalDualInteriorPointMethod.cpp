@@ -9,6 +9,7 @@
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/EvaluationSpace.hpp"
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -205,20 +206,27 @@ namespace uno {
       return std::sqrt(this->barrier_parameter());
    }
 
+   EvaluationSpace& PrimalDualInteriorPointMethod::get_evaluation_space() const {
+      return this->linear_solver->get_evaluation_space();
+   }
+
    void PrimalDualInteriorPointMethod::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
          HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
       // create the subproblem
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
       const Subproblem subproblem{barrier_problem, iterate, hessian_model, regularization_strategy, trust_region_radius};
-      this->linear_solver->evaluate_constraint_jacobian(subproblem);
+      auto& evaluation_space = this->linear_solver->get_evaluation_space();
+      evaluation_space.evaluate_constraint_jacobian(subproblem);
    }
 
    void PrimalDualInteriorPointMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      this->linear_solver->compute_constraint_jacobian_vector_product(vector, result);
+      auto& evaluation_space = this->linear_solver->get_evaluation_space();
+      evaluation_space.compute_constraint_jacobian_vector_product(vector, result);
    }
 
    void PrimalDualInteriorPointMethod::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      this->linear_solver->compute_constraint_jacobian_transposed_vector_product(vector, result);
+      auto& evaluation_space = this->linear_solver->get_evaluation_space();
+      evaluation_space.compute_constraint_jacobian_transposed_vector_product(vector, result);
    }
 
    double PrimalDualInteriorPointMethod::compute_hessian_quadratic_product(const Vector<double>& /*vector*/) const {

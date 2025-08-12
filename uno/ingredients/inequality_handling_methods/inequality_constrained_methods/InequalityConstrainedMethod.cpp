@@ -9,6 +9,7 @@
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/EvaluationSpace.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
@@ -74,22 +75,30 @@ namespace uno {
       return 0.;
    }
 
+   EvaluationSpace& InequalityConstrainedMethod::get_evaluation_space() const {
+      return this->solver->get_evaluation_space();
+   }
+
    void InequalityConstrainedMethod::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
          HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
       const Subproblem subproblem{problem, iterate, hessian_model, regularization_strategy, trust_region_radius};
-      this->solver->evaluate_constraint_jacobian(subproblem);
+      auto& evaluation_space = this->solver->get_evaluation_space();
+      evaluation_space.evaluate_constraint_jacobian(subproblem);
    }
 
    void InequalityConstrainedMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      this->solver->compute_constraint_jacobian_vector_product(vector, result);
+      auto& evaluation_space = this->solver->get_evaluation_space();
+      evaluation_space.compute_constraint_jacobian_vector_product(vector, result);
    }
 
    void InequalityConstrainedMethod::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      this->solver->compute_constraint_jacobian_transposed_vector_product(vector, result);
+      auto& evaluation_space = this->solver->get_evaluation_space();
+      evaluation_space.compute_constraint_jacobian_transposed_vector_product(vector, result);
    }
 
    double InequalityConstrainedMethod::compute_hessian_quadratic_product(const Vector<double>& vector) const {
-      return this->solver->compute_hessian_quadratic_product(vector);
+      auto& evaluation_space = this->solver->get_evaluation_space();
+      return evaluation_space.compute_hessian_quadratic_product(vector);
    }
 
    // compute dual *displacements*

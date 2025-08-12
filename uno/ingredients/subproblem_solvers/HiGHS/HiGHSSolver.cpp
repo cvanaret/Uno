@@ -69,6 +69,10 @@ namespace uno {
       this->solve_subproblem(subproblem, direction);
    }
 
+   EvaluationSpace& HiGHSSolver::get_evaluation_space() {
+
+   }
+
    void HiGHSSolver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
       subproblem.evaluate_constraint_jacobian(this->model.lp_.a_matrix_.value_.data());
    }

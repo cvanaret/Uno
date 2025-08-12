@@ -122,6 +122,10 @@ namespace uno {
       this->solve_subproblem(subproblem, initial_point, direction, warmstart_information);
    }
 
+   EvaluationSpace& BQPDSolver::get_evaluation_space() {
+
+   }
+
    void BQPDSolver::evaluate_constraint_jacobian(const Subproblem& subproblem) {
       subproblem.evaluate_constraint_jacobian(this->jacobian_values.data());
 
