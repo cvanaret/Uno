@@ -21,6 +21,8 @@ namespace uno {
       EvaluationSpace() = default;
       virtual ~EvaluationSpace() = default;
 
+      [[nodiscard]] virtual const double* get_constraints() const = 0;
+
       virtual void evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) = 0;
       virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
       virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector,

@@ -60,6 +60,10 @@ namespace uno {
       this->solution.resize(dimension);
    }
 
+   const double* COOEvaluationSpace::get_constraints() const {
+      return this->constraints.data();
+   }
+
    void COOEvaluationSpace::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
       problem.evaluate_constraint_jacobian(iterate, this->matrix_values.data() + this->number_hessian_nonzeros);
    }
