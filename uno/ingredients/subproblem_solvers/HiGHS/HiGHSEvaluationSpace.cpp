@@ -59,6 +59,10 @@ namespace uno {
       this->compute_hessian_sparsity(subproblem);
    }
 
+   const double* HiGHSEvaluationSpace::get_constraints() const {
+      return this->constraints.data();
+   }
+
    void HiGHSEvaluationSpace::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
       problem.evaluate_constraint_jacobian(iterate, this->model.lp_.a_matrix_.value_.data());
    }
