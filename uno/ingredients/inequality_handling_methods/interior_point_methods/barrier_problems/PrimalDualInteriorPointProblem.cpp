@@ -25,8 +25,9 @@ namespace uno {
       this->reformulated_problem.evaluate_constraints(iterate, constraints);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
-      this->reformulated_problem.evaluate_objective_gradient(iterate, objective_gradient);
+   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, const EvaluationSpace& evaluation_space,
+         double* objective_gradient) const {
+      this->reformulated_problem.evaluate_objective_gradient(iterate, evaluation_space, objective_gradient);
 
       // barrier terms
       for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {
@@ -107,8 +108,9 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const {
-      this->reformulated_problem.evaluate_lagrangian_gradient(lagrangian_gradient, inequality_handling_method, iterate);
+         const InequalityHandlingMethod& inequality_handling_method, const EvaluationSpace& evaluation_space, Iterate& iterate) const {
+      this->reformulated_problem.evaluate_lagrangian_gradient(lagrangian_gradient, inequality_handling_method,
+         evaluation_space, iterate);
 
       // barrier terms
       for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {

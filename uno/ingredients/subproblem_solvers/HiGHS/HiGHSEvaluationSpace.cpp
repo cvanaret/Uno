@@ -111,12 +111,12 @@ namespace uno {
    void HiGHSEvaluationSpace::evaluate_functions(Statistics& statistics, const Subproblem& subproblem,
          const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
-      if (warmstart_information.objective_changed) {
-         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data());
-      }
       if (warmstart_information.constraints_changed) {
          subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints);
          this->evaluate_constraint_jacobian(subproblem.problem, subproblem.current_iterate);
+      }
+      if (warmstart_information.objective_changed) {
+         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, *this, this->model.lp_.col_cost_.data());
       }
       // evaluate the Hessian and regularize it
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {

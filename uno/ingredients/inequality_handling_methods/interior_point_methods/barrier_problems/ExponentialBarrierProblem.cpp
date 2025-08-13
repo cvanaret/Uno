@@ -31,9 +31,10 @@ namespace uno {
       this->reformulated_problem.evaluate_constraints(iterate, constraints);
    }
 
-   void ExponentialBarrierProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
+   void ExponentialBarrierProblem::evaluate_objective_gradient(Iterate& iterate, const EvaluationSpace& evaluation_space,
+         double* objective_gradient) const {
       // original objective gradient
-      this->reformulated_problem.evaluate_objective_gradient(iterate, objective_gradient);
+      this->reformulated_problem.evaluate_objective_gradient(iterate, evaluation_space, objective_gradient);
 
       // contributions of inequality constraints
       // since we define the multipliers for the lower and upper bounds explicitly, the components are all 0
@@ -68,8 +69,9 @@ namespace uno {
    }
 
    void ExponentialBarrierProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const {
-      this->reformulated_problem.evaluate_lagrangian_gradient(lagrangian_gradient, inequality_handling_method, iterate);
+         const InequalityHandlingMethod& inequality_handling_method, const EvaluationSpace& evaluation_space, Iterate& iterate) const {
+      this->reformulated_problem.evaluate_lagrangian_gradient(lagrangian_gradient, inequality_handling_method,
+         evaluation_space, iterate);
    }
    
    void ExponentialBarrierProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
