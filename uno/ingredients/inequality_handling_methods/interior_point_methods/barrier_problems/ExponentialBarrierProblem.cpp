@@ -216,7 +216,29 @@ namespace uno {
    }
 
    void ExponentialBarrierProblem::generate_initial_iterate(Iterate& initial_iterate) const {
+      /*
+      // make the initial point strictly feasible wrt the bounds
+      for (size_t variable_index: Range(this->number_variables)) {
+         initial_iterate.primals[variable_index] = this->push_variable_to_interior(initial_iterate.primals[variable_index],
+            this->reformulated_problem.variable_lower_bound(variable_index), this->reformulated_problem.variable_upper_bound(variable_index));
+      }
+      */
 
+      // set the bound multipliers
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         initial_iterate.multipliers.constraints[constraint_index] = this->parameters.default_multiplier;
+      }
+      for (const size_t variable_index: this->reformulated_problem.get_lower_bounded_variables()) {
+         initial_iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
+      }
+      for (const size_t variable_index: this->reformulated_problem.get_upper_bounded_variables()) {
+         initial_iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
+      }
+
+      // compute least-square multipliers
+      if (0 < this->number_constraints) {
+         // TODO
+      }
    }
 
    double ExponentialBarrierProblem::compute_centrality_error(const Vector<double>& primals,
