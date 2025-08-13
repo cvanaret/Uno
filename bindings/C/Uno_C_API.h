@@ -85,6 +85,14 @@ extern "C" {
       bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
       double* result, void* user_data);
 
+   // create_uno_model
+   // creates an optimization model that can be solved by Uno.
+   void* create_uno_model();
+
+   // destroy_uno_model
+   // destroys a given Uno model. Once destroyed, the model cannot be used anymore.
+   void destroy_uno_model(void* uno_model);
+
 #ifdef __cplusplus
 }
 #endif
