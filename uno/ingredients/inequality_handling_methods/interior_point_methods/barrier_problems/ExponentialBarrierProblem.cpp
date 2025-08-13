@@ -42,34 +42,44 @@ namespace uno {
       size_t gradient_index = this->reformulated_problem.number_variables;
       // TODO we need to maintain two sets of constraint multipliers
       for (size_t constraint_index: Range(this->reformulated_problem.number_constraints)) {
-         if (is_finite(this->reformulated_problem.constraint_lower_bound(constraint_index))) {
-            objective_gradient[gradient_index] = this->reformulated_problem.constraint_lower_bound(constraint_index) -
-               constraints[constraint_index] - this->barrier_parameter * std::log(iterate.multipliers.constraints[constraint_index]);
-            ++gradient_index;
-         }
-         if (is_finite(this->reformulated_problem.constraint_upper_bound(constraint_index))) {
-            objective_gradient[gradient_index] = constraints[constraint_index] - this->reformulated_problem.constraint_upper_bound(constraint_index) -
-               this->barrier_parameter * std::log(iterate.multipliers.constraints[constraint_index]);
-            ++gradient_index;
+         const double lower_bound = this->reformulated_problem.constraint_lower_bound(constraint_index);
+         const double upper_bound = this->reformulated_problem.constraint_upper_bound(constraint_index);
+         if (lower_bound < upper_bound) {
+            if (is_finite(lower_bound)) {
+               objective_gradient[gradient_index] = lower_bound - constraints[constraint_index] - this->barrier_parameter*
+                  std::log(iterate.multipliers.constraints[constraint_index]);
+               ++gradient_index;
+            }
+            if (is_finite(upper_bound)) {
+               objective_gradient[gradient_index] = constraints[constraint_index] - upper_bound - this->barrier_parameter*
+                  std::log(iterate.multipliers.constraints[constraint_index]);
+               ++gradient_index;
+            }
          }
       }
       for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {
-         if (is_finite(this->reformulated_problem.variable_lower_bound(variable_index))) {
-            objective_gradient[gradient_index] = this->reformulated_problem.variable_lower_bound(variable_index) -
-               iterate.primals[variable_index] - this->barrier_parameter * std::log(iterate.multipliers.lower_bounds[variable_index]);
-            ++gradient_index;
-         }
-         if (is_finite(this->reformulated_problem.variable_upper_bound(variable_index))) {
-            objective_gradient[gradient_index] = iterate.primals[variable_index] - this->reformulated_problem.variable_upper_bound(variable_index) -
-               this->barrier_parameter * std::log(iterate.multipliers.upper_bounds[variable_index]);
-            ++gradient_index;
+         const double lower_bound = this->reformulated_problem.variable_lower_bound(variable_index);
+         const double upper_bound = this->reformulated_problem.variable_upper_bound(variable_index);
+         if (lower_bound < upper_bound) {
+            if (is_finite(lower_bound)) {
+               objective_gradient[gradient_index] = lower_bound - iterate.primals[variable_index] - this->barrier_parameter*
+                  std::log(iterate.multipliers.lower_bounds[variable_index]);
+               ++gradient_index;
+            }
+            if (is_finite(upper_bound)) {
+               objective_gradient[gradient_index] = iterate.primals[variable_index] - upper_bound - this->barrier_parameter*
+                  std::log(iterate.multipliers.upper_bounds[variable_index]);
+               ++gradient_index;
+            }
          }
       }
+      /*
       std::cout << "ExponentialBarrierProblem::evaluate_objective_gradient\n";
       for (size_t index: Range(gradient_index)) {
          std::cout << objective_gradient[index] << ' ';
       }
       std::cout << '\n';
+      */
    }
 
    size_t ExponentialBarrierProblem::number_jacobian_nonzeros() const {
@@ -264,19 +274,27 @@ namespace uno {
 
       // count the number of variables associated to constraint bounds
       for (size_t constraint_index: Range(problem.number_constraints)) {
-         if (is_finite(problem.constraint_lower_bound(constraint_index))) {
-            number_variables++;
-         }
-         if (is_finite(problem.constraint_upper_bound(constraint_index))) {
-            number_variables++;
+         const double lower_bound = problem.constraint_lower_bound(constraint_index);
+         const double upper_bound = problem.constraint_upper_bound(constraint_index);
+         if (lower_bound < upper_bound) {
+            if (is_finite(lower_bound)) {
+               number_variables++;
+            }
+            if (is_finite(upper_bound)) {
+               number_variables++;
+            }
          }
       }
       for (size_t variable_index: Range(problem.number_variables)) {
-         if (is_finite(problem.variable_lower_bound(variable_index))) {
-            number_variables++;
-         }
-         if (is_finite(problem.variable_upper_bound(variable_index))) {
-            number_variables++;
+         const double lower_bound = problem.variable_lower_bound(variable_index);
+         const double upper_bound = problem.variable_upper_bound(variable_index);
+         if (lower_bound < upper_bound) {
+            if (is_finite(lower_bound)) {
+               number_variables++;
+            }
+            if (is_finite(upper_bound)) {
+               number_variables++;
+            }
          }
       }
       return number_variables;
