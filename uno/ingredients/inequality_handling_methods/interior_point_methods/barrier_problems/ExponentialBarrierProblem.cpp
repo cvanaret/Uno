@@ -4,6 +4,7 @@
 #include "ExponentialBarrierProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/EvaluationSpace.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/UnaryNegation.hpp"
 #include "symbolic/VectorView.hpp"
@@ -37,7 +38,38 @@ namespace uno {
       this->reformulated_problem.evaluate_objective_gradient(iterate, evaluation_space, objective_gradient);
 
       // contributions of inequality constraints
-      // since we define the multipliers for the lower and upper bounds explicitly, the components are all 0
+      const auto& constraints = evaluation_space.get_constraints();
+      size_t gradient_index = this->reformulated_problem.number_variables;
+      // TODO we need to maintain two sets of constraint multipliers
+      for (size_t constraint_index: Range(this->reformulated_problem.number_constraints)) {
+         if (is_finite(this->reformulated_problem.constraint_lower_bound(constraint_index))) {
+            objective_gradient[gradient_index] = this->reformulated_problem.constraint_lower_bound(constraint_index) -
+               constraints[constraint_index] - this->barrier_parameter * std::log(iterate.multipliers.constraints[constraint_index]);
+            ++gradient_index;
+         }
+         if (is_finite(this->reformulated_problem.constraint_upper_bound(constraint_index))) {
+            objective_gradient[gradient_index] = constraints[constraint_index] - this->reformulated_problem.constraint_upper_bound(constraint_index) -
+               this->barrier_parameter * std::log(iterate.multipliers.constraints[constraint_index]);
+            ++gradient_index;
+         }
+      }
+      for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {
+         if (is_finite(this->reformulated_problem.variable_lower_bound(variable_index))) {
+            objective_gradient[gradient_index] = this->reformulated_problem.variable_lower_bound(variable_index) -
+               iterate.primals[variable_index] - this->barrier_parameter * std::log(iterate.multipliers.lower_bounds[variable_index]);
+            ++gradient_index;
+         }
+         if (is_finite(this->reformulated_problem.variable_upper_bound(variable_index))) {
+            objective_gradient[gradient_index] = iterate.primals[variable_index] - this->reformulated_problem.variable_upper_bound(variable_index) -
+               this->barrier_parameter * std::log(iterate.multipliers.upper_bounds[variable_index]);
+            ++gradient_index;
+         }
+      }
+      std::cout << "ExponentialBarrierProblem::evaluate_objective_gradient\n";
+      for (size_t index: Range(gradient_index)) {
+         std::cout << objective_gradient[index] << ' ';
+      }
+      std::cout << '\n';
    }
 
    size_t ExponentialBarrierProblem::number_jacobian_nonzeros() const {
@@ -49,8 +81,7 @@ namespace uno {
    }
 
    size_t ExponentialBarrierProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
-      size_t number_nonzeros = this->reformulated_problem.number_hessian_nonzeros(hessian_model);
-      return number_nonzeros;
+      return this->reformulated_problem.number_hessian_nonzeros(hessian_model);
    }
 
    void ExponentialBarrierProblem::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices,
@@ -183,7 +214,7 @@ namespace uno {
    void ExponentialBarrierProblem::postprocess_iterate(Iterate& /*iterate*/) const {
       // do nothing
    }
-
+   
    double ExponentialBarrierProblem::compute_centrality_error(const Vector<double>& primals,
          const Multipliers& multipliers, double barrier_parameter) const {
       const Range variables_range = Range(this->reformulated_problem.number_variables);
@@ -204,6 +235,7 @@ namespace uno {
 
    size_t ExponentialBarrierProblem::count_number_variables(const OptimizationProblem& problem) {
       size_t number_variables = problem.number_variables;
+
       // count the number of variables associated to constraint bounds
       for (size_t constraint_index: Range(problem.number_constraints)) {
          if (is_finite(problem.constraint_lower_bound(constraint_index))) {
