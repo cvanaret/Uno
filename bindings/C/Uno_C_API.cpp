@@ -96,11 +96,11 @@ public:
    [[nodiscard]] bool has_jacobian_operator() const override {
       return (this->user_model.jacobian_operator != nullptr);
    }
-   
+
    [[nodiscard]] bool has_jacobian_transposed_operator() const override {
       return (this->user_model.jacobian_transposed_operator != nullptr);
    }
-   
+
    [[nodiscard]] bool has_hessian_operator() const override {
       return (this->user_model.lagrangian_hessian_operator != nullptr);
    }
