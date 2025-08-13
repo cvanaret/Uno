@@ -214,7 +214,11 @@ namespace uno {
    void ExponentialBarrierProblem::postprocess_iterate(Iterate& /*iterate*/) const {
       // do nothing
    }
-   
+
+   void ExponentialBarrierProblem::generate_initial_iterate(Iterate& initial_iterate) const {
+
+   }
+
    double ExponentialBarrierProblem::compute_centrality_error(const Vector<double>& primals,
          const Multipliers& multipliers, double barrier_parameter) const {
       const Range variables_range = Range(this->reformulated_problem.number_variables);
