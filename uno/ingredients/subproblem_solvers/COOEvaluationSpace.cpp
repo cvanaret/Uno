@@ -65,8 +65,8 @@ const size_t dimension = subproblem.number_variables + subproblem.number_constra
       this->solution.resize(dimension);
    }
 
-   void COOEvaluationSpace::evaluate_constraint_jacobian(const Subproblem& subproblem) {
-      subproblem.evaluate_constraint_jacobian(this->matrix_values.data() + this->number_hessian_nonzeros);
+   void COOEvaluationSpace::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
+      problem.evaluate_constraint_jacobian(iterate, this->matrix_values.data() + this->number_hessian_nonzeros);
    }
 
    void COOEvaluationSpace::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
@@ -105,10 +105,10 @@ const size_t dimension = subproblem.number_variables + subproblem.number_constra
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->objective_gradient.data());
+         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data());
       }
       if (warmstart_information.constraints_changed) {
-         subproblem.evaluate_constraints(this->constraints);
+         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints);
       }
 
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {

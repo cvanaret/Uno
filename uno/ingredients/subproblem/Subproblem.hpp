@@ -39,11 +39,6 @@ namespace uno {
       void compute_regularized_augmented_matrix_sparsity(size_t* row_indices, size_t* column_indices, const size_t* jacobian_row_indices,
          const size_t* jacobian_column_indices, size_t solver_indexing) const;
 
-      // constraints, objective gradient and Jacobian
-      void evaluate_objective_gradient(double* objective_gradient) const;
-      void evaluate_constraints(std::vector<double>& constraints) const;
-      void evaluate_constraint_jacobian(double* jacobian_values) const;
-
       // regularized Hessian
       void evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const;
       void regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const;
@@ -83,9 +78,10 @@ namespace uno {
 
       [[nodiscard]] double dual_regularization_factor() const;
 
-   protected:
       const OptimizationProblem& problem;
       Iterate& current_iterate;
+
+   protected:
       HessianModel& hessian_model;
       RegularizationStrategy<double>& regularization_strategy;
       const double trust_region_radius;

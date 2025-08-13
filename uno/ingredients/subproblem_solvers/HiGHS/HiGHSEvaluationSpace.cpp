@@ -59,8 +59,8 @@ namespace uno {
       this->compute_hessian_sparsity(subproblem);
    }
 
-   void HiGHSEvaluationSpace::evaluate_constraint_jacobian(const Subproblem& subproblem) {
-      subproblem.evaluate_constraint_jacobian(this->model.lp_.a_matrix_.value_.data());
+   void HiGHSEvaluationSpace::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
+      problem.evaluate_constraint_jacobian(iterate, this->model.lp_.a_matrix_.value_.data());
    }
 
    void HiGHSEvaluationSpace::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
@@ -112,11 +112,11 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->model.lp_.col_cost_.data());
+         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data());
       }
       if (warmstart_information.constraints_changed) {
-         subproblem.evaluate_constraints(this->constraints);
-         this->evaluate_constraint_jacobian(subproblem);
+         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints);
+         this->evaluate_constraint_jacobian(subproblem.problem, subproblem.current_iterate);
       }
       // evaluate the Hessian and regularize it
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {

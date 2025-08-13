@@ -116,7 +116,7 @@ namespace uno {
       WSC.mxlws = static_cast<int>(this->mxlws);
 
       // evaluate the functions and derivatives
-      this->evaluation_space.evaluate_functions(subproblem, warmstart_information);
+      this->evaluation_space.evaluate_functions(subproblem.problem, subproblem.current_iterate, warmstart_information);
 
       // variable bounds
       if (warmstart_information.variable_bounds_changed) {
