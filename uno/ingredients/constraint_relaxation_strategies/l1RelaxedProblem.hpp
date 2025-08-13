@@ -11,11 +11,8 @@
 namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {
    public:
-      // constructor with proximal term
-      l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient, double proximal_coefficient,
-         double const* proximal_center);
-      // constructor without proximal term
-      l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
+      l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
+         double proximal_coefficient, double const* proximal_center);
 
       [[nodiscard]] double get_objective_multiplier() const override;
 
@@ -61,16 +58,13 @@ namespace uno {
       [[nodiscard]] IterateStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const;
 
-      // parameterization
-      void set_proximal_multiplier(double new_proximal_coefficient);
-      void set_proximal_center(double const* new_proximal_center);
       void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>& elastic_setting_function) const;
 
    protected:
       const size_t number_elastic_variables;
       const double objective_multiplier;
       const double constraint_violation_coefficient;
-      double proximal_coefficient;
+      const double proximal_coefficient;
       double const* proximal_center;
       const Concatenation<const Collection<size_t>&, ForwardRange> lower_bounded_variables; // model variables + elastic variables
       const Concatenation<const Collection<size_t>&, ForwardRange> single_lower_bounded_variables; // model variables + elastic variables

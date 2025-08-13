@@ -25,13 +25,9 @@ namespace uno {
          proximal_center(proximal_center),
          // lower bounded variables are the model variables + the elastic variables
          lower_bounded_variables(concatenate(this->model.get_lower_bounded_variables(), Range(model.number_variables,
-               this->number_variables))),
+            this->number_variables))),
          single_lower_bounded_variables(concatenate(this->model.get_single_lower_bounded_variables(),
-               Range(model.number_variables, this->number_variables))) {
-   }
-
-   l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient):
-      l1RelaxedProblem(model, objective_multiplier, constraint_violation_coefficient, 0., nullptr) {
+            Range(model.number_variables, this->number_variables))) {
    }
 
    double l1RelaxedProblem::get_objective_multiplier() const {
@@ -329,14 +325,6 @@ namespace uno {
 
    const Collection<size_t>& l1RelaxedProblem::get_dual_regularization_constraints() const {
       return this->dual_regularization_constraints;
-   }
-
-   void l1RelaxedProblem::set_proximal_multiplier(double new_proximal_coefficient) {
-      this->proximal_coefficient = new_proximal_coefficient;
-   }
-
-   void l1RelaxedProblem::set_proximal_center(double const* new_proximal_center) {
-      this->proximal_center = new_proximal_center;
    }
 
    void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t,
