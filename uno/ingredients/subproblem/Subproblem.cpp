@@ -69,18 +69,6 @@ namespace uno {
       }
    }
 
-   void Subproblem::evaluate_objective_gradient(double* objective_gradient) const {
-      this->problem.evaluate_objective_gradient(this->current_iterate, objective_gradient);
-   }
-
-   void Subproblem::evaluate_constraints(std::vector<double>& constraints) const {
-      this->problem.evaluate_constraints(this->current_iterate, constraints);
-   }
-
-   void Subproblem::evaluate_constraint_jacobian(double* jacobian_values) const {
-      this->problem.evaluate_constraint_jacobian(this->current_iterate, jacobian_values);
-   }
-
    void Subproblem::evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,

@@ -40,8 +40,7 @@ namespace uno {
       this->evaluate_progress_measures(*this->inequality_handling_method, problem, initial_iterate);
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
-      this->inequality_handling_method->evaluate_constraint_jacobian(problem, initial_iterate,
-         *this->hessian_model, *this->regularization_strategy, INF<double>);
+      this->inequality_handling_method->evaluate_constraint_jacobian(problem, initial_iterate);
       problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, *this->inequality_handling_method,
          initial_iterate);
       this->compute_primal_dual_residuals(problem, initial_iterate);

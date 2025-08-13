@@ -66,8 +66,7 @@ namespace uno {
       this->optimality_inequality_handling_method->generate_initial_iterate(optimality_problem, initial_iterate);
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
-      this->optimality_inequality_handling_method->evaluate_constraint_jacobian(optimality_problem, initial_iterate,
-         *this->optimality_hessian_model, *this->optimality_regularization_strategy, trust_region_radius);
+      this->optimality_inequality_handling_method->evaluate_constraint_jacobian(optimality_problem, initial_iterate);
       optimality_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, *this->optimality_inequality_handling_method,
          initial_iterate);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(optimality_problem, initial_iterate);
@@ -156,8 +155,7 @@ namespace uno {
          this->first_switch_to_feasibility = false;
       }
 
-      this->feasibility_inequality_handling_method->evaluate_constraint_jacobian(feasibility_problem, current_iterate,
-         *this->feasibility_hessian_model, *this->feasibility_regularization_strategy, trust_region_radius);
+      this->feasibility_inequality_handling_method->evaluate_constraint_jacobian(feasibility_problem, current_iterate);
 
       if (Logger::level == INFO) statistics.print_current_line();
       warmstart_information.whole_problem_changed();

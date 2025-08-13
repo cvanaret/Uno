@@ -79,11 +79,9 @@ namespace uno {
       return this->solver->get_evaluation_space();
    }
 
-   void InequalityConstrainedMethod::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
-         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
-      const Subproblem subproblem{problem, iterate, hessian_model, regularization_strategy, trust_region_radius};
+   void InequalityConstrainedMethod::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
       auto& evaluation_space = this->solver->get_evaluation_space();
-      evaluation_space.evaluate_constraint_jacobian(subproblem);
+      evaluation_space.evaluate_constraint_jacobian(problem, iterate);
    }
 
    void InequalityConstrainedMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {

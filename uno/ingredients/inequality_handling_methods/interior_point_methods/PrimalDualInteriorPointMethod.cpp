@@ -210,13 +210,11 @@ namespace uno {
       return this->linear_solver->get_evaluation_space();
    }
 
-   void PrimalDualInteriorPointMethod::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate,
-         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
+   void PrimalDualInteriorPointMethod::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
       // create the subproblem
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-      const Subproblem subproblem{barrier_problem, iterate, hessian_model, regularization_strategy, trust_region_radius};
       auto& evaluation_space = this->linear_solver->get_evaluation_space();
-      evaluation_space.evaluate_constraint_jacobian(subproblem);
+      evaluation_space.evaluate_constraint_jacobian(barrier_problem, iterate);
    }
 
    void PrimalDualInteriorPointMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {

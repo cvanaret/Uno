@@ -31,13 +31,13 @@ namespace uno {
       }
    }
 
-   void BQPDEvaluationSpace::evaluate_constraint_jacobian(const Subproblem& subproblem) {
-      subproblem.evaluate_constraint_jacobian(this->jacobian_values.data());
+   void BQPDEvaluationSpace::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
+      problem.evaluate_constraint_jacobian(iterate, this->jacobian_values.data());
 
       // copy the Jacobian with permutation into &this->gradients[subproblem.number_variables]
-      for (size_t nonzero_index: Range(subproblem.number_jacobian_nonzeros())) {
+      for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
          const size_t permutated_nonzero_index = this->permutation_vector[nonzero_index];
-         this->gradients[subproblem.number_variables + nonzero_index] = this->jacobian_values[permutated_nonzero_index];
+         this->gradients[problem.number_variables + nonzero_index] = this->jacobian_values[permutated_nonzero_index];
       }
    }
 
@@ -86,15 +86,16 @@ namespace uno {
       return quadratic_product;
    }
 
-   void BQPDEvaluationSpace::evaluate_functions(const Subproblem& subproblem, const WarmstartInformation& warmstart_information) {
+   void BQPDEvaluationSpace::evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate,
+         const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
       if (warmstart_information.objective_changed) {
-         subproblem.evaluate_objective_gradient(this->gradients.data());
+         problem.evaluate_objective_gradient(current_iterate, this->gradients.data());
       }
       if (warmstart_information.constraints_changed) {
-         subproblem.evaluate_constraints(this->constraints);
-         this->evaluate_constraint_jacobian(subproblem);
+         problem.evaluate_constraints(current_iterate, this->constraints);
+         this->evaluate_constraint_jacobian(problem, current_iterate);
       }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->evaluate_hessian = true;
