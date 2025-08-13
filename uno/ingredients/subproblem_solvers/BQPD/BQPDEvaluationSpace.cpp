@@ -34,6 +34,10 @@ namespace uno {
       }
    }
 
+   const double* BQPDEvaluationSpace::get_constraints() const {
+      return this->constraints.data();
+   }
+
    void BQPDEvaluationSpace::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
       problem.evaluate_constraint_jacobian(iterate, this->jacobian_values.data());
 
