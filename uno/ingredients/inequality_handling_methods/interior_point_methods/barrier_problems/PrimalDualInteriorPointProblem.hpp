@@ -59,6 +59,8 @@ namespace uno {
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
       void postprocess_iterate(Iterate& iterate) const;
+
+      void generate_initial_iterate(Iterate& initial_iterate) const override;
       [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
          double shift) const;
 
