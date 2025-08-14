@@ -154,7 +154,7 @@ namespace uno {
       this->feasibility_inequality_handling_method->evaluate_constraint_jacobian(feasibility_problem, current_iterate);
 
       if (Logger::level == INFO) statistics.print_current_line();
-      warmstart_information.whole_problem_changed();
+      warmstart_information.reset();
    }
 
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
@@ -226,7 +226,7 @@ namespace uno {
             this->can_switch_to_optimality_phase(current_iterate, globalization_strategy, model, trial_iterate, direction, step_length)) {
          this->switch_to_optimality_phase(current_iterate, globalization_strategy, model, trial_iterate);
          // set a cold start in the subproblem solver
-         warmstart_information.whole_problem_changed();
+         warmstart_information.reset();
       }
       else {
          warmstart_information.no_changes();

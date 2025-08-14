@@ -12,11 +12,10 @@ namespace uno {
       bool constraint_bounds_changed{true};
       bool variable_bounds_changed{true};
 
-      void display() const;
       void no_changes();
-      void iterate_changed();
-      void whole_problem_changed();
-      void only_objective_changed();
+      void reset();
+
+      void display() const;
    };
 } // namespace
 
