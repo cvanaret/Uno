@@ -58,28 +58,6 @@ set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
 
 # source files
 file(GLOB UNO_SOURCE_FILES
-<<<<<<< HEAD
-        uno/Uno.cpp
-        uno/ingredients/constraint_relaxation_strategies/*.cpp
-        uno/ingredients/globalization_mechanisms/*.cpp
-        uno/ingredients/globalization_strategies/*.cpp
-        uno/ingredients/globalization_strategies/switching_methods/*.cpp
-        uno/ingredients/globalization_strategies/switching_methods/filter_methods/*.cpp
-        uno/ingredients/globalization_strategies/switching_methods/filter_methods/filters/*.cpp
-        uno/ingredients/globalization_strategies/switching_methods/funnel_methods/*.cpp
-        uno/ingredients/hessian_models/*.cpp
-        uno/ingredients/inequality_handling_methods/*.cpp
-        uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
-        uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
-        uno/ingredients/regularization_strategies/*.cpp
-        uno/ingredients/subproblem/*.cpp
-        uno/ingredients/subproblem_solvers/*.cpp
-        uno/model/*.cpp
-        uno/optimization/*.cpp
-        uno/options/*.cpp
-        uno/tools/*.cpp
-        bindings/C/Uno_C_API.cpp
-=======
    uno/Uno.cpp
    uno/ingredients/constraint_relaxation_strategies/*.cpp
    uno/ingredients/globalization_mechanisms/*.cpp
@@ -100,7 +78,6 @@ file(GLOB UNO_SOURCE_FILES
    uno/options/*.cpp
    uno/tools/*.cpp
    bindings/C/Uno_C_API.cpp
->>>>>>> b873821e (CMakeLists: compile bindings/C/Uno_C_API.cpp with libraries + install Uno_C_API.h)
 )
 
 # unit test source files
