@@ -11,7 +11,7 @@ endif()
 ######################
 
 # define the project
-project(Uno VERSION 2.0.3
+project(Uno VERSION 2.0.2
         DESCRIPTION "Uno (Unifying Nonlinear Optimization)"
         LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
@@ -21,7 +21,7 @@ if (MSVC)
    add_compile_options("$<$<COMPILE_LANGUAGE:C>:/utf-8>")
    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
    # https://github.com/google/googletest/tree/main/googletest#visual-studio-dynamic-vs-static-runtimes
-	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 else()
    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
@@ -49,8 +49,8 @@ if(HSL OR MA57 OR MA27 OR BQPD)
    enable_language(Fortran)
    include(FortranCInterface)
    FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
-      MACRO_NAMESPACE "FC_"
-      SYMBOL_NAMESPACE "FC_")
+           MACRO_NAMESPACE "FC_"
+           SYMBOL_NAMESPACE "FC_")
 endif()
 
 # directories
@@ -58,26 +58,26 @@ set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
 
 # source files
 file(GLOB UNO_SOURCE_FILES
-   uno/Uno.cpp
-   uno/ingredients/constraint_relaxation_strategies/*.cpp
-   uno/ingredients/globalization_mechanisms/*.cpp
-   uno/ingredients/globalization_strategies/*.cpp
-   uno/ingredients/globalization_strategies/switching_methods/*.cpp
-   uno/ingredients/globalization_strategies/switching_methods/filter_methods/*.cpp
-   uno/ingredients/globalization_strategies/switching_methods/filter_methods/filters/*.cpp
-   uno/ingredients/globalization_strategies/switching_methods/funnel_methods/*.cpp
-   uno/ingredients/hessian_models/*.cpp
-   uno/ingredients/inequality_handling_methods/*.cpp
-   uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
-   uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
-   uno/ingredients/regularization_strategies/*.cpp
-   uno/ingredients/subproblem/*.cpp
-   uno/ingredients/subproblem_solvers/*.cpp
-   uno/model/*.cpp
-   uno/optimization/*.cpp
-   uno/options/*.cpp
-   uno/tools/*.cpp
-   bindings/C/Uno_C_API.cpp
+        uno/Uno.cpp
+        uno/ingredients/constraint_relaxation_strategies/*.cpp
+        uno/ingredients/globalization_mechanisms/*.cpp
+        uno/ingredients/globalization_strategies/*.cpp
+        uno/ingredients/globalization_strategies/switching_methods/*.cpp
+        uno/ingredients/globalization_strategies/switching_methods/filter_methods/*.cpp
+        uno/ingredients/globalization_strategies/switching_methods/filter_methods/filters/*.cpp
+        uno/ingredients/globalization_strategies/switching_methods/funnel_methods/*.cpp
+        uno/ingredients/hessian_models/*.cpp
+        uno/ingredients/inequality_handling_methods/*.cpp
+        uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
+        uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
+        uno/ingredients/regularization_strategies/*.cpp
+        uno/ingredients/subproblem/*.cpp
+        uno/ingredients/subproblem_solvers/*.cpp
+        uno/model/*.cpp
+        uno/optimization/*.cpp
+        uno/options/*.cpp
+        uno/tools/*.cpp
+        bindings/C/Uno_C_API.cpp
 )
 
 # unit test source files
@@ -152,8 +152,8 @@ endif()
 find_library(BQPD bqpd)
 if(BQPD)
    list(APPEND UNO_SOURCE_FILES
-		uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
-		uno/ingredients/subproblem_solvers/BQPD/BQPDEvaluationSpace.cpp)
+           uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
+           uno/ingredients/subproblem_solvers/BQPD/BQPDEvaluationSpace.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/BQPDSolverTests.cpp)
    link_to_uno(bqpd ${BQPD})
 endif()
@@ -162,8 +162,8 @@ endif()
 find_package(HIGHS)
 if(HIGHS_FOUND)
    list(APPEND UNO_SOURCE_FILES
-		uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
-		uno/ingredients/subproblem_solvers/HiGHS/HiGHSEvaluationSpace.cpp)
+           uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
+           uno/ingredients/subproblem_solvers/HiGHS/HiGHSEvaluationSpace.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
    list(APPEND LIBRARIES highs::highs)
    add_definitions("-D HAS_HIGHS")
@@ -252,7 +252,7 @@ if(BUILD_STATIC_LIBS)
    # by default, the target to install is the static library
    set(DEFAULT_UNO_LIB uno_static)
    if (MSVC)
-         add_compile_options(/MT)
+      add_compile_options(/MT)
    endif()
 else()
    set(DEFAULT_UNO_LIB uno_shared)
@@ -278,13 +278,13 @@ endif()
 ##################################
 find_package(GTest CONFIG)
 if(GTest_DIR)
-	message(STATUS "Found GoogleTest")
+   message(STATUS "Found GoogleTest")
    add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
    target_include_directories(run_unotest PUBLIC ${DIRECTORIES} ${GTEST_INCLUDE_DIR})
    target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES})
    if (MSVC)
       set_target_properties(run_unotest PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-	endif()
+   endif()
 endif()
 
 #########################################
@@ -301,10 +301,10 @@ if(TARGET uno_ampl)
    list(APPEND INSTALL_TARGETS uno_ampl)
 endif()
 install(TARGETS ${INSTALL_TARGETS}
-   COMPONENT libuno
-   EXPORT UnoTargets
-   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # DLLs on windows
-   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # static libraries
-   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # shared libraries
-   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # headers
+        COMPONENT libuno
+        EXPORT UnoTargets
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # DLLs on windows
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # static libraries
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # shared libraries
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # headers
 )
