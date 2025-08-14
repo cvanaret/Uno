@@ -66,7 +66,7 @@ namespace uno {
       Uno::pick_ingredients(model, options);
       Statistics statistics = Uno::create_statistics(model, options);
       WarmstartInformation warmstart_information{};
-      warmstart_information.reset();
+      warmstart_information.whole_problem_changed();
 
       // initialize initial primal and dual points
       Iterate current_iterate(model.number_variables, model.number_constraints);
@@ -93,7 +93,7 @@ namespace uno {
                DEBUG << "\n### Outer iteration " << major_iterations << '\n';
 
                // compute an acceptable iterate by solving a subproblem at the current point
-               warmstart_information.reset();
+               warmstart_information.iterate_changed();
                this->globalization_mechanism->compute_next_iterate(statistics, *this->constraint_relaxation_strategy,
                   *this->globalization_strategy, model, current_iterate, trial_iterate, this->direction, warmstart_information,
                   user_callbacks);
