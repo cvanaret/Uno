@@ -77,6 +77,7 @@ file(GLOB UNO_SOURCE_FILES
    uno/optimization/*.cpp
    uno/options/*.cpp
    uno/tools/*.cpp
+   bindings/C/Uno_C_API.cpp
 )
 
 # unit test source files
@@ -236,6 +237,7 @@ if(BUILD_STATIC_LIBS)
    target_include_directories(uno_static PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_static PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
+   set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "bindings/C/Uno_C_API.h")
 endif()
 
 if(BUILD_SHARED_LIBS)
@@ -243,6 +245,7 @@ if(BUILD_SHARED_LIBS)
    target_include_directories(uno_shared PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_shared PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
+   set_target_properties(uno_shared PROPERTIES PUBLIC_HEADER "bindings/C/Uno_C_API.h")
 endif()
 
 if(BUILD_STATIC_LIBS)
@@ -304,3 +307,5 @@ install(TARGETS ${INSTALL_TARGETS}
    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Static libraries
    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # Shared libraries
    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+message(STATUS ${CMAKE_INSTALL_INCLUDEDIR})
+message(STATUS ${CMAKE_INSTALL_FULL_INCLUDEDIR})
