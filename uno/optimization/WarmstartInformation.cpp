@@ -10,8 +10,6 @@ namespace uno {
       std::cout << "Constraints changed: " << std::boolalpha << this->constraints_changed << '\n';
       std::cout << "Constraint bounds changed: " << std::boolalpha << this->constraint_bounds_changed << '\n';
       std::cout << "Variable bounds changed: " << std::boolalpha << this->variable_bounds_changed << '\n';
-      std::cout << "Hessian sparsity changed: " << std::boolalpha << this->hessian_sparsity_changed << '\n';
-      std::cout << "Jacobian sparsity changed: " << std::boolalpha << this->jacobian_sparsity_changed << '\n';
    }
 
    void WarmstartInformation::no_changes() {
@@ -19,8 +17,6 @@ namespace uno {
       this->constraints_changed = false;
       this->constraint_bounds_changed = false;
       this->variable_bounds_changed = false;
-      this->hessian_sparsity_changed = false;
-      this->jacobian_sparsity_changed = false;
    }
 
    void WarmstartInformation::iterate_changed() {
@@ -35,8 +31,6 @@ namespace uno {
       this->constraints_changed = true;
       this->constraint_bounds_changed = true;
       this->variable_bounds_changed = true;
-      this->hessian_sparsity_changed = true;
-      this->jacobian_sparsity_changed = true;
    }
 
    void WarmstartInformation::only_objective_changed() {
@@ -44,7 +38,5 @@ namespace uno {
       this->constraints_changed = false;
       this->constraint_bounds_changed = false;
       this->variable_bounds_changed = false;
-      this->hessian_sparsity_changed = false;
-      this->jacobian_sparsity_changed = false;
    }
 } // namespace
