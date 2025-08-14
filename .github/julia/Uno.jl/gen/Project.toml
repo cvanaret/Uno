@@ -1,0 +1,8 @@
+[deps]
+Clang = "40e3b903-d033-50b4-a0cc-940c62c95e31"
+JuliaFormatter = "98e50ef6-434e-11e9-1051-2b60c6c9e899"
+Uno_jll = "396d5378-14f1-5ab1-981d-48acd51740ed"
+
+[compat]
+julia = "1.10"
+Uno_jll = "2.0.1"
