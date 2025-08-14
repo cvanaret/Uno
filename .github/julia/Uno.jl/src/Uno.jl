@@ -18,4 +18,6 @@ export uno
 include("libuno.jl")
 include("C_wrapper.jl")
 
+global Optimizer
+
 end # module Uno
