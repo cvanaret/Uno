@@ -76,6 +76,9 @@ extern "C" {
       bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
       double* result, void* user_data);
 
+   // get the current Uno version as v major.minor.patch
+   void uno_get_version(int* major, int* minor, int* patch);
+
    // creates an optimization model that can be solved by Uno.
    void* uno_create_model();
 
