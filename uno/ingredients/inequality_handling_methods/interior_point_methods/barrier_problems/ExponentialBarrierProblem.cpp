@@ -4,7 +4,6 @@
 #include "ExponentialBarrierProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/EvaluationSpace.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/UnaryNegation.hpp"
 #include "symbolic/VectorView.hpp"
@@ -15,51 +14,68 @@ namespace uno {
    ExponentialBarrierProblem::ExponentialBarrierProblem(const OptimizationProblem& problem, double barrier_parameter,
       const InteriorPointParameters& parameters):
          // no slacks: as many constraints as the number of equality constraints of the problem
-         BarrierProblem(problem.model, ExponentialBarrierProblem::count_number_variables(problem),
+         BarrierProblem(problem.model, problem.number_variables + ExponentialBarrierProblem::count_number_extra_variables(problem),
             problem.get_equality_constraints().size()),
-         reformulated_problem(problem), barrier_parameter(barrier_parameter), parameters(parameters) {
-      if (!this->reformulated_problem.get_inequality_constraints().empty()) {
-         throw std::runtime_error("ExponentialBarrierProblem does not support inequality constraints yet");
+         problem(problem), number_extra_variables(ExponentialBarrierProblem::count_number_extra_variables(problem)),
+         barrier_parameter(barrier_parameter), parameters(parameters) {
+      if (!this->problem.get_equality_constraints().empty()) {
+         throw std::runtime_error("ExponentialBarrierProblem does not support equality constraints yet");
       }
-      DEBUG << "The exponential barrier problem has " << this->number_variables << " variables\n";
+      DEBUG << "The exponential barrier problem has " << this->number_variables << " variables and " <<
+         this->number_constraints << " constraints\n";
+   }
+
+   void ExponentialBarrierProblem::generate_initial_iterate(Iterate& initial_iterate) const {
+      // set the bound multipliers
+      for (size_t constraint_index: Range(this->problem.number_constraints)) {
+         initial_iterate.multipliers.constraints[constraint_index] = this->parameters.default_multiplier;
+      }
+      for (const size_t variable_index: Range(this->problem.number_variables)) {
+         initial_iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
+         initial_iterate.multipliers.upper_bounds[variable_index] = this->parameters.default_multiplier;
+      }
    }
 
    double ExponentialBarrierProblem::get_objective_multiplier() const {
-      return this->reformulated_problem.get_objective_multiplier();
+      return this->problem.get_objective_multiplier();
    }
 
    void ExponentialBarrierProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
-      this->reformulated_problem.evaluate_constraints(iterate, constraints);
+      // TODO handle equality constraints
+      // this->problem.evaluate_constraints(iterate, constraints);
    }
 
    void ExponentialBarrierProblem::evaluate_objective_gradient(Iterate& iterate, const EvaluationSpace& evaluation_space,
          double* objective_gradient) const {
       // original objective gradient
-      this->reformulated_problem.evaluate_objective_gradient(iterate, evaluation_space, objective_gradient);
+      this->problem.evaluate_objective_gradient(iterate, evaluation_space, objective_gradient);
 
       // contributions of inequality constraints
-      const auto& constraints = evaluation_space.get_constraints();
-      size_t gradient_index = this->reformulated_problem.number_variables;
+      std::vector<double> original_constraints(this->problem.number_constraints);
+      this->problem.evaluate_constraints(iterate, original_constraints);
+
+      //const auto& constraints = evaluation_space.get_constraints();
+      size_t gradient_index = this->problem.number_variables;
       // TODO we need to maintain two sets of constraint multipliers
-      for (size_t constraint_index: Range(this->reformulated_problem.number_constraints)) {
-         const double lower_bound = this->reformulated_problem.constraint_lower_bound(constraint_index);
-         const double upper_bound = this->reformulated_problem.constraint_upper_bound(constraint_index);
+      for (size_t constraint_index: this->problem.get_inequality_constraints()) {
+         const double lower_bound = this->problem.constraint_lower_bound(constraint_index);
+         const double upper_bound = this->problem.constraint_upper_bound(constraint_index);
          if (lower_bound < upper_bound) {
             if (is_finite(lower_bound)) {
-               objective_gradient[gradient_index] = lower_bound - constraints[constraint_index] - this->barrier_parameter*
+               objective_gradient[gradient_index] = lower_bound - original_constraints[constraint_index] - this->barrier_parameter*
                   std::log(iterate.multipliers.constraints[constraint_index]);
                ++gradient_index;
             }
             if (is_finite(upper_bound)) {
-               objective_gradient[gradient_index] = constraints[constraint_index] - upper_bound - this->barrier_parameter*
+               objective_gradient[gradient_index] = original_constraints[constraint_index] - upper_bound - this->barrier_parameter*
                   std::log(iterate.multipliers.constraints[constraint_index]);
                ++gradient_index;
             }
          }
       }
-      for (size_t variable_index: Range(this->reformulated_problem.number_variables)) {
-         const double lower_bound = this->reformulated_problem.variable_lower_bound(variable_index);
-         const double upper_bound = this->reformulated_problem.variable_upper_bound(variable_index);
+      for (size_t variable_index: Range(this->problem.number_variables)) {
+         const double lower_bound = this->problem.variable_lower_bound(variable_index);
+         const double upper_bound = this->problem.variable_upper_bound(variable_index);
          if (lower_bound < upper_bound) {
             if (is_finite(lower_bound)) {
                objective_gradient[gradient_index] = lower_bound - iterate.primals[variable_index] - this->barrier_parameter*
@@ -73,17 +89,16 @@ namespace uno {
             }
          }
       }
-      /*
       std::cout << "ExponentialBarrierProblem::evaluate_objective_gradient\n";
       for (size_t index: Range(gradient_index)) {
          std::cout << objective_gradient[index] << ' ';
       }
       std::cout << '\n';
-      */
    }
 
    size_t ExponentialBarrierProblem::number_jacobian_nonzeros() const {
-      return this->reformulated_problem.number_jacobian_nonzeros();
+      return 0; // TODO handle equality constraints
+      // return this->problem.number_jacobian_nonzeros();
    }
 
    bool ExponentialBarrierProblem::has_curvature(const HessianModel& hessian_model) const {
@@ -91,40 +106,43 @@ namespace uno {
    }
 
    size_t ExponentialBarrierProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
-      return this->reformulated_problem.number_hessian_nonzeros(hessian_model);
+      return this->problem.number_hessian_nonzeros(hessian_model) + 2*this->problem.number_jacobian_nonzeros() +
+         this->number_extra_variables;
    }
 
-   void ExponentialBarrierProblem::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices,
-         size_t solver_indexing, MatrixOrder matrix_order) const {
-      this->reformulated_problem.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+   void ExponentialBarrierProblem::compute_constraint_jacobian_sparsity(size_t* /*row_indices*/, size_t* /*column_indices*/,
+         size_t /*solver_indexing*/, MatrixOrder /*matrix_order*/) const {
+      // TODO handle equality constraints
+      // this->problem.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
    void ExponentialBarrierProblem::compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
          size_t* column_indices, size_t solver_indexing) const {
       // original Lagrangian Hessian
-      this->reformulated_problem.compute_hessian_sparsity(hessian_model, row_indices, column_indices, solver_indexing);
+      this->problem.compute_hessian_sparsity(hessian_model, row_indices, column_indices, solver_indexing);
    }
 
-   void ExponentialBarrierProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
-      this->reformulated_problem.evaluate_constraint_jacobian(iterate, jacobian_values);
+   void ExponentialBarrierProblem::evaluate_constraint_jacobian(Iterate& /*iterate*/, double* /*jacobian_values*/) const {
+      // TODO handle equality constraints
+      // this->problem.evaluate_constraint_jacobian(iterate, jacobian_values);
    }
 
    void ExponentialBarrierProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
          const InequalityHandlingMethod& inequality_handling_method, const EvaluationSpace& evaluation_space, Iterate& iterate) const {
-      this->reformulated_problem.evaluate_lagrangian_gradient(lagrangian_gradient, inequality_handling_method,
+      this->problem.evaluate_lagrangian_gradient(lagrangian_gradient, inequality_handling_method,
          evaluation_space, iterate);
    }
    
    void ExponentialBarrierProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
          const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const {
       // original Lagrangian Hessian
-      this->reformulated_problem.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian_values);
+      this->problem.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian_values);
    }
 
    void ExponentialBarrierProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,
          const Multipliers& multipliers, double* result) const {
       // original Lagrangian Hessian
-      this->reformulated_problem.compute_hessian_vector_product(hessian_model, vector, multipliers, result);
+      this->problem.compute_hessian_vector_product(hessian_model, vector, multipliers, result);
    }
 
    double ExponentialBarrierProblem::variable_lower_bound(size_t /*variable_index*/) const {
@@ -136,19 +154,19 @@ namespace uno {
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_lower_bounded_variables() const {
-      return this->reformulated_problem.get_lower_bounded_variables();
+      return this->empty_set;
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_upper_bounded_variables() const {
-      return this->reformulated_problem.get_upper_bounded_variables();
+      return this->empty_set;
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_single_lower_bounded_variables() const {
-      return this->reformulated_problem.get_single_lower_bounded_variables();
+      return this->problem.get_single_lower_bounded_variables();
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_single_upper_bounded_variables() const {
-      return this->reformulated_problem.get_single_upper_bounded_variables();
+      return this->problem.get_single_upper_bounded_variables();
    }
 
    const Vector<size_t>& ExponentialBarrierProblem::get_fixed_variables() const {
@@ -156,42 +174,42 @@ namespace uno {
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_primal_regularization_variables() const {
-      return this->reformulated_problem.get_primal_regularization_variables();
+      return this->problem.get_primal_regularization_variables();
    }
 
    double ExponentialBarrierProblem::constraint_lower_bound(size_t constraint_index) const {
-      return this->reformulated_problem.constraint_lower_bound(constraint_index);
+      return this->problem.constraint_lower_bound(constraint_index);
    }
 
    double ExponentialBarrierProblem::constraint_upper_bound(size_t constraint_index) const {
-      return this->reformulated_problem.constraint_upper_bound(constraint_index);
+      return this->problem.constraint_upper_bound(constraint_index);
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_equality_constraints() const {
-      return this->reformulated_problem.get_equality_constraints();
+      return this->problem.get_equality_constraints();
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_inequality_constraints() const {
-      return this->inequality_constraints;
+      return this->empty_set;
    }
 
    const Collection<size_t>& ExponentialBarrierProblem::get_dual_regularization_constraints() const {
-      if (this->reformulated_problem.get_dual_regularization_constraints().empty()) {
+      if (this->problem.get_dual_regularization_constraints().empty()) {
          // this is an indication that the constraints (if there is any) were already regularized in a previous
          // reformulation (e.g. l1 relaxation). In that case, we stick to an empty set
-         return this->reformulated_problem.get_dual_regularization_constraints();
+         return this->problem.get_dual_regularization_constraints();
       }
       // otherwise, we pick the set of equality constraints
-      return this->reformulated_problem.get_equality_constraints();
+      return this->problem.get_equality_constraints();
    }
 
    void ExponentialBarrierProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& solution,
          Direction& direction) const {
       // form the primal-dual direction
-      direction.primals = view(solution, 0, this->reformulated_problem.number_variables);
+      direction.primals = view(solution, 0, this->problem.number_variables);
       // retrieve the duals with correct signs (note the minus sign)
-      direction.multipliers.constraints = view(-solution, this->reformulated_problem.number_variables,
-         this->reformulated_problem.number_variables + this->reformulated_problem.number_constraints);
+      direction.multipliers.constraints = view(-solution, this->problem.number_variables,
+         this->problem.number_variables + this->problem.number_constraints);
    }
 
    double ExponentialBarrierProblem::push_variable_to_interior(double variable_value, double /*lower_bound*/, double /*upper_bound*/) const {
@@ -206,7 +224,7 @@ namespace uno {
 
    double ExponentialBarrierProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
-      return this->reformulated_problem.complementarity_error(primals, constraints, multipliers, shift_value, residual_norm);
+      return this->problem.complementarity_error(primals, constraints, multipliers, shift_value, residual_norm);
    }
 
    double ExponentialBarrierProblem::dual_regularization_factor() const {
@@ -225,55 +243,29 @@ namespace uno {
       // do nothing
    }
 
-   void ExponentialBarrierProblem::generate_initial_iterate(Iterate& initial_iterate) const {
-      /*
-      // make the initial point strictly feasible wrt the bounds
-      for (size_t variable_index: Range(this->number_variables)) {
-         initial_iterate.primals[variable_index] = this->push_variable_to_interior(initial_iterate.primals[variable_index],
-            this->reformulated_problem.variable_lower_bound(variable_index), this->reformulated_problem.variable_upper_bound(variable_index));
-      }
-      */
-
-      // set the bound multipliers
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         initial_iterate.multipliers.constraints[constraint_index] = this->parameters.default_multiplier;
-      }
-      for (const size_t variable_index: this->reformulated_problem.get_lower_bounded_variables()) {
-         initial_iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
-      }
-      for (const size_t variable_index: this->reformulated_problem.get_upper_bounded_variables()) {
-         initial_iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
-      }
-
-      // compute least-square multipliers
-      if (0 < this->number_constraints) {
-         // TODO
-      }
-   }
-
    double ExponentialBarrierProblem::compute_centrality_error(const Vector<double>& primals,
-         const Multipliers& multipliers, double barrier_parameter) const {
-      const Range variables_range = Range(this->reformulated_problem.number_variables);
+         const Multipliers& multipliers, double shift) const {
+      const Range variables_range = Range(this->problem.number_variables);
       const VectorExpression shifted_bound_complementarity{variables_range, [&](size_t variable_index) {
          double result = 0.;
          if (0. < multipliers.lower_bounds[variable_index]) { // lower bound
             result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
-               (primals[variable_index] - this->reformulated_problem.variable_lower_bound(variable_index)) - barrier_parameter));
+               (primals[variable_index] - this->problem.variable_lower_bound(variable_index)) - shift));
          }
          if (multipliers.upper_bounds[variable_index] < 0.) { // upper bound
             result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
-               (primals[variable_index] - this->reformulated_problem.variable_upper_bound(variable_index)) - barrier_parameter));
+               (primals[variable_index] - this->problem.variable_upper_bound(variable_index)) - shift));
          }
          return result;
       }};
       return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
    }
 
-   size_t ExponentialBarrierProblem::count_number_variables(const OptimizationProblem& problem) {
-      size_t number_variables = problem.number_variables;
+   size_t ExponentialBarrierProblem::count_number_extra_variables(const OptimizationProblem& problem) {
+      size_t number_variables = 0;
 
       // count the number of variables associated to constraint bounds
-      for (size_t constraint_index: Range(problem.number_constraints)) {
+      for (size_t constraint_index: problem.get_inequality_constraints()) {
          const double lower_bound = problem.constraint_lower_bound(constraint_index);
          const double upper_bound = problem.constraint_upper_bound(constraint_index);
          if (lower_bound < upper_bound) {

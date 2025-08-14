@@ -14,7 +14,7 @@ namespace uno {
 
       virtual void generate_initial_iterate(Iterate& initial_iterate) const = 0;
       [[nodiscard]] virtual double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
-         double barrier_parameter) const = 0;
+         double shift) const = 0;
    };
 
    inline BarrierProblem::BarrierProblem(const Model& model, size_t number_variables, size_t number_constraints):

@@ -14,7 +14,8 @@ namespace uno {
       ExponentialBarrierProblem(const OptimizationProblem& problem, double barrier_parameter,
          const InteriorPointParameters &parameters);
 
-      // function evaluations
+      void generate_initial_iterate(Iterate& initial_iterate) const override;
+
       [[nodiscard]] double get_objective_multiplier() const override;
 
       // constraint evaluations
@@ -68,18 +69,18 @@ namespace uno {
          const Vector<double>& primal_direction) const;
       void postprocess_iterate(Iterate& iterate) const;
 
-      void generate_initial_iterate(Iterate& initial_iterate) const override;
       [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
-         double barrier_parameter) const override;
+         double shift) const override;
 
    protected:
-      const OptimizationProblem& reformulated_problem;
+      const OptimizationProblem& problem;
+      const size_t number_extra_variables;
       const double barrier_parameter;
       const InteriorPointParameters& parameters;
       const Vector<size_t> fixed_variables{};
-      const ForwardRange inequality_constraints{0};
+      const ForwardRange empty_set{0};
 
-      [[nodiscard]] static size_t count_number_variables(const OptimizationProblem& problem);
+      [[nodiscard]] static size_t count_number_extra_variables(const OptimizationProblem& problem);
    };
 } // namespace
 
