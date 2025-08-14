@@ -123,9 +123,6 @@ extern "C" {
       bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
       double* result, void* user_data);
 
-   // get the current Uno version as v major.minor.patch
-   void uno_get_version(int* major, int* minor, int* patch);
-
    // creates an optimization model that can be solved by Uno.
    // initially, the model contains "number_variables" variables, no objective function, and no constraints.
    // takes as inputs the type of problem ('L' for linear, 'Q' for quadratic, 'N' for nonlinear), the number of
