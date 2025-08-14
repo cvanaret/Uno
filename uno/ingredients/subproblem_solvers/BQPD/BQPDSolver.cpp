@@ -128,7 +128,7 @@ namespace uno {
       }
 
       // constraint bounds
-      if (warmstart_information.constraint_bounds_changed || warmstart_information.constraints_changed) {
+      if (warmstart_information.iterate_changed) {
          auto constraints_lower_bounds = view(this->lower_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
          auto constraints_upper_bounds = view(this->upper_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
          subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, this->evaluation_space.constraints);
@@ -221,8 +221,7 @@ namespace uno {
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {
       BQPDMode mode = BQPDMode::USER_DEFINED_ACTIVE_SET;
       // if only the variable bounds changed, reuse the active set estimate and the Jacobian information
-      if (warmstart_information.variable_bounds_changed && !warmstart_information.objective_changed &&
-            !warmstart_information.constraints_changed && !warmstart_information.constraint_bounds_changed) {
+      if (warmstart_information.variable_bounds_changed && !warmstart_information.iterate_changed) {
          mode = BQPDMode::UNCHANGED_ACTIVE_SET_AND_JACOBIAN;
       }
       return mode;
