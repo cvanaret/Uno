@@ -37,17 +37,18 @@ namespace uno {
       }
    }
 
+   // lower triangular part of the symmetric augmented matrix
    void Subproblem::compute_regularized_augmented_matrix_sparsity(size_t* row_indices, size_t* column_indices,
          const size_t* jacobian_row_indices, const size_t* jacobian_column_indices, size_t solver_indexing) const {
       // sparsity of original Lagrangian Hessian in the (1, 1) block
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
-      // copy Jacobian of general constraints into the (1, 2) block
+      // copy Jacobian of general constraints into the (2, 1) block
       const size_t hessian_offset = this->number_hessian_nonzeros();
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
          // to get the transpose, switch the order of the row/column vectors
-         row_indices[hessian_offset + nonzero_index] = jacobian_column_indices[nonzero_index] + solver_indexing;
-         column_indices[hessian_offset + nonzero_index] = this->problem.number_variables + jacobian_row_indices[nonzero_index] + solver_indexing;
+         row_indices[hessian_offset + nonzero_index] = this->problem.number_variables + jacobian_row_indices[nonzero_index] + solver_indexing;
+         column_indices[hessian_offset + nonzero_index] = jacobian_column_indices[nonzero_index] + solver_indexing;
       }
 
       // regularize the augmented matrix only if required (diagonal regularization)
