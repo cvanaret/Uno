@@ -44,7 +44,7 @@ namespace uno {
       Timer timer{};
       Statistics statistics = Uno::create_statistics(model, options);
       WarmstartInformation warmstart_information{};
-      warmstart_information.whole_problem_changed();
+      warmstart_information.reset();
 
       size_t major_iterations = 0;
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
@@ -64,7 +64,7 @@ namespace uno {
                DEBUG << "\n### Outer iteration " << major_iterations << '\n';
 
                // compute an acceptable iterate by solving a subproblem at the current point
-               warmstart_information.iterate_changed();
+               warmstart_information.reset();
                this->globalization_mechanism->compute_next_iterate(statistics, *this->constraint_relaxation_strategy,
                   *this->globalization_strategy, model, current_iterate, trial_iterate, this->direction, warmstart_information,
                   user_callbacks);
