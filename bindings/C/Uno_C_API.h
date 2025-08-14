@@ -80,10 +80,36 @@ extern "C" {
    void uno_get_version(int* major, int* minor, int* patch);
 
    // creates an optimization model that can be solved by Uno.
-   void* uno_create_model();
+   // initially, the model contains "number_variables" variables, no objective function, and no constraints.
+   // takes as inputs the type of problem ('L' for linear, 'Q' for quadratic, 'N' for nonlinear), the number of
+   // variables, two arrays of lower and upper bounds of size "number_variables", and the vector indexing (0 for
+   // C-style indexing, 1 for Fortran-style indexing).
+   void* uno_create_model(char problem_type, int number_variables, double* variables_lower_bounds,
+      double* variables_upper_bounds, int vector_indexing);
+
+   // sets the objective and objective gradient of a given model.
+   // takes as inputs a function pointer of the objective function and a function pointer of its gradient function.
+   void uno_set_objective(void* model, Objective objective_function, ObjectiveGradient objective_gradient);
+
+   // sets the constraints and constraint Jacobian of a given model.
+   // takes as inputs the number of constraints, a function pointer of the constraint functions, two arrays of lower and
+   // upper bounds of size "number_constraints", the number of nonzero elements of the Jacobian, a function pointer of
+   // the Jacobian sparsity, and a function pointer of the constraint Jacobian.
+   void uno_set_constraints(void* model, int number_constraints, Constraints constraint_functions,
+      double* constraints_lower_bounds, double* constraints_upper_bounds, int number_jacobian_nonzeros,
+      JacobianSparsity jacobian_sparsity, Jacobian constraint_jacobian);
+
+   // sets the Lagrangian Hessian of a given model.
+   // takes as inputs the number of nonzero elements of the Lagrangian Hessian, a function pointer of the Hessian
+   // sparsity, and a function pointer of the Hessian.
+   void uno_set_lagrangian_hessian(void* model, int number_hessian_nonzeros, HessianSparsity hessian_sparsity,
+      Hessian lagrangian_hessian);
+
+   // sets the user data of a given model.
+   void uno_set_user_data(void* model, void* user_data);
 
    // destroys a given Uno model. Once destroyed, the model cannot be used anymore.
-   void uno_destroy_model(void* uno_model);
+   void uno_destroy_model(void* model);
 
 #ifdef __cplusplus
 }
