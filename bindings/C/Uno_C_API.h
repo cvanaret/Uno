@@ -4,6 +4,8 @@
 #ifndef UNO_C_API_H
 #define UNO_C_API_H
 
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
