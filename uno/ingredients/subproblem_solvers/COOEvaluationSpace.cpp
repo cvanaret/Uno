@@ -65,6 +65,10 @@ const size_t dimension = subproblem.number_variables + subproblem.number_constra
       this->solution.resize(dimension);
    }
 
+   const double* COOEvaluationSpace::get_constraints() const {
+      return this->constraints.data();
+   }
+
    void COOEvaluationSpace::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
       problem.evaluate_constraint_jacobian(iterate, this->matrix_values.data() + this->number_hessian_nonzeros);
    }
@@ -104,13 +108,12 @@ const size_t dimension = subproblem.number_variables + subproblem.number_constra
    void COOEvaluationSpace::set_up_linear_system(Statistics& statistics, const Subproblem& subproblem,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
-      if (warmstart_information.objective_changed) {
-         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data());
-      }
       if (warmstart_information.constraints_changed) {
          subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints);
       }
-
+      if (warmstart_information.objective_changed) {
+         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, *this, this->objective_gradient.data());
+      }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // assemble the augmented matrix
          subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data());
