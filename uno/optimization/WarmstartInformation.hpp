@@ -7,9 +7,7 @@
 namespace uno {
    class WarmstartInformation {
    public:
-      bool objective_changed{true};
-      bool constraints_changed{true};
-      bool constraint_bounds_changed{true};
+      bool iterate_changed{true};
       bool variable_bounds_changed{true};
 
       void no_changes();

@@ -41,7 +41,7 @@ namespace uno {
       }
 
       // constraint bounds
-      if (warmstart_information.constraint_bounds_changed || warmstart_information.constraints_changed) {
+      if (warmstart_information.iterate_changed) {
          subproblem.set_constraints_bounds(this->evaluation_space.model.lp_.row_lower_, this->evaluation_space.model.lp_.row_upper_, this->evaluation_space.constraints);
       }
 
