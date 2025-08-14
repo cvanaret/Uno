@@ -220,8 +220,11 @@ namespace uno {
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {
       BQPDMode mode = BQPDMode::USER_DEFINED_ACTIVE_SET;
+      if (warmstart_information.iterate_changed) {
+         mode = BQPDMode::ACTIVE_SET_EQUALITIES;
+      }
       // if only the variable bounds changed, reuse the active set estimate and the Jacobian information
-      if (warmstart_information.variable_bounds_changed && !warmstart_information.iterate_changed) {
+      else if (warmstart_information.variable_bounds_changed) {
          mode = BQPDMode::UNCHANGED_ACTIVE_SET_AND_JACOBIAN;
       }
       return mode;
