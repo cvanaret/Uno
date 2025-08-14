@@ -77,10 +77,10 @@ extern "C" {
       double* result, void* user_data);
 
    // creates an optimization model that can be solved by Uno.
-   void* create_uno_model();
+   void* uno_create_model();
 
    // destroys a given Uno model. Once destroyed, the model cannot be used anymore.
-   void destroy_uno_model(void* uno_model);
+   void uno_destroy_model(void* uno_model);
 
 #ifdef __cplusplus
 }
