@@ -11,11 +11,11 @@ public:
    ~CModel() = default;
 };
 
-void* create_uno_model() {
+void* uno_create_model() {
    return new CModel();
 }
 
-void destroy_uno_model(void* uno_model) {
+void uno_destroy_model(void* uno_model) {
    assert(uno_model != nullptr);
    delete static_cast<CModel*>(uno_model);
 }
