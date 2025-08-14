@@ -71,7 +71,7 @@ namespace uno {
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius();
                // reset the Hessian representation of the subproblem solver
-               warmstart_information.reset();
+               warmstart_information.whole_problem_changed();
             }
             else {
                // take full primal-dual step
