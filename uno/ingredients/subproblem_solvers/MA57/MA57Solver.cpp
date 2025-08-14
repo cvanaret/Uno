@@ -119,6 +119,10 @@ namespace uno {
       assert(!this->analysis_performed);
 
       // symbolic analysis
+      std::cout << "MA57 analysis:\n";
+      print_vector(std::cout, this->evaluation_space.matrix_row_indices);
+      print_vector(std::cout, this->evaluation_space.matrix_column_indices);
+      std::cout << "Dimension = " << this->workspace.n << '\n';
       MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->evaluation_space.matrix_row_indices.data(),
          this->evaluation_space.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
          this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
