@@ -100,7 +100,8 @@ namespace uno {
       // Jacobian
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
          const auto [constraint_index, variable_index, derivative] = constraint_jacobian[nonzero_index];
-         rhs[variable_index] += this->current_iterate.multipliers.constraints[constraint_index] * derivative;
+         rhs[static_cast<size_t>(variable_index)] +=
+            this->current_iterate.multipliers.constraints[static_cast<size_t>(constraint_index)] * derivative;
       }
       // constraints
       for (size_t constraint_index: Range(this->number_constraints)) {
