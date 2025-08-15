@@ -110,14 +110,14 @@ namespace uno {
          this->number_extra_variables;
    }
 
-   void ExponentialBarrierProblem::compute_constraint_jacobian_sparsity(size_t* /*row_indices*/, size_t* /*column_indices*/,
-         size_t /*solver_indexing*/, MatrixOrder /*matrix_order*/) const {
+   void ExponentialBarrierProblem::compute_constraint_jacobian_sparsity(int* /*row_indices*/, int* /*column_indices*/,
+         int /*solver_indexing*/, MatrixOrder /*matrix_order*/) const {
       // TODO handle equality constraints
       // this->problem.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
-   void ExponentialBarrierProblem::compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
-         size_t* column_indices, size_t solver_indexing) const {
+   void ExponentialBarrierProblem::compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
+         int* column_indices, int solver_indexing) const {
       // original Lagrangian Hessian
       this->problem.compute_hessian_sparsity(hessian_model, row_indices, column_indices, solver_indexing);
    }
