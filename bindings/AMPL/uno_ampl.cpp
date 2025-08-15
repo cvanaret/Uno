@@ -74,7 +74,8 @@ int main(int argc, char* argv[]) {
          std::string model_name = std::string(argv[1]);
 
          // gather the options
-         Options options = DefaultOptions::load();
+         Options options(true);
+         DefaultOptions::load(options);
          // determine the default solvers based on the available libraries
          Options solvers_options = DefaultOptions::determine_solvers();
          options.overwrite_with(solvers_options);

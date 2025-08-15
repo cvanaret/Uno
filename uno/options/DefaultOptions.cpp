@@ -7,9 +7,7 @@
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 
 namespace uno {
-   Options DefaultOptions::load() {
-      Options options(true);
-
+   void DefaultOptions::load(Options& options) {
       /** termination **/
       // primal tolerance (constraint violation)
       options["primal_tolerance"] = "1e-8";
@@ -169,8 +167,6 @@ namespace uno {
 
       /** AMPL options **/
       options["AMPL_write_solution_to_file"] = "yes";
-
-      return options;
    }
 
    Options DefaultOptions::determine_solvers() {
