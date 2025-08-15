@@ -9,38 +9,40 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+   const double uno_Min = 1.;
+   const double uno_Max = -1.;
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and
    // stores the objective value of "x" in "objective_value".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int (*Objective)(int number_variables, const double* x, double* objective_value, void* user_data);
+   typedef int32_t (*Objective)(int32_t number_variables, const double* x, double* objective_value, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the constraint
    // values at "x" in the vector "constraint_values" of size "number_constraints".
    // - returns an integer that is 0 if the evaluations succeeded, and positive otherwise.
-   typedef int (*Constraints)(int number_variables, int number_constraints, const double* x, double* constraint_values,
+   typedef int32_t (*Constraints)(int32_t number_variables, int32_t number_constraints, const double* x, double* constraint_values,
       void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the dense objective
    // gradient at "x" in the vector "gradient" of size "number_variables".
    // - returns an integer that is 0 if the evaluations succeeded, and positive otherwise.
-   typedef int (*ObjectiveGradient)(int number_variables, const double* x, double* gradient, void* user_data);
+   typedef int32_t (*ObjectiveGradient)(int32_t number_variables, const double* x, double* gradient, void* user_data);
 
    // - takes as inputs two vectors "row_indices" and "column_indices", allocates memory for them with size
    // "number_jacobian_nonzeros", and stores the row and column indices of the constraint Jacobian entries in
    // coordinate (COO) format.
-   typedef void (*JacobianSparsity)(int number_jacobian_nonzeros, int* row_indices, int* column_indices, void* user_data);
+   typedef void (*JacobianSparsity)(int32_t number_jacobian_nonzeros, int32_t* row_indices, int32_t* column_indices, void* user_data);
 
    // - takes as inputs two vectors "row_indices" and "column_indices", allocates memory for them with size
    // "number_hessian_nonzeros", and stores the row and column indices of the Lagrangian Hessian entries in
    // coordinate (COO) format.
-   typedef void (*HessianSparsity)(int number_hessian_nonzeros, int* row_indices, int* column_indices, void* user_data);
+   typedef void (*HessianSparsity)(int32_t number_hessian_nonzeros, int32_t* row_indices, int32_t* column_indices, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the entries of the
    // sparse constraint Jacobian in the vector "jacobian" of size "number_jacobian_nonzeros". The values should be in
    // the same order as the indices provided in "constraint_jacobian_sparsity".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int (*Jacobian)(int number_variables, int number_jacobian_nonzeros, const double* x, double* jacobian,
+   typedef int32_t (*Jacobian)(int32_t number_variables, int32_t number_jacobian_nonzeros, const double* x, double* jacobian,
       void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", an objective multiplier, a vector "multipliers" of
@@ -49,15 +51,15 @@ extern "C" {
    // the same order as the indices provided in "constraint_jacobian_sparsity".
    // Only the lower triangular part of the symmetric Lagrangian Hessian should be provided.
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int (*Hessian)(int number_variables, int number_constraints, int number_hessian_nonzeros, const double* x,
-      double objective_multiplier, const double* multipliers, double* hessian, void* user_data);
+   typedef int32_t (*Hessian)(int32_t number_variables, int32_t number_constraints, int32_t number_hessian_nonzeros,
+      const double* x, double objective_multiplier, const double* multipliers, double* hessian, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
    // the Jacobian should be evaluated at "x" (otherwise, the current constraint Jacobian is used), a vector "vector"
    // of size "number_variables" and an object "user_data", and stores the Jacobian-vector product in the vector
    // "result" of size "number_constraints".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int (*JacobianVectorProduct)(int number_variables, int number_constraints, const double* x,
+   typedef int32_t (*JacobianVectorProduct)(int32_t number_variables, int32_t number_constraints, const double* x,
       bool evaluate_at_x, const double* vector, double* result, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
@@ -65,7 +67,7 @@ extern "C" {
    // of size "number_constraints" and an object "user_data", and stores the Jacobian transposed-vector product in the
    // vector "result" of size "number_variables".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int (*JacobianTransposedVectorProduct)(int number_variables, int number_constraints, const double* x,
+   typedef int32_t (*JacobianTransposedVectorProduct)(int32_t number_variables, int32_t number_constraints, const double* x,
       bool evaluate_at_x, const double* vector, double* result, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
@@ -74,37 +76,38 @@ extern "C" {
    // size "number_variables", and an object "user_data", and stores the Hessian-vector product in the vector "result"
    // of size "number_variables".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int (*HessianVectorProduct)(int number_variables, int number_constraints, const double* x,
+   typedef int32_t (*HessianVectorProduct)(int32_t number_variables, int32_t number_constraints, const double* x,
       bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
       double* result, void* user_data);
 
    // get the current Uno version as v major.minor.patch
-   void uno_get_version(int* major, int* minor, int* patch);
+   void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch);
 
    // creates an optimization model that can be solved by Uno.
    // initially, the model contains "number_variables" variables, no objective function, and no constraints.
    // takes as inputs the type of problem ('L' for linear, 'Q' for quadratic, 'N' for nonlinear), the number of
    // variables, two arrays of lower and upper bounds of size "number_variables", and the vector indexing (0 for
    // C-style indexing, 1 for Fortran-style indexing).
-   void* uno_create_model(char problem_type, int number_variables, double* variables_lower_bounds,
-      double* variables_upper_bounds, int vector_indexing);
+   void* uno_create_model(char problem_type, int32_t number_variables, double* variables_lower_bounds,
+      double* variables_upper_bounds, int32_t vector_indexing);
 
    // sets the objective and objective gradient of a given model.
-   // takes as inputs a function pointer of the objective function and a function pointer of its gradient function.
-   void uno_set_objective(void* model, Objective objective_function, ObjectiveGradient objective_gradient);
+   // takes as inputs the objective sense (uno_Min or uno_Max), a function point32_ter of the objective function and a
+   // function point32_ter of its gradient function.
+   void uno_set_objective(void* model, double objective_sense, Objective objective_function, ObjectiveGradient objective_gradient);
 
    // sets the constraints and constraint Jacobian of a given model.
-   // takes as inputs the number of constraints, a function pointer of the constraint functions, two arrays of lower and
-   // upper bounds of size "number_constraints", the number of nonzero elements of the Jacobian, a function pointer of
-   // the Jacobian sparsity, and a function pointer of the constraint Jacobian.
-   void uno_set_constraints(void* model, int number_constraints, Constraints constraint_functions,
-      double* constraints_lower_bounds, double* constraints_upper_bounds, int number_jacobian_nonzeros,
+   // takes as inputs the number of constraints, a function point32_ter of the constraint functions, two arrays of lower and
+   // upper bounds of size "number_constraints", the number of nonzero elements of the Jacobian, a function point32_ter of
+   // the Jacobian sparsity, and a function point32_ter of the constraint Jacobian.
+   void uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
+      double* constraints_lower_bounds, double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
       JacobianSparsity jacobian_sparsity, Jacobian constraint_jacobian);
 
    // sets the Lagrangian Hessian of a given model.
-   // takes as inputs the number of nonzero elements of the Lagrangian Hessian, a function pointer of the Hessian
-   // sparsity, and a function pointer of the Hessian.
-   void uno_set_lagrangian_hessian(void* model, int number_hessian_nonzeros, HessianSparsity hessian_sparsity,
+   // takes as inputs the number of nonzero elements of the Lagrangian Hessian, a function point32_ter of the Hessian
+   // sparsity, and a function point32_ter of the Hessian.
+   void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, HessianSparsity hessian_sparsity,
       Hessian lagrangian_hessian);
 
    // sets the user data of a given model.
