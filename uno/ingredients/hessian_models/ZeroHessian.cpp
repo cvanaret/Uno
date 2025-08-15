@@ -22,8 +22,8 @@ namespace uno {
       return 0;
    }
 
-   void ZeroHessian::compute_sparsity(const Model& /*model*/, size_t* /*row_indices*/, size_t* /*column_indices*/,
-         size_t /*solver_indexing*/) const {
+   void ZeroHessian::compute_sparsity(const Model& /*model*/, int* /*row_indices*/, int* /*column_indices*/,
+         int /*solver_indexing*/) const {
       // empty structure
    }
 

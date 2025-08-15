@@ -32,8 +32,8 @@ namespace uno {
 
       // Jacobian
       size_t number_jacobian_nonzeros{};
-      std::vector<size_t> jacobian_row_indices{};
-      std::vector<size_t> jacobian_column_indices{};
+      std::vector<int> jacobian_row_indices{};
+      std::vector<int> jacobian_column_indices{};
 
       // symmetric matrix (Hessian or augmented system)
       size_t number_hessian_nonzeros{};

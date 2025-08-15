@@ -45,8 +45,8 @@ namespace uno {
       result.fill(0.);
       const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
       for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
+         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
+         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
          const double derivative = this->jacobian_values[nonzero_index];
 
          // a safeguard to make sure we take only the correct part of the Jacobian
@@ -60,8 +60,8 @@ namespace uno {
       result.fill(0.);
       const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
       for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
+         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
+         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
          const double derivative = this->jacobian_values[nonzero_index];
          assert(constraint_index < vector.size());
          assert(variable_index < result.size());
@@ -74,8 +74,8 @@ namespace uno {
       double quadratic_product = 0.;
       const size_t number_hessian_nonzeros = this->hessian_values.size();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
-         const size_t row_index = this->hessian_row_indices[nonzero_index];
-         const size_t column_index = this->hessian_column_indices[nonzero_index];
+         const size_t row_index = static_cast<size_t>(this->hessian_row_indices[nonzero_index]);
+         const size_t column_index = static_cast<size_t>(this->hessian_column_indices[nonzero_index]);
          const double entry = this->hessian_values[nonzero_index];
          assert(row_index < vector.size());
          assert(column_index < vector.size());
@@ -139,26 +139,27 @@ namespace uno {
       );
 
       // copy the COO format into BQPD's CSR format
-      size_t current_constraint = 0;
+      int current_constraint = 0;
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t permutated_nonzero_index = this->permutation_vector[jacobian_nonzero_index];
          // variable index
-         const size_t variable_index = this->jacobian_column_indices[permutated_nonzero_index];
-         this->gradient_sparsity[1 + subproblem.number_variables + jacobian_nonzero_index] =
-            static_cast<int>(variable_index + Indexing::Fortran_indexing);
+         const int variable_index = this->jacobian_column_indices[permutated_nonzero_index];
+         this->gradient_sparsity[1 + subproblem.number_variables + jacobian_nonzero_index] = variable_index +
+            Indexing::Fortran_indexing;
 
          // constraint index
-         const size_t constraint_index = this->jacobian_row_indices[permutated_nonzero_index];
+         const int constraint_index = this->jacobian_row_indices[permutated_nonzero_index];
          assert(current_constraint <= constraint_index);
          while (current_constraint < constraint_index) {
             ++current_constraint;
-            this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + current_constraint] =
-               static_cast<int>(subproblem.number_variables + jacobian_nonzero_index + Indexing::Fortran_indexing);
+            this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 +
+               static_cast<size_t>(current_constraint)] = static_cast<int>(subproblem.number_variables +
+                  jacobian_nonzero_index) + Indexing::Fortran_indexing;
          }
       }
       // since there cannot be empty rows, we don't need to loop over empty rows like we do for the HiGHS Hessian
       this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 + subproblem.number_constraints] =
-         static_cast<int>(subproblem.number_variables + number_jacobian_nonzeros + Indexing::Fortran_indexing);
+         static_cast<int>(subproblem.number_variables + number_jacobian_nonzeros) + Indexing::Fortran_indexing;
 
       // the Jacobian will be evaluated in this vector, and copied with permutation into this->gradients
       this->jacobian_values.resize(number_jacobian_nonzeros);

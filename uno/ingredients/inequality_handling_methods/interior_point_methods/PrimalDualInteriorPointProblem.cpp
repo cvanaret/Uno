@@ -49,13 +49,13 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices,
-         size_t solver_indexing, MatrixOrder matrix_order) const {
+   void PrimalDualInteriorPointProblem::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices,
+         int solver_indexing, MatrixOrder matrix_order) const {
       this->first_reformulation.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
-   void PrimalDualInteriorPointProblem::compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
-         size_t* column_indices, size_t solver_indexing) const {
+   void PrimalDualInteriorPointProblem::compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
+         int* column_indices, int solver_indexing) const {
       // original Lagrangian Hessian
       this->first_reformulation.compute_hessian_sparsity(hessian_model, row_indices, column_indices, solver_indexing);
 
@@ -65,8 +65,8 @@ namespace uno {
          const bool finite_lower_bound = is_finite(this->first_reformulation.variable_lower_bound(variable_index));
          const bool finite_upper_bound = is_finite(this->first_reformulation.variable_upper_bound(variable_index));
          if (finite_lower_bound || finite_upper_bound) {
-            row_indices[current_index] = variable_index + solver_indexing;
-            column_indices[current_index] = variable_index + solver_indexing;
+            row_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
+            column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
             ++current_index;
          }
       }

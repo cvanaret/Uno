@@ -73,20 +73,20 @@ namespace uno {
       this->model->evaluate_objective_gradient(x, gradient);
    }
 
-   void HomogeneousEqualityConstrainedModel::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices,
-         size_t solver_indexing, MatrixOrder matrix_order) const {
+   void HomogeneousEqualityConstrainedModel::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices,
+         int solver_indexing, MatrixOrder matrix_order) const {
       this->model->compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
 
       // add the slack contributions
       size_t nonzero_index = this->model->number_jacobian_nonzeros();
       for (const auto [constraint_index, slack_index]: this->get_slacks()) {
-         row_indices[nonzero_index] = constraint_index + solver_indexing;
-         column_indices[nonzero_index] = slack_index + solver_indexing;
+         row_indices[nonzero_index] = static_cast<int>(constraint_index) + solver_indexing;
+         column_indices[nonzero_index] = static_cast<int>(slack_index) + solver_indexing;
          ++nonzero_index;
       }
    }
 
-   void HomogeneousEqualityConstrainedModel::compute_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+   void HomogeneousEqualityConstrainedModel::compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const {
       this->model->compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
    }
 

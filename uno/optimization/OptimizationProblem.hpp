@@ -46,10 +46,10 @@ namespace uno {
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
       [[nodiscard]] virtual bool has_curvature(const HessianModel& hessian_model) const;
       [[nodiscard]] virtual size_t number_hessian_nonzeros(const HessianModel& hessian_model) const;
-      virtual void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+      virtual void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
          MatrixOrder matrix_order) const;
-      virtual void compute_hessian_sparsity(const HessianModel& hessian_model, size_t* row_indices,
-         size_t* column_indices, size_t solver_indexing) const;
+      virtual void compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
+         int* column_indices, int solver_indexing) const;
 
       // numerical evaluations of Jacobian and Hessian
       virtual void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const;

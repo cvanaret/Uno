@@ -39,18 +39,18 @@ namespace uno {
       this->model.lp_.a_matrix_.index_.resize(number_jacobian_nonzeros); // constraint indices
       this->model.lp_.a_matrix_.start_.resize(subproblem.number_variables + 1);
       this->model.lp_.a_matrix_.value_.resize(number_jacobian_nonzeros);
-      size_t current_variable = 0;
+      int current_variable = 0;
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
          // constraint index is used as is
-         const size_t constraint_index = this->jacobian_row_indices[jacobian_nonzero_index];
-         this->model.lp_.a_matrix_.index_[jacobian_nonzero_index] = static_cast<HighsInt>(constraint_index);
+         const HighsInt constraint_index = static_cast<HighsInt>(this->jacobian_row_indices[jacobian_nonzero_index]);
+         this->model.lp_.a_matrix_.index_[jacobian_nonzero_index] = constraint_index;
 
          // variable index is used to build the pointers to the column starts
-         const size_t variable_index = this->jacobian_column_indices[jacobian_nonzero_index];
+         const int variable_index = this->jacobian_column_indices[jacobian_nonzero_index];
          assert(current_variable <= variable_index);
          while (current_variable < variable_index) {
             ++current_variable;
-            this->model.lp_.a_matrix_.start_[current_variable] = static_cast<HighsInt>(jacobian_nonzero_index);
+            this->model.lp_.a_matrix_.start_[static_cast<size_t>(current_variable)] = static_cast<HighsInt>(jacobian_nonzero_index);
          }
       }
       this->model.lp_.a_matrix_.start_[subproblem.number_variables] = static_cast<HighsInt>(number_jacobian_nonzeros);
@@ -67,8 +67,8 @@ namespace uno {
       result.fill(0.);
       const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
       for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
+         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
+         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
          const double derivative = this->model.lp_.a_matrix_.value_[nonzero_index];
 
          // a safeguard to make sure we take only the correct part of the Jacobian
@@ -82,8 +82,8 @@ namespace uno {
       result.fill(0.);
       const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
       for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
+         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
+         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
          const double derivative = this->model.lp_.a_matrix_.value_[nonzero_index];
          assert(constraint_index < vector.size());
          assert(variable_index < result.size());
@@ -96,8 +96,8 @@ namespace uno {
       double quadratic_product = 0.;
       const size_t number_hessian_nonzeros = this->hessian_values.size();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
-         const size_t row_index = this->hessian_row_indices[nonzero_index];
-         const size_t column_index = this->hessian_column_indices[nonzero_index];
+         const size_t row_index = static_cast<size_t>(this->hessian_row_indices[nonzero_index]);
+         const size_t column_index = static_cast<size_t>(this->hessian_column_indices[nonzero_index]);
          const double entry = this->hessian_values[nonzero_index];
          assert(row_index < vector.size());
          assert(column_index < vector.size());
@@ -168,25 +168,25 @@ namespace uno {
 
       // copy the COO format into HiGHS' CSC format
       this->model.hessian_.start_[0] = 0;
-      size_t current_column = 0;
+      int current_column = 0;
       for (size_t hessian_nonzero_index: Range(number_regularized_hessian_nonzeros)) {
          const size_t permutated_nonzero_index = this->permutation_vector[hessian_nonzero_index];
          // row index
-         const size_t row_index = this->hessian_row_indices[permutated_nonzero_index];
-         this->model.hessian_.index_[hessian_nonzero_index] = static_cast<HighsInt>(row_index);
+         const HighsInt row_index = static_cast<HighsInt>(this->hessian_row_indices[permutated_nonzero_index]);
+         this->model.hessian_.index_[hessian_nonzero_index] = row_index;
 
          // column index
-         const size_t column_index = this->hessian_column_indices[permutated_nonzero_index];
+         const int column_index = this->hessian_column_indices[permutated_nonzero_index];
          assert(current_column <= column_index);
          while (current_column < column_index) {
             ++current_column;
-            this->model.hessian_.start_[current_column] = static_cast<HighsInt>(hessian_nonzero_index);
+            this->model.hessian_.start_[static_cast<size_t>(current_column)] = static_cast<HighsInt>(hessian_nonzero_index);
          }
       }
       // fill the remaining empty columns
-      while (current_column < subproblem.number_variables) {
+      while (current_column < static_cast<int>(subproblem.number_variables)) {
          ++current_column;
-         this->model.hessian_.start_[current_column] = static_cast<HighsInt>(number_regularized_hessian_nonzeros);
+         this->model.hessian_.start_[static_cast<size_t>(current_column)] = static_cast<HighsInt>(number_regularized_hessian_nonzeros);
       }
 
       // the Hessian will be evaluated in this vector, and copied with permutation into this->model.hessian_.value_
