@@ -38,6 +38,11 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
    message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
 endif()
+add_compile_definitions()
+option(USE_64BIT_INTEGERS "Use 64-bit integers" OFF)
+if(USE_64BIT_INTEGERS)
+   add_compile_definitions(USE_64BIT_INTEGERS)
+endif()
 
 # determine whether a Fortran compiler is required, based on the available optional dependencies
 find_library(HSL hsl)
