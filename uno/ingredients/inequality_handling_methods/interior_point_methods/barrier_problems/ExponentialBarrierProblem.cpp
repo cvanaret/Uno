@@ -14,15 +14,11 @@ namespace uno {
    ExponentialBarrierProblem::ExponentialBarrierProblem(const OptimizationProblem& problem, double barrier_parameter,
       const InteriorPointParameters& parameters):
          // no slacks: as many constraints as the number of equality constraints of the problem
-         BarrierProblem(problem.model, problem.number_variables + ExponentialBarrierProblem::count_number_extra_variables(problem),
-            problem.get_equality_constraints().size()),
+         BarrierProblem(problem.model, problem.number_variables + 2*ExponentialBarrierProblem::count_number_extra_variables(problem),
+            0),
          problem(problem), number_extra_variables(ExponentialBarrierProblem::count_number_extra_variables(problem)),
          barrier_parameter(barrier_parameter), parameters(parameters) {
-      if (!this->problem.get_equality_constraints().empty()) {
-         throw std::runtime_error("ExponentialBarrierProblem does not support equality constraints yet");
-      }
-      DEBUG << "The exponential barrier problem has " << this->number_variables << " variables and " <<
-         this->number_constraints << " constraints\n";
+      DEBUG << "The exponential barrier problem has " << this->number_variables << " variables\n";
    }
 
    void ExponentialBarrierProblem::generate_initial_iterate(Iterate& initial_iterate) const {
@@ -40,9 +36,8 @@ namespace uno {
       return this->problem.get_objective_multiplier();
    }
 
-   void ExponentialBarrierProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
-      // TODO handle equality constraints
-      // this->problem.evaluate_constraints(iterate, constraints);
+   void ExponentialBarrierProblem::evaluate_constraints(Iterate& /*iterate*/, std::vector<double>& /*constraints*/) const {
+      // no constraints
    }
 
    void ExponentialBarrierProblem::evaluate_objective_gradient(Iterate& iterate, const EvaluationSpace& evaluation_space,
@@ -57,36 +52,32 @@ namespace uno {
       //const auto& constraints = evaluation_space.get_constraints();
       size_t gradient_index = this->problem.number_variables;
       // TODO we need to maintain two sets of constraint multipliers
-      for (size_t constraint_index: this->problem.get_inequality_constraints()) {
+      for (size_t constraint_index: Range(this->problem.number_constraints)) {
          const double lower_bound = this->problem.constraint_lower_bound(constraint_index);
          const double upper_bound = this->problem.constraint_upper_bound(constraint_index);
-         if (lower_bound < upper_bound) {
-            if (is_finite(lower_bound)) {
-               objective_gradient[gradient_index] = lower_bound - original_constraints[constraint_index] - this->barrier_parameter*
-                  std::log(iterate.multipliers.constraints[constraint_index]);
-               ++gradient_index;
-            }
-            if (is_finite(upper_bound)) {
-               objective_gradient[gradient_index] = original_constraints[constraint_index] - upper_bound - this->barrier_parameter*
-                  std::log(iterate.multipliers.constraints[constraint_index]);
-               ++gradient_index;
-            }
+         if (is_finite(lower_bound)) {
+            objective_gradient[gradient_index] = lower_bound - original_constraints[constraint_index] - this->barrier_parameter*
+               std::log(iterate.multipliers.constraints[constraint_index]);
+            ++gradient_index;
+         }
+         if (is_finite(upper_bound)) {
+            objective_gradient[gradient_index] = original_constraints[constraint_index] - upper_bound - this->barrier_parameter*
+               std::log(iterate.multipliers.constraints[constraint_index]);
+            ++gradient_index;
          }
       }
       for (size_t variable_index: Range(this->problem.number_variables)) {
          const double lower_bound = this->problem.variable_lower_bound(variable_index);
          const double upper_bound = this->problem.variable_upper_bound(variable_index);
-         if (lower_bound < upper_bound) {
-            if (is_finite(lower_bound)) {
-               objective_gradient[gradient_index] = lower_bound - iterate.primals[variable_index] - this->barrier_parameter*
-                  std::log(iterate.multipliers.lower_bounds[variable_index]);
-               ++gradient_index;
-            }
-            if (is_finite(upper_bound)) {
-               objective_gradient[gradient_index] = iterate.primals[variable_index] - upper_bound - this->barrier_parameter*
-                  std::log(iterate.multipliers.upper_bounds[variable_index]);
-               ++gradient_index;
-            }
+         if (is_finite(lower_bound)) {
+            objective_gradient[gradient_index] = lower_bound - iterate.primals[variable_index] - this->barrier_parameter*
+               std::log(iterate.multipliers.lower_bounds[variable_index]);
+            ++gradient_index;
+         }
+         if (is_finite(upper_bound)) {
+            objective_gradient[gradient_index] = iterate.primals[variable_index] - upper_bound - this->barrier_parameter*
+               std::log(iterate.multipliers.upper_bounds[variable_index]);
+            ++gradient_index;
          }
       }
       std::cout << "ExponentialBarrierProblem::evaluate_objective_gradient\n";
@@ -97,8 +88,7 @@ namespace uno {
    }
 
    size_t ExponentialBarrierProblem::number_jacobian_nonzeros() const {
-      return 0; // TODO handle equality constraints
-      // return this->problem.number_jacobian_nonzeros();
+      return 0;
    }
 
    bool ExponentialBarrierProblem::has_curvature(const HessianModel& hessian_model) const {
@@ -106,25 +96,43 @@ namespace uno {
    }
 
    size_t ExponentialBarrierProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
-      return this->problem.number_hessian_nonzeros(hessian_model) + 2*this->problem.number_jacobian_nonzeros() +
-         this->number_extra_variables;
+      return this->problem.number_hessian_nonzeros(hessian_model) + 2*this->number_extra_variables;
    }
 
    void ExponentialBarrierProblem::compute_constraint_jacobian_sparsity(int* /*row_indices*/, int* /*column_indices*/,
          int /*solver_indexing*/, MatrixOrder /*matrix_order*/) const {
-      // TODO handle equality constraints
-      // this->problem.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
    void ExponentialBarrierProblem::compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
          int* column_indices, int solver_indexing) const {
       // original Lagrangian Hessian
       this->problem.compute_hessian_sparsity(hessian_model, row_indices, column_indices, solver_indexing);
+
+      // two copies of the Jacobian
+      const size_t number_hessian_nonzeros = this->problem.number_hessian_nonzeros(hessian_model);
+      // sparsity of the Jacobian
+      this->problem.compute_constraint_jacobian_sparsity(row_indices + number_hessian_nonzeros, column_indices +
+         number_hessian_nonzeros, solver_indexing, MatrixOrder::COLUMN_MAJOR); // TODO
+      const size_t number_jacobian_nonzeros = this->problem.number_jacobian_nonzeros();
+      // copy it a second time
+      for (size_t index: Range(number_jacobian_nonzeros)) {
+         row_indices[number_hessian_nonzeros + number_jacobian_nonzeros + index] = row_indices[number_hessian_nonzeros + index];
+         column_indices[number_hessian_nonzeros + number_jacobian_nonzeros + index] = column_indices[number_hessian_nonzeros + index];
+      }
+      // shift the row indices
+      for (size_t index: Range(number_jacobian_nonzeros)) {
+         row_indices[number_hessian_nonzeros + index] += static_cast<int>(this->problem.number_variables);
+         row_indices[number_hessian_nonzeros + number_jacobian_nonzeros + index] += static_cast<int>(this->problem.number_variables +
+            this->problem.number_constraints);
+      }
+      // diagonal contributions
+      row_indices[11] = 7;
+      column_indices[11] = 1;
+      row_indices[12] = 8;
+      column_indices[12] = 1;
    }
 
    void ExponentialBarrierProblem::evaluate_constraint_jacobian(Iterate& /*iterate*/, double* /*jacobian_values*/) const {
-      // TODO handle equality constraints
-      // this->problem.evaluate_constraint_jacobian(iterate, jacobian_values);
    }
 
    void ExponentialBarrierProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
@@ -265,28 +273,20 @@ namespace uno {
       size_t number_variables = 0;
 
       // count the number of variables associated to constraint bounds
-      for (size_t constraint_index: problem.get_inequality_constraints()) {
-         const double lower_bound = problem.constraint_lower_bound(constraint_index);
-         const double upper_bound = problem.constraint_upper_bound(constraint_index);
-         if (lower_bound < upper_bound) {
-            if (is_finite(lower_bound)) {
-               number_variables++;
-            }
-            if (is_finite(upper_bound)) {
-               number_variables++;
-            }
+      for (size_t constraint_index: Range(problem.number_constraints)) {
+         if (is_finite(problem.constraint_lower_bound(constraint_index))) {
+            number_variables++;
+         }
+         if (is_finite(problem.constraint_upper_bound(constraint_index))) {
+            number_variables++;
          }
       }
       for (size_t variable_index: Range(problem.number_variables)) {
-         const double lower_bound = problem.variable_lower_bound(variable_index);
-         const double upper_bound = problem.variable_upper_bound(variable_index);
-         if (lower_bound < upper_bound) {
-            if (is_finite(lower_bound)) {
-               number_variables++;
-            }
-            if (is_finite(upper_bound)) {
-               number_variables++;
-            }
+         if (is_finite(problem.variable_lower_bound(variable_index))) {
+            number_variables++;
+         }
+         if (is_finite(problem.variable_upper_bound(variable_index))) {
+            number_variables++;
          }
       }
       return number_variables;
