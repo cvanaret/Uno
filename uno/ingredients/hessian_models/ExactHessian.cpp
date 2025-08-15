@@ -24,7 +24,7 @@ namespace uno {
       return model.number_hessian_nonzeros();
    }
 
-   void ExactHessian::compute_sparsity(const Model& model, size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+   void ExactHessian::compute_sparsity(const Model& model, int* row_indices, int* column_indices, int solver_indexing) const {
       // Hessian sparsity of the model
       model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
    }

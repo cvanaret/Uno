@@ -33,11 +33,11 @@ namespace uno {
          RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
 
       // sparsity patterns
-      void compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+      void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
          MatrixOrder matrix_order) const;
-      void compute_regularized_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const;
-      void compute_regularized_augmented_matrix_sparsity(size_t* row_indices, size_t* column_indices, const size_t* jacobian_row_indices,
-         const size_t* jacobian_column_indices, size_t solver_indexing) const;
+      void compute_regularized_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const;
+      void compute_regularized_augmented_matrix_sparsity(int* row_indices, int* column_indices, const int* jacobian_row_indices,
+         const int* jacobian_column_indices, int solver_indexing) const;
 
       // regularized Hessian
       void evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const;

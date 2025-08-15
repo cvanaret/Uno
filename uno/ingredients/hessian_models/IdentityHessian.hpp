@@ -15,7 +15,7 @@ namespace uno {
       [[nodiscard]] bool has_explicit_representation() const override;
       [[nodiscard]] bool has_curvature(const Model& model) const override;
       [[nodiscard]] size_t number_nonzeros(const Model& model) const override;
-      void compute_sparsity(const Model& model, size_t* row_indices, size_t* column_indices, size_t solver_indexing) const override;
+      void compute_sparsity(const Model& model, int* row_indices, int* column_indices, int solver_indexing) const override;
       [[nodiscard]] bool is_positive_definite() const override;
 
       void initialize(const Model& model) override;

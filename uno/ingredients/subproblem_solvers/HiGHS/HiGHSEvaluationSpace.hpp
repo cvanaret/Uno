@@ -35,11 +35,11 @@ namespace uno {
       std::vector<double> constraints{};
       Vector<double> linear_objective{};
       // constraint Jacobian in COO format
-      Vector<size_t> jacobian_row_indices{};
-      Vector<size_t> jacobian_column_indices{};
+      Vector<int> jacobian_row_indices{};
+      Vector<int> jacobian_column_indices{};
       // Lagrangian Hessian in COO format
-      Vector<size_t> hessian_row_indices{};
-      Vector<size_t> hessian_column_indices{};
+      Vector<int> hessian_row_indices{};
+      Vector<int> hessian_column_indices{};
       Vector<double> hessian_values{};
       Vector<size_t> permutation_vector{};
 

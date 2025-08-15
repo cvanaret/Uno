@@ -17,12 +17,12 @@ namespace uno {
          regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius) {
    }
 
-   void Subproblem::compute_constraint_jacobian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing,
+   void Subproblem::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
          MatrixOrder matrix_order) const {
       this->problem.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
-   void Subproblem::compute_regularized_hessian_sparsity(size_t* row_indices, size_t* column_indices, size_t solver_indexing) const {
+   void Subproblem::compute_regularized_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const {
       // sparsity of original Lagrangian Hessian
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
@@ -30,16 +30,16 @@ namespace uno {
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
          size_t current_index = this->number_hessian_nonzeros();
          for (size_t variable_index: this->get_primal_regularization_variables()) {
-            row_indices[current_index ] = variable_index + solver_indexing;
-            column_indices[current_index] = variable_index + solver_indexing;
+            row_indices[current_index ] = static_cast<int>(variable_index) + solver_indexing;
+            column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
             ++current_index;
          }
       }
    }
 
    // lower triangular part of the symmetric augmented matrix
-   void Subproblem::compute_regularized_augmented_matrix_sparsity(size_t* row_indices, size_t* column_indices,
-         const size_t* jacobian_row_indices, const size_t* jacobian_column_indices, size_t solver_indexing) const {
+   void Subproblem::compute_regularized_augmented_matrix_sparsity(int* row_indices, int* column_indices,
+         const int* jacobian_row_indices, const int* jacobian_column_indices, int solver_indexing) const {
       // sparsity of original Lagrangian Hessian in the (1, 1) block
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
@@ -47,7 +47,8 @@ namespace uno {
       const size_t hessian_offset = this->number_hessian_nonzeros();
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
          // to get the transpose, switch the order of the row/column vectors
-         row_indices[hessian_offset + nonzero_index] = this->problem.number_variables + jacobian_row_indices[nonzero_index] + solver_indexing;
+         row_indices[hessian_offset + nonzero_index] = static_cast<int>(this->problem.number_variables) +
+            jacobian_row_indices[nonzero_index] + solver_indexing;
          column_indices[hessian_offset + nonzero_index] = jacobian_column_indices[nonzero_index] + solver_indexing;
       }
 
@@ -55,14 +56,14 @@ namespace uno {
       size_t current_index = hessian_offset + this->problem.number_jacobian_nonzeros();
       if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
          for (size_t variable_index: this->get_primal_regularization_variables()) {
-            row_indices[current_index] = variable_index + solver_indexing;
-            column_indices[current_index] = variable_index + solver_indexing;
+            row_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
+            column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
             ++current_index;
          }
       }
       if (this->regularization_strategy.performs_dual_regularization()) {
          for (size_t constraint_index: this->get_dual_regularization_constraints()) {
-            const size_t shifted_constraint_index = this->number_variables + constraint_index;
+            const int shifted_constraint_index = static_cast<int>(this->number_variables + constraint_index);
             row_indices[current_index] = shifted_constraint_index + solver_indexing;
             column_indices[current_index] = shifted_constraint_index + solver_indexing;
             ++current_index;

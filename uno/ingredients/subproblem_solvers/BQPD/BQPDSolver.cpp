@@ -330,8 +330,8 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
    bool* evaluate_hessian = uno::retrieve_pointer<bool>(0, lws);
    uno::Statistics* statistics = uno::retrieve_pointer<uno::Statistics>(1, lws);
    uno::Subproblem* subproblem = uno::retrieve_pointer<uno::Subproblem>(2, lws);
-   uno::Vector<size_t>* hessian_row_indices = uno::retrieve_pointer<uno::Vector<size_t>>(3, lws);
-   uno::Vector<size_t>* hessian_column_indices = uno::retrieve_pointer<uno::Vector<size_t>>(4, lws);
+   uno::Vector<int>* hessian_row_indices = uno::retrieve_pointer<uno::Vector<int>>(3, lws);
+   uno::Vector<int>* hessian_column_indices = uno::retrieve_pointer<uno::Vector<int>>(4, lws);
    uno::Vector<double>* hessian_values = uno::retrieve_pointer<uno::Vector<double>>(5, lws);
    assert(evaluate_hessian != nullptr);
    assert(statistics != nullptr);
@@ -354,8 +354,8 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
       }
       // Hessian-vector product
       for (size_t nonzero_index: uno::Range(subproblem->number_regularized_hessian_nonzeros())) {
-         const size_t row_index = (*hessian_row_indices)[nonzero_index];
-         const size_t column_index = (*hessian_column_indices)[nonzero_index];
+         const size_t row_index = static_cast<size_t>((*hessian_row_indices)[nonzero_index]);
+         const size_t column_index = static_cast<size_t>((*hessian_column_indices)[nonzero_index]);
          const double entry = (*hessian_values)[nonzero_index];
          result[row_index] += entry * vector[column_index];
          if (row_index != column_index) {

@@ -17,15 +17,9 @@ namespace uno {
       this->number_matrix_nonzeros = subproblem.number_regularized_hessian_nonzeros();
       this->matrix_row_indices.resize(this->number_matrix_nonzeros);
       this->matrix_column_indices.resize(this->number_matrix_nonzeros);
-      // compute the COO sparse representation: use temporary vectors of size_t
-      Vector<size_t> tmp_row_indices(this->number_matrix_nonzeros);
-      Vector<size_t> tmp_column_indices(this->number_matrix_nonzeros);
-      subproblem.compute_regularized_hessian_sparsity(tmp_row_indices.data(), tmp_column_indices.data(), Indexing::Fortran_indexing);
-      // build vectors of int
-      for (size_t nonzero_index: Range(this->number_matrix_nonzeros)) {
-         this->matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
-      }
+      // compute the COO sparse representation
+      subproblem.compute_regularized_hessian_sparsity(this->matrix_row_indices.data(), this->matrix_column_indices.data(),
+         Indexing::Fortran_indexing);
       this->matrix_values.resize(this->number_matrix_nonzeros);
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
@@ -50,16 +44,9 @@ const size_t dimension = subproblem.number_variables + subproblem.number_constra
       this->number_matrix_nonzeros = subproblem.number_regularized_augmented_system_nonzeros();
       this->matrix_row_indices.resize(this->number_matrix_nonzeros);
       this->matrix_column_indices.resize(this->number_matrix_nonzeros);
-      // compute the COO sparse representation: use temporary vectors of size_t
-      Vector<size_t> tmp_row_indices(this->number_matrix_nonzeros);
-      Vector<size_t> tmp_column_indices(this->number_matrix_nonzeros);
-      subproblem.compute_regularized_augmented_matrix_sparsity(tmp_row_indices.data(), tmp_column_indices.data(),
+      // compute the COO sparse representation
+      subproblem.compute_regularized_augmented_matrix_sparsity(this->matrix_row_indices.data(), this->matrix_column_indices.data(),
          this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), Indexing::Fortran_indexing);
-      // build vectors of int
-      for (size_t nonzero_index: Range(this->number_matrix_nonzeros)) {
-         this->matrix_row_indices[nonzero_index] = static_cast<int>(tmp_row_indices[nonzero_index]);
-         this->matrix_column_indices[nonzero_index] = static_cast<int>(tmp_column_indices[nonzero_index]);
-      }
       this->matrix_values.resize(this->number_matrix_nonzeros);
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
@@ -73,8 +60,8 @@ const size_t dimension = subproblem.number_variables + subproblem.number_constra
       result.fill(0.);
       const size_t offset = this->number_hessian_nonzeros;
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
+         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
+         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
          const double derivative = this->matrix_values[offset + nonzero_index];
 
          if (constraint_index < result.size() && variable_index < vector.size()) {
@@ -87,8 +74,8 @@ const size_t dimension = subproblem.number_variables + subproblem.number_constra
       result.fill(0.);
       const size_t offset = this->number_hessian_nonzeros;
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
-         const size_t constraint_index = this->jacobian_row_indices[nonzero_index];
-         const size_t variable_index = this->jacobian_column_indices[nonzero_index];
+         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
+         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
          const double derivative = this->matrix_values[offset + nonzero_index];
 
          if (variable_index < result.size() && constraint_index < vector.size()) {
