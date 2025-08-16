@@ -5,6 +5,7 @@
 #define UNO_C_API_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -92,21 +93,21 @@ extern "C" {
       double* variables_upper_bounds, int32_t vector_indexing);
 
    // sets the objective and objective gradient of a given model.
-   // takes as inputs the objective sense (uno_Min or uno_Max), a function point32_ter of the objective function and a
-   // function point32_ter of its gradient function.
+   // takes as inputs the objective sense (uno_Min or uno_Max), a function pointer of the objective function and a
+   // function pointer of its gradient function.
    void uno_set_objective(void* model, double objective_sense, Objective objective_function, ObjectiveGradient objective_gradient);
 
    // sets the constraints and constraint Jacobian of a given model.
-   // takes as inputs the number of constraints, a function point32_ter of the constraint functions, two arrays of lower and
-   // upper bounds of size "number_constraints", the number of nonzero elements of the Jacobian, a function point32_ter of
-   // the Jacobian sparsity, and a function point32_ter of the constraint Jacobian.
+   // takes as inputs the number of constraints, a function pointer of the constraint functions, two arrays of lower and
+   // upper bounds of size "number_constraints", the number of nonzero elements of the Jacobian, a function pointer of
+   // the Jacobian sparsity, and a function pointer of the constraint Jacobian.
    void uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
       double* constraints_lower_bounds, double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
       JacobianSparsity jacobian_sparsity, Jacobian constraint_jacobian);
 
    // sets the Lagrangian Hessian of a given model.
-   // takes as inputs the number of nonzero elements of the Lagrangian Hessian, a function point32_ter of the Hessian
-   // sparsity, and a function point32_ter of the Hessian.
+   // takes as inputs the number of nonzero elements of the Lagrangian Hessian, a function pointer of the Hessian
+   // sparsity, and a function pointer of the Hessian.
    void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, HessianSparsity hessian_sparsity,
       Hessian lagrangian_hessian);
 

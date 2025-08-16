@@ -1,18 +1,19 @@
 function uno_get_version(major, minor, patch)
-    @ccall libuno.uno_get_version(major::Ptr{Cint}, minor::Ptr{Cint},
-                                  patch::Ptr{Cint})::Cvoid
+    @ccall libuno.uno_get_version(major::Ptr{Int32}, minor::Ptr{Int32},
+                                  patch::Ptr{Int32})::Cvoid
 end
 
 function uno_create_model(problem_type, number_variables, variables_lower_bounds,
                           variables_upper_bounds, vector_indexing)
-    @ccall libuno.uno_create_model(problem_type::Cchar, number_variables::Cint,
+    @ccall libuno.uno_create_model(problem_type::Cchar, number_variables::Int32,
                                    variables_lower_bounds::Ptr{Cdouble},
                                    variables_upper_bounds::Ptr{Cdouble},
-                                   vector_indexing::Cint)::Ptr{Cvoid}
+                                   vector_indexing::Int32)::Ptr{Cvoid}
 end
 
-function uno_set_objective(model, objective_function, objective_gradient)
-    @ccall libuno.uno_set_objective(model::Ptr{Cvoid}, objective_function::Ptr{Cvoid},
+function uno_set_objective(model, objective_sense, objective_function, objective_gradient)
+    @ccall libuno.uno_set_objective(model::Ptr{Cvoid}, objective_sense::Cdouble,
+                                    objective_function::Ptr{Cvoid},
                                     objective_gradient::Ptr{Cvoid})::Cvoid
 end
 
@@ -20,11 +21,11 @@ function uno_set_constraints(model, number_constraints, constraint_functions,
                              constraints_lower_bounds, constraints_upper_bounds,
                              number_jacobian_nonzeros, jacobian_sparsity,
                              constraint_jacobian)
-    @ccall libuno.uno_set_constraints(model::Ptr{Cvoid}, number_constraints::Cint,
+    @ccall libuno.uno_set_constraints(model::Ptr{Cvoid}, number_constraints::Int32,
                                       constraint_functions::Ptr{Cvoid},
                                       constraints_lower_bounds::Ptr{Cdouble},
                                       constraints_upper_bounds::Ptr{Cdouble},
-                                      number_jacobian_nonzeros::Cint,
+                                      number_jacobian_nonzeros::Int32,
                                       jacobian_sparsity::Ptr{Cvoid},
                                       constraint_jacobian::Ptr{Cvoid})::Cvoid
 end
@@ -32,7 +33,7 @@ end
 function uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_sparsity,
                                     lagrangian_hessian)
     @ccall libuno.uno_set_lagrangian_hessian(model::Ptr{Cvoid},
-                                             number_hessian_nonzeros::Cint,
+                                             number_hessian_nonzeros::Int32,
                                              hessian_sparsity::Ptr{Cvoid},
                                              lagrangian_hessian::Ptr{Cvoid})::Cvoid
 end
