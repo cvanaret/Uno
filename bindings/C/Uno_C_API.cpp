@@ -1,0 +1,178 @@
+// Copyright (c) 2025 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+#include <cassert>
+#include <iostream>
+#include "Uno_C_API.h"
+#include "Uno.hpp"
+#include "options/DefaultOptions.hpp"
+#include "optimization/Iterate.hpp"
+#include "tools/Logger.hpp"
+
+class CModel {
+public:
+   CModel(char problem_type, int32_t number_variables, double* variables_lower_bounds, double* variables_upper_bounds,
+      int32_t vector_indexing):
+         problem_type(problem_type),
+         vector_indexing(vector_indexing),
+         number_variables(number_variables),
+         variables_lower_bounds(variables_lower_bounds),
+         variables_upper_bounds(variables_upper_bounds) {
+   }
+
+   ~CModel() = default;
+
+   const char problem_type; // 'L' for linear, 'Q' for quadratic, 'N' for nonlinear
+   const int32_t vector_indexing; // 0 for C-style indexing, 1 for Fortran-style indexing
+
+   // variables
+   const int32_t number_variables;
+   double* variables_lower_bounds{nullptr};
+   double* variables_upper_bounds{nullptr};
+
+   // objective
+   double objective_sense{1.};
+   Objective objective_function{nullptr};
+   ObjectiveGradient objective_gradient{nullptr};
+
+   // constraints
+   int32_t number_constraints{0};
+   Constraints constraint_functions{nullptr};
+   double* constraints_lower_bounds{nullptr};
+   double* constraints_upper_bounds{nullptr};
+   int32_t number_jacobian_nonzeros{0};
+   JacobianSparsity jacobian_sparsity{nullptr};
+   Jacobian constraint_jacobian{nullptr};
+
+   // Hessian
+   int32_t number_hessian_nonzeros{0};
+   HessianSparsity hessian_sparsity{nullptr};
+   Hessian lagrangian_hessian{nullptr};
+
+   void* user_data{nullptr};
+};
+
+// current version is 2.0.1
+void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch) {
+   *major = 2;
+   *minor = 0;
+   *patch = 1;
+}
+
+void* uno_create_model(char problem_type, int32_t number_variables, double* variables_lower_bounds,
+      double* variables_upper_bounds, int32_t vector_indexing) {
+   if (number_variables <= 0) {
+      std::cout << "Please specify a positive number of variables.\n";
+      return nullptr;
+   }
+   if (vector_indexing != 0 && vector_indexing != 1) {
+      std::cout << "Please specify a valid vector indexing.\n";
+      return nullptr;
+   }
+   return new CModel(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, vector_indexing);
+}
+
+void uno_set_objective(void* model, double objective_sense, Objective objective_function, ObjectiveGradient objective_gradient) {
+   if (objective_sense != 1. && objective_sense != -1.) {
+      std::cout << "Please specify a valid objective sense.\n";
+      return;
+   }
+
+   assert(model != nullptr);
+   CModel* c_model = static_cast<CModel*>(model);
+   c_model->objective_sense = objective_sense;
+   c_model->objective_function = objective_function;
+   c_model->objective_gradient = objective_gradient;
+}
+
+void uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
+      double* constraints_lower_bounds, double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
+      JacobianSparsity jacobian_sparsity, Jacobian constraint_jacobian) {
+   if (number_constraints <= 0) {
+      std::cout << "Please specify a positive number of constraints.\n";
+      return;
+   }
+
+   assert(model != nullptr);
+   CModel* c_model = static_cast<CModel*>(model);
+   c_model->number_constraints = number_constraints;
+   c_model->constraint_functions = constraint_functions;
+   c_model->constraints_lower_bounds = constraints_lower_bounds;
+   c_model->constraints_upper_bounds = constraints_upper_bounds;
+   c_model->number_jacobian_nonzeros = number_jacobian_nonzeros;
+   c_model->jacobian_sparsity = jacobian_sparsity;
+   c_model->constraint_jacobian = constraint_jacobian;
+}
+
+void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, HessianSparsity hessian_sparsity,
+      Hessian lagrangian_hessian) {
+   assert(model != nullptr);
+   CModel* c_model = static_cast<CModel*>(model);
+   c_model->number_hessian_nonzeros = number_hessian_nonzeros;
+   c_model->hessian_sparsity = hessian_sparsity;
+   c_model->lagrangian_hessian = lagrangian_hessian;
+}
+
+void uno_set_user_data(void* model, void* user_data) {
+   assert(model != nullptr);
+   CModel* c_model = static_cast<CModel*>(model);
+   c_model->user_data = user_data;
+}
+
+void* uno_create_options() {
+   uno::Options* options = new uno::Options(true);
+   uno::DefaultOptions::load(*options);
+   // determine the default solvers based on the available libraries
+   const uno::Options solvers_options = uno::DefaultOptions::determine_solvers();
+   options->overwrite_with(solvers_options);
+   return options;
+}
+
+void uno_set_option(void* options, const char* option_name, const char* option_value) {
+   assert(options != nullptr);
+   uno::Options* uno_options = static_cast<uno::Options*>(options);
+   (*uno_options)[option_name] = option_value;
+}
+
+void* uno_create_solver(const void* options) {
+   assert(options != nullptr);
+   const uno::Options* uno_options = static_cast<const uno::Options*>(options);
+   uno::Logger::set_logger(uno_options->get_string("logger"));
+   // TODO number of constraints ??
+   return new uno::Uno(0, *uno_options);
+}
+
+void uno_optimize(void* solver, const void* model, const void* options) {
+   // check the model
+   assert(model != nullptr);
+   const CModel* c_model = static_cast<const CModel*>(model);
+   if (!c_model->objective_function && !c_model->constraint_functions) {
+      std::cout << "Please specify at least an objective or constraints.\n";
+      return;
+   }
+
+   assert(solver != nullptr);
+   assert(options != nullptr);
+   uno::Uno* uno_solver = static_cast<uno::Uno*>(solver);
+   const uno::Options* uno_options = static_cast<const uno::Options*>(options);
+   uno::Iterate current_iterate(static_cast<size_t>(c_model->number_variables),
+      static_cast<size_t>(c_model->number_constraints));
+   // TODO generate initial iterate
+   // TODO return result
+   // uno_solver->solve(*c_model, initial_iterate, *uno_options);
+}
+
+void uno_destroy_model(void* model) {
+   assert(model != nullptr);
+   delete static_cast<CModel*>(model);
+}
+
+void uno_destroy_options(void* options) {
+   assert(options != nullptr);
+   delete static_cast<uno::Options*>(options);
+}
+
+void uno_destroy_solver(void* solver) {
+   assert(solver != nullptr);
+   delete static_cast<uno::Uno*>(solver);
+}

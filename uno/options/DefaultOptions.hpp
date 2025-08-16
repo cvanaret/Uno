@@ -9,7 +9,7 @@
 namespace uno {
    class DefaultOptions {
    public:
-      [[nodiscard]] static Options load();
+      static void load(Options& options);
       [[nodiscard]] static Options determine_solvers();
    };
 } // namespace
