@@ -81,11 +81,15 @@ namespace uno {
       }
 
       // set the bound multipliers
-      for (const size_t variable_index: problem.get_lower_bounded_variables()) {
-         initial_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
-      }
-      for (const size_t variable_index: problem.get_upper_bounded_variables()) {
-         initial_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
+      for (size_t variable_index: Range(problem.number_variables)) {
+         const double lower_bound = problem.variable_lower_bound(variable_index);
+         const double upper_bound = problem.variable_upper_bound(variable_index);
+         if (is_finite(lower_bound)) {
+            initial_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
+         }
+         if (is_finite(upper_bound)) {
+            initial_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
+         }
       }
 
       if (0 < problem.number_constraints) {
@@ -172,11 +176,15 @@ namespace uno {
    void PrimalDualInteriorPointMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
       DEBUG << "IPM: setting the elastic variables and their duals\n";
 
-      for (const size_t variable_index: problem.get_lower_bounded_variables()) {
-         current_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
-      }
-      for (const size_t variable_index: problem.get_upper_bounded_variables()) {
-         current_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
+      for (size_t variable_index: Range(problem.number_variables)) {
+         const double lower_bound = problem.variable_lower_bound(variable_index);
+         const double upper_bound = problem.variable_upper_bound(variable_index);
+         if (is_finite(lower_bound)) {
+            current_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
+         }
+         if (is_finite(upper_bound)) {
+            current_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
+         }
       }
 
       // c(x) - p + n = 0

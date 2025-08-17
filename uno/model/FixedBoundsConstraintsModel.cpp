@@ -11,22 +11,8 @@ namespace uno {
                original_model->number_constraints + original_model->get_fixed_variables().size(),
                original_model->objective_sign),
          model(std::move(original_model)),
-         fixed_variables(), // empty vector
-         lower_bounded_variables_collection(this->lower_bounded_variables),
-         upper_bounded_variables_collection(this->upper_bounded_variables),
          equality_constraints(concatenate(this->model->get_equality_constraints(), Range(this->model->number_constraints, this->number_constraints))),
          linear_constraints(concatenate(this->model->get_linear_constraints(), Range(this->model->number_constraints, this->number_constraints))) {
-      this->lower_bounded_variables.reserve(this->model->get_lower_bounded_variables().size());
-      this->upper_bounded_variables.reserve(this->model->get_upper_bounded_variables().size());
-
-      for (size_t variable_index: Range(this->model->number_variables)) {
-         if (is_finite(this->variable_lower_bound(variable_index))) {
-            this->lower_bounded_variables.emplace_back(variable_index);
-         }
-         if (is_finite(this->variable_upper_bound(variable_index))) {
-            this->upper_bounded_variables.emplace_back(variable_index);
-         }
-      }
    }
 
    double FixedBoundsConstraintsModel::evaluate_objective(const Vector<double>& x) const {
@@ -103,24 +89,8 @@ namespace uno {
       return this->model->variable_upper_bound(variable_index);
    }
 
-   const Collection<size_t>& FixedBoundsConstraintsModel::get_lower_bounded_variables() const {
-      return this->lower_bounded_variables_collection;
-   }
-
-   const Collection<size_t>& FixedBoundsConstraintsModel::get_upper_bounded_variables() const {
-      return this->upper_bounded_variables_collection;
-   }
-
    const SparseVector<size_t>& FixedBoundsConstraintsModel::get_slacks() const {
       return this->model->get_slacks();
-   }
-
-   const Collection<size_t>& FixedBoundsConstraintsModel::get_single_lower_bounded_variables() const {
-      return this->model->get_single_lower_bounded_variables();
-   }
-
-   const Collection<size_t>& FixedBoundsConstraintsModel::get_single_upper_bounded_variables() const {
-      return this->model->get_single_upper_bounded_variables();
    }
 
    const Vector<size_t>& FixedBoundsConstraintsModel::get_fixed_variables() const {

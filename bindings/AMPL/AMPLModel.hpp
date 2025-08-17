@@ -46,11 +46,7 @@ namespace uno {
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
-      [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override;
-      [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override;
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
-      [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
-      [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
@@ -82,14 +78,6 @@ namespace uno {
       std::vector<size_t> inequality_constraints{};
       CollectionAdapter<std::vector<size_t>&> inequality_constraints_collection;
       SparseVector<size_t> slacks{};
-      std::vector<size_t> lower_bounded_variables;
-      CollectionAdapter<std::vector<size_t>&> lower_bounded_variables_collection;
-      std::vector<size_t> upper_bounded_variables;
-      CollectionAdapter<std::vector<size_t>&> upper_bounded_variables_collection;
-      std::vector<size_t> single_lower_bounded_variables{}; // indices of the single lower-bounded variables
-      CollectionAdapter<std::vector<size_t>&> single_lower_bounded_variables_collection;
-      std::vector<size_t> single_upper_bounded_variables{}; // indices of the single upper-bounded variables
-      CollectionAdapter<std::vector<size_t>&> single_upper_bounded_variables_collection;
       Vector<size_t> fixed_variables;
 
       void partition_variables();

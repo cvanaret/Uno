@@ -153,7 +153,17 @@ namespace uno {
    }
 
    double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const {
-      const size_t total_size = model.get_lower_bounded_variables().size() + model.get_upper_bounded_variables().size() + model.number_constraints;
+      size_t number_lower_bounded_variables = 0;
+      size_t number_upper_bounded_variables = 0;
+      for (size_t variable_index: Range(model.number_variables)) {
+         if (is_finite(model.variable_lower_bound(variable_index))) {
+            ++number_lower_bounded_variables;
+         }
+         if (is_finite(model.variable_upper_bound(variable_index))) {
+            ++number_upper_bounded_variables;
+         }
+      }
+      const size_t total_size = number_lower_bounded_variables + number_upper_bounded_variables + model.number_constraints;
       if (total_size == 0) {
          return 1.;
       }
@@ -169,7 +179,17 @@ namespace uno {
    }
 
    double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const {
-      const size_t total_size = model.get_lower_bounded_variables().size() + model.get_upper_bounded_variables().size();
+      size_t number_lower_bounded_variables = 0;
+      size_t number_upper_bounded_variables = 0;
+      for (size_t variable_index: Range(model.number_variables)) {
+         if (is_finite(model.variable_lower_bound(variable_index))) {
+            ++number_lower_bounded_variables;
+         }
+         if (is_finite(model.variable_upper_bound(variable_index))) {
+            ++number_upper_bounded_variables;
+         }
+      }
+      const size_t total_size = number_lower_bounded_variables + number_upper_bounded_variables;
       if (total_size == 0) {
          return 1.;
       }

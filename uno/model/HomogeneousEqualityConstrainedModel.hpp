@@ -8,7 +8,6 @@
 #include "Model.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "symbolic/CollectionAdapter.hpp"
-#include "symbolic/Concatenation.hpp"
 
 namespace uno {
    // generate an equality-constrained model by:
@@ -40,11 +39,7 @@ namespace uno {
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
-      [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override;
-      [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override;
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
-      [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
-      [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
 
       [[nodiscard]] double constraint_lower_bound(size_t /*constraint_index*/) const override;
       [[nodiscard]] double constraint_upper_bound(size_t /*constraint_index*/) const override;
@@ -68,14 +63,6 @@ namespace uno {
       ForwardRange equality_constraints;
       ForwardRange inequality_constraints;
       SparseVector<size_t> slacks;
-      std::vector<size_t> lower_bounded_slacks;
-      std::vector<size_t> upper_bounded_slacks;
-      std::vector<size_t> single_lower_bounded_slacks;
-      std::vector<size_t> single_upper_bounded_slacks;
-      Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>>> lower_bounded_variables;
-      Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>>> upper_bounded_variables;
-      Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>>> single_lower_bounded_variables;
-      Concatenation<const Collection<size_t>&, CollectionAdapter<std::vector<size_t>>> single_upper_bounded_variables;
    };
 } // namespace
 

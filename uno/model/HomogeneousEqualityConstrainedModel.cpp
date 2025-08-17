@@ -3,10 +3,8 @@
 
 #include "HomogeneousEqualityConstrainedModel.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/Concatenation.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 #include "symbolic/Range.hpp"
-#include "tools/Infinity.hpp"
 
 namespace uno {
    // Transform the problem into an equality-constrained problem with constraints c(x) = 0. This implies:
@@ -22,13 +20,7 @@ namespace uno {
          // all constraints are equality constraints
          equality_constraints(Range(this->number_constraints)),
          inequality_constraints(Range(0)),
-         slacks(this->model->get_inequality_constraints().size()),
-         lower_bounded_slacks(this->slacks.size()),
-         upper_bounded_slacks(this->slacks.size()),
-         lower_bounded_variables(concatenate(this->model->get_lower_bounded_variables(), adapt(this->lower_bounded_slacks))),
-         upper_bounded_variables(concatenate(this->model->get_upper_bounded_variables(), adapt(this->upper_bounded_slacks))),
-         single_lower_bounded_variables(concatenate(this->model->get_single_lower_bounded_variables(), adapt(this->single_lower_bounded_slacks))),
-         single_upper_bounded_variables(concatenate(this->model->get_single_upper_bounded_variables(), adapt(this->single_upper_bounded_slacks))){
+         slacks(this->model->get_inequality_constraints().size()) {
       // register the inequality constraint of each slack
       size_t inequality_index = 0;
       for (const size_t constraint_index: this->model->get_inequality_constraints()) {
@@ -36,18 +28,6 @@ namespace uno {
          this->constraint_index_of_inequality_index[inequality_index] = constraint_index;
          this->slack_index_of_constraint_index[constraint_index] = slack_variable_index;
          this->slacks.insert(constraint_index, slack_variable_index);
-         if (is_finite(this->model->constraint_lower_bound(constraint_index))) {
-            this->lower_bounded_slacks.emplace_back(slack_variable_index);
-            if (!is_finite(this->model->constraint_upper_bound(constraint_index))) {
-               this->single_lower_bounded_slacks.emplace_back(slack_variable_index);
-            }
-         }
-         if (is_finite(this->model->constraint_upper_bound(constraint_index))) {
-            this->upper_bounded_slacks.emplace_back(slack_variable_index);
-            if (!is_finite(this->model->constraint_lower_bound(constraint_index))) {
-               this->single_upper_bounded_slacks.emplace_back(slack_variable_index);
-            }
-         }
          inequality_index++;
       }
    }
@@ -133,24 +113,8 @@ namespace uno {
       }
    }
 
-   const Collection<size_t>& HomogeneousEqualityConstrainedModel::get_lower_bounded_variables() const {
-      return this->lower_bounded_variables;
-   }
-
-   const Collection<size_t>& HomogeneousEqualityConstrainedModel::get_upper_bounded_variables() const {
-      return this->upper_bounded_variables;
-   }
-
    const SparseVector<size_t>& HomogeneousEqualityConstrainedModel::get_slacks() const {
       return this->slacks;
-   }
-
-   const Collection<size_t>& HomogeneousEqualityConstrainedModel::get_single_lower_bounded_variables() const {
-      return this->single_lower_bounded_variables;
-   }
-
-   const Collection<size_t>& HomogeneousEqualityConstrainedModel::get_single_upper_bounded_variables() const {
-      return this->single_upper_bounded_variables;
    }
 
    double HomogeneousEqualityConstrainedModel::constraint_lower_bound(size_t /*constraint_index*/) const {

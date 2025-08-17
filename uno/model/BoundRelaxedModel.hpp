@@ -53,11 +53,7 @@ namespace uno {
       // only these two functions are redefined
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
-      [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override { return this->model->get_lower_bounded_variables(); }
-      [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override { return this->model->get_upper_bounded_variables(); }
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override { return this->model->get_slacks(); }
-      [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override { return this->model->get_single_lower_bounded_variables(); }
-      [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override { return this->model->get_single_upper_bounded_variables(); }
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override { return this->model->get_fixed_variables(); }
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override { return this->model->constraint_lower_bound(constraint_index); }
