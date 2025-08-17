@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "ExponentialBarrierProblem.hpp"
+#include "PrimalDualExponentialBarrierProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
@@ -11,17 +11,17 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   ExponentialBarrierProblem::ExponentialBarrierProblem(const OptimizationProblem& problem, double barrier_parameter,
+   PrimalDualExponentialBarrierProblem::PrimalDualExponentialBarrierProblem(const OptimizationProblem& problem, double barrier_parameter,
       const InteriorPointParameters& parameters):
          // no slacks: as many constraints as the number of equality constraints of the problem
-         BarrierProblem(problem.model, problem.number_variables + 2*ExponentialBarrierProblem::count_number_extra_variables(problem),
+         BarrierProblem(problem.model, problem.number_variables + 2*PrimalDualExponentialBarrierProblem::count_number_extra_variables(problem),
             0),
-         problem(problem), number_extra_variables(ExponentialBarrierProblem::count_number_extra_variables(problem)),
+         problem(problem), number_extra_variables(PrimalDualExponentialBarrierProblem::count_number_extra_variables(problem)),
          barrier_parameter(barrier_parameter), parameters(parameters) {
       DEBUG << "The exponential barrier problem has " << this->number_variables << " variables\n";
    }
 
-   void ExponentialBarrierProblem::generate_initial_iterate(Iterate& initial_iterate) const {
+   void PrimalDualExponentialBarrierProblem::generate_initial_iterate(Iterate& initial_iterate) const {
       // set the bound multipliers
       for (size_t constraint_index: Range(this->problem.number_constraints)) {
          initial_iterate.multipliers.constraints[constraint_index] = this->parameters.default_multiplier;
@@ -32,15 +32,15 @@ namespace uno {
       }
    }
 
-   double ExponentialBarrierProblem::get_objective_multiplier() const {
+   double PrimalDualExponentialBarrierProblem::get_objective_multiplier() const {
       return this->problem.get_objective_multiplier();
    }
 
-   void ExponentialBarrierProblem::evaluate_constraints(Iterate& /*iterate*/, std::vector<double>& /*constraints*/) const {
+   void PrimalDualExponentialBarrierProblem::evaluate_constraints(Iterate& /*iterate*/, std::vector<double>& /*constraints*/) const {
       // no constraints
    }
 
-   void ExponentialBarrierProblem::evaluate_objective_gradient(Iterate& iterate, const EvaluationSpace& evaluation_space,
+   void PrimalDualExponentialBarrierProblem::evaluate_objective_gradient(Iterate& iterate, const EvaluationSpace& evaluation_space,
          double* objective_gradient) const {
       // original objective gradient
       this->problem.evaluate_objective_gradient(iterate, evaluation_space, objective_gradient);
@@ -80,30 +80,30 @@ namespace uno {
             ++gradient_index;
          }
       }
-      std::cout << "ExponentialBarrierProblem::evaluate_objective_gradient\n";
+      std::cout << "PrimalDualExponentialBarrierProblem::evaluate_objective_gradient\n";
       for (size_t index: Range(gradient_index)) {
          std::cout << objective_gradient[index] << ' ';
       }
       std::cout << '\n';
    }
 
-   size_t ExponentialBarrierProblem::number_jacobian_nonzeros() const {
+   size_t PrimalDualExponentialBarrierProblem::number_jacobian_nonzeros() const {
       return 0;
    }
 
-   bool ExponentialBarrierProblem::has_curvature(const HessianModel& hessian_model) const {
+   bool PrimalDualExponentialBarrierProblem::has_curvature(const HessianModel& hessian_model) const {
       return hessian_model.has_curvature(this->model);
    }
 
-   size_t ExponentialBarrierProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
+   size_t PrimalDualExponentialBarrierProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
       return this->problem.number_hessian_nonzeros(hessian_model) + 2*this->number_extra_variables;
    }
 
-   void ExponentialBarrierProblem::compute_constraint_jacobian_sparsity(int* /*row_indices*/, int* /*column_indices*/,
+   void PrimalDualExponentialBarrierProblem::compute_constraint_jacobian_sparsity(int* /*row_indices*/, int* /*column_indices*/,
          int /*solver_indexing*/, MatrixOrder /*matrix_order*/) const {
    }
 
-   void ExponentialBarrierProblem::compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
+   void PrimalDualExponentialBarrierProblem::compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
          int* column_indices, int solver_indexing) const {
       // original Lagrangian Hessian
       this->problem.compute_hessian_sparsity(hessian_model, row_indices, column_indices, solver_indexing);
@@ -132,60 +132,60 @@ namespace uno {
       column_indices[12] = 1;
    }
 
-   void ExponentialBarrierProblem::evaluate_constraint_jacobian(Iterate& /*iterate*/, double* /*jacobian_values*/) const {
+   void PrimalDualExponentialBarrierProblem::evaluate_constraint_jacobian(Iterate& /*iterate*/, double* /*jacobian_values*/) const {
    }
 
-   void ExponentialBarrierProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
+   void PrimalDualExponentialBarrierProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
          const InequalityHandlingMethod& inequality_handling_method, const EvaluationSpace& evaluation_space, Iterate& iterate) const {
       this->problem.evaluate_lagrangian_gradient(lagrangian_gradient, inequality_handling_method,
          evaluation_space, iterate);
    }
    
-   void ExponentialBarrierProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
+   void PrimalDualExponentialBarrierProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
          const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const {
       // original Lagrangian Hessian
       this->problem.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian_values);
    }
 
-   void ExponentialBarrierProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,
+   void PrimalDualExponentialBarrierProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,
          const Multipliers& multipliers, double* result) const {
       // original Lagrangian Hessian
       this->problem.compute_hessian_vector_product(hessian_model, vector, multipliers, result);
    }
 
-   double ExponentialBarrierProblem::variable_lower_bound(size_t /*variable_index*/) const {
+   double PrimalDualExponentialBarrierProblem::variable_lower_bound(size_t /*variable_index*/) const {
       return -INF<double>;
    }
 
-   double ExponentialBarrierProblem::variable_upper_bound(size_t /*variable_index*/) const {
+   double PrimalDualExponentialBarrierProblem::variable_upper_bound(size_t /*variable_index*/) const {
       return INF<double>;
    }
 
-   const Vector<size_t>& ExponentialBarrierProblem::get_fixed_variables() const {
+   const Vector<size_t>& PrimalDualExponentialBarrierProblem::get_fixed_variables() const {
       return this->fixed_variables;
    }
 
-   const Collection<size_t>& ExponentialBarrierProblem::get_primal_regularization_variables() const {
+   const Collection<size_t>& PrimalDualExponentialBarrierProblem::get_primal_regularization_variables() const {
       return this->problem.get_primal_regularization_variables();
    }
 
-   double ExponentialBarrierProblem::constraint_lower_bound(size_t constraint_index) const {
+   double PrimalDualExponentialBarrierProblem::constraint_lower_bound(size_t constraint_index) const {
       return this->problem.constraint_lower_bound(constraint_index);
    }
 
-   double ExponentialBarrierProblem::constraint_upper_bound(size_t constraint_index) const {
+   double PrimalDualExponentialBarrierProblem::constraint_upper_bound(size_t constraint_index) const {
       return this->problem.constraint_upper_bound(constraint_index);
    }
 
-   const Collection<size_t>& ExponentialBarrierProblem::get_equality_constraints() const {
+   const Collection<size_t>& PrimalDualExponentialBarrierProblem::get_equality_constraints() const {
       return this->problem.get_equality_constraints();
    }
 
-   const Collection<size_t>& ExponentialBarrierProblem::get_inequality_constraints() const {
+   const Collection<size_t>& PrimalDualExponentialBarrierProblem::get_inequality_constraints() const {
       return this->empty_set;
    }
 
-   const Collection<size_t>& ExponentialBarrierProblem::get_dual_regularization_constraints() const {
+   const Collection<size_t>& PrimalDualExponentialBarrierProblem::get_dual_regularization_constraints() const {
       if (this->problem.get_dual_regularization_constraints().empty()) {
          // this is an indication that the constraints (if there is any) were already regularized in a previous
          // reformulation (e.g. l1 relaxation). In that case, we stick to an empty set
@@ -195,7 +195,7 @@ namespace uno {
       return this->problem.get_equality_constraints();
    }
 
-   void ExponentialBarrierProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& solution,
+   void PrimalDualExponentialBarrierProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& solution,
          Direction& direction) const {
       // form the primal-dual direction
       direction.primals = view(solution, 0, this->problem.number_variables);
@@ -204,38 +204,38 @@ namespace uno {
          this->problem.number_variables + this->problem.number_constraints);
    }
 
-   double ExponentialBarrierProblem::push_variable_to_interior(double variable_value, double /*lower_bound*/, double /*upper_bound*/) const {
+   double PrimalDualExponentialBarrierProblem::push_variable_to_interior(double variable_value, double /*lower_bound*/, double /*upper_bound*/) const {
       return variable_value;
    }
 
-   void ExponentialBarrierProblem::set_auxiliary_measure(Iterate& iterate) const {
+   void PrimalDualExponentialBarrierProblem::set_auxiliary_measure(Iterate& iterate) const {
       // auxiliary measure: barrier terms
       double barrier_terms = 0.;
       iterate.progress.auxiliary = barrier_terms;
    }
 
-   double ExponentialBarrierProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
+   double PrimalDualExponentialBarrierProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       return this->problem.complementarity_error(primals, constraints, multipliers, shift_value, residual_norm);
    }
 
-   double ExponentialBarrierProblem::dual_regularization_factor() const {
+   double PrimalDualExponentialBarrierProblem::dual_regularization_factor() const {
       return std::pow(this->barrier_parameter, this->parameters.dual_regularization_exponent);
    }
 
    // protected member functions
 
-   double ExponentialBarrierProblem::compute_barrier_term_directional_derivative(const Iterate& /*current_iterate*/,
+   double PrimalDualExponentialBarrierProblem::compute_barrier_term_directional_derivative(const Iterate& /*current_iterate*/,
          const Vector<double>& /*primal_direction*/) const {
       double directional_derivative = 0.;
       return directional_derivative;
    }
 
-   void ExponentialBarrierProblem::postprocess_iterate(Iterate& /*iterate*/) const {
+   void PrimalDualExponentialBarrierProblem::postprocess_iterate(Iterate& /*iterate*/) const {
       // do nothing
    }
 
-   double ExponentialBarrierProblem::compute_centrality_error(const Vector<double>& primals,
+   double PrimalDualExponentialBarrierProblem::compute_centrality_error(const Vector<double>& primals,
          const Multipliers& multipliers, double shift) const {
       const Range variables_range = Range(this->problem.number_variables);
       const VectorExpression shifted_bound_complementarity{variables_range, [&](size_t variable_index) {
@@ -253,7 +253,7 @@ namespace uno {
       return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
    }
 
-   size_t ExponentialBarrierProblem::count_number_extra_variables(const OptimizationProblem& problem) {
+   size_t PrimalDualExponentialBarrierProblem::count_number_extra_variables(const OptimizationProblem& problem) {
       size_t number_variables = 0;
 
       // count the number of variables associated to constraint bounds
