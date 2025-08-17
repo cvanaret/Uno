@@ -10,6 +10,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+   // current Uno version is 2.0.1
+   const int32_t uno_version_major = 2;
+   const int32_t uno_version_minor = 0;
+   const int32_t uno_version_patch = 1;
+
+   // get the current Uno version as v major.minor.patch
+   void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch);
+
    const double uno_Min = 1.;
    const double uno_Max = -1.;
 
@@ -80,9 +88,6 @@ extern "C" {
    typedef int32_t (*HessianVectorProduct)(int32_t number_variables, int32_t number_constraints, const double* x,
       bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
       double* result, void* user_data);
-
-   // get the current Uno version as v major.minor.patch
-   void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch);
 
    // creates an optimization model that can be solved by Uno.
    // initially, the model contains "number_variables" variables, no objective function, and no constraints.
