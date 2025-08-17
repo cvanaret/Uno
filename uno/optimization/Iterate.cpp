@@ -23,7 +23,7 @@ namespace uno {
       if (!this->is_objective_computed) {
          // evaluate the objective
          this->evaluations.objective = model.evaluate_objective(this->primals);
-         Iterate::number_eval_objective++;
+         ++Iterate::number_eval_objective;
          if (!is_finite(this->evaluations.objective)) {
             throw FunctionEvaluationError();
          }
@@ -36,7 +36,7 @@ namespace uno {
          if (model.is_constrained()) {
             // evaluate the constraints
             model.evaluate_constraints(this->primals, this->evaluations.constraints);
-            Iterate::number_eval_constraints++;
+            ++Iterate::number_eval_constraints;
             // check finiteness
             if (std::any_of(this->evaluations.constraints.cbegin(), this->evaluations.constraints.cend(), [](double constraint_j) {
                return !is_finite(constraint_j);
@@ -54,7 +54,7 @@ namespace uno {
          // evaluate the objective gradient
          model.evaluate_objective_gradient(this->primals, this->evaluations.objective_gradient);
          this->is_objective_gradient_computed = true;
-         Iterate::number_eval_objective_gradient++;
+         ++Iterate::number_eval_objective_gradient;
       }
    }
 

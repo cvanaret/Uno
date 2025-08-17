@@ -3,7 +3,6 @@
 
 #include "HomogeneousEqualityConstrainedModel.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/CollectionAdapter.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
@@ -28,7 +27,7 @@ namespace uno {
          this->constraint_index_of_inequality_index[inequality_index] = constraint_index;
          this->slack_index_of_constraint_index[constraint_index] = slack_variable_index;
          this->slacks.insert(constraint_index, slack_variable_index);
-         inequality_index++;
+         ++inequality_index;
       }
    }
 

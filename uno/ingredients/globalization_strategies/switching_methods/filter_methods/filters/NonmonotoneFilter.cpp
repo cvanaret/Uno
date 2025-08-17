@@ -23,7 +23,7 @@ namespace uno {
          // find other filter entries that dominate ith entry
          for (size_t other_entry_index: Range(this->number_entries)) {
             if ((this->objective[entry_index] > this->objective[other_entry_index]) && (this->infeasibility[entry_index] > this->infeasibility[other_entry_index])) {
-               number_dominated++;
+               ++number_dominated;
             }
          }
          if (number_dominated > this->max_number_dominated_entries) {
@@ -43,7 +43,7 @@ namespace uno {
       // add new entry to filter in position this->number_entries
       this->infeasibility[this->number_entries] = current_infeasibility;
       this->objective[this->number_entries] = current_objective;
-      this->number_entries++;
+      ++this->number_entries;
    }
 
    size_t NonmonotoneFilter::compute_number_dominated_entries(double trial_infeasibility, double trial_objective) const {
@@ -51,11 +51,11 @@ namespace uno {
       for (size_t entry_index: Range(this->number_entries)) {
          if (!this->objective_sufficient_reduction(this->objective[entry_index], trial_objective, trial_infeasibility) &&
                !this->infeasibility_sufficient_reduction(this->infeasibility[entry_index], trial_infeasibility)) {
-            number_dominated_entries++;
+            ++number_dominated_entries;
          }
          else if ((trial_objective >= this->objective[entry_index] - this->parameters.gamma * trial_infeasibility) &&
                   (trial_infeasibility > this->parameters.beta * this->infeasibility[entry_index])) {
-            number_dominated_entries++;
+            ++number_dominated_entries;
          }
       }
       return number_dominated_entries;
@@ -82,7 +82,7 @@ namespace uno {
       size_t number_dominated_entries = this->compute_number_dominated_entries(trial_infeasibility, trial_objective);
       if (!this->objective_sufficient_reduction(current_objective, trial_objective, trial_infeasibility) &&
           (trial_infeasibility > this->parameters.beta * current_infeasibility)) {
-         number_dominated_entries++;
+         ++number_dominated_entries;
       }
       return (number_dominated_entries <= this->max_number_dominated_entries);
    }

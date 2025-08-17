@@ -70,13 +70,13 @@ namespace uno {
       return entry == "yes";
    }
 
-   // argv[i] for i = 3..argc-1 are overwriting options
+   // argv[i] for i = offset..argc-1 are overwriting options
    Options Options::get_command_line_options(int argc, char* argv[], size_t offset) {
       static const std::string delimiter = "=";
       Options overwriting_options(false);
 
       // build the (name, value) map
-      for (size_t i = offset; i < static_cast<size_t>(argc); i++) {
+      for (size_t i = offset; i < static_cast<size_t>(argc); ++i) {
          const std::string argument = std::string(argv[i]);
          size_t position = argument.find_first_of(delimiter);
          if (position == std::string::npos) {
@@ -124,7 +124,7 @@ namespace uno {
       std::string option_list{};
       for (const auto& [option_name, option_value]: this->options) {
          if (!this->is_default[option_name] && this->used[option_name]) {
-            number_used_options++;
+            ++number_used_options;
             option_list.append("- ").append(option_name).append(" = ").append(option_value).append("\n");
          }
       }

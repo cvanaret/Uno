@@ -7,7 +7,6 @@
 #include <memory>
 #include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "symbolic/CollectionAdapter.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "symbolic/Range.hpp"
 

@@ -70,7 +70,7 @@ namespace uno {
 
    template <RangeDirection direction>
    void Range<direction>::increment_iterator(size_t& index) const {
-      index++;
+      ++index;
    }
 
    using ForwardRange = Range<FORWARD>;

@@ -48,7 +48,7 @@ namespace uno {
       while (!termination) {
          bool is_acceptable = false;
          try {
-            number_iterations++;
+            ++number_iterations;
             DEBUG << "\n\t### Trust-region inner iteration " << number_iterations << " with radius " << this->radius << "\n\n";
             if (1 < number_iterations) { statistics.start_new_line(); }
             this->set_TR_statistics(statistics, number_iterations);

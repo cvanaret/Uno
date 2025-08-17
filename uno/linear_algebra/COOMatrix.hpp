@@ -8,26 +8,6 @@
 #include "Matrix.hpp"
 
 namespace uno {
-   /*
-   template <typename IndexType>
-   class COOMatrix: public Matrix<IndexType> {
-   public:
-      const size_t dimension{};
-      Vector<IndexType> row_indices{};
-      Vector<IndexType> column_indices{};
-      Vector<double> values{};
-
-      COOMatrix() = default;
-
-      COOMatrix(size_t dimension, size_t number_nonzeros):
-         dimension(dimension), row_indices(number_nonzeros), column_indices(number_nonzeros), values(number_nonzeros) { }
-
-      std::tuple<IndexType, IndexType, double> operator[](size_t nonzero_index) const override {
-         return {this->row_indices[nonzero_index], this->column_indices[nonzero_index], this->values[nonzero_index]};
-      }
-   };
-   */
-
    template <typename IndexType>
    class COOMatrix: public Matrix<IndexType> {
    public:

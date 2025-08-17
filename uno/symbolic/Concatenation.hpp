@@ -26,7 +26,7 @@ namespace uno {
       }
 
       void increment_iterator(size_t& index) const override {
-         index++;
+         ++index;
       }
 
    protected:

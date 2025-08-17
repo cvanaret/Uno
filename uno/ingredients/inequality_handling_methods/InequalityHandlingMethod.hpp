@@ -5,7 +5,6 @@
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
 #include <string>
-#include "optimization/OptimizationProblem.hpp"
 
 namespace uno {
    // forward declarations
@@ -14,8 +13,6 @@ namespace uno {
    class HessianModel;
    class Iterate;
    class l1RelaxedProblem;
-   class Model;
-   class Multipliers;
    class OptimizationProblem;
    class Options;
    template <typename ElementType>

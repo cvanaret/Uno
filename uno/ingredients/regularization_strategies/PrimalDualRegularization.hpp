@@ -178,7 +178,7 @@ namespace uno {
          DEBUG2 << augmented_matrix_values << '\n';
          DEBUG << "Performing numerical factorization of the indefinite system\n";
          linear_solver.do_numerical_factorization(augmented_matrix_values);
-         number_attempts++;
+         ++number_attempts;
          DEBUG << "Number of attempts: " << number_attempts << "\n";
 
          const Inertia new_estimated_inertia = linear_solver.get_inertia();

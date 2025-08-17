@@ -60,13 +60,13 @@ namespace uno {
       // find position in filter without margin
       size_t start_position = 0;
       while (start_position < this->number_entries && this->infeasibility[start_position] < current_infeasibility) {
-         start_position++;
+         ++start_position;
       }
 
       // find redundant entries starting from position
       size_t end_position = start_position;
       while (end_position < this->number_entries && current_objective <= this->objective[end_position]) {
-         end_position++;
+         ++end_position;
       }
 
       // remove entries [position:end_position] from filter
@@ -87,7 +87,7 @@ namespace uno {
       // add new entry to the filter at position
       start_position = 0;
       while (start_position < this->number_entries && !this->infeasibility_sufficient_reduction(this->infeasibility[start_position], current_infeasibility)) {
-         start_position++;
+         ++start_position;
       }
       // shift entries by one to right to make room for new entry
       if (start_position < this->number_entries) {
@@ -96,7 +96,7 @@ namespace uno {
       // add new entry to filter
       this->infeasibility[start_position] = current_infeasibility;
       this->objective[start_position] = current_objective;
-      this->number_entries++;
+      ++this->number_entries;
    }
 
    bool Filter::acceptable_wrt_upper_bound(double trial_infeasibility) const {
@@ -114,7 +114,7 @@ namespace uno {
       // TODO: use binary search
       size_t position = 0;
       while (position < this->number_entries && !this->infeasibility_sufficient_reduction(this->infeasibility[position], trial_infeasibility)) {
-         position++;
+         ++position;
       }
 
       // check acceptability
