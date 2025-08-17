@@ -1,17 +1,17 @@
 // Copyright (c) 2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_EXPONENTIALBARRIERPROBLEM_H
-#define UNO_EXPONENTIALBARRIERPROBLEM_H
+#ifndef UNO_PRIMALDUALEXPONENTIALBARRIERPROBLEM_H
+#define UNO_PRIMALDUALEXPONENTIALBARRIERPROBLEM_H
 
 #include "../InteriorPointParameters.hpp"
 #include "../BarrierProblem.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
-   class ExponentialBarrierProblem : public BarrierProblem {
+   class PrimalDualExponentialBarrierProblem : public BarrierProblem {
    public:
-      ExponentialBarrierProblem(const OptimizationProblem& problem, double barrier_parameter,
+      PrimalDualExponentialBarrierProblem(const OptimizationProblem& problem, double barrier_parameter,
          const InteriorPointParameters &parameters);
 
       void generate_initial_iterate(Iterate& initial_iterate) const override;
@@ -80,4 +80,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_EXPONENTIALBARRIERPROBLEM_H
+#endif // UNO_PRIMALDUALEXPONENTIALBARRIERPROBLEM_H
