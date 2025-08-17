@@ -7,7 +7,6 @@
 #include "linear_algebra/MatrixOrder.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Expression.hpp"
-#include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -106,22 +105,6 @@ namespace uno {
 
    double OptimizationProblem::variable_upper_bound(size_t variable_index) const {
       return this->model.variable_upper_bound(variable_index);
-   }
-
-   const Collection<size_t>& OptimizationProblem::get_lower_bounded_variables() const {
-      return this->model.get_lower_bounded_variables();
-   }
-
-   const Collection<size_t>& OptimizationProblem::get_upper_bounded_variables() const {
-      return this->model.get_upper_bounded_variables();
-   }
-
-   const Collection<size_t>& OptimizationProblem::get_single_lower_bounded_variables() const {
-      return this->model.get_single_lower_bounded_variables();
-   }
-
-   const Collection<size_t>& OptimizationProblem::get_single_upper_bounded_variables() const {
-      return this->model.get_single_upper_bounded_variables();
    }
 
    const Vector<size_t>& OptimizationProblem::get_fixed_variables() const {

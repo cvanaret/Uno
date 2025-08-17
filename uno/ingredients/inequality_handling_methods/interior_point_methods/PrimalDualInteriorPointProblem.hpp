@@ -43,10 +43,6 @@ namespace uno {
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
-      [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override;
-      [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override;
-      [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
-      [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
       // [[nodiscard]] virtual const Collection<size_t>& get_primal_regularization_variables() const;
 
@@ -65,7 +61,7 @@ namespace uno {
          const Vector<double>& primal_direction) const;
       void postprocess_iterate(Iterate& iterate) const;
       [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
-         double barrier_parameter) const;
+         double shift) const;
 
    protected:
       const OptimizationProblem& first_reformulation;

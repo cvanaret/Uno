@@ -43,11 +43,7 @@ namespace uno {
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
-      [[nodiscard]] const Collection<size_t>& get_lower_bounded_variables() const override;
-      [[nodiscard]] const Collection<size_t>& get_upper_bounded_variables() const override;
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
-      [[nodiscard]] const Collection<size_t>& get_single_lower_bounded_variables() const override;
-      [[nodiscard]] const Collection<size_t>& get_single_upper_bounded_variables() const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
@@ -66,11 +62,7 @@ namespace uno {
 
    private:
       const std::unique_ptr<Model> model{};
-      Vector<size_t> fixed_variables;
-      Vector<size_t> lower_bounded_variables;
-      CollectionAdapter<Vector<size_t>&> lower_bounded_variables_collection;
-      Vector<size_t> upper_bounded_variables;
-      CollectionAdapter<Vector<size_t>&> upper_bounded_variables_collection;
+      Vector<size_t> fixed_variables{};
       Concatenation<const Collection<size_t>&, ForwardRange> equality_constraints;
       Concatenation<const Collection<size_t>&, ForwardRange> linear_constraints;
    };

@@ -9,7 +9,6 @@
 #include "optimization/Iterate.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "symbolic/UnaryNegation.hpp"
-#include "symbolic/VectorView.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
@@ -22,12 +21,7 @@ namespace uno {
          objective_multiplier(objective_multiplier),
          constraint_violation_coefficient(constraint_violation_coefficient),
          proximal_coefficient(proximal_coefficient),
-         proximal_center(proximal_center),
-         // lower bounded variables are the model variables + the elastic variables
-         lower_bounded_variables(concatenate(this->model.get_lower_bounded_variables(), Range(model.number_variables,
-            this->number_variables))),
-         single_lower_bounded_variables(concatenate(this->model.get_single_lower_bounded_variables(),
-            Range(model.number_variables, this->number_variables))) {
+         proximal_center(proximal_center) {
    }
 
    double l1RelaxedProblem::get_objective_multiplier() const {
@@ -285,22 +279,6 @@ namespace uno {
       else { // elastic variable in [0, +inf[
          return INF<double>;
       }
-   }
-
-   const Collection<size_t>& l1RelaxedProblem::get_lower_bounded_variables() const {
-      return this->lower_bounded_variables;
-   }
-
-   const Collection<size_t>& l1RelaxedProblem::get_upper_bounded_variables() const {
-      return this->model.get_upper_bounded_variables();
-   }
-
-   const Collection<size_t>& l1RelaxedProblem::get_single_lower_bounded_variables() const {
-      return this->single_lower_bounded_variables;
-   }
-
-   const Collection<size_t>& l1RelaxedProblem::get_single_upper_bounded_variables() const {
-      return this->model.get_single_upper_bounded_variables();
    }
 
    const Vector<size_t>& l1RelaxedProblem::get_fixed_variables() const {

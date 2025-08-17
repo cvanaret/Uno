@@ -49,22 +49,15 @@ namespace uno {
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
-         inequality_constraints_collection(this->inequality_constraints),
-         lower_bounded_variables_collection(this->lower_bounded_variables),
-         upper_bounded_variables_collection(this->upper_bounded_variables),
-         single_lower_bounded_variables_collection(this->single_lower_bounded_variables),
-         single_upper_bounded_variables_collection(this->single_upper_bounded_variables) {
+         inequality_constraints_collection(this->inequality_constraints) {
+      // Jacobian storage: use goff fields of struct cgrad
       this->asl->i.congrd_mode = 2;
 
-      // variables
-      this->lower_bounded_variables.reserve(this->number_variables);
-      this->upper_bounded_variables.reserve(this->number_variables);
-      this->single_lower_bounded_variables.reserve(this->number_variables);
-      this->single_upper_bounded_variables.reserve(this->number_variables);
+      // detect fix variables
       this->fixed_variables.reserve(this->number_variables);
       this->partition_variables();
 
-      // constraints
+      // partition equality/inequality constraints
       this->equality_constraints.reserve(this->number_constraints);
       this->inequality_constraints.reserve(this->number_constraints);
       this->partition_constraints();
@@ -195,24 +188,8 @@ namespace uno {
       return (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index + 1] : INF<double>;
    }
 
-   const Collection<size_t>& AMPLModel::get_lower_bounded_variables() const {
-      return this->lower_bounded_variables_collection;
-   }
-
-   const Collection<size_t>& AMPLModel::get_upper_bounded_variables() const {
-      return this->upper_bounded_variables_collection;
-   }
-
    const SparseVector<size_t>& AMPLModel::get_slacks() const {
       return this->slacks;
-   }
-
-   const Collection<size_t>& AMPLModel::get_single_lower_bounded_variables() const {
-      return this->single_lower_bounded_variables_collection;
-   }
-
-   const Collection<size_t>& AMPLModel::get_single_upper_bounded_variables() const {
-      return this->single_upper_bounded_variables_collection;
    }
 
    const Vector<size_t>& AMPLModel::get_fixed_variables() const {
@@ -311,24 +288,9 @@ namespace uno {
 
    void AMPLModel::partition_variables() {
       for (size_t variable_index: Range(this->number_variables)) {
-         const double lower_bound = this->variable_lower_bound(variable_index);
-         const double upper_bound = this->variable_upper_bound(variable_index);
-         // figure out the type of the bounds
-         if (lower_bound == upper_bound) {
+         if (this->variable_lower_bound(variable_index) == this->variable_upper_bound(variable_index)) {
             WARNING << "Variable x" << variable_index << " has identical bounds\n";
             this->fixed_variables.emplace_back(variable_index);
-         }
-         else if (is_finite(lower_bound) && is_finite(upper_bound)) {
-            this->lower_bounded_variables.emplace_back(variable_index);
-            this->upper_bounded_variables.emplace_back(variable_index);
-         }
-         else if (is_finite(lower_bound)) {
-            this->lower_bounded_variables.emplace_back(variable_index);
-            this->single_lower_bounded_variables.emplace_back(variable_index);
-         }
-         else if (is_finite(upper_bound)) {
-            this->upper_bounded_variables.emplace_back(variable_index);
-            this->single_upper_bounded_variables.emplace_back(variable_index);
          }
       }
    }
@@ -354,8 +316,9 @@ namespace uno {
    void AMPLModel::compute_lagrangian_hessian_sparsity() {
       // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
       // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
-      const int upper_triangular = 2;
-      this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, -1, 1, 1, upper_triangular));
+      // store in lower-triangular part
+      constexpr int triangular = 2;
+      this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, -1, 1, 1, triangular));
 
       // sparsity pattern
       [[maybe_unused]] const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
