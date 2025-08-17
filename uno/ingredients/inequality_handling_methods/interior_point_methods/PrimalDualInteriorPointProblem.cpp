@@ -95,8 +95,10 @@ namespace uno {
       size_t number_nonzeros = this->first_reformulation.number_hessian_nonzeros(hessian_model);
       // barrier contribution: original variables
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         if (is_finite(this->first_reformulation.variable_lower_bound(variable_index)) || is_finite(this->first_reformulation.variable_upper_bound(variable_index))) {
-            number_nonzeros++;
+         const double lower_bound = this->first_reformulation.variable_lower_bound(variable_index);
+         const double upper_bound = this->first_reformulation.variable_upper_bound(variable_index);
+         if (is_finite(lower_bound) || is_finite(upper_bound)) {
+            ++number_nonzeros;
          }
       }
       return number_nonzeros;

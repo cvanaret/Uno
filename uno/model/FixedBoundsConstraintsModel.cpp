@@ -25,7 +25,7 @@ namespace uno {
       size_t current_constraint = this->model->number_constraints;
       for (size_t fixed_variable_index: this->model->get_fixed_variables()) {
          constraints[current_constraint] = x[fixed_variable_index];
-         current_constraint++;
+         ++current_constraint;
       }
    }
 
@@ -154,7 +154,7 @@ namespace uno {
          else {
             iterate.multipliers.upper_bounds[variable_index] = constraint_multiplier;
          }
-         current_constraint++;
+         ++current_constraint;
       }
       this->model->postprocess_solution(iterate, termination_status);
    }

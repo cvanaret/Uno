@@ -4,6 +4,7 @@
 #ifndef UNO_COLLECTIONADAPTER_H
 #define UNO_COLLECTIONADAPTER_H
 
+#include <cstddef>
 #include "Collection.hpp"
 
 namespace uno {
@@ -38,7 +39,7 @@ namespace uno {
 
    template <typename Array>
    void CollectionAdapter<Array>::increment_iterator(size_t& index) const {
-      index++;
+      ++index;
    }
 
    template <typename Array>

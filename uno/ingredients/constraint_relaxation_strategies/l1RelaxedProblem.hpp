@@ -6,7 +6,6 @@
 
 #include <functional>
 #include "optimization/OptimizationProblem.hpp"
-#include "symbolic/Concatenation.hpp"
 
 namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {

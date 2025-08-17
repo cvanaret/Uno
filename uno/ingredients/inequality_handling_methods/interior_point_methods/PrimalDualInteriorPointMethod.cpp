@@ -122,7 +122,7 @@ namespace uno {
 
       // compute the primal-dual solution
       this->linear_solver->solve_indefinite_system(statistics, subproblem, direction, warmstart_information);
-      this->number_subproblems_solved++;
+      ++this->number_subproblems_solved;
 
       // check whether the augmented matrix was singular, in which case the subproblem is infeasible
       if (this->linear_solver->matrix_is_singular()) {

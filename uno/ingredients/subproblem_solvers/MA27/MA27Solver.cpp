@@ -175,7 +175,7 @@ namespace uno {
       bool factorization_done = false;
       size_t attempt = 0;
       while (not factorization_done) {
-         attempt++;
+         ++attempt;
          if (this->workspace.number_factorization_attempts < attempt) {
             throw std::runtime_error("MA27 reached the maximum number of factorization attempts");
          }

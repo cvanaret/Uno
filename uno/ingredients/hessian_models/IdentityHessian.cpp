@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "IdentityHessian.hpp"
-#include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "tools/Logger.hpp"
 

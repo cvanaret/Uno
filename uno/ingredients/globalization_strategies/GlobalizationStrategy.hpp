@@ -13,9 +13,6 @@ namespace uno {
    class Statistics;
    class Options;
 
-   /*! \class GlobalizationStrategy
-    *  Ingredient that accepts or rejects a trial iterate
-    */
    class GlobalizationStrategy {
    public:
       explicit GlobalizationStrategy(const Options& options);

@@ -55,7 +55,7 @@ namespace uno {
       bool termination = false;
       size_t number_iterations = 0;
       while (!termination) {
-         number_iterations++;
+         ++number_iterations;
          DEBUG << "\n\tLine-search iteration " << number_iterations << ", step_length " << step_length << '\n';
          if (1 < number_iterations) { statistics.start_new_line(); }
          statistics.set("step length", step_length);

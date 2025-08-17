@@ -151,8 +151,8 @@ namespace uno {
 
             const int lnewfact = !is_real_workspace ? 0 : get_larger_real_workspace_size(this->workspace);
             const int lnewifact = is_real_workspace ? 0 : get_larger_integer_workspace_size(this->workspace);
-            std::vector<double> newfact(lnewfact);
-            std::vector<int> newifact(lnewifact);
+            std::vector<double> newfact(static_cast<size_t>(lnewfact));
+            std::vector<int> newifact(static_cast<size_t>(lnewifact));
             const int enlarge_target = is_real_workspace ? 0 : 1;
 
             MA57_enlarge_workspace(&this->workspace.n, &enlarge_target, this->workspace.keep.data(), this->workspace.fact.data(),

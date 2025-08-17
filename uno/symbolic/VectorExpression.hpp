@@ -20,7 +20,7 @@ namespace uno {
          }
 
          iterator& operator++() {
-            this->index++;
+            ++this->index;
             return *this;
          }
 

@@ -50,7 +50,7 @@ namespace uno {
       Subproblem subproblem{problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
       this->solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_iterate.multipliers, direction.multipliers);
-      this->number_subproblems_solved++;
+      ++this->number_subproblems_solved;
       // reset the initial point
       this->initial_point.fill(0.);
    }

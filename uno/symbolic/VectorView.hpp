@@ -21,7 +21,7 @@ namespace uno {
             return {this->index, this->view[this->index]};
          }
          
-         iterator& operator++() { this->index++; return *this; }
+         iterator& operator++() { ++this->index; return *this; }
 
          friend bool operator!=(const iterator& a, const iterator& b) { return &a.view != &b.view || a.index != b.index; };
 

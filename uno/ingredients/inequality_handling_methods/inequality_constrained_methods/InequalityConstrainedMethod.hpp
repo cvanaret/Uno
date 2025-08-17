@@ -10,6 +10,9 @@
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
+   // forward declaration
+   class Multipliers;
+
    class InequalityConstrainedMethod : public InequalityHandlingMethod {
    public:
       explicit InequalityConstrainedMethod(const Options& options);

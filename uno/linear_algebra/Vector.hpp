@@ -146,7 +146,7 @@ namespace uno {
             result += separator;
          }
          result += element;
-         index++;
+         ++index;
       }
       return result;
    }

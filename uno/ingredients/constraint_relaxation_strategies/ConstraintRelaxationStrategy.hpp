@@ -107,7 +107,7 @@ namespace uno {
          this->loose_dual_tolerance);
       // if converged, keep track of the number of consecutive iterations
       if (status_loose_tolerance != IterateStatus::NOT_OPTIMAL) {
-         this->loose_tolerance_consecutive_iterations++;
+         ++this->loose_tolerance_consecutive_iterations;
       }
       else {
          this->loose_tolerance_consecutive_iterations = 0;

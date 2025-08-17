@@ -1,13 +1,10 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <cassert>
 #include "l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
-#include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/Concatenation.hpp"
 #include "symbolic/UnaryNegation.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
@@ -41,7 +38,7 @@ namespace uno {
          else { // positive part
             constraints[inequality_index] -= iterate.primals[elastic_index];
          }
-         elastic_index++;
+         ++elastic_index;
       }
       for (size_t equality_index: this->model.get_equality_constraints()) {
          constraints[equality_index] += (iterate.primals[elastic_index] - iterate.primals[elastic_index + 1]);
@@ -188,15 +185,15 @@ namespace uno {
             lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
                iterate.multipliers.constraints[inequality_index] - iterate.multipliers.lower_bounds[elastic_index];
          }
-         elastic_index++;
+         ++elastic_index;
       }
       for (size_t equality_index: this->model.get_equality_constraints()) {
          lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
             iterate.multipliers.constraints[equality_index] - iterate.multipliers.lower_bounds[elastic_index];
-         elastic_index++;
+         ++elastic_index;
          lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
             iterate.multipliers.constraints[equality_index] - iterate.multipliers.lower_bounds[elastic_index];
-         elastic_index++;
+         ++elastic_index;
       }
 
       // proximal contribution
@@ -316,7 +313,7 @@ namespace uno {
          else { // positive part
             elastic_setting_function(iterate, inequality_index, elastic_index, -1.);
          }
-         elastic_index++;
+         ++elastic_index;
       }
       for (size_t equality_index: this->model.get_equality_constraints()) {
          elastic_setting_function(iterate, equality_index, elastic_index, 1.);

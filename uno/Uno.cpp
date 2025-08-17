@@ -58,7 +58,7 @@ namespace uno {
             bool termination = false;
             // check for termination
             while (!termination) {
-               major_iterations++;
+               ++major_iterations;
                statistics.start_new_line();
                statistics.set("iter", major_iterations);
                DEBUG << "\n### Outer iteration " << major_iterations << '\n';

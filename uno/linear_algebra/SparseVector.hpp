@@ -29,7 +29,7 @@ namespace uno {
          }
 
          iterator& operator++() {
-            this->index++;
+            ++this->index;
             return *this;
          }
 
@@ -87,7 +87,7 @@ namespace uno {
    void SparseVector<ElementType>::insert(size_t index, ElementType value) {
       this->indices.emplace_back(index);
       this->values.emplace_back(value);
-      this->number_nonzeros++;
+      ++this->number_nonzeros;
    }
 
    template <typename ElementType>

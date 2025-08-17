@@ -7,7 +7,6 @@
 #include <memory>
 #include "Model.hpp"
 #include "linear_algebra/SparseVector.hpp"
-#include "symbolic/CollectionAdapter.hpp"
 
 namespace uno {
    // generate an equality-constrained model by:
