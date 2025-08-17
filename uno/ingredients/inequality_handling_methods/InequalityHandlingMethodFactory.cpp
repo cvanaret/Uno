@@ -9,7 +9,7 @@
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "interior_point_methods/InteriorPointMethod.hpp"
-#include "interior_point_methods/barrier_problems/ExponentialBarrierProblem.hpp"
+#include "interior_point_methods/barrier_problems/PrimalExponentialBarrierProblem.hpp"
 #include "interior_point_methods/barrier_problems/PrimalDualInteriorPointProblem.hpp"
 #include "options/Options.hpp"
 
@@ -26,7 +26,7 @@ namespace uno {
          return std::make_unique<InteriorPointMethod<PrimalDualInteriorPointProblem>>(options);
       }
       else if (inequality_handling_method == "interior_point" && options.get_string("barrier_function") == "exp") {
-         return std::make_unique<InteriorPointMethod<ExponentialBarrierProblem>>(options);
+         return std::make_unique<InteriorPointMethod<PrimalExponentialBarrierProblem>>(options);
       }
       throw std::invalid_argument("Inequality handling method " + inequality_handling_method + " is not supported");
    }
