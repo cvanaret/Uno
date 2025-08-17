@@ -52,11 +52,10 @@ public:
    void* user_data{nullptr};
 };
 
-// current version is 2.0.1
 void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch) {
-   *major = 2;
-   *minor = 0;
-   *patch = 1;
+   *major = uno_version_major;
+   *minor = uno_version_minor;
+   *patch = uno_version_patch;
 }
 
 void* uno_create_model(char problem_type, int32_t number_variables, double* variables_lower_bounds,
