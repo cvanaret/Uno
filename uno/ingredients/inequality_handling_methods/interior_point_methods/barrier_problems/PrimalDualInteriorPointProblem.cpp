@@ -476,7 +476,7 @@ namespace uno {
          }
       }
    }
-   
+
    double PrimalDualInteriorPointProblem::compute_centrality_error(const Vector<double>& primals,
          const Multipliers& multipliers, double shift) const {
       const Range variables_range = Range(this->reformulated_problem.number_variables);

@@ -161,22 +161,6 @@ namespace uno {
       return INF<double>;
    }
 
-   const Collection<size_t>& ExponentialBarrierProblem::get_lower_bounded_variables() const {
-      return this->empty_set;
-   }
-
-   const Collection<size_t>& ExponentialBarrierProblem::get_upper_bounded_variables() const {
-      return this->empty_set;
-   }
-
-   const Collection<size_t>& ExponentialBarrierProblem::get_single_lower_bounded_variables() const {
-      return this->problem.get_single_lower_bounded_variables();
-   }
-
-   const Collection<size_t>& ExponentialBarrierProblem::get_single_upper_bounded_variables() const {
-      return this->problem.get_single_upper_bounded_variables();
-   }
-
    const Vector<size_t>& ExponentialBarrierProblem::get_fixed_variables() const {
       return this->fixed_variables;
    }
