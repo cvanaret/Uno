@@ -19,23 +19,28 @@ end
 
 function uno_set_constraints(model, number_constraints, constraint_functions,
                              constraints_lower_bounds, constraints_upper_bounds,
-                             number_jacobian_nonzeros, jacobian_sparsity,
-                             constraint_jacobian)
+                             number_jacobian_nonzeros, jacobian_row_indices,
+                             jacobian_column_indices, constraint_jacobian)
     @ccall libuno.uno_set_constraints(model::Ptr{Cvoid}, number_constraints::Int32,
                                       constraint_functions::Ptr{Cvoid},
                                       constraints_lower_bounds::Ptr{Cdouble},
                                       constraints_upper_bounds::Ptr{Cdouble},
                                       number_jacobian_nonzeros::Int32,
-                                      jacobian_sparsity::Ptr{Cvoid},
+                                      jacobian_row_indices::Ptr{Int32},
+                                      jacobian_column_indices::Ptr{Int32},
                                       constraint_jacobian::Ptr{Cvoid})::Cvoid
 end
 
-function uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_sparsity,
-                                    lagrangian_hessian)
+function uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part,
+                                    hessian_row_indices, hessian_column_indices,
+                                    lagrangian_hessian, lagrangian_sign_convention)
     @ccall libuno.uno_set_lagrangian_hessian(model::Ptr{Cvoid},
                                              number_hessian_nonzeros::Int32,
-                                             hessian_sparsity::Ptr{Cvoid},
-                                             lagrangian_hessian::Ptr{Cvoid})::Cvoid
+                                             hessian_triangular_part::Cchar,
+                                             hessian_row_indices::Ptr{Int32},
+                                             hessian_column_indices::Ptr{Int32},
+                                             lagrangian_hessian::Ptr{Cvoid},
+                                             lagrangian_sign_convention::Cdouble)::Cvoid
 end
 
 function uno_set_user_data(model, user_data)
