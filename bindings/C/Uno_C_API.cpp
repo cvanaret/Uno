@@ -44,6 +44,8 @@ public:
    int32_t* jacobian_row_indices{nullptr};
    int32_t* jacobian_column_indices{nullptr};
    Jacobian constraint_jacobian{nullptr};
+   JacobianOperator jacobian_operator{nullptr};
+   JacobianTransposedOperator jacobian_transposed_operator{nullptr};
 
    // Hessian
    int32_t number_hessian_nonzeros{0};
@@ -108,6 +110,18 @@ void uno_set_constraints(void* model, int32_t number_constraints, Constraints co
    c_model->jacobian_row_indices = jacobian_row_indices;
    c_model->jacobian_column_indices = jacobian_column_indices;
    c_model->constraint_jacobian = constraint_jacobian;
+}
+
+void uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator) {
+   assert(model != nullptr);
+   CModel* c_model = static_cast<CModel*>(model);
+   c_model->jacobian_operator = jacobian_operator;
+}
+
+void uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator) {
+   assert(model != nullptr);
+   CModel* c_model = static_cast<CModel*>(model);
+   c_model->jacobian_transposed_operator = jacobian_transposed_operator;
 }
 
 void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
