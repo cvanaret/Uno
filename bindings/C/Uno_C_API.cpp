@@ -41,12 +41,14 @@ public:
    double* constraints_lower_bounds{nullptr};
    double* constraints_upper_bounds{nullptr};
    int32_t number_jacobian_nonzeros{0};
-   JacobianSparsity jacobian_sparsity{nullptr};
+   int32_t* jacobian_row_indices{nullptr};
+   int32_t* jacobian_column_indices{nullptr};
    Jacobian constraint_jacobian{nullptr};
 
    // Hessian
    int32_t number_hessian_nonzeros{0};
-   HessianSparsity hessian_sparsity{nullptr};
+   int32_t* hessian_row_indices{nullptr};
+   int32_t* hessian_column_indices{nullptr};
    Hessian lagrangian_hessian{nullptr};
 
    void* user_data{nullptr};
@@ -86,7 +88,7 @@ void uno_set_objective(void* model, double objective_sense, Objective objective_
 
 void uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
       double* constraints_lower_bounds, double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
-      JacobianSparsity jacobian_sparsity, Jacobian constraint_jacobian) {
+      int32_t* jacobian_row_indices, int32_t* jacobian_column_indices, Jacobian constraint_jacobian) {
    if (number_constraints <= 0) {
       std::cout << "Please specify a positive number of constraints.\n";
       return;
@@ -99,16 +101,18 @@ void uno_set_constraints(void* model, int32_t number_constraints, Constraints co
    c_model->constraints_lower_bounds = constraints_lower_bounds;
    c_model->constraints_upper_bounds = constraints_upper_bounds;
    c_model->number_jacobian_nonzeros = number_jacobian_nonzeros;
-   c_model->jacobian_sparsity = jacobian_sparsity;
+   c_model->jacobian_row_indices = jacobian_row_indices;
+   c_model->jacobian_column_indices = jacobian_column_indices;
    c_model->constraint_jacobian = constraint_jacobian;
 }
 
-void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, HessianSparsity hessian_sparsity,
-      Hessian lagrangian_hessian) {
+void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, int32_t* hessian_row_indices,
+      int32_t* hessian_column_indices, Hessian lagrangian_hessian) {
    assert(model != nullptr);
    CModel* c_model = static_cast<CModel*>(model);
    c_model->number_hessian_nonzeros = number_hessian_nonzeros;
-   c_model->hessian_sparsity = hessian_sparsity;
+   c_model->hessian_row_indices = hessian_row_indices;
+   c_model->hessian_column_indices = hessian_column_indices;
    c_model->lagrangian_hessian = lagrangian_hessian;
 }
 
