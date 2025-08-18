@@ -114,9 +114,13 @@ extern "C" {
    // /!\ since the Lagrangian Hessian is symmetric, we ask for either the lower or the triangular part of the matrix.
    // takes as inputs the number of nonzero elements of the Lagrangian Hessian, a character that specifies whether the
    // lower ('L') or upper ('U') triangular part is provided, two arrays of row and column indices for the Hessian in
-   // COOrdinate format, and a function pointer of the Hessian.
+   // COOrdinate format, a function pointer of the Hessian, and a scalar in {-1, +1} that determines the sign convention
+   // of the Lagrangian:
+   // if "lagrangian_sign_convention" == 1,  the Lagrangian is rho*f(x) + y^T c(x)
+   // if "lagrangian_sign_convention" == -1, the Lagrangian is rho*f(x) - y^T c(x)
    void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
-      int32_t* hessian_row_indices, int32_t* hessian_column_indices, Hessian lagrangian_hessian);
+      int32_t* hessian_row_indices, int32_t* hessian_column_indices, Hessian lagrangian_hessian,
+      double lagrangian_sign_convention);
 
    // sets the user data of a given model.
    void uno_set_user_data(void* model, void* user_data);

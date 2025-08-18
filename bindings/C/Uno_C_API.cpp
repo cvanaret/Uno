@@ -47,10 +47,12 @@ public:
 
    // Hessian
    int32_t number_hessian_nonzeros{0};
+   // lower ('L') or upper ('U')
    char hessian_triangular_part{}; // default is empty
    int32_t* hessian_row_indices{nullptr};
    int32_t* hessian_column_indices{nullptr};
    Hessian lagrangian_hessian{nullptr};
+   double lagrangian_sign_convention{-1.};
 
    void* user_data{nullptr};
 };
@@ -108,7 +110,15 @@ void uno_set_constraints(void* model, int32_t number_constraints, Constraints co
 }
 
 void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
-      int32_t* hessian_row_indices, int32_t* hessian_column_indices, Hessian lagrangian_hessian) {
+      int32_t* hessian_row_indices, int32_t* hessian_column_indices, Hessian lagrangian_hessian,
+      double lagrangian_sign_convention) {
+   if (number_hessian_nonzeros <= 0) {
+      std::cout << "Please specify a positive number of Lagrangian Hessian nonzeros.\n";
+   }
+   if (lagrangian_sign_convention != -1. && lagrangian_sign_convention != 1.) {
+      std::cout << "Please specify a Lagrangian sign convention in {-1, 1}.\n";
+   }
+
    assert(model != nullptr);
    CModel* c_model = static_cast<CModel*>(model);
    c_model->number_hessian_nonzeros = number_hessian_nonzeros;
@@ -116,6 +126,7 @@ void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, ch
    c_model->hessian_row_indices = hessian_row_indices;
    c_model->hessian_column_indices = hessian_column_indices;
    c_model->lagrangian_hessian = lagrangian_hessian;
+   c_model->lagrangian_sign_convention = lagrangian_sign_convention;
 }
 
 void uno_set_user_data(void* model, void* user_data) {
