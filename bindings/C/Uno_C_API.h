@@ -111,10 +111,12 @@ extern "C" {
       int32_t* jacobian_row_indices, int32_t* jacobian_column_indices, Jacobian constraint_jacobian);
 
    // sets the Lagrangian Hessian of a given model.
-   // takes as inputs the number of nonzero elements of the Lagrangian Hessian, two arrays of row and
-   // column indices for the Hessian in COOrdinate format, and a function pointer of the Hessian.
-   void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, int32_t* hessian_row_indices,
-      int32_t* hessian_column_indices, Hessian lagrangian_hessian);
+   // /!\ since the Lagrangian Hessian is symmetric, we ask for either the lower or the triangular part of the matrix.
+   // takes as inputs the number of nonzero elements of the Lagrangian Hessian, a character that specifies whether the
+   // lower ('L') or upper ('U') triangular part is provided, two arrays of row and column indices for the Hessian in
+   // COOrdinate format, and a function pointer of the Hessian.
+   void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
+      int32_t* hessian_row_indices, int32_t* hessian_column_indices, Hessian lagrangian_hessian);
 
    // sets the user data of a given model.
    void uno_set_user_data(void* model, void* user_data);
