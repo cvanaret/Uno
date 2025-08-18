@@ -145,12 +145,6 @@ extern "C" {
    // returns true if it succeeded, false otherwise.
    bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator);
 
-   // sets the Jacobian operator (computes Jacobian-vector products) of a given model.
-   void uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator);
-
-   // sets the Jacobian transposed operator (computes Jacobian^T-vector products) of a given model.
-   void uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator);
-
    // sets the Lagrangian Hessian of a given model.
    // /!\ since the Lagrangian Hessian is symmetric, we ask for either the lower or the triangular part of the matrix.
    // takes as inputs the number of nonzero elements of the Lagrangian Hessian, a character that specifies whether the
