@@ -125,8 +125,28 @@ extern "C" {
    // sets the user data of a given model.
    void uno_set_user_data(void* model, void* user_data);
 
+   // creates a set of default options.
+   void* uno_create_default_options();
+
+   // sets a particular option in a given set of options.
+   // takes as inputs the name of the option and the value to which it should be set.
+   void uno_set_option(void* options, const char* option_name, const char* option_value);
+
+   // creates the Uno solver for given options.
+   void* uno_create_solver(const void* options);
+
+   // optimizes a given model using the Uno solver, with given options and initial primal-dual iterate.
+   void uno_optimize(void* solver, const void* model, const void* options, const double* primal_iterate,
+      const double* dual_iterate);
+
    // destroys a given Uno model. Once destroyed, the model cannot be used anymore.
    void uno_destroy_model(void* model);
+
+   // destroy a set of Uno options. Once destroyed, the options cannot be used anymore.
+   void uno_destroy_options(void* options);
+
+   // destroy an Uno solver. Once destroyed, the solver cannot be used anymore.
+   void uno_destroy_solver(void* solver);
 
 #ifdef __cplusplus
 }
