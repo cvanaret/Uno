@@ -52,6 +52,7 @@ public:
    int32_t* hessian_row_indices{nullptr};
    int32_t* hessian_column_indices{nullptr};
    Hessian lagrangian_hessian{nullptr};
+   HessianOperator lagrangian_hessian_operator{nullptr};
    double lagrangian_sign_convention{-1.};
 
    void* user_data{nullptr};
@@ -114,18 +115,43 @@ void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, ch
       double lagrangian_sign_convention) {
    if (number_hessian_nonzeros <= 0) {
       std::cout << "Please specify a positive number of Lagrangian Hessian nonzeros.\n";
+      return;
    }
    if (lagrangian_sign_convention != -1. && lagrangian_sign_convention != 1.) {
       std::cout << "Please specify a Lagrangian sign convention in {-1, 1}.\n";
+      return;
    }
 
    assert(model != nullptr);
    CModel* c_model = static_cast<CModel*>(model);
+   // make sure that the sign convention is consistent with that of the Hessian operator
+   if (c_model->lagrangian_hessian_operator != nullptr && c_model->lagrangian_sign_convention != lagrangian_sign_convention) {
+      std::cout << "Please specify a Lagrangian sign convention consistent with that of the Hessian operator.\n";
+      return;
+   }
    c_model->number_hessian_nonzeros = number_hessian_nonzeros;
    c_model->hessian_triangular_part = hessian_triangular_part;
    c_model->hessian_row_indices = hessian_row_indices;
    c_model->hessian_column_indices = hessian_column_indices;
    c_model->lagrangian_hessian = lagrangian_hessian;
+   c_model->lagrangian_sign_convention = lagrangian_sign_convention;
+}
+
+void uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator,
+      double lagrangian_sign_convention) {
+   if (lagrangian_sign_convention != -1. && lagrangian_sign_convention != 1.) {
+      std::cout << "Please specify a Lagrangian sign convention in {-1, 1}.\n";
+      return;
+   }
+
+   assert(model != nullptr);
+   CModel* c_model = static_cast<CModel*>(model);
+   // make sure that the sign convention is consistent with that of the Hessian function
+   if (c_model->lagrangian_hessian != nullptr && c_model->lagrangian_sign_convention != lagrangian_sign_convention) {
+      std::cout << "Please specify a Lagrangian sign convention consistent with that of the Hessian function.\n";
+      return;
+   }
+   c_model->lagrangian_hessian_operator = lagrangian_hessian_operator;
    c_model->lagrangian_sign_convention = lagrangian_sign_convention;
 }
 
