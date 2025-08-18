@@ -119,7 +119,7 @@ function uno(
   vector_indexing = Cint(1)  # Fortran-style indexing
   c_model = uno_create_model(problem_type, Cint(nvar), lvar, uvar, vector_indexing)
   (c_model == C_NULL) && error("Failed to construct Uno model for some unknown reason.")
-  uno_model = UnoModel(c_model, eval_objective, eval_constraints, eval_gradient, eval_jacobian_sparsity, eval_jacobian, eval_hessian_sparsity, eval_hessian)
+  uno_model = UnoModel(c_model, eval_objective, eval_constraints, eval_gradient, eval_jacobian, eval_hessian)
 
   user_data = pointer_from_objref(uno_model)::Ptr{Cvoid}
   uno_set_user_data(c_model, user_data)
