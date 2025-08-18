@@ -349,18 +349,6 @@ void uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperato
    user_model->jacobian_transposed_operator = jacobian_transposed_operator;
 }
 
-void uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator) {
-   assert(model != nullptr);
-   CModel* c_model = static_cast<CModel*>(model);
-   c_model->jacobian_operator = jacobian_operator;
-}
-
-void uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator) {
-   assert(model != nullptr);
-   CModel* c_model = static_cast<CModel*>(model);
-   c_model->jacobian_transposed_operator = jacobian_transposed_operator;
-}
-
 void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
       int32_t* hessian_row_indices, int32_t* hessian_column_indices, Hessian lagrangian_hessian,
       double lagrangian_sign_convention) {
