@@ -85,7 +85,7 @@ extern "C" {
    // size "number_variables", and an object "user_data", and stores the Hessian-vector product in the vector "result"
    // of size "number_variables".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int32_t (*HessianVectorProduct)(int32_t number_variables, int32_t number_constraints, const double* x,
+   typedef int32_t (*HessianOperator)(int32_t number_variables, int32_t number_constraints, const double* x,
       bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
       double* result, void* user_data);
 
@@ -120,6 +120,14 @@ extern "C" {
    // if "lagrangian_sign_convention" == -1, the Lagrangian is rho*f(x) - y^T c(x)
    void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
       int32_t* hessian_row_indices, int32_t* hessian_column_indices, Hessian lagrangian_hessian,
+      double lagrangian_sign_convention);
+
+   // sets the Lagrangian Hessian operator (computes Hessian-vector products) of a given model.
+   // takes as inputs a function pointer of the Hessian operator, and a scalar in {-1, +1} that determines the sign convention
+   // of the Lagrangian:
+   // if "lagrangian_sign_convention" == 1,  the Lagrangian is rho*f(x) + y^T c(x)
+   // if "lagrangian_sign_convention" == -1, the Lagrangian is rho*f(x) - y^T c(x)
+   void uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator,
       double lagrangian_sign_convention);
 
    // sets the user data of a given model.
