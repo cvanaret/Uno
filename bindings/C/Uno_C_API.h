@@ -40,12 +40,12 @@ extern "C" {
    // - takes as inputs two vectors "row_indices" and "column_indices", allocates memory for them with size
    // "number_jacobian_nonzeros", and stores the row and column indices of the constraint Jacobian entries in
    // coordinate (COO) format.
-   typedef void (*JacobianSparsity)(int32_t number_jacobian_nonzeros, int32_t* row_indices, int32_t* column_indices, void* user_data);
+   // typedef void (*JacobianSparsity)(int32_t number_jacobian_nonzeros, int32_t* row_indices, int32_t* column_indices, void* user_data);
 
    // - takes as inputs two vectors "row_indices" and "column_indices", allocates memory for them with size
    // "number_hessian_nonzeros", and stores the row and column indices of the Lagrangian Hessian entries in
    // coordinate (COO) format.
-   typedef void (*HessianSparsity)(int32_t number_hessian_nonzeros, int32_t* row_indices, int32_t* column_indices, void* user_data);
+   // typedef void (*HessianSparsity)(int32_t number_hessian_nonzeros, int32_t* row_indices, int32_t* column_indices, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the entries of the
    // sparse constraint Jacobian in the vector "jacobian" of size "number_jacobian_nonzeros". The values should be in
@@ -104,17 +104,17 @@ extern "C" {
 
    // sets the constraints and constraint Jacobian of a given model.
    // takes as inputs the number of constraints, a function pointer of the constraint functions, two arrays of lower and
-   // upper bounds of size "number_constraints", the number of nonzero elements of the Jacobian, a function pointer of
-   // the Jacobian sparsity, and a function pointer of the constraint Jacobian.
+   // upper bounds of size "number_constraints", the number of nonzero elements of the Jacobian, two arrays of row and
+   // column indices for the constraint Jacobian in COOrdinate format, and a function pointer of the constraint Jacobian.
    void uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
       double* constraints_lower_bounds, double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
-      JacobianSparsity jacobian_sparsity, Jacobian constraint_jacobian);
+      int32_t* jacobian_row_indices, int32_t* jacobian_column_indices, Jacobian constraint_jacobian);
 
    // sets the Lagrangian Hessian of a given model.
-   // takes as inputs the number of nonzero elements of the Lagrangian Hessian, a function pointer of the Hessian
-   // sparsity, and a function pointer of the Hessian.
-   void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, HessianSparsity hessian_sparsity,
-      Hessian lagrangian_hessian);
+   // takes as inputs the number of nonzero elements of the Lagrangian Hessian, two arrays of row and
+   // column indices for the Hessian in COOrdinate format, and a function pointer of the Hessian.
+   void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, int32_t* hessian_row_indices,
+      int32_t* hessian_column_indices, Hessian lagrangian_hessian);
 
    // sets the user data of a given model.
    void uno_set_user_data(void* model, void* user_data);
