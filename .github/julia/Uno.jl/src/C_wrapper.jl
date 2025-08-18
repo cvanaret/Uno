@@ -18,9 +18,7 @@ mutable struct UnoModel
   eval_objective::Function
   eval_constraints::Function
   eval_gradient::Function
-  eval_jacobian_sparsity::Function
   eval_jacobian::Function
-  eval_hessian_sparsity::Function
   eval_hessian::Function
 end
 
@@ -47,22 +45,6 @@ function uno_objective_gradient(number_variables::Cint, x::Ptr{Float64}, gradien
   _g = unsafe_wrap(Array, gradient, number_variables)
   _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
   _user_data.eval_gradient(_g, _x)
-  return Cint(0)
-end
-
-function uno_jacobian_sparsity(number_jacobian_nonzeros::Cint, row_indices::Ptr{Cint}, column_indices::Ptr{Cint}, user_data::Ptr{Cvoid})
-  _jrows = unsafe_wrap(Array, row_indices, number_jacobian_nonzeros)
-  _jcols = unsafe_wrap(Array, column_indices, number_jacobian_nonzeros)
-  _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
-  _user_data.eval_jacobian_sparsity(_jrows, _jcols)
-  return Cint(0)
-end
-
-function uno_hessian_sparsity(number_hessian_nonzeros::Cint, row_indices::Ptr{Cint}, column_indices::Ptr{Cint}, user_data::Ptr{Cvoid})
-  _hrows = unsafe_wrap(Array, row_indices, number_hessian_nonzeros)
-  _hcols = unsafe_wrap(Array, column_indices, number_hessian_nonzeros)
-  _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
-  _user_data.eval_hessian_sparsity(_hrows, _hcols)
   return Cint(0)
 end
 
@@ -118,14 +100,16 @@ function uno(
   uvar::Vector{Float64},
   lcon::Vector{Float64},
   ucon::Vector{Float64},
+  jrows::Vector{Cint},
+  jcols::Vector{Cint},
   nnzj::Int,
+  hrows::Vector{Cint},
+  hcols::Vector{Cint},
   nnzh::Int,
   eval_objective::Function,
   eval_constraints::Function,
   eval_gradient::Function,
-  eval_jacobian_sparsity::Function,
   eval_jacobian::Function,
-  eval_hessian_sparsity::Function,
   eval_hessian::Function,
 )
   @assert nvar == length(lvar) == length(uvar)
@@ -145,13 +129,11 @@ function uno(
   uno_set_objective(c_model, eval_objective_c, eval_gradient_c)
 
   eval_constraints_c = @cfunction(uno_constraints, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  eval_jacobian_sparsity_c = @cfunction(uno_jacobian_sparsity, Cint, (Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cvoid}))
   eval_jacobian_c = @cfunction(uno_jacobian, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  uno_set_constraints(c_model, Cint(ncon), eval_constraints_c, lcon, ucon, Cint(nnzj), eval_jacobian_sparsity_c, eval_jacobian_c)
+  uno_set_constraints(c_model, Cint(ncon), eval_constraints_c, lcon, ucon, Cint(nnzj), jrows, jcols, eval_jacobian_c)
 
-  eval_hessian_sparsity_c = @cfunction(uno_hessian_sparsity, Cint, (Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cvoid}))
   eval_hessian_c = @cfunction(uno_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  uno_set_lagrangian_hessian(c_model, Cint(nnzh), eval_hessian_sparsity_c, eval_hessian_c)
+  uno_set_lagrangian_hessian(c_model, Cint(nnzh), 'L', hrows, hcols, eval_hessian_c, 1.0)
 
   # eval_Jv_c = @cfunction(uno_jacobian_vector_product, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
   # eval_Jtv_c = @cfunction(uno_jacobian_transposed_vector_product, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
