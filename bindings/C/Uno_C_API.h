@@ -68,7 +68,7 @@ extern "C" {
    // of size "number_variables" and an object "user_data", and stores the Jacobian-vector product in the vector
    // "result" of size "number_constraints".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int32_t (*JacobianVectorProduct)(int32_t number_variables, int32_t number_constraints, const double* x,
+   typedef int32_t (*JacobianOperator)(int32_t number_variables, int32_t number_constraints, const double* x,
       bool evaluate_at_x, const double* vector, double* result, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
@@ -76,7 +76,7 @@ extern "C" {
    // of size "number_constraints" and an object "user_data", and stores the Jacobian transposed-vector product in the
    // vector "result" of size "number_variables".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int32_t (*JacobianTransposedVectorProduct)(int32_t number_variables, int32_t number_constraints, const double* x,
+   typedef int32_t (*JacobianTransposedOperator)(int32_t number_variables, int32_t number_constraints, const double* x,
       bool evaluate_at_x, const double* vector, double* result, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
@@ -109,6 +109,12 @@ extern "C" {
    void uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
       double* constraints_lower_bounds, double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
       int32_t* jacobian_row_indices, int32_t* jacobian_column_indices, Jacobian constraint_jacobian);
+
+   // sets the Jacobian operator (computes Jacobian-vector products) of a given model.
+   void uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator);
+
+   // sets the Jacobian transposed operator (computes Jacobian^T-vector products) of a given model.
+   void uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator);
 
    // sets the Lagrangian Hessian of a given model.
    // /!\ since the Lagrangian Hessian is symmetric, we ask for either the lower or the triangular part of the matrix.
