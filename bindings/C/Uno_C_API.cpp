@@ -58,6 +58,10 @@ public:
    double lagrangian_sign_convention{-1.};
 
    void* user_data{nullptr};
+
+   // initial iterate
+   double* initial_primal_iterate{nullptr};
+   double* initial_dual_iterate{nullptr};
 };
 
 void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch) {
@@ -175,7 +179,19 @@ void uno_set_user_data(void* model, void* user_data) {
    c_model->user_data = user_data;
 }
 
-void* uno_create_options() {
+void uno_set_initial_primal_iterate(void* model, double* initial_primal_iterate) {
+   assert(model != nullptr);
+   CModel* c_model = static_cast<CModel*>(model);
+   c_model->initial_primal_iterate = initial_primal_iterate;
+}
+
+void uno_set_initial_dual_iterate(void* model, double* initial_dual_iterate) {
+   assert(model != nullptr);
+   CModel* c_model = static_cast<CModel*>(model);
+   c_model->initial_dual_iterate = initial_dual_iterate;
+}
+
+void* uno_create_default_options() {
    uno::Options* options = new uno::Options;
    uno::DefaultOptions::load(*options);
    // determine the default solvers based on the available libraries
@@ -198,8 +214,7 @@ void* uno_create_solver(const void* options) {
    return new uno::Uno;
 }
 
-void uno_optimize(void* solver, const void* model, const void* options, const double* primal_iterate,
-      const double* dual_iterate) {
+void uno_optimize(void* solver, const void* model, const void* options) {
    // check the model
    assert(model != nullptr);
    const CModel* c_model = static_cast<const CModel*>(model);
@@ -211,11 +226,11 @@ void uno_optimize(void* solver, const void* model, const void* options, const do
    // generate the initial primal-dual iterate
    uno::Iterate initial_iterate(static_cast<size_t>(c_model->number_variables),
       static_cast<size_t>(c_model->number_constraints));
-   if (primal_iterate != nullptr) {
-      std::copy_n(primal_iterate, c_model->number_variables, initial_iterate.primals.begin());
+   if (c_model->initial_primal_iterate != nullptr) {
+      std::copy_n(c_model->initial_primal_iterate, c_model->number_variables, initial_iterate.primals.begin());
    }
-   if (dual_iterate != nullptr) {
-      std::copy_n(dual_iterate, c_model->number_constraints, initial_iterate.multipliers.constraints.begin());
+   if (c_model->initial_dual_iterate != nullptr) {
+      std::copy_n(c_model->initial_dual_iterate, c_model->number_constraints, initial_iterate.multipliers.constraints.begin());
    }
 
    assert(solver != nullptr);
