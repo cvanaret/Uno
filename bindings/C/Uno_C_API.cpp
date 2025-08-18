@@ -158,7 +158,8 @@ void* uno_create_solver(const void* options) {
    return new uno::Uno;
 }
 
-void uno_optimize(void* solver, const void* model, const void* options) {
+void uno_optimize(void* solver, const void* model, const void* options, const double* primal_iterate,
+      const double* dual_iterate) {
    // check the model
    assert(model != nullptr);
    const CModel* c_model = static_cast<const CModel*>(model);
@@ -167,15 +168,23 @@ void uno_optimize(void* solver, const void* model, const void* options) {
       return;
    }
 
-   assert(solver != nullptr);
-   assert(options != nullptr);
-   uno::Uno* uno_solver = static_cast<uno::Uno*>(solver);
-   const uno::Options* uno_options = static_cast<const uno::Options*>(options);
-   uno::Iterate current_iterate(static_cast<size_t>(c_model->number_variables),
+   // generate the initial primal-dual iterate
+   uno::Iterate initial_iterate(static_cast<size_t>(c_model->number_variables),
       static_cast<size_t>(c_model->number_constraints));
-   // TODO generate initial iterate
+   if (primal_iterate != nullptr) {
+      std::copy_n(primal_iterate, c_model->number_variables, initial_iterate.primals.begin());
+   }
+   if (dual_iterate != nullptr) {
+      std::copy_n(dual_iterate, c_model->number_constraints, initial_iterate.multipliers.constraints.begin());
+   }
+
+   assert(solver != nullptr);
+   uno::Uno* uno_solver = static_cast<uno::Uno*>(solver);
+   assert(options != nullptr);
+   const uno::Options* uno_options = static_cast<const uno::Options*>(options);
+
    // TODO return result
-   // uno_solver->solve(*c_model, initial_iterate, *uno_options);
+   //uno::Result result = uno_solver->solve(*c_model, initial_iterate, *uno_options);
 }
 
 void uno_destroy_model(void* model) {
