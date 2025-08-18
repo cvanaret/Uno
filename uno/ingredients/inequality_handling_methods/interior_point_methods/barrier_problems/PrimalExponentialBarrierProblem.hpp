@@ -70,13 +70,10 @@ namespace uno {
 
    protected:
       const OptimizationProblem& problem;
-      const size_t number_extra_variables;
       const double barrier_parameter;
       const InteriorPointParameters& parameters;
       const Vector<size_t> fixed_variables{};
       const ForwardRange empty_set{0};
-
-      [[nodiscard]] static size_t count_number_extra_variables(const OptimizationProblem& problem);
    };
 } // namespace
 
