@@ -116,8 +116,10 @@ extern "C" {
       double* variables_upper_bounds, int32_t base_indexing);
 
    // sets the objective and objective gradient of a given model.
-   // takes as inputs a function pointer of the objective function and a function pointer of its gradient function.
-   void uno_set_objective(void* model, Objective objective_function, ObjectiveGradient objective_gradient);
+   // takes as inputs the optimization sense (UNO_MINIMIZE or UNO_MAXIMIZE), a function pointer of the objective
+   // function and a function pointer of its gradient function.
+   void uno_set_objective(void* model, int32_t optimization_sense, Objective objective_function,
+      ObjectiveGradient objective_gradient);
 
    // sets the constraints and constraint Jacobian of a given model.
    // takes as inputs the number of constraints, a function pointer of the constraint functions, two arrays of lower and
@@ -162,24 +164,18 @@ extern "C" {
    // sets the initial dual iterate of a given model.
    void uno_set_initial_dual_iterate(void* model, double* initial_dual_iterate);
 
-   // creates a set of default options.
-   void* uno_create_default_options();
+   // creates the Uno solver.
+   void* uno_create_solver();
 
    // sets a particular option in a given set of options.
    // takes as inputs the name of the option and the value to which it should be set.
-   void uno_set_option(void* options, const char* option_name, const char* option_value);
-
-   // creates the Uno solver for given options.
-   void* uno_create_solver(const void* options);
+   void uno_set_option(void* solver, const char* option_name, const char* option_value);
 
    // optimizes a given model using the Uno solver and given options.
-   void uno_optimize(void* solver, const void* model, const void* options, int32_t optimization_sense);
+   void uno_optimize(void* solver, const void* model);
 
    // destroys a given Uno model. Once destroyed, the model cannot be used anymore.
    void uno_destroy_model(void* model);
-
-   // destroy a set of Uno options. Once destroyed, the options cannot be used anymore.
-   void uno_destroy_options(void* options);
 
    // destroy an Uno solver. Once destroyed, the solver cannot be used anymore.
    void uno_destroy_solver(void* solver);
