@@ -26,7 +26,8 @@ end
 
 function nlpmodels_lagrangian_hessian(nlp::AbstractNLPModel{Float64}, hvals::Vector{Float64}, x::Vector{Float64},
                                       multipliers::Vector{Float64}, objective_multiplier::Float64)
-  NLPModels.hess_coord!(nlp, x, multipliers, hvals, obj_weight=objective_multiplier)
+  # NLPModels.hess_coord!(nlp, x, multipliers, hvals, obj_weight=objective_multiplier)
+NLPModels.hess_coord!(nlp, x, -multipliers, hvals, obj_weight=objective_multiplier)
   return hvals
 end
 
@@ -45,7 +46,8 @@ end
 function nlpmodels_lagrangian_hessian_operator(nlp::AbstractNLPModel{Float64}, Hv::Vector{Float64}, x::Vector{Float64},
                                                objective_multiplier::Float64, multipliers::Vector{Float64},
                                                v::Vector{Float64}, evaluate_at_x::Bool)
-  NLPModels.hprod!(nlp, x, multipliers, v, Hv; obj_weight=objective_multiplier)
+  # NLPModels.hprod!(nlp, x, multipliers, v, Hv; obj_weight=objective_multiplier)
+  NLPModels.hprod!(nlp, x, -multipliers, v, Hv; obj_weight=objective_multiplier)
   return Hv
 end
 
@@ -62,11 +64,11 @@ function Uno.uno(nlp::AbstractNLPModel{Float64})
     nlp.meta.uvar,
     nlp.meta.lcon,
     nlp.meta.ucon,
-    Cint.(jrows),
-    Cint.(jcols),
+    Cint.(jrows .- 1),
+    Cint.(jcols .- 1),
     nlp.meta.nnzj,
-    Cint.(hrows),
-    Cint.(hcols),
+    Cint.(hrows .- 1),
+    Cint.(hcols .- 1),
     nlp.meta.nnzh,
     nlp.meta.x0,
     nlp.meta.y0,
