@@ -54,7 +54,7 @@ function uno_constraints(number_variables::Cint, number_constraints::Cint, x::Pt
   if isnothing(_user_data.user_model)
     _user_data.eval_constraints(_c, _x)
   else
-    user_data.eval_constraints(_user_data.user_model, _c, _x)
+    _user_data.eval_constraints(_user_data.user_model, _c, _x)
   end
   return Cint(0)
 end
