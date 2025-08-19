@@ -31,6 +31,22 @@ extern "C" {
    const char UNO_LOWER_TRIANGLE = 'L';
    const char UNO_UPPER_TRIANGLE = 'U';
 
+   // Optimization status
+   const int32_t UNO_SUCCESS = 0;
+   const int32_t UNO_ITERATION_LIMIT = 1;
+   const int32_t UNO_TIME_LIMIT = 2;
+   const int32_t UNO_EVALUATION_ERROR = 3;
+   const int32_t UNO_ALGORITHMIC_ERROR = 4;
+
+   // Iterate status
+   const int32_t UNO_NOT_OPTIMAL = 0;
+   const int32_t UNO_FEASIBLE_KKT_POINT = 1; // feasible stationary point
+   const int32_t UNO_FEASIBLE_FJ_POINT = 2; // stationary point without constraint qualification
+   const int32_t UNO_INFEASIBLE_STATIONARY_POINT = 3; // infeasible stationary point of constraint violation
+   const int32_t UNO_FEASIBLE_SMALL_STEP = 4;
+   const int32_t UNO_INFEASIBLE_SMALL_STEP = 5;
+   const int32_t UNO_UNBOUNDED = 6;
+
    // current Uno version is 2.0.1
    const int32_t uno_version_major = 2;
    const int32_t uno_version_minor = 0;
@@ -176,6 +192,36 @@ extern "C" {
 
    // optimizes a given model using the Uno solver and given options.
    void uno_optimize(void* solver, const void* model);
+
+   // gets the optimization status (once the model was solved)
+   int32_t uno_get_optimization_status(const void* solver);
+
+   // gets the iterate status (once the model was solved)
+   int32_t uno_get_solution_status(const void* solver);
+
+   // gets the objective value at the solution (once the model was solved)
+   double uno_get_solution_objective(const void* solver);
+
+   // gets the primal solution (once the model was solved)
+   double* uno_get_primal_solution(const void* solver);
+
+   // gets the dual solution associated with the constraints (once the model was solved)
+   double* uno_get_constraint_dual_solution(const void* solver);
+
+   // gets the dual solution associated with the lower bounds (once the model was solved)
+   double* uno_get_lower_bound_dual_solution(const void* solver);
+
+   // gets the dual solution associated with the upper bounds (once the model was solved)
+   double* uno_get_upper_bound_dual_solution(const void* solver);
+
+   // gets the primal feasibility at the solution (once the model was solved)
+   double uno_get_solution_primal_feasibility(const void* solver);
+
+   // gets the dual feasibility (aka stationarity) at the solution (once the model was solved)
+   double uno_get_solution_dual_feasibility(const void* solver);
+
+   // gets the complementarity at the solution (once the model was solved)
+   double uno_get_solution_complementarity(const void* solver);
 
    // destroys a given Uno model. Once destroyed, the model cannot be used anymore.
    void uno_destroy_model(void* model);
