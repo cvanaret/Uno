@@ -131,9 +131,9 @@ function uno_lagrangian_hessian_operator(number_variables::Cint, number_constrai
   _Hv = unsafe_wrap(Array, result, number_variables)
   _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
   if isnothing(_user_data.user_model)
-    _user_data.eval_Hv(_Hv, _x, _multipliers, _v, evaluate_at_x)
+    _user_data.eval_Hv(_Hv, _x, objective_multiplier, _multipliers, _v, evaluate_at_x)
   else
-    _user_data.eval_Hv(_user_data.user_model, _Hv, _x, _multipliers, _v, evaluate_at_x)
+    _user_data.eval_Hv(_user_data.user_model, _Hv, _x, objective_multiplier, _multipliers, _v, evaluate_at_x)
   end
   return Cint(0)
 end
@@ -147,6 +147,7 @@ function uno_optimize(uno_model::UnoModel, maximize::Bool)
 end
 
 function uno(
+  problem_type::Char,
   nvar::Int,
   ncon::Int,
   lvar::Vector{Float64},
@@ -174,7 +175,9 @@ function uno(
   @assert nvar == length(lvar) == length(uvar) == length(x0)
   @assert ncon == length(lcon) == length(ucon) == length(y0)
 
-  problem_type = 'N'  # 'L' for linear, 'Q' for quadratic, 'N' for nonlinear
+  # 'L' for linear, 'Q' for quadratic, 'N' for nonlinear
+  @assert problem_type == 'L' || problem_type == 'Q' || problem_type == 'N'
+
   base_indexing = Cint(1)  # Fortran-style indexing
   c_model = uno_create_model(problem_type, Cint(nvar), lvar, uvar, base_indexing)
   (c_model == C_NULL) && error("Failed to construct Uno model for some unknown reason.")
