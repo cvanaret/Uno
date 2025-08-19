@@ -13,9 +13,9 @@ function main()
   options_path = joinpath(@__DIR__, "uno.toml")
   options = load_options(options_path)
 
-  callbacks = ["ObjectiveGradient", "Objective", "Constraints", "JacobianSparsity",
-               "HessianSparsity", "Jacobian", "Hessian", "JacobianVectorProduct",
-               "JacobianTransposedVectorProduct", "HessianVectorProduct"]
+  callbacks = ["ObjectiveGradient", "Objective", "Constraints",
+               "JacobianOperator", "JacobianTransposedOperator", "HessianOperator",
+               "JacobianSparsity", "Jacobian", "HessianSparsity", "Hessian"]
   options["general"]["output_ignorelist"] = callbacks
 
   args = get_default_args()
@@ -26,6 +26,7 @@ function main()
 
   path = options["general"]["output_file_path"]
   wrappers = read(path, String)
+  wrappers = replace(wrappers, r"^#.*\n?"m => "")
   for callback in callbacks
     wrappers = replace(wrappers, callback => "Ptr{Cvoid}")
   end
