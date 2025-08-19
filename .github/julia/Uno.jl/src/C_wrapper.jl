@@ -170,7 +170,8 @@ function uno(
   @assert problem_type == 'L' || problem_type == 'Q' || problem_type == 'N'
   optimization_sense = minimize ? Cint(0) : Cint(1)
 
-  base_indexing = Cint(1)  # Fortran-style indexing
+  # base_indexing = Cint(1)  # Fortran-style indexing
+  base_indexing = Cint(0)  # C-style indexing
   c_model = uno_create_model(problem_type, Cint(nvar), lvar, uvar, base_indexing)
   (c_model == C_NULL) && error("Failed to construct Uno model for some unknown reason.")
   c_solver = uno_create_solver()
