@@ -141,7 +141,7 @@ function uno_set_solver_option(uno_model::UnoModel, option_name::String, option_
 end
 
 function uno_set_solver_preset(uno_model::UnoModel, preset_name::String)
-  uno_set_option(uno_model.c_solver, preset_name)
+  uno_set_solver_preset(uno_model.c_solver, preset_name)
 end
 
 function uno_optimize(uno_model::UnoModel)
