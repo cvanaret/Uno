@@ -14,7 +14,6 @@ end
 mutable struct UnoModel{M}
   # Reference to the internal C model of Uno
   c_model::Ptr{Cvoid}
-  c_options::Ptr{Cvoid}
   c_solver::Ptr{Cvoid}
   # Callbacks
   eval_objective::Function
@@ -30,9 +29,8 @@ mutable struct UnoModel{M}
 end
 
 function uno_finalizer(uno_model::UnoModel)
-  uno_destroy_options(uno_model.c_options)
-  uno_destroy_solver(uno_model.c_model)
   uno_destroy_model(uno_model.c_model)
+  uno_destroy_solver(uno_model.c_solver)
 end
 
 # Base.unsafe_convert(::Type{Ptr{Cvoid}}, uno_model::UnoModel) = uno_model.c_model
@@ -138,16 +136,21 @@ function uno_lagrangian_hessian_operator(number_variables::Cint, number_constrai
   return Cint(0)
 end
 
-function uno_set_option(uno_model::UnoModel, option_name::String, option_value::String)
-  uno_set_option(uno_model.c_options, option_name, option_value)
+function uno_set_solver_option(uno_model::UnoModel, option_name::String, option_value::String)
+  uno_set_set_solver_option(uno_model.c_solver, option_name, option_value)
 end
 
-function uno_optimize(uno_model::UnoModel, maximize::Bool)
-  uno_optimize(uno_model.c_solver, uno_model.c_model, uno_model.c_options, Cint(maximize))
+function uno_set_solver_preset(uno_model::UnoModel, preset_name::String)
+  uno_set_option(uno_model.c_solver, preset_name)
+end
+
+function uno_optimize(uno_model::UnoModel)
+  uno_optimize(uno_model.c_solver, uno_model.c_model)
 end
 
 function uno(
   problem_type::Char,
+  minimize::Bool,
   nvar::Int,
   ncon::Int,
   lvar::Vector{Float64},
@@ -177,13 +180,14 @@ function uno(
 
   # 'L' for linear, 'Q' for quadratic, 'N' for nonlinear
   @assert problem_type == 'L' || problem_type == 'Q' || problem_type == 'N'
+  optimization_sense = minimize ? Cint(0) : Cint(1)
 
   base_indexing = Cint(1)  # Fortran-style indexing
   c_model = uno_create_model(problem_type, Cint(nvar), lvar, uvar, base_indexing)
   (c_model == C_NULL) && error("Failed to construct Uno model for some unknown reason.")
-  c_options = uno_create_default_options()
   c_solver = uno_create_solver(c_options)
-  uno_model = UnoModel(c_model, c_options, c_solver, eval_objective, eval_constraints, eval_gradient,
+  (c_solver == C_NULL) && error("Failed to construct Uno solver for some unknown reason.")
+  uno_model = UnoModel(c_model, c_solver, eval_objective, eval_constraints, eval_gradient,
                        eval_jacobian, eval_hessian, eval_Jv, eval_Jtv, eval_Hv, user_model)
 
   uno_set_initial_primal_iterate(c_model, x0)
@@ -194,7 +198,7 @@ function uno(
 
   eval_objective_c = @cfunction(uno_objective, Cint, (Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
   eval_gradient_c = @cfunction(uno_objective_gradient, Cint, (Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  uno_set_objective(c_model, eval_objective_c, eval_gradient_c)
+  uno_set_objective(c_model, optimization_sense, eval_objective_c, eval_gradient_c)
 
   eval_constraints_c = @cfunction(uno_constraints, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
   eval_jacobian_c = @cfunction(uno_jacobian, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
