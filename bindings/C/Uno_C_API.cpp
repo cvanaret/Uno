@@ -428,9 +428,6 @@ void* uno_create_solver() {
    // default options
    Options* options = new Options;
    DefaultOptions::load(*options);
-   // determine the default subproblem solvers based on the available libraries
-   const Options subproblem_solvers = DefaultOptions::determine_subproblem_solvers();
-   options->set(subproblem_solvers);
 
    // Uno solver
    Uno* uno_solver = new Uno;

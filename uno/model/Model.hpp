@@ -88,6 +88,8 @@ namespace uno {
       [[nodiscard]] virtual double constraint_violation(double constraint_value, size_t constraint_index) const;
       template <typename Array>
       double constraint_violation(const Array& constraints, Norm residual_norm) const;
+
+      void partition_constraints(std::vector<size_t>& equality_constraints, std::vector<size_t>& inequality_constraints) const;
    };
 
    // compute ||c||
