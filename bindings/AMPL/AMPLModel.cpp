@@ -58,9 +58,7 @@ namespace uno {
       this->partition_variables();
 
       // partition equality/inequality constraints
-      this->equality_constraints.reserve(this->number_constraints);
-      this->inequality_constraints.reserve(this->number_constraints);
-      this->partition_constraints();
+      this->partition_constraints(this->equality_constraints, this->inequality_constraints);
 
       // compute sparsity pattern and number of nonzeros of Lagrangian Hessian
       this->compute_lagrangian_hessian_sparsity();
@@ -302,24 +300,6 @@ namespace uno {
          if (this->variable_lower_bound(variable_index) == this->variable_upper_bound(variable_index)) {
             WARNING << "Variable x" << variable_index << " has identical bounds\n";
             this->fixed_variables.emplace_back(variable_index);
-         }
-      }
-   }
-
-   void AMPLModel::partition_constraints() {
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         const double lower_bound = this->constraint_lower_bound(constraint_index);
-         const double upper_bound = this->constraint_upper_bound(constraint_index);
-         if (lower_bound == upper_bound) {
-            this->equality_constraints.emplace_back(constraint_index);
-         }
-         else if (!is_finite(lower_bound) && !is_finite(upper_bound)) {
-            WARNING << "Constraint c" << constraint_index << " has no bounds\n";
-            // count the constraint as inequality to avoid reindexing of the constraints
-            this->inequality_constraints.emplace_back(constraint_index);
-         }
-         else {
-            this->inequality_constraints.emplace_back(constraint_index);
          }
       }
    }
