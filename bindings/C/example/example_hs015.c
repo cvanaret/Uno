@@ -7,7 +7,8 @@ int32_t objective_function(int32_t /*number_variables*/, const double* x, double
 	return 0;
 }
 
-int32_t constraint_functions(int32_t /*number_variables*/, int32_t /*number_constraints*/, const double* x, double* constraint_values, void* /*user_data*/) {
+int32_t constraint_functions(int32_t /*number_variables*/, int32_t /*number_constraints*/, const double* x,
+		double* constraint_values, void* /*user_data*/) {
 	constraint_values[0] = x[0]*x[1];
 	constraint_values[1] = x[0] + pow(x[1], 2.);
 	return 0;
@@ -19,7 +20,8 @@ int32_t objective_gradient(int32_t /*number_variables*/, const double* x, double
 	return 0;
 }
 
-int32_t constraint_jacobian(int32_t /*number_variables*/, int32_t /*number_jacobian_nonzeros*/, const double* x, double* jacobian, void* /*user_data*/) {
+int32_t constraint_jacobian(int32_t /*number_variables*/, int32_t /*number_jacobian_nonzeros*/, const double* x,
+		double* jacobian, void* /*user_data*/) {
 	jacobian[0] = x[1];
 	jacobian[1] = 1.;
 	jacobian[2] = x[0];
