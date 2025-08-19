@@ -4,16 +4,15 @@ function uno_get_version(major, minor, patch)
 end
 
 function uno_create_model(problem_type, number_variables, variables_lower_bounds,
-                          variables_upper_bounds, vector_indexing)
+                          variables_upper_bounds, base_indexing)
     @ccall libuno.uno_create_model(problem_type::Cchar, number_variables::Int32,
                                    variables_lower_bounds::Ptr{Cdouble},
                                    variables_upper_bounds::Ptr{Cdouble},
-                                   vector_indexing::Int32)::Ptr{Cvoid}
+                                   base_indexing::Int32)::Ptr{Cvoid}
 end
 
-function uno_set_objective(model, objective_sense, objective_function, objective_gradient)
-    @ccall libuno.uno_set_objective(model::Ptr{Cvoid}, objective_sense::Cdouble,
-                                    objective_function::Ptr{Cvoid},
+function uno_set_objective(model, objective_function, objective_gradient)
+    @ccall libuno.uno_set_objective(model::Ptr{Cvoid}, objective_function::Ptr{Cvoid},
                                     objective_gradient::Ptr{Cvoid})::Cvoid
 end
 
@@ -31,6 +30,16 @@ function uno_set_constraints(model, number_constraints, constraint_functions,
                                       constraint_jacobian::Ptr{Cvoid})::Cvoid
 end
 
+function uno_set_jacobian_operator(model, jacobian_operator)
+    @ccall libuno.uno_set_jacobian_operator(model::Ptr{Cvoid},
+                                            jacobian_operator::Ptr{Cvoid})::Cvoid
+end
+
+function uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator)
+    @ccall libuno.uno_set_jacobian_transposed_operator(model::Ptr{Cvoid},
+                                                       jacobian_transposed_operator::Ptr{Cvoid})::Cvoid
+end
+
 function uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part,
                                     hessian_row_indices, hessian_column_indices,
                                     lagrangian_hessian, lagrangian_sign_convention)
@@ -43,10 +52,53 @@ function uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_tria
                                              lagrangian_sign_convention::Cdouble)::Cvoid
 end
 
+function uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator,
+                                             lagrangian_sign_convention)
+    @ccall libuno.uno_set_lagrangian_hessian_operator(model::Ptr{Cvoid},
+                                                      lagrangian_hessian_operator::Ptr{Cvoid},
+                                                      lagrangian_sign_convention::Cdouble)::Cvoid
+end
+
 function uno_set_user_data(model, user_data)
     @ccall libuno.uno_set_user_data(model::Ptr{Cvoid}, user_data::Ptr{Cvoid})::Cvoid
 end
 
+function uno_set_initial_primal_iterate(model, initial_primal_iterate)
+    @ccall libuno.uno_set_initial_primal_iterate(model::Ptr{Cvoid},
+                                                 initial_primal_iterate::Ptr{Cdouble})::Cvoid
+end
+
+function uno_set_initial_dual_iterate(model, initial_dual_iterate)
+    @ccall libuno.uno_set_initial_dual_iterate(model::Ptr{Cvoid},
+                                               initial_dual_iterate::Ptr{Cdouble})::Cvoid
+end
+
+function uno_create_default_options()
+    @ccall libuno.uno_create_default_options()::Ptr{Cvoid}
+end
+
+function uno_set_option(options, option_name, option_value)
+    @ccall libuno.uno_set_option(options::Ptr{Cvoid}, option_name::Cstring,
+                                 option_value::Cstring)::Cvoid
+end
+
+function uno_create_solver(options)
+    @ccall libuno.uno_create_solver(options::Ptr{Cvoid})::Ptr{Cvoid}
+end
+
+function uno_optimize(solver, model, options, optimization_sense)
+    @ccall libuno.uno_optimize(solver::Ptr{Cvoid}, model::Ptr{Cvoid}, options::Ptr{Cvoid},
+                               optimization_sense::Int32)::Cvoid
+end
+
 function uno_destroy_model(model)
     @ccall libuno.uno_destroy_model(model::Ptr{Cvoid})::Cvoid
+end
+
+function uno_destroy_options(options)
+    @ccall libuno.uno_destroy_options(options::Ptr{Cvoid})::Cvoid
+end
+
+function uno_destroy_solver(solver)
+    @ccall libuno.uno_destroy_solver(solver::Ptr{Cvoid})::Cvoid
 end
