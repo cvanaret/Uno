@@ -14,6 +14,8 @@ end
 mutable struct UnoModel
   # Reference to the internal C model of Uno
   c_model::Ptr{Cvoid}
+  c_options::Ptr{Cvoid}
+  c_solver::Ptr{Cvoid}
   # Callbacks
   eval_objective::Function
   eval_constraints::Function
@@ -22,7 +24,13 @@ mutable struct UnoModel
   eval_hessian::Function
 end
 
-Base.unsafe_convert(::Type{Ptr{Cvoid}}, uno_model::UnoModel) = uno_model.c_model
+function uno_finalizer(uno_model::UnoModel)
+  uno_destroy_options(uno_model.c_options)
+  uno_destroy_solver(uno_model.c_model)
+  uno_destroy_model(uno_model.c_model)
+end
+
+# Base.unsafe_convert(::Type{Ptr{Cvoid}}, uno_model::UnoModel) = uno_model.c_model
 
 function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
@@ -56,7 +64,7 @@ function uno_jacobian(number_variables::Cint, number_jacobian_nonzeros::Cint, x:
   return Cint(0)
 end
 
-function uno_hessian(number_variables::Cint, number_constraints::Cint, number_hessian_nonzeros::Cint, x::Ptr{Float64}, objective_multiplier::Float64, multipliers::Ptr{Float64}, hessian::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_lagrangian_hessian(number_variables::Cint, number_constraints::Cint, number_hessian_nonzeros::Cint, x::Ptr{Float64}, objective_multiplier::Float64, multipliers::Ptr{Float64}, hessian::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _multipliers = unsafe_wrap(Array, hessian, number_constraints)
   _hvals = unsafe_wrap(Array, hessian, number_Hessian_nonzeros)
@@ -65,32 +73,40 @@ function uno_hessian(number_variables::Cint, number_constraints::Cint, number_he
   return Cint(0)
 end
 
-function uno_jacobian_vector_product(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, evaluate_at_x::Bool, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_jacobian_operator(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, evaluate_at_x::Bool, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _v = unsafe_wrap(Array, vector, number_variables)
   _Jv = unsafe_wrap(Array, result, number_constraints)
   _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
-  # ...
+  # _user_data.eval_Jv(_Jv, _x, _v, evaluate_at_x)
   return Cint(0)
 end
 
-function uno_jacobian_transposed_vector_product(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, evaluate_at_x::Bool, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_jacobian_transposed_operator(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, evaluate_at_x::Bool, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _v = unsafe_wrap(Array, vector, number_constraints)
   _Jtv = unsafe_wrap(Array, result, number_variables)
   _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
-  # ...
+  # _user_data.eval_Jtv(_Jtv, _x, _v, evaluate_at_x)
   return Cint(0)
 end
 
-function uno_hessian_vector_product(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, evaluate_at_x::Bool, objective_multiplier::Float64, multipliers::Ptr{Float64}, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_lagrangian_hessian_operator(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, evaluate_at_x::Bool, objective_multiplier::Float64, multipliers::Ptr{Float64}, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _multipliers = unsafe_wrap(Array, hessian, number_constraints)
   _v = unsafe_wrap(Array, vector, number_variables)
   _Hv = unsafe_wrap(Array, result, number_variables)
   _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
-  # ...
+  # _user_data.eval_Hv(_Hv, _x, _multipliers, _v, evaluate_at_x)
   return Cint(0)
+end
+
+function uno_set_option(uno_model::UnoModel, option_name::String, option_value::String)
+  uno_set_option(uno_model.c_options, option_name, option_value)
+end
+
+function uno_optimize(uno_model::UnoModel, maximize::Bool)
+  uno_optimize(uno_model.c_solver, uno_model.c_model, uno_model.c_options, Cint(maximize))
 end
 
 function uno(
@@ -106,20 +122,27 @@ function uno(
   hrows::Vector{Cint},
   hcols::Vector{Cint},
   nnzh::Int,
+  x0::Vector{Float64},
+  y0::Vector{Float64},
   eval_objective::Function,
   eval_constraints::Function,
   eval_gradient::Function,
   eval_jacobian::Function,
   eval_hessian::Function,
 )
-  @assert nvar == length(lvar) == length(uvar)
-  @assert ncon == length(lcon) == length(ucon)
+  @assert nvar == length(lvar) == length(uvar) == length(x0)
+  @assert ncon == length(lcon) == length(ucon) == length(y0)
 
   problem_type = 'N'  # 'L' for linear, 'Q' for quadratic, 'N' for nonlinear
   vector_indexing = Cint(1)  # Fortran-style indexing
   c_model = uno_create_model(problem_type, Cint(nvar), lvar, uvar, vector_indexing)
   (c_model == C_NULL) && error("Failed to construct Uno model for some unknown reason.")
-  uno_model = UnoModel(c_model, eval_objective, eval_constraints, eval_gradient, eval_jacobian, eval_hessian)
+  c_options = uno_create_default_options()
+  c_solver = uno_create_solver(c_options)
+  uno_model = UnoModel(c_model, c_options, c_solver, eval_objective, eval_constraints, eval_gradient, eval_jacobian, eval_hessian)
+
+  uno_set_initial_primal_iterate(c_model, x0)
+  uno_set_initial_dual_iterate(c_model, y0)
 
   user_data = pointer_from_objref(uno_model)::Ptr{Cvoid}
   uno_set_user_data(c_model, user_data)
@@ -132,13 +155,18 @@ function uno(
   eval_jacobian_c = @cfunction(uno_jacobian, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
   uno_set_constraints(c_model, Cint(ncon), eval_constraints_c, lcon, ucon, Cint(nnzj), jrows, jcols, eval_jacobian_c)
 
-  eval_hessian_c = @cfunction(uno_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+  eval_hessian_c = @cfunction(uno_lagrangian_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
   uno_set_lagrangian_hessian(c_model, Cint(nnzh), 'L', hrows, hcols, eval_hessian_c, 1.0)
 
-  # eval_Jv_c = @cfunction(uno_jacobian_vector_product, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  # eval_Jtv_c = @cfunction(uno_jacobian_transposed_vector_product, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  # eval_Hv_c = @cfunction(uno_hessian_vector_product, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+  # eval_Jv_c = @cfunction(uno_jacobian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+  # uno_set_jacobian_operator(c_model, eval_Jv_c)
 
-  finalizer(uno_destroy_model, uno_model)
+  # eval_Jtv_c = @cfunction(uno_jacobian_transposed_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+  # uno_set_jacobian_transposed_operator(c_model, eval_Jtv_c)
+
+  # eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+  # uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c, 1.0)
+
+  finalizer(uno_finalizer, uno_model)
   return uno_model
 end
