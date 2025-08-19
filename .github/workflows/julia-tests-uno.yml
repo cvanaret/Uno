@@ -12,7 +12,7 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
-    
+
 # needed to allow julia-actions/cache to delete old caches that it has created
 permissions:
   actions: write
@@ -61,5 +61,5 @@ jobs:
           using Pkg
           Pkg.instantiate()
           Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
-          Pkg.develop(path="/home/runner/work/Uno/Uno/.github/julia/Uno.jl")
+          Pkg.develop(path="/home/runner/work/Uno/Uno/bindings/Julia/Uno.jl")
           Pkg.test("Uno")
