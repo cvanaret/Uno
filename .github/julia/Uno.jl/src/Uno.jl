@@ -13,6 +13,8 @@ function __init__()
     return
 end
 
+export uno
+
 include("libuno.jl")
 include("C_wrapper.jl")
 
