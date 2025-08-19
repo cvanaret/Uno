@@ -9,7 +9,6 @@
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "symbolic/CollectionAdapter.hpp"
-
 // include AMPL Solver Library (ASL)
 extern "C" {
 #include "asl_pfgh.h"
