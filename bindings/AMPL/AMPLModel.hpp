@@ -9,7 +9,6 @@
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "symbolic/CollectionAdapter.hpp"
-
 // include AMPL Solver Library (ASL)
 extern "C" {
 #include "asl_pfgh.h"
@@ -85,7 +84,6 @@ namespace uno {
       Vector<size_t> fixed_variables;
 
       void partition_variables();
-      void partition_constraints();
       void compute_lagrangian_hessian_sparsity();
    };
 
