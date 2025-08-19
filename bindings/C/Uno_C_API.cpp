@@ -448,10 +448,10 @@ void uno_set_solver_preset(void* solver, const char* preset_name) {
    Presets::set(*uno_solver->options, preset_name);
 }
 
-void uno_optimize(void* solver, const void* model) {
+void uno_optimize(void* solver, void* model) {
    // check the model
    assert(model != nullptr);
-   const UserModel* user_model = static_cast<const UserModel*>(model);
+   UserModel* user_model = static_cast<UserModel*>(model);
    if (!user_model->objective_function && !user_model->constraint_functions) {
       std::cout << "Please specify at least an objective or constraints.\n";
       return;
