@@ -21,4 +21,5 @@ endif()
 
 find_library(UNO REQUIRED)
 add_executable(example_hs015 example_hs015.c)
-target_link_libraries(example_hs015 PUBLIC ${UNO})
+# link the math library and Uno
+target_link_libraries(example_hs015 PUBLIC m ${UNO})
