@@ -137,7 +137,7 @@ function uno_lagrangian_hessian_operator(number_variables::Cint, number_constrai
 end
 
 function uno_set_solver_option(uno_model::UnoModel, option_name::String, option_value::String)
-  uno_set_set_solver_option(uno_model.c_solver, option_name, option_value)
+  uno_set_solver_option(uno_model.c_solver, option_name, option_value)
 end
 
 function uno_set_solver_preset(uno_model::UnoModel, preset_name::String)
