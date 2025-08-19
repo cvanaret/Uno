@@ -167,9 +167,12 @@ extern "C" {
    // creates the Uno solver.
    void* uno_create_solver();
 
-   // sets a particular option in a given set of options.
+   // sets a particular option in the Uno solver.
    // takes as inputs the name of the option and the value to which it should be set.
-   void uno_set_option(void* solver, const char* option_name, const char* option_value);
+   void uno_set_solver_option(void* solver, const char* option_name, const char* option_value);
+
+   // sets a particular preset in the Uno solver.
+   void uno_set_solver_preset(void* solver, const char* preset_name);
 
    // optimizes a given model using the Uno solver and given options.
    void uno_optimize(void* solver, const void* model);
