@@ -185,7 +185,7 @@ function uno(
   base_indexing = Cint(1)  # Fortran-style indexing
   c_model = uno_create_model(problem_type, Cint(nvar), lvar, uvar, base_indexing)
   (c_model == C_NULL) && error("Failed to construct Uno model for some unknown reason.")
-  c_solver = uno_create_solver(c_options)
+  c_solver = uno_create_solver()
   (c_solver == C_NULL) && error("Failed to construct Uno solver for some unknown reason.")
   uno_model = UnoModel(c_model, c_solver, eval_objective, eval_constraints, eval_gradient,
                        eval_jacobian, eval_hessian, eval_Jv, eval_Jtv, eval_Hv, user_model)
