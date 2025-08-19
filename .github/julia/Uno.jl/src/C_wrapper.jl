@@ -182,7 +182,8 @@ function uno(
   @assert problem_type == 'L' || problem_type == 'Q' || problem_type == 'N'
   optimization_sense = minimize ? Cint(0) : Cint(1)
 
-  base_indexing = Cint(1)  # Fortran-style indexing
+  # base_indexing = Cint(1)  # Fortran-style indexing
+  base_indexing = Cint(0)  # C-style indexing
   c_model = uno_create_model(problem_type, Cint(nvar), lvar, uvar, base_indexing)
   (c_model == C_NULL) && error("Failed to construct Uno model for some unknown reason.")
   c_solver = uno_create_solver()
@@ -205,7 +206,8 @@ function uno(
   uno_set_constraints(c_model, Cint(ncon), eval_constraints_c, lcon, ucon, Cint(nnzj), jrows, jcols, eval_jacobian_c)
 
   eval_hessian_c = @cfunction(uno_lagrangian_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  uno_set_lagrangian_hessian(c_model, Cint(nnzh), 'L', hrows, hcols, eval_hessian_c, 1.0)
+  # uno_set_lagrangian_hessian(c_model, Cint(nnzh), 'L', hrows, hcols, eval_hessian_c, 1.0)
+  uno_set_lagrangian_hessian(c_model, Cint(nnzh), 'L', hrows, hcols, eval_hessian_c, -1.0)
 
   eval_Jv_c = @cfunction(uno_jacobian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
   uno_set_jacobian_operator(c_model, eval_Jv_c)
@@ -214,7 +216,8 @@ function uno(
   uno_set_jacobian_transposed_operator(c_model, eval_Jtv_c)
 
   eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c, 1.0)
+  # uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c, 1.0)
+  uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c, -1.0)
 
   finalizer(uno_finalizer, uno_model)
   return uno_model
