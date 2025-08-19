@@ -1,6 +1,7 @@
 module UnoNLPModelsExt
 
 import Uno
+import NLPModels
 import NLPModels: AbstractNLPModel
 
 function nlpmodels_objective(nlp::AbstractNLPModel{Float64}, x::Vector{Float64})
@@ -42,16 +43,18 @@ function nlpmodels_jacobian_transposed_operator(nlp::AbstractNLPModel{Float64}, 
 end
 
 function nlpmodels_lagrangian_hessian_operator(nlp::AbstractNLPModel{Float64}, Hv::Vector{Float64}, x::Vector{Float64},
-                                               multipliers::Vector{Float64}, v::Vector{Float64}, evaluate_at_x::Bool)
-  NLPModels.hprod!(nlp, x, multipliers, v, Hv)
-  # NLPModels.hprod!(nlp, x, multipliers, v, Hv; obj_weight=objective_multiplier)
+                                               objective_multiplier::Float64, multipliers::Vector{Float64},
+                                               v::Vector{Float64}, evaluate_at_x::Bool)
+  NLPModels.hprod!(nlp, x, multipliers, v, Hv; obj_weight=objective_multiplier)
   return Hv
 end
 
 function Uno.uno(nlp::AbstractNLPModel{Float64})
   jrows, jcols = NLPModels.jac_structure(nlp)
   hrows, hcols = NLPModels.hess_structure(nlp)
+  problem_type = nlp.meta.islp ? 'L' : 'N'
   uno_model = Uno.uno(
+    problem_type,
     nlp.meta.nvar,
     nlp.meta.ncon,
     nlp.meta.lvar,
