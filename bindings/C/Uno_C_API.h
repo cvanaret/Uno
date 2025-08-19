@@ -10,6 +10,27 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+   // Optimization sense
+   const int32_t UNO_MINIMIZE = 0;
+   const int32_t UNO_MAXIMIZE = 1;
+
+   // Lagrange multiplier sign convention
+   const double UNO_MULTIPLIER_POSITIVE =  1.0;
+   const double UNO_MULTIPLIER_NEGATIVE = -1.0;
+
+   // Problem type: 'L' = Linear, 'Q' = Quadratic, 'N' = Nonlinear
+   const char UNO_PROBLEM_LINEAR    = 'L';
+   const char UNO_PROBLEM_QUADRATIC = 'Q';
+   const char UNO_PROBLEM_NONLINEAR = 'N';
+
+   // Base indexing style: 0-based (C) or 1-based (Fortran)
+   const int32_t UNO_ZERO_BASED_INDEXING = 0;
+   const int32_t UNO_ONE_BASED_INDEXING  = 1;
+
+   // Triangular part: 'L' = lower, 'U' = upper
+   const char UNO_LOWER_TRIANGLE = 'L';
+   const char UNO_UPPER_TRIANGLE = 'U';
+
    // current Uno version is 2.0.1
    const int32_t uno_version_major = 2;
    const int32_t uno_version_minor = 0;
@@ -17,9 +38,6 @@ extern "C" {
 
    // get the current Uno version as v major.minor.patch
    void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch);
-
-   const double uno_Min = 1.;
-   const double uno_Max = -1.;
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and
    // stores the objective value of "x" in "objective_value".
@@ -95,12 +113,11 @@ extern "C" {
    // variables, two arrays of lower and upper bounds of size "number_variables", and the vector indexing (0 for
    // C-style indexing, 1 for Fortran-style indexing).
    void* uno_create_model(char problem_type, int32_t number_variables, double* variables_lower_bounds,
-      double* variables_upper_bounds, int32_t vector_indexing);
+      double* variables_upper_bounds, int32_t base_indexing);
 
    // sets the objective and objective gradient of a given model.
-   // takes as inputs the objective sense (uno_Min or uno_Max), a function pointer of the objective function and a
-   // function pointer of its gradient function.
-   void uno_set_objective(void* model, double objective_sense, Objective objective_function, ObjectiveGradient objective_gradient);
+   // takes as inputs a function pointer of the objective function and a function pointer of its gradient function.
+   void uno_set_objective(void* model, Objective objective_function, ObjectiveGradient objective_gradient);
 
    // sets the constraints and constraint Jacobian of a given model.
    // takes as inputs the number of constraints, a function pointer of the constraint functions, two arrays of lower and
@@ -156,7 +173,7 @@ extern "C" {
    void* uno_create_solver(const void* options);
 
    // optimizes a given model using the Uno solver and given options.
-   void uno_optimize(void* solver, const void* model, const void* options);
+   void uno_optimize(void* solver, const void* model, const void* options, int32_t optimization_sense);
 
    // destroys a given Uno model. Once destroyed, the model cannot be used anymore.
    void uno_destroy_model(void* model);
