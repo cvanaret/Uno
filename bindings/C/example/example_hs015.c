@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <math.h>
 #include "Uno_C_API.h"
@@ -37,6 +38,13 @@ int32_t lagrangian_hessian(int32_t /*number_variables*/, int32_t /*number_constr
 	return 0;
 }
 
+void print_vector(const double* vector, int32_t size) {
+	for (size_t index = 0; index < size; ++index) {
+		printf("%g ", vector[index]);
+	}
+	printf("\n");
+}
+
 int main() {
 	int32_t uno_major, uno_minor, uno_patch;
 	uno_get_version(&uno_major, &uno_minor, &uno_patch);
@@ -49,7 +57,7 @@ int main() {
 	double variables_lower_bounds[] = {-INFINITY, -INFINITY};
 	double variables_upper_bounds[] = {0.5, INFINITY};
 	// objective
-	const int32_t optimization_sense = UNO_MINIMIZE;
+	const int32_t optimization_sense = UNO_MAXIMIZE;
 	// constraints
 	const int32_t number_constraints = 2;
 	double constraints_lower_bounds[] = {1., 0.};
@@ -82,6 +90,28 @@ int main() {
 
 	// solve
 	uno_optimize(solver, model);
+
+	// get the solution
+	const int32_t optimization_status = uno_get_optimization_status(solver);
+	assert(optimization_status == UNO_SUCCESS);
+	const int32_t iterate_status = uno_get_solution_status(solver);
+	assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
+	const double solution_objective = uno_get_solution_objective(solver);
+	printf("\nSolution objective = %g\n", solution_objective);
+	const double* primal_solution = uno_get_primal_solution(solver);
+	printf("Primal solution: "); print_vector(primal_solution, number_variables);
+	const double* constraint_dual_solution = uno_get_constraint_dual_solution(solver);
+	printf("Constraint dual solution: "); print_vector(constraint_dual_solution, number_constraints);
+	const double* lower_bound_dual_solution = uno_get_lower_bound_dual_solution(solver);
+	printf("Lower bound dual solution: "); print_vector(lower_bound_dual_solution, number_variables);
+	const double* upper_bound_dual_solution = uno_get_upper_bound_dual_solution(solver);
+	printf("Upper bound dual solution: "); print_vector(upper_bound_dual_solution, number_variables);
+	const double solution_primal_feasibility = uno_get_solution_primal_feasibility(solver);
+	printf("Primal feasibility solution at solution = %e\n", solution_primal_feasibility);
+	const double solution_dual_feasibility = uno_get_solution_dual_feasibility(solver);
+	printf("Dual feasibility solution at solution = %e\n", solution_dual_feasibility);
+	const double solution_complementarity = uno_get_solution_complementarity(solver);
+	printf("Complementarity solution at solution = %e\n", solution_complementarity);
 
 	// cleanup
 	uno_destroy_solver(solver);
