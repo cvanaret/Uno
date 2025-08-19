@@ -55,6 +55,7 @@ function Uno.uno(nlp::AbstractNLPModel{Float64})
   problem_type = nlp.meta.islp ? 'L' : 'N'
   uno_model = Uno.uno(
     problem_type,
+    nlp.meta.minimize,
     nlp.meta.nvar,
     nlp.meta.ncon,
     nlp.meta.lvar,
