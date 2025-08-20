@@ -97,7 +97,8 @@ int main() {
 	const int32_t iterate_status = uno_get_solution_status(solver);
 	assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
 	const double solution_objective = uno_get_solution_objective(solver);
-	printf("\nSolution objective = %g\n", solution_objective);
+	printf("\nReading the result from the C file:\n");
+	printf("Solution objective = %g\n", solution_objective);
 
 	double primal_solution[number_variables];
 	uno_get_primal_solution(solver, primal_solution);
