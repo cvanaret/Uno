@@ -194,34 +194,34 @@ extern "C" {
    void uno_optimize(void* solver, const void* model);
 
    // gets the optimization status (once the model was solved)
-   int32_t uno_get_optimization_status(const void* solver);
+   int32_t uno_get_optimization_status(void* solver);
 
    // gets the iterate status (once the model was solved)
-   int32_t uno_get_solution_status(const void* solver);
+   int32_t uno_get_solution_status(void* solver);
 
    // gets the objective value at the solution (once the model was solved)
-   double uno_get_solution_objective(const void* solver);
+   double uno_get_solution_objective(void* solver);
 
    // gets the primal solution (once the model was solved)
-   double* uno_get_primal_solution(const void* solver);
+   double* uno_get_primal_solution(void* solver);
 
    // gets the dual solution associated with the constraints (once the model was solved)
-   double* uno_get_constraint_dual_solution(const void* solver);
+   double* uno_get_constraint_dual_solution(void* solver);
 
    // gets the dual solution associated with the lower bounds (once the model was solved)
-   double* uno_get_lower_bound_dual_solution(const void* solver);
+   double* uno_get_lower_bound_dual_solution(void* solver);
 
    // gets the dual solution associated with the upper bounds (once the model was solved)
-   double* uno_get_upper_bound_dual_solution(const void* solver);
+   double* uno_get_upper_bound_dual_solution(void* solver);
 
    // gets the primal feasibility at the solution (once the model was solved)
-   double uno_get_solution_primal_feasibility(const void* solver);
+   double uno_get_solution_primal_feasibility(void* solver);
 
    // gets the dual feasibility (aka stationarity) at the solution (once the model was solved)
-   double uno_get_solution_dual_feasibility(const void* solver);
+   double uno_get_solution_dual_feasibility(void* solver);
 
    // gets the complementarity at the solution (once the model was solved)
-   double uno_get_solution_complementarity(const void* solver);
+   double uno_get_solution_complementarity(void* solver);
 
    // destroys a given Uno model. Once destroyed, the model cannot be used anymore.
    void uno_destroy_model(void* model);
