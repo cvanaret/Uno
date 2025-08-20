@@ -104,20 +104,20 @@ function uno_get_solution_objective(solver)
     @ccall libuno.uno_get_solution_objective(solver::Ptr{Cvoid})::Cdouble
 end
 
-function uno_get_primal_solution(solver)
-    @ccall libuno.uno_get_primal_solution(solver::Ptr{Cvoid})::Ptr{Cdouble}
+function uno_get_primal_solution(solver, primal_solution)
+    @ccall libuno.uno_get_primal_solution(solver::Ptr{Cvoid}, primal_solution::Ptr{Cdouble})::Cvoid
 end
 
-function uno_get_constraint_dual_solution(solver)
-    @ccall libuno.uno_get_constraint_dual_solution(solver::Ptr{Cvoid})::Ptr{Cdouble}
+function uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+    @ccall libuno.uno_get_constraint_dual_solution(solver::Ptr{Cvoid}, constraint_dual_solution::Ptr{Cdouble})::Cvoid
 end
 
-function uno_get_lower_bound_dual_solution(solver)
-    @ccall libuno.uno_get_lower_bound_dual_solution(solver::Ptr{Cvoid})::Ptr{Cdouble}
+function uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+    @ccall libuno.uno_get_lower_bound_dual_solution(solver::Ptr{Cvoid}, lower_bound_dual_solution::Ptr{Cdouble})::Cvoid
 end
 
-function uno_get_upper_bound_dual_solution(solver)
-    @ccall libuno.uno_get_upper_bound_dual_solution(solver::Ptr{Cvoid})::Ptr{Cdouble}
+function uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+    @ccall libuno.uno_get_upper_bound_dual_solution(solver::Ptr{Cvoid}, upper_bound_dual_solution::Ptr{Cdouble})::Cvoid
 end
 
 function uno_get_solution_primal_feasibility(solver)
