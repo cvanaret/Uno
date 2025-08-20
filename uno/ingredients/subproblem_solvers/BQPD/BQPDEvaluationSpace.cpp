@@ -143,12 +143,6 @@ namespace uno {
 
       // copy the COO format into BQPD's CSR format
       int current_constraint = 0;
-      std::cout << "Unpermuted Jacobian row indices:";
-      for (size_t index: Range(number_jacobian_nonzeros)) {
-         std::cout << " " << this->jacobian_row_indices[index];
-      }
-      std::cout << std::endl;
-      std::cout << "Permutation vector: " << this->permutation_vector << std::endl;
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t permutated_nonzero_index = this->permutation_vector[jacobian_nonzero_index];
          // variable index
@@ -158,7 +152,6 @@ namespace uno {
 
          // constraint index
          const int constraint_index = this->jacobian_row_indices[permutated_nonzero_index];
-         std::cout << "current_constraint = " << current_constraint << ", constraint_index = " << constraint_index << std::endl;
          assert(current_constraint <= constraint_index);
          while (current_constraint < constraint_index) {
             ++current_constraint;
