@@ -31,6 +31,7 @@ jobs:
         os: [ubuntu-latest]
         architecture: [x64]
 
+    steps:
     - name: Download dependency (BQPD)
       shell: bash
       run: |
@@ -70,6 +71,6 @@ jobs:
       run: make -j6
         
     - name: Run example
-      working-directory: ${{github.workspace}}/build
+      working-directory: ${{github.workspace}}/bindings/C/example/build
       # Execute unit tests
       run: ./example_hs015
