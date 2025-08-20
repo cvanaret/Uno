@@ -55,12 +55,6 @@ function Uno.uno(nlp::AbstractNLPModel{Float64})
   jrows, jcols = NLPModels.jac_structure(nlp)
   hrows, hcols = NLPModels.hess_structure(nlp)
   problem_type = nlp.meta.islp ? 'L' : 'N'
-  # define the 0-based indexed sparsity patterns
-  jrows_c = Cint.(jrows .- 1)
-  jcols_c = Cint.(jcols .- 1)
-  hrows_c = Cint.(hrows .- 1)
-  hcols_c = Cint.(hcols .- 1)
-  
   uno_model = Uno.uno(
     problem_type,
     nlp.meta.minimize,
@@ -70,11 +64,11 @@ function Uno.uno(nlp::AbstractNLPModel{Float64})
     nlp.meta.uvar,
     nlp.meta.lcon,
     nlp.meta.ucon,
-    jrows_c,
-    jcols_c,
+    Cint.(jrows),
+    Cint.(jcols),
     nlp.meta.nnzj,
-    hrows_c,
-    hcols_c,
+    Cint.(hrows),
+    Cint.(hcols),
     nlp.meta.nnzh,
     nlp.meta.x0,
     nlp.meta.y0,
