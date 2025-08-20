@@ -152,7 +152,7 @@ namespace uno {
 
          // constraint index
          const int constraint_index = this->jacobian_row_indices[permutated_nonzero_index];
-         assert(current_constraint <= constraint_index);
+         //assert(current_constraint <= constraint_index);
          while (current_constraint < constraint_index) {
             ++current_constraint;
             this->gradient_sparsity[1 + subproblem.number_variables + number_jacobian_nonzeros + 1 +
