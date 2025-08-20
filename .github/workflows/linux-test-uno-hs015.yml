@@ -1,0 +1,75 @@
+# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
+name: Unit tests on Linux
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
+    # You can convert this to a matrix build if you need cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        architecture: [x64]
+
+    - name: Download dependency (BQPD)
+      shell: bash
+      run: |
+        VERSION_BQPD="1.0.0"
+        PLATFORM="x86_64-linux-gnu"
+        wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
+        mkdir deps
+        tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
+
+    - name: Configure Uno CMake
+      shell: bash
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      run: |
+        mkdir build && cd build
+        cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+              -DBQPD=${{github.workspace}}/deps/lib/libbqpd.a \
+              -DBUILD_STATIC_LIBS=ON \
+              -DBUILD_SHARED_LIBS=ON ..
+
+    - name: Build and install Uno
+      shell: bash
+      run: |
+        make -j6
+        sudo make install
+        
+    - name: Configure example CMake
+      shell: bash
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      run: |
+        cd ../bindings/C/example
+        mkdir build && cd build
+        cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ..
+
+    - name: Build example
+      run: make -j6
+        
+    - name: Run example
+      working-directory: ${{github.workspace}}/build
+      # Execute unit tests
+      run: ./example_hs015
