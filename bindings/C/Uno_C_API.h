@@ -191,7 +191,7 @@ extern "C" {
    void uno_set_solver_preset(void* solver, const char* preset_name);
 
    // optimizes a given model using the Uno solver and given options.
-   void uno_optimize(void* solver, const void* model);
+   void uno_optimize(void* solver, void* model);
 
    // gets the optimization status (once the model was solved)
    int32_t uno_get_optimization_status(void* solver);

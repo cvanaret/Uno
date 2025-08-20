@@ -12,6 +12,7 @@ namespace uno {
    public:
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
          double proximal_coefficient, double const* proximal_center);
+      ~l1RelaxedProblem() override = default;
 
       [[nodiscard]] double get_objective_multiplier() const override;
 
