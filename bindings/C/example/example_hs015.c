@@ -57,7 +57,7 @@ int main() {
 	double variables_lower_bounds[] = {-INFINITY, -INFINITY};
 	double variables_upper_bounds[] = {0.5, INFINITY};
 	// objective
-	const int32_t optimization_sense = UNO_MAXIMIZE;
+	const int32_t optimization_sense = UNO_MINIMIZE;
 	// constraints
 	const int32_t number_constraints = 2;
 	double constraints_lower_bounds[] = {1., 0.};
