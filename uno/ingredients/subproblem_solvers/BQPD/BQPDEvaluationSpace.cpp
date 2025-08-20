@@ -152,6 +152,7 @@ namespace uno {
 
          // constraint index
          const int constraint_index = this->jacobian_row_indices[permutated_nonzero_index];
+         std::cout << "Current constraint " << current_constraint << ", constraint index " << constraint_index << '\n';
          assert(current_constraint <= constraint_index);
          while (current_constraint < constraint_index) {
             ++current_constraint;
