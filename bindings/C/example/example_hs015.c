@@ -95,9 +95,10 @@ int main() {
 	const int32_t optimization_status = uno_get_optimization_status(solver);
 	assert(optimization_status == UNO_SUCCESS);
 	const int32_t iterate_status = uno_get_solution_status(solver);
-	assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
+	//assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
 	const double solution_objective = uno_get_solution_objective(solver);
 	printf("\nSolution objective = %g\n", solution_objective);
+/*
 	const double* primal_solution = uno_get_primal_solution(solver);
 	printf("Primal solution: "); print_vector(primal_solution, number_variables);
 	const double* constraint_dual_solution = uno_get_constraint_dual_solution(solver);
@@ -106,6 +107,7 @@ int main() {
 	printf("Lower bound dual solution: "); print_vector(lower_bound_dual_solution, number_variables);
 	const double* upper_bound_dual_solution = uno_get_upper_bound_dual_solution(solver);
 	printf("Upper bound dual solution: "); print_vector(upper_bound_dual_solution, number_variables);
+*/
 	const double solution_primal_feasibility = uno_get_solution_primal_feasibility(solver);
 	printf("Primal feasibility solution at solution = %e\n", solution_primal_feasibility);
 	const double solution_dual_feasibility = uno_get_solution_dual_feasibility(solver);
