@@ -69,7 +69,7 @@ jobs:
 
     - name: Build example
       working-directory: ${{github.workspace}}/bindings/C/example
-      run: cmake --build ${{github.workspace}}/bindings/C/example/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/bindings/C/example/build --config ${{env.BUILD_TYPE}} -DUNO=/usr/local/lib/libuno.so
         
     - name: Run example
       working-directory: ${{github.workspace}}/bindings/C/example/build
