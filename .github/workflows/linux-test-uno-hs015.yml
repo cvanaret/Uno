@@ -32,6 +32,8 @@ jobs:
         architecture: [x64]
 
     steps:
+    - uses: actions/checkout@v4
+    
     - name: Download dependency (BQPD)
       shell: bash
       run: |
