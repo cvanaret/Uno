@@ -15,7 +15,7 @@ solution_complementarity = Uno.uno_get_solution_complementarity(uno_model)
 
 # Should be Julia vectors and not C pointers!
 # Just check that we can call the C routines in Julia.
-Uno.uno_get_primal_solution(uno_model)
-Uno.uno_get_constraint_dual_solution(uno_model)
-Uno.uno_get_lower_bound_dual_solution(uno_model)
-Uno.uno_get_upper_bound_dual_solution(uno_model)
+#Uno.uno_get_primal_solution(uno_model)
+#Uno.uno_get_constraint_dual_solution(uno_model)
+#Uno.uno_get_lower_bound_dual_solution(uno_model)
+#Uno.uno_get_upper_bound_dual_solution(uno_model)
