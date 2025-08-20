@@ -57,7 +57,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       
     - name: Install Uno
-      run: cmake --install ${{github.workspace}}/build
+      run: sudo cmake --install ${{github.workspace}}/build
         
     - name: Configure example CMake
       shell: bash
