@@ -203,16 +203,16 @@ extern "C" {
    double uno_get_solution_objective(void* solver);
 
    // gets the primal solution (once the model was solved)
-   double* uno_get_primal_solution(void* solver);
+   void uno_get_primal_solution(void* solver, double* primal_solution);
 
    // gets the dual solution associated with the constraints (once the model was solved)
-   double* uno_get_constraint_dual_solution(void* solver);
+   void uno_get_constraint_dual_solution(void* solver, double* constraint_dual_solution);
 
    // gets the dual solution associated with the lower bounds (once the model was solved)
-   double* uno_get_lower_bound_dual_solution(void* solver);
+   void uno_get_lower_bound_dual_solution(void* solver, double* lower_bound_dual_solution);
 
    // gets the dual solution associated with the upper bounds (once the model was solved)
-   double* uno_get_upper_bound_dual_solution(void* solver);
+   void uno_get_upper_bound_dual_solution(void* solver, double* upper_bound_dual_solution);
 
    // gets the primal feasibility at the solution (once the model was solved)
    double uno_get_solution_primal_feasibility(void* solver);
