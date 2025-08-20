@@ -54,7 +54,7 @@ jobs:
                                              -DBUILD_SHARED_LIBS=ON .
 
     - name: Build Uno
-      run: cmake --build ${{github.workspace}}/build --target run_unotest --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       
     - name: Install Uno
       run: cmake --install ${{github.workspace}}/build
