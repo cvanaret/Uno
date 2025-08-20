@@ -440,7 +440,6 @@ void* uno_create_solver() {
    // Uno solver
    Uno* uno_solver = new Uno;
    Solver* solver = new Solver{uno_solver, options, nullptr}; // no result yet
-   Logger::set_logger(options->get_string("logger"));
    return solver;
 }
 
@@ -480,7 +479,7 @@ void uno_optimize(void* solver, void* model) {
    const UnoModel uno_model(*user_model);
 
    // solve the model using Uno
-   // Logger::set_logger(uno_solver->options->get_string("logger"));
+   Logger::set_logger(uno_solver->options->get_string("logger"));
    Result result = uno_solver->solver->solve(uno_model, initial_iterate, *uno_solver->options);
    // clean up the previous result (if any)
    delete uno_solver->result;
