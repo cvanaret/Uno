@@ -223,31 +223,35 @@ function uno_optimize(uno_model::UnoModel)
 end
 
 function uno_get_optimization_status(uno_model::UnoModel)
-  uno_get_optimization_status(uno_model.c_solver)
+  return uno_get_optimization_status(uno_model.c_solver)
 end
 
 function uno_get_solution_status(uno_model::UnoModel)
-  uno_get_solution_status(uno_model.c_solver)
+  return uno_get_solution_status(uno_model.c_solver)
 end
 
 function uno_get_solution_objective(uno_model::UnoModel)
-  uno_get_solution_objective(uno_model.c_solver)
+  return uno_get_solution_objective(uno_model.c_solver)
 end
 
 function uno_get_primal_solution(uno_model::UnoModel, primal_solution::Vector{Float64})
   uno_get_primal_solution(uno_model.c_solver, primal_solution)
+  return primal_solution
 end
 
 function uno_get_constraint_dual_solution(uno_model::UnoModel, constraint_dual_solution::Vector{Float64})
   uno_get_constraint_dual_solution(uno_model.c_solver, constraint_dual_solution)
+  return constraint_dual_solution
 end
 
 function uno_get_lower_bound_dual_solution(uno_model::UnoModel, lower_bound_dual_solution::Vector{Float64})
   uno_get_lower_bound_dual_solution(uno_model.c_solver, lower_bound_dual_solution)
+  return lower_bound_dual_solution
 end
 
 function uno_get_upper_bound_dual_solution(uno_model::UnoModel, upper_bound_dual_solution::Vector{Float64})
   uno_get_upper_bound_dual_solution(uno_model.c_solver, upper_bound_dual_solution)
+  return upper_bound_dual_solution
 end
 
 function uno_get_solution_primal_feasibility(uno_model::UnoModel)
