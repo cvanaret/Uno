@@ -92,6 +92,46 @@ function uno_optimize(solver, model)
     @ccall libuno.uno_optimize(solver::Ptr{Cvoid}, model::Ptr{Cvoid})::Cvoid
 end
 
+function uno_get_optimization_status(solver)
+    @ccall libuno.uno_get_optimization_status(solver::Ptr{Cvoid})::Int32
+end
+
+function uno_get_solution_status(solver)
+    @ccall libuno.uno_get_solution_status(solver::Ptr{Cvoid})::Int32
+end
+
+function uno_get_solution_objective(solver)
+    @ccall libuno.uno_get_solution_objective(solver::Ptr{Cvoid})::Cdouble
+end
+
+function uno_get_primal_solution(solver)
+    @ccall libuno.uno_get_primal_solution(solver::Ptr{Cvoid})::Ptr{Cdouble}
+end
+
+function uno_get_constraint_dual_solution(solver)
+    @ccall libuno.uno_get_constraint_dual_solution(solver::Ptr{Cvoid})::Ptr{Cdouble}
+end
+
+function uno_get_lower_bound_dual_solution(solver)
+    @ccall libuno.uno_get_lower_bound_dual_solution(solver::Ptr{Cvoid})::Ptr{Cdouble}
+end
+
+function uno_get_upper_bound_dual_solution(solver)
+    @ccall libuno.uno_get_upper_bound_dual_solution(solver::Ptr{Cvoid})::Ptr{Cdouble}
+end
+
+function uno_get_solution_primal_feasibility(solver)
+    @ccall libuno.uno_get_solution_primal_feasibility(solver::Ptr{Cvoid})::Cdouble
+end
+
+function uno_get_solution_dual_feasibility(solver)
+    @ccall libuno.uno_get_solution_dual_feasibility(solver::Ptr{Cvoid})::Cdouble
+end
+
+function uno_get_solution_complementarity(solver)
+    @ccall libuno.uno_get_solution_complementarity(solver::Ptr{Cvoid})::Cdouble
+end
+
 function uno_destroy_model(model)
     @ccall libuno.uno_destroy_model(model::Ptr{Cvoid})::Cvoid
 end

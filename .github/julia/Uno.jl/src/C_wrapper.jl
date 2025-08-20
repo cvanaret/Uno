@@ -136,18 +136,6 @@ function uno_lagrangian_hessian_operator(number_variables::Cint, number_constrai
   return Cint(0)
 end
 
-function uno_set_solver_option(uno_model::UnoModel, option_name::String, option_value::String)
-  uno_set_solver_option(uno_model.c_solver, option_name, option_value)
-end
-
-function uno_set_solver_preset(uno_model::UnoModel, preset_name::String)
-  uno_set_solver_preset(uno_model.c_solver, preset_name)
-end
-
-function uno_optimize(uno_model::UnoModel)
-  uno_optimize(uno_model.c_solver, uno_model.c_model)
-end
-
 function uno(
   problem_type::Char,
   minimize::Bool,
@@ -221,4 +209,60 @@ function uno(
 
   finalizer(uno_finalizer, uno_model)
   return uno_model
+end
+
+function uno_set_solver_option(uno_model::UnoModel, option_name::String, option_value::String)
+  uno_set_solver_option(uno_model.c_solver, option_name, option_value)
+end
+
+function uno_set_solver_preset(uno_model::UnoModel, preset_name::String)
+  uno_set_solver_preset(uno_model.c_solver, preset_name)
+end
+
+function uno_optimize(uno_model::UnoModel)
+  uno_optimize(uno_model.c_solver, uno_model.c_model)
+end
+
+function uno_get_optimization_status(uno_model::UnoModel)
+  uno_get_optimization_status(uno_model.c_solver)
+end
+
+function uno_get_solution_status(uno_model::UnoModel)
+  uno_get_solution_status(uno_model.c_solver)
+end
+
+function uno_get_solution_objective(uno_model::UnoModel)
+  uno_get_solution_objective(uno_model.c_solver)
+end
+
+function uno_get_primal_solution(uno_model::UnoModel)
+  primal_solution_ptr = uno_get_primal_solution(uno_model.c_solver)
+  # ::Ptr{Cdouble}
+end
+
+function uno_get_constraint_dual_solution(uno_model::UnoModel)
+  dual_solution_ptr = uno_get_constraint_dual_solution(uno_model.c_solver)
+  # ::Ptr{Cdouble}
+end
+
+function uno_get_lower_bound_dual_solution(uno_model::UnoModel)
+  lower_bound_dual_solution_ptr = uno_get_lower_bound_dual_solution(uno_model.c_solver)
+  # ::Ptr{Cdouble}
+end
+
+function uno_get_upper_bound_dual_solution(uno_model::UnoModel)
+  upper_bound_dual_solution_ptr = uno_get_upper_bound_dual_solution(uno_model.c_solver)
+  # ::Ptr{Cdouble}
+end
+
+function uno_get_solution_primal_feasibility(uno_model::UnoModel)
+  return uno_get_solution_primal_feasibility(uno_model.c_solver)
+end
+
+function uno_get_solution_dual_feasibility(uno_model::UnoModel)
+  return uno_get_solution_dual_feasibility(uno_model.c_solver)
+end
+
+function uno_get_solution_complementarity(uno_model::UnoModel)
+  return uno_get_solution_complementarity(uno_model.c_solver)
 end
