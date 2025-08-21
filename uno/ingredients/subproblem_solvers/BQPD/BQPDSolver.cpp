@@ -367,7 +367,7 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
          }
       }
       else {
-         throw std::runtime_error("The Hessian cannot be regularized if it is only available implicitly");
+         throw std::runtime_error("The Hessian cannot be regularized if it is not available explicitly");
       }
    }
    // otherwise, try to perform a Hessian-vector product if possible
