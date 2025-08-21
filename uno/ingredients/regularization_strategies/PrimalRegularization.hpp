@@ -84,6 +84,8 @@ namespace uno {
    void PrimalRegularization<ElementType>::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
          const double* hessian_values, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, double* primal_regularization_values) {
+      assert(hessian_values != nullptr);
+
       DEBUG << "Current Hessian:\n" << hessian_values << '\n';
       const double smallest_diagonal_entry = 0.; // TODO hessian_values.smallest_diagonal_entry(expected_inertia.positive);
       DEBUG << "The minimal diagonal entry of the matrix is " << smallest_diagonal_entry << '\n';

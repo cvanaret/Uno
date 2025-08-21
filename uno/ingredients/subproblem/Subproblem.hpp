@@ -61,6 +61,7 @@ namespace uno {
       void set_constraints_bounds(Array& constraints_lower_bounds, Array& constraints_upper_bounds,
          std::vector<double>& constraints) const;
 
+      [[nodiscard]] bool is_hessian_positive_definite() const;
       [[nodiscard]] bool has_implicit_hessian_representation() const;
       [[nodiscard]] bool has_explicit_hessian_representation() const;
       [[nodiscard]] bool has_curvature() const;

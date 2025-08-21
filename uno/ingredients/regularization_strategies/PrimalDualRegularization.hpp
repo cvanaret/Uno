@@ -118,6 +118,8 @@ namespace uno {
          const double* augmented_matrix_values, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          double* primal_regularization_values, double* dual_regularization_values) {
+      assert(augmented_matrix_values != nullptr);
+
       this->primal_regularization = ElementType(0);
       this->dual_regularization = ElementType(0);
       for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {

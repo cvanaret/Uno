@@ -61,6 +61,10 @@ namespace uno {
    }
 
    void BQPDSolver::initialize_memory(const Subproblem& subproblem) {
+      if (!subproblem.has_implicit_hessian_representation() && !subproblem.has_explicit_hessian_representation()) {
+         throw std::runtime_error("The Hessian cannot be evaluated implicitly or explicitly");
+      }
+
       this->evaluation_space.initialize(subproblem);
 
       this->w.resize(subproblem.number_variables + subproblem.number_constraints);
@@ -340,27 +344,34 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
    assert(hessian_column_indices != nullptr);
    assert(hessian_values != nullptr);
 
-   // by default, try to perform a Hessian-vector product if possible
-   if (subproblem->has_implicit_hessian_representation()) {
-      subproblem->compute_hessian_vector_product(vector, result);
-   }
-   // otherwise, try to compute the explicit matrix
-   else if (subproblem->has_explicit_hessian_representation()) {
-      // if the Hessian has not been evaluated at the current point, evaluate it
-      if (*evaluate_hessian) {
-         subproblem->evaluate_lagrangian_hessian(*statistics, hessian_values->data());
-         subproblem->regularize_lagrangian_hessian(*statistics, hessian_values->data());
-         *evaluate_hessian = false;
-      }
-      // Hessian-vector product
-      for (size_t nonzero_index: uno::Range(subproblem->number_regularized_hessian_nonzeros())) {
-         const size_t row_index = static_cast<size_t>((*hessian_row_indices)[nonzero_index]);
-         const size_t column_index = static_cast<size_t>((*hessian_column_indices)[nonzero_index]);
-         const double entry = (*hessian_values)[nonzero_index];
-         result[row_index] += entry * vector[column_index];
-         if (row_index != column_index) {
-            result[column_index] += entry * vector[row_index];
+   // if the Hessian must be regularized or if no implicit representation exists
+   if ((!subproblem->is_hessian_positive_definite() && subproblem->performs_primal_regularization()) ||
+         !subproblem->has_implicit_hessian_representation()) {
+      // compute the explicit matrix
+      if (subproblem->has_explicit_hessian_representation()) {
+         // if the Hessian has not been evaluated at the current point, evaluate it
+         if (*evaluate_hessian) {
+            subproblem->evaluate_lagrangian_hessian(*statistics, hessian_values->data());
+            subproblem->regularize_lagrangian_hessian(*statistics, hessian_values->data());
+            *evaluate_hessian = false;
+         }
+         // Hessian-vector product
+         for (size_t nonzero_index: uno::Range(subproblem->number_regularized_hessian_nonzeros())) {
+            const size_t row_index = static_cast<size_t>((*hessian_row_indices)[nonzero_index]);
+            const size_t column_index = static_cast<size_t>((*hessian_column_indices)[nonzero_index]);
+            const double entry = (*hessian_values)[nonzero_index];
+            result[row_index] += entry * vector[column_index];
+            if (row_index != column_index) {
+               result[column_index] += entry * vector[row_index];
+            }
          }
       }
+      else {
+         throw std::runtime_error("The Hessian cannot be regularized if it is only available implicitly");
+      }
+   }
+   // otherwise, try to perform a Hessian-vector product if possible
+   else if (subproblem->has_implicit_hessian_representation()) {
+      subproblem->compute_hessian_vector_product(vector, result);
    }
 }
