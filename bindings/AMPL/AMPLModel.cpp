@@ -70,6 +70,17 @@ namespace uno {
       ASL_free(&this->asl);
    }
 
+   bool AMPLModel::has_implicit_representation() const {
+      // As long as we use the ASL library ("solvers"), we need to form the explicit Hessian
+      // The reason is that the ASL Hessian representation changes as soon as trial
+      // iterates are evaluated. The variant "solvers2" should address the issue.
+      return false;
+   }
+
+   bool AMPLModel::has_explicit_representation() const {
+      return true;
+   }
+
    double AMPLModel::evaluate_objective(const Vector<double>& x) const {
       fint error_flag = 0;
       double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
