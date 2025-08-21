@@ -161,7 +161,7 @@ namespace uno {
    }
 
    std::string Uno::current_version() {
-      return "2.0.1";
+      return "2.0.2";
    }
 
    void Uno::print_instructions() {
