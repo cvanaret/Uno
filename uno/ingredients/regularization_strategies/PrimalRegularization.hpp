@@ -4,6 +4,7 @@
 #ifndef UNO_PRIMALREGULARIZATION_H
 #define UNO_PRIMALREGULARIZATION_H
 
+#include <cassert>
 #include <memory>
 #include <string>
 #include "RegularizationStrategy.hpp"
