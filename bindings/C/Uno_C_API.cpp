@@ -90,7 +90,15 @@ public:
    }
 
    // TODO handle failures
-   // TODO add flags that indicate whether the Hessian is explicitly/implicitly available
+
+   // Hessian representation
+   [[nodiscard]] bool has_implicit_representation() const override {
+      return (this->user_model.lagrangian_hessian_operator != nullptr);
+   }
+
+   [[nodiscard]] bool has_explicit_representation() const override {
+      return (this->user_model.lagrangian_hessian != nullptr);
+   }
 
    // function evaluations
    [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override {
