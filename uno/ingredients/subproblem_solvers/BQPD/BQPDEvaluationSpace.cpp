@@ -20,8 +20,11 @@ namespace uno {
       // save sparsity patterns of objective gradient and constraint Jacobian into BQPD workspace
       this->compute_gradients_sparsity(subproblem);
 
-      // if the Hessian model only has an explicit representation, allocate an explicit Hessian matrix
-      if (subproblem.has_curvature() && !subproblem.has_implicit_hessian_representation() && subproblem.has_explicit_hessian_representation()) {
+      // allocate an explicit Hessian matrix if:
+      // - the Hessian is not positive definite and must be regularized, or
+      // - the Hessian model only has an explicit representation
+      if ((!subproblem.is_hessian_positive_definite() && subproblem.performs_primal_regularization()) ||
+            !subproblem.has_implicit_hessian_representation()) {
          const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
          this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);

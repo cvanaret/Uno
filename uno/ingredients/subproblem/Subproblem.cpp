@@ -140,6 +140,10 @@ namespace uno {
       }
    }
 
+   bool Subproblem::is_hessian_positive_definite() const {
+      return this->hessian_model.is_positive_definite();
+   }
+
    bool Subproblem::has_implicit_hessian_representation() const {
       return this->hessian_model.has_implicit_representation(this->problem.model);
    }
