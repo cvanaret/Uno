@@ -33,7 +33,7 @@ namespace uno {
    enum BQPDMode {
       COLD_START = 0,
       ACTIVE_SET_EQUALITIES = 1, // cold start
-      USER_DEFINED = 2, // hot start
+      USER_DEFINED_ACTIVE_SET = 2, // hot start
       UNCHANGED_ACTIVE_SET = 3,
       UNCHANGED_ACTIVE_SET_AND_JACOBIAN = 4,
       UNCHANGED_ACTIVE_SET_AND_REDUCED_HESSIAN = 5,
