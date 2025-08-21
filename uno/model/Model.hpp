@@ -35,6 +35,10 @@ namespace uno {
       const size_t number_constraints; /*!< Number of constraints */
       const double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
 
+      // Hessian representation
+      [[nodiscard]] virtual bool has_implicit_representation() const = 0;
+      [[nodiscard]] virtual bool has_explicit_representation() const = 0;
+
       // function evaluations
       [[nodiscard]] virtual double evaluate_objective(const Vector<double>& x) const = 0;
       virtual void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const = 0;

@@ -11,8 +11,8 @@ namespace uno {
    public:
       IdentityHessian() = default;
 
-      [[nodiscard]] bool has_implicit_representation() const override;
-      [[nodiscard]] bool has_explicit_representation() const override;
+      [[nodiscard]] bool has_implicit_representation(const Model& model) const override;
+      [[nodiscard]] bool has_explicit_representation(const Model& model) const override;
       [[nodiscard]] bool has_curvature(const Model& model) const override;
       [[nodiscard]] size_t number_nonzeros(const Model& model) const override;
       void compute_sparsity(const Model& model, int* row_indices, int* column_indices, int solver_indexing) const override;

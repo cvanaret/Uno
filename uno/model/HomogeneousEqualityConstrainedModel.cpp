@@ -31,6 +31,15 @@ namespace uno {
       }
    }
 
+   // Hessian representation
+   bool HomogeneousEqualityConstrainedModel::has_implicit_representation() const {
+      return this->model->has_implicit_representation();
+   }
+   
+   bool HomogeneousEqualityConstrainedModel::has_explicit_representation() const {
+      return this->model->has_explicit_representation();
+   }
+
    double HomogeneousEqualityConstrainedModel::evaluate_objective(const Vector<double>& x) const {
       return this->model->evaluate_objective(x);
    }

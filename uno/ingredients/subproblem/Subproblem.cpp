@@ -141,11 +141,11 @@ namespace uno {
    }
 
    bool Subproblem::has_implicit_hessian_representation() const {
-      return this->hessian_model.has_implicit_representation();
+      return this->hessian_model.has_implicit_representation(this->problem.model);
    }
 
    bool Subproblem::has_explicit_hessian_representation() const {
-      return this->hessian_model.has_explicit_representation();
+      return this->hessian_model.has_explicit_representation(this->problem.model);
    }
 
    // two sources of curvature: the problem and the regularization strategy

@@ -15,6 +15,14 @@ namespace uno {
          linear_constraints(concatenate(this->model->get_linear_constraints(), Range(this->model->number_constraints, this->number_constraints))) {
    }
 
+   bool FixedBoundsConstraintsModel::has_implicit_representation() const {
+      return this->model->has_implicit_representation();
+   }
+
+   bool FixedBoundsConstraintsModel::has_explicit_representation() const {
+      return this->model->has_explicit_representation();
+   }
+
    double FixedBoundsConstraintsModel::evaluate_objective(const Vector<double>& x) const {
       return this->model->evaluate_objective(x);
    }
