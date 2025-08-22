@@ -22,14 +22,6 @@
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
-   Uno::Uno(size_t number_constraints, const Options& options) :
-         constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(number_constraints, options)),
-         globalization_strategy(GlobalizationStrategyFactory::create(number_constraints, options)),
-         globalization_mechanism(GlobalizationMechanismFactory::create(options)),
-         max_iterations(options.get_unsigned_int("max_iterations")),
-         time_limit(options.get_double("time_limit")),
-         print_solution(options.get_bool("print_solution")) { }
-   
    Level Logger::level = INFO;
 
    // solve without user callbacks
@@ -41,13 +33,17 @@ namespace uno {
 
    // solve with user callbacks
    Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options, UserCallbacks& user_callbacks) {
-      Timer timer{};
+      const Timer timer{};
+      // pick the ingredients based on the user-defined options
+      Uno::pick_ingredients(model, options);
       Statistics statistics = Uno::create_statistics(model, options);
       WarmstartInformation warmstart_information{};
       warmstart_information.whole_problem_changed();
 
       size_t major_iterations = 0;
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
+      const size_t max_iterations = options.get_unsigned_int("max_iterations"); // maximum number of iterations
+      const double time_limit = options.get_double("time_limit"); // CPU time limit (can be inf)
       try {
          // use the initial primal-dual point to initialize the strategies and generate the initial iterate
          this->initialize(statistics, model, current_iterate, options);
@@ -69,7 +65,8 @@ namespace uno {
                   *this->globalization_strategy, model, current_iterate, trial_iterate, this->direction, warmstart_information,
                   user_callbacks);
                GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
-               termination = this->termination_criteria(trial_iterate.status, major_iterations, timer.get_duration(), optimization_status);
+               termination = Uno::termination_criteria(trial_iterate.status, major_iterations, max_iterations,
+                  timer.get_duration(), time_limit, optimization_status);
                user_callbacks.notify_new_primals(trial_iterate.primals);
                user_callbacks.notify_new_multipliers(trial_iterate.multipliers);
 
@@ -93,71 +90,8 @@ namespace uno {
          optimization_status = OptimizationStatus::EVALUATION_ERROR;
       }
       Result result = this->create_result(model, optimization_status, current_iterate, major_iterations, timer);
-      this->print_optimization_summary(result);
+      this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
-   }
-
-   void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) {
-      statistics.start_new_line();
-      statistics.set("iter", 0);
-      statistics.set("status", "initial point");
-      // TODO here we don't know if there's a trust-region radius yet!
-      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, INF<double>, options);
-      GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate);
-      GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
-      this->globalization_strategy->initialize(statistics, current_iterate, options);
-      this->globalization_mechanism->initialize(statistics, options);
-      options.print_used();
-      if (Logger::level == INFO) {
-         statistics.print_header();
-         statistics.print_current_line();
-      }
-      current_iterate.status = IterateStatus::NOT_OPTIMAL;
-   }
-
-   Statistics Uno::create_statistics(const Model& model, const Options& options) {
-      Statistics statistics{};
-      statistics.add_column("iter", Statistics::int_width, options.get_int("statistics_major_column_order"));
-      statistics.add_column("step norm", Statistics::double_width - 5, options.get_int("statistics_step_norm_column_order"));
-      statistics.add_column("objective", Statistics::double_width - 5, options.get_int("statistics_objective_column_order"));
-      if (model.is_constrained()) {
-         statistics.add_column("primal feas", Statistics::double_width - 4, options.get_int("statistics_primal_feasibility_column_order"));
-      }
-      statistics.add_column("stationarity", Statistics::double_width - 3, options.get_int("statistics_stationarity_column_order"));
-      statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
-      statistics.add_column("status", Statistics::string_width - 9, options.get_int("statistics_status_column_order"));
-      return statistics;
-   }
-
-   bool Uno::termination_criteria(IterateStatus current_status, size_t iteration, double current_time, OptimizationStatus& optimization_status) const {
-      if (current_status != IterateStatus::NOT_OPTIMAL) {
-         return true;
-      }
-      else if (this->max_iterations <= iteration) {
-         optimization_status = OptimizationStatus::ITERATION_LIMIT;
-         return true;
-      }
-      else if (this->time_limit <= current_time) {
-         optimization_status = OptimizationStatus::TIME_LIMIT;
-         return true;
-      }
-      return false;
-   }
-
-   void Uno::postprocess_iterate(const Model& model, Iterate& iterate, IterateStatus termination_status) {
-      // in case the objective was not yet evaluated, evaluate it
-      iterate.evaluate_objective(model);
-      model.postprocess_solution(iterate, termination_status);
-      DEBUG2 << "Final iterate:\n" << iterate;
-   }
-
-   Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate, size_t major_iterations,
-         const Timer& timer) const {
-      const size_t number_subproblems_solved = this->constraint_relaxation_strategy->get_number_subproblems_solved();
-      const size_t number_hessian_evaluations = this->constraint_relaxation_strategy->get_hessian_evaluation_count();
-      return {optimization_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,
-            timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
-            Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
    }
 
    std::string Uno::current_version() {
@@ -188,15 +122,89 @@ namespace uno {
       std::cout << "- Linear solvers: " << join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", ") << '\n';
    }
 
+   void Uno::pick_ingredients(const Model& model, const Options& options) {
+      bool unconstrained_model = (model.number_constraints == 0);
+      this->constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(unconstrained_model, options);
+      this->globalization_strategy = GlobalizationStrategyFactory::create(unconstrained_model, options);
+      this->globalization_mechanism = GlobalizationMechanismFactory::create(options);
+   }
+
+   void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) {
+      statistics.start_new_line();
+      statistics.set("iter", 0);
+      statistics.set("status", "initial point");
+
+      model.project_onto_variable_bounds(current_iterate.primals);
+      // TODO here we don't know if there's a trust-region radius yet!
+      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, INF<double>, options);
+      GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate);
+      GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
+      this->globalization_strategy->initialize(statistics, current_iterate, options);
+      this->globalization_mechanism->initialize(statistics, options);
+
+      options.print_used();
+      if (Logger::level == INFO) {
+         statistics.print_header();
+         statistics.print_current_line();
+      }
+      current_iterate.status = IterateStatus::NOT_OPTIMAL;
+   }
+
+   Statistics Uno::create_statistics(const Model& model, const Options& options) {
+      Statistics statistics{};
+      statistics.add_column("iter", Statistics::int_width, options.get_int("statistics_major_column_order"));
+      statistics.add_column("step norm", Statistics::double_width - 5, options.get_int("statistics_step_norm_column_order"));
+      statistics.add_column("objective", Statistics::double_width - 5, options.get_int("statistics_objective_column_order"));
+      if (model.is_constrained()) {
+         statistics.add_column("primal feas", Statistics::double_width - 4, options.get_int("statistics_primal_feasibility_column_order"));
+      }
+      statistics.add_column("stationarity", Statistics::double_width - 3, options.get_int("statistics_stationarity_column_order"));
+      statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
+      statistics.add_column("status", Statistics::string_width - 9, options.get_int("statistics_status_column_order"));
+      return statistics;
+   }
+
+   bool Uno::termination_criteria(IterateStatus current_status, size_t iteration, size_t max_iterations, double current_time,
+         double time_limit, OptimizationStatus& optimization_status) {
+      if (current_status != IterateStatus::NOT_OPTIMAL) {
+         return true;
+      }
+      else if (max_iterations <= iteration) {
+         optimization_status = OptimizationStatus::ITERATION_LIMIT;
+         return true;
+      }
+      else if (time_limit <= current_time) {
+         optimization_status = OptimizationStatus::TIME_LIMIT;
+         return true;
+      }
+      return false;
+   }
+
+   void Uno::postprocess_iterate(const Model& model, Iterate& iterate, IterateStatus termination_status) {
+      // in case the objective was not yet evaluated, evaluate it
+      iterate.evaluate_objective(model);
+      model.postprocess_solution(iterate, termination_status);
+      DEBUG2 << "Final iterate:\n" << iterate;
+   }
+
+   Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate, size_t major_iterations,
+         const Timer& timer) const {
+      const size_t number_subproblems_solved = this->constraint_relaxation_strategy->get_number_subproblems_solved();
+      const size_t number_hessian_evaluations = this->constraint_relaxation_strategy->get_hessian_evaluation_count();
+      return {optimization_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,
+            timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
+            Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
+   }
+
    std::string Uno::get_strategy_combination() const {
       return this->globalization_mechanism->get_name() + " " + this->globalization_strategy->get_name() + " " +
          this->constraint_relaxation_strategy->get_name();
    }
 
-   void Uno::print_optimization_summary(const Result& result) const {
+   void Uno::print_optimization_summary(const Result& result, bool print_solution) const {
       DISCRETE << "\nUno " << Uno::current_version() << " (" << this->get_strategy_combination() << ")\n";
       DISCRETE << Timer::get_current_date();
       DISCRETE << "────────────────────────────────────────\n";
-      result.print(this->print_solution);
+      result.print(print_solution);
    }
 } // namespace

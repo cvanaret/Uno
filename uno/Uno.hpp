@@ -22,7 +22,7 @@ namespace uno {
 
    class Uno {
    public:
-      Uno(size_t number_constraints, const Options& options);
+      Uno() = default;
 
       // solve with or without user callbacks
       Result solve(const Model& model, Iterate& current_iterate, const Options& options);
@@ -31,25 +31,23 @@ namespace uno {
       static std::string current_version();
       static void print_instructions();
       static void print_available_strategies();
-      void print_optimization_summary(const Result& result) const;
 
    private:
-      std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy;
-      std::unique_ptr<GlobalizationStrategy> globalization_strategy;
-      std::unique_ptr<GlobalizationMechanism> globalization_mechanism;
+      std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy{};
+      std::unique_ptr<GlobalizationStrategy> globalization_strategy{};
+      std::unique_ptr<GlobalizationMechanism> globalization_mechanism{};
       Direction direction{};
-      const size_t max_iterations; /*!< Maximum number of iterations */
-      const double time_limit; /*!< CPU time limit (can be inf) */
-      const bool print_solution;
 
-      [[nodiscard]] std::string get_strategy_combination() const;
+      void pick_ingredients(const Model& model, const Options& options);
       void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options);
       [[nodiscard]] static Statistics create_statistics(const Model& model, const Options& options);
-      [[nodiscard]] bool termination_criteria(IterateStatus current_status, size_t iteration, double current_time,
-         OptimizationStatus& optimization_status) const;
+      [[nodiscard]] static bool termination_criteria(IterateStatus current_status, size_t iteration, size_t max_iterations,
+         double current_time, double time_limit, OptimizationStatus& optimization_status);
       static void postprocess_iterate(const Model& model, Iterate& iterate, IterateStatus termination_status);
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate,
          size_t major_iterations, const Timer& timer) const;
+      [[nodiscard]] std::string get_strategy_combination() const;
+      void print_optimization_summary(const Result& result, bool print_solution) const;
    };
 } // namespace
 
