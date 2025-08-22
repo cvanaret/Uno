@@ -13,9 +13,9 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(size_t number_constraints, const Options& options) {
+   std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(bool unconstrained_model, const Options& options) {
       // set unconstrained strategy automatically
-      if (number_constraints == 0) {
+      if (unconstrained_model) {
          INFO << "The model is unconstrained, picking a merit function as globalization strategy\n";
          return std::make_unique<l1MeritFunction>(options);
       }
