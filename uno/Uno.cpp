@@ -142,7 +142,7 @@ namespace uno {
       this->globalization_strategy->initialize(statistics, current_iterate, options);
       this->globalization_mechanism->initialize(statistics, options);
 
-      options.print_used();
+      options.print_used_overwritten();
       if (Logger::level == INFO) {
          statistics.print_header();
          statistics.print_current_line();
