@@ -8,28 +8,17 @@
 
 namespace uno {
    // setter
-   void Options::set(const std::string& option_name, const std::string& option_value) {
-      // if the option already exists and is not the same, flag it as overwritten
-      const auto existing_option_value = this->at_optional(option_name);
-      if (!existing_option_value.has_value() || *existing_option_value == option_value) {
-         this->overwritten_options[option_name] = false;
-      }
-      else {
-         this->overwritten_options[option_name] = true;
-      }
+   void Options::set(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten) {
       this->options[option_name] = option_value;
-   }
-
-   void Options::set(const Options& additional_options) {
-      for (const auto& [option_name, option_value]: additional_options) {
-         this->set(option_name, option_value);
-         this->overwritten_options[option_name] = true;
-      }
+      this->overwritten_options[option_name] = flag_as_overwritten;
    }
 
    void Options::overwrite_with(const Options& overwriting_options) {
       for (const auto& [option_name, option_value]: overwriting_options) {
-         this->set(option_name, option_value);
+         // if the option already exists and is not the same, flag it as overwritten
+         const auto existing_option_value = this->at_optional(option_name);
+         bool flag_as_overwritten = (existing_option_value.has_value() && *existing_option_value != option_value);
+         this->set(option_name, option_value, flag_as_overwritten);
       }
    }
 
