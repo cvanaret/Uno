@@ -86,7 +86,8 @@ int main() {
 
 	// solver creation
 	void* solver = uno_create_solver();
-	// uno_set_solver_preset(solver, "ipopt");
+	uno_set_solver_preset(solver, "funnelsqp");
+	uno_set_solver_option(solver, "print_solution", "yes");
 
 	// solve
 	uno_optimize(solver, model);

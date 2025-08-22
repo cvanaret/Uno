@@ -5,8 +5,8 @@ println("The version of Uno is $version.")
 
 nlp = CUTEstModel{Float64}("HS15")
 uno_model = uno(nlp)
-Uno.uno_set_solver_preset(uno_model, "ipopt")
-Uno.uno_set_solver_option(uno_model, "unbounded_objective_threshold", "-1e15")
+Uno.uno_set_solver_preset(uno_model, "funnelsqp")
+Uno.uno_set_solver_option(uno_model, "print_solution", "yes")
 Uno.uno_optimize(uno_model)
 
 optimization_status = Uno.uno_get_optimization_status(uno_model)
