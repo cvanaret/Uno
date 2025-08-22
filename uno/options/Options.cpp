@@ -126,22 +126,6 @@ namespace uno {
       return options;
    }
 
-   void Options::print() const {
-      size_t number_options = 0;
-      std::string option_list{};
-      for (const auto& [option_name, option_value]: this->options) {
-         ++number_options;
-         std::string s = "- " + option_name + " = ";
-         s += option_value + ", overwritten = ";
-         s += std::to_string(this->overwritten_options[option_name]) + '\n';
-         option_list.append(s);
-      }
-      // print the overwritten options
-      if (number_options > 0) {
-         DISCRETE << "\nOptions:\n" << option_list << '\n';
-      }
-   }
-
    void Options::print_used_overwritten() const {
       size_t number_used_options = 0;
       std::string option_list{};

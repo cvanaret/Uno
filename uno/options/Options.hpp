@@ -26,8 +26,7 @@ namespace uno {
 
       [[nodiscard]] static Options get_command_line_options(int argc, char* argv[], size_t offset);
       [[nodiscard]] static Options load_option_file(const std::string& file_name);
-
-      void print() const;
+      
       void print_used_overwritten() const;
 
       [[nodiscard]] std::map<std::string, std::string>::const_iterator begin() const;
