@@ -92,11 +92,11 @@ public:
    // TODO handle failures
 
    // Hessian representation
-   [[nodiscard]] bool has_implicit_representation() const override {
+   [[nodiscard]] bool has_implicit_hessian_representation() const override {
       return (this->user_model.lagrangian_hessian_operator != nullptr);
    }
 
-   [[nodiscard]] bool has_explicit_representation() const override {
+   [[nodiscard]] bool has_explicit_hessian_representation() const override {
       return (this->user_model.lagrangian_hessian != nullptr);
    }
 
