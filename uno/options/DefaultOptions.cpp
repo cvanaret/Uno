@@ -8,6 +8,8 @@
 
 namespace uno {
    void DefaultOptions::load(Options& options) {
+      DefaultOptions::determine_subproblem_solvers(options);
+
       /** termination **/
       // primal tolerance (constraint violation)
       options.set("primal_tolerance", "1e-8");
@@ -166,23 +168,20 @@ namespace uno {
       options.set("BQPD_kmax", "500");
    }
 
-   Options DefaultOptions::determine_subproblem_solvers() {
-      Options options;
-
-      /** solvers: check the available solvers **/
+   // determine default subproblem solvers, based on the available external dependencies
+   void DefaultOptions::determine_subproblem_solvers(Options& options) {
       // QP solver
       if (0 < QPSolverFactory::available_solvers.size()) {
-         options.set("QP_solver", *QPSolverFactory::available_solvers.begin());
+         options.set("QP_solver", *QPSolverFactory::available_solvers.begin(), true);
       }
       // LP solver
       if (0 < LPSolverFactory::available_solvers.size()) {
-         options.set("LP_solver", *LPSolverFactory::available_solvers.begin());
+         options.set("LP_solver", *LPSolverFactory::available_solvers.begin(), true);
       }
       // linear solver
       const auto linear_solvers = SymmetricIndefiniteLinearSolverFactory::available_solvers();
       if (!linear_solvers.empty()) {
-         options.set("linear_solver", linear_solvers[0]);
+         options.set("linear_solver", linear_solvers[0], true);
       }
-      return options;
    }
 } // namespace

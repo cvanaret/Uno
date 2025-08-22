@@ -75,9 +75,6 @@ int main(int argc, char* argv[]) {
          // gather the options
          Options options;
          DefaultOptions::load(options);
-         // determine the default solvers based on the available libraries
-         const Options subproblem_solvers = DefaultOptions::determine_subproblem_solvers();
-         options.set(subproblem_solvers);
          // the -AMPL flag indicates that the solution should be written to the AMPL solution file
          size_t offset = 2;
          if (argc > 2 && std::string(argv[2]) == "-AMPL") {

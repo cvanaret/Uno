@@ -13,8 +13,7 @@ namespace uno {
    public:
       Options() = default;
 
-      void set(const std::string& option_name, const std::string& option_value);
-      void set(const Options& additional_options);
+      void set(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten = false);
       void overwrite_with(const Options& overwriting_options);
 
       [[nodiscard]] const std::string& get_string(const std::string& option_name) const;

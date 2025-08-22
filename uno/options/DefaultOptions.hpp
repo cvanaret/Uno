@@ -10,7 +10,9 @@ namespace uno {
    class DefaultOptions {
    public:
       static void load(Options& options);
-      [[nodiscard]] static Options determine_subproblem_solvers();
+
+   protected:
+      static void determine_subproblem_solvers(Options& options);
    };
 } // namespace
 
