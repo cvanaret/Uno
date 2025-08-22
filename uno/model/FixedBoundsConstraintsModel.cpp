@@ -15,12 +15,12 @@ namespace uno {
          linear_constraints(concatenate(this->model->get_linear_constraints(), Range(this->model->number_constraints, this->number_constraints))) {
    }
 
-   bool FixedBoundsConstraintsModel::has_implicit_representation() const {
-      return this->model->has_implicit_representation();
+   bool FixedBoundsConstraintsModel::has_implicit_hessian_representation() const {
+      return this->model->has_implicit_hessian_representation();
    }
 
-   bool FixedBoundsConstraintsModel::has_explicit_representation() const {
-      return this->model->has_explicit_representation();
+   bool FixedBoundsConstraintsModel::has_explicit_hessian_representation() const {
+      return this->model->has_explicit_hessian_representation();
    }
 
    double FixedBoundsConstraintsModel::evaluate_objective(const Vector<double>& x) const {

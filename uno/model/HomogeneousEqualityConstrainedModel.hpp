@@ -18,8 +18,8 @@ namespace uno {
       explicit HomogeneousEqualityConstrainedModel(std::unique_ptr<Model> original_model);
 
       // Hessian representation
-      [[nodiscard]] bool has_implicit_representation() const override;
-      [[nodiscard]] bool has_explicit_representation() const override;
+      [[nodiscard]] bool has_implicit_hessian_representation() const override;
+      [[nodiscard]] bool has_explicit_hessian_representation() const override;
 
       // function evaluations
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;

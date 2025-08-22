@@ -16,12 +16,12 @@ namespace uno {
       BoundRelaxedModel(std::unique_ptr<Model> original_model, const Options& options);
 
       // Hessian representation
-      [[nodiscard]] bool has_implicit_representation() const override {
-         return this->model->has_implicit_representation();
+      [[nodiscard]] bool has_implicit_hessian_representation() const override {
+         return this->model->has_implicit_hessian_representation();
       }
 
-      [[nodiscard]] bool has_explicit_representation() const override {
-         return this->model->has_explicit_representation();
+      [[nodiscard]] bool has_explicit_hessian_representation() const override {
+         return this->model->has_explicit_hessian_representation();
       }
 
       // function evaluations

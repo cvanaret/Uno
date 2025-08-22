@@ -36,8 +36,8 @@ namespace uno {
       const double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
 
       // Hessian representation
-      [[nodiscard]] virtual bool has_implicit_representation() const = 0;
-      [[nodiscard]] virtual bool has_explicit_representation() const = 0;
+      [[nodiscard]] virtual bool has_implicit_hessian_representation() const = 0;
+      [[nodiscard]] virtual bool has_explicit_hessian_representation() const = 0;
 
       // function evaluations
       [[nodiscard]] virtual double evaluate_objective(const Vector<double>& x) const = 0;
