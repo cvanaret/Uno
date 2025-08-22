@@ -7,16 +7,30 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   Options::Options(bool are_default_options): are_default_options(are_default_options) { }
-
-   size_t Options::size() const {
-      return this->options.size();
+   // setter
+   void Options::set(const std::string& option_name, const std::string& option_value) {
+      // if the option already exists and is not the same, flag it as overwritten
+      const auto existing_option_value = this->at_optional(option_name);
+      if (!existing_option_value.has_value() || *existing_option_value == option_value) {
+         this->overwritten_options[option_name] = false;
+      }
+      else {
+         this->overwritten_options[option_name] = true;
+      }
+      this->options[option_name] = option_value;
    }
 
-   // setter
-   std::string& Options::operator[](const std::string& option_name) {
-      this->is_default[option_name] = this->are_default_options;
-      return this->options[option_name];
+   void Options::set(const Options& additional_options) {
+      for (const auto& [option_name, option_value]: additional_options) {
+         this->set(option_name, option_value);
+         this->overwritten_options[option_name] = true;
+      }
+   }
+
+   void Options::overwrite_with(const Options& overwriting_options) {
+      for (const auto& [option_name, option_value]: overwriting_options) {
+         this->set(option_name, option_value);
+      }
    }
 
    // getters
@@ -73,7 +87,7 @@ namespace uno {
    // argv[i] for i = offset..argc-1 are overwriting options
    Options Options::get_command_line_options(int argc, char* argv[], size_t offset) {
       static const std::string delimiter = "=";
-      Options overwriting_options(false);
+      Options overwriting_options;
 
       // build the (name, value) map
       for (size_t i = offset; i < static_cast<size_t>(argc); ++i) {
@@ -84,13 +98,13 @@ namespace uno {
          }
          const std::string option_name = argument.substr(0, position);
          const std::string option_value = argument.substr(position + 1);
-         overwriting_options[option_name] = option_value;
+         overwriting_options.set(option_name, option_value);
       }
       return overwriting_options;
    }
 
    Options Options::load_option_file(const std::string& file_name) {
-      Options options(false);
+      Options options;
       std::ifstream file;
       file.open(file_name);
       if (!file) {
@@ -104,7 +118,7 @@ namespace uno {
                std::istringstream iss;
                iss.str(line);
                iss >> option_name >> option_value;
-               options[option_name] = option_value;
+               options.set(option_name, option_value);
             }
          }
          file.close();
@@ -112,18 +126,11 @@ namespace uno {
       return options;
    }
 
-   void Options::overwrite_with(const Options& overwriting_options) {
-      for (const auto& [option_name, option_value]: overwriting_options) {
-         (*this)[option_name] = option_value;
-         this->is_default[option_name] = overwriting_options.is_default[option_name];
-      }
-   }
-
-   void Options::print_used() const {
+   void Options::print_used_overwritten() const {
       size_t number_used_options = 0;
       std::string option_list{};
       for (const auto& [option_name, option_value]: this->options) {
-         if (!this->is_default[option_name] && this->used[option_name]) {
+         if (this->used[option_name] && this->overwritten_options[option_name]) {
             ++number_used_options;
             option_list.append("- ").append(option_name).append(" = ").append(option_value).append("\n");
          }

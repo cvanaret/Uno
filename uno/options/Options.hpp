@@ -11,10 +11,11 @@
 namespace uno {
    class Options {
    public:
-      explicit Options(bool are_default_options);
+      Options() = default;
 
-      [[nodiscard]] size_t size() const;
-      std::string& operator[](const std::string& option_name);
+      void set(const std::string& option_name, const std::string& option_value);
+      void set(const Options& additional_options);
+      void overwrite_with(const Options& overwriting_options);
 
       [[nodiscard]] const std::string& get_string(const std::string& option_name) const;
       [[nodiscard]] std::optional<std::string> get_string_optional(const std::string& option_name) const;
@@ -25,8 +26,8 @@ namespace uno {
 
       [[nodiscard]] static Options get_command_line_options(int argc, char* argv[], size_t offset);
       [[nodiscard]] static Options load_option_file(const std::string& file_name);
-      void overwrite_with(const Options& overwriting_options);
-      void print_used() const;
+      
+      void print_used_overwritten() const;
 
       [[nodiscard]] std::map<std::string, std::string>::const_iterator begin() const;
       [[nodiscard]] std::map<std::string, std::string>::const_iterator end() const;
@@ -34,8 +35,7 @@ namespace uno {
    private:
       std::map<std::string, std::string> options{};
       mutable std::map<std::string, bool> used{};
-      mutable std::map<std::string, bool> is_default{};
-      const bool are_default_options;
+      mutable std::map<std::string, bool> overwritten_options{};
 
       [[nodiscard]] const std::string& at(const std::string& option_name) const;
       [[nodiscard]] std::optional<std::string> at_optional(const std::string& option_name) const;

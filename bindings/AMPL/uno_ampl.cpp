@@ -73,18 +73,19 @@ int main(int argc, char* argv[]) {
          std::string model_name = std::string(argv[1]);
 
          // gather the options
-         Options options = DefaultOptions::load();
+         Options options;
+         DefaultOptions::load(options);
          // determine the default solvers based on the available libraries
-         Options solvers_options = DefaultOptions::determine_solvers();
-         options.overwrite_with(solvers_options);
+         const Options subproblem_solvers = DefaultOptions::determine_subproblem_solvers();
+         options.set(subproblem_solvers);
          // the -AMPL flag indicates that the solution should be written to the AMPL solution file
          size_t offset = 2;
          if (argc > 2 && std::string(argv[2]) == "-AMPL") {
-            options["AMPL_write_solution_to_file"] = "yes";
+            options.set("AMPL_write_solution_to_file", "yes");
             ++offset;
          }
          else {
-            options["AMPL_write_solution_to_file"] = "no";
+            options.set("AMPL_write_solution_to_file", "no");
          }
          // get the command line arguments (options start at index offset)
          Options command_line_options = Options::get_command_line_options(argc, argv, offset);
