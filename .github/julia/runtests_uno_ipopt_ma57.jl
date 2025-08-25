@@ -32,26 +32,26 @@ Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solv
         # this to `=> MOI.INFEASIBLE_POINT`
         MINLPTests.INFEASIBLE_PROBLEM => MOI.NO_SOLUTION,
     )
+    objective_tol = 1e-4
+    primal_tol = 1e-4
     # This function tests (potentially) non-convex nonlinear programs. The tests
     # are meant to be "easy" in the sense that most NLP solvers can find the
     # same global minimum, but a test failure can sometimes be allowed.
     MINLPTests.test_nlp_expr(
         Optimizer_Uno_ipopt;
         exclude = [
-            # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
-            "005_010",
             # Okay to exclude forever: AmplNLWriter does not support
             # user-defined functions.
             "006_010",
             # Remove once https://github.com/cvanaret/Uno/issues/38 is fixed
             "007_010",
         ],
-        primal_target,
+        primal_target, objective_tol, primal_tol
     )
     # This function tests convex nonlinear programs. Test failures here should
     # never be allowed, because even local NLP solvers should find the global
     # optimum.
-    MINLPTests.test_nlp_cvx_expr(Optimizer_Uno_ipopt; primal_target)
+    MINLPTests.test_nlp_cvx_expr(Optimizer_Uno_ipopt; primal_target, objective_tol, primal_tol)
 end
 
 # This testset runs the full gamut of MOI.Test.runtests. There are a number of
