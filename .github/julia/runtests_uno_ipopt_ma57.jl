@@ -38,8 +38,6 @@ Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solv
     MINLPTests.test_nlp_expr(
         Optimizer_Uno_ipopt;
         exclude = [
-            # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
-            "005_010",
             # Okay to exclude forever: AmplNLWriter does not support
             # user-defined functions.
             "006_010",

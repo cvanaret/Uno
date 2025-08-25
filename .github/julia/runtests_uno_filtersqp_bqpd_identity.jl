@@ -40,7 +40,7 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "hes
             "003_014",  # Local solution
             "004_010",  # Local solution
             "004_011",  # Local solution
-            # Remove once https://github.com/cvanaret/Uno/issues/39 is fixed
+            # no gradient at the initial point
             "005_010",
             "007_010",
             "008_010",  # Local solution
