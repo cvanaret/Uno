@@ -108,7 +108,12 @@ namespace uno {
       }
       const BarrierProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
       const Subproblem subproblem{barrier_problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
-      this->linear_solver->initialize_augmented_system(subproblem);
+      if (0 < subproblem.number_constraints) {
+         this->linear_solver->initialize_augmented_system(subproblem);
+      }
+      else {
+         this->linear_solver->initialize_hessian(subproblem);
+      }
    }
 
    template <typename BarrierProblem>
