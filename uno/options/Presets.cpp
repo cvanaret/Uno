@@ -37,7 +37,7 @@ namespace uno {
       // shortcuts for state-of-the-art combinations
       if (preset_name == "ipopt") {
          options.set("constraint_relaxation_strategy", "feasibility_restoration");
-         options.set("inequality_handling_method", "primal_dual_interior_point");
+         options.set("inequality_handling_method", "interior_point");
          options.set("hessian_model", "exact");
          options.set("regularization_strategy", "primal_dual");
          options.set("globalization_mechanism", "LS");
