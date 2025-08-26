@@ -86,8 +86,6 @@ namespace uno {
       HessianModel& hessian_model;
       RegularizationStrategy<double>& regularization_strategy;
       const double trust_region_radius;
-
-      [[nodiscard]] size_t regularization_size() const;
    };
 
    template <typename IndexType>

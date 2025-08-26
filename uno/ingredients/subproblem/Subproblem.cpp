@@ -192,23 +192,25 @@ namespace uno {
    }
 
    size_t Subproblem::number_regularized_hessian_nonzeros() const {
-      return this->number_hessian_nonzeros() + this->regularization_size();
+      size_t number_nonzeros = this->number_hessian_nonzeros();
+      if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
+         number_nonzeros += this->get_primal_regularization_variables().size();
+      }
+      return number_nonzeros;
    }
 
    size_t Subproblem::number_regularized_augmented_system_nonzeros() const {
-      return this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros() + this->regularization_size();
+      size_t number_nonzeros = this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
+      if (!this->hessian_model.is_positive_definite() && this->performs_primal_regularization()) {
+         number_nonzeros += this->get_primal_regularization_variables().size();
+      }
+      if (this->performs_dual_regularization()) {
+         number_nonzeros += this->get_dual_regularization_constraints().size();
+      }
+      return number_nonzeros;
    }
 
    double Subproblem::dual_regularization_factor() const {
       return this->problem.dual_regularization_factor();
-   }
-
-   size_t Subproblem::regularization_size() const {
-      const size_t primal_regularization_size = this->get_primal_regularization_variables().size();
-      const size_t dual_regularization_size = this->get_dual_regularization_constraints().size();
-      const size_t regularization_size =
-         (this->performs_primal_regularization() ? primal_regularization_size : 0) +
-         (this->performs_dual_regularization() ? dual_regularization_size : 0);
-      return regularization_size;
    }
 } // namespace
