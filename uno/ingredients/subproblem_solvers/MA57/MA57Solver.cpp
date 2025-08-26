@@ -119,6 +119,7 @@ namespace uno {
       assert(!this->analysis_performed);
 
       // symbolic analysis
+      std::cout << "DOING SYMBOLIC ANALYSIS\n";
       std::cout << "MA57 analysis:\n";
       print_vector(std::cout, this->evaluation_space.matrix_row_indices);
       print_vector(std::cout, this->evaluation_space.matrix_column_indices);
@@ -145,6 +146,15 @@ namespace uno {
 
    void MA57Solver::do_numerical_factorization(const double* matrix_values) {
       assert(this->analysis_performed);
+
+      std::cout << "DOING NUMERICAL FACT\n";
+      std::cout << "MA57 factorization:\n";
+      print_vector(std::cout, this->evaluation_space.matrix_row_indices);
+      print_vector(std::cout, this->evaluation_space.matrix_column_indices);
+      for (size_t nonzero_index: Range(this->evaluation_space.matrix_row_indices.size())) {
+         std::cout << matrix_values[nonzero_index] << ' ';
+      }
+      std::cout << '\n';
 
       bool factorization_done = false;
       while (!factorization_done) {
@@ -199,6 +209,8 @@ namespace uno {
       else {
          // copy rhs into result (overwritten by MA57)
          result = rhs;
+         std::cout << "SOLVING THE LINEAR SYSTEM\n";
+         std::cout << "MA57 RHS: " << rhs << '\n';
 
          MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
             this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.nrhs, result.data(), &lrhs,

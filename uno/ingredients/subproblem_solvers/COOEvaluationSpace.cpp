@@ -3,6 +3,8 @@
 
 #include <stdexcept>
 #include "COOEvaluationSpace.hpp"
+
+#include "DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/COOMatrix.hpp"

@@ -165,6 +165,7 @@ namespace uno {
          trust_region_radius};
 
       // compute the primal-dual solution
+      std::cout << "CURRENT POINT: " << current_iterate.primals << '\n';
       this->linear_solver->solve_indefinite_system(statistics, subproblem, direction, warmstart_information);
       ++this->number_subproblems_solved;
 
