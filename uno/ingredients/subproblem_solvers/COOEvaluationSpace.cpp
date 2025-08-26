@@ -13,6 +13,9 @@ namespace uno {
    void COOEvaluationSpace::initialize_hessian(const Subproblem& subproblem) {
       const size_t dimension = subproblem.number_variables;
 
+      // objective gradient
+      this->objective_gradient.resize(subproblem.number_variables);
+
       // Hessian
       this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
       this->number_matrix_nonzeros = subproblem.number_regularized_hessian_nonzeros();
@@ -114,7 +117,7 @@ const size_t dimension = subproblem.number_variables + subproblem.number_constra
          // regularize the augmented matrix (this calls the analysis and the factorization)
          subproblem.regularize_augmented_matrix(statistics, this->matrix_values.data(),
             subproblem.dual_regularization_factor(), linear_solver);
-
+         
          // assemble the RHS
          const COOMatrix jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
             this->matrix_values.data() + this->number_hessian_nonzeros};

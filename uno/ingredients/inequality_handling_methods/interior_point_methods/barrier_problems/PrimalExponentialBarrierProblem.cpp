@@ -39,7 +39,6 @@ namespace uno {
 
    void PrimalExponentialBarrierProblem::evaluate_objective_gradient(Iterate& iterate, const EvaluationSpace& evaluation_space,
          double* objective_gradient) const {
-      // original objective gradient
       this->problem.evaluate_objective_gradient(iterate, evaluation_space, objective_gradient);
 
       // constraints
@@ -95,8 +94,17 @@ namespace uno {
       }
 
       // bound constraints
-
-      std::cout << "PrimalExponentialBarrierProblem::evaluate_objective_gradient\n";
+      for (size_t variable_index: Range(this->problem.number_variables)) {
+         const double lower_bound = this->problem.variable_lower_bound(variable_index);
+         const double upper_bound = this->problem.variable_upper_bound(variable_index);
+         if (is_finite(lower_bound)) {
+            objective_gradient[variable_index] -= lower_bound_multipliers[variable_index];
+         }
+         if (is_finite(upper_bound)) {
+            objective_gradient[variable_index] -= upper_bound_multipliers[variable_index];
+         }
+      }
+      std::cout << "PrimalExponentialBarrierProblem::evaluate_objective_gradient: ";
       for (size_t index: Range(this->problem.number_variables)) {
          std::cout << objective_gradient[index] << ' ';
       }
@@ -161,16 +169,16 @@ namespace uno {
       return this->problem.get_primal_regularization_variables();
    }
 
-   double PrimalExponentialBarrierProblem::constraint_lower_bound(size_t constraint_index) const {
-      return this->problem.constraint_lower_bound(constraint_index);
+   double PrimalExponentialBarrierProblem::constraint_lower_bound(size_t /*constraint_index*/) const {
+      throw std::runtime_error("This should not be called");
    }
 
-   double PrimalExponentialBarrierProblem::constraint_upper_bound(size_t constraint_index) const {
-      return this->problem.constraint_upper_bound(constraint_index);
+   double PrimalExponentialBarrierProblem::constraint_upper_bound(size_t /*constraint_index*/) const {
+      throw std::runtime_error("This should not be called");
    }
 
    const Collection<size_t>& PrimalExponentialBarrierProblem::get_equality_constraints() const {
-      return this->problem.get_equality_constraints();
+      return this->empty_set;
    }
 
    const Collection<size_t>& PrimalExponentialBarrierProblem::get_inequality_constraints() const {
@@ -178,13 +186,7 @@ namespace uno {
    }
 
    const Collection<size_t>& PrimalExponentialBarrierProblem::get_dual_regularization_constraints() const {
-      if (this->problem.get_dual_regularization_constraints().empty()) {
-         // this is an indication that the constraints (if there is any) were already regularized in a previous
-         // reformulation (e.g. l1 relaxation). In that case, we stick to an empty set
-         return this->problem.get_dual_regularization_constraints();
-      }
-      // otherwise, we pick the set of equality constraints
-      return this->problem.get_equality_constraints();
+      return this->empty_set;
    }
 
    void PrimalExponentialBarrierProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& solution,
