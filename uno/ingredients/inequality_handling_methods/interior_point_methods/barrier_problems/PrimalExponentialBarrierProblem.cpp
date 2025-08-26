@@ -191,11 +191,9 @@ namespace uno {
 
    void PrimalExponentialBarrierProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& solution,
          Direction& direction) const {
-      // form the primal-dual direction
+      std::cout << "EXPO solution: " << solution << '\n';
+      // form the primal direction
       direction.primals = view(solution, 0, this->problem.number_variables);
-      // retrieve the duals with correct signs (note the minus sign)
-      direction.multipliers.constraints = view(-solution, this->problem.number_variables,
-         this->problem.number_variables + this->problem.number_constraints);
    }
 
    double PrimalExponentialBarrierProblem::push_variable_to_interior(double variable_value, double /*lower_bound*/, double /*upper_bound*/) const {
