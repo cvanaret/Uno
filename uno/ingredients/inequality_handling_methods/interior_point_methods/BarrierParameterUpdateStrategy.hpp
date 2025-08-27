@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include "BarrierParameterUpdateStrategy.hpp"
 #include "optimization/DualResiduals.hpp"
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
