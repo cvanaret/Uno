@@ -123,6 +123,7 @@ namespace uno {
          }
          // assemble the augmented matrix
          subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data());
+
          // regularize the augmented matrix (this calls the analysis and the factorization)
          subproblem.regularize_augmented_matrix(statistics, this->matrix_values.data(),
             subproblem.dual_regularization_factor(), linear_solver);
