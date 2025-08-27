@@ -3,7 +3,7 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-# For help with this file, please contact `@amontoison` or `@odow` on GitHub.
+# For help with this file, please contact `@odow` on GitHub.
 
 using Test
 
@@ -22,7 +22,7 @@ function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=MA27", "unbounded_objective_threshold=-1e15"])
+Optimizer_Uno_ipopt() = Optimizer(["logger=SILENT", "preset=ipopt", "linear_solver=MUMPS", "hessian_model=identity", "unbounded_objective_threshold=-1e15"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
@@ -97,6 +97,14 @@ end
             r"^test_conic_linear_INFEASIBLE_2$",
             r"^test_linear_INFEASIBLE$",
             r"^test_linear_INFEASIBLE_2$",
+            r"^test_linear_DUAL_INFEASIBLE$",
+            r"^test_linear_DUAL_INFEASIBLE_2$",
+            r"^test_linear_add_constraints$",
+            r"^test_nonlinear_expression_hs109$",
+            r"^test_nonlinear_expression_quartic$",
+            r"^test_nonlinear_hs071_NLPBlockDual$",
+            r"^test_quadratic_nonhomogeneous$",
+            r"^test_solve_TerminationStatus_DUAL_INFEASIBLE$",
             r"^test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_",
             # ==================================================================
             # The following tests are okay to exclude forever.
