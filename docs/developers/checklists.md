@@ -14,6 +14,7 @@ In preparation for a release, use the following checklist. These steps can be do
  - [ ] Change the version number in `Uno::current_version()` in `uno/Uno.cpp`
  - [ ] Change the version number in `CITATION.cff` (twice)
  - [ ] Change the version number in `CMakeLists.txt`
+ - [ ] Change the version number in `bindings/C/Uno_C_API.h`
  - [ ] The commit messages in this PR do not contain `[ci skip]`
 
 ````
