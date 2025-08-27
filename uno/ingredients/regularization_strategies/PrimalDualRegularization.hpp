@@ -56,7 +56,6 @@ namespace uno {
       const ElementType primal_regularization_fast_increase_factor;
       const ElementType primal_regularization_slow_increase_factor;
       const size_t threshold_unsuccessful_attempts;
-      bool symbolic_analysis_performed{false};
    };
 
    template <typename ElementType>
@@ -85,6 +84,7 @@ namespace uno {
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
          this->optional_linear_solver->initialize_augmented_system(subproblem);
+         this->optional_linear_solver->do_symbolic_analysis();
       }
       this->regularize_hessian(statistics, subproblem, hessian_values, expected_inertia, *this->optional_linear_solver,
          primal_regularization_values);
@@ -108,6 +108,7 @@ namespace uno {
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
          this->optional_linear_solver->initialize_augmented_system(subproblem);
+         this->optional_linear_solver->do_symbolic_analysis();
       }
       this->regularize_augmented_matrix(statistics, subproblem, augmented_matrix_values, dual_regularization_parameter,
          expected_inertia, *this->optional_linear_solver, primal_regularization_values, dual_regularization_values);
@@ -132,13 +133,6 @@ namespace uno {
       DEBUG << "Testing factorization with regularization factors (0, 0)\n";
       size_t number_attempts = 1;
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";
-
-      // perform the symbolic analysis only once
-      if (!this->symbolic_analysis_performed) {
-         DEBUG << "Performing symbolic analysis of the indefinite system\n";
-         linear_solver.do_symbolic_analysis();
-         this->symbolic_analysis_performed = true;
-      }
 
       DEBUG << "Performing numerical factorization of the indefinite system\n";
       linear_solver.do_numerical_factorization(augmented_matrix_values);

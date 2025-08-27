@@ -116,6 +116,8 @@ namespace uno {
    }
 
    void MA57Solver::do_symbolic_analysis() {
+      assert(!this->analysis_performed);
+
       // symbolic analysis
       MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->evaluation_space.matrix_row_indices.data(),
          this->evaluation_space.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
@@ -134,9 +136,12 @@ namespace uno {
       // store the sizes of the symbolic analysis
       this->workspace.lfact = lfact;
       this->workspace.lifact = lifact;
+      this->analysis_performed = true;
    }
 
    void MA57Solver::do_numerical_factorization(const double* matrix_values) {
+      assert(this->analysis_performed);
+
       bool factorization_done = false;
       while (!factorization_done) {
          // numerical factorization
@@ -170,9 +175,12 @@ namespace uno {
             factorization_done = true;
          }
       }
+      this->factorization_performed = true;
    }
 
    void MA57Solver::solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) {
+      assert(this->factorization_performed);
+
       // solve
       const int lrhs = this->workspace.n; // integer, length of rhs
 
