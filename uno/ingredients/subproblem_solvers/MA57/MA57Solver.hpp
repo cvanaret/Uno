@@ -66,7 +66,7 @@ namespace uno {
    private:
       MA57Workspace workspace{};
       COOEvaluationSpace evaluation_space{};
-
+      
       bool analysis_performed{false};
       bool factorization_performed{false};
 
