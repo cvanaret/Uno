@@ -43,6 +43,7 @@ namespace uno {
       Vector<double> matrix_values;
       Vector<double> rhs{};
       Vector<double> solution{};
+      bool analysis_performed{false};
    };
 } // namespace
 

@@ -51,7 +51,6 @@ namespace uno {
       const double regularization_initial_value{};
       const double regularization_increase_factor{};
       const double regularization_failure_threshold{};
-      bool symbolic_analysis_performed{false};
    };
 
    template <typename ElementType>
@@ -100,11 +99,6 @@ namespace uno {
          }
          DEBUG << "Current Hessian:\n" << hessian_values;
 
-         // perform the symbolic analysis only once
-         if (!this->symbolic_analysis_performed) {
-            linear_solver.do_symbolic_analysis();
-            this->symbolic_analysis_performed = true;
-         }
          linear_solver.do_numerical_factorization(hessian_values);
          const Inertia estimated_inertia = linear_solver.get_inertia();
          DEBUG << "Expected inertia: " << expected_inertia << '\n';

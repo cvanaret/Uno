@@ -4,6 +4,7 @@
 #include "Subproblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
+#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
@@ -112,13 +113,19 @@ namespace uno {
 
    void Subproblem::regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const {
-      const Inertia expected_inertia{this->number_variables, this->number_constraints, 0};
+      if ((!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_dual_regularization()) ||
+            this->regularization_strategy.performs_dual_regularization()) {
+         const Inertia expected_inertia{this->number_variables, this->number_constraints, 0};
 
-      const size_t offset = this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
-      double* primal_regularization_values = augmented_matrix_values + offset;
-      double* dual_regularization_values = augmented_matrix_values + offset + this->get_primal_regularization_variables().size();
-      this->regularization_strategy.regularize_augmented_matrix(statistics, *this, augmented_matrix_values,
-         dual_regularization_parameter, expected_inertia, linear_solver, primal_regularization_values, dual_regularization_values);
+         const size_t offset = this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
+         double* primal_regularization_values = augmented_matrix_values + offset;
+         double* dual_regularization_values = augmented_matrix_values + offset + this->get_primal_regularization_variables().size();
+         this->regularization_strategy.regularize_augmented_matrix(statistics, *this, augmented_matrix_values,
+            dual_regularization_parameter, expected_inertia, linear_solver, primal_regularization_values, dual_regularization_values);
+      }
+      else {
+         linear_solver.do_numerical_factorization(augmented_matrix_values);
+      }
    }
 
    void Subproblem::assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const {
@@ -176,7 +183,10 @@ namespace uno {
    }
 
    const Collection<size_t>& Subproblem::get_primal_regularization_variables() const {
-      return this->problem.get_primal_regularization_variables();
+      if (!this->hessian_model.is_positive_definite() && this->regularization_strategy.performs_primal_regularization()) {
+         return this->problem.get_primal_regularization_variables();
+      }
+      return this->empty_set;
    }
 
    const Collection<size_t>& Subproblem::get_dual_regularization_constraints() const {

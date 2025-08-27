@@ -67,7 +67,8 @@ namespace uno {
       MA57Workspace workspace{};
       COOEvaluationSpace evaluation_space{};
 
-      static constexpr size_t fortran_shift{1};
+      bool analysis_performed{false};
+      bool factorization_performed{false};
 
       bool use_iterative_refinement{false};
    };

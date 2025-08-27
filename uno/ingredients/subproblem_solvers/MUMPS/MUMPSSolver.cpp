@@ -65,21 +65,29 @@ namespace uno {
    }
 
    void MUMPSSolver::do_symbolic_analysis() {
+      assert(!this->analysis_performed);
+
       this->workspace.job = MUMPSSolver::JOB_ANALYSIS;
       // connect the local sparsity with the pointers in the workspace
       this->workspace.irn = this->evaluation_space.matrix_row_indices.data();
       this->workspace.jcn = this->evaluation_space.matrix_column_indices.data();
       dmumps_c(&this->workspace);
       this->workspace.icntl[7] = 8; // ICNTL(8) = 8: recompute scaling before factorization
+      this->analysis_performed = true;
    }
 
    void MUMPSSolver::do_numerical_factorization(const double* matrix_values) {
+      assert(this->analysis_performed);
+
       this->workspace.job = MUMPSSolver::JOB_FACTORIZATION;
       this->workspace.a = const_cast<double*>(matrix_values);
       dmumps_c(&this->workspace);
+      this->factorization_performed = true;
    }
 
    void MUMPSSolver::solve_indefinite_system(const Vector<double>& /*matrix_values*/, const Vector<double>& rhs, Vector<double>& result) {
+      assert(this->factorization_performed);
+
       result = rhs;
       this->workspace.rhs = result.data();
       this->workspace.job = MUMPSSolver::JOB_SOLVE;

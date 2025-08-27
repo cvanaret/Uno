@@ -45,7 +45,8 @@ namespace uno {
 
       static const int GENERAL_SYMMETRIC = 2;
 
-      const size_t fortran_shift{1};
+      bool analysis_performed{false};
+      bool factorization_performed{false};
    };
 } // namespace
 

@@ -3,6 +3,7 @@
 
 #include "COOEvaluationSpace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/COOMatrix.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -99,6 +100,12 @@ const size_t dimension = subproblem.number_variables + subproblem.number_constra
       }
 
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+         // perform the symbolic analysis once and for all
+         if (!this->analysis_performed) {
+            DEBUG << "Performing symbolic analysis of the indefinite system\n";
+            linear_solver.do_symbolic_analysis();
+            this->analysis_performed = true;
+         }
          // assemble the augmented matrix
          subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data());
          // regularize the augmented matrix (this calls the analysis and the factorization)

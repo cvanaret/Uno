@@ -60,7 +60,8 @@ namespace uno {
       MA27Workspace workspace{};
       COOEvaluationSpace evaluation_space{};
 
-      static constexpr size_t fortran_shift{1};
+      bool analysis_performed{false};
+      bool factorization_performed{false};
 
       // bool use_iterative_refinement{false}; // Not sure how to do this with ma27
       void check_factorization_status();

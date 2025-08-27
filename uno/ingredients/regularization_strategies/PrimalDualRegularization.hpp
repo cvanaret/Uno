@@ -56,7 +56,6 @@ namespace uno {
       const ElementType primal_regularization_fast_increase_factor;
       const ElementType primal_regularization_slow_increase_factor;
       const size_t threshold_unsuccessful_attempts;
-      bool symbolic_analysis_performed{false};
    };
 
    template <typename ElementType>
@@ -132,13 +131,6 @@ namespace uno {
       DEBUG << "Testing factorization with regularization factors (0, 0)\n";
       size_t number_attempts = 1;
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";
-
-      // perform the symbolic analysis only once
-      if (!this->symbolic_analysis_performed) {
-         DEBUG << "Performing symbolic analysis of the indefinite system\n";
-         linear_solver.do_symbolic_analysis();
-         this->symbolic_analysis_performed = true;
-      }
 
       DEBUG << "Performing numerical factorization of the indefinite system\n";
       linear_solver.do_numerical_factorization(augmented_matrix_values);

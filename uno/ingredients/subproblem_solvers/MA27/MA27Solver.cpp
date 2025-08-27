@@ -149,6 +149,8 @@ namespace uno {
    }
 
    void MA27Solver::do_symbolic_analysis() {
+      assert(!this->analysis_performed);
+
       int liw = static_cast<int>(this->workspace.iw.size());
       MA27_symbolic_analysis(&this->workspace.n, &this->workspace.nnz,              /* size info */
          this->evaluation_space.matrix_row_indices.data(), this->evaluation_space.matrix_column_indices.data(),                     /* matrix indices */
@@ -164,9 +166,12 @@ namespace uno {
          WARNING << "MA27 has issued a warning: IFLAG = " << this->workspace.info[eINFO::IFLAG] << " additional info, IERROR = "
             << this->workspace.info[eINFO::IERROR] << '\n';
       }
+      this->analysis_performed = true;
    }
 
    void MA27Solver::do_numerical_factorization(const double* matrix_values) {
+      assert(this->analysis_performed);
+
       // initialize factor with the entries of the matrix. It will be modified by MA27BD
       std::copy_n(matrix_values, this->workspace.nnz, this->workspace.factor.begin());
 
@@ -203,10 +208,13 @@ namespace uno {
       }
       this->workspace.w.resize(static_cast<size_t>(this->workspace.maxfrt));
       this->check_factorization_status();
+      this->factorization_performed = true;
    }
 
    void MA27Solver::solve_indefinite_system(const Vector<double>& /*matrix_values*/, const Vector<double>& rhs,
          Vector<double>& result) {
+      assert(this->factorization_performed);
+
       int la = static_cast<int>(this->workspace.factor.size());
       int liw = static_cast<int>(this->workspace.iw.size());
 
