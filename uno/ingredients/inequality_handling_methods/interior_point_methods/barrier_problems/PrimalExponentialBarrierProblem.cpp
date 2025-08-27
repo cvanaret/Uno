@@ -6,7 +6,6 @@
 #include "linear_algebra/Indexing.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/UnaryNegation.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
@@ -20,13 +19,9 @@ namespace uno {
 
    void PrimalExponentialBarrierProblem::generate_initial_iterate(Iterate& initial_iterate) const {
       // set the bound multipliers
-      for (size_t constraint_index: Range(this->problem.number_constraints)) {
-         initial_iterate.multipliers.constraints[constraint_index] = this->parameters.default_multiplier;
-      }
-      for (const size_t variable_index: Range(this->problem.number_variables)) {
-         initial_iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
-         initial_iterate.multipliers.upper_bounds[variable_index] = this->parameters.default_multiplier;
-      }
+      initial_iterate.multipliers.constraints.fill(this->parameters.default_multiplier);
+      initial_iterate.multipliers.lower_bounds.fill(this->parameters.default_multiplier);
+      initial_iterate.multipliers.upper_bounds.fill(-this->parameters.default_multiplier);
    }
 
    double PrimalExponentialBarrierProblem::get_objective_multiplier() const {
