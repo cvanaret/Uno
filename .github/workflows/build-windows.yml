@@ -75,6 +75,8 @@ jobs:
           -DMUMPS_PORD_LIBRARY=${{github.workspace}}\deps\lib\libpord.a ^
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\deps\lib\libmpiseq.a ^
           -DHIGHS_DIR=${{github.workspace}}\deps\highs\lib\cmake\highs ^
+          -DBLAS_LIBRARIES=${{github.workspace}}\deps\lib\libblas.a ^
+          -DLAPACK_LIBRARIES=${{github.workspace}}\deps\lib\liblapack.a ^
           -DBUILD_STATIC_LIBS=ON ^
           -DBUILD_SHARED_LIBS=ON .
 
