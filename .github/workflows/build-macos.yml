@@ -76,12 +76,10 @@ jobs:
                                                 -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/deps/lib/libmumps_common.a \
                                                 -DMUMPS_PORD_LIBRARY=${{github.workspace}}/deps/lib/libpord.a \
                                                 -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/deps/lib/libmpiseq.a \
-                                                -DHIGHS_DIR=${{github.workspace}}/deps/highs \
-                                                -DBLAS_LIBRARIES=${{github.workspace}}/deps/lib/libblas.a \
-                                                -DLAPACK_LIBRARIES=${{github.workspace}}/deps/lib/liblapack.a \
+                                                -DHIGHS_DIR=${{github.workspace}}/deps/highs/lib/cmake/highs \
                                                 -DBUILD_STATIC_LIBS=ON \
                                                 -DBUILD_SHARED_LIBS=ON .
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j4
