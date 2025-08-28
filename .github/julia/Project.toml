@@ -3,7 +3,7 @@ AmplNLWriter = "7c4d4715-977e-5154-bfe0-e096adeac482"
 MINLPTests = "ee0a3090-8ee9-5cdb-b8cb-8eeba3165522"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-JuMP = "e252ec54f2f0d4a576d87575031c3a24775f4c72"
+JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 
 [compat]
 AmplNLWriter = "1"
