@@ -29,16 +29,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # we want the combination (macos-13, x64) + (macos-latest, arm64)
-        os: [macos-13, macos-latest]
-        architecture: [arm64, x64]
+        os: [macos-13]
+        architecture: [x64]
         compiler: [gcc]
-        exclude:
-          # macos-latest only works with arm64 architecture 
-          - os: macos-latest
-            architecture: x64
-          - os: macos-13
-            architecture: arm64
 
     steps:
     - name: Checkout repository
@@ -83,7 +76,7 @@ jobs:
                                                 -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/deps/lib/libmumps_common.a \
                                                 -DMUMPS_PORD_LIBRARY=${{github.workspace}}/deps/lib/libpord.a \
                                                 -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/deps/lib/libmpiseq.a \
-                                                -DHIGHS_DIR=${{github.workspace}}/deps/highs/lib/cmake/highs \
+                                                -DHIGHS_DIR=${{github.workspace}}/deps/highs \
                                                 -DBLAS_LIBRARIES=${{github.workspace}}/deps/lib/libblas.a \
                                                 -DLAPACK_LIBRARIES=${{github.workspace}}/deps/lib/liblapack.a \
                                                 -DBUILD_STATIC_LIBS=ON \
