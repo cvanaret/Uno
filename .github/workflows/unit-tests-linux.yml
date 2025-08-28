@@ -59,6 +59,7 @@ jobs:
         wget https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/MUMPS_static-v${VERSION_MUMPS}%2B0/MUMPS_static.v${VERSION_MUMPS}.$PLATFORM-libgfortran5.tar.gz
         wget https://github.com/amontoison/HiGHS_static_jll.jl/releases/download/HiGHS_static-v${VERSION_HIGHS}%2B0/HiGHS_static.v${VERSION_HIGHS}.$PLATFORM-libgfortran5.tar.gz
         mkdir deps
+        mkdir deps/highs
         tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
         tar -xzvf MUMPS_static.v${VERSION_MUMPS}.$PLATFORM-libgfortran5.tar.gz -C deps
         tar -xzvf HiGHS_static.v${VERSION_HIGHS}.$PLATFORM-libgfortran5.tar.gz -C deps/highs
