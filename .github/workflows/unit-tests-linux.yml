@@ -61,7 +61,7 @@ jobs:
         mkdir deps
         tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
         tar -xzvf MUMPS_static.v${VERSION_MUMPS}.$PLATFORM-libgfortran5.tar.gz -C deps
-        tar -xzvf HiGHS_static.v${VERSION_HIGHS}.$PLATFORM-libgfortran5.tar.gz -C deps
+        tar -xzvf HiGHS_static.v${VERSION_HIGHS}.$PLATFORM-libgfortran5.tar.gz -C deps/highs
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
@@ -78,7 +78,7 @@ jobs:
                                                 -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/deps/lib/libmpiseq.a \
                                                 -DBLAS_LIBRARIES=${{github.workspace}}/deps/lib/libblas.a \
                                                 -DLAPACK_LIBRARIES=${{github.workspace}}/deps/lib/liblapack.a \
-                                                -DHIGHS_DIR=${{github.workspace}}/deps \
+                                                -DHIGHS_DIR=${{github.workspace}}/deps/highs/lib/cmake/highs \
                                                 -DBUILD_STATIC_LIBS=ON \
                                                 -DBUILD_SHARED_LIBS=ON .
 
