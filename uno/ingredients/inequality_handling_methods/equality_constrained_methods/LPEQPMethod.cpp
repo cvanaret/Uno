@@ -13,6 +13,7 @@
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/EvaluationSpace.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -26,13 +27,14 @@ namespace uno {
          activity_tolerance(options.get_double("TR_activity_tolerance")) {
    }
 
-   void LPEQPMethod::initialize(const OptimizationProblem& problem, const HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy) {
+   void LPEQPMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
+         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
       this->initial_point.resize(problem.number_variables);
-      regularization_strategy.initialize_memory(problem, hessian_model);
       this->LP_direction = Direction(problem.number_variables, problem.number_constraints);
-      this->LP_solver->initialize_memory(problem, this->LP_hessian_model, this->LP_regularization_strategy);
-      this->QP_solver->initialize_memory(problem, hessian_model, regularization_strategy);
+      const Subproblem LP_subproblem{problem, current_iterate, this->LP_hessian_model, this->LP_regularization_strategy, trust_region_radius};
+      this->LP_solver->initialize_memory(LP_subproblem);
+      const Subproblem EQP_subproblem{problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
+      this->QP_solver->initialize_memory(EQP_subproblem);
    }
 
    void LPEQPMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
@@ -48,19 +50,17 @@ namespace uno {
    }
 
    void LPEQPMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         const Multipliers& current_multipliers, Direction& direction, HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
-         WarmstartInformation& /*warmstart_information*/) {
+         Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
+         double trust_region_radius, WarmstartInformation& /*warmstart_information*/) {
       //std::cout << "Before solving LP:\n"; warmstart_information.display();
       // solve LP subproblem (within trust-region to avoid unboundedness)
       if (trust_region_radius == INF<double>) {
          trust_region_radius = 100.; // TODO option
       }
 
-      Subproblem LP_subproblem{problem, current_iterate, current_multipliers, this->LP_hessian_model,
-         this->LP_regularization_strategy, trust_region_radius};
+      Subproblem LP_subproblem{problem, current_iterate, this->LP_hessian_model, this->LP_regularization_strategy, trust_region_radius};
       constexpr WarmstartInformation LP_warmstart_information{};
-      this->solve_LP(statistics, LP_subproblem, current_multipliers, LP_warmstart_information);
+      this->solve_LP(statistics, LP_subproblem, current_iterate.multipliers, LP_warmstart_information);
       DEBUG << "d^*(LP) = " << this->LP_direction << '\n';
 
       if (this->LP_direction.status == SubproblemStatus::INFEASIBLE) {
@@ -81,10 +81,10 @@ namespace uno {
          trust_region_radius);
 
       // compute EQP direction
-      Subproblem EQP_subproblem{fixed_active_set_problem, current_iterate, current_multipliers, hessian_model,
+      Subproblem EQP_subproblem{fixed_active_set_problem, current_iterate, hessian_model,
          regularization_strategy, trust_region_radius};
       constexpr WarmstartInformation EQP_warmstart_information{};
-      this->solve_EQP(statistics, EQP_subproblem, current_multipliers, direction, EQP_warmstart_information);
+      this->solve_EQP(statistics, EQP_subproblem, current_iterate.multipliers, direction, EQP_warmstart_information);
       DEBUG << "d^*(EQP) = " << direction << '\n';
       // reset the initial point
       this->initial_point.fill(0.);
@@ -103,8 +103,8 @@ namespace uno {
    void LPEQPMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
       problem.set_elastic_variable_values(current_iterate, [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
          iterate.primals[elastic_index] = 0.;
-         iterate.feasibility_multipliers.lower_bounds[elastic_index] = 1.;
-         iterate.feasibility_multipliers.upper_bounds[elastic_index] = 0.;
+         iterate.multipliers.lower_bounds[elastic_index] = 1.;
+         iterate.multipliers.upper_bounds[elastic_index] = 0.;
       });
    }
 
@@ -112,11 +112,30 @@ namespace uno {
       return 0.;
    }
 
-   // progress measures
-   double LPEQPMethod::hessian_quadratic_product(const Vector<double>& vector) const {
-      return this->QP_solver->hessian_quadratic_product(vector);
+   EvaluationSpace& LPEQPMethod::get_evaluation_space() const {
+      return this->QP_solver->get_evaluation_space();
+   }
+   
+   void LPEQPMethod::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
+      auto& evaluation_space = this->QP_solver->get_evaluation_space();
+      evaluation_space.evaluate_constraint_jacobian(problem, iterate);
    }
 
+   void LPEQPMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      auto& evaluation_space = this->QP_solver->get_evaluation_space();
+      evaluation_space.compute_constraint_jacobian_vector_product(vector, result);
+   }
+
+   void LPEQPMethod::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+      auto& evaluation_space = this->QP_solver->get_evaluation_space();
+      evaluation_space.compute_constraint_jacobian_transposed_vector_product(vector, result);
+   }
+
+   double LPEQPMethod::compute_hessian_quadratic_product(const Vector<double>& vector) const {
+      auto& evaluation_space = this->QP_solver->get_evaluation_space();
+      return evaluation_space.compute_hessian_quadratic_product(vector);
+   }
+   
    void LPEQPMethod::set_auxiliary_measure(const OptimizationProblem& /*problem*/, Iterate& iterate) {
       iterate.progress.auxiliary = 0.;
    }
@@ -126,7 +145,7 @@ namespace uno {
       return 0.;
    }
 
-   void LPEQPMethod::postprocess_iterate(const OptimizationProblem& /*problem*/, Vector<double>& /*primals*/, Multipliers& /*multipliers*/) {
+   void LPEQPMethod::postprocess_iterate(const OptimizationProblem& /*problem*/, Iterate& /*iterate*/) {
       // do nothing
    }
 
