@@ -195,7 +195,6 @@ namespace uno {
       else {
          // copy rhs into result (overwritten by MA57)
          result = rhs;
-
          MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
             this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.nrhs, result.data(), &lrhs,
             this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
