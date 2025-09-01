@@ -1,16 +1,14 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <memory>
 #include "UnoSolverWrapper.hpp"
 #include "PythonModel.hpp"
 #include "model/ModelFactory.hpp"
 #include "options/Options.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
-   UnoSolverWrapper::UnoSolverWrapper(bool constrained_model, const Options& options):
-         uno_solver(constrained_model, options) {
-   }
-
    void UnoSolverWrapper::solve(size_t number_variables, size_t number_constraints, const objective_function_type& evaluate_objective,
          const constraint_functions_type& evaluate_constraints, const objective_gradient_type& evaluate_objective_gradient,
          const jacobian_type& evaluate_jacobian, const lagrangian_hessian_type& evaluate_lagrangian_hessian,
@@ -41,7 +39,6 @@ namespace uno {
       model->initial_primal_point(initial_iterate.primals);
       model->project_onto_variable_bounds(initial_iterate.primals);
       model->initial_dual_point(initial_iterate.multipliers.constraints);
-      initial_iterate.feasibility_multipliers.reset();
 
       // solve the instance
       const Result result = this->uno_solver.solve(*model, initial_iterate, options);
