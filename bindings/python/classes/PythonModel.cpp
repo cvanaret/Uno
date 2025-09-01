@@ -2,13 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "PythonModel.hpp"
-#include "linear_algebra/RectangularMatrix.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "Uno.hpp"
 
 namespace uno {
    PythonModel::PythonModel(const std::string& file_name, size_t number_variables, size_t number_constraints,
-            double objective_sign, const objective_function_type& evaluate_objective, const constraint_functions_type& evaluate_constraints,
+            double objective_sign, const objective_function_type& objective, const constraint_functions_type& constraints,
             const objective_gradient_type& evaluate_objective_gradient, const jacobian_type& evaluate_jacobian,
             const lagrangian_hessian_type& evaluate_lagrangian_hessian, size_t number_jacobian_nonzeros,
             size_t number_hessian_nonzeros, const std::vector<double>& variables_lower_bounds,
@@ -17,11 +16,11 @@ namespace uno {
             const std::vector<double>& dual_initial_point) :
          Model(file_name, number_variables, number_constraints, objective_sign),
          // functions
-         objective(evaluate_objective), constraints(evaluate_constraints), objective_gradient(evaluate_objective_gradient),
+         objective(objective), constraints(constraints), objective_gradient(evaluate_objective_gradient),
          jacobian(evaluate_jacobian), hessian(evaluate_lagrangian_hessian),
          // sparsity
-         number_jacobian_nonzeros(number_jacobian_nonzeros),
-         number_hessian_nonzeros(number_hessian_nonzeros),
+         jacobian_nnz(number_jacobian_nonzeros),
+         hessian_nnz(number_hessian_nonzeros),
          // bounds
          variables_lower_bounds(variables_lower_bounds), variables_upper_bounds(variables_upper_bounds),
          constraints_lower_bounds(constraints_lower_bounds), constraints_upper_bounds(constraints_upper_bounds),
@@ -30,24 +29,23 @@ namespace uno {
          // additional information on the variables and the constraints
          constraint_type(this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
-         inequality_constraints_collection(this->inequality_constraints),
-         lower_bounded_variables_collection(this->lower_bounded_variables),
-         upper_bounded_variables_collection(this->upper_bounded_variables),
-         single_lower_bounded_variables_collection(this->single_lower_bounded_variables),
-         single_upper_bounded_variables_collection(this->single_upper_bounded_variables) {
+         inequality_constraints_collection(this->inequality_constraints) {
       // variables
-      this->lower_bounded_variables.reserve(this->number_variables);
-      this->upper_bounded_variables.reserve(this->number_variables);
-      this->single_lower_bounded_variables.reserve(this->number_variables);
-      this->single_upper_bounded_variables.reserve(this->number_variables);
       this->fixed_variables.reserve(this->number_variables);
-      this->partition_variables(this->fixed_variables, this->lower_bounded_variables, this->upper_bounded_variables,
-         this->single_lower_bounded_variables, this->single_upper_bounded_variables);
+      //Model::partition_variables(this->fixed_variables);
 
       // constraints
       this->equality_constraints.reserve(this->number_constraints);
       this->inequality_constraints.reserve(this->number_constraints);
-      this->partition_constraints(this->equality_constraints, this->inequality_constraints);
+      //Model::partition_constraints(this->equality_constraints, this->inequality_constraints);
+   }
+
+   bool PythonModel::has_implicit_hessian_representation() const {
+      return false;
+   }
+
+   bool PythonModel::has_explicit_hessian_representation() const {
+      return true;
    }
 
    double PythonModel::evaluate_objective(const Vector<double>& x) const {
@@ -59,23 +57,18 @@ namespace uno {
       this->objective_gradient(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(&gradient));
    }
 
-   void PythonModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
+   void PythonModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
       this->constraints(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(&constraints));
    }
 
-   // sparse gradient
-   void PythonModel::evaluate_constraint_gradient(const Vector<double>& /*x*/, size_t /*constraint_index*/, SparseVector<double>& /*gradient*/) const {
-      throw std::runtime_error("PythonModel::evaluate_constraint_gradient not implemented");
-   }
-
-   void PythonModel::evaluate_constraint_jacobian(const Vector<double>& x, RectangularMatrix<double>& constraint_jacobian) const {
-      this->jacobian(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(&constraint_jacobian));
+   void PythonModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
+      this->jacobian(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(jacobian_values));
    }
 
    void PythonModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         SymmetricMatrix<size_t, double>& hessian) const {
+         double* hessian_values) const {
       this->hessian(wrap_pointer(const_cast<Vector<double>*>(&x)), objective_multiplier, wrap_pointer(const_cast<Vector<double>*>(&multipliers)),
-         wrap_pointer(&hessian));
+         wrap_pointer(hessian_values));
    }
 
    void PythonModel::compute_hessian_vector_product(const double* /*vector*/, double /*objective_multiplier*/,
@@ -91,24 +84,8 @@ namespace uno {
       return this->variables_upper_bounds[variable_index];
    }
 
-   const Collection<size_t>& PythonModel::get_lower_bounded_variables() const {
-      return this->lower_bounded_variables_collection;
-   }
-
-   const Collection<size_t>& PythonModel::get_upper_bounded_variables() const {
-      return this->upper_bounded_variables_collection;
-   }
-
    const SparseVector<size_t>& PythonModel::get_slacks() const {
       return this->slacks;
-   }
-
-   const Collection<size_t>& PythonModel::get_single_lower_bounded_variables() const {
-      return this->single_lower_bounded_variables_collection;
-   }
-
-   const Collection<size_t>& PythonModel::get_single_upper_bounded_variables() const {
-      return this->single_upper_bounded_variables_collection;
    }
 
    const Vector<size_t>& PythonModel::get_fixed_variables() const {
@@ -149,11 +126,11 @@ namespace uno {
       // do nothing
    }
 
-   size_t PythonModel::get_number_jacobian_nonzeros() const {
-      return this->number_jacobian_nonzeros;
+   size_t PythonModel::number_jacobian_nonzeros() const {
+      return this->jacobian_nnz;
    }
 
-   size_t PythonModel::get_number_hessian_nonzeros() const {
-      return this->number_hessian_nonzeros;
+   size_t PythonModel::number_hessian_nonzeros() const {
+      return this->hessian_nnz;
    }
 } // namespace
