@@ -13,7 +13,7 @@ namespace uno {
    void define_UnoSolver(py::module& module) {
       py::class_<UnoSolverWrapper>(module, "UnoSolver")
          // constructor
-         .def(py::init<bool, const Options&>(), py::arg("constrained_model"), py::arg("options"), "Constructor")
+         .def(py::init<>(), "Constructor")
          // methods
          .def("solve", &UnoSolverWrapper::solve,
             /*

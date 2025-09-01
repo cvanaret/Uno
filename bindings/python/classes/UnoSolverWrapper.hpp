@@ -14,7 +14,7 @@ namespace uno {
 
    class UnoSolverWrapper {
    public:
-      UnoSolverWrapper(bool constrained_model, const Options& options);
+      UnoSolverWrapper() = default;
 
       void solve(size_t number_variables, size_t number_constraints, const objective_function_type& evaluate_objective,
          const constraint_functions_type& evaluate_constraints, const objective_gradient_type& evaluate_objective_gradient,
@@ -25,7 +25,7 @@ namespace uno {
          const std::vector<double>& primal_initial_point, const std::vector<double>& dual_initial_point, const Options& options);
 
    protected:
-      Uno uno_solver;
+      Uno uno_solver{};
    };
 } // namespace
 

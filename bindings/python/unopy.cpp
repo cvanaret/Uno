@@ -10,8 +10,6 @@ PYBIND11_MAKE_OPAQUE(uno::Vector<double>);
 
 namespace uno {
    void define_SparseVector(py::module& module);
-   void define_RectangularMatrix(py::module& module);
-   void define_SymmetricMatrix(py::module& module);
    void define_Options(py::module& module);
    void define_UnoSolver(py::module& module);
    void define_Vector(py::module& module);
@@ -21,8 +19,6 @@ namespace uno {
       module.doc() = "Python bindings to the solver Uno for nonlinearly constrained optimization";
       
       define_SparseVector(module);
-      define_RectangularMatrix(module);
-      define_SymmetricMatrix(module);
       define_Options(module);
       define_UnoSolver(module);
       define_Vector(module);
