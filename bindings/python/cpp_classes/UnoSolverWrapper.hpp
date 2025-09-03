@@ -1,24 +1,23 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_UNOSOLVER_H
-#define UNO_UNOSOLVER_H
+#ifndef UNO_UNOSOLVERWRAPPER_H
+#define UNO_UNOSOLVERWRAPPER_H
 
 #include "Uno.hpp"
-#include "model/Model.hpp"
-#include "optimization/Result.hpp"
 #include "options/Options.hpp"
+#include "PythonModel.hpp"
 
 namespace uno {
-   class UnoSolver {
+   class UnoSolverWrapper {
    public:
       Uno uno_solver{};
       Options options{};
 
-      UnoSolver();
+      UnoSolverWrapper();
 
-      void optimize(const Model& model);
+      void optimize(const PythonUserModel& user_model);
    };
 } // namespace
 
-#endif // UNO_UNOSOLVER_H
+#endif // UNO_UNOSOLVERWRAPPER_H

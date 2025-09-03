@@ -35,13 +35,13 @@ def evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_va
 
 if __name__ == '__main__':
 	# model creation
-	base_indexing = UNO_ZERO_BASED_INDEXING
+	base_indexing = unopy.UNO_ZERO_BASED_INDEXING
 	# variables
 	number_variables = 2
 	variables_lower_bounds = [-Inf, -Inf]
 	variables_upper_bounds = [0.5, Inf]
 	# objective
-	optimization_sense = UNO_MINIMIZE
+	optimization_sense = unopy.UNO_MINIMIZE
 	# constraints
 	number_constraints = 2
 	constraints_lower_bounds = [1., 0.]
@@ -51,29 +51,15 @@ if __name__ == '__main__':
 	jacobian_column_indices = [0, 0, 1, 1]
 	# Hessian
 	number_hessian_nonzeros = 3
-	hessian_triangular_part = UNO_LOWER_TRIANGLE
-	hessian_row_indices[] = [0, 1, 1]
-	hessian_column_indices[] = [0, 0, 1]
-	lagrangian_sign_convention = UNO_MULTIPLIER_NEGATIVE
+	hessian_triangular_part = unopy.UNO_LOWER_TRIANGLE
+	hessian_row_indices = [0, 1, 1]
+	hessian_column_indices = [0, 0, 1]
+	lagrangian_sign_convention = unopy.UNO_MULTIPLIER_NEGATIVE
 	# initial point
 	x0 = [-2., 1.]
 
-	options = unopy.get_default_options()
-	unopy.set_preset(options, "filtersqp")
+	model = unopy.Model('N', 2, 0., 0., 1)
 	uno_solver = unopy.UnoSolver()
-	result = uno_solver.solve(number_variables, number_constraints,
-		evaluate_objective,
-		evaluate_constraints,
-		evaluate_objective_gradient,
-		evaluate_jacobian,
-		evaluate_lagrangian_hessian,
-		number_jacobian_nonzeros,
-		number_hessian_nonzeros,
-		variables_lower_bounds,
-		variables_upper_bounds,
-		constraints_lower_bounds,
-		constraints_upper_bounds,
-		primal_initial_point,
-		dual_initial_point,
-		options)
-	# TODO result
+	uno_solver.set_preset("filtersqp")
+	
+	result = uno_solver.optimize(model)

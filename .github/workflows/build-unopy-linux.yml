@@ -46,5 +46,5 @@ jobs:
       run: |
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    - name: Build
+    - name: Build unopy
       run: cmake --build ${{github.workspace}}/build --target unopy --config ${{env.BUILD_TYPE}}
