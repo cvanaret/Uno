@@ -286,8 +286,8 @@ if(pybind11_DIR)
    endif()
    
    file(GLOB PYTHON_MODULE_FILES
-      bindings/python/classes/*.cpp
-      bindings/python/modules/*.cpp
+      bindings/python/cpp_classes/*.cpp
+      bindings/python/python_modules/*.cpp
       bindings/python/unopy.cpp
    )
 
@@ -327,10 +327,10 @@ if(TARGET unopy)
    list(APPEND INSTALL_TARGETS unopy)
 endif()
 install(TARGETS ${INSTALL_TARGETS}
-        COMPONENT libuno
-        EXPORT UnoTargets
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # DLLs on windows
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # static libraries
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # shared libraries
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # headers
+   COMPONENT libuno
+   EXPORT UnoTargets
+   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # DLLs on windows
+   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # static libraries
+   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # shared libraries
+   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} # headers
 )

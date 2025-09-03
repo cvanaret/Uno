@@ -5,26 +5,16 @@
 #define UNO_PYTHONMODEL_H
 
 #include <vector>
-#include "PythonTypes.hpp"
-#include "UnoSolverWrapper.hpp"
+#include "../unopy.hpp"
+#include "UnoSolver.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "model/Model.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 
 namespace uno {
-   // forward reference
-   class Options;
-
    class PythonModel: public Model {
    public:
-      PythonModel(const std::string& file_name, size_t number_variables, size_t number_constraints,
-         double objective_sign, const objective_function_type& objective, const constraint_functions_type& constraints,
-         const objective_gradient_type& evaluate_objective_gradient, const jacobian_type& evaluate_jacobian,
-         const lagrangian_hessian_type& evaluate_lagrangian_hessian, size_t number_jacobian_nonzeros,
-         size_t number_hessian_nonzeros, const std::vector<double>& variables_lower_bounds,
-         const std::vector<double>& variables_upper_bounds, const std::vector<double>& constraints_lower_bounds,
-         const std::vector<double>& constraints_upper_bounds, const std::vector<double>& primal_initial_point,
-         const std::vector<double>& dual_initial_point);
+      explicit PythonModel(const PythonUserModel& user_model);
       ~PythonModel() override = default;
 
       // Hessian representation
@@ -71,34 +61,14 @@ namespace uno {
       [[nodiscard]] size_t number_hessian_nonzeros() const override;
 
    protected:
-      // functions
-      const objective_function_type& objective;
-      const constraint_functions_type& constraints;
-      const objective_gradient_type& objective_gradient;
-      const jacobian_type& jacobian;
-      const lagrangian_hessian_type& hessian;
-
-      const size_t jacobian_nnz;
-      const size_t hessian_nnz;
-
-      const std::vector<double>& variables_lower_bounds;
-      const std::vector<double>& variables_upper_bounds;
-      const std::vector<double>& constraints_lower_bounds;
-      const std::vector<double>& constraints_upper_bounds;
-
-      const std::vector<double>& primal_initial_point;
-      const std::vector<double>& dual_initial_point;
-
-      std::vector<FunctionType> constraint_type; /*!< Types of the constraints (LINEAR, QUADRATIC, NONLINEAR) */
-
-      // lists of variables and constraints + corresponding collection objects
-      ForwardRange linear_constraints{0};
-      std::vector<size_t> equality_constraints{};
-      CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;
-      std::vector<size_t> inequality_constraints{};
-      CollectionAdapter<std::vector<size_t>&> inequality_constraints_collection;
-      SparseVector<size_t> slacks{};
-      Vector<size_t> fixed_variables;
+      const PythonUserModel& user_model;
+      const SparseVector<size_t> slacks{0};
+      const Vector<size_t> fixed_variables{0};
+      const ForwardRange linear_constraints{0};
+      std::vector<size_t> equality_constraints;
+      CollectionAdapter<std::vector<size_t>> equality_constraints_collection;
+      std::vector<size_t> inequality_constraints;
+      CollectionAdapter<std::vector<size_t>> inequality_constraints_collection;
    };
 } // namespace
 
