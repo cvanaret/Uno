@@ -25,15 +25,22 @@ namespace uno {
    }
 
    double PythonModel::evaluate_objective(const Vector<double>& x) const {
-      return this->user_model.objective_function(wrap_pointer(const_cast<Vector<double>*>(&x)));
+      if (this->user_model.objective_function != nullptr) {
+         return this->user_model.objective_function(wrap_pointer(const_cast<Vector<double>*>(&x)));
+      }
+      return 0.;
    }
 
    void PythonModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
-      this->user_model.constraint_functions(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(&constraints));
+      if (this->user_model.constraint_functions != nullptr) {
+         this->user_model.constraint_functions(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(&constraints));
+      }
    }
 
    void PythonModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
-      this->user_model.objective_gradient(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(&gradient));
+      if (this->user_model.objective_gradient != nullptr) {
+         this->user_model.objective_gradient(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(&gradient));
+      }
    }
 
    void PythonModel::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
@@ -69,13 +76,17 @@ namespace uno {
    }
 
    void PythonModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
-      this->user_model.constraint_jacobian(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(jacobian_values));
+      if (this->user_model.constraint_jacobian != nullptr) {
+         this->user_model.constraint_jacobian(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(jacobian_values));
+      }
    }
 
    void PythonModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const {
-      this->user_model.lagrangian_hessian(wrap_pointer(const_cast<Vector<double>*>(&x)), objective_multiplier,
-         wrap_pointer(const_cast<Vector<double>*>(&multipliers)), wrap_pointer(hessian_values));
+      if (this->user_model.lagrangian_hessian != nullptr) {
+         this->user_model.lagrangian_hessian(wrap_pointer(const_cast<Vector<double>*>(&x)), objective_multiplier,
+            wrap_pointer(const_cast<Vector<double>*>(&multipliers)), wrap_pointer(hessian_values));
+      }
    }
 
    void PythonModel::compute_hessian_vector_product(const double* /*vector*/, double /*objective_multiplier*/,
