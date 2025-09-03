@@ -10,7 +10,7 @@
 namespace py = pybind11;
 
 namespace uno {
-   void define_PythonUserModel(py::module& module) {
+   void define_Model(py::module& module) {
       py::class_<PythonUserModel>(module, "Model")
          // constructor
          .def(py::init<char, int32_t, double*, double*, int32_t>(), "Constructor");

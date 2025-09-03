@@ -10,8 +10,9 @@ namespace py = pybind11;
 PYBIND11_MAKE_OPAQUE(uno::Vector<double>);
 
 namespace uno {
-   void define_PythonUserModel(py::module& module);
+   void define_Model(py::module& module);
    void define_UnoSolver(py::module& module);
+   void define_Constants(py::module& module);
 
    // unopy module definition
    PYBIND11_MODULE(unopy, module) {
@@ -20,13 +21,8 @@ namespace uno {
       description.append(", a solver for nonlinearly constrained optimization");
       module.doc() = description;
 
-      define_PythonUserModel(module);
+      define_Model(module);
       define_UnoSolver(module);
-
-      // export constants
-      module.attr("UNO_ZERO_BASED_INDEXING") = 0;
-      module.attr("UNO_MINIMIZE") = 0;
-      module.attr("UNO_LOWER_TRIANGLE") = 'L';
-      module.attr("UNO_MULTIPLIER_NEGATIVE") = -1.;
+      define_Constants(module);
    }
 } // namespace
