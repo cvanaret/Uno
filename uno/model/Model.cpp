@@ -5,6 +5,8 @@
 #include <utility>
 #include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "tools/Infinity.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    // abstract Problem class
@@ -27,5 +29,32 @@ namespace uno {
       const double lower_bound_violation = std::max(0., this->constraint_lower_bound(constraint_index) - constraint_value);
       const double upper_bound_violation = std::max(0., constraint_value - this->constraint_upper_bound(constraint_index));
       return std::max(lower_bound_violation, upper_bound_violation);
+   }
+
+   void Model::detect_fixed_variables(Vector<size_t>& fixed_variables) const {
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (this->variable_lower_bound(variable_index) == this->variable_upper_bound(variable_index)) {
+            WARNING << "Variable x" << variable_index << " has identical bounds\n";
+            fixed_variables.emplace_back(variable_index);
+         }
+      }
+   }
+
+   void Model::partition_constraints(std::vector<size_t>& equality_constraints, std::vector<size_t>& inequality_constraints) const {
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         const double lower_bound = this->constraint_lower_bound(constraint_index);
+         const double upper_bound = this->constraint_upper_bound(constraint_index);
+         if (lower_bound == upper_bound) {
+            equality_constraints.emplace_back(constraint_index);
+         }
+         else if (!is_finite(lower_bound) && !is_finite(upper_bound)) {
+            WARNING << "Constraint c" << constraint_index << " has no bounds\n";
+            // count the constraint as inequality to avoid reindexing of the constraints
+            inequality_constraints.emplace_back(constraint_index);
+         }
+         else {
+            inequality_constraints.emplace_back(constraint_index);
+         }
+      }
    }
 } // namespace
