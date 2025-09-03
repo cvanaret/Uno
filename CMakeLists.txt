@@ -283,8 +283,8 @@ if(pybind11_DIR)
    endif()
    
    file(GLOB PYTHON_MODULE_FILES
-      bindings/python/classes/*.cpp
-      bindings/python/modules/*.cpp
+      bindings/python/cpp_classes/*.cpp
+      bindings/python/python_modules/*.cpp
       bindings/python/unopy.cpp
    )
 
