@@ -5,19 +5,26 @@
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
 #include <string>
-#include "../cpp_classes/UnoSolver.hpp"
+#include "../cpp_classes/PythonModel.hpp"
+#include "../cpp_classes/UnoSolverWrapper.hpp"
+#include "options/Presets.hpp"
 
 namespace py = pybind11;
 
 namespace uno {
    void define_UnoSolver(py::module& module) {
-      py::class_<UnoSolver>(module, "UnoSolver")
+      py::class_<UnoSolverWrapper>(module, "UnoSolver")
          // constructor
-      .def(py::init<>(), "Constructor")
+         .def(py::init<>(), "Constructor")
          // methods
-         .def("set_option", [](UnoSolver& solver, const std::string& option_name, const std::string& option_value) {
+         .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, const std::string& option_value) {
             solver.options.set(option_name, option_value);
          }, py::arg("option_name"), py::arg("option_value"))
-         .def("optimize", &UnoSolver::optimize, py::arg("model"), "Optimize an optimization model with the Uno solver");
+         .def("set_preset", [](UnoSolverWrapper& solver, const std::string& preset_name) {
+            Presets::set(solver.options, preset_name);
+         }, py::arg("preset_name"))
+         .def("optimize", [](UnoSolverWrapper& solver, const PythonUserModel& user_model) {
+            solver.optimize(user_model);
+         }, py::arg("model"), "Optimize an optimization model with the Uno solver");
    }
 } // namespace

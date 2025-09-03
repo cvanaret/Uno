@@ -22,5 +22,11 @@ namespace uno {
 
       define_PythonUserModel(module);
       define_UnoSolver(module);
+
+      // export constants
+      module.attr("UNO_ZERO_BASED_INDEXING") = 0;
+      module.attr("UNO_MINIMIZE") = 0;
+      module.attr("UNO_LOWER_TRIANGLE") = 'L';
+      module.attr("UNO_MULTIPLIER_NEGATIVE") = -1.;
    }
 } // namespace

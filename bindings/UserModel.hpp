@@ -1,8 +1,8 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_UNOMODEL_H
-#define UNO_UNOMODEL_H
+#ifndef UNO_USERMODEL_H
+#define UNO_USERMODEL_H
 
 #include "UnoConstants.hpp"
 #include <vector>
@@ -70,4 +70,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_UNOMODEL_H
+#endif // UNO_USERMODEL_H
