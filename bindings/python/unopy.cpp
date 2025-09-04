@@ -4,10 +4,12 @@
 #include <pybind11/pybind11.h>
 #include "unopy.hpp"
 #include "Uno.hpp"
+#include "tools/PointerWrapper.hpp"
 
 namespace py = pybind11;
 
 PYBIND11_MAKE_OPAQUE(uno::Vector<double>);
+PYBIND11_MAKE_OPAQUE(uno::PointerWrapper<double>);
 
 namespace uno {
    void define_Model(py::module& module);

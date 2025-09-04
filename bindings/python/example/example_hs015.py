@@ -6,32 +6,29 @@ Inf = float("inf")
 
 # hs015.mod
 
-def evaluate_objective(x):
+def objective(x):
 	objective = 100.*(x[1] - x[0]**2)**2 + (1. - x[0])**2
-	return (objective, 0)
+	print("objective = ", objective)
+	return objective
 	
-def evaluate_constraints(x, constraint_values):
+def constraints(x, constraint_values):
 	constraint_values[0] = x[0]*x[1]
 	constraint_values[1] = x[0] + x[1]**2
-	return 0
 	
-def evaluate_objective_gradient(x, gradient):
+def objective_gradient(x, gradient):
 	gradient[0] = 400.*x[0]**3 - 400.*x[0]*x[1] + 2.*x[0] - 2.
 	gradient[1] = 200.*(x[1] - x[0]**2)
-	return 0
 
-def evaluate_jacobian(x, jacobian_values):
+def constraint_jacobian(x, jacobian_values):
 	jacobian_values[0] = x[1]
 	jacobian_values[1] = 1.
 	jacobian_values[2] = x[0]
 	jacobian_values[3] = 2.*x[1]
-	return 0
 
-def evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values):
+def lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values):
 	hessian_values[0] = objective_multiplier*(1200*x[0]**2 - 400.*x[1] + 2.)
 	hessian_values[1] = -400.*objective_multiplier*x[0] - multipliers[0]
 	hessian_values[2] = 200.*objective_multiplier - 2.*multipliers[1]
-	return 0
 
 if __name__ == '__main__':
 	# model creation
@@ -58,8 +55,19 @@ if __name__ == '__main__':
 	# initial point
 	x0 = [-2., 1.]
 
-	model = unopy.Model('N', 2, 0., 0., 1)
+	model = unopy.Model(unopy.PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
+		variables_upper_bounds, base_indexing)
+	model.set_objective(optimization_sense, objective, objective_gradient)
+	#model.set_constraints(number_constraints, constraints,
+	#	constraints_lower_bounds, constraints_upper_bounds, number_jacobian_nonzeros,
+	#	jacobian_row_indices, jacobian_column_indices, constraint_jacobian)
+	model.set_initial_primal_iterate(x0)
+	
 	uno_solver = unopy.UnoSolver()
 	uno_solver.set_preset("filtersqp")
+	uno_solver.set_option("print_subproblem", "yes")
+	uno_solver.set_option("print_solution", "yes")
+	#uno_solver.set_option("logger", "DEBUG3")
 	
 	result = uno_solver.optimize(model)
+	

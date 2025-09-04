@@ -291,6 +291,7 @@ if(pybind11_DIR)
       bindings/python/unopy.cpp
    )
 
+   add_definitions("-D PYBIND11_DETAILED_ERROR_MESSAGES")
    pybind11_add_module(unopy SHARED EXCLUDE_FROM_ALL $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
    target_link_libraries(unopy PUBLIC ${LIBRARIES})
    target_include_directories(unopy PUBLIC ${DIRECTORIES})

@@ -7,6 +7,7 @@
 #include <vector>
 #include "../unopy.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 

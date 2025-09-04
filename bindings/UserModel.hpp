@@ -34,7 +34,7 @@ namespace uno {
       DoubleVector variables_upper_bounds{nullptr};
 
       // objective
-      Objective objective_function{nullptr};
+      Objective objective_function{};
       ObjectiveGradient objective_gradient{nullptr};
 
       // constraints

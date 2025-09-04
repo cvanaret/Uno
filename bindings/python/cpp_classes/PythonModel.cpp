@@ -6,8 +6,7 @@
 #include "Uno.hpp"
 
 namespace uno {
-   PythonModel::PythonModel(const UserModel<Objective, ObjectiveGradient, Constraints, Jacobian, JacobianOperator,
-         JacobianTransposedOperator, Hessian, HessianOperator>& user_model):
+   PythonModel::PythonModel(const PythonUserModel& user_model):
       Model("Python model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
          static_cast<double>(user_model.optimization_sense)),
       user_model(user_model),
@@ -26,20 +25,25 @@ namespace uno {
 
    double PythonModel::evaluate_objective(const Vector<double>& x) const {
       if (this->user_model.objective_function != nullptr) {
-         return this->user_model.objective_function(wrap_pointer(const_cast<Vector<double>*>(&x)));
+         std::cout << "PythonModel::evaluate_objective\n";
+         return (*this->user_model.objective_function)(wrap_pointer(&x));
+      }
+      else {
+         std::cout << "PythonModel::evaluate_objective has empty pointer\n";
       }
       return 0.;
    }
 
    void PythonModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
       if (this->user_model.constraint_functions != nullptr) {
-         this->user_model.constraint_functions(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(&constraints));
+         this->user_model.constraint_functions(x, constraints);
       }
    }
 
    void PythonModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       if (this->user_model.objective_gradient != nullptr) {
-         this->user_model.objective_gradient(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(&gradient));
+         std::cout << "PythonModel::evaluate_objective_gradient\n";
+         (*this->user_model.objective_gradient)(wrap_pointer(&x), wrap_pointer(&gradient));
       }
    }
 
@@ -77,15 +81,14 @@ namespace uno {
 
    void PythonModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
       if (this->user_model.constraint_jacobian != nullptr) {
-         this->user_model.constraint_jacobian(wrap_pointer(const_cast<Vector<double>*>(&x)), wrap_pointer(jacobian_values));
+         this->user_model.constraint_jacobian(x, jacobian_values);
       }
    }
 
    void PythonModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const {
       if (this->user_model.lagrangian_hessian != nullptr) {
-         this->user_model.lagrangian_hessian(wrap_pointer(const_cast<Vector<double>*>(&x)), objective_multiplier,
-            wrap_pointer(const_cast<Vector<double>*>(&multipliers)), wrap_pointer(hessian_values));
+         this->user_model.lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
       }
    }
 
@@ -131,8 +134,8 @@ namespace uno {
    }
 
    void PythonModel::initial_primal_point(Vector<double>& x) const {
-      if (this->user_model.initial_primal_iterate != nullptr) {
-         std::copy_n(this->user_model.initial_primal_iterate, this->user_model.number_variables, x.data());
+      if (this->user_model.initial_primal_iterate.has_value()) {
+         std::copy_n(this->user_model.initial_primal_iterate->begin(), this->user_model.number_variables, x.begin());
       }
       else {
          x.fill(0.);
@@ -140,8 +143,8 @@ namespace uno {
    }
 
    void PythonModel::initial_dual_point(Vector<double>& multipliers) const {
-      if (this->user_model.initial_dual_iterate != nullptr) {
-         std::copy_n(this->user_model.initial_dual_iterate, this->user_model.number_constraints, multipliers.data());
+      if (this->user_model.initial_dual_iterate.has_value()) {
+         std::copy_n(this->user_model.initial_dual_iterate->begin(), this->user_model.number_constraints, multipliers.begin());
       }
       else {
          multipliers.fill(0.);
