@@ -52,8 +52,7 @@ namespace uno {
       this->asl->i.congrd_mode = 2;
 
       // detect fix variables
-      this->fixed_variables.reserve(this->number_variables);
-      this->find_fixed_variables();
+      Model::find_fixed_variables(this->fixed_variables);
 
       // partition equality/inequality constraints
       Model::partition_constraints(this->equality_constraints, this->inequality_constraints);
@@ -301,6 +300,7 @@ namespace uno {
       return this->number_asl_hessian_nonzeros;
    }
 
+<<<<<<< HEAD
    void AMPLModel::find_fixed_variables() {
       for (size_t variable_index: Range(this->number_variables)) {
          if (this->variable_lower_bound(variable_index) == this->variable_upper_bound(variable_index)) {
@@ -310,6 +310,8 @@ namespace uno {
       }
    }
 
+=======
+>>>>>>> b872050d (Find the fixed variables when building the C model)
    void AMPLModel::compute_lagrangian_hessian_sparsity() {
       // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
       // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
