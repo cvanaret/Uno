@@ -86,6 +86,7 @@ public:
          user_model(user_model),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints) {
+      this->find_fixed_variables(this->fixed_variables);
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
 
@@ -261,7 +262,7 @@ public:
 protected:
    const UserModel& user_model;
    const SparseVector<size_t> slacks{0};
-   const Vector<size_t> fixed_variables{0};
+   Vector<size_t> fixed_variables{0};
    const ForwardRange linear_constraints{0};
    std::vector<size_t> equality_constraints;
    CollectionAdapter<std::vector<size_t>> equality_constraints_collection;
