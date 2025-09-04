@@ -31,6 +31,15 @@ namespace uno {
       return std::max(lower_bound_violation, upper_bound_violation);
    }
 
+   void Model::find_fixed_variables(Vector<size_t>& fixed_variables) const {
+      for (size_t variable_index: Range(this->number_variables)) {
+         if (this->variable_lower_bound(variable_index) == this->variable_upper_bound(variable_index)) {
+            WARNING << "Variable x" << variable_index << " has identical bounds\n";
+            fixed_variables.emplace_back(variable_index);
+         }
+      }
+   }
+
    void Model::partition_constraints(std::vector<size_t>& equality_constraints, std::vector<size_t>& inequality_constraints) const {
       equality_constraints.reserve(this->number_constraints);
       inequality_constraints.reserve(this->number_constraints);

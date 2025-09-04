@@ -87,6 +87,7 @@ namespace uno {
       template <typename Array>
       double constraint_violation(const Array& constraints, Norm residual_norm) const;
 
+      void find_fixed_variables(Vector<size_t>& fixed_variables) const;
       void partition_constraints(std::vector<size_t>& equality_constraints, std::vector<size_t>& inequality_constraints) const;
    };
 
