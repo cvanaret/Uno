@@ -11,8 +11,8 @@
 extern "C" {
 #endif
    // Optimization sense
-   const int32_t UNO_MINIMIZE = 0;
-   const int32_t UNO_MAXIMIZE = 1;
+   const int32_t UNO_MINIMIZE =  1;
+   const int32_t UNO_MAXIMIZE = -1;
 
    // Lagrange multiplier sign convention
    const double UNO_MULTIPLIER_POSITIVE =  1.0;

@@ -107,6 +107,7 @@ public:
       if (this->user_model.objective_function != nullptr) {
          this->user_model.objective_function(this->user_model.number_variables, x.data(), &objective_value,
             this->user_model.user_data);
+         objective_value *= this->objective_sign;
       }
       return objective_value;
    }
@@ -123,6 +124,9 @@ public:
       if (this->user_model.objective_gradient != nullptr) {
          this->user_model.objective_gradient(this->user_model.number_variables, x.data(), gradient.data(),
             this->user_model.user_data);
+         for (size_t variable_index: Range(this->number_variables)) {
+            gradient[variable_index] *= this->objective_sign;
+         }
       }
    }
 
@@ -170,14 +174,16 @@ public:
    void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const override {
       if (this->user_model.lagrangian_hessian != nullptr) {
+         objective_multiplier *= this->objective_sign;
          this->user_model.lagrangian_hessian(this->user_model.number_variables, this->user_model.number_constraints,
             this->user_model.number_hessian_nonzeros, x.data(), objective_multiplier, multipliers.data(), hessian_values,
             this->user_model.user_data);
       }
    }
 
-   void compute_hessian_vector_product(const double* /*vector*/, double /*objective_multiplier*/, const Vector<double>& /*multipliers*/,
+   void compute_hessian_vector_product(const double* /*vector*/, double objective_multiplier, const Vector<double>& /*multipliers*/,
          double* /*result*/) const override {
+      objective_multiplier *= this->objective_sign;
       // TODO
    }
 
