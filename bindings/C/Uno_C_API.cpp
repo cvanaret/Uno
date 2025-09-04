@@ -176,16 +176,31 @@ public:
          double* hessian_values) const override {
       if (this->user_model.lagrangian_hessian != nullptr) {
          objective_multiplier *= this->objective_sign;
+         // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
+         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+            const_cast<Vector<double>&>(multipliers).scale(-1.);
+         }
          this->user_model.lagrangian_hessian(this->user_model.number_variables, this->user_model.number_constraints,
             this->user_model.number_hessian_nonzeros, x.data(), objective_multiplier, multipliers.data(), hessian_values,
             this->user_model.user_data);
+         // flip the signs of the multipliers back
+         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+            const_cast<Vector<double>&>(multipliers).scale(-1.);
+         }
       }
    }
 
-   void compute_hessian_vector_product(const double* /*vector*/, double objective_multiplier, const Vector<double>& /*multipliers*/,
+   void compute_hessian_vector_product(const double* /*vector*/, double objective_multiplier, const Vector<double>& multipliers,
          double* /*result*/) const override {
       objective_multiplier *= this->objective_sign;
+      // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
+      if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+         const_cast<Vector<double>&>(multipliers).scale(-1.);
+      }
       // TODO
+      if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+         const_cast<Vector<double>&>(multipliers).scale(-1.);
+      }
    }
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override {
@@ -248,6 +263,9 @@ public:
    void initial_dual_point(Vector<double>& multipliers) const override {
       if (this->user_model.initial_dual_iterate != nullptr) {
          std::copy_n(this->user_model.initial_dual_iterate, this->user_model.number_constraints, multipliers.data());
+         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+            multipliers.scale(-1.);
+         }
       }
       else {
          multipliers.fill(0.);
@@ -470,21 +488,16 @@ void uno_optimize(void* solver, void* model) {
       return;
    }
 
-   // generate the initial primal-dual iterate
-   Iterate initial_iterate(static_cast<size_t>(user_model->number_variables),
-      static_cast<size_t>(user_model->number_constraints));
-   if (user_model->initial_primal_iterate != nullptr) {
-      std::copy_n(user_model->initial_primal_iterate, user_model->number_variables, initial_iterate.primals.begin());
-   }
-   if (user_model->initial_dual_iterate != nullptr) {
-      std::copy_n(user_model->initial_dual_iterate, user_model->number_constraints, initial_iterate.multipliers.constraints.begin());
-   }
-
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
 
    // create an instance of UnoModel, a subclass of Model
    const UnoModel uno_model(*user_model);
+
+   // generate the initial primal-dual iterate
+   Iterate initial_iterate(static_cast<size_t>(user_model->number_variables), static_cast<size_t>(user_model->number_constraints));
+   uno_model.initial_primal_point(initial_iterate.primals);
+   uno_model.initial_dual_point(initial_iterate.multipliers.constraints);
 
    // solve the model using Uno
    Logger::set_logger(uno_solver->options->get_string("logger"));
@@ -523,19 +536,34 @@ void uno_get_primal_solution(void* solver, double* primal_solution) {
    std::copy_n(result->solution.primals.data(), result->number_variables, primal_solution);
 }
 
-void uno_get_constraint_dual_solution(void* solver, double* constraint_dual_solution) {
+void flip_vector_sign(size_t size, double* vector) {
+   for (size_t index: Range(size)) {
+      vector[index] *= -1.;
+   }
+}
+
+void uno_get_constraint_dual_solution(void* solver, double lagrangian_sign_convention, double* constraint_dual_solution) {
    Result* result = uno_get_result(solver);
    std::copy_n(result->solution.multipliers.constraints.data(), result->number_constraints, constraint_dual_solution);
+   if (lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+      flip_vector_sign(result->number_constraints, constraint_dual_solution);
+   }
 }
 
-void uno_get_lower_bound_dual_solution(void* solver, double* lower_bound_dual_solution) {
+void uno_get_lower_bound_dual_solution(void* solver, double lagrangian_sign_convention, double* lower_bound_dual_solution) {
    Result* result = uno_get_result(solver);
    std::copy_n(result->solution.multipliers.lower_bounds.data(), result->number_variables, lower_bound_dual_solution);
+   if (lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+      flip_vector_sign(result->number_variables, lower_bound_dual_solution);
+   }
 }
 
-void uno_get_upper_bound_dual_solution(void* solver, double* upper_bound_dual_solution) {
+void uno_get_upper_bound_dual_solution(void* solver, double lagrangian_sign_convention, double* upper_bound_dual_solution) {
    Result* result = uno_get_result(solver);
    std::copy_n(result->solution.multipliers.upper_bounds.data(), result->number_variables, upper_bound_dual_solution);
+   if (lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+      flip_vector_sign(result->number_variables, upper_bound_dual_solution);
+   }
 }
 
 double uno_get_solution_primal_feasibility(void* solver) {

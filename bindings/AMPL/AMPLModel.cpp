@@ -43,7 +43,8 @@ namespace uno {
    }
 
    AMPLModel::AMPLModel(const std::string& file_name, ASL* asl, const Options& options) :
-         Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), (asl->i.objtype_[0] == 1) ? -1. : 1.),
+         Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_),
+            (asl->i.objtype_[0] == 1) ? -1. : 1. /* optimization sense */),
          asl(asl),
          write_solution_to_file(options.get_bool("AMPL_write_solution_to_file")),
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
