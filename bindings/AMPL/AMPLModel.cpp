@@ -42,7 +42,8 @@ namespace uno {
    }
 
    AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
-         Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), (asl->i.objtype_[0] == 1) ? -1. : 1.),
+         Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_),
+            (asl->i.objtype_[0] == 1) ? -1. : 1. /* optimization sense */),
          asl(asl),
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
@@ -300,18 +301,6 @@ namespace uno {
       return this->number_asl_hessian_nonzeros;
    }
 
-<<<<<<< HEAD
-   void AMPLModel::find_fixed_variables() {
-      for (size_t variable_index: Range(this->number_variables)) {
-         if (this->variable_lower_bound(variable_index) == this->variable_upper_bound(variable_index)) {
-            WARNING << "Variable x" << variable_index << " has identical bounds\n";
-            this->fixed_variables.emplace_back(variable_index);
-         }
-      }
-   }
-
-=======
->>>>>>> b872050d (Find the fixed variables when building the C model)
    void AMPLModel::compute_lagrangian_hessian_sparsity() {
       // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
       // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);

@@ -11,7 +11,8 @@
 namespace uno {
    // abstract Problem class
    Model::Model(std::string name, size_t number_variables, size_t number_constraints, double objective_sign) :
-         name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints), objective_sign(objective_sign) {
+         name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints),
+         objective_sign(objective_sign) {
    }
 
    void Model::project_onto_variable_bounds(Vector<double>& x) const {
