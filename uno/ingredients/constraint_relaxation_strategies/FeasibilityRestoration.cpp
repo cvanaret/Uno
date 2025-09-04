@@ -64,8 +64,9 @@ namespace uno {
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
       this->optimality_inequality_handling_method->evaluate_constraint_jacobian(optimality_problem, initial_iterate);
-      optimality_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, *this->optimality_inequality_handling_method,
-         initial_iterate);
+      const auto& evaluation_space = this->optimality_inequality_handling_method->get_evaluation_space();
+      optimality_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
+         *this->optimality_inequality_handling_method, evaluation_space, initial_iterate);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(optimality_problem, initial_iterate);
       this->evaluate_progress_measures(*this->optimality_inequality_handling_method, optimality_problem, initial_iterate);
    }
@@ -239,16 +240,18 @@ namespace uno {
 
       if (this->current_phase == Phase::OPTIMALITY) {
          const OptimizationProblem optimality_problem{model};
+         const auto& evaluation_space = this->optimality_inequality_handling_method->get_evaluation_space();
          optimality_problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient,
-            *this->optimality_inequality_handling_method, iterate);
+            *this->optimality_inequality_handling_method, evaluation_space, iterate);
          ConstraintRelaxationStrategy::compute_primal_dual_residuals(optimality_problem, iterate);
          return ConstraintRelaxationStrategy::check_termination(optimality_problem, iterate);
       }
       else {
          l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient,
             this->optimality_inequality_handling_method->proximal_coefficient(), this->reference_optimality_primals.data()};
+         const auto& evaluation_space = this->feasibility_inequality_handling_method->get_evaluation_space();
          feasibility_problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient,
-            *this->feasibility_inequality_handling_method, iterate);
+            *this->feasibility_inequality_handling_method, evaluation_space, iterate);
          ConstraintRelaxationStrategy::compute_primal_dual_residuals(feasibility_problem, iterate);
          return ConstraintRelaxationStrategy::check_termination(feasibility_problem, iterate);
       }
