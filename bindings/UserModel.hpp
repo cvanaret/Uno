@@ -5,12 +5,14 @@
 #define UNO_USERMODEL_H
 
 #include "UnoConstants.hpp"
+#include <cstdint>
 #include <vector>
 
 namespace uno {
    // UserModel contains the description of the model provided by the user
    template <typename Objective, typename ObjectiveGradient, typename Constraints, typename Jacobian,
-      typename JacobianOperator, typename JacobianTransposedOperator, typename Hessian, typename HessianOperator>
+      typename JacobianOperator, typename JacobianTransposedOperator, typename Hessian, typename HessianOperator,
+      typename InitialIterateType>
    class UserModel {
    public:
       UserModel(char problem_type, int32_t number_variables, double* variables_lower_bounds, double* variables_upper_bounds,
@@ -33,7 +35,7 @@ namespace uno {
       double* variables_upper_bounds{nullptr};
 
       // objective
-      Objective objective_function{nullptr};
+      Objective objective_function{};
       ObjectiveGradient objective_gradient{nullptr};
 
       // constraints
@@ -65,8 +67,8 @@ namespace uno {
       int32_t optimization_sense{UNO_MINIMIZE};
 
       // initial iterate
-      double* initial_primal_iterate{nullptr};
-      double* initial_dual_iterate{nullptr};
+      InitialIterateType initial_primal_iterate{};
+      InitialIterateType initial_dual_iterate{};
    };
 } // namespace
 
