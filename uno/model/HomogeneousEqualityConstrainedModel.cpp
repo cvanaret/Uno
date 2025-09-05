@@ -12,7 +12,7 @@ namespace uno {
    HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(std::unique_ptr<Model> original_model):
          Model(original_model->name + " -> equality constrained", original_model->number_variables +
             original_model->get_inequality_constraints().size(), original_model->number_constraints,
-            original_model->objective_sign),
+            original_model->optimization_sense),
          // transfer ownership of the pointer
          model(std::move(original_model)),
          constraint_index_of_inequality_index(this->model->get_inequality_constraints().size()),

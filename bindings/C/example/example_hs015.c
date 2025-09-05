@@ -105,13 +105,13 @@ int main() {
 	uno_get_primal_solution(solver, primal_solution);
 	printf("Primal solution: "); print_vector(primal_solution, number_variables);
 	double constraint_dual_solution[number_constraints];
-	uno_get_constraint_dual_solution(solver, lagrangian_sign_convention, constraint_dual_solution);
+	uno_get_constraint_dual_solution(solver, constraint_dual_solution);
 	printf("Constraint dual solution: "); print_vector(constraint_dual_solution, number_constraints);
 	double lower_bound_dual_solution[number_variables];
-	uno_get_lower_bound_dual_solution(solver, lagrangian_sign_convention, lower_bound_dual_solution);
+	uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution);
 	printf("Lower bound dual solution: "); print_vector(lower_bound_dual_solution, number_variables);
 	double upper_bound_dual_solution[number_variables];
-	uno_get_upper_bound_dual_solution(solver, lagrangian_sign_convention, upper_bound_dual_solution);
+	uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution);
 	printf("Upper bound dual solution: "); print_vector(upper_bound_dual_solution, number_variables);
 	const double solution_primal_feasibility = uno_get_solution_primal_feasibility(solver);
 	printf("Primal feasibility solution at solution = %e\n", solution_primal_feasibility);

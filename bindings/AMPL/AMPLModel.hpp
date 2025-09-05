@@ -21,6 +21,8 @@ namespace uno {
 
    class AMPLModel: public Model {
    public:
+      static constexpr double lagrangian_sign_convention{-1.};
+
       AMPLModel(const std::string& file_name, const Options& options);
       ~AMPLModel() override;
 
