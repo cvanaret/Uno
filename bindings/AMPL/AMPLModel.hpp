@@ -26,7 +26,9 @@ namespace uno {
       AMPLModel(const std::string& file_name, const Options& options);
       ~AMPLModel() override;
 
-      // Hessian representation
+      // availability of linear operators
+      [[nodiscard]] bool has_jacobian_operator() const override;
+      [[nodiscard]] bool has_jacobian_transposed_operator() const override;
       [[nodiscard]] bool has_implicit_hessian_representation() const override;
       [[nodiscard]] bool has_explicit_hessian_representation() const override;
 
@@ -46,6 +48,10 @@ namespace uno {
       void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override;
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const override;
+
+      // linear operators for Jacobian-, Jacobian^T-, and Hessian-vector products
+      void compute_jacobian_vector_product(const double* vector, double* result) const override;
+      void compute_jacobian_transposed_vector_product(const double* vector, double* result) const override;
       void compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
          double* result) const override;
 

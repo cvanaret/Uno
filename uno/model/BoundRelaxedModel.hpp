@@ -15,7 +15,15 @@ namespace uno {
    public:
       BoundRelaxedModel(std::unique_ptr<Model> original_model, const Options& options);
 
-      // Hessian representation
+      // availability of linear operators
+      [[nodiscard]] bool has_jacobian_operator() const override {
+         return this->model->has_jacobian_operator();
+      }
+
+      [[nodiscard]] bool has_jacobian_transposed_operator() const override {
+         return this->model->has_jacobian_transposed_operator();
+      }
+
       [[nodiscard]] bool has_implicit_hessian_representation() const override {
          return this->model->has_implicit_hessian_representation();
       }
@@ -52,6 +60,14 @@ namespace uno {
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
             double* hessian_values) const override {
          this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
+      }
+
+      void compute_jacobian_vector_product(const double* vector, double* result) const override {
+         this->model->compute_jacobian_vector_product(vector, result);
+      }
+
+      void compute_jacobian_transposed_vector_product(const double* vector, double* result) const override {
+         this->model->compute_jacobian_transposed_vector_product(vector, result);
       }
 
       void compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,

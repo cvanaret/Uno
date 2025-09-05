@@ -15,6 +15,14 @@ namespace uno {
          linear_constraints(concatenate(this->model->get_linear_constraints(), Range(this->model->number_constraints, this->number_constraints))) {
    }
 
+   bool FixedBoundsConstraintsModel::has_jacobian_operator() const {
+      return this->model->has_jacobian_operator();
+   }
+
+   bool FixedBoundsConstraintsModel::has_jacobian_transposed_operator() const {
+      return this->model->has_jacobian_transposed_operator();
+   }
+
    bool FixedBoundsConstraintsModel::has_implicit_hessian_representation() const {
       return this->model->has_implicit_hessian_representation();
    }
@@ -63,7 +71,8 @@ namespace uno {
 
    void FixedBoundsConstraintsModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
       this->model->evaluate_constraint_jacobian(x, jacobian_values);
-      // add the fixed variables
+
+      // add the contributions of the fixed variables
       size_t nonzero_index = this->model->number_jacobian_nonzeros();
       for ([[maybe_unused]] size_t _: this->model->get_fixed_variables()) {
          jacobian_values[nonzero_index] = 1.;
@@ -74,6 +83,29 @@ namespace uno {
    void FixedBoundsConstraintsModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const {
       this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
+   }
+
+   // linear operators for Jacobian-, Jacobian^T-, and Hessian-vector products
+   void FixedBoundsConstraintsModel::compute_jacobian_vector_product(const double* vector, double* result) const {
+      this->model->compute_jacobian_vector_product(vector, result);
+
+      // add the contributions of the fixed variables
+      size_t constraint_index = this->number_constraints;
+      for (size_t fixed_variable_index: this->model->get_fixed_variables()) {
+         result[constraint_index] = vector[fixed_variable_index];
+         ++constraint_index;
+      }
+   }
+
+   void FixedBoundsConstraintsModel::compute_jacobian_transposed_vector_product(const double* vector, double* result) const {
+      this->model->compute_jacobian_transposed_vector_product(vector, result);
+
+      // add the contributions of the fixed variables
+      size_t constraint_index = this->number_constraints;
+      for (size_t fixed_variable_index: this->model->get_fixed_variables()) {
+         result[fixed_variable_index] += vector[constraint_index];
+         ++constraint_index;
+      }
    }
 
    void FixedBoundsConstraintsModel::compute_hessian_vector_product(const double* vector, double objective_multiplier,

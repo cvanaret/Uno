@@ -71,16 +71,6 @@ extern "C" {
    // - returns an integer that is 0 if the evaluations succeeded, and positive otherwise.
    typedef int32_t (*ObjectiveGradient)(int32_t number_variables, const double* x, double* gradient, void* user_data);
 
-   // - takes as inputs two vectors "row_indices" and "column_indices", allocates memory for them with size
-   // "number_jacobian_nonzeros", and stores the row and column indices of the constraint Jacobian entries in
-   // coordinate (COO) format.
-   // typedef void (*JacobianSparsity)(int32_t number_jacobian_nonzeros, int32_t* row_indices, int32_t* column_indices, void* user_data);
-
-   // - takes as inputs two vectors "row_indices" and "column_indices", allocates memory for them with size
-   // "number_hessian_nonzeros", and stores the row and column indices of the Lagrangian Hessian entries in
-   // coordinate (COO) format.
-   // typedef void (*HessianSparsity)(int32_t number_hessian_nonzeros, int32_t* row_indices, int32_t* column_indices, void* user_data);
-
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the entries of the
    // sparse constraint Jacobian in the vector "jacobian" of size "number_jacobian_nonzeros". The values should be in
    // the same order as the indices provided in "constraint_jacobian_sparsity".

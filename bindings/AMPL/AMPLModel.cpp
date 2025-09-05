@@ -68,6 +68,14 @@ namespace uno {
    AMPLModel::~AMPLModel() {
       ASL_free(&this->asl);
    }
+   
+   bool AMPLModel::has_jacobian_operator() const {
+      return false;
+   }
+
+   bool AMPLModel::has_jacobian_transposed_operator() const {
+      return false;
+   }
 
    bool AMPLModel::has_implicit_hessian_representation() const {
       // As long as we use the ASL library ("solvers"), we need to form the explicit Hessian
@@ -178,6 +186,14 @@ namespace uno {
       objective_multiplier *= this->optimization_sense;
       (*(this->asl)->p.Sphes)(this->asl, nullptr, hessian_values, -1, &objective_multiplier,
          const_cast<double*>(multipliers.data()));
+   }
+
+   void AMPLModel::compute_jacobian_vector_product(const double* /*vector*/, double* /*result*/) const {
+      throw std::runtime_error("AMPLModel::compute_jacobian_vector_product not implemented");
+   }
+
+   void AMPLModel::compute_jacobian_transposed_vector_product(const double* /*vector*/, double* /*result*/) const {
+      throw std::runtime_error("AMPLModel::compute_jacobian_transposed_vector_product not implemented");
    }
 
    void AMPLModel::compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,

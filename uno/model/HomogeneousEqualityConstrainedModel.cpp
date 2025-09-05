@@ -32,7 +32,14 @@ namespace uno {
       }
    }
 
-   // Hessian representation
+   bool HomogeneousEqualityConstrainedModel::has_jacobian_operator() const {
+      return this->model->has_jacobian_operator();
+   }
+
+   bool HomogeneousEqualityConstrainedModel::has_jacobian_transposed_operator() const {
+      return this->model->has_jacobian_transposed_operator();
+   }
+
    bool HomogeneousEqualityConstrainedModel::has_implicit_hessian_representation() const {
       return this->model->has_implicit_hessian_representation();
    }
@@ -93,6 +100,25 @@ namespace uno {
    void HomogeneousEqualityConstrainedModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier,
          const Vector<double>& multipliers, double* hessian_values) const {
       this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
+   }
+
+   // linear operators for Jacobian-, Jacobian^T-, and Hessian-vector products
+   void HomogeneousEqualityConstrainedModel::compute_jacobian_vector_product(const double* vector, double* result) const {
+      this->model->compute_jacobian_vector_product(vector, result);
+
+      // add the slack contributions
+      for (const auto [constraint_index, slack_variable_index]: this->get_slacks()) {
+         result[constraint_index] -= vector[slack_variable_index];
+      }
+   }
+
+   void HomogeneousEqualityConstrainedModel::compute_jacobian_transposed_vector_product(const double* vector, double* result) const {
+      this->model->compute_jacobian_transposed_vector_product(vector, result);
+
+      // add the slack contributions
+      for (const auto [constraint_index, slack_variable_index]: this->get_slacks()) {
+         result[slack_variable_index] = -vector[constraint_index];
+      }
    }
 
    void HomogeneousEqualityConstrainedModel::compute_hessian_vector_product(const double* vector, double objective_multiplier,
