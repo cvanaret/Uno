@@ -100,6 +100,26 @@ namespace uno {
       this->model.evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
    }
 
+   // linear operators for Jacobian-, Jacobian^T-, and Hessian-vector products
+   void HomogeneousEqualityConstrainedModel::compute_jacobian_vector_product(const double* x, const double* vector, double* result) const {
+      this->model.compute_jacobian_vector_product(x, vector, result);
+
+      // add the slack contributions
+      for (const auto [constraint_index, slack_variable_index]: this->get_slacks()) {
+         result[constraint_index] -= vector[slack_variable_index];
+      }
+   }
+
+   void HomogeneousEqualityConstrainedModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector,
+         double* result) const {
+      this->model.compute_jacobian_transposed_vector_product(x, vector, result);
+
+      // add the slack contributions
+      for (const auto [constraint_index, slack_variable_index]: this->get_slacks()) {
+         result[slack_variable_index] = -vector[constraint_index];
+      }
+   }
+
    void HomogeneousEqualityConstrainedModel::compute_hessian_vector_product(const double* x, const double* vector,
          double objective_multiplier, const Vector<double>& multipliers, double* result) const {
       this->model.compute_hessian_vector_product(x, vector, objective_multiplier, multipliers, result);
