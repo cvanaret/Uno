@@ -21,7 +21,10 @@ namespace uno {
 
    class AMPLModel: public Model {
    public:
-      AMPLModel(const std::string& file_name);
+      explicit AMPLModel(const std::string& file_name);
+
+      static constexpr double lagrangian_sign_convention{-1.};
+
       ~AMPLModel() override;
 
       // availability of linear operators
