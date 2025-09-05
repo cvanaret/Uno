@@ -33,7 +33,7 @@ namespace uno {
       const std::string name;
       const size_t number_variables; /*!< Number of variables */
       const size_t number_constraints; /*!< Number of constraints */
-      const double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
+      const double optimization_sense; /*!< Sign of the objective function (1: minimization, -1: maximization) */
 
       // Hessian representation
       [[nodiscard]] virtual bool has_implicit_hessian_representation() const = 0;

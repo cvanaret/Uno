@@ -34,7 +34,7 @@ namespace uno {
 
       // set the sign convention for the Lagrangian: Uno uses ∇²L(x, y) = ∇²f(x) - \sum_j y_j ∇²c_j(x)
       fint error_flag{0};
-      lagscale_ASL(asl, -1., &error_flag);
+      lagscale_ASL(asl, AMPLModel::lagrangian_sign_convention, &error_flag);
       return asl;
    }
 
@@ -82,7 +82,7 @@ namespace uno {
 
    double AMPLModel::evaluate_objective(const Vector<double>& x) const {
       fint error_flag = 0;
-      double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
+      double result = this->optimization_sense * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
       if (0 < error_flag) {
          throw FunctionEvaluationError();
       }
@@ -115,7 +115,7 @@ namespace uno {
       if (0 < error_flag) {
          throw GradientEvaluationError();
       }
-      gradient.scale(this->objective_sign);
+      gradient.scale(this->optimization_sense);
    }
 
    void AMPLModel::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
@@ -175,7 +175,7 @@ namespace uno {
 
    void AMPLModel::evaluate_lagrangian_hessian(const Vector<double>& /*x*/, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const {
-      objective_multiplier *= this->objective_sign;
+      objective_multiplier *= this->optimization_sense;
       (*(this->asl)->p.Sphes)(this->asl, nullptr, hessian_values, -1, &objective_multiplier,
          const_cast<double*>(multipliers.data()));
    }
@@ -183,7 +183,7 @@ namespace uno {
    void AMPLModel::compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
          double* result) const {
       // scale by the objective sign
-      objective_multiplier *= this->objective_sign;
+      objective_multiplier *= this->optimization_sense;
 
       // compute the Hessian-vector product
       (this->asl->p.Hvcomp)(this->asl, result, const_cast<double*>(vector), -1, &objective_multiplier,
@@ -261,10 +261,10 @@ namespace uno {
          // flip the signs of the multipliers and the objective if we maximize
          // note: due to the different sign convention for the Lagrangian between ASL and Uno,
          // we need to flip the signs of the constraint multipliers when minimizing
-         iterate.multipliers.constraints *= -this->objective_sign;
-         iterate.multipliers.lower_bounds *= this->objective_sign;
-         iterate.multipliers.upper_bounds *= this->objective_sign;
-         iterate.evaluations.objective *= this->objective_sign;
+         iterate.multipliers.constraints *= AMPLModel::lagrangian_sign_convention * this->optimization_sense;
+         iterate.multipliers.lower_bounds *= this->optimization_sense;
+         iterate.multipliers.upper_bounds *= this->optimization_sense;
+         iterate.evaluations.objective *= this->optimization_sense;
 
          // include the bound duals in the .sol file, using suffixes
          SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
@@ -279,12 +279,6 @@ namespace uno {
          std::string message = "Uno ";
          message.append(Uno::current_version()).append(": ").append(iterate_status_to_message(iterate_status));
          write_sol_ASL(this->asl, message.data(), iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
-
-         // flip back the signs of the multipliers and the objective back if we maximize
-         iterate.multipliers.constraints *= -this->objective_sign;
-         iterate.multipliers.lower_bounds *= this->objective_sign;
-         iterate.multipliers.upper_bounds *= this->objective_sign;
-         iterate.evaluations.objective *= this->objective_sign;
       }
    }
 
