@@ -92,9 +92,15 @@ public:
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
 
-   // TODO handle failures
-
-   // Hessian representation
+   // availability of linear operators
+   [[nodiscard]] bool has_jacobian_operator() const override {
+      return (this->user_model.jacobian_operator != nullptr);
+   }
+   
+   [[nodiscard]] bool has_jacobian_transposed_operator() const override {
+      return (this->user_model.jacobian_transposed_operator != nullptr);
+   }
+   
    [[nodiscard]] bool has_implicit_hessian_representation() const override {
       return (this->user_model.lagrangian_hessian_operator != nullptr);
    }
@@ -204,6 +210,17 @@ public:
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
       }
+      else {
+         throw std::runtime_error("evaluate_lagrangian_hessian not implemented");
+      }
+   }
+
+   void compute_jacobian_vector_product(const double* /*vector*/, double* /*result*/) const override {
+      throw std::runtime_error("compute_jacobian_vector_product not implemented");
+   }
+
+   void compute_jacobian_transposed_vector_product(const double* /*vector*/, double* /*result*/) const override {
+      throw std::runtime_error("compute_jacobian_transposed_vector_product not implemented");
    }
 
    void compute_hessian_vector_product(const double* /*vector*/, double objective_multiplier, const Vector<double>& multipliers,
