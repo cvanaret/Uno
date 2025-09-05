@@ -11,6 +11,7 @@
 #include "model/Model.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Presets.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 #include "symbolic/Range.hpp"
@@ -106,8 +107,11 @@ public:
    [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override {
       double objective_value{0.};
       if (this->user_model.objective_function != nullptr) {
-         this->user_model.objective_function(this->user_model.number_variables, x.data(), &objective_value,
-            this->user_model.user_data);
+         const int32_t return_code = this->user_model.objective_function(this->user_model.number_variables, x.data(),
+            &objective_value, this->user_model.user_data);
+         if (0 < return_code) {
+            throw FunctionEvaluationError();
+         }
          objective_value *= this->optimization_sense;
       }
       return objective_value;
@@ -115,16 +119,22 @@ public:
 
    void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override {
       if (this->user_model.constraint_functions != nullptr) {
-         this->user_model.constraint_functions(this->user_model.number_variables, this->user_model.number_constraints,
-            x.data(), constraints.data(), this->user_model.user_data);
+         const int32_t return_code = this->user_model.constraint_functions(this->user_model.number_variables,
+            this->user_model.number_constraints, x.data(), constraints.data(), this->user_model.user_data);
+         if (0 < return_code) {
+            throw FunctionEvaluationError();
+         }
       }
    }
 
    // dense objective gradient
    void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override {
       if (this->user_model.objective_gradient != nullptr) {
-         this->user_model.objective_gradient(this->user_model.number_variables, x.data(), gradient.data(),
-            this->user_model.user_data);
+         const int32_t return_code = this->user_model.objective_gradient(this->user_model.number_variables, x.data(),
+            gradient.data(), this->user_model.user_data);
+         if (0 < return_code) {
+            throw GradientEvaluationError();
+         }
          for (size_t variable_index: Range(this->number_variables)) {
             gradient[variable_index] *= this->optimization_sense;
          }
@@ -167,8 +177,11 @@ public:
    // numerical evaluations of Jacobian and Hessian
    void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override {
       if (this->user_model.constraint_jacobian != nullptr) {
-         this->user_model.constraint_jacobian(this->user_model.number_variables, this->user_model.number_jacobian_nonzeros,
-            x.data(), jacobian_values, this->user_model.user_data);
+         const int32_t return_code = this->user_model.constraint_jacobian(this->user_model.number_variables,
+            this->user_model.number_jacobian_nonzeros, x.data(), jacobian_values, this->user_model.user_data);
+         if (0 < return_code) {
+            throw GradientEvaluationError();
+         }
       }
    }
 
@@ -180,9 +193,12 @@ public:
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
-         this->user_model.lagrangian_hessian(this->user_model.number_variables, this->user_model.number_constraints,
-            this->user_model.number_hessian_nonzeros, x.data(), objective_multiplier, multipliers.data(), hessian_values,
-            this->user_model.user_data);
+         const int32_t return_code = this->user_model.lagrangian_hessian(this->user_model.number_variables,
+            this->user_model.number_constraints, this->user_model.number_hessian_nonzeros, x.data(), objective_multiplier,
+            multipliers.data(), hessian_values, this->user_model.user_data);
+         if (0 < return_code) {
+            throw HessianEvaluationError();
+         }
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
@@ -198,6 +214,7 @@ public:
          const_cast<Vector<double>&>(multipliers).scale(-1.);
       }
       // TODO
+      throw std::runtime_error("compute_hessian_vector_product not implemented yet");
       if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
          const_cast<Vector<double>&>(multipliers).scale(-1.);
       }
