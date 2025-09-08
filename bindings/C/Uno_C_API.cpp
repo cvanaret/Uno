@@ -23,7 +23,7 @@ using namespace uno;
 // UserModel contains the description of the model provided by the user
 class UserModel {
 public:
-   UserModel(char problem_type, int32_t number_variables, double* variables_lower_bounds, double* variables_upper_bounds,
+   UserModel(char problem_type, int32_t number_variables, const double* variables_lower_bounds, const double* variables_upper_bounds,
       int32_t base_indexing):
          problem_type(problem_type),
          base_indexing(base_indexing),
@@ -39,8 +39,8 @@ public:
 
    // variables
    const int32_t number_variables;
-   double* variables_lower_bounds{nullptr};
-   double* variables_upper_bounds{nullptr};
+   const double* variables_lower_bounds{nullptr};
+   const double* variables_upper_bounds{nullptr};
 
    // objective
    Objective objective_function{nullptr};
@@ -49,8 +49,8 @@ public:
    // constraints
    int32_t number_constraints{0};
    Constraints constraint_functions{nullptr};
-   double* constraints_lower_bounds{nullptr};
-   double* constraints_upper_bounds{nullptr};
+   const double* constraints_lower_bounds{nullptr};
+   const double* constraints_upper_bounds{nullptr};
    int32_t number_jacobian_nonzeros{0};
    std::vector<int32_t> jacobian_row_indices{};
    std::vector<int32_t> jacobian_column_indices{};
@@ -75,8 +75,8 @@ public:
    int32_t optimization_sense{UNO_MINIMIZE};
 
    // initial iterate
-   double* initial_primal_iterate{nullptr};
-   double* initial_dual_iterate{nullptr};
+   const double* initial_primal_iterate{nullptr};
+   const double* initial_dual_iterate{nullptr};
 };
 
 // UnoModel contains an instance of UserModel and complies with the Model interface
@@ -346,8 +346,8 @@ void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch) {
    *patch = uno_version_patch;
 }
 
-void* uno_create_model(char problem_type, int32_t number_variables, double* variables_lower_bounds,
-      double* variables_upper_bounds, int32_t base_indexing) {
+void* uno_create_model(char problem_type, int32_t number_variables, const double* variables_lower_bounds,
+      const double* variables_upper_bounds, int32_t base_indexing) {
    if (number_variables <= 0) {
       std::cout << "Please specify a positive number of variables.\n";
       return nullptr;
@@ -378,8 +378,8 @@ void uno_set_objective(void* model, int32_t optimization_sense, Objective object
 }
 
 void uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
-      double* constraints_lower_bounds, double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
-      int32_t* jacobian_row_indices, int32_t* jacobian_column_indices, Jacobian constraint_jacobian) {
+      const double* constraints_lower_bounds, const double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
+      const int32_t* jacobian_row_indices, const int32_t* jacobian_column_indices, Jacobian constraint_jacobian) {
    if (number_constraints <= 0) {
       std::cout << "Please specify a positive number of constraints.\n";
       return;
@@ -415,7 +415,7 @@ void uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperato
 }
 
 void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
-      int32_t* hessian_row_indices, int32_t* hessian_column_indices, Hessian lagrangian_hessian,
+      const int32_t* hessian_row_indices, const int32_t* hessian_column_indices, Hessian lagrangian_hessian,
       double lagrangian_sign_convention) {
    if (number_hessian_nonzeros <= 0) {
       std::cout << "Please specify a positive number of Lagrangian Hessian nonzeros.\n";
