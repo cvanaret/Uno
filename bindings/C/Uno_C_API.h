@@ -118,8 +118,8 @@ extern "C" {
    // takes as inputs the type of problem ('L' for linear, 'Q' for quadratic, 'N' for nonlinear), the number of
    // variables, two arrays of lower and upper bounds of size "number_variables", and the vector indexing (0 for
    // C-style indexing, 1 for Fortran-style indexing).
-   void* uno_create_model(char problem_type, int32_t number_variables, double* variables_lower_bounds,
-      double* variables_upper_bounds, int32_t base_indexing);
+   void* uno_create_model(char problem_type, int32_t number_variables, const double* variables_lower_bounds,
+      const double* variables_upper_bounds, int32_t base_indexing);
 
    // sets the objective and objective gradient of a given model.
    // takes as inputs the optimization sense (UNO_MINIMIZE or UNO_MAXIMIZE), a function pointer of the objective
@@ -132,8 +132,8 @@ extern "C" {
    // upper bounds of size "number_constraints", the number of nonzero elements of the Jacobian, two arrays of row and
    // column indices for the constraint Jacobian in COOrdinate format, and a function pointer of the constraint Jacobian.
    void uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
-      double* constraints_lower_bounds, double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
-      int32_t* jacobian_row_indices, int32_t* jacobian_column_indices, Jacobian constraint_jacobian);
+      const double* constraints_lower_bounds, const double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
+      const int32_t* jacobian_row_indices, const int32_t* jacobian_column_indices, Jacobian constraint_jacobian);
 
    // sets the Jacobian operator (computes Jacobian-vector products) of a given model.
    void uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator);
@@ -150,7 +150,7 @@ extern "C" {
    // if "lagrangian_sign_convention" == 1,  the Lagrangian is rho*f(x) + y^T c(x)
    // if "lagrangian_sign_convention" == -1, the Lagrangian is rho*f(x) - y^T c(x)
    void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
-      int32_t* hessian_row_indices, int32_t* hessian_column_indices, Hessian lagrangian_hessian,
+      const int32_t* hessian_row_indices, const int32_t* hessian_column_indices, Hessian lagrangian_hessian,
       double lagrangian_sign_convention);
 
    // sets the Lagrangian Hessian operator (computes Hessian-vector products) of a given model.
