@@ -29,8 +29,8 @@ namespace uno {
       // availability of linear operators
       [[nodiscard]] bool has_jacobian_operator() const override;
       [[nodiscard]] bool has_jacobian_transposed_operator() const override;
-      [[nodiscard]] bool has_implicit_hessian_representation() const override;
-      [[nodiscard]] bool has_explicit_hessian_representation() const override;
+      [[nodiscard]] bool has_hessian_operator() const override;
+      [[nodiscard]] bool has_hessian_matrix() const override;
 
       // function evaluations
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;

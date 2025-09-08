@@ -38,8 +38,8 @@ namespace uno {
       // availability of linear operators
       [[nodiscard]] virtual bool has_jacobian_operator() const = 0;
       [[nodiscard]] virtual bool has_jacobian_transposed_operator() const = 0;
-      [[nodiscard]] virtual bool has_implicit_hessian_representation() const = 0;
-      [[nodiscard]] virtual bool has_explicit_hessian_representation() const = 0;
+      [[nodiscard]] virtual bool has_hessian_operator() const = 0;
+      [[nodiscard]] virtual bool has_hessian_matrix() const = 0;
 
       // function evaluations
       [[nodiscard]] virtual double evaluate_objective(const Vector<double>& x) const = 0;
@@ -50,7 +50,7 @@ namespace uno {
 
       // sparsity patterns of Jacobian and Hessian
       virtual void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
-         MatrixOrder matrix_format) const = 0;
+         MatrixOrder matrix_order) const = 0;
       virtual void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const = 0;
 
       // numerical evaluations of Jacobian and Hessian

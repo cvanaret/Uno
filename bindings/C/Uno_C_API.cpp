@@ -101,11 +101,11 @@ public:
       return (this->user_model.jacobian_transposed_operator != nullptr);
    }
    
-   [[nodiscard]] bool has_implicit_hessian_representation() const override {
+   [[nodiscard]] bool has_hessian_operator() const override {
       return (this->user_model.lagrangian_hessian_operator != nullptr);
    }
 
-   [[nodiscard]] bool has_explicit_hessian_representation() const override {
+   [[nodiscard]] bool has_hessian_matrix() const override {
       return (this->user_model.lagrangian_hessian != nullptr);
    }
 
@@ -149,11 +149,11 @@ public:
 
    // sparsity patterns of Jacobian and Hessian
    void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
-         MatrixOrder /*matrix_format*/) const override {
+         MatrixOrder /*matrix_order*/) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
       std::copy_n(this->user_model.jacobian_row_indices.data(), static_cast<size_t>(this->user_model.number_jacobian_nonzeros), row_indices);
       std::copy_n(this->user_model.jacobian_column_indices.data(), static_cast<size_t>(this->user_model.number_jacobian_nonzeros), column_indices);
-      // TODO matrix_format
+      // TODO matrix_order
 
       // handle the solver indexing
       if (this->user_model.base_indexing != solver_indexing) {

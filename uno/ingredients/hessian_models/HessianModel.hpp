@@ -21,8 +21,8 @@ namespace uno {
 
       size_t evaluation_count{0};
 
-      [[nodiscard]] virtual bool has_implicit_representation(const Model& model) const = 0;
-      [[nodiscard]] virtual bool has_explicit_representation(const Model& model) const = 0;
+      [[nodiscard]] virtual bool has_linear_operator(const Model& model) const = 0;
+      [[nodiscard]] virtual bool has_matrix(const Model& model) const = 0;
       [[nodiscard]] virtual bool has_curvature(const Model& model) const = 0;
       [[nodiscard]] virtual size_t number_nonzeros(const Model& model) const = 0;
       virtual void compute_sparsity(const Model& model, int* row_indices, int* column_indices, int solver_indexing) const = 0;

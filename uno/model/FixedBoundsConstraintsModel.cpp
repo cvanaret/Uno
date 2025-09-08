@@ -23,12 +23,12 @@ namespace uno {
       return this->model->has_jacobian_transposed_operator();
    }
 
-   bool FixedBoundsConstraintsModel::has_implicit_hessian_representation() const {
-      return this->model->has_implicit_hessian_representation();
+   bool FixedBoundsConstraintsModel::has_hessian_operator() const {
+      return this->model->has_hessian_operator();
    }
 
-   bool FixedBoundsConstraintsModel::has_explicit_hessian_representation() const {
-      return this->model->has_explicit_hessian_representation();
+   bool FixedBoundsConstraintsModel::has_hessian_matrix() const {
+      return this->model->has_hessian_matrix();
    }
 
    double FixedBoundsConstraintsModel::evaluate_objective(const Vector<double>& x) const {

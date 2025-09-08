@@ -24,12 +24,12 @@ namespace uno {
          return this->model->has_jacobian_transposed_operator();
       }
 
-      [[nodiscard]] bool has_implicit_hessian_representation() const override {
-         return this->model->has_implicit_hessian_representation();
+      [[nodiscard]] bool has_hessian_operator() const override {
+         return this->model->has_hessian_operator();
       }
 
-      [[nodiscard]] bool has_explicit_hessian_representation() const override {
-         return this->model->has_explicit_hessian_representation();
+      [[nodiscard]] bool has_hessian_matrix() const override {
+         return this->model->has_hessian_matrix();
       }
 
       // function evaluations

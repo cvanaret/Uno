@@ -40,12 +40,12 @@ namespace uno {
       return this->model->has_jacobian_transposed_operator();
    }
 
-   bool HomogeneousEqualityConstrainedModel::has_implicit_hessian_representation() const {
-      return this->model->has_implicit_hessian_representation();
+   bool HomogeneousEqualityConstrainedModel::has_hessian_operator() const {
+      return this->model->has_hessian_operator();
    }
    
-   bool HomogeneousEqualityConstrainedModel::has_explicit_hessian_representation() const {
-      return this->model->has_explicit_hessian_representation();
+   bool HomogeneousEqualityConstrainedModel::has_hessian_matrix() const {
+      return this->model->has_hessian_matrix();
    }
 
    double HomogeneousEqualityConstrainedModel::evaluate_objective(const Vector<double>& x) const {

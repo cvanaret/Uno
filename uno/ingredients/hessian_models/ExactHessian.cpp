@@ -5,12 +5,12 @@
 #include "model/Model.hpp"
 
 namespace uno {
-   bool ExactHessian::has_implicit_representation(const Model& model) const {
-      return model.has_implicit_hessian_representation();
+   bool ExactHessian::has_linear_operator(const Model& model) const {
+      return model.has_hessian_operator();
    }
 
-   bool ExactHessian::has_explicit_representation(const Model& model) const {
-      return model.has_explicit_hessian_representation();
+   bool ExactHessian::has_matrix(const Model& model) const {
+      return model.has_hessian_matrix();
    }
 
    bool ExactHessian::has_curvature(const Model& model) const {
