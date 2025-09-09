@@ -38,6 +38,17 @@ int32_t lagrangian_hessian(int32_t /*number_variables*/, int32_t /*number_constr
 	return 0;
 }
 
+int32_t lagrangian_hessian_operator(int32_t number_variables, int32_t number_constraints, const double* x,
+      bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
+      double* result, void* user_data) {
+	const double hessian00 = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
+	const double hessian10 = -400.*objective_multiplier*x[0] - multipliers[0];
+	const double hessian11 = 200.*objective_multiplier - 2.*multipliers[1];
+	result[0] = hessian00*vector[0] + hessian10*vector[1];
+	result[1] = hessian10*vector[0] + hessian11*vector[1];
+	return 0;
+}
+
 void print_vector(const double* vector, int32_t size) {
 	for (size_t index = 0; index < size; ++index) {
 		printf("%g ", vector[index]);
@@ -80,8 +91,12 @@ int main() {
 	assert(uno_set_constraints(model, number_constraints, constraint_functions,
 		constraints_lower_bounds, constraints_upper_bounds, number_jacobian_nonzeros,
 		jacobian_row_indices, jacobian_column_indices, constraint_jacobian));
+	/*
 	assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
 		hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention));
+	*/
+	assert(uno_set_lagrangian_hessian_operator(model, number_hessian_nonzeros, lagrangian_hessian_operator,
+		lagrangian_sign_convention));
 	assert(uno_set_initial_primal_iterate(model, x0));
 
 	// solver creation
