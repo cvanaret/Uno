@@ -161,6 +161,8 @@ function uno(
   eval_Jv::Function,
   eval_Jtv::Function,
   eval_Hv::Function;
+  hessian_triangle::Char='L',
+  lagrangian_sign::Float64=1.0,
   user_model=nothing
 )
   @assert nvar == length(lvar) == length(uvar) == length(x0)
@@ -193,8 +195,7 @@ function uno(
   uno_set_constraints(c_model, Cint(ncon), eval_constraints_c, lcon, ucon, Cint(nnzj), jrows, jcols, eval_jacobian_c)
 
   eval_hessian_c = @cfunction(uno_lagrangian_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  # uno_set_lagrangian_hessian(c_model, Cint(nnzh), 'L', hrows, hcols, eval_hessian_c, 1.0)
-  uno_set_lagrangian_hessian(c_model, Cint(nnzh), 'L', hrows, hcols, eval_hessian_c, -1.0)
+  uno_set_lagrangian_hessian(c_model, Cint(nnzh), hessian_triangle, hrows, hcols, eval_hessian_c, lagrangian_sign)
 
   eval_Jv_c = @cfunction(uno_jacobian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
   uno_set_jacobian_operator(c_model, eval_Jv_c)
@@ -203,8 +204,7 @@ function uno(
   uno_set_jacobian_transposed_operator(c_model, eval_Jtv_c)
 
   eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  # uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c, 1.0)
-  uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c, -1.0)
+  uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c, lagrangian_sign)
 
   finalizer(uno_finalizer, uno_model)
   return uno_model
