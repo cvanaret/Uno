@@ -124,22 +124,26 @@ extern "C" {
    // sets the objective and objective gradient of a given model.
    // takes as inputs the optimization sense (UNO_MINIMIZE or UNO_MAXIMIZE), a function pointer of the objective
    // function and a function pointer of its gradient function.
-   void uno_set_objective(void* model, int32_t optimization_sense, Objective objective_function,
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_objective(void* model, int32_t optimization_sense, Objective objective_function,
       ObjectiveGradient objective_gradient);
 
    // sets the constraints and constraint Jacobian of a given model.
    // takes as inputs the number of constraints, a function pointer of the constraint functions, two arrays of lower and
    // upper bounds of size "number_constraints", the number of nonzero elements of the Jacobian, two arrays of row and
    // column indices for the constraint Jacobian in COOrdinate format, and a function pointer of the constraint Jacobian.
-   void uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
       const int32_t* jacobian_row_indices, const int32_t* jacobian_column_indices, Jacobian constraint_jacobian);
 
    // sets the Jacobian operator (computes Jacobian-vector products) of a given model.
-   void uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator);
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator);
 
    // sets the Jacobian transposed operator (computes Jacobian^T-vector products) of a given model.
-   void uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator);
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator);
 
    // sets the Lagrangian Hessian of a given model.
    // /!\ since the Lagrangian Hessian is symmetric, we ask for either the lower or the triangular part of the matrix.
@@ -149,7 +153,8 @@ extern "C" {
    // of the Lagrangian:
    // if "lagrangian_sign_convention" == 1,  the Lagrangian is rho*f(x) + y^T c(x)
    // if "lagrangian_sign_convention" == -1, the Lagrangian is rho*f(x) - y^T c(x)
-   void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
       const int32_t* hessian_row_indices, const int32_t* hessian_column_indices, Hessian lagrangian_hessian,
       double lagrangian_sign_convention);
 
@@ -158,17 +163,21 @@ extern "C" {
    // of the Lagrangian:
    // if "lagrangian_sign_convention" == 1,  the Lagrangian is rho*f(x) + y^T c(x)
    // if "lagrangian_sign_convention" == -1, the Lagrangian is rho*f(x) - y^T c(x)
-   void uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator,
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator,
       double lagrangian_sign_convention);
 
    // sets the user data of a given model.
-   void uno_set_user_data(void* model, void* user_data);
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_user_data(void* model, void* user_data);
 
    // sets the initial primal iterate of a given model.
-   void uno_set_initial_primal_iterate(void* model, double* initial_primal_iterate);
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_initial_primal_iterate(void* model, double* initial_primal_iterate);
 
    // sets the initial dual iterate of a given model.
-   void uno_set_initial_dual_iterate(void* model, double* initial_dual_iterate);
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_initial_dual_iterate(void* model, double* initial_dual_iterate);
 
    // creates the Uno solver.
    void* uno_create_solver();

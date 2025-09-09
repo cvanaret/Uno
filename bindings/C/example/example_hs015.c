@@ -76,13 +76,13 @@ int main() {
 
 	void* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
       variables_upper_bounds, base_indexing);
-	uno_set_objective(model, optimization_sense, objective_function, objective_gradient);
-	uno_set_constraints(model, number_constraints, constraint_functions,
+	assert(uno_set_objective(model, optimization_sense, objective_function, objective_gradient));
+	assert(uno_set_constraints(model, number_constraints, constraint_functions,
 		constraints_lower_bounds, constraints_upper_bounds, number_jacobian_nonzeros,
-		jacobian_row_indices, jacobian_column_indices, constraint_jacobian);
-	uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
-		hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention);
-	uno_set_initial_primal_iterate(model, x0);
+		jacobian_row_indices, jacobian_column_indices, constraint_jacobian));
+	assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
+		hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention));
+	assert(uno_set_initial_primal_iterate(model, x0));
 
 	// solver creation
 	void* solver = uno_create_solver();
