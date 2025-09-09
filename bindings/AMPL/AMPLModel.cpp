@@ -10,7 +10,6 @@
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
 #include "options/Options.hpp"
-#include "symbolic/Concatenation.hpp"
 #include "Uno.hpp"
 
 namespace uno {
@@ -55,7 +54,7 @@ namespace uno {
 
       // detect fix variables
       this->fixed_variables.reserve(this->number_variables);
-      this->partition_variables();
+      this->find_fixed_variables();
 
       // partition equality/inequality constraints
       this->equality_constraints.reserve(this->number_constraints);
@@ -83,7 +82,7 @@ namespace uno {
 
    double AMPLModel::evaluate_objective(const Vector<double>& x) const {
       fint error_flag = 0;
-      double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
+      const double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
       if (0 < error_flag) {
          throw FunctionEvaluationError();
       }
@@ -297,7 +296,7 @@ namespace uno {
       return this->number_asl_hessian_nonzeros;
    }
 
-   void AMPLModel::partition_variables() {
+   void AMPLModel::find_fixed_variables() {
       for (size_t variable_index: Range(this->number_variables)) {
          if (this->variable_lower_bound(variable_index) == this->variable_upper_bound(variable_index)) {
             WARNING << "Variable x" << variable_index << " has identical bounds\n";
@@ -330,11 +329,5 @@ namespace uno {
       // store in lower-triangular part
       constexpr int triangular = 2;
       this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, -1, 1, 1, triangular));
-
-      // sparsity pattern
-      [[maybe_unused]] const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
-      // check that the column pointers are sorted in increasing order
-      assert(in_increasing_order(asl_column_start, this->number_variables + 1) &&
-         "AMPLModel::evaluate_lagrangian_hessian: column starts are not ordered");
    }
 } // namespace
