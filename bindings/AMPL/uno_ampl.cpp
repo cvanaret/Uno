@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
 
    try {
       if (argc == 1 || (argc == 2 && std::string(argv[1]) == "--v")) {
-         Uno::print_instructions();
+         std::cout << "Uno " << Uno::current_version() << '\n';
       }
       else if (argc == 2 && std::string(argv[1]) == "--strategies") {
          Uno::print_available_strategies();
