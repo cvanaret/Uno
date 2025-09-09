@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 #include "symbolic/Expression.hpp"
+#include "symbolic/Range.hpp"
 
 using namespace uno;
 
