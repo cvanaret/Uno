@@ -168,7 +168,7 @@ function uno(
 
   # 'L' for linear, 'Q' for quadratic, 'N' for nonlinear
   @assert problem_type == 'L' || problem_type == 'Q' || problem_type == 'N'
-  optimization_sense = minimize ? Cint(0) : Cint(1)
+  optimization_sense = minimize ? Cint(1) : Cint(-1)
 
   base_indexing = Cint(1)  # Fortran-style indexing
   c_model = uno_create_model(problem_type, Cint(nvar), lvar, uvar, base_indexing)
