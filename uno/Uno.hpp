@@ -29,7 +29,6 @@ namespace uno {
       Result solve(const Model& model, Iterate& current_iterate, const Options& options, UserCallbacks& user_callbacks);
 
       static std::string current_version();
-      static void print_instructions();
       static void print_available_strategies();
 
    private:

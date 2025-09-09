@@ -98,21 +98,8 @@ namespace uno {
       return "2.0.3";
    }
 
-   void Uno::print_instructions() {
-      std::cout << "Welcome in Uno " << Uno::current_version() << '\n';
-      std::cout << "To solve an AMPL model, type ./uno_ampl model.nl -AMPL [option_name=option_value ...]\n";
-      std::cout << "To choose a constraint relaxation strategy, use the argument constraint_relaxation_strategy="
-                   "[feasibility_restoration]\n";
-      std::cout << "To choose a subproblem method, use the argument subproblem=[QP|LP|primal_dual_interior_point]\n";
-      std::cout << "To choose a globalization mechanism, use the argument globalization_mechanism=[LS|TR]\n";
-      std::cout << "To choose a globalization strategy, use the argument globalization_strategy="
-                   "[l1_merit|fletcher_filter_method|waechter_filter_method]\n";
-      std::cout << "To choose a preset, use the argument preset=[filtersqp|ipopt|byrd]\n";
-      std::cout << "The options can be combined in the same command line.\n";
-   }
-
    void Uno::print_available_strategies() {
-      std::cout << "Available strategies:\n";
+      std::cout << "Available Uno strategies:\n";
       std::cout << "- Constraint relaxation strategies: " << join(ConstraintRelaxationStrategyFactory::available_strategies, ", ") << '\n';
       std::cout << "- Globalization mechanisms: " << join(GlobalizationMechanismFactory::available_strategies, ", ") << '\n';
       std::cout << "- Globalization strategies: " << join(GlobalizationStrategyFactory::available_strategies, ", ") << '\n';
@@ -120,10 +107,11 @@ namespace uno {
       std::cout << "- QP solvers: " << join(QPSolverFactory::available_solvers, ", ") << '\n';
       std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers, ", ") << '\n';
       std::cout << "- Linear solvers: " << join(SymmetricIndefiniteLinearSolverFactory::available_solvers(), ", ") << '\n';
+      std::cout << "- Presets: filtersqp, ipopt\n";
    }
 
    void Uno::pick_ingredients(const Model& model, const Options& options) {
-      bool unconstrained_model = (model.number_constraints == 0);
+      const bool unconstrained_model = (model.number_constraints == 0);
       this->constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(unconstrained_model, options);
       this->globalization_strategy = GlobalizationStrategyFactory::create(unconstrained_model, options);
       this->globalization_mechanism = GlobalizationMechanismFactory::create(options);
