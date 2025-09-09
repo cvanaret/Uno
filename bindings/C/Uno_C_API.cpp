@@ -363,11 +363,11 @@ void* uno_create_model(char problem_type, int32_t number_variables, const double
    return new UserModel(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing);
 }
 
-void uno_set_objective(void* model, int32_t optimization_sense, Objective objective_function,
+bool uno_set_objective(void* model, int32_t optimization_sense, Objective objective_function,
       ObjectiveGradient objective_gradient) {
    if (optimization_sense != UNO_MINIMIZE && optimization_sense != UNO_MAXIMIZE) {
       std::cout << "Please specify a valid objective sense.\n";
-      return;
+      return false;
    }
 
    assert(model != nullptr);
@@ -375,14 +375,15 @@ void uno_set_objective(void* model, int32_t optimization_sense, Objective object
    user_model->optimization_sense = optimization_sense;
    user_model->objective_function = objective_function;
    user_model->objective_gradient = objective_gradient;
+   return true;
 }
 
-void uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
+bool uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
       const int32_t* jacobian_row_indices, const int32_t* jacobian_column_indices, Jacobian constraint_jacobian) {
    if (number_constraints <= 0) {
       std::cout << "Please specify a positive number of constraints.\n";
-      return;
+      return false;
    }
 
    assert(model != nullptr);
@@ -400,36 +401,39 @@ void uno_set_constraints(void* model, int32_t number_constraints, Constraints co
       user_model->jacobian_column_indices[index] = jacobian_column_indices[index];
    }
    user_model->constraint_jacobian = constraint_jacobian;
+   return true;
 }
 
-void uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator) {
+bool uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator) {
    assert(model != nullptr);
    UserModel* user_model = static_cast<UserModel*>(model);
    user_model->jacobian_operator = jacobian_operator;
+   return true;
 }
 
-void uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator) {
+bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator) {
    assert(model != nullptr);
    UserModel* user_model = static_cast<UserModel*>(model);
    user_model->jacobian_transposed_operator = jacobian_transposed_operator;
+   return true;
 }
 
-void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
+bool uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
       const int32_t* hessian_row_indices, const int32_t* hessian_column_indices, Hessian lagrangian_hessian,
       double lagrangian_sign_convention) {
    if (number_hessian_nonzeros <= 0) {
       std::cout << "Please specify a positive number of Lagrangian Hessian nonzeros.\n";
-      return;
+      return false;
    }
    if (hessian_triangular_part != UNO_LOWER_TRIANGLE && hessian_triangular_part != UNO_UPPER_TRIANGLE) {
       std::cout << "Please specify a correct Hessian triangle in {'" << UNO_LOWER_TRIANGLE << "', '" <<
          UNO_UPPER_TRIANGLE << "'}.\n";
-      return;
+      return false;
    }
    if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
       std::cout << "Please specify a correct Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
          UNO_MULTIPLIER_POSITIVE << "}.\n";
-      return;
+      return false;
    }
 
    assert(model != nullptr);
@@ -437,7 +441,7 @@ void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, ch
    // make sure that the sign convention is consistent with that of the Hessian operator
    if (user_model->lagrangian_hessian_operator != nullptr && user_model->lagrangian_sign_convention != lagrangian_sign_convention) {
       std::cout << "Please specify a Lagrangian sign convention consistent with that of the Hessian operator.\n";
-      return;
+      return false;
    }
    user_model->number_hessian_nonzeros = number_hessian_nonzeros;
    // copy the Hessian sparsity to allow the calling code to dispose of its vectors
@@ -452,14 +456,15 @@ void uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, ch
    user_model->hessian_triangular_part = UNO_LOWER_TRIANGLE;
    user_model->lagrangian_hessian = lagrangian_hessian;
    user_model->lagrangian_sign_convention = lagrangian_sign_convention;
+   return true;
 }
 
-void uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator,
+bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator,
       double lagrangian_sign_convention) {
    if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
       std::cout << "Please specify a Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
          UNO_MULTIPLIER_POSITIVE << "}.\n";
-      return;
+      return false;
    }
 
    assert(model != nullptr);
@@ -467,28 +472,32 @@ void uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian
    // make sure that the sign convention is consistent with that of the Hessian function
    if (user_model->lagrangian_hessian != nullptr && user_model->lagrangian_sign_convention != lagrangian_sign_convention) {
       std::cout << "Please specify a Lagrangian sign convention consistent with that of the Hessian function.\n";
-      return;
+      return false;
    }
    user_model->lagrangian_hessian_operator = lagrangian_hessian_operator;
    user_model->lagrangian_sign_convention = lagrangian_sign_convention;
+   return true;
 }
 
-void uno_set_user_data(void* model, void* user_data) {
+bool uno_set_user_data(void* model, void* user_data) {
    assert(model != nullptr);
    UserModel* user_model = static_cast<UserModel*>(model);
    user_model->user_data = user_data;
+   return true;
 }
 
-void uno_set_initial_primal_iterate(void* model, double* initial_primal_iterate) {
+bool uno_set_initial_primal_iterate(void* model, double* initial_primal_iterate) {
    assert(model != nullptr);
    UserModel* user_model = static_cast<UserModel*>(model);
    user_model->initial_primal_iterate = initial_primal_iterate;
+   return true;
 }
 
-void uno_set_initial_dual_iterate(void* model, double* initial_dual_iterate) {
+bool uno_set_initial_dual_iterate(void* model, double* initial_dual_iterate) {
    assert(model != nullptr);
    UserModel* user_model = static_cast<UserModel*>(model);
    user_model->initial_dual_iterate = initial_dual_iterate;
+   return true;
 }
 
 void uno_set_option(void* options, const char* option_name, const char* option_value) {
