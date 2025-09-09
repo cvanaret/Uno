@@ -109,7 +109,7 @@ namespace uno {
          result[constraint_index] -= vector[slack_variable_index];
       }
    }
-
+   
    void HomogeneousEqualityConstrainedModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector,
          double* result) const {
       this->model.compute_jacobian_transposed_vector_product(x, vector, result);

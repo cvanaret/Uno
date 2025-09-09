@@ -215,12 +215,30 @@ public:
       }
    }
 
-   void compute_jacobian_vector_product(const double* /*vector*/, double* /*result*/) const override {
-      throw std::runtime_error("compute_jacobian_vector_product not implemented");
+   void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const override {
+      if (this->user_model.jacobian_operator != nullptr) {
+         const int32_t return_code = this->user_model.jacobian_operator(this->user_model.number_variables,
+            this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
+         if (0 < return_code) {
+            throw GradientEvaluationError();
+         }
+      }
+      else {
+         throw std::runtime_error("compute_jacobian_vector_product not implemented");
+      }
    }
 
-   void compute_jacobian_transposed_vector_product(const double* /*vector*/, double* /*result*/) const override {
-      throw std::runtime_error("compute_jacobian_transposed_vector_product not implemented");
+   void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const override {
+      if (this->user_model.jacobian_transposed_operator != nullptr) {
+         const int32_t return_code = this->user_model.jacobian_transposed_operator(this->user_model.number_variables,
+            this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
+         if (0 < return_code) {
+            throw GradientEvaluationError();
+         }
+      }
+      else {
+         throw std::runtime_error("compute_jacobian_transposed_vector_product not implemented");
+      }
    }
 
    void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier, const Vector<double>& multipliers,
