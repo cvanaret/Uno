@@ -1,4 +1,4 @@
-@tesetset "Interface for NLPModels.jl" begin
+@testset "Interface for NLPModels.jl" begin
   nlp = CUTEstModel{Float64}("HS15")
   uno_model = uno(nlp)
   Uno.uno_set_solver_preset(uno_model, "funnelsqp")
