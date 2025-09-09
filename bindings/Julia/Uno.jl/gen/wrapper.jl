@@ -5,7 +5,7 @@ using Clang.Generators
 using JuliaFormatter
 
 function main()
-  # for future versions of Uno_jll.jl (> v2.0.2)
+  # for future versions of Uno_jll.jl (> v2.0.3)
   # include_dir = joinpath(Uno_jll.artifact_dir, "include")
   include_dir = joinpath(@__DIR__, "..", "..", "..", "C")
   headers = [joinpath(include_dir, "Uno_C_API.h")]
