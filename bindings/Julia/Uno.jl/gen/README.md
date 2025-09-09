@@ -25,3 +25,4 @@ If you have already instantiated the environment, you can also run:
 julia --project wrapper.jl
 ```
 
+Note that if new constants are added to `Uno_C_API.h`, a manual update of `prologue.jl` is required.
