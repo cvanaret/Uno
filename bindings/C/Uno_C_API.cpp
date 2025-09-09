@@ -102,7 +102,7 @@ public:
    }
 
    [[nodiscard]] bool has_hessian_operator() const override {
-      return (this->user_model.lagrangian_hessian_operator != nullptr);
+      return false; // TODO (this->user_model.lagrangian_hessian_operator != nullptr);
    }
 
    [[nodiscard]] bool has_hessian_matrix() const override {
