@@ -2,7 +2,7 @@ name: Julia wrappers for Uno.jl
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
@@ -28,7 +28,7 @@ jobs:
           cd ../src
           git diff --quiet libuno.jl || {
           echo "❌ The Julia wrappers in libuno.jl are out of date. ❌";
-          echo "Please run wrapper.jl in /bindings/Julia/Uno.jl/gen to regenerate them:";
+          echo "Please run wrapper.jl in bindings/Julia/Uno.jl/gen to regenerate them:";
           echo "";
           echo "cd bindings/Julia/Uno.jl/gen";
           echo "julia --project -e 'using Pkg; Pkg.instantiate()'";
