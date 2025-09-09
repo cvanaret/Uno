@@ -84,7 +84,7 @@ namespace uno {
       SparseVector<size_t> slacks{};
       Vector<size_t> fixed_variables;
 
-      void partition_variables();
+      void find_fixed_variables();
       void partition_constraints();
       void compute_lagrangian_hessian_sparsity();
    };
