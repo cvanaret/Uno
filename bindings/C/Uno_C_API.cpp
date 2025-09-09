@@ -102,7 +102,7 @@ public:
    }
    
    [[nodiscard]] bool has_hessian_operator() const override {
-      return false; // TODO (this->user_model.lagrangian_hessian_operator != nullptr);
+      return (this->user_model.lagrangian_hessian_operator != nullptr);
    }
 
    [[nodiscard]] bool has_hessian_matrix() const override {
@@ -468,8 +468,12 @@ bool uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, ch
    return true;
 }
 
-bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator,
+bool uno_set_lagrangian_hessian_operator(void* model, int32_t number_hessian_nonzeros, HessianOperator lagrangian_hessian_operator,
       double lagrangian_sign_convention) {
+   if (number_hessian_nonzeros <= 0) {
+      std::cout << "Please specify a positive number of Lagrangian Hessian nonzeros.\n";
+      return false;
+   }
    if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
       std::cout << "Please specify a Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
          UNO_MULTIPLIER_POSITIVE << "}.\n";
@@ -483,6 +487,7 @@ bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian
       std::cout << "Please specify a Lagrangian sign convention consistent with that of the Hessian function.\n";
       return false;
    }
+   user_model->number_hessian_nonzeros = number_hessian_nonzeros;
    user_model->lagrangian_hessian_operator = lagrangian_hessian_operator;
    user_model->lagrangian_sign_convention = lagrangian_sign_convention;
    return true;

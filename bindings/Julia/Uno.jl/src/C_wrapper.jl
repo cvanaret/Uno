@@ -204,7 +204,7 @@ function uno(
   uno_set_jacobian_transposed_operator(c_model, eval_Jtv_c)
 
   eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c, lagrangian_sign)
+  uno_set_lagrangian_hessian_operator(c_model, Cint(nnzh), eval_Hv_c, lagrangian_sign)
 
   finalizer(uno_finalizer, uno_model)
   return uno_model
