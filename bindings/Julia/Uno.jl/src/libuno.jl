@@ -54,9 +54,10 @@ function uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_tria
                                              lagrangian_sign_convention::Cdouble)::Cvoid
 end
 
-function uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator,
+function uno_set_lagrangian_hessian_operator(model, number_hessian_nonzeros, lagrangian_hessian_operator,
                                              lagrangian_sign_convention)
     @ccall libuno.uno_set_lagrangian_hessian_operator(model::Ptr{Cvoid},
+                                                      number_hessian_nonzeros::Int32,
                                                       lagrangian_hessian_operator::Ptr{Cvoid},
                                                       lagrangian_sign_convention::Cdouble)::Cvoid
 end
