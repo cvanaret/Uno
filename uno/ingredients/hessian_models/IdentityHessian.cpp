@@ -6,11 +6,11 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   bool IdentityHessian::has_implicit_representation(const Model& /*model*/) const {
+   bool IdentityHessian::has_hessian_operator(const Model& /*model*/) const {
       return true;
    }
 
-   bool IdentityHessian::has_explicit_representation(const Model& /*model*/) const {
+   bool IdentityHessian::has_hessian_matrix(const Model& /*model*/) const {
       return true;
    }
 

@@ -61,7 +61,7 @@ namespace uno {
    }
 
    void BQPDSolver::initialize_memory(const Subproblem& subproblem) {
-      if (!subproblem.has_implicit_hessian_representation() && !subproblem.has_explicit_hessian_representation()) {
+      if (!subproblem.has_hessian_operator() && !subproblem.has_hessian_matrix()) {
          throw std::runtime_error("The Hessian cannot be evaluated implicitly or explicitly");
       }
 
@@ -346,9 +346,9 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
 
    // if the Hessian must be regularized or if no implicit representation exists
    if ((!subproblem->is_hessian_positive_definite() && subproblem->performs_primal_regularization()) ||
-         !subproblem->has_implicit_hessian_representation()) {
+         !subproblem->has_hessian_operator()) {
       // compute the explicit matrix
-      if (subproblem->has_explicit_hessian_representation()) {
+      if (subproblem->has_hessian_matrix()) {
          // if the Hessian has not been evaluated at the current point, evaluate it
          if (*evaluate_hessian) {
             subproblem->evaluate_lagrangian_hessian(*statistics, hessian_values->data());
@@ -371,7 +371,7 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
       }
    }
    // otherwise, try to perform a Hessian-vector product if possible
-   else if (subproblem->has_implicit_hessian_representation()) {
+   else if (subproblem->has_hessian_operator()) {
       subproblem->compute_hessian_vector_product(subproblem->current_iterate.primals.data(), vector, result);
    }
 }
