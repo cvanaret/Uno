@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Charlie Vanaret
+// Copyright (c) 2025 Alexis Montoison and Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_C_API_H
@@ -48,9 +48,9 @@ extern "C" {
    const int32_t UNO_UNBOUNDED = 6;
 
    // current Uno version is 2.0.3
-   const int32_t uno_version_major = 2;
-   const int32_t uno_version_minor = 0;
-   const int32_t uno_version_patch = 3;
+   const int32_t UNO_VERSION_MAJOR = 2;
+   const int32_t UNO_VERSION_MINOR = 0;
+   const int32_t UNO_VERSION_PATCH = 3;
 
    // get the current Uno version as v major.minor.patch
    void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch);
