@@ -12,7 +12,7 @@
 #include "tools/PointerWrapper.hpp"
 
 namespace uno {
-   using Objective = std::function<double(const Vector<double>&)>;
+   using Objective = std::function<int(const Vector<double>&, PointerWrapper<double>)>;
 
    using Constraints = std::function<int(const Vector<double>&, PointerWrapper<double>)>;
 
