@@ -43,7 +43,7 @@ namespace uno {
       // reformulate the model if it is to be solved with an interior-point method
       if (options.get_string("inequality_handling_method") == "primal_dual_interior_point") {
          // move the fixed variables to the set of general constraints
-         const FixedBoundsConstraintsModel fixed_bound_model(model, options);
+         const FixedBoundsConstraintsModel fixed_bound_model(model);
          // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks
          const HomogeneousEqualityConstrainedModel homogeneous_model(fixed_bound_model);
          // slightly relax the bound constraints
