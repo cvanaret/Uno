@@ -63,7 +63,7 @@ namespace uno {
    protected:
       const PythonUserModel& user_model;
       const SparseVector<size_t> slacks{0};
-      const Vector<size_t> fixed_variables{0};
+      Vector<size_t> fixed_variables{0};
       const ForwardRange linear_constraints{0};
       std::vector<size_t> equality_constraints;
       CollectionAdapter<std::vector<size_t>> equality_constraints_collection;

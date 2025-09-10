@@ -14,13 +14,13 @@
 namespace uno {
    using Objective = std::function<double(const Vector<double>&)>;
 
-   using Constraints = std::function<void(const Vector<double>&, PointerWrapper<double>)>;
+   using Constraints = std::function<int(const Vector<double>&, PointerWrapper<double>)>;
 
-   using ObjectiveGradient = std::function<void(const Vector<double>&, PointerWrapper<double>)>;
+   using ObjectiveGradient = std::function<int(const Vector<double>&, PointerWrapper<double>)>;
 
-   using Jacobian = std::function<void(const Vector<double>&, PointerWrapper<double>)>;
+   using Jacobian = std::function<int(const Vector<double>&, PointerWrapper<double>)>;
 
-   using Hessian = std::function<void(const Vector<double>&, double objective_multiplier, const Vector<double>&,
+   using Hessian = std::function<int(const Vector<double>&, double objective_multiplier, const Vector<double>&,
       PointerWrapper<double>)>;
 
    // TODO
