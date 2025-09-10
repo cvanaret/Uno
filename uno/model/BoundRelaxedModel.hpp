@@ -25,7 +25,10 @@ namespace uno {
       }
 
       // function evaluations
-      [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override { return this->model->evaluate_objective(x); }
+      [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override {
+         return this->model->evaluate_objective(x);
+      }
+
       void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override {
          this->model->evaluate_constraints(x, constraints);
       }
@@ -54,9 +57,9 @@ namespace uno {
          this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
       }
 
-      void compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
-            double* result) const override {
-         this->model->compute_hessian_vector_product(vector, objective_multiplier, multipliers, result);
+      void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
+            const Vector<double>& multipliers, double* result) const override {
+         this->model->compute_hessian_vector_product(x, vector, objective_multiplier, multipliers, result);
       }
 
       // only these two functions are redefined

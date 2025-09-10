@@ -224,9 +224,10 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector, const Multipliers& multipliers,
-         double* result) const {
-      hessian_model.compute_hessian_vector_product(this->model, vector, this->get_objective_multiplier(), multipliers.constraints, result);
+   void l1RelaxedProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
+         const Multipliers& multipliers, double* result) const {
+      hessian_model.compute_hessian_vector_product(this->model, x, vector, this->get_objective_multiplier(),
+         multipliers.constraints, result);
 
       // proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {

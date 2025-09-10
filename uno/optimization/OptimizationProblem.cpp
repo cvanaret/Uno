@@ -90,9 +90,10 @@ namespace uno {
          multipliers.constraints, hessian_values);
    }
 
-   void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector, const Multipliers& multipliers,
-         double* result) const {
-      hessian_model.compute_hessian_vector_product(this->model, vector, this->get_objective_multiplier(), multipliers.constraints, result);
+   void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
+         const Multipliers& multipliers, double* result) const {
+      hessian_model.compute_hessian_vector_product(this->model, x, vector, this->get_objective_multiplier(),
+         multipliers.constraints, result);
    }
 
    size_t OptimizationProblem::get_number_original_variables() const {

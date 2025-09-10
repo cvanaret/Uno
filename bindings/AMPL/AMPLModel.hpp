@@ -45,8 +45,8 @@ namespace uno {
       void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override;
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const override;
-      void compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
-         double* result) const override;
+      void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
+         const Vector<double>& multipliers, double* result) const override;
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;

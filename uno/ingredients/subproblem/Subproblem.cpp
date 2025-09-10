@@ -89,9 +89,9 @@ namespace uno {
       }
    }
 
-   void Subproblem::compute_hessian_vector_product(const double* vector, double* result) const {
+   void Subproblem::compute_hessian_vector_product(const double* x, const double* vector, double* result) const {
       // unregularized Hessian-vector product
-      this->problem.compute_hessian_vector_product(this->hessian_model, vector, this->current_iterate.multipliers, result);
+      this->problem.compute_hessian_vector_product(this->hessian_model, x, vector, this->current_iterate.multipliers, result);
 
       // contribution of the regularization strategy
       const double regularization_factor = this->regularization_strategy.get_primal_regularization_factor();
