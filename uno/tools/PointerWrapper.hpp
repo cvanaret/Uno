@@ -22,8 +22,16 @@ namespace uno {
          return *this->pointer;
       }
 
+      const T& operator[](std::size_t index) const {
+         return this->pointer[index];
+      }
+
+      T& operator[](std::size_t index) {
+         return this->pointer[index];
+      }
+
    protected:
-      T* pointer;
+      T* const pointer; // const pointer to non-const quantity
    };
 
    template <typename T>

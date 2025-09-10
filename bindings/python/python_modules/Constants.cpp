@@ -46,8 +46,8 @@ namespace uno {
       module.attr("UNBOUNDED") = UNO_UNBOUNDED;
 
       // current Uno version is 2.0.3
-      module.attr("VERSION_MAJOR") = uno_version_major;
-      module.attr("VERSION_MINOR") = uno_version_minor;
-      module.attr("VERSION_PATCH") = uno_version_patch;
+      module.attr("VERSION_MAJOR") = UNO_VERSION_MAJOR;
+      module.attr("VERSION_MINOR") = UNO_VERSION_MINOR;
+      module.attr("VERSION_PATCH") = UNO_VERSION_PATCH;
    }
 } // namespace

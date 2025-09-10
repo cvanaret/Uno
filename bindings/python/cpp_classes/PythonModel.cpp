@@ -3,6 +3,7 @@
 
 #include "PythonModel.hpp"
 #include "symbolic/Concatenation.hpp"
+#include "tools/PointerWrapper.hpp"
 #include "Uno.hpp"
 
 namespace uno {
@@ -24,26 +25,21 @@ namespace uno {
    }
 
    double PythonModel::evaluate_objective(const Vector<double>& x) const {
-      if (this->user_model.objective_function != nullptr) {
-         std::cout << "PythonModel::evaluate_objective\n";
-         return (*this->user_model.objective_function)(wrap_pointer(&x));
-      }
-      else {
-         std::cout << "PythonModel::evaluate_objective has empty pointer\n";
+      if (this->user_model.objective_function.has_value()) {
+         return (*this->user_model.objective_function)(x);
       }
       return 0.;
    }
 
-   void PythonModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
-      if (this->user_model.constraint_functions != nullptr) {
-         this->user_model.constraint_functions(x, constraints);
+   void PythonModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
+      if (this->user_model.constraint_functions.has_value()) {
+         (*this->user_model.constraint_functions)(x, wrap_pointer(constraints.data()));
       }
    }
 
    void PythonModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
-      if (this->user_model.objective_gradient != nullptr) {
-         std::cout << "PythonModel::evaluate_objective_gradient\n";
-         (*this->user_model.objective_gradient)(wrap_pointer(&x), wrap_pointer(&gradient));
+      if (this->user_model.objective_gradient.has_value()) {
+         (*this->user_model.objective_gradient)(x, wrap_pointer(gradient.data()));
       }
    }
 
@@ -80,15 +76,15 @@ namespace uno {
    }
 
    void PythonModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
-      if (this->user_model.constraint_jacobian != nullptr) {
-         this->user_model.constraint_jacobian(x, jacobian_values);
+      if (this->user_model.constraint_jacobian.has_value()) {
+         (*this->user_model.constraint_jacobian)(x, wrap_pointer(jacobian_values));
       }
    }
 
    void PythonModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const {
-      if (this->user_model.lagrangian_hessian != nullptr) {
-         this->user_model.lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
+      if (this->user_model.lagrangian_hessian.has_value()) {
+         (*this->user_model.lagrangian_hessian)(x, objective_multiplier, multipliers, wrap_pointer(hessian_values));
       }
    }
 
@@ -98,11 +94,21 @@ namespace uno {
    }
 
    double PythonModel::variable_lower_bound(size_t variable_index) const {
-      return this->user_model.variables_lower_bounds[variable_index];
+      if (this->user_model.variables_lower_bounds.has_value()) {
+         return (*this->user_model.variables_lower_bounds)[variable_index];
+      }
+      else {
+         return -INF<double>;
+      }
    }
 
    double PythonModel::variable_upper_bound(size_t variable_index) const {
-      return this->user_model.variables_upper_bounds[variable_index];
+      if (this->user_model.variables_upper_bounds.has_value()) {
+         return (*this->user_model.variables_upper_bounds)[variable_index];
+      }
+      else {
+         return INF<double>;
+      }
    }
 
    const SparseVector<size_t>& PythonModel::get_slacks() const {
@@ -114,11 +120,21 @@ namespace uno {
    }
 
    double PythonModel::constraint_lower_bound(size_t constraint_index) const {
-      return this->user_model.constraints_lower_bounds[constraint_index];
+      if (this->user_model.constraints_lower_bounds.has_value()) {
+         return (*this->user_model.constraints_lower_bounds)[constraint_index];
+      }
+      else {
+         return -INF<double>;
+      }
    }
 
    double PythonModel::constraint_upper_bound(size_t constraint_index) const {
-      return this->user_model.constraints_upper_bounds[constraint_index];
+      if (this->user_model.constraints_upper_bounds.has_value()) {
+         return (*this->user_model.constraints_upper_bounds)[constraint_index];
+      }
+      else {
+         return INF<double>;
+      }
    }
 
    const Collection<size_t>& PythonModel::get_equality_constraints() const {

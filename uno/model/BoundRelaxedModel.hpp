@@ -36,7 +36,7 @@ namespace uno {
          return this->model.evaluate_objective(x);
       }
 
-      void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override {
+      void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override {
          this->model.evaluate_constraints(x, constraints);
       }
 
