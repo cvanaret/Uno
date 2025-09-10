@@ -49,7 +49,7 @@ namespace uno {
       void regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
       template <typename IndexType>
-      void assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
+      void assemble_augmented_rhs(const Vector<double>& objective_gradient, const Vector<double>& constraints,
          const Matrix<IndexType>& constraint_jacobian, Vector<double>& rhs) const;
       void assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const;
 
@@ -59,7 +59,7 @@ namespace uno {
       // constraints bounds
       template <typename Array>
       void set_constraints_bounds(Array& constraints_lower_bounds, Array& constraints_upper_bounds,
-         std::vector<double>& constraints) const;
+         Vector<double>& constraints) const;
 
       [[nodiscard]] bool is_hessian_positive_definite() const;
       [[nodiscard]] bool has_hessian_operator() const;
@@ -90,7 +90,7 @@ namespace uno {
    };
 
    template <typename IndexType>
-   void Subproblem::assemble_augmented_rhs(const Vector<double>& objective_gradient, const std::vector<double>& constraints,
+   void Subproblem::assemble_augmented_rhs(const Vector<double>& objective_gradient, const Vector<double>& constraints,
          const Matrix<IndexType>& constraint_jacobian, Vector<double>& rhs) const {
       rhs.fill(0.);
 
@@ -112,7 +112,7 @@ namespace uno {
 
    template <typename Array>
    void Subproblem::set_constraints_bounds(Array& constraints_lower_bounds, Array& constraints_upper_bounds,
-         std::vector<double>& constraints) const {
+         Vector<double>& constraints) const {
       for (size_t constraint_index: Range(this->problem.number_constraints)) {
          constraints_lower_bounds[constraint_index] = this->problem.constraint_lower_bound(constraint_index) - constraints[constraint_index];
          constraints_upper_bounds[constraint_index] = this->problem.constraint_upper_bound(constraint_index) - constraints[constraint_index];

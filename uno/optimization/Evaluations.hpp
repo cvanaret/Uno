@@ -11,7 +11,7 @@
 namespace uno {
       struct Evaluations {
             double objective{INF<double>}; /*!< Objective value */
-            std::vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
+            Vector<double> constraints; /*!< Constraint values (size \f$m)\f$ */
             std::vector<double> linearized_constraints;
             Vector<double> objective_gradient; /*!< Sparse Jacobian of the objective */
 

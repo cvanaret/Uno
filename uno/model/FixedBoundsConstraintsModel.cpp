@@ -35,7 +35,7 @@ namespace uno {
       return this->model.evaluate_objective(x);
    }
 
-   void FixedBoundsConstraintsModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
+   void FixedBoundsConstraintsModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       this->model.evaluate_constraints(x, constraints);
       // add the fixed variables
       size_t current_constraint = this->model.number_constraints;

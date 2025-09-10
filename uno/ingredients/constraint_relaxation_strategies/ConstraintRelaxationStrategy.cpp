@@ -143,7 +143,7 @@ namespace uno {
       // complementarity error
       constexpr double shift_value = 0.;
       // TODO preallocate constraints
-      std::vector<double> constraints(problem.number_constraints);
+      Vector<double> constraints(problem.number_constraints);
       problem.evaluate_constraints(iterate, constraints);
       iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, constraints,
          iterate.multipliers, shift_value, this->residual_norm);

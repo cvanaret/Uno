@@ -17,7 +17,7 @@ namespace uno {
       [[nodiscard]] double get_objective_multiplier() const override;
 
       // constraint evaluations
-      void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const override;
+      void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
 
       // dense objective gradient
       void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const override;

@@ -5,8 +5,8 @@
 #define UNO_CONSTANTS_H
 
 // Optimization sense
-const int32_t UNO_MINIMIZE = 0;
-const int32_t UNO_MAXIMIZE = 1;
+const int32_t UNO_MINIMIZE = 1;
+const int32_t UNO_MAXIMIZE = -1;
 
 // Lagrange multiplier sign convention
 const double UNO_MULTIPLIER_POSITIVE =  1.0;
@@ -42,8 +42,8 @@ const int32_t UNO_INFEASIBLE_SMALL_STEP = 5;
 const int32_t UNO_UNBOUNDED = 6;
 
 // current Uno version is 2.0.3
-const int32_t uno_version_major = 2;
-const int32_t uno_version_minor = 0;
-const int32_t uno_version_patch = 3;
+const int32_t UNO_VERSION_MAJOR = 2;
+const int32_t UNO_VERSION_MINOR = 0;
+const int32_t UNO_VERSION_PATCH = 3;
 
 #endif // UNO_CONSTANTS_H

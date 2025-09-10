@@ -7,9 +7,7 @@ Inf = float("inf")
 # hs015.mod
 
 def objective(x):
-	objective = 100.*(x[1] - x[0]**2)**2 + (1. - x[0])**2
-	print("objective = ", objective)
-	return objective
+	return 100.*(x[1] - x[0]**2)**2 + (1. - x[0])**2
 	
 def constraints(x, constraint_values):
 	constraint_values[0] = x[0]*x[1]
@@ -55,18 +53,19 @@ if __name__ == '__main__':
 	# initial point
 	x0 = [-2., 1.]
 
-	model = unopy.Model(unopy.PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
-		variables_upper_bounds, base_indexing)
+	model = unopy.Model(unopy.PROBLEM_NONLINEAR, number_variables, variables_lower_bounds, variables_upper_bounds,
+		base_indexing)
 	model.set_objective(optimization_sense, objective, objective_gradient)
-	#model.set_constraints(number_constraints, constraints,
-	#	constraints_lower_bounds, constraints_upper_bounds, number_jacobian_nonzeros,
-	#	jacobian_row_indices, jacobian_column_indices, constraint_jacobian)
+	model.set_constraints(number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds,
+	  number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, constraint_jacobian)
+	model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
+		hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
 	model.set_initial_primal_iterate(x0)
 	
 	uno_solver = unopy.UnoSolver()
 	uno_solver.set_preset("filtersqp")
-	uno_solver.set_option("print_subproblem", "yes")
-	uno_solver.set_option("print_solution", "yes")
+	#uno_solver.set_option("print_subproblem", "yes")
+	#uno_solver.set_option("print_solution", "yes")
 	#uno_solver.set_option("logger", "DEBUG3")
 	
 	result = uno_solver.optimize(model)

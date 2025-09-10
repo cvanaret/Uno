@@ -35,7 +35,7 @@ namespace uno {
 
       // objective
       Objective objective_function{};
-      ObjectiveGradient objective_gradient{nullptr};
+      ObjectiveGradient objective_gradient{};
 
       // constraints
       int32_t number_constraints{0};

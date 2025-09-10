@@ -12,26 +12,25 @@
 #include "tools/PointerWrapper.hpp"
 
 namespace uno {
-   //using Objective = std::function<double(const Vector<double>&)>;
-   using Objective = double (*)(PointerWrapper<const Vector<double>>);
+   using Objective = std::function<double(const Vector<double>&)>;
 
-   using Constraints = std::function<void(const Vector<double>&, std::vector<double>&)>;
+   using Constraints = std::function<void(const Vector<double>&, PointerWrapper<double>)>;
 
-   //using ObjectiveGradient = std::function<void(const Vector<double>&, Vector<double>&)>;
-   typedef void (*ObjectiveGradient)(PointerWrapper<const Vector<double>>, PointerWrapper<Vector<double>>);
+   using ObjectiveGradient = std::function<void(const Vector<double>&, PointerWrapper<double>)>;
 
-   using Jacobian = std::function<void(const Vector<double>& /*x*/, double* /*jacobian_values*/)>;
+   using Jacobian = std::function<void(const Vector<double>&, PointerWrapper<double>)>;
 
-   using Hessian = std::function<void(const Vector<double>& /*x*/, double objective_multiplier,
-      const Vector<double>& /*multipliers*/, double* /*hessian_values*/)>;
+   using Hessian = std::function<void(const Vector<double>&, double objective_multiplier, const Vector<double>&,
+      PointerWrapper<double>)>;
 
    // TODO
    using JacobianOperator = void*;
    using JacobianTransposedOperator = void*;
    using HessianOperator = void*;
 
-   using PythonUserModel = UserModel<Objective*, ObjectiveGradient, Constraints, Jacobian, JacobianOperator,
-      JacobianTransposedOperator, Hessian, HessianOperator, std::optional<std::vector<double>>>;
+   using PythonUserModel = UserModel<std::optional<Objective>, std::optional<ObjectiveGradient>, std::optional<Constraints>,
+      std::optional<Jacobian>, JacobianOperator, JacobianTransposedOperator, std::optional<Hessian>, HessianOperator,
+      std::optional<std::vector<double>>>;
 } // namespace
 
 #endif // UNO_UNOPY_H

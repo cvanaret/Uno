@@ -28,7 +28,7 @@ namespace uno {
 
       // function evaluations
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
-      void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override;
+      void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override;
 
       // dense objective gradient
       void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;

@@ -5,7 +5,6 @@
 #define UNO_HIGHSEVALUATIONSPACE_H
 
 #include <cstddef>
-#include <vector>
 #include "optimization/EvaluationSpace.hpp"
 #include "Highs.h"
 #include "linear_algebra/Vector.hpp"
@@ -32,7 +31,7 @@ namespace uno {
       void evaluate_functions(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information);
 
       HighsModel model;
-      std::vector<double> constraints{};
+      Vector<double> constraints{};
       Vector<double> linear_objective{};
       // constraint Jacobian in COO format
       Vector<int> jacobian_row_indices{};
