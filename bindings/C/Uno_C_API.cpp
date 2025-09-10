@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Charlie Vanaret
+// Copyright (c) 2025 Alexis Montoison and Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
@@ -368,9 +368,9 @@ struct Solver {
 };
 
 void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch) {
-   *major = uno_version_major;
-   *minor = uno_version_minor;
-   *patch = uno_version_patch;
+   *major = UNO_VERSION_MAJOR;
+   *minor = UNO_VERSION_MINOR;
+   *patch = UNO_VERSION_PATCH;
 }
 
 void* uno_create_model(char problem_type, int32_t number_variables, const double* variables_lower_bounds,
