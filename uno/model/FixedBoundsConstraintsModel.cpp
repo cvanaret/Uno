@@ -5,7 +5,7 @@
 #include "optimization/Iterate.hpp"
 
 namespace uno {
-   FixedBoundsConstraintsModel::FixedBoundsConstraintsModel(const Model& original_model, const Options& /*options*/) :
+   FixedBoundsConstraintsModel::FixedBoundsConstraintsModel(const Model& original_model) :
          Model(original_model.name + " -> no fixed bounds", original_model.number_variables,
             // move the fixed variables to the set of general constraints
             original_model.number_constraints + original_model.get_fixed_variables().size(),

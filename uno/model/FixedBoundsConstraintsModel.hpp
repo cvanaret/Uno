@@ -18,7 +18,7 @@ namespace uno {
    // linear constraint 0 x[1] + 1 x[2] + ... + 0 x[n] == 1
    class FixedBoundsConstraintsModel: public Model {
    public:
-      FixedBoundsConstraintsModel(const Model& original_model, const Options& options);
+      explicit FixedBoundsConstraintsModel(const Model& original_model);
 
       // availability of linear operators
       [[nodiscard]] bool has_jacobian_operator() const override;
