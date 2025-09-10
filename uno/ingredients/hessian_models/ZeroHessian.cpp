@@ -5,11 +5,11 @@
 #include "model/Model.hpp"
 
 namespace uno {
-   bool ZeroHessian::has_implicit_representation(const Model& /*model*/) const {
+   bool ZeroHessian::has_hessian_operator(const Model& /*model*/) const {
       return true;
    }
 
-   bool ZeroHessian::has_explicit_representation(const Model& /*model*/) const {
+   bool ZeroHessian::has_hessian_matrix(const Model& /*model*/) const {
       return true;
    }
 
