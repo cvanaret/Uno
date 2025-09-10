@@ -12,11 +12,11 @@ namespace uno {
    // UserModel contains the description of the model provided by the user
    template <typename Objective, typename ObjectiveGradient, typename Constraints, typename Jacobian,
       typename JacobianOperator, typename JacobianTransposedOperator, typename Hessian, typename HessianOperator,
-      typename InitialIterateType>
+      typename OptionalDoubleVector>
    class UserModel {
    public:
-      UserModel(char problem_type, int32_t number_variables, double* variables_lower_bounds, double* variables_upper_bounds,
-         int32_t base_indexing):
+      UserModel(char problem_type, int32_t number_variables, const std::vector<double>& variables_lower_bounds,
+         const std::vector<double>& variables_upper_bounds, int32_t base_indexing):
             problem_type(problem_type),
             base_indexing(base_indexing),
             number_variables(number_variables),
@@ -31,18 +31,18 @@ namespace uno {
 
       // variables
       const int32_t number_variables;
-      double* variables_lower_bounds{nullptr};
-      double* variables_upper_bounds{nullptr};
+      OptionalDoubleVector variables_lower_bounds{};
+      OptionalDoubleVector variables_upper_bounds{};
 
       // objective
       Objective objective_function{};
-      ObjectiveGradient objective_gradient{nullptr};
+      ObjectiveGradient objective_gradient{};
 
       // constraints
       int32_t number_constraints{0};
-      Constraints constraint_functions{nullptr};
-      double* constraints_lower_bounds{nullptr};
-      double* constraints_upper_bounds{nullptr};
+      Constraints constraint_functions{};
+      OptionalDoubleVector constraints_lower_bounds{};
+      OptionalDoubleVector constraints_upper_bounds{};
       int32_t number_jacobian_nonzeros{0};
       std::vector<int32_t> jacobian_row_indices{};
       std::vector<int32_t> jacobian_column_indices{};
@@ -67,8 +67,8 @@ namespace uno {
       int32_t optimization_sense{UNO_MINIMIZE};
 
       // initial iterate
-      InitialIterateType initial_primal_iterate{};
-      InitialIterateType initial_dual_iterate{};
+      OptionalDoubleVector initial_primal_iterate{};
+      OptionalDoubleVector initial_dual_iterate{};
    };
 } // namespace
 

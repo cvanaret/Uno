@@ -25,7 +25,7 @@ namespace uno {
       return this->objective_multiplier;
    }
 
-   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
       constraints = iterate.evaluations.constraints;
 
