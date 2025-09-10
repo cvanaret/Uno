@@ -17,9 +17,11 @@ namespace uno {
       explicit PythonModel(const PythonUserModel& user_model);
       ~PythonModel() override = default;
 
-      // Hessian representation
-      [[nodiscard]] bool has_implicit_hessian_representation() const override;
-      [[nodiscard]] bool has_explicit_hessian_representation() const override;
+      // availability of linear operators
+      [[nodiscard]] bool has_jacobian_operator() const override;
+      [[nodiscard]] bool has_jacobian_transposed_operator() const override;
+      [[nodiscard]] bool has_hessian_operator() const override;
+      [[nodiscard]] bool has_hessian_matrix() const override;
 
       // function evaluations
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
@@ -38,8 +40,8 @@ namespace uno {
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const override;
       // here we use pointers, since the vector and the result may be provided by a low-level subproblem solver
-      void compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
-         double* result) const override;
+      void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
+         const Vector<double>& multipliers, double* result) const override;
 
       // purely functions
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
