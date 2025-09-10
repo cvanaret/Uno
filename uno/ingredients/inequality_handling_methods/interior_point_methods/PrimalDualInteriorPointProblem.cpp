@@ -160,10 +160,10 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,
-         const Multipliers& multipliers, double* result) const {
+   void PrimalDualInteriorPointProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x,
+         const double* vector, const Multipliers& multipliers, double* result) const {
       // original Lagrangian Hessian
-      this->first_reformulation.compute_hessian_vector_product(hessian_model, vector, multipliers, result);
+      this->first_reformulation.compute_hessian_vector_product(hessian_model, x, vector, multipliers, result);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {

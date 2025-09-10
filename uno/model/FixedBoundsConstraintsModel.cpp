@@ -76,9 +76,9 @@ namespace uno {
       this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
    }
 
-   void FixedBoundsConstraintsModel::compute_hessian_vector_product(const double* vector, double objective_multiplier,
-         const Vector<double>& multipliers, double* result) const {
-      this->model->compute_hessian_vector_product(vector, objective_multiplier, multipliers, result);
+   void FixedBoundsConstraintsModel::compute_hessian_vector_product(const double* x, const double* vector,
+         double objective_multiplier, const Vector<double>& multipliers, double* result) const {
+      this->model->compute_hessian_vector_product(x, vector, objective_multiplier, multipliers, result);
    }
 
    double FixedBoundsConstraintsModel::variable_lower_bound(size_t variable_index) const {

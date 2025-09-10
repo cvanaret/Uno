@@ -56,8 +56,8 @@ namespace uno {
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const = 0;
       // here we use pointers, since the vector and the result may be provided by a low-level subproblem solver
-      virtual void compute_hessian_vector_product(const double* vector, double objective_multiplier, const Vector<double>& multipliers,
-         double* result) const = 0;
+      virtual void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
+         const Vector<double>& multipliers, double* result) const = 0;
 
       // purely virtual functions
       [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;

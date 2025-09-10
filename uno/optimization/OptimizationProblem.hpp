@@ -57,7 +57,7 @@ namespace uno {
          const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, double* hessian_values) const;
-      virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,
+      virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
          const Multipliers& multipliers, double* result) const;
 
       [[nodiscard]] size_t get_number_original_variables() const;
