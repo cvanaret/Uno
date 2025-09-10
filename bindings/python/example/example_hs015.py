@@ -6,8 +6,9 @@ Inf = float("inf")
 
 # hs015.mod
 
-def objective(x):
-	return 100.*(x[1] - x[0]**2)**2 + (1. - x[0])**2
+def objective(x, objective_value):
+	objective_value[0] = 100.*(x[1] - x[0]**2)**2 + (1. - x[0])**2
+	return 0
 	
 def constraints(x, constraint_values):
 	constraint_values[0] = x[0]*x[1]

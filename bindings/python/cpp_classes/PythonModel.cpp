@@ -33,12 +33,15 @@ namespace uno {
    }
 
    double PythonModel::evaluate_objective(const Vector<double>& x) const {
+      double objective_value = 0.;
       if (this->user_model.objective_function.has_value()) {
-         double objective_value = (*this->user_model.objective_function)(x);
+         const int32_t return_code = (*this->user_model.objective_function)(x, wrap_pointer(&objective_value));
+         if (0 < return_code) {
+            throw FunctionEvaluationError();
+         }
          objective_value *= this->optimization_sense;
-         return objective_value;
       }
-      return 0.;
+      return objective_value;
    }
 
    void PythonModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
