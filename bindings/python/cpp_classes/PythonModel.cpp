@@ -24,11 +24,19 @@ namespace uno {
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
 
-   bool PythonModel::has_implicit_hessian_representation() const {
+   bool PythonModel::has_jacobian_operator() const {
+      return (this->user_model.jacobian_operator != nullptr);
+   }
+
+   bool PythonModel::has_jacobian_transposed_operator() const {
+      return (this->user_model.jacobian_transposed_operator != nullptr);
+   }
+
+   bool PythonModel::has_hessian_operator() const {
       return (this->user_model.lagrangian_hessian_operator != nullptr);
    }
 
-   bool PythonModel::has_explicit_hessian_representation() const {
+   bool PythonModel::has_hessian_matrix() const {
       return (this->user_model.lagrangian_hessian != nullptr);
    }
 
@@ -129,7 +137,7 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_hessian_vector_product(const double* /*vector*/, double /*objective_multiplier*/,
+   void PythonModel::compute_hessian_vector_product(const double* /*x*/, const double* /*vector*/, double /*objective_multiplier*/,
          const Vector<double>& /*multipliers*/, double* /*result*/) const {
       throw std::runtime_error("PythonModel::compute_hessian_vector_product not implemented yet");
    }
