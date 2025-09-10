@@ -12,21 +12,25 @@ def objective(x):
 def constraints(x, constraint_values):
 	constraint_values[0] = x[0]*x[1]
 	constraint_values[1] = x[0] + x[1]**2
+	return 0
 	
 def objective_gradient(x, gradient):
 	gradient[0] = 400.*x[0]**3 - 400.*x[0]*x[1] + 2.*x[0] - 2.
 	gradient[1] = 200.*(x[1] - x[0]**2)
+	return 0
 
 def constraint_jacobian(x, jacobian_values):
 	jacobian_values[0] = x[1]
 	jacobian_values[1] = 1.
 	jacobian_values[2] = x[0]
 	jacobian_values[3] = 2.*x[1]
+	return 0
 
 def lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values):
 	hessian_values[0] = objective_multiplier*(1200*x[0]**2 - 400.*x[1] + 2.)
 	hessian_values[1] = -400.*objective_multiplier*x[0] - multipliers[0]
 	hessian_values[2] = 200.*objective_multiplier - 2.*multipliers[1]
+	return 0
 
 if __name__ == '__main__':
 	# model creation

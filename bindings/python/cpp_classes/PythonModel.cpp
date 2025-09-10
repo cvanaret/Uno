@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "PythonModel.hpp"
+#include "optimization/EvaluationErrors.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "tools/PointerWrapper.hpp"
 #include "Uno.hpp"
@@ -10,36 +11,54 @@ namespace uno {
    PythonModel::PythonModel(const PythonUserModel& user_model):
       Model("Python model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
          static_cast<double>(user_model.optimization_sense)),
-      user_model(user_model),
-      equality_constraints_collection(this->equality_constraints),
-      inequality_constraints_collection(this->inequality_constraints) {
+         user_model(user_model),
+         equality_constraints_collection(this->equality_constraints),
+         inequality_constraints_collection(this->inequality_constraints) {
+      // detect fix variables
+      this->fixed_variables.reserve(this->number_variables);
+      this->detect_fixed_variables(this->fixed_variables);
+
+      // partition equality/inequality constraints
+      this->equality_constraints.reserve(this->number_constraints);
+      this->inequality_constraints.reserve(this->number_constraints);
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
 
    bool PythonModel::has_implicit_hessian_representation() const {
-      return false;
+      return (this->user_model.lagrangian_hessian_operator != nullptr);
    }
 
    bool PythonModel::has_explicit_hessian_representation() const {
-      return true;
+      return (this->user_model.lagrangian_hessian != nullptr);
    }
 
    double PythonModel::evaluate_objective(const Vector<double>& x) const {
       if (this->user_model.objective_function.has_value()) {
-         return (*this->user_model.objective_function)(x);
+         double objective_value = (*this->user_model.objective_function)(x);
+         objective_value *= this->optimization_sense;
+         return objective_value;
       }
       return 0.;
    }
 
    void PythonModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       if (this->user_model.constraint_functions.has_value()) {
-         (*this->user_model.constraint_functions)(x, wrap_pointer(constraints.data()));
+         const int32_t return_code = (*this->user_model.constraint_functions)(x, wrap_pointer(constraints.data()));
+         if (0 < return_code) {
+            throw FunctionEvaluationError();
+         }
       }
    }
 
    void PythonModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       if (this->user_model.objective_gradient.has_value()) {
-         (*this->user_model.objective_gradient)(x, wrap_pointer(gradient.data()));
+         const int32_t return_code = (*this->user_model.objective_gradient)(x, wrap_pointer(gradient.data()));
+         if (0 < return_code) {
+            throw GradientEvaluationError();
+         }
+         for (size_t variable_index: Range(this->number_variables)) {
+            gradient[variable_index] *= this->optimization_sense;
+         }
       }
    }
 
@@ -77,14 +96,33 @@ namespace uno {
 
    void PythonModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
       if (this->user_model.constraint_jacobian.has_value()) {
-         (*this->user_model.constraint_jacobian)(x, wrap_pointer(jacobian_values));
+         const int32_t return_code = (*this->user_model.constraint_jacobian)(x, wrap_pointer(jacobian_values));
+         if (0 < return_code) {
+            throw GradientEvaluationError();
+         }
       }
    }
 
    void PythonModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const {
       if (this->user_model.lagrangian_hessian.has_value()) {
-         (*this->user_model.lagrangian_hessian)(x, objective_multiplier, multipliers, wrap_pointer(hessian_values));
+         objective_multiplier *= this->optimization_sense;
+         // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
+         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+            const_cast<Vector<double>&>(multipliers).scale(-1.);
+         }
+         const int32_t return_code = (*this->user_model.lagrangian_hessian)(x, objective_multiplier, multipliers,
+            wrap_pointer(hessian_values));
+         // flip the signs of the multipliers back
+         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+            const_cast<Vector<double>&>(multipliers).scale(-1.);
+         }
+         if (0 < return_code) {
+            throw HessianEvaluationError();
+         }
+      }
+      else {
+         throw std::runtime_error("evaluate_lagrangian_hessian not implemented");
       }
    }
 
@@ -97,18 +135,14 @@ namespace uno {
       if (this->user_model.variables_lower_bounds.has_value()) {
          return (*this->user_model.variables_lower_bounds)[variable_index];
       }
-      else {
-         return -INF<double>;
-      }
+      return -INF<double>;
    }
 
    double PythonModel::variable_upper_bound(size_t variable_index) const {
       if (this->user_model.variables_upper_bounds.has_value()) {
          return (*this->user_model.variables_upper_bounds)[variable_index];
       }
-      else {
-         return INF<double>;
-      }
+      return INF<double>;
    }
 
    const SparseVector<size_t>& PythonModel::get_slacks() const {
@@ -123,18 +157,14 @@ namespace uno {
       if (this->user_model.constraints_lower_bounds.has_value()) {
          return (*this->user_model.constraints_lower_bounds)[constraint_index];
       }
-      else {
-         return -INF<double>;
-      }
+      return -INF<double>;
    }
 
    double PythonModel::constraint_upper_bound(size_t constraint_index) const {
       if (this->user_model.constraints_upper_bounds.has_value()) {
          return (*this->user_model.constraints_upper_bounds)[constraint_index];
       }
-      else {
-         return INF<double>;
-      }
+      return INF<double>;
    }
 
    const Collection<size_t>& PythonModel::get_equality_constraints() const {
@@ -161,14 +191,22 @@ namespace uno {
    void PythonModel::initial_dual_point(Vector<double>& multipliers) const {
       if (this->user_model.initial_dual_iterate.has_value()) {
          std::copy_n(this->user_model.initial_dual_iterate->begin(), this->user_model.number_constraints, multipliers.begin());
+         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+            multipliers.scale(-1.);
+         }
       }
       else {
          multipliers.fill(0.);
       }
    }
 
-   void PythonModel::postprocess_solution(Iterate& /*iterate*/, IterateStatus /*iterate_status*/) const {
-      // do nothing
+   void PythonModel::postprocess_solution(Iterate& iterate, IterateStatus /*iterate_status*/) const {
+      // flip the signs of the multipliers, depending on what the sign convention of the Lagrangian is, and whether
+      // we maximize
+      iterate.multipliers.constraints *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
+      iterate.multipliers.lower_bounds *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
+      iterate.multipliers.upper_bounds *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
+      iterate.evaluations.objective *= this->optimization_sense;
    }
 
    size_t PythonModel::number_jacobian_nonzeros() const {
