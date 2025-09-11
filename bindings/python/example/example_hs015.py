@@ -71,16 +71,16 @@ if __name__ == '__main__':
 	model.set_objective(optimization_sense, objective, objective_gradient)
 	model.set_constraints(number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds,
 	  number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, constraint_jacobian)
-	#model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
-	#	hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
-	model.set_lagrangian_hessian_operator(number_hessian_nonzeros, lagrangian_hessian_operator, lagrangian_sign_convention)
+	model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
+		hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
+	#model.set_lagrangian_hessian_operator(number_hessian_nonzeros, lagrangian_hessian_operator, lagrangian_sign_convention)
 	model.set_initial_primal_iterate(x0)
 	
 	uno_solver = unopy.UnoSolver()
 	uno_solver.set_preset("filtersqp")
 	#uno_solver.set_option("print_subproblem", "yes")
 	#uno_solver.set_option("print_solution", "yes")
-	#uno_solver.set_option("logger", "DEBUG3")
+	uno_solver.set_option("logger", "DEBUG3")
 	
 	result = uno_solver.optimize(model)
 	
