@@ -4,7 +4,6 @@
 #include "PythonModel.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "symbolic/Concatenation.hpp"
-#include "tools/PointerWrapper.hpp"
 #include "Uno.hpp"
 
 namespace uno {
@@ -43,7 +42,7 @@ namespace uno {
    double PythonModel::evaluate_objective(const Vector<double>& x) const {
       double objective_value = 0.;
       if (this->user_model.objective_function.has_value()) {
-         const int32_t return_code = (*this->user_model.objective_function)(x, wrap_pointer(&objective_value));
+         const int32_t return_code = (*this->user_model.objective_function)(x, &objective_value);
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
@@ -54,7 +53,7 @@ namespace uno {
 
    void PythonModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       if (this->user_model.constraint_functions.has_value()) {
-         const int32_t return_code = (*this->user_model.constraint_functions)(x, wrap_pointer(constraints.data()));
+         const int32_t return_code = (*this->user_model.constraint_functions)(x, constraints.data());
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
@@ -63,7 +62,7 @@ namespace uno {
 
    void PythonModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       if (this->user_model.objective_gradient.has_value()) {
-         const int32_t return_code = (*this->user_model.objective_gradient)(x, wrap_pointer(gradient.data()));
+         const int32_t return_code = (*this->user_model.objective_gradient)(x, gradient.data());
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -107,7 +106,7 @@ namespace uno {
 
    void PythonModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
       if (this->user_model.constraint_jacobian.has_value()) {
-         const int32_t return_code = (*this->user_model.constraint_jacobian)(x, wrap_pointer(jacobian_values));
+         const int32_t return_code = (*this->user_model.constraint_jacobian)(x, jacobian_values);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -123,7 +122,7 @@ namespace uno {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
          const int32_t return_code = (*this->user_model.lagrangian_hessian)(x, objective_multiplier, multipliers,
-            wrap_pointer(hessian_values));
+            hessian_values);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
@@ -137,9 +136,27 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_hessian_vector_product(const double* /*x*/, const double* /*vector*/, double /*objective_multiplier*/,
-         const Vector<double>& /*multipliers*/, double* /*result*/) const {
-      throw std::runtime_error("PythonModel::compute_hessian_vector_product not implemented yet");
+   void PythonModel::compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
+         const Vector<double>& multipliers, double* result) const {
+      if (this->user_model.lagrangian_hessian_operator.has_value()) {
+         objective_multiplier *= this->optimization_sense;
+         // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
+         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+            const_cast<Vector<double>&>(multipliers).scale(-1.);
+         }
+         const int32_t return_code = (*this->user_model.lagrangian_hessian_operator)(const_cast<double*>(x), true,
+            objective_multiplier, multipliers, const_cast<double*>(vector), result);
+         // flip the signs of the multipliers back
+         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+            const_cast<Vector<double>&>(multipliers).scale(-1.);
+         }
+         if (0 < return_code) {
+            throw HessianEvaluationError();
+         }
+      }
+      else {
+         throw std::runtime_error("compute_hessian_vector_product not implemented");
+      }
    }
 
    double PythonModel::variable_lower_bound(size_t variable_index) const {
