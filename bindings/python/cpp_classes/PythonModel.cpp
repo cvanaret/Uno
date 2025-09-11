@@ -136,6 +136,30 @@ namespace uno {
       }
    }
 
+   void PythonModel::compute_jacobian_vector_product(const double* x, const double* vector, double* result) const {
+      if (this->user_model.jacobian_operator.has_value()) {
+         const int32_t return_code = (*this->user_model.jacobian_operator)(x, true, vector, result);
+         if (0 < return_code) {
+            throw GradientEvaluationError();
+         }
+      }
+      else {
+         throw std::runtime_error("compute_jacobian_vector_product not implemented");
+      }
+   }
+
+   void PythonModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const {
+      if (this->user_model.jacobian_transposed_operator.has_value()) {
+         const int32_t return_code = (*this->user_model.jacobian_transposed_operator)(x, true, vector, result);
+         if (0 < return_code) {
+            throw GradientEvaluationError();
+         }
+      }
+      else {
+         throw std::runtime_error("compute_jacobian_transposed_vector_product not implemented");
+      }
+   }
+
    void PythonModel::compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
          const Vector<double>& multipliers, double* result) const {
       if (this->user_model.lagrangian_hessian_operator.has_value()) {

@@ -79,9 +79,19 @@ namespace uno {
       }
    }
 
-   void FixedBoundsConstraintsModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         double* hessian_values) const {
+   void FixedBoundsConstraintsModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier,
+         const Vector<double>& multipliers, double* hessian_values) const {
       this->model.evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
+   }
+
+   void FixedBoundsConstraintsModel::compute_jacobian_vector_product(const double* x, const double* vector,
+         double* result) const {
+      this->model.compute_jacobian_vector_product(x, vector, result);
+   }
+
+   void FixedBoundsConstraintsModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector,
+         double* result) const {
+      this->model.compute_jacobian_transposed_vector_product(x, vector, result);
    }
 
    void FixedBoundsConstraintsModel::compute_hessian_vector_product(const double* x, const double* vector,
