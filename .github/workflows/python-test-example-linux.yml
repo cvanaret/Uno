@@ -69,9 +69,12 @@ jobs:
       - name: Build unopy
         run: cmake --build ${{github.workspace}}/build --target unopy --config ${{env.BUILD_TYPE}} -j4
 
-      - name: Install Uno
+      - name: Install unopy
         run: sudo cmake --install ${{github.workspace}}/build
+        
+      - name: Add unopy directory to PYTHONPATH
+        run: export PYTHONPATH=$PYTHONPATH:/usr/local/lib/
 
       - name: Run example
         working-directory: ${{github.workspace}}/bindings/python/example
-        run: python ./example_hs015.py
+        run: python example_hs015.py
