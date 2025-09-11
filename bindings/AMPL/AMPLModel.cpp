@@ -188,6 +188,14 @@ namespace uno {
          const_cast<double*>(multipliers.data()));
    }
 
+   void AMPLModel::compute_jacobian_vector_product(const double* /*x*/, const double* /*vector*/, double* /*result*/) const {
+      throw std::runtime_error("AMPLModel::compute_jacobian_vector_product is not implemented.");
+   }
+
+   void AMPLModel::compute_jacobian_transposed_vector_product(const double* /*x*/, const double* /*vector*/, double* /*result*/) const {
+      throw std::runtime_error("AMPLModel::compute_jacobian_transposed_vector_product is not implemented.");
+   }
+
    void AMPLModel::compute_hessian_vector_product(const double* /*x*/, const double* vector, double objective_multiplier,
          const Vector<double>& multipliers, double* result) const {
       // scale by the objective sign
