@@ -73,7 +73,7 @@ jobs:
       #    echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib" >> $GITHUB_ENV
 
       - name: Add path
-        shell: sed -i '2 a import sys\nsys.path.append("/usr/local/lib")\n' ${{github.workspace}}/bindings/python/example/example_hs015.py
+        run: sed -i '2 a import sys\nsys.path.append("/usr/local/lib")\n' ${{github.workspace}}/bindings/python/example/example_hs015.py
 
       - name: Run example
         working-directory: ${{github.workspace}}/bindings/python/example
