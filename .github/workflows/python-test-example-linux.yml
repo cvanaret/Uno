@@ -62,8 +62,11 @@ jobs:
                                                -DBQPD=${{github.workspace}}/deps/lib/libbqpd.a \
                                                -DBUILD_STATIC_LIBS=ON \
                                                -DBUILD_SHARED_LIBS=ON .
-                                               
-      - name: Build Uno
+
+      - name: Build libuno
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j4
+
+      - name: Build unopy
         run: cmake --build ${{github.workspace}}/build --target unopy --config ${{env.BUILD_TYPE}} -j4
 
       - name: Install Uno
