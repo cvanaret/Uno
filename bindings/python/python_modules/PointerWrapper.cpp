@@ -16,5 +16,11 @@ namespace uno {
          .def("__setitem__", [](PointerWrapper<double> self, size_t index, double value) {
             self[index] = value;
          });
+
+      py::class_<PointerWrapper<const double>>(module, "ConstPointerWrapper")
+         // accessor/setter
+         .def("__getitem__", [](const PointerWrapper<const double> self, size_t index) {
+            return self[index];
+         });
    }
 } // namespace
