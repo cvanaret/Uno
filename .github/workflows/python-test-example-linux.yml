@@ -30,6 +30,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      
       - name: Set up Python
         # This is the version of the action for setting up Python, not the Python version.
         uses: actions/setup-python@v5
@@ -38,6 +39,11 @@ jobs:
           python-version: "3.12"
           # Optional - x64 or x86 architecture, defaults to x64
           architecture: 'x64'
+          
+      - name: Install pybind11
+        run: |
+          sudo apt install -y python3-pybind11 pybind11-dev
+        
       - name: Download dependency (BQPD)
         shell: bash
         run: |
@@ -46,6 +52,7 @@ jobs:
           wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
           mkdir deps
           tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
+          
       - name: Configure Uno CMake
         shell: bash
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
@@ -55,6 +62,7 @@ jobs:
                                                -DBQPD=${{github.workspace}}/deps/lib/libbqpd.a \
                                                -DBUILD_STATIC_LIBS=ON \
                                                -DBUILD_SHARED_LIBS=ON .
+                                               
       - name: Build Uno
         run: cmake --build ${{github.workspace}}/build --target unopy --config ${{env.BUILD_TYPE}} -j4
 
