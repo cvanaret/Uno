@@ -23,13 +23,14 @@ namespace uno {
    using Hessian = std::function<int(const Vector<double>&, double objective_multiplier, const Vector<double>&,
       PointerWrapper<double>)>;
 
-   // TODO
    using JacobianOperator = void*;
    using JacobianTransposedOperator = void*;
-   using HessianOperator = void*;
+
+   using HessianOperator = std::function<int(PointerWrapper<double>, bool, double objective_multiplier, const Vector<double>&,
+      PointerWrapper<double>, PointerWrapper<double>)>;
 
    using PythonUserModel = UserModel<std::optional<Objective>, std::optional<ObjectiveGradient>, std::optional<Constraints>,
-      std::optional<Jacobian>, JacobianOperator, JacobianTransposedOperator, std::optional<Hessian>, HessianOperator,
+      std::optional<Jacobian>, JacobianOperator, JacobianTransposedOperator, std::optional<Hessian>, std::optional<HessianOperator>,
       std::optional<std::vector<double>>>;
 } // namespace
 

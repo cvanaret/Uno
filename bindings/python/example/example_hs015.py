@@ -33,6 +33,14 @@ def lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values):
 	hessian_values[2] = 200.*objective_multiplier - 2.*multipliers[1]
 	return 0
 
+def lagrangian_hessian_operator(x, evaluate_at_x, objective_multiplier, multipliers, vector, result):
+	hessian00 = objective_multiplier*(1200*x[0]**2. - 400.*x[1] + 2.)
+	hessian10 = -400.*objective_multiplier*x[0] - multipliers[0]
+	hessian11 = 200.*objective_multiplier - 2.*multipliers[1]
+	result[0] = hessian00*vector[0] + hessian10*vector[1]
+	result[1] = hessian10*vector[0] + hessian11*vector[1]
+	return 0
+
 if __name__ == '__main__':
 	# model creation
 	base_indexing = unopy.ZERO_BASED_INDEXING
@@ -63,8 +71,9 @@ if __name__ == '__main__':
 	model.set_objective(optimization_sense, objective, objective_gradient)
 	model.set_constraints(number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds,
 	  number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, constraint_jacobian)
-	model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
-		hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
+	#model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
+	#	hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
+	model.set_lagrangian_hessian_operator(number_hessian_nonzeros, lagrangian_hessian_operator, lagrangian_sign_convention)
 	model.set_initial_primal_iterate(x0)
 	
 	uno_solver = unopy.UnoSolver()
