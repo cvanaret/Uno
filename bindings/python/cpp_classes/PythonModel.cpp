@@ -144,8 +144,8 @@ namespace uno {
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
-         const int32_t return_code = (*this->user_model.lagrangian_hessian_operator)(const_cast<double*>(x), true,
-            objective_multiplier, multipliers, const_cast<double*>(vector), result);
+         const int32_t return_code = (*this->user_model.lagrangian_hessian_operator)(x, true, objective_multiplier,
+            multipliers, vector, result);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
