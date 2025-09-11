@@ -83,6 +83,14 @@ namespace uno {
          user_model.lagrangian_sign_convention = lagrangian_sign_convention;
       })
 
+      .def("set_jacobian_operator", [](PythonUserModel& user_model, const JacobianOperator& jacobian_operator) {
+         user_model.jacobian_operator = jacobian_operator;
+      })
+
+      .def("set_jacobian__transposed_operator", [](PythonUserModel& user_model, const JacobianTransposedOperator& jacobian_transposed_operator) {
+         user_model.jacobian_transposed_operator = jacobian_transposed_operator;
+      })
+
       .def("set_lagrangian_hessian_operator", [](PythonUserModel& user_model, int32_t number_hessian_nonzeros,
             const HessianOperator& lagrangian_hessian_operator, double lagrangian_sign_convention) {
          if (number_hessian_nonzeros <= 0) {

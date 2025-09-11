@@ -20,18 +20,19 @@ namespace uno {
 
    using Jacobian = std::function<int(const Vector<double>&, PointerWrapper<double>)>;
 
-   using Hessian = std::function<int(const Vector<double>&, double objective_multiplier, const Vector<double>&,
+   using Hessian = std::function<int(const Vector<double>&, double, const Vector<double>&, PointerWrapper<double>)>;
+
+   using JacobianOperator = std::function<int(PointerWrapper<const double>, bool, PointerWrapper<const double>, PointerWrapper<double>)>;
+
+   using JacobianTransposedOperator = std::function<int(PointerWrapper<const double>, bool, PointerWrapper<const double>,
       PointerWrapper<double>)>;
 
-   using JacobianOperator = void*;
-   using JacobianTransposedOperator = void*;
-
-   using HessianOperator = std::function<int(PointerWrapper<const double>, bool, double objective_multiplier,
+   using HessianOperator = std::function<int(PointerWrapper<const double>, bool, double,
       const Vector<double>&, PointerWrapper<const double>, PointerWrapper<double>)>;
 
    using PythonUserModel = UserModel<std::optional<Objective>, std::optional<ObjectiveGradient>, std::optional<Constraints>,
-      std::optional<Jacobian>, JacobianOperator, JacobianTransposedOperator, std::optional<Hessian>, std::optional<HessianOperator>,
-      std::optional<std::vector<double>>>;
+      std::optional<Jacobian>, std::optional<JacobianOperator>, std::optional<JacobianTransposedOperator>,
+      std::optional<Hessian>, std::optional<HessianOperator>, std::optional<std::vector<double>>>;
 } // namespace
 
 #endif // UNO_UNOPY_H
