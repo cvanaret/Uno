@@ -66,10 +66,10 @@ jobs:
       - name: Install unopy
         run: sudo cmake --install ${{github.workspace}}/build
         
-      - name: Add unopy directory to PYTHONPATH and LD_LIBRARY_PATH
+      - name: Add unopy directory to PYTHONPATH
         run: |
           export PYTHONPATH=$PYTHONPATH:/usr/local/lib/unopy.cpython-312-x86_64-linux-gnu.so
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/unopy.cpython-312-x86_64-linux-gnu.so
+          echo "PYTHONPATH=$PYTHONPATH" >> $GITHUB_ENV
 
       - name: Run example
         working-directory: ${{github.workspace}}/bindings/python/example
