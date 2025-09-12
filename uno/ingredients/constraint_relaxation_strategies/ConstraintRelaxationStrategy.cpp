@@ -108,7 +108,7 @@ namespace uno {
       const double objective_multiplier = problem.get_objective_multiplier();
       trial_iterate.objective_multiplier = objective_multiplier;
       this->compute_progress_measures(inequality_handling_method, problem, globalization_strategy, current_iterate, trial_iterate);
-      
+
       bool accept_iterate = false;
       if (direction.norm == 0.) {
          DEBUG << "Zero step acceptable\n";
@@ -143,7 +143,7 @@ namespace uno {
       // complementarity error
       constexpr double shift_value = 0.;
       // TODO preallocate constraints
-      std::vector<double> constraints(problem.number_constraints);
+      Vector<double> constraints(problem.number_constraints);
       problem.evaluate_constraints(iterate, constraints);
       iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, constraints,
          iterate.multipliers, shift_value, this->residual_norm);

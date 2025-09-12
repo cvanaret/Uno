@@ -29,7 +29,7 @@ namespace uno {
 
       void evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, const WarmstartInformation& warmstart_information);
 
-      std::vector<double> constraints{};
+      Vector<double> constraints{};
       Vector<double> gradients{};
       Vector<int> gradient_sparsity{};
       // COO constraint Jacobian

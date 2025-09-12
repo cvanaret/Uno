@@ -37,7 +37,7 @@ namespace uno {
          return this->model->evaluate_objective(x);
       }
 
-      void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override {
+      void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override {
          this->model->evaluate_constraints(x, constraints);
       }
 
@@ -63,6 +63,14 @@ namespace uno {
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
             double* hessian_values) const override {
          this->model->evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
+      }
+
+      void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const override {
+         this->model->compute_jacobian_vector_product(x, vector, result);
+      }
+
+      void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const override {
+         this->model->compute_jacobian_transposed_vector_product(x, vector, result);
       }
 
       void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,

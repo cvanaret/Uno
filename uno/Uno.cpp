@@ -93,11 +93,11 @@ namespace uno {
       this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
    }
-
+   
    std::string Uno::current_version() {
       return "2.0.3";
    }
-
+   
    void Uno::print_available_strategies() {
       std::cout << "Available Uno strategies:\n";
       std::cout << "- Constraint relaxation strategies: " << join(ConstraintRelaxationStrategyFactory::available_strategies, ", ") << '\n';

@@ -1,29 +1,21 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_AMPLMODEL_H
-#define UNO_AMPLMODEL_H
+#ifndef UNO_PYTHONMODEL_H
+#define UNO_PYTHONMODEL_H
 
 #include <vector>
-#include "model/Model.hpp"
+#include "../unopy.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "model/Model.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 
-// include AMPL Solver Library (ASL)
-extern "C" {
-#include "asl_pfgh.h"
-#include "getstub.h"
-}
-
 namespace uno {
-   // forward reference
-   class Options;
-
-   class AMPLModel: public Model {
+   class PythonModel: public Model {
    public:
-      AMPLModel(const std::string& file_name, const Options& options);
-      ~AMPLModel() override;
+      explicit PythonModel(const PythonUserModel& user_model);
+      ~PythonModel() override = default;
 
       // availability of linear operators
       [[nodiscard]] bool has_jacobian_operator() const override;
@@ -38,9 +30,9 @@ namespace uno {
       // dense objective gradient
       void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
 
-      // structures of Jacobian and Hessian
+      // sparsity patterns of Jacobian and Hessian
       void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
-         MatrixOrder matrix_order) const override;
+         MatrixOrder matrix_format) const override;
       void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
@@ -54,6 +46,7 @@ namespace uno {
       void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
          const Vector<double>& multipliers, double* result) const override;
 
+      // purely functions
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
@@ -67,44 +60,21 @@ namespace uno {
 
       void initial_primal_point(Vector<double>& x) const override;
       void initial_dual_point(Vector<double>& multipliers) const override;
-      void postprocess_solution(Iterate& iterate, IterateStatus iterate_status) const override;
+      void postprocess_solution(Iterate& iterate, IterateStatus termination_status) const override;
 
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] size_t number_hessian_nonzeros() const override;
 
-   private:
-      // private constructor to pass the dimensions to the Model base constructor
-      AMPLModel(const std::string& file_name, ASL* asl, const Options& options);
-
-      // mutable: can be modified by const methods (internal state not seen by user)
-      mutable ASL* asl; /*!< Instance of the AMPL Solver Library class */
-      const bool write_solution_to_file;
-      size_t number_asl_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
-
-      // lists of variables and constraints + corresponding collection objects
-      ForwardRange linear_constraints;
-      std::vector<size_t> equality_constraints{};
-      CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;
-      std::vector<size_t> inequality_constraints{};
-      CollectionAdapter<std::vector<size_t>&> inequality_constraints_collection;
-      SparseVector<size_t> slacks{};
-      Vector<size_t> fixed_variables;
-
-      void compute_lagrangian_hessian_sparsity();
+   protected:
+      const PythonUserModel& user_model;
+      const SparseVector<size_t> slacks{0};
+      Vector<size_t> fixed_variables{0};
+      const ForwardRange linear_constraints{0};
+      std::vector<size_t> equality_constraints;
+      CollectionAdapter<std::vector<size_t>> equality_constraints_collection;
+      std::vector<size_t> inequality_constraints;
+      CollectionAdapter<std::vector<size_t>> inequality_constraints_collection;
    };
-
-   // check that an array of integers is in increasing order (x[i] <= x[i+1])
-   template <typename Array>
-   bool in_increasing_order(const Array& array, size_t length) {
-      size_t index = 0;
-      while (index < length - 1) {
-         if (array[index] > array[index + 1]) {
-            return false;
-         }
-         index++;
-      }
-      return true;
-   }
 } // namespace
 
-#endif // UNO_AMPLMODEL_H
+#endif // UNO_PYTHONMODEL_H

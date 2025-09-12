@@ -25,7 +25,7 @@ namespace uno {
 
       // function evaluations
       [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override;
-      void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override;
+      void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override;
 
       // dense objective gradient
       void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
@@ -39,6 +39,10 @@ namespace uno {
       void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override;
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const override;
+
+      // linear operators for Jacobian-, Jacobian^T-, and Hessian-vector products
+      void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const override;
+      void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const override;
       void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
          const Vector<double>& multipliers, double* result) const override;
 
