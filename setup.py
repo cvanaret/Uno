@@ -59,7 +59,7 @@ class CMakeBuild(build_ext):
             f"-DPython_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
         ]
-        build_args = []
+        build_args = ["--target", "unopy"]
         # Adding CMake arguments set as environment variable
         # (needed e.g. to build for ARM OSx on conda-forge)
         if "CMAKE_ARGS" in os.environ:
@@ -145,6 +145,7 @@ setup(
     license="MIT",
     keywords="mathematics, optimization",
     ext_modules=[CMakeExtension("unopy")],
+    cmdclass={"build_ext": CMakeBuild},
     install_requires=["pybind11[global]"],
     python_requires=">=3.6",
     zip_safe=False,
