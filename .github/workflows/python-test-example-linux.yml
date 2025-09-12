@@ -57,17 +57,11 @@ jobs:
                                                -DBUILD_STATIC_LIBS=ON \
                                                -DBUILD_SHARED_LIBS=ON .
 
-      - name: Build libuno
-        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j4
-
       - name: Build unopy
         run: cmake --build ${{github.workspace}}/build --target unopy --config ${{env.BUILD_TYPE}} -j4
 
       - name: Install unopy
-        run: sudo cmake --install ${{github.workspace}}/build
-
-      - name: Add path
-        run: sed -i '2 a import sys\nsys.path.append("/usr/local/lib")\n' ${{github.workspace}}/bindings/python/example/example_hs015.py
+        run: pip install .
 
       - name: Run example
         working-directory: ${{github.workspace}}/bindings/python/example
