@@ -64,7 +64,7 @@ jobs:
         run: cmake --build ${{github.workspace}}/build --target unopy --config ${{env.BUILD_TYPE}} -j4
 
       - name: Install unopy
-        run: sudo cmake --install ${{github.workspace}}/build
+        run: pip install .
         
       #- name: Add unopy directory to PYTHONPATH and LD_LIBRARY_PATH
       #  shell: bash
@@ -72,8 +72,8 @@ jobs:
       #    echo "PYTHONPATH=$PYTHONPATH:/usr/local/lib/unopy.cpython-312-x86_64-linux-gnu.so" >> $GITHUB_ENV
       #    echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib" >> $GITHUB_ENV
 
-      - name: Add path
-        run: sed -i '2 a import sys\nsys.path.append("/usr/local/lib")\n' ${{github.workspace}}/bindings/python/example/example_hs015.py
+      #- name: Add path
+      #  run: sed -i '2 a import sys\nsys.path.append("/usr/local/lib")\n' ${{github.workspace}}/bindings/python/example/example_hs015.py
 
       - name: Run example
         working-directory: ${{github.workspace}}/bindings/python/example
