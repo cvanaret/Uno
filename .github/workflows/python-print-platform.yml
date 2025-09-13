@@ -39,4 +39,4 @@ jobs:
 
       - name: Run script
         working-directory: ${{github.workspace}}/.github/Python
-        run: python platform.py
+        run: python print_platform.py
