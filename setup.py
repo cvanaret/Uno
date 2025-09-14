@@ -5,6 +5,7 @@ https://packaging.python.org/guides/distributing-packages-using-setuptools/
 https://github.com/pypa/sampleproject
 """
 import os
+import platform
 import re
 import subprocess
 import sys
@@ -34,10 +35,43 @@ class CMakeExtension(Extension):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
 
+def get_machine():
+    # x86_64 / AMD64 / arm64 
+    machine = platform.machine().lower()
+    if machine == "x86_64" or machine == "AMD64":
+        return "x86_64"
+    elif machine == "arm64":
+        return "aarch64"
+    else:
+        raise RuntimeError("The machine " + machine + " is not known.")
+
+def get_system():
+    # linux / win32 / darwin
+    system = sys.platform
+    if system == "linux":
+        return "linux-gnu"
+    elif system == "win32":
+        return "w64-mingw32"
+    elif system == "darwin":
+        return "apple-darwin"
+    else:
+        raise RuntimeError("The system " + system + " is not known.")
 
 # The main interface is through CMake
 class CMakeBuild(build_ext):
     def build_extension(self, ext):
+        #######################
+        # get a BQPD artifact #
+        #######################
+        bqpd_version = get_machine() + '-' + get_system() + '-libgfortran5.tar.gz'
+        filename = "BQPD.v1.0.0." + bqpd_version
+        subprocess.check_call(['wget', "https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v1.0.0%2B0/" + filename])
+        subprocess.check_call(['mkdir', '-p', 'deps'])
+        subprocess.check_call(['tar', '-xzvf', filename, '-C', 'deps'])
+		 
+        ##############################
+        # compile the shared library #
+        ##############################
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
 
         # required for for auto-detection & inclusion of auxiliary "native" libs
@@ -58,6 +92,7 @@ class CMakeBuild(build_ext):
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
             f"-DPython_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
+            f"-DBQPD=/media/data/Uno/deps/lib/libbqpd.a"
         ]
         build_args = ["--target", "unopy"]
         # Adding CMake arguments set as environment variable
@@ -66,7 +101,7 @@ class CMakeBuild(build_ext):
             cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ") if item]
 
         # In this example, we pass in the version to C++. You might not need to.
-        cmake_args += [f"-DEXAMPLE_VERSION_INFO={self.distribution.get_version()}"]
+        # cmake_args += [f"-DEXAMPLE_VERSION_INFO={self.distribution.get_version()}"]
 
         if self.compiler.compiler_type != "msvc":
             # Using Ninja-build since it a) is available as a wheel and b)
@@ -127,7 +162,6 @@ class CMakeBuild(build_ext):
             ["cmake", "--build", "."] + build_args, cwd=self.build_temp
         )
 
-
 setup(
     name="unopy",
     version="2.0.3",
@@ -145,7 +179,9 @@ setup(
     license="MIT",
     keywords="mathematics, optimization",
     ext_modules=[CMakeExtension("unopy")],
-    cmdclass={"build_ext": CMakeBuild},
+    cmdclass={
+		"build_ext": CMakeBuild
+	 },
     install_requires=["pybind11[global]"],
     python_requires=">=3.6",
     zip_safe=False,
