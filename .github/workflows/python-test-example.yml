@@ -1,4 +1,4 @@
-name: Test of the Python example on Linux, Windows, and macOS
+name: Test unopy on the Python example
 
 on:
   push:
@@ -21,6 +21,7 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         architecture: [x64, arm64]
