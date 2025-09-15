@@ -43,15 +43,15 @@ jobs:
           architecture: 'x64'
           
       - name: Install pybind11 for Linux
-        if: ${{matrix.architecture}} == "ubuntu-latest"
+        if: ${{matrix.os}} == 'ubuntu-latest'
         run: sudo apt install -y python3-pybind11 pybind11-dev
 
       - name: Install pybind11 for Windows
-        if: ${{matrix.architecture}} == "windows-latest"
+        if: ${{matrix.os}} == 'windows-latest'
         run: conda install -c conda-forge pybind11
 
       - name: Install pybind11 for macOS
-        if: ${{matrix.architecture}} == "macos-latest"
+        if: ${{matrix.os}} == 'macos-latest'
         run: brew install pybind11
 
       - name: Compile and install unopy
