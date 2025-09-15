@@ -58,6 +58,10 @@ jobs:
         if: runner.os == 'Windows'
         run: conda install -c conda-forge pybind11
 
+      - name:  Install setuptools on Windows
+        if: runner.os == 'Windows'
+        run: pip install setuptools
+
       - name:  Install pybind11 on macOS
         if: runner.os == 'macOS'
         run: brew install pybind11
