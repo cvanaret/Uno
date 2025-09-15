@@ -1,4 +1,4 @@
-name: Test unopy on the Python example
+name: unopy on Python example
 
 on:
   push:
@@ -41,18 +41,6 @@ jobs:
           # Semantic version range syntax or exact version of a Python version
           python-version: "3.12"
           architecture: 'x64'
-
-      - name:  Install pybind11 on Linux
-        if: runner.os == 'Linux'
-        run: sudo apt install -y python3-pybind11 pybind11-dev
-         
-      - name:  Install pybind11 on Windows
-        if: runner.os == 'Windows'
-        run: conda install -c conda-forge pybind11
-
-      - name:  Install pybind11 on macOS
-        if: runner.os == 'macOS'
-        run: brew install pybind11
 
       - name: add MinGW64 directory to Windows path
         if: runner.os == 'Windows'
