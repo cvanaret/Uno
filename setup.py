@@ -60,6 +60,7 @@ def get_system():
 # The main interface is through CMake
 class CMakeBuild(build_ext):
     def build_extension(self, ext):
+        current_directory = os.getcwd()
         #######################
         # get a BQPD artifact #
         #######################
@@ -92,7 +93,7 @@ class CMakeBuild(build_ext):
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
             f"-DPython_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
-            f"-DBQPD=/media/data/Uno/deps/lib/libbqpd.a"
+            f"-DBQPD=" + current_directory + "/deps/lib/libbqpd.a"
         ]
         build_args = ["--target", "unopy"]
         # Adding CMake arguments set as environment variable
