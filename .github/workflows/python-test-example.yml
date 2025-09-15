@@ -23,13 +23,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
         architecture: [x64, arm64]
         python-version: ["3.12"]
         exclude:
           - os: ubuntu-latest
-            architecture: arm64
-          - os: windows-latest
             architecture: arm64
 
     steps:
