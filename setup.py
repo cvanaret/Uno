@@ -38,7 +38,7 @@ class CMakeExtension(Extension):
 def get_machine():
     # x86_64 / AMD64 / arm64 
     machine = platform.machine().lower()
-    if machine == "x86_64" or machine == "AMD64":
+    if machine == "x86_64" or machine == "amd64":
         return "x86_64"
     elif machine == "arm64":
         return "aarch64"
@@ -60,7 +60,14 @@ def get_system():
 # The main interface is through CMake
 class CMakeBuild(build_ext):
     def build_extension(self, ext):
+        # paths
         current_directory = os.getcwd()
+        
+        extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
+        # required for for auto-detection & inclusion of auxiliary "native" libs
+        if not extdir.endswith(os.path.sep):
+            extdir += os.path.sep
+        
         #######################
         # get a BQPD artifact #
         #######################
@@ -73,12 +80,6 @@ class CMakeBuild(build_ext):
         ##############################
         # compile the shared library #
         ##############################
-        extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
-
-        # required for for auto-detection & inclusion of auxiliary "native" libs
-        if not extdir.endswith(os.path.sep):
-            extdir += os.path.sep
-
         debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
         cfg = "Debug" if debug else "Release"
 
