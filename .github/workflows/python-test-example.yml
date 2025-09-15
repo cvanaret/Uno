@@ -48,7 +48,7 @@ jobs:
          
       - name:  Install vcpkg on Windows
         if: runner.os == 'Windows'
-        uses: actions/run-vcpkg@v11
+        uses: lukka/run-vcpkg@v11
 
       - name:  Install pybind11 on Windows
         if: runner.os == 'Windows'
