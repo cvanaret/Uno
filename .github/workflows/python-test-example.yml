@@ -42,19 +42,28 @@ jobs:
           python-version: "3.12"
           architecture: 'x64'
 
-      - name:  Install pybind11
-        shell: bash
-        run: |
-         if [ "$RUNNER_OS" == "Linux" ]; then
-              sudo apt install -y python3-pybind11 pybind11-dev
-         elif [ "$RUNNER_OS" == "Windows" ]; then
-              conda install -c conda-forge pybind11
-         elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install pybind11
-         else
-              echo "$RUNNER_OS not supported"
-              exit 1
-         fi
+      - name:  Install pybind11 on Linux
+        if: runner.os == 'Linux'
+        run: sudo apt install -y python3-pybind11 pybind11-dev
+         
+      - name:  Install pybind11 on Windows
+        if: runner.os == 'Windows'
+        run: conda install -c conda-forge pybind11
+
+      - name:  Install pybind11 on macOS
+        if: runner.os == 'macOS'
+        run: brew install pybind11
+
+      - name: add MinGW64 directory to Windows path
+        if: runner.os == 'Windows'
+        run: echo "C:\tools\msys64\mingw64\bin" >> "$GITHUB_PATH"
+
+      - name: Install Fortran compiler on macOS
+        if: runner.os == 'macOS'
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '13'
 
       - name: Compile and install unopy
         run: pip install . -v
