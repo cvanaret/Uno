@@ -72,21 +72,34 @@ class CMakeBuild(build_ext):
         # get artifacts for the dependencies #
         ######################################
         subprocess.check_call(['mkdir', '-p', 'deps'])
+        subprocess.check_call(['mkdir', '-p', 'deps/highs'])
         
         VERSION_BQPD = "1.0.0"
         VERSION_MUMPS = "5.8.0"
+        VERSION_HSL = "4.0.4"
+        VERSION_HIGHS = "1.11.0"
+        
+        artifact_version = get_machine() + '-' + get_system() + "-libgfortran5"
         
         # BQPD
-        bqpd_version = get_machine() + '-' + get_system() + "-libgfortran5"
-        bqpd_filename = "BQPD.v" + VERSION_BQPD + "." + bqpd_version + ".tar.gz"
-        subprocess.check_call(['wget', "-N", "https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v1.0.0%2B0/" + bqpd_filename])
+        bqpd_filename = "BQPD.v" + VERSION_BQPD + "." + artifact_version + ".tar.gz"
+        subprocess.check_call(['wget', "-N", "https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v" + VERSION_BQPD + "%2B0/" + bqpd_filename])
         subprocess.check_call(['tar', '-xzvf', bqpd_filename, '-C', 'deps'])
         
         # MUMPS
-        mumps_version = get_machine() + '-' + get_system() + "-libgfortran5"
-        mumps_filename = "MUMPS_static.v" + VERSION_MUMPS + "." + mumps_version + ".tar.gz"
-        subprocess.check_call(['wget', "-N", "https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/MUMPS_static-v5.8.0%2B0/" + mumps_filename])
+        mumps_filename = "MUMPS_static.v" + VERSION_MUMPS + "." + artifact_version + ".tar.gz"
+        subprocess.check_call(['wget', "-N", "https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/MUMPS_static-v" + VERSION_MUMPS + "%2B0/" + mumps_filename])
         subprocess.check_call(['tar', '-xzvf', mumps_filename, '-C', 'deps'])
+        
+        # HSL
+        hsl_filename = "HSL.v" + VERSION_HSL + "." + artifact_version + ".tar.gz"
+        subprocess.check_call(['wget', "-N", "https://github.com/JuliaBinaryWrappers/HSL_jll.jl/releases/download/HSL-v" + VERSION_HSL + "%2B0/" + hsl_filename])
+        subprocess.check_call(['tar', '-xzvf', hsl_filename, '-C', 'deps'])
+        
+        # HiGHS
+        highs_filename = "HiGHS_static.v" + VERSION_HIGHS + "." + artifact_version + ".tar.gz"
+        subprocess.check_call(['wget', "-N", "https://github.com/amontoison/HiGHS_static_jll.jl/releases/download/HiGHS_static-v" + VERSION_HIGHS + "%2B0/" + highs_filename])
+        subprocess.check_call(['tar', '-xzvf', highs_filename, '-C', 'deps/highs'])
 
         ##############################
         # compile the shared library #
@@ -115,6 +128,8 @@ class CMakeBuild(build_ext):
             f"-DMUMPS_MPISEQ_LIBRARY=" + current_directory + "/deps/lib/libmpiseq.a",
             f"-DBLAS_LIBRARIES=" + current_directory + "/deps/lib/libblas.a",
             f"-DLAPACK_LIBRARIES=" + current_directory + "/deps/lib/liblapack.a",
+            f"-DHSL=" + current_directory + "/deps/lib/libhsl.so",
+            f"-DHIGHS_DIR=" + current_directory + "/deps/highs/lib/cmake/highs",
         ]
         build_args = ["--target", "unopy"]
         # Adding CMake arguments set as environment variable
