@@ -128,7 +128,7 @@ class CMakeBuild(build_ext):
             f"-DMUMPS_MPISEQ_LIBRARY=" + current_directory + "/deps/lib/libmpiseq.a",
             f"-DBLAS_LIBRARIES=" + current_directory + "/deps/lib/libblas.a",
             f"-DLAPACK_LIBRARIES=" + current_directory + "/deps/lib/liblapack.a",
-            f"-DHSL=" + current_directory + "/deps/lib/libhsl.so",
+            #f"-DHSL=" + current_directory + "/deps/lib/libhsl.so",
             f"-DHIGHS_DIR=" + current_directory + "/deps/highs/lib/cmake/highs",
         ]
         build_args = ["--target", "unopy"]
