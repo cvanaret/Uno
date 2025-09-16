@@ -68,15 +68,26 @@ class CMakeBuild(build_ext):
         if not extdir.endswith(os.path.sep):
             extdir += os.path.sep
         
-        #######################
-        # get a BQPD artifact #
-        #######################
-        bqpd_version = get_machine() + '-' + get_system() + '-libgfortran5.tar.gz'
-        filename = "BQPD.v1.0.0." + bqpd_version
-        subprocess.check_call(['wget', "https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v1.0.0%2B0/" + filename])
+        ######################################
+        # get artifacts for the dependencies #
+        ######################################
         subprocess.check_call(['mkdir', '-p', 'deps'])
-        subprocess.check_call(['tar', '-xzvf', filename, '-C', 'deps'])
-		 
+        
+        VERSION_BQPD = "1.0.0"
+        VERSION_MUMPS = "5.8.0"
+        
+        # BQPD
+        bqpd_version = get_machine() + '-' + get_system() + "-libgfortran5"
+        bqpd_filename = "BQPD.v" + VERSION_BQPD + "." + bqpd_version + ".tar.gz"
+        subprocess.check_call(['wget', "-N", "https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v1.0.0%2B0/" + bqpd_filename])
+        subprocess.check_call(['tar', '-xzvf', bqpd_filename, '-C', 'deps'])
+        
+        # MUMPS
+        mumps_version = get_machine() + '-' + get_system() + "-libgfortran5"
+        mumps_filename = "MUMPS_static.v" + VERSION_MUMPS + "." + mumps_version + ".tar.gz"
+        subprocess.check_call(['wget', "-N", "https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/MUMPS_static-v5.8.0%2B0/" + mumps_filename])
+        subprocess.check_call(['tar', '-xzvf', mumps_filename, '-C', 'deps'])
+
         ##############################
         # compile the shared library #
         ##############################
@@ -94,7 +105,16 @@ class CMakeBuild(build_ext):
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
             f"-DPython_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
-            f"-DBQPD=" + current_directory + "/deps/lib/libbqpd.a"
+            f"-DBQPD=" + current_directory + "/deps/lib/libbqpd.a",
+            f"-DMUMPS_INCLUDE_DIR=" + current_directory + "/deps/include",
+            f"-DMETIS_INCLUDE_DIR=" + current_directory + "/deps/include",
+            f"-DMETIS_LIBRARY=" + current_directory + "/deps/lib/libmetis.a",
+            f"-DMUMPS_LIBRARY=" + current_directory + "/deps/lib/libdmumps.a",
+            f"-DMUMPS_COMMON_LIBRARY=" + current_directory + "/deps/lib/libmumps_common.a",
+            f"-DMUMPS_PORD_LIBRARY=" + current_directory + "/deps/lib/libpord.a",
+            f"-DMUMPS_MPISEQ_LIBRARY=" + current_directory + "/deps/lib/libmpiseq.a",
+            f"-DBLAS_LIBRARIES=" + current_directory + "/deps/lib/libblas.a",
+            f"-DLAPACK_LIBRARIES=" + current_directory + "/deps/lib/liblapack.a",
         ]
         build_args = ["--target", "unopy"]
         # Adding CMake arguments set as environment variable
