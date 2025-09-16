@@ -129,7 +129,7 @@ class CMakeBuild(build_ext):
             f"-DBLAS_LIBRARIES=" + current_directory + "/deps/lib/libblas.a",
             f"-DLAPACK_LIBRARIES=" + current_directory + "/deps/lib/liblapack.a",
             #f"-DHSL=" + current_directory + "/deps/lib/libhsl.so",
-            f"-DHIGHS_DIR=" + current_directory + "/deps/highs/lib/cmake/highs",
+            #f"-DHIGHS_DIR=" + current_directory + "/deps/highs/lib/cmake/highs",
         ]
         build_args = ["--target", "unopy"]
         # Adding CMake arguments set as environment variable
