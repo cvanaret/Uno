@@ -286,9 +286,9 @@ if(pybind11_DIR)
    endif()
    
    file(GLOB PYTHON_MODULE_FILES
-      bindings/python/cpp_classes/*.cpp
-      bindings/python/python_modules/*.cpp
-      bindings/python/unopy.cpp
+      bindings/Python/cpp_classes/*.cpp
+      bindings/Python/python_modules/*.cpp
+      bindings/Python/unopy.cpp
    )
 
    add_definitions("-D PYBIND11_DETAILED_ERROR_MESSAGES")
