@@ -30,10 +30,16 @@ namespace uno {
          if (0. < this->evaluation_space.objective_gradient[variable_index]) {
             direction.primals[variable_index] = this->variable_lower_bounds[variable_index];
             direction.multipliers.lower_bounds[variable_index] = this->evaluation_space.objective_gradient[variable_index];
+            if (!is_finite(this->variable_lower_bounds[variable_index])) {
+               direction.status = SubproblemStatus::UNBOUNDED_PROBLEM;
+            }
          }
          else if (this->evaluation_space.objective_gradient[variable_index] < 0.) {
             direction.primals[variable_index] = this->variable_upper_bounds[variable_index];
             direction.multipliers.upper_bounds[variable_index] = this->evaluation_space.objective_gradient[variable_index];
+            if (!is_finite(this->variable_upper_bounds[variable_index])) {
+               direction.status = SubproblemStatus::UNBOUNDED_PROBLEM;
+            }
          }
          else {
             direction.primals[variable_index] = 0.;
@@ -41,8 +47,6 @@ namespace uno {
          }
          direction.subproblem_objective += this->evaluation_space.objective_gradient[variable_index] * direction.primals[variable_index];
       }
-
-      // TODO check unboundedness
    }
 
    EvaluationSpace& BoxLPSolver::get_evaluation_space() {
