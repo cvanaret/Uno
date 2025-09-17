@@ -6,6 +6,7 @@
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/subproblem_solvers/BoxLPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "optimization/Direction.hpp"
@@ -25,8 +26,14 @@ namespace uno {
       // allocate the LP/QP solver, depending on the presence of curvature in the subproblem
       const Subproblem subproblem{problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
       if (!subproblem.has_curvature()) {
-         DEBUG << "No curvature in the subproblems, allocating an LP solver\n";
-         this->solver = LPSolverFactory::create(this->options);
+         if (subproblem.number_constraints == 0) {
+            DEBUG << "No curvature and only bound constraints in the subproblems, allocating a box LP solver\n";
+            this->solver = BoxLPSolverFactory::create();
+         }
+         else {
+            DEBUG << "No curvature in the subproblems, allocating an LP solver\n";
+            this->solver = LPSolverFactory::create(this->options);
+         }
       }
       else {
          DEBUG << "Curvature in the subproblems, allocating a QP solver\n";

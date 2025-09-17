@@ -6,7 +6,7 @@
 
 #include <memory>
 #include "../InequalityHandlingMethod.hpp"
-#include "ingredients/subproblem_solvers/LPSolver.hpp"
+#include "ingredients/subproblem_solvers/InequalityConstrainedSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -51,7 +51,7 @@ namespace uno {
 
    protected:
       // pointer to allow polymorphism
-      std::unique_ptr<LPSolver> solver{};
+      std::unique_ptr<InequalityConstrainedSolver> solver{};
       Vector<double> initial_point{};
       const Options& options; // copy of the options for delayed allocation of solver
 

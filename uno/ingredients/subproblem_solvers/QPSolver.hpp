@@ -7,9 +7,9 @@
 #include "LPSolver.hpp"
 
 namespace uno {
-   class QPSolver : public LPSolver {
+   class QPSolver: public LPSolver {
    public:
-      QPSolver(): LPSolver() { }
+      QPSolver() = default;
       ~QPSolver() override = default;
 
       void initialize_memory(const Subproblem& subproblem) override = 0;
