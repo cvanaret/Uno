@@ -4,28 +4,20 @@
 #ifndef UNO_LPSOLVER_H
 #define UNO_LPSOLVER_H
 
-namespace uno {
-   // forward declarations
-   class Direction;
-   class EvaluationSpace;
-   class Iterate;
-   class Statistics;
-   class Subproblem;
-   template <typename ElementType>
-   class Vector;
-   class WarmstartInformation;
+#include "InequalityConstrainedSolver.hpp"
 
-   class LPSolver {
+namespace uno {
+   class LPSolver: public InequalityConstrainedSolver {
    public:
       LPSolver() = default;
-      virtual ~LPSolver() = default;
+      ~LPSolver() override = default;
 
-      virtual void initialize_memory(const Subproblem& subproblem) = 0;
+      void initialize_memory(const Subproblem& subproblem) override = 0;
 
-      virtual void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) = 0;
+      void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
+         Direction& direction, const WarmstartInformation& warmstart_information) override = 0;
 
-      [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() = 0;
+      [[nodiscard]] EvaluationSpace& get_evaluation_space() override = 0;
    };
 } // namespace
 
