@@ -79,5 +79,5 @@ jobs:
         run: pip install . -v
 
       - name: Run example
-        working-directory: ${{github.workspace}}/bindings/python/example
+        working-directory: ${{github.workspace}}/bindings/Python/example
         run: python example_hs015.py
