@@ -8,7 +8,7 @@ namespace py = pybind11;
 
 namespace uno {
    void define_PointerWrapper(py::module& module) {
-      py::class_<PointerWrapper<double>>(module, "PointerWrapper")
+      py::class_<PointerWrapper<double>>(module, "PointerToDouble")
          // accessor/setter
          .def("__getitem__", [](const PointerWrapper<double> self, size_t index) {
             return self[index];
@@ -17,10 +17,12 @@ namespace uno {
             self[index] = value;
          });
 
-      py::class_<PointerWrapper<const double>>(module, "ConstPointerWrapper")
+      py::class_<PointerWrapper<const double>>(module, "ConstPointerToDouble")
          // accessor/setter
          .def("__getitem__", [](const PointerWrapper<const double> self, size_t index) {
             return self[index];
          });
+
+      py::class_<PointerWrapper<void>>(module, "PointerToVoid");
    }
 } // namespace

@@ -13,20 +13,24 @@ namespace uno {
       PointerWrapper(T* pointer): pointer(pointer) {
       }
 
-      T* operator->() const {
+      template <typename U = T, std::enable_if_t<!std::is_void_v<U>, int> = 0>
+      U* operator->() const {
          return this->pointer;
       }
 
-      T& operator*() const {
+      template <typename U = T, std::enable_if_t<!std::is_void_v<U>, int> = 0>
+      U& operator*() const {
          assert(this->pointer != nullptr && "PointerWrapper wrapping NULL, cannot be dereferenced");
          return *this->pointer;
       }
 
-      const T& operator[](std::size_t index) const {
+      template <typename U = T, std::enable_if_t<!std::is_void_v<U>, int> = 0>
+      const U& operator[](std::size_t index) const {
          return this->pointer[index];
       }
 
-      T& operator[](std::size_t index) {
+      template <typename U = T, std::enable_if_t<!std::is_void_v<U>, int> = 0>
+      U& operator[](std::size_t index) {
          return this->pointer[index];
       }
 
