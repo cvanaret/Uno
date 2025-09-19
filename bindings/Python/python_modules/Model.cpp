@@ -107,6 +107,10 @@ namespace uno {
 
       .def("set_initial_primal_iterate", [](PythonUserModel& user_model, std::vector<double>& initial_primal_iterate) {
          user_model.initial_primal_iterate = initial_primal_iterate;
+      })
+
+      .def("set_user_data", [](PythonUserModel& user_model, const py::object& user_data) {
+         user_model.user_data = user_data;
       });
    }
 } // namespace
