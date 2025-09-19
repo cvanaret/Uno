@@ -87,7 +87,7 @@ namespace uno {
          user_model.jacobian_operator = jacobian_operator;
       })
 
-      .def("set_jacobian__transposed_operator", [](PythonUserModel& user_model, const JacobianTransposedOperator& jacobian_transposed_operator) {
+      .def("set_jacobian_transposed_operator", [](PythonUserModel& user_model, const JacobianTransposedOperator& jacobian_transposed_operator) {
          user_model.jacobian_transposed_operator = jacobian_transposed_operator;
       })
 
@@ -107,6 +107,10 @@ namespace uno {
 
       .def("set_initial_primal_iterate", [](PythonUserModel& user_model, std::vector<double>& initial_primal_iterate) {
          user_model.initial_primal_iterate = initial_primal_iterate;
+      })
+
+      .def("set_initial_dual_iterate", [](PythonUserModel& user_model, std::vector<double>& initial_dual_iterate) {
+         user_model.initial_dual_iterate = initial_dual_iterate;
       })
 
       .def("set_user_data", [](PythonUserModel& user_model, const py::object& user_data) {
