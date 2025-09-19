@@ -33,7 +33,7 @@ namespace uno {
       const std::string name;
       const size_t number_variables; /*!< Number of variables */
       const size_t number_constraints; /*!< Number of constraints */
-      const double objective_sign; /*!< Sign of the objective function (1: minimization, -1: maximization) */
+      const double optimization_sense; /*!< Sign of the objective function (1: minimization, -1: maximization) */
 
       // availability of linear operators
       [[nodiscard]] virtual bool has_jacobian_operator() const = 0;
@@ -57,7 +57,11 @@ namespace uno {
       virtual void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const = 0;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const = 0;
+
+      // linear operators for Jacobian-, Jacobian^T-, and Hessian-vector products
       // here we use pointers, since the vector and the result may be provided by a low-level subproblem solver
+      virtual void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const = 0;
+      virtual void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const = 0;
       virtual void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
          const Vector<double>& multipliers, double* result) const = 0;
 
@@ -88,6 +92,9 @@ namespace uno {
       [[nodiscard]] virtual double constraint_violation(double constraint_value, size_t constraint_index) const;
       template <typename Array>
       double constraint_violation(const Array& constraints, Norm residual_norm) const;
+
+      void find_fixed_variables(Vector<size_t>& fixed_variables) const;
+      void partition_constraints(std::vector<size_t>& equality_constraints, std::vector<size_t>& inequality_constraints) const;
    };
 
    // compute ||c||
