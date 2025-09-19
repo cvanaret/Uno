@@ -1,0 +1,83 @@
+name: unopy on Python example
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        architecture: [x64, arm64]
+        python-version: ["3.12"]
+        exclude:
+          - os: ubuntu-latest
+            architecture: arm64
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        # This is the version of the action for setting up Python, not the Python version.
+        uses: actions/setup-python@v5
+        with:
+          # Semantic version range syntax or exact version of a Python version
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.architecture }}
+
+      - name: Install pybind11 on Linux
+        if: runner.os == 'Linux'
+        run: sudo apt install -y python3-pybind11 pybind11-dev
+         
+      - name: Install conda on Windows
+        if: runner.os == 'Windows'
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+
+      - name:  Install pybind11 on Windows
+        if: runner.os == 'Windows'
+        run: conda install -c conda-forge pybind11
+
+      - name:  Install setuptools on Windows
+        if: runner.os == 'Windows'
+        run: pip install setuptools
+
+      - name:  Install pybind11 on macOS
+        if: runner.os == 'macOS'
+        run: brew install pybind11
+
+      - name: add MinGW64 directory to Windows path
+        if: runner.os == 'Windows'
+        run: echo "C:\tools\msys64\mingw64\bin" >> "$GITHUB_PATH"
+
+      - name: Install Fortran compiler on macOS
+        if: runner.os == 'macOS'
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '13'
+
+      - name: Compile and install unopy
+        run: pip install . -v
+
+      - name: Run example
+        working-directory: ${{github.workspace}}/bindings/Python/example
+        run: python example_hs015.py

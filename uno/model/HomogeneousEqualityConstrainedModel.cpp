@@ -11,7 +11,7 @@ namespace uno {
    // - equality constraints are shifted by their RHS
    HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(const Model& original_model):
          Model(original_model.name + " -> equality constrained", original_model.number_variables +
-            original_model.get_inequality_constraints().size(), original_model.number_constraints, original_model.objective_sign),
+            original_model.get_inequality_constraints().size(), original_model.number_constraints, original_model.optimization_sense),
          model(original_model),
          constraint_index_of_inequality_index(this->model.get_inequality_constraints().size()),
          slack_index_of_constraint_index(this->model.number_constraints),
@@ -50,7 +50,7 @@ namespace uno {
       return this->model.evaluate_objective(x);
    }
 
-   void HomogeneousEqualityConstrainedModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
+   void HomogeneousEqualityConstrainedModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       this->model.evaluate_constraints(x, constraints);
       // inequality constraints: add the slacks
       for (const auto [constraint_index, slack_index]: this->get_slacks()) {
@@ -98,6 +98,16 @@ namespace uno {
    void HomogeneousEqualityConstrainedModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier,
          const Vector<double>& multipliers, double* hessian_values) const {
       this->model.evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
+   }
+
+   void HomogeneousEqualityConstrainedModel::compute_jacobian_vector_product(const double* x, const double* vector,
+            double* result) const {
+      this->model.compute_jacobian_vector_product(x, vector, result);
+   }
+
+   void HomogeneousEqualityConstrainedModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector,
+         double* result) const {
+      this->model.compute_jacobian_transposed_vector_product(x, vector, result);
    }
 
    void HomogeneousEqualityConstrainedModel::compute_hessian_vector_product(const double* x, const double* vector,

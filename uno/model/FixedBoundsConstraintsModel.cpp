@@ -5,11 +5,11 @@
 #include "optimization/Iterate.hpp"
 
 namespace uno {
-   FixedBoundsConstraintsModel::FixedBoundsConstraintsModel(const Model& original_model, const Options& /*options*/) :
+   FixedBoundsConstraintsModel::FixedBoundsConstraintsModel(const Model& original_model) :
          Model(original_model.name + " -> no fixed bounds", original_model.number_variables,
-               // move the fixed variables to the set of general constraints
-               original_model.number_constraints + original_model.get_fixed_variables().size(),
-               original_model.objective_sign),
+            // move the fixed variables to the set of general constraints
+            original_model.number_constraints + original_model.get_fixed_variables().size(),
+            original_model.optimization_sense),
          model(original_model),
          equality_constraints(concatenate(this->model.get_equality_constraints(), Range(this->model.number_constraints, this->number_constraints))),
          linear_constraints(concatenate(this->model.get_linear_constraints(), Range(this->model.number_constraints, this->number_constraints))) {
@@ -35,7 +35,7 @@ namespace uno {
       return this->model.evaluate_objective(x);
    }
 
-   void FixedBoundsConstraintsModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
+   void FixedBoundsConstraintsModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       this->model.evaluate_constraints(x, constraints);
       // add the fixed variables
       size_t current_constraint = this->model.number_constraints;
@@ -79,9 +79,19 @@ namespace uno {
       }
    }
 
-   void FixedBoundsConstraintsModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         double* hessian_values) const {
+   void FixedBoundsConstraintsModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier,
+         const Vector<double>& multipliers, double* hessian_values) const {
       this->model.evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
+   }
+
+   void FixedBoundsConstraintsModel::compute_jacobian_vector_product(const double* x, const double* vector,
+         double* result) const {
+      this->model.compute_jacobian_vector_product(x, vector, result);
+   }
+
+   void FixedBoundsConstraintsModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector,
+         double* result) const {
+      this->model.compute_jacobian_transposed_vector_product(x, vector, result);
    }
 
    void FixedBoundsConstraintsModel::compute_hessian_vector_product(const double* x, const double* vector,
