@@ -352,8 +352,8 @@ public:
 
 protected:
    const UserModel& user_model;
-   const SparseVector<size_t> slacks{0};
-   Vector<size_t> fixed_variables{0};
+   const SparseVector<size_t> slacks{};
+   Vector<size_t> fixed_variables{};
    const ForwardRange linear_constraints{0};
    std::vector<size_t> equality_constraints;
    CollectionAdapter<std::vector<size_t>> equality_constraints_collection;
@@ -571,17 +571,10 @@ void uno_optimize(void* solver, void* model) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
 
-   // create an instance of UnoModel, a subclass of Model
+   // create an instance of UnoModel, a subclass of Model, and solve the model using Uno
    const UnoModel uno_model(*user_model);
-
-   // generate the initial primal-dual iterate
-   Iterate initial_iterate(static_cast<size_t>(user_model->number_variables), static_cast<size_t>(user_model->number_constraints));
-   uno_model.initial_primal_point(initial_iterate.primals);
-   uno_model.initial_dual_point(initial_iterate.multipliers.constraints);
-
-   // solve the model using Uno
    Logger::set_logger(uno_solver->options->get_string("logger"));
-   Result result = uno_solver->solver->solve(uno_model, initial_iterate, *uno_solver->options);
+   Result result = uno_solver->solver->solve(uno_model, *uno_solver->options);
    // clean up the previous result (if any)
    delete uno_solver->result;
    // move the new result into uno_solver
