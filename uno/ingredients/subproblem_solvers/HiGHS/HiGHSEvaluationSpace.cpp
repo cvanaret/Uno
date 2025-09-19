@@ -132,6 +132,9 @@ namespace uno {
 
    // column-wise lower triangular Lagrangian Hessian
    void HiGHSEvaluationSpace::compute_hessian_sparsity(const Subproblem& subproblem) {
+      if (!subproblem.has_hessian_matrix()) {
+         throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with HiGHS");
+      }
       const size_t number_regularized_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
       this->model.hessian_.dim_ = static_cast<HighsInt>(subproblem.number_variables);
       this->model.hessian_.format_ = HessianFormat::kTriangular;
