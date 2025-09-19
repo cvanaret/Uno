@@ -12,7 +12,7 @@ namespace uno {
    // UserModel contains the description of the model provided by the user
    template <typename Objective, typename ObjectiveGradient, typename Constraints, typename Jacobian,
       typename JacobianOperator, typename JacobianTransposedOperator, typename Hessian, typename HessianOperator,
-      typename OptionalDoubleVector>
+      typename OptionalDoubleVector, typename UserDataType>
    class UserModel {
    public:
       UserModel(char problem_type, int32_t number_variables, const std::vector<double>& variables_lower_bounds,
@@ -61,7 +61,7 @@ namespace uno {
       double lagrangian_sign_convention{UNO_MULTIPLIER_NEGATIVE};
 
       // User data
-      void* user_data{nullptr};
+      UserDataType user_data{};
 
       // Optimization sense
       int32_t optimization_sense{UNO_MINIMIZE};

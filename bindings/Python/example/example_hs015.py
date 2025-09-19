@@ -6,34 +6,35 @@ Inf = float("inf")
 
 # hs015.mod
 
-def objective(x, objective_value):
-	objective_value[0] = 100.*(x[1] - x[0]**2)**2 + (1. - x[0])**2
+def objective(x, objective_value, user_data):
+	# objective definition depends on a parameter "offset" passed via user_data
+	objective_value[0] = 100.*(x[1] - x[0]**2)**2 + (1. - x[0])**2 + user_data["offset"]
 	return 0
 	
-def constraints(x, constraint_values):
+def constraints(x, constraint_values, user_data):
 	constraint_values[0] = x[0]*x[1]
 	constraint_values[1] = x[0] + x[1]**2
 	return 0
 	
-def objective_gradient(x, gradient):
+def objective_gradient(x, gradient, user_data):
 	gradient[0] = 400.*x[0]**3 - 400.*x[0]*x[1] + 2.*x[0] - 2.
 	gradient[1] = 200.*(x[1] - x[0]**2)
 	return 0
 
-def constraint_jacobian(x, jacobian_values):
+def constraint_jacobian(x, jacobian_values, user_data):
 	jacobian_values[0] = x[1]
 	jacobian_values[1] = 1.
 	jacobian_values[2] = x[0]
 	jacobian_values[3] = 2.*x[1]
 	return 0
 
-def lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values):
+def lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values, user_data):
 	hessian_values[0] = objective_multiplier*(1200*x[0]**2 - 400.*x[1] + 2.)
 	hessian_values[1] = -400.*objective_multiplier*x[0] - multipliers[0]
 	hessian_values[2] = 200.*objective_multiplier - 2.*multipliers[1]
 	return 0
 
-def lagrangian_hessian_operator(x, evaluate_at_x, objective_multiplier, multipliers, vector, result):
+def lagrangian_hessian_operator(x, evaluate_at_x, objective_multiplier, multipliers, vector, result, user_data):
 	hessian00 = objective_multiplier*(1200*x[0]**2. - 400.*x[1] + 2.)
 	hessian10 = -400.*objective_multiplier*x[0] - multipliers[0]
 	hessian11 = 200.*objective_multiplier - 2.*multipliers[1]
@@ -66,6 +67,8 @@ if __name__ == '__main__':
 	lagrangian_sign_convention = unopy.MULTIPLIER_NEGATIVE
 	# initial point
 	x0 = [-2., 1.]
+	# user data
+	user_data = {"offset": -306.5}
 
 	model = unopy.Model(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing)
 	model.set_objective(optimization_sense, objective, objective_gradient)
@@ -75,6 +78,7 @@ if __name__ == '__main__':
 		hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
 	#model.set_lagrangian_hessian_operator(number_hessian_nonzeros, lagrangian_hessian_operator, lagrangian_sign_convention)
 	model.set_initial_primal_iterate(x0)
+	model.set_user_data(user_data)
 	
 	uno_solver = unopy.UnoSolver()
 	uno_solver.set_preset("filtersqp")
