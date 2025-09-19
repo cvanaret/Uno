@@ -38,13 +38,12 @@ namespace uno {
    }
 
    // generate the ASL object and call the private constructor
-   AMPLModel::AMPLModel(const std::string& file_name, const Options& options) : AMPLModel(file_name, generate_asl(file_name), options) {
+   AMPLModel::AMPLModel(const std::string& file_name) : AMPLModel(file_name, generate_asl(file_name)) {
    }
 
-   AMPLModel::AMPLModel(const std::string& file_name, ASL* asl, const Options& options) :
+   AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
          Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), (asl->i.objtype_[0] == 1) ? -1. : 1.),
          asl(asl),
-         write_solution_to_file(options.get_bool("AMPL_write_solution_to_file")),
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
@@ -246,54 +245,56 @@ namespace uno {
       std::copy_n(this->asl->i.pi0_, this->number_constraints, multipliers.begin());
    }
 
-   void AMPLModel::postprocess_solution(Iterate& iterate, IterateStatus iterate_status) const {
-      if (this->write_solution_to_file) {
-         // write the primal-dual solution and status into a *.sol file
-         this->asl->p.solve_code_ = 400; // limit
-         if (iterate_status == IterateStatus::FEASIBLE_KKT_POINT) {
-            this->asl->p.solve_code_ = 0;
-         }
-         if (iterate_status == IterateStatus::FEASIBLE_SMALL_STEP) {
-            this->asl->p.solve_code_ = 100;
-         }
-         else if (iterate_status == IterateStatus::INFEASIBLE_STATIONARY_POINT) {
-            this->asl->p.solve_code_ = 200;
-         }
-         else if (iterate_status == IterateStatus::UNBOUNDED) {
-            this->asl->p.solve_code_ = 300;
-         }
-         else if (iterate_status == IterateStatus::INFEASIBLE_SMALL_STEP) {
-            this->asl->p.solve_code_ = 500;
-         }
+   void AMPLModel::postprocess_solution(Iterate& /*iterate*/, IterateStatus /*iterate_status*/) const {
+      // do nothing
+   }
 
-         // flip the signs of the multipliers and the objective if we maximize
-         // note: due to the different sign convention for the Lagrangian between ASL and Uno,
-         // we need to flip the signs of the constraint multipliers when minimizing
-         iterate.multipliers.constraints *= -this->objective_sign;
-         iterate.multipliers.lower_bounds *= this->objective_sign;
-         iterate.multipliers.upper_bounds *= this->objective_sign;
-         iterate.evaluations.objective *= this->objective_sign;
-
-         // include the bound duals in the .sol file, using suffixes
-         SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
-         SufDecl upper_bound_suffix{const_cast<char*>("upper_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
-         std::array<SufDecl, 2> suffixes{lower_bound_suffix, upper_bound_suffix};
-         suf_declare_ASL(this->asl, suffixes.data(), suffixes.size());
-         suf_rput_ASL(this->asl, "lower_bound_duals", ASL_Sufkind_var, iterate.multipliers.lower_bounds.data());
-         suf_rput_ASL(this->asl, "upper_bound_duals", ASL_Sufkind_var, iterate.multipliers.upper_bounds.data());
-
-         Option_Info option_info{};
-         option_info.wantsol = 9; // write the solution without printing the message to stdout
-         std::string message = "Uno ";
-         message.append(Uno::current_version()).append(": ").append(iterate_status_to_message(iterate_status));
-         write_sol_ASL(this->asl, message.data(), iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
-
-         // flip back the signs of the multipliers and the objective back if we maximize
-         iterate.multipliers.constraints *= -this->objective_sign;
-         iterate.multipliers.lower_bounds *= this->objective_sign;
-         iterate.multipliers.upper_bounds *= this->objective_sign;
-         iterate.evaluations.objective *= this->objective_sign;
+   void AMPLModel::write_solution_to_file(Iterate& iterate, IterateStatus iterate_status) const {
+      // write the primal-dual solution and status into a *.sol file
+      this->asl->p.solve_code_ = 400; // limit
+      if (iterate_status == IterateStatus::FEASIBLE_KKT_POINT) {
+         this->asl->p.solve_code_ = 0;
       }
+      if (iterate_status == IterateStatus::FEASIBLE_SMALL_STEP) {
+         this->asl->p.solve_code_ = 100;
+      }
+      else if (iterate_status == IterateStatus::INFEASIBLE_STATIONARY_POINT) {
+         this->asl->p.solve_code_ = 200;
+      }
+      else if (iterate_status == IterateStatus::UNBOUNDED) {
+         this->asl->p.solve_code_ = 300;
+      }
+      else if (iterate_status == IterateStatus::INFEASIBLE_SMALL_STEP) {
+         this->asl->p.solve_code_ = 500;
+      }
+
+      // flip the signs of the multipliers and the objective if we maximize
+      // note: due to the different sign convention for the Lagrangian between ASL and Uno,
+      // we need to flip the signs of the constraint multipliers when minimizing
+      iterate.multipliers.constraints *= -this->objective_sign;
+      iterate.multipliers.lower_bounds *= this->objective_sign;
+      iterate.multipliers.upper_bounds *= this->objective_sign;
+      iterate.evaluations.objective *= this->objective_sign;
+
+      // include the bound duals in the .sol file, using suffixes
+      SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
+      SufDecl upper_bound_suffix{const_cast<char*>("upper_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
+      std::array<SufDecl, 2> suffixes{lower_bound_suffix, upper_bound_suffix};
+      suf_declare_ASL(this->asl, suffixes.data(), suffixes.size());
+      suf_rput_ASL(this->asl, "lower_bound_duals", ASL_Sufkind_var, iterate.multipliers.lower_bounds.data());
+      suf_rput_ASL(this->asl, "upper_bound_duals", ASL_Sufkind_var, iterate.multipliers.upper_bounds.data());
+
+      Option_Info option_info{};
+      option_info.wantsol = 9; // write the solution without printing the message to stdout
+      std::string message = "Uno ";
+      message.append(Uno::current_version()).append(": ").append(iterate_status_to_message(iterate_status));
+      write_sol_ASL(this->asl, message.data(), iterate.primals.data(), iterate.multipliers.constraints.data(), &option_info);
+
+      // flip back the signs of the multipliers and the objective back if we maximize
+      iterate.multipliers.constraints *= -this->objective_sign;
+      iterate.multipliers.lower_bounds *= this->objective_sign;
+      iterate.multipliers.upper_bounds *= this->objective_sign;
+      iterate.evaluations.objective *= this->objective_sign;
    }
 
    size_t AMPLModel::number_jacobian_nonzeros() const {

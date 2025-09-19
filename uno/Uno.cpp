@@ -11,6 +11,9 @@
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "model/BoundRelaxedModel.hpp"
+#include "model/FixedBoundsConstraintsModel.hpp"
+#include "model/HomogeneousEqualityConstrainedModel.hpp"
 #include "model/Model.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -25,20 +28,50 @@ namespace uno {
    Level Logger::level = INFO;
 
    // solve without user callbacks
-   Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options) {
+   Result Uno::solve(const Model& model, const Options& options) {
       // pass user callbacks that do nothing
       NoUserCallbacks user_callbacks{};
-      return this->solve(model, current_iterate, options, user_callbacks);
+      return this->solve(model, options, user_callbacks);
    }
 
    // solve with user callbacks
-   Result Uno::solve(const Model& model, Iterate& current_iterate, const Options& options, UserCallbacks& user_callbacks) {
+   Result Uno::solve(const Model& model, const Options& options, UserCallbacks& user_callbacks) {
+      DISCRETE << "Original model " << model.name << '\n' << model.number_variables << " variables, " <<
+         model.number_constraints << " constraints (" << model.get_equality_constraints().size() <<
+         " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
+
+      // reformulate the model if it is to be solved with an interior-point method
+      if (options.get_string("inequality_handling_method") == "primal_dual_interior_point") {
+         // move the fixed variables to the set of general constraints
+         const FixedBoundsConstraintsModel fixed_bound_model(model, options);
+         // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks
+         const HomogeneousEqualityConstrainedModel homogeneous_model(fixed_bound_model);
+         // slightly relax the bound constraints
+         const BoundRelaxedModel bound_relaxed_model(homogeneous_model, options);
+
+         DISCRETE << "Reformulated model " << bound_relaxed_model.name << '\n' << bound_relaxed_model.number_variables << " variables, " <<
+            bound_relaxed_model.number_constraints << " constraints (" << bound_relaxed_model.get_equality_constraints().size() <<
+            " equality, " << bound_relaxed_model.get_inequality_constraints().size() << " inequality)\n";
+         return uno_solve(bound_relaxed_model, options, user_callbacks);
+      }
+      else {
+         return uno_solve(model, options, user_callbacks);
+      }
+   }
+
+   // protected solve function
+   Result Uno::uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks) {
       const Timer timer{};
       // pick the ingredients based on the user-defined options
       Uno::pick_ingredients(model, options);
       Statistics statistics = Uno::create_statistics(model, options);
       WarmstartInformation warmstart_information{};
       warmstart_information.whole_problem_changed();
+
+      // initialize initial primal and dual points
+      Iterate current_iterate(model.number_variables, model.number_constraints);
+      model.initial_primal_point(current_iterate.primals);
+      model.initial_dual_point(current_iterate.multipliers.constraints);
 
       size_t major_iterations = 0;
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
