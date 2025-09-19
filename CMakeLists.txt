@@ -23,7 +23,7 @@ if (MSVC)
    # https://github.com/google/googletest/tree/main/googletest#visual-studio-dynamic-vs-static-runtimes
 	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 else()
-   set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
+   set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion -Wsign-conversion")
    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
 endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
