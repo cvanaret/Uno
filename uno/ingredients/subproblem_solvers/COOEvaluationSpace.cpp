@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <stdexcept>
 #include "COOEvaluationSpace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
@@ -11,6 +12,9 @@
 
 namespace uno {
    void COOEvaluationSpace::initialize_hessian(const Subproblem& subproblem) {
+      if (!subproblem.has_hessian_matrix()) {
+         throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
+      }
       const size_t dimension = subproblem.number_variables;
 
       // Hessian
@@ -27,7 +31,10 @@ namespace uno {
    }
 
    void COOEvaluationSpace::initialize_augmented_system(const Subproblem& subproblem) {
-const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
+      if (!subproblem.has_hessian_matrix()) {
+         throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
+      }
+      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
 
       // evaluations
       this->objective_gradient.resize(subproblem.number_variables);
