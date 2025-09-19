@@ -12,7 +12,7 @@ namespace uno {
    // UserModel contains the description of the model provided by the user
    template <typename Objective, typename ObjectiveGradient, typename Constraints, typename Jacobian,
       typename JacobianOperator, typename JacobianTransposedOperator, typename Hessian, typename HessianOperator,
-      typename OptionalDoubleVector, typename UserDataType>
+      typename DoubleVector, typename UserDataType>
    class UserModel {
    public:
       UserModel(char problem_type, int32_t number_variables, const std::vector<double>& variables_lower_bounds,
@@ -31,18 +31,18 @@ namespace uno {
 
       // variables
       const int32_t number_variables;
-      OptionalDoubleVector variables_lower_bounds{};
-      OptionalDoubleVector variables_upper_bounds{};
+      DoubleVector variables_lower_bounds{nullptr};
+      DoubleVector variables_upper_bounds{nullptr};
 
       // objective
-      Objective objective_function{};
-      ObjectiveGradient objective_gradient{};
+      Objective objective_function{nullptr};
+      ObjectiveGradient objective_gradient{nullptr};
 
       // constraints
       int32_t number_constraints{0};
-      Constraints constraint_functions{};
-      OptionalDoubleVector constraints_lower_bounds{};
-      OptionalDoubleVector constraints_upper_bounds{};
+      Constraints constraint_functions{nullptr};
+      DoubleVector constraints_lower_bounds{};
+      DoubleVector constraints_upper_bounds{};
       int32_t number_jacobian_nonzeros{0};
       std::vector<int32_t> jacobian_row_indices{};
       std::vector<int32_t> jacobian_column_indices{};
@@ -67,8 +67,8 @@ namespace uno {
       int32_t optimization_sense{UNO_MINIMIZE};
 
       // initial iterate
-      OptionalDoubleVector initial_primal_iterate{};
-      OptionalDoubleVector initial_dual_iterate{};
+      DoubleVector initial_primal_iterate{};
+      DoubleVector initial_dual_iterate{};
    };
 } // namespace
 

@@ -43,7 +43,8 @@ namespace uno {
       double objective_value = 0.;
       if (this->user_model.objective_function.has_value()) {
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.objective_function)(x, &objective_value, user_data);
+         const int32_t return_code = (*this->user_model.objective_function)(static_cast<int32_t>(this->number_variables),
+            x, &objective_value, user_data);
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
@@ -55,7 +56,8 @@ namespace uno {
    void PythonModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       if (this->user_model.constraint_functions.has_value()) {
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.constraint_functions)(x, constraints.data(), user_data);
+         const int32_t return_code = (*this->user_model.constraint_functions)(static_cast<int32_t>(this->number_variables),
+            static_cast<int32_t>(this->number_constraints), x, constraints.data(), user_data);
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
@@ -65,7 +67,8 @@ namespace uno {
    void PythonModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       if (this->user_model.objective_gradient.has_value()) {
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.objective_gradient)(x, gradient.data(), user_data);
+         const int32_t return_code = (*this->user_model.objective_gradient)(static_cast<int32_t>(this->number_variables),
+            x, gradient.data(), user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -110,7 +113,8 @@ namespace uno {
    void PythonModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
       if (this->user_model.constraint_jacobian.has_value()) {
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.constraint_jacobian)(x, jacobian_values, user_data);
+         const int32_t return_code = (*this->user_model.constraint_jacobian)(static_cast<int32_t>(this->number_variables),
+            static_cast<int32_t>(this->number_jacobian_nonzeros()), x, jacobian_values, user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -126,8 +130,9 @@ namespace uno {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.lagrangian_hessian)(x, objective_multiplier, multipliers,
-            hessian_values, user_data);
+         const int32_t return_code = (*this->user_model.lagrangian_hessian)(static_cast<int32_t>(this->number_variables),
+            static_cast<int32_t>(this->number_constraints), static_cast<int32_t>(this->number_hessian_nonzeros()), x,
+            objective_multiplier, multipliers, hessian_values, user_data);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
@@ -144,7 +149,8 @@ namespace uno {
    void PythonModel::compute_jacobian_vector_product(const double* x, const double* vector, double* result) const {
       if (this->user_model.jacobian_operator.has_value()) {
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.jacobian_operator)(x, true, vector, result, user_data);
+         const int32_t return_code = (*this->user_model.jacobian_operator)(static_cast<int32_t>(this->number_variables),
+            static_cast<int32_t>(this->number_constraints), x, true, vector, result, user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -157,7 +163,8 @@ namespace uno {
    void PythonModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const {
       if (this->user_model.jacobian_transposed_operator.has_value()) {
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.jacobian_transposed_operator)(x, true, vector, result, user_data);
+         const int32_t return_code = (*this->user_model.jacobian_transposed_operator)(static_cast<int32_t>(this->number_variables),
+            static_cast<int32_t>(this->number_constraints), x, true, vector, result, user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -176,8 +183,8 @@ namespace uno {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.lagrangian_hessian_operator)(x, true, objective_multiplier,
-            multipliers, vector, result, user_data);
+         const int32_t return_code = (*this->user_model.lagrangian_hessian_operator)(static_cast<int32_t>(this->number_variables),
+            static_cast<int32_t>(this->number_constraints), x, true, objective_multiplier, multipliers, vector, result, user_data);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
