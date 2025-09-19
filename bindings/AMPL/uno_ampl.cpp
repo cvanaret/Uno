@@ -3,7 +3,6 @@
 
 #include <string>
 #include "AMPLModel.hpp"
-#include "model/ModelFactory.hpp"
 #include "optimization/Result.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Options.hpp"
