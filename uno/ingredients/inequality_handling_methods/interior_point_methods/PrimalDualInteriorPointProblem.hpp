@@ -14,6 +14,8 @@ namespace uno {
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter,
          const InteriorPointParameters &parameters);
 
+      void generate_initial_iterate(Iterate& initial_iterate) const;
+
       [[nodiscard]] double get_objective_multiplier() const override;
 
       // constraint evaluations
@@ -64,13 +66,15 @@ namespace uno {
          double shift) const;
 
    protected:
-      const OptimizationProblem& first_reformulation;
+      const OptimizationProblem& problem;
       const double barrier_parameter;
       const InteriorPointParameters& parameters;
       const Vector<size_t> fixed_variables{};
       const ForwardRange equality_constraints;
       const ForwardRange inequality_constraints{0};
 
+      [[nodiscard]] double problem_variable_lower_bound(size_t variable_index) const;
+      [[nodiscard]] double problem_variable_upper_bound(size_t variable_index) const;
       void compute_bound_dual_direction(const Iterate& current_iterate, Direction& direction) const;
       [[nodiscard]] double primal_fraction_to_boundary(const Vector<double>& current_primals, const Vector<double>& primal_direction,
          double tau) const;

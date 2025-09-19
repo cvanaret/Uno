@@ -18,7 +18,7 @@ namespace uno {
          // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks
          model = std::make_unique<HomogeneousEqualityConstrainedModel>(std::move(model));
          // slightly relax the bound constraints
-         model = std::make_unique<BoundRelaxedModel>(std::move(model), options);
+         //model = std::make_unique<BoundRelaxedModel>(std::move(model), options);
       }
       return model;
    }

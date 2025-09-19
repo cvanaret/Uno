@@ -54,7 +54,6 @@ namespace uno {
       const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
       double previous_barrier_parameter;
-      const double default_multiplier;
       const InteriorPointParameters parameters;
       const double least_square_multiplier_max_norm;
       const double l1_constraint_violation_coefficient; // (rho in Section 3.3.1 in IPOPT paper)

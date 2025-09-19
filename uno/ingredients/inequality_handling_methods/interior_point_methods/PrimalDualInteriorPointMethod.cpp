@@ -7,7 +7,6 @@
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
-#include "linear_algebra/SparseVector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationSpace.hpp"
 #include "optimization/Iterate.hpp"
@@ -21,15 +20,16 @@ namespace uno {
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))),
          barrier_parameter_update_strategy(options),
          previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
-         default_multiplier(options.get_double("barrier_default_multiplier")),
          parameters({
-               options.get_double("barrier_tau_min"),
-               options.get_double("barrier_k_sigma"),
-               options.get_double("barrier_regularization_exponent"),
-               options.get_double("barrier_small_direction_factor"),
-               options.get_double("barrier_push_variable_to_interior_k1"),
-               options.get_double("barrier_push_variable_to_interior_k2"),
-               options.get_double("barrier_damping_factor")
+            options.get_double("barrier_tau_min"),
+            options.get_double("barrier_k_sigma"),
+            options.get_double("barrier_regularization_exponent"),
+            options.get_double("barrier_small_direction_factor"),
+            options.get_double("barrier_push_variable_to_interior_k1"),
+            options.get_double("barrier_push_variable_to_interior_k2"),
+            options.get_double("barrier_damping_factor"),
+            options.get_double("primal_tolerance"),
+            options.get_double("barrier_default_multiplier"),
          }),
          least_square_multiplier_max_norm(options.get_double("least_square_multiplier_max_norm")),
          l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")) {
@@ -53,48 +53,8 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
-      // TODO: enforce linear constraints at initial point
-
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-
-      // add the slacks to the initial iterate
-      initial_iterate.set_number_variables(problem.number_variables);
-      // make the initial point strictly feasible wrt the bounds
-      for (size_t variable_index: Range(problem.number_variables)) {
-         initial_iterate.primals[variable_index] = barrier_problem.push_variable_to_interior(initial_iterate.primals[variable_index],
-            problem.variable_lower_bound(variable_index), problem.variable_upper_bound(variable_index));
-      }
-
-      // set the slack variables (if any)
-      if (!problem.model.get_slacks().is_empty()) {
-         // set the slacks to the constraint values
-         initial_iterate.evaluate_constraints(problem.model);
-         for (const auto [constraint_index, slack_index]: problem.model.get_slacks()) {
-            initial_iterate.primals[slack_index] =
-               barrier_problem.push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index],
-               problem.variable_lower_bound(slack_index), problem.variable_upper_bound(slack_index));
-         }
-         // since the slacks have been set, the function evaluations should also be updated
-         initial_iterate.is_objective_gradient_computed = false;
-         initial_iterate.are_constraints_computed = false;
-         initial_iterate.is_constraint_jacobian_computed = false;
-      }
-
-      // set the bound multipliers
-      for (size_t variable_index: Range(problem.number_variables)) {
-         const double lower_bound = problem.variable_lower_bound(variable_index);
-         const double upper_bound = problem.variable_upper_bound(variable_index);
-         if (is_finite(lower_bound)) {
-            initial_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
-         }
-         if (is_finite(upper_bound)) {
-            initial_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
-         }
-      }
-
-      if (0 < problem.number_constraints) {
-         // TODO compute least-square multipliers
-      }
+      barrier_problem.generate_initial_iterate(initial_iterate);
    }
 
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
@@ -180,10 +140,10 @@ namespace uno {
          const double lower_bound = problem.variable_lower_bound(variable_index);
          const double upper_bound = problem.variable_upper_bound(variable_index);
          if (is_finite(lower_bound)) {
-            current_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
+            current_iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
          }
          if (is_finite(upper_bound)) {
-            current_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
+            current_iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
          }
       }
 
