@@ -4,7 +4,6 @@
 #ifndef UNO_FIXEDBOUNDSCONSTRAINTSMODEL_H
 #define UNO_FIXEDBOUNDSCONSTRAINTSMODEL_H
 
-#include <memory>
 #include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "symbolic/Concatenation.hpp"
@@ -19,7 +18,7 @@ namespace uno {
    // linear constraint 0 x[1] + 1 x[2] + ... + 0 x[n] == 1
    class FixedBoundsConstraintsModel: public Model {
    public:
-      FixedBoundsConstraintsModel(std::unique_ptr<Model> original_model, const Options& options);
+      FixedBoundsConstraintsModel(const Model& original_model, const Options& options);
 
       // availability of linear operators
       [[nodiscard]] bool has_jacobian_operator() const override;
@@ -66,7 +65,7 @@ namespace uno {
       [[nodiscard]] size_t number_hessian_nonzeros() const override;
 
    private:
-      const std::unique_ptr<Model> model{};
+      const Model& model;
       Vector<size_t> fixed_variables{};
       Concatenation<const Collection<size_t>&, ForwardRange> equality_constraints;
       Concatenation<const Collection<size_t>&, ForwardRange> linear_constraints;

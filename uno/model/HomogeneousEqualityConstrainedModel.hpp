@@ -4,7 +4,6 @@
 #ifndef UNO_HOMOGENEOUSEQUALITYCONSTRAINEDMODEL_H
 #define UNO_HOMOGENEOUSEQUALITYCONSTRAINEDMODEL_H
 
-#include <memory>
 #include "Model.hpp"
 #include "linear_algebra/SparseVector.hpp"
 
@@ -15,7 +14,7 @@ namespace uno {
    // all constraints are of the form "c(x) = 0"
    class HomogeneousEqualityConstrainedModel: public Model {
    public:
-      explicit HomogeneousEqualityConstrainedModel(std::unique_ptr<Model> original_model);
+      explicit HomogeneousEqualityConstrainedModel(const Model& original_model);
 
       // availability of linear operators
       [[nodiscard]] bool has_jacobian_operator() const override;
@@ -61,7 +60,7 @@ namespace uno {
       [[nodiscard]] size_t number_hessian_nonzeros() const override;
 
    protected:
-      const std::unique_ptr<Model> model{};
+      const Model& model;
       std::vector<size_t> constraint_index_of_inequality_index;
       std::vector<size_t> slack_index_of_constraint_index;
 
