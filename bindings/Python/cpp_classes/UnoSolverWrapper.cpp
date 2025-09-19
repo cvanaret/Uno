@@ -13,18 +13,7 @@ namespace uno {
 
    void UnoSolverWrapper::optimize(const PythonUserModel& user_model) {
       const PythonModel model{user_model};
-
       Logger::set_logger(this->options.get_string("logger"));
-      DISCRETE << "Original model " << model.name << '\n' << model.number_variables << " variables, " <<
-         model.number_constraints << " constraints (" << model.get_equality_constraints().size() <<
-         " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
-
-      // initialize initial primal and dual points
-      Iterate initial_iterate(model.number_variables, model.number_constraints);
-      model.initial_primal_point(initial_iterate.primals);
-      model.initial_dual_point(initial_iterate.multipliers.constraints);
-
-      // solve the instance
-      Result result = this->uno_solver.solve(model, initial_iterate, this->options);
+      Result result = this->uno_solver.solve(model, this->options);
    }
 } // namespace
