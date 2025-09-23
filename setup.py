@@ -82,24 +82,28 @@ class CMakeBuild(build_ext):
         artifact_version = get_machine() + '-' + get_system() + "-libgfortran5"
         
         # BQPD
-        bqpd_filename = "BQPD.v" + VERSION_BQPD + "." + artifact_version + ".tar.gz"
-        subprocess.check_call(['wget', "-N", "https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v" + VERSION_BQPD + "%2B0/" + bqpd_filename])
-        subprocess.check_call(['tar', '-xzvf', bqpd_filename, '-C', 'deps'])
+        if not os.path.exists(current_directory + "/deps/lib/libbqpd.a"):
+            bqpd_filename = "BQPD.v" + VERSION_BQPD + "." + artifact_version + ".tar.gz"
+            subprocess.check_call(['wget', "-N", "https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v" + VERSION_BQPD + "%2B0/" + bqpd_filename])
+            subprocess.check_call(['tar', '-xzvf', bqpd_filename, '-C', 'deps'])
         
         # MUMPS
-        mumps_filename = "MUMPS_static.v" + VERSION_MUMPS + "." + artifact_version + ".tar.gz"
-        subprocess.check_call(['wget', "-N", "https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/MUMPS_static-v" + VERSION_MUMPS + "%2B0/" + mumps_filename])
-        subprocess.check_call(['tar', '-xzvf', mumps_filename, '-C', 'deps'])
+        if not os.path.exists(current_directory + "/deps/lib/libdmumps.a"):
+            mumps_filename = "MUMPS_static.v" + VERSION_MUMPS + "." + artifact_version + ".tar.gz"
+            subprocess.check_call(['wget', "-N", "https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/MUMPS_static-v" + VERSION_MUMPS + "%2B0/" + mumps_filename])
+            subprocess.check_call(['tar', '-xzvf', mumps_filename, '-C', 'deps'])
         
         # HSL
-        hsl_filename = "HSL.v" + VERSION_HSL + "." + artifact_version + ".tar.gz"
-        subprocess.check_call(['wget', "-N", "https://github.com/JuliaBinaryWrappers/HSL_jll.jl/releases/download/HSL-v" + VERSION_HSL + "%2B0/" + hsl_filename])
-        subprocess.check_call(['tar', '-xzvf', hsl_filename, '-C', 'deps'])
+        if not os.path.exists(current_directory + "/deps/lib/libhsl.so"):
+            hsl_filename = "HSL.v" + VERSION_HSL + "." + artifact_version + ".tar.gz"
+            subprocess.check_call(['wget', "-N", "https://github.com/JuliaBinaryWrappers/HSL_jll.jl/releases/download/HSL-v" + VERSION_HSL + "%2B0/" + hsl_filename])
+            subprocess.check_call(['tar', '-xzvf', hsl_filename, '-C', 'deps'])
         
         # HiGHS
-        highs_filename = "HiGHS_static.v" + VERSION_HIGHS + "." + artifact_version + ".tar.gz"
-        subprocess.check_call(['wget', "-N", "https://github.com/amontoison/HiGHS_static_jll.jl/releases/download/HiGHS_static-v" + VERSION_HIGHS + "%2B0/" + highs_filename])
-        subprocess.check_call(['tar', '-xzvf', highs_filename, '-C', 'deps/highs'])
+        if not os.path.exists(current_directory + "/deps/highs/lib/cmake/highs"):
+            highs_filename = "HiGHS_static.v" + VERSION_HIGHS + "." + artifact_version + ".tar.gz"
+            subprocess.check_call(['wget', "-N", "https://github.com/amontoison/HiGHS_static_jll.jl/releases/download/HiGHS_static-v" + VERSION_HIGHS + "%2B0/" + highs_filename])
+            subprocess.check_call(['tar', '-xzvf', highs_filename, '-C', 'deps/highs'])
 
         ##############################
         # compile the shared library #
