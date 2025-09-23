@@ -16,7 +16,7 @@ namespace uno {
 
       UnoSolverWrapper();
 
-      void optimize(const PythonUserModel& user_model);
+      [[nodiscard]] Result optimize(const PythonUserModel& user_model);
    };
 } // namespace
 

@@ -11,9 +11,9 @@ namespace uno {
       DefaultOptions::load(this->options);
    }
 
-   void UnoSolverWrapper::optimize(const PythonUserModel& user_model) {
+   Result UnoSolverWrapper::optimize(const PythonUserModel& user_model) {
       const PythonModel model{user_model};
       Logger::set_logger(this->options.get_string("logger"));
-      Result result = this->uno_solver.solve(model, this->options);
+      return this->uno_solver.solve(model, this->options);
    }
 } // namespace

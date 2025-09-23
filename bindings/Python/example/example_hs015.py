@@ -89,3 +89,4 @@ if __name__ == '__main__':
 	#uno_solver.set_option("logger", "DEBUG3")
 	
 	result = uno_solver.optimize(model)
+	print("Reading the number of iterations from Python: ", result.number_iterations)

@@ -15,6 +15,7 @@ namespace uno {
    void define_Vector(py::module& module);
    void define_PointerWrapper(py::module& module);
    void define_Model(py::module& module);
+   void define_Result(py::module& module);
    void define_UnoSolver(py::module& module);
    void define_Constants(py::module& module);
 
@@ -28,6 +29,7 @@ namespace uno {
       define_Vector(module);
       define_PointerWrapper(module);
       define_Model(module);
+      define_Result(module);
       define_UnoSolver(module);
       define_Constants(module);
    }
