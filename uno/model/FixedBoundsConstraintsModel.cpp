@@ -159,7 +159,7 @@ namespace uno {
       this->model.initial_dual_point(multipliers);
    }
 
-   void FixedBoundsConstraintsModel::postprocess_solution(Iterate& iterate, SolutionStatus termination_status) const {
+   void FixedBoundsConstraintsModel::postprocess_solution(Iterate& iterate) const {
       // move the multipliers back from the general constraints to the bound constraints
       size_t current_constraint = this->model.number_constraints;
       for (size_t variable_index: this->model.get_fixed_variables()) {
@@ -172,7 +172,7 @@ namespace uno {
          }
          ++current_constraint;
       }
-      this->model.postprocess_solution(iterate, termination_status);
+      this->model.postprocess_solution(iterate);
    }
 
    size_t FixedBoundsConstraintsModel::number_jacobian_nonzeros() const {

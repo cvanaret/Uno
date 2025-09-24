@@ -167,10 +167,10 @@ namespace uno {
       this->model.initial_dual_point(multipliers);
    }
 
-   void HomogeneousEqualityConstrainedModel::postprocess_solution(Iterate& iterate, SolutionStatus termination_status) const {
+   void HomogeneousEqualityConstrainedModel::postprocess_solution(Iterate& iterate) const {
       // discard the slacks
       iterate.number_variables = this->model.number_variables;
-      this->model.postprocess_solution(iterate, termination_status);
+      this->model.postprocess_solution(iterate);
    }
 
    size_t HomogeneousEqualityConstrainedModel::number_jacobian_nonzeros() const {
