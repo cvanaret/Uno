@@ -19,7 +19,8 @@ namespace uno {
          throw std::runtime_error("BoxLPSolver cannot solve problems with general constraints");
       }
       // compute the objective gradient
-      subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->evaluation_space.objective_gradient.data());
+      subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->evaluation_space,
+         this->evaluation_space.objective_gradient.data());
 
       // compute the variables bounds
       subproblem.set_variables_bounds(this->variable_lower_bounds, this->variable_upper_bounds);

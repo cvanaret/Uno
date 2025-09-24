@@ -142,10 +142,10 @@ namespace uno {
       this->problem.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian_values);
    }
 
-   void PrimalExponentialBarrierProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* vector,
-         const Multipliers& multipliers, double* result) const {
+   void PrimalExponentialBarrierProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x,
+         const double* vector, const Multipliers& multipliers, double* result) const {
       // original Lagrangian Hessian
-      this->problem.compute_hessian_vector_product(hessian_model, vector, multipliers, result);
+      this->problem.compute_hessian_vector_product(hessian_model, x, vector, multipliers, result);
    }
 
    double PrimalExponentialBarrierProblem::variable_lower_bound(size_t /*variable_index*/) const {
