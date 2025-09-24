@@ -5,9 +5,8 @@
 #define UNO_DENSEMATRIX_H
 
 #include <cassert>
-#include <iostream>
+#include <ostream>
 #include <vector>
-#include "symbolic/MatrixVectorProduct.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
