@@ -18,6 +18,8 @@ namespace uno {
       void initialize_hessian(const Subproblem& subproblem);
       void initialize_augmented_system(const Subproblem& subproblem);
 
+      [[nodiscard]] const double* get_constraints() const override;
+
       void evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) override;
       void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector,

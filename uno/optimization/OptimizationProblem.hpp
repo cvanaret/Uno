@@ -18,6 +18,7 @@ namespace uno {
    template <typename IndexType>
    class COOMatrix;
    class Direction;
+   class EvaluationSpace;
    class HessianModel;
    class InequalityHandlingMethod;
    class Iterate;
@@ -40,7 +41,7 @@ namespace uno {
       virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const;
 
       // dense objective gradient
-      virtual void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const;
+      virtual void evaluate_objective_gradient(Iterate& iterate, const EvaluationSpace& evaluation_space, double* objective_gradient) const;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
@@ -54,7 +55,7 @@ namespace uno {
       // numerical evaluations of Jacobian and Hessian
       virtual void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const;
       virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const;
+         const InequalityHandlingMethod& inequality_handling_method, const EvaluationSpace& evaluation_space, Iterate& iterate) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, double* hessian_values) const;
       virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,

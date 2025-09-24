@@ -29,7 +29,8 @@ namespace uno {
       constraints = iterate.evaluations.constraints;
    }
 
-   void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
+   void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, const EvaluationSpace& /*evaluation_space*/,
+         double* objective_gradient) const {
       iterate.evaluate_objective_gradient(this->model);
       for (size_t index: Range(this->number_variables)) {
          objective_gradient[index] = iterate.evaluations.objective_gradient[index];
@@ -65,12 +66,12 @@ namespace uno {
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
    // split in two parts: objective contribution and constraints' contribution
    void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const {
+         const InequalityHandlingMethod& inequality_handling_method, const EvaluationSpace& evaluation_space, Iterate& iterate) const {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // ∇f(x_k)
-      this->evaluate_objective_gradient(iterate, lagrangian_gradient.objective_contribution.data());
+      this->evaluate_objective_gradient(iterate, evaluation_space, lagrangian_gradient.objective_contribution.data());
 
       // ∇c(x_k) λ_k
       inequality_handling_method.compute_constraint_jacobian_transposed_vector_product(iterate.multipliers.constraints,

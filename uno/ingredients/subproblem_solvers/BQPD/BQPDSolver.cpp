@@ -219,7 +219,7 @@ namespace uno {
    }
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {
-      BQPDMode mode = BQPDMode::USER_DEFINED;
+      BQPDMode mode = BQPDMode::USER_DEFINED_ACTIVE_SET;
       // if problem structure changed, use cold start
       if (warmstart_information.hessian_sparsity_changed || warmstart_information.jacobian_sparsity_changed) {
          mode = BQPDMode::ACTIVE_SET_EQUALITIES;
@@ -228,7 +228,7 @@ namespace uno {
       else if (warmstart_information.variable_bounds_changed && !warmstart_information.objective_changed &&
                !warmstart_information.constraints_changed && !warmstart_information.constraint_bounds_changed) {
          mode = BQPDMode::UNCHANGED_ACTIVE_SET_AND_JACOBIAN;
-      }
+               }
       return mode;
    }
 

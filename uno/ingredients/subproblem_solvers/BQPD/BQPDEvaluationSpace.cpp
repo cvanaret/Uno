@@ -34,6 +34,10 @@ namespace uno {
       }
    }
 
+   const double* BQPDEvaluationSpace::get_constraints() const {
+      return this->constraints.data();
+   }
+
    void BQPDEvaluationSpace::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
       problem.evaluate_constraint_jacobian(iterate, this->jacobian_values.data());
 
@@ -93,12 +97,12 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
-      if (warmstart_information.objective_changed) {
-         problem.evaluate_objective_gradient(current_iterate, this->gradients.data());
-      }
       if (warmstart_information.constraints_changed) {
          problem.evaluate_constraints(current_iterate, this->constraints);
          this->evaluate_constraint_jacobian(problem, current_iterate);
+      }
+      if (warmstart_information.objective_changed) {
+         problem.evaluate_objective_gradient(current_iterate, *this, this->gradients.data());
       }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->evaluate_hessian = true;

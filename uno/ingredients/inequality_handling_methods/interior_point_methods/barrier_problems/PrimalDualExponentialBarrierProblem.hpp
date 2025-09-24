@@ -1,17 +1,20 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_L1RELAXEDPROBLEM_H
-#define UNO_L1RELAXEDPROBLEM_H
+#ifndef UNO_PRIMALDUALEXPONENTIALBARRIERPROBLEM_H
+#define UNO_PRIMALDUALEXPONENTIALBARRIERPROBLEM_H
 
-#include <functional>
-#include "optimization/OptimizationProblem.hpp"
+#include "../InteriorPointParameters.hpp"
+#include "../BarrierProblem.hpp"
+#include "symbolic/Range.hpp"
 
 namespace uno {
-   class l1RelaxedProblem: public OptimizationProblem {
+   class PrimalDualExponentialBarrierProblem : public BarrierProblem {
    public:
-      l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
-         double proximal_coefficient, double const* proximal_center);
+      PrimalDualExponentialBarrierProblem(const OptimizationProblem& problem, double barrier_parameter,
+         const InteriorPointParameters &parameters);
+
+      void generate_initial_iterate(Iterate& initial_iterate) const override;
 
       [[nodiscard]] double get_objective_multiplier() const override;
 
@@ -42,7 +45,7 @@ namespace uno {
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
-      // [[nodiscard]] virtual const Collection<size_t>& get_primal_regularization_variables() const;
+      [[nodiscard]] const Collection<size_t>& get_primal_regularization_variables() const override;
 
       [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
       [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
@@ -50,19 +53,31 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
 
-      [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
-         double dual_tolerance) const;
+      void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution,
+         Direction& direction) const override;
 
-      void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>& elastic_setting_function) const;
+      [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
+      void set_auxiliary_measure(Iterate& iterate) const;
+      [[nodiscard]] double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
+         const Multipliers& multipliers, double shift_value, Norm residual_norm) const override;
+      [[nodiscard]] double dual_regularization_factor() const override;
+      [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
+         const Vector<double>& primal_direction) const;
+      void postprocess_iterate(Iterate& iterate) const;
+
+      [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
+         double shift) const override;
 
    protected:
-      const size_t number_elastic_variables;
-      const double objective_multiplier;
-      const double constraint_violation_coefficient;
-      const double proximal_coefficient;
-      double const* proximal_center;
-      const ForwardRange dual_regularization_constraints{0};
+      const OptimizationProblem& problem;
+      const size_t number_extra_variables;
+      const double barrier_parameter;
+      const InteriorPointParameters& parameters;
+      const Vector<size_t> fixed_variables{};
+      const ForwardRange empty_set{0};
+
+      [[nodiscard]] static size_t count_number_extra_variables(const OptimizationProblem& problem);
    };
 } // namespace
 
-#endif // UNO_L1RELAXEDPROBLEM_H
+#endif // UNO_PRIMALDUALEXPONENTIALBARRIERPROBLEM_H

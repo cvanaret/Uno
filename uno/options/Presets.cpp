@@ -37,7 +37,8 @@ namespace uno {
       // shortcuts for state-of-the-art combinations
       if (preset_name == "ipopt") {
          options.set("constraint_relaxation_strategy", "feasibility_restoration");
-         options.set("inequality_handling_method", "primal_dual_interior_point");
+         options.set("inequality_handling_method", "interior_point");
+         options.set("barrier_function", "log");
          options.set("hessian_model", "exact");
          options.set("regularization_strategy", "primal_dual");
          options.set("globalization_mechanism", "LS");
@@ -54,6 +55,30 @@ namespace uno {
          options.set("LS_min_step_length", "5e-7");
          options.set("barrier_tau_min", "0.99");
          options.set("barrier_damping_factor", "1e-5");
+         options.set("l1_constraint_violation_coefficient", "1000.");
+         options.set("progress_norm", "L1");
+         options.set("residual_norm", "INF");
+         options.set("scale_functions", "yes");
+         options.set("primal_tolerance", "1e-8");
+         options.set("dual_tolerance", "1e-8");
+         options.set("loose_dual_tolerance", "1e-6");
+         options.set("loose_tolerance_consecutive_iteration_threshold", "15");
+         options.set("switch_to_optimality_requires_linearized_feasibility", "no");
+         options.set("LS_scale_duals_with_step_length", "yes");
+         options.set("protect_actual_reduction_against_roundoff", "yes");
+      }
+      else if (preset_name == "expo") {
+         options.set("constraint_relaxation_strategy", "feasibility_restoration");
+         options.set("inequality_handling_method", "interior_point");
+         options.set("barrier_function", "exp");
+         options.set("barrier_initial_parameter", "10.");
+         options.set("hessian_model", "exact");
+         options.set("regularization_strategy", "primal");
+         options.set("globalization_mechanism", "LS");
+         options.set("globalization_strategy", "l1_merit");
+         options.set("armijo_decrease_fraction", "1e-8");
+         options.set("LS_backtracking_ratio", "0.5");
+         options.set("LS_min_step_length", "5e-7");
          options.set("l1_constraint_violation_coefficient", "1000.");
          options.set("progress_norm", "L1");
          options.set("residual_norm", "INF");

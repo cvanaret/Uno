@@ -46,7 +46,8 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
+   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, const EvaluationSpace& /*evaluation_space*/,
+         double* objective_gradient) const {
       // scale nabla f(x) by rho
       if (this->objective_multiplier != 0.) {
          iterate.evaluate_objective_gradient(this->model);
@@ -156,7 +157,7 @@ namespace uno {
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
    void l1RelaxedProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const {
+         const InequalityHandlingMethod& inequality_handling_method, const EvaluationSpace& /*evaluation_space*/, Iterate& iterate) const {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
 
