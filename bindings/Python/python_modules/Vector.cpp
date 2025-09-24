@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <string>
 #include <pybind11/pybind11.h>
 #include "linear_algebra/Vector.hpp"
 
@@ -13,6 +14,17 @@ namespace uno {
          .def("size", [](const Vector<double>& self) {
             return self.size();
          }, "Number of elements of the vector")
+         // representation
+         .def("__repr__", [](const Vector<double>& self) {
+            std::string representation{};
+            for (size_t index = 0; index < self.size(); ++index) {
+               if (0 < index) {
+                  representation.append(", ");
+               }
+               representation.append(std::to_string(self[index]));
+            }
+            return representation;
+         })
          // iterator
          .def("__iter__", [](const Vector<double>& self) {
             return py::make_iterator(self.begin(), self.end());

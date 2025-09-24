@@ -10,15 +10,23 @@ namespace uno {
    void define_Result(py::module& module) {
       py::class_<Result>(module, "Result")
       // attributes
-      //.def_readonly("primal_solution", &Result::solution.primals)
       .def_readonly("optimization_status", &Result::optimization_status)
+      .def_readonly("solution_status", &Result::solution_status)
+      .def_readonly("solution_objective", &Result::solution_objective)
+      .def_readonly("solution_primal_feasibility", &Result::solution_primal_feasibility)
+      .def_readonly("solution_dual_feasibility", &Result::solution_dual_feasibility)
+      .def_readonly("solution_complementarity", &Result::solution_complementarity)
+      .def_readonly("primal_solution", &Result::primal_solution)
+      .def_readonly("constraint_dual_solution", &Result::constraint_dual_solution)
+      .def_readonly("lower_bound_dual_solution", &Result::lower_bound_dual_solution)
+      .def_readonly("upper_bound_dual_solution", &Result::upper_bound_dual_solution)
       .def_readonly("number_iterations", &Result::number_iterations)
       .def_readonly("cpu_time", &Result::cpu_time)
-      .def_readonly("objective_evaluations", &Result::number_objective_evaluations)
-      .def_readonly("constraint_evaluations", &Result::number_constraint_evaluations)
-      .def_readonly("objective_gradient_evaluations", &Result::number_objective_gradient_evaluations)
-      .def_readonly("jacobian_evaluations", &Result::number_jacobian_evaluations)
-      .def_readonly("hessian_evaluations", &Result::number_hessian_evaluations)
+      .def_readonly("number_objective_evaluations", &Result::number_objective_evaluations)
+      .def_readonly("number_constraint_evaluations", &Result::number_constraint_evaluations)
+      .def_readonly("number_objective_gradient_evaluations", &Result::number_objective_gradient_evaluations)
+      .def_readonly("number_jacobian_evaluations", &Result::number_jacobian_evaluations)
+      .def_readonly("number_hessian_evaluations", &Result::number_hessian_evaluations)
       .def_readonly("number_subproblems_solved", &Result::number_subproblems_solved);
    }
 } // namespace
