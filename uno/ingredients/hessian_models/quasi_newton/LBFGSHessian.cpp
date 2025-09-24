@@ -5,11 +5,11 @@
 #include "model/Model.hpp"
 #include "options/Options.hpp"
 #include "linear_algebra/LAPACK.hpp"
-#include "linear_algebra/SymmetricMatrix.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Expression.hpp"
 #include "symbolic/Range.hpp"
+#include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
@@ -19,11 +19,11 @@ namespace uno {
          memory_size(options.get_unsigned_int("quasi_newton_memory_size")) {
    }
 
-   bool LBFGSHessian::has_implicit_representation() const {
+   bool LBFGSHessian::has_hessian_operator(const Model& /*model*/) const {
       return true;
    }
 
-   bool LBFGSHessian::has_explicit_representation() const {
+   bool LBFGSHessian::has_hessian_matrix(const Model& /*model*/) const {
       return false;
    }
 
@@ -33,6 +33,10 @@ namespace uno {
 
    size_t LBFGSHessian::number_nonzeros(const Model& /*model*/) const {
       throw std::runtime_error("LBFGSHessian::number_nonzeros should not be called");
+   }
+
+   void LBFGSHessian::compute_sparsity(const Model& /*model*/, int* /*row_indices*/, int* /*column_indices*/, int /*solver_indexing*/) const {
+      throw std::runtime_error("LBFGSHessian::compute_sparsity should not be called");
    }
 
    bool LBFGSHessian::is_positive_definite() const {
@@ -63,14 +67,14 @@ namespace uno {
    }
    
    void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& /*model*/, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, SymmetricMatrix<size_t, double>& /*hessian*/) {
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
       throw std::runtime_error("LBFGSHessian::evaluate_hessian should not be called");
    }
 
    // Hessian-vector product where the Hessian approximation is Bk = B0 - U U^T + V V^T and B0 = delta I
    // Bk v = (B0 - U U^T + V V^T) v = delta v - U U^T x + V V^T x
-   void LBFGSHessian::compute_hessian_vector_product(const Model& model, const double* vector, double objective_multiplier,
-         const Vector<double>& /*constraint_multipliers*/, double* result) {
+   void LBFGSHessian::compute_hessian_vector_product(const Model& model, const double* /*x*/, const double* vector,
+         double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, double* result) {
       assert(objective_multiplier == this->objective_multiplier &&
          "The L-BFGS Hessian model was initialized with a different objective multiplier");
 
@@ -142,15 +146,17 @@ namespace uno {
    void LBFGSHessian::update_Y_matrix(const Model& model, Iterate& current_iterate, Iterate& trial_iterate) {
       // evaluate Lagrangian gradients at the current and trial iterates, both with the trial multipliers
       current_iterate.evaluate_objective_gradient(model);
-      current_iterate.evaluate_constraint_jacobian(model);
+      std::vector<double> current_jacobian_values(model.number_jacobian_nonzeros());
+      model.evaluate_constraint_jacobian(current_iterate.primals, current_jacobian_values.data());
       trial_iterate.evaluate_objective_gradient(model);
-      trial_iterate.evaluate_constraint_jacobian(model);
+      std::vector<double> trial_jacobian_values(model.number_jacobian_nonzeros());
+      model.evaluate_constraint_jacobian(trial_iterate.primals, trial_jacobian_values.data());
       // TODO preallocate
       LagrangianGradient<double> current_split_lagrangian_gradient(this->dimension);
       LagrangianGradient<double> trial_split_lagrangian_gradient(this->dimension);
       const OptimizationProblem problem{model};
-      problem.evaluate_lagrangian_gradient(current_split_lagrangian_gradient, current_iterate, trial_iterate.multipliers);
-      problem.evaluate_lagrangian_gradient(trial_split_lagrangian_gradient, trial_iterate, trial_iterate.multipliers);
+      //problem.evaluate_lagrangian_gradient(current_split_lagrangian_gradient, current_iterate, trial_iterate.multipliers);
+      //problem.evaluate_lagrangian_gradient(trial_split_lagrangian_gradient, trial_iterate, trial_iterate.multipliers);
       const auto current_lagrangian_gradient = this->objective_multiplier * current_split_lagrangian_gradient.objective_contribution
          + current_split_lagrangian_gradient.constraints_contribution;
       const auto trial_lagrangian_gradient = this->objective_multiplier * trial_split_lagrangian_gradient.objective_contribution
