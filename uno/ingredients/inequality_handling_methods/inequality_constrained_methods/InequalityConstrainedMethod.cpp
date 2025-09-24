@@ -106,15 +106,6 @@ namespace uno {
       return evaluation_space.compute_hessian_quadratic_product(vector);
    }
 
-   // compute dual *displacements*
-   // because of the way we form LPs/QPs, we get the new *multipliers* back from the solver. To get the dual displacements/direction,
-   // we need to subtract the current multipliers
-   void InequalityConstrainedMethod::compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers) {
-      view(direction_multipliers.constraints, 0, current_multipliers.constraints.size()) -= current_multipliers.constraints;
-      view(direction_multipliers.lower_bounds, 0, current_multipliers.lower_bounds.size()) -= current_multipliers.lower_bounds;
-      view(direction_multipliers.upper_bounds, 0, current_multipliers.upper_bounds.size()) -= current_multipliers.upper_bounds;
-   }
-
    // auxiliary measure is 0 in inequality-constrained methods
    void InequalityConstrainedMethod::set_auxiliary_measure(const OptimizationProblem& /*problem*/, Iterate& iterate) {
       iterate.progress.auxiliary = 0.;

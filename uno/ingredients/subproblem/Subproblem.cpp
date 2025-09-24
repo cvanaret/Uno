@@ -13,8 +13,8 @@ namespace uno {
    Subproblem::Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
       RegularizationStrategy<double>& regularization_strategy, double trust_region_radius):
          number_variables(problem.number_variables), number_constraints(problem.number_constraints),
-         problem(problem), current_iterate(current_iterate), hessian_model(hessian_model),
-         regularization_strategy(regularization_strategy), trust_region_radius(trust_region_radius) {
+         problem(problem), current_iterate(current_iterate), trust_region_radius(trust_region_radius),
+         hessian_model(hessian_model), regularization_strategy(regularization_strategy) {
    }
 
    void Subproblem::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,

@@ -81,11 +81,11 @@ namespace uno {
 
       const OptimizationProblem& problem;
       Iterate& current_iterate;
+      const double trust_region_radius;
 
    protected:
       HessianModel& hessian_model;
       RegularizationStrategy<double>& regularization_strategy;
-      const double trust_region_radius;
       const ForwardRange empty_set{0};
    };
 

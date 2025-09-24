@@ -116,11 +116,11 @@ namespace uno {
       assert(0 < this->radius && "The trust-region radius should be positive");
       // reset multipliers for bound constraints active at trust region (except if one of the original bounds is active)
       for (size_t variable_index: Range(model.number_variables)) {
-         if (std::abs(direction.primals[variable_index] + this->radius) <= this->activity_tolerance &&
+         if (std::abs(direction.primals[variable_index] + this->radius) <= this->activity_tolerance && // d_i = -radius
                this->activity_tolerance < std::abs(trial_iterate.primals[variable_index] - model.variable_lower_bound(variable_index))) {
             trial_iterate.multipliers.lower_bounds[variable_index] = 0.;
          }
-         if (std::abs(direction.primals[variable_index] - this->radius) <= this->activity_tolerance &&
+         if (std::abs(direction.primals[variable_index] - this->radius) <= this->activity_tolerance && // d_i = radius
                this->activity_tolerance < std::abs(model.variable_upper_bound(variable_index) - trial_iterate.primals[variable_index])) {
             trial_iterate.multipliers.upper_bounds[variable_index] = 0.;
          }
