@@ -333,7 +333,7 @@ public:
       }
    }
 
-   void postprocess_solution(Iterate& iterate, SolutionStatus /*solution_status*/) const override {
+   void postprocess_solution(Iterate& iterate) const override {
       // flip the signs of the multipliers, depending on what the sign convention of the Lagrangian is, and whether
       // we maximize
       iterate.multipliers.constraints *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
