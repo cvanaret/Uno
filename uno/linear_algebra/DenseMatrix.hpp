@@ -5,7 +5,7 @@
 #define UNO_DENSEMATRIX_H
 
 #include <cassert>
-#include <iostream>
+#include <ostream>
 #include <vector>
 #include "symbolic/Range.hpp"
 
