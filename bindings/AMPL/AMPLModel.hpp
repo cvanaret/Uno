@@ -16,6 +16,9 @@ extern "C" {
 }
 
 namespace uno {
+   // forward declaration
+   class Result;
+
    class AMPLModel: public Model {
    public:
       AMPLModel(const std::string& file_name);
@@ -59,9 +62,9 @@ namespace uno {
 
       void initial_primal_point(Vector<double>& x) const override;
       void initial_dual_point(Vector<double>& multipliers) const override;
-      void postprocess_solution(Iterate& iterate, IterateStatus iterate_status) const override;
+      void postprocess_solution(Iterate& iterate, SolutionStatus iterate_status) const override;
 
-      void write_solution_to_file(Iterate& iterate, IterateStatus iterate_status) const;
+      void write_solution_to_file(Result& result) const;
 
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] size_t number_hessian_nonzeros() const override;

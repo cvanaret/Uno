@@ -29,7 +29,7 @@ namespace uno {
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
-      [[nodiscard]] IterateStatus check_termination(const Model& model, Iterate& iterate) override;
+      [[nodiscard]] SolutionStatus check_termination(const Model& model, Iterate& iterate) override;
 
       [[nodiscard]] std::string get_name() const override;
       [[nodiscard]] size_t get_hessian_evaluation_count() const override;

@@ -168,7 +168,7 @@ namespace uno {
          statistics.print_header();
          statistics.print_current_line();
       }
-      current_iterate.status = IterateStatus::NOT_OPTIMAL;
+      current_iterate.status = SolutionStatus::NOT_OPTIMAL;
    }
 
    Statistics Uno::create_statistics(const Model& model, const Options& options) {
@@ -185,9 +185,9 @@ namespace uno {
       return statistics;
    }
 
-   bool Uno::termination_criteria(IterateStatus current_status, size_t iteration, size_t max_iterations, double current_time,
+   bool Uno::termination_criteria(SolutionStatus current_status, size_t iteration, size_t max_iterations, double current_time,
          double time_limit, OptimizationStatus& optimization_status) {
-      if (current_status != IterateStatus::NOT_OPTIMAL) {
+      if (current_status != SolutionStatus::NOT_OPTIMAL) {
          return true;
       }
       else if (max_iterations <= iteration) {
@@ -201,20 +201,23 @@ namespace uno {
       return false;
    }
 
-   void Uno::postprocess_iterate(const Model& model, Iterate& iterate, IterateStatus termination_status) {
+   void Uno::postprocess_iterate(const Model& model, Iterate& iterate, SolutionStatus termination_status) {
       // in case the objective was not yet evaluated, evaluate it
       iterate.evaluate_objective(model);
       model.postprocess_solution(iterate, termination_status);
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 
-   Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate, size_t major_iterations,
+   Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate& solution, size_t major_iterations,
          const Timer& timer) const {
       const size_t number_subproblems_solved = this->constraint_relaxation_strategy->get_number_subproblems_solved();
       const size_t number_hessian_evaluations = this->constraint_relaxation_strategy->get_hessian_evaluation_count();
-      return {optimization_status, std::move(current_iterate), model.number_variables, model.number_constraints, major_iterations,
-            timer.get_duration(), Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
-            Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
+      return {model.number_variables, model.number_constraints, optimization_status, solution.status,
+         solution.evaluations.objective, solution.progress.infeasibility, solution.residuals.stationarity,
+         solution.residuals.complementarity, solution.primals, solution.multipliers.constraints,
+         solution.multipliers.lower_bounds, solution.multipliers.upper_bounds, major_iterations, timer.get_duration(),
+         Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
+         Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
    }
 
    std::string Uno::get_strategy_combination() const {

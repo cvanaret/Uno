@@ -33,7 +33,7 @@ namespace uno {
             // ...
          }
          if (options.get_bool("AMPL_write_solution_to_file")) {
-            model.write_solution_to_file(result.solution, result.solution.status);
+            model.write_solution_to_file(result);
          }
          // std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
       }

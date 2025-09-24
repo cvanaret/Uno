@@ -239,7 +239,7 @@ namespace uno {
       }
    }
 
-   IterateStatus l1RelaxedProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
+   SolutionStatus l1RelaxedProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const {
       // evaluate termination conditions based on optimality conditions
       const bool feasibility_stationarity = (current_iterate.residuals.stationarity <= dual_tolerance);
@@ -256,9 +256,9 @@ namespace uno {
       if (this->model.is_constrained() && feasibility_stationarity && !primal_feasibility && feasibility_complementarity &&
             no_trivial_duals) {
          // no primal feasibility, stationary point of constraint violation
-         return IterateStatus::INFEASIBLE_STATIONARY_POINT;
+         return SolutionStatus::INFEASIBLE_STATIONARY_POINT;
       }
-      return IterateStatus::NOT_OPTIMAL;
+      return SolutionStatus::NOT_OPTIMAL;
    }
 
    double l1RelaxedProblem::variable_lower_bound(size_t variable_index) const {

@@ -29,7 +29,7 @@ namespace uno {
       trial_iterate.is_objective_gradient_computed = false;
       trial_iterate.are_constraints_computed = false;
       trial_iterate.is_constraint_jacobian_computed = false;
-      trial_iterate.status = IterateStatus::NOT_OPTIMAL;
+      trial_iterate.status = SolutionStatus::NOT_OPTIMAL;
    }
 
    void GlobalizationMechanism::set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) {
