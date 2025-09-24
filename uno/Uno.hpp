@@ -40,10 +40,10 @@ namespace uno {
       void pick_ingredients(const Model& model, const Options& options);
       void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options);
       [[nodiscard]] static Statistics create_statistics(const Model& model, const Options& options);
-      [[nodiscard]] static bool termination_criteria(SolutionStatus current_status, size_t iteration, size_t max_iterations,
+      [[nodiscard]] static bool termination_criteria(SolutionStatus solution_status, size_t iteration, size_t max_iterations,
          double current_time, double time_limit, OptimizationStatus& optimization_status);
       [[nodiscard]] Result uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks);
-      static void postprocess_iterate(const Model& model, Iterate& iterate, SolutionStatus termination_status);
+      static void postprocess_iterate(const Model& model, Iterate& iterate);
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate& solution,
          size_t major_iterations, const Timer& timer) const;
       [[nodiscard]] std::string get_strategy_combination() const;

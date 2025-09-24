@@ -116,7 +116,7 @@ namespace uno {
          }
          if (Logger::level == INFO) statistics.print_footer();
 
-         Uno::postprocess_iterate(model, current_iterate, current_iterate.status);
+         Uno::postprocess_iterate(model, current_iterate);
       }
       catch (const std::exception& e) {
          DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
@@ -185,9 +185,9 @@ namespace uno {
       return statistics;
    }
 
-   bool Uno::termination_criteria(SolutionStatus current_status, size_t iteration, size_t max_iterations, double current_time,
+   bool Uno::termination_criteria(SolutionStatus solution_status, size_t iteration, size_t max_iterations, double current_time,
          double time_limit, OptimizationStatus& optimization_status) {
-      if (current_status != SolutionStatus::NOT_OPTIMAL) {
+      if (solution_status != SolutionStatus::NOT_OPTIMAL) {
          return true;
       }
       else if (max_iterations <= iteration) {
@@ -201,10 +201,10 @@ namespace uno {
       return false;
    }
 
-   void Uno::postprocess_iterate(const Model& model, Iterate& iterate, SolutionStatus termination_status) {
+   void Uno::postprocess_iterate(const Model& model, Iterate& iterate) {
       // in case the objective was not yet evaluated, evaluate it
       iterate.evaluate_objective(model);
-      model.postprocess_solution(iterate, termination_status);
+      model.postprocess_solution(iterate);
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 
