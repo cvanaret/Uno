@@ -12,13 +12,13 @@ namespace uno {
       // attributes
       //.def_readonly("primal_solution", &Result::solution.primals)
       .def_readonly("optimization_status", &Result::optimization_status)
-      .def_readonly("number_iterations", &Result::iteration)
+      .def_readonly("number_iterations", &Result::number_iterations)
       .def_readonly("cpu_time", &Result::cpu_time)
-      .def_readonly("objective_evaluations", &Result::objective_evaluations)
-      .def_readonly("constraint_evaluations", &Result::constraint_evaluations)
-      .def_readonly("objective_gradient_evaluations", &Result::objective_gradient_evaluations)
-      .def_readonly("jacobian_evaluations", &Result::jacobian_evaluations)
-      .def_readonly("hessian_evaluations", &Result::hessian_evaluations)
+      .def_readonly("objective_evaluations", &Result::number_objective_evaluations)
+      .def_readonly("constraint_evaluations", &Result::number_constraint_evaluations)
+      .def_readonly("objective_gradient_evaluations", &Result::number_objective_gradient_evaluations)
+      .def_readonly("jacobian_evaluations", &Result::number_jacobian_evaluations)
+      .def_readonly("hessian_evaluations", &Result::number_hessian_evaluations)
       .def_readonly("number_subproblems_solved", &Result::number_subproblems_solved);
    }
 } // namespace
