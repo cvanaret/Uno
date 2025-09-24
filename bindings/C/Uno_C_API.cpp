@@ -333,7 +333,7 @@ public:
       }
    }
 
-   void postprocess_solution(Iterate& iterate, IterateStatus /*termination_status*/) const override {
+   void postprocess_solution(Iterate& iterate, SolutionStatus /*solution_status*/) const override {
       // flip the signs of the multipliers, depending on what the sign convention of the Lagrangian is, and whether
       // we maximize
       iterate.multipliers.constraints *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
@@ -596,47 +596,47 @@ int32_t uno_get_optimization_status(void* solver) {
 
 int32_t uno_get_solution_status(void* solver) {
    Result* result = uno_get_result(solver);
-   return static_cast<int32_t>(result->solution.status);
+   return static_cast<int32_t>(result->solution_status);
 }
 
 double uno_get_solution_objective(void* solver) {
    Result* result = uno_get_result(solver);
-   return result->solution.evaluations.objective;
+   return result->solution_objective;
 }
 
 void uno_get_primal_solution(void* solver, double* primal_solution) {
    Result* result = uno_get_result(solver);
-   std::copy_n(result->solution.primals.data(), result->number_variables, primal_solution);
+   std::copy_n(result->primal_solution.data(), result->number_variables, primal_solution);
 }
 
 void uno_get_constraint_dual_solution(void* solver, double* constraint_dual_solution) {
    Result* result = uno_get_result(solver);
-   std::copy_n(result->solution.multipliers.constraints.data(), result->number_constraints, constraint_dual_solution);
+   std::copy_n(result->constraint_dual_solution.data(), result->number_constraints, constraint_dual_solution);
 }
 
 void uno_get_lower_bound_dual_solution(void* solver, double* lower_bound_dual_solution) {
    Result* result = uno_get_result(solver);
-   std::copy_n(result->solution.multipliers.lower_bounds.data(), result->number_variables, lower_bound_dual_solution);
+   std::copy_n(result->lower_bound_dual_solution.data(), result->number_variables, lower_bound_dual_solution);
 }
 
 void uno_get_upper_bound_dual_solution(void* solver, double* upper_bound_dual_solution) {
    Result* result = uno_get_result(solver);
-   std::copy_n(result->solution.multipliers.upper_bounds.data(), result->number_variables, upper_bound_dual_solution);
+   std::copy_n(result->upper_bound_dual_solution.data(), result->number_variables, upper_bound_dual_solution);
 }
 
 double uno_get_solution_primal_feasibility(void* solver) {
    Result* result = uno_get_result(solver);
-   return result->solution.primal_feasibility;
+   return result->solution_primal_feasibility;
 }
 
 double uno_get_solution_dual_feasibility(void* solver) {
    Result* result = uno_get_result(solver);
-   return result->solution.residuals.stationarity;
+   return result->solution_dual_feasibility;
 }
 
 double uno_get_solution_complementarity(void* solver) {
    Result* result = uno_get_result(solver);
-   return result->solution.residuals.complementarity;
+   return result->solution_complementarity;
 }
 
 void uno_destroy_model(void* model) {
