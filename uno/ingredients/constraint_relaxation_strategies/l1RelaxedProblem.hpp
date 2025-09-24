@@ -50,7 +50,7 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
 
-      [[nodiscard]] IterateStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
+      [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const;
 
       void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>& elastic_setting_function) const;

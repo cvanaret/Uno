@@ -9,7 +9,7 @@
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "optimization/Iterate.hpp"
-#include "optimization/IterateStatus.hpp"
+#include "optimization/SolutionStatus.hpp"
 
 namespace uno {
    // forward declarations
@@ -46,7 +46,7 @@ namespace uno {
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
-      [[nodiscard]] virtual IterateStatus check_termination(const Model& model, Iterate& iterate) = 0;
+      [[nodiscard]] virtual SolutionStatus check_termination(const Model& model, Iterate& iterate) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
@@ -86,39 +86,39 @@ namespace uno {
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;
 
       template <typename Problem>
-      [[nodiscard]] IterateStatus check_termination(const Problem& problem, Iterate& iterate);
+      [[nodiscard]] SolutionStatus check_termination(const Problem& problem, Iterate& iterate);
    };
 
    template <typename Problem>
-   IterateStatus ConstraintRelaxationStrategy::check_termination(const Problem& problem, Iterate& iterate) {
+   SolutionStatus ConstraintRelaxationStrategy::check_termination(const Problem& problem, Iterate& iterate) {
       if (iterate.is_objective_computed && iterate.evaluations.objective < this->unbounded_objective_threshold) {
-         return IterateStatus::UNBOUNDED;
+         return SolutionStatus::UNBOUNDED;
       }
 
       // test convergence wrt the tight tolerance
-      const IterateStatus status_tight_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
+      const SolutionStatus status_tight_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
          this->dual_tolerance);
-      if (status_tight_tolerance != IterateStatus::NOT_OPTIMAL || this->loose_dual_tolerance <= this->primal_tolerance) {
+      if (status_tight_tolerance != SolutionStatus::NOT_OPTIMAL || this->loose_dual_tolerance <= this->primal_tolerance) {
          return status_tight_tolerance;
       }
 
       // if not converged, check convergence wrt loose tolerance (provided it is strictly looser than the tight tolerance)
-      const IterateStatus status_loose_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
+      const SolutionStatus status_loose_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
          this->loose_dual_tolerance);
       // if converged, keep track of the number of consecutive iterations
-      if (status_loose_tolerance != IterateStatus::NOT_OPTIMAL) {
+      if (status_loose_tolerance != SolutionStatus::NOT_OPTIMAL) {
          ++this->loose_tolerance_consecutive_iterations;
       }
       else {
          this->loose_tolerance_consecutive_iterations = 0;
-         return IterateStatus::NOT_OPTIMAL;
+         return SolutionStatus::NOT_OPTIMAL;
       }
       // check if loose tolerance achieved for enough consecutive iterations
       if (this->loose_tolerance_consecutive_iteration_threshold <= this->loose_tolerance_consecutive_iterations) {
          return status_loose_tolerance;
       }
       else {
-         return IterateStatus::NOT_OPTIMAL;
+         return SolutionStatus::NOT_OPTIMAL;
       }
    }
 } // namespace

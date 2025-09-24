@@ -149,11 +149,11 @@ namespace uno {
    bool TrustRegionStrategy::check_termination_with_small_step(Iterate& trial_iterate) const {
       // terminate with a feasible point
       if (trial_iterate.progress.infeasibility <= this->primal_tolerance) {
-         trial_iterate.status = IterateStatus::FEASIBLE_SMALL_STEP;
+         trial_iterate.status = SolutionStatus::FEASIBLE_SMALL_STEP;
          return true;
       }
       else if (trial_iterate.objective_multiplier == 0.) { // terminate with an infeasible point
-         trial_iterate.status = IterateStatus::INFEASIBLE_SMALL_STEP;
+         trial_iterate.status = SolutionStatus::INFEASIBLE_SMALL_STEP;
          return true;
       }
       else { // do not terminate, infeasible non stationary

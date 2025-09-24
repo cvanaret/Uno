@@ -83,7 +83,7 @@ namespace uno {
 
       void initial_primal_point(Vector<double>& x) const override { this->model.initial_primal_point(x); }
       void initial_dual_point(Vector<double>& multipliers) const override { this->model.initial_dual_point(multipliers); }
-      void postprocess_solution(Iterate& iterate, IterateStatus termination_status) const override {
+      void postprocess_solution(Iterate& iterate, SolutionStatus termination_status) const override {
          this->model.postprocess_solution(iterate, termination_status);
       }
 

@@ -1,13 +1,13 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_ITERATESTATUS_H
-#define UNO_ITERATESTATUS_H
+#ifndef UNO_SOLUTIONSTATUS_H
+#define UNO_SOLUTIONSTATUS_H
 
 #include <string>
 
 namespace uno {
-   enum class IterateStatus {
+   enum class SolutionStatus {
       NOT_OPTIMAL = 0,
       FEASIBLE_KKT_POINT, /* feasible stationary point */
       FEASIBLE_FJ_POINT, /* stationary point without constraint qualification */
@@ -17,7 +17,7 @@ namespace uno {
       UNBOUNDED
    };
 
-   std::string iterate_status_to_message(IterateStatus status);
+   std::string solution_status_to_message(SolutionStatus status);
 } // namespace
 
-#endif // UNO_ITERATESTATUS_H
+#endif // UNO_SOLUTIONSTATUS_H

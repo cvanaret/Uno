@@ -81,7 +81,7 @@ namespace uno {
       return accept_iterate;
    }
 
-   IterateStatus UnconstrainedStrategy::check_termination(const Model& model, Iterate& iterate) {
+   SolutionStatus UnconstrainedStrategy::check_termination(const Model& model, Iterate& iterate) {
       iterate.evaluate_objective_gradient(model);
       iterate.evaluate_constraints(model);
 

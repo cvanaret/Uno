@@ -10,7 +10,7 @@
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Result.hpp"
-#include "optimization/IterateStatus.hpp"
+#include "optimization/SolutionStatus.hpp"
 
 namespace uno {
    // forward declarations
@@ -40,11 +40,11 @@ namespace uno {
       void pick_ingredients(const Model& model, const Options& options);
       void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options);
       [[nodiscard]] static Statistics create_statistics(const Model& model, const Options& options);
-      [[nodiscard]] static bool termination_criteria(IterateStatus current_status, size_t iteration, size_t max_iterations,
+      [[nodiscard]] static bool termination_criteria(SolutionStatus current_status, size_t iteration, size_t max_iterations,
          double current_time, double time_limit, OptimizationStatus& optimization_status);
       [[nodiscard]] Result uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks);
-      static void postprocess_iterate(const Model& model, Iterate& iterate, IterateStatus termination_status);
-      [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate& current_iterate,
+      static void postprocess_iterate(const Model& model, Iterate& iterate, SolutionStatus termination_status);
+      [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate& solution,
          size_t major_iterations, const Timer& timer) const;
       [[nodiscard]] std::string get_strategy_combination() const;
       void print_optimization_summary(const Result& result, bool print_solution) const;

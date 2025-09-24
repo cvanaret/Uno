@@ -117,7 +117,7 @@ namespace uno {
          ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Model& model, Iterate& trial_iterate) {
       bool termination = false;
       trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
-      if (trial_iterate.status != IterateStatus::NOT_OPTIMAL) {
+      if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
          statistics.set("status", "accepted (small step length)");
          GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
          termination = true;
