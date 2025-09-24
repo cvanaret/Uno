@@ -19,10 +19,10 @@ namespace uno {
       const double solution_primal_feasibility;
       const double solution_dual_feasibility;
       const double solution_complementarity;
-      Vector<double>& primal_solution;
-      Vector<double>& constraint_dual_solution;
-      Vector<double>& lower_bound_dual_solution;
-      Vector<double>& upper_bound_dual_solution;
+      Vector<double> primal_solution;
+      Vector<double> constraint_dual_solution;
+      Vector<double> lower_bound_dual_solution;
+      Vector<double> upper_bound_dual_solution;
       const size_t number_iterations;
       const double cpu_time;
       const size_t number_objective_evaluations;
