@@ -3,7 +3,6 @@ module UnoMathOptInterfaceExt
 import Uno
 import MathOptInterface as MOI
 
-const MOI = MathOptInterface
 const MOIU = MathOptInterface.Utilities
 
 function __init__()
