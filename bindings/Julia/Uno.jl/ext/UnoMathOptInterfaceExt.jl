@@ -1,9 +1,9 @@
 module UnoMathOptInterfaceExt
 
-import Uno
-import MathOptInterface as MOI
+import Uno, MathOptInterface
 
-const MOIU = MOI.Utilities
+const MOI = MathOptInterface
+const MOIU = MathOptInterface.Utilities
 
 function __init__()
     setglobal!(Uno, :Optimizer, Optimizer)
