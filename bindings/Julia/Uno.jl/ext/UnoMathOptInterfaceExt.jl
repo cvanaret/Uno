@@ -3,7 +3,7 @@ module UnoMathOptInterfaceExt
 import Uno
 import MathOptInterface as MOI
 
-const MOIU = MathOptInterface.Utilities
+const MOIU = MOI.Utilities
 
 function __init__()
     setglobal!(Uno, :Optimizer, Optimizer)
