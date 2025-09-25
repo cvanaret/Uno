@@ -127,40 +127,46 @@ function c_lagrangian_hessian_operator(
 end
 
 # Sparsity pattern of the Jacobian
-nnzj = 8
-jrows = Vector{Cint}(undef, nnzj)
-jcols = Vector{Cint}(undef, nnzj)
-# Constraint (row) 1
-jrows[1] = 1
-jcols[1] = 1
-jrows[2] = 1
-jcols[2] = 2
-jrows[3] = 1
-jcols[3] = 3
-jrows[4] = 1
-jcols[4] = 4
-# Constraint (row) 2
-jrows[5] = 2
-jcols[5] = 1
-jrows[6] = 2
-jcols[6] = 2
-jrows[7] = 2
-jcols[7] = 3
-jrows[8] = 2
-jcols[8] = 4
+function sparsity_pattern_jacobian_hs71()
+  nnzj = 8
+  jrows = Vector{Cint}(undef, nnzj)
+  jcols = Vector{Cint}(undef, nnzj)
+  # Constraint (row) 1
+  jrows[1] = 1
+  jcols[1] = 1
+  jrows[2] = 1
+  jcols[2] = 2
+  jrows[3] = 1
+  jcols[3] = 3
+  jrows[4] = 1
+  jcols[4] = 4
+  # Constraint (row) 2
+  jrows[5] = 2
+  jcols[5] = 1
+  jrows[6] = 2
+  jcols[6] = 2
+  jrows[7] = 2
+  jcols[7] = 3
+  jrows[8] = 2
+  jcols[8] = 4
+  return jrows, jcols, nnzj
+end
 
 # Sparsity pattern of the Hessian of the Lagrangian
-nnzh = 10
-hrows = Vector{Cint}(undef, nnzh)
-hcols = Vector{Cint}(undef, nnzh)
-# Symmetric matrix, fill the lower left triangle only
-idx = 1
-for row in 1:4
-  for col in 1:row
-    hrows[idx] = row
-    hcols[idx] = col
-    idx += 1
+function sparsity_pattern_lagrangian_hessian_hs71()
+  nnzh = 10
+  hrows = Vector{Cint}(undef, nnzh)
+  hcols = Vector{Cint}(undef, nnzh)
+  # Symmetric matrix, fill the lower left triangle only
+  idx = 1
+  for row in 1:4
+    for col in 1:row
+      hrows[idx] = row
+      hcols[idx] = col
+      idx += 1
+    end
   end
+  return hrows, hcols, nnzh
 end
 
 nvar = 4
@@ -173,6 +179,9 @@ ucon = [2.0e19, 40.0]
 
 x0 = [1.0, 5.0, 5.0, 1.0]
 y0 = zeros(Float64, ncon)
+
+jrows, jcols, nnzj = sparsity_pattern_jacobian_hs71()
+hrows, hcols, nnzh = sparsity_pattern_lagrangian_hessian_hs71()
 
 uno_model = Uno.uno(
   'N',
