@@ -75,8 +75,9 @@ namespace uno {
    // Bk v = (B0 - U U^T + V V^T) v = delta v - U U^T x + V V^T x
    void LBFGSHessian::compute_hessian_vector_product(const Model& model, const double* /*x*/, const double* vector,
          double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, double* result) {
-      assert(objective_multiplier == this->objective_multiplier &&
-         "The L-BFGS Hessian model was initialized with a different objective multiplier");
+      if (objective_multiplier != this->objective_multiplier) {
+         throw std::runtime_error("The L-BFGS Hessian model was initialized with a different objective multiplier");
+      }
 
       if (this->hessian_recomputation_required) {
          this->recompute_hessian_representation();
