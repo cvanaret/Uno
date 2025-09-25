@@ -11,6 +11,6 @@ function __init__()
 end
 
 include("MOI_utils.jl")
-include("MOI_wrapper.jl")
+#include("MOI_wrapper.jl")
 
 end  # module UnoMathOptInterfaceExt
