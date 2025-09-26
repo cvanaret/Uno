@@ -13,13 +13,10 @@ namespace uno {
          user_model(user_model),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints) {
-      // detect fix variables
-      this->fixed_variables.reserve(this->number_variables);
-      this->detect_fixed_variables(this->fixed_variables);
+      // find fixed variables
+      this->find_fixed_variables(this->fixed_variables);
 
       // partition equality/inequality constraints
-      this->equality_constraints.reserve(this->number_constraints);
-      this->inequality_constraints.reserve(this->number_constraints);
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
 
