@@ -54,6 +54,8 @@ To solve an AMPL model in the [.nl format](https://en.wikipedia.org/wiki/Nl_(for
 - compile the executable ```make uno_ampl```.
 - run the command ```./uno_ampl model.nl [-AMPL] [option=value ...]``` where ```[option=value ...]``` is a list of options separated by spaces. If the `-AMPL` flag is supplied, the solution is written to the AMPL solution file `model.sol`.
 
+For an overview of the available strategies, type: ```./uno_ampl --strategies```:
+
 A couple of CUTEst instances are available in the `/examples` directory.
 
 ### Julia
@@ -73,7 +75,7 @@ Options can be set in three different ways (with decreasing precedence):
 
 ### Combining strategies on the fly
 
-For an overview of the available strategies, type: ```./uno_ampl --strategies```:
+The following ingredients are currently available:
 - to pick a constraint relaxation strategy, use the argument: ```constraint_relaxation_strategy=[feasibility_restoration]```  
 - to pick an inequality handling method, use the argument: ```inequality_handling_method=[inequality_constrained|primal_dual_interior_point]``` 
 - to pick a Hessian model, use the argument: ```hessian_model=[exact|identity|zero]``` 
