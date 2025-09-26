@@ -63,6 +63,7 @@ Uno can be installed in Julia via [Uno_jll.jl](https://github.com/JuliaBinaryWra
 
 ### C
 The C interface is compiled as part of the Uno library. For more details, see its [README.md](bindings/C/README.md).
+It may be modified in future minor releases.
 
 ## Solving a problem with Uno
 
