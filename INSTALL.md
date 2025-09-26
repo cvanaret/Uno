@@ -63,31 +63,27 @@ ccmake ..
 ```console
 make -jn
 ```
-5. Compile the ASL executable:
-```console
-make uno_ampl -jn
-```
 
-To compile the code with different configurations, simply create a `build` directory for each configuration and perform instructions 1 to 5.
+To compile the code with different configurations, simply create a `build` directory for each configuration and perform instructions 1 to 4.
 
 ### Install
 
-6. Install the built libraries and executable (`uno_static`, `uno_shared`, and `uno_ampl`):
+5. Install the built libraries and header (`uno_static`, `uno_shared` and `Uno_C_API.h`):
 ```console
 sudo make install
 ```
 
 ### Unit tests
 
-7. Install the GoogleTest suite:
+6. Install the GoogleTest suite:
 ```console
 sudo apt install googletest
 ```
-8. Compile the test suite:
+7. Compile the test suite:
 ```console
 make run_unotest -jn
 ```
-9. Run the test suite:
+8. Run the test suite:
 ```console
 ./run_unotest
 ```

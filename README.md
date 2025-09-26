@@ -46,6 +46,22 @@ Uno implements **presets**, that is strategy combinations that correspond to exi
 
 See the [INSTALL](INSTALL.md) file for instructions on how to compile Uno from source or use the precompiled libraries and executables.
 
+## Interfaces
+
+### AMPL/nl files
+To solve an AMPL model in the [.nl format](https://en.wikipedia.org/wiki/Nl_(format)), move to the `build` directory and:
+- run `cmake` with the path to the ASL library: `-DAMPLSOLVER=path`;
+- compile the executable ```make uno_ampl```.
+- run the command ```./uno_ampl model.nl [-AMPL] [option=value ...]``` where ```[option=value ...]``` is a list of options separated by spaces. If the `-AMPL` flag is supplied, the solution is written to the AMPL solution file `model.sol`.
+
+A couple of CUTEst instances are available in the `/examples` directory.
+
+### Julia
+Uno can be installed in Julia via [Uno_jll.jl](https://github.com/JuliaBinaryWrappers/Uno_jll.jl) and used via [AmplNLWriter.jl](https://juliahub.com/ui/Packages/General/AmplNLWriter.jl). An example can be found [here](https://discourse.julialang.org/t/the-uno-unifying-nonconvex-optimization-solver/115883/21).
+
+### C
+The C interface is compiled as part of the Uno library. For more details, see its [README.md](bindings/C/README.md).
+
 ## Solving a problem with Uno
 
 ### Controlling Uno via options
@@ -54,17 +70,6 @@ Options can be set in three different ways (with decreasing precedence):
 - passing an option file (`option_file=file`) that contains `option value` on each line;
 - setting a preset that mimics an existing solver (`preset=[filtersqp|ipopt]`);
 - setting individual options (see the [default options](https://github.com/cvanaret/Uno/blob/main/uno/options/DefaultOptions.cpp)).
-
-### Interfaces
-
-#### AMPL/nl files
-To solve an AMPL model in the [.nl format](https://en.wikipedia.org/wiki/Nl_(format)), type in the `build` directory: ```./uno_ampl model.nl [-AMPL] [option=value ...]```  
-where ```[option=value ...]``` is a list of options separated by spaces. If the `-AMPL` flag is supplied, the solution is written to the AMPL solution file `model.sol`.
-
-A couple of CUTEst instances are available in the `/examples` directory.
-
-#### Julia
-Uno can be installed in Julia via [Uno_jll.jl](https://github.com/JuliaBinaryWrappers/Uno_jll.jl) and used via [AmplNLWriter.jl](https://juliahub.com/ui/Packages/General/AmplNLWriter.jl). An example can be found [here](https://discourse.julialang.org/t/the-uno-unifying-nonconvex-optimization-solver/115883/21).
 
 ### Combining strategies on the fly
 
