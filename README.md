@@ -59,7 +59,22 @@ For an overview of the available strategies, type: ```./uno_ampl --strategies```
 A couple of CUTEst instances are available in the `/examples` directory.
 
 ### Julia
-Uno can be installed in Julia via [Uno_jll.jl](https://github.com/JuliaBinaryWrappers/Uno_jll.jl) and used via [AmplNLWriter.jl](https://juliahub.com/ui/Packages/General/AmplNLWriter.jl). An example can be found [here](https://discourse.julialang.org/t/the-uno-unifying-nonconvex-optimization-solver/115883/21).
+Uno can be used from Julia in two ways:
+
+1. **Pure Julia interface**:
+   [Uno.jl](https://github.com/cvanaret/Uno/tree/main/bindings/Julia/Uno.jl) is the native Julia interface to [Uno](https://github.com/cvanaret/Uno).
+   It provides direct integration with the Julia optimization ecosystem through:
+   - a thin wrapper around the full C API,
+   - an interface to [NLPModels.jl](https://github.com/JuliaSmoothOptimizers/NLPModels.jl) for solving problems following the NLPModels API, such as [CUTEst](https://github.com/JuliaSmoothOptimizers/CUTEst.jl), [ADNLPModels.jl](https://github.com/JuliaSmoothOptimizers/ADNLPModels.jl), or [ExaModels.jl](https://github.com/exanauts/ExaModels.jl),
+   - an interface to [MathOptInterface.jl](https://github.com/jump-dev/MathOptInterface.jl) for handling [JuMP](https://github.com/jump-dev/JuMP.jl) models (currently under development).
+
+   Under the hood, `Uno.jl` uses precompiled shared libraries from [Uno_jll.jl](https://github.com/JuliaBinaryWrappers/Uno_jll.jl) while exposing a high-level Julia API.
+   More details can be found in the [README](https://github.com/cvanaret/Uno/tree/main/bindings/Julia/Uno.jl) of `Uno.jl`.
+   This is the recommended way of using Uno in Julia.
+
+2. **AMPL interface**:
+   Alternatively, the executable `uno_ampl` can be installed via [Uno_jll.jl](https://github.com/JuliaBinaryWrappers/Uno_jll.jl) and used through [AmplNLWriter.jl](https://juliahub.com/ui/Packages/General/AmplNLWriter.jl).
+   An example can be found [here](https://discourse.julialang.org/t/the-uno-unifying-nonconvex-optimization-solver/115883/21).
 
 ### C
 The C interface is compiled as part of the Uno library. For more details, see its [README.md](bindings/C/README.md).
