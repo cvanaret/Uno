@@ -5,6 +5,7 @@
 #include <cassert>
 #include <iostream>
 #include "Uno_C_API.h"
+#include "../UserModel.hpp"
 #include "Uno.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
@@ -20,69 +21,13 @@
 
 using namespace uno;
 
-// UserModel contains the description of the model provided by the user
-class UserModel {
-public:
-   UserModel(char problem_type, int32_t number_variables, const double* variables_lower_bounds, const double* variables_upper_bounds,
-      int32_t base_indexing):
-         problem_type(problem_type),
-         base_indexing(base_indexing),
-         number_variables(number_variables),
-         variables_lower_bounds(variables_lower_bounds),
-         variables_upper_bounds(variables_upper_bounds) {
-   }
-
-   ~UserModel() = default;
-
-   const char problem_type; // 'L' for linear, 'Q' for quadratic, 'N' for nonlinear
-   const int32_t base_indexing; // 0 for C-style indexing, 1 for Fortran-style indexing
-
-   // variables
-   const int32_t number_variables;
-   const double* variables_lower_bounds{nullptr};
-   const double* variables_upper_bounds{nullptr};
-
-   // objective
-   Objective objective_function{nullptr};
-   ObjectiveGradient objective_gradient{nullptr};
-
-   // constraints
-   int32_t number_constraints{0};
-   Constraints constraint_functions{nullptr};
-   const double* constraints_lower_bounds{nullptr};
-   const double* constraints_upper_bounds{nullptr};
-   int32_t number_jacobian_nonzeros{0};
-   std::vector<int32_t> jacobian_row_indices{};
-   std::vector<int32_t> jacobian_column_indices{};
-   Jacobian constraint_jacobian{nullptr};
-   JacobianOperator jacobian_operator{nullptr};
-   JacobianTransposedOperator jacobian_transposed_operator{nullptr};
-
-   // Hessian
-   int32_t number_hessian_nonzeros{0};
-   // lower ('L') or upper ('U')
-   char hessian_triangular_part{}; // default is empty
-   std::vector<int32_t> hessian_row_indices{};
-   std::vector<int32_t> hessian_column_indices{};
-   Hessian lagrangian_hessian{nullptr};
-   HessianOperator lagrangian_hessian_operator{nullptr};
-   double lagrangian_sign_convention{UNO_MULTIPLIER_NEGATIVE};
-
-   // User data
-   void* user_data{nullptr};
-
-   // Optimization sense
-   int32_t optimization_sense{UNO_MINIMIZE};
-
-   // initial iterate
-   const double* initial_primal_iterate{nullptr};
-   const double* initial_dual_iterate{nullptr};
-};
+using CUserModel = UserModel<Objective, ObjectiveGradient, Constraints, Jacobian, JacobianOperator, JacobianTransposedOperator,
+   Hessian, HessianOperator, const double*, void*>;
 
 // UnoModel contains an instance of UserModel and complies with the Model interface
 class UnoModel: public Model {
 public:
-   explicit UnoModel(const UserModel& user_model):
+   explicit UnoModel(const CUserModel& user_model):
          Model("C model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
             static_cast<double>(user_model.optimization_sense)),
          user_model(user_model),
@@ -351,7 +296,7 @@ public:
    }
 
 protected:
-   const UserModel& user_model;
+   const CUserModel& user_model;
    const SparseVector<size_t> slacks{};
    Vector<size_t> fixed_variables{};
    const ForwardRange linear_constraints{0};
@@ -387,7 +332,7 @@ void* uno_create_model(char problem_type, int32_t number_variables, const double
       std::cout << "Please specify a valid base indexing.\n";
       return nullptr;
    }
-   return new UserModel(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing);
+   return new CUserModel(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing);
 }
 
 bool uno_set_objective(void* model, int32_t optimization_sense, Objective objective_function,
@@ -398,7 +343,7 @@ bool uno_set_objective(void* model, int32_t optimization_sense, Objective object
    }
 
    assert(model != nullptr);
-   UserModel* user_model = static_cast<UserModel*>(model);
+   CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->optimization_sense = optimization_sense;
    user_model->objective_function = objective_function;
    user_model->objective_gradient = objective_gradient;
@@ -414,7 +359,7 @@ bool uno_set_constraints(void* model, int32_t number_constraints, Constraints co
    }
 
    assert(model != nullptr);
-   UserModel* user_model = static_cast<UserModel*>(model);
+   CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->number_constraints = number_constraints;
    user_model->constraint_functions = constraint_functions;
    user_model->constraints_lower_bounds = constraints_lower_bounds;
@@ -433,14 +378,14 @@ bool uno_set_constraints(void* model, int32_t number_constraints, Constraints co
 
 bool uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator) {
    assert(model != nullptr);
-   UserModel* user_model = static_cast<UserModel*>(model);
+   CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->jacobian_operator = jacobian_operator;
    return true;
 }
 
 bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator) {
    assert(model != nullptr);
-   UserModel* user_model = static_cast<UserModel*>(model);
+   CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->jacobian_transposed_operator = jacobian_transposed_operator;
    return true;
 }
@@ -464,7 +409,7 @@ bool uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, ch
    }
 
    assert(model != nullptr);
-   UserModel* user_model = static_cast<UserModel*>(model);
+   CUserModel* user_model = static_cast<CUserModel*>(model);
    // make sure that the sign convention is consistent with that of the Hessian operator
    if (user_model->lagrangian_hessian_operator != nullptr && user_model->lagrangian_sign_convention != lagrangian_sign_convention) {
       std::cout << "Please specify a Lagrangian sign convention consistent with that of the Hessian operator.\n";
@@ -499,7 +444,7 @@ bool uno_set_lagrangian_hessian_operator(void* model, int32_t number_hessian_non
    }
 
    assert(model != nullptr);
-   UserModel* user_model = static_cast<UserModel*>(model);
+   CUserModel* user_model = static_cast<CUserModel*>(model);
    // make sure that the sign convention is consistent with that of the Hessian function
    if (user_model->lagrangian_hessian != nullptr && user_model->lagrangian_sign_convention != lagrangian_sign_convention) {
       std::cout << "Please specify a Lagrangian sign convention consistent with that of the Hessian function.\n";
@@ -513,21 +458,21 @@ bool uno_set_lagrangian_hessian_operator(void* model, int32_t number_hessian_non
 
 bool uno_set_user_data(void* model, void* user_data) {
    assert(model != nullptr);
-   UserModel* user_model = static_cast<UserModel*>(model);
+   CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->user_data = user_data;
    return true;
 }
 
 bool uno_set_initial_primal_iterate(void* model, double* initial_primal_iterate) {
    assert(model != nullptr);
-   UserModel* user_model = static_cast<UserModel*>(model);
+   CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->initial_primal_iterate = initial_primal_iterate;
    return true;
 }
 
 bool uno_set_initial_dual_iterate(void* model, double* initial_dual_iterate) {
    assert(model != nullptr);
-   UserModel* user_model = static_cast<UserModel*>(model);
+   CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->initial_dual_iterate = initial_dual_iterate;
    return true;
 }
@@ -562,7 +507,7 @@ void uno_set_solver_preset(void* solver, const char* preset_name) {
 void uno_optimize(void* solver, void* model) {
    // check the model
    assert(model != nullptr);
-   UserModel* user_model = static_cast<UserModel*>(model);
+   CUserModel* user_model = static_cast<CUserModel*>(model);
    if (!user_model->objective_function && !user_model->constraint_functions) {
       std::cout << "Please specify at least an objective or constraints.\n";
       return;
@@ -641,7 +586,7 @@ double uno_get_solution_complementarity(void* solver) {
 
 void uno_destroy_model(void* model) {
    assert(model != nullptr);
-   delete static_cast<UserModel*>(model);
+   delete static_cast<CUserModel*>(model);
 }
 
 void uno_destroy_solver(void* solver) {
