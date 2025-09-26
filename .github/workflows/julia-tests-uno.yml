@@ -1,0 +1,65 @@
+name: Julia tests for the interface Uno.jl
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+
+# needed to allow julia-actions/cache to delete old caches that it has created
+permissions:
+  actions: write
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    name: Uno.jl
+
+    steps:
+      - uses: actions/checkout@v4
+      # Install Julia 1.7 for BinaryBuilder. Note that this is an old version of
+      # Julia, but it is required for compatibility with BinaryBuilder.
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.7"
+          arch: x64
+      - uses: julia-actions/cache@v2
+      # Set environment variables required by BinaryBuilder.
+      - name: Set the environment variables
+        run: |
+          git fetch --tags
+          echo "UNO_RELEASE=$(git describe --tags $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_ENV
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "UNO_COMMIT=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+            echo "UNO_URL=${{ github.event.pull_request.head.repo.clone_url }}" >> $GITHUB_ENV
+          else
+            echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
+            echo "UNO_URL=https://github.com/${{ github.repository }}.git" >> $GITHUB_ENV
+          fi
+      - name: Compile Uno_jll.jl
+        run: |
+          julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
+          julia --color=yes .github/julia/build_tarballs_yggdrasil.jl x86_64-linux-gnu-cxx11 --verbose --deploy="local"
+      # Now install a newer version of Julia to actually test Uno_jll.jl.
+      # We choose v1.10 because it is the current Long-Term Support (LTS).
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.10"
+          arch: x64
+      - name: Test Uno.jl with NLPModels.jl / CUTEst.jl
+        shell: julia --color=yes --project=.github/julia {0}
+        run: |
+          using Pkg
+          Pkg.instantiate()
+          Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
+          Pkg.develop(path="/home/runner/work/Uno/Uno/bindings/Julia/Uno.jl")
+          Pkg.test("Uno")

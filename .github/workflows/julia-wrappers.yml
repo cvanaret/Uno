@@ -1,0 +1,40 @@
+name: Julia wrappers for Uno.jl
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  build:
+    name: Check for updates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Uno
+        uses: actions/checkout@v4
+
+      - name: Install Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: 1
+          arch: x64
+
+      - name: Regenerate the Julia wrappers
+        shell: bash
+        run: |
+          cd bindings/Julia/Uno.jl/gen
+          julia --color=no --project -e 'using Pkg; Pkg.instantiate()'
+          julia --color=no --project wrapper.jl
+          cd ../src
+          git diff --quiet libuno.jl || {
+          echo "❌ The Julia wrappers in libuno.jl are out of date. ❌";
+          echo "Please run wrapper.jl in bindings/Julia/Uno.jl/gen to regenerate them:";
+          echo "";
+          echo "cd bindings/Julia/Uno.jl/gen";
+          echo "julia --project -e 'using Pkg; Pkg.instantiate()'";
+          echo "julia --project wrapper.jl";
+          echo "";
+          echo "You can also find the instructions at:";
+          echo "https://github.com/cvanaret/Uno/blob/master/bindings/Julia/Uno.jl/README.md";
+          exit 1;
+          }

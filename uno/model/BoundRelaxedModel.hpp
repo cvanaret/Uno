@@ -64,6 +64,14 @@ namespace uno {
          this->model.evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
       }
 
+      void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const override {
+         this->model.compute_jacobian_vector_product(x, vector, result);
+      }
+
+      void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const override {
+         this->model.compute_jacobian_transposed_vector_product(x, vector, result);
+      }
+
       void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
             const Vector<double>& multipliers, double* result) const override {
          this->model.compute_hessian_vector_product(x, vector, objective_multiplier, multipliers, result);

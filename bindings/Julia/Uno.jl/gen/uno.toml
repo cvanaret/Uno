@@ -1,0 +1,11 @@
+[general]
+use_julia_native_enum_type = true
+print_using_CEnum = false
+library_name = "libuno"
+prologue_file_path = "./prologue.jl"
+output_file_path = "../src/libuno.jl"
+
+[codegen]
+use_julia_bool = true
+use_ccall_macro = true
+always_NUL_terminated_string = true
