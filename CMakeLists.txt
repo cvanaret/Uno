@@ -1,4 +1,4 @@
-﻿# Copyright (c) 2018-2024 Charlie Vanaret
+﻿# Copyright (c) 2018-2025 Charlie Vanaret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 cmake_minimum_required(VERSION 3.7)
@@ -11,7 +11,7 @@ endif()
 ######################
 
 # define the project
-project(Uno VERSION 2.0.2
+project(Uno VERSION 2.1.0
         DESCRIPTION "Uno (Unifying Nonlinear Optimization)"
         LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
