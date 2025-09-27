@@ -19,7 +19,7 @@ function test_MOI_Test()
                 MOI.ObjectiveBound,
             ],
         );
-        exclude = String[
+        exclude = [
             #  - Failures only in Uno.jl -- need an investigation of Charlie
             "test_linear_transform",
             "test_conic_NormInfinityCone_3",
