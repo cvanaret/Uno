@@ -66,7 +66,7 @@ jobs:
         run: sudo cmake --install ${{github.workspace}}/build
 
       - name: Add path
-        run: sed -i '2 a import sys\nsys.path.append("/usr/local/lib")\n' ${{github.workspace}}/bindings/python/example/example_hs015.py
+        run: sed -i '2 a import sys\nsys.path.append("/usr/local/lib")\n' ${{github.workspace}}/bindings/Python/example/example_hs015.py
 
       - name: Run example
         working-directory: ${{github.workspace}}/bindings/Python/example
