@@ -64,9 +64,9 @@ jobs:
 
       - name: Install unopy
         run: sudo cmake --install ${{github.workspace}}/build
-        
-      - name: Add unopy directory to PYTHONPATH
-        run: export PYTHONPATH=$PYTHONPATH:/usr/local/lib/unopy.cpython-312-x86_64-linux-gnu.so
+
+      - name: Add path
+        run: sed -i '2 a import sys\nsys.path.append("/usr/local/lib")\n' ${{github.workspace}}/bindings/python/example/example_hs015.py
 
       - name: Run example
         working-directory: ${{github.workspace}}/bindings/Python/example
