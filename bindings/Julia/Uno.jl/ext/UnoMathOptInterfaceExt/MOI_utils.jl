@@ -540,3 +540,117 @@ function MOI.eval_hessian_lagrangian(
     end
     return i
 end
+
+function eval_Jv_product(
+    f::MOI.ScalarAffineFunction{T},
+    y::Vector{T},
+    x::Vector{T},
+    w::Vector{T},
+    p::Dict{Int64,T},
+    i::Int,
+)::Int where {T}
+    # ...
+    return i
+end
+
+function eval_Jv_product(
+    f::MOI.ScalarQuadraticFunction{T},
+    y::Vector{T},
+    x::Vector{T},
+    w::Vector{T},
+    p::Dict{Int64,T},
+    i::Int,
+)::Int where {T}
+    # ...
+    return i
+end
+
+function MOI.eval_constraint_jacobian_product(
+    block::QPBlockData{T},
+    y::AbstractVector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
+) where {T}
+    i = 0
+    for constraint in block.constraints
+        i = eval_Jv_product(constraint, y, x, w, block.parameters, i)
+    end
+    return i
+end
+
+function eval_Jtv_product(
+    f::MOI.ScalarAffineFunction{T},
+    y::AbstractVector{T},
+    x::Vector{T},
+    w::Vector{T},
+    p::Dict{Int64,T},
+    i::Int,
+)::Int where {T}
+    # ...
+    return i
+end
+
+function eval_Jtv_product(
+    f::MOI.ScalarQuadraticFunction{T},
+    y::AbstractVector{T},
+    x::Vector{T},
+    w::Vector{T},
+    p::Dict{Int64,T},
+    i::Int,
+)::Int where {T}
+    # ...
+    return i
+end
+
+function MOI.eval_constraint_jacobian_transpose_product(
+    block::QPBlockData{T},
+    y::AbstractVector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
+) where {T}
+    i = 0
+    for constraint in block.constraints
+        i = eval_Jtv_product(constraint, y, x, w, block.parameters, i)
+    end
+    return i
+end
+
+function eval_Hv_product(
+    f::MOI.ScalarAffineFunction{T},
+    H::Vector{T},
+    x::Vector{T},
+    v::Vector{T},
+    α::T,
+    i::Int
+)::Int where {T}
+    # ...
+    return i
+end
+
+function eval_Hv_product(
+    f::MOI.ScalarQuadraticFunction{T},
+    H::Vector{T},
+    x::Vector{T},
+    v::Vector{T},
+    α::T,
+    i::Int
+)::Int where {T}
+    # ...
+    return i
+end
+
+function MOI.eval_hessian_lagrangian_product(
+    block::QPBlockData{T},
+    H::AbstractVector{T},
+    x::AbstractVector{T},
+    v::AbstractVector{T},
+    σ::T,
+    μ::AbstractVector{T},
+) where {T}
+    i = 0
+    i = eval_Hv_product(block.objective, H, x, v, σ, i)
+    for (row, constraint) in enumerate(block.constraints)
+        i = eval_Hv_product(constraint, H, x, v, μ[row], i)
+    end
+    return i
+end

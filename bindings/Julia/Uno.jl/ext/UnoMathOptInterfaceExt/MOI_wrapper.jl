@@ -1240,6 +1240,33 @@ function MOI.eval_hessian_lagrangian(model::Optimizer, H, x, σ, μ)
     return
 end
 
+function MOI.eval_constraint_jacobian_product(model::Optimizer, y, x, w)
+    fill!(y, 0.0)
+    qp_offset = length(model.qp_data)
+    y_nlp = view(y, (qp_offset+1):length(y))
+    MOI.eval_constraint_jacobian_product(model.nlp_data.evaluator, y_nlp, x, w)
+    MOI.eval_constraint_jacobian_product(model.qp_data, y, x, w)
+    return
+end
+
+function MOI.eval_constraint_jacobian_transpose_product(model::Optimizer, y, x, w)
+    fill!(y, 0.0)
+    qp_offset = length(model.qp_data)
+    w_nlp = view(w, (qp_offset+1):length(w))
+    MOI.eval_constraint_jacobian_transpose_product(model.nlp_data.evaluator, y, x, w_nlp)
+    MOI.eval_constraint_jacobian_transpose_product(model.qp_data, y, x, w)
+    return
+end
+
+function MOI.eval_hessian_lagrangian_product(model::Optimizer, H, x, v, σ, μ)
+    fill!(H, 0.0)
+    qp_offset = length(model.qp_data)
+    μ_nlp = view(μ, (qp_offset+1):length(μ))
+    MOI.eval_hessian_lagrangian_product(model.nlp_data.evaluator, H, x, v, σ, μ_nlp)
+    MOI.eval_hessian_lagrangian_product(model.qp_data, H, x, v, σ, μ)
+    return
+end
+
 ### MOI.AutomaticDifferentiationBackend
 
 MOI.supports(::Optimizer, ::MOI.AutomaticDifferentiationBackend) = true
@@ -1317,11 +1344,9 @@ function _setup_model(model::Optimizer)
     moi_constraints(model, c, x) = MOI.eval_constraint(model, c, x)
     moi_jacobian(model, jvals, x) = MOI.eval_constraint_jacobian(model, jvals, x)
     moi_lagrangian_hessian(model, hvals, x, multipliers, objective_multiplier) = MOI.eval_hessian_lagrangian(model, hvals, x, objective_multiplier, multipliers)
-
-    # To be fixed by Alexis (@amontoison) one day...
-    moi_jacobian_operator(model, Jv, x, v, evaluate_at_x) = nothing
-    moi_jacobian_transposed_operator(model, Jtv, x, v, evaluate_at_x) = nothing
-    moi_lagrangian_hessian_operator(model, Hv, x, objective_multiplier, multipliers, v, evaluate_at_x) = nothing
+    moi_jacobian_operator(model, Jv, x, v, evaluate_at_x) = MOI.eval_constraint_jacobian_product(model, Jv, x, v)
+    moi_jacobian_transposed_operator(model, Jtv, x, v, evaluate_at_x) = MOI.eval_constraint_jacobian_transpose_product(model, Jtv, x, v)
+    moi_lagrangian_hessian_operator(model, Hv, x, objective_multiplier, multipliers, v, evaluate_at_x) = MOI.eval_hessian_lagrangian_product(model, Hv, x, v, objective_multiplier, multipliers)
 
     g_L, g_U = copy(model.qp_data.g_L), copy(model.qp_data.g_U)
     for (_, s) in model.vector_nonlinear_oracle_constraints
