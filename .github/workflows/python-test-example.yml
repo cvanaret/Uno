@@ -69,5 +69,5 @@ jobs:
         run: export PYTHONPATH=$PYTHONPATH:/usr/local/lib/unopy.cpython-312-x86_64-linux-gnu.so
 
       - name: Run example
-        working-directory: ${{github.workspace}}/bindings/python/example
+        working-directory: ${{github.workspace}}/bindings/Python/example
         run: python example_hs015.py
