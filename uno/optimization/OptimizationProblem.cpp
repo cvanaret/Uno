@@ -24,7 +24,7 @@ namespace uno {
       return 1.;
    }
 
-   void OptimizationProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+   void OptimizationProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
       constraints = iterate.evaluations.constraints;
    }
@@ -136,7 +136,6 @@ namespace uno {
       return this->dual_regularization_constraints;
    }
 
-
    void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& /*solution*/,
          Direction& /*direction*/) const {
    }
@@ -152,7 +151,7 @@ namespace uno {
       return norm(residual_norm, scaled_lagrangian);
    }
 
-   double OptimizationProblem::complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
+   double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
       const Range variables_range = Range(this->number_variables);

@@ -43,7 +43,7 @@ namespace uno {
       // reformulate the model if it is to be solved with an interior-point method
       if (options.get_string("inequality_handling_method") == "primal_dual_interior_point") {
          // move the fixed variables to the set of general constraints
-         const FixedBoundsConstraintsModel fixed_bound_model(model, options);
+         const FixedBoundsConstraintsModel fixed_bound_model(model);
          // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks
          const HomogeneousEqualityConstrainedModel homogeneous_model(fixed_bound_model);
          // slightly relax the bound constraints
@@ -126,11 +126,11 @@ namespace uno {
       this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
    }
-
+   
    std::string Uno::current_version() {
       return "2.1.0";
    }
-
+   
    void Uno::print_available_strategies() {
       std::cout << "Available Uno strategies:\n";
       std::cout << "- Constraint relaxation strategies: " << join(ConstraintRelaxationStrategyFactory::available_strategies, ", ") << '\n';

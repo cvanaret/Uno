@@ -4,7 +4,6 @@
 #ifndef UNO_OPTIMIZATIONPROBLEM_H
 #define UNO_OPTIMIZATIONPROBLEM_H
 
-#include <vector>
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "model/Model.hpp"
@@ -37,7 +36,7 @@ namespace uno {
       [[nodiscard]] virtual double get_objective_multiplier() const;
 
       // constraint evaluations
-      virtual void evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const;
+      virtual void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const;
 
       // dense objective gradient
       virtual void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const;
@@ -77,7 +76,7 @@ namespace uno {
 
       [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
          Norm residual_norm);
-      [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const std::vector<double>& constraints,
+      [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
 
       [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
