@@ -6,7 +6,7 @@ The package has three components:
 
 * a thin wrapper around the complete C API,
 * an interface to [NLPModels.jl](https://github.com/JuliaSmoothOptimizers/NLPModels.jl) for solving any optimization problem following the API, such as [CUTEst](https://github.com/JuliaSmoothOptimizers/CUTEst.jl) problems,
-* an interface to [MathOptInterface.jl](https://github.com/jump-dev/MathOptInterface.jl) for handling [JuMP](https://github.com/jump-dev/JuMP.jl) models (currently under development).
+* an interface to [MathOptInterface.jl](https://github.com/jump-dev/MathOptInterface.jl) for handling [JuMP](https://github.com/jump-dev/JuMP.jl) models.
 
 ## Affiliation
 
@@ -22,7 +22,7 @@ julia> Pkg.add(url="https://github.com/cvanaret/Uno", subdir="bindings/Julia/Uno
 julia> Pkg.test("Uno")
 ```
 
-We plan to register `Uno.jl` once the interface for `MathOptInterface` is finalized.
+We plan to register `Uno.jl` in the near future (at the latest by JuMP-dev 2025).
 
 ## LibHSL
 

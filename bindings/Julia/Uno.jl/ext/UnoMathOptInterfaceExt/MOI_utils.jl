@@ -1,4 +1,5 @@
 # Copyright (c) 2013: Iain Dunning, Miles Lubin, and contributors
+# 2025: Adapted for Uno.jl by Alexis Montoison and Charlie Vanaret
 #
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
@@ -9,7 +10,7 @@
 #
 #     Until this message is removed, breaking changes to the functions and
 #     types, including their deletion, may be introduced in any minor or patch
-#     release of Ipopt.
+#     release of Uno.
 
 @enum(
     _FunctionType,
