@@ -14,7 +14,12 @@ end
 mutable struct UnoModel{M}
   # Reference to the internal C model of Uno
   c_model::Ptr{Cvoid}
+  # Reference to the internal C solver of Uno
   c_solver::Ptr{Cvoid}
+  # Number of variables
+  nvar::Int
+  # Number of constraints
+  ncon::Int
   # Callbacks
   eval_objective::Function
   eval_constraints::Function
@@ -32,8 +37,6 @@ function uno_finalizer(uno_model::UnoModel)
   uno_destroy_model(uno_model.c_model)
   uno_destroy_solver(uno_model.c_solver)
 end
-
-# Base.unsafe_convert(::Type{Ptr{Cvoid}}, uno_model::UnoModel) = uno_model.c_model
 
 function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
@@ -177,37 +180,60 @@ function uno(
   (c_model == C_NULL) && error("Failed to construct Uno model for some unknown reason.")
   c_solver = uno_create_solver()
   (c_solver == C_NULL) && error("Failed to construct Uno solver for some unknown reason.")
-  uno_model = UnoModel(c_model, c_solver, eval_objective, eval_constraints, eval_gradient,
+  uno_model = UnoModel(c_model, c_solver, nvar, ncon, eval_objective, eval_constraints, eval_gradient,
                        eval_jacobian, eval_hessian, eval_Jv, eval_Jtv, eval_Hv, user_model)
 
-  uno_set_initial_primal_iterate(c_model, x0)
-  uno_set_initial_dual_iterate(c_model, y0)
+  uno_set_initial_primal_iterate(uno_model, x0)
+  uno_set_initial_dual_iterate(uno_model, y0)
 
   user_data = pointer_from_objref(uno_model)::Ptr{Cvoid}
-  uno_set_user_data(c_model, user_data)
+  flag = uno_set_user_data(c_model, user_data)
+  flag || error("Failed to set user data via uno_set_user_data.")
 
   eval_objective_c = @cfunction(uno_objective, Cint, (Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
   eval_gradient_c = @cfunction(uno_objective_gradient, Cint, (Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  uno_set_objective(c_model, optimization_sense, eval_objective_c, eval_gradient_c)
+  flag = uno_set_objective(c_model, optimization_sense, eval_objective_c, eval_gradient_c)
+  flag || error("Failed to set objective and gradient via uno_set_objective.")
 
-  eval_constraints_c = @cfunction(uno_constraints, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  eval_jacobian_c = @cfunction(uno_jacobian, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  uno_set_constraints(c_model, Cint(ncon), eval_constraints_c, lcon, ucon, Cint(nnzj), jrows, jcols, eval_jacobian_c)
+  if nnzh > 0
+    eval_hessian_c = @cfunction(uno_lagrangian_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+    flag = uno_set_lagrangian_hessian(c_model, Cint(nnzh), hessian_triangle, hrows, hcols, eval_hessian_c, lagrangian_sign)
+    flag || error("Failed to set Lagrangian Hessian via uno_set_lagrangian_hessian.")
 
-  eval_hessian_c = @cfunction(uno_lagrangian_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  uno_set_lagrangian_hessian(c_model, Cint(nnzh), hessian_triangle, hrows, hcols, eval_hessian_c, lagrangian_sign)
+    eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+    flag = uno_set_lagrangian_hessian_operator(c_model, Cint(nnzh), eval_Hv_c, lagrangian_sign)
+    flag || error("Failed to set Hessian operator via uno_set_lagrangian_hessian_operator.")
+  end
 
-  eval_Jv_c = @cfunction(uno_jacobian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  uno_set_jacobian_operator(c_model, eval_Jv_c)
+  if ncon > 0
+    eval_constraints_c = @cfunction(uno_constraints, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+    eval_jacobian_c = @cfunction(uno_jacobian, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+    flag = uno_set_constraints(c_model, Cint(ncon), eval_constraints_c, lcon, ucon, Cint(nnzj), jrows, jcols, eval_jacobian_c)
+    flag || error("Failed to set constraints and Jacobian via uno_set_constraints.")
 
-  eval_Jtv_c = @cfunction(uno_jacobian_transposed_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  uno_set_jacobian_transposed_operator(c_model, eval_Jtv_c)
+    eval_Jv_c = @cfunction(uno_jacobian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+    flag = uno_set_jacobian_operator(c_model, eval_Jv_c)
+    flag || error("Failed to set Jacobian operator via uno_set_jacobian_operator.")
 
-  eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-  uno_set_lagrangian_hessian_operator(c_model, Cint(nnzh), eval_Hv_c, lagrangian_sign)
+    eval_Jtv_c = @cfunction(uno_jacobian_transposed_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+    flag = uno_set_jacobian_transposed_operator(c_model, eval_Jtv_c)
+    flag || error("Failed to set transposed Jacobian operator via uno_set_jacobian_transposed_operator.")
+  end
 
   finalizer(uno_finalizer, uno_model)
   return uno_model
+end
+
+function uno_set_initial_primal_iterate(uno_model::UnoModel, initial_primal_iterate::Vector{Float64})
+  flag = uno_set_initial_primal_iterate(uno_model.c_model, initial_primal_iterate)
+  flag || error("Failed to set initial primal iterate via uno_set_initial_primal_iterate.")
+  return
+end
+
+function uno_set_initial_dual_iterate(uno_model::UnoModel, initial_dual_iterate::Vector{Float64})
+  flag = uno_set_initial_dual_iterate(uno_model.c_model, initial_dual_iterate)
+  flag || error("Failed to set initial dual iterate via uno_set_initial_dual_iterate.")
+  return
 end
 
 function uno_set_solver_option(uno_model::UnoModel, option_name::String, option_value::String)
