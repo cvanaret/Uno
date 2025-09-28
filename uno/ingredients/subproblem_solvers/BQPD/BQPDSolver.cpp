@@ -61,7 +61,7 @@ namespace uno {
    }
 
    void BQPDSolver::initialize_memory(const Subproblem& subproblem) {
-      if (!subproblem.has_hessian_operator() && !subproblem.has_hessian_matrix()) {
+      if (subproblem.has_curvature() && !subproblem.has_hessian_operator() && !subproblem.has_hessian_matrix()) {
          throw std::runtime_error("The Hessian cannot be evaluated implicitly or explicitly");
       }
 
