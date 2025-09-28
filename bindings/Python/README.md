@@ -1,7 +1,7 @@
 ## Uno's Python bindings
 
 Uno's Python bindings allows you to solve an optimization model described by callback functions.
-The Python module `unopy` is compiled via the command `make unopy`, and is (for the moment) installed via `make install`.
+The Python module `unopy` is compiled via the command `make unopy` using pybind11, and is (for the moment) installed via `make install`.
 An example is available in the file [example_hs015.c](example/example_hs015.py).
 
 ### Building an optimization model
