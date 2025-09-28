@@ -1,0 +1,73 @@
+name: unopy on Python example
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        architecture: [x64]
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        # This is the version of the action for setting up Python, not the Python version.
+        uses: actions/setup-python@v5
+        with:
+          # Semantic version range syntax or exact version of a Python version
+          python-version: "3.12"
+          architecture: 'x64'
+          
+      - name: Install pybind11
+        run: sudo apt install -y python3-pybind11 pybind11-dev
+        
+      - name: Download dependency (BQPD)
+        shell: bash
+        run: |
+          VERSION_BQPD="1.0.0"
+          PLATFORM="x86_64-linux-gnu"
+          wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
+          mkdir deps
+          tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
+          
+      - name: Configure Uno CMake
+        shell: bash
+        run: |
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                                               -DBQPD=${{github.workspace}}/deps/lib/libbqpd.a \
+                                               -DBUILD_STATIC_LIBS=ON \
+                                               -DBUILD_SHARED_LIBS=ON .
+
+      - name: Build libuno
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j4
+
+      - name: Build unopy
+        run: cmake --build ${{github.workspace}}/build --target unopy --config ${{env.BUILD_TYPE}} -j4
+
+      - name: Install unopy
+        run: sudo cmake --install ${{github.workspace}}/build
+
+      - name: Add path
+        run: sed -i '2 a import sys\nsys.path.append("/usr/local/lib")\n' ${{github.workspace}}/bindings/Python/example/example_hs015.py
+
+      - name: Run example
+        working-directory: ${{github.workspace}}/bindings/Python/example
+        run: python example_hs015.py

@@ -5,7 +5,7 @@
 #include "optimization/Iterate.hpp"
 
 namespace uno {
-   FixedBoundsConstraintsModel::FixedBoundsConstraintsModel(const Model& original_model, const Options& /*options*/) :
+   FixedBoundsConstraintsModel::FixedBoundsConstraintsModel(const Model& original_model) :
          Model(original_model.name + " -> no fixed bounds", original_model.number_variables,
             // move the fixed variables to the set of general constraints
             original_model.number_constraints + original_model.get_fixed_variables().size(),
@@ -35,7 +35,7 @@ namespace uno {
       return this->model.evaluate_objective(x);
    }
 
-   void FixedBoundsConstraintsModel::evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const {
+   void FixedBoundsConstraintsModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       this->model.evaluate_constraints(x, constraints);
       // add the fixed variables
       size_t current_constraint = this->model.number_constraints;
@@ -80,8 +80,8 @@ namespace uno {
       }
    }
 
-   void FixedBoundsConstraintsModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
-         double* hessian_values) const {
+   void FixedBoundsConstraintsModel::evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier,
+         const Vector<double>& multipliers, double* hessian_values) const {
       this->model.evaluate_lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values);
    }
 

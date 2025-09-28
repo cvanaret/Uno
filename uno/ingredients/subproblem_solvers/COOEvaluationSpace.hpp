@@ -28,7 +28,7 @@ namespace uno {
          const WarmstartInformation& warmstart_information);
 
       Vector<double> objective_gradient{}; /*!< Sparse Jacobian of the objective */
-      std::vector<double> constraints{}; /*!< Constraint values (size \f$m)\f$ */
+      Vector<double> constraints{}; /*!< Constraint values (size \f$m)\f$ */
 
       // Jacobian
       size_t number_jacobian_nonzeros{};

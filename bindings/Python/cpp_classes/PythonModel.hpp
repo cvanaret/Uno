@@ -1,20 +1,21 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_HOMOGENEOUSEQUALITYCONSTRAINEDMODEL_H
-#define UNO_HOMOGENEOUSEQUALITYCONSTRAINEDMODEL_H
+#ifndef UNO_PYTHONMODEL_H
+#define UNO_PYTHONMODEL_H
 
-#include "Model.hpp"
+#include <vector>
+#include "../unopy.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "model/Model.hpp"
+#include "symbolic/CollectionAdapter.hpp"
 
 namespace uno {
-   // generate an equality-constrained model by:
-   // - introducing slacks in inequality constraints
-   // - subtracting the (possibly nonzero) RHS of equality constraints
-   // all constraints are of the form "c(x) = 0"
-   class HomogeneousEqualityConstrainedModel: public Model {
+   class PythonModel: public Model {
    public:
-      explicit HomogeneousEqualityConstrainedModel(const Model& original_model);
+      explicit PythonModel(const PythonUserModel& user_model);
+      ~PythonModel() override = default;
 
       // availability of linear operators
       [[nodiscard]] bool has_jacobian_operator() const override;
@@ -31,7 +32,7 @@ namespace uno {
 
       // sparsity patterns of Jacobian and Hessian
       void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
-         MatrixOrder matrix_order) const override;
+         MatrixOrder matrix_format) const override;
       void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
@@ -45,16 +46,17 @@ namespace uno {
       void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
          const Vector<double>& multipliers, double* result) const override;
 
+      // purely functions
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
+      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
-      [[nodiscard]] double constraint_lower_bound(size_t /*constraint_index*/) const override;
-      [[nodiscard]] double constraint_upper_bound(size_t /*constraint_index*/) const override;
+      [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
+      [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
-      [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
       void initial_primal_point(Vector<double>& x) const override;
       void initial_dual_point(Vector<double>& multipliers) const override;
@@ -64,14 +66,15 @@ namespace uno {
       [[nodiscard]] size_t number_hessian_nonzeros() const override;
 
    protected:
-      const Model& model;
-      std::vector<size_t> constraint_index_of_inequality_index;
-      std::vector<size_t> slack_index_of_constraint_index;
-
-      ForwardRange equality_constraints;
-      ForwardRange inequality_constraints;
-      SparseVector<size_t> slacks;
+      const PythonUserModel& user_model;
+      const SparseVector<size_t> slacks{};
+      Vector<size_t> fixed_variables{};
+      const ForwardRange linear_constraints{0};
+      std::vector<size_t> equality_constraints;
+      CollectionAdapter<std::vector<size_t>> equality_constraints_collection;
+      std::vector<size_t> inequality_constraints;
+      CollectionAdapter<std::vector<size_t>> inequality_constraints_collection;
    };
 } // namespace
 
-#endif // UNO_HOMOGENEOUSEQUALITYCONSTRAINEDMODEL_H
+#endif // UNO_PYTHONMODEL_H

@@ -68,7 +68,7 @@ public:
       return objective_value;
    }
 
-   void evaluate_constraints(const Vector<double>& x, std::vector<double>& constraints) const override {
+   void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override {
       if (this->user_model.constraint_functions != nullptr) {
          const int32_t return_code = this->user_model.constraint_functions(this->user_model.number_variables,
             this->user_model.number_constraints, x.data(), constraints.data(), this->user_model.user_data);

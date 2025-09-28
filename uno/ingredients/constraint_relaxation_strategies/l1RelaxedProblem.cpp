@@ -25,7 +25,7 @@ namespace uno {
       return this->objective_multiplier;
    }
 
-   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, std::vector<double>& constraints) const {
+   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
       iterate.evaluate_constraints(this->model);
       constraints = iterate.evaluations.constraints;
 
@@ -252,7 +252,7 @@ namespace uno {
       DEBUG << "Feasibility stationarity: " << std::boolalpha << feasibility_stationarity << '\n';
       DEBUG << "Feasibility complementarity: " << std::boolalpha << feasibility_complementarity << '\n';
       DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
-      
+
       if (this->model.is_constrained() && feasibility_stationarity && !primal_feasibility && feasibility_complementarity &&
             no_trivial_duals) {
          // no primal feasibility, stationary point of constraint violation

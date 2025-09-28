@@ -14,8 +14,8 @@ namespace uno {
       typename DoubleVector, typename UserDataType>
    class UserModel {
    public:
-      UserModel(char problem_type, int32_t number_variables, const DoubleVector variables_lower_bounds,
-         const DoubleVector variables_upper_bounds, int32_t base_indexing):
+      UserModel(char problem_type, int32_t number_variables, DoubleVector variables_lower_bounds,
+         DoubleVector variables_upper_bounds, int32_t base_indexing):
             problem_type(problem_type),
             base_indexing(base_indexing),
             number_variables(number_variables),
