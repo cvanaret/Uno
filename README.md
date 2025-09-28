@@ -76,8 +76,11 @@ Uno can be used from Julia in two ways:
    Alternatively, the executable `uno_ampl` can be installed via [Uno_jll.jl](https://github.com/JuliaBinaryWrappers/Uno_jll.jl) and used through [AmplNLWriter.jl](https://juliahub.com/ui/Packages/General/AmplNLWriter.jl).
    An example can be found [here](https://discourse.julialang.org/t/the-uno-unifying-nonconvex-optimization-solver/115883/21).
 
+### Python
+Uno's Python bindings can be compiled via the command `make unopy` and require pybind11. For more details, see their [README.md](bindings/Python/README.md).
+
 ### C
-The C interface is compiled as part of the Uno library. For more details, see its [README.md](bindings/C/README.md).
+Uno's C interface is compiled as part of the Uno library. For more details, see its [README.md](bindings/C/README.md).
 It may be modified in future minor releases.
 
 ## Solving a problem with Uno
