@@ -28,5 +28,21 @@ namespace uno {
       .def_readonly("number_jacobian_evaluations", &Result::number_jacobian_evaluations)
       .def_readonly("number_hessian_evaluations", &Result::number_hessian_evaluations)
       .def_readonly("number_subproblems_solved", &Result::number_subproblems_solved);
+
+      py::enum_<OptimizationStatus>(module, "OptimizationStatus")
+      .value("SUCCESS", OptimizationStatus::SUCCESS)
+      .value("ITERATION_LIMIT", OptimizationStatus::ITERATION_LIMIT)
+      .value("TIME_LIMIT", OptimizationStatus::TIME_LIMIT)
+      .value("EVALUATION_ERROR", OptimizationStatus::EVALUATION_ERROR)
+      .value("ALGORITHMIC_ERROR", OptimizationStatus::ALGORITHMIC_ERROR);
+
+      py::enum_<SolutionStatus>(module, "SolutionStatus")
+      .value("NOT_OPTIMAL", SolutionStatus::NOT_OPTIMAL)
+      .value("FEASIBLE_KKT_POINT", SolutionStatus::FEASIBLE_KKT_POINT)
+      .value("FEASIBLE_FJ_POINT", SolutionStatus::FEASIBLE_FJ_POINT)
+      .value("INFEASIBLE_STATIONARY_POINT", SolutionStatus::INFEASIBLE_STATIONARY_POINT)
+      .value("FEASIBLE_SMALL_STEP", SolutionStatus::FEASIBLE_SMALL_STEP)
+      .value("INFEASIBLE_SMALL_STEP", SolutionStatus::INFEASIBLE_SMALL_STEP)
+      .value("UNBOUNDED", SolutionStatus::UNBOUNDED);
    }
 } // namespace

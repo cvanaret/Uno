@@ -92,8 +92,8 @@ if __name__ == '__main__':
 
 	# optimization summary
 	print("\nReading optimization summary from Python:")
-	#print("Number of iterations:", result.optimization_status)
-	#print("Number of iterations:", result.solution_status)
+	print("Number of iterations:", result.optimization_status)
+	print("Number of iterations:", result.solution_status)
 	print("Objective at solution:", result.solution_objective)
 	print("Primal feasibility at solution:", result.solution_primal_feasibility)
 	print("Dual feasibility at solution:", result.solution_dual_feasibility)
