@@ -47,9 +47,9 @@ extern "C" {
    const int32_t UNO_INFEASIBLE_SMALL_STEP = 5;
    const int32_t UNO_UNBOUNDED = 6;
 
-   // current Uno version is 2.1.0
+   // current Uno version is 2.2.0
    const int32_t UNO_VERSION_MAJOR = 2;
-   const int32_t UNO_VERSION_MINOR = 1;
+   const int32_t UNO_VERSION_MINOR = 2;
    const int32_t UNO_VERSION_PATCH = 0;
 
    // get the current Uno version as v major.minor.patch
