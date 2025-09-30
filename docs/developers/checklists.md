@@ -15,8 +15,10 @@ In preparation for a release, use the following checklist. These steps can be do
  - [ ] Change the version number in `CITATION.cff` (twice)
  - [ ] Change the version number in `CMakeLists.txt`
  - [ ] Change the version number in `bindings/C/Uno_C_API.h`
- - [ ] Change the version number in `bindings/Julia/Uno.jl/Project.toml`
- - [ ] Change the version number in `bindings/Julia/Uno.jl/gen/Project.toml`
  - [ ] The commit messages in this PR do not contain `[ci skip]`
 
+## Post-release
+
+ - [ ] Change the version number in `bindings/Julia/Uno.jl/Project.toml`
+ - [ ] Change the version number in `bindings/Julia/Uno.jl/gen/Project.toml`
 ````
