@@ -49,11 +49,11 @@ function nlpmodels_lagrangian_hessian_operator(nlp::AbstractNLPModel{Float64}, H
   return Hv
 end
 
-function Uno.uno(nlp::AbstractNLPModel{Float64})
+function Uno.uno_model(nlp::AbstractNLPModel{Float64})
   jrows, jcols = NLPModels.jac_structure(nlp)
   hrows, hcols = NLPModels.hess_structure(nlp)
   problem_type = nlp.meta.islp ? 'L' : 'N'
-  uno_model = Uno.uno(
+  model = Uno.uno_model(
     problem_type,
     nlp.meta.minimize,
     nlp.meta.nvar,
@@ -82,7 +82,7 @@ function Uno.uno(nlp::AbstractNLPModel{Float64})
     lagrangian_sign=1.0,
     user_model=nlp,
   )
-  return uno_model
+  return model
 end
 
 end

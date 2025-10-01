@@ -13,7 +13,7 @@ function __init__()
     return
 end
 
-export uno
+export uno_model, uno_optimize
 
 include("libuno.jl")
 include("C_wrapper.jl")

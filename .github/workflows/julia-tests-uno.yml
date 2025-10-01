@@ -55,7 +55,7 @@ jobs:
         with:
           version: "1.10"
           arch: x64
-      - name: Test Uno.jl with NLPModels.jl / CUTEst.jl
+      - name: Unit tests of Uno.jl
         shell: julia --color=yes --project=.github/julia {0}
         run: |
           using Pkg

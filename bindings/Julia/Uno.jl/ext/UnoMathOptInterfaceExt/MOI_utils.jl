@@ -1,4 +1,5 @@
 # Copyright (c) 2013: Iain Dunning, Miles Lubin, and contributors
+# 2025: Adapted for Uno.jl by Alexis Montoison and Charlie Vanaret
 #
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
@@ -9,7 +10,7 @@
 #
 #     Until this message is removed, breaking changes to the functions and
 #     types, including their deletion, may be introduced in any minor or patch
-#     release of Ipopt.
+#     release of Uno.
 
 @enum(
     _FunctionType,
@@ -242,10 +243,9 @@ end
 
 function append_sparse_hessian_structure!(f::MOI.ScalarQuadraticFunction, H)
     for term in f.quadratic_terms
-        if _is_parameter(term.variable_1) || _is_parameter(term.variable_2)
-            continue
+        if !_is_parameter(term.variable_1) && !_is_parameter(term.variable_2)
+            push!(H, (term.variable_1.value, term.variable_2.value))
         end
-        push!(H, (term.variable_1.value, term.variable_2.value))
     end
     return
 end
@@ -259,11 +259,10 @@ function eval_sparse_hessian(
 )::Int where {T}
     i = 0
     for term in f.quadratic_terms
-        if _is_parameter(term.variable_1) || _is_parameter(term.variable_2)
-            continue
+        if !_is_parameter(term.variable_1) && !_is_parameter(term.variable_2)
+            i += 1
+            ∇²f[i] = term.coefficient * σ
         end
-        i += 1
-        ∇²f[i] = term.coefficient * σ
     end
     return i
 end
@@ -274,6 +273,118 @@ function eval_sparse_hessian(
     σ::T,
 )::Int where {T}
     return 0
+end
+
+function eval_Jv_product(
+    f::MOI.ScalarAffineFunction{T},
+    y::Vector{T},
+    x::Vector{T},
+    w::Vector{T},
+    p::Dict{Int64,T},
+    i::Int,
+)::Nothing where {T}
+    for term in f.terms
+        if !_is_parameter(term.variable)
+            y[i] += term.coefficient * w[term.variable.value]
+        end
+    end
+    return
+end
+
+function eval_Jv_product(
+    f::MOI.ScalarQuadraticFunction{T},
+    y::Vector{T},
+    x::Vector{T},
+    w::Vector{T},
+    p::Dict{Int64,T},
+    i::Int,
+)::Nothing where {T}
+    for term in f.quadratic_terms
+        if !_is_parameter(term.variable_1)
+            val = _value(term.variable_2, x, p)
+            y[i] += term.coefficient * val * w[term.variable_1.value]
+        end
+        if term.variable_1 != term.variable_2 && !_is_parameter(term.variable_2)
+            val = _value(term.variable_1, x, p)
+            y[i] += term.coefficient * val * w[term.variable_2.value]
+        end
+    end
+    for term in f.affine_terms
+        if !_is_parameter(term.variable)
+            y[i] += term.coefficient * w[term.variable.value]
+        end
+    end
+    return
+end
+
+function eval_Jtv_product(
+    f::MOI.ScalarAffineFunction{T},
+    y::AbstractVector{T},
+    x::Vector{T},
+    w::Vector{T},
+    p::Dict{Int64,T},
+    i::Int,
+)::Nothing where {T}
+    wi = w[i]
+    for term in f.terms
+        if !_is_parameter(term.variable)
+            y[term.variable.value] += wi * term.coefficient
+        end
+    end
+    return
+end
+
+function eval_Jtv_product(
+    f::MOI.ScalarQuadraticFunction{T},
+    y::AbstractVector{T},
+    x::Vector{T},
+    w::Vector{T},
+    p::Dict{Int64,T},
+    i::Int,
+)::Nothing where {T}
+    wi = w[i]
+    for term in f.quadratic_terms
+        if !_is_parameter(term.variable_1)
+            y[term.variable_1.value] += wi * term.coefficient * _value(term.variable_2, x, p)
+        end
+        if term.variable_1 != term.variable_2 && !_is_parameter(term.variable_2)
+            y[term.variable_2.value] += wi * term.coefficient * _value(term.variable_1, x, p)
+        end
+    end
+    for term in f.affine_terms
+        if !_is_parameter(term.variable)
+            y[term.variable.value] += wi * term.coefficient
+        end
+    end
+    return
+end
+
+function eval_Hv_product(
+    f::MOI.ScalarAffineFunction{T},
+    H::Vector{T},
+    x::Vector{T},
+    v::Vector{T},
+    α::T,
+)::Nothing where {T}
+    return
+end
+
+function eval_Hv_product(
+    f::MOI.ScalarQuadraticFunction{T},
+    H::Vector{T},
+    x::Vector{T},
+    v::Vector{T},
+    α::T,
+)::Nothing where {T}
+    for term in f.quadratic_terms
+        if !_is_parameter(term.variable_1) && !_is_parameter(term.variable_2)
+            H[term.variable_1.value] += α * term.coefficient * v[term.variable_2.value]
+            if term.variable_1 != term.variable_2
+                H[term.variable_2.value] += α * term.coefficient * v[term.variable_1.value]
+            end
+        end
+    end
+    return
 end
 
 Base.length(block::QPBlockData) = length(block.bound_type)
@@ -538,4 +649,43 @@ function MOI.eval_hessian_lagrangian(
         i += eval_sparse_hessian(∇²f, constraint, μ[row])
     end
     return i
+end
+
+function MOI.eval_constraint_jacobian_product(
+    block::QPBlockData{T},
+    y::AbstractVector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
+) where {T}
+    for (i, constraint) in enumerate(block.constraints)
+        eval_Jv_product(constraint, y, x, w, block.parameters, i)
+    end
+    return
+end
+
+function MOI.eval_constraint_jacobian_transpose_product(
+    block::QPBlockData{T},
+    y::AbstractVector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
+) where {T}
+    for (i, constraint) in enumerate(block.constraints)
+        eval_Jtv_product(constraint, y, x, w, block.parameters, i)
+    end
+    return
+end
+
+function MOI.eval_hessian_lagrangian_product(
+    block::QPBlockData{T},
+    H::AbstractVector{T},
+    x::AbstractVector{T},
+    v::AbstractVector{T},
+    σ::T,
+    μ::AbstractVector{T},
+) where {T}
+    eval_Hv_product(block.objective, H, x, v, σ)
+    for (i, constraint) in enumerate(block.constraints)
+        eval_Hv_product(constraint, H, x, v, μ[i])
+    end
+    return
 end
