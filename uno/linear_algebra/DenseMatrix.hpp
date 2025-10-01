@@ -68,7 +68,7 @@ namespace uno {
       UPPER_TRIANGULAR
    };
 
-   // DenseMatrix is an m x n matrix in column-order order where the columns are concatenated in a long vector
+   // DenseMatrix is an m x n matrix in column-major order where the columns are concatenated in a long vector
    template <typename ElementType, MatrixShape Shape = MatrixShape::GENERAL>
    class DenseMatrix {
    public:
