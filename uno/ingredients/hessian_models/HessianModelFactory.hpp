@@ -14,7 +14,7 @@ namespace uno {
 
    class HessianModelFactory {
    public:
-      static std::unique_ptr<HessianModel> create(double fixed_objective_multiplier, const Options& options);
+      static std::unique_ptr<HessianModel> create(double objective_multiplier, const Options& options);
    };
 } // namespace
 

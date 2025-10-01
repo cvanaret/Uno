@@ -14,7 +14,7 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<HessianModel> HessianModelFactory::create(double objective_multiplier, const Options& options) {
+   std::unique_ptr<HessianModel> HessianModelFactory::create([[maybe_unused]] double objective_multiplier, const Options& options) {
       const std::string& hessian_model = options.get_string("hessian_model");
       if (hessian_model == "exact") {
          return std::make_unique<ExactHessian>();

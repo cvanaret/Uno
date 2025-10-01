@@ -39,7 +39,7 @@ namespace uno {
 
    protected:
       size_t dimension{};
-      const double objective_multiplier;
+      const double fixed_objective_multiplier;
       const size_t memory_size; // user defined
       size_t number_entries_in_memory{0}; // 0 <= used_memory_size <= memory_size
       size_t current_memory_slot{0}; // 0 <= current_available_slot < memory_size

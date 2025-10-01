@@ -15,7 +15,7 @@
 namespace uno {
    LBFGSHessian::LBFGSHessian(double objective_multiplier, const Options& options):
          HessianModel(),
-         objective_multiplier(objective_multiplier),
+         fixed_objective_multiplier(objective_multiplier),
          memory_size(options.get_unsigned_int("quasi_newton_memory_size")) {
    }
 
@@ -75,7 +75,7 @@ namespace uno {
    // Bk v = (B0 - U U^T + V V^T) v = delta v - U U^T x + V V^T x
    void LBFGSHessian::compute_hessian_vector_product(const Model& model, const double* /*x*/, const double* vector,
          double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, double* result) {
-      if (objective_multiplier != this->objective_multiplier) {
+      if (objective_multiplier != this->fixed_objective_multiplier) {
          throw std::runtime_error("The L-BFGS Hessian model was initialized with a different objective multiplier");
       }
 
@@ -158,9 +158,9 @@ namespace uno {
       const OptimizationProblem problem{model};
       //problem.evaluate_lagrangian_gradient(current_split_lagrangian_gradient, current_iterate, trial_iterate.multipliers);
       //problem.evaluate_lagrangian_gradient(trial_split_lagrangian_gradient, trial_iterate, trial_iterate.multipliers);
-      const auto current_lagrangian_gradient = this->objective_multiplier * current_split_lagrangian_gradient.objective_contribution
+      const auto current_lagrangian_gradient = this->fixed_objective_multiplier * current_split_lagrangian_gradient.objective_contribution
          + current_split_lagrangian_gradient.constraints_contribution;
-      const auto trial_lagrangian_gradient = this->objective_multiplier * trial_split_lagrangian_gradient.objective_contribution
+      const auto trial_lagrangian_gradient = this->fixed_objective_multiplier * trial_split_lagrangian_gradient.objective_contribution
          + trial_split_lagrangian_gradient.constraints_contribution;
       this->Y_matrix.column(this->current_memory_slot) = trial_lagrangian_gradient - current_lagrangian_gradient;
    }
@@ -207,7 +207,7 @@ namespace uno {
       // add M += Ltilde Ltilde^T
       LBFGSHessian::perform_high_rank_update(this->M_matrix, this->number_entries_in_memory, this->memory_size, Ltilde_matrix,
          this->number_entries_in_memory, this->memory_size, 1., 1.);
-      // add M += S^T B0 S (= delta S^T S)
+      // add M += S^T B0 S = delta S^T S
       LBFGSHessian::perform_high_rank_update_transpose(this->M_matrix, this->number_entries_in_memory, this->memory_size,
          this->S_matrix, this->number_entries_in_memory, this->dimension, this->initial_identity_multiple, 1.);
       DEBUG << "> M: " << this->M_matrix;
@@ -266,7 +266,9 @@ namespace uno {
       // return delta = 1/gamma where gamma is given by (7.20) in Numerical optimization (Nocedal & Wright)
       const double numerator = dot(last_column_Y, last_column_Y);
       const double denominator = dot(last_column_S, last_column_Y); // TODO should be the current D entry
-      assert(denominator != 0 && "LBFGSHessian::compute_initial_identity_factor: the denominator is 0");
+      if (denominator == 0.) {
+         throw std::runtime_error("LBFGSHessian::compute_initial_identity_factor: the denominator is 0");
+      }
       return numerator/denominator;
    }
 
