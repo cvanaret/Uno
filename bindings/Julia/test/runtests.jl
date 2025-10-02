@@ -1,7 +1,7 @@
 using Uno, Test
 using NLPModels, MathOptInterface, CUTEst
 
-version = Uno.version()
+version = uno_version()
 println("The version of Uno is $version.")
 
 @testset "C interface" begin
@@ -12,6 +12,6 @@ end
   include("NLP_wrapper.jl")
 end
 
-#@testset "Interface for MathOptInterface.jl" begin
-#  include("MOI_wrapper.jl")
-#end
+@testset "Interface for MathOptInterface.jl" begin
+  include("MOI_wrapper.jl")
+end

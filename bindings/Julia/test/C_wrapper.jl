@@ -177,13 +177,10 @@ ncon = 2
 lcon = [25.0, 40.0]
 ucon = [2.0e19, 40.0]
 
-x0 = [1.0, 5.0, 5.0, 1.0]
-y0 = zeros(Float64, ncon)
-
 jrows, jcols, nnzj = sparsity_pattern_jacobian_hs71()
 hrows, hcols, nnzh = sparsity_pattern_lagrangian_hessian_hs71()
 
-uno_model = Uno.uno(
+model = uno_model(
   'N',
   true,
   nvar,
@@ -198,8 +195,6 @@ uno_model = Uno.uno(
   hrows,
   hcols,
   nnzh,
-  x0,
-  y0,
   c_objective,
   c_constraints,
   c_objective_gradient,
@@ -210,28 +205,33 @@ uno_model = Uno.uno(
   c_lagrangian_hessian_operator,
 )
 
-Uno.uno_set_solver_preset(uno_model, "funnelsqp")
-Uno.uno_set_solver_option(uno_model, "print_solution", "yes")
-Uno.uno_optimize(uno_model)
+x0 = Float64[1.0, 5.0, 5.0, 1.0]
+y0 = zeros(Float64, ncon)
+Uno.uno_set_initial_primal_iterate(model, x0)
+Uno.uno_set_initial_dual_iterate(model, y0)
 
-optimization_status = Uno.uno_get_optimization_status(uno_model)
-solution_status = Uno.uno_get_solution_status(uno_model)
-solution_objective = Uno.uno_get_solution_objective(uno_model)
-solution_primal_feasibility = Uno.uno_get_solution_primal_feasibility(uno_model)
-solution_dual_feasibility = Uno.uno_get_solution_dual_feasibility(uno_model)
-solution_complementarity = Uno.uno_get_solution_complementarity(uno_model)
+solver = uno_solver("funnelsqp")
+Uno.uno_set_solver_option(solver, "print_solution", "yes")
+uno_optimize(solver, model)
+
+optimization_status = Uno.uno_get_optimization_status(solver)
+solution_status = Uno.uno_get_solution_status(solver)
+solution_objective = Uno.uno_get_solution_objective(solver)
+solution_primal_feasibility = Uno.uno_get_solution_primal_feasibility(solver)
+solution_dual_feasibility = Uno.uno_get_solution_dual_feasibility(solver)
+solution_complementarity = Uno.uno_get_solution_complementarity(solver)
 
 primal_solution = Vector{Float64}(undef, nvar)
-Uno.uno_get_primal_solution(uno_model, primal_solution)
+Uno.uno_get_primal_solution(solver, primal_solution)
 
 constraint_dual_solution = Vector{Float64}(undef, ncon)
-Uno.uno_get_constraint_dual_solution(uno_model, constraint_dual_solution)
+Uno.uno_get_constraint_dual_solution(solver, constraint_dual_solution)
 
 lower_bound_dual_solution = Vector{Float64}(undef, nvar)
-Uno.uno_get_lower_bound_dual_solution(uno_model, lower_bound_dual_solution)
+Uno.uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
 
 upper_bound_dual_solution = Vector{Float64}(undef, nvar)
-Uno.uno_get_upper_bound_dual_solution(uno_model, upper_bound_dual_solution)
+Uno.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 
 @test optimization_status == 0  # UNO_SUCCESS
 @test solution_status == 1      # UNO_FEASIBLE_KKT_POINT

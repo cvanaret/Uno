@@ -7,7 +7,7 @@ using JuliaFormatter
 function main()
   # Use the header Uno_C_API.h provided by Uno_jll.jl
   # include_dir = joinpath(Uno_jll.artifact_dir, "include")
-  include_dir = joinpath(@__DIR__, "..", "..", "..", "C")
+  include_dir = joinpath(@__DIR__, "..", "..", "C")
   headers = [joinpath(include_dir, "Uno_C_API.h")]
 
   options_path = joinpath(@__DIR__, "uno.toml")
