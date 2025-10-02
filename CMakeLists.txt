@@ -324,9 +324,6 @@ endif()
 if(TARGET uno_ampl)
    list(APPEND INSTALL_TARGETS uno_ampl)
 endif()
-if(TARGET unopy)
-   list(APPEND INSTALL_TARGETS unopy)
-endif()
 install(TARGETS ${INSTALL_TARGETS}
    COMPONENT libuno
    EXPORT UnoTargets
