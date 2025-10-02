@@ -24,6 +24,68 @@ julia> Pkg.test("Uno")
 
 We plan to register `Uno.jl` in the near future (at the latest by JuMP-dev 2025).
 
+## Examples
+
+Below are examples showing how to use `Uno.jl` with the interfaces for `NLPModels.jl` and `MathOptInterface.jl`.
+
+```julia
+using Uno, CUTEst
+
+nlp = CUTEstModel{Float64}("HS15")
+model = uno_model(nlp)
+solver = uno_solver("funnelsqp", print_solution="yes")
+uno_optimize(solver, model)
+
+optimization_status = Uno.uno_get_optimization_status(solver)
+solution_status = Uno.uno_get_solution_status(solver)
+solution_objective = Uno.uno_get_solution_objective(solver)
+solution_primal_feasibility = Uno.uno_get_solution_primal_feasibility(solver)
+solution_dual_feasibility = Uno.uno_get_solution_dual_feasibility(solver)
+solution_complementarity = Uno.uno_get_solution_complementarity(solver)
+
+primal_solution = Vector{Float64}(undef, nlp.meta.nvar)
+Uno.uno_get_primal_solution(solver, primal_solution)
+
+constraint_dual_solution = Vector{Float64}(undef, nlp.meta.ncon)
+Uno.uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+
+lower_bound_dual_solution = Vector{Float64}(undef, nlp.meta.nvar)
+Uno.uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+
+upper_bound_dual_solution = Vector{Float64}(undef, nlp.meta.nvar)
+Uno.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+```
+
+```julia
+using Uno, JuMP
+
+jump_model = Model(Uno.Optimizer)
+x0 = [-2, 1]
+uvar = [0.5, Inf]
+@variable(jump_model, x[i = 1:2] ≤ uvar[i], start = x0[i])
+@objective(jump_model, Min, 100 * (x[2] - x[1]^2)^2 + (1 - x[1])^2)
+@constraint(jump_model, x[1] * x[2] - 1 ≥ 0)
+@constraint(jump_model, x[1] + x[2]^2 ≥ 0)
+
+optimize!(jump_model)
+
+termination_status(jump_model)  # solver termination status
+objective_value(jump_model)     # objective value
+value.(x)                       # primal solution
+```
+
+If you encounter any issues with the interface for JuMP problems, you can use [NLPModelsJuMP.jl](https://github.com/JuliaSmoothOptimizers/NLPModelsJuMP.jl) as a workaround:
+
+```julia
+using NLPModelsJuMP
+
+nlp = MathOptNLPModel(jump_model)
+
+model = uno_model(nlp)
+solver = uno_solver("funnelsqp", print_solution="yes")
+uno_optimize(solver, model)
+```
+
 ## LibHSL
 
 We highly recommend downloading the latest release of [libHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) and installing the official version of `HSL_jll.jl`.

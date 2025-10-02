@@ -1,7 +1,6 @@
 nlp = CUTEstModel{Float64}("HS15")
 model = uno_model(nlp)
-solver = uno_solver("funnelsqp")
-Uno.uno_set_solver_option(solver, "print_solution", "yes")
+solver = uno_solver("funnelsqp", print_solution="yes")
 uno_optimize(solver, model)
 
 optimization_status = Uno.uno_get_optimization_status(solver)

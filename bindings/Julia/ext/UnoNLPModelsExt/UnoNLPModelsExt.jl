@@ -68,8 +68,6 @@ function Uno.uno_model(nlp::AbstractNLPModel{Float64})
     Cint.(hrows),
     Cint.(hcols),
     nlp.meta.nnzh,
-    nlp.meta.x0,
-    nlp.meta.y0,
     nlpmodels_objective,
     nlpmodels_constraints,
     nlpmodels_objective_gradient,
@@ -82,6 +80,8 @@ function Uno.uno_model(nlp::AbstractNLPModel{Float64})
     lagrangian_sign=1.0,
     user_model=nlp,
   )
+  Uno.uno_set_initial_primal_iterate(model, nlp.meta.x0)
+  Uno.uno_set_initial_dual_iterate(model, nlp.meta.y0)
   return model
 end
 

@@ -149,8 +149,6 @@ function uno_model(
   hrows::Vector{Cint},
   hcols::Vector{Cint},
   nnzh::Int,
-  x0::Vector{Float64},
-  y0::Vector{Float64},
   eval_objective::Function,
   eval_constraints::Function,
   eval_gradient::Function,
@@ -163,8 +161,8 @@ function uno_model(
   lagrangian_sign::Float64=1.0,
   user_model=nothing
 )
-  @assert nvar == length(lvar) == length(uvar) == length(x0)
-  @assert ncon == length(lcon) == length(ucon) == length(y0)
+  @assert nvar == length(lvar) == length(uvar)
+  @assert ncon == length(lcon) == length(ucon)
 
   # 'L' for linear, 'Q' for quadratic, 'N' for nonlinear
   @assert problem_type == 'L' || problem_type == 'Q' || problem_type == 'N'
@@ -175,9 +173,6 @@ function uno_model(
   (c_model == C_NULL) && error("Failed to construct Uno model for some unknown reason.")
   model = UnoModel(c_model, nvar, ncon, eval_objective, eval_constraints, eval_gradient,
                    eval_jacobian, eval_hessian, eval_Jv, eval_Jtv, eval_Hv, user_model)
-
-  uno_set_initial_primal_iterate(model, x0)
-  uno_set_initial_dual_iterate(model, y0)
 
   user_data = pointer_from_objref(model)::Ptr{Cvoid}
   flag = uno_set_user_data(c_model, user_data)
@@ -224,11 +219,21 @@ end
 
 Base.unsafe_convert(::Type{Ptr{Cvoid}}, solver::UnoSolver) = solver.c_solver
 
-function uno_solver(preset::String)
+function uno_solver(preset::String; kwargs...)
   c_solver = uno_create_solver()
   (c_solver == C_NULL) && error("Failed to construct Uno solver for some unknown reason.")
-  uno_set_solver_preset(c_solver, preset)
   solver = UnoSolver(c_solver)
+
+  # pass options to Uno
+  uno_set_solver_preset(c_solver, preset)
+  for (k, v) in kwargs
+    if typeof(v) <: String
+      uno_set_solver_option(c_solver, string(k), v)
+    else
+      @warn "$k does not seem to be a valid Uno option."
+    end
+  end
+
   finalizer(uno_destroy_solver, solver)
   return solver
 end
@@ -238,12 +243,14 @@ function uno_optimize(solver::UnoSolver, model::UnoModel)
 end
 
 function uno_set_initial_primal_iterate(model::UnoModel, initial_primal_iterate::Vector{Float64})
+  @assert model.nvar == length(initial_primal_iterate)
   flag = uno_set_initial_primal_iterate(model.c_model, initial_primal_iterate)
   flag || error("Failed to set initial primal iterate via uno_set_initial_primal_iterate.")
   return
 end
 
 function uno_set_initial_dual_iterate(model::UnoModel, initial_dual_iterate::Vector{Float64})
+  @assert model.ncon == length(initial_dual_iterate)
   flag = uno_set_initial_dual_iterate(model.c_model, initial_dual_iterate)
   flag || error("Failed to set initial dual iterate via uno_set_initial_dual_iterate.")
   return

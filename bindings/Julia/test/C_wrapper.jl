@@ -177,9 +177,6 @@ ncon = 2
 lcon = [25.0, 40.0]
 ucon = [2.0e19, 40.0]
 
-x0 = [1.0, 5.0, 5.0, 1.0]
-y0 = zeros(Float64, ncon)
-
 jrows, jcols, nnzj = sparsity_pattern_jacobian_hs71()
 hrows, hcols, nnzh = sparsity_pattern_lagrangian_hessian_hs71()
 
@@ -198,8 +195,6 @@ model = uno_model(
   hrows,
   hcols,
   nnzh,
-  x0,
-  y0,
   c_objective,
   c_constraints,
   c_objective_gradient,
@@ -209,6 +204,11 @@ model = uno_model(
   c_jacobian_transposed_operator,
   c_lagrangian_hessian_operator,
 )
+
+x0 = Float64[1.0, 5.0, 5.0, 1.0]
+y0 = zeros(Float64, ncon)
+Uno.uno_set_initial_primal_iterate(model, x0)
+Uno.uno_set_initial_dual_iterate(model, y0)
 
 solver = uno_solver("funnelsqp")
 Uno.uno_set_solver_option(solver, "print_solution", "yes")
