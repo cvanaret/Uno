@@ -93,6 +93,7 @@ Create a new Uno optimizer.
 """
 mutable struct Optimizer <: MOI.AbstractOptimizer
     inner::Union{Nothing,Uno.UnoModel}
+    solver::Union{Nothing,Uno.UnoSolver}
     name::String
     invalid_model::Bool
     silent::Bool
@@ -118,6 +119,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
 
     function Optimizer()
         return new(
+            nothing,
             nothing,
             "",
             false,
@@ -152,7 +154,7 @@ const _SETS = Union{
     MOI.Interval{Float64},
 }
 
-MOI.get(::Optimizer, ::MOI.SolverVersion) = string(Uno.version())
+MOI.get(::Optimizer, ::MOI.SolverVersion) = string(Uno.uno_version())
 
 ### _EmptyNLPEvaluator
 
@@ -171,6 +173,7 @@ MOI.eval_hessian_lagrangian_product(::_EmptyNLPEvaluator, H, x, v, σ, μ) = not
 
 function MOI.empty!(model::Optimizer)
     model.inner = nothing
+    model.solver = nothing
     # SKIP: model.name
     model.invalid_model = false
     # SKIP: model.silent
@@ -804,7 +807,7 @@ function MOI.get(
     # Alexis -- revisit this code when we know how to handle the workspace
     # λ = model.inner.mult_g[row(model, ci)]
     mult_g = Vector{Float64}(undef, model.inner.ncon)
-    Uno.uno_get_constraint_dual_solution(model.inner, mult_g)
+    Uno.uno_get_constraint_dual_solution(model.solver, mult_g)
 
     λ = mult_g[row(model, ci)]
     J = Tuple{Int,Int}[]
@@ -814,7 +817,7 @@ function MOI.get(
     # Alexis -- revisit this code when we know how to handle the workspace
     # _eval_constraint_jacobian(J_val, 0, model.inner.x, f, s)
     sol = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_primal_solution(model.inner, sol)
+    Uno.uno_get_primal_solution(model.solver, sol)
     _eval_constraint_jacobian(J_val, 0, sol, f, s)
 
     dual = zeros(MOI.dimension(s.set))
@@ -1384,6 +1387,7 @@ function _setup_model(model::Optimizer)
         lagrangian_sign=1.0,
         user_model=model,
     )
+    model.solver = Uno.uno_solver("funnelsqp")
     return
 end
 
@@ -1408,13 +1412,13 @@ function MOI.optimize!(model::Optimizer)
     end
     copy_parameters(model)
     inner = model.inner::Uno.UnoModel
-    Uno.uno_set_solver_option(inner, "print_solution", model.silent ? "no" : "yes")
-    Uno.uno_set_solver_preset(inner, "funnelsqp")
+    solver = model.solver::Uno.UnoSolver
+    Uno.uno_set_solver_option(solver, "print_solution", model.silent ? "no" : "yes")
 
     # Other misc options that over-ride the ones set above.
     for (name, value) in model.options
         if value isa String
-            Uno.uno_set_solver_option(inner, name, value)
+            Uno.uno_set_solver_option(solver, name, value)
         else
             error(
                 "Unable to add option `\"$name\"` with the value " *
@@ -1432,7 +1436,7 @@ function MOI.optimize!(model::Optimizer)
             clamp(0.0, model.variables.lower[i], model.variables.upper[i])
         end
     end
-    Uno.uno_set_initial_primal_iterate(inner, model.x0)
+    Uno.uno_set_initial_primal_iterate(solver, model.x0)
     for (i, start) in enumerate(model.qp_data.mult_g)
         model.y0[i] = _dual_start(model, start, -1)
     end
@@ -1447,7 +1451,7 @@ function MOI.optimize!(model::Optimizer)
             model.y0[offset+i] = _dual_start(model, start, -1)
         end
     end
-    Uno.uno_set_initial_dual_iterate(inner, model.y0)
+    Uno.uno_set_initial_dual_iterate(solver, model.y0)
 
     # We can't provide yet a starting point for the slacks in Uno
     # for i in 1:inner.n
@@ -1462,7 +1466,7 @@ function MOI.optimize!(model::Optimizer)
         s.eval_jacobian_timer = 0.0
         s.eval_hessian_lagrangian_timer = 0.0
     end
-    Uno.uno_optimize(inner)
+    Uno.uno_optimize(solver, inner)
     model.solve_time = time() - start_time
     return
 end
@@ -1490,7 +1494,7 @@ function MOI.get(model::Optimizer, ::MOI.TerminationStatus)
     elseif model.inner === nothing
         return MOI.OPTIMIZE_NOT_CALLED
     end
-    uno_status = Uno.uno_get_optimization_status(model.inner)
+    uno_status = Uno.uno_get_optimization_status(model.solver)
     status, _ = _STATUS_CODES[uno_status]
     return status
 end
@@ -1503,7 +1507,7 @@ function MOI.get(model::Optimizer, ::MOI.RawStatusString)
     elseif model.inner === nothing
         return "Optimize not called"
     end
-    uno_status = Uno.uno_get_optimization_status(model.inner)
+    uno_status = Uno.uno_get_optimization_status(model.solver)
     return string(uno_status)
 end
 
@@ -1513,7 +1517,7 @@ function _manually_evaluated_primal_status(model::Optimizer)
     # Alexis -- revisit this code when we know how to handle the workspace
     # x, g = model.inner.x, model.inner.g
     x = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_primal_solution(model.inner, x)
+    Uno.uno_get_primal_solution(model.solver, x)
     g = Vector{Float64}(undef, model.inner.ncon)
     MOI.eval_constraint(model, g, x)
 
@@ -1544,7 +1548,7 @@ function MOI.get(model::Optimizer, attr::MOI.PrimalStatus)
     if !(1 <= attr.result_index <= MOI.get(model, MOI.ResultCount()))
         return MOI.NO_SOLUTION
     end
-    uno_status = Uno.uno_get_optimization_status(model.inner)
+    uno_status = Uno.uno_get_optimization_status(model.solver)
     _, status = _STATUS_CODES[uno_status]
     if status == MOI.UNKNOWN_RESULT_STATUS
         # Not sure. RestorationFailure can terminate at a feasible (but
@@ -1560,7 +1564,7 @@ function MOI.get(model::Optimizer, attr::MOI.DualStatus)
     if !(1 <= attr.result_index <= MOI.get(model, MOI.ResultCount()))
         return MOI.NO_SOLUTION
     end
-    uno_status = Uno.uno_get_optimization_status(model.inner)
+    uno_status = Uno.uno_get_optimization_status(model.solver)
     _, status = _STATUS_CODES[uno_status]
     return status
 end
@@ -1577,7 +1581,7 @@ MOI.get(model::Optimizer, ::MOI.BarrierIterations) = model.barrier_iterations
 
 function MOI.get(model::Optimizer, attr::MOI.ObjectiveValue)
     MOI.check_result_index_bounds(model, attr)
-    obj_val = Uno.uno_get_solution_objective(model.inner)
+    obj_val = Uno.uno_get_solution_objective(model.solver)
     return obj_val
 end
 
@@ -1597,7 +1601,7 @@ function MOI.get(
     # Alexis -- revisit this code when we know how to handle the workspace
     # model.inner.x[column(vi)]
     x = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_primal_solution(model.inner, x)
+    Uno.uno_get_primal_solution(model.solver, x)
     return x[column(vi)]
 end
 
@@ -1642,7 +1646,7 @@ function MOI.get(
     # Alexis -- revisit this code when we know how to handle the workspace
     # model.inner.g[row(model, ci)]
     x = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_primal_solution(model.inner, x)
+    Uno.uno_get_primal_solution(model.solver, x)
     g = Vector{Float64}(undef, model.inner.ncon)
     MOI.eval_constraint(model, g, x)
     return g[row(model, ci)]
@@ -1658,7 +1662,7 @@ function MOI.get(
     # Alexis -- revisit this code when we know how to handle the workspace
     # model.inner.x[ci.value]
     x = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_primal_solution(model.inner, x)
+    Uno.uno_get_primal_solution(model.solver, x)
     return x[ci.value]
 end
 
@@ -1683,7 +1687,7 @@ function MOI.get(
     # Alexis -- revisit this code when we know how to handle the workspace
     # v = s * model.inner.mult_g[row(model, ci)]
     mult_g = Vector{Float64}(undef, model.inner.ncon)
-    Uno.uno_get_constraint_dual_solution(model.inner, mult_g)
+    Uno.uno_get_constraint_dual_solution(model.solver, mult_g)
     v = s * mult_g[row(model, ci)]
     return v
 end
@@ -1699,8 +1703,8 @@ function MOI.get(
     # rc = model.inner.mult_x_L[ci.value] - model.inner.mult_x_U[ci.value]
     mult_x_L = Vector{Float64}(undef, model.inner.nvar)
     mult_x_U = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_lower_bound_dual_solution(model.inner, mult_x_L)
-    Uno.uno_get_upper_bound_dual_solution(model.inner, mult_x_U)
+    Uno.uno_get_lower_bound_dual_solution(model.solver, mult_x_L)
+    Uno.uno_get_upper_bound_dual_solution(model.solver, mult_x_U)
     rc = mult_x_L[ci.value] - mult_x_U[ci.value]
     return min(0.0, _dual_multiplier(model) * rc)
 end
@@ -1716,8 +1720,8 @@ function MOI.get(
     # rc = model.inner.mult_x_L[ci.value] - model.inner.mult_x_U[ci.value]
     mult_x_L = Vector{Float64}(undef, model.inner.nvar)
     mult_x_U = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_lower_bound_dual_solution(model.inner, mult_x_L)
-    Uno.uno_get_upper_bound_dual_solution(model.inner, mult_x_U)
+    Uno.uno_get_lower_bound_dual_solution(model.solver, mult_x_L)
+    Uno.uno_get_upper_bound_dual_solution(model.solver, mult_x_U)
     rc = mult_x_L[ci.value] - mult_x_U[ci.value]
     return max(0.0, _dual_multiplier(model) * rc)
 end
@@ -1733,8 +1737,8 @@ function MOI.get(
     # rc = model.inner.mult_x_L[ci.value] - model.inner.mult_x_U[ci.value]
     mult_x_L = Vector{Float64}(undef, model.inner.nvar)
     mult_x_U = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_lower_bound_dual_solution(model.inner, mult_x_L)
-    Uno.uno_get_upper_bound_dual_solution(model.inner, mult_x_U)
+    Uno.uno_get_lower_bound_dual_solution(model.solver, mult_x_L)
+    Uno.uno_get_upper_bound_dual_solution(model.solver, mult_x_U)
     rc = mult_x_L[ci.value] - mult_x_U[ci.value]
     return _dual_multiplier(model) * rc
 end
@@ -1750,8 +1754,8 @@ function MOI.get(
     # rc = model.inner.mult_x_L[ci.value] - model.inner.mult_x_U[ci.value]
     mult_x_L = Vector{Float64}(undef, model.inner.nvar)
     mult_x_U = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_lower_bound_dual_solution(model.inner, mult_x_L)
-    Uno.uno_get_upper_bound_dual_solution(model.inner, mult_x_U)
+    Uno.uno_get_lower_bound_dual_solution(model.solver, mult_x_L)
+    Uno.uno_get_upper_bound_dual_solution(model.solver, mult_x_U)
     rc = mult_x_L[ci.value] - mult_x_U[ci.value]
     return _dual_multiplier(model) * rc
 end
@@ -1764,7 +1768,7 @@ function MOI.get(model::Optimizer, attr::MOI.NLPBlockDual)
     # Alexis -- revisit this code when we know how to handle the workspace
     # v = s .* model.inner.mult_g[(length(model.qp_data)+1):end]
     mult_g = Vector{Float64}(undef, model.inner.ncon)
-    Uno.uno_get_constraint_dual_solution(model.inner, mult_g)
+    Uno.uno_get_constraint_dual_solution(model.solver, mult_g)
     v = s .* mult_g[(length(model.qp_data)+1):end]
     return v
 end

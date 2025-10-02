@@ -18,7 +18,7 @@ This Julia interface is developed and maintained by [Alexis Montoison](https://g
 
 ```julia
 julia> using Pkg
-julia> Pkg.add(url="https://github.com/cvanaret/Uno", subdir="bindings/Julia/Uno.jl")
+julia> Pkg.add(url="https://github.com/cvanaret/Uno", subdir="bindings/Julia")
 julia> Pkg.test("Uno")
 ```
 

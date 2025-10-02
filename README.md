@@ -69,7 +69,7 @@ Uno can be used from Julia in two ways:
    - an interface to [MathOptInterface.jl](https://github.com/jump-dev/MathOptInterface.jl) for handling [JuMP](https://github.com/jump-dev/JuMP.jl) models.
 
    Under the hood, `Uno.jl` uses precompiled shared libraries from [Uno_jll.jl](https://github.com/JuliaBinaryWrappers/Uno_jll.jl) while exposing a high-level Julia API.
-   More details can be found in the [README](https://github.com/cvanaret/Uno/tree/main/bindings/Julia/Uno.jl) of `Uno.jl`.
+   More details can be found in the [README](https://github.com/cvanaret/Uno/tree/main/bindings/Julia) of `Uno.jl`.
    This is the recommended way of using Uno in Julia.
 
 2. **AMPL interface**:

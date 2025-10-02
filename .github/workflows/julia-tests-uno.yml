@@ -61,5 +61,5 @@ jobs:
           using Pkg
           Pkg.instantiate()
           Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
-          Pkg.develop(path="/home/runner/work/Uno/Uno/bindings/Julia/Uno.jl")
+          Pkg.develop(path="/home/runner/work/Uno/Uno/bindings/Julia")
           Pkg.test("Uno")

@@ -3,39 +3,12 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE file or at https://opensource.org/licenses/MIT.
 
-function version()
+function uno_version()
     major = Ref{Cint}()
     minor = Ref{Cint}()
     patch = Ref{Cint}()
     uno_get_version(major, minor, patch)
     return VersionNumber(major[], minor[], patch[])
-end
-
-mutable struct UnoModel{M}
-  # Reference to the internal C model of Uno
-  c_model::Ptr{Cvoid}
-  # Reference to the internal C solver of Uno
-  c_solver::Ptr{Cvoid}
-  # Number of variables
-  nvar::Int
-  # Number of constraints
-  ncon::Int
-  # Callbacks
-  eval_objective::Function
-  eval_constraints::Function
-  eval_gradient::Function
-  eval_jacobian::Function
-  eval_hessian::Function
-  eval_Jv::Function
-  eval_Jtv::Function
-  eval_Hv::Function
-  # User data
-  user_model::M
-end
-
-function uno_finalizer(model::UnoModel)
-  uno_destroy_model(model.c_model)
-  uno_destroy_solver(model.c_solver)
 end
 
 function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value::Ptr{Float64}, user_data::Ptr{Cvoid})
@@ -139,6 +112,28 @@ function uno_lagrangian_hessian_operator(number_variables::Cint, number_constrai
   return Cint(0)
 end
 
+mutable struct UnoModel{M}
+  # Reference to the internal C model of Uno
+  c_model::Ptr{Cvoid}
+  # Number of variables
+  nvar::Int
+  # Number of constraints
+  ncon::Int
+  # Callbacks
+  eval_objective::Function
+  eval_constraints::Function
+  eval_gradient::Function
+  eval_jacobian::Function
+  eval_hessian::Function
+  eval_Jv::Function
+  eval_Jtv::Function
+  eval_Hv::Function
+  # User data
+  user_model::M
+end
+
+Base.unsafe_convert(::Type{Ptr{Cvoid}}, model::UnoModel) = model.c_model
+
 function uno_model(
   problem_type::Char,
   minimize::Bool,
@@ -178,10 +173,8 @@ function uno_model(
   base_indexing = Cint(1)  # Fortran-style indexing
   c_model = uno_create_model(problem_type, Cint(nvar), lvar, uvar, base_indexing)
   (c_model == C_NULL) && error("Failed to construct Uno model for some unknown reason.")
-  c_solver = uno_create_solver()
-  (c_solver == C_NULL) && error("Failed to construct Uno solver for some unknown reason.")
-  model = UnoModel(c_model, c_solver, nvar, ncon, eval_objective, eval_constraints, eval_gradient,
-                       eval_jacobian, eval_hessian, eval_Jv, eval_Jtv, eval_Hv, user_model)
+  model = UnoModel(c_model, nvar, ncon, eval_objective, eval_constraints, eval_gradient,
+                   eval_jacobian, eval_hessian, eval_Jv, eval_Jtv, eval_Hv, user_model)
 
   uno_set_initial_primal_iterate(model, x0)
   uno_set_initial_dual_iterate(model, y0)
@@ -220,12 +213,28 @@ function uno_model(
     flag || error("Failed to set transposed Jacobian operator via uno_set_jacobian_transposed_operator.")
   end
 
-  finalizer(uno_finalizer, model)
+  finalizer(uno_destroy_model, model)
   return model
 end
 
-function uno_optimize(model::UnoModel)
-  uno_optimize(model.c_solver, model.c_model)
+mutable struct UnoSolver
+  # Reference to the internal C solver of Uno
+  c_solver::Ptr{Cvoid}
+end
+
+Base.unsafe_convert(::Type{Ptr{Cvoid}}, solver::UnoSolver) = solver.c_solver
+
+function uno_solver(preset::String)
+  c_solver = uno_create_solver()
+  (c_solver == C_NULL) && error("Failed to construct Uno solver for some unknown reason.")
+  uno_set_solver_preset(c_solver, preset)
+  solver = UnoSolver(c_solver)
+  finalizer(uno_destroy_solver, solver)
+  return solver
+end
+
+function uno_optimize(solver::UnoSolver, model::UnoModel)
+  uno_optimize(solver.c_solver, model.c_model)
 end
 
 function uno_set_initial_primal_iterate(model::UnoModel, initial_primal_iterate::Vector{Float64})
@@ -240,54 +249,54 @@ function uno_set_initial_dual_iterate(model::UnoModel, initial_dual_iterate::Vec
   return
 end
 
-function uno_set_solver_option(model::UnoModel, option_name::String, option_value::String)
-  uno_set_solver_option(model.c_solver, option_name, option_value)
+function uno_set_solver_option(solver::UnoSolver, option_name::String, option_value::String)
+  uno_set_solver_option(solver.c_solver, option_name, option_value)
 end
 
-function uno_set_solver_preset(model::UnoModel, preset_name::String)
-  uno_set_solver_preset(model.c_solver, preset_name)
+function uno_set_solver_preset(solver::UnoSolver, preset_name::String)
+  uno_set_solver_preset(solver.c_solver, preset_name)
 end
 
-function uno_get_optimization_status(model::UnoModel)
-  return uno_get_optimization_status(model.c_solver)
+function uno_get_optimization_status(solver::UnoSolver)
+  return uno_get_optimization_status(solver.c_solver)
 end
 
 function uno_get_solution_status(model::UnoModel)
   return uno_get_solution_status(model.c_solver)
 end
 
-function uno_get_solution_objective(model::UnoModel)
-  return uno_get_solution_objective(model.c_solver)
+function uno_get_solution_objective(solver::UnoSolver)
+  return uno_get_solution_objective(solver.c_solver)
 end
 
-function uno_get_primal_solution(model::UnoModel, primal_solution::Vector{Float64})
-  uno_get_primal_solution(model.c_solver, primal_solution)
+function uno_get_primal_solution(solver::UnoSolver, primal_solution::Vector{Float64})
+  uno_get_primal_solution(solver.c_solver, primal_solution)
   return primal_solution
 end
 
-function uno_get_constraint_dual_solution(model::UnoModel, constraint_dual_solution::Vector{Float64})
-  uno_get_constraint_dual_solution(model.c_solver, constraint_dual_solution)
+function uno_get_constraint_dual_solution(solver::UnoSolver, constraint_dual_solution::Vector{Float64})
+  uno_get_constraint_dual_solution(solver.c_solver, constraint_dual_solution)
   return constraint_dual_solution
 end
 
-function uno_get_lower_bound_dual_solution(model::UnoModel, lower_bound_dual_solution::Vector{Float64})
-  uno_get_lower_bound_dual_solution(model.c_solver, lower_bound_dual_solution)
+function uno_get_lower_bound_dual_solution(solver::UnoSolver, lower_bound_dual_solution::Vector{Float64})
+  uno_get_lower_bound_dual_solution(solver.c_solver, lower_bound_dual_solution)
   return lower_bound_dual_solution
 end
 
-function uno_get_upper_bound_dual_solution(model::UnoModel, upper_bound_dual_solution::Vector{Float64})
-  uno_get_upper_bound_dual_solution(model.c_solver, upper_bound_dual_solution)
+function uno_get_upper_bound_dual_solution(solver::UnoSolver, upper_bound_dual_solution::Vector{Float64})
+  uno_get_upper_bound_dual_solution(solver.c_solver, upper_bound_dual_solution)
   return upper_bound_dual_solution
 end
 
-function uno_get_solution_primal_feasibility(model::UnoModel)
-  return uno_get_solution_primal_feasibility(model.c_solver)
+function uno_get_solution_primal_feasibility(solver::UnoSolver)
+  return uno_get_solution_primal_feasibility(solver.c_solver)
 end
 
-function uno_get_solution_dual_feasibility(model::UnoModel)
-  return uno_get_solution_dual_feasibility(model.c_solver)
+function uno_get_solution_dual_feasibility(solver::UnoSolver)
+  return uno_get_solution_dual_feasibility(solver.c_solver)
 end
 
-function uno_get_solution_complementarity(model::UnoModel)
-  return uno_get_solution_complementarity(model.c_solver)
+function uno_get_solution_complementarity(solver::UnoSolver)
+  return uno_get_solution_complementarity(solver.c_solver)
 end

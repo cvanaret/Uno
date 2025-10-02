@@ -1,7 +1,7 @@
 using Uno, Test
 using NLPModels, MathOptInterface, CUTEst
 
-version = Uno.version()
+version = uno_version()
 println("The version of Uno is $version.")
 
 @testset "C interface" begin
