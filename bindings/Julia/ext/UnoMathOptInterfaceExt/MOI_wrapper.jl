@@ -1442,6 +1442,9 @@ function MOI.optimize!(model::Optimizer)
     if model.x0 === nothing
         model.x0 = Vector{Float64}(undef, inner.nvar)
     end
+    if length(model.x0) != inner.nvar
+        resize!(model.x0, inner.nvar)
+    end
     for i in 1:length(model.variable_primal_start)
         model.x0[i] = if model.variable_primal_start[i] !== nothing
             model.variable_primal_start[i]
@@ -1453,6 +1456,9 @@ function MOI.optimize!(model::Optimizer)
 
     if model.y0 === nothing
         model.y0 = Vector{Float64}(undef, inner.ncon)
+    end
+    if length(model.y0) != inner.ncon
+        resize!(model.y0, inner.ncon)
     end
     for (i, start) in enumerate(model.qp_data.mult_g)
         model.y0[i] = _dual_start(model, start, -1)
