@@ -17,7 +17,6 @@ UnoMathOptInterfaceExt = "MathOptInterface"
 UnoNLPModelsExt = "NLPModels"
 
 [compat]
-CUTEst = "=1.3.4"
 LinearAlgebra = "1.10"
 MathOptInterface = "1.25"
 NLPModels = "0.21.5"
