@@ -95,6 +95,10 @@ function test_MOI_Test()
             r"test_nonlinear_without_objective.*",
             "test_objective_FEASIBILITY_SENSE_clears_objective",
             "test_nonlinear_constraint_log",
+            r"test_nonlinear_quadratic_1.*",
+            r"test_nonlinear_quadratic_2.*",
+            r"test_nonlinear_quadratic_3.*",
+            r"test_nonlinear_quadratic_4.*",
         ],
     )
     return

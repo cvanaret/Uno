@@ -194,6 +194,8 @@ function MOI.empty!(model::Optimizer)
     model.barrier_iterations = 0
     # SKIP: model.ad_backend
     empty!(model.vector_nonlinear_oracle_constraints)
+    model.x0 = nothing
+    model.y0 = nothing
     return
 end
 
@@ -238,6 +240,8 @@ function MOI.add_constrained_variable(
 )
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     _init_nlp_model(model)
     p = MOI.VariableIndex(_PARAMETER_OFFSET + length(model.parameters))
     push!(model.list_of_variable_indices, p)
@@ -411,6 +415,8 @@ function MOI.add_variable(model::Optimizer)
     push!(model.mult_x_U, nothing)
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     x = MOI.add_variable(model.variables)
     push!(model.list_of_variable_indices, x)
     return x
@@ -460,6 +466,8 @@ function MOI.add_constraint(model::Optimizer, x::MOI.VariableIndex, set::_SETS)
     index = MOI.add_constraint(model.variables, x, set)
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     return index
 end
 
@@ -472,6 +480,8 @@ function MOI.set(
     MOI.set(model.variables, MOI.ConstraintSet(), ci, set)
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     return
 end
 
@@ -482,6 +492,8 @@ function MOI.delete(
     MOI.delete(model.variables, ci)
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     return
 end
 
@@ -510,6 +522,8 @@ function MOI.add_constraint(
     index = MOI.add_constraint(model.qp_data, func, set)
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     return index
 end
 
@@ -554,6 +568,8 @@ function MOI.set(
     MOI.set(model.qp_data, MOI.ConstraintSet(), ci, set)
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     return
 end
 
@@ -651,6 +667,8 @@ function MOI.add_constraint(
     index = MOI.Nonlinear.add_constraint(model.nlp_model, f, s)
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     return MOI.ConstraintIndex{typeof(f),typeof(s)}(index.value)
 end
 
@@ -673,6 +691,8 @@ function MOI.set(
     MOI.Nonlinear.set_objective(model.nlp_model, func)
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     return
 end
 
@@ -698,6 +718,8 @@ function MOI.set(
     model.nlp_model.constraints[index] = MOI.Nonlinear.Constraint(func, set)
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     return
 end
 
@@ -775,6 +797,8 @@ function MOI.add_constraint(
 ) where {F<:MOI.VectorOfVariables,S<:_VectorNonlinearOracle}
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     cache = _VectorNonlinearOracleCache(s)
     push!(model.vector_nonlinear_oracle_constraints, (f, cache))
     n = length(model.vector_nonlinear_oracle_constraints)
@@ -1020,6 +1044,8 @@ function MOI.set(model::Optimizer, ::MOI.NLPBlock, nlp_data::MOI.NLPBlockData)
     model.nlp_data = nlp_data
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     return
 end
 
@@ -1035,6 +1061,8 @@ function MOI.set(
     model.sense = sense
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     return
 end
 
@@ -1092,6 +1120,8 @@ function MOI.set(
     end
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     return
 end
 
@@ -1296,6 +1326,8 @@ function MOI.set(
     # act defensive and invalidate regardless.
     model.inner = nothing
     model.solver = nothing
+    model.x0 = nothing
+    model.y0 = nothing
     model.ad_backend = backend
     return
 end
@@ -1442,9 +1474,6 @@ function MOI.optimize!(model::Optimizer)
     if model.x0 === nothing
         model.x0 = Vector{Float64}(undef, inner.nvar)
     end
-    if length(model.x0) != inner.nvar
-        resize!(model.x0, inner.nvar)
-    end
     for i in 1:length(model.variable_primal_start)
         model.x0[i] = if model.variable_primal_start[i] !== nothing
             model.variable_primal_start[i]
@@ -1456,9 +1485,6 @@ function MOI.optimize!(model::Optimizer)
 
     if model.y0 === nothing
         model.y0 = Vector{Float64}(undef, inner.ncon)
-    end
-    if length(model.y0) != inner.ncon
-        resize!(model.y0, inner.ncon)
     end
     for (i, start) in enumerate(model.qp_data.mult_g)
         model.y0[i] = _dual_start(model, start, -1)
