@@ -9,7 +9,7 @@
 namespace uno {
    // setter
    void Options::set(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten) {
-      this->options[option_name] = option_value;
+      this->string_options[option_name] = option_value;
       this->overwritten_options[option_name] = flag_as_overwritten;
    }
 
@@ -25,7 +25,7 @@ namespace uno {
    // getters
    const std::string& Options::at(const std::string& option_name) const {
       try {
-         const std::string& option_value = this->options.at(option_name);
+         const std::string& option_value = this->string_options.at(option_name);
          this->used[option_name] = true;
          return option_value;
       }
@@ -36,7 +36,7 @@ namespace uno {
 
    std::optional<std::string> Options::at_optional(const std::string& option_name) const {
       try {
-         const std::string& option_value = this->options.at(option_name);
+         const std::string& option_value = this->string_options.at(option_name);
          this->used[option_name] = true;
          return option_value;
       }
@@ -118,7 +118,7 @@ namespace uno {
    void Options::print_used_overwritten() const {
       size_t number_used_options = 0;
       std::string option_list{};
-      for (const auto& [option_name, option_value]: this->options) {
+      for (const auto& [option_name, option_value]: this->string_options) {
          if (this->used[option_name] && this->overwritten_options[option_name]) {
             ++number_used_options;
             option_list.append("- ").append(option_name).append(" = ").append(option_value).append("\n");
@@ -131,10 +131,10 @@ namespace uno {
    }
 
    std::map<std::string, std::string>::const_iterator Options::begin() const {
-      return this->options.begin();
+      return this->string_options.begin();
    }
 
    std::map<std::string, std::string>::const_iterator Options::end() const {
-      return this->options.end();
+      return this->string_options.end();
    }
 } // namespace

@@ -32,7 +32,9 @@ namespace uno {
       [[nodiscard]] std::map<std::string, std::string>::const_iterator end() const;
 
    private:
-      std::map<std::string, std::string> options{};
+      std::map<std::string, int32_t> integer_options{};
+      std::map<std::string, double> double_options{};
+      std::map<std::string, std::string> string_options{};
       mutable std::map<std::string, bool> used{};
       mutable std::map<std::string, bool> overwritten_options{};
 
