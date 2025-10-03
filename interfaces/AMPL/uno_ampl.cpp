@@ -27,7 +27,7 @@ namespace uno {
          Uno uno{};
          Result result = uno.solve(model, options);
          if (result.optimization_status == OptimizationStatus::SUCCESS) {
-            // check result.solution.status
+            // check result.solution_status
          }
          else {
             // ...
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
       else {
          // AMPL expects: ./uno_ampl model.nl [-AMPL] [option_name=option_value, ...]
          // model name
-         std::string model_name = std::string(argv[1]);
+         const char* model_name = argv[1];
 
          // gather the options
          Options options;
@@ -64,20 +64,22 @@ int main(int argc, char* argv[]) {
          // the -AMPL flag indicates that the solution should be written to the AMPL solution file
          size_t offset = 2;
          if (argc > 2 && std::string(argv[2]) == "-AMPL") {
-            options.set("AMPL_write_solution_to_file", "yes");
+            options.set_bool("AMPL_write_solution_to_file", true);
             ++offset;
          }
          else {
-            options.set("AMPL_write_solution_to_file", "no");
+            options.set_bool("AMPL_write_solution_to_file", false);
          }
          // get the command line arguments (options start at index offset)
          const Options command_line_options = Options::get_command_line_options(argc, argv, offset);
          // possibly set options from an option file
+         /*
          const auto optional_option_file = command_line_options.get_string_optional("option_file");
          if (optional_option_file.has_value()) {
             Options file_options = Options::load_option_file(*optional_option_file);
             options.overwrite_with(file_options);
          }
+         */
          // possibly set a preset
          const auto optional_preset = command_line_options.get_string_optional("preset");
          const Options preset_options = Presets::get_preset_options(optional_preset);
