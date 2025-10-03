@@ -1,5 +1,5 @@
 # Copyright (c) 2013: Iain Dunning, Miles Lubin, and contributors
-# 2025: Adapted for Uno.jl by Alexis Montoison and Charlie Vanaret
+# 2025: Modified for MadNLP.jl and Uno.jl by Alexis Montoison
 #
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
@@ -19,7 +19,7 @@
     _kFunctionTypeScalarQuadratic,
 )
 
-function _function_type_to_func(::Type{T}, k::_FunctionType) where {T}
+function _function_type_to_set(::Type{T}, k::_FunctionType) where {T}
     if k == _kFunctionTypeVariableIndex
         return MOI.VariableIndex
     elseif k == _kFunctionTypeScalarAffine
@@ -88,7 +88,7 @@ mutable struct QPBlockData{T}
     end
 end
 
-function _value(variable::MOI.VariableIndex, x::Vector, p::Dict)
+function _value(variable::MOI.VariableIndex, x::AbstractVector, p::Dict)
     if _is_parameter(variable)
         return p[variable.value]
     else
@@ -98,7 +98,7 @@ end
 
 function eval_function(
     f::MOI.ScalarQuadraticFunction{T},
-    x::Vector{T},
+    x::AbstractVector{T},
     p::Dict{Int64,T},
 )::T where {T}
     y = f.constant
@@ -119,7 +119,7 @@ end
 
 function eval_function(
     f::MOI.ScalarAffineFunction{T},
-    x::Vector{T},
+    x::AbstractVector{T},
     p::Dict{Int64,T},
 )::T where {T}
     y = f.constant
@@ -130,9 +130,9 @@ function eval_function(
 end
 
 function eval_dense_gradient(
-    ∇f::Vector{T},
+    ∇f::AbstractVector{T},
     f::MOI.ScalarQuadraticFunction{T},
-    x::Vector{T},
+    x::AbstractVector{T},
     p::Dict{Int64,T},
 )::Nothing where {T}
     for term in f.affine_terms
@@ -154,9 +154,9 @@ function eval_dense_gradient(
 end
 
 function eval_dense_gradient(
-    ∇f::Vector{T},
+    ∇f::AbstractVector{T},
     f::MOI.ScalarAffineFunction{T},
-    x::Vector{T},
+    x::AbstractVector{T},
     p::Dict{Int64,T},
 )::Nothing where {T}
     for term in f.terms
@@ -200,7 +200,7 @@ end
 function eval_sparse_gradient(
     ∇f::AbstractVector{T},
     f::MOI.ScalarQuadraticFunction{T},
-    x::Vector{T},
+    x::AbstractVector{T},
     p::Dict{Int64,T},
 )::Int where {T}
     i = 0
@@ -228,7 +228,7 @@ end
 function eval_sparse_gradient(
     ∇f::AbstractVector{T},
     f::MOI.ScalarAffineFunction{T},
-    x::Vector{T},
+    x::AbstractVector{T},
     p::Dict{Int64,T},
 )::Int where {T}
     i = 0
@@ -277,9 +277,9 @@ end
 
 function eval_Jv_product(
     f::MOI.ScalarAffineFunction{T},
-    y::Vector{T},
-    x::Vector{T},
-    w::Vector{T},
+    y::AbstractVector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
     p::Dict{Int64,T},
     i::Int,
 )::Nothing where {T}
@@ -293,9 +293,9 @@ end
 
 function eval_Jv_product(
     f::MOI.ScalarQuadraticFunction{T},
-    y::Vector{T},
-    x::Vector{T},
-    w::Vector{T},
+    y::AbstractVector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
     p::Dict{Int64,T},
     i::Int,
 )::Nothing where {T}
@@ -320,8 +320,8 @@ end
 function eval_Jtv_product(
     f::MOI.ScalarAffineFunction{T},
     y::AbstractVector{T},
-    x::Vector{T},
-    w::Vector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
     p::Dict{Int64,T},
     i::Int,
 )::Nothing where {T}
@@ -337,8 +337,8 @@ end
 function eval_Jtv_product(
     f::MOI.ScalarQuadraticFunction{T},
     y::AbstractVector{T},
-    x::Vector{T},
-    w::Vector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
     p::Dict{Int64,T},
     i::Int,
 )::Nothing where {T}
@@ -361,9 +361,9 @@ end
 
 function eval_Hv_product(
     f::MOI.ScalarAffineFunction{T},
-    H::Vector{T},
-    x::Vector{T},
-    v::Vector{T},
+    H::AbstractVector{T},
+    x::AbstractVector{T},
+    v::AbstractVector{T},
     α::T,
 )::Nothing where {T}
     return
@@ -371,9 +371,9 @@ end
 
 function eval_Hv_product(
     f::MOI.ScalarQuadraticFunction{T},
-    H::Vector{T},
-    x::Vector{T},
-    v::Vector{T},
+    H::AbstractVector{T},
+    x::AbstractVector{T},
+    v::AbstractVector{T},
     α::T,
 )::Nothing where {T}
     for term in f.quadratic_terms
@@ -410,7 +410,7 @@ function MOI.set(
 end
 
 function MOI.get(block::QPBlockData{T}, ::MOI.ObjectiveFunctionType) where {T}
-    return _function_type_to_func(T, block.objective_function_type)
+    return _function_type_to_set(T, block.objective_function_type)
 end
 
 function MOI.get(block::QPBlockData{T}, ::MOI.ObjectiveFunction{F}) where {T,F}
@@ -423,7 +423,7 @@ function MOI.get(
 ) where {T}
     constraints = Set{Tuple{Type,Type}}()
     for i in 1:length(block)
-        F = _function_type_to_func(T, block.function_type[i])
+        F = _function_type_to_set(T, block.function_type[i])
         S = _bound_type_to_set(T, block.bound_type[i])
         push!(constraints, (F, S))
     end
@@ -453,7 +453,7 @@ function MOI.get(
     for i in 1:length(block)
         if _bound_type_to_set(T, block.bound_type[i]) != S
             continue
-        elseif _function_type_to_func(T, block.function_type[i]) != F
+        elseif _function_type_to_set(T, block.function_type[i]) != F
             continue
         end
         push!(ret, MOI.ConstraintIndex{F,S}(i))
@@ -475,16 +475,16 @@ end
 function MOI.add_constraint(
     block::QPBlockData{T},
     f::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}},
-    s::Union{MOI.LessThan{T},MOI.GreaterThan{T},MOI.EqualTo{T},MOI.Interval{T}},
+    set::Union{MOI.LessThan{T},MOI.GreaterThan{T},MOI.EqualTo{T},MOI.Interval{T}},
 ) where {T}
     push!(block.constraints, f)
-    bound_type, l, u = _set_info(s)
+    bound_type, l, u = _set_info(set)
     push!(block.g_L, l)
     push!(block.g_U, u)
     push!(block.mult_g, nothing)
     push!(block.bound_type, bound_type)
     push!(block.function_type, _function_info(f))
-    return MOI.ConstraintIndex{typeof(f),typeof(s)}(length(block.bound_type))
+    return MOI.ConstraintIndex{typeof(f),typeof(set)}(length(block.bound_type))
 end
 
 function MOI.get(
