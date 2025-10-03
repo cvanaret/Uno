@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <pybind11/pybind11.h>
-#include "../bindings/C/Uno_C_API.h"
+#include "../interfaces/C/Uno_C_API.h"
 
 namespace py = pybind11;
 

@@ -58,17 +58,17 @@ jobs:
         run: sudo cmake --install ${{github.workspace}}/build
 
       - name: Configure example CMake
-        working-directory: ${{github.workspace}}/bindings/C/example
+        working-directory: ${{github.workspace}}/interfaces/C/example
         shell: bash
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
         run: |
-          cmake -B ${{github.workspace}}/bindings/C/example/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DUNO=/usr/local/lib/libuno.so .
+          cmake -B ${{github.workspace}}/interfaces/C/example/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DUNO=/usr/local/lib/libuno.so .
 
       - name: Build example
-        working-directory: ${{github.workspace}}/bindings/C/example
-        run: cmake --build ${{github.workspace}}/bindings/C/example/build --config ${{env.BUILD_TYPE}}
+        working-directory: ${{github.workspace}}/interfaces/C/example
+        run: cmake --build ${{github.workspace}}/interfaces/C/example/build --config ${{env.BUILD_TYPE}}
 
       - name: Run example
-        working-directory: ${{github.workspace}}/bindings/C/example/build
+        working-directory: ${{github.workspace}}/interfaces/C/example/build
         run: ./example_hs015
