@@ -8,7 +8,8 @@
 #include "OptimizationStatus.hpp"
 
 namespace uno {
-   struct Result {
+   class Result {
+   public:
       Result() = delete;
 
       const size_t number_variables;
