@@ -62,7 +62,7 @@ A couple of CUTEst instances are available in the `/examples` directory.
 Uno can be used from Julia in two ways:
 
 1. **Pure Julia interface**:
-   [Uno.jl](https://github.com/cvanaret/Uno/tree/main/interfaces/Julia/Uno.jl) is the native Julia interface to [Uno](https://github.com/cvanaret/Uno).
+   [Uno.jl](https://github.com/cvanaret/Uno/tree/main/interfaces/Julia) is the native Julia interface to [Uno](https://github.com/cvanaret/Uno).
    It provides direct integration with the Julia optimization ecosystem through:
    - a thin wrapper around the full C API,
    - an interface to [NLPModels.jl](https://github.com/JuliaSmoothOptimizers/NLPModels.jl) for solving problems following the NLPModels API, such as [CUTEst](https://github.com/JuliaSmoothOptimizers/CUTEst.jl), [ADNLPModels.jl](https://github.com/JuliaSmoothOptimizers/ADNLPModels.jl), or [ExaModels.jl](https://github.com/exanauts/ExaModels.jl),
