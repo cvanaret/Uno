@@ -19,6 +19,6 @@ In preparation for a release, use the following checklist. These steps can be do
 
 ## Post-release
 
- - [ ] Change the version number in `interfaces/Julia/Uno.jl/Project.toml`
- - [ ] Change the version number in `interfaces/Julia/Uno.jl/gen/Project.toml`
+ - [ ] Change the version number in `interfaces/Julia/Project.toml`
+ - [ ] Change the version number in `interfaces/Julia/gen/Project.toml`
 ````
