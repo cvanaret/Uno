@@ -22,19 +22,19 @@ jobs:
       - name: Regenerate the Julia wrappers
         shell: bash
         run: |
-          cd bindings/Julia/gen
+          cd interfaces/Julia/gen
           julia --color=no --project -e 'using Pkg; Pkg.instantiate()'
           julia --color=no --project wrapper.jl
           cd ../src
           git diff --quiet libuno.jl || {
           echo "❌ The Julia wrappers in libuno.jl are out of date. ❌";
-          echo "Please run wrapper.jl in bindings/Julia/gen to regenerate them:";
+          echo "Please run wrapper.jl in interfaces/Julia/gen to regenerate them:";
           echo "";
-          echo "cd bindings/Julia/gen";
+          echo "cd interfaces/Julia/gen";
           echo "julia --project -e 'using Pkg; Pkg.instantiate()'";
           echo "julia --project wrapper.jl";
           echo "";
           echo "You can also find the instructions at:";
-          echo "https://github.com/cvanaret/Uno/blob/master/bindings/Julia/README.md";
+          echo "https://github.com/cvanaret/Uno/blob/master/interfaces/Julia/README.md";
           exit 1;
           }
