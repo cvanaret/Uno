@@ -268,8 +268,8 @@ function uno_get_optimization_status(solver::UnoSolver)
   return uno_get_optimization_status(solver.c_solver)
 end
 
-function uno_get_solution_status(model::UnoModel)
-  return uno_get_solution_status(model.c_solver)
+function uno_get_solution_status(solver::UnoSolver)
+  return uno_get_solution_status(solver.c_solver)
 end
 
 function uno_get_solution_objective(solver::UnoSolver)
