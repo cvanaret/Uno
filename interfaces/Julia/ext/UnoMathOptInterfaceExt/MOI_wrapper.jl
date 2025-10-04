@@ -22,11 +22,8 @@ struct _VectorNonlinearOracle <: MOI.AbstractVectorSet
     eval_f::Function
     jacobian_structure::Vector{Tuple{Int,Int}}
     eval_jacobian::Function
-    eval_jacobian_product::Union{Nothing,Function}
-    eval_jacobian_transpose_product::Union{Nothing,Function}
     hessian_lagrangian_structure::Vector{Tuple{Int,Int}}
     eval_hessian_lagrangian::Union{Nothing,Function}
-    eval_hessian_lagrangian_product::Union{Nothing,Function}
 
     function _VectorNonlinearOracle(;
         dimension::Int,
@@ -35,12 +32,8 @@ struct _VectorNonlinearOracle <: MOI.AbstractVectorSet
         eval_f::Function,
         jacobian_structure::Vector{Tuple{Int,Int}},
         eval_jacobian::Function,
-        # The hessian_lagrangian and the matrix-free operators are optional.
-        eval_jacobian_product::Union{Nothing,Function} = nothing,
-        eval_jacobian_transpose_product::Union{Nothing,Function} = nothing,
         hessian_lagrangian_structure::Vector{Tuple{Int,Int}} = Tuple{Int,Int}[],
         eval_hessian_lagrangian::Union{Nothing,Function} = nothing,
-        eval_hessian_lagrangian_product::Union{Nothing,Function} = nothing,
     )
         @assert length(l) == length(u)
         return new(
@@ -51,11 +44,8 @@ struct _VectorNonlinearOracle <: MOI.AbstractVectorSet
             eval_f,
             jacobian_structure,
             eval_jacobian,
-            eval_jacobian_product,
-            eval_jacobian_transpose_product,
             hessian_lagrangian_structure,
             eval_hessian_lagrangian,
-            eval_hessian_lagrangian_product,
         )
     end
 end
