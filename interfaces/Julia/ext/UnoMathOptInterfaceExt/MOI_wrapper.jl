@@ -1510,14 +1510,6 @@ function MOI.optimize!(model::Optimizer)
     return
 end
 
-#const _STATUS_CODES = Dict{Cint, Tuple{MOI.TerminationStatusCode, MOI.ResultStatusCode}}(
-#    Uno.UNO_SUCCESS           => (MOI.LOCALLY_SOLVED,  MOI.FEASIBLE_POINT       ),
-#    Uno.UNO_ITERATION_LIMIT   => (MOI.ITERATION_LIMIT, MOI.UNKNOWN_RESULT_STATUS),
-#    Uno.UNO_TIME_LIMIT        => (MOI.TIME_LIMIT,      MOI.UNKNOWN_RESULT_STATUS),
-#    Uno.UNO_EVALUATION_ERROR  => (MOI.NUMERICAL_ERROR, MOI.UNKNOWN_RESULT_STATUS),
-#    Uno.UNO_ALGORITHMIC_ERROR => (MOI.OTHER_ERROR,     MOI.UNKNOWN_RESULT_STATUS),
-#)
-
 function _status_code_mapping(uno_termination_status::Cint, uno_solution_status::Cint)
     if uno_termination_status == Uno.UNO_ITERATION_LIMIT
         return (MOI.ITERATION_LIMIT, MOI.UNKNOWN_RESULT_STATUS) # here we could test feasibility
