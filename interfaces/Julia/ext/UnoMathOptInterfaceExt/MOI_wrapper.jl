@@ -834,7 +834,7 @@ function MOI.get(
     mult_g = Vector{Float64}(undef, model.inner.ncon)
     Uno.uno_get_constraint_dual_solution(model.solver, mult_g)
 
-    λ = mult_g[row(model, ci)]
+    # λ = mult_g[row(model, ci)]
     J = Tuple{Int,Int}[]
     _jacobian_structure(J, 0, f, s)
     J_val = zeros(length(J))
