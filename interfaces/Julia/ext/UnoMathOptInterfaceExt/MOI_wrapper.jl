@@ -1510,13 +1510,39 @@ function MOI.optimize!(model::Optimizer)
     return
 end
 
-const _STATUS_CODES = Dict{Cint, Tuple{MOI.TerminationStatusCode, MOI.ResultStatusCode}}(
-    Uno.UNO_SUCCESS           => (MOI.LOCALLY_SOLVED,  MOI.FEASIBLE_POINT       ),
-    Uno.UNO_ITERATION_LIMIT   => (MOI.ITERATION_LIMIT, MOI.UNKNOWN_RESULT_STATUS),
-    Uno.UNO_TIME_LIMIT        => (MOI.TIME_LIMIT,      MOI.UNKNOWN_RESULT_STATUS),
-    Uno.UNO_EVALUATION_ERROR  => (MOI.NUMERICAL_ERROR, MOI.UNKNOWN_RESULT_STATUS),
-    Uno.UNO_ALGORITHMIC_ERROR => (MOI.OTHER_ERROR,     MOI.UNKNOWN_RESULT_STATUS),
-)
+#const _STATUS_CODES = Dict{Cint, Tuple{MOI.TerminationStatusCode, MOI.ResultStatusCode}}(
+#    Uno.UNO_SUCCESS           => (MOI.LOCALLY_SOLVED,  MOI.FEASIBLE_POINT       ),
+#    Uno.UNO_ITERATION_LIMIT   => (MOI.ITERATION_LIMIT, MOI.UNKNOWN_RESULT_STATUS),
+#    Uno.UNO_TIME_LIMIT        => (MOI.TIME_LIMIT,      MOI.UNKNOWN_RESULT_STATUS),
+#    Uno.UNO_EVALUATION_ERROR  => (MOI.NUMERICAL_ERROR, MOI.UNKNOWN_RESULT_STATUS),
+#    Uno.UNO_ALGORITHMIC_ERROR => (MOI.OTHER_ERROR,     MOI.UNKNOWN_RESULT_STATUS),
+#)
+
+function _status_code_mapping(uno_termination_status::Cint, uno_solution_status::Cint)
+    if uno_termination_status == Uno.UNO_ITERATION_LIMIT
+        return (MOI.ITERATION_LIMIT, MOI.UNKNOWN_RESULT_STATUS) # here we could test feasibility
+    elseif uno_termination_status == Uno.UNO_TIME_LIMIT
+        return (MOI.TIME_LIMIT, MOI.UNKNOWN_RESULT_STATUS) # here we could test feasibility
+    elseif uno_termination_status == Uno.UNO_EVALUATION_ERROR
+        return (MOI.INVALID_MODEL, MOI.UNKNOWN_RESULT_STATUS)
+    elseif uno_termination_status == Uno.UNO_ALGORITHMIC_ERROR
+        return (MOI.OTHER_ERROR, MOI.UNKNOWN_RESULT_STATUS)
+    else # UNO_SUCCESS
+        if uno_solution_status == Uno.UNO_FEASIBLE_KKT_POINT
+            return (MOI.LOCALLY_SOLVED, MOI.FEASIBLE_POINT)
+        elseif uno_solution_status == Uno.UNO_FEASIBLE_FJ_POINT
+            return (MOI.LOCALLY_SOLVED, MOI.FEASIBLE_POINT)
+        elseif uno_solution_status == Uno.UNO_INFEASIBLE_STATIONARY_POINT
+            return (MOI.LOCALLY_INFEASIBLE, MOI.INFEASIBLE_POINT)
+        elseif uno_solution_status == Uno.UNO_FEASIBLE_SMALL_STEP
+            return (MOI.SLOW_PROGRESS, MOI.FEASIBLE_POINT)
+        elseif uno_solution_status == Uno.UNO_INFEASIBLE_SMALL_STEP
+            return (MOI.SLOW_PROGRESS, MOI.INFEASIBLE_POINT)
+        else # UNO_UNBOUNDED
+            return (MOI.DUAL_INFEASIBLE, MOI.FEASIBLE_POINT)
+        end
+    end
+end
 
 ### MOI.ResultCount
 
@@ -1533,9 +1559,10 @@ function MOI.get(model::Optimizer, ::MOI.TerminationStatus)
     elseif model.inner === nothing || model.solver === nothing
         return MOI.OPTIMIZE_NOT_CALLED
     end
-    uno_status = Uno.uno_get_optimization_status(model.solver)
-    status, _ = _STATUS_CODES[uno_status]
-    return status
+    uno_termination_status = Uno.uno_get_optimization_status(model.solver)
+    uno_solution_status = Uno.uno_get_solution_status(model.solver)
+    termination_status, _ = _status_code_mapping(uno_termination_status, uno_solution_status)
+    return termination_status
 end
 
 ### MOI.RawStatusString
@@ -1587,14 +1614,13 @@ function MOI.get(model::Optimizer, attr::MOI.PrimalStatus)
     if !(1 <= attr.result_index <= MOI.get(model, MOI.ResultCount()))
         return MOI.NO_SOLUTION
     end
-    uno_status = Uno.uno_get_optimization_status(model.solver)
-    _, status = _STATUS_CODES[uno_status]
-    if status == MOI.UNKNOWN_RESULT_STATUS
-        # Not sure. RestorationFailure can terminate at a feasible (but
-        # non-stationary) point.
+    uno_termination_status = Uno.uno_get_optimization_status(model.solver)
+    uno_solution_status = Uno.uno_get_solution_status(model.solver)
+    _, primal_status = _status_code_mapping(uno_termination_status, uno_solution_status)
+    if primal_status == MOI.UNKNOWN_RESULT_STATUS
         return _manually_evaluated_primal_status(model)
     end
-    return status
+    return primal_status
 end
 
 ### MOI.DualStatus
@@ -1603,9 +1629,10 @@ function MOI.get(model::Optimizer, attr::MOI.DualStatus)
     if !(1 <= attr.result_index <= MOI.get(model, MOI.ResultCount()))
         return MOI.NO_SOLUTION
     end
-    uno_status = Uno.uno_get_optimization_status(model.solver)
-    _, status = _STATUS_CODES[uno_status]
-    return status
+    uno_termination_status = Uno.uno_get_optimization_status(model.solver)
+    uno_solution_status = Uno.uno_get_solution_status(model.solver)
+    _, dual_status = _status_code_mapping(uno_termination_status, uno_solution_status)
+    return dual_status
 end
 
 ### MOI.SolveTimeSec
