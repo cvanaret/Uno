@@ -18,10 +18,6 @@ $$
 
 where $f: \mathbb{R}^n \rightarrow \mathbb{R}$ and $c: \mathbb{R}^n \rightarrow \mathbb{R}^m$ are (ideally twice) continuously differentiable.
 
-This formulation allows for unbounded variables and equality constraints, and explicitly separates general nonlinear and bound constraints.
-
-## Unifying nonlinearly constrained optimization
-
 We consider the family of **Lagrange-Newton (essentially SQP and interior-point) methods** that iteratively solve the optimality (KKT) conditions with Newton's method, and we argue that most Lagrange-Newton methods can be broken down into the following generic ingredients:
 * a **constraint relaxation strategy**: a systematic way to relax the general constraints;
 * an **inequality handling method**: a systematic way to handle the inequality constraints;
