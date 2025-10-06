@@ -21,8 +21,8 @@ namespace uno {
          PythonUserModel model(problem_type, number_variables, base_indexing);
          // copy the bounds internally
          const size_t unsigned_number_variables = static_cast<size_t>(number_variables);
-         model.variables_lower_bounds->resize(unsigned_number_variables);
-         model.variables_upper_bounds->resize(unsigned_number_variables);
+         model.variables_lower_bounds = std::vector<double>(unsigned_number_variables);
+         model.variables_upper_bounds = std::vector<double>(unsigned_number_variables);
          for (size_t variable_index: Range(unsigned_number_variables)) {
             (*model.variables_lower_bounds)[variable_index] = variables_lower_bounds[variable_index];
             (*model.variables_upper_bounds)[variable_index] = variables_upper_bounds[variable_index];
