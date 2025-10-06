@@ -1438,7 +1438,7 @@ function _setup_model(model::Optimizer)
         user_model=model,
     )
     model.solver = Uno.uno_solver("funnelsqp")
-    # Check with Charlie if we can remove them later.
+    # Check with Charlie why we need the four next lines.
     model.x0 = zeros(Float64, nvar)
     Uno.uno_set_initial_primal_iterate(model.solver, model.x0)
     model.y0 = zeros(Float64, ncon)
@@ -1849,6 +1849,7 @@ function MOI.get(model::Optimizer, attr::MOI.NLPBlockDual)
     # v = s .* model.inner.mult_g[(length(model.qp_data)+1):end]
     mult_g = Vector{Float64}(undef, model.inner.ncon)
     Uno.uno_get_constraint_dual_solution(model.solver, mult_g)
-    v = s .* mult_g[(length(model.qp_data)+1):end]
+    offset = length(model.qp_data)
+    v = s .* mult_g[(offset+1):end]
     return v
 end
