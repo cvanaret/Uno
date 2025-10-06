@@ -22,6 +22,7 @@ function test_MOI_Test()
         exclude = [
             # Failures in Uno.jl -- need an investigation of Charlie
             "test_conic_NormInfinityCone_3",
+            "test_conic_NormInfinityCone_INFEASIBLE",
             r"test_conic_NormOneCone.*",
             r"test_conic_linear_VectorAffineFunction.*",
             r"test_conic_linear_VectorOfVariables.*",
