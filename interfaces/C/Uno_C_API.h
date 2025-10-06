@@ -181,12 +181,12 @@ extern "C" {
    // [optional]
    // sets the initial primal iterate of a given model.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_initial_primal_iterate(void* model, double* initial_primal_iterate);
+   bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_iterate);
 
    // [optional]
    // sets the initial dual iterate of a given model.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_initial_dual_iterate(void* model, double* initial_dual_iterate);
+   bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterate);
 
    // creates the Uno solver.
    void* uno_create_solver();

@@ -480,24 +480,30 @@ bool uno_set_user_data(void* model, void* user_data) {
    return true;
 }
 
-bool uno_set_initial_primal_iterate(void* model, double* initial_primal_iterate) {
+bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_iterate) {
    assert(model != nullptr);
-   CUserModel* user_model = static_cast<CUserModel*>(model);
-   // copy the initial primal point
-   for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
-      user_model->initial_primal_iterate[variable_index] = initial_primal_iterate[variable_index];
+   if (initial_primal_iterate != nullptr) {
+      CUserModel* user_model = static_cast<CUserModel*>(model);
+      // copy the initial primal point
+      for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
+         user_model->initial_primal_iterate[variable_index] = initial_primal_iterate[variable_index];
+      }
+      return true;
    }
-   return true;
+   return false;
 }
 
-bool uno_set_initial_dual_iterate(void* model, double* initial_dual_iterate) {
+bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterate) {
    assert(model != nullptr);
-   CUserModel* user_model = static_cast<CUserModel*>(model);
-   // copy the initial dual point
-   for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
-      user_model->initial_dual_iterate[constraint_index] = initial_dual_iterate[constraint_index];
+   if (initial_dual_iterate != nullptr) {
+      CUserModel* user_model = static_cast<CUserModel*>(model);
+      // copy the initial dual point
+      for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
+         user_model->initial_dual_iterate[constraint_index] = initial_dual_iterate[constraint_index];
+      }
+      return true;
    }
-   return true;
+   return false;
 }
 
 void uno_set_option(void* options, const char* option_name, const char* option_value) {
