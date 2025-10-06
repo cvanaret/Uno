@@ -7,36 +7,35 @@
 const _PARAMETER_OFFSET = 0x00f0000000000000
 
 _is_parameter(x::MOI.VariableIndex) = x.value >= _PARAMETER_OFFSET
-
 _is_parameter(term::MOI.ScalarAffineTerm) = _is_parameter(term.variable)
+_is_parameter(term::MOI.ScalarQuadraticTerm) = _is_parameter(term.variable_1) || _is_parameter(term.variable_2)
 
-function _is_parameter(term::MOI.ScalarQuadraticTerm)
-    return _is_parameter(term.variable_1) || _is_parameter(term.variable_2)
-end
-
-struct _VectorNonlinearOracle <: MOI.AbstractVectorSet
+struct VectorNonlinearOracle{T}
     input_dimension::Int
     output_dimension::Int
-    l::Vector{Float64}
-    u::Vector{Float64}
+    l::Vector{T}
+    u::Vector{T}
     eval_f::Function
     jacobian_structure::Vector{Tuple{Int,Int}}
     eval_jacobian::Function
     hessian_lagrangian_structure::Vector{Tuple{Int,Int}}
     eval_hessian_lagrangian::Union{Nothing,Function}
 
-    function _VectorNonlinearOracle(;
+    function VectorNonlinearOracle(;
         dimension::Int,
-        l::Vector{Float64},
-        u::Vector{Float64},
+        l::Vector{T},
+        u::Vector{T},
         eval_f::Function,
         jacobian_structure::Vector{Tuple{Int,Int}},
         eval_jacobian::Function,
+        # The hessian_lagrangian is optional.
         hessian_lagrangian_structure::Vector{Tuple{Int,Int}} = Tuple{Int,Int}[],
         eval_hessian_lagrangian::Union{Nothing,Function} = nothing,
-    )
-        @assert length(l) == length(u)
-        return new(
+    ) where {T}
+        if length(l) != length(u)
+            throw(DimensionMismatch())
+        end
+        return new{T}(
             dimension,
             length(l),
             l,
@@ -50,12 +49,23 @@ struct _VectorNonlinearOracle <: MOI.AbstractVectorSet
     end
 end
 
-MOI.dimension(s::_VectorNonlinearOracle) = s.input_dimension
+MOI.dimension(s::VectorNonlinearOracle) = s.input_dimension
 
-MOI.copy(s::_VectorNonlinearOracle) = s
+function Base.copy(s::VectorNonlinearOracle)
+    return VectorNonlinearOracle(;
+        dimension = s.input_dimension,
+        l = copy(s.l),
+        u = copy(s.u),
+        eval_f = s.eval_f,
+        jacobian_structure = copy(s.jacobian_structure),
+        eval_jacobian = s.eval_jacobian,
+        hessian_lagrangian_structure = copy(s.hessian_lagrangian_structure),
+        eval_hessian_lagrangian = s.eval_hessian_lagrangian,
+    )
+end
 
-function Base.show(io::IO, s::_VectorNonlinearOracle)
-    println(io, "_VectorNonlinearOracle(;")
+function Base.show(io::IO, s::VectorNonlinearOracle{T}) where {T}
+    println(io, "VectorNonlinearOracle{$T}(;")
     println(io, "    dimension = ", s.input_dimension, ",")
     println(io, "    l = ", s.l, ",")
     println(io, "    u = ", s.u, ",")
@@ -65,13 +75,13 @@ function Base.show(io::IO, s::_VectorNonlinearOracle)
 end
 
 mutable struct _VectorNonlinearOracleCache
-    set::_VectorNonlinearOracle
+    set::VectorNonlinearOracle{Float64}
     x::Vector{Float64}
     eval_f_timer::Float64
     eval_jacobian_timer::Float64
     eval_hessian_lagrangian_timer::Float64
 
-    function _VectorNonlinearOracleCache(set::_VectorNonlinearOracle)
+    function _VectorNonlinearOracleCache(set::VectorNonlinearOracle{Float64})
         return new(set, zeros(set.input_dimension), 0.0, 0.0, 0.0)
     end
 end
@@ -107,14 +117,18 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     x0::Union{Nothing,Vector{Float64}}
     y0::Union{Nothing,Vector{Float64}}
 
-    function Optimizer()
+    function Optimizer(; kwargs...)
+        option_dict = Dict{String, Any}()
+        for (name, value) in kwargs
+            option_dict[name |> string] = value
+        end
         return new(
             nothing,
             nothing,
             "",
             false,
             false,
-            Dict{String,Any}(),
+            option_dict,
             NaN,
             MOI.FEASIBILITY_SENSE,
             Dict{MOI.VariableIndex,Float64}(),
@@ -144,7 +158,7 @@ const _SETS = Union{
     MOI.Interval{Float64},
 }
 
-MOI.get(::Optimizer, ::MOI.SolverVersion) = string(Uno.uno_version())
+MOI.get(::Optimizer, ::MOI.SolverVersion) = Uno.uno_version() |> string
 
 ### _EmptyNLPEvaluator
 
@@ -207,13 +221,6 @@ end
 
 MOI.get(::Optimizer, ::MOI.SolverName) = "Uno"
 
-function MOI.supports_add_constrained_variable(
-    ::Optimizer,
-    ::Type{MOI.Parameter{Float64}},
-)
-    return true
-end
-
 function _init_nlp_model(model)
     if model.nlp_model === nothing
         if !(model.nlp_data.evaluator isa _EmptyNLPEvaluator)
@@ -222,6 +229,13 @@ function _init_nlp_model(model)
         model.nlp_model = MOI.Nonlinear.Model()
     end
     return
+end
+
+function MOI.supports_add_constrained_variable(
+    ::Optimizer,
+    ::Type{MOI.Parameter{Float64}},
+)
+    return true
 end
 
 function MOI.add_constrained_variable(
@@ -327,7 +341,7 @@ function MOI.get(model::Optimizer, attr::MOI.ListOfConstraintTypesPresent)
     append!(ret, MOI.get(model.qp_data, attr))
     _add_scalar_nonlinear_constraints(ret, model.nlp_model)
     if !isempty(model.vector_nonlinear_oracle_constraints)
-        push!(ret, (MOI.VectorOfVariables, _VectorNonlinearOracle))
+        push!(ret, (MOI.VectorOfVariables, VectorNonlinearOracle{Float64}))
     end
     return ret
 end
@@ -748,19 +762,22 @@ function MOI.set(
     return
 end
 
-### MOI.VectorOfVariables in _VectorNonlinearOracle
+### MOI.VectorOfVariables in VectorNonlinearOracle{Float64}
 
 function MOI.supports_constraint(
     ::Optimizer,
     ::Type{MOI.VectorOfVariables},
-    ::Type{_VectorNonlinearOracle},
+    ::Type{VectorNonlinearOracle{Float64}},
 )
     return true
 end
 
 function MOI.is_valid(
     model::Optimizer,
-    ci::MOI.ConstraintIndex{MOI.VectorOfVariables,_VectorNonlinearOracle},
+    ci::MOI.ConstraintIndex{
+        MOI.VectorOfVariables,
+        VectorNonlinearOracle{Float64},
+    },
 )
     return 1 <= ci.value <= length(model.vector_nonlinear_oracle_constraints)
 end
@@ -768,7 +785,7 @@ end
 function MOI.get(
     model::Optimizer,
     attr::MOI.ListOfConstraintIndices{F,S},
-) where {F<:MOI.VectorOfVariables,S<:_VectorNonlinearOracle}
+) where {F<:MOI.VectorOfVariables,S<:VectorNonlinearOracle{Float64}}
     n = length(model.vector_nonlinear_oracle_constraints)
     return MOI.ConstraintIndex{F,S}.(1:n)
 end
@@ -776,7 +793,7 @@ end
 function MOI.get(
     model::Optimizer,
     attr::MOI.NumberOfConstraints{F,S},
-) where {F<:MOI.VectorOfVariables,S<:_VectorNonlinearOracle}
+) where {F<:MOI.VectorOfVariables,S<:VectorNonlinearOracle{Float64}}
     return length(model.vector_nonlinear_oracle_constraints)
 end
 
@@ -784,7 +801,7 @@ function MOI.add_constraint(
     model::Optimizer,
     f::F,
     s::S,
-) where {F<:MOI.VectorOfVariables,S<:_VectorNonlinearOracle}
+) where {F<:MOI.VectorOfVariables,S<:VectorNonlinearOracle{Float64}}
     model.inner = nothing
     model.solver = nothing
     model.x0 = nothing
@@ -798,7 +815,7 @@ end
 function row(
     model::Optimizer,
     ci::MOI.ConstraintIndex{F,S},
-) where {F<:MOI.VectorOfVariables,S<:_VectorNonlinearOracle}
+) where {F<:MOI.VectorOfVariables,S<:VectorNonlinearOracle{Float64}}
     offset = length(model.qp_data)
     for i in 1:(ci.value-1)
         _, s = model.vector_nonlinear_oracle_constraints[i]
@@ -812,7 +829,7 @@ function MOI.get(
     model::Optimizer,
     attr::MOI.ConstraintPrimal,
     ci::MOI.ConstraintIndex{F,S},
-) where {F<:MOI.VectorOfVariables,S<:_VectorNonlinearOracle}
+) where {F<:MOI.VectorOfVariables,S<:VectorNonlinearOracle{Float64}}
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     f, _ = model.vector_nonlinear_oracle_constraints[ci.value]
@@ -823,7 +840,7 @@ function MOI.get(
     model::Optimizer,
     attr::MOI.ConstraintDual,
     ci::MOI.ConstraintIndex{F,S},
-) where {F<:MOI.VectorOfVariables,S<:_VectorNonlinearOracle}
+) where {F<:MOI.VectorOfVariables,S<:VectorNonlinearOracle{Float64}}
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     sign = -_dual_multiplier(model)
@@ -926,82 +943,82 @@ function MOI.supports(
     ::MOI.ConstraintDualStart,
     ::Type{MOI.ConstraintIndex{MOI.VariableIndex,S}},
 ) where {S<:_SETS}
-    return false
+    return true
 end
 
-# function MOI.set(
-#     model::Optimizer,
-#     ::MOI.ConstraintDualStart,
-#     ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}},
-#     value::Union{Real,Nothing},
-# )
-#     MOI.throw_if_not_valid(model, ci)
-#     model.mult_x_L[ci.value] = value
-#     # No need to reset model.inner and model.solver, because this gets handled in optimize!.
-#     return
-# end
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}},
+    value::Union{Real,Nothing},
+)
+    MOI.throw_if_not_valid(model, ci)
+    model.mult_x_L[ci.value] = value
+    # No need to reset model.inner and model.solver, because this gets handled in optimize!.
+    return
+end
 
-# function MOI.get(
-#     model::Optimizer,
-#     ::MOI.ConstraintDualStart,
-#     ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}},
-# )
-#     MOI.throw_if_not_valid(model, ci)
-#     return model.mult_x_L[ci.value]
-# end
+function MOI.get(
+    model::Optimizer,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}},
+)
+    MOI.throw_if_not_valid(model, ci)
+    return model.mult_x_L[ci.value]
+end
 
-# function MOI.set(
-#     model::Optimizer,
-#     ::MOI.ConstraintDualStart,
-#     ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}},
-#     value::Union{Real,Nothing},
-# )
-#     MOI.throw_if_not_valid(model, ci)
-#     model.mult_x_U[ci.value] = value
-#     # No need to reset model.inner and model.solver, because this gets handled in optimize!.
-#     return
-# end
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}},
+    value::Union{Real,Nothing},
+)
+    MOI.throw_if_not_valid(model, ci)
+    model.mult_x_U[ci.value] = value
+    # No need to reset model.inner and model.solver, because this gets handled in optimize!.
+    return
+end
 
-# function MOI.get(
-#     model::Optimizer,
-#     ::MOI.ConstraintDualStart,
-#     ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}},
-# )
-#     MOI.throw_if_not_valid(model, ci)
-#     return model.mult_x_U[ci.value]
-# end
+function MOI.get(
+    model::Optimizer,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}},
+)
+    MOI.throw_if_not_valid(model, ci)
+    return model.mult_x_U[ci.value]
+end
 
-# function MOI.set(
-#     model::Optimizer,
-#     ::MOI.ConstraintDualStart,
-#     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
-#     value::Union{Real,Nothing},
-# ) where {S<:Union{MOI.EqualTo{Float64},MOI.Interval{Float64}}}
-#     MOI.throw_if_not_valid(model, ci)
-#     if value === nothing
-#         model.mult_x_L[ci.value] = nothing
-#         model.mult_x_U[ci.value] = nothing
-#     elseif value >= 0.0
-#         model.mult_x_L[ci.value] = value
-#         model.mult_x_U[ci.value] = 0.0
-#     else
-#         model.mult_x_L[ci.value] = 0.0
-#         model.mult_x_U[ci.value] = value
-#     end
-#     # No need to reset model.inner and model.solver, because this gets handled in optimize!.
-#     return
-# end
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
+    value::Union{Real,Nothing},
+) where {S<:Union{MOI.EqualTo{Float64},MOI.Interval{Float64}}}
+    MOI.throw_if_not_valid(model, ci)
+    if value === nothing
+        model.mult_x_L[ci.value] = nothing
+        model.mult_x_U[ci.value] = nothing
+    elseif value >= 0.0
+        model.mult_x_L[ci.value] = value
+        model.mult_x_U[ci.value] = 0.0
+    else
+        model.mult_x_L[ci.value] = 0.0
+        model.mult_x_U[ci.value] = value
+    end
+    # No need to reset model.inner and model.solver, because this gets handled in optimize!.
+    return
+end
 
-# function MOI.get(
-#     model::Optimizer,
-#     ::MOI.ConstraintDualStart,
-#     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
-# ) where {S<:Union{MOI.EqualTo{Float64},MOI.Interval{Float64}}}
-#     MOI.throw_if_not_valid(model, ci)
-#     l = model.mult_x_L[ci.value]
-#     u = model.mult_x_U[ci.value]
-#     return (l === u === nothing) ? nothing : (l + u)
-# end
+function MOI.get(
+    model::Optimizer,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
+) where {S<:Union{MOI.EqualTo{Float64},MOI.Interval{Float64}}}
+    MOI.throw_if_not_valid(model, ci)
+    l = model.mult_x_L[ci.value]
+    u = model.mult_x_U[ci.value]
+    return (l === u === nothing) ? nothing : (l + u)
+end
 
 ### MOI.NLPBlockDualStart
 
@@ -1421,6 +1438,11 @@ function _setup_model(model::Optimizer)
         user_model=model,
     )
     model.solver = Uno.uno_solver("funnelsqp")
+    # Check with Charlie why we need the four next lines.
+    model.x0 = zeros(Float64, nvar)
+    Uno.uno_set_initial_primal_iterate(model.solver, model.x0)
+    model.y0 = zeros(Float64, ncon)
+    Uno.uno_set_initial_dual_iterate(model.solver, model.y0)
     return
 end
 
@@ -1827,6 +1849,7 @@ function MOI.get(model::Optimizer, attr::MOI.NLPBlockDual)
     # v = s .* model.inner.mult_g[(length(model.qp_data)+1):end]
     mult_g = Vector{Float64}(undef, model.inner.ncon)
     Uno.uno_get_constraint_dual_solution(model.solver, mult_g)
-    v = s .* mult_g[(length(model.qp_data)+1):end]
+    offset = length(model.qp_data)
+    v = s .* mult_g[(offset+1):end]
     return v
 end

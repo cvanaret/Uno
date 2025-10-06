@@ -21,9 +21,9 @@ LinearAlgebra = "1.10"
 MathOptInterface = "1.25"
 NLPModels = "0.21.5"
 OpenBLAS32_jll = "0.3.24"
+Test = "1.10"
 Uno_jll = "2.2.0"
 julia = "1.10"
-Test = "1.10"
 
 [extras]
 CUTEst = "1b53aba6-35b6-5f92-a507-53c67d53f819"
