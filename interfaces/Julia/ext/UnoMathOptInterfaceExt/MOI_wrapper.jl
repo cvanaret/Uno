@@ -1748,7 +1748,7 @@ end
 
 ### MOI.ConstraintDual
 
-_dual_multiplier(model::Optimizer) = model.sense == MOI.MIN_SENSE ? 1.0 : -1.0
+_dual_multiplier(model::Optimizer) = 1.0
 
 function MOI.get(
     model::Optimizer,
