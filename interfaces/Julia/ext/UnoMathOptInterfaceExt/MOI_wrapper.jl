@@ -10,14 +10,65 @@ _is_parameter(x::MOI.VariableIndex) = x.value >= _PARAMETER_OFFSET
 _is_parameter(term::MOI.ScalarAffineTerm) = _is_parameter(term.variable)
 _is_parameter(term::MOI.ScalarQuadraticTerm) = _is_parameter(term.variable_1) || _is_parameter(term.variable_2)
 
+struct VectorNonlinearOracle{T}
+    input_dimension::Int
+    output_dimension::Int
+    l::Vector{T}
+    u::Vector{T}
+    eval_f::Function
+    jacobian_structure::Vector{Tuple{Int,Int}}
+    eval_jacobian::Function
+    hessian_lagrangian_structure::Vector{Tuple{Int,Int}}
+    eval_hessian_lagrangian::Union{Nothing,Function}
+
+    function VectorNonlinearOracle(;
+        dimension::Int,
+        l::Vector{T},
+        u::Vector{T},
+        eval_f::Function,
+        jacobian_structure::Vector{Tuple{Int,Int}},
+        eval_jacobian::Function,
+        # The hessian_lagrangian is optional.
+        hessian_lagrangian_structure::Vector{Tuple{Int,Int}} = Tuple{Int,Int}[],
+        eval_hessian_lagrangian::Union{Nothing,Function} = nothing,
+    ) where {T}
+        if length(l) != length(u)
+            throw(DimensionMismatch())
+        end
+        return new{T}(
+            dimension,
+            length(l),
+            l,
+            u,
+            eval_f,
+            jacobian_structure,
+            eval_jacobian,
+            hessian_lagrangian_structure,
+            eval_hessian_lagrangian,
+        )
+    end
+end
+
+dimension(s::VectorNonlinearOracle) = s.input_dimension
+
+function Base.show(io::IO, s::VectorNonlinearOracle{T}) where {T}
+    println(io, "VectorNonlinearOracle{$T}(;")
+    println(io, "    dimension = ", s.input_dimension, ",")
+    println(io, "    l = ", s.l, ",")
+    println(io, "    u = ", s.u, ",")
+    println(io, "    ...,")
+    print(io, ")")
+    return
+end
+
 mutable struct _VectorNonlinearOracleCache
-    set::MOI.VectorNonlinearOracle{Float64}
+    set::VectorNonlinearOracle{Float64}
     x::Vector{Float64}
     eval_f_timer::Float64
     eval_jacobian_timer::Float64
     eval_hessian_lagrangian_timer::Float64
 
-    function _VectorNonlinearOracleCache(set::MOI.VectorNonlinearOracle{Float64})
+    function _VectorNonlinearOracleCache(set::VectorNonlinearOracle{Float64})
         return new(set, zeros(set.input_dimension), 0.0, 0.0, 0.0)
     end
 end
@@ -281,7 +332,7 @@ function MOI.get(model::Optimizer, attr::MOI.ListOfConstraintTypesPresent)
     append!(ret, MOI.get(model.qp_data, attr))
     _add_scalar_nonlinear_constraints(ret, model.nlp_model)
     if !isempty(model.vector_nonlinear_oracle_constraints)
-        push!(ret, (MOI.VectorOfVariables, MOI.VectorNonlinearOracle{Float64}))
+        push!(ret, (MOI.VectorOfVariables, VectorNonlinearOracle{Float64}))
     end
     return ret
 end
@@ -702,12 +753,12 @@ function MOI.set(
     return
 end
 
-### MOI.VectorOfVariables in MOI.VectorNonlinearOracle{Float64}
+### MOI.VectorOfVariables in VectorNonlinearOracle{Float64}
 
 function MOI.supports_constraint(
     ::Optimizer,
     ::Type{MOI.VectorOfVariables},
-    ::Type{MOI.VectorNonlinearOracle{Float64}},
+    ::Type{VectorNonlinearOracle{Float64}},
 )
     return true
 end
@@ -716,7 +767,7 @@ function MOI.is_valid(
     model::Optimizer,
     ci::MOI.ConstraintIndex{
         MOI.VectorOfVariables,
-        MOI.VectorNonlinearOracle{Float64},
+        VectorNonlinearOracle{Float64},
     },
 )
     return 1 <= ci.value <= length(model.vector_nonlinear_oracle_constraints)
@@ -725,7 +776,7 @@ end
 function MOI.get(
     model::Optimizer,
     attr::MOI.ListOfConstraintIndices{F,S},
-) where {F<:MOI.VectorOfVariables,S<:MOI.VectorNonlinearOracle{Float64}}
+) where {F<:MOI.VectorOfVariables,S<:VectorNonlinearOracle{Float64}}
     n = length(model.vector_nonlinear_oracle_constraints)
     return MOI.ConstraintIndex{F,S}.(1:n)
 end
@@ -733,7 +784,7 @@ end
 function MOI.get(
     model::Optimizer,
     attr::MOI.NumberOfConstraints{F,S},
-) where {F<:MOI.VectorOfVariables,S<:MOI.VectorNonlinearOracle{Float64}}
+) where {F<:MOI.VectorOfVariables,S<:VectorNonlinearOracle{Float64}}
     return length(model.vector_nonlinear_oracle_constraints)
 end
 
@@ -741,7 +792,7 @@ function MOI.add_constraint(
     model::Optimizer,
     f::F,
     s::S,
-) where {F<:MOI.VectorOfVariables,S<:MOI.VectorNonlinearOracle{Float64}}
+) where {F<:MOI.VectorOfVariables,S<:VectorNonlinearOracle{Float64}}
     model.inner = nothing
     model.solver = nothing
     model.x0 = nothing
@@ -755,7 +806,7 @@ end
 function row(
     model::Optimizer,
     ci::MOI.ConstraintIndex{F,S},
-) where {F<:MOI.VectorOfVariables,S<:MOI.VectorNonlinearOracle{Float64}}
+) where {F<:MOI.VectorOfVariables,S<:VectorNonlinearOracle{Float64}}
     offset = length(model.qp_data)
     for i in 1:(ci.value-1)
         _, s = model.vector_nonlinear_oracle_constraints[i]
@@ -769,7 +820,7 @@ function MOI.get(
     model::Optimizer,
     attr::MOI.ConstraintPrimal,
     ci::MOI.ConstraintIndex{F,S},
-) where {F<:MOI.VectorOfVariables,S<:MOI.VectorNonlinearOracle{Float64}}
+) where {F<:MOI.VectorOfVariables,S<:VectorNonlinearOracle{Float64}}
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     f, _ = model.vector_nonlinear_oracle_constraints[ci.value]
@@ -780,7 +831,7 @@ function MOI.get(
     model::Optimizer,
     attr::MOI.ConstraintDual,
     ci::MOI.ConstraintIndex{F,S},
-) where {F<:MOI.VectorOfVariables,S<:MOI.VectorNonlinearOracle{Float64}}
+) where {F<:MOI.VectorOfVariables,S<:VectorNonlinearOracle{Float64}}
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     sign = -_dual_multiplier(model)
@@ -1378,6 +1429,11 @@ function _setup_model(model::Optimizer)
         user_model=model,
     )
     model.solver = Uno.uno_solver("funnelsqp")
+    # Check with Charlie if we can remove them later.
+    model.x0 = zeros(Float64, nvar)
+    Uno.uno_set_initial_primal_iterate(model.solver, model.x0)
+    model.y0 = zeros(Float64, ncon)
+    Uno.uno_set_initial_dual_iterate(model.solver, model.y0)
     return
 end
 
