@@ -33,4 +33,4 @@ CUTEst = "1b53aba6-35b6-5f92-a507-53c67d53f819"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["CUTEst", "MathOptInterface", "NLPModels", "Test"]
+test = ["CUTEst", "NLPModels", "Test"]
