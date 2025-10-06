@@ -259,7 +259,10 @@ public:
 
    void initial_primal_point(Vector<double>& x) const override {
       if (this->user_model.initial_primal_iterate != nullptr) {
-         std::copy_n(this->user_model.initial_primal_iterate, this->user_model.number_variables, x.data());
+         // copy the available initial point
+         for (size_t variable_index: Range(static_cast<size_t>(this->user_model.number_variables))) {
+            x[variable_index] = this->user_model.initial_primal_iterate[variable_index];
+         }
       }
       else {
          x.fill(0.);
@@ -268,7 +271,10 @@ public:
 
    void initial_dual_point(Vector<double>& multipliers) const override {
       if (this->user_model.initial_dual_iterate != nullptr) {
-         std::copy_n(this->user_model.initial_dual_iterate, this->user_model.number_constraints, multipliers.data());
+         // copy the available initial point
+         for (size_t constraint_index: Range(static_cast<size_t>(this->user_model.number_constraints))) {
+            multipliers[constraint_index] = this->user_model.initial_dual_iterate[constraint_index];
+         }
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             multipliers.scale(-1.);
          }
