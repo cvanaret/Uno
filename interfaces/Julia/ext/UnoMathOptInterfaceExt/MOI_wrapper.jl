@@ -49,7 +49,20 @@ struct VectorNonlinearOracle{T}
     end
 end
 
-dimension(s::VectorNonlinearOracle) = s.input_dimension
+MOI.dimension(s::VectorNonlinearOracle) = s.input_dimension
+
+function Base.copy(s::VectorNonlinearOracle)
+    return VectorNonlinearOracle(;
+        dimension = s.input_dimension,
+        l = copy(s.l),
+        u = copy(s.u),
+        eval_f = s.eval_f,
+        jacobian_structure = copy(s.jacobian_structure),
+        eval_jacobian = s.eval_jacobian,
+        hessian_lagrangian_structure = copy(s.hessian_lagrangian_structure),
+        eval_hessian_lagrangian = s.eval_hessian_lagrangian,
+    )
+end
 
 function Base.show(io::IO, s::VectorNonlinearOracle{T}) where {T}
     println(io, "VectorNonlinearOracle{$T}(;")
@@ -81,24 +94,20 @@ Create a new Uno optimizer.
 mutable struct Optimizer <: MOI.AbstractOptimizer
     inner::Union{Nothing,Uno.UnoModel}
     solver::Union{Nothing,Uno.UnoSolver}
-
     name::String
     invalid_model::Bool
     silent::Bool
     options::Dict{String,Any}
     solve_time::Float64
     sense::MOI.OptimizationSense
-
     parameters::Dict{MOI.VariableIndex,MOI.Nonlinear.ParameterIndex}
     variables::MOI.Utilities.VariablesContainer{Float64}
     list_of_variable_indices::Vector{MOI.VariableIndex}
     variable_primal_start::Vector{Union{Nothing,Float64}}
     mult_x_L::Vector{Union{Nothing,Float64}}
     mult_x_U::Vector{Union{Nothing,Float64}}
-
     nlp_data::MOI.NLPBlockData
     nlp_dual_start::Union{Nothing,Vector{Float64}}
-
     mult_g_nlp::Dict{MOI.Nonlinear.ConstraintIndex,Float64}
     qp_data::QPBlockData{Float64}
     nlp_model::Union{Nothing,MOI.Nonlinear.Model}
