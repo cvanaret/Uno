@@ -41,9 +41,7 @@ function test_MOI_Test()
             "test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_Interval_upper",
             # Operators Jv, Jtv and Hv
             r"test_nonlinear_expression_hs071.*",
-            r"test_nonlinear_hs071.*",
             r"test_nonlinear_objective.*",
-            r"test_nonlinear_without_objective.*",
             r"test_nonlinear_quadratic_1.*",
             r"test_nonlinear_quadratic_2.*",
             r"test_nonlinear_quadratic_3.*",
