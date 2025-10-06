@@ -484,6 +484,16 @@ bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_it
    assert(model != nullptr);
    if (initial_primal_iterate != nullptr) {
       CUserModel* user_model = static_cast<CUserModel*>(model);
+      std::cout << "Current x0 in CUserModel:";
+      for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
+         std::cout << " " << user_model->initial_primal_iterate[variable_index];
+      }
+      std::cout << '\n';
+      std::cout << "User's x0:";
+      for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
+         std::cout << " " << initial_primal_iterate[variable_index];
+      }
+      std::cout << '\n';
       // copy the initial primal point
       for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
          user_model->initial_primal_iterate[variable_index] = initial_primal_iterate[variable_index];
