@@ -1359,6 +1359,8 @@ function _setup_model(model::Optimizer)
         !isempty(model.nlp_data.constraint_bounds) ||
         !isempty(model.vector_nonlinear_oracle_constraints)
     has_hessian = :Hess in MOI.features_available(model.nlp_data.evaluator)
+    has_jacobian_operator = :JacVec in MOI.features_available(model.nlp_data.evaluator)
+    has_hessian_operator = :HessVec in MOI.features_available(model.nlp_data.evaluator)
     for (_, s) in model.vector_nonlinear_oracle_constraints
         if s.set.eval_hessian_lagrangian === nothing
             has_hessian = false
@@ -1367,10 +1369,16 @@ function _setup_model(model::Optimizer)
     end
     init_feat = [:Grad]
     if has_hessian
-        push!(init_feat, :Hess, :HessVec)
+        push!(init_feat, :Hess)
+    end
+    if has_hessian_operator
+        push!(init_feat, :HessVec)
     end
     if has_nlp_constraints
-        push!(init_feat, :Jac, :JacVec)
+        push!(init_feat, :Jac)
+    end
+    if has_jacobian_operator
+        push!(init_feat, :JacVec)
     end
     MOI.initialize(model.nlp_data.evaluator, init_feat)
 
@@ -1430,19 +1438,14 @@ function _setup_model(model::Optimizer)
         moi_objective_gradient,
         moi_jacobian,
         moi_lagrangian_hessian,
-        moi_jacobian_operator,
-        moi_jacobian_transposed_operator,
-        moi_lagrangian_hessian_operator;
+        has_jacobian_operator ? moi_jacobian_operator : nothing,
+        has_jacobian_operator ? moi_jacobian_transposed_operator : nothing,
+        has_hessian_operator ? moi_lagrangian_hessian_operator : nothing;
         hessian_triangle='L',
         lagrangian_sign=1.0,
         user_model=model,
     )
     model.solver = Uno.uno_solver("funnelsqp")
-    # Check with Charlie why we need the four next lines.
-    model.x0 = zeros(Float64, nvar)
-    Uno.uno_set_initial_primal_iterate(model.solver, model.x0)
-    model.y0 = zeros(Float64, ncon)
-    Uno.uno_set_initial_dual_iterate(model.solver, model.y0)
     return
 end
 
@@ -1493,7 +1496,7 @@ function MOI.optimize!(model::Optimizer)
             clamp(0.0, model.variables.lower[i], model.variables.upper[i])
         end
     end
-    Uno.uno_set_initial_primal_iterate(solver, model.x0)
+    Uno.uno_set_initial_primal_iterate(inner, model.x0)
 
     if model.y0 === nothing
         model.y0 = Vector{Float64}(undef, inner.ncon)
@@ -1512,7 +1515,7 @@ function MOI.optimize!(model::Optimizer)
             model.y0[offset+i] = _dual_start(model, start, -1)
         end
     end
-    Uno.uno_set_initial_dual_iterate(solver, model.y0)
+    Uno.uno_set_initial_dual_iterate(inner, model.y0)
 
     # We can't provide yet a starting point for the slacks in Uno
     # for i in 1:inner.n

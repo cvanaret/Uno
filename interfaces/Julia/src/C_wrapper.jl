@@ -125,9 +125,9 @@ mutable struct UnoModel{M}
   eval_gradient::Function
   eval_jacobian::Function
   eval_hessian::Function
-  eval_Jv::Function
-  eval_Jtv::Function
-  eval_Hv::Function
+  eval_Jv::Union{Function,Nothing}
+  eval_Jtv::Union{Function,Nothing}
+  eval_Hv::Union{Function,Nothing}
   # User data
   user_model::M
 end
@@ -154,9 +154,9 @@ function uno_model(
   eval_gradient::Function,
   eval_jacobian::Function,
   eval_hessian::Function,
-  eval_Jv::Function,
-  eval_Jtv::Function,
-  eval_Hv::Function;
+  eval_Jv::Union{Function,Nothing},
+  eval_Jtv::Union{Function,Nothing},
+  eval_Hv::Union{Function,Nothing};
   hessian_triangle::Char='L',
   lagrangian_sign::Float64=1.0,
   user_model=nothing
@@ -188,9 +188,11 @@ function uno_model(
     flag = uno_set_lagrangian_hessian(c_model, Cint(nnzh), hessian_triangle, hrows, hcols, eval_hessian_c, lagrangian_sign)
     flag || error("Failed to set Lagrangian Hessian via uno_set_lagrangian_hessian.")
 
-    eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-    flag = uno_set_lagrangian_hessian_operator(c_model, Cint(nnzh), eval_Hv_c, lagrangian_sign)
-    flag || error("Failed to set Hessian operator via uno_set_lagrangian_hessian_operator.")
+    if !isnothing(eval_Hv)
+      eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+      flag = uno_set_lagrangian_hessian_operator(c_model, Cint(nnzh), eval_Hv_c, lagrangian_sign)
+      flag || error("Failed to set Hessian operator via uno_set_lagrangian_hessian_operator.")
+    end
   end
 
   if ncon > 0
@@ -199,13 +201,17 @@ function uno_model(
     flag = uno_set_constraints(c_model, Cint(ncon), eval_constraints_c, lcon, ucon, Cint(nnzj), jrows, jcols, eval_jacobian_c)
     flag || error("Failed to set constraints and Jacobian via uno_set_constraints.")
 
-    eval_Jv_c = @cfunction(uno_jacobian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-    flag = uno_set_jacobian_operator(c_model, eval_Jv_c)
-    flag || error("Failed to set Jacobian operator via uno_set_jacobian_operator.")
+    if !isnothing(eval_Jv)
+      eval_Jv_c = @cfunction(uno_jacobian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+      flag = uno_set_jacobian_operator(c_model, eval_Jv_c)
+      flag || error("Failed to set Jacobian operator via uno_set_jacobian_operator.")
+    end
 
-    eval_Jtv_c = @cfunction(uno_jacobian_transposed_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-    flag = uno_set_jacobian_transposed_operator(c_model, eval_Jtv_c)
-    flag || error("Failed to set transposed Jacobian operator via uno_set_jacobian_transposed_operator.")
+    if !isnothing(eval_Jtv)
+      eval_Jtv_c = @cfunction(uno_jacobian_transposed_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+      flag = uno_set_jacobian_transposed_operator(c_model, eval_Jtv_c)
+      flag || error("Failed to set transposed Jacobian operator via uno_set_jacobian_transposed_operator.")
+    end
   end
 
   finalizer(uno_destroy_model, model)
