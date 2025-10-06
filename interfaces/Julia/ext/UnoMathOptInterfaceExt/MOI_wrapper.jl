@@ -7,12 +7,8 @@
 const _PARAMETER_OFFSET = 0x00f0000000000000
 
 _is_parameter(x::MOI.VariableIndex) = x.value >= _PARAMETER_OFFSET
-
 _is_parameter(term::MOI.ScalarAffineTerm) = _is_parameter(term.variable)
-
-function _is_parameter(term::MOI.ScalarQuadraticTerm)
-    return _is_parameter(term.variable_1) || _is_parameter(term.variable_2)
-end
+_is_parameter(term::MOI.ScalarQuadraticTerm) = _is_parameter(term.variable_1) || _is_parameter(term.variable_2)
 
 mutable struct _VectorNonlinearOracleCache
     set::MOI.VectorNonlinearOracle{Float64}
@@ -34,20 +30,24 @@ Create a new Uno optimizer.
 mutable struct Optimizer <: MOI.AbstractOptimizer
     inner::Union{Nothing,Uno.UnoModel}
     solver::Union{Nothing,Uno.UnoSolver}
+
     name::String
     invalid_model::Bool
     silent::Bool
     options::Dict{String,Any}
     solve_time::Float64
     sense::MOI.OptimizationSense
+
     parameters::Dict{MOI.VariableIndex,MOI.Nonlinear.ParameterIndex}
     variables::MOI.Utilities.VariablesContainer{Float64}
     list_of_variable_indices::Vector{MOI.VariableIndex}
     variable_primal_start::Vector{Union{Nothing,Float64}}
     mult_x_L::Vector{Union{Nothing,Float64}}
     mult_x_U::Vector{Union{Nothing,Float64}}
+
     nlp_data::MOI.NLPBlockData
     nlp_dual_start::Union{Nothing,Vector{Float64}}
+
     mult_g_nlp::Dict{MOI.Nonlinear.ConstraintIndex,Float64}
     qp_data::QPBlockData{Float64}
     nlp_model::Union{Nothing,MOI.Nonlinear.Model}
@@ -57,14 +57,18 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     x0::Union{Nothing,Vector{Float64}}
     y0::Union{Nothing,Vector{Float64}}
 
-    function Optimizer()
+    function Optimizer(; kwargs...)
+        option_dict = Dict{String, Any}()
+        for (name, value) in kwargs
+            option_dict[name |> string] = value
+        end
         return new(
             nothing,
             nothing,
             "",
             false,
             false,
-            Dict{String,Any}(),
+            option_dict,
             NaN,
             MOI.FEASIBILITY_SENSE,
             Dict{MOI.VariableIndex,Float64}(),
@@ -94,7 +98,7 @@ const _SETS = Union{
     MOI.Interval{Float64},
 }
 
-MOI.get(::Optimizer, ::MOI.SolverVersion) = string(Uno.uno_version())
+MOI.get(::Optimizer, ::MOI.SolverVersion) = Uno.uno_version() |> string
 
 ### _EmptyNLPEvaluator
 
@@ -157,13 +161,6 @@ end
 
 MOI.get(::Optimizer, ::MOI.SolverName) = "Uno"
 
-function MOI.supports_add_constrained_variable(
-    ::Optimizer,
-    ::Type{MOI.Parameter{Float64}},
-)
-    return true
-end
-
 function _init_nlp_model(model)
     if model.nlp_model === nothing
         if !(model.nlp_data.evaluator isa _EmptyNLPEvaluator)
@@ -172,6 +169,13 @@ function _init_nlp_model(model)
         model.nlp_model = MOI.Nonlinear.Model()
     end
     return
+end
+
+function MOI.supports_add_constrained_variable(
+    ::Optimizer,
+    ::Type{MOI.Parameter{Float64}},
+)
+    return true
 end
 
 function MOI.add_constrained_variable(
@@ -879,82 +883,82 @@ function MOI.supports(
     ::MOI.ConstraintDualStart,
     ::Type{MOI.ConstraintIndex{MOI.VariableIndex,S}},
 ) where {S<:_SETS}
-    return false
+    return true
 end
 
-# function MOI.set(
-#     model::Optimizer,
-#     ::MOI.ConstraintDualStart,
-#     ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}},
-#     value::Union{Real,Nothing},
-# )
-#     MOI.throw_if_not_valid(model, ci)
-#     model.mult_x_L[ci.value] = value
-#     # No need to reset model.inner and model.solver, because this gets handled in optimize!.
-#     return
-# end
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}},
+    value::Union{Real,Nothing},
+)
+    MOI.throw_if_not_valid(model, ci)
+    model.mult_x_L[ci.value] = value
+    # No need to reset model.inner and model.solver, because this gets handled in optimize!.
+    return
+end
 
-# function MOI.get(
-#     model::Optimizer,
-#     ::MOI.ConstraintDualStart,
-#     ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}},
-# )
-#     MOI.throw_if_not_valid(model, ci)
-#     return model.mult_x_L[ci.value]
-# end
+function MOI.get(
+    model::Optimizer,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}},
+)
+    MOI.throw_if_not_valid(model, ci)
+    return model.mult_x_L[ci.value]
+end
 
-# function MOI.set(
-#     model::Optimizer,
-#     ::MOI.ConstraintDualStart,
-#     ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}},
-#     value::Union{Real,Nothing},
-# )
-#     MOI.throw_if_not_valid(model, ci)
-#     model.mult_x_U[ci.value] = value
-#     # No need to reset model.inner and model.solver, because this gets handled in optimize!.
-#     return
-# end
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}},
+    value::Union{Real,Nothing},
+)
+    MOI.throw_if_not_valid(model, ci)
+    model.mult_x_U[ci.value] = value
+    # No need to reset model.inner and model.solver, because this gets handled in optimize!.
+    return
+end
 
-# function MOI.get(
-#     model::Optimizer,
-#     ::MOI.ConstraintDualStart,
-#     ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}},
-# )
-#     MOI.throw_if_not_valid(model, ci)
-#     return model.mult_x_U[ci.value]
-# end
+function MOI.get(
+    model::Optimizer,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}},
+)
+    MOI.throw_if_not_valid(model, ci)
+    return model.mult_x_U[ci.value]
+end
 
-# function MOI.set(
-#     model::Optimizer,
-#     ::MOI.ConstraintDualStart,
-#     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
-#     value::Union{Real,Nothing},
-# ) where {S<:Union{MOI.EqualTo{Float64},MOI.Interval{Float64}}}
-#     MOI.throw_if_not_valid(model, ci)
-#     if value === nothing
-#         model.mult_x_L[ci.value] = nothing
-#         model.mult_x_U[ci.value] = nothing
-#     elseif value >= 0.0
-#         model.mult_x_L[ci.value] = value
-#         model.mult_x_U[ci.value] = 0.0
-#     else
-#         model.mult_x_L[ci.value] = 0.0
-#         model.mult_x_U[ci.value] = value
-#     end
-#     # No need to reset model.inner and model.solver, because this gets handled in optimize!.
-#     return
-# end
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
+    value::Union{Real,Nothing},
+) where {S<:Union{MOI.EqualTo{Float64},MOI.Interval{Float64}}}
+    MOI.throw_if_not_valid(model, ci)
+    if value === nothing
+        model.mult_x_L[ci.value] = nothing
+        model.mult_x_U[ci.value] = nothing
+    elseif value >= 0.0
+        model.mult_x_L[ci.value] = value
+        model.mult_x_U[ci.value] = 0.0
+    else
+        model.mult_x_L[ci.value] = 0.0
+        model.mult_x_U[ci.value] = value
+    end
+    # No need to reset model.inner and model.solver, because this gets handled in optimize!.
+    return
+end
 
-# function MOI.get(
-#     model::Optimizer,
-#     ::MOI.ConstraintDualStart,
-#     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
-# ) where {S<:Union{MOI.EqualTo{Float64},MOI.Interval{Float64}}}
-#     MOI.throw_if_not_valid(model, ci)
-#     l = model.mult_x_L[ci.value]
-#     u = model.mult_x_U[ci.value]
-#     return (l === u === nothing) ? nothing : (l + u)
-# end
+function MOI.get(
+    model::Optimizer,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
+) where {S<:Union{MOI.EqualTo{Float64},MOI.Interval{Float64}}}
+    MOI.throw_if_not_valid(model, ci)
+    l = model.mult_x_L[ci.value]
+    u = model.mult_x_U[ci.value]
+    return (l === u === nothing) ? nothing : (l + u)
+end
 
 ### MOI.NLPBlockDualStart
 
