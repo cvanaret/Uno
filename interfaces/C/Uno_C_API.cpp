@@ -96,31 +96,35 @@ public:
    void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
          MatrixOrder /*matrix_order*/) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
-      std::copy_n(this->user_model.jacobian_row_indices.data(), static_cast<size_t>(this->user_model.number_jacobian_nonzeros), row_indices);
-      std::copy_n(this->user_model.jacobian_column_indices.data(), static_cast<size_t>(this->user_model.number_jacobian_nonzeros), column_indices);
+      for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
+         row_indices[nonzero_index] = this->user_model.jacobian_row_indices[nonzero_index];
+         column_indices[nonzero_index] = this->user_model.jacobian_column_indices[nonzero_index];
+      }
       // TODO matrix_order
 
       // handle the solver indexing
       if (this->user_model.base_indexing != solver_indexing) {
          const int indexing_difference = solver_indexing - this->user_model.base_indexing;
-         for (size_t index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
-            row_indices[index] += indexing_difference;
-            column_indices[index] += indexing_difference;
+         for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
+            row_indices[nonzero_index] += indexing_difference;
+            column_indices[nonzero_index] += indexing_difference;
          }
       }
    }
 
    void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
-      std::copy_n(this->user_model.hessian_row_indices.data(), static_cast<size_t>(this->user_model.number_hessian_nonzeros), row_indices);
-      std::copy_n(this->user_model.hessian_column_indices.data(), static_cast<size_t>(this->user_model.number_hessian_nonzeros), column_indices);
+      for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_hessian_nonzeros))) {
+         row_indices[nonzero_index] = this->user_model.hessian_row_indices[nonzero_index];
+         column_indices[nonzero_index] = this->user_model.hessian_column_indices[nonzero_index];
+      }
 
       // handle the solver indexing
       if (this->user_model.base_indexing != solver_indexing) {
          const int indexing_difference = solver_indexing - this->user_model.base_indexing;
-         for (size_t index: Range(static_cast<size_t>(this->user_model.number_hessian_nonzeros))) {
-            row_indices[index] += indexing_difference;
-            column_indices[index] += indexing_difference;
+         for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_hessian_nonzeros))) {
+            row_indices[nonzero_index] += indexing_difference;
+            column_indices[nonzero_index] += indexing_difference;
          }
       }
    }
@@ -557,22 +561,30 @@ double uno_get_solution_objective(void* solver) {
 
 void uno_get_primal_solution(void* solver, double* primal_solution) {
    Result* result = uno_get_result(solver);
-   std::copy_n(result->primal_solution.data(), result->number_variables, primal_solution);
+   for (size_t variable_index: Range(result->number_variables)) {
+      primal_solution[variable_index] = result->primal_solution[variable_index];
+   }
 }
 
 void uno_get_constraint_dual_solution(void* solver, double* constraint_dual_solution) {
    Result* result = uno_get_result(solver);
-   std::copy_n(result->constraint_dual_solution.data(), result->number_constraints, constraint_dual_solution);
+   for (size_t constraint_index: Range(result->number_constraints)) {
+      constraint_dual_solution[constraint_index] = result->constraint_dual_solution[constraint_index];
+   }
 }
 
 void uno_get_lower_bound_dual_solution(void* solver, double* lower_bound_dual_solution) {
    Result* result = uno_get_result(solver);
-   std::copy_n(result->lower_bound_dual_solution.data(), result->number_variables, lower_bound_dual_solution);
+   for (size_t variable_index: Range(result->number_variables)) {
+      lower_bound_dual_solution[variable_index] = result->lower_bound_dual_solution[variable_index];
+   }
 }
 
 void uno_get_upper_bound_dual_solution(void* solver, double* upper_bound_dual_solution) {
    Result* result = uno_get_result(solver);
-   std::copy_n(result->upper_bound_dual_solution.data(), result->number_variables, upper_bound_dual_solution);
+   for (size_t variable_index: Range(result->number_variables)) {
+      upper_bound_dual_solution[variable_index] = result->upper_bound_dual_solution[variable_index];
+   }
 }
 
 double uno_get_solution_primal_feasibility(void* solver) {
