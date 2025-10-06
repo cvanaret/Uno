@@ -25,7 +25,7 @@ function test_MOI_Test()
             r"test_conic_NormOneCone.*",
             r"test_conic_linear_VectorAffineFunction.*",
             r"test_conic_linear_VectorOfVariables.*",
-            r"test_constraint_ScalarAffineFunction_EqualTo",
+            "test_constraint_ScalarAffineFunction_EqualTo",
             "test_constraint_ScalarAffineFunction_GreaterThan",
             "test_constraint_qcp_duplicate_off_diagonal",
             r"test_linear_integration.*",
