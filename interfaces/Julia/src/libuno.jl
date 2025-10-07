@@ -146,23 +146,24 @@ function uno_get_solution_objective(solver)
     @ccall libuno.uno_get_solution_objective(solver::Ptr{Cvoid})::Cdouble
 end
 
-function uno_get_primal_component(solver, index)
-    @ccall libuno.uno_get_primal_component(solver::Ptr{Cvoid}, index::Int32)::Cdouble
-end
-
-function uno_get_constraint_dual_component(solver, index)
-    @ccall libuno.uno_get_constraint_dual_component(solver::Ptr{Cvoid},
+function uno_get_primal_solution_component(solver, index)
+    @ccall libuno.uno_get_primal_solution_component(solver::Ptr{Cvoid},
                                                     index::Int32)::Cdouble
 end
 
-function uno_get_lower_bound_dual_component(solver, index)
-    @ccall libuno.uno_get_lower_bound_dual_component(solver::Ptr{Cvoid},
-                                                     index::Int32)::Cdouble
+function uno_get_constraint_dual_solution_component(solver, index)
+    @ccall libuno.uno_get_constraint_dual_solution_component(solver::Ptr{Cvoid},
+                                                             index::Int32)::Cdouble
 end
 
-function uno_get_upper_bound_dual_component(solver, index)
-    @ccall libuno.uno_get_upper_bound_dual_component(solver::Ptr{Cvoid},
-                                                     index::Int32)::Cdouble
+function uno_get_lower_bound_dual_solution_component(solver, index)
+    @ccall libuno.uno_get_lower_bound_dual_solution_component(solver::Ptr{Cvoid},
+                                                              index::Int32)::Cdouble
+end
+
+function uno_get_upper_bound_dual_solution_component(solver, index)
+    @ccall libuno.uno_get_upper_bound_dual_solution_component(solver::Ptr{Cvoid},
+                                                              index::Int32)::Cdouble
 end
 
 function uno_get_primal_solution(solver, primal_solution)
@@ -195,6 +196,38 @@ end
 
 function uno_get_solution_complementarity(solver)
     @ccall libuno.uno_get_solution_complementarity(solver::Ptr{Cvoid})::Cdouble
+end
+
+function uno_get_number_iterations(solver)
+    @ccall libuno.uno_get_number_iterations(solver::Ptr{Cvoid})::Int32
+end
+
+function uno_get_cpu_time(solver)
+    @ccall libuno.uno_get_cpu_time(solver::Ptr{Cvoid})::Cdouble
+end
+
+function uno_get_number_objective_evaluations(solver)
+    @ccall libuno.uno_get_number_objective_evaluations(solver::Ptr{Cvoid})::Int32
+end
+
+function uno_get_number_constraint_evaluations(solver)
+    @ccall libuno.uno_get_number_constraint_evaluations(solver::Ptr{Cvoid})::Int32
+end
+
+function uno_get_number_objective_gradient_evaluations(solver)
+    @ccall libuno.uno_get_number_objective_gradient_evaluations(solver::Ptr{Cvoid})::Int32
+end
+
+function uno_get_number_jacobian_evaluations(solver)
+    @ccall libuno.uno_get_number_jacobian_evaluations(solver::Ptr{Cvoid})::Int32
+end
+
+function uno_get_number_hessian_evaluations(solver)
+    @ccall libuno.uno_get_number_hessian_evaluations(solver::Ptr{Cvoid})::Int32
+end
+
+function uno_get_number_subproblem_solved_evaluations(solver)
+    @ccall libuno.uno_get_number_subproblem_solved_evaluations(solver::Ptr{Cvoid})::Int32
 end
 
 function uno_destroy_model(model)
