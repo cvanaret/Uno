@@ -114,8 +114,6 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     barrier_iterations::Int
     ad_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation
     vector_nonlinear_oracle_constraints::Vector{Tuple{MOI.VectorOfVariables,_VectorNonlinearOracleCache}}
-    x0::Union{Nothing,Vector{Float64}}
-    y0::Union{Nothing,Vector{Float64}}
 
     function Optimizer(; kwargs...)
         option_dict = Dict{String, Any}()
@@ -145,8 +143,6 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
             0,
             MOI.Nonlinear.SparseReverseMode(),
             Tuple{MOI.VectorOfVariables,_VectorNonlinearOracleCache}[],
-            nothing,
-            nothing,
         )
     end
 end
@@ -198,8 +194,6 @@ function MOI.empty!(model::Optimizer)
     model.barrier_iterations = 0
     # SKIP: model.ad_backend
     empty!(model.vector_nonlinear_oracle_constraints)
-    model.x0 = nothing
-    model.y0 = nothing
     return
 end
 
@@ -244,8 +238,6 @@ function MOI.add_constrained_variable(
 )
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     _init_nlp_model(model)
     p = MOI.VariableIndex(_PARAMETER_OFFSET + length(model.parameters))
     push!(model.list_of_variable_indices, p)
@@ -419,8 +411,6 @@ function MOI.add_variable(model::Optimizer)
     push!(model.mult_x_U, nothing)
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     x = MOI.add_variable(model.variables)
     push!(model.list_of_variable_indices, x)
     return x
@@ -470,8 +460,6 @@ function MOI.add_constraint(model::Optimizer, x::MOI.VariableIndex, set::_SETS)
     index = MOI.add_constraint(model.variables, x, set)
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     return index
 end
 
@@ -484,8 +472,6 @@ function MOI.set(
     MOI.set(model.variables, MOI.ConstraintSet(), ci, set)
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     return
 end
 
@@ -496,8 +482,6 @@ function MOI.delete(
     MOI.delete(model.variables, ci)
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     return
 end
 
@@ -526,8 +510,6 @@ function MOI.add_constraint(
     index = MOI.add_constraint(model.qp_data, func, set)
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     return index
 end
 
@@ -572,8 +554,6 @@ function MOI.set(
     MOI.set(model.qp_data, MOI.ConstraintSet(), ci, set)
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     return
 end
 
@@ -671,8 +651,6 @@ function MOI.add_constraint(
     index = MOI.Nonlinear.add_constraint(model.nlp_model, f, s)
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     return MOI.ConstraintIndex{typeof(f),typeof(s)}(index.value)
 end
 
@@ -695,8 +673,6 @@ function MOI.set(
     MOI.Nonlinear.set_objective(model.nlp_model, func)
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     return
 end
 
@@ -722,8 +698,6 @@ function MOI.set(
     model.nlp_model.constraints[index] = MOI.Nonlinear.Constraint(func, set)
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     return
 end
 
@@ -804,8 +778,6 @@ function MOI.add_constraint(
 ) where {F<:MOI.VectorOfVariables,S<:VectorNonlinearOracle{Float64}}
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     cache = _VectorNonlinearOracleCache(s)
     push!(model.vector_nonlinear_oracle_constraints, (f, cache))
     n = length(model.vector_nonlinear_oracle_constraints)
@@ -1051,8 +1023,6 @@ function MOI.set(model::Optimizer, ::MOI.NLPBlock, nlp_data::MOI.NLPBlockData)
     model.nlp_data = nlp_data
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     return
 end
 
@@ -1068,8 +1038,6 @@ function MOI.set(
     model.sense = sense
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     return
 end
 
@@ -1127,8 +1095,6 @@ function MOI.set(
     end
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     return
 end
 
@@ -1333,8 +1299,6 @@ function MOI.set(
     # act defensive and invalidate regardless.
     model.inner = nothing
     model.solver = nothing
-    model.x0 = nothing
-    model.y0 = nothing
     model.ad_backend = backend
     return
 end
@@ -1486,42 +1450,34 @@ function MOI.optimize!(model::Optimizer)
 
     # Initialize the starting point, projecting variables from 0 onto their
     # bounds if VariablePrimalStart is not provided.
-    if model.x0 === nothing
-        model.x0 = Vector{Float64}(undef, inner.nvar)
-    end
     for i in 1:length(model.variable_primal_start)
-        model.x0[i] = if model.variable_primal_start[i] !== nothing
+        x0_i = if model.variable_primal_start[i] !== nothing
             model.variable_primal_start[i]
         else
             clamp(0.0, model.variables.lower[i], model.variables.upper[i])
         end
+        Uno.uno_set_initial_primal_component(inner, i-1, x0_i)
     end
-    Uno.uno_set_initial_primal_iterate(inner, model.x0)
 
-    if model.y0 === nothing
-        model.y0 = Vector{Float64}(undef, inner.ncon)
-    end
     for (i, start) in enumerate(model.qp_data.mult_g)
-        model.y0[i] = _dual_start(model, start, -1)
+        y0_i = _dual_start(model, start, -1)
+        Uno.uno_set_initial_dual_component(inner, i-1, y0_i)
     end
     offset = length(model.qp_data.mult_g)
     if model.nlp_dual_start === nothing
-        model.y0[(offset+1):end] .= 0.0
+        for i in offset+1:inner.ncon
+            Uno.uno_set_initial_dual_component(inner, i-1, 0.0)
+        end
         for (key, val) in model.mult_g_nlp
-            model.y0[offset+key.value] = val
+            Uno.uno_set_initial_dual_component(inner, offset+key.value-1, val)
         end
     else
         for (i, start) in enumerate(model.nlp_dual_start::Vector{Float64})
-            model.y0[offset+i] = _dual_start(model, start, -1)
+            y0_i = _dual_start(model, start, -1)
+            Uno.uno_set_initial_dual_component(inner, offset+i-1, y0_i)
         end
     end
-    Uno.uno_set_initial_dual_iterate(inner, model.y0)
 
-    # We can't provide yet a starting point for the slacks in Uno
-    # for i in 1:inner.n
-    #     inner.mult_x_L[i] = _dual_start(model, model.mult_x_L[i])
-    #     inner.mult_x_U[i] = _dual_start(model, model.mult_x_U[i], -1)
-    # end
     model.barrier_iterations = 0
 
     # Clear timers
