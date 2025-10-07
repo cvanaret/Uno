@@ -596,89 +596,129 @@ Result* uno_get_result(void* solver) {
 }
 
 int32_t uno_get_optimization_status(void* solver) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    return static_cast<int32_t>(result->optimization_status);
 }
 
 int32_t uno_get_solution_status(void* solver) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    return static_cast<int32_t>(result->solution_status);
 }
 
 double uno_get_solution_objective(void* solver) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    return result->solution_objective;
 }
 
 double uno_get_primal_solution_component(void* solver, int32_t index) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    const size_t unsigned_index = static_cast<size_t>(index);
    assert(0 <= index && unsigned_index < result->number_variables);
    return result->primal_solution[unsigned_index];
 }
 
 double uno_get_constraint_dual_solution_component(void* solver, int32_t index) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    const size_t unsigned_index = static_cast<size_t>(index);
    assert(0 <= index && unsigned_index < result->number_constraints);
    return result->constraint_dual_solution[unsigned_index];
 }
 
 double uno_get_lower_bound_dual_solution_component(void* solver, int32_t index) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    const size_t unsigned_index = static_cast<size_t>(index);
    assert(0 <= index && unsigned_index < result->number_variables);
    return result->lower_bound_dual_solution[unsigned_index];
 }
 
 double uno_get_upper_bound_dual_solution_component(void* solver, int32_t index) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    const size_t unsigned_index = static_cast<size_t>(index);
    assert(0 <= index && unsigned_index < result->number_variables);
    return result->upper_bound_dual_solution[unsigned_index];
 }
 
 void uno_get_primal_solution(void* solver, double* primal_solution) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    for (size_t variable_index: Range(result->number_variables)) {
       primal_solution[variable_index] = result->primal_solution[variable_index];
    }
 }
 
 void uno_get_constraint_dual_solution(void* solver, double* constraint_dual_solution) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    for (size_t constraint_index: Range(result->number_constraints)) {
       constraint_dual_solution[constraint_index] = result->constraint_dual_solution[constraint_index];
    }
 }
 
 void uno_get_lower_bound_dual_solution(void* solver, double* lower_bound_dual_solution) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    for (size_t variable_index: Range(result->number_variables)) {
       lower_bound_dual_solution[variable_index] = result->lower_bound_dual_solution[variable_index];
    }
 }
 
 void uno_get_upper_bound_dual_solution(void* solver, double* upper_bound_dual_solution) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    for (size_t variable_index: Range(result->number_variables)) {
       upper_bound_dual_solution[variable_index] = result->upper_bound_dual_solution[variable_index];
    }
 }
 
 double uno_get_solution_primal_feasibility(void* solver) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    return result->solution_primal_feasibility;
 }
 
 double uno_get_solution_dual_feasibility(void* solver) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    return result->solution_dual_feasibility;
 }
 
 double uno_get_solution_complementarity(void* solver) {
-   Result* result = uno_get_result(solver);
+   const Result* result = uno_get_result(solver);
    return result->solution_complementarity;
+}
+
+int32_t uno_get_number_iterations(void* solver) {
+   const Result* result = uno_get_result(solver);
+   return static_cast<int32_t>(result->number_iterations);
+}
+
+double uno_get_cpu_time(void* solver) {
+   const Result* result = uno_get_result(solver);
+   return result->cpu_time;
+}
+
+int32_t uno_get_number_objective_evaluations(void* solver) {
+   const Result* result = uno_get_result(solver);
+   return static_cast<int32_t>(result->number_objective_evaluations);
+}
+
+int32_t uno_get_number_constraint_evaluations(void* solver) {
+   const Result* result = uno_get_result(solver);
+   return static_cast<int32_t>(result->number_constraint_evaluations);
+}
+
+int32_t uno_get_number_objective_gradient_evaluations(void* solver) {
+   const Result* result = uno_get_result(solver);
+   return static_cast<int32_t>(result->number_objective_gradient_evaluations);
+}
+
+int32_t uno_get_number_jacobian_evaluations(void* solver) {
+   const Result* result = uno_get_result(solver);
+   return static_cast<int32_t>(result->number_jacobian_evaluations);
+}
+
+int32_t uno_get_number_hessian_evaluations(void* solver) {
+   const Result* result = uno_get_result(solver);
+   return static_cast<int32_t>(result->number_hessian_evaluations);
+}
+
+int32_t uno_get_number_subproblem_solved_evaluations(void* solver) {
+   const Result* result = uno_get_result(solver);
+   return static_cast<int32_t>(result->number_subproblems_solved);
 }
 
 void uno_destroy_model(void* model) {

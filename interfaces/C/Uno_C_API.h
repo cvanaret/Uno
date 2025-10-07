@@ -253,6 +253,30 @@ extern "C" {
    // gets the complementarity at the solution (once the model was solved)
    double uno_get_solution_complementarity(void* solver);
 
+   // gets the number of outer iterations required by the solver (once the model was solved)
+   int32_t uno_get_number_iterations(void* solver);
+
+   // gets the CPU time required by the solver (once the model was solved)
+   double uno_get_cpu_time(void* solver);
+
+   // gets the number of objective evaluations required by the solver (once the model was solved)
+   int32_t uno_get_number_objective_evaluations(void* solver);
+
+   // gets the number of constraint evaluations required by the solver (once the model was solved)
+   int32_t uno_get_number_constraint_evaluations(void* solver);
+
+   // gets the number of objective gradient evaluations required by the solver (once the model was solved)
+   int32_t uno_get_number_objective_gradient_evaluations(void* solver);
+
+   // gets the number of constraint Jacobian evaluations required by the solver (once the model was solved)
+   int32_t uno_get_number_jacobian_evaluations(void* solver);
+
+   // gets the number of Lagrangian Hessian evaluations required by the solver (once the model was solved)
+   int32_t uno_get_number_hessian_evaluations(void* solver);
+
+   // gets the number of subproblems solved by the solver (once the model was solved)
+   int32_t uno_get_number_subproblem_solved_evaluations(void* solver);
+
    // destroys a given Uno model. Once destroyed, the model cannot be used anymore.
    void uno_destroy_model(void* model);
 
