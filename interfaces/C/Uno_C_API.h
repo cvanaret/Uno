@@ -221,16 +221,16 @@ extern "C" {
    double uno_get_solution_objective(void* solver);
 
    // gets one component of the primal solution (once the model was solved)
-   double uno_get_primal_component(void* solver, int32_t index);
+   double uno_get_primal_solution_component(void* solver, int32_t index);
 
    // gets one component of the constraint dual solution (once the model was solved)
-   double uno_get_constraint_dual_component(void* solver, int32_t index);
+   double uno_get_constraint_dual_solution_component(void* solver, int32_t index);
 
    // gets one component of the lower bound dual solution (once the model was solved)
-   double uno_get_lower_bound_dual_component(void* solver, int32_t index);
+   double uno_get_lower_bound_dual_solution_component(void* solver, int32_t index);
 
    // gets one component of the upper bound dual solution (once the model was solved)
-   double uno_get_upper_bound_dual_component(void* solver, int32_t index);
+   double uno_get_upper_bound_dual_solution_component(void* solver, int32_t index);
 
    // gets the primal solution (once the model was solved)
    void uno_get_primal_solution(void* solver, double* primal_solution);
