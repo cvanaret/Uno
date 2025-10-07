@@ -179,6 +179,16 @@ extern "C" {
    bool uno_set_user_data(void* model, void* user_data);
 
    // [optional]
+   // sets one component of the initial primal iterate for a given model.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_initial_primal_component(void* model, int32_t index, double initial_primal_component);
+
+   // [optional]
+   // sets one component of the initial dual iterate for a given model.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_initial_dual_component(void* model, int32_t index, double initial_dual_component);
+
+   // [optional]
    // sets the initial primal iterate of a given model.
    // returns true if it succeeded, false otherwise.
    bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_iterate);
@@ -209,6 +219,18 @@ extern "C" {
 
    // gets the objective value at the solution (once the model was solved)
    double uno_get_solution_objective(void* solver);
+
+   // gets one component of the primal solution (once the model was solved)
+   double uno_get_primal_component(void* solver, int32_t index);
+
+   // gets one component of the constraint dual solution (once the model was solved)
+   double uno_get_constraint_dual_component(void* solver, int32_t index);
+
+   // gets one component of the lower bound dual solution (once the model was solved)
+   double uno_get_lower_bound_dual_component(void* solver, int32_t index);
+
+   // gets one component of the upper bound dual solution (once the model was solved)
+   double uno_get_upper_bound_dual_component(void* solver, int32_t index);
 
    // gets the primal solution (once the model was solved)
    void uno_get_primal_solution(void* solver, double* primal_solution);

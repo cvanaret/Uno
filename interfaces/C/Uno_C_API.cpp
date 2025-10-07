@@ -480,6 +480,28 @@ bool uno_set_user_data(void* model, void* user_data) {
    return true;
 }
 
+bool uno_set_initial_primal_component(void* model, int32_t index, double initial_primal_component) {
+   assert(model != nullptr);
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   if (0 <= index && index < user_model->number_variables) {
+      const size_t unsigned_index = static_cast<size_t>(index);
+      user_model->initial_primal_iterate[unsigned_index] = initial_primal_component;
+      return true;
+   }
+   return false;
+}
+
+bool uno_set_initial_dual_component(void* model, int32_t index, double initial_dual_component) {
+   assert(model != nullptr);
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   if (0 <= index && index < user_model->number_constraints) {
+      const size_t unsigned_index = static_cast<size_t>(index);
+      user_model->initial_dual_iterate[unsigned_index] = initial_dual_component;
+      return true;
+   }
+   return false;
+}
+
 bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_iterate) {
    assert(model != nullptr);
    if (initial_primal_iterate != nullptr) {
@@ -586,6 +608,34 @@ int32_t uno_get_solution_status(void* solver) {
 double uno_get_solution_objective(void* solver) {
    Result* result = uno_get_result(solver);
    return result->solution_objective;
+}
+
+double uno_get_primal_component(void* solver, int32_t index) {
+   Result* result = uno_get_result(solver);
+   const size_t unsigned_index = static_cast<size_t>(index);
+   assert(0 <= index && unsigned_index < result->number_variables);
+   return result->primal_solution[unsigned_index];
+}
+
+double uno_get_constraint_dual_component(void* solver, int32_t index) {
+   Result* result = uno_get_result(solver);
+   const size_t unsigned_index = static_cast<size_t>(index);
+   assert(0 <= index && unsigned_index < result->number_constraints);
+   return result->constraint_dual_solution[unsigned_index];
+}
+
+double uno_get_lower_bound_dual_component(void* solver, int32_t index) {
+   Result* result = uno_get_result(solver);
+   const size_t unsigned_index = static_cast<size_t>(index);
+   assert(0 <= index && unsigned_index < result->number_variables);
+   return result->lower_bound_dual_solution[unsigned_index];
+}
+
+double uno_get_upper_bound_dual_component(void* solver, int32_t index) {
+   Result* result = uno_get_result(solver);
+   const size_t unsigned_index = static_cast<size_t>(index);
+   assert(0 <= index && unsigned_index < result->number_variables);
+   return result->upper_bound_dual_solution[unsigned_index];
 }
 
 void uno_get_primal_solution(void* solver, double* primal_solution) {
