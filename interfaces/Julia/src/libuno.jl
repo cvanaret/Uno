@@ -98,14 +98,12 @@ function uno_set_user_data(model, user_data)
 end
 
 function uno_set_initial_primal_component(model, index, initial_primal_component)
-    @ccall libuno.uno_set_initial_primal_component(model::Ptr{Cvoid},
-                                                   index::Int32,
+    @ccall libuno.uno_set_initial_primal_component(model::Ptr{Cvoid}, index::Int32,
                                                    initial_primal_component::Cdouble)::Bool
 end
 
 function uno_set_initial_dual_component(model, index, initial_dual_component)
-    @ccall libuno.uno_set_initial_dual_component(model::Ptr{Cvoid},
-                                                 index::Int32,
+    @ccall libuno.uno_set_initial_dual_component(model::Ptr{Cvoid}, index::Int32,
                                                  initial_dual_component::Cdouble)::Bool
 end
 
