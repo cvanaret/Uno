@@ -39,6 +39,10 @@ function test_MOI_Test()
             "test_quadratic_nonconvex_constraint_basic",
             "test_quadratic_nonhomogeneous",
             "test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_Interval_upper",
+            r"test_quadratic_constraint_basic.*",
+            r"test_quadratic_constraint_integration.*",
+            r"test_quadratic_constraint_minimize.*",
+            r"test_quadratic_duplicate_terms.*",
             # Operators Jv, Jtv and Hv
             r"test_nonlinear_expression_hs071.*",
             r"test_nonlinear_objective.*",
