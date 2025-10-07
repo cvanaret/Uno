@@ -22,7 +22,7 @@
 using namespace uno;
 
 using CUserModel = UserModel<Objective, ObjectiveGradient, Constraints, Jacobian, JacobianOperator, JacobianTransposedOperator,
-   Hessian, HessianOperator, const double*, void*>;
+   Hessian, HessianOperator, std::vector<double>, void*>;
 
 // UnoModel contains an instance of UserModel and complies with the Model interface
 class UnoModel: public Model {
@@ -96,31 +96,35 @@ public:
    void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
          MatrixOrder /*matrix_order*/) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
-      std::copy_n(this->user_model.jacobian_row_indices.data(), static_cast<size_t>(this->user_model.number_jacobian_nonzeros), row_indices);
-      std::copy_n(this->user_model.jacobian_column_indices.data(), static_cast<size_t>(this->user_model.number_jacobian_nonzeros), column_indices);
+      for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
+         row_indices[nonzero_index] = this->user_model.jacobian_row_indices[nonzero_index];
+         column_indices[nonzero_index] = this->user_model.jacobian_column_indices[nonzero_index];
+      }
       // TODO matrix_order
 
       // handle the solver indexing
       if (this->user_model.base_indexing != solver_indexing) {
          const int indexing_difference = solver_indexing - this->user_model.base_indexing;
-         for (size_t index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
-            row_indices[index] += indexing_difference;
-            column_indices[index] += indexing_difference;
+         for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
+            row_indices[nonzero_index] += indexing_difference;
+            column_indices[nonzero_index] += indexing_difference;
          }
       }
    }
 
    void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
-      std::copy_n(this->user_model.hessian_row_indices.data(), static_cast<size_t>(this->user_model.number_hessian_nonzeros), row_indices);
-      std::copy_n(this->user_model.hessian_column_indices.data(), static_cast<size_t>(this->user_model.number_hessian_nonzeros), column_indices);
+      for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_hessian_nonzeros))) {
+         row_indices[nonzero_index] = this->user_model.hessian_row_indices[nonzero_index];
+         column_indices[nonzero_index] = this->user_model.hessian_column_indices[nonzero_index];
+      }
 
       // handle the solver indexing
       if (this->user_model.base_indexing != solver_indexing) {
          const int indexing_difference = solver_indexing - this->user_model.base_indexing;
-         for (size_t index: Range(static_cast<size_t>(this->user_model.number_hessian_nonzeros))) {
-            row_indices[index] += indexing_difference;
-            column_indices[index] += indexing_difference;
+         for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_hessian_nonzeros))) {
+            row_indices[nonzero_index] += indexing_difference;
+            column_indices[nonzero_index] += indexing_difference;
          }
       }
    }
@@ -210,17 +214,11 @@ public:
    }
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override {
-      if (this->user_model.variables_lower_bounds != nullptr) {
-         return this->user_model.variables_lower_bounds[variable_index];
-      }
-      return -INF<double>;
+      return this->user_model.variables_lower_bounds[variable_index];
    }
 
    [[nodiscard]] double variable_upper_bound(size_t variable_index) const override {
-      if (this->user_model.variables_upper_bounds != nullptr) {
-         return this->user_model.variables_upper_bounds[variable_index];
-      }
-      return INF<double>;
+      return this->user_model.variables_upper_bounds[variable_index];
    }
 
    [[nodiscard]] const SparseVector<size_t>& get_slacks() const override {
@@ -232,17 +230,11 @@ public:
    }
 
    [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override {
-      if (this->user_model.constraints_lower_bounds != nullptr) {
-         return this->user_model.constraints_lower_bounds[constraint_index];
-      }
-      return -INF<double>;
+      return this->user_model.constraints_lower_bounds[constraint_index];
    }
 
    [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override {
-      if (this->user_model.constraints_upper_bounds != nullptr) {
-         return this->user_model.constraints_upper_bounds[constraint_index];
-      }
-      return INF<double>;
+      return this->user_model.constraints_upper_bounds[constraint_index];
    }
 
    [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override {
@@ -258,23 +250,19 @@ public:
    }
 
    void initial_primal_point(Vector<double>& x) const override {
-      if (this->user_model.initial_primal_iterate != nullptr) {
-         std::copy_n(this->user_model.initial_primal_iterate, this->user_model.number_variables, x.data());
-      }
-      else {
-         x.fill(0.);
+      // copy the initial primal point
+      for (size_t variable_index: Range(static_cast<size_t>(this->user_model.number_variables))) {
+         x[variable_index] = this->user_model.initial_primal_iterate[variable_index];
       }
    }
 
    void initial_dual_point(Vector<double>& multipliers) const override {
-      if (this->user_model.initial_dual_iterate != nullptr) {
-         std::copy_n(this->user_model.initial_dual_iterate, this->user_model.number_constraints, multipliers.data());
-         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
-            multipliers.scale(-1.);
-         }
+      // copy the initial dual point
+      for (size_t constraint_index: Range(static_cast<size_t>(this->user_model.number_constraints))) {
+         multipliers[constraint_index] = this->user_model.initial_dual_iterate[constraint_index];
       }
-      else {
-         multipliers.fill(0.);
+      if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+         multipliers.scale(-1.);
       }
    }
 
@@ -332,7 +320,23 @@ void* uno_create_model(char problem_type, int32_t number_variables, const double
       std::cout << "Please specify a valid base indexing.\n";
       return nullptr;
    }
-   return new CUserModel(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing);
+   CUserModel* user_model = new CUserModel(problem_type, number_variables, base_indexing);
+   // copy the bounds internally
+   const size_t unsigned_number_variables = static_cast<size_t>(number_variables);
+   user_model->variables_lower_bounds.resize(unsigned_number_variables);
+   user_model->variables_upper_bounds.resize(unsigned_number_variables);
+   for (size_t variable_index: Range(unsigned_number_variables)) {
+      user_model->variables_lower_bounds[variable_index] = (variables_lower_bounds != nullptr) ?
+         variables_lower_bounds[variable_index] : -INF<double>;
+      user_model->variables_upper_bounds[variable_index] = (variables_upper_bounds != nullptr) ?
+         variables_upper_bounds[variable_index] : INF<double>;
+   }
+   // create the initial primal point
+   user_model->initial_primal_iterate.resize(unsigned_number_variables);
+   for (size_t variable_index: Range(unsigned_number_variables)) {
+      user_model->initial_primal_iterate[variable_index] = 0.;
+   }
+   return user_model;
 }
 
 bool uno_set_objective(void* model, int32_t optimization_sense, Objective objective_function,
@@ -362,8 +366,16 @@ bool uno_set_constraints(void* model, int32_t number_constraints, Constraints co
    CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->number_constraints = number_constraints;
    user_model->constraint_functions = constraint_functions;
-   user_model->constraints_lower_bounds = constraints_lower_bounds;
-   user_model->constraints_upper_bounds = constraints_upper_bounds;
+   // copy the bounds internally
+   const size_t unsigned_number_constraints = static_cast<size_t>(number_constraints);
+   user_model->constraints_lower_bounds.resize(unsigned_number_constraints);
+   user_model->constraints_upper_bounds.resize(unsigned_number_constraints);
+   for (size_t constraint_index: Range(unsigned_number_constraints)) {
+      user_model->constraints_lower_bounds[constraint_index] = (constraints_lower_bounds != nullptr) ?
+         constraints_lower_bounds[constraint_index] : -INF<double>;
+      user_model->constraints_upper_bounds[constraint_index] = (constraints_upper_bounds != nullptr) ?
+         constraints_upper_bounds[constraint_index] : INF<double>;
+   }
    user_model->number_jacobian_nonzeros = number_jacobian_nonzeros;
    // copy the Jacobian sparsity to allow the calling code to dispose of its vectors
    user_model->jacobian_row_indices.resize(static_cast<size_t>(number_jacobian_nonzeros));
@@ -373,6 +385,11 @@ bool uno_set_constraints(void* model, int32_t number_constraints, Constraints co
       user_model->jacobian_column_indices[index] = jacobian_column_indices[index];
    }
    user_model->constraint_jacobian = constraint_jacobian;
+   // create the initial dual point
+   user_model->initial_dual_iterate.resize(unsigned_number_constraints);
+   for (size_t constraint_index: Range(unsigned_number_constraints)) {
+      user_model->initial_dual_iterate[constraint_index] = 0.;
+   }
    return true;
 }
 
@@ -463,18 +480,40 @@ bool uno_set_user_data(void* model, void* user_data) {
    return true;
 }
 
-bool uno_set_initial_primal_iterate(void* model, double* initial_primal_iterate) {
+bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_iterate) {
    assert(model != nullptr);
-   CUserModel* user_model = static_cast<CUserModel*>(model);
-   user_model->initial_primal_iterate = initial_primal_iterate;
-   return true;
+   if (initial_primal_iterate != nullptr) {
+      CUserModel* user_model = static_cast<CUserModel*>(model);
+      std::cout << "Current x0 in CUserModel:";
+      for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
+         std::cout << " " << user_model->initial_primal_iterate[variable_index];
+      }
+      std::cout << '\n';
+      std::cout << "User's x0:";
+      for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
+         std::cout << " " << initial_primal_iterate[variable_index];
+      }
+      std::cout << '\n';
+      // copy the initial primal point
+      for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
+         user_model->initial_primal_iterate[variable_index] = initial_primal_iterate[variable_index];
+      }
+      return true;
+   }
+   return false;
 }
 
-bool uno_set_initial_dual_iterate(void* model, double* initial_dual_iterate) {
+bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterate) {
    assert(model != nullptr);
-   CUserModel* user_model = static_cast<CUserModel*>(model);
-   user_model->initial_dual_iterate = initial_dual_iterate;
-   return true;
+   if (initial_dual_iterate != nullptr) {
+      CUserModel* user_model = static_cast<CUserModel*>(model);
+      // copy the initial dual point
+      for (size_t constraint_index: Range(static_cast<size_t>(user_model->number_constraints))) {
+         user_model->initial_dual_iterate[constraint_index] = initial_dual_iterate[constraint_index];
+      }
+      return true;
+   }
+   return false;
 }
 
 void uno_set_option(void* options, const char* option_name, const char* option_value) {
@@ -551,22 +590,30 @@ double uno_get_solution_objective(void* solver) {
 
 void uno_get_primal_solution(void* solver, double* primal_solution) {
    Result* result = uno_get_result(solver);
-   std::copy_n(result->primal_solution.data(), result->number_variables, primal_solution);
+   for (size_t variable_index: Range(result->number_variables)) {
+      primal_solution[variable_index] = result->primal_solution[variable_index];
+   }
 }
 
 void uno_get_constraint_dual_solution(void* solver, double* constraint_dual_solution) {
    Result* result = uno_get_result(solver);
-   std::copy_n(result->constraint_dual_solution.data(), result->number_constraints, constraint_dual_solution);
+   for (size_t constraint_index: Range(result->number_constraints)) {
+      constraint_dual_solution[constraint_index] = result->constraint_dual_solution[constraint_index];
+   }
 }
 
 void uno_get_lower_bound_dual_solution(void* solver, double* lower_bound_dual_solution) {
    Result* result = uno_get_result(solver);
-   std::copy_n(result->lower_bound_dual_solution.data(), result->number_variables, lower_bound_dual_solution);
+   for (size_t variable_index: Range(result->number_variables)) {
+      lower_bound_dual_solution[variable_index] = result->lower_bound_dual_solution[variable_index];
+   }
 }
 
 void uno_get_upper_bound_dual_solution(void* solver, double* upper_bound_dual_solution) {
    Result* result = uno_get_result(solver);
-   std::copy_n(result->upper_bound_dual_solution.data(), result->number_variables, upper_bound_dual_solution);
+   for (size_t variable_index: Range(result->number_variables)) {
+      upper_bound_dual_solution[variable_index] = result->upper_bound_dual_solution[variable_index];
+   }
 }
 
 double uno_get_solution_primal_feasibility(void* solver) {

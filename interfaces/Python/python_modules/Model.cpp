@@ -16,10 +16,18 @@ namespace uno {
       py::class_<PythonUserModel>(module, "Model")
       // constructor
       // https://stackoverflow.com/a/62310838/16037994
-      .def(py::init<>([](char problem_type, int32_t number_variables, std::vector<double>& variables_lower_bounds,
-         std::vector<double>& variables_upper_bounds, int32_t base_indexing) {
-         return PythonUserModel(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds,
-            base_indexing);
+      .def(py::init<>([](char problem_type, int32_t number_variables, const std::vector<double>& variables_lower_bounds,
+            const std::vector<double>& variables_upper_bounds, int32_t base_indexing) {
+         PythonUserModel model(problem_type, number_variables, base_indexing);
+         // copy the bounds internally
+         const size_t unsigned_number_variables = static_cast<size_t>(number_variables);
+         model.variables_lower_bounds = std::vector<double>(unsigned_number_variables);
+         model.variables_upper_bounds = std::vector<double>(unsigned_number_variables);
+         for (size_t variable_index: Range(unsigned_number_variables)) {
+            (*model.variables_lower_bounds)[variable_index] = variables_lower_bounds[variable_index];
+            (*model.variables_upper_bounds)[variable_index] = variables_upper_bounds[variable_index];
+         }
+         return model;
       }), "Constructor")
 
       // methods

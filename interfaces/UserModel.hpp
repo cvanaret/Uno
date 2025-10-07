@@ -14,13 +14,10 @@ namespace uno {
       typename DoubleVector, typename UserDataType>
    class UserModel {
    public:
-      UserModel(char problem_type, int32_t number_variables, DoubleVector variables_lower_bounds,
-         DoubleVector variables_upper_bounds, int32_t base_indexing):
+      UserModel(char problem_type, int32_t number_variables, int32_t base_indexing):
             problem_type(problem_type),
             base_indexing(base_indexing),
-            number_variables(number_variables),
-            variables_lower_bounds(variables_lower_bounds),
-            variables_upper_bounds(variables_upper_bounds) {
+            number_variables(number_variables) {
       }
 
       ~UserModel() = default;
@@ -30,8 +27,8 @@ namespace uno {
 
       // variables
       const int32_t number_variables;
-      DoubleVector variables_lower_bounds{nullptr};
-      DoubleVector variables_upper_bounds{nullptr};
+      DoubleVector variables_lower_bounds{};
+      DoubleVector variables_upper_bounds{};
 
       // objective
       Objective objective_function{nullptr};
