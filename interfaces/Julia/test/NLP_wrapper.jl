@@ -23,7 +23,7 @@ upper_bound_dual_solution = Vector{Float64}(undef, nlp.meta.nvar)
 Uno.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 
 for i in 1:nlp.meta.nvar
-    @test constraint_primal_solution[i] == Uno.uno_get_constraint_dual_component(solver, i-1)
+    @test primal_solution[i] == Uno.uno_get_constraint_dual_component(solver, i-1)
     @test lower_bound_dual_solution[i] == Uno.uno_get_lower_bound_dual_component(solver, i-1)
     @test upper_bound_dual_solution[i] == Uno.uno_get_upper_bound_dual_component(solver, i-1)
 end
