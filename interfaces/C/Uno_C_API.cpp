@@ -722,15 +722,19 @@ int32_t uno_get_number_subproblem_solved_evaluations(void* solver) {
 }
 
 void uno_destroy_model(void* model) {
-   assert(model != nullptr);
-   delete static_cast<CUserModel*>(model);
+   if (model != nullptr) {
+      delete static_cast<CUserModel*>(model);
+   }
 }
 
 void uno_destroy_solver(void* solver) {
-   assert(solver != nullptr);
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   delete uno_solver->solver;
-   delete uno_solver->options;
-   delete uno_solver->result;
-   delete uno_solver;
+   if (solver != nullptr) {
+      Solver* uno_solver = static_cast<Solver*>(solver);
+      delete uno_solver->solver;
+      delete uno_solver->options;
+      if (uno_solver->result != nullptr) {
+         delete uno_solver->result;
+      }
+      delete uno_solver;
+   }
 }
