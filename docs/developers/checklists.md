@@ -19,6 +19,7 @@ In preparation for a release, use the following checklist. These steps can be do
 
 ## Post-release
 
- - [ ] Change the version number in `interfaces/Julia/Project.toml`
- - [ ] Change the version number in `interfaces/Julia/gen/Project.toml`
+ - [ ] update the [Yggdrasil tarballs](https://github.com/JuliaPackaging/Yggdrasil/blob/master/U/Uno/build_tarballs.jl)
+ - [ ] Change the `Uno_jll` version number in `interfaces/Julia/Project.toml`
+ - [ ] Change the `Uno_jll` version number in `interfaces/Julia/gen/Project.toml`
 ````
