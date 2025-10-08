@@ -544,7 +544,6 @@ bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_it
    assert(model != nullptr);
    if (initial_primal_iterate != nullptr) {
       CUserModel* user_model = static_cast<CUserModel*>(model);
-#if 0
       std::cout << "Current x0 in CUserModel:";
       for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
          std::cout << " " << user_model->initial_primal_iterate[variable_index];
@@ -555,7 +554,6 @@ bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_it
          std::cout << " " << initial_primal_iterate[variable_index];
       }
       std::cout << '\n';
-#endif
       // copy the initial primal point
       for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
          user_model->initial_primal_iterate[variable_index] = initial_primal_iterate[variable_index];
@@ -667,7 +665,7 @@ bool uno_get_bool_solver_option(void* solver, const char* option_name) {
    return uno_solver->options->get_bool(option_name);   
 }
 
-const char* get_string_solver_option(void* solver, const char* option_name) {
+const char* uno_get_string_solver_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_string(option_name).c_str();     
