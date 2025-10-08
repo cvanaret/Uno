@@ -132,6 +132,13 @@ mutable struct UnoModel{M}
   user_model::M
 end
 
+function uno_destroy_model(model::UnoModel)
+  if model.c_model != C_NULL
+    uno_destroy_model(model.c_model)
+    model.c_model = C_NULL
+  end
+end
+
 Base.unsafe_convert(::Type{Ptr{Cvoid}}, model::UnoModel) = model.c_model
 
 function uno_model(
@@ -221,6 +228,13 @@ end
 mutable struct UnoSolver
   # Reference to the internal C solver of Uno
   c_solver::Ptr{Cvoid}
+end
+
+function uno_destroy_solver(solver::UnoSolver)
+  if solver.c_solver != C_NULL
+    uno_destroy_solver(solver.c_solver)
+    solver.c_solver = C_NULL
+  end
 end
 
 Base.unsafe_convert(::Type{Ptr{Cvoid}}, solver::UnoSolver) = solver.c_solver
