@@ -1,11 +1,11 @@
-cff-version: 2.2.0
+cff-version: 2.2.1
 message: "If you use this software, please cite it as below."
 authors:
 - family-names: "Vanaret"
   given-names: "Charlie"
   orcid: "https://orcid.org/0000-0002-1131-7631"
 title: "Uno"
-version: 2.2.0
+version: 2.2.1
 url: "https://github.com/cvanaret/Uno"
 preferred-citation:
   type: unpublished
