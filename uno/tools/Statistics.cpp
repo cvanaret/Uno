@@ -6,6 +6,7 @@
 #include <iomanip>
 #include "Statistics.hpp"
 #include "options/Options.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    // TODO move this to the option file
@@ -47,10 +48,10 @@ namespace uno {
       for (const auto& element: this->columns) {
          std::string header = element.second;
          for (int j = 0; j < this->widths[header]; j++) {
-            std::cout << Statistics::symbol("top");
+            INFO << Statistics::symbol("top");
          }
       }
-      std::cout << '\n';
+      INFO << '\n';
    }
 
    void Statistics::print_header() {
@@ -59,12 +60,12 @@ namespace uno {
       /* headers */
       for (const auto& element: this->columns) {
          const std::string& header = element.second;
-         std::cout << " " << header;
+         INFO << " " << header;
          for (int j = 0; j < this->widths[header] - static_cast<int>(header.size()) - 1; j++) {
-            std::cout << " ";
+            INFO << " ";
          }
       }
-      std::cout << '\n';
+      INFO << '\n';
       /* line below */
       this->print_horizontal_line();
    }
@@ -86,19 +87,19 @@ namespace uno {
          int length;
          try {
             const auto& value = this->current_line.at(header);
-            std::cout << " " << value;
+            INFO << " " << value;
             length = 1 + static_cast<int>(length_utf8(value));
          }
          catch (const std::out_of_range&) {
-            std::cout << " -";
+            INFO << " -";
             length = 2;
          }
          int number_spaces = (length <= this->widths[header]) ? this->widths[header] - length : 0;
          for (int j = 0; j < number_spaces; j++) {
-            std::cout << " ";
+            INFO << " ";
          }
       }
-      std::cout << '\n';
+      INFO << '\n';
    }
 
    void Statistics::print_footer() {
@@ -106,10 +107,10 @@ namespace uno {
       for (const auto& element: this->columns) {
          const auto& header = element.second;
          for (int j = 0; j < this->widths[header]; j++) {
-            std::cout << Statistics::symbol("bottom");
+            INFO << Statistics::symbol("bottom");
          }
       }
-      std::cout << '\n';
+      INFO << '\n';
       */
       Statistics::print_header();
    }
