@@ -18,6 +18,7 @@
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
+#include "tools/UserCallbacks.hpp"
 
 using namespace uno;
 
@@ -294,9 +295,46 @@ protected:
    CollectionAdapter<std::vector<size_t>> inequality_constraints_collection;
 };
 
+class CUserCallbacks: public UserCallbacks {
+   private:
+      NotifyAcceptableIterateUserCallback m_notify_acceptable_iterate_user_callback;
+      NotifyNewPrimals m_notify_new_primals_callback;
+      NotifyNewMultipliers m_notify_new_multipliers_callback;
+      void* m_user_data;
+
+   public:
+      CUserCallbacks(
+         NotifyAcceptableIterateUserCallback notify_acceptable_iterate_user_callback,
+         NotifyNewPrimals notify_new_primals_callback,
+         NotifyNewMultipliers notify_new_multipliers_callback,
+         void* user_data
+      ): UserCallbacks(),
+         m_notify_acceptable_iterate_user_callback(notify_acceptable_iterate_user_callback),
+         m_notify_new_primals_callback(notify_new_primals_callback),
+         m_notify_new_multipliers_callback(notify_new_multipliers_callback),
+         m_user_data(user_data) { };
+
+      void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity) override {
+         if (m_notify_acceptable_iterate_user_callback != nullptr) {
+            m_notify_acceptable_iterate_user_callback(static_cast<int32_t>(primals.size()), static_cast<int32_t>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(), multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility, dual_feasibility, complementarity, m_user_data);
+         }
+      }
+      void notify_new_primals(const Vector<double>& primals) override {
+         if (m_notify_new_primals_callback != nullptr) {
+            m_notify_new_primals_callback(static_cast<int32_t>(primals.size()), primals.data(), m_user_data);
+         }
+      }
+      void notify_new_multipliers(const Multipliers& multipliers) override {
+         if (m_notify_new_multipliers_callback != nullptr) {
+            m_notify_new_multipliers_callback(static_cast<int32_t>(multipliers.lower_bounds.size()), static_cast<int32_t>(multipliers.constraints.size()), multipliers.lower_bounds.data(), multipliers.upper_bounds.data(), multipliers.constraints.data(), m_user_data);
+         }
+      }
+};
+
 struct Solver {
    Uno* solver;
    Options* options;
+   UserCallbacks* user_callback;
    Result* result;
 };
 
@@ -506,6 +544,7 @@ bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_it
    assert(model != nullptr);
    if (initial_primal_iterate != nullptr) {
       CUserModel* user_model = static_cast<CUserModel*>(model);
+#if 0
       std::cout << "Current x0 in CUserModel:";
       for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
          std::cout << " " << user_model->initial_primal_iterate[variable_index];
@@ -516,6 +555,7 @@ bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_it
          std::cout << " " << initial_primal_iterate[variable_index];
       }
       std::cout << '\n';
+#endif
       // copy the initial primal point
       for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
          user_model->initial_primal_iterate[variable_index] = initial_primal_iterate[variable_index];
@@ -549,9 +589,12 @@ void* uno_create_solver() {
    Options* options = new Options;
    DefaultOptions::load(*options);
 
+   // default user callbacks
+   UserCallbacks* user_callbacks = new NoUserCallbacks;
+
    // Uno solver
    Uno* uno_solver = new Uno;
-   Solver* solver = new Solver{uno_solver, options, nullptr}; // no result yet
+   Solver* solver = new Solver{uno_solver, options, user_callbacks, nullptr}; // no result yet
    return solver;
 }
 
@@ -563,6 +606,14 @@ void uno_set_solver_option(void* solver, const char* option_name, const char* op
 void uno_set_solver_preset(void* solver, const char* preset_name) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    Presets::set(*uno_solver->options, preset_name);
+}
+
+void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_user_callback,
+      NotifyNewPrimals notify_new_primals_callback, NotifyNewMultipliers notify_new_multipliers_callback, void* user_data) {
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   delete uno_solver->user_callback; // delete the previous callbacks
+   uno_solver->user_callback = new CUserCallbacks(notify_acceptable_iterate_user_callback,
+      notify_new_primals_callback, notify_new_multipliers_callback, user_data);
 }
 
 void uno_optimize(void* solver, void* model) {
@@ -580,7 +631,7 @@ void uno_optimize(void* solver, void* model) {
    // create an instance of UnoModel, a subclass of Model, and solve the model using Uno
    const UnoModel uno_model(*user_model);
    Logger::set_logger(uno_solver->options->get_string("logger"));
-   Result result = uno_solver->solver->solve(uno_model, *uno_solver->options);
+   Result result = uno_solver->solver->solve(uno_model, *uno_solver->options, *uno_solver->user_callback);
    // clean up the previous result (if any)
    delete uno_solver->result;
    // move the new result into uno_solver

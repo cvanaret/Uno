@@ -113,6 +113,18 @@ extern "C" {
       bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
       double* result, void* user_data);
 
+   // - takes as inputs the number of variables, the number of constraints, a vector "primals" of size "number_variables",
+   // the lower and upper bound multipliers of size "number_variables", the number of constraints, 
+   // a vector "constraint_multipliers" of size "number_constraints", an objective multiplier, the primal feasibility,
+   // the dual feasibility, and the complementarity
+   typedef void (*NotifyAcceptableIterateUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals, const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity, void* user_data);
+
+   // - takes as inputs the number of variables, and a vector "primals" of size "number_variables"
+   typedef void (*NotifyNewPrimals)(int32_t number_variables, const double* primals, void* user_data);
+   
+   // - takes as inputs the number of variables, the number of constraints, the lower and upper bound multipliers of size "number_variables", and a vector "constraint_multipliers" of size "number_constraints"
+   typedef void (*NotifyNewMultipliers)(int32_t number_variables, int32_t number_constraints, const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraints_multipliers, void* user_data);
+
    // creates an optimization model that can be solved by Uno.
    // initially, the model contains "number_variables" variables, no objective function, and no constraints.
    // takes as inputs the type of problem ('L' for linear, 'Q' for quadratic, 'N' for nonlinear), the number of
@@ -207,6 +219,11 @@ extern "C" {
 
    // sets a particular preset in the Uno solver.
    void uno_set_solver_preset(void* solver, const char* preset_name);
+
+   // [optional]
+   // sets the user callbacks for solver.
+   void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_user_callback,
+      NotifyNewPrimals notify_new_primals_callback, NotifyNewMultipliers notify_new_multipliers_callback, void* user_data);
 
    // optimizes a given model using the Uno solver and given options.
    void uno_optimize(void* solver, void* model);
