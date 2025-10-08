@@ -480,7 +480,7 @@ bool uno_set_user_data(void* model, void* user_data) {
    return true;
 }
 
-bool uno_set_initial_primal_component(void* model, int32_t index, double initial_primal_component) {
+bool uno_set_initial_primal_iterate_component(void* model, int32_t index, double initial_primal_component) {
    assert(model != nullptr);
    CUserModel* user_model = static_cast<CUserModel*>(model);
    if (0 <= index && index < user_model->number_variables) {
@@ -491,7 +491,7 @@ bool uno_set_initial_primal_component(void* model, int32_t index, double initial
    return false;
 }
 
-bool uno_set_initial_dual_component(void* model, int32_t index, double initial_dual_component) {
+bool uno_set_initial_dual_iterate_component(void* model, int32_t index, double initial_dual_component) {
    assert(model != nullptr);
    CUserModel* user_model = static_cast<CUserModel*>(model);
    if (0 <= index && index < user_model->number_constraints) {

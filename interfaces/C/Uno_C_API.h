@@ -181,12 +181,12 @@ extern "C" {
    // [optional]
    // sets one component of the initial primal iterate for a given model.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_initial_primal_component(void* model, int32_t index, double initial_primal_component);
+   bool uno_set_initial_primal_iterate_component(void* model, int32_t index, double initial_primal_component);
 
    // [optional]
    // sets one component of the initial dual iterate for a given model.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_initial_dual_component(void* model, int32_t index, double initial_dual_component);
+   bool uno_set_initial_dual_iterate_component(void* model, int32_t index, double initial_dual_component);
 
    // [optional]
    // sets the initial primal iterate of a given model.

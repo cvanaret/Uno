@@ -1456,25 +1456,25 @@ function MOI.optimize!(model::Optimizer)
         else
             clamp(0.0, model.variables.lower[i], model.variables.upper[i])
         end
-        Uno.uno_set_initial_primal_component(inner, i-1, x0_i)
+        Uno.uno_set_initial_primal_iterate_component(inner, i-1, x0_i)
     end
 
     for (i, start) in enumerate(model.qp_data.mult_g)
         y0_i = _dual_start(model, start, -1)
-        Uno.uno_set_initial_dual_component(inner, i-1, y0_i)
+        Uno.uno_set_initial_dual_iterate_component(inner, i-1, y0_i)
     end
     offset = length(model.qp_data.mult_g)
     if model.nlp_dual_start === nothing
         for i in offset+1:inner.ncon
-            Uno.uno_set_initial_dual_component(inner, i-1, 0.0)
+            Uno.uno_set_initial_dual_iterate_component(inner, i-1, 0.0)
         end
         for (key, val) in model.mult_g_nlp
-            Uno.uno_set_initial_dual_component(inner, offset+key.value-1, val)
+            Uno.uno_set_initial_dual_iterate_component(inner, offset+key.value-1, val)
         end
     else
         for (i, start) in enumerate(model.nlp_dual_start::Vector{Float64})
             y0_i = _dual_start(model, start, -1)
-            Uno.uno_set_initial_dual_component(inner, offset+i-1, y0_i)
+            Uno.uno_set_initial_dual_iterate_component(inner, offset+i-1, y0_i)
         end
     end
 
