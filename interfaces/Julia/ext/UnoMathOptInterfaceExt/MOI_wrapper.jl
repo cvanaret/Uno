@@ -98,7 +98,6 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     invalid_model::Bool
     silent::Bool
     options::Dict{String,Any}
-    solve_time::Float64
     sense::MOI.OptimizationSense
     parameters::Dict{MOI.VariableIndex,MOI.Nonlinear.ParameterIndex}
     variables::MOI.Utilities.VariablesContainer{Float64}
@@ -111,12 +110,11 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     mult_g_nlp::Dict{MOI.Nonlinear.ConstraintIndex,Float64}
     qp_data::QPBlockData{Float64}
     nlp_model::Union{Nothing,MOI.Nonlinear.Model}
-    barrier_iterations::Int
     ad_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation
     vector_nonlinear_oracle_constraints::Vector{Tuple{MOI.VectorOfVariables,_VectorNonlinearOracleCache}}
 
     function Optimizer(; kwargs...)
-        option_dict = Dict{String, Any}()
+        option_dict = Dict{String,Any}()
         for (name, value) in kwargs
             option_dict[name |> string] = value
         end
@@ -127,7 +125,6 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
             false,
             false,
             option_dict,
-            NaN,
             MOI.FEASIBILITY_SENSE,
             Dict{MOI.VariableIndex,Float64}(),
             MOI.Utilities.VariablesContainer{Float64}(),
@@ -140,7 +137,6 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
             Dict{MOI.Nonlinear.ConstraintIndex,Float64}(),
             QPBlockData{Float64}(),
             nothing,
-            0,
             MOI.Nonlinear.SparseReverseMode(),
             Tuple{MOI.VectorOfVariables,_VectorNonlinearOracleCache}[],
         )
@@ -178,7 +174,6 @@ function MOI.empty!(model::Optimizer)
     model.invalid_model = false
     # SKIP: model.silent
     # SKIP: model.options
-    model.solve_time = 0.0
     model.sense = MOI.FEASIBILITY_SENSE
     empty!(model.parameters)
     MOI.empty!(model.variables)
@@ -191,7 +186,6 @@ function MOI.empty!(model::Optimizer)
     empty!(model.mult_g_nlp)
     model.qp_data = QPBlockData{Float64}()
     model.nlp_model = nothing
-    model.barrier_iterations = 0
     # SKIP: model.ad_backend
     empty!(model.vector_nonlinear_oracle_constraints)
     return
@@ -1425,7 +1419,6 @@ function copy_parameters(model::Optimizer)
 end
 
 function MOI.optimize!(model::Optimizer)
-    start_time = time()
     if model.inner === nothing || model.solver == nothing
         _setup_model(model)
     end
@@ -1439,7 +1432,11 @@ function MOI.optimize!(model::Optimizer)
     # Other misc options that over-ride the ones set above.
     for (name, value) in model.options
         if value isa String
-            Uno.uno_set_solver_option(solver, name, value)
+            if name == "preset"
+                Uno.uno_set_solver_preset(solver, value)
+            else
+                Uno.uno_set_solver_option(solver, name, value)
+            end
         else
             error(
                 "Unable to add option `\"$name\"` with the value " *
@@ -1478,8 +1475,6 @@ function MOI.optimize!(model::Optimizer)
         end
     end
 
-    model.barrier_iterations = 0
-
     # Clear timers
     for (_, s) in model.vector_nonlinear_oracle_constraints
         s.eval_f_timer = 0.0
@@ -1487,7 +1482,6 @@ function MOI.optimize!(model::Optimizer)
         s.eval_hessian_lagrangian_timer = 0.0
     end
     Uno.uno_optimize(solver, inner)
-    model.solve_time = time() - start_time
     return
 end
 
@@ -1610,11 +1604,11 @@ end
 
 ### MOI.SolveTimeSec
 
-MOI.get(model::Optimizer, ::MOI.SolveTimeSec) = model.solve_time
+MOI.get(model::Optimizer, ::MOI.SolveTimeSec) = Uno.uno_get_cpu_time(model.solver)
 
 ### MOI.BarrierIterations
 
-MOI.get(model::Optimizer, ::MOI.BarrierIterations) = model.barrier_iterations
+MOI.get(model::Optimizer, ::MOI.BarrierIterations) = Uno.uno_get_number_iterations(model.solver)
 
 ### MOI.ObjectiveValue
 
@@ -1637,11 +1631,7 @@ function MOI.get(
         p = model.parameters[vi]
         return model.nlp_model[p]
     end
-    # Alexis -- revisit this code when we know how to handle the workspace
-    # model.inner.x[column(vi)]
-    x = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_primal_solution(model.solver, x)
-    return x[column(vi)]
+    return Uno.uno_get_primal_solution_component(model.solver, column(vi)-1)
 end
 
 ### MOI.ConstraintPrimal
@@ -1723,11 +1713,8 @@ function MOI.get(
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     s = -_dual_multiplier(model)
-    # Alexis -- revisit this code when we know how to handle the workspace
-    # v = s * model.inner.mult_g[row(model, ci)]
-    mult_g = Vector{Float64}(undef, model.inner.ncon)
-    Uno.uno_get_constraint_dual_solution(model.solver, mult_g)
-    v = s * mult_g[row(model, ci)]
+    λ = Uno.uno_get_constraint_dual_solution_component(model.solver, row(model, ci)-1)
+    v = s * λ
     return v
 end
 
@@ -1738,13 +1725,9 @@ function MOI.get(
 )
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-     # Alexis -- revisit this code when we know how to handle the workspace
-    # rc = model.inner.mult_x_L[ci.value] - model.inner.mult_x_U[ci.value]
-    mult_x_L = Vector{Float64}(undef, model.inner.nvar)
-    mult_x_U = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_lower_bound_dual_solution(model.solver, mult_x_L)
-    Uno.uno_get_upper_bound_dual_solution(model.solver, mult_x_U)
-    rc = mult_x_L[ci.value] - mult_x_U[ci.value]
+    xL_i = Uno.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
+    xU_i = Uno.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
+    rc = xL_i - xU_i
     return min(0.0, _dual_multiplier(model) * rc)
 end
 
@@ -1755,13 +1738,9 @@ function MOI.get(
 )
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-    # Alexis -- revisit this code when we know how to handle the workspace
-    # rc = model.inner.mult_x_L[ci.value] - model.inner.mult_x_U[ci.value]
-    mult_x_L = Vector{Float64}(undef, model.inner.nvar)
-    mult_x_U = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_lower_bound_dual_solution(model.solver, mult_x_L)
-    Uno.uno_get_upper_bound_dual_solution(model.solver, mult_x_U)
-    rc = mult_x_L[ci.value] - mult_x_U[ci.value]
+    xL_i = Uno.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
+    xU_i = Uno.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
+    rc = xL_i - xU_i
     return max(0.0, _dual_multiplier(model) * rc)
 end
 
@@ -1772,13 +1751,9 @@ function MOI.get(
 )
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-     # Alexis -- revisit this code when we know how to handle the workspace
-    # rc = model.inner.mult_x_L[ci.value] - model.inner.mult_x_U[ci.value]
-    mult_x_L = Vector{Float64}(undef, model.inner.nvar)
-    mult_x_U = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_lower_bound_dual_solution(model.solver, mult_x_L)
-    Uno.uno_get_upper_bound_dual_solution(model.solver, mult_x_U)
-    rc = mult_x_L[ci.value] - mult_x_U[ci.value]
+    xL_i = Uno.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
+    xU_i = Uno.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
+    rc = xL_i - xU_i
     return _dual_multiplier(model) * rc
 end
 
@@ -1789,13 +1764,9 @@ function MOI.get(
 )
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-     # Alexis -- revisit this code when we know how to handle the workspace
-    # rc = model.inner.mult_x_L[ci.value] - model.inner.mult_x_U[ci.value]
-    mult_x_L = Vector{Float64}(undef, model.inner.nvar)
-    mult_x_U = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_lower_bound_dual_solution(model.solver, mult_x_L)
-    Uno.uno_get_upper_bound_dual_solution(model.solver, mult_x_U)
-    rc = mult_x_L[ci.value] - mult_x_U[ci.value]
+    xL_i = Uno.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
+    xU_i = Uno.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
+    rc = xL_i - xU_i
     return _dual_multiplier(model) * rc
 end
 
@@ -1804,11 +1775,10 @@ end
 function MOI.get(model::Optimizer, attr::MOI.NLPBlockDual)
     MOI.check_result_index_bounds(model, attr)
     s = -_dual_multiplier(model)
-    # Alexis -- revisit this code when we know how to handle the workspace
-    # v = s .* model.inner.mult_g[(length(model.qp_data)+1):end]
-    mult_g = Vector{Float64}(undef, model.inner.ncon)
-    Uno.uno_get_constraint_dual_solution(model.solver, mult_g)
-    offset = length(model.qp_data)
-    v = s .* mult_g[(offset+1):end]
+    nquad = length(model.qp_data)
+    v = Vector{Float64}(undef, model.inner.ncon - nquad)
+    for i = nquad+1:model.inner.ncon
+        v[i-nquad] = s * Uno.uno_get_constraint_dual_solution_component(model.solver, i-1)
+    end
     return v
 end
