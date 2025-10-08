@@ -217,6 +217,10 @@ extern "C" {
    // takes as inputs the name of the option and the value to which it should be set.
    void uno_set_solver_option(void* solver, const char* option_name, const char* option_value);
 
+   // [optional] loads the options from a given option file.
+   // takes as input the name of the option file.
+   void uno_load_solver_option_file(void* solver, const char* file_name);
+
    // sets a particular preset in the Uno solver.
    void uno_set_solver_preset(void* solver, const char* preset_name);
 

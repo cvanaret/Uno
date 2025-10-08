@@ -603,6 +603,11 @@ void uno_set_solver_option(void* solver, const char* option_name, const char* op
    uno_solver->options->set(option_name, option_value);
 }
 
+void uno_load_solver_option_file(void* solver, const char* file_name) {
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   uno_solver->options->overwrite_with(uno::Options::load_option_file(file_name));
+}
+
 void uno_set_solver_preset(void* solver, const char* preset_name) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    Presets::set(*uno_solver->options, preset_name);
