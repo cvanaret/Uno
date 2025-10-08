@@ -4,6 +4,7 @@
 #ifndef UNO_OPTIONS_H
 #define UNO_OPTIONS_H
 
+#include <cstdint>
 #include <map>
 #include <string>
 #include <optional>
