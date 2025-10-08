@@ -76,7 +76,7 @@ jobs:
                                                 -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/deps/lib/libmumps_common.a \
                                                 -DMUMPS_PORD_LIBRARY=${{github.workspace}}/deps/lib/libpord.a \
                                                 -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/deps/lib/libmpiseq.a \
-                                                -DHIGHS_DIR=${{github.workspace}}/deps/highs/lib/cmake/highs \
+                                                -DHIGHS_DIR=${{github.workspace}}/deps/highs/lib \
                                                 -DBLAS_LIBRARIES=${{github.workspace}}/deps/lib/libblas.a \
                                                 -DLAPACK_LIBRARIES=${{github.workspace}}/deps/lib/liblapack.a \
                                                 -DBUILD_STATIC_LIBS=ON \
