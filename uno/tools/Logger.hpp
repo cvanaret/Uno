@@ -15,13 +15,15 @@ namespace uno {
    class Logger {
    public:
        static Level level;
+       inline static std::ostream* stream = &std::cout;
        static void set_logger(const std::string& logger_level);
+       static void set_stream(std::ostream &output_stream);
    };
 
    template <typename T>
    const Level& operator<<(const Level& level, T& element) {
       if (level <= Logger::level) {
-         std::cout << element;
+         (*Logger::stream) << element;
       }
       return level;
    }
@@ -29,7 +31,7 @@ namespace uno {
    template <typename T>
    const Level& operator<<(const Level& level, const T& element) {
       if (level <= Logger::level) {
-         std::cout << element;
+         (*Logger::stream) << element;
       }
       return level;
    }
