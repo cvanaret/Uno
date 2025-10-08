@@ -297,26 +297,26 @@ protected:
 
 class CUserCallbacks: public UserCallbacks {
    private:
-      NotifyAcceptableIterateUserCallback m_notify_acceptable_iterate_user_callback;
-      NotifyNewPrimals m_notify_new_primals_callback;
-      NotifyNewMultipliers m_notify_new_multipliers_callback;
+      NotifyAcceptableIterateUserCallback m_notify_acceptable_iterate_callback;
+      NotifyNewPrimalsUserCallback m_notify_new_primals_callback;
+      NotifyNewMultipliersUserCallback m_notify_new_multipliers_callback;
       void* m_user_data;
 
    public:
       CUserCallbacks(
-         NotifyAcceptableIterateUserCallback notify_acceptable_iterate_user_callback,
-         NotifyNewPrimals notify_new_primals_callback,
-         NotifyNewMultipliers notify_new_multipliers_callback,
+         NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
+         NotifyNewPrimalsUserCallback notify_new_primals_callback,
+         NotifyNewMultipliersUserCallback notify_new_multipliers_callback,
          void* user_data
       ): UserCallbacks(),
-         m_notify_acceptable_iterate_user_callback(notify_acceptable_iterate_user_callback),
+         m_notify_acceptable_iterate_callback(notify_acceptable_iterate_callback),
          m_notify_new_primals_callback(notify_new_primals_callback),
          m_notify_new_multipliers_callback(notify_new_multipliers_callback),
          m_user_data(user_data) { };
 
       void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity) override {
-         if (m_notify_acceptable_iterate_user_callback != nullptr) {
-            m_notify_acceptable_iterate_user_callback(static_cast<int32_t>(primals.size()), static_cast<int32_t>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(), multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility, dual_feasibility, complementarity, m_user_data);
+         if (m_notify_acceptable_iterate_callback != nullptr) {
+            m_notify_acceptable_iterate_callback(static_cast<int32_t>(primals.size()), static_cast<int32_t>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(), multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility, dual_feasibility, complementarity, m_user_data);
          }
       }
       void notify_new_primals(const Vector<double>& primals) override {
@@ -611,11 +611,11 @@ void uno_set_solver_preset(void* solver, const char* preset_name) {
    Presets::set(*uno_solver->options, preset_name);
 }
 
-void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_user_callback,
-      NotifyNewPrimals notify_new_primals_callback, NotifyNewMultipliers notify_new_multipliers_callback, void* user_data) {
+void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
+      NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback, void* user_data) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    delete uno_solver->user_callback; // delete the previous callbacks
-   uno_solver->user_callback = new CUserCallbacks(notify_acceptable_iterate_user_callback,
+   uno_solver->user_callback = new CUserCallbacks(notify_acceptable_iterate_callback,
       notify_new_primals_callback, notify_new_multipliers_callback, user_data);
 }
 
