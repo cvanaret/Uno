@@ -125,6 +125,9 @@ extern "C" {
    // - takes as inputs the number of variables, the number of constraints, the lower and upper bound multipliers of size "number_variables", and a vector "constraint_multipliers" of size "number_constraints"
    typedef void (*NotifyNewMultipliersUserCallback)(int32_t number_variables, int32_t number_constraints, const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraints_multipliers, void* user_data);
 
+   // - takes as inputs the a vector "buf" of size "len"
+   typedef int32_t (*LoggerStreamUserCallback)(const char* buf, int32_t len, void* user_data);
+
    // creates an optimization model that can be solved by Uno.
    // initially, the model contains "number_variables" variables, no objective function, and no constraints.
    // takes as inputs the type of problem ('L' for linear, 'Q' for quadratic, 'N' for nonlinear), the number of
@@ -228,6 +231,14 @@ extern "C" {
    // sets the user callbacks for solver.
    void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
       NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback, void* user_data);
+
+   // [optional]
+   // sets the logger stream callback.
+   void uno_set_logger_stream_callback(LoggerStreamUserCallback logger_stream_callback, void* user_data);
+
+   // [optional]
+   // resets the logger stream to the standard output
+   void uno_reset_logger_stream();
 
    // optimizes a given model using the Uno solver and given options.
    void uno_optimize(void* solver, void* model);
