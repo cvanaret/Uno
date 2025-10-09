@@ -1604,11 +1604,11 @@ end
 
 ### MOI.SolveTimeSec
 
-MOI.get(model::Optimizer, ::MOI.SolveTimeSec) = Uno.uno_get_cpu_time(model.solver)
+MOI.get(model::Optimizer, ::MOI.SolveTimeSec) = isnothing(model.solver) ? NaN : Uno.uno_get_cpu_time(model.solver)
 
 ### MOI.BarrierIterations
 
-MOI.get(model::Optimizer, ::MOI.BarrierIterations) = Uno.uno_get_number_iterations(model.solver)
+MOI.get(model::Optimizer, ::MOI.BarrierIterations) = isnothing(model.solver) ? 0 : Uno.uno_get_number_iterations(model.solver)
 
 ### MOI.ObjectiveValue
 
