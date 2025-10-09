@@ -225,6 +225,21 @@ function uno_model(
   return model
 end
 
+
+function uno_set_initial_primal_iterate(model::UnoModel, initial_primal_iterate::Vector{Float64})
+  @assert model.nvar == length(initial_primal_iterate)
+  flag = uno_set_initial_primal_iterate(model.c_model, initial_primal_iterate)
+  flag || error("Failed to set initial primal iterate via uno_set_initial_primal_iterate.")
+  return
+end
+
+function uno_set_initial_dual_iterate(model::UnoModel, initial_dual_iterate::Vector{Float64})
+  @assert model.ncon == length(initial_dual_iterate)
+  flag = uno_set_initial_dual_iterate(model.c_model, initial_dual_iterate)
+  flag || error("Failed to set initial dual iterate via uno_set_initial_dual_iterate.")
+  return
+end
+
 mutable struct UnoSolver
   # Reference to the internal C solver of Uno
   c_solver::Ptr{Cvoid}
@@ -259,21 +274,23 @@ function uno_solver(preset::String; kwargs...)
 end
 
 function uno_optimize(solver::UnoSolver, model::UnoModel)
+  @assert (solver.c_solver != C_NULL) && (model.c_model != C_NULL)
   uno_optimize(solver.c_solver, model.c_model)
 end
 
-function uno_set_initial_primal_iterate(model::UnoModel, initial_primal_iterate::Vector{Float64})
-  @assert model.nvar == length(initial_primal_iterate)
-  flag = uno_set_initial_primal_iterate(model.c_model, initial_primal_iterate)
-  flag || error("Failed to set initial primal iterate via uno_set_initial_primal_iterate.")
-  return
+function uno_get_cpu_time(solver::UnoSolver)
+  @assert solver.c_solver != C_NULL
+  uno_get_cpu_time(solver.c_solver)
 end
 
-function uno_set_initial_dual_iterate(model::UnoModel, initial_dual_iterate::Vector{Float64})
-  @assert model.ncon == length(initial_dual_iterate)
-  flag = uno_set_initial_dual_iterate(model.c_model, initial_dual_iterate)
-  flag || error("Failed to set initial dual iterate via uno_set_initial_dual_iterate.")
-  return
+function uno_get_number_iterations(solver::UnoSolver)
+  @assert solver.c_solver != C_NULL
+  uno_get_number_iterations(solver.c_solver)
+end
+
+function uno_get_number_subproblem_solved_evaluations(solver::UnoSolver)
+  @assert solver.c_solver != C_NULL
+  uno_get_number_subproblem_solved_evaluations(solver.c_solver)
 end
 
 function uno_set_solver_option(solver::UnoSolver, option_name::String, option_value::String)
