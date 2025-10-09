@@ -39,6 +39,8 @@ const NotifyNewPrimalsUserCallback = Ptr{Cvoid}
 
 const NotifyNewMultipliersUserCallback = Ptr{Cvoid}
 
+const LoggerStreamUserCallback = Ptr{Cvoid}
+
 function uno_create_model(problem_type, number_variables, variables_lower_bounds,
                           variables_upper_bounds, base_indexing)
     @ccall libuno.uno_create_model(problem_type::Cchar, number_variables::Int32,
@@ -148,6 +150,15 @@ function uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback,
                                            notify_new_primals_callback::NotifyNewPrimalsUserCallback,
                                            notify_new_multipliers_callback::NotifyNewMultipliersUserCallback,
                                            user_data::Ptr{Cvoid})::Cvoid
+end
+
+function uno_set_logger_stream_callback(logger_stream_callback, user_data)
+    @ccall libuno.uno_set_logger_stream_callback(logger_stream_callback::LoggerStreamUserCallback,
+                                                 user_data::Ptr{Cvoid})::Cvoid
+end
+
+function uno_reset_logger_stream()
+    @ccall libuno.uno_reset_logger_stream()::Cvoid
 end
 
 function uno_optimize(solver, model)
