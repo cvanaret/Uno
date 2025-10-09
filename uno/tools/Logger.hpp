@@ -18,6 +18,7 @@ namespace uno {
        inline static std::ostream* stream = &std::cout;
        static void set_logger(const std::string& logger_level);
        static void set_stream(std::ostream &output_stream);
+       static void flush();
    };
 
    template <typename T>
@@ -36,12 +37,8 @@ namespace uno {
       return level;
    }
 
-   inline const Level& operator<<(const Level& level, std::ostream& (*element)(std::ostream&)) {
-      if (level <= Logger::level) {
-         (*Logger::stream) << element;
-      }
-      return level;
-   }
+   const Level& operator<<(const Level& level, std::ostream& (*element)(std::ostream&));
+   
 } // namespace
 
 #endif // UNO_LOGGER_H
