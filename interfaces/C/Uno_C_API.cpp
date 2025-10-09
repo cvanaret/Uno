@@ -332,25 +332,31 @@ class CUserCallbacks: public UserCallbacks {
       }
 };
 
+// std::streambuf wrapper around LoggerStreamUserCallback
 class CStreamBuf : public std::streambuf {
    public:
       explicit CStreamBuf(LoggerStreamUserCallback logger_stream_callback, void* user_data, std::size_t bufferSize) : 
       m_logger_stream_callback(logger_stream_callback), m_user_data(user_data) {
+         // allocate output buffer and set stream buffer pointer
          m_buffer = new char[bufferSize];
          setp(m_buffer, m_buffer + bufferSize - 1); 
       }
       ~CStreamBuf() override {
+         // flush remaining data and release buffer memory
          sync();
          delete[] m_buffer;
       }
    
    protected:
-      int_type overflow(int_type ch) override {
+      // called on buffer overflow
+      int overflow(int ch) override {
          if (ch != EOF) {
+               // insert the character into the buffer
                *pptr() = traits_type::to_char_type(ch);
                pbump(1);
          }
-         return flushBuffer() == 0 ? ch : EOF;
+         // return EOF for error
+         return flushBuffer() == 0 ? ch : EOF; 
       }
       int sync() override {
          return flushBuffer();
@@ -361,27 +367,34 @@ class CStreamBuf : public std::streambuf {
       void* m_user_data;
       char* m_buffer;
 
+      // flush buffer to the logger callback
       int flushBuffer() {
+         // check for invalid stream callback
          if (!m_logger_stream_callback) {
             return -1;
          }
+         // current used buffer size
          std::ptrdiff_t n = pptr() - pbase();
          if (n > 0) {
-               if (m_logger_stream_callback(pbase(), static_cast<int32_t>(n), m_user_data ) != static_cast<int32_t>(n)) {
-                  return -1;
-               }
-               pbump(static_cast<int>(-n));
+            // call user logger callback
+            if (m_logger_stream_callback(pbase(), static_cast<int32_t>(n), m_user_data ) != static_cast<int32_t>(n)) {
+               return -1;
+            }
+            // move buffer pointer
+            pbump(static_cast<int>(-n));
          }
          return 0;
       }
 };
 
+// std::ostream wrapper around LoggerStreamUserCallback
 class COStream : public std::ostream {
    public:
-      explicit COStream(LoggerStreamUserCallback logger_stream_callback, void* user_data, std::size_t bufferSize = 1024) : 
+      explicit COStream(LoggerStreamUserCallback logger_stream_callback, void* user_data, std::size_t bufferSize = 1024) : // 1024 default buffer size
       std::ostream(&m_buf), m_buf(logger_stream_callback, user_data, bufferSize) { }
 
    private:
+      // internal stream buffer that sends output to the LoggerStreamUserCallback
       CStreamBuf m_buf;
 };
 COStream* c_ostream = nullptr;
