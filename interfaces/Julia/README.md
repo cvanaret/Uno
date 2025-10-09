@@ -33,7 +33,7 @@ using Uno, CUTEst
 
 nlp = CUTEstModel{Float64}("HS15")
 model = uno_model(nlp)
-solver = uno_solver("funnelsqp", print_solution="yes")
+solver = uno_solver("filtersqp", print_solution="yes")
 uno_optimize(solver, model)
 
 timer = Uno.uno_get_cpu_time(solver)
@@ -62,7 +62,7 @@ Uno.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 ```julia
 using Uno, JuMP
 
-jump_model = Model(() -> Uno.Optimizer(preset="funnelsqp"))
+jump_model = Model(() -> Uno.Optimizer(preset="filtersqp"))
 x0 = [-2, 1]
 uvar = [0.5, Inf]
 @variable(jump_model, x[i = 1:2] ≤ uvar[i], start = x0[i])
@@ -86,7 +86,7 @@ using NLPModelsJuMP
 nlp = MathOptNLPModel(jump_model)
 
 model = uno_model(nlp)
-solver = uno_solver("funnelsqp", print_solution="yes")
+solver = uno_solver("filtersqp", print_solution="yes")
 uno_optimize(solver, model)
 ```
 
