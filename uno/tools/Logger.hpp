@@ -35,6 +35,13 @@ namespace uno {
       }
       return level;
    }
+
+   inline const Level& operator<<(const Level& level, std::ostream& (*element)(std::ostream&)) {
+      if (level <= Logger::level) {
+         (*Logger::stream) << element;
+      }
+      return level;
+   }
 } // namespace
 
 #endif // UNO_LOGGER_H
