@@ -225,7 +225,10 @@ extern "C" {
 
    // sets a particular option in the Uno solver.
    // takes as inputs the name of the option and the value to which it should be set.
-   void uno_set_solver_option(void* solver, const char* option_name, const char* option_value);
+   void uno_set_solver_integer_option(void* solver, const char* option_name, int32_t option_value);
+   void uno_set_solver_double_option(void* solver, const char* option_name, double option_value);
+   void uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value);
+   void uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value);
 
    // [optional] loads the options from a given option file.
    // takes as input the name of the option file.
