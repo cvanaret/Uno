@@ -264,6 +264,12 @@ function uno_solver(preset::String; kwargs...)
   for (k, v) in kwargs
     if typeof(v) <: String
       uno_set_solver_string_option(c_solver, string(k), v)
+    elseif typeof(v) <: CInt
+      uno_set_solver_integer_option(c_solver, string(k), v)
+    elseif typeof(v) <: Float64
+      uno_set_solver_double_option(c_solver, string(k), v)
+    elseif typeof(v) <: Bool
+      uno_set_solver_bool_option(c_solver, string(k), v)
     else
       @warn "$k does not seem to be a valid Uno option."
     end
