@@ -263,7 +263,7 @@ function uno_solver(preset::String; kwargs...)
   uno_set_solver_preset(c_solver, preset)
   for (k, v) in kwargs
     if typeof(v) <: String
-      uno_set_solver_option(c_solver, string(k), v)
+      uno_set_solver_string_option(c_solver, string(k), v)
     else
       @warn "$k does not seem to be a valid Uno option."
     end
@@ -293,8 +293,20 @@ function uno_get_number_subproblem_solved_evaluations(solver::UnoSolver)
   uno_get_number_subproblem_solved_evaluations(solver.c_solver)
 end
 
-function uno_set_solver_option(solver::UnoSolver, option_name::String, option_value::String)
-  uno_set_solver_option(solver.c_solver, option_name, option_value)
+function uno_set_solver_integer_option(solver::UnoSolver, option_name::String, option_value::Cint)
+  uno_set_solver_integer_option(solver.c_solver, option_name, option_value)
+end
+
+function uno_set_solver_double_option(solver::UnoSolver, option_name::String, option_value::Float64)
+  uno_set_solver_double_option(solver.c_solver, option_name, option_value)
+end
+
+function uno_set_solver_bool_option(solver::UnoSolver, option_name::String, option_value::Bool)
+  uno_set_solver_bool_option(solver.c_solver, option_name, option_value)
+end
+
+function uno_set_solver_string_option(solver::UnoSolver, option_name::String, option_value::String)
+  uno_set_solver_string_option(solver.c_solver, option_name, option_value)
 end
 
 function uno_set_solver_preset(solver::UnoSolver, preset_name::String)
