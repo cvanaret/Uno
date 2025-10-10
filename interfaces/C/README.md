@@ -120,7 +120,7 @@ uno_set_logger_stream_callback(logger_stream_callback, user_data);
 
 and reset the logger stream to the standard output:
 ```c
-uno_reset_logger_stream
+uno_reset_logger_stream();
 ```
 
 ### Solving the model
