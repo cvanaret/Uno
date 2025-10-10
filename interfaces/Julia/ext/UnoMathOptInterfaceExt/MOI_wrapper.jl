@@ -1437,16 +1437,16 @@ function MOI.optimize!(model::Optimizer)
             else
                 Uno.uno_set_solver_string_option(solver, name, value)
             end
-        else if value isa Float64
+        elseif value isa Float64
             Uno.uno_set_solver_double_option(solver, name, value)
-        else if value isa Cint
+        elseif value isa Cint
             Uno.uno_set_solver_integer_option(solver, name, value)
-        else if value isa Bool
+        elseif value isa Bool
             Uno.uno_set_solver_bool_option(solver, name, value)
         else
             error(
                 "Unable to add option `\"$name\"` with the value " *
-                "`$value::$(typeof(value))`. The value must be a `::String`, a `::Float64`, a `::Cint`, or a `Bool`.",
+                "`$value::$(typeof(value))`. The value must be a `::String`, a `::Float64`, a `::Cint`, or a `::Bool`.",
             )
         end
     end
