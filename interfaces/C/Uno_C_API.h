@@ -114,19 +114,25 @@ extern "C" {
       double* result, void* user_data);
 
    // - takes as inputs the number of variables, the number of constraints, a vector "primals" of size "number_variables",
-   // the lower and upper bound multipliers of size "number_variables", the number of constraints, 
-   // a vector "constraint_multipliers" of size "number_constraints", an objective multiplier, the primal feasibility,
-   // the dual feasibility, and the complementarity
-   typedef void (*NotifyAcceptableIterateUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals, const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity, void* user_data);
+   // the lower and upper bound multipliers of size "number_variables", a vector "constraint_multipliers" of size
+   // "number_constraints", an objective multiplier, the primal feasibility residual, the dual feasibility residual, and
+   // the complementarity residual
+   typedef void (*NotifyAcceptableIterateUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals,
+      const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
+      double objective_multiplier, double primal_feasibility_residual, double dual_feasibility_residual,
+      double complementarity_residual, void* user_data);
 
    // - takes as inputs the number of variables, and a vector "primals" of size "number_variables"
    typedef void (*NotifyNewPrimalsUserCallback)(int32_t number_variables, const double* primals, void* user_data);
    
-   // - takes as inputs the number of variables, the number of constraints, the lower and upper bound multipliers of size "number_variables", and a vector "constraint_multipliers" of size "number_constraints"
-   typedef void (*NotifyNewMultipliersUserCallback)(int32_t number_variables, int32_t number_constraints, const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraints_multipliers, void* user_data);
+   // - takes as inputs the number of variables, the number of constraints, the lower and upper bound multipliers of
+   // size "number_variables", and a vector "constraint_multipliers" of size "number_constraints"
+   typedef void (*NotifyNewMultipliersUserCallback)(int32_t number_variables, int32_t number_constraints,
+      const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraints_multipliers,
+      void* user_data);
 
-   // - takes as inputs the a vector "buf" of size "len"
-   typedef int32_t (*LoggerStreamUserCallback)(const char* buf, int32_t len, void* user_data);
+   // - takes as inputs a vector "buffer" of size "length"
+   typedef int32_t (*LoggerStreamUserCallback)(const char* buffer, int32_t length, void* user_data);
 
    // creates an optimization model that can be solved by Uno.
    // initially, the model contains "number_variables" variables, no objective function, and no constraints.

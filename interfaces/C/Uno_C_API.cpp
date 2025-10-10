@@ -297,112 +297,118 @@ protected:
 };
 
 class CUserCallbacks: public UserCallbacks {
-   private:
-      NotifyAcceptableIterateUserCallback m_notify_acceptable_iterate_callback;
-      NotifyNewPrimalsUserCallback m_notify_new_primals_callback;
-      NotifyNewMultipliersUserCallback m_notify_new_multipliers_callback;
-      void* m_user_data;
+public:
+   CUserCallbacks(NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
+      NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback,
+      void* user_data): UserCallbacks(),
+         notify_acceptable_iterate_callback(notify_acceptable_iterate_callback),
+         notify_new_primals_callback(notify_new_primals_callback),
+         notify_new_multipliers_callback(notify_new_multipliers_callback),
+         user_data(user_data) { };
 
-   public:
-      CUserCallbacks(
-         NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
-         NotifyNewPrimalsUserCallback notify_new_primals_callback,
-         NotifyNewMultipliersUserCallback notify_new_multipliers_callback,
-         void* user_data
-      ): UserCallbacks(),
-         m_notify_acceptable_iterate_callback(notify_acceptable_iterate_callback),
-         m_notify_new_primals_callback(notify_new_primals_callback),
-         m_notify_new_multipliers_callback(notify_new_multipliers_callback),
-         m_user_data(user_data) { };
+   void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+         double primal_feasibility_residual, double dual_feasibility_residual, double complementarity_residual) override {
+      if (this->notify_acceptable_iterate_callback != nullptr) {
+         this->notify_acceptable_iterate_callback(static_cast<int32_t>(primals.size()),
+            static_cast<int32_t>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(),
+            multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility_residual,
+            dual_feasibility_residual, complementarity_residual, this->user_data);
+      }
+   }
+   void notify_new_primals(const Vector<double>& primals) override {
+      if (this->notify_new_primals_callback != nullptr) {
+         this->notify_new_primals_callback(static_cast<int32_t>(primals.size()), primals.data(), this->user_data);
+      }
+   }
+   void notify_new_multipliers(const Multipliers& multipliers) override {
+      if (this->notify_new_multipliers_callback != nullptr) {
+         this->notify_new_multipliers_callback(static_cast<int32_t>(multipliers.lower_bounds.size()),
+            static_cast<int32_t>(multipliers.constraints.size()), multipliers.lower_bounds.data(), multipliers.upper_bounds.data(),
+            multipliers.constraints.data(), this->user_data);
+      }
+   }
 
-      void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity) override {
-         if (m_notify_acceptable_iterate_callback != nullptr) {
-            m_notify_acceptable_iterate_callback(static_cast<int32_t>(primals.size()), static_cast<int32_t>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(), multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility, dual_feasibility, complementarity, m_user_data);
-         }
-      }
-      void notify_new_primals(const Vector<double>& primals) override {
-         if (m_notify_new_primals_callback != nullptr) {
-            m_notify_new_primals_callback(static_cast<int32_t>(primals.size()), primals.data(), m_user_data);
-         }
-      }
-      void notify_new_multipliers(const Multipliers& multipliers) override {
-         if (m_notify_new_multipliers_callback != nullptr) {
-            m_notify_new_multipliers_callback(static_cast<int32_t>(multipliers.lower_bounds.size()), static_cast<int32_t>(multipliers.constraints.size()), multipliers.lower_bounds.data(), multipliers.upper_bounds.data(), multipliers.constraints.data(), m_user_data);
-         }
-      }
+private:
+   NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback;
+   NotifyNewPrimalsUserCallback notify_new_primals_callback;
+   NotifyNewMultipliersUserCallback notify_new_multipliers_callback;
+   void* user_data;
 };
 
 // std::streambuf wrapper around LoggerStreamUserCallback
-class CStreamBuf : public std::streambuf {
-   public:
-      explicit CStreamBuf(LoggerStreamUserCallback logger_stream_callback, void* user_data, std::size_t bufferSize) : 
-      m_logger_stream_callback(logger_stream_callback), m_user_data(user_data) {
-         // allocate output buffer and set stream buffer pointer
-         m_buffer = new char[bufferSize];
-         setp(m_buffer, m_buffer + bufferSize - 1); 
-      }
-      ~CStreamBuf() override {
-         // flush remaining data and release buffer memory
-         sync();
-         delete[] m_buffer;
-      }
-   
-   protected:
-      // called on buffer overflow
-      int overflow(int ch) override {
-         if (ch != EOF) {
-               // insert the character into the buffer
-               *pptr() = traits_type::to_char_type(ch);
-               pbump(1);
-         }
-         // return EOF for error
-         return flushBuffer() == 0 ? ch : EOF; 
-      }
-      int sync() override {
-         return flushBuffer();
-      }
-   
-   private:
-      LoggerStreamUserCallback m_logger_stream_callback;
-      void* m_user_data;
-      char* m_buffer;
+class CStreamBuffer : public std::streambuf {
+public:
+   explicit CStreamBuffer(LoggerStreamUserCallback logger_stream_callback, void* user_data, std::size_t buffer_size) :
+         logger_stream_callback(logger_stream_callback), user_data(user_data) {
+      // allocate output buffer and set stream buffer pointer
+      this->buffer = new char[buffer_size];
+      this->setp(this->buffer, this->buffer + buffer_size - 1);
+   }
+   ~CStreamBuffer() override {
+      // flush remaining data and release buffer memory
+      this->sync();
+      delete[] this->buffer;
+   }
 
-      // flush buffer to the logger callback
-      int flushBuffer() {
-         // check for invalid stream callback
-         if (!m_logger_stream_callback) {
+protected:
+   // called on buffer overflow
+   int overflow(int character) override {
+      if (character != EOF) {
+            // insert the character into the buffer
+            *this->pptr() = traits_type::to_char_type(character);
+            this->pbump(1);
+      }
+      // return EOF for error
+      return (this->flush_buffer() == 0) ? character : EOF;
+   }
+
+   int sync() override {
+      return this->flush_buffer();
+   }
+
+private:
+   LoggerStreamUserCallback logger_stream_callback;
+   void* user_data;
+   char* buffer;
+
+   // flush buffer to the logger callback
+   int flush_buffer() {
+      // check for invalid stream callback
+      if (!this->logger_stream_callback) {
+         return -1;
+      }
+      std::ptrdiff_t current_used_buffer_size = this->pptr() - this->pbase();
+      if (current_used_buffer_size > 0) {
+         // call user logger callback
+         const int32_t callback_result = this->logger_stream_callback(this->pbase(), static_cast<int32_t>(current_used_buffer_size),
+            this->user_data);
+         if (callback_result != static_cast<int32_t>(current_used_buffer_size)) {
             return -1;
          }
-         // current used buffer size
-         std::ptrdiff_t n = pptr() - pbase();
-         if (n > 0) {
-            // call user logger callback
-            if (m_logger_stream_callback(pbase(), static_cast<int32_t>(n), m_user_data ) != static_cast<int32_t>(n)) {
-               return -1;
-            }
-            // move buffer pointer
-            pbump(static_cast<int>(-n));
-         }
-         return 0;
+         // move buffer pointer
+         this->pbump(static_cast<int>(-current_used_buffer_size));
       }
+      return 0;
+   }
 };
 
 // std::ostream wrapper around LoggerStreamUserCallback
 class COStream : public std::ostream {
-   public:
-      explicit COStream(LoggerStreamUserCallback logger_stream_callback, void* user_data, std::size_t bufferSize = 1024) : // 1024 default buffer size
-      std::ostream(&m_buf), m_buf(logger_stream_callback, user_data, bufferSize) { }
+public:
+   COStream(LoggerStreamUserCallback logger_stream_callback, void* user_data, std::size_t buffer_size = 1024) : // 1024 default buffer size
+      std::ostream(&this->buffer), buffer(logger_stream_callback, user_data, buffer_size) { }
 
-   private:
-      // internal stream buffer that sends output to the LoggerStreamUserCallback
-      CStreamBuf m_buf;
+private:
+   // internal stream buffer that sends output to the LoggerStreamUserCallback
+   CStreamBuffer buffer;
 };
+
 COStream* c_ostream = nullptr;
 
 struct Solver {
    Uno* solver;
    Options* options;
-   UserCallbacks* user_callback;
+   UserCallbacks* user_callbacks;
    Result* result;
 };
 
@@ -692,11 +698,12 @@ void uno_set_solver_preset(void* solver, const char* preset_name) {
 }
 
 void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
-      NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback, void* user_data) {
+      NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback,
+      void* user_data) {
    Solver* uno_solver = static_cast<Solver*>(solver);
-   delete uno_solver->user_callback; // delete the previous callbacks
-   uno_solver->user_callback = new CUserCallbacks(notify_acceptable_iterate_callback,
-      notify_new_primals_callback, notify_new_multipliers_callback, user_data);
+   delete uno_solver->user_callbacks; // delete the previous callbacks
+   uno_solver->user_callbacks = new CUserCallbacks(notify_acceptable_iterate_callback, notify_new_primals_callback,
+      notify_new_multipliers_callback, user_data);
 }
 
 void uno_optimize(void* solver, void* model) {
@@ -714,7 +721,7 @@ void uno_optimize(void* solver, void* model) {
    // create an instance of UnoModel, a subclass of Model, and solve the model using Uno
    const UnoModel uno_model(*user_model);
    Logger::set_logger(uno_solver->options->get_string("logger"));
-   Result result = uno_solver->solver->solve(uno_model, *uno_solver->options, *uno_solver->user_callback);
+   Result result = uno_solver->solver->solve(uno_model, *uno_solver->options, *uno_solver->user_callbacks);
    // clean up the previous result (if any)
    delete uno_solver->result;
    // move the new result into uno_solver
