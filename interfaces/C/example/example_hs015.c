@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <math.h>
 #include "Uno_C_API.h"
@@ -102,7 +103,7 @@ int main() {
 	// solver creation
 	void* solver = uno_create_solver();
 	uno_set_solver_preset(solver, "filtersqp");
-	uno_set_solver_option(solver, "print_solution", "yes");
+	uno_set_solver_bool_option(solver, "print_solution", true);
 
 	// solve
 	uno_optimize(solver, model);
