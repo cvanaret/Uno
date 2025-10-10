@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <streambuf>
 #include "Uno_C_API.h"
 #include "../UserModel.hpp"
 #include "Uno.hpp"
@@ -18,6 +19,7 @@
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
+#include "tools/UserCallbacks.hpp"
 
 using namespace uno;
 
@@ -294,9 +296,113 @@ protected:
    CollectionAdapter<std::vector<size_t>> inequality_constraints_collection;
 };
 
+class CUserCallbacks: public UserCallbacks {
+   private:
+      NotifyAcceptableIterateUserCallback m_notify_acceptable_iterate_callback;
+      NotifyNewPrimalsUserCallback m_notify_new_primals_callback;
+      NotifyNewMultipliersUserCallback m_notify_new_multipliers_callback;
+      void* m_user_data;
+
+   public:
+      CUserCallbacks(
+         NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
+         NotifyNewPrimalsUserCallback notify_new_primals_callback,
+         NotifyNewMultipliersUserCallback notify_new_multipliers_callback,
+         void* user_data
+      ): UserCallbacks(),
+         m_notify_acceptable_iterate_callback(notify_acceptable_iterate_callback),
+         m_notify_new_primals_callback(notify_new_primals_callback),
+         m_notify_new_multipliers_callback(notify_new_multipliers_callback),
+         m_user_data(user_data) { };
+
+      void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity) override {
+         if (m_notify_acceptable_iterate_callback != nullptr) {
+            m_notify_acceptable_iterate_callback(static_cast<int32_t>(primals.size()), static_cast<int32_t>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(), multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility, dual_feasibility, complementarity, m_user_data);
+         }
+      }
+      void notify_new_primals(const Vector<double>& primals) override {
+         if (m_notify_new_primals_callback != nullptr) {
+            m_notify_new_primals_callback(static_cast<int32_t>(primals.size()), primals.data(), m_user_data);
+         }
+      }
+      void notify_new_multipliers(const Multipliers& multipliers) override {
+         if (m_notify_new_multipliers_callback != nullptr) {
+            m_notify_new_multipliers_callback(static_cast<int32_t>(multipliers.lower_bounds.size()), static_cast<int32_t>(multipliers.constraints.size()), multipliers.lower_bounds.data(), multipliers.upper_bounds.data(), multipliers.constraints.data(), m_user_data);
+         }
+      }
+};
+
+// std::streambuf wrapper around LoggerStreamUserCallback
+class CStreamBuf : public std::streambuf {
+   public:
+      explicit CStreamBuf(LoggerStreamUserCallback logger_stream_callback, void* user_data, std::size_t bufferSize) : 
+      m_logger_stream_callback(logger_stream_callback), m_user_data(user_data) {
+         // allocate output buffer and set stream buffer pointer
+         m_buffer = new char[bufferSize];
+         setp(m_buffer, m_buffer + bufferSize - 1); 
+      }
+      ~CStreamBuf() override {
+         // flush remaining data and release buffer memory
+         sync();
+         delete[] m_buffer;
+      }
+   
+   protected:
+      // called on buffer overflow
+      int overflow(int ch) override {
+         if (ch != EOF) {
+               // insert the character into the buffer
+               *pptr() = traits_type::to_char_type(ch);
+               pbump(1);
+         }
+         // return EOF for error
+         return flushBuffer() == 0 ? ch : EOF; 
+      }
+      int sync() override {
+         return flushBuffer();
+      }
+   
+   private:
+      LoggerStreamUserCallback m_logger_stream_callback;
+      void* m_user_data;
+      char* m_buffer;
+
+      // flush buffer to the logger callback
+      int flushBuffer() {
+         // check for invalid stream callback
+         if (!m_logger_stream_callback) {
+            return -1;
+         }
+         // current used buffer size
+         std::ptrdiff_t n = pptr() - pbase();
+         if (n > 0) {
+            // call user logger callback
+            if (m_logger_stream_callback(pbase(), static_cast<int32_t>(n), m_user_data ) != static_cast<int32_t>(n)) {
+               return -1;
+            }
+            // move buffer pointer
+            pbump(static_cast<int>(-n));
+         }
+         return 0;
+      }
+};
+
+// std::ostream wrapper around LoggerStreamUserCallback
+class COStream : public std::ostream {
+   public:
+      explicit COStream(LoggerStreamUserCallback logger_stream_callback, void* user_data, std::size_t bufferSize = 1024) : // 1024 default buffer size
+      std::ostream(&m_buf), m_buf(logger_stream_callback, user_data, bufferSize) { }
+
+   private:
+      // internal stream buffer that sends output to the LoggerStreamUserCallback
+      CStreamBuf m_buf;
+};
+COStream* c_ostream = nullptr;
+
 struct Solver {
    Uno* solver;
    Options* options;
+   UserCallbacks* user_callback;
    Result* result;
 };
 
@@ -306,18 +412,30 @@ void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch) {
    *patch = UNO_VERSION_PATCH;
 }
 
+void uno_set_logger_stream_callback(LoggerStreamUserCallback logger_stream_callback, void* user_data) {
+   delete c_ostream;
+   c_ostream = new COStream(logger_stream_callback, user_data);
+   Logger::set_stream(*c_ostream);
+}
+
+void uno_reset_logger_stream() {
+   delete c_ostream;
+   c_ostream = nullptr;
+   Logger::set_stream(std::cout);
+}
+
 void* uno_create_model(char problem_type, int32_t number_variables, const double* variables_lower_bounds,
       const double* variables_upper_bounds, int32_t base_indexing) {
    if (number_variables <= 0) {
-      std::cout << "Please specify a positive number of variables.\n";
+      WARNING << "Please specify a positive number of variables."  << std::endl;
       return nullptr;
    }
    if (problem_type != UNO_PROBLEM_LINEAR && problem_type != UNO_PROBLEM_QUADRATIC && problem_type != UNO_PROBLEM_NONLINEAR) {
-      std::cout << "Please specify a valid problem type.\n";
+      WARNING << "Please specify a valid problem type."  << std::endl;
       return nullptr;
    }
    if (base_indexing != UNO_ZERO_BASED_INDEXING && base_indexing != UNO_ONE_BASED_INDEXING) {
-      std::cout << "Please specify a valid base indexing.\n";
+      WARNING << "Please specify a valid base indexing." << std::endl;
       return nullptr;
    }
    CUserModel* user_model = new CUserModel(problem_type, number_variables, base_indexing);
@@ -342,7 +460,7 @@ void* uno_create_model(char problem_type, int32_t number_variables, const double
 bool uno_set_objective(void* model, int32_t optimization_sense, Objective objective_function,
       ObjectiveGradient objective_gradient) {
    if (optimization_sense != UNO_MINIMIZE && optimization_sense != UNO_MAXIMIZE) {
-      std::cout << "Please specify a valid objective sense.\n";
+      WARNING << "Please specify a valid objective sense."  << std::endl;
       return false;
    }
 
@@ -358,7 +476,7 @@ bool uno_set_constraints(void* model, int32_t number_constraints, Constraints co
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
       const int32_t* jacobian_row_indices, const int32_t* jacobian_column_indices, Jacobian constraint_jacobian) {
    if (number_constraints <= 0) {
-      std::cout << "Please specify a positive number of constraints.\n";
+      WARNING << "Please specify a positive number of constraints."  << std::endl;
       return false;
    }
 
@@ -411,17 +529,17 @@ bool uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, ch
       const int32_t* hessian_row_indices, const int32_t* hessian_column_indices, Hessian lagrangian_hessian,
       double lagrangian_sign_convention) {
    if (number_hessian_nonzeros <= 0) {
-      std::cout << "Please specify a positive number of Lagrangian Hessian nonzeros.\n";
+      WARNING << "Please specify a positive number of Lagrangian Hessian nonzeros."  << std::endl;
       return false;
    }
    if (hessian_triangular_part != UNO_LOWER_TRIANGLE && hessian_triangular_part != UNO_UPPER_TRIANGLE) {
-      std::cout << "Please specify a correct Hessian triangle in {'" << UNO_LOWER_TRIANGLE << "', '" <<
-         UNO_UPPER_TRIANGLE << "'}.\n";
+      WARNING << "Please specify a correct Hessian triangle in {'" << UNO_LOWER_TRIANGLE << "', '" <<
+         UNO_UPPER_TRIANGLE << "'}."  << std::endl;
       return false;
    }
    if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
-      std::cout << "Please specify a correct Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
-         UNO_MULTIPLIER_POSITIVE << "}.\n";
+      WARNING << "Please specify a correct Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
+         UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;
       return false;
    }
 
@@ -429,7 +547,7 @@ bool uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, ch
    CUserModel* user_model = static_cast<CUserModel*>(model);
    // make sure that the sign convention is consistent with that of the Hessian operator
    if (user_model->lagrangian_hessian_operator != nullptr && user_model->lagrangian_sign_convention != lagrangian_sign_convention) {
-      std::cout << "Please specify a Lagrangian sign convention consistent with that of the Hessian operator.\n";
+      WARNING << "Please specify a Lagrangian sign convention consistent with that of the Hessian operator."  << std::endl;
       return false;
    }
    user_model->number_hessian_nonzeros = number_hessian_nonzeros;
@@ -451,12 +569,12 @@ bool uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, ch
 bool uno_set_lagrangian_hessian_operator(void* model, int32_t number_hessian_nonzeros, HessianOperator lagrangian_hessian_operator,
       double lagrangian_sign_convention) {
    if (number_hessian_nonzeros <= 0) {
-      std::cout << "Please specify a positive number of Lagrangian Hessian nonzeros.\n";
+      WARNING << "Please specify a positive number of Lagrangian Hessian nonzeros."  << std::endl;
       return false;
    }
    if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
-      std::cout << "Please specify a Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
-         UNO_MULTIPLIER_POSITIVE << "}.\n";
+      WARNING << "Please specify a Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
+         UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;
       return false;
    }
 
@@ -464,7 +582,7 @@ bool uno_set_lagrangian_hessian_operator(void* model, int32_t number_hessian_non
    CUserModel* user_model = static_cast<CUserModel*>(model);
    // make sure that the sign convention is consistent with that of the Hessian function
    if (user_model->lagrangian_hessian != nullptr && user_model->lagrangian_sign_convention != lagrangian_sign_convention) {
-      std::cout << "Please specify a Lagrangian sign convention consistent with that of the Hessian function.\n";
+      WARNING << "Please specify a Lagrangian sign convention consistent with that of the Hessian function."  << std::endl;
       return false;
    }
    user_model->number_hessian_nonzeros = number_hessian_nonzeros;
@@ -506,16 +624,16 @@ bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_it
    assert(model != nullptr);
    if (initial_primal_iterate != nullptr) {
       CUserModel* user_model = static_cast<CUserModel*>(model);
-      std::cout << "Current x0 in CUserModel:";
+      DEBUG << "Current x0 in CUserModel:";
       for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
-         std::cout << " " << user_model->initial_primal_iterate[variable_index];
+         DEBUG << " " << user_model->initial_primal_iterate[variable_index];
       }
-      std::cout << '\n';
-      std::cout << "User's x0:";
+      DEBUG  << std::endl;
+      DEBUG << "User's x0:";
       for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
-         std::cout << " " << initial_primal_iterate[variable_index];
+         DEBUG << " " << initial_primal_iterate[variable_index];
       }
-      std::cout << '\n';
+      DEBUG  << std::endl;
       // copy the initial primal point
       for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
          user_model->initial_primal_iterate[variable_index] = initial_primal_iterate[variable_index];
@@ -549,9 +667,12 @@ void* uno_create_solver() {
    Options* options = new Options;
    DefaultOptions::load(*options);
 
+   // default user callbacks
+   UserCallbacks* user_callbacks = new NoUserCallbacks;
+
    // Uno solver
    Uno* uno_solver = new Uno;
-   Solver* solver = new Solver{uno_solver, options, nullptr}; // no result yet
+   Solver* solver = new Solver{uno_solver, options, user_callbacks, nullptr}; // no result yet
    return solver;
 }
 
@@ -560,9 +681,22 @@ void uno_set_solver_option(void* solver, const char* option_name, const char* op
    uno_solver->options->set(option_name, option_value);
 }
 
+void uno_load_solver_option_file(void* solver, const char* file_name) {
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   uno_solver->options->overwrite_with(uno::Options::load_option_file(file_name));
+}
+
 void uno_set_solver_preset(void* solver, const char* preset_name) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    Presets::set(*uno_solver->options, preset_name);
+}
+
+void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
+      NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback, void* user_data) {
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   delete uno_solver->user_callback; // delete the previous callbacks
+   uno_solver->user_callback = new CUserCallbacks(notify_acceptable_iterate_callback,
+      notify_new_primals_callback, notify_new_multipliers_callback, user_data);
 }
 
 void uno_optimize(void* solver, void* model) {
@@ -570,7 +704,7 @@ void uno_optimize(void* solver, void* model) {
    assert(model != nullptr);
    CUserModel* user_model = static_cast<CUserModel*>(model);
    if (!user_model->objective_function && !user_model->constraint_functions) {
-      std::cout << "Please specify at least an objective or constraints.\n";
+      WARNING << "Please specify at least an objective or constraints."  << std::endl;
       return;
    }
 
@@ -580,11 +714,43 @@ void uno_optimize(void* solver, void* model) {
    // create an instance of UnoModel, a subclass of Model, and solve the model using Uno
    const UnoModel uno_model(*user_model);
    Logger::set_logger(uno_solver->options->get_string("logger"));
-   Result result = uno_solver->solver->solve(uno_model, *uno_solver->options);
+   Result result = uno_solver->solver->solve(uno_model, *uno_solver->options, *uno_solver->user_callback);
    // clean up the previous result (if any)
    delete uno_solver->result;
    // move the new result into uno_solver
    uno_solver->result = new Result(std::move(result));
+   // flush the logger
+   Logger::flush();
+}
+
+double uno_get_double_solver_option(void* solver, const char* option_name) {
+   assert(solver != nullptr);
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   return uno_solver->options->get_double(option_name);
+}
+
+int uno_get_int_solver_option(void* solver, const char* option_name) {
+   assert(solver != nullptr);
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   return uno_solver->options->get_int(option_name);
+}
+
+size_t uno_get_unsigned_int_solver_option(void* solver, const char* option_name) {
+   assert(solver != nullptr);
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   return uno_solver->options->get_unsigned_int(option_name);
+}
+
+bool uno_get_bool_solver_option(void* solver, const char* option_name) {
+   assert(solver != nullptr);
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   return uno_solver->options->get_bool(option_name);   
+}
+
+const char* uno_get_string_solver_option(void* solver, const char* option_name) {
+   assert(solver != nullptr);
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   return uno_solver->options->get_string(option_name).c_str();     
 }
 
 // auxiliary function

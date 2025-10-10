@@ -113,6 +113,21 @@ extern "C" {
       bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
       double* result, void* user_data);
 
+   // - takes as inputs the number of variables, the number of constraints, a vector "primals" of size "number_variables",
+   // the lower and upper bound multipliers of size "number_variables", the number of constraints, 
+   // a vector "constraint_multipliers" of size "number_constraints", an objective multiplier, the primal feasibility,
+   // the dual feasibility, and the complementarity
+   typedef void (*NotifyAcceptableIterateUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals, const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity, void* user_data);
+
+   // - takes as inputs the number of variables, and a vector "primals" of size "number_variables"
+   typedef void (*NotifyNewPrimalsUserCallback)(int32_t number_variables, const double* primals, void* user_data);
+   
+   // - takes as inputs the number of variables, the number of constraints, the lower and upper bound multipliers of size "number_variables", and a vector "constraint_multipliers" of size "number_constraints"
+   typedef void (*NotifyNewMultipliersUserCallback)(int32_t number_variables, int32_t number_constraints, const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraints_multipliers, void* user_data);
+
+   // - takes as inputs the a vector "buf" of size "len"
+   typedef int32_t (*LoggerStreamUserCallback)(const char* buf, int32_t len, void* user_data);
+
    // creates an optimization model that can be solved by Uno.
    // initially, the model contains "number_variables" variables, no objective function, and no constraints.
    // takes as inputs the type of problem ('L' for linear, 'Q' for quadratic, 'N' for nonlinear), the number of
@@ -205,11 +220,43 @@ extern "C" {
    // takes as inputs the name of the option and the value to which it should be set.
    void uno_set_solver_option(void* solver, const char* option_name, const char* option_value);
 
+   // [optional] loads the options from a given option file.
+   // takes as input the name of the option file.
+   void uno_load_solver_option_file(void* solver, const char* file_name);
+
    // sets a particular preset in the Uno solver.
    void uno_set_solver_preset(void* solver, const char* preset_name);
 
+   // [optional]
+   // sets the user callbacks for solver.
+   void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
+      NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback, void* user_data);
+
+   // [optional]
+   // sets the logger stream callback.
+   void uno_set_logger_stream_callback(LoggerStreamUserCallback logger_stream_callback, void* user_data);
+
+   // [optional]
+   // resets the logger stream to the standard output
+   void uno_reset_logger_stream();
+
    // optimizes a given model using the Uno solver and given options.
    void uno_optimize(void* solver, void* model);
+
+   // gets the value of a given double option.
+   double uno_get_double_solver_option(void* solver, const char* option_name);
+
+   // gets the value of a given integer option.
+   int uno_get_int_solver_option(void* solver, const char* option_name);
+   
+   // gets the value of a given unsigned integer option.
+   size_t uno_get_unsigned_int_solver_option(void* solver, const char* option_name);
+
+   // gets the value of a given boolean option.
+   bool uno_get_bool_solver_option(void* solver, const char* option_name);
+
+   // gets the value of a given string option.
+   const char* uno_get_string_solver_option(void* solver, const char* option_name);
 
    // gets the optimization status (once the model was solved)
    int32_t uno_get_optimization_status(void* solver);
