@@ -17,7 +17,7 @@ extern "C" {
 
 namespace uno {
    // forward declaration
-   class Result;
+   struct Result;
 
    class AMPLModel: public Model {
    public:
