@@ -27,6 +27,7 @@ const UNO_INFEASIBLE_STATIONARY_POINT = Cint(3)
 const UNO_FEASIBLE_SMALL_STEP = Cint(4)
 const UNO_INFEASIBLE_SMALL_STEP = Cint(5)
 const UNO_UNBOUNDED = Cint(6)
+const UNO_USER_REQUESTED_STOP = Cint(7)
 
 function uno_get_version(major, minor, patch)
     @ccall libuno.uno_get_version(major::Ptr{Int32}, minor::Ptr{Int32},

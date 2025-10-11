@@ -23,6 +23,9 @@ namespace uno {
       else if (status == SolutionStatus::UNBOUNDED) {
          return "Unbounded problem";
       }
+      else if (status == SolutionStatus::USER_REQUESTED_STOP) {
+         return "User requested stop";
+      }
       return "Suboptimal point";
    }
 } // namespace
