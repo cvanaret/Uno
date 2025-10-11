@@ -8,13 +8,15 @@
 #include <vector>
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
-#include "optimization/SolutionStatus.hpp"
 #include "symbolic/VectorExpression.hpp"
 
 namespace uno {
    // forward declarations
    template <typename ElementType>
    class Collection;
+   template <typename ElementType>
+   class LagrangianGradient;
+   class Multipliers;
    template <typename ElementType>
    class SparseVector;
    template <typename ElementType>

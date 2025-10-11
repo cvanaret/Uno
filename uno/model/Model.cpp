@@ -31,7 +31,7 @@ namespace uno {
       const double upper_bound_violation = std::max(0., constraint_value - this->constraint_upper_bound(constraint_index));
       return std::max(lower_bound_violation, upper_bound_violation);
    }
-
+   
    void Model::find_fixed_variables(Vector<size_t>& fixed_variables) const {
       fixed_variables.reserve(this->number_variables);
 
