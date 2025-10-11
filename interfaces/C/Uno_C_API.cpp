@@ -662,12 +662,6 @@ bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterat
    return false;
 }
 
-void uno_set_option(void* options, const char* option_name, const char* option_value) {
-   assert(options != nullptr);
-   uno::Options* uno_options = static_cast<uno::Options*>(options);
-   uno_options->set(option_name, option_value);
-}
-
 void* uno_create_solver() {
    // default options
    Options* options = new Options;
@@ -682,9 +676,24 @@ void* uno_create_solver() {
    return solver;
 }
 
-void uno_set_solver_option(void* solver, const char* option_name, const char* option_value) {
+void uno_set_solver_integer_option(void* solver, const char* option_name, int32_t option_value) {
    Solver* uno_solver = static_cast<Solver*>(solver);
-   uno_solver->options->set(option_name, option_value);
+   uno_solver->options->set_integer(option_name, option_value);
+}
+
+void uno_set_solver_double_option(void* solver, const char* option_name, double option_value) {
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   uno_solver->options->set_double(option_name, option_value);
+}
+
+void uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value) {
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   uno_solver->options->set_bool(option_name, option_value);
+}
+
+void uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value) {
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   uno_solver->options->set_string(option_name, option_value);
 }
 
 void uno_load_solver_option_file(void* solver, const char* file_name) {
