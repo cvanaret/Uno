@@ -227,6 +227,7 @@ end
 
 
 function uno_set_initial_primal_iterate(model::UnoModel, initial_primal_iterate::Vector{Float64})
+  @assert model.c_model != C_NULL
   @assert model.nvar == length(initial_primal_iterate)
   flag = uno_set_initial_primal_iterate(model.c_model, initial_primal_iterate)
   flag || error("Failed to set initial primal iterate via uno_set_initial_primal_iterate.")
@@ -234,6 +235,7 @@ function uno_set_initial_primal_iterate(model::UnoModel, initial_primal_iterate:
 end
 
 function uno_set_initial_dual_iterate(model::UnoModel, initial_dual_iterate::Vector{Float64})
+  @assert model.c_model != C_NULL
   @assert model.ncon == length(initial_dual_iterate)
   flag = uno_set_initial_dual_iterate(model.c_model, initial_dual_iterate)
   flag || error("Failed to set initial dual iterate via uno_set_initial_dual_iterate.")
@@ -262,8 +264,14 @@ function uno_solver(preset::String; kwargs...)
   # pass options to Uno
   uno_set_solver_preset(c_solver, preset)
   for (k, v) in kwargs
-    if typeof(v) <: String
+    if v isa String
       uno_set_solver_string_option(c_solver, string(k), v)
+    elseif v isa Float64
+      Uno.uno_set_solver_double_option(solver, string(k), v)
+    elseif v isa Integer
+      Uno.uno_set_solver_integer_option(solver, string(k), Cint(v))
+    elseif v isa Bool
+      Uno.uno_set_solver_bool_option(solver, string(k), v)
     else
       @warn "$k does not seem to be a valid Uno option."
     end
@@ -294,65 +302,80 @@ function uno_get_number_subproblem_solved_evaluations(solver::UnoSolver)
 end
 
 function uno_set_solver_integer_option(solver::UnoSolver, option_name::String, option_value::Cint)
+  @assert solver.c_solver != C_NULL
   uno_set_solver_integer_option(solver.c_solver, option_name, option_value)
 end
 
 function uno_set_solver_double_option(solver::UnoSolver, option_name::String, option_value::Float64)
+  @assert solver.c_solver != C_NULL
   uno_set_solver_double_option(solver.c_solver, option_name, option_value)
 end
 
 function uno_set_solver_bool_option(solver::UnoSolver, option_name::String, option_value::Bool)
+  @assert solver.c_solver != C_NULL
   uno_set_solver_bool_option(solver.c_solver, option_name, option_value)
 end
 
 function uno_set_solver_string_option(solver::UnoSolver, option_name::String, option_value::String)
+  @assert solver.c_solver != C_NULL
   uno_set_solver_string_option(solver.c_solver, option_name, option_value)
 end
 
 function uno_set_solver_preset(solver::UnoSolver, preset_name::String)
+  @assert solver.c_solver != C_NULL
   uno_set_solver_preset(solver.c_solver, preset_name)
 end
 
 function uno_get_optimization_status(solver::UnoSolver)
+  @assert solver.c_solver != C_NULL
   return uno_get_optimization_status(solver.c_solver)
 end
 
 function uno_get_solution_status(solver::UnoSolver)
+  @assert solver.c_solver != C_NULL
   return uno_get_solution_status(solver.c_solver)
 end
 
 function uno_get_solution_objective(solver::UnoSolver)
+  @assert solver.c_solver != C_NULL
   return uno_get_solution_objective(solver.c_solver)
 end
 
 function uno_get_primal_solution(solver::UnoSolver, primal_solution::Vector{Float64})
+  @assert solver.c_solver != C_NULL
   uno_get_primal_solution(solver.c_solver, primal_solution)
   return primal_solution
 end
 
 function uno_get_constraint_dual_solution(solver::UnoSolver, constraint_dual_solution::Vector{Float64})
+  @assert solver.c_solver != C_NULL
   uno_get_constraint_dual_solution(solver.c_solver, constraint_dual_solution)
   return constraint_dual_solution
 end
 
 function uno_get_lower_bound_dual_solution(solver::UnoSolver, lower_bound_dual_solution::Vector{Float64})
+  @assert solver.c_solver != C_NULL
   uno_get_lower_bound_dual_solution(solver.c_solver, lower_bound_dual_solution)
   return lower_bound_dual_solution
 end
 
 function uno_get_upper_bound_dual_solution(solver::UnoSolver, upper_bound_dual_solution::Vector{Float64})
+  @assert solver.c_solver != C_NULL
   uno_get_upper_bound_dual_solution(solver.c_solver, upper_bound_dual_solution)
   return upper_bound_dual_solution
 end
 
 function uno_get_solution_primal_feasibility(solver::UnoSolver)
+  @assert solver.c_solver != C_NULL
   return uno_get_solution_primal_feasibility(solver.c_solver)
 end
 
 function uno_get_solution_dual_feasibility(solver::UnoSolver)
+  @assert solver.c_solver != C_NULL
   return uno_get_solution_dual_feasibility(solver.c_solver)
 end
 
 function uno_get_solution_complementarity(solver::UnoSolver)
+  @assert solver.c_solver != C_NULL
   return uno_get_solution_complementarity(solver.c_solver)
 end
