@@ -47,6 +47,7 @@ extern "C" {
    const int32_t UNO_FEASIBLE_SMALL_STEP = 4;
    const int32_t UNO_INFEASIBLE_SMALL_STEP = 5;
    const int32_t UNO_UNBOUNDED = 6;
+   const int32_t UNO_USER_REQUESTED_STOP = 7; // stop requested by the user in user callbacks
 
    // current Uno version is 2.2.1
    const int32_t UNO_VERSION_MAJOR = 2;
@@ -118,17 +119,20 @@ extern "C" {
    // the lower and upper bound multipliers of size "number_variables", a vector "constraint_multipliers" of size
    // "number_constraints", an objective multiplier, the primal feasibility residual, the dual feasibility residual, and
    // the complementarity residual
-   typedef void (*NotifyAcceptableIterateUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals,
+   // returns false for user requested stop 
+   typedef bool (*NotifyAcceptableIterateUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
       double objective_multiplier, double primal_feasibility_residual, double dual_feasibility_residual,
       double complementarity_residual, void* user_data);
 
    // - takes as inputs the number of variables, and a vector "primals" of size "number_variables"
-   typedef void (*NotifyNewPrimalsUserCallback)(int32_t number_variables, const double* primals, void* user_data);
+   // returns false for user requested stop 
+   typedef bool (*NotifyNewPrimalsUserCallback)(int32_t number_variables, const double* primals, void* user_data);
    
    // - takes as inputs the number of variables, the number of constraints, the lower and upper bound multipliers of
    // size "number_variables", and a vector "constraint_multipliers" of size "number_constraints"
-   typedef void (*NotifyNewMultipliersUserCallback)(int32_t number_variables, int32_t number_constraints,
+   // returns false for user requested stop 
+   typedef bool (*NotifyNewMultipliersUserCallback)(int32_t number_variables, int32_t number_constraints,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraints_multipliers,
       void* user_data);
 

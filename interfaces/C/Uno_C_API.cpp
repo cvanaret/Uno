@@ -309,22 +309,31 @@ public:
    void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
          double primal_feasibility_residual, double dual_feasibility_residual, double complementarity_residual) override {
       if (this->notify_acceptable_iterate_callback != nullptr) {
-         this->notify_acceptable_iterate_callback(static_cast<int32_t>(primals.size()),
+         // false for user requested stop
+         if (!this->notify_acceptable_iterate_callback(static_cast<int32_t>(primals.size()),
             static_cast<int32_t>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(),
             multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility_residual,
-            dual_feasibility_residual, complementarity_residual, this->user_data);
+            dual_feasibility_residual, complementarity_residual, this->user_data)) {
+            this->stop_request();
+         }
       }
    }
    void notify_new_primals(const Vector<double>& primals) override {
       if (this->notify_new_primals_callback != nullptr) {
-         this->notify_new_primals_callback(static_cast<int32_t>(primals.size()), primals.data(), this->user_data);
+         // false for user requested stop
+         if (!this->notify_new_primals_callback(static_cast<int32_t>(primals.size()), primals.data(), this->user_data)) {
+            this->stop_request();
+         }
       }
    }
    void notify_new_multipliers(const Multipliers& multipliers) override {
       if (this->notify_new_multipliers_callback != nullptr) {
-         this->notify_new_multipliers_callback(static_cast<int32_t>(multipliers.lower_bounds.size()),
+         // false for user requested stop
+         if (!this->notify_new_multipliers_callback(static_cast<int32_t>(multipliers.lower_bounds.size()),
             static_cast<int32_t>(multipliers.constraints.size()), multipliers.lower_bounds.data(), multipliers.upper_bounds.data(),
-            multipliers.constraints.data(), this->user_data);
+            multipliers.constraints.data(), this->user_data)) {
+            this->stop_request();
+         }
       }
    }
 
