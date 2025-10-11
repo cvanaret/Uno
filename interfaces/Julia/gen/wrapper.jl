@@ -15,7 +15,9 @@ function main()
 
   callbacks = ["ObjectiveGradient", "Objective", "Constraints",
                "JacobianOperator", "JacobianTransposedOperator", "HessianOperator",
-               "JacobianSparsity", "Jacobian", "HessianSparsity", "Hessian"]
+               "JacobianSparsity", "Jacobian", "HessianSparsity", "Hessian",
+               "NotifyAcceptableIterateUserCallback", "NotifyNewPrimalsUserCallback",
+               "NotifyNewMultipliersUserCallback", "LoggerStreamUserCallback"]
   options["general"]["output_ignorelist"] = callbacks
 
   args = get_default_args()
