@@ -33,14 +33,6 @@ function uno_get_version(major, minor, patch)
                                   patch::Ptr{Int32})::Cvoid
 end
 
-const NotifyAcceptableIterateUserCallback = Ptr{Cvoid}
-
-const NotifyNewPrimalsUserCallback = Ptr{Cvoid}
-
-const NotifyNewMultipliersUserCallback = Ptr{Cvoid}
-
-const LoggerStreamUserCallback = Ptr{Cvoid}
-
 function uno_create_model(problem_type, number_variables, variables_lower_bounds,
                           variables_upper_bounds, base_indexing)
     @ccall libuno.uno_create_model(problem_type::Cchar, number_variables::Int32,
@@ -146,14 +138,14 @@ function uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback,
                                   notify_new_primals_callback,
                                   notify_new_multipliers_callback, user_data)
     @ccall libuno.uno_set_solver_callbacks(solver::Ptr{Cvoid},
-                                           notify_acceptable_iterate_callback::NotifyAcceptableIterateUserCallback,
-                                           notify_new_primals_callback::NotifyNewPrimalsUserCallback,
-                                           notify_new_multipliers_callback::NotifyNewMultipliersUserCallback,
+                                           notify_acceptable_iterate_callback::Ptr{Cvoid},
+                                           notify_new_primals_callback::Ptr{Cvoid},
+                                           notify_new_multipliers_callback::Ptr{Cvoid},
                                            user_data::Ptr{Cvoid})::Cvoid
 end
 
 function uno_set_logger_stream_callback(logger_stream_callback, user_data)
-    @ccall libuno.uno_set_logger_stream_callback(logger_stream_callback::LoggerStreamUserCallback,
+    @ccall libuno.uno_set_logger_stream_callback(logger_stream_callback::Ptr{Cvoid},
                                                  user_data::Ptr{Cvoid})::Cvoid
 end
 
@@ -176,7 +168,7 @@ end
 
 function uno_get_unsigned_int_solver_option(solver, option_name)
     @ccall libuno.uno_get_unsigned_int_solver_option(solver::Ptr{Cvoid},
-                                                     option_name::Cstring)::Cint
+                                                     option_name::Cstring)::Csize_t
 end
 
 function uno_get_bool_solver_option(solver, option_name)
