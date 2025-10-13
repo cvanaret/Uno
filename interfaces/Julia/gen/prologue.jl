@@ -25,6 +25,7 @@ const UNO_ITERATION_LIMIT = Cint(1)
 const UNO_TIME_LIMIT = Cint(2)
 const UNO_EVALUATION_ERROR = Cint(3)
 const UNO_ALGORITHMIC_ERROR = Cint(4)
+const UNO_USER_REQUESTED_STOP = Cint(5)
 
 # Iterate status
 const UNO_NOT_OPTIMAL = Cint(0)
@@ -34,4 +35,3 @@ const UNO_INFEASIBLE_STATIONARY_POINT = Cint(3)
 const UNO_FEASIBLE_SMALL_STEP = Cint(4)
 const UNO_INFEASIBLE_SMALL_STEP = Cint(5)
 const UNO_UNBOUNDED = Cint(6)
-const UNO_USER_REQUESTED_STOP = Cint(7)

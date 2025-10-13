@@ -38,6 +38,7 @@ extern "C" {
    const int32_t UNO_TIME_LIMIT = 2;
    const int32_t UNO_EVALUATION_ERROR = 3;
    const int32_t UNO_ALGORITHMIC_ERROR = 4;
+   const int32_t UNO_USER_REQUESTED_STOP = 5; // stop requested by the user in user callbacks
 
    // Iterate status
    const int32_t UNO_NOT_OPTIMAL = 0;
@@ -47,7 +48,6 @@ extern "C" {
    const int32_t UNO_FEASIBLE_SMALL_STEP = 4;
    const int32_t UNO_INFEASIBLE_SMALL_STEP = 5;
    const int32_t UNO_UNBOUNDED = 6;
-   const int32_t UNO_USER_REQUESTED_STOP = 7; // stop requested by the user in user callbacks
 
    // current Uno version is 2.2.1
    const int32_t UNO_VERSION_MAJOR = 2;

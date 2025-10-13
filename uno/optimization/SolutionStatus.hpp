@@ -14,8 +14,7 @@ namespace uno {
       INFEASIBLE_STATIONARY_POINT, /* infeasible stationary point of constraint violation */
       FEASIBLE_SMALL_STEP,
       INFEASIBLE_SMALL_STEP,
-      UNBOUNDED,
-      USER_REQUESTED_STOP /* stop requested by the user in user callbacks */
+      UNBOUNDED
    };
 
    std::string solution_status_to_message(SolutionStatus status);
