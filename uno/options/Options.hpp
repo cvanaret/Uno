@@ -18,7 +18,6 @@ namespace uno {
       void set_double(const std::string& option_name, double option_value, bool flag_as_overwritten = false);
       void set_bool(const std::string& option_name, bool option_value, bool flag_as_overwritten = false);
       void set_string(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten = false);
-      void overwrite_with(const Options& overwriting_options);
 
       [[nodiscard]] int get_int(const std::string& option_name) const;
       [[nodiscard]] size_t get_unsigned_int(const std::string& option_name) const;
@@ -29,11 +28,9 @@ namespace uno {
 
       [[nodiscard]] static Options get_command_line_options(int argc, char* argv[], size_t offset);
       [[nodiscard]] static Options load_option_file(const std::string& file_name);
-      
-      void print_used_overwritten() const;
 
-      [[nodiscard]] std::map<std::string, std::string>::const_iterator begin() const;
-      [[nodiscard]] std::map<std::string, std::string>::const_iterator end() const;
+      void overwrite_with(const Options& overwriting_options);
+      void print_used_overwritten() const;
 
    private:
       std::map<std::string, int32_t> integer_options{};
@@ -43,16 +40,7 @@ namespace uno {
 
       mutable std::map<std::string, bool> used{};
       mutable std::map<std::string, bool> overwritten_options{};
-
-      [[nodiscard]] const std::string& at(const std::string& option_name) const;
-      [[nodiscard]] std::optional<std::string> at_optional(const std::string& option_name) const;
    };
-
-   template <typename T>
-   const T& get(const std::map<std::string, T>& options, const std::string& option_name) {
-      return options.at(option_name);
-   }
-
 } // namespace
 
 #endif // UNO_OPTIONS_H
