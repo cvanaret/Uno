@@ -122,9 +122,24 @@ function uno_create_solver()
     @ccall libuno.uno_create_solver()::Ptr{Cvoid}
 end
 
-function uno_set_solver_option(solver, option_name, option_value)
-    @ccall libuno.uno_set_solver_option(solver::Ptr{Cvoid}, option_name::Cstring,
-                                        option_value::Cstring)::Cvoid
+function uno_set_solver_integer_option(solver, option_name, option_value)
+    @ccall libuno.uno_set_solver_integer_option(solver::Ptr{Cvoid}, option_name::Cstring,
+                                                option_value::Int32)::Cvoid
+end
+
+function uno_set_solver_double_option(solver, option_name, option_value)
+    @ccall libuno.uno_set_solver_double_option(solver::Ptr{Cvoid}, option_name::Cstring,
+                                               option_value::Cdouble)::Cvoid
+end
+
+function uno_set_solver_bool_option(solver, option_name, option_value)
+    @ccall libuno.uno_set_solver_bool_option(solver::Ptr{Cvoid}, option_name::Cstring,
+                                             option_value::Bool)::Cvoid
+end
+
+function uno_set_solver_string_option(solver, option_name, option_value)
+    @ccall libuno.uno_set_solver_string_option(solver::Ptr{Cvoid}, option_name::Cstring,
+                                               option_value::Cstring)::Cvoid
 end
 
 function uno_load_solver_option_file(solver, file_name)

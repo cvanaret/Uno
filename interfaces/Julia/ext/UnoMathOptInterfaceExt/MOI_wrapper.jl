@@ -1432,15 +1432,17 @@ function MOI.optimize!(model::Optimizer)
     # Other misc options that over-ride the ones set above.
     for (name, value) in model.options
         if value isa String
-            if name == "preset"
-                Uno.uno_set_solver_preset(solver, value)
-            else
-                Uno.uno_set_solver_option(solver, name, value)
-            end
+            Uno.uno_set_solver_string_option(solver, name, value)
+        elseif value isa Float64
+            Uno.uno_set_solver_double_option(solver, name, value)
+        elseif value isa Integer
+            Uno.uno_set_solver_integer_option(solver, name, Cint(value))
+        elseif value isa Bool
+            Uno.uno_set_solver_bool_option(solver, name, value)
         else
             error(
                 "Unable to add option `\"$name\"` with the value " *
-                "`$value::$(typeof(value))`. The value must be a `::String`.",
+                "`$value::$(typeof(value))`. The value must be a `::String`, a `::Float64`, an `::Integer`, or a `::Bool`.",
             )
         end
     end

@@ -34,7 +34,7 @@ using Uno, CUTEst
 nlp = CUTEstModel{Float64}("HS15")
 model = uno_model(nlp)
 solver = uno_solver("filtersqp", print_solution="yes")
-uno_optimize(solver, model)
+Uno.uno_optimize(solver, model)
 
 timer = Uno.uno_get_cpu_time(solver)
 niter = Uno.uno_get_number_iterations(solver)
