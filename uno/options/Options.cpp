@@ -4,6 +4,8 @@
 #include <fstream>
 #include <sstream>
 #include "Options.hpp"
+
+#include "Presets.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -26,6 +28,33 @@ namespace uno {
    void Options::set_string(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten) {
       this->string_options[option_name] = option_value;
       this->overwritten_options[option_name] = flag_as_overwritten;
+   }
+
+   // setter for option with unknown type
+   void Options::set(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten) {
+      if (option_name == "preset") {
+         Presets::set(*this, option_value);
+      }
+      else {
+         try {
+            const OptionType type = this->option_types.at(option_name);
+            if (type == OptionType::INTEGER) {
+               this->set_integer(option_name, std::stoi(option_value), flag_as_overwritten);
+            }
+            else if (type == OptionType::DOUBLE) {
+               this->set_double(option_name, std::stod(option_value), flag_as_overwritten);
+            }
+            else if (type == OptionType::BOOL) {
+               this->set_bool(option_name, option_value == "yes", flag_as_overwritten);
+            }
+            else if (type == OptionType::STRING) {
+               this->set_string(option_name, option_value, flag_as_overwritten);
+            }
+         }
+         catch(const std::out_of_range&) {
+            throw std::out_of_range("The option with name " + option_name + " was not found");
+         }
+      }
    }
 
    // getters
@@ -93,7 +122,7 @@ namespace uno {
    // argv[i] for i = offset..argc-1 are overwriting options
    Options Options::get_command_line_options(int argc, char* argv[], size_t offset) {
       static const std::string delimiter = "=";
-      Options overwriting_options;
+      Options command_line_options;
 
       // build the (name, value) map
       for (size_t i = offset; i < static_cast<size_t>(argc); ++i) {
@@ -104,14 +133,13 @@ namespace uno {
          }
          const std::string option_name = argument.substr(0, position);
          const std::string option_value = argument.substr(position + 1);
-         overwriting_options.set_string(option_name, option_value);
+         // set option with unknown type
+         command_line_options.set(option_name, option_value);
       }
-      WARNING << "Options::get_command_line_options not fully implemented\n";
-      return overwriting_options;
+      return command_line_options;
    }
 
    Options Options::load_option_file(const std::string& file_name) {
-      /*
       Options options;
       std::ifstream file;
       file.open(file_name);
@@ -126,14 +154,13 @@ namespace uno {
                std::istringstream iss;
                iss.str(line);
                iss >> option_name >> option_value;
+               // set option with unknown type
                options.set(option_name, option_value);
             }
          }
          file.close();
       }
       return options;
-      */
-      throw std::runtime_error("Options::load_option_file not implemented yet");
    }
 
    void Options::overwrite_with(const Options& overwriting_options) {
