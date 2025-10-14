@@ -87,7 +87,7 @@ nlp = MathOptNLPModel(jump_model)
 
 model = uno_model(nlp)
 solver = uno_solver()
-uno_set_solver_preset(solver, "funnelsqp")
+uno_set_solver_preset(solver, "filtersqp")
 uno_set_solver_bool_option(solver, "print_solution", true)
 uno_optimize(solver, model)
 ```
