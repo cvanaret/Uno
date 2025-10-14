@@ -32,13 +32,6 @@ extern "C" {
    const char UNO_LOWER_TRIANGLE = 'L';
    const char UNO_UPPER_TRIANGLE = 'U';
 
-   // Option type: 0 = integer, 1 = double, 2 = boolean, 3 = string, -1 = not found
-   const int32_t UNO_OPTION_TYPE_INT = 0;
-   const int32_t UNO_OPTION_TYPE_DOUBLE = 1;
-   const int32_t UNO_OPTION_TYPE_BOOL = 2;
-   const int32_t UNO_OPTION_TYPE_STRING = 3;
-   const int32_t UNO_OPTION_TYPE_NOT_FOUND = -1;
-
    // Optimization status
    const int32_t UNO_SUCCESS = 0;
    const int32_t UNO_ITERATION_LIMIT = 1;
@@ -241,11 +234,6 @@ extern "C" {
    void uno_set_solver_double_option(void* solver, const char* option_name, double option_value);
    void uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value);
    void uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value);
-
-   // gets the type of a particular option in the Uno solver.
-   // takes as input the name of the option.
-   // the possible types are integer, double, bool and string.
-   int32_t uno_get_solver_option_type(void* solver, const char* option_name);
 
    // [optional] loads the options from a given option file.
    // takes as input the name of the option file.

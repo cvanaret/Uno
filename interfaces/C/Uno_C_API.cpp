@@ -712,16 +712,6 @@ void uno_set_solver_string_option(void* solver, const char* option_name, const c
    }
 }
 
-int32_t uno_get_solver_option_type(void* solver, const char* option_name) {
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   try {
-      return static_cast<int32_t>(uno_solver->options->get_option_type(option_name));
-   }
-   catch(const std::out_of_range&) {
-      return UNO_OPTION_TYPE_NOT_FOUND;
-   }
-}
-
 void uno_load_solver_option_file(void* solver, const char* file_name) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->options->overwrite_with(uno::Options::load_option_file(file_name));
