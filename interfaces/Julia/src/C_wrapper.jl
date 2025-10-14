@@ -256,7 +256,7 @@ end
 
 Base.unsafe_convert(::Type{Ptr{Cvoid}}, solver::UnoSolver) = solver.c_solver
 
-function uno_solver(kwargs...)
+function uno_solver(; kwargs...)
   c_solver = uno_create_solver()
   (c_solver == C_NULL) && error("Failed to construct Uno solver for some unknown reason.")
   solver = UnoSolver(c_solver)
