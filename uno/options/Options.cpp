@@ -48,7 +48,7 @@ namespace uno {
          }
       }
       catch(const std::out_of_range&) {
-         throw std::out_of_range("The option with name " + option_name + " was not found");
+         throw std::out_of_range("The type of the option with name " + option_name + " could not be found");
       }
    }
 
