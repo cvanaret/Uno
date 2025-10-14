@@ -256,13 +256,12 @@ end
 
 Base.unsafe_convert(::Type{Ptr{Cvoid}}, solver::UnoSolver) = solver.c_solver
 
-function uno_solver(preset::String; kwargs...)
+function uno_solver(kwargs...)
   c_solver = uno_create_solver()
   (c_solver == C_NULL) && error("Failed to construct Uno solver for some unknown reason.")
   solver = UnoSolver(c_solver)
 
   # pass options to Uno
-  uno_set_solver_preset(c_solver, preset)
   for (k, v) in kwargs
     if v isa String
       uno_set_solver_string_option(c_solver, string(k), v)
