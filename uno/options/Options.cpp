@@ -32,28 +32,23 @@ namespace uno {
 
    // setter for option with unknown type
    void Options::set(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten) {
-      if (option_name == "preset") {
-         Presets::set(*this, option_value);
+      try {
+         const OptionType type = this->option_types.at(option_name);
+         if (type == OptionType::INTEGER) {
+            this->set_integer(option_name, std::stoi(option_value), flag_as_overwritten);
+         }
+         else if (type == OptionType::DOUBLE) {
+            this->set_double(option_name, std::stod(option_value), flag_as_overwritten);
+         }
+         else if (type == OptionType::BOOL) {
+            this->set_bool(option_name, option_value == "yes", flag_as_overwritten);
+         }
+         else if (type == OptionType::STRING) {
+            this->set_string(option_name, option_value, flag_as_overwritten);
+         }
       }
-      else {
-         try {
-            const OptionType type = this->option_types.at(option_name);
-            if (type == OptionType::INTEGER) {
-               this->set_integer(option_name, std::stoi(option_value), flag_as_overwritten);
-            }
-            else if (type == OptionType::DOUBLE) {
-               this->set_double(option_name, std::stod(option_value), flag_as_overwritten);
-            }
-            else if (type == OptionType::BOOL) {
-               this->set_bool(option_name, option_value == "yes", flag_as_overwritten);
-            }
-            else if (type == OptionType::STRING) {
-               this->set_string(option_name, option_value, flag_as_overwritten);
-            }
-         }
-         catch(const std::out_of_range&) {
-            throw std::out_of_range("The option with name " + option_name + " was not found");
-         }
+      catch(const std::out_of_range&) {
+         throw std::out_of_range("The option with name " + option_name + " was not found");
       }
    }
 

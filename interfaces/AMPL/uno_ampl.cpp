@@ -73,13 +73,11 @@ int main(int argc, char* argv[]) {
          // get the command line arguments (options start at index offset)
          const Options command_line_options = Options::get_command_line_options(argc, argv, offset);
          // possibly set options from an option file
-         /*
          const auto optional_option_file = command_line_options.get_string_optional("option_file");
          if (optional_option_file.has_value()) {
             Options file_options = Options::load_option_file(*optional_option_file);
             options.overwrite_with(file_options);
          }
-         */
          // possibly set a preset
          const auto optional_preset = command_line_options.get_string_optional("preset");
          const Options preset_options = Presets::get_preset_options(optional_preset);

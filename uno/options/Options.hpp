@@ -145,6 +145,7 @@ namespace uno {
          {"QP_solver", OptionType::STRING},
          {"LP_solver", OptionType::STRING},
          {"linear_solver", OptionType::STRING},
+         {"preset", OptionType::STRING},
       };
    };
 } // namespace
