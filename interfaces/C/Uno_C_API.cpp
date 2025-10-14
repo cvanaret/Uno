@@ -765,31 +765,31 @@ void uno_optimize(void* solver, void* model) {
    Logger::flush();
 }
 
-double uno_get_double_solver_option(void* solver, const char* option_name) {
+double uno_get_solver_double_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_double(option_name);
 }
 
-int uno_get_int_solver_option(void* solver, const char* option_name) {
+int uno_get_solver_integer_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_int(option_name);
 }
 
-size_t uno_get_unsigned_int_solver_option(void* solver, const char* option_name) {
+size_t uno_get_solver_unsigned_integer_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_unsigned_int(option_name);
 }
 
-bool uno_get_bool_solver_option(void* solver, const char* option_name) {
+bool uno_get_solver_bool_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_bool(option_name);   
 }
 
-const char* uno_get_string_solver_option(void* solver, const char* option_name) {
+const char* uno_get_solver_string_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_string(option_name).c_str();     

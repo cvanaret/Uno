@@ -271,19 +271,13 @@ extern "C" {
    void uno_optimize(void* solver, void* model);
 
    // gets the value of a given double option.
-   double uno_get_double_solver_option(void* solver, const char* option_name);
-
-   // gets the value of a given integer option.
-   int uno_get_int_solver_option(void* solver, const char* option_name);
-   
-   // gets the value of a given unsigned integer option.
-   size_t uno_get_unsigned_int_solver_option(void* solver, const char* option_name);
-
-   // gets the value of a given boolean option.
-   bool uno_get_bool_solver_option(void* solver, const char* option_name);
-
-   // gets the value of a given string option.
-   const char* uno_get_string_solver_option(void* solver, const char* option_name);
+   // takes as inputs the name of the option.
+   // the possible types are integer, unsigned integer, double, bool and string.
+   int uno_get_solver_integer_option(void* solver, const char* option_name);
+   size_t uno_get_solver_unsigned_integer_option(void* solver, const char* option_name);
+   double uno_get_solver_double_option(void* solver, const char* option_name);
+   bool uno_get_solver_bool_option(void* solver, const char* option_name);
+   const char* uno_get_solver_string_option(void* solver, const char* option_name);
 
    // gets the optimization status (once the model was solved)
    int32_t uno_get_optimization_status(void* solver);

@@ -184,26 +184,27 @@ function uno_optimize(solver, model)
     @ccall libuno.uno_optimize(solver::Ptr{Cvoid}, model::Ptr{Cvoid})::Cvoid
 end
 
-function uno_get_double_solver_option(solver, option_name)
-    @ccall libuno.uno_get_double_solver_option(solver::Ptr{Cvoid},
+function uno_get_solver_integer_option(solver, option_name)
+    @ccall libuno.uno_get_solver_integer_option(solver::Ptr{Cvoid},
+                                                option_name::Cstring)::Cint
+end
+
+function uno_get_solver_unsigned_integer_option(solver, option_name)
+    @ccall libuno.uno_get_solver_unsigned_integer_option(solver::Ptr{Cvoid},
+                                                         option_name::Cstring)::Csize_t
+end
+
+function uno_get_solver_double_option(solver, option_name)
+    @ccall libuno.uno_get_solver_double_option(solver::Ptr{Cvoid},
                                                option_name::Cstring)::Cdouble
 end
 
-function uno_get_int_solver_option(solver, option_name)
-    @ccall libuno.uno_get_int_solver_option(solver::Ptr{Cvoid}, option_name::Cstring)::Cint
+function uno_get_solver_bool_option(solver, option_name)
+    @ccall libuno.uno_get_solver_bool_option(solver::Ptr{Cvoid}, option_name::Cstring)::Bool
 end
 
-function uno_get_unsigned_int_solver_option(solver, option_name)
-    @ccall libuno.uno_get_unsigned_int_solver_option(solver::Ptr{Cvoid},
-                                                     option_name::Cstring)::Csize_t
-end
-
-function uno_get_bool_solver_option(solver, option_name)
-    @ccall libuno.uno_get_bool_solver_option(solver::Ptr{Cvoid}, option_name::Cstring)::Bool
-end
-
-function uno_get_string_solver_option(solver, option_name)
-    @ccall libuno.uno_get_string_solver_option(solver::Ptr{Cvoid},
+function uno_get_solver_string_option(solver, option_name)
+    @ccall libuno.uno_get_solver_string_option(solver::Ptr{Cvoid},
                                                option_name::Cstring)::Cstring
 end
 
