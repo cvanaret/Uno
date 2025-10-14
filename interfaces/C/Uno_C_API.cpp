@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <streambuf>
 #include "Uno_C_API.h"
@@ -692,8 +693,14 @@ void uno_set_solver_bool_option(void* solver, const char* option_name, bool opti
 }
 
 void uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value) {
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   uno_solver->options->set_string(option_name, option_value);
+   // handle the preset separately
+   if (strcmp(option_name, "preset") == 0) {
+      uno_set_solver_preset(solver, option_value);
+   }
+   else {
+      Solver* uno_solver = static_cast<Solver*>(solver);
+      uno_solver->options->set_string(option_name, option_value);
+   }
 }
 
 void uno_load_solver_option_file(void* solver, const char* file_name) {
