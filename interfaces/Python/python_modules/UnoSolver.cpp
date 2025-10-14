@@ -13,20 +13,32 @@ namespace py = pybind11;
 namespace uno {
    void define_UnoSolver(py::module& module) {
       py::class_<UnoSolverWrapper>(module, "UnoSolver")
-         // constructor
-         .def(py::init<>(), "Constructor")
+      // constructor
+      .def(py::init<>(), "Constructor")
 
-         // methods
-         .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, const std::string& option_value) {
-            solver.options.set(option_name, option_value);
-         }, py::arg("option_name"), py::arg("option_value"))
+      // methods
+      .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, int32_t option_value) {
+         solver.options.set_integer(option_name, option_value);
+      }, py::arg("option_name"), py::arg("option_value"))
 
-         .def("set_preset", [](UnoSolverWrapper& solver, const std::string& preset_name) {
-            Presets::set(solver.options, preset_name);
-         }, py::arg("preset_name"))
+      .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, double option_value) {
+         solver.options.set_double(option_name, option_value);
+      }, py::arg("option_name"), py::arg("option_value"))
 
-         .def("optimize", [](UnoSolverWrapper& solver, const PythonUserModel& user_model) {
-            return solver.optimize(user_model);
-         }, py::arg("model"), "Optimize an optimization model with the Uno solver");
-   }
+      .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, bool option_value) {
+         solver.options.set_bool(option_name, option_value);
+      }, py::arg("option_name"), py::arg("option_value"))
+
+      .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, const std::string& option_value) {
+         solver.options.set_string(option_name, option_value);
+      }, py::arg("option_name"), py::arg("option_value"))
+
+      .def("set_preset", [](UnoSolverWrapper& solver, const std::string& preset_name) {
+         Presets::set(solver.options, preset_name);
+      }, py::arg("preset_name"))
+
+      .def("optimize", [](UnoSolverWrapper& solver, const PythonUserModel& user_model) {
+         return solver.optimize(user_model);
+      }, py::arg("model"), "Optimize an optimization model with the Uno solver");
+}
 } // namespace

@@ -144,7 +144,7 @@ void solve_instance(int32_t optimization_sense, double lagrangian_sign_conventio
 	// solver creation
 	void* solver = uno_create_solver();
 	uno_set_solver_preset(solver, "filtersqp");
-	uno_set_solver_option(solver, "logger", "SILENT");
+	uno_set_solver_string_option(solver, "logger", "SILENT");
 
 	// solve
 	uno_optimize(solver, model);

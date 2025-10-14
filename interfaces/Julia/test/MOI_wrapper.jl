@@ -726,7 +726,7 @@ function test_error_adding_option()
     @test_throws(
         ErrorException(
             "Unable to add option `\"$name\"` with the value " *
-            "`$value::$(typeof(value))`. The value must be a `::String`.",
+            "`$value::$(typeof(value))`. The value must be a `::String`, a `::Float64`, an `::Integer`, or a `::Bool`.",
         ),
         MOI.optimize!(model),
     )
