@@ -667,6 +667,9 @@ void* uno_create_solver() {
    // default options
    Options* options = new Options;
    DefaultOptions::load(*options);
+   // add default preset
+   const Options preset_options = Presets::get_preset_options(std::nullopt);
+   options->overwrite_with(preset_options);
 
    // default user callbacks
    UserCallbacks* user_callbacks = new NoUserCallbacks;
