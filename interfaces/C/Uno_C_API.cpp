@@ -353,75 +353,28 @@ private:
    void* user_data;
 };
 
-// std::streambuf wrapper around LoggerStreamUserCallback
-class CStreamBuffer : public std::streambuf {
-public:
-   explicit CStreamBuffer(LoggerStreamUserCallback logger_stream_callback, void* user_data, std::size_t buffer_size) :
-         logger_stream_callback(logger_stream_callback), user_data(user_data) {
-      // allocate output buffer and set stream buffer pointer
-      this->buffer = new char[buffer_size];
-      this->setp(this->buffer, this->buffer + buffer_size - 1);
-   }
-   ~CStreamBuffer() override {
-      // flush remaining data and release buffer memory
-      this->sync();
-      delete[] this->buffer;
-   }
+class CStreamCallback : public UserStreamCallback {
+public: 
+   CStreamCallback(LoggerStreamUserCallback logger_stream_callback, void* user_data) :
+   UserStreamCallback(), logger_stream_callback(logger_stream_callback), user_data(user_data) { }
+   ~CStreamCallback() override { }
 
-protected:
-   // called on buffer overflow
-   int overflow(int character) override {
-      if (character != EOF) {
-            // insert the character into the buffer
-            *this->pptr() = traits_type::to_char_type(character);
-            this->pbump(1);
+   int32_t operator()(const char* buf, int32_t len) const override {
+      if (this->logger_stream_callback) {
+         return this->logger_stream_callback(buf, len, this->user_data);
+      } 
+      else {
+         return 0;
       }
-      // return EOF for error
-      return (this->flush_buffer() == 0) ? character : EOF;
-   }
-
-   int sync() override {
-      return this->flush_buffer();
    }
 
 private:
    LoggerStreamUserCallback logger_stream_callback;
    void* user_data;
-   char* buffer;
-
-   // flush buffer to the logger callback
-   int flush_buffer() {
-      // check for invalid stream callback
-      if (!this->logger_stream_callback) {
-         return -1;
-      }
-      std::ptrdiff_t current_used_buffer_size = this->pptr() - this->pbase();
-      if (current_used_buffer_size > 0) {
-         // call user logger callback
-         const int32_t callback_result = this->logger_stream_callback(this->pbase(), static_cast<int32_t>(current_used_buffer_size),
-            this->user_data);
-         if (callback_result != static_cast<int32_t>(current_used_buffer_size)) {
-            return -1;
-         }
-         // move buffer pointer
-         this->pbump(static_cast<int>(-current_used_buffer_size));
-      }
-      return 0;
-   }
 };
 
-// std::ostream wrapper around LoggerStreamUserCallback
-class COStream : public std::ostream {
-public:
-   COStream(LoggerStreamUserCallback logger_stream_callback, void* user_data, std::size_t buffer_size = 1024) : // 1024 default buffer size
-      std::ostream(&this->buffer), buffer(logger_stream_callback, user_data, buffer_size) { }
-
-private:
-   // internal stream buffer that sends output to the LoggerStreamUserCallback
-   CStreamBuffer buffer;
-};
-
-COStream* c_ostream = nullptr;
+CStreamCallback* c_stream_callback = nullptr;
+UserOStream* ostream = nullptr;
 
 struct Solver {
    Uno* solver;
@@ -437,14 +390,18 @@ void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch) {
 }
 
 void uno_set_logger_stream_callback(LoggerStreamUserCallback logger_stream_callback, void* user_data) {
-   delete c_ostream;
-   c_ostream = new COStream(logger_stream_callback, user_data);
-   Logger::set_stream(*c_ostream);
+   delete c_stream_callback;
+   delete ostream;
+   c_stream_callback = new CStreamCallback(logger_stream_callback, user_data);
+   ostream = new UserOStream(c_stream_callback);
+   Logger::set_stream(*ostream);
 }
 
 void uno_reset_logger_stream() {
-   delete c_ostream;
-   c_ostream = nullptr;
+   delete ostream;
+   delete c_stream_callback;
+   c_stream_callback = nullptr;
+   ostream = nullptr;
    Logger::set_stream(std::cout);
 }
 
