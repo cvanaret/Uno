@@ -43,7 +43,7 @@ optimization_status = Uno.uno_get_optimization_status(solver)
 solution_status = Uno.uno_get_solution_status(solver)
 solution_objective = Uno.uno_get_solution_objective(solver)
 solution_primal_feasibility = Uno.uno_get_solution_primal_feasibility(solver)
-solution_dual_feasibility = Uno.uno_get_solution_dual_feasibility(solver)
+solution_stationarity = Uno.uno_get_solution_stationarity(solver)
 solution_complementarity = Uno.uno_get_solution_complementarity(solver)
 
 primal_solution = Vector{Float64}(undef, nlp.meta.nvar)

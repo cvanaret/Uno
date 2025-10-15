@@ -96,7 +96,7 @@ if __name__ == '__main__':
 	print("Number of iterations:", result.solution_status)
 	print("Objective at solution:", result.solution_objective)
 	print("Primal feasibility at solution:", result.solution_primal_feasibility)
-	print("Dual feasibility at solution:", result.solution_dual_feasibility)
+	print("Stationarity at solution:", result.solution_stationarity)
 	print("Complementarity at solution:", result.solution_complementarity)
 	print("Primal solution:", result.primal_solution)
 	print("Constraint dual solution:", result.constraint_dual_solution)

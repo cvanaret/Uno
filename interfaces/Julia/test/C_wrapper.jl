@@ -219,7 +219,7 @@ optimization_status = Uno.uno_get_optimization_status(solver)
 solution_status = Uno.uno_get_solution_status(solver)
 solution_objective = Uno.uno_get_solution_objective(solver)
 solution_primal_feasibility = Uno.uno_get_solution_primal_feasibility(solver)
-solution_dual_feasibility = Uno.uno_get_solution_dual_feasibility(solver)
+solution_stationarity = Uno.uno_get_solution_stationarity(solver)
 solution_complementarity = Uno.uno_get_solution_complementarity(solver)
 
 primal_solution = Vector{Float64}(undef, nvar)
@@ -242,5 +242,5 @@ Uno.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 @test primal_solution[4] ≈ 1.3794082897556983 atol = 1e-5
 @test solution_objective ≈ 17.014017145179164 atol = 1e-5
 @test solution_primal_feasibility ≈ 0.0 atol = 1e-5
-@test solution_dual_feasibility ≈ 0.0 atol = 1e-5
+@test solution_stationarity ≈ 0.0 atol = 1e-5
 @test solution_complementarity ≈ 0.0 atol = 1e-5

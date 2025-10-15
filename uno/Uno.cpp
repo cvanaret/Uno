@@ -85,7 +85,6 @@ namespace uno {
 
          try {
             bool termination = false;
-            bool user_termination;
             // check for termination
             while (!termination) {
                ++major_iterations;
@@ -101,7 +100,9 @@ namespace uno {
                GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
                user_callbacks.notify_new_primals(trial_iterate.primals);
                user_callbacks.notify_new_multipliers(trial_iterate.multipliers);
-               user_termination = user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers, trial_iterate.objective_multiplier, trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+               const bool user_termination = user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers,
+                  trial_iterate.objective_multiplier, trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity,
+                  trial_iterate.residuals.complementarity);
                termination = Uno::termination_criteria(trial_iterate.status, major_iterations, max_iterations,
                   timer.get_duration(), time_limit, user_termination, optimization_status);
                

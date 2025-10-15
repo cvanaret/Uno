@@ -15,23 +15,26 @@ namespace uno {
       UserCallbacks() = default;
       virtual ~UserCallbacks() = default;
 
-      virtual void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity) = 0;
+      virtual void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+         double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) = 0;
       virtual void notify_new_primals(const Vector<double>& primals) = 0;
       virtual void notify_new_multipliers(const Multipliers& multipliers) = 0;
-      virtual bool user_termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity) = 0; // returns true for user termination
-
-   private:
+      virtual bool user_termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+         double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) = 0; // returns true for user termination
    };
 
    class NoUserCallbacks: public UserCallbacks {
    public:
       NoUserCallbacks(): UserCallbacks() { }
 
-      void notify_acceptable_iterate(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/, double /*primal_feasibility*/, double /*dual_feasibility*/, double /*complementarity*/) override { }
+      void notify_acceptable_iterate(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/,
+         double /*primal_feasibility_residual*/, double /*stationarity_residual*/, double /*complementarity_residual*/) override { }
       void notify_new_primals(const Vector<double>& /*primals*/) override { }
       void notify_new_multipliers(const Multipliers& /*multipliers*/) override { }
-      bool user_termination(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/, double /*primal_feasibility*/, double /*dual_feasibility*/, double /*complementarity*/) override { return false; }
-
+      bool user_termination(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/,
+            double /*primal_feasibility_residual*/, double /*stationarity_residual*/, double /*complementarity_residual*/) override {
+         return false;
+      }
    };
 } // namespace
 

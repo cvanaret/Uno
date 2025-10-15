@@ -116,8 +116,7 @@ namespace uno {
 
    OptionType Options::get_option_type(const std::string& option_name) const {
       try {
-         const OptionType type = this->option_types.at(option_name);
-         return type;
+         return this->option_types.at(option_name);
       }
       catch(const std::out_of_range&) {
          throw std::out_of_range("The type of the option with name " + option_name + " could not be found");

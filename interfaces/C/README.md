@@ -168,9 +168,9 @@ void uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution);
 ```c
 double uno_get_solution_primal_feasibility(solver);
 ```
-- the dual feasibility (aka stationarity) measure at the solution:
+- the stationarity measure at the solution:
 ```c
-double uno_get_solution_dual_feasibility(solver);
+double uno_get_solution_stationarity(solver);
 ```
 - the complementarity measure at the solution:
 ```c

@@ -266,8 +266,8 @@ function uno_get_solution_primal_feasibility(solver)
     @ccall libuno.uno_get_solution_primal_feasibility(solver::Ptr{Cvoid})::Cdouble
 end
 
-function uno_get_solution_dual_feasibility(solver)
-    @ccall libuno.uno_get_solution_dual_feasibility(solver::Ptr{Cvoid})::Cdouble
+function uno_get_solution_stationarity(solver)
+    @ccall libuno.uno_get_solution_stationarity(solver::Ptr{Cvoid})::Cdouble
 end
 
 function uno_get_solution_complementarity(solver)
