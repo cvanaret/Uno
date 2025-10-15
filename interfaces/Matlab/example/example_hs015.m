@@ -4,6 +4,8 @@ clc, clear
 %% Optimization model
 % Problem type: 'L' = Linear, 'Q' = Quadratic, 'N' = Nonlinear
 model.problem_type = 'N';
+% Vector indexing
+model.base_indexing = 1;
 % Number of variables
 model.number_variables = 2;
 % Variable bounds
@@ -26,6 +28,10 @@ model.constraints_upper_bounds = [inf, inf];
 model.constraint_function = @constraint_function;
 % Constraint jacobian handle: jacobian = constraint_jacobian(x)
 model.constraint_jacobian = @constraint_jacobian;
+% Constraint sparsity pattern (base_indexing-based)
+model.number_jacobian_nonzeros = 4;
+model.jacobian_row_indices = [1 2 1 2];
+model.jacobian_column_indices = [1 1 2 2];
 
 % Lagrangian sign convention: 1 = rho*f(x) + y^T c(x), -1 = rho*f(x) - y^T c(x)
 model.lagrangian_sign_convention = -1;
@@ -33,6 +39,10 @@ model.lagrangian_sign_convention = -1;
 model.hessian_triangular_part = 'L';
 % Lagrangian Hessian handle: hessian = lagrangian_hessian(x,rho,y)
 model.lagrangian_hessian = @lagrangian_hessian;
+% Lagrangian Hessian sparsity pattern (base_indexing-based)
+model.number_hessian_nonzeros = 3;
+model.hessian_row_indices = [1 2 2];
+model.hessian_column_indices = [1 1 2];
 
 % Jacobian operator handle: result = jacobian_operator(x,v)
 % model.jacobian_operator = @jacobian_operator;
@@ -41,7 +51,7 @@ model.lagrangian_hessian = @lagrangian_hessian;
 % model.jacobian_transposed_operator = @jacobian_transposed_operator;
 
 % Hessian operator handle: result = lagrangian_hessian_operator(x,rho,y,v)
-model.lagrangian_hessian_operator = @lagrangian_hessian_operator;
+% model.lagrangian_hessian_operator = @lagrangian_hessian_operator;
 
 % Initial primal point
 model.initial_primal_iterate = [-2.0, 1.0];
@@ -96,19 +106,19 @@ end
 
 % Constraint jacobian
 function J = constraint_jacobian(x)
-    J = sparse(2,2);
-    J(1,1) = x(2);
-    J(2,1) = 1;
-    J(1,2) = x(1);
-    J(2,2) = 2*x(2);
+    J = zeros(4,1);
+    J(1) = x(2);
+    J(2) = 1;
+    J(3) = x(1);
+    J(4) = 2*x(2);
 end
 
 % Lagrangian Hessian - lower triangular part
 function H = lagrangian_hessian(x, objective_multiplier, multipliers)
-    H = sparse(2,2);
-    H(1,1) = objective_multiplier*(1200*x(1)^2 - 400*x(2) + 2);
-    H(2,1) = -400*objective_multiplier*x(1) - multipliers(1);
-    H(2,2) = 200*objective_multiplier - 2*multipliers(2);
+    H = zeros(3,1);
+    H(1) = objective_multiplier*(1200*x(1)^2 - 400*x(2) + 2);
+    H(2) = -400*objective_multiplier*x(1) - multipliers(1);
+    H(3) = 200*objective_multiplier - 2*multipliers(2);
 end
 
 % Lagrangian Hessian operator
