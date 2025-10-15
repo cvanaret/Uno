@@ -17,7 +17,8 @@ function main()
                "JacobianOperator", "JacobianTransposedOperator", "HessianOperator",
                "JacobianSparsity", "Jacobian", "HessianSparsity", "Hessian",
                "NotifyAcceptableIterateUserCallback", "NotifyNewPrimalsUserCallback",
-               "NotifyNewMultipliersUserCallback", "LoggerStreamUserCallback"]
+               "NotifyNewMultipliersUserCallback", "TerminationUserCallback",
+               "LoggerStreamUserCallback"]
   options["general"]["output_ignorelist"] = callbacks
 
   args = get_default_args()

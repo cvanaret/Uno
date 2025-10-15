@@ -301,10 +301,11 @@ class CUserCallbacks: public UserCallbacks {
 public:
    CUserCallbacks(NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
       NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback,
-      void* user_data): UserCallbacks(),
+      TerminationUserCallback user_termination_callback, void* user_data): UserCallbacks(),
          notify_acceptable_iterate_callback(notify_acceptable_iterate_callback),
          notify_new_primals_callback(notify_new_primals_callback),
          notify_new_multipliers_callback(notify_new_multipliers_callback),
+         user_termination_callback(user_termination_callback),
          user_data(user_data) { };
 
    void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
@@ -328,11 +329,23 @@ public:
             multipliers.constraints.data(), this->user_data);
       }
    }
+   bool user_termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+         double primal_feasibility_residual, double dual_feasibility_residual, double complementarity_residual) override {
+      if (this->user_termination_callback) {
+         return this->user_termination_callback(static_cast<int32_t>(primals.size()),
+            static_cast<int32_t>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(),
+            multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility_residual,
+            dual_feasibility_residual, complementarity_residual, this->user_data);
+      } else {
+         return false; // never terminate
+      }
+   }
 
 private:
    NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback;
    NotifyNewPrimalsUserCallback notify_new_primals_callback;
    NotifyNewMultipliersUserCallback notify_new_multipliers_callback;
+   TerminationUserCallback user_termination_callback;
    void* user_data;
 };
 
@@ -706,6 +719,16 @@ void uno_set_solver_string_option(void* solver, const char* option_name, const c
    }
 }
 
+int32_t uno_get_solver_option_type(void* solver, const char* option_name) {
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   try {
+      return static_cast<int32_t>(uno_solver->options->get_option_type(option_name));
+   }
+   catch(const std::out_of_range&) {
+      return UNO_OPTION_TYPE_NOT_FOUND;
+   }
+}
+
 void uno_load_solver_option_file(void* solver, const char* file_name) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->options->overwrite_with(uno::Options::load_option_file(file_name));
@@ -718,11 +741,11 @@ void uno_set_solver_preset(void* solver, const char* preset_name) {
 
 void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
       NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback,
-      void* user_data) {
+      TerminationUserCallback user_termination_callback, void* user_data) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    delete uno_solver->user_callbacks; // delete the previous callbacks
    uno_solver->user_callbacks = new CUserCallbacks(notify_acceptable_iterate_callback, notify_new_primals_callback,
-      notify_new_multipliers_callback, user_data);
+      notify_new_multipliers_callback, user_termination_callback, user_data);
 }
 
 void uno_optimize(void* solver, void* model) {
@@ -749,31 +772,31 @@ void uno_optimize(void* solver, void* model) {
    Logger::flush();
 }
 
-double uno_get_double_solver_option(void* solver, const char* option_name) {
+double uno_get_solver_double_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_double(option_name);
 }
 
-int uno_get_int_solver_option(void* solver, const char* option_name) {
+int uno_get_solver_integer_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_int(option_name);
 }
 
-size_t uno_get_unsigned_int_solver_option(void* solver, const char* option_name) {
+size_t uno_get_solver_unsigned_integer_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_unsigned_int(option_name);
 }
 
-bool uno_get_bool_solver_option(void* solver, const char* option_name) {
+bool uno_get_solver_bool_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_bool(option_name);   
 }
 
-const char* uno_get_string_solver_option(void* solver, const char* option_name) {
+const char* uno_get_solver_string_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_string(option_name).c_str();     

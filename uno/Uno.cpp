@@ -85,6 +85,7 @@ namespace uno {
 
          try {
             bool termination = false;
+            bool user_termination;
             // check for termination
             while (!termination) {
                ++major_iterations;
@@ -98,11 +99,12 @@ namespace uno {
                   *this->globalization_strategy, model, current_iterate, trial_iterate, this->direction, warmstart_information,
                   user_callbacks);
                GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
-               termination = Uno::termination_criteria(trial_iterate.status, major_iterations, max_iterations,
-                  timer.get_duration(), time_limit, optimization_status);
                user_callbacks.notify_new_primals(trial_iterate.primals);
                user_callbacks.notify_new_multipliers(trial_iterate.multipliers);
-
+               user_termination = user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers, trial_iterate.objective_multiplier, trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
+               termination = Uno::termination_criteria(trial_iterate.status, major_iterations, max_iterations,
+                  timer.get_duration(), time_limit, user_termination, optimization_status);
+               
                // the trial iterate becomes the current iterate for the next iteration
                std::swap(current_iterate, trial_iterate);
             }
@@ -186,7 +188,7 @@ namespace uno {
    }
 
    bool Uno::termination_criteria(SolutionStatus solution_status, size_t iteration, size_t max_iterations, double current_time,
-         double time_limit, OptimizationStatus& optimization_status) {
+         double time_limit, bool user_termination, OptimizationStatus& optimization_status) {
       if (solution_status != SolutionStatus::NOT_OPTIMAL) {
          return true;
       }
@@ -196,6 +198,10 @@ namespace uno {
       }
       else if (time_limit <= current_time) {
          optimization_status = OptimizationStatus::TIME_LIMIT;
+         return true;
+      }
+      else if (user_termination) {
+         optimization_status = OptimizationStatus::USER_TERMINATION;
          return true;
       }
       return false;

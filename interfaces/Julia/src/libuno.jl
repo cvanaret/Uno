@@ -14,11 +14,18 @@ const UNO_ONE_BASED_INDEXING = Cint(1)
 const UNO_LOWER_TRIANGLE = Cchar('L')
 const UNO_UPPER_TRIANGLE = Cchar('U')
 
+const UNO_OPTION_TYPE_INT = Cint(0)
+const UNO_OPTION_TYPE_DOUBLE = Cint(1)
+const UNO_OPTION_TYPE_BOOL = Cint(2)
+const UNO_OPTION_TYPE_STRING = Cint(3)
+const UNO_OPTION_TYPE_NOT_FOUND = Cint(-1)
+
 const UNO_SUCCESS = Cint(0)
 const UNO_ITERATION_LIMIT = Cint(1)
 const UNO_TIME_LIMIT = Cint(2)
 const UNO_EVALUATION_ERROR = Cint(3)
 const UNO_ALGORITHMIC_ERROR = Cint(4)
+const UNO_USER_TERMINATION = Cint(5)
 
 const UNO_NOT_OPTIMAL = Cint(0)
 const UNO_FEASIBLE_KKT_POINT = Cint(1)
@@ -141,6 +148,11 @@ function uno_set_solver_string_option(solver, option_name, option_value)
                                                option_value::Cstring)::Cvoid
 end
 
+function uno_get_solver_option_type(solver, option_name)
+    @ccall libuno.uno_get_solver_option_type(solver::Ptr{Cvoid},
+                                             option_name::Cstring)::Int32
+end
+
 function uno_load_solver_option_file(solver, file_name)
     @ccall libuno.uno_load_solver_option_file(solver::Ptr{Cvoid}, file_name::Cstring)::Cvoid
 end
@@ -151,11 +163,13 @@ end
 
 function uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback,
                                   notify_new_primals_callback,
-                                  notify_new_multipliers_callback, user_data)
+                                  notify_new_multipliers_callback,
+                                  user_termination_callback, user_data)
     @ccall libuno.uno_set_solver_callbacks(solver::Ptr{Cvoid},
                                            notify_acceptable_iterate_callback::Ptr{Cvoid},
                                            notify_new_primals_callback::Ptr{Cvoid},
                                            notify_new_multipliers_callback::Ptr{Cvoid},
+                                           user_termination_callback::Ptr{Cvoid},
                                            user_data::Ptr{Cvoid})::Cvoid
 end
 
@@ -172,26 +186,27 @@ function uno_optimize(solver, model)
     @ccall libuno.uno_optimize(solver::Ptr{Cvoid}, model::Ptr{Cvoid})::Cvoid
 end
 
-function uno_get_double_solver_option(solver, option_name)
-    @ccall libuno.uno_get_double_solver_option(solver::Ptr{Cvoid},
+function uno_get_solver_integer_option(solver, option_name)
+    @ccall libuno.uno_get_solver_integer_option(solver::Ptr{Cvoid},
+                                                option_name::Cstring)::Cint
+end
+
+function uno_get_solver_unsigned_integer_option(solver, option_name)
+    @ccall libuno.uno_get_solver_unsigned_integer_option(solver::Ptr{Cvoid},
+                                                         option_name::Cstring)::Csize_t
+end
+
+function uno_get_solver_double_option(solver, option_name)
+    @ccall libuno.uno_get_solver_double_option(solver::Ptr{Cvoid},
                                                option_name::Cstring)::Cdouble
 end
 
-function uno_get_int_solver_option(solver, option_name)
-    @ccall libuno.uno_get_int_solver_option(solver::Ptr{Cvoid}, option_name::Cstring)::Cint
+function uno_get_solver_bool_option(solver, option_name)
+    @ccall libuno.uno_get_solver_bool_option(solver::Ptr{Cvoid}, option_name::Cstring)::Bool
 end
 
-function uno_get_unsigned_int_solver_option(solver, option_name)
-    @ccall libuno.uno_get_unsigned_int_solver_option(solver::Ptr{Cvoid},
-                                                     option_name::Cstring)::Csize_t
-end
-
-function uno_get_bool_solver_option(solver, option_name)
-    @ccall libuno.uno_get_bool_solver_option(solver::Ptr{Cvoid}, option_name::Cstring)::Bool
-end
-
-function uno_get_string_solver_option(solver, option_name)
-    @ccall libuno.uno_get_string_solver_option(solver::Ptr{Cvoid},
+function uno_get_solver_string_option(solver, option_name)
+    @ccall libuno.uno_get_solver_string_option(solver::Ptr{Cvoid},
                                                option_name::Cstring)::Cstring
 end
 

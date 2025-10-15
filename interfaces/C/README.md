@@ -84,7 +84,10 @@ uno_destroy_solver(solver);
 
 Options can be passed to the Uno solver:
 ```c
-uno_set_solver_option(solver, "print_solution", "yes");
+uno_set_solver_integer_option(solver, "max_iterations", 1000);
+uno_set_solver_double_option(solver, "primal_tolerance", 1.0e-6);
+uno_set_solver_bool_option(solver, "print_solution", true);
+uno_set_solver_string_option(solver, "hessian_model", "exact");
 ```
 
 Loading options from a file (overwrites existing options):
@@ -94,11 +97,11 @@ uno_load_solver_option_file(solver, "uno.opt");
 
 Getting typed value of an option from the Uno solver:
 ```c
-double uno_get_double_solver_option(solver, "primal_tolerance");
-int uno_get_int_solver_option(solver, "max_iterations");
-size_t uno_get_unsigned_int_solver_option(solver, "max_iterations");
-bool uno_get_bool_solver_option(solver, "print_solution");
-const char* uno_get_string_solver_option(solver, "hessian_model");
+int uno_get_solver_integer_option(solver, "max_iterations");
+size_t uno_get_solver_unsigned_integer_option(solver, "max_iterations");
+double uno_set_solver_double_option(solver, "primal_tolerance");
+bool uno_get_solver_bool_option(solver, "print_solution");
+const char* uno_get_solver_string_option(solver, "hessian_model");
 ```
 
 Setting a preset has Uno mimic an existing solver:
@@ -110,7 +113,7 @@ uno_set_solver_preset(solver, "filtersqp");
 
 Setting the user callbacks to the Uno solver:
 ```c
-uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback, notify_new_primals_callback, notify_new_multipliers_callback, user_data);
+uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback, notify_new_primals_callback, notify_new_multipliers_callback, user_termination_callback, user_data);
 ```
 
 Setting the logger stream callback:

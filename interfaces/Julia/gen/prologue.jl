@@ -19,12 +19,20 @@ const UNO_ONE_BASED_INDEXING  = Cint(1)
 const UNO_LOWER_TRIANGLE = Cchar('L')
 const UNO_UPPER_TRIANGLE = Cchar('U')
 
+# Option type: 0 = integer, 1 = double, 2 = boolean, 3 = string, -1 = not found
+const UNO_OPTION_TYPE_INT       = Cint(0)
+const UNO_OPTION_TYPE_DOUBLE    = Cint(1)
+const UNO_OPTION_TYPE_BOOL      = Cint(2)
+const UNO_OPTION_TYPE_STRING    = Cint(3)
+const UNO_OPTION_TYPE_NOT_FOUND = Cint(-1)
+
 # Optimization status
 const UNO_SUCCESS = Cint(0)
 const UNO_ITERATION_LIMIT = Cint(1)
 const UNO_TIME_LIMIT = Cint(2)
 const UNO_EVALUATION_ERROR = Cint(3)
 const UNO_ALGORITHMIC_ERROR = Cint(4)
+const UNO_USER_TERMINATION = Cint(5)
 
 # Iterate status
 const UNO_NOT_OPTIMAL = Cint(0)

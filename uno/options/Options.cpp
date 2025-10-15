@@ -114,6 +114,16 @@ namespace uno {
       }
    }
 
+   OptionType Options::get_option_type(const std::string& option_name) const {
+      try {
+         const OptionType type = this->option_types.at(option_name);
+         return type;
+      }
+      catch(const std::out_of_range&) {
+         throw std::out_of_range("The type of the option with name " + option_name + " could not be found");
+      }
+   }
+
    // argv[i] for i = offset..argc-1 are overwriting options
    Options Options::get_command_line_options(int argc, char* argv[], size_t offset) {
       static const std::string delimiter = "=";

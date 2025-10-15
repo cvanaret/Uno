@@ -18,6 +18,9 @@ namespace uno {
       virtual void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity) = 0;
       virtual void notify_new_primals(const Vector<double>& primals) = 0;
       virtual void notify_new_multipliers(const Multipliers& multipliers) = 0;
+      virtual bool user_termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity) = 0; // returns true for user termination
+
+   private:
    };
 
    class NoUserCallbacks: public UserCallbacks {
@@ -27,6 +30,8 @@ namespace uno {
       void notify_acceptable_iterate(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/, double /*primal_feasibility*/, double /*dual_feasibility*/, double /*complementarity*/) override { }
       void notify_new_primals(const Vector<double>& /*primals*/) override { }
       void notify_new_multipliers(const Multipliers& /*multipliers*/) override { }
+      bool user_termination(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/, double /*primal_feasibility*/, double /*dual_feasibility*/, double /*complementarity*/) override { return false; }
+
    };
 } // namespace
 

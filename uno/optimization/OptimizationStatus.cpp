@@ -20,6 +20,9 @@ namespace uno {
       else if (status == OptimizationStatus::ALGORITHMIC_ERROR) {
          return "Algorithmic error";
       }
+      else if (status == OptimizationStatus::USER_TERMINATION) {
+         return "User termination";
+      }
       return "Unknown";
    }
 } // namespace

@@ -32,12 +32,20 @@ extern "C" {
    const char UNO_LOWER_TRIANGLE = 'L';
    const char UNO_UPPER_TRIANGLE = 'U';
 
+   // Option type: 0 = integer, 1 = double, 2 = boolean, 3 = string, -1 = not found
+   const int32_t UNO_OPTION_TYPE_INT = 0;
+   const int32_t UNO_OPTION_TYPE_DOUBLE = 1;
+   const int32_t UNO_OPTION_TYPE_BOOL = 2;
+   const int32_t UNO_OPTION_TYPE_STRING = 3;
+   const int32_t UNO_OPTION_TYPE_NOT_FOUND = -1;
+
    // Optimization status
    const int32_t UNO_SUCCESS = 0;
    const int32_t UNO_ITERATION_LIMIT = 1;
    const int32_t UNO_TIME_LIMIT = 2;
    const int32_t UNO_EVALUATION_ERROR = 3;
    const int32_t UNO_ALGORITHMIC_ERROR = 4;
+   const int32_t UNO_USER_TERMINATION = 5;
 
    // Iterate status
    const int32_t UNO_NOT_OPTIMAL = 0;
@@ -117,22 +125,32 @@ extern "C" {
    // - takes as inputs the number of variables, the number of constraints, a vector "primals" of size "number_variables",
    // the lower and upper bound multipliers of size "number_variables", a vector "constraint_multipliers" of size
    // "number_constraints", an objective multiplier, the primal feasibility residual, the dual feasibility residual, and
-   // the complementarity residual
+   // the complementarity residual.
    typedef void (*NotifyAcceptableIterateUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
       double objective_multiplier, double primal_feasibility_residual, double dual_feasibility_residual,
       double complementarity_residual, void* user_data);
 
-   // - takes as inputs the number of variables, and a vector "primals" of size "number_variables"
+   // - takes as inputs the number of variables, and a vector "primals" of size "number_variables".
    typedef void (*NotifyNewPrimalsUserCallback)(int32_t number_variables, const double* primals, void* user_data);
    
    // - takes as inputs the number of variables, the number of constraints, the lower and upper bound multipliers of
-   // size "number_variables", and a vector "constraint_multipliers" of size "number_constraints"
+   // size "number_variables", and a vector "constraint_multipliers" of size "number_constraints".
    typedef void (*NotifyNewMultipliersUserCallback)(int32_t number_variables, int32_t number_constraints,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraints_multipliers,
       void* user_data);
 
-   // - takes as inputs a vector "buffer" of size "length"
+   // - takes as inputs the number of variables, the number of constraints, a vector "primals" of size "number_variables",
+   // the lower and upper bound multipliers of size "number_variables", a vector "constraint_multipliers" of size
+   // "number_constraints", an objective multiplier, the primal feasibility residual, the dual feasibility residual, and
+   // the complementarity residual.
+   // returns true for user termination.
+   typedef bool (*TerminationUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals,
+      const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
+      double objective_multiplier, double primal_feasibility_residual, double dual_feasibility_residual,
+      double complementarity_residual, void* user_data);
+
+   // - takes as inputs a vector "buffer" of size "length".
    typedef int32_t (*LoggerStreamUserCallback)(const char* buffer, int32_t length, void* user_data);
 
    // creates an optimization model that can be solved by Uno.
@@ -231,6 +249,11 @@ extern "C" {
    void uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value);
    void uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value);
 
+   // gets the type of a particular option in the Uno solver.
+   // takes as input the name of the option.
+   // the possible types are integer, double, bool and string.
+   int32_t uno_get_solver_option_type(void* solver, const char* option_name);
+
    // [optional] loads the options from a given option file.
    // takes as input the name of the option file.
    void uno_load_solver_option_file(void* solver, const char* file_name);
@@ -241,7 +264,8 @@ extern "C" {
    // [optional]
    // sets the user callbacks for solver.
    void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
-      NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback, void* user_data);
+      NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback, 
+      TerminationUserCallback user_termination_callback, void* user_data);
 
    // [optional]
    // sets the logger stream callback.
@@ -255,19 +279,13 @@ extern "C" {
    void uno_optimize(void* solver, void* model);
 
    // gets the value of a given double option.
-   double uno_get_double_solver_option(void* solver, const char* option_name);
-
-   // gets the value of a given integer option.
-   int uno_get_int_solver_option(void* solver, const char* option_name);
-   
-   // gets the value of a given unsigned integer option.
-   size_t uno_get_unsigned_int_solver_option(void* solver, const char* option_name);
-
-   // gets the value of a given boolean option.
-   bool uno_get_bool_solver_option(void* solver, const char* option_name);
-
-   // gets the value of a given string option.
-   const char* uno_get_string_solver_option(void* solver, const char* option_name);
+   // takes as inputs the name of the option.
+   // the possible types are integer, unsigned integer, double, bool and string.
+   int uno_get_solver_integer_option(void* solver, const char* option_name);
+   size_t uno_get_solver_unsigned_integer_option(void* solver, const char* option_name);
+   double uno_get_solver_double_option(void* solver, const char* option_name);
+   bool uno_get_solver_bool_option(void* solver, const char* option_name);
+   const char* uno_get_solver_string_option(void* solver, const char* option_name);
 
    // gets the optimization status (once the model was solved)
    int32_t uno_get_optimization_status(void* solver);
