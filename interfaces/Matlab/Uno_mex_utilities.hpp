@@ -231,28 +231,19 @@ namespace uno {
                         INFO << "Incorrect type of option '" << field_name << "'." << std::endl;
                     }
                 }
-                // OptionType::INTEGER accepts double, int32_t
+                // OptionType::INTEGER accepts double
                 else if (option_type == OptionType::INTEGER) {
-                    if (mxGetClassID(field_value) == getMxClassID<int32_t>()) {
-                        uno_options.set_integer(field_name, mxArray_to_scalar<int32_t>(field_value));
-                    }
-                    else if (mxGetClassID(field_value) == getMxClassID<double>()) {
+                    if (mxGetClassID(field_value) == getMxClassID<double>()) {
                         uno_options.set_integer(field_name, static_cast<int32_t>(mxArray_to_scalar<double>(field_value))); // cast to int
                     }
                     else {
                         INFO << "Incorrect type of option '" << field_name << "'." << std::endl;
                     }
                 }
-                // OptionType::BOOL accepts double, int32_t, logical
+                // OptionType::BOOL accepts logical
                 else if (option_type == OptionType::BOOL) {
                     if (mxGetClassID(field_value) == getMxClassID<bool>()) { 
                         uno_options.set_bool(field_name, mxArray_to_scalar<bool>(field_value)); 
-                    }
-                    else if (mxGetClassID(field_value) == getMxClassID<double>()) { 
-                        uno_options.set_bool(field_name, mxArray_to_scalar<double>(field_value)>0); // compare to zero
-                    }
-                    else if (mxGetClassID(field_value) == getMxClassID<int32_t>()) {
-                        uno_options.set_bool(field_name, mxArray_to_scalar<int32_t>(field_value)>0); // compare to zero
                     }
                     else {
                         INFO << "Incorrect type of option '" << field_name << "'." << std::endl;
@@ -268,12 +259,9 @@ namespace uno {
                     }
                 }
             } catch (const std::out_of_range&) {
-                // set the option with type depending on mxArray class
+                // set the option with type depending on mxArray class (only double, bool, char)
                 if (mxGetClassID(field_value) == getMxClassID<double>()) {
                     uno_options.set_double(field_name, mxArray_to_scalar<double>(field_value));
-                }
-                else if (mxGetClassID(field_value) == getMxClassID<int32_t>()) {
-                    uno_options.set_integer(field_name, mxArray_to_scalar<int32_t>(field_value));
                 }
                 else if (mxGetClassID(field_value) == getMxClassID<bool>()) {
                     uno_options.set_bool(field_name, mxArray_to_scalar<bool>(field_value));
