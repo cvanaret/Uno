@@ -4,6 +4,8 @@
 #ifndef UNO_VECTORVIEW_H
 #define UNO_VECTORVIEW_H
 
+#include <ostream>
+
 namespace uno {
    // span of an arbitrary container: allocation-free view of a certain length
    template <typename Vector>

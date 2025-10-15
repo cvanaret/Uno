@@ -13,6 +13,7 @@ namespace uno {
    class HessianModel;
    class Iterate;
    class l1RelaxedProblem;
+   class Multipliers;
    class OptimizationProblem;
    class Options;
    template <typename ElementType>
@@ -61,6 +62,9 @@ namespace uno {
       bool subproblem_definition_changed{false};
 
       [[nodiscard]] virtual std::string get_name() const = 0;
+
+   protected:
+      static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
    };
 } // namespace
 

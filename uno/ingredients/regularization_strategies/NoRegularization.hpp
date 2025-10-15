@@ -5,6 +5,7 @@
 #define UNO_NOREGULARIZATION_H
 
 #include "RegularizationStrategy.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 
 namespace uno {
    template <typename ElementType>
