@@ -18,21 +18,9 @@ namespace uno {
       virtual void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity) = 0;
       virtual void notify_new_primals(const Vector<double>& primals) = 0;
       virtual void notify_new_multipliers(const Multipliers& multipliers) = 0;
-
-      // user stop request
-      // virtual final to prevent overriding
-      virtual void stop_request() final {
-         stop_request_flag = true;
-      }
-      virtual void reset_stop_request() final {
-         stop_request_flag = false;
-      }
-      virtual bool is_stop_requested() const final {
-         return stop_request_flag;
-      }
+      virtual bool user_termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double dual_feasibility, double complementarity) = 0; // returns true for user termination
 
    private:
-      bool stop_request_flag = false;
    };
 
    class NoUserCallbacks: public UserCallbacks {
@@ -42,6 +30,8 @@ namespace uno {
       void notify_acceptable_iterate(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/, double /*primal_feasibility*/, double /*dual_feasibility*/, double /*complementarity*/) override { }
       void notify_new_primals(const Vector<double>& /*primals*/) override { }
       void notify_new_multipliers(const Multipliers& /*multipliers*/) override { }
+      bool user_termination(const Vector<double>& /*primals*/, const Multipliers& /*multipliers*/, double /*objective_multiplier*/, double /*primal_feasibility*/, double /*dual_feasibility*/, double /*complementarity*/) override { return false; }
+
    };
 } // namespace
 

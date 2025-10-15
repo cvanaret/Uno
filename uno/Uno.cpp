@@ -85,6 +85,7 @@ namespace uno {
 
          try {
             bool termination = false;
+            bool user_termination;
             // check for termination
             while (!termination) {
                ++major_iterations;
@@ -100,8 +101,9 @@ namespace uno {
                GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
                user_callbacks.notify_new_primals(trial_iterate.primals);
                user_callbacks.notify_new_multipliers(trial_iterate.multipliers);
+               user_termination = user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers, trial_iterate.objective_multiplier, trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity, trial_iterate.residuals.complementarity);
                termination = Uno::termination_criteria(trial_iterate.status, major_iterations, max_iterations,
-                  timer.get_duration(), time_limit, user_callbacks.is_stop_requested(), optimization_status);
+                  timer.get_duration(), time_limit, user_termination, optimization_status);
                
                // the trial iterate becomes the current iterate for the next iteration
                std::swap(current_iterate, trial_iterate);
@@ -124,7 +126,6 @@ namespace uno {
       }
       Result result = this->create_result(model, optimization_status, current_iterate, major_iterations, timer);
       this->print_optimization_summary(result, options.get_bool("print_solution"));
-      user_callbacks.reset_stop_request(); // reset the stop request flag for future solves
       return result;
    }
    
@@ -187,7 +188,7 @@ namespace uno {
    }
 
    bool Uno::termination_criteria(SolutionStatus solution_status, size_t iteration, size_t max_iterations, double current_time,
-         double time_limit, bool user_requested_stop, OptimizationStatus& optimization_status) {
+         double time_limit, bool user_termination, OptimizationStatus& optimization_status) {
       if (solution_status != SolutionStatus::NOT_OPTIMAL) {
          return true;
       }
@@ -199,8 +200,8 @@ namespace uno {
          optimization_status = OptimizationStatus::TIME_LIMIT;
          return true;
       }
-      else if (user_requested_stop) {
-         optimization_status = OptimizationStatus::USER_REQUESTED_STOP;
+      else if (user_termination) {
+         optimization_status = OptimizationStatus::USER_TERMINATION;
          return true;
       }
       return false;

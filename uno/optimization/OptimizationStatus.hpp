@@ -13,7 +13,7 @@ namespace uno {
       TIME_LIMIT,
       EVALUATION_ERROR,
       ALGORITHMIC_ERROR,
-      USER_REQUESTED_STOP /* stop requested by the user in user callbacks */
+      USER_TERMINATION
    };
 
    std::string optimization_status_to_message(OptimizationStatus status);
