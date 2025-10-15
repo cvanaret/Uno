@@ -11,6 +11,8 @@ Create optimization model as a MATLAB struct:
 ```matlab
 % Problem type: 'L' = Linear, 'Q' = Quadratic, 'N' = Nonlinear
 model.problem_type = ...;
+% Vector indexing: 1 = Matlab-style, 0 = C-style
+model.base_indexing = ...;
 % Number of variables
 model.number_variables = ...;
 % Variable bounds
@@ -20,7 +22,7 @@ model.variables_upper_bounds = [ ... ];
 
 The following fields has also to be set:
 
-- objective and its (full) gradient;
+- objective and its full gradient;
 ```matlab
 % Optimization sense: 1 = Minimize, -1 = Maximize
 model.optimization_sense = 1;
@@ -30,7 +32,7 @@ model.objective_function = @objective_function;
 model.objective_gradient = @objective_gradient;
 ```
 
-- constraint function and bounds and its (either sparse or full) Jacobian matrix;
+- constraint function and bounds and its sparse Jacobian matrix;
 ```matlab
 % Number of constraints
 model.number_constraints = ...;
@@ -39,18 +41,26 @@ model.constraints_lower_bounds = [ ... ];
 model.constraints_upper_bounds = [ ... ];
 % Constraint function handle: constraints = constrain_function(x)
 model.constraint_function = @constraint_function;
-% Constraint jacobian handle: jacobian = constraint_jacobian(x)
+% Constraint jacobian handle: jacobian_values = constraint_jacobian(x)
 model.constraint_jacobian = @constraint_jacobian;
+% Constraint sparsity pattern (base_indexing-based)
+model.number_jacobian_nonzeros = ...;
+model.jacobian_row_indices = [ ... ];
+model.jacobian_column_indices = [ ... ];
 ```
 
-- (either full or sparse) Lagrangian Hessian matrix;
+- sparse Lagrangian Hessian matrix;
 ```matlab
 % Lagrangian sign convention: 1 = rho*f(x) + y^T c(x), -1 = rho*f(x) - y^T c(x)
 model.lagrangian_sign_convention = ...;
 % Hessian triangular part: 'L' = lower, 'U' = upper
 model.hessian_triangular_part = 'L';
-% Lagrangian Hessian handle: hessian = lagrangian_hessian(x,rho,y)
+% Lagrangian Hessian handle: hessian_values = lagrangian_hessian(x,rho,y)
 model.lagrangian_hessian = @lagrangian_hessian;
+% Lagrangian Hessian sparsity pattern (base_indexing-based)
+model.number_hessian_nonzeros = ...;
+model.hessian_row_indices = [ ... ];
+model.hessian_column_indices = [ ... ];
 ```
 
 - a Jacobian operator (performs Jacobian-vector products);
