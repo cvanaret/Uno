@@ -1403,7 +1403,7 @@ function _setup_model(model::Optimizer)
         lagrangian_sign=1.0,
         user_model=model,
     )
-    model.solver = Uno.uno_solver("funnelsqp")
+    model.solver = Uno.uno_solver()
     return
 end
 
@@ -1428,6 +1428,9 @@ function MOI.optimize!(model::Optimizer)
     copy_parameters(model)
     inner = model.inner::Uno.UnoModel
     solver = model.solver::Uno.UnoSolver
+
+    # The default logger is "INFO".
+    Uno.uno_set_solver_string_option(solver, "logger", model.silent ? "SILENT" : "INFO")
 
     # Other misc options that over-ride the ones set above.
     for (name, value) in model.options
@@ -1564,14 +1567,15 @@ function _manually_evaluated_primal_status(model::Optimizer)
         push!(g_L, bound.lower)
         push!(g_U, bound.upper)
     end
-    # 1e-8 is the default tolerance
-    tol = get(model.options, "tol", 1e-8)
+    # 1e-8 is the default primal tolerance
+    tol = get(model.options, "primal_tolerance", 1e-8)
     if all(x_L[i] - tol <= x[i] <= x_U[i] + tol for i in 1:n) &&
        all(g_L[i] - tol <= g[i] <= g_U[i] + tol for i in 1:m)
         return MOI.FEASIBLE_POINT
     end
     # 1e-6 is the default acceptable tolerance
-    atol = get(model.options, "acceptable_tol", 1e-6)
+    # TODO: Charlie, should we add this option in Uno?
+    atol = get(model.options, "loose_primal_tolerance", 1e-6)
     if all(x_L[i] - atol <= x[i] <= x_U[i] + atol for i in 1:n) &&
        all(g_L[i] - atol <= g[i] <= g_U[i] + atol for i in 1:m)
         return MOI.NEARLY_FEASIBLE_POINT

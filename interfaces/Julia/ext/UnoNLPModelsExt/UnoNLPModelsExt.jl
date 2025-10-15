@@ -49,7 +49,7 @@ function nlpmodels_lagrangian_hessian_operator(nlp::AbstractNLPModel{Float64}, H
   return Hv
 end
 
-function Uno.uno_model(nlp::AbstractNLPModel{Float64})
+function Uno.uno_model(nlp::AbstractNLPModel{Float64}; operators_available::Bool=true)
   jrows, jcols = NLPModels.jac_structure(nlp)
   hrows, hcols = NLPModels.hess_structure(nlp)
   problem_type = nlp.meta.islp ? 'L' : 'N'
@@ -73,9 +73,9 @@ function Uno.uno_model(nlp::AbstractNLPModel{Float64})
     nlpmodels_objective_gradient,
     nlpmodels_jacobian,
     nlpmodels_lagrangian_hessian,
-    nlpmodels_jacobian_operator,
-    nlpmodels_jacobian_transposed_operator,
-    nlpmodels_lagrangian_hessian_operator;
+    operators_available ? nlpmodels_jacobian_operator : nothing,
+    operators_available ? nlpmodels_jacobian_transposed_operator : nothing,
+    operators_available ? nlpmodels_lagrangian_hessian_operator : nothing;
     hessian_triangle='L',
     lagrangian_sign=1.0,
     user_model=nlp,

@@ -210,8 +210,9 @@ y0 = zeros(Float64, ncon)
 Uno.uno_set_initial_primal_iterate(model, x0)
 Uno.uno_set_initial_dual_iterate(model, y0)
 
-solver = uno_solver("funnelsqp")
-Uno.uno_set_solver_bool_option(solver, "print_solution", true)
+solver = uno_solver()
+uno_set_solver_preset(solver, "funnelsqp")
+uno_set_solver_bool_option(solver, "print_solution", true)
 uno_optimize(solver, model)
 
 optimization_status = Uno.uno_get_optimization_status(solver)

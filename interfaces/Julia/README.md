@@ -33,8 +33,8 @@ using Uno, CUTEst
 
 nlp = CUTEstModel{Float64}("HS15")
 model = uno_model(nlp)
-solver = uno_solver("filtersqp", print_solution="yes")
-Uno.uno_optimize(solver, model)
+solver = uno_solver(preset="filtersqp", print_solution=true, logger="INFO")
+uno_optimize(solver, model)
 
 timer = Uno.uno_get_cpu_time(solver)
 niter = Uno.uno_get_number_iterations(solver)
@@ -86,7 +86,9 @@ using NLPModelsJuMP
 nlp = MathOptNLPModel(jump_model)
 
 model = uno_model(nlp)
-solver = uno_solver("filtersqp", print_solution="yes")
+solver = uno_solver()
+uno_set_solver_preset(solver, "filtersqp")
+uno_set_solver_bool_option(solver, "print_solution", true)
 uno_optimize(solver, model)
 ```
 

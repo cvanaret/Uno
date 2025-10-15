@@ -102,7 +102,7 @@ int main() {
 
 	// solver creation
 	void* solver = uno_create_solver();
-	uno_set_solver_preset(solver, "filtersqp");
+	//uno_set_solver_preset(solver, "filtersqp");
 	uno_set_solver_bool_option(solver, "print_solution", true);
 
 	// solve
