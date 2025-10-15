@@ -45,7 +45,7 @@ extern "C" {
    const int32_t UNO_TIME_LIMIT = 2;
    const int32_t UNO_EVALUATION_ERROR = 3;
    const int32_t UNO_ALGORITHMIC_ERROR = 4;
-   const int32_t UNO_USER_REQUESTED_STOP = 5; // stop requested by the user in user callbacks
+   const int32_t UNO_USER_TERMINATION = 5;
 
    // Iterate status
    const int32_t UNO_NOT_OPTIMAL = 0;
@@ -125,25 +125,32 @@ extern "C" {
    // - takes as inputs the number of variables, the number of constraints, a vector "primals" of size "number_variables",
    // the lower and upper bound multipliers of size "number_variables", a vector "constraint_multipliers" of size
    // "number_constraints", an objective multiplier, the primal feasibility residual, the dual feasibility residual, and
-   // the complementarity residual
-   // returns false for user requested stop 
-   typedef bool (*NotifyAcceptableIterateUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals,
+   // the complementarity residual.
+   typedef void (*NotifyAcceptableIterateUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
       double objective_multiplier, double primal_feasibility_residual, double dual_feasibility_residual,
       double complementarity_residual, void* user_data);
 
-   // - takes as inputs the number of variables, and a vector "primals" of size "number_variables"
-   // returns false for user requested stop 
-   typedef bool (*NotifyNewPrimalsUserCallback)(int32_t number_variables, const double* primals, void* user_data);
+   // - takes as inputs the number of variables, and a vector "primals" of size "number_variables".
+   typedef void (*NotifyNewPrimalsUserCallback)(int32_t number_variables, const double* primals, void* user_data);
    
    // - takes as inputs the number of variables, the number of constraints, the lower and upper bound multipliers of
-   // size "number_variables", and a vector "constraint_multipliers" of size "number_constraints"
-   // returns false for user requested stop 
-   typedef bool (*NotifyNewMultipliersUserCallback)(int32_t number_variables, int32_t number_constraints,
+   // size "number_variables", and a vector "constraint_multipliers" of size "number_constraints".
+   typedef void (*NotifyNewMultipliersUserCallback)(int32_t number_variables, int32_t number_constraints,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraints_multipliers,
       void* user_data);
 
-   // - takes as inputs a vector "buffer" of size "length"
+   // - takes as inputs the number of variables, the number of constraints, a vector "primals" of size "number_variables",
+   // the lower and upper bound multipliers of size "number_variables", a vector "constraint_multipliers" of size
+   // "number_constraints", an objective multiplier, the primal feasibility residual, the dual feasibility residual, and
+   // the complementarity residual.
+   // returns true for user termination.
+   typedef bool (*TerminationUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals,
+      const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
+      double objective_multiplier, double primal_feasibility_residual, double dual_feasibility_residual,
+      double complementarity_residual, void* user_data);
+
+   // - takes as inputs a vector "buffer" of size "length".
    typedef int32_t (*LoggerStreamUserCallback)(const char* buffer, int32_t length, void* user_data);
 
    // creates an optimization model that can be solved by Uno.
@@ -257,7 +264,8 @@ extern "C" {
    // [optional]
    // sets the user callbacks for solver.
    void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
-      NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback, void* user_data);
+      NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback, 
+      TerminationUserCallback user_termination_callback, void* user_data);
 
    // [optional]
    // sets the logger stream callback.

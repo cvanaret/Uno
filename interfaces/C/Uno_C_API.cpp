@@ -301,40 +301,43 @@ class CUserCallbacks: public UserCallbacks {
 public:
    CUserCallbacks(NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
       NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback,
-      void* user_data): UserCallbacks(),
+      TerminationUserCallback user_termination_callback, void* user_data): UserCallbacks(),
          notify_acceptable_iterate_callback(notify_acceptable_iterate_callback),
          notify_new_primals_callback(notify_new_primals_callback),
          notify_new_multipliers_callback(notify_new_multipliers_callback),
+         user_termination_callback(user_termination_callback),
          user_data(user_data) { };
 
    void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
          double primal_feasibility_residual, double dual_feasibility_residual, double complementarity_residual) override {
       if (this->notify_acceptable_iterate_callback != nullptr) {
-         // false for user requested stop
-         if (!this->notify_acceptable_iterate_callback(static_cast<int32_t>(primals.size()),
+         this->notify_acceptable_iterate_callback(static_cast<int32_t>(primals.size()),
             static_cast<int32_t>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(),
             multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility_residual,
-            dual_feasibility_residual, complementarity_residual, this->user_data)) {
-            this->stop_request();
-         }
+            dual_feasibility_residual, complementarity_residual, this->user_data);
       }
    }
    void notify_new_primals(const Vector<double>& primals) override {
       if (this->notify_new_primals_callback != nullptr) {
-         // false for user requested stop
-         if (!this->notify_new_primals_callback(static_cast<int32_t>(primals.size()), primals.data(), this->user_data)) {
-            this->stop_request();
-         }
+         this->notify_new_primals_callback(static_cast<int32_t>(primals.size()), primals.data(), this->user_data);
       }
    }
    void notify_new_multipliers(const Multipliers& multipliers) override {
       if (this->notify_new_multipliers_callback != nullptr) {
-         // false for user requested stop
-         if (!this->notify_new_multipliers_callback(static_cast<int32_t>(multipliers.lower_bounds.size()),
+         this->notify_new_multipliers_callback(static_cast<int32_t>(multipliers.lower_bounds.size()),
             static_cast<int32_t>(multipliers.constraints.size()), multipliers.lower_bounds.data(), multipliers.upper_bounds.data(),
-            multipliers.constraints.data(), this->user_data)) {
-            this->stop_request();
-         }
+            multipliers.constraints.data(), this->user_data);
+      }
+   }
+   bool user_termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+         double primal_feasibility_residual, double dual_feasibility_residual, double complementarity_residual) override {
+      if (this->user_termination_callback) {
+         return this->user_termination_callback(static_cast<int32_t>(primals.size()),
+            static_cast<int32_t>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(),
+            multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility_residual,
+            dual_feasibility_residual, complementarity_residual, this->user_data);
+      } else {
+         return false; // never terminate
       }
    }
 
@@ -342,6 +345,7 @@ private:
    NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback;
    NotifyNewPrimalsUserCallback notify_new_primals_callback;
    NotifyNewMultipliersUserCallback notify_new_multipliers_callback;
+   TerminationUserCallback user_termination_callback;
    void* user_data;
 };
 
@@ -737,11 +741,11 @@ void uno_set_solver_preset(void* solver, const char* preset_name) {
 
 void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
       NotifyNewPrimalsUserCallback notify_new_primals_callback, NotifyNewMultipliersUserCallback notify_new_multipliers_callback,
-      void* user_data) {
+      TerminationUserCallback user_termination_callback, void* user_data) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    delete uno_solver->user_callbacks; // delete the previous callbacks
    uno_solver->user_callbacks = new CUserCallbacks(notify_acceptable_iterate_callback, notify_new_primals_callback,
-      notify_new_multipliers_callback, user_data);
+      notify_new_multipliers_callback, user_termination_callback, user_data);
 }
 
 void uno_optimize(void* solver, void* model) {
