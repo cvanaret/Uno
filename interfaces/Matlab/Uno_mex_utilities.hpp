@@ -86,9 +86,7 @@ namespace uno {
     // destroy mxArray vector
     void destroy_mxArray_vector(std::vector<mxArray*>& vector) {
         for (auto* arr : vector) {
-            if (arr) {
-                mxDestroyArray(arr);
-            }
+            mxDestroyArray(arr);
         }
     }
 
@@ -126,11 +124,32 @@ namespace uno {
 
     // convert mxArray to string
     std::string mxArray_to_string(const mxArray* array) {
-        if (!array) return std::string();
-        char* cstr = mxArrayToString(array);
-        std::string str(cstr);
-        mxFree(cstr);
-        return str;
+        std::string str;
+        if (!array) {
+            return str;
+        }
+        else if (mxIsChar(array)) {
+            char* cstr = mxArrayToString(array);
+            str = std::string(cstr);
+            mxFree(cstr);
+            return str;
+        }
+        else if (mxIsClass(array,"string")) {
+            // convert matlab string to char and call mxArray_to_string
+            // TODO handle non-scalar matlab string
+            mxArray* array_str = mxDuplicateArray(array);
+            mxArray* array_char = nullptr;
+            int return_value = mexCallMATLAB(1, &array_char, 1, &array_str, "char");
+            if (return_value == 0) {
+                str = mxArray_to_string(array_char);
+            }
+            mxDestroyArray(array_str);
+            mxDestroyArray(array_char);
+            return str;
+        }
+        else {
+            return str;
+        }
     }
 
     // convert string to mxArray
