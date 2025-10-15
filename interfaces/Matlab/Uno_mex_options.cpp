@@ -19,8 +19,8 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     // preset (optional)
     std::string preset;
     if (nrhs == 1 && !mxIsEmpty(prhs[0])) {
-        if (!mxIsChar(prhs[0])) {
-            mexErrMsgIdAndTxt("uno:error", "Invalid argument at position 1. Value must be of type char.");
+        if (!mxIsChar(prhs[0]) && !mxIsClass(prhs[0],"string")) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid argument at position 1. Value must be of type char or string.");
         }
         preset = mxArray_to_string(prhs[0]);
     }
