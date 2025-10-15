@@ -307,7 +307,7 @@ if(Matlab_FOUND)
 
    get_filename_component(Matlab_MX_LIBRARY_PATH ${Matlab_MX_LIBRARY} DIRECTORY )
    find_library(MXLIBUT NAMES libut ut 
-                PATHS ${Matlab_MX_LIBRARY_PATH} REQUIRED)
+                PATHS ${Matlab_MX_LIBRARY_PATH})
    if(MXLIBUT)
       add_definitions("-D HAS_MXLIBUT")
    endif()
@@ -323,7 +323,7 @@ if(Matlab_FOUND)
    matlab_add_mex(NAME unomex-options SRC interfaces/Matlab/Uno_mex_options.cpp
       OUTPUT_NAME uno_options
       EXCLUDE_FROM_ALL $<TARGET_OBJECTS:compiled_uno_files>
-      LINK_TO ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
+      LINK_TO ${LIBRARIES} ${FORTRAN_LIBS})
    target_include_directories(unomex-options PUBLIC ${DIRECTORIES})
 
    # logical target to compile mex
