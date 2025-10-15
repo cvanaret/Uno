@@ -4,6 +4,8 @@
 #ifndef UNO_USERMODEL_H
 #define UNO_USERMODEL_H
 
+#include <iostream>
+#include <streambuf>
 #include <vector>
 #include <cstring>
 #include "C/Uno_C_API.h"

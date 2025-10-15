@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cstring>
-#include <iostream>
-#include <streambuf>
 #include "Uno_C_API.h"
 #include "../UserModel.hpp"
 #include "Uno.hpp"
