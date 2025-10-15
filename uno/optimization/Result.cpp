@@ -15,7 +15,7 @@ namespace uno {
       DISCRETE << "Objective value:\t\t\t" << std::defaultfloat << std::setprecision(7) << this->solution_objective << '\n';
       DISCRETE << "Primal feasibility:\t\t\t" << this->solution_primal_feasibility << '\n';
 
-      DISCRETE << "┌ Stationarity residual:\t\t" << this->solution_dual_feasibility << '\n';
+      DISCRETE << "┌ Stationarity residual:\t\t" << this->solution_stationarity << '\n';
       DISCRETE << "│ Primal feasibility:\t\t\t" << this->solution_primal_feasibility << '\n';
       DISCRETE << "└ Complementarity residual:\t\t" << this->solution_complementarity << '\n';
 

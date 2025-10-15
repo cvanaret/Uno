@@ -128,7 +128,7 @@ extern "C" {
    // the complementarity residual.
    typedef void (*NotifyAcceptableIterateUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
-      double objective_multiplier, double primal_feasibility_residual, double dual_feasibility_residual,
+      double objective_multiplier, double primal_feasibility_residual, double stationarity_residual,
       double complementarity_residual, void* user_data);
 
    // - takes as inputs the number of variables, and a vector "primals" of size "number_variables".
@@ -147,7 +147,7 @@ extern "C" {
    // returns true for user termination.
    typedef bool (*TerminationUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
-      double objective_multiplier, double primal_feasibility_residual, double dual_feasibility_residual,
+      double objective_multiplier, double primal_feasibility_residual, double stationarity_residual,
       double complementarity_residual, void* user_data);
 
    // - takes as inputs a vector "buffer" of size "length".
@@ -320,13 +320,13 @@ extern "C" {
    // gets the dual solution associated with the upper bounds (once the model was solved)
    void uno_get_upper_bound_dual_solution(void* solver, double* upper_bound_dual_solution);
 
-   // gets the primal feasibility at the solution (once the model was solved)
+   // gets the primal feasibility residual at the solution (once the model was solved)
    double uno_get_solution_primal_feasibility(void* solver);
 
-   // gets the dual feasibility (aka stationarity) at the solution (once the model was solved)
-   double uno_get_solution_dual_feasibility(void* solver);
+   // gets the stationarity residual at the solution (once the model was solved)
+   double uno_get_solution_stationarity(void* solver);
 
-   // gets the complementarity at the solution (once the model was solved)
+   // gets the complementarity residual at the solution (once the model was solved)
    double uno_get_solution_complementarity(void* solver);
 
    // gets the number of outer iterations required by the solver (once the model was solved)

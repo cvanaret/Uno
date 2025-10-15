@@ -93,9 +93,9 @@ To inspect the result of the optimization, read the attributes of the `result` o
 - the dual solution associated with the general constraints: `result.constraint_dual_solution`
 - the dual solution associated with the lower bounds: `result.lower_bound_dual_solution`
 - the dual solution associated with the upper bounds: `result.upper_bound_dual_solution`
-- the primal feasibility measure at the solution: `result.solution_primal_feasibility`
-- the dual feasibility (aka stationarity) measure at the solution: `result.solution_dual_feasibility`
-- the complementarity measure at the solution: `result.solution_complementarity`
+- the primal feasibility residual at the solution: `result.solution_primal_feasibility`
+- the stationarity residual at the solution: `result.solution_stationarity`
+- the complementarity residual at the solution: `result.solution_complementarity`
 - the number of (outer) iterations: `result.number_iterations`
 - the CPU time (in seconds): `result.cpu_time`
 - the number of objective evaluations: `result.number_objective_evaluations`

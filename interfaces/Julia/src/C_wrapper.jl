@@ -369,9 +369,9 @@ function uno_get_solution_primal_feasibility(solver::UnoSolver)
   return uno_get_solution_primal_feasibility(solver.c_solver)
 end
 
-function uno_get_solution_dual_feasibility(solver::UnoSolver)
+function uno_get_solution_stationarity(solver::UnoSolver)
   @assert solver.c_solver != C_NULL
-  return uno_get_solution_dual_feasibility(solver.c_solver)
+  return uno_get_solution_stationarity(solver.c_solver)
 end
 
 function uno_get_solution_complementarity(solver::UnoSolver)

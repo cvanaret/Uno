@@ -18,7 +18,7 @@ namespace uno {
       const SolutionStatus solution_status;
       const double solution_objective;
       const double solution_primal_feasibility;
-      const double solution_dual_feasibility;
+      const double solution_stationarity;
       const double solution_complementarity;
       Vector<double> primal_solution;
       Vector<double> constraint_dual_solution;

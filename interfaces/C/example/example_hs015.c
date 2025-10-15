@@ -130,11 +130,11 @@ int main() {
 	uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution);
 	printf("Upper bound dual solution: "); print_vector(upper_bound_dual_solution, number_variables);
 	const double solution_primal_feasibility = uno_get_solution_primal_feasibility(solver);
-	printf("Primal feasibility solution at solution = %e\n", solution_primal_feasibility);
-	const double solution_dual_feasibility = uno_get_solution_dual_feasibility(solver);
-	printf("Dual feasibility solution at solution = %e\n", solution_dual_feasibility);
+	printf("Primal feasibility at solution = %e\n", solution_primal_feasibility);
+	const double solution_stationarity = uno_get_solution_stationarity(solver);
+	printf("Stationarity at solution = %e\n", solution_stationarity);
 	const double solution_complementarity = uno_get_solution_complementarity(solver);
-	printf("Complementarity solution at solution = %e\n", solution_complementarity);
+	printf("Complementarity at solution = %e\n", solution_complementarity);
 
 	// cleanup
 	uno_destroy_solver(solver);

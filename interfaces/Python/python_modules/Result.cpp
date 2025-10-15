@@ -14,7 +14,7 @@ namespace uno {
       .def_readonly("solution_status", &Result::solution_status)
       .def_readonly("solution_objective", &Result::solution_objective)
       .def_readonly("solution_primal_feasibility", &Result::solution_primal_feasibility)
-      .def_readonly("solution_dual_feasibility", &Result::solution_dual_feasibility)
+      .def_readonly("solution_stationarity", &Result::solution_stationarity)
       .def_readonly("solution_complementarity", &Result::solution_complementarity)
       .def_readonly("primal_solution", &Result::primal_solution)
       .def_readonly("constraint_dual_solution", &Result::constraint_dual_solution)
