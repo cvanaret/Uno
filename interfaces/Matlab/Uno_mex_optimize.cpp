@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <stdint.h>
+#include <algorithm>
 #include "mex.h"
 #include "Uno_mex_utilities.hpp"
 #include "../UserModel.hpp"
@@ -39,19 +40,19 @@ public:
 
     // availability of linear operators
     [[nodiscard]] bool has_jacobian_operator() const override {
-        return (this->user_model.jacobian_operator != nullptr && !mxIsEmpty(this->user_model.jacobian_operator));
+        return this->user_model.jacobian_operator != nullptr;
     }
 
     [[nodiscard]] bool has_jacobian_transposed_operator() const override {
-        return (this->user_model.jacobian_transposed_operator != nullptr && !mxIsEmpty(this->user_model.jacobian_transposed_operator));
+        return this->user_model.jacobian_transposed_operator != nullptr;
     }
 
     [[nodiscard]] bool has_hessian_operator() const override {
-        return (this->user_model.lagrangian_hessian_operator != nullptr && !mxIsEmpty(this->user_model.lagrangian_hessian_operator));
+        return this->user_model.lagrangian_hessian_operator != nullptr;
     }
 
     [[nodiscard]] bool has_hessian_matrix() const override {
-        return (this->user_model.lagrangian_hessian != nullptr && !mxIsEmpty(this->user_model.lagrangian_hessian));
+        return this->user_model.lagrangian_hessian != nullptr;
     }
 
     // function evaluations
@@ -148,7 +149,7 @@ public:
     
     // numerical evaluations of Jacobian and Hessian
     void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override {
-        // jacobian = constraint_jacobian(x);
+        // jacobian_values = constraint_jacobian(x);
         if (this->user_model.constraint_jacobian) {
             const Vector<double> x1(x.begin(), x.begin()+this->number_variables);
             std::vector<mxArray*> inputs({vector_to_mxArray(x1)});
@@ -165,7 +166,7 @@ public:
 
     void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const override {
-        // hessian = lagrangian_hessian(x, objective_multiplier, multipliers);
+        // hessian_values = lagrangian_hessian(x, rho, y);
         if (this->user_model.lagrangian_hessian) {
             objective_multiplier *= this->optimization_sense;
             // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
@@ -194,7 +195,7 @@ public:
     }
 
     void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const override {
-        // result = jacobian_operator(x, vector);
+        // result = jacobian_operator(x, v);
         if (this->user_model.jacobian_operator) {
             mxArray* x_arr = pointer_to_mxArray(x, this->number_variables);
             mxArray* vector_arr = pointer_to_mxArray(vector, this->number_variables);
@@ -214,7 +215,7 @@ public:
     }
 
     void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const override {
-        // result = jacobian_transposed_operator(x, vector);
+        // result = jacobian_transposed_operator(x, v);
         if ((this->user_model.jacobian_operator != nullptr) &&
             !mxIsEmpty(this->user_model.jacobian_operator)) {
             mxArray* x_arr = pointer_to_mxArray(x, this->number_variables);
@@ -236,7 +237,7 @@ public:
 
     void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier, const Vector<double>& multipliers,
          double* result) const override {
-        // result = lagrangian_hessian_operator(x, objective_multiplier, multipliers, vector);
+        // result = lagrangian_hessian_operator(x, rho, y, v);
         if (this->user_model.lagrangian_hessian_operator) {
             objective_multiplier *= this->optimization_sense;
             // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
@@ -402,7 +403,7 @@ public:
         user_termination_callback(user_termination_callback) { }
 
     void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double stationarity, double complementarity) override {
-        // notify_acceptable_iterate(primals, multipliers.lower_bounds, multipliers.upper_bounds, multipliers.constraints, objective_multiplier, primal_feasibility, stationarity, complementarity);
+        // notify_acceptable_iterate_callback(x, yl, yb, y, rho, feas, stat, compl);
         if (this->notify_acceptable_iterate_callback) {
             std::vector<mxArray*> inputs = {vector_to_mxArray(primals), vector_to_mxArray(multipliers.lower_bounds), vector_to_mxArray(multipliers.upper_bounds), vector_to_mxArray(multipliers.constraints), scalar_to_mxArray(objective_multiplier), scalar_to_mxArray(primal_feasibility), scalar_to_mxArray(stationarity), scalar_to_mxArray(complementarity)};
             std::vector<mxArray*> outputs(0);
@@ -412,7 +413,7 @@ public:
         }
     }
     void notify_new_primals(const Vector<double>& primals) override {
-        // notify_new_primals(primals);
+        // notify_new_primals_callback(x);
         if (this->notify_new_primals_callback) {
             std::vector<mxArray*> inputs = {vector_to_mxArray(primals)};
             std::vector<mxArray*> outputs(0);
@@ -422,7 +423,7 @@ public:
         }
     }
     void notify_new_multipliers(const Multipliers& multipliers) override {
-        // notify_new_multipliers(multipliers.lower_bounds, multipliers.upper_bounds, multipliers.constraints);
+        // notify_new_multipliers_callback(yl, yb, y);
         if (this->notify_new_multipliers_callback) {
             std::vector<mxArray*> inputs = {vector_to_mxArray(multipliers.lower_bounds), vector_to_mxArray(multipliers.upper_bounds), vector_to_mxArray(multipliers.constraints)};
             std::vector<mxArray*> outputs(0);
@@ -437,7 +438,7 @@ public:
             utSetInterruptPending(false);
             return true;
         }
-        // terminate = user_termination(primals, multipliers.lower_bounds, multipliers.upper_bounds, multipliers.constraints, objective_multiplier, primal_feasibility, stationarity, complementarity);
+        // terminate = user_termination_callback(x, yl, yb, y, rho, feas, stat, compl);
         if (this->user_termination_callback) {
             std::vector<mxArray*> inputs = {vector_to_mxArray(primals), vector_to_mxArray(multipliers.lower_bounds), vector_to_mxArray(multipliers.upper_bounds), vector_to_mxArray(multipliers.constraints), scalar_to_mxArray(objective_multiplier), scalar_to_mxArray(primal_feasibility), scalar_to_mxArray(stationarity), scalar_to_mxArray(complementarity)};
             std::vector<mxArray*> outputs(1);
@@ -472,7 +473,7 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
         mexErrMsgIdAndTxt("uno:error", "Too many input arguments.");
     }
     // model (mandatory)
-    MxStruct model = mxArray_to_mxStruct(prhs[0]);
+    const MxStruct model = mxArray_to_mxStruct(prhs[0]);
     // options (optional)
     MxStruct options;
     if (nrhs > 1) {
@@ -486,6 +487,9 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
 
     // problem type
     mxArray* problem_type = model["problem_type"];
+
+    // base indexing
+    mxArray* base_indexing = model["base_indexing"];
 
     // variables
     mxArray* number_variables = model["number_variables"];
@@ -503,14 +507,24 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     mxArray* constraints_upper_bounds = model["constraints_upper_bounds"];
     mxArray* constraint_function = model["constraint_function"];
     mxArray* constraint_jacobian = model["constraint_jacobian"];
+    mxArray* number_jacobian_nonzeros = model["number_jacobian_nonzeros"];
+    mxArray* jacobian_row_indices = model["jacobian_row_indices"];
+    mxArray* jacobian_column_indices = model["jacobian_column_indices"];
+
+    // jacobian operators
     mxArray* jacobian_operator = model["jacobian_operator"];
     mxArray* jacobian_transposed_operator = model["jacobian_transposed_operator"];
 
     // hessian
     mxArray* lagrangian_sign_convention = model["lagrangian_sign_convention"];
-    mxArray* lagrangian_hessian = model["lagrangian_hessian"];
-    mxArray* lagrangian_hessian_operator = model["lagrangian_hessian_operator"];
     mxArray* hessian_triangular_part = model["hessian_triangular_part"];
+    mxArray* lagrangian_hessian = model["lagrangian_hessian"];
+    mxArray* number_hessian_nonzeros = model["number_hessian_nonzeros"];
+    mxArray* hessian_row_indices = model["hessian_row_indices"];
+    mxArray* hessian_column_indices = model["hessian_column_indices"];
+
+    // hessian operators
+    mxArray* lagrangian_hessian_operator = model["lagrangian_hessian_operator"];
 
     // initial iterates
     mxArray* initial_primal_iterate = model["initial_primal_iterate"];
@@ -533,64 +547,50 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
         notify_new_multipliers_callback, user_termination_callback);
 
     // create user model
-    const int32_t base_indexing = 0; // always zero in matlab
-    MatlabUserModel user_model(mxArray_to_scalar<char>(problem_type), static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), base_indexing);
+    MatlabUserModel user_model(mxArray_to_scalar<char>(problem_type), 
+        static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), 
+        static_cast<int32_t>(mxArray_to_scalar<double>(base_indexing)));
     user_model.number_constraints = static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints));
     user_model.variables_lower_bounds = variables_lower_bounds;
     user_model.variables_upper_bounds = variables_upper_bounds;
-    user_model.constraints_lower_bounds = constraints_lower_bounds;
-    user_model.constraints_upper_bounds = constraints_upper_bounds;
     // objective
     user_model.objective_function = objective_function;
     user_model.objective_gradient = objective_gradient;
     user_model.optimization_sense = static_cast<int32_t>(mxArray_to_scalar<double>(optimization_sense));
     // constraint
     user_model.constraint_functions = constraint_function;
+    user_model.constraints_lower_bounds = constraints_lower_bounds;
+    user_model.constraints_upper_bounds = constraints_upper_bounds;
     user_model.constraint_jacobian = constraint_jacobian;
+    user_model.number_jacobian_nonzeros = static_cast<int32_t>(mxArray_to_scalar<double>(number_jacobian_nonzeros));
+    Vector jacobian_row_indices_vector = convert_vector_type<int32_t>( mxArray_to_vector<double>(jacobian_row_indices) );
+    Vector jacobian_column_indices_vector = convert_vector_type<int32_t>( mxArray_to_vector<double>(jacobian_column_indices) );
+    user_model.jacobian_row_indices = std::vector(jacobian_row_indices_vector.begin(), jacobian_row_indices_vector.end());
+    user_model.jacobian_column_indices = std::vector(jacobian_column_indices_vector.begin(), jacobian_column_indices_vector.end());
+    // jacobian operators
     user_model.jacobian_operator = jacobian_operator;
     user_model.jacobian_transposed_operator = jacobian_transposed_operator;
     // hessian
     user_model.lagrangian_sign_convention = static_cast<int32_t>(mxArray_to_scalar<double>(lagrangian_sign_convention));
     user_model.hessian_triangular_part = mxArray_to_scalar<char>(hessian_triangular_part);
     user_model.lagrangian_hessian = lagrangian_hessian;
+    user_model.number_hessian_nonzeros = static_cast<int32_t>(mxArray_to_scalar<double>(number_hessian_nonzeros));
+    Vector hessian_row_indices_vector = convert_vector_type<int32_t>( mxArray_to_vector<double>(hessian_row_indices) );
+    Vector hessian_column_indices_vector = convert_vector_type<int32_t>( mxArray_to_vector<double>(hessian_column_indices) );
+    user_model.hessian_row_indices = std::vector(hessian_row_indices_vector.begin(), hessian_row_indices_vector.end());
+    user_model.hessian_column_indices = std::vector(hessian_column_indices_vector.begin(), hessian_column_indices_vector.end());
+    // force lower triangular hessian
+    if (user_model.lagrangian_hessian) {
+        if (user_model.hessian_triangular_part == 'U') {
+            std::swap(user_model.hessian_row_indices, user_model.hessian_column_indices);
+            user_model.hessian_triangular_part = 'L';
+        }
+    }
+    // hessian operator
     user_model.lagrangian_hessian_operator = lagrangian_hessian_operator;
     // initial iterates
     user_model.initial_primal_iterate = initial_primal_iterate;
     user_model.initial_dual_iterate = initial_dual_iterate;
-
-    // set sparsity of Jacobian
-    // jacobian = constraint_jacobian(x);
-    if (user_model.constraint_jacobian) {
-        Vector<double> x(user_model.number_variables, mxGetNaN());
-        std::vector<mxArray*> inputs({vector_to_mxArray(x)});
-        std::vector<mxArray*> outputs(1);
-        const int32_t return_code = call_matlab_function(user_model.constraint_jacobian, inputs, outputs);
-        destroy_mxArray_vector(inputs);
-        if (0 < return_code) {
-            mexErrMsgIdAndTxt("uno:error", "Error evaluating constraint_jacobian to determine its sparsity.");
-        }
-        // handle both full and sparse jacobian
-        user_model.number_jacobian_nonzeros = get_mxArray_sparsity(outputs[0], user_model.jacobian_row_indices, user_model.jacobian_column_indices);
-        destroy_mxArray_vector(outputs);
-    }
-
-    // set sparsity of Hessian
-    // hessian = lagrangian_hessian(x, objective_multiplier, multipliers);
-    if (user_model.lagrangian_hessian) {
-        Vector<double> x(user_model.number_variables, mxGetNaN());
-        Vector<double> multipliers(user_model.number_constraints, mxGetNaN());
-        double objective_multiplier = 1.0;
-        std::vector<mxArray*> inputs({vector_to_mxArray(x), scalar_to_mxArray(objective_multiplier), vector_to_mxArray(multipliers)});
-        std::vector<mxArray*> outputs(1);
-        const int32_t return_code = call_matlab_function(user_model.lagrangian_hessian, inputs, outputs);
-        destroy_mxArray_vector(inputs);
-        if (0 < return_code) {
-            mexErrMsgIdAndTxt("uno:error", "Error evaluating lagrangian_hessian to determine its sparsity.");
-        }
-        // handle both full and sparse hessian
-        user_model.number_hessian_nonzeros = get_mxArray_sparsity(outputs[0], user_model.hessian_row_indices, user_model.hessian_column_indices);
-        destroy_mxArray_vector(outputs);
-    }
 
     // create Uno model
     const UnoModel uno_model(user_model);

@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <map>
 #include <string>
+#include <algorithm>
 #include "mex.h"
 #include "Uno.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -71,6 +72,15 @@ namespace uno {
         } else {
             return 0;
         }
+    }
+
+    // convert Vector type
+    template <typename OutType, typename InType>
+    Vector<OutType> convert_vector_type(const Vector<InType>& input) {
+        Vector<OutType> output(input.size());
+        std::transform(input.begin(), input.end(), output.begin(),
+                    [](const InType& val) { return static_cast<OutType>(val); });
+        return output;
     }
 
     // destroy mxArray vector
@@ -151,39 +161,6 @@ namespace uno {
         T* ptr = static_cast<T*>(mxGetData(arr));
         std::copy(vec.begin(), vec.end(), ptr);
         return arr;
-    }
-
-    // get mxArray row and column COO sparsity
-    int32_t get_mxArray_sparsity(const mxArray* arr, std::vector<int32_t>& row_indices, std::vector<int32_t>& column_indices) {
-        mwIndex index = 0; // count nonzeros
-        row_indices.clear();
-        column_indices.clear();
-        if (mxIsSparse(arr)) { // sparse matrix, CSC to COO format
-            mwIndex* ir = mxGetIr(arr);
-            mwIndex* jc = mxGetJc(arr);
-            mwIndex ncols = static_cast<mwIndex>(mxGetN(arr));
-            for (mwIndex col = 0; col < ncols; ++col) {
-                for (mwIndex j = jc[col]; j < jc[col + 1]; ++j) {
-                    row_indices.push_back(static_cast<int32_t>(ir[j]));
-                    column_indices.push_back(static_cast<int32_t>(col));
-                    ++index;
-                }
-            }
-        } else { // full matrix, column major
-            mwIndex nrows = static_cast<mwIndex>(mxGetM(arr));
-            mwIndex ncols = static_cast<mwIndex>(mxGetN(arr));
-            mwIndex nnz = static_cast<mwIndex>(nrows * ncols);
-            row_indices.resize(nnz);
-            column_indices.resize(nnz);
-            for (mwIndex col = 0; col < ncols; ++col) {
-                for (mwIndex row = 0; row < nrows; ++row) {
-                    row_indices.push_back(static_cast<int32_t>(row));
-                    column_indices.push_back(static_cast<int32_t>(col));
-                    ++index;
-                }
-            }
-        }
-        return static_cast<int32_t>(index);
     }
     
     // convert MxStruct to mxArray
