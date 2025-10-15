@@ -113,7 +113,7 @@ uno_set_solver_preset(solver, "filtersqp");
 
 Setting the user callbacks to the Uno solver:
 ```c
-uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback, notify_new_primals_callback, notify_new_multipliers_callback, user_data);
+uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback, notify_new_primals_callback, notify_new_multipliers_callback, user_termination_callback, user_data);
 ```
 
 Setting the logger stream callback:
