@@ -1,0 +1,628 @@
+// Copyright (c) 2025 Stefano Lovato and Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+#include <stdint.h>
+#include "mex.h"
+#include "Uno_mex_utilities.hpp"
+#include "../UserModel.hpp"
+#include "Uno.hpp"
+#include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "model/Model.hpp"
+#include "options/DefaultOptions.hpp"
+#include "options/Presets.hpp"
+#include "optimization/EvaluationErrors.hpp"
+#include "optimization/Iterate.hpp"
+#include "symbolic/CollectionAdapter.hpp"
+#include "symbolic/Range.hpp"
+#include "tools/Infinity.hpp"
+#include "tools/Logger.hpp"
+#include "tools/UserCallbacks.hpp"
+
+using namespace uno;
+
+using MatlabUserModel = UserModel<mxArray*, mxArray*, mxArray*, mxArray*, mxArray*, mxArray*,
+   mxArray*, mxArray*, mxArray*, void*>; // user data are handled in matlab wrapper
+
+// UnoModel contains an instance of UserModel and complies with the Model interface
+class UnoModel: public Model {
+public:
+    explicit UnoModel(const MatlabUserModel& user_model):
+            Model("Matlab model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
+            static_cast<double>(user_model.optimization_sense)),
+            user_model(user_model),
+            equality_constraints_collection(this->equality_constraints),
+            inequality_constraints_collection(this->inequality_constraints) {
+        this->find_fixed_variables(this->fixed_variables);
+        this->partition_constraints(this->equality_constraints, this->inequality_constraints);
+    }
+
+    // availability of linear operators
+    [[nodiscard]] bool has_jacobian_operator() const override {
+        return (this->user_model.jacobian_operator != nullptr && !mxIsEmpty(this->user_model.jacobian_operator));
+    }
+
+    [[nodiscard]] bool has_jacobian_transposed_operator() const override {
+        return (this->user_model.jacobian_transposed_operator != nullptr && !mxIsEmpty(this->user_model.jacobian_transposed_operator));
+    }
+
+    [[nodiscard]] bool has_hessian_operator() const override {
+        return (this->user_model.lagrangian_hessian_operator != nullptr && !mxIsEmpty(this->user_model.lagrangian_hessian_operator));
+    }
+
+    [[nodiscard]] bool has_hessian_matrix() const override {
+        return (this->user_model.lagrangian_hessian != nullptr && !mxIsEmpty(this->user_model.lagrangian_hessian));
+    }
+
+    // function evaluations
+    [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override {
+        double objective_value{0.};
+        // objective_value = objective_function(x);
+        if (this->user_model.objective_function) {
+            const Vector<double> x1(x.begin(), x.begin()+this->number_variables);
+            std::vector<mxArray*> inputs({vector_to_mxArray(x1)});
+            std::vector<mxArray*> outputs(1);
+            const int32_t return_code = call_matlab_function(user_model.objective_function, inputs, outputs);
+            destroy_mxArray_vector(inputs);
+            if (0 < return_code) {
+                throw FunctionEvaluationError();
+            }
+            objective_value = this->optimization_sense * mxArray_to_scalar<double>(outputs[0]);
+            destroy_mxArray_vector(outputs);
+        }
+        return objective_value;
+    }
+
+    void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override {
+        // constraint = constraint_function(x);
+        if (this->user_model.constraint_functions) {
+            const Vector<double> x1(x.begin(), x.begin()+this->number_variables);
+            std::vector<mxArray*> inputs({vector_to_mxArray(x1)});
+            std::vector<mxArray*> outputs(1);
+            const int32_t return_code = call_matlab_function(user_model.constraint_functions, inputs, outputs);
+            destroy_mxArray_vector(inputs);
+            if (0 < return_code) {
+                throw FunctionEvaluationError();
+            }
+            mxArray_to_vector(outputs[0], constraints);
+            destroy_mxArray_vector(outputs);
+        }
+    }
+
+    // dense objective gradient
+    void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override {
+        // gradient = objective_gradient(x);
+        if (this->user_model.objective_gradient) {
+            const Vector<double> x1(x.begin(), x.begin()+this->number_variables);
+            std::vector<mxArray*> inputs({vector_to_mxArray(x1)});
+            std::vector<mxArray*> outputs(1);
+            const int32_t return_code = call_matlab_function(user_model.objective_gradient, inputs, outputs);
+            destroy_mxArray_vector(inputs);
+            if (0 < return_code) {
+                throw GradientEvaluationError();
+            }
+            mxArray_to_vector(outputs[0], gradient);
+            destroy_mxArray_vector(outputs);
+            for (size_t variable_index: Range(this->number_variables)) {
+                gradient[variable_index] *= this->optimization_sense;
+            }
+        }
+    }
+
+    // sparsity patterns of Jacobian and Hessian
+    void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
+            MatrixOrder /*matrix_order*/) const override {
+        // copy the indices of the user sparsity patterns to the Uno vectors
+        for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
+            row_indices[nonzero_index] = this->user_model.jacobian_row_indices[nonzero_index];
+            column_indices[nonzero_index] = this->user_model.jacobian_column_indices[nonzero_index];
+        }
+        // TODO matrix_order
+
+        // handle the solver indexing
+        if (this->user_model.base_indexing != solver_indexing) {
+            const int indexing_difference = solver_indexing - this->user_model.base_indexing;
+            for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
+                row_indices[nonzero_index] += indexing_difference;
+                column_indices[nonzero_index] += indexing_difference;
+            }
+        }
+    }
+
+    void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override {
+        // copy the indices of the user sparsity patterns to the Uno vectors
+        for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_hessian_nonzeros))) {
+            row_indices[nonzero_index] = this->user_model.hessian_row_indices[nonzero_index];
+            column_indices[nonzero_index] = this->user_model.hessian_column_indices[nonzero_index];
+        }
+
+        // handle the solver indexing
+        if (this->user_model.base_indexing != solver_indexing) {
+            const int indexing_difference = solver_indexing - this->user_model.base_indexing;
+            for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_hessian_nonzeros))) {
+                row_indices[nonzero_index] += indexing_difference;
+                column_indices[nonzero_index] += indexing_difference;
+            }
+        }
+    }
+    
+    // numerical evaluations of Jacobian and Hessian
+    void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override {
+        // jacobian = constraint_jacobian(x);
+        if (this->user_model.constraint_jacobian) {
+            const Vector<double> x1(x.begin(), x.begin()+this->number_variables);
+            std::vector<mxArray*> inputs({vector_to_mxArray(x1)});
+            std::vector<mxArray*> outputs(1);
+            const int32_t return_code = call_matlab_function(user_model.constraint_jacobian, inputs, outputs);
+            destroy_mxArray_vector(inputs);
+            if (0 < return_code) {
+                throw GradientEvaluationError();
+            }
+            mxArray_to_pointer(outputs[0], jacobian_values);
+            destroy_mxArray_vector(outputs);
+        }
+    }
+
+    void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
+         double* hessian_values) const override {
+        // hessian = lagrangian_hessian(x, objective_multiplier, multipliers);
+        if (this->user_model.lagrangian_hessian) {
+            objective_multiplier *= this->optimization_sense;
+            // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
+            if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+                const_cast<Vector<double>&>(multipliers).scale(-1.);
+            }
+            // eval matlab function
+            const Vector<double> x1(x.begin(), x.begin()+this->number_variables);
+            std::vector<mxArray*> inputs({vector_to_mxArray(x1), scalar_to_mxArray(objective_multiplier),vector_to_mxArray(multipliers)});
+            std::vector<mxArray*> outputs(1);
+            const int32_t return_code = call_matlab_function(user_model.lagrangian_hessian, inputs, outputs);
+            destroy_mxArray_vector(inputs);
+            // flip the signs of the multipliers back
+            if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+                const_cast<Vector<double>&>(multipliers).scale(-1.);
+            }
+            if (0 < return_code) {
+                throw HessianEvaluationError();
+            }
+            mxArray_to_pointer(outputs[0], hessian_values);
+            destroy_mxArray_vector(outputs);
+        }
+        else {
+            throw std::runtime_error("evaluate_lagrangian_hessian not implemented");
+        }
+    }
+
+    void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const override {
+        // result = jacobian_operator(x, vector);
+        if (this->user_model.jacobian_operator) {
+            mxArray* x_arr = pointer_to_mxArray(x, this->number_variables);
+            mxArray* vector_arr = pointer_to_mxArray(vector, this->number_variables);
+            std::vector<mxArray*> inputs({x_arr, vector_arr});
+            std::vector<mxArray*> outputs(1);
+            const int32_t return_code = call_matlab_function(user_model.jacobian_operator, inputs, outputs);
+            destroy_mxArray_vector(inputs);
+            if (0 < return_code) {
+                throw GradientEvaluationError();
+            }
+            mxArray_to_pointer(outputs[0], result);
+            destroy_mxArray_vector(outputs);
+        }
+        else {
+            throw std::runtime_error("compute_jacobian_vector_product not implemented");
+        }
+    }
+
+    void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const override {
+        // result = jacobian_transposed_operator(x, vector);
+        if ((this->user_model.jacobian_operator != nullptr) &&
+            !mxIsEmpty(this->user_model.jacobian_operator)) {
+            mxArray* x_arr = pointer_to_mxArray(x, this->number_variables);
+            mxArray* vector_arr = pointer_to_mxArray(vector, this->number_constraints);
+            std::vector<mxArray*> inputs({x_arr, vector_arr});
+            std::vector<mxArray*> outputs(1);
+            const int32_t return_code = call_matlab_function(user_model.jacobian_transposed_operator, inputs, outputs);
+            destroy_mxArray_vector(inputs);
+            if (0 < return_code) {
+                throw GradientEvaluationError();
+            }
+            mxArray_to_pointer(outputs[0], result);
+            destroy_mxArray_vector(outputs);
+        }
+        else {
+            throw std::runtime_error("compute_jacobian_transposed_vector_product not implemented");
+        }
+    }
+
+    void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier, const Vector<double>& multipliers,
+         double* result) const override {
+        // result = lagrangian_hessian_operator(x, objective_multiplier, multipliers, vector);
+        if (this->user_model.lagrangian_hessian_operator) {
+            objective_multiplier *= this->optimization_sense;
+            // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
+            if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+                const_cast<Vector<double>&>(multipliers).scale(-1.);
+            }
+            mxArray* x_arr = pointer_to_mxArray(x, this->number_variables);
+            mxArray* vector_arr = pointer_to_mxArray(vector, this->number_variables);
+            std::vector<mxArray*> inputs({x_arr, scalar_to_mxArray(objective_multiplier), vector_to_mxArray(multipliers), vector_arr});
+            std::vector<mxArray*> outputs(1);
+            const int32_t return_code = call_matlab_function(user_model.lagrangian_hessian_operator, inputs, outputs);
+            destroy_mxArray_vector(inputs);
+            // flip the signs of the multipliers back
+            if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+                const_cast<Vector<double>&>(multipliers).scale(-1.);
+            }
+            if (0 < return_code) {
+                throw HessianEvaluationError();
+            }
+            mxArray_to_pointer(outputs[0], result);
+            destroy_mxArray_vector(outputs);
+        } 
+        else {
+            throw std::runtime_error("compute_hessian_vector_product not implemented");
+        }
+    }
+
+    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override {
+        Vector<double> variables_lower_bounds = mxArray_to_vector<double>(this->user_model.variables_lower_bounds);
+        return variables_lower_bounds[variable_index];
+    }
+
+    [[nodiscard]] double variable_upper_bound(size_t variable_index) const override {
+        Vector<double> variables_upper_bounds = mxArray_to_vector<double>(this->user_model.variables_upper_bounds);
+        return variables_upper_bounds[variable_index];
+    }
+
+    [[nodiscard]] const SparseVector<size_t>& get_slacks() const override {
+        return this->slacks;
+    }
+
+    [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override {
+        return this->fixed_variables;
+    }
+
+    [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override {
+        Vector<double> constraints_lower_bounds = mxArray_to_vector<double>(this->user_model.constraints_lower_bounds);
+        return constraints_lower_bounds[constraint_index];
+    }
+
+    [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override {
+        Vector<double> constraints_upper_bounds = mxArray_to_vector<double>(this->user_model.constraints_upper_bounds);
+        return constraints_upper_bounds[constraint_index];
+    }
+
+    [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override {
+        return this->equality_constraints_collection;
+    }
+
+    [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override {
+        return this->inequality_constraints_collection;
+    }
+
+    [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override {
+        return this->linear_constraints;
+    }
+
+    void initial_primal_point(Vector<double>& x) const override {
+        x.fill(0);
+        if (this->user_model.initial_primal_iterate) {
+            mxArray_to_vector(this->user_model.initial_primal_iterate, x);
+        }
+    }
+
+    void initial_dual_point(Vector<double>& multipliers) const override {
+        multipliers.fill(0);
+        if (this->user_model.initial_dual_iterate) {
+            mxArray_to_vector(this->user_model.initial_dual_iterate, multipliers);
+        }
+        if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+            multipliers.scale(-1.);
+        }
+    }
+    
+    void postprocess_solution(Iterate& iterate) const override {
+        // flip the signs of the multipliers, depending on what the sign convention of the Lagrangian is, and whether
+        // we maximize
+        iterate.multipliers.constraints *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
+        iterate.multipliers.lower_bounds *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
+        iterate.multipliers.upper_bounds *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
+        iterate.evaluations.objective *= this->optimization_sense;
+    }
+
+    [[nodiscard]] size_t number_jacobian_nonzeros() const override {
+        return static_cast<size_t>(this->user_model.number_jacobian_nonzeros);
+    }
+
+    [[nodiscard]] size_t number_hessian_nonzeros() const override {
+        return static_cast<size_t>(this->user_model.number_hessian_nonzeros);
+    }
+
+protected:
+   const MatlabUserModel& user_model;
+   const SparseVector<size_t> slacks{};
+   Vector<size_t> fixed_variables{};
+   const ForwardRange linear_constraints{0};
+   std::vector<size_t> equality_constraints;
+   CollectionAdapter<std::vector<size_t>> equality_constraints_collection;
+   std::vector<size_t> inequality_constraints;
+   CollectionAdapter<std::vector<size_t>> inequality_constraints_collection;
+
+};
+
+class MatlabStreamCallback : public UserStreamCallback {
+public: 
+    MatlabStreamCallback(mxArray* logger_stream_callback) :
+    UserStreamCallback(), logger_stream_callback(logger_stream_callback) { }
+    ~MatlabStreamCallback() override { }
+
+int32_t operator()(const char* buf, int32_t len) const override {
+    if (this->logger_stream_callback) {
+        // logger_stream_callback(str)
+        std::string str(buf, len);
+        std::vector<mxArray*> inputs = { string_to_mxArray(str) };
+        std::vector<mxArray*> outputs(0);
+        call_matlab_function(this->logger_stream_callback, inputs, outputs);
+        destroy_mxArray_vector(inputs);
+        destroy_mxArray_vector(outputs);
+        mexEvalString("pause(0);"); // force output to appear immediately 
+        return len;
+    } 
+    else {
+        // call mexPrintf
+        mexPrintf("%.*s", static_cast<int>(len), buf);
+        mexEvalString("pause(0);"); // force output to appear immediately 
+        return len;
+    }
+}
+
+private:
+    mxArray* logger_stream_callback;
+};
+
+#ifdef HAS_MXLIBUT
+// These functions are to allow interrupt from MATLAB using CTRL+C (see 
+// https://undocumentedmatlab.com/articles/mex-ctrl-c-interrupt) 
+extern "C" bool utIsInterruptPending();
+extern "C" bool utSetInterruptPending(bool);
+#else
+// libut is not available, use dummy
+constexpr bool utIsInterruptPending() { return false; }
+constexpr bool utSetInterruptPending(bool) { return false; }
+#endif
+
+// Matlab user callbacks
+class MatlabUserCallbacks : public UserCallbacks {
+public:
+    MatlabUserCallbacks(mxArray* notify_acceptable_iterate_callback, mxArray* notify_new_primals_callback, 
+        mxArray* notify_new_multipliers_callback, mxArray* user_termination_callback) : UserCallbacks(),
+        notify_acceptable_iterate_callback(notify_acceptable_iterate_callback),
+        notify_new_primals_callback(notify_new_primals_callback),
+        notify_new_multipliers_callback(notify_new_multipliers_callback),
+        user_termination_callback(user_termination_callback) { }
+
+    void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double stationarity, double complementarity) override {
+        // notify_acceptable_iterate(primals, multipliers.lower_bounds, multipliers.upper_bounds, multipliers.constraints, objective_multiplier, primal_feasibility, stationarity, complementarity);
+        if (this->notify_acceptable_iterate_callback) {
+            std::vector<mxArray*> inputs = {vector_to_mxArray(primals), vector_to_mxArray(multipliers.lower_bounds), vector_to_mxArray(multipliers.upper_bounds), vector_to_mxArray(multipliers.constraints), scalar_to_mxArray(objective_multiplier), scalar_to_mxArray(primal_feasibility), scalar_to_mxArray(stationarity), scalar_to_mxArray(complementarity)};
+            std::vector<mxArray*> outputs(0);
+            call_matlab_function(this->notify_acceptable_iterate_callback, inputs, outputs);
+            destroy_mxArray_vector(inputs);
+            destroy_mxArray_vector(outputs);
+        }
+    }
+    void notify_new_primals(const Vector<double>& primals) override {
+        // notify_new_primals(primals);
+        if (this->notify_new_primals_callback) {
+            std::vector<mxArray*> inputs = {vector_to_mxArray(primals)};
+            std::vector<mxArray*> outputs(0);
+            call_matlab_function(this->notify_new_primals_callback, inputs, outputs);
+            destroy_mxArray_vector(inputs);
+            destroy_mxArray_vector(outputs);
+        }
+    }
+    void notify_new_multipliers(const Multipliers& multipliers) override {
+        // notify_new_multipliers(multipliers.lower_bounds, multipliers.upper_bounds, multipliers.constraints);
+        if (this->notify_new_multipliers_callback) {
+            std::vector<mxArray*> inputs = {vector_to_mxArray(multipliers.lower_bounds), vector_to_mxArray(multipliers.upper_bounds), vector_to_mxArray(multipliers.constraints)};
+            std::vector<mxArray*> outputs(0);
+            call_matlab_function(this->notify_new_multipliers_callback, inputs, outputs);
+            destroy_mxArray_vector(inputs);
+            destroy_mxArray_vector(outputs);
+        }
+    }
+    bool user_termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double stationarity, double complementarity) override {
+        // handle matlab CTRL+C event
+        if (utIsInterruptPending()) {
+            utSetInterruptPending(false);
+            return true;
+        }
+        // terminate = user_termination(primals, multipliers.lower_bounds, multipliers.upper_bounds, multipliers.constraints, objective_multiplier, primal_feasibility, stationarity, complementarity);
+        if (this->user_termination_callback) {
+            std::vector<mxArray*> inputs = {vector_to_mxArray(primals), vector_to_mxArray(multipliers.lower_bounds), vector_to_mxArray(multipliers.upper_bounds), vector_to_mxArray(multipliers.constraints), scalar_to_mxArray(objective_multiplier), scalar_to_mxArray(primal_feasibility), scalar_to_mxArray(stationarity), scalar_to_mxArray(complementarity)};
+            std::vector<mxArray*> outputs(1);
+            const int32_t return_code = call_matlab_function(this->user_termination_callback, inputs, outputs);
+            destroy_mxArray_vector(inputs);
+            if (0 < return_code) {
+                return false; // never terminate if callback fails
+            }
+            bool terminate = mxArray_to_scalar<bool>(outputs[0]);
+            destroy_mxArray_vector(outputs);
+            return terminate;
+        } else {
+            return false; // never terminate
+        }
+    }
+
+private:
+    mxArray* notify_acceptable_iterate_callback;
+    mxArray* notify_new_primals_callback;
+    mxArray* notify_new_multipliers_callback;
+    mxArray* user_termination_callback;
+};
+
+// gateway function
+// result = uno_optimize(model[, options, callbacks])
+void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
+    // validate arguments
+    if (nrhs < 1) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid argument list. Function requires 1 input.");
+    }
+    if (nrhs > 3) {
+        mexErrMsgIdAndTxt("uno:error", "Too many input arguments.");
+    }
+    // model (mandatory)
+    MxStruct model = mxArray_to_mxStruct(prhs[0]);
+    // options (optional)
+    MxStruct options;
+    if (nrhs > 1) {
+        options = mxArray_to_mxStruct(prhs[1]);
+    }
+    // callbacks (optional)
+    MxStruct callbacks;
+    if (nrhs > 2) {
+        callbacks = mxArray_to_mxStruct(prhs[2]);
+    }
+
+    // problem type
+    mxArray* problem_type = model["problem_type"];
+
+    // variables
+    mxArray* number_variables = model["number_variables"];
+    mxArray* variables_lower_bounds = model["variables_lower_bounds"];
+    mxArray* variables_upper_bounds = model["variables_upper_bounds"];
+
+    // objective
+    mxArray* objective_function = model["objective_function"];
+    mxArray* objective_gradient = model["objective_gradient"];
+    mxArray* optimization_sense = model["optimization_sense"];
+
+    // constraints
+    mxArray* number_constraints = model["number_constraints"];
+    mxArray* constraints_lower_bounds = model["constraints_lower_bounds"];
+    mxArray* constraints_upper_bounds = model["constraints_upper_bounds"];
+    mxArray* constraint_function = model["constraint_function"];
+    mxArray* constraint_jacobian = model["constraint_jacobian"];
+    mxArray* jacobian_operator = model["jacobian_operator"];
+    mxArray* jacobian_transposed_operator = model["jacobian_transposed_operator"];
+
+    // hessian
+    mxArray* lagrangian_sign_convention = model["lagrangian_sign_convention"];
+    mxArray* lagrangian_hessian = model["lagrangian_hessian"];
+    mxArray* lagrangian_hessian_operator = model["lagrangian_hessian_operator"];
+    mxArray* hessian_triangular_part = model["hessian_triangular_part"];
+
+    // initial iterates
+    mxArray* initial_primal_iterate = model["initial_primal_iterate"];
+    mxArray* initial_dual_iterate = model["initial_dual_iterate"];
+
+    // callbacks
+    mxArray* logger_stream_callback = callbacks["logger_stream_callback"];
+    mxArray* notify_acceptable_iterate_callback = callbacks["notify_acceptable_iterate_callback"];
+    mxArray* notify_new_primals_callback = callbacks["notify_new_primals_callback"];
+    mxArray* notify_new_multipliers_callback = callbacks["notify_new_multipliers_callback"];
+    mxArray* user_termination_callback = callbacks["user_termination_callback"];
+    
+    // set the logger stream
+    MatlabStreamCallback matlab_stream_callback(logger_stream_callback);
+    UserOStream matlab_ostream(&matlab_stream_callback);
+    Logger::set_stream(matlab_ostream);
+    
+    // create user callbacks
+    MatlabUserCallbacks user_callbacks(notify_acceptable_iterate_callback, notify_new_primals_callback, 
+        notify_new_multipliers_callback, user_termination_callback);
+
+    // create user model
+    const int32_t base_indexing = 0; // always zero in matlab
+    MatlabUserModel user_model(mxArray_to_scalar<char>(problem_type), static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), base_indexing);
+    user_model.number_constraints = static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints));
+    user_model.variables_lower_bounds = variables_lower_bounds;
+    user_model.variables_upper_bounds = variables_upper_bounds;
+    user_model.constraints_lower_bounds = constraints_lower_bounds;
+    user_model.constraints_upper_bounds = constraints_upper_bounds;
+    // objective
+    user_model.objective_function = objective_function;
+    user_model.objective_gradient = objective_gradient;
+    user_model.optimization_sense = static_cast<int32_t>(mxArray_to_scalar<double>(optimization_sense));
+    // constraint
+    user_model.constraint_functions = constraint_function;
+    user_model.constraint_jacobian = constraint_jacobian;
+    user_model.jacobian_operator = jacobian_operator;
+    user_model.jacobian_transposed_operator = jacobian_transposed_operator;
+    // hessian
+    user_model.lagrangian_sign_convention = static_cast<int32_t>(mxArray_to_scalar<double>(lagrangian_sign_convention));
+    user_model.hessian_triangular_part = mxArray_to_scalar<char>(hessian_triangular_part);
+    user_model.lagrangian_hessian = lagrangian_hessian;
+    user_model.lagrangian_hessian_operator = lagrangian_hessian_operator;
+    // initial iterates
+    user_model.initial_primal_iterate = initial_primal_iterate;
+    user_model.initial_dual_iterate = initial_dual_iterate;
+
+    // set sparsity of Jacobian
+    // jacobian = constraint_jacobian(x);
+    if (user_model.constraint_jacobian) {
+        Vector<double> x(user_model.number_variables, mxGetNaN());
+        std::vector<mxArray*> inputs({vector_to_mxArray(x)});
+        std::vector<mxArray*> outputs(1);
+        const int32_t return_code = call_matlab_function(user_model.constraint_jacobian, inputs, outputs);
+        destroy_mxArray_vector(inputs);
+        if (0 < return_code) {
+            mexErrMsgIdAndTxt("uno:error", "Error evaluating constraint_jacobian to determine its sparsity.");
+        }
+        // handle both full and sparse jacobian
+        user_model.number_jacobian_nonzeros = get_mxArray_sparsity(outputs[0], user_model.jacobian_row_indices, user_model.jacobian_column_indices);
+        destroy_mxArray_vector(outputs);
+    }
+
+    // set sparsity of Hessian
+    // hessian = lagrangian_hessian(x, objective_multiplier, multipliers);
+    if (user_model.lagrangian_hessian) {
+        Vector<double> x(user_model.number_variables, mxGetNaN());
+        Vector<double> multipliers(user_model.number_constraints, mxGetNaN());
+        double objective_multiplier = 1.0;
+        std::vector<mxArray*> inputs({vector_to_mxArray(x), scalar_to_mxArray(objective_multiplier), vector_to_mxArray(multipliers)});
+        std::vector<mxArray*> outputs(1);
+        const int32_t return_code = call_matlab_function(user_model.lagrangian_hessian, inputs, outputs);
+        destroy_mxArray_vector(inputs);
+        if (0 < return_code) {
+            mexErrMsgIdAndTxt("uno:error", "Error evaluating lagrangian_hessian to determine its sparsity.");
+        }
+        // handle both full and sparse hessian
+        user_model.number_hessian_nonzeros = get_mxArray_sparsity(outputs[0], user_model.hessian_row_indices, user_model.hessian_column_indices);
+        destroy_mxArray_vector(outputs);
+    }
+
+    // create Uno model
+    const UnoModel uno_model(user_model);
+    
+    // create Uno solver
+    Uno uno_solver;
+
+    // create Uno options
+    Options uno_options;
+    // default options
+    DefaultOptions::load(uno_options);
+    // add default preset
+    const Options preset_options = Presets::get_preset_options(std::nullopt);
+    uno_options.overwrite_with(preset_options);
+    // overwrite with user options
+    const Options user_options = mxStruct_to_options(options);
+    uno_options.overwrite_with(user_options);   
+
+    // solve
+    Logger::set_logger(uno_options.get_string("logger"));
+    MxStruct result;
+    try {
+        Result uno_result = uno_solver.solve(uno_model, uno_options, user_callbacks);
+        result = result_to_mxStruct(uno_result);
+    }
+    catch (const std::exception& e) {
+        mexErrMsgIdAndTxt("uno:error", e.what());
+    }
+
+    // output
+    plhs[0] = mxStruct_to_mxArray(result);
+
+    // flush the logger
+    Logger::flush();
+}

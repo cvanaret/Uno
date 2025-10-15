@@ -297,6 +297,40 @@ if(pybind11_DIR)
    target_include_directories(unopy PUBLIC ${DIRECTORIES})
 endif()
 
+############################
+# optional Matlab bindings #
+############################
+
+find_package(Matlab COMPONENTS MAIN_PROGRAM MEX_COMPILER)
+if(Matlab_FOUND)
+   message(STATUS "Found Matlab")
+
+   get_filename_component(Matlab_MX_LIBRARY_PATH ${Matlab_MX_LIBRARY} DIRECTORY )
+   find_library(MXLIBUT NAMES libut ut 
+                PATHS ${Matlab_MX_LIBRARY_PATH} REQUIRED)
+   if(MXLIBUT)
+      add_definitions("-D HAS_MXLIBUT")
+   endif()
+
+   # uno_optimize
+   matlab_add_mex(NAME unomex-optimize SRC interfaces/Matlab/Uno_mex_optimize.cpp 
+      OUTPUT_NAME uno_optimize
+      EXCLUDE_FROM_ALL $<TARGET_OBJECTS:compiled_uno_files>
+      LINK_TO ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
+   target_include_directories(unomex-optimize PUBLIC ${DIRECTORIES})
+   
+   # uno_options
+   matlab_add_mex(NAME unomex-options SRC interfaces/Matlab/Uno_mex_options.cpp
+      OUTPUT_NAME uno_options
+      EXCLUDE_FROM_ALL $<TARGET_OBJECTS:compiled_uno_files>
+      LINK_TO ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
+   target_include_directories(unomex-options PUBLIC ${DIRECTORIES})
+
+   # logical target to compile mex
+   add_custom_target(unomex DEPENDS unomex-optimize unomex-options)
+
+endif()
+
 ##################################
 # optional GoogleTest unit tests #
 ##################################
