@@ -9,6 +9,7 @@
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "symbolic/CollectionAdapter.hpp"
+#include "tools/NumberModelEvaluations.hpp"
 // include AMPL Solver Library (ASL)
 extern "C" {
 #include "asl_pfgh.h"
@@ -76,6 +77,13 @@ namespace uno {
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] size_t number_hessian_nonzeros() const override;
 
+      [[nodiscard]] size_t number_model_objective_evaluations() const override;
+      [[nodiscard]] size_t number_model_constraints_evaluations() const override;
+      [[nodiscard]] size_t number_model_objective_gradient_evaluations() const override;
+      [[nodiscard]] size_t number_model_jacobian_evaluations() const override;
+      [[nodiscard]] size_t number_model_hessian_evaluations() const override;
+      void reset_number_evaluations() const override;
+
    private:
       // private constructor to pass the dimensions to the Model base constructor
       AMPLModel(const std::string& file_name, ASL* asl);
@@ -92,6 +100,8 @@ namespace uno {
       CollectionAdapter<std::vector<size_t>&> inequality_constraints_collection;
       SparseVector<size_t> slacks{};
       Vector<size_t> fixed_variables;
+
+      mutable NumberModelEvaluations number_model_evaluations{};
 
       void compute_lagrangian_hessian_sparsity();
    };

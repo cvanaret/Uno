@@ -29,10 +29,6 @@ namespace uno {
 
       // evaluations
       Evaluations evaluations;
-      static size_t number_eval_objective;
-      static size_t number_eval_constraints;
-      static size_t number_eval_objective_gradient;
-      static size_t number_eval_jacobian;
       // lazy evaluation flags
       bool is_objective_computed{false};
       bool are_constraints_computed{false};

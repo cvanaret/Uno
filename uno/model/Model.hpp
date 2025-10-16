@@ -84,6 +84,13 @@ namespace uno {
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const = 0;
       [[nodiscard]] virtual size_t number_hessian_nonzeros() const = 0;
 
+      [[nodiscard]] virtual size_t number_model_objective_evaluations() const = 0;
+      [[nodiscard]] virtual size_t number_model_constraints_evaluations() const = 0;
+      [[nodiscard]] virtual size_t number_model_objective_gradient_evaluations() const = 0;
+      [[nodiscard]] virtual size_t number_model_jacobian_evaluations() const = 0;
+      [[nodiscard]] virtual size_t number_model_hessian_evaluations() const = 0;
+      virtual void reset_number_evaluations() const = 0;
+
       // auxiliary functions
       void project_onto_variable_bounds(Vector<double>& x) const;
       [[nodiscard]] bool is_constrained() const;

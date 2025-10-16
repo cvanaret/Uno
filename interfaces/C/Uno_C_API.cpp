@@ -20,6 +20,7 @@
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
+#include "tools/NumberModelEvaluations.hpp"
 #include "tools/UserCallbacks.hpp"
 
 using namespace uno;
@@ -67,6 +68,7 @@ public:
             throw FunctionEvaluationError();
          }
          objective_value *= this->optimization_sense;
+         ++this->number_model_evaluations.objective;
       }
       return objective_value;
    }
@@ -78,6 +80,7 @@ public:
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
+         ++this->number_model_evaluations.constraints;
       }
    }
 
@@ -92,6 +95,7 @@ public:
          for (size_t variable_index: Range(this->number_variables)) {
             gradient[variable_index] *= this->optimization_sense;
          }
+         ++this->number_model_evaluations.objective_gradient;
       }
    }
 
@@ -140,6 +144,7 @@ public:
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
+         ++this->number_model_evaluations.jacobian;
       }
    }
 
@@ -161,6 +166,7 @@ public:
          if (0 < return_code) {
             throw HessianEvaluationError();
          }
+         ++this->number_model_evaluations.hessian;
       }
       else {
          throw std::runtime_error("evaluate_lagrangian_hessian not implemented");
@@ -286,8 +292,33 @@ public:
       return static_cast<size_t>(this->user_model.number_hessian_nonzeros);
    }
 
+   [[nodiscard]] size_t number_model_objective_evaluations() const override {
+      return this->number_model_evaluations.objective;
+   }
+
+   [[nodiscard]] size_t number_model_constraints_evaluations() const override {
+      return this->number_model_evaluations.constraints;
+   }
+
+   [[nodiscard]] size_t number_model_objective_gradient_evaluations() const override {
+      return this->number_model_evaluations.objective_gradient;
+   }
+
+   [[nodiscard]] size_t number_model_jacobian_evaluations() const override {
+      return this->number_model_evaluations.jacobian;
+   }
+
+   [[nodiscard]] size_t number_model_hessian_evaluations() const override {
+      return this->number_model_evaluations.hessian;
+   }
+
+   void reset_number_evaluations() const override {
+      this->number_model_evaluations.reset();
+   }
+
 protected:
    const CUserModel& user_model;
+   mutable NumberModelEvaluations number_model_evaluations{};
    const SparseVector<size_t> slacks{};
    Vector<size_t> fixed_variables{};
    const ForwardRange linear_constraints{0};
