@@ -98,6 +98,30 @@ namespace uno {
       [[nodiscard]] size_t number_jacobian_nonzeros() const override { return this->model.number_jacobian_nonzeros(); }
       [[nodiscard]] size_t number_hessian_nonzeros() const override { return this->model.number_hessian_nonzeros(); }
 
+      [[nodiscard]] size_t number_model_objective_evaluations() const override {
+         return this->model.number_model_objective_evaluations();
+      }
+
+      [[nodiscard]] size_t number_model_constraints_evaluations() const override {
+         return this->model.number_model_constraints_evaluations();
+      }
+
+      [[nodiscard]] size_t number_model_objective_gradient_evaluations() const override {
+         return this->model.number_model_objective_gradient_evaluations();
+      }
+
+      [[nodiscard]] size_t number_model_jacobian_evaluations() const override {
+         return this->model.number_model_jacobian_evaluations();
+      }
+
+      [[nodiscard]] size_t number_model_hessian_evaluations() const override {
+         return this->model.number_model_hessian_evaluations();
+      }
+
+      void reset_number_evaluations() const override {
+         this->model.reset_number_evaluations();
+      }
+
    private:
       const Model& model;
       const double relaxation_factor;

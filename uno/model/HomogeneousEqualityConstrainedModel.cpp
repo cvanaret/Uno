@@ -200,4 +200,28 @@ namespace uno {
    size_t HomogeneousEqualityConstrainedModel::number_hessian_nonzeros() const {
       return this->model.number_hessian_nonzeros();
    }
+
+   size_t HomogeneousEqualityConstrainedModel::number_model_objective_evaluations() const {
+      return this->model.number_model_objective_evaluations();
+   }
+
+   size_t HomogeneousEqualityConstrainedModel::number_model_constraints_evaluations() const {
+      return this->model.number_model_constraints_evaluations();
+   }
+
+   size_t HomogeneousEqualityConstrainedModel::number_model_objective_gradient_evaluations() const {
+      return this->model.number_model_objective_gradient_evaluations();
+   }
+
+   size_t HomogeneousEqualityConstrainedModel::number_model_jacobian_evaluations() const {
+      return this->model.number_model_jacobian_evaluations();
+   }
+
+   size_t HomogeneousEqualityConstrainedModel::number_model_hessian_evaluations() const {
+      return this->model.number_model_hessian_evaluations();
+   }
+
+   void HomogeneousEqualityConstrainedModel::reset_number_evaluations() const {
+      this->model.reset_number_evaluations();
+   }
 } // namespace

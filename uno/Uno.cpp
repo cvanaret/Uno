@@ -62,6 +62,7 @@ namespace uno {
    // protected solve function
    Result Uno::uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks) {
       const Timer timer{};
+      model.reset_number_evaluations();
       // pick the ingredients based on the user-defined options
       Uno::pick_ingredients(model, options);
       Statistics statistics = Uno::create_statistics(model, options);
@@ -170,8 +171,6 @@ namespace uno {
          statistics.print_current_line();
       }
       current_iterate.status = SolutionStatus::NOT_OPTIMAL;
-      model.number_eval_objective = model.number_eval_constraints = model.number_eval_objective_gradient =
-         model.number_eval_jacobian = model.number_eval_hessian = 0;
    }
 
    Statistics Uno::create_statistics(const Model& model, const Options& options) {
@@ -223,8 +222,9 @@ namespace uno {
          solution.evaluations.objective, solution.progress.infeasibility, solution.residuals.stationarity,
          solution.residuals.complementarity, solution.primals, solution.multipliers.constraints,
          solution.multipliers.lower_bounds, solution.multipliers.upper_bounds, major_iterations, timer.get_duration(),
-         model.number_eval_objective, model.number_eval_constraints, model.number_eval_objective_gradient,
-         model.number_eval_jacobian, model.number_eval_hessian, number_subproblems_solved};
+         model.number_model_objective_evaluations(), model.number_model_constraints_evaluations(),
+         model.number_model_objective_gradient_evaluations(), model.number_model_jacobian_evaluations(),
+         model.number_model_hessian_evaluations(), number_subproblems_solved};
    }
 
    std::string Uno::get_strategy_combination() const {
