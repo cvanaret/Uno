@@ -105,7 +105,7 @@ namespace uno {
       }
 
       // if not converged, check convergence wrt loose tolerance (provided it is strictly looser than the tight tolerance)
-      const SolutionStatus status_loose_tolerance = problem.check_first_order_convergence(iterate, this->loose_primal_tolerance,
+      const SolutionStatus status_loose_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
          this->loose_dual_tolerance);
       // if converged, keep track of the number of consecutive iterations
       if (status_loose_tolerance != SolutionStatus::NOT_OPTIMAL) {
