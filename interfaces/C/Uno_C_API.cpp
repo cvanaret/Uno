@@ -318,7 +318,7 @@ public:
 
 protected:
    const CUserModel& user_model;
-   mutable NumberModelEvaluations number_model_evaluations;
+   mutable NumberModelEvaluations number_model_evaluations{};
    const SparseVector<size_t> slacks{};
    Vector<size_t> fixed_variables{};
    const ForwardRange linear_constraints{0};

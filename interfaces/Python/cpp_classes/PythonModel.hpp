@@ -10,6 +10,7 @@
 #include "linear_algebra/Vector.hpp"
 #include "model/Model.hpp"
 #include "symbolic/CollectionAdapter.hpp"
+#include "tools/NumberModelEvaluations.hpp"
 
 namespace uno {
    class PythonModel: public Model {
@@ -65,8 +66,16 @@ namespace uno {
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] size_t number_hessian_nonzeros() const override;
 
+      [[nodiscard]] size_t number_model_objective_evaluations() const override;
+      [[nodiscard]] size_t number_model_constraints_evaluations() const override;
+      [[nodiscard]] size_t number_model_objective_gradient_evaluations() const override;
+      [[nodiscard]] size_t number_model_jacobian_evaluations() const override;
+      [[nodiscard]] size_t number_model_hessian_evaluations() const override;
+      void reset_number_evaluations() const override;
+
    protected:
       const PythonUserModel& user_model;
+      mutable NumberModelEvaluations number_model_evaluations{};
       const SparseVector<size_t> slacks{};
       Vector<size_t> fixed_variables{};
       const ForwardRange linear_constraints{0};

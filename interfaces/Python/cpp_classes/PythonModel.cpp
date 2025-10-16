@@ -46,7 +46,7 @@ namespace uno {
             throw FunctionEvaluationError();
          }
          objective_value *= this->optimization_sense;
-         ++this->number_eval_objective;
+         ++this->number_model_evaluations.objective;
       }
       return objective_value;
    }
@@ -59,7 +59,7 @@ namespace uno {
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
-         ++this->number_eval_constraints;
+         ++this->number_model_evaluations.constraints;
       }
    }
 
@@ -74,7 +74,7 @@ namespace uno {
          for (size_t variable_index: Range(this->number_variables)) {
             gradient[variable_index] *= this->optimization_sense;
          }
-         ++this->number_eval_objective_gradient;
+         ++this->number_model_evaluations.objective_gradient;
       }
    }
 
@@ -118,7 +118,7 @@ namespace uno {
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
-         ++this->number_eval_jacobian;
+         ++this->number_model_evaluations.jacobian;
       }
    }
 
@@ -141,7 +141,7 @@ namespace uno {
          if (0 < return_code) {
             throw HessianEvaluationError();
          }
-         ++this->number_eval_hessian;
+         ++this->number_model_evaluations.hessian;
       }
       else {
          throw std::runtime_error("evaluate_lagrangian_hessian not implemented");
@@ -284,5 +284,29 @@ namespace uno {
 
    size_t PythonModel::number_hessian_nonzeros() const {
       return static_cast<size_t>(this->user_model.number_hessian_nonzeros);
+   }
+
+   size_t PythonModel::number_model_objective_evaluations() const {
+      return this->number_model_evaluations.objective;
+   }
+
+   size_t PythonModel::number_model_constraints_evaluations() const {
+      return this->number_model_evaluations.constraints;
+   }
+
+   size_t PythonModel::number_model_objective_gradient_evaluations() const {
+      return this->number_model_evaluations.objective_gradient;
+   }
+
+   size_t PythonModel::number_model_jacobian_evaluations() const {
+      return this->number_model_evaluations.jacobian;
+   }
+
+   size_t PythonModel::number_model_hessian_evaluations() const {
+      return this->number_model_evaluations.hessian;
+   }
+
+   void PythonModel::reset_number_evaluations() const {
+      this->number_model_evaluations.reset();
    }
 } // namespace
