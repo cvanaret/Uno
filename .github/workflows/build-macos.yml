@@ -29,9 +29,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-13]
-        architecture: [x64]
-        compiler: [gcc]
+        os: [macos-latest]
+        architecture: [arm64]
+        compiler: [clang]
 
     steps:
     - name: Checkout repository
