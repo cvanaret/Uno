@@ -8,11 +8,6 @@
 #include "optimization/EvaluationErrors.hpp"
 
 namespace uno {
-   size_t Iterate::number_eval_objective = 0;
-   size_t Iterate::number_eval_constraints = 0;
-   size_t Iterate::number_eval_objective_gradient = 0;
-   size_t Iterate::number_eval_jacobian = 0;
-
    Iterate::Iterate(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
          primals(number_variables), multipliers(number_variables, number_constraints),
@@ -23,7 +18,6 @@ namespace uno {
       if (!this->is_objective_computed) {
          // evaluate the objective
          this->evaluations.objective = model.evaluate_objective(this->primals);
-         ++Iterate::number_eval_objective;
          if (!is_finite(this->evaluations.objective)) {
             throw FunctionEvaluationError();
          }
@@ -36,7 +30,6 @@ namespace uno {
          if (model.is_constrained()) {
             // evaluate the constraints
             model.evaluate_constraints(this->primals, this->evaluations.constraints);
-            ++Iterate::number_eval_constraints;
             // check finiteness
             if (std::any_of(this->evaluations.constraints.begin(), this->evaluations.constraints.end(), [](double constraint_j) {
                return !is_finite(constraint_j);
@@ -54,7 +47,6 @@ namespace uno {
          // evaluate the objective gradient
          model.evaluate_objective_gradient(this->primals, this->evaluations.objective_gradient);
          this->is_objective_gradient_computed = true;
-         ++Iterate::number_eval_objective_gradient;
       }
    }
 

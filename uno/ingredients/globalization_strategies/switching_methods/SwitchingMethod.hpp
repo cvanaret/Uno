@@ -24,7 +24,7 @@ namespace uno {
       [[nodiscard]] static double unconstrained_merit_function(const ProgressMeasures& progress);
       [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility) const;
       [[nodiscard]] bool is_feasibility_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-            const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction);
+            const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) const;
       virtual void set_statistics(Statistics& statistics) const = 0;
    };
 } // namespace

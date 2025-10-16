@@ -170,6 +170,8 @@ namespace uno {
          statistics.print_current_line();
       }
       current_iterate.status = SolutionStatus::NOT_OPTIMAL;
+      model.number_eval_objective = model.number_eval_constraints = model.number_eval_objective_gradient =
+         model.number_eval_jacobian = model.number_eval_hessian = 0;
    }
 
    Statistics Uno::create_statistics(const Model& model, const Options& options) {
@@ -216,13 +218,13 @@ namespace uno {
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate& solution, size_t major_iterations,
          const Timer& timer) const {
       const size_t number_subproblems_solved = this->constraint_relaxation_strategy->get_number_subproblems_solved();
-      const size_t number_hessian_evaluations = this->constraint_relaxation_strategy->get_hessian_evaluation_count();
+      //const size_t number_hessian_evaluations = this->constraint_relaxation_strategy->get_hessian_evaluation_count();
       return {model.number_variables, model.number_constraints, optimization_status, solution.status,
          solution.evaluations.objective, solution.progress.infeasibility, solution.residuals.stationarity,
          solution.residuals.complementarity, solution.primals, solution.multipliers.constraints,
          solution.multipliers.lower_bounds, solution.multipliers.upper_bounds, major_iterations, timer.get_duration(),
-         Iterate::number_eval_objective, Iterate::number_eval_constraints, Iterate::number_eval_objective_gradient,
-         Iterate::number_eval_jacobian, number_hessian_evaluations, number_subproblems_solved};
+         model.number_eval_objective, model.number_eval_constraints, model.number_eval_objective_gradient,
+         model.number_eval_jacobian, model.number_eval_hessian, number_subproblems_solved};
    }
 
    std::string Uno::get_strategy_combination() const {

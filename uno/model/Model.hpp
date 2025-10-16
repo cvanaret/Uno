@@ -95,6 +95,12 @@ namespace uno {
 
       void find_fixed_variables(Vector<size_t>& fixed_variables) const;
       void partition_constraints(std::vector<size_t>& equality_constraints, std::vector<size_t>& inequality_constraints) const;
+
+      mutable size_t number_eval_objective{0};
+      mutable size_t number_eval_constraints{0};
+      mutable size_t number_eval_objective_gradient{0};
+      mutable size_t number_eval_jacobian{0};
+      mutable size_t number_eval_hessian{0};
    };
 
    // compute ||c||

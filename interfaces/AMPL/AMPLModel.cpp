@@ -91,6 +91,7 @@ namespace uno {
       if (0 < error_flag) {
          throw FunctionEvaluationError();
       }
+      ++this->number_eval_objective;
       return result;
    }
 
@@ -111,6 +112,7 @@ namespace uno {
       if (0 < error_flag) {
          throw FunctionEvaluationError();
       }
+      ++this->number_eval_constraints;
    }
 
    // dense gradient
@@ -121,6 +123,7 @@ namespace uno {
          throw GradientEvaluationError();
       }
       gradient.scale(this->optimization_sense);
+      ++this->number_eval_objective_gradient;
    }
 
    void AMPLModel::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
@@ -171,6 +174,7 @@ namespace uno {
       if (0 < error_flag) {
          throw GradientEvaluationError();
       }
+      ++this->number_eval_jacobian;
    }
 
    // register the vector of variables
@@ -183,6 +187,7 @@ namespace uno {
       objective_multiplier *= this->optimization_sense;
       (*(this->asl)->p.Sphes)(this->asl, nullptr, hessian_values, -1, &objective_multiplier,
          const_cast<double*>(multipliers.data()));
+      ++this->number_eval_hessian;
    }
 
    void AMPLModel::compute_jacobian_vector_product(const double* /*x*/, const double* /*vector*/, double* /*result*/) const {

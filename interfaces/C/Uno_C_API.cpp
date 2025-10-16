@@ -67,6 +67,7 @@ public:
             throw FunctionEvaluationError();
          }
          objective_value *= this->optimization_sense;
+         ++this->number_eval_objective;
       }
       return objective_value;
    }
@@ -78,6 +79,7 @@ public:
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
+         ++this->number_eval_constraints;
       }
    }
 
@@ -92,6 +94,7 @@ public:
          for (size_t variable_index: Range(this->number_variables)) {
             gradient[variable_index] *= this->optimization_sense;
          }
+         ++this->number_eval_objective_gradient;
       }
    }
 
@@ -140,6 +143,7 @@ public:
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
+         ++this->number_eval_jacobian;
       }
    }
 
@@ -161,6 +165,7 @@ public:
          if (0 < return_code) {
             throw HessianEvaluationError();
          }
+         ++this->number_eval_hessian;
       }
       else {
          throw std::runtime_error("evaluate_lagrangian_hessian not implemented");
