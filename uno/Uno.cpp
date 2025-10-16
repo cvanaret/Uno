@@ -98,8 +98,6 @@ namespace uno {
                   *this->globalization_strategy, model, current_iterate, trial_iterate, this->direction, warmstart_information,
                   user_callbacks);
                GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
-               user_callbacks.notify_new_primals(trial_iterate.primals);
-               user_callbacks.notify_new_multipliers(trial_iterate.multipliers);
                const bool user_termination = user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers,
                   trial_iterate.objective_multiplier, trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity,
                   trial_iterate.residuals.complementarity);
