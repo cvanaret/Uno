@@ -40,7 +40,7 @@ namespace uno {
 
    // solving the feasibility problem = working on infeasibility only (no filter acceptability test)
    bool SwitchingMethod::is_feasibility_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) {
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) const {
       // drop the objective measure and focus on infeasibility and auxiliary terms (barrier, proximal, ...)
       const double current_merit = current_progress.infeasibility + current_progress.auxiliary;
       const double trial_merit = trial_progress.infeasibility + trial_progress.auxiliary;
@@ -59,7 +59,6 @@ namespace uno {
       else {
          DEBUG << "Trial iterate (h-type) was rejected by violating the Armijo condition\n";
       }
-      Iterate::number_eval_objective--;
       statistics.set("status", std::string(accept ? "✔" : "✘") + " (restoration)");
       return accept;
    }

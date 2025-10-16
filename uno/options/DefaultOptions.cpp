@@ -16,6 +16,8 @@ namespace uno {
       options.set_double("primal_tolerance", 1e-8);
       // dual tolerance (stationarity and complementarity)
       options.set_double("dual_tolerance", 1e-8);
+      // loose tolerance used if primal tolerance cannot be reached
+      options.set_double("loose_primal_tolerance", 1e-6);
       // loose tolerance used if dual tolerance cannot be reached
       options.set_double("loose_dual_tolerance", 1e-6);
       // number of iterations during which the loose tolerance is monitored

@@ -91,6 +91,7 @@ namespace uno {
       if (0 < error_flag) {
          throw FunctionEvaluationError();
       }
+      ++this->number_model_evaluations.objective;
       return result;
    }
 
@@ -111,6 +112,7 @@ namespace uno {
       if (0 < error_flag) {
          throw FunctionEvaluationError();
       }
+      ++this->number_model_evaluations.constraints;
    }
 
    // dense gradient
@@ -121,6 +123,7 @@ namespace uno {
          throw GradientEvaluationError();
       }
       gradient.scale(this->optimization_sense);
+      ++this->number_model_evaluations.objective_gradient;
    }
 
    void AMPLModel::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
@@ -171,6 +174,7 @@ namespace uno {
       if (0 < error_flag) {
          throw GradientEvaluationError();
       }
+      ++this->number_model_evaluations.jacobian;
    }
 
    // register the vector of variables
@@ -183,6 +187,7 @@ namespace uno {
       objective_multiplier *= this->optimization_sense;
       (*(this->asl)->p.Sphes)(this->asl, nullptr, hessian_values, -1, &objective_multiplier,
          const_cast<double*>(multipliers.data()));
+      ++this->number_model_evaluations.hessian;
    }
 
    void AMPLModel::compute_jacobian_vector_product(const double* /*x*/, const double* /*vector*/, double* /*result*/) const {
@@ -307,6 +312,30 @@ namespace uno {
 
    size_t AMPLModel::number_hessian_nonzeros() const {
       return this->number_asl_hessian_nonzeros;
+   }
+
+   size_t AMPLModel::number_model_objective_evaluations() const {
+      return this->number_model_evaluations.objective;
+   }
+
+   size_t AMPLModel::number_model_constraints_evaluations() const {
+      return this->number_model_evaluations.constraints;
+   }
+
+   size_t AMPLModel::number_model_objective_gradient_evaluations() const {
+      return this->number_model_evaluations.objective_gradient;
+   }
+
+   size_t AMPLModel::number_model_jacobian_evaluations() const {
+      return this->number_model_evaluations.jacobian;
+   }
+
+   size_t AMPLModel::number_model_hessian_evaluations() const {
+      return this->number_model_evaluations.hessian;
+   }
+
+   void AMPLModel::reset_number_evaluations() const {
+      this->number_model_evaluations.reset();
    }
 
    void AMPLModel::compute_lagrangian_hessian_sparsity() {
