@@ -65,14 +65,13 @@ options = uno_options(); % default preset
 
 %% UNO solver callbacks
 callbacks = struct();
+
 % Logger stream handle: logger_stream_callback(str)
 % callbacks.logger_stream_callback = @logger_stream_callback;
+
 % Notify acceptable iterate handle: notify_acceptable_iterate_callback(x, yl, yb, y, rho, feas, stat, compl)
 % callbacks.notify_acceptable_iterate_callback = @notify_acceptable_iterate_callback;
-% Notify new primal handle: notify_new_primals(x)
-% callbacks.notify_new_primals_callback = @notify_new_primals_callback;
-% Notify new dual handle: notify_new_multipliers(x, yl, yb, y)
-% callbacks.notify_new_multipliers_callback = @notify_new_multipliers_callback;
+
 % User termination handle: terminate = user_termination_callback(x, yl, yb, y, rho, feas, stat, compl)
 % callbacks.user_termination_callback = @user_termination_callback;
 

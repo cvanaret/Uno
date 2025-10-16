@@ -395,11 +395,8 @@ constexpr bool utSetInterruptPending(bool) { return false; }
 // Matlab user callbacks
 class MatlabUserCallbacks : public UserCallbacks {
 public:
-    MatlabUserCallbacks(mxArray* notify_acceptable_iterate_callback, mxArray* notify_new_primals_callback, 
-        mxArray* notify_new_multipliers_callback, mxArray* user_termination_callback) : UserCallbacks(),
+    MatlabUserCallbacks(mxArray* notify_acceptable_iterate_callback, mxArray* user_termination_callback) : UserCallbacks(),
         notify_acceptable_iterate_callback(notify_acceptable_iterate_callback),
-        notify_new_primals_callback(notify_new_primals_callback),
-        notify_new_multipliers_callback(notify_new_multipliers_callback),
         user_termination_callback(user_termination_callback) { }
 
     void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier, double primal_feasibility, double stationarity, double complementarity) override {
@@ -408,26 +405,6 @@ public:
             std::vector<mxArray*> inputs = {vector_to_mxArray(primals), vector_to_mxArray(multipliers.lower_bounds), vector_to_mxArray(multipliers.upper_bounds), vector_to_mxArray(multipliers.constraints), scalar_to_mxArray(objective_multiplier), scalar_to_mxArray(primal_feasibility), scalar_to_mxArray(stationarity), scalar_to_mxArray(complementarity)};
             std::vector<mxArray*> outputs(0);
             call_matlab_function(this->notify_acceptable_iterate_callback, inputs, outputs);
-            destroy_mxArray_vector(inputs);
-            destroy_mxArray_vector(outputs);
-        }
-    }
-    void notify_new_primals(const Vector<double>& primals) override {
-        // notify_new_primals_callback(x);
-        if (this->notify_new_primals_callback) {
-            std::vector<mxArray*> inputs = {vector_to_mxArray(primals)};
-            std::vector<mxArray*> outputs(0);
-            call_matlab_function(this->notify_new_primals_callback, inputs, outputs);
-            destroy_mxArray_vector(inputs);
-            destroy_mxArray_vector(outputs);
-        }
-    }
-    void notify_new_multipliers(const Multipliers& multipliers) override {
-        // notify_new_multipliers_callback(yl, yb, y);
-        if (this->notify_new_multipliers_callback) {
-            std::vector<mxArray*> inputs = {vector_to_mxArray(multipliers.lower_bounds), vector_to_mxArray(multipliers.upper_bounds), vector_to_mxArray(multipliers.constraints)};
-            std::vector<mxArray*> outputs(0);
-            call_matlab_function(this->notify_new_multipliers_callback, inputs, outputs);
             destroy_mxArray_vector(inputs);
             destroy_mxArray_vector(outputs);
         }
@@ -457,8 +434,6 @@ public:
 
 private:
     mxArray* notify_acceptable_iterate_callback;
-    mxArray* notify_new_primals_callback;
-    mxArray* notify_new_multipliers_callback;
     mxArray* user_termination_callback;
 };
 
@@ -533,8 +508,6 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     // callbacks
     mxArray* logger_stream_callback = callbacks["logger_stream_callback"];
     mxArray* notify_acceptable_iterate_callback = callbacks["notify_acceptable_iterate_callback"];
-    mxArray* notify_new_primals_callback = callbacks["notify_new_primals_callback"];
-    mxArray* notify_new_multipliers_callback = callbacks["notify_new_multipliers_callback"];
     mxArray* user_termination_callback = callbacks["user_termination_callback"];
     
     // set the logger stream
@@ -543,8 +516,7 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     Logger::set_stream(matlab_ostream);
     
     // create user callbacks
-    MatlabUserCallbacks user_callbacks(notify_acceptable_iterate_callback, notify_new_primals_callback, 
-        notify_new_multipliers_callback, user_termination_callback);
+    MatlabUserCallbacks user_callbacks(notify_acceptable_iterate_callback, user_termination_callback);
 
     // create user model
     MatlabUserModel user_model(mxArray_to_scalar<char>(problem_type), 
