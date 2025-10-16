@@ -162,13 +162,9 @@ function uno_set_solver_preset(solver, preset_name)
 end
 
 function uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback,
-                                  notify_new_primals_callback,
-                                  notify_new_multipliers_callback,
                                   user_termination_callback, user_data)
     @ccall libuno.uno_set_solver_callbacks(solver::Ptr{Cvoid},
                                            notify_acceptable_iterate_callback::Ptr{Cvoid},
-                                           notify_new_primals_callback::Ptr{Cvoid},
-                                           notify_new_multipliers_callback::Ptr{Cvoid},
                                            user_termination_callback::Ptr{Cvoid},
                                            user_data::Ptr{Cvoid})::Cvoid
 end
