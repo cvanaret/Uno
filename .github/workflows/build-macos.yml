@@ -69,7 +69,7 @@ jobs:
       run: |
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                                                 -DCMAKE_C_COMPILER=clang \
-                                                -DCMAKE_CPP_COMPILER=clang++ \
+                                                -DCMAKE_CXX_COMPILER=clang++ \
                                                 -DMUMPS_INCLUDE_DIR=${{github.workspace}}/deps/include \
                                                 -DMETIS_INCLUDE_DIR=${{github.workspace}}/deps/include \
                                                 -DBQPD=${{github.workspace}}/deps/lib/libbqpd.a \
