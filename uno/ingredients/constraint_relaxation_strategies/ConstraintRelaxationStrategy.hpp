@@ -58,6 +58,7 @@ namespace uno {
       const double residual_scaling_threshold;
       const double primal_tolerance;
       const double dual_tolerance;
+      const double loose_primal_tolerance;
       const double loose_dual_tolerance;
       size_t loose_tolerance_consecutive_iterations{0};
       const size_t loose_tolerance_consecutive_iteration_threshold;
@@ -98,7 +99,8 @@ namespace uno {
       // test convergence wrt the tight tolerance
       const SolutionStatus status_tight_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
          this->dual_tolerance);
-      if (status_tight_tolerance != SolutionStatus::NOT_OPTIMAL || this->loose_dual_tolerance <= this->primal_tolerance) {
+      if (status_tight_tolerance != SolutionStatus::NOT_OPTIMAL || (this->loose_primal_tolerance <= this->primal_tolerance &&
+            this->loose_dual_tolerance <= this->dual_tolerance)) {
          return status_tight_tolerance;
       }
 

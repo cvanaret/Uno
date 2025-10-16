@@ -60,6 +60,7 @@ namespace uno {
          preset_options.set_bool("scale_functions", true);
          preset_options.set_double("primal_tolerance", 1e-8);
          preset_options.set_double("dual_tolerance", 1e-8);
+         preset_options.set_double("loose_primal_tolerance", 1e-6);
          preset_options.set_double("loose_dual_tolerance", 1e-6);
          preset_options.set_integer("loose_tolerance_consecutive_iteration_threshold", 15);
          preset_options.set_bool("switch_to_optimality_requires_linearized_feasibility", false);
@@ -81,7 +82,6 @@ namespace uno {
          preset_options.set_bool("enforce_linear_constraints", true);
          preset_options.set_double("primal_tolerance", 1e-6);
          preset_options.set_double("dual_tolerance", 1e-6);
-         preset_options.set_double("loose_dual_tolerance", 1e-6);
          preset_options.set_double("TR_min_radius", 1e-8);
          preset_options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
          preset_options.set_bool("protect_actual_reduction_against_roundoff", false);
@@ -100,7 +100,6 @@ namespace uno {
          preset_options.set_bool("enforce_linear_constraints", true);
          preset_options.set_double("primal_tolerance", 1e-6);
          preset_options.set_double("dual_tolerance", 1e-6);
-         preset_options.set_double("loose_dual_tolerance", 1e-6);
          preset_options.set_double("TR_min_radius", 1e-8);
          preset_options.set_bool("switch_to_optimality_requires_acceptance", false);
          preset_options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
@@ -129,7 +128,6 @@ namespace uno {
          preset_options.set_bool("enforce_linear_constraints", true);
          preset_options.set_double("primal_tolerance", 1e-6);
          preset_options.set_double("dual_tolerance", 1e-5);
-         preset_options.set_double("loose_dual_tolerance", 1e-4);
          preset_options.set_double("TR_min_radius", 1e-8);
          preset_options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
          preset_options.set_bool("protect_actual_reduction_against_roundoff", false);
