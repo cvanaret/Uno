@@ -68,6 +68,8 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                                                -DCMAKE_C_COMPILER=clang \
+                                                -DCMAKE_CPP_COMPILER=clang++ \
                                                 -DMUMPS_INCLUDE_DIR=${{github.workspace}}/deps/include \
                                                 -DMETIS_INCLUDE_DIR=${{github.workspace}}/deps/include \
                                                 -DBQPD=${{github.workspace}}/deps/lib/libbqpd.a \
