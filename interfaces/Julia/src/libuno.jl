@@ -14,7 +14,7 @@ const UNO_ONE_BASED_INDEXING = Cint(1)
 const UNO_LOWER_TRIANGLE = Cchar('L')
 const UNO_UPPER_TRIANGLE = Cchar('U')
 
-const UNO_OPTION_TYPE_INT = Cint(0)
+const UNO_OPTION_TYPE_INTEGER = Cint(0)
 const UNO_OPTION_TYPE_DOUBLE = Cint(1)
 const UNO_OPTION_TYPE_BOOL = Cint(2)
 const UNO_OPTION_TYPE_STRING = Cint(3)
