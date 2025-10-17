@@ -67,7 +67,7 @@ jobs:
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                                                 -DCMAKE_C_COMPILER=clang \
                                                 -DCMAKE_CXX_COMPILER=clang++ \
-                                                -DCMAKE_Fortran_COMPILER=fc \
+                                                -DCMAKE_Fortran_COMPILER=lfortran \
                                                 -DBQPD=${{github.workspace}}/deps/lib/libbqpd.a \
                                                 -DHIGHS_DIR=${{github.workspace}}/deps/highs/lib/cmake/highs \
                                                 -DBUILD_STATIC_LIBS=ON \
