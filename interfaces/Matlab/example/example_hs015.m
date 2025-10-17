@@ -113,20 +113,20 @@ function J = constraint_jacobian(x)
 end
 
 % Lagrangian Hessian - lower triangular part
-function H = lagrangian_hessian(x, objective_multiplier, multipliers)
+function H = lagrangian_hessian(x, rho, y)
     H = zeros(3,1);
-    H(1) = objective_multiplier*(1200*x(1)^2 - 400*x(2) + 2);
-    H(2) = -400*objective_multiplier*x(1) - multipliers(1);
-    H(3) = 200*objective_multiplier - 2*multipliers(2);
+    H(1) = rho*(1200*x(1)^2 - 400*x(2) + 2);
+    H(2) = -400*rho*x(1) - y(1);
+    H(3) = 200*rho - 2*y(2);
 end
 
 % Lagrangian Hessian operator
-function result = lagrangian_hessian_operator(x, objective_multiplier, multipliers, vector)
-    h00 = objective_multiplier*(1200*x(1)^2 - 400*x(2) + 2);
-    h10 = -400*objective_multiplier*x(1) - multipliers(1);
-    h11 = 200*objective_multiplier - 2*multipliers(2);
+function result = lagrangian_hessian_operator(x, rho, y, v)
+    h00 = rho*(1200*x(1)^2 - 400*x(2) + 2);
+    h10 = -400*rho*x(1) - y(1);
+    h11 = 200*rho - 2*y(2);
 
     result = zeros(2,1);
-    result(1) = h00*vector(1) + h10*vector(2);
-    result(2) = h10*vector(1) + h11*vector(2);
+    result(1) = h00*v(1) + h10*v(2);
+    result(2) = h10*v(1) + h11*v(2);
 end
