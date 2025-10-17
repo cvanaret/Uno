@@ -57,8 +57,8 @@ jobs:
     - name: Install Fortran compiler
       uses: fortran-lang/setup-fortran@main
       with:
-        compiler: 'lfortran'
-        version: '0.45.0'
+        compiler: 'intel-classic'
+        version: '2021.10'
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
@@ -67,7 +67,7 @@ jobs:
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                                                 -DCMAKE_C_COMPILER=clang \
                                                 -DCMAKE_CXX_COMPILER=clang++ \
-                                                -DCMAKE_Fortran_COMPILER=lfortran \
+                                                -DCMAKE_Fortran_COMPILER=ifort \
                                                 -DBQPD=${{github.workspace}}/deps/lib/libbqpd.a \
                                                 -DHIGHS_DIR=${{github.workspace}}/deps/highs/lib/cmake/highs \
                                                 -DBUILD_STATIC_LIBS=ON \
