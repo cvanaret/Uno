@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <algorithm>
 #include "mex.h"
-#include "Uno_mex_utilities.hpp"
 #include "../UserModel.hpp"
 #include "Uno.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -20,11 +19,12 @@
 #include "tools/Logger.hpp"
 #include "tools/NumberModelEvaluations.hpp"
 #include "tools/UserCallbacks.hpp"
+#include "Uno_mex_utilities.hpp"
 
 using namespace uno;
 
-using MatlabUserModel = UserModel<mxArray*, mxArray*, mxArray*, mxArray*, mxArray*, mxArray*,
-   mxArray*, mxArray*, mxArray*, void*>; // user data are handled in matlab wrapper
+using MatlabUserModel = UserModel<handle_t, handle_t, handle_t,handle_t, handle_t,handle_t,
+   handle_t, handle_t, mxArray*, void*>; // user data are handled in matlab wrapper
 
 // UnoModel contains an instance of UserModel and complies with the Model interface
 class UnoModel: public Model {
@@ -64,12 +64,15 @@ public:
             const Vector<double> x1(x.begin(), x.begin()+this->number_variables);
             std::vector<mxArray*> inputs({vector_to_mxArray(x1)});
             std::vector<mxArray*> outputs(1);
-            const int32_t return_code = call_matlab_function(user_model.objective_function, inputs, outputs);
-            destroy_mxArray_vector(inputs);
-            if (0 < return_code) {
+            try {
+                call_matlab_function(user_model.objective_function, inputs, outputs);
+            } catch (const MatlabFunctionError& err) {
+                destroy_mxArray_vector(inputs);
+                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
                 throw FunctionEvaluationError();
             }
             objective_value = this->optimization_sense * mxArray_to_scalar<double>(outputs[0]);
+            destroy_mxArray_vector(inputs);
             destroy_mxArray_vector(outputs);
             ++this->number_model_evaluations.objective;
         }
@@ -82,12 +85,15 @@ public:
             const Vector<double> x1(x.begin(), x.begin()+this->number_variables);
             std::vector<mxArray*> inputs({vector_to_mxArray(x1)});
             std::vector<mxArray*> outputs(1);
-            const int32_t return_code = call_matlab_function(user_model.constraint_functions, inputs, outputs);
-            destroy_mxArray_vector(inputs);
-            if (0 < return_code) {
+            try {
+                call_matlab_function(user_model.constraint_functions, inputs, outputs);
+            } catch (const MatlabFunctionError& err) {
+                destroy_mxArray_vector(inputs);
+                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
                 throw FunctionEvaluationError();
             }
             mxArray_to_vector(outputs[0], constraints);
+            destroy_mxArray_vector(inputs);
             destroy_mxArray_vector(outputs);
             ++this->number_model_evaluations.constraints;
         }
@@ -100,12 +106,15 @@ public:
             const Vector<double> x1(x.begin(), x.begin()+this->number_variables);
             std::vector<mxArray*> inputs({vector_to_mxArray(x1)});
             std::vector<mxArray*> outputs(1);
-            const int32_t return_code = call_matlab_function(user_model.objective_gradient, inputs, outputs);
-            destroy_mxArray_vector(inputs);
-            if (0 < return_code) {
+            try {
+                call_matlab_function(user_model.objective_gradient, inputs, outputs);
+            } catch (const MatlabFunctionError& err) {
+                destroy_mxArray_vector(inputs);
+                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
                 throw GradientEvaluationError();
             }
             mxArray_to_vector(outputs[0], gradient);
+            destroy_mxArray_vector(inputs);
             destroy_mxArray_vector(outputs);
             for (size_t variable_index: Range(this->number_variables)) {
                 gradient[variable_index] *= this->optimization_sense;
@@ -158,12 +167,15 @@ public:
             const Vector<double> x1(x.begin(), x.begin()+this->number_variables);
             std::vector<mxArray*> inputs({vector_to_mxArray(x1)});
             std::vector<mxArray*> outputs(1);
-            const int32_t return_code = call_matlab_function(user_model.constraint_jacobian, inputs, outputs);
-            destroy_mxArray_vector(inputs);
-            if (0 < return_code) {
+            try {
+                call_matlab_function(user_model.constraint_jacobian, inputs, outputs);
+            } catch (const MatlabFunctionError& err) {
+                destroy_mxArray_vector(inputs);
+                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
                 throw GradientEvaluationError();
             }
             mxArray_to_pointer(outputs[0], jacobian_values);
+            destroy_mxArray_vector(inputs);
             destroy_mxArray_vector(outputs);
             ++this->number_model_evaluations.jacobian;
         }
@@ -182,16 +194,23 @@ public:
             const Vector<double> x1(x.begin(), x.begin()+this->number_variables);
             std::vector<mxArray*> inputs({vector_to_mxArray(x1), scalar_to_mxArray(objective_multiplier),vector_to_mxArray(multipliers)});
             std::vector<mxArray*> outputs(1);
-            const int32_t return_code = call_matlab_function(user_model.lagrangian_hessian, inputs, outputs);
-            destroy_mxArray_vector(inputs);
+            try {
+                call_matlab_function(user_model.lagrangian_hessian, inputs, outputs);
+            } catch (const MatlabFunctionError& err) {
+                destroy_mxArray_vector(inputs);
+                // flip the signs of the multipliers back
+                if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+                    const_cast<Vector<double>&>(multipliers).scale(-1.);
+                }
+                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
+                throw HessianEvaluationError();
+            }
             // flip the signs of the multipliers back
             if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
                 const_cast<Vector<double>&>(multipliers).scale(-1.);
             }
-            if (0 < return_code) {
-                throw HessianEvaluationError();
-            }
             mxArray_to_pointer(outputs[0], hessian_values);
+            destroy_mxArray_vector(inputs);
             destroy_mxArray_vector(outputs);
             ++this->number_model_evaluations.hessian;
         }
@@ -207,12 +226,15 @@ public:
             mxArray* vector_arr = pointer_to_mxArray(vector, this->number_variables);
             std::vector<mxArray*> inputs({x_arr, vector_arr});
             std::vector<mxArray*> outputs(1);
-            const int32_t return_code = call_matlab_function(user_model.jacobian_operator, inputs, outputs);
-            destroy_mxArray_vector(inputs);
-            if (0 < return_code) {
+            try {
+                call_matlab_function(user_model.jacobian_operator, inputs, outputs);
+            } catch (const MatlabFunctionError& err) {
+                destroy_mxArray_vector(inputs);
+                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
                 throw GradientEvaluationError();
             }
             mxArray_to_pointer(outputs[0], result);
+            destroy_mxArray_vector(inputs);
             destroy_mxArray_vector(outputs);
         }
         else {
@@ -228,12 +250,15 @@ public:
             mxArray* vector_arr = pointer_to_mxArray(vector, this->number_constraints);
             std::vector<mxArray*> inputs({x_arr, vector_arr});
             std::vector<mxArray*> outputs(1);
-            const int32_t return_code = call_matlab_function(user_model.jacobian_transposed_operator, inputs, outputs);
-            destroy_mxArray_vector(inputs);
-            if (0 < return_code) {
+            try {
+                call_matlab_function(user_model.jacobian_transposed_operator, inputs, outputs);
+            } catch (const MatlabFunctionError& err) {
+                destroy_mxArray_vector(inputs);
+                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
                 throw GradientEvaluationError();
             }
             mxArray_to_pointer(outputs[0], result);
+            destroy_mxArray_vector(inputs);
             destroy_mxArray_vector(outputs);
         }
         else {
@@ -254,16 +279,23 @@ public:
             mxArray* vector_arr = pointer_to_mxArray(vector, this->number_variables);
             std::vector<mxArray*> inputs({x_arr, scalar_to_mxArray(objective_multiplier), vector_to_mxArray(multipliers), vector_arr});
             std::vector<mxArray*> outputs(1);
-            const int32_t return_code = call_matlab_function(user_model.lagrangian_hessian_operator, inputs, outputs);
-            destroy_mxArray_vector(inputs);
+            try {
+                call_matlab_function(user_model.lagrangian_hessian_operator, inputs, outputs);
+            } catch (const MatlabFunctionError& err) {
+                destroy_mxArray_vector(inputs);
+                // flip the signs of the multipliers back
+                if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+                    const_cast<Vector<double>&>(multipliers).scale(-1.);
+                }
+                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
+                throw HessianEvaluationError();
+            }
             // flip the signs of the multipliers back
             if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
                 const_cast<Vector<double>&>(multipliers).scale(-1.);
             }
-            if (0 < return_code) {
-                throw HessianEvaluationError();
-            }
             mxArray_to_pointer(outputs[0], result);
+            destroy_mxArray_vector(inputs);
             destroy_mxArray_vector(outputs);
         } 
         else {
@@ -384,7 +416,7 @@ protected:
 
 class MatlabStreamCallback : public UserStreamCallback {
 public: 
-    MatlabStreamCallback(mxArray* logger_stream_callback) :
+    MatlabStreamCallback(handle_t logger_stream_callback) :
     UserStreamCallback(), logger_stream_callback(logger_stream_callback) { }
     ~MatlabStreamCallback() override { }
 
@@ -394,7 +426,12 @@ int32_t operator()(const char* buf, int32_t len) const override {
         std::string str(buf, len);
         std::vector<mxArray*> inputs = { string_to_mxArray(str) };
         std::vector<mxArray*> outputs(0);
-        call_matlab_function(this->logger_stream_callback, inputs, outputs);
+        try {
+            call_matlab_function(this->logger_stream_callback, inputs, outputs);
+        }
+        catch (const MatlabFunctionError& err) {
+            mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
+        }
         destroy_mxArray_vector(inputs);
         destroy_mxArray_vector(outputs);
         mexEvalString("pause(0);"); // force output to appear immediately 
@@ -409,7 +446,7 @@ int32_t operator()(const char* buf, int32_t len) const override {
 }
 
 private:
-    mxArray* logger_stream_callback;
+    handle_t logger_stream_callback;
 };
 
 #ifdef HAS_MXLIBUT
@@ -426,7 +463,7 @@ constexpr bool utSetInterruptPending(bool) { return false; }
 // Matlab user callbacks
 class MatlabUserCallbacks : public UserCallbacks {
 public:
-    MatlabUserCallbacks(mxArray* notify_acceptable_iterate_callback, mxArray* user_termination_callback) : UserCallbacks(),
+    MatlabUserCallbacks(handle_t notify_acceptable_iterate_callback, handle_t user_termination_callback) : UserCallbacks(),
         notify_acceptable_iterate_callback(notify_acceptable_iterate_callback),
         user_termination_callback(user_termination_callback) { }
 
@@ -435,7 +472,12 @@ public:
         if (this->notify_acceptable_iterate_callback) {
             std::vector<mxArray*> inputs = {vector_to_mxArray(primals), vector_to_mxArray(multipliers.lower_bounds), vector_to_mxArray(multipliers.upper_bounds), vector_to_mxArray(multipliers.constraints), scalar_to_mxArray(objective_multiplier), scalar_to_mxArray(primal_feasibility), scalar_to_mxArray(stationarity), scalar_to_mxArray(complementarity)};
             std::vector<mxArray*> outputs(0);
-            call_matlab_function(this->notify_acceptable_iterate_callback, inputs, outputs);
+            try {
+                call_matlab_function(this->notify_acceptable_iterate_callback, inputs, outputs);
+            }
+            catch (const MatlabFunctionError& err) {
+                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
+            }
             destroy_mxArray_vector(inputs);
             destroy_mxArray_vector(outputs);
         }
@@ -450,12 +492,14 @@ public:
         if (this->user_termination_callback) {
             std::vector<mxArray*> inputs = {vector_to_mxArray(primals), vector_to_mxArray(multipliers.lower_bounds), vector_to_mxArray(multipliers.upper_bounds), vector_to_mxArray(multipliers.constraints), scalar_to_mxArray(objective_multiplier), scalar_to_mxArray(primal_feasibility), scalar_to_mxArray(stationarity), scalar_to_mxArray(complementarity)};
             std::vector<mxArray*> outputs(1);
-            const int32_t return_code = call_matlab_function(this->user_termination_callback, inputs, outputs);
-            destroy_mxArray_vector(inputs);
-            if (0 < return_code) {
-                return false; // never terminate if callback fails
+            try {
+                call_matlab_function(this->user_termination_callback, inputs, outputs);
+            }  
+            catch (const MatlabFunctionError& err) {
+                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
             }
             bool terminate = mxArray_to_scalar<bool>(outputs[0]);
+            destroy_mxArray_vector(inputs);
             destroy_mxArray_vector(outputs);
             return terminate;
         } else {
@@ -464,82 +508,244 @@ public:
     }
 
 private:
-    mxArray* notify_acceptable_iterate_callback;
-    mxArray* user_termination_callback;
+    handle_t notify_acceptable_iterate_callback;
+    handle_t user_termination_callback;
 };
 
 // gateway function
 // result = uno_optimize(model[, options, callbacks])
 void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
-    // validate arguments
+    // validate argument list
+    std::string errmsg;
     if (nrhs < 1) {
-        mexErrMsgIdAndTxt("uno:error", "Invalid argument list. Function requires 1 input.");
+        errmsg = ErrorString::format_error(ErrorType::NARGIN_NOTENOUGH, 1);
+        mexErrMsgIdAndTxt("uno:error", errmsg.c_str());
     }
     if (nrhs > 3) {
-        mexErrMsgIdAndTxt("uno:error", "Too many input arguments.");
+        errmsg = ErrorString::format_error(ErrorType::NARGIN_TOOMANY);
+        mexErrMsgIdAndTxt("uno:error", errmsg.c_str());
     }
+
     // model (mandatory)
+    if (!validate_struct_input(prhs[0], 1, errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", errmsg.c_str());
+    }
     const MxStruct model = mxArray_to_mxStruct(prhs[0]);
+
     // options (optional)
     MxStruct options;
     if (nrhs > 1) {
+        if (!validate_struct_input(prhs[1], 2, errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", errmsg.c_str());
+        }
         options = mxArray_to_mxStruct(prhs[1]);
     }
+
     // callbacks (optional)
     MxStruct callbacks;
     if (nrhs > 2) {
+        if (!validate_struct_input(prhs[2], 3, errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", errmsg.c_str());
+        }
         callbacks = mxArray_to_mxStruct(prhs[2]);
     }
 
-    // problem type
+    // problem type (mandatory)
     mxArray* problem_type = model["problem_type"];
+    if (!validate_char(problem_type, {UNO_PROBLEM_LINEAR, UNO_PROBLEM_QUADRATIC, UNO_PROBLEM_NONLINEAR}, "problem_type", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+    }
 
-    // base indexing
+    // base indexing (mandatory)
     mxArray* base_indexing = model["base_indexing"];
+    if (!validate_positive_integer(base_indexing, "base_indexing", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+    }
 
-    // variables
+    // variables (mandatory)
     mxArray* number_variables = model["number_variables"];
     mxArray* variables_lower_bounds = model["variables_lower_bounds"];
     mxArray* variables_upper_bounds = model["variables_upper_bounds"];
+    if (!validate_positive_integer(number_variables, "number_variables", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+    }
+    if (!validate_double_vector(variables_lower_bounds, static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), "variables_lower_bounds", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+    }
+    if (!validate_double_vector(variables_upper_bounds, static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), "variables_lower_bounds", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+    }
 
-    // objective
+    // objective (mandatory)
     mxArray* objective_function = model["objective_function"];
     mxArray* objective_gradient = model["objective_gradient"];
     mxArray* optimization_sense = model["optimization_sense"];
+    // objective = objective_function(x)
+    if (!validate_matlab_handle<double, double>(objective_function, 
+        { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) }, 
+        { 1 },
+        "objective_function", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model objective function. %s", errmsg.c_str());
+    }
+    // gradient = objective_gradient(x)
+    if (!validate_matlab_handle<double, double>(objective_gradient, 
+        { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) }, 
+        { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) },
+        "objective_gradient", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model objective gradient. %s", errmsg.c_str());
+    }
+    if (!validate_unitary(optimization_sense, "optimization_sense", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+    }
 
-    // constraints
+    // constraints (mandatory)
     mxArray* number_constraints = model["number_constraints"];
     mxArray* constraints_lower_bounds = model["constraints_lower_bounds"];
     mxArray* constraints_upper_bounds = model["constraints_upper_bounds"];
     mxArray* constraint_function = model["constraint_function"];
-    mxArray* constraint_jacobian = model["constraint_jacobian"];
+    if (!validate_positive_integer(number_constraints, "number_constraints", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+    }
+    if (!validate_double_vector(constraints_lower_bounds, static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints)), "constraints_lower_bounds", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+    }
+    if (!validate_double_vector(constraints_upper_bounds, static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints)), "constraints_upper_bounds", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+    }
+    // constraints = constrain_function(x)
+    if (!validate_matlab_handle<double, double>(constraint_function, 
+        { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) }, 
+        { static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints)) },
+        "constraint_function", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model constraint function. %s", errmsg.c_str());
+    }
+
+    // jacobian (mandatory)
     mxArray* number_jacobian_nonzeros = model["number_jacobian_nonzeros"];
     mxArray* jacobian_row_indices = model["jacobian_row_indices"];
     mxArray* jacobian_column_indices = model["jacobian_column_indices"];
+    mxArray* constraint_jacobian = model["constraint_jacobian"];
+    if (!validate_positive_integer(number_jacobian_nonzeros, "number_jacobian_nonzeros", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+    }
+    if (!validate_integer_vector(jacobian_row_indices, static_cast<int32_t>(mxArray_to_scalar<double>(number_jacobian_nonzeros)), "jacobian_row_indices", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+    }
+    if (!validate_integer_vector(jacobian_column_indices, static_cast<int32_t>(mxArray_to_scalar<double>(number_jacobian_nonzeros)), "jacobian_column_indices", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+    }
+    // jacobian = constraint_jacobian(x)
+    if (!validate_matlab_handle<double, double>(constraint_jacobian, 
+        { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) }, 
+        { static_cast<int32_t>(mxArray_to_scalar<double>(number_jacobian_nonzeros)) },
+        "constraint_jacobian", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model constraint Jacobian. %s", errmsg.c_str());
+    }
 
-    // jacobian operators
+    // jacobian operators (optional)
     mxArray* jacobian_operator = model["jacobian_operator"];
     mxArray* jacobian_transposed_operator = model["jacobian_transposed_operator"];
+    if (jacobian_operator != nullptr) {
+        // result = jacobian_operator(x,v)
+        if (!validate_matlab_handle<double, double>(jacobian_operator, 
+            { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) }, 
+            { static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints)) },
+            "jacobian_operator", errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid model Jacobian operator. %s", errmsg.c_str());
+        }
+    }
+    if (jacobian_transposed_operator != nullptr) {
+        // jacobian_transposed_operator(x,v)
+        if (!validate_matlab_handle<double, double>(jacobian_transposed_operator, 
+            { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints)) }, 
+            { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) },
+            "jacobian_transposed_operator", errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid model Jacobian transposed operator. %s", errmsg.c_str());
+        }
+    }
 
-    // hessian
+    // lagrangian sign convention (mandatory)
     mxArray* lagrangian_sign_convention = model["lagrangian_sign_convention"];
+    if (!validate_unitary(lagrangian_sign_convention, "lagrangian_sign_convention", errmsg)) {
+        mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+    }
+
+    // hessian (optional)
     mxArray* hessian_triangular_part = model["hessian_triangular_part"];
-    mxArray* lagrangian_hessian = model["lagrangian_hessian"];
     mxArray* number_hessian_nonzeros = model["number_hessian_nonzeros"];
     mxArray* hessian_row_indices = model["hessian_row_indices"];
     mxArray* hessian_column_indices = model["hessian_column_indices"];
+    mxArray* lagrangian_hessian = model["lagrangian_hessian"];
+    if (lagrangian_hessian != nullptr) {
+        if (!validate_char(hessian_triangular_part, {UNO_LOWER_TRIANGLE, UNO_UPPER_TRIANGLE}, "hessian_triangular_part", errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+        }
+        if (!validate_positive_integer(number_hessian_nonzeros, "number_hessian_nonzeros", errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+        }
+        if (!validate_integer_vector(hessian_row_indices, static_cast<int32_t>(mxArray_to_scalar<double>(number_hessian_nonzeros)), "hessian_row_indices", errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+        }
+        if (!validate_integer_vector(hessian_column_indices, static_cast<int32_t>(mxArray_to_scalar<double>(number_hessian_nonzeros)), "hessian_column_indices", errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+        }
+        // hessian = lagrangian_hessian(x,rho,y)
+        if (!validate_matlab_handle<double, double>(lagrangian_hessian, 
+            { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), 1, static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints)) }, 
+            { static_cast<int32_t>(mxArray_to_scalar<double>(number_hessian_nonzeros)) },
+            "lagrangian_hessian", errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid model Lagrangian Hessian. %s", errmsg.c_str());
+        }
+    }
 
-    // hessian operators
+    // hessian operators (optional)
     mxArray* lagrangian_hessian_operator = model["lagrangian_hessian_operator"];
+    if (lagrangian_hessian_operator != nullptr) {
+        // lagrangian_hessian_operator(x,rho,y,v)
+        if (!validate_matlab_handle<double, double>(lagrangian_hessian_operator, 
+            { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), 1, static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints)), static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) }, 
+            { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) },
+            "lagrangian_hessian_operator", errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid model Lagrangian Hessian operator. %s", errmsg.c_str());
+        }
+    }
 
-    // initial iterates
+    // initial iterates (optional)
     mxArray* initial_primal_iterate = model["initial_primal_iterate"];
     mxArray* initial_dual_iterate = model["initial_dual_iterate"];
+    if (initial_primal_iterate != nullptr) {
+        if (!validate_double_vector(initial_primal_iterate, static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), "initial_primal_iterate", errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+        }
+    }
+    if (initial_dual_iterate != nullptr) {
+        if (!validate_double_vector(initial_dual_iterate, static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints)), "initial_dual_iterate", errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
+        }
+    }
 
-    // callbacks
+    // callbacks (optional)
     mxArray* logger_stream_callback = callbacks["logger_stream_callback"];
     mxArray* notify_acceptable_iterate_callback = callbacks["notify_acceptable_iterate_callback"];
     mxArray* user_termination_callback = callbacks["user_termination_callback"];
+    if (logger_stream_callback != nullptr) {
+        // logger_stream_callback(str)
+        if (!validate_matlab_handle_no_call<char,void>(logger_stream_callback, 1, 0, "logger_stream_callback", errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid logger stream callback. %s", errmsg.c_str());
+        }
+    }
+    if (notify_acceptable_iterate_callback != nullptr) {
+        // notify_acceptable_iterate_callback(x, yl, yb, y, rho, feas, stat, compl)
+        if (!validate_matlab_handle_no_call<char,void>(notify_acceptable_iterate_callback, 8, 0, "notify_acceptable_iterate_callback", errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid notify acceptable iterate callback. %s", errmsg.c_str());
+        }
+    }
+    if (user_termination_callback != nullptr) {
+        // terminate = user_termination_callback(x, yl, yb, y, rho, feas, stat, compl)
+        if (!validate_matlab_handle_no_call<char,void>(user_termination_callback, 8, 1, "user_termination_callback", errmsg)) {
+            mexErrMsgIdAndTxt("uno:error", "Invalid user termination callback. %s", errmsg.c_str());
+        }
+    }
     
     // set the logger stream
     MatlabStreamCallback matlab_stream_callback(logger_stream_callback);
@@ -620,7 +826,8 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
         result = result_to_mxStruct(uno_result);
     }
     catch (const std::exception& e) {
-        mexErrMsgIdAndTxt("uno:error", e.what());
+        errmsg = ErrorString::format_error(ErrorType::UNO, e.what());
+        mexErrMsgIdAndTxt("uno:error", errmsg.c_str());
     }
 
     // output

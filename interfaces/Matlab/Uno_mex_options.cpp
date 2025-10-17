@@ -2,10 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "mex.h"
-#include "Uno_mex_utilities.hpp"
 #include "Uno.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Presets.hpp"
+#include "Uno_mex_utilities.hpp"
 
 using namespace uno;
 
@@ -14,13 +14,15 @@ using namespace uno;
 void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
     // validate arguments
     if (nrhs > 1) {
-        mexErrMsgIdAndTxt("uno:error", "Too many input arguments.");
+        const std::string errmsg = ErrorString::format_error(ErrorType::NARGIN_TOOMANY);
+        mexErrMsgIdAndTxt("uno:error", errmsg.c_str());
     }
     // preset (optional)
     std::string preset;
-    if (nrhs == 1 && !mxIsEmpty(prhs[0])) {
-        if (!mxIsChar(prhs[0]) && !mxIsClass(prhs[0],"string")) {
-            mexErrMsgIdAndTxt("uno:error", "Invalid argument at position 1. Value must be of type char or string.");
+    if (nrhs == 1 && !isempty(prhs[0])) {
+        if (!isa<char>(prhs[0]) && !isa<std::string>(prhs[0])) {
+            const std::string errmsg = ErrorString::format_error(ErrorType::INPUT_TYPE_STRING, 1);
+            mexErrMsgIdAndTxt("uno:error", errmsg.c_str());
         }
         preset = mxArray_to_string(prhs[0]);
     }
@@ -41,7 +43,8 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
             Presets::set(uno_options, preset);
         }
         catch (const std::runtime_error& err) {
-            mexErrMsgIdAndTxt("uno:error", "Invalid argument at position 1. %s", err.what());
+            const std::string errmsg = ErrorString::format_error(ErrorType::INPUT_INVALID, 1);
+            mexErrMsgIdAndTxt("uno:error", "%s %s.", errmsg.c_str(), err.what());
         }
     }
 
