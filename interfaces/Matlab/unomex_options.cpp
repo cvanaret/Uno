@@ -1,16 +1,17 @@
 // Copyright (c) 2025 Stefano Lovato and Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "mex.h"
 #include "Uno.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Presets.hpp"
-#include "Uno_mex_utilities.hpp"
+#include "cpp_classes/ErrorString.hpp"
+#include "unomex/unomex_conversion.hpp"
+#include "unomex/unomex_utils.hpp"
+#include "mex.h"
 
 using namespace uno;
 
-// gateway function
-// options = uno_options([preset]);
+// gateway function: options = uno_options([preset]);
 void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
     // validate arguments
     if (nrhs > 1) {

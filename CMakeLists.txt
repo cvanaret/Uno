@@ -304,6 +304,11 @@ endif()
 find_package(Matlab COMPONENTS MAIN_PROGRAM MEX_COMPILER)
 if(Matlab_FOUND)
    message(STATUS "Found Matlab")
+   
+   file(GLOB MATLAB_SOURCE_FILES
+      interfaces/Matlab/cpp_classes/*.cpp
+      interfaces/Matlab/unomex/*.cpp
+   )
 
    get_filename_component(Matlab_MX_LIBRARY_PATH ${Matlab_MX_LIBRARY} DIRECTORY )
    find_library(MXLIBUT NAMES libut ut 
@@ -313,14 +318,14 @@ if(Matlab_FOUND)
    endif()
 
    # uno_optimize
-   matlab_add_mex(NAME unomex-optimize SRC interfaces/Matlab/Uno_mex_optimize.cpp 
+   matlab_add_mex(NAME unomex-optimize SRC interfaces/Matlab/unomex_optimize.cpp ${MATLAB_SOURCE_FILES}
       OUTPUT_NAME uno_optimize
       EXCLUDE_FROM_ALL $<TARGET_OBJECTS:compiled_uno_files>
       LINK_TO ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
    target_include_directories(unomex-optimize PUBLIC ${DIRECTORIES})
    
    # uno_options
-   matlab_add_mex(NAME unomex-options SRC interfaces/Matlab/Uno_mex_options.cpp
+   matlab_add_mex(NAME unomex-options SRC interfaces/Matlab/unomex_options.cpp ${MATLAB_SOURCE_FILES}
       OUTPUT_NAME uno_options
       EXCLUDE_FROM_ALL $<TARGET_OBJECTS:compiled_uno_files>
       LINK_TO ${LIBRARIES} ${FORTRAN_LIBS})

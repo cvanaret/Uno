@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <algorithm>
-#include "mex.h"
 #include "../UserModel.hpp"
 #include "Uno.hpp"
 #include "linear_algebra/SparseVector.hpp"
@@ -19,7 +18,13 @@
 #include "tools/Logger.hpp"
 #include "tools/NumberModelEvaluations.hpp"
 #include "tools/UserCallbacks.hpp"
-#include "Uno_mex_utilities.hpp"
+#include "cpp_classes/MxStruct.hpp"
+#include "cpp_classes/ErrorString.hpp"
+#include "unomex/unomex_function.hpp"
+#include "unomex/unomex_conversion.hpp"
+#include "unomex/unomex_validation.hpp"
+#include "unomex/unomex_utils.hpp"
+#include "mex.h"
 
 using namespace uno;
 
@@ -512,8 +517,7 @@ private:
     handle_t user_termination_callback;
 };
 
-// gateway function
-// result = uno_optimize(model[, options, callbacks])
+// gateway function: result = uno_optimize(model[, options, callbacks])
 void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs[]) {
     // validate argument list
     std::string errmsg;
@@ -581,14 +585,14 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     mxArray* objective_gradient = model["objective_gradient"];
     mxArray* optimization_sense = model["optimization_sense"];
     // objective = objective_function(x)
-    if (!validate_matlab_handle<double, double>(objective_function, 
+    if (!validate_matlab_handle(objective_function, 
         { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) }, 
         { 1 },
         "objective_function", errmsg)) {
         mexErrMsgIdAndTxt("uno:error", "Invalid model objective function. %s", errmsg.c_str());
     }
     // gradient = objective_gradient(x)
-    if (!validate_matlab_handle<double, double>(objective_gradient, 
+    if (!validate_matlab_handle(objective_gradient, 
         { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) }, 
         { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) },
         "objective_gradient", errmsg)) {
@@ -613,7 +617,7 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
         mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
     }
     // constraints = constrain_function(x)
-    if (!validate_matlab_handle<double, double>(constraint_function, 
+    if (!validate_matlab_handle(constraint_function, 
         { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) }, 
         { static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints)) },
         "constraint_function", errmsg)) {
@@ -635,7 +639,7 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
         mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
     }
     // jacobian = constraint_jacobian(x)
-    if (!validate_matlab_handle<double, double>(constraint_jacobian, 
+    if (!validate_matlab_handle(constraint_jacobian, 
         { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) }, 
         { static_cast<int32_t>(mxArray_to_scalar<double>(number_jacobian_nonzeros)) },
         "constraint_jacobian", errmsg)) {
@@ -647,7 +651,7 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     mxArray* jacobian_transposed_operator = model["jacobian_transposed_operator"];
     if (jacobian_operator != nullptr) {
         // result = jacobian_operator(x,v)
-        if (!validate_matlab_handle<double, double>(jacobian_operator, 
+        if (!validate_matlab_handle(jacobian_operator, 
             { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) }, 
             { static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints)) },
             "jacobian_operator", errmsg)) {
@@ -656,7 +660,7 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     }
     if (jacobian_transposed_operator != nullptr) {
         // jacobian_transposed_operator(x,v)
-        if (!validate_matlab_handle<double, double>(jacobian_transposed_operator, 
+        if (!validate_matlab_handle(jacobian_transposed_operator, 
             { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints)) }, 
             { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) },
             "jacobian_transposed_operator", errmsg)) {
@@ -690,7 +694,7 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
             mexErrMsgIdAndTxt("uno:error", "Invalid model. %s", errmsg.c_str());
         }
         // hessian = lagrangian_hessian(x,rho,y)
-        if (!validate_matlab_handle<double, double>(lagrangian_hessian, 
+        if (!validate_matlab_handle(lagrangian_hessian, 
             { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), 1, static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints)) }, 
             { static_cast<int32_t>(mxArray_to_scalar<double>(number_hessian_nonzeros)) },
             "lagrangian_hessian", errmsg)) {
@@ -702,7 +706,7 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     mxArray* lagrangian_hessian_operator = model["lagrangian_hessian_operator"];
     if (lagrangian_hessian_operator != nullptr) {
         // lagrangian_hessian_operator(x,rho,y,v)
-        if (!validate_matlab_handle<double, double>(lagrangian_hessian_operator, 
+        if (!validate_matlab_handle(lagrangian_hessian_operator, 
             { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)), 1, static_cast<int32_t>(mxArray_to_scalar<double>(number_constraints)), static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) }, 
             { static_cast<int32_t>(mxArray_to_scalar<double>(number_variables)) },
             "lagrangian_hessian_operator", errmsg)) {
@@ -730,19 +734,19 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     mxArray* user_termination_callback = callbacks["user_termination_callback"];
     if (logger_stream_callback != nullptr) {
         // logger_stream_callback(str)
-        if (!validate_matlab_handle_no_call<char,void>(logger_stream_callback, 1, 0, "logger_stream_callback", errmsg)) {
+        if (!validate_matlab_handle_no_call(logger_stream_callback, 1, 0, "logger_stream_callback", errmsg)) {
             mexErrMsgIdAndTxt("uno:error", "Invalid logger stream callback. %s", errmsg.c_str());
         }
     }
     if (notify_acceptable_iterate_callback != nullptr) {
         // notify_acceptable_iterate_callback(x, yl, yb, y, rho, feas, stat, compl)
-        if (!validate_matlab_handle_no_call<char,void>(notify_acceptable_iterate_callback, 8, 0, "notify_acceptable_iterate_callback", errmsg)) {
+        if (!validate_matlab_handle_no_call(notify_acceptable_iterate_callback, 8, 0, "notify_acceptable_iterate_callback", errmsg)) {
             mexErrMsgIdAndTxt("uno:error", "Invalid notify acceptable iterate callback. %s", errmsg.c_str());
         }
     }
     if (user_termination_callback != nullptr) {
         // terminate = user_termination_callback(x, yl, yb, y, rho, feas, stat, compl)
-        if (!validate_matlab_handle_no_call<char,void>(user_termination_callback, 8, 1, "user_termination_callback", errmsg)) {
+        if (!validate_matlab_handle_no_call(user_termination_callback, 8, 1, "user_termination_callback", errmsg)) {
             mexErrMsgIdAndTxt("uno:error", "Invalid user termination callback. %s", errmsg.c_str());
         }
     }
