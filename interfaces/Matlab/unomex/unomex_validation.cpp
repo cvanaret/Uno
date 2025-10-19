@@ -9,7 +9,7 @@
 namespace uno {
 
     // validate Matlab function handle
-    bool validate_matlab_handle(handle_t handle, const std::string field_name, std::string& errmsg) {
+    bool validate_matlab_handle_field(handle_t handle, const std::string field_name, std::string& errmsg) {
         // Matlab throws error when wrong nargin/nargour etc... just check the validity of the handle
         if (!isvalid(handle)) {
             errmsg = ErrorString::format_error(ErrorType::MISSING_FIELD, field_name.c_str());

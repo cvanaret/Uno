@@ -11,7 +11,7 @@
 
 namespace uno {
 
-    bool validate_matlab_handle(handle_t handle, const std::string field_name, std::string& errmsg);
+    bool validate_matlab_handle_field(handle_t handle, const std::string field_name, std::string& errmsg);
 
     bool validate_struct_input(const mxArray* arr, const size_t position, std::string& errmsg);
 
