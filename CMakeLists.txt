@@ -320,20 +320,18 @@ if(Matlab_FOUND)
    # uno_optimize
    matlab_add_mex(NAME unomex-optimize SRC interfaces/Matlab/unomex_optimize.cpp ${MATLAB_SOURCE_FILES}
       OUTPUT_NAME uno_optimize
-      EXCLUDE_FROM_ALL $<TARGET_OBJECTS:compiled_uno_files>
-      LINK_TO ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
+      LINK_TO ${DEFAULT_UNO_LIB} ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
    target_include_directories(unomex-optimize PUBLIC ${DIRECTORIES})
    
    # uno_options
    matlab_add_mex(NAME unomex-options SRC interfaces/Matlab/unomex_options.cpp ${MATLAB_SOURCE_FILES}
       OUTPUT_NAME uno_options
-      EXCLUDE_FROM_ALL $<TARGET_OBJECTS:compiled_uno_files>
-      LINK_TO ${LIBRARIES} ${FORTRAN_LIBS})
+      LINK_TO ${DEFAULT_UNO_LIB} ${LIBRARIES} ${FORTRAN_LIBS})
    target_include_directories(unomex-options PUBLIC ${DIRECTORIES})
 
-   # logical target to compile mex
+   # logical target to compile both mex
    add_custom_target(unomex DEPENDS unomex-optimize unomex-options)
-
+   
 endif()
 
 ##################################
@@ -365,6 +363,9 @@ if(TARGET uno_ampl)
 endif()
 if(TARGET unopy)
    list(APPEND INSTALL_TARGETS unopy)
+endif()
+if(TARGET unomex)
+   list(APPEND INSTALL_TARGETS unomex-optimize unomex-options)
 endif()
 install(TARGETS ${INSTALL_TARGETS}
    COMPONENT libuno
