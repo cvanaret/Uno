@@ -22,9 +22,6 @@ namespace uno {
     };
 
     void call_matlab_function(handle_t handle, const std::vector<mxArray*>& inputs, std::vector<mxArray*>& outputs);
-    
-    int32_t nargin(handle_t handle);
-    int32_t nargout(handle_t handle);
 
 }; // namespace
 
