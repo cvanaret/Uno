@@ -9,6 +9,15 @@
 
 namespace uno {
 
+    MxArrayVectorGuard::MxArrayVectorGuard(const std::vector<mxArray*>& vector)
+    : vector(vector) {}
+
+    MxArrayVectorGuard::~MxArrayVectorGuard() {
+        for (auto* arr : vector) {
+            mxDestroyArray(arr);
+        }
+    }
+
     template<> mxClassID get_mxClassID<double>() { return mxDOUBLE_CLASS; }
     template<> mxClassID get_mxClassID<float>() { return mxSINGLE_CLASS; }
     template<> mxClassID get_mxClassID<int8_t>() { return mxINT8_CLASS; }
@@ -34,11 +43,11 @@ namespace uno {
         return mxIsEmpty(arr);
     }
 
-    bool has_size(const mxArray* arr, const int32_t nrows, const int32_t ncolumns) {
+    bool has_size(const mxArray* arr, const size_t nrows, const size_t ncolumns) {
         if (mxGetNumberOfDimensions(arr)>2) {
             return false;;
         }
-        return (static_cast<int32_t>(mxGetM(arr))==nrows) && (static_cast<int32_t>(mxGetN(arr))==ncolumns);
+        return (static_cast<size_t>(mxGetM(arr))==nrows) && (static_cast<size_t>(mxGetN(arr))==ncolumns);
     }
 
     bool ispositive(const mxArray* arr) {
@@ -64,14 +73,8 @@ namespace uno {
         return mxGetNumberOfElements(arr)==1;
     }
 
-    bool isvector(const mxArray* arr, const int32_t len) {
+    bool isvector(const mxArray* arr, const size_t len) {
         return has_size(arr, len, 1) || has_size(arr, 1, len);
-    }
-
-    void destroy_mxArray_vector(std::vector<mxArray*>& vector) {
-        for (auto* arr : vector) {
-            mxDestroyArray(arr);
-        }
     }
 
 }; // namespace

@@ -12,6 +12,13 @@
 
 namespace uno {
 
+    // guard on std::vector<mxArray*> for automatic memory management
+    struct MxArrayVectorGuard {
+        const std::vector<mxArray*>& vector;
+        explicit MxArrayVectorGuard(const std::vector<mxArray*>& vector);
+        ~MxArrayVectorGuard();
+    };
+
     constexpr int mxSTRING_CLASS = 19; // cf. https://it.mathworks.com/matlabcentral/answers/2102376-how-do-i-process-a-string-class-in-a-mex-function
 
     template<typename T>
@@ -25,14 +32,12 @@ namespace uno {
         return mxGetClassID(arr) == get_mxClassID<T>();
     }
     
-    bool has_size(const mxArray* arr, const int32_t nrows, const int32_t ncolumns);
+    bool has_size(const mxArray* arr, const size_t nrows, const size_t ncolumns);
     bool ispositive(const mxArray* arr);
     bool isinteger(const mxArray* arr);
     bool isunitary(const mxArray* arr);
     bool isscalar(const mxArray* arr);
-    bool isvector(const mxArray* arr, const int32_t len);
-
-    void destroy_mxArray_vector(std::vector<mxArray*>& vector);
+    bool isvector(const mxArray* arr, const size_t len);
 
     template <typename OutType, typename InType>
     Vector<OutType> convert_vector_type(const Vector<InType>& input) {

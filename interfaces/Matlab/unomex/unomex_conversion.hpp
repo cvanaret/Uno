@@ -66,6 +66,14 @@ namespace uno {
         std::copy(vec.begin(), vec.end(), ptr);
         return arr;
     }
+    template<typename T>
+    mxArray* vector_to_mxArray(const Vector<T>& vec, const size_t n) {
+        const mxClassID classid = get_mxClassID<T>();
+        mxArray* arr = mxCreateNumericMatrix(static_cast<mwSize>(n), 1, classid, mxREAL);
+        T* ptr = static_cast<T*>(mxGetData(arr));
+        std::copy(vec.begin(), vec.begin()+n, ptr);
+        return arr;
+    }
 
     std::string mxArray_to_string(const mxArray* arr);
     mxArray* string_to_mxArray(const std::string str);

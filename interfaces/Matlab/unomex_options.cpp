@@ -22,7 +22,7 @@ void mexFunction( int /* nlhs */, mxArray* plhs[], int nrhs, const mxArray* prhs
     std::string preset;
     if (nrhs == 1 && !isempty(prhs[0])) {
         if (!isa<char>(prhs[0]) && !isa<std::string>(prhs[0])) {
-            const std::string errmsg = ErrorString::format_error(ErrorType::INPUT_TYPE_STRING, 1);
+            const std::string errmsg = ErrorString::format_error(ErrorType::INPUT_STRING, 1);
             mexErrMsgIdAndTxt("uno:error", errmsg.c_str());
         }
         preset = mxArray_to_string(prhs[0]);

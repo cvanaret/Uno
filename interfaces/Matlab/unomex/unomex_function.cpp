@@ -8,7 +8,7 @@
 namespace uno {
 
     MatlabFunctionError::MatlabFunctionError(const std::string& str) 
-        : msg(ErrorString::format_error(ErrorType::EVALUATION) + "\n" + str + "\n") {}
+        : msg(ErrorString::format_error(ErrorType::EVALUATION) + "\n" + str) {}
 
     const char* MatlabFunctionError::what() const noexcept {
         return this->msg.c_str();
