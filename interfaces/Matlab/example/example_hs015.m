@@ -81,7 +81,7 @@ result = uno_optimize(model, options, callbacks);
 clear uno_optimize uno_options
 
 %% Display the result
-disp(result)
+% disp(result)
 
 %% Model functions
 % Objective function
@@ -112,7 +112,7 @@ function J = constraint_jacobian(x)
     J(4) = 2*x(2);
 end
 
-% Lagrangian Hessian - lower triangular part
+% Lagrangian Hessian (lower triangular)
 function H = lagrangian_hessian(x, rho, y)
     H = zeros(3,1);
     H(1) = rho*(1200*x(1)^2 - 400*x(2) + 2);
