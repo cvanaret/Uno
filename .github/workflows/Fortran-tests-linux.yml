@@ -56,7 +56,7 @@ jobs:
 
       - name: Compile Fortran tests
         working-directory: ${{github.workspace}}/interfaces/Fortran
-        run: gfortran test_uno.f90 -o test_uno -L../../build -luno -lstdc++
+        run: gfortran test_uno.f90 -o test_uno -L../../build -luno -L${{github.workspace}}/deps/lib/libbqpd.a -lbqpd -lstdc++
 
       - name: Run Fortran tests
         working-directory: ${{github.workspace}}/interfaces/Fortran
