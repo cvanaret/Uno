@@ -208,19 +208,15 @@ public:
             std::vector<mxArray*> outputs(1);
             MxArrayVectorGuard input_guard(inputs);
             MxArrayVectorGuard output_guard(outputs);
-            try {
-                call_matlab_function(user_model.lagrangian_hessian, inputs, outputs);
-            } catch (const MatlabFunctionError& err) {
-                // flip the signs of the multipliers back
-                if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
-                    const_cast<Vector<double>&>(multipliers).scale(-1.);
-                }
-                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
-                throw HessianEvaluationError();
-            }
             // flip the signs of the multipliers back
             if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
                 const_cast<Vector<double>&>(multipliers).scale(-1.);
+            }
+            try {
+                call_matlab_function(user_model.lagrangian_hessian, inputs, outputs);
+            } catch (const MatlabFunctionError& err) {
+                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
+                throw HessianEvaluationError();
             }
             if (std::string errmsg; !validate_double_vector_output(outputs[0], this->number_hessian_nonzeros(), errmsg)) {
                 mexWarnMsgIdAndTxt("uno:warning", "Error in Lagrangian Hessian.\n%s\n", errmsg.c_str());
@@ -302,19 +298,15 @@ public:
             std::vector<mxArray*> outputs(1);
             MxArrayVectorGuard input_guard(inputs);
             MxArrayVectorGuard output_guard(outputs);
-            try {
-                call_matlab_function(user_model.lagrangian_hessian_operator, inputs, outputs);
-            } catch (const MatlabFunctionError& err) {
-                // flip the signs of the multipliers back
-                if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
-                    const_cast<Vector<double>&>(multipliers).scale(-1.);
-                }
-                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
-                throw HessianEvaluationError();
-            }
             // flip the signs of the multipliers back
             if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
                 const_cast<Vector<double>&>(multipliers).scale(-1.);
+            }
+            try {
+                call_matlab_function(user_model.lagrangian_hessian_operator, inputs, outputs);
+            } catch (const MatlabFunctionError& err) {
+                mexWarnMsgIdAndTxt("uno:warning", "%s", err.what());
+                throw HessianEvaluationError();
             }
             if (std::string errmsg; !validate_double_vector_output(outputs[0], this->number_variables, errmsg)) {
                 mexWarnMsgIdAndTxt("uno:warning", "Error in Lagrangian Hessian operator.\n%s\n", errmsg.c_str());
