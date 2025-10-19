@@ -9,7 +9,8 @@ implicit none
 ! uno_get_version
 !---------------------------------------------
 interface
-   subroutine uno_get_version(major, minor, patch) bind(C, name="uno_get_version")
+   subroutine uno_get_version(major, minor, patch) &
+      bind(C, name="uno_get_version")
       import :: c_int
       integer(c_int) :: major, minor, patch
    end subroutine uno_get_version
@@ -20,7 +21,8 @@ end interface
 !---------------------------------------------
 interface
    function uno_create_model(problem_type, number_variables, variables_lower_bounds, &
-                             variables_upper_bounds, base_indexing) result(model) bind(C, name="uno_create_model")
+                             variables_upper_bounds, base_indexing) result(model) &
+      bind(C, name="uno_create_model")
       import :: c_char, c_int, c_double, c_ptr
       character(c_char), value :: problem_type
       integer(c_int), value :: number_variables, base_indexing
@@ -34,7 +36,8 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_objective(model, optimization_sense, objective_function, &
-                              objective_gradient) result(success) bind(C, name="uno_set_objective")
+                              objective_gradient) result(success) &
+      bind(C, name="uno_set_objective")
       import :: c_ptr, c_int, c_funptr, c_bool
       type(c_ptr), value :: model
       integer(c_int), value :: optimization_sense
@@ -194,7 +197,8 @@ end interface
 ! uno_create_solver
 !---------------------------------------------
 interface
-   function uno_create_solver() result(solver) bind(C, name="uno_create_solver")
+   function uno_create_solver() result(solver) &
+      bind(C, name="uno_create_solver")
       import :: c_ptr
       type(c_ptr) :: solver
    end function uno_create_solver
@@ -204,7 +208,8 @@ end interface
 ! uno_set_solver_integer_option
 !---------------------------------------------
 interface
-   subroutine uno_set_solver_integer_option(solver, option_name, option_value) bind(C, name="uno_set_solver_integer_option")
+   subroutine uno_set_solver_integer_option(solver, option_name, option_value) &
+      bind(C, name="uno_set_solver_integer_option")
       import :: c_ptr, c_char, c_int
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: option_name
@@ -216,7 +221,8 @@ end interface
 ! uno_set_solver_double_option
 !---------------------------------------------
 interface
-   subroutine uno_set_solver_double_option(solver, option_name, option_value) bind(C, name="uno_set_solver_double_option")
+   subroutine uno_set_solver_double_option(solver, option_name, option_value) &
+      bind(C, name="uno_set_solver_double_option")
       import :: c_ptr, c_char, c_double
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: option_name
@@ -228,7 +234,8 @@ end interface
 ! uno_set_solver_bool_option
 !---------------------------------------------
 interface
-   subroutine uno_set_solver_bool_option(solver, option_name, option_value) bind(C, name="uno_set_solver_bool_option")
+   subroutine uno_set_solver_bool_option(solver, option_name, option_value) &
+      bind(C, name="uno_set_solver_bool_option")
       import :: c_ptr, c_char, c_bool
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: option_name
@@ -240,7 +247,8 @@ end interface
 ! uno_set_solver_string_option
 !---------------------------------------------
 interface
-   subroutine uno_set_solver_string_option(solver, option_name, option_value) bind(C, name="uno_set_solver_string_option")
+   subroutine uno_set_solver_string_option(solver, option_name, option_value) &
+      bind(C, name="uno_set_solver_string_option")
       import :: c_ptr, c_char
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: option_name
@@ -252,7 +260,8 @@ end interface
 ! uno_get_solver_option_type
 !---------------------------------------------
 interface
-   function uno_get_solver_option_type(solver, option_name) result(option_type) bind(C, name="uno_get_solver_option_type")
+   function uno_get_solver_option_type(solver, option_name) result(option_type) &
+      bind(C, name="uno_get_solver_option_type")
       import :: c_ptr, c_char, c_int
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: option_name
@@ -264,7 +273,8 @@ end interface
 ! uno_load_solver_option_file
 !---------------------------------------------
 interface
-   subroutine uno_load_solver_option_file(solver, file_name) bind(C, name="uno_load_solver_option_file")
+   subroutine uno_load_solver_option_file(solver, file_name) &
+      bind(C, name="uno_load_solver_option_file")
       import :: c_ptr, c_char
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: file_name
@@ -275,7 +285,8 @@ end interface
 ! uno_set_solver_preset
 !---------------------------------------------
 interface
-   subroutine uno_set_solver_preset(solver, preset_name) bind(C, name="uno_set_solver_preset")
+   subroutine uno_set_solver_preset(solver, preset_name) &
+      bind(C, name="uno_set_solver_preset")
       import :: c_ptr, c_char
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: preset_name
@@ -287,7 +298,8 @@ end interface
 !---------------------------------------------
 interface
    subroutine uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback, &
-                                       user_termination_callback, user_data) bind(C, name="uno_set_solver_callbacks")
+                                       user_termination_callback, user_data) &
+      bind(C, name="uno_set_solver_callbacks")
       import :: c_ptr, c_funptr
       type(c_ptr), value :: solver, user_data
       type(c_funptr), value :: notify_acceptable_iterate_callback, user_termination_callback
@@ -298,7 +310,8 @@ end interface
 ! uno_set_logger_stream_callback
 !---------------------------------------------
 interface
-   subroutine uno_set_logger_stream_callback(logger_stream_callback, user_data) bind(C, name="uno_set_logger_stream_callback")
+   subroutine uno_set_logger_stream_callback(logger_stream_callback, user_data) &
+      bind(C, name="uno_set_logger_stream_callback")
       import :: c_ptr, c_funptr
       type(c_ptr), value :: user_data
       type(c_funptr), value :: logger_stream_callback
@@ -309,7 +322,8 @@ end interface
 ! uno_reset_logger_stream
 !---------------------------------------------
 interface
-   subroutine uno_reset_logger_stream() bind(C, name="uno_reset_logger_stream")
+   subroutine uno_reset_logger_stream() &
+      bind(C, name="uno_reset_logger_stream")
    end subroutine uno_reset_logger_stream
 end interface
 
@@ -317,7 +331,8 @@ end interface
 ! uno_optimize
 !---------------------------------------------
 interface
-   subroutine uno_optimize(solver, model) bind(C, name="uno_optimize")
+   subroutine uno_optimize(solver, model) &
+      bind(C, name="uno_optimize")
       import :: c_ptr
       type(c_ptr), value :: solver, model
    end subroutine uno_optimize
@@ -327,7 +342,8 @@ end interface
 ! uno_get_solver_integer_option
 !---------------------------------------------
 interface
-   function uno_get_solver_integer_option(solver, option_name) result(solver_integer_option) bind(C, name="uno_get_solver_integer_option")
+   function uno_get_solver_integer_option(solver, option_name) result(solver_integer_option) &
+      bind(C, name="uno_get_solver_integer_option")
       import :: c_ptr, c_char, c_int
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: option_name
@@ -339,7 +355,8 @@ end interface
 ! uno_get_solver_double_option
 !---------------------------------------------
 interface
-   function uno_get_solver_double_option(solver, option_name) result(solver_double_option) bind(C, name="uno_get_solver_double_option")
+   function uno_get_solver_double_option(solver, option_name) result(solver_double_option) &
+      bind(C, name="uno_get_solver_double_option")
       import :: c_ptr, c_char, c_double
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: option_name
@@ -351,7 +368,8 @@ end interface
 ! uno_get_solver_bool_option
 !---------------------------------------------
 interface
-   function uno_get_solver_bool_option(solver, option_name) result(solver_bool_option) bind(C, name="uno_get_solver_bool_option")
+   function uno_get_solver_bool_option(solver, option_name) result(solver_bool_option) &
+      bind(C, name="uno_get_solver_bool_option")
       import :: c_ptr, c_char, c_bool
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: option_name
@@ -363,7 +381,8 @@ end interface
 ! uno_get_solver_string_option
 !---------------------------------------------
 interface
-   function uno_get_solver_string_option(solver, option_name) result(solver_string_option) bind(C, name="uno_get_solver_string_option")
+   function uno_get_solver_string_option(solver, option_name) result(solver_string_option) &
+      bind(C, name="uno_get_solver_string_option")
       import :: c_ptr, c_char
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: option_name
@@ -375,7 +394,8 @@ end interface
 ! uno_get_solution_status
 !---------------------------------------------
 interface
-   function uno_get_optimization_status(solver) result(optimization_status) bind(C, name="uno_get_optimization_status")
+   function uno_get_optimization_status(solver) result(optimization_status) &
+      bind(C, name="uno_get_optimization_status")
       import :: c_ptr, c_int
       type(c_ptr), value :: solver
       integer(c_int) :: optimization_status
@@ -386,7 +406,8 @@ end interface
 ! uno_get_solution_status
 !---------------------------------------------
 interface
-   function uno_get_solution_status(solver) result(solution_status) bind(C, name="uno_get_solution_status")
+   function uno_get_solution_status(solver) result(solution_status) &
+      bind(C, name="uno_get_solution_status")
       import :: c_ptr, c_int
       type(c_ptr), value :: solver
       integer(c_int) :: solution_status
@@ -397,7 +418,8 @@ end interface
 ! uno_get_solution_objective
 !---------------------------------------------
 interface
-   function uno_get_solution_objective(solver) result(solution_objective) bind(C, name="uno_get_solution_objective")
+   function uno_get_solution_objective(solver) result(solution_objective) &
+      bind(C, name="uno_get_solution_objective")
       import :: c_ptr, c_double
       type(c_ptr), value :: solver
       real(c_double) :: solution_objective
@@ -408,7 +430,8 @@ end interface
 ! uno_get_primal_solution_component
 !---------------------------------------------
 interface
-   function uno_get_primal_solution_component(solver, index) result(primal_solution_component) bind(C, name="uno_get_primal_solution_component")
+   function uno_get_primal_solution_component(solver, index) result(primal_solution_component) &
+      bind(C, name="uno_get_primal_solution_component")
       import :: c_ptr, c_int, c_double
       type(c_ptr), value :: solver
       integer(c_int), value :: index
@@ -420,7 +443,8 @@ end interface
 ! uno_get_constraint_dual_solution_component
 !---------------------------------------------
 interface
-   function uno_get_constraint_dual_solution_component(solver, index) result(constraint_dual_solution_component) bind(C, name="uno_get_constraint_dual_solution_component")
+   function uno_get_constraint_dual_solution_component(solver, index) result(constraint_dual_solution_component) &
+      bind(C, name="uno_get_constraint_dual_solution_component")
       import :: c_ptr, c_int, c_double
       type(c_ptr), value :: solver
       integer(c_int), value :: index
@@ -432,7 +456,8 @@ end interface
 ! uno_get_lower_bound_dual_solution_component
 !---------------------------------------------
 interface
-   function uno_get_lower_bound_dual_solution_component(solver, index) result(lower_bound_dual_solution_component) bind(C, name="uno_get_lower_bound_dual_solution_component")
+   function uno_get_lower_bound_dual_solution_component(solver, index) result(lower_bound_dual_solution_component) &
+      bind(C, name="uno_get_lower_bound_dual_solution_component")
       import :: c_ptr, c_int, c_double
       type(c_ptr), value :: solver
       integer(c_int), value :: index
@@ -444,7 +469,8 @@ end interface
 ! uno_get_upper_bound_dual_solution_component
 !---------------------------------------------
 interface
-   function uno_get_upper_bound_dual_solution_component(solver, index) result(upper_bound_dual_solution_component) bind(C, name="uno_get_upper_bound_dual_solution_component")
+   function uno_get_upper_bound_dual_solution_component(solver, index) result(upper_bound_dual_solution_component) &
+      bind(C, name="uno_get_upper_bound_dual_solution_component")
       import :: c_ptr, c_int, c_double
       type(c_ptr), value :: solver
       integer(c_int), value :: index
@@ -456,7 +482,8 @@ end interface
 ! uno_get_primal_solution
 !---------------------------------------------
 interface
-   subroutine uno_get_primal_solution(solver, primal_solution) bind(C, name="uno_get_primal_solution")
+   subroutine uno_get_primal_solution(solver, primal_solution) &
+      bind(C, name="uno_get_primal_solution")
       import :: c_ptr, c_double
       type(c_ptr), value :: solver
       real(c_double), dimension(*) :: primal_solution
@@ -467,7 +494,8 @@ end interface
 ! uno_get_constraint_dual_solution
 !---------------------------------------------
 interface
-   subroutine uno_get_constraint_dual_solution(solver, constraint_dual_solution) bind(C, name="uno_get_constraint_dual_solution")
+   subroutine uno_get_constraint_dual_solution(solver, constraint_dual_solution) &
+      bind(C, name="uno_get_constraint_dual_solution")
       import :: c_ptr, c_double
       type(c_ptr), value :: solver
       real(c_double), dimension(*) :: constraint_dual_solution
@@ -478,7 +506,8 @@ end interface
 ! uno_get_lower_bound_dual_solution
 !---------------------------------------------
 interface
-   subroutine uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution) bind(C, name="uno_get_lower_bound_dual_solution")
+   subroutine uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution) &
+      bind(C, name="uno_get_lower_bound_dual_solution")
       import :: c_ptr, c_double
       type(c_ptr), value :: solver
       real(c_double), dimension(*) :: lower_bound_dual_solution
@@ -489,7 +518,8 @@ end interface
 ! uno_get_upper_bound_dual_solution
 !---------------------------------------------
 interface
-   subroutine uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution) bind(C, name="uno_get_upper_bound_dual_solution")
+   subroutine uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution) &
+      bind(C, name="uno_get_upper_bound_dual_solution")
       import :: c_ptr, c_double
       type(c_ptr), value :: solver
       real(c_double), dimension(*) :: upper_bound_dual_solution
@@ -500,7 +530,8 @@ end interface
 ! uno_get_solution_primal_feasibility
 !---------------------------------------------
 interface
-   function uno_get_solution_primal_feasibility(solver) result(solution_primal_feasibility) bind(C, name="uno_get_solution_primal_feasibility")
+   function uno_get_solution_primal_feasibility(solver) result(solution_primal_feasibility) &
+      bind(C, name="uno_get_solution_primal_feasibility")
       import :: c_ptr, c_double
       type(c_ptr), value :: solver
       real(c_double) :: solution_primal_feasibility
@@ -511,7 +542,8 @@ end interface
 ! uno_get_solution_stationarity
 !---------------------------------------------
 interface
-   function uno_get_solution_stationarity(solver) result(solution_stationarity) bind(C, name="uno_get_solution_stationarity")
+   function uno_get_solution_stationarity(solver) result(solution_stationarity) &
+      bind(C, name="uno_get_solution_stationarity")
       import :: c_ptr, c_double
       type(c_ptr), value :: solver
       real(c_double) :: solution_stationarity
@@ -522,7 +554,8 @@ end interface
 ! uno_get_solution_complementarity
 !---------------------------------------------
 interface
-   function uno_get_solution_complementarity(solver) result(solution_complementarity) bind(C, name="uno_get_solution_complementarity")
+   function uno_get_solution_complementarity(solver) result(solution_complementarity) &
+      bind(C, name="uno_get_solution_complementarity")
       import :: c_ptr, c_double
       type(c_ptr), value :: solver
       real(c_double) :: solution_complementarity
@@ -533,7 +566,8 @@ end interface
 ! uno_get_number_iterations
 !---------------------------------------------
 interface
-   function uno_get_number_iterations(solver) result(number_iterations) bind(C, name="uno_get_number_iterations")
+   function uno_get_number_iterations(solver) result(number_iterations) &
+      bind(C, name="uno_get_number_iterations")
       import :: c_ptr, c_int
       type(c_ptr), value :: solver
       integer(c_int) :: number_iterations
@@ -544,7 +578,8 @@ end interface
 ! uno_get_cpu_time
 !---------------------------------------------
 interface
-   function uno_get_cpu_time(solver) result(cpu_time) bind(C, name="uno_get_cpu_time")
+   function uno_get_cpu_time(solver) result(cpu_time) &
+      bind(C, name="uno_get_cpu_time")
       import :: c_ptr, c_double
       type(c_ptr), value :: solver
       real(c_double) :: cpu_time
@@ -555,7 +590,8 @@ end interface
 ! uno_get_number_objective_evaluations
 !---------------------------------------------
 interface
-   function uno_get_number_objective_evaluations(solver) result(number_objective_evaluations) bind(C, name="uno_get_number_objective_evaluations")
+   function uno_get_number_objective_evaluations(solver) result(number_objective_evaluations) &
+      bind(C, name="uno_get_number_objective_evaluations")
       import :: c_ptr, c_int
       type(c_ptr), value :: solver
       integer(c_int) :: number_objective_evaluations
@@ -566,7 +602,8 @@ end interface
 ! uno_get_number_constraint_evaluations
 !---------------------------------------------
 interface
-   function uno_get_number_constraint_evaluations(solver) result(number_constraint_evaluations) bind(C, name="uno_get_number_constraint_evaluations")
+   function uno_get_number_constraint_evaluations(solver) result(number_constraint_evaluations) &
+      bind(C, name="uno_get_number_constraint_evaluations")
       import :: c_ptr, c_int
       type(c_ptr), value :: solver
       integer(c_int) :: number_constraint_evaluations
@@ -577,7 +614,8 @@ end interface
 ! uno_get_number_objective_gradient_evaluations
 !---------------------------------------------
 interface
-   function uno_get_number_objective_gradient_evaluations(solver) result(number_objective_gradient_evaluations) bind(C, name="uno_get_number_objective_gradient_evaluations")
+   function uno_get_number_objective_gradient_evaluations(solver) result(number_objective_gradient_evaluations) &
+      bind(C, name="uno_get_number_objective_gradient_evaluations")
       import :: c_ptr, c_int
       type(c_ptr), value :: solver
       integer(c_int) :: number_objective_gradient_evaluations
@@ -588,7 +626,8 @@ end interface
 ! uno_get_number_jacobian_evaluations
 !---------------------------------------------
 interface
-   function uno_get_number_jacobian_evaluations(solver) result(number_jacobian_evaluations) bind(C, name="uno_get_number_jacobian_evaluations")
+   function uno_get_number_jacobian_evaluations(solver) result(number_jacobian_evaluations) &
+      bind(C, name="uno_get_number_jacobian_evaluations")
       import :: c_ptr, c_int
       type(c_ptr), value :: solver
       integer(c_int) :: number_jacobian_evaluations
@@ -599,7 +638,8 @@ end interface
 ! uno_get_number_hessian_evaluations
 !---------------------------------------------
 interface
-   function uno_get_number_hessian_evaluations(solver) result(number_hessian_evaluations) bind(C, name="uno_get_number_hessian_evaluations")
+   function uno_get_number_hessian_evaluations(solver) result(number_hessian_evaluations) &
+      bind(C, name="uno_get_number_hessian_evaluations")
       import :: c_ptr, c_int
       type(c_ptr), value :: solver
       integer(c_int) :: number_hessian_evaluations
@@ -610,7 +650,8 @@ end interface
 ! uno_get_number_subproblem_solved_evaluations
 !---------------------------------------------
 interface
-   function uno_get_number_subproblem_solved_evaluations(solver) result(number_subproblem_solved_evaluations) bind(C, name="uno_get_number_subproblem_solved_evaluations")
+   function uno_get_number_subproblem_solved_evaluations(solver) result(number_subproblem_solved_evaluations) &
+      bind(C, name="uno_get_number_subproblem_solved_evaluations")
       import :: c_ptr, c_int
       type(c_ptr), value :: solver
       integer(c_int) :: number_subproblem_solved_evaluations
@@ -621,7 +662,8 @@ end interface
 ! uno_destroy_model
 !---------------------------------------------
 interface
-   subroutine uno_destroy_model(model) bind(C, name="uno_destroy_model")
+   subroutine uno_destroy_model(model) &
+      bind(C, name="uno_destroy_model")
       import :: c_ptr
       type(c_ptr), value :: model
    end subroutine uno_destroy_model
@@ -631,7 +673,8 @@ end interface
 ! uno_destroy_solver
 !---------------------------------------------
 interface
-   subroutine uno_destroy_solver(solver) bind(C, name="uno_destroy_solver")
+   subroutine uno_destroy_solver(solver) &
+      bind(C, name="uno_destroy_solver")
       import :: c_ptr
       type(c_ptr), value :: solver
    end subroutine uno_destroy_solver
