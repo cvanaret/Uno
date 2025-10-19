@@ -187,11 +187,6 @@ function uno_get_solver_integer_option(solver, option_name)
                                                 option_name::Cstring)::Cint
 end
 
-function uno_get_solver_unsigned_integer_option(solver, option_name)
-    @ccall libuno.uno_get_solver_unsigned_integer_option(solver::Ptr{Cvoid},
-                                                         option_name::Cstring)::Csize_t
-end
-
 function uno_get_solver_double_option(solver, option_name)
     @ccall libuno.uno_get_solver_double_option(solver::Ptr{Cvoid},
                                                option_name::Cstring)::Cdouble

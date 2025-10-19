@@ -19,7 +19,8 @@ end interface
 ! uno_create_model
 !---------------------------------------------
 interface
-   function uno_create_model(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing) result(model) bind(C, name="uno_create_model")
+   function uno_create_model(problem_type, number_variables, variables_lower_bounds, &
+                             variables_upper_bounds, base_indexing) result(model) bind(C, name="uno_create_model")
       import :: c_char, c_int, c_double, c_ptr
       character(c_char), value :: problem_type
       integer(c_int), value :: number_variables, base_indexing
@@ -32,7 +33,8 @@ end interface
 ! uno_set_objective
 !---------------------------------------------
 interface
-   function uno_set_objective(model, optimization_sense, objective_function, objective_gradient) result(success) bind(C, name="uno_set_objective")
+   function uno_set_objective(model, optimization_sense, objective_function, &
+                              objective_gradient) result(success) bind(C, name="uno_set_objective")
       import :: c_ptr, c_int, c_funptr, c_bool
       type(c_ptr), value :: model
       integer(c_int), value :: optimization_sense
@@ -246,30 +248,70 @@ interface
    end subroutine uno_set_solver_string_option
 end interface
 
-! // gets the type of a particular option in the Uno solver.
-! // takes as input the name of the option.
-! // the possible types are integer, double, bool and string.
-! int32_t uno_get_solver_option_type(void* solver, const char* option_name);
+!---------------------------------------------
+! uno_get_solver_option_type
+!---------------------------------------------
+interface
+   function uno_get_solver_option_type(solver, option_name) result(option_type) bind(C, name="uno_get_solver_option_type")
+      import :: c_ptr, c_char, c_int
+      type(c_ptr), value :: solver
+      character(c_char), dimension(*) :: option_name
+      integer(c_int) :: option_type
+   end function uno_get_solver_option_type
+end interface
 
-! // [optional] loads the options from a given option file.
-! // takes as input the name of the option file.
-! void uno_load_solver_option_file(void* solver, const char* file_name);
+!---------------------------------------------
+! uno_load_solver_option_file
+!---------------------------------------------
+interface
+   subroutine uno_load_solver_option_file(solver, file_name) bind(C, name="uno_load_solver_option_file")
+      import :: c_ptr, c_char
+      type(c_ptr), value :: solver
+      character(c_char), dimension(*) :: file_name
+   end subroutine uno_load_solver_option_file
+end interface
 
-! // sets a particular preset in the Uno solver.
-! void uno_set_solver_preset(void* solver, const char* preset_name);
+!---------------------------------------------
+! uno_set_solver_preset
+!---------------------------------------------
+interface
+   subroutine uno_set_solver_preset(solver, preset_name) bind(C, name="uno_set_solver_preset")
+      import :: c_ptr, c_char
+      type(c_ptr), value :: solver
+      character(c_char), dimension(*) :: preset_name
+   end subroutine uno_set_solver_preset
+end interface
 
-! // [optional]
-! // sets the user callbacks for solver.
-! void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
-!    TerminationUserCallback user_termination_callback, void* user_data);
+!---------------------------------------------
+! uno_set_solver_callbacks
+!---------------------------------------------
+interface
+   subroutine uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback, &
+                                       user_termination_callback, user_data) bind(C, name="uno_set_solver_callbacks")
+      import :: c_ptr, c_funptr
+      type(c_ptr), value :: solver, user_data
+      type(c_funptr), value :: notify_acceptable_iterate_callback, user_termination_callback
+   end subroutine uno_set_solver_callbacks
+end interface
 
-! // [optional]
-! // sets the logger stream callback.
-! void uno_set_logger_stream_callback(LoggerStreamUserCallback logger_stream_callback, void* user_data);
+!---------------------------------------------
+! uno_set_logger_stream_callback
+!---------------------------------------------
+interface
+   subroutine uno_set_logger_stream_callback(logger_stream_callback, user_data) bind(C, name="uno_set_logger_stream_callback")
+      import :: c_ptr, c_funptr
+      type(c_ptr), value :: user_data
+      type(c_funptr), value :: logger_stream_callback
+   end subroutine uno_set_logger_stream_callback
+end interface
 
-! // [optional]
-! // resets the logger stream to the standard output
-! void uno_reset_logger_stream();
+!---------------------------------------------
+! uno_reset_logger_stream
+!---------------------------------------------
+interface
+   subroutine uno_reset_logger_stream() bind(C, name="uno_reset_logger_stream")
+   end subroutine uno_reset_logger_stream
+end interface
 
 !---------------------------------------------
 ! uno_optimize
@@ -281,80 +323,299 @@ interface
    end subroutine uno_optimize
 end interface
 
-! // gets the value of a given double option.
-! // takes as inputs the name of the option.
-! // the possible types are integer, unsigned integer, double, bool and string.
-! int uno_get_solver_integer_option(void* solver, const char* option_name);
-! size_t uno_get_solver_unsigned_integer_option(void* solver, const char* option_name);
-! double uno_get_solver_double_option(void* solver, const char* option_name);
-! bool uno_get_solver_bool_option(void* solver, const char* option_name);
-! const char* uno_get_solver_string_option(void* solver, const char* option_name);
+!---------------------------------------------
+! uno_get_solver_integer_option
+!---------------------------------------------
+interface
+   function uno_get_solver_integer_option(solver, option_name) result(solver_integer_option) bind(C, name="uno_get_solver_integer_option")
+      import :: c_ptr, c_char, c_int
+      type(c_ptr), value :: solver
+      character(c_char), dimension(*) :: option_name
+      integer(c_int) :: solver_integer_option
+   end function uno_get_solver_integer_option
+end interface
 
-! // gets the optimization status (once the model was solved)
-! int32_t uno_get_optimization_status(void* solver);
+!---------------------------------------------
+! uno_get_solver_double_option
+!---------------------------------------------
+interface
+   function uno_get_solver_double_option(solver, option_name) result(solver_double_option) bind(C, name="uno_get_solver_double_option")
+      import :: c_ptr, c_char, c_double
+      type(c_ptr), value :: solver
+      character(c_char), dimension(*) :: option_name
+      real(c_double) :: solver_double_option
+   end function uno_get_solver_double_option
+end interface
 
-! // gets the iterate status (once the model was solved)
-! int32_t uno_get_solution_status(void* solver);
+!---------------------------------------------
+! uno_get_solver_bool_option
+!---------------------------------------------
+interface
+   function uno_get_solver_bool_option(solver, option_name) result(solver_bool_option) bind(C, name="uno_get_solver_bool_option")
+      import :: c_ptr, c_char, c_bool
+      type(c_ptr), value :: solver
+      character(c_char), dimension(*) :: option_name
+      logical(c_bool) :: solver_bool_option
+   end function uno_get_solver_bool_option
+end interface
 
-! // gets the objective value at the solution (once the model was solved)
-! double uno_get_solution_objective(void* solver);
+!---------------------------------------------
+! uno_get_solver_string_option
+!---------------------------------------------
+interface
+   function uno_get_solver_string_option(solver, option_name) result(solver_string_option) bind(C, name="uno_get_solver_string_option")
+      import :: c_ptr, c_char
+      type(c_ptr), value :: solver
+      character(c_char), dimension(*) :: option_name
+      type(c_ptr) :: solver_string_option
+   end function uno_get_solver_string_option
+end interface
 
-! // gets one component of the primal solution (once the model was solved)
-! double uno_get_primal_solution_component(void* solver, int32_t index);
+!---------------------------------------------
+! uno_get_solution_status
+!---------------------------------------------
+interface
+   function uno_get_optimization_status(solver) result(optimization_status) bind(C, name="uno_get_optimization_status")
+      import :: c_ptr, c_int
+      type(c_ptr), value :: solver
+      integer(c_int) :: optimization_status
+   end function uno_get_optimization_status
+end interface
 
-! // gets one component of the constraint dual solution (once the model was solved)
-! double uno_get_constraint_dual_solution_component(void* solver, int32_t index);
+!---------------------------------------------
+! uno_get_solution_status
+!---------------------------------------------
+interface
+   function uno_get_solution_status(solver) result(solution_status) bind(C, name="uno_get_solution_status")
+      import :: c_ptr, c_int
+      type(c_ptr), value :: solver
+      integer(c_int) :: solution_status
+   end function uno_get_solution_status
+end interface
 
-! // gets one component of the lower bound dual solution (once the model was solved)
-! double uno_get_lower_bound_dual_solution_component(void* solver, int32_t index);
+!---------------------------------------------
+! uno_get_solution_objective
+!---------------------------------------------
+interface
+   function uno_get_solution_objective(solver) result(solution_objective) bind(C, name="uno_get_solution_objective")
+      import :: c_ptr, c_double
+      type(c_ptr), value :: solver
+      real(c_double) :: solution_objective
+   end function uno_get_solution_objective
+end interface
 
-! // gets one component of the upper bound dual solution (once the model was solved)
-! double uno_get_upper_bound_dual_solution_component(void* solver, int32_t index);
+!---------------------------------------------
+! uno_get_primal_solution_component
+!---------------------------------------------
+interface
+   function uno_get_primal_solution_component(solver, index) result(primal_solution_component) bind(C, name="uno_get_primal_solution_component")
+      import :: c_ptr, c_int, c_double
+      type(c_ptr), value :: solver
+      integer(c_int), value :: index
+      real(c_double) :: primal_solution_component
+   end function uno_get_primal_solution_component
+end interface
 
-! // gets the primal solution (once the model was solved)
-! void uno_get_primal_solution(void* solver, double* primal_solution);
+!---------------------------------------------
+! uno_get_constraint_dual_solution_component
+!---------------------------------------------
+interface
+   function uno_get_constraint_dual_solution_component(solver, index) result(constraint_dual_solution_component) bind(C, name="uno_get_constraint_dual_solution_component")
+      import :: c_ptr, c_int, c_double
+      type(c_ptr), value :: solver
+      integer(c_int), value :: index
+      real(c_double) :: constraint_dual_solution_component
+   end function uno_get_constraint_dual_solution_component
+end interface
 
-! // gets the dual solution associated with the constraints (once the model was solved)
-! void uno_get_constraint_dual_solution(void* solver, double* constraint_dual_solution);
+!---------------------------------------------
+! uno_get_lower_bound_dual_solution_component
+!---------------------------------------------
+interface
+   function uno_get_lower_bound_dual_solution_component(solver, index) result(lower_bound_dual_solution_component) bind(C, name="uno_get_lower_bound_dual_solution_component")
+      import :: c_ptr, c_int, c_double
+      type(c_ptr), value :: solver
+      integer(c_int), value :: index
+      real(c_double) :: lower_bound_dual_solution_component
+   end function uno_get_lower_bound_dual_solution_component
+end interface
 
-! // gets the dual solution associated with the lower bounds (once the model was solved)
-! void uno_get_lower_bound_dual_solution(void* solver, double* lower_bound_dual_solution);
+!---------------------------------------------
+! uno_get_upper_bound_dual_solution_component
+!---------------------------------------------
+interface
+   function uno_get_upper_bound_dual_solution_component(solver, index) result(upper_bound_dual_solution_component) bind(C, name="uno_get_upper_bound_dual_solution_component")
+      import :: c_ptr, c_int, c_double
+      type(c_ptr), value :: solver
+      integer(c_int), value :: index
+      real(c_double) :: upper_bound_dual_solution_component
+   end function uno_get_upper_bound_dual_solution_component
+end interface
 
-! // gets the dual solution associated with the upper bounds (once the model was solved)
-! void uno_get_upper_bound_dual_solution(void* solver, double* upper_bound_dual_solution);
+!---------------------------------------------
+! uno_get_primal_solution
+!---------------------------------------------
+interface
+   subroutine uno_get_primal_solution(solver, primal_solution) bind(C, name="uno_get_primal_solution")
+      import :: c_ptr, c_double
+      type(c_ptr), value :: solver
+      real(c_double), dimension(*) :: primal_solution
+   end subroutine uno_get_primal_solution
+end interface
 
-! // gets the primal feasibility residual at the solution (once the model was solved)
-! double uno_get_solution_primal_feasibility(void* solver);
+!---------------------------------------------
+! uno_get_constraint_dual_solution
+!---------------------------------------------
+interface
+   subroutine uno_get_constraint_dual_solution(solver, constraint_dual_solution) bind(C, name="uno_get_constraint_dual_solution")
+      import :: c_ptr, c_double
+      type(c_ptr), value :: solver
+      real(c_double), dimension(*) :: constraint_dual_solution
+   end subroutine uno_get_constraint_dual_solution
+end interface
 
-! // gets the stationarity residual at the solution (once the model was solved)
-! double uno_get_solution_stationarity(void* solver);
+!---------------------------------------------
+! uno_get_lower_bound_dual_solution
+!---------------------------------------------
+interface
+   subroutine uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution) bind(C, name="uno_get_lower_bound_dual_solution")
+      import :: c_ptr, c_double
+      type(c_ptr), value :: solver
+      real(c_double), dimension(*) :: lower_bound_dual_solution
+   end subroutine uno_get_lower_bound_dual_solution
+end interface
 
-! // gets the complementarity residual at the solution (once the model was solved)
-! double uno_get_solution_complementarity(void* solver);
+!---------------------------------------------
+! uno_get_upper_bound_dual_solution
+!---------------------------------------------
+interface
+   subroutine uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution) bind(C, name="uno_get_upper_bound_dual_solution")
+      import :: c_ptr, c_double
+      type(c_ptr), value :: solver
+      real(c_double), dimension(*) :: upper_bound_dual_solution
+   end subroutine uno_get_upper_bound_dual_solution
+end interface
 
-! // gets the number of outer iterations required by the solver (once the model was solved)
-! int32_t uno_get_number_iterations(void* solver);
+!---------------------------------------------
+! uno_get_solution_primal_feasibility
+!---------------------------------------------
+interface
+   function uno_get_solution_primal_feasibility(solver) result(solution_primal_feasibility) bind(C, name="uno_get_solution_primal_feasibility")
+      import :: c_ptr, c_double
+      type(c_ptr), value :: solver
+      real(c_double) :: solution_primal_feasibility
+   end function uno_get_solution_primal_feasibility
+end interface
 
-! // gets the CPU time required by the solver (once the model was solved)
-! double uno_get_cpu_time(void* solver);
+!---------------------------------------------
+! uno_get_solution_stationarity
+!---------------------------------------------
+interface
+   function uno_get_solution_stationarity(solver) result(solution_stationarity) bind(C, name="uno_get_solution_stationarity")
+      import :: c_ptr, c_double
+      type(c_ptr), value :: solver
+      real(c_double) :: solution_stationarity
+   end function uno_get_solution_stationarity
+end interface
 
-! // gets the number of objective evaluations required by the solver (once the model was solved)
-! int32_t uno_get_number_objective_evaluations(void* solver);
+!---------------------------------------------
+! uno_get_solution_complementarity
+!---------------------------------------------
+interface
+   function uno_get_solution_complementarity(solver) result(solution_complementarity) bind(C, name="uno_get_solution_complementarity")
+      import :: c_ptr, c_double
+      type(c_ptr), value :: solver
+      real(c_double) :: solution_complementarity
+   end function uno_get_solution_complementarity
+end interface
 
-! // gets the number of constraint evaluations required by the solver (once the model was solved)
-! int32_t uno_get_number_constraint_evaluations(void* solver);
+!---------------------------------------------
+! uno_get_number_iterations
+!---------------------------------------------
+interface
+   function uno_get_number_iterations(solver) result(number_iterations) bind(C, name="uno_get_number_iterations")
+      import :: c_ptr, c_int
+      type(c_ptr), value :: solver
+      integer(c_int) :: number_iterations
+   end function uno_get_number_iterations
+end interface
 
-! // gets the number of objective gradient evaluations required by the solver (once the model was solved)
-! int32_t uno_get_number_objective_gradient_evaluations(void* solver);
+!---------------------------------------------
+! uno_get_cpu_time
+!---------------------------------------------
+interface
+   function uno_get_cpu_time(solver) result(cpu_time) bind(C, name="uno_get_cpu_time")
+      import :: c_ptr, c_double
+      type(c_ptr), value :: solver
+      real(c_double) :: cpu_time
+   end function uno_get_cpu_time
+end interface
 
-! // gets the number of constraint Jacobian evaluations required by the solver (once the model was solved)
-! int32_t uno_get_number_jacobian_evaluations(void* solver);
+!---------------------------------------------
+! uno_get_number_objective_evaluations
+!---------------------------------------------
+interface
+   function uno_get_number_objective_evaluations(solver) result(number_objective_evaluations) bind(C, name="uno_get_number_objective_evaluations")
+      import :: c_ptr, c_int
+      type(c_ptr), value :: solver
+      integer(c_int) :: number_objective_evaluations
+   end function uno_get_number_objective_evaluations
+end interface
 
-! // gets the number of Lagrangian Hessian evaluations required by the solver (once the model was solved)
-! int32_t uno_get_number_hessian_evaluations(void* solver);
+!---------------------------------------------
+! uno_get_number_constraint_evaluations
+!---------------------------------------------
+interface
+   function uno_get_number_constraint_evaluations(solver) result(number_constraint_evaluations) bind(C, name="uno_get_number_constraint_evaluations")
+      import :: c_ptr, c_int
+      type(c_ptr), value :: solver
+      integer(c_int) :: number_constraint_evaluations
+   end function uno_get_number_constraint_evaluations
+end interface
 
-! // gets the number of subproblems solved by the solver (once the model was solved)
-! int32_t uno_get_number_subproblem_solved_evaluations(void* solver);
+!---------------------------------------------
+! uno_get_number_objective_gradient_evaluations
+!---------------------------------------------
+interface
+   function uno_get_number_objective_gradient_evaluations(solver) result(number_objective_gradient_evaluations) bind(C, name="uno_get_number_objective_gradient_evaluations")
+      import :: c_ptr, c_int
+      type(c_ptr), value :: solver
+      integer(c_int) :: number_objective_gradient_evaluations
+   end function uno_get_number_objective_gradient_evaluations
+end interface
+
+!---------------------------------------------
+! uno_get_number_jacobian_evaluations
+!---------------------------------------------
+interface
+   function uno_get_number_jacobian_evaluations(solver) result(number_jacobian_evaluations) bind(C, name="uno_get_number_jacobian_evaluations")
+      import :: c_ptr, c_int
+      type(c_ptr), value :: solver
+      integer(c_int) :: number_jacobian_evaluations
+   end function uno_get_number_jacobian_evaluations
+end interface
+
+!---------------------------------------------
+! uno_get_number_hessian_evaluations
+!---------------------------------------------
+interface
+   function uno_get_number_hessian_evaluations(solver) result(number_hessian_evaluations) bind(C, name="uno_get_number_hessian_evaluations")
+      import :: c_ptr, c_int
+      type(c_ptr), value :: solver
+      integer(c_int) :: number_hessian_evaluations
+   end function uno_get_number_hessian_evaluations
+end interface
+
+!---------------------------------------------
+! uno_get_number_subproblem_solved_evaluations
+!---------------------------------------------
+interface
+   function uno_get_number_subproblem_solved_evaluations(solver) result(number_subproblem_solved_evaluations) bind(C, name="uno_get_number_subproblem_solved_evaluations")
+      import :: c_ptr, c_int
+      type(c_ptr), value :: solver
+      integer(c_int) :: number_subproblem_solved_evaluations
+   end function uno_get_number_subproblem_solved_evaluations
+end interface
 
 !---------------------------------------------
 ! uno_destroy_model
