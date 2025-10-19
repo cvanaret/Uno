@@ -115,7 +115,18 @@ end
 % Lagrangian Hessian (lower triangular)
 function H = lagrangian_hessian(x, ~, y)
     H = zeros(3,1);
-    H(1) = - 106*y(1) - 106*y(2);
+    H(1) = -106*y(1) - 106*y(2);
     H(2) = 400*x(2)^3*y(1) + 400*x(2)^3*y(2);
     H(3) = 1200*x(2)^2*y(2)*(- x(2)^4 + x(1) + 1) - 1600*x(2)^6*y(2) - 1200*x(2)^2*y(1)*(x(2)^4 - x(1) + 1) - 1600*x(2)^6*y(1);
+end
+
+% Lagrangian Hessian operator
+function result = lagrangian_hessian_operator(x, ~, y, v)
+    h00 = -106*y(1) - 106*y(2);
+    h10 = 400*x(2)^3*y(1) + 400*x(2)^3*y(2);
+    h11 = 1200*x(2)^2*y(2)*(- x(2)^4 + x(1) + 1) - 1600*x(2)^6*y(2) - 1200*x(2)^2*y(1)*(x(2)^4 - x(1) + 1) - 1600*x(2)^6*y(1);
+
+    result = zeros(3,1);
+    result(1) = h00*v(1) + h10*v(2);
+    result(2) = h10*v(1) + h11*v(2);
 end
