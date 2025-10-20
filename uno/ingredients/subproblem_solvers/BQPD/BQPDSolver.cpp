@@ -367,7 +367,7 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
          }
       }
       else {
-         throw std::runtime_error("The Hessian cannot be regularized if it is not available explicitly");
+         throw std::runtime_error("The Lagrangian Hessian has no appropriate representation");
       }
    }
    // otherwise, try to perform a Hessian-vector product if possible

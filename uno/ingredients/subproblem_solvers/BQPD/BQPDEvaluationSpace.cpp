@@ -6,6 +6,7 @@
 #include "BQPDEvaluationSpace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
+#include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/WarmstartInformation.hpp"
 
@@ -31,6 +32,9 @@ namespace uno {
          this->hessian_values.resize(number_regularized_hessian_nonzeros);
          subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
             this->hessian_column_indices.data(), Indexing::C_indexing);
+      }
+      else {
+         // TODO allocate some vector to contain the result of Hv (see compute_hessian_quadratic_product)
       }
    }
 
@@ -73,18 +77,31 @@ namespace uno {
       }
    }
 
-   double BQPDEvaluationSpace::compute_hessian_quadratic_product(const Vector<double>& vector) const {
+   double BQPDEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
       double quadratic_product = 0.;
-      const size_t number_hessian_nonzeros = this->hessian_values.size();
-      for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
-         const size_t row_index = static_cast<size_t>(this->hessian_row_indices[nonzero_index]);
-         const size_t column_index = static_cast<size_t>(this->hessian_column_indices[nonzero_index]);
-         const double entry = this->hessian_values[nonzero_index];
-         assert(row_index < vector.size());
-         assert(column_index < vector.size());
+      if (subproblem.has_hessian_matrix()) { // explicit matrix
+         const size_t number_hessian_nonzeros = this->hessian_values.size();
+         for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
+            const size_t row_index = static_cast<size_t>(this->hessian_row_indices[nonzero_index]);
+            const size_t column_index = static_cast<size_t>(this->hessian_column_indices[nonzero_index]);
+            const double entry = this->hessian_values[nonzero_index];
+            assert(row_index < vector.size());
+            assert(column_index < vector.size());
 
-         const double factor = (row_index != column_index) ? 2. : 1.;
-         quadratic_product += factor * entry * vector[row_index] * vector[column_index];
+            const double factor = (row_index != column_index) ? 2. : 1.;
+            quadratic_product += factor * entry * vector[row_index] * vector[column_index];
+         }
+      }
+      else if (subproblem.has_hessian_operator()) { // linear operator
+         // TODO preallocate
+         Vector<double> result(subproblem.number_variables);
+         // compute Hv
+         subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), vector.data(), result.data());
+         // compute the dot product <v, Hv>
+         quadratic_product = dot(vector, result);
+      }
+      else {
+         throw std::runtime_error("The Lagrangian Hessian has no appropriate representation");
       }
       return quadratic_product;
    }
