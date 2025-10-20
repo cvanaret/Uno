@@ -6,8 +6,21 @@
 
 #include <vector>
 #include "C/Uno_C_API.h"
+#include "optimization/ProblemType.hpp"
 
 namespace uno {
+   inline ProblemType problem_type_from_char(char problem_type) {
+      if (problem_type == 'L') {
+         return ProblemType::LINEAR;
+      }
+      else if (problem_type == 'Q') {
+         return ProblemType::QUADRATIC;
+      }
+      else {
+         return ProblemType::NONLINEAR;
+      }
+   }
+
    // UserModel contains the description of the model provided by the user
    template <typename Objective, typename ObjectiveGradient, typename Constraints, typename Jacobian,
       typename JacobianOperator, typename JacobianTransposedOperator, typename Hessian, typename HessianOperator,
@@ -15,14 +28,14 @@ namespace uno {
    class UserModel {
    public:
       UserModel(char problem_type, int32_t number_variables, int32_t base_indexing):
-            problem_type(problem_type),
+            problem_type(problem_type_from_char(problem_type)),
             base_indexing(base_indexing),
             number_variables(number_variables) {
       }
 
       ~UserModel() = default;
 
-      const char problem_type; // 'L' for linear, 'Q' for quadratic, 'N' for nonlinear
+      const ProblemType problem_type; // 'L' for linear, 'Q' for quadratic, 'N' for nonlinear
       const int32_t base_indexing; // 0 for C-style indexing, 1 for Fortran-style indexing
 
       // variables
