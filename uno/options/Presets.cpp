@@ -39,7 +39,7 @@ namespace uno {
          preset_options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
          preset_options.set_string("inequality_handling_method", "primal_dual_interior_point");
          preset_options.set_string("hessian_model", "exact");
-         preset_options.set_string("regularization_strategy", "primal_dual");
+         preset_options.set_string("inertia_correction_strategy", "primal_dual");
          preset_options.set_string("globalization_mechanism", "LS");
          preset_options.set_string("globalization_strategy", "waechter_filter_method");
          preset_options.set_string("filter_type", "standard");
@@ -71,7 +71,7 @@ namespace uno {
          preset_options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
          preset_options.set_string("inequality_handling_method", "inequality_constrained");
          preset_options.set_string("hessian_model", "exact");
-         preset_options.set_string("regularization_strategy", "none");
+         preset_options.set_string("inertia_correction_strategy", "none");
          preset_options.set_string("globalization_mechanism", "TR");
          preset_options.set_string("globalization_strategy", "fletcher_filter_method");
          preset_options.set_string("filter_type", "standard");
@@ -90,7 +90,7 @@ namespace uno {
          preset_options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
          preset_options.set_string("inequality_handling_method", "inequality_constrained");
          preset_options.set_string("hessian_model", "exact");
-         preset_options.set_string("regularization_strategy", "none");
+         preset_options.set_string("inertia_correction_strategy", "none");
          preset_options.set_string("globalization_mechanism", "TR");
          preset_options.set_string("globalization_strategy", "funnel_method");
          preset_options.set_string("progress_norm", "L1");
@@ -117,7 +117,7 @@ namespace uno {
          preset_options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
          preset_options.set_string("inequality_handling_method", "inequality_constrained");
          preset_options.set_string("hessian_model", "zero");
-         preset_options.set_string("regularization_strategy", "none");
+         preset_options.set_string("inertia_correction_strategy", "none");
          preset_options.set_string("globalization_mechanism", "TR");
          preset_options.set_string("globalization_strategy", "fletcher_filter_method");
          preset_options.set_string("filter_type", "standard");

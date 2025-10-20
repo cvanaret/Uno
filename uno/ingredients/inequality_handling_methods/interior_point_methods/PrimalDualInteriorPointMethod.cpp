@@ -36,7 +36,7 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) {
       if (!problem.get_inequality_constraints().empty()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
@@ -44,7 +44,7 @@ namespace uno {
          throw std::runtime_error("The problem has fixed variables. Move them to the set of general constraints.");
       }
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-      const Subproblem subproblem{barrier_problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
+      const Subproblem subproblem{barrier_problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
       this->linear_solver->initialize_augmented_system(subproblem);
    }
 
@@ -98,7 +98,7 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
+         Direction& direction, HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet");
@@ -117,7 +117,7 @@ namespace uno {
 
       // create the subproblem
       const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-      const Subproblem subproblem{barrier_problem, current_iterate, hessian_model, regularization_strategy,
+      const Subproblem subproblem{barrier_problem, current_iterate, hessian_model, inertia_correction_strategy,
          trust_region_radius};
 
       // compute the primal-dual solution

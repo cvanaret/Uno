@@ -20,7 +20,7 @@ namespace uno {
    class DirectSymmetricIndefiniteLinearSolver;
    class HessianModel;
    template <typename ElementType>
-   class RegularizationStrategy;
+   class InertiaCorrectionStrategy;
    class Statistics;
    template <typename ElementType>
    class Vector;
@@ -30,7 +30,7 @@ namespace uno {
       const size_t number_variables, number_constraints;
 
       Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
+         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius);
 
       // sparsity patterns
       void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
@@ -84,7 +84,7 @@ namespace uno {
 
    protected:
       HessianModel& hessian_model;
-      RegularizationStrategy<double>& regularization_strategy;
+      InertiaCorrectionStrategy<double>& inertia_correction_strategy;
       const double trust_region_radius;
       const ForwardRange empty_set{0};
    };

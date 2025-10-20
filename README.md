@@ -23,7 +23,7 @@ We consider the family of **Lagrange-Newton (essentially SQP and interior-point)
 * an **inequality handling method**: a systematic way to handle the inequality constraints;
 * a **Lagrange-Newton subproblem**: a local Lagrange-Newton approximation of the reformulated problem, composed of:
 	* a **Hessian model**: a model of the Lagrangian Hessian of the original problem;
-	* a **regularization strategy**: a strategy to regularize the Lagrangian Hessian or the augmented system of the reformulated problem;
+	* an **inertia control strategy**: a strategy to correct the inertia of the Lagrangian Hessian or the augmented system of the reformulated problem;
 * a **globalization strategy**: an acceptance test of the trial iterate;
 * a **globalization mechanism**: a recourse action upon rejection of the trial iterate.
 
@@ -36,7 +36,7 @@ The following graph gives an overview of state-of-the-art strategies:
 
 Uno implements **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
-* `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual regularization).
+* `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual inertia correction).
 
 ## Installation instructions
 
@@ -94,7 +94,7 @@ The following ingredients are currently available:
 - to pick a constraint relaxation strategy, use the argument: ```constraint_relaxation_strategy=[feasibility_restoration]```  
 - to pick an inequality handling method, use the argument: ```inequality_handling_method=[inequality_constrained|primal_dual_interior_point]``` 
 - to pick a Hessian model, use the argument: ```hessian_model=[exact|identity|zero]``` 
-- to pick a regularization strategy, use the argument: ```regularization_strategy=[primal|primal_dual|none]``` 
+- to pick an inertia correction strategy, use the argument: ```inertia_correction_strategy=[primal|primal_dual|none]``` 
 - to pick a globalization strategy, use the argument: ```globalization_strategy=[l1_merit|fletcher_filter_method|waechter_filter_method|funnel_method]```   
 - to pick a globalization mechanism, use the argument : ```globalization_mechanism=[TR|LS]```  
 

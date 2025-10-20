@@ -5,7 +5,7 @@
 #define UNO_DIRECTSYMMETRICINDEFINITELINEARSOLVER_H
 
 #include "SymmetricIndefiniteLinearSolver.hpp"
-#include "ingredients/regularization_strategies/Inertia.hpp"
+#include "ingredients/inertia_correction_strategies/Inertia.hpp"
 
 namespace uno {
    template <typename ElementType>

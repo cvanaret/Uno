@@ -38,7 +38,7 @@ namespace uno {
    private:
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
       std::unique_ptr<HessianModel> hessian_model;
-      std::unique_ptr<RegularizationStrategy<double>> regularization_strategy;
+      std::unique_ptr<InertiaCorrectionStrategy<double>> inertia_correction_strategy;
 
       void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
          Iterate& iterate) const override;

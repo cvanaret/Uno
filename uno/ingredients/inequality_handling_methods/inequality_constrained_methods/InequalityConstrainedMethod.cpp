@@ -20,11 +20,11 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) {
       this->initial_point.resize(problem.number_variables);
 
       // allocate the LP/QP solver, depending on the presence of curvature in the subproblem
-      const Subproblem subproblem{problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
+      const Subproblem subproblem{problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
       if (!subproblem.has_curvature()) {
          if (subproblem.number_constraints == 0) {
             DEBUG << "No curvature and only bound constraints in the subproblems, allocating a box LP solver\n";
@@ -51,10 +51,10 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
+         Direction& direction, HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information) {
       // create the subproblem and solve it
-      Subproblem subproblem{problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
+      Subproblem subproblem{problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
       this->solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_iterate.multipliers, direction.multipliers);
       ++this->number_subproblems_solved;

@@ -9,8 +9,8 @@
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
-#include "ingredients/regularization_strategies/RegularizationStrategyFactory.hpp"
-#include "ingredients/regularization_strategies/UnstableRegularization.hpp"
+#include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
+#include "ingredients/inertia_correction_strategies/UnstableRegularization.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
@@ -27,8 +27,8 @@ namespace uno {
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          optimality_hessian_model(HessianModelFactory::create(options)),
          feasibility_hessian_model(HessianModelFactory::create(options)),
-         optimality_regularization_strategy(RegularizationStrategyFactory::create(options)),
-         feasibility_regularization_strategy(RegularizationStrategyFactory::create(options)),
+         optimality_inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
+         feasibility_inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
          optimality_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
          feasibility_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
          linear_feasibility_tolerance(options.get_double("primal_tolerance")),
@@ -45,16 +45,16 @@ namespace uno {
       // memory allocation
       this->optimality_hessian_model->initialize(model);
       this->optimality_inequality_handling_method->initialize(optimality_problem, initial_iterate,
-         *this->optimality_hessian_model, *this->optimality_regularization_strategy, trust_region_radius);
+         *this->optimality_hessian_model, *this->optimality_inertia_correction_strategy, trust_region_radius);
       direction = Direction(
          std::max(optimality_problem.number_variables, feasibility_problem.number_variables),
          std::max(optimality_problem.number_constraints, feasibility_problem.number_constraints)
       );
 
       // statistics
-      this->optimality_regularization_strategy->initialize_statistics(statistics, options);
+      this->optimality_inertia_correction_strategy->initialize_statistics(statistics, options);
       this->optimality_inequality_handling_method->initialize_statistics(statistics, options);
-      this->feasibility_regularization_strategy->initialize_statistics(statistics, options);
+      this->feasibility_inertia_correction_strategy->initialize_statistics(statistics, options);
       this->feasibility_inequality_handling_method->initialize_statistics(statistics, options);
       statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
       statistics.set("phase", "OPT");
@@ -81,7 +81,7 @@ namespace uno {
             DEBUG << "Solving the optimality subproblem\n";
             const OptimizationProblem optimality_problem{model};
             this->solve_subproblem(statistics, *this->optimality_inequality_handling_method, optimality_problem, current_iterate,
-               direction, *this->optimality_hessian_model, *this->optimality_regularization_strategy, trust_region_radius,
+               direction, *this->optimality_hessian_model, *this->optimality_inertia_correction_strategy, trust_region_radius,
                warmstart_information);
             if (direction.status == SubproblemStatus::INFEASIBLE) {
                // switch to the feasibility problem, starting from the current direction
@@ -109,7 +109,7 @@ namespace uno {
       l1RelaxedProblem feasibility_problem{model, 0., this->constraint_violation_coefficient,
          this->optimality_inequality_handling_method->proximal_coefficient(), this->reference_optimality_primals.data()};
       this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method, feasibility_problem, current_iterate,
-         direction, *this->feasibility_hessian_model, *this->feasibility_regularization_strategy, trust_region_radius,
+         direction, *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy, trust_region_radius,
          warmstart_information);
    }
 
@@ -144,7 +144,7 @@ namespace uno {
       // initialize the feasibility ingredients upon the first switch to feasibility restoration
       if (this->first_switch_to_feasibility) {
          this->feasibility_inequality_handling_method->initialize(feasibility_problem, current_iterate,
-            *this->feasibility_hessian_model, *this->feasibility_regularization_strategy, trust_region_radius);
+            *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy, trust_region_radius);
          this->feasibility_hessian_model->initialize(model);
 
          this->first_switch_to_feasibility = false;
@@ -158,10 +158,10 @@ namespace uno {
 
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction, HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius,
+         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
          WarmstartInformation& warmstart_information) {
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      inequality_handling_method.solve(statistics, problem, current_iterate, direction, hessian_model, regularization_strategy,
+      inequality_handling_method.solve(statistics, problem, current_iterate, direction, hessian_model, inertia_correction_strategy,
          trust_region_radius, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
@@ -263,7 +263,7 @@ namespace uno {
 
    std::string FeasibilityRestoration::get_name() const {
       return "restoration " + this->optimality_inequality_handling_method->get_name() + " with " +
-         this->optimality_hessian_model->get_name() + " Hessian and " + this->optimality_regularization_strategy->get_name() +
+         this->optimality_hessian_model->get_name() + " Hessian and " + this->optimality_inertia_correction_strategy->get_name() +
          " regularization";
    }
 

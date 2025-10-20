@@ -42,7 +42,7 @@ namespace uno {
       options.set_integer("statistics_TR_radius_column_order", 10);
       options.set_integer("statistics_LS_step_length_column_order", 10);
       options.set_integer("statistics_restoration_phase_column_order", 20);
-      options.set_integer("statistics_regularization_column_order", 21);
+      options.set_integer("statistics_primal_regularization_column_order", 21);
       options.set_integer("statistics_funnel_width_column_order", 25);
       options.set_integer("statistics_step_norm_column_order", 31);
       options.set_integer("statistics_objective_column_order", 100);
@@ -57,7 +57,7 @@ namespace uno {
       options.set_string("logger", "INFO");
       // Hessian model (exact|zero)
       options.set_string("hessian_model", "exact");
-      options.set_string("regularization_strategy", "primal");
+      options.set_string("inertia_correction_strategy", "primal");
       // scale the functions (yes|no)
       options.set_bool("scale_functions", false);
       options.set_double("function_scaling_threshold", 100.);

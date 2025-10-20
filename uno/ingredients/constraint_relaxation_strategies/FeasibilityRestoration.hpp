@@ -7,7 +7,7 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
-#include "ingredients/regularization_strategies/RegularizationStrategy.hpp"
+#include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -43,8 +43,8 @@ namespace uno {
       const double constraint_violation_coefficient;
       std::unique_ptr<HessianModel> optimality_hessian_model;
       std::unique_ptr<HessianModel> feasibility_hessian_model;
-      std::unique_ptr<RegularizationStrategy<double>> optimality_regularization_strategy;
-      std::unique_ptr<RegularizationStrategy<double>> feasibility_regularization_strategy;
+      std::unique_ptr<InertiaCorrectionStrategy<double>> optimality_inertia_correction_strategy;
+      std::unique_ptr<InertiaCorrectionStrategy<double>> feasibility_inertia_correction_strategy;
       std::unique_ptr<InequalityHandlingMethod> optimality_inequality_handling_method;
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
       // the class maintains multipliers for the other phase (feasibility multipliers if we are in the optimality phase,
@@ -57,7 +57,7 @@ namespace uno {
       bool first_switch_to_feasibility{true};
 
       void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         Iterate& current_iterate, Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
+         Iterate& current_iterate, Direction& direction, HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information);
       void switch_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy, const Model& model,
          Iterate& trial_iterate);
