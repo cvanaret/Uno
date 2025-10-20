@@ -14,7 +14,7 @@ namespace uno {
    }
 
    bool ExactHessian::has_curvature(const Model& model) const {
-      return (0 < model.number_hessian_nonzeros());
+      return (model.get_problem_type() != ProblemType::LINEAR);
    }
 
    size_t ExactHessian::number_nonzeros(const Model& model) const {
