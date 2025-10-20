@@ -606,12 +606,8 @@ bool uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, ch
    return true;
 }
 
-bool uno_set_lagrangian_hessian_operator(void* model, int32_t number_hessian_nonzeros, HessianOperator lagrangian_hessian_operator,
+bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator,
       double lagrangian_sign_convention) {
-   if (number_hessian_nonzeros <= 0) {
-      WARNING << "Please specify a positive number of Lagrangian Hessian nonzeros."  << std::endl;
-      return false;
-   }
    if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
       WARNING << "Please specify a Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
          UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;
@@ -625,7 +621,6 @@ bool uno_set_lagrangian_hessian_operator(void* model, int32_t number_hessian_non
       WARNING << "Please specify a Lagrangian sign convention consistent with that of the Hessian function."  << std::endl;
       return false;
    }
-   user_model->number_hessian_nonzeros = number_hessian_nonzeros;
    user_model->lagrangian_hessian_operator = lagrangian_hessian_operator;
    user_model->lagrangian_sign_convention = lagrangian_sign_convention;
    return true;
