@@ -798,12 +798,6 @@ int uno_get_solver_integer_option(void* solver, const char* option_name) {
    return uno_solver->options->get_int(option_name);
 }
 
-size_t uno_get_solver_unsigned_integer_option(void* solver, const char* option_name) {
-   assert(solver != nullptr);
-   Solver* uno_solver = static_cast<Solver*>(solver);
-   return uno_solver->options->get_unsigned_int(option_name);
-}
-
 bool uno_get_solver_bool_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);

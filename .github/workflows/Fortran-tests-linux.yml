@@ -1,0 +1,63 @@
+# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
+name: Tests of the Fortran interfaces on Linux
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
+    # You can convert this to a matrix build if you need cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        architecture: [x64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download dependency (BQPD)
+        shell: bash
+        run: |
+          VERSION_BQPD="1.0.0"
+          PLATFORM="x86_64-linux-gnu"
+          wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
+          mkdir deps
+          tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
+
+      - name: Configure Uno CMake
+        shell: bash
+        run: |
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                                               -DBQPD=${{github.workspace}}/deps/lib/libbqpd.a \
+                                               -DBUILD_STATIC_LIBS=ON \
+                                               -DBUILD_SHARED_LIBS=OFF .
+
+      - name: Build Uno
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j4
+
+      - name: Compile Fortran tests
+        working-directory: ${{github.workspace}}/interfaces/Fortran
+        run: gfortran test_uno.f90 -o test_uno -L../../build -luno -L${{github.workspace}}/deps/lib -lbqpd -lstdc++
+
+      - name: Run Fortran tests
+        working-directory: ${{github.workspace}}/interfaces/Fortran
+        run: ./test_uno

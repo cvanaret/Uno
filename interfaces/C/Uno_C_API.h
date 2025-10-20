@@ -270,9 +270,8 @@ extern "C" {
 
    // gets the value of a given double option.
    // takes as inputs the name of the option.
-   // the possible types are integer, unsigned integer, double, bool and string.
+   // the possible types are integer, double, bool and string.
    int uno_get_solver_integer_option(void* solver, const char* option_name);
-   size_t uno_get_solver_unsigned_integer_option(void* solver, const char* option_name);
    double uno_get_solver_double_option(void* solver, const char* option_name);
    bool uno_get_solver_bool_option(void* solver, const char* option_name);
    const char* uno_get_solver_string_option(void* solver, const char* option_name);
