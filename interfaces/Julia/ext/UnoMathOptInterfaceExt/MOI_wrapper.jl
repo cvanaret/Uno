@@ -1574,7 +1574,6 @@ function _manually_evaluated_primal_status(model::Optimizer)
         return MOI.FEASIBLE_POINT
     end
     # 1e-6 is the default acceptable tolerance
-    # TODO: Charlie, should we add this option in Uno?
     atol = get(model.options, "loose_primal_tolerance", 1e-6)
     if all(x_L[i] - atol <= x[i] <= x_U[i] + atol for i in 1:n) &&
        all(g_L[i] - atol <= g[i] <= g_U[i] + atol for i in 1:m)
