@@ -1,16 +1,16 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_NOREGULARIZATION_H
-#define UNO_NOREGULARIZATION_H
+#ifndef UNO_NOINERTIACORRECTION_H
+#define UNO_NOINERTIACORRECTION_H
 
-#include "RegularizationStrategy.hpp"
+#include "InertiaCorrectionStrategy.hpp"
 
 namespace uno {
    template <typename ElementType>
-   class NoRegularization: public RegularizationStrategy<ElementType> {
+   class NoInertiaCorrection: public InertiaCorrectionStrategy<ElementType> {
    public:
-      explicit NoRegularization() = default;
+      explicit NoInertiaCorrection() = default;
 
       void initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) override {
          // do nothing
@@ -64,4 +64,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_NOREGULARIZATION_H
+#endif // UNO_NOINERTIACORRECTION_H

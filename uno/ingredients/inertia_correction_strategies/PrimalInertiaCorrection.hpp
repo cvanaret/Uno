@@ -1,13 +1,13 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_PRIMALREGULARIZATION_H
-#define UNO_PRIMALREGULARIZATION_H
+#ifndef UNO_PRIMALINERTIACORRECTION_H
+#define UNO_PRIMALINERTIACORRECTION_H
 
 #include <cassert>
 #include <memory>
 #include <string>
-#include "RegularizationStrategy.hpp"
+#include "InertiaCorrectionStrategy.hpp"
 #include "UnstableRegularization.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
@@ -18,9 +18,9 @@
 
 namespace uno {
    template <typename ElementType>
-   class PrimalRegularization: public RegularizationStrategy<ElementType> {
+   class PrimalInertiaCorrection: public InertiaCorrectionStrategy<ElementType> {
    public:
-      explicit PrimalRegularization(const Options& options);
+      explicit PrimalInertiaCorrection(const Options& options);
 
       void initialize_statistics(Statistics& statistics, const Options& options) override;
 
@@ -54,8 +54,8 @@ namespace uno {
    };
 
    template <typename ElementType>
-   PrimalRegularization<ElementType>::PrimalRegularization(const Options& options):
-         RegularizationStrategy<ElementType>(),
+   PrimalInertiaCorrection<ElementType>::PrimalInertiaCorrection(const Options& options):
+         InertiaCorrectionStrategy<ElementType>(),
          optional_linear_solver_name(options.get_string("linear_solver")),
          regularization_initial_value(options.get_double("regularization_initial_value")),
          regularization_increase_factor(options.get_double("regularization_increase_factor")),
@@ -63,13 +63,13 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void PrimalRegularization<ElementType>::initialize_statistics(Statistics& statistics, const Options& options) {
-      statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_regularization_column_order"));
+   void PrimalInertiaCorrection<ElementType>::initialize_statistics(Statistics& statistics, const Options& options) {
+      statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_primal_regularization_column_order"));
    }
 
    // Nocedal and Wright, p51
    template <typename ElementType>
-   void PrimalRegularization<ElementType>::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
+   void PrimalInertiaCorrection<ElementType>::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
          const double* hessian_values, const Inertia& expected_inertia, double* primal_regularization_values) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
@@ -82,7 +82,7 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void PrimalRegularization<ElementType>::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
+   void PrimalInertiaCorrection<ElementType>::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
          const double* hessian_values, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, double* primal_regularization_values) {
       assert(hessian_values != nullptr);
@@ -121,7 +121,7 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
+   void PrimalInertiaCorrection<ElementType>::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const double* augmented_matrix_values, ElementType dual_regularization_parameter,
          const Inertia& expected_inertia, double* primal_regularization_values,
          double* dual_regularization_values) {
@@ -136,7 +136,7 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void PrimalRegularization<ElementType>::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
+   void PrimalInertiaCorrection<ElementType>::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
          const double* augmented_matrix_values, ElementType /*dual_regularization_parameter*/,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          double* primal_regularization_values, double* /*dual_regularization_values*/) {
@@ -145,24 +145,24 @@ namespace uno {
    }
 
    template <typename ElementType>
-   bool PrimalRegularization<ElementType>::performs_primal_regularization() const {
+   bool PrimalInertiaCorrection<ElementType>::performs_primal_regularization() const {
       return true;
    }
 
    template <typename ElementType>
-   bool PrimalRegularization<ElementType>::performs_dual_regularization() const {
+   bool PrimalInertiaCorrection<ElementType>::performs_dual_regularization() const {
       return false;
    }
 
    template <typename ElementType>
-   double PrimalRegularization<ElementType>::get_primal_regularization_factor() const {
+   double PrimalInertiaCorrection<ElementType>::get_primal_regularization_factor() const {
       return this->regularization_factor;
    }
 
    template <typename ElementType>
-   std::string PrimalRegularization<ElementType>::get_name() const {
+   std::string PrimalInertiaCorrection<ElementType>::get_name() const {
       return "primal";
    }
 } // namespace
 
-#endif // UNO_PRIMALREGULARIZATION_H
+#endif // UNO_PRIMALINERTIACORRECTION_H

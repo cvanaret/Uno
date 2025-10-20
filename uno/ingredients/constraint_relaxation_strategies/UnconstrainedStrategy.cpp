@@ -5,7 +5,7 @@
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
-#include "ingredients/regularization_strategies/RegularizationStrategyFactory.hpp"
+#include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
@@ -18,7 +18,7 @@ namespace uno {
          ConstraintRelaxationStrategy(options),
          inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
          hessian_model(HessianModelFactory::create(options)),
-         regularization_strategy(RegularizationStrategyFactory::create(options)) {
+         inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)) {
    }
 
    void UnconstrainedStrategy::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
@@ -28,11 +28,11 @@ namespace uno {
       // memory allocation
       this->hessian_model->initialize(model);
       this->inequality_handling_method->initialize(problem, initial_iterate, *this->hessian_model,
-         *this->regularization_strategy, trust_region_radius);
+         *this->inertia_correction_strategy, trust_region_radius);
       direction = Direction(problem.number_variables, problem.number_constraints);
 
       // statistics
-      this->regularization_strategy->initialize_statistics(statistics, options);
+      this->inertia_correction_strategy->initialize_statistics(statistics, options);
       this->inequality_handling_method->initialize_statistics(statistics, options);
 
       // initial iterate
@@ -54,7 +54,7 @@ namespace uno {
       const OptimizationProblem problem{model};
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
       this->inequality_handling_method->solve(statistics, problem, current_iterate, direction, *this->hessian_model,
-         *this->regularization_strategy, trust_region_radius, warmstart_information);
+         *this->inertia_correction_strategy, trust_region_radius, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
       warmstart_information.no_changes();
@@ -100,7 +100,7 @@ namespace uno {
 
    std::string UnconstrainedStrategy::get_name() const {
       return this->inequality_handling_method->get_name() + " with " + this->hessian_model->get_name() + " Hessian and " +
-         this->regularization_strategy->get_name() + " regularization";
+         this->inertia_correction_strategy->get_name() + " regularization";
    }
 
    size_t UnconstrainedStrategy::get_hessian_evaluation_count() const {
