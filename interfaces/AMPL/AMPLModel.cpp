@@ -9,7 +9,6 @@
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
-#include "options/Options.hpp"
 #include "Uno.hpp"
 
 namespace uno {
@@ -45,6 +44,9 @@ namespace uno {
          Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_),
             (asl->i.objtype_[0] == 1) ? -1. : 1. /* optimization sense */),
          asl(asl),
+         // compute sparsity pattern and number of nonzeros of Lagrangian Hessian
+         number_asl_hessian_nonzeros(this->compute_lagrangian_hessian_sparsity()),
+         problem_type(this->determine_problem_type()),
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
@@ -57,15 +59,16 @@ namespace uno {
 
       // partition equality/inequality constraints
       Model::partition_constraints(this->equality_constraints, this->inequality_constraints);
-
-      // compute sparsity pattern and number of nonzeros of Lagrangian Hessian
-      this->compute_lagrangian_hessian_sparsity();
    }
 
    AMPLModel::~AMPLModel() {
       ASL_free(&this->asl);
    }
-   
+
+   ProblemType AMPLModel::get_problem_type() const {
+      return this->problem_type;
+   }
+
    bool AMPLModel::has_jacobian_operator() const {
       return false;
    }
@@ -338,11 +341,22 @@ namespace uno {
       this->number_model_evaluations.reset();
    }
 
-   void AMPLModel::compute_lagrangian_hessian_sparsity() {
+   size_t AMPLModel::compute_lagrangian_hessian_sparsity() const {
       // compute the maximum number of nonzero elements, provided that all multipliers are non-zero
       // int (*Sphset) (ASL*, SputInfo**, int nobj, int ow, int y, int uptri);
       // store in lower-triangular part
       constexpr int triangular = 2;
-      this->number_asl_hessian_nonzeros = static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, -1, 1, 1, triangular));
+      return static_cast<size_t>((*(this->asl)->p.Sphset)(this->asl, nullptr, -1, 1, 1, triangular));
+   }
+
+   ProblemType AMPLModel::determine_problem_type() const {
+      // in an LP, there are no Hessian terms and all the constraints are linear
+      if (this->number_asl_hessian_nonzeros == 0 && this->linear_constraints.size() == this->number_constraints) {
+         return ProblemType::LINEAR;
+      }
+      // as is, we cannot conclude whether the model is a QP (this requires extra work). We simply report an NLP
+      else {
+         return ProblemType::NONLINEAR;
+      }
    }
 } // namespace

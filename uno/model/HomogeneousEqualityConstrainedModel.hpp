@@ -16,6 +16,8 @@ namespace uno {
    public:
       explicit HomogeneousEqualityConstrainedModel(const Model& original_model);
 
+      [[nodiscard]] ProblemType get_problem_type() const override;
+
       // availability of linear operators
       [[nodiscard]] bool has_jacobian_operator() const override;
       [[nodiscard]] bool has_jacobian_transposed_operator() const override;

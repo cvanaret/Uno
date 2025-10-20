@@ -15,6 +15,10 @@ namespace uno {
          linear_constraints(concatenate(this->model.get_linear_constraints(), Range(this->model.number_constraints, this->number_constraints))) {
    }
 
+   ProblemType FixedBoundsConstraintsModel::get_problem_type() const {
+      return this->model.get_problem_type();
+   }
+
    bool FixedBoundsConstraintsModel::has_jacobian_operator() const {
       return this->model.has_jacobian_operator();
    }
