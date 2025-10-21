@@ -17,7 +17,7 @@
 
 namespace uno {
    PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(const Options& options):
-         InequalityHandlingMethod(),
+         InequalityHandlingMethod(options),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))),
          barrier_parameter_update_strategy(options),
          previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
@@ -209,11 +209,7 @@ namespace uno {
       // create the subproblem
       const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy,
          trust_region_radius};
-      return subproblem.compute_predicted_reductions(this->get_evaluation_space(), direction, step_length);
-   }
-
-   EvaluationSpace& PrimalDualInteriorPointMethod::get_evaluation_space() const {
-      return this->linear_solver->get_evaluation_space();
+      return subproblem.compute_predicted_reductions(this->get_evaluation_space(), direction, step_length, this->progress_norm);
    }
 
    void PrimalDualInteriorPointMethod::evaluate_constraint_jacobian(Iterate& iterate) {
@@ -282,5 +278,9 @@ namespace uno {
 
    std::string PrimalDualInteriorPointMethod::get_name() const {
       return "primal-dual interior-point method";
+   }
+
+   EvaluationSpace& PrimalDualInteriorPointMethod::get_evaluation_space() const {
+      return this->linear_solver->get_evaluation_space();
    }
 } // namespace

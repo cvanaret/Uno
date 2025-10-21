@@ -228,14 +228,14 @@ namespace uno {
    }
 
    double Subproblem::compute_predicted_infeasibility_reduction(const EvaluationSpace& evaluation_space,
-         const Vector<double>& primal_direction, double step_length) const {
+         const Vector<double>& primal_direction, double step_length, Norm progress_norm) const {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
-      const double current_constraint_violation = this->problem.model.constraint_violation(current_iterate.evaluations.constraints,
-         Norm::L1 /*this->progress_norm*/);
+      const double current_constraint_violation = this->problem.model.constraint_violation(this->current_iterate.evaluations.constraints,
+         progress_norm);
       Vector<double> result(this->problem.model.number_constraints);
       evaluation_space.compute_constraint_jacobian_vector_product(primal_direction, result);
-      const double trial_linearized_constraint_violation = this->problem.model.constraint_violation(current_iterate.evaluations.constraints +
-         step_length * result, Norm::L1 /*this->progress_norm*/);
+      const double trial_linearized_constraint_violation = this->problem.model.constraint_violation(this->current_iterate.evaluations.constraints +
+         step_length * result, progress_norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
    }
 
@@ -251,9 +251,9 @@ namespace uno {
    }
 
    ProgressMeasures Subproblem::compute_predicted_reductions(const EvaluationSpace& evaluation_space, const Direction& direction,
-         double step_length) const {
+         double step_length, Norm progress_norm) const {
       return {
-         this->compute_predicted_infeasibility_reduction(evaluation_space, direction.primals, step_length),
+         this->compute_predicted_infeasibility_reduction(evaluation_space, direction.primals, step_length, progress_norm),
          this->compute_predicted_objective_reduction(evaluation_space, direction.primals, step_length),
          0.
          // TODO

@@ -5,15 +5,20 @@
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
+#include "options/Options.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/UserCallbacks.hpp"
 
 namespace uno {
+   InequalityHandlingMethod::InequalityHandlingMethod(const Options& options):
+      progress_norm(norm_from_string(options.get_string("progress_norm"))) {
+   }
+
    // infeasibility measure: constraint violation
    void InequalityHandlingMethod::set_infeasibility_measure(const Model& model, Iterate& iterate) const {
       iterate.evaluate_constraints(model);
-      iterate.progress.infeasibility = model.constraint_violation(iterate.evaluations.constraints, Norm::L1 /*this->progress_norm*/);
+      iterate.progress.infeasibility = model.constraint_violation(iterate.evaluations.constraints, this->progress_norm);
    }
 
    // objective measure: scaled objective

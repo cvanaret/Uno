@@ -37,7 +37,6 @@ namespace uno {
          double trust_region_radius, Iterate& current_iterate, const Direction& direction, double step_length) const override;
 
       // matrix computations
-      [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
       void evaluate_constraint_jacobian(Iterate& iterate) override;
       void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
@@ -71,6 +70,7 @@ namespace uno {
       void update_barrier_parameter(const Iterate& current_iterate, const DualResiduals& residuals);
       [[nodiscard]] bool is_small_step(const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
       [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
+      [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
    };
 } // namespace
 

@@ -17,7 +17,7 @@
 
 namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(const Options& options):
-         InequalityHandlingMethod(), options(options) {
+         InequalityHandlingMethod(options), options(options) {
    }
 
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
@@ -85,11 +85,7 @@ namespace uno {
          HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
          double trust_region_radius, Iterate& current_iterate, const Direction& direction, double step_length) const {
       const Subproblem subproblem{problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
-      return subproblem.compute_predicted_reductions(this->get_evaluation_space(), direction, step_length);
-   }
-
-   EvaluationSpace& InequalityConstrainedMethod::get_evaluation_space() const {
-      return this->solver->get_evaluation_space();
+      return subproblem.compute_predicted_reductions(this->get_evaluation_space(), direction, step_length, this->progress_norm);
    }
 
    void InequalityConstrainedMethod::evaluate_constraint_jacobian(Iterate& iterate) {
@@ -142,5 +138,9 @@ namespace uno {
 
    std::string InequalityConstrainedMethod::get_name() const {
       return "inequality-constrained method";
+   }
+
+   EvaluationSpace& InequalityConstrainedMethod::get_evaluation_space() const {
+      return this->solver->get_evaluation_space();
    }
 } // namespace

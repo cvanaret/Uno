@@ -132,7 +132,7 @@ namespace uno {
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       bool accept_iterate = constraint_relaxation_strategy.is_iterate_acceptable(statistics, globalization_strategy, model,
-         current_iterate, trial_iterate, direction, 1., warmstart_information, user_callbacks);
+         this->radius, current_iterate, trial_iterate, direction, 1., warmstart_information, user_callbacks);
       this->set_primal_statistics(statistics, model, trial_iterate);
       if (accept_iterate) {
          // trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);

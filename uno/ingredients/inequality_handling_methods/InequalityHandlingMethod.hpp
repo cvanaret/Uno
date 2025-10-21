@@ -5,8 +5,8 @@
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
 #include <string>
-
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
+#include "linear_algebra/Norm.hpp"
 
 namespace uno {
    // forward declarations
@@ -30,7 +30,7 @@ namespace uno {
    
    class InequalityHandlingMethod {
    public:
-      InequalityHandlingMethod() = default;
+      explicit InequalityHandlingMethod(const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
       virtual void initialize(const OptimizationProblem& problem, Iterate& current_iterate,
@@ -58,7 +58,6 @@ namespace uno {
          double step_length, UserCallbacks& user_callbacks);
 
       // matrix computations
-      [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() const = 0;
       virtual void evaluate_constraint_jacobian(Iterate& iterate) = 0;
       virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
       virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
@@ -78,6 +77,11 @@ namespace uno {
       bool subproblem_definition_changed{false};
 
       [[nodiscard]] virtual std::string get_name() const = 0;
+
+   protected:
+      const Norm progress_norm;
+
+      [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() const = 0;
    };
 } // namespace
 

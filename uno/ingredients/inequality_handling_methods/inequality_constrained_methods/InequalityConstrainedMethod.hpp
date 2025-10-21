@@ -36,7 +36,6 @@ namespace uno {
          double trust_region_radius, Iterate& current_iterate, const Direction& direction, double step_length) const override;
 
       // matrix computations
-      [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
       void evaluate_constraint_jacobian(Iterate& iterate) override;
       void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
@@ -61,6 +60,7 @@ namespace uno {
       const Options& options; // copy of the options for delayed allocation of solver
 
       static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
+      [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
    };
 } // namespace
 
