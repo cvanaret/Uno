@@ -35,7 +35,7 @@ namespace uno {
          Direction& direction, HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
 
-      virtual void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
+      virtual void initialize_feasibility_problem(Iterate& current_iterate) = 0;
       virtual void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) = 0;
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
       [[nodiscard]] virtual double proximal_coefficient() const = 0;

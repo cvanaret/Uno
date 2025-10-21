@@ -65,7 +65,7 @@ namespace uno {
       this->initial_point.fill(0.);
    }
 
-   void InequalityConstrainedMethod::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& /*current_iterate*/) {
+   void InequalityConstrainedMethod::initialize_feasibility_problem(Iterate& /*current_iterate*/) {
       // do nothing
    }
 

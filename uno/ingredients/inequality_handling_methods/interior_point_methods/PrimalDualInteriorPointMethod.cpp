@@ -139,7 +139,7 @@ namespace uno {
       return this->barrier_parameter_update_strategy.get_barrier_parameter();
    }
 
-   void PrimalDualInteriorPointMethod::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& current_iterate) {
+   void PrimalDualInteriorPointMethod::initialize_feasibility_problem(Iterate& current_iterate) {
       this->solving_feasibility_problem = true;
       this->first_feasibility_iteration = true;
       this->subproblem_definition_changed = true;

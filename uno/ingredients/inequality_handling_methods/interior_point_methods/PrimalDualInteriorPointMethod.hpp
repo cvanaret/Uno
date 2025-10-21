@@ -28,7 +28,7 @@ namespace uno {
          HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
          WarmstartInformation& warmstart_information) override;
 
-      void initialize_feasibility_problem(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
+      void initialize_feasibility_problem(Iterate& current_iterate) override;
       void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
       [[nodiscard]] double proximal_coefficient() const override;
