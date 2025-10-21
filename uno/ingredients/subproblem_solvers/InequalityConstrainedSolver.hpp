@@ -21,7 +21,7 @@ namespace uno {
 
       virtual void initialize_memory(const Subproblem& subproblem) = 0;
 
-      virtual void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
+      virtual void solve(Statistics& statistics, const Subproblem& subproblem, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) = 0;
 
       [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() = 0;

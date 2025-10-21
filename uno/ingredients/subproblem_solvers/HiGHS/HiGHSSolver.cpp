@@ -19,7 +19,7 @@ namespace uno {
       this->evaluation_space.initialize_memory(subproblem);
    }
 
-   void HiGHSSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& /*initial_point*/,
+   void HiGHSSolver::solve(Statistics& statistics, const Subproblem& subproblem, const Vector<double>& /*initial_point*/,
          Direction& direction, const WarmstartInformation& warmstart_information) {
       this->set_up_subproblem(statistics, subproblem, warmstart_information);
       this->solve_subproblem(subproblem, direction);
