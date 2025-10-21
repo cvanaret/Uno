@@ -39,9 +39,9 @@ namespace uno {
          Direction& direction, double trust_region_radius, const Options& options) {
       this->optimality_problem = std::make_unique<const OptimizationProblem>(model);
       this->reference_optimality_primals.resize(this->optimality_problem->number_variables);
-      this->feasibility_problem = std::make_unique<l1RelaxedProblem>(model, 0., this->constraint_violation_coefficient,
-         this->reference_optimality_primals.data());
+      this->feasibility_problem = std::make_unique<l1RelaxedProblem>(model, 0., this->constraint_violation_coefficient);
       this->feasibility_problem->set_proximal_coefficient(this->optimality_inequality_handling_method->proximal_coefficient());
+      this->feasibility_problem->set_proximal_center(this->reference_optimality_primals.data());
 
       // memory allocation
       this->optimality_hessian_model->initialize(model);
@@ -107,6 +107,10 @@ namespace uno {
       statistics.set("phase", "FEAS");
       // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
       this->feasibility_problem->set_proximal_coefficient(this->optimality_inequality_handling_method->proximal_coefficient());
+      this->feasibility_problem->set_proximal_center(this->reference_optimality_primals.data());
+      std::cout << "proximal_coefficient = " << this->optimality_inequality_handling_method->proximal_coefficient() << '\n';
+      std::cout << "proximal_center = " << this->reference_optimality_primals[0] << ", " <<
+         this->reference_optimality_primals[1] << '\n';
       this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method, *this->feasibility_problem,
          current_iterate, direction, *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy,
          trust_region_radius, warmstart_information);
@@ -127,13 +131,15 @@ namespace uno {
       this->reference_optimality_progress = current_iterate.progress;
       this->reference_optimality_primals = current_iterate.primals;
 
+      this->feasibility_problem->set_proximal_coefficient(this->optimality_inequality_handling_method->proximal_coefficient());
+      this->feasibility_problem->set_proximal_center(this->reference_optimality_primals.data());
+
       current_iterate.set_number_variables(this->feasibility_problem->number_variables);
       // swap the iterate's multipliers and the feasibility multipliers maintained by the class
       this->other_phase_multipliers.constraints.resize(this->feasibility_problem->number_constraints);
       this->other_phase_multipliers.lower_bounds.resize(this->feasibility_problem->number_variables);
       this->other_phase_multipliers.upper_bounds.resize(this->feasibility_problem->number_variables);
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
-      this->feasibility_problem->set_proximal_coefficient(this->optimality_inequality_handling_method->proximal_coefficient());
       this->feasibility_inequality_handling_method->set_elastic_variable_values(*this->feasibility_problem, current_iterate);
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(*this->feasibility_problem, current_iterate);
 
@@ -209,6 +215,7 @@ namespace uno {
       }
       else {
          this->feasibility_problem->set_proximal_coefficient(this->optimality_inequality_handling_method->proximal_coefficient());
+         this->feasibility_problem->set_proximal_center(this->reference_optimality_primals.data());
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
             *this->feasibility_problem, *this->feasibility_inequality_handling_method, current_iterate, trial_iterate,
             direction, step_length, user_callbacks);
@@ -240,6 +247,7 @@ namespace uno {
       }
       else {
          this->feasibility_problem->set_proximal_coefficient(this->optimality_inequality_handling_method->proximal_coefficient());
+         this->feasibility_problem->set_proximal_center(this->reference_optimality_primals.data());
          this->feasibility_problem->evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient,
             *this->feasibility_inequality_handling_method, iterate);
          ConstraintRelaxationStrategy::compute_primal_dual_residuals(*this->feasibility_problem, iterate);
