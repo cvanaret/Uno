@@ -66,7 +66,6 @@ namespace uno {
       this->optimality_problem->evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
          *this->optimality_inequality_handling_method, initial_iterate);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(*this->optimality_problem, initial_iterate);
-      this->evaluate_progress_measures(*this->optimality_inequality_handling_method, *this->optimality_problem, initial_iterate);
    }
 
    void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -201,14 +200,14 @@ namespace uno {
       bool accept_iterate = false;
       // determine acceptability, depending on the current phase
       if (this->current_phase == Phase::OPTIMALITY) {
-         accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
-            *this->optimality_problem, *this->optimality_inequality_handling_method, current_iterate, trial_iterate,
-            direction, step_length, user_callbacks);
+         accept_iterate = this->optimality_inequality_handling_method->is_iterate_acceptable(statistics, globalization_strategy,
+            *this->optimality_problem, *this->optimality_hessian_model, *this->optimality_inertia_correction_strategy,
+            /* TODO */ INF<double>, current_iterate, trial_iterate, direction, step_length, user_callbacks);
       }
       else {
-         accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
-            *this->feasibility_problem, *this->feasibility_inequality_handling_method, current_iterate, trial_iterate,
-            direction, step_length, user_callbacks);
+         accept_iterate = this->feasibility_inequality_handling_method->is_iterate_acceptable(statistics, globalization_strategy,
+            *this->feasibility_problem, *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy,
+            /* TODO */ INF<double>, current_iterate, trial_iterate, direction, step_length, user_callbacks);
       }
       trial_iterate.status = this->check_termination(model, trial_iterate);
 
@@ -241,13 +240,6 @@ namespace uno {
          ConstraintRelaxationStrategy::compute_primal_dual_residuals(*this->feasibility_problem, iterate);
          return ConstraintRelaxationStrategy::check_termination(*this->feasibility_problem, iterate);
       }
-   }
-
-   void FeasibilityRestoration::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
-         const OptimizationProblem& problem, Iterate& iterate) const {
-      this->set_infeasibility_measure(problem.model, iterate);
-      this->set_objective_measure(problem.model, iterate);
-      inequality_handling_method.set_auxiliary_measure(iterate);
    }
 
    std::string FeasibilityRestoration::get_name() const {

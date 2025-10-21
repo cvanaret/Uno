@@ -18,6 +18,7 @@ namespace uno {
    // forward declarations
    template <typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
+   class EvaluationSpace;
    class HessianModel;
    template <typename ElementType>
    class InertiaCorrectionStrategy;
@@ -78,6 +79,14 @@ namespace uno {
       [[nodiscard]] size_t number_regularized_augmented_system_nonzeros() const;
 
       [[nodiscard]] double dual_regularization_factor() const;
+
+      // progress measures
+      [[nodiscard]] double compute_predicted_infeasibility_reduction(const EvaluationSpace& evaluation_space,
+         const Vector<double>& primal_direction, double step_length) const;
+      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const EvaluationSpace& evaluation_space,
+         const Vector<double>& primal_direction, double step_length) const;
+      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const EvaluationSpace& evaluation_space, const Direction& direction,
+         double step_length) const;
 
       const OptimizationProblem& problem;
       Iterate& current_iterate;

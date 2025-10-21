@@ -6,18 +6,24 @@
 
 #include <string>
 
+#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
+
 namespace uno {
    // forward declarations
    class Direction;
+   class GlobalizationStrategy;
    class EvaluationSpace;
    class HessianModel;
    class Iterate;
    class l1RelaxedProblem;
+   class Model;
    class OptimizationProblem;
    class Options;
    template <typename ElementType>
    class InertiaCorrectionStrategy;
    class Statistics;
+   class Subproblem;
+   class UserCallbacks;
    template <typename ElementType>
    class Vector;
    class WarmstartInformation;
@@ -39,12 +45,24 @@ namespace uno {
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 
+      // acceptance
+      void set_infeasibility_measure(const Model& model, Iterate& iterate) const;
+      void set_objective_measure(const Model& model, Iterate& iterate) const;
+      void compute_progress_measures(const OptimizationProblem& problem, Iterate& iterate);
+      [[nodiscard]] virtual ProgressMeasures compute_predicted_reductions(const OptimizationProblem& problem,
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
+         double trust_region_radius, Iterate& current_iterate, const Direction& direction, double step_length) const = 0;
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         const OptimizationProblem& problem, HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
+         double trust_region_radius, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length, UserCallbacks& user_callbacks);
+
       // matrix computations
       [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() const = 0;
       virtual void evaluate_constraint_jacobian(Iterate& iterate) = 0;
       virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
       virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
-      [[nodiscard]] virtual double compute_hessian_quadratic_product(const Vector<double>& vector) const = 0;
+      [[nodiscard]] virtual double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const = 0;
 
       // progress measures
       virtual void set_auxiliary_measure(Iterate& iterate) = 0;

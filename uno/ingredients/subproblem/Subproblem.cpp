@@ -7,7 +7,10 @@
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/EvaluationSpace.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/ScalarMultiple.hpp"
+#include "symbolic/Sum.hpp"
 
 namespace uno {
    Subproblem::Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
@@ -222,5 +225,40 @@ namespace uno {
 
    double Subproblem::dual_regularization_factor() const {
       return this->problem.dual_regularization_factor();
+   }
+
+   double Subproblem::compute_predicted_infeasibility_reduction(const EvaluationSpace& evaluation_space,
+         const Vector<double>& primal_direction, double step_length) const {
+      // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
+      const double current_constraint_violation = this->problem.model.constraint_violation(current_iterate.evaluations.constraints,
+         Norm::L1 /*this->progress_norm*/);
+      Vector<double> result(this->problem.model.number_constraints);
+      evaluation_space.compute_constraint_jacobian_vector_product(primal_direction, result);
+      const double trial_linearized_constraint_violation = this->problem.model.constraint_violation(current_iterate.evaluations.constraints +
+         step_length * result, Norm::L1 /*this->progress_norm*/);
+      return current_constraint_violation - trial_linearized_constraint_violation;
+   }
+
+   std::function<double(double)> Subproblem::compute_predicted_objective_reduction(const EvaluationSpace& evaluation_space,
+         const Vector<double>& primal_direction, double step_length) const {
+      // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
+      const double directional_derivative = dot(primal_direction, this->current_iterate.evaluations.objective_gradient);
+      const double quadratic_term = false /*this->first_order_predicted_reduction*/ ? 0. :
+         evaluation_space.compute_hessian_quadratic_product(*this, primal_direction);
+      return [=](double objective_multiplier) {
+         return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
+      };
+   }
+
+   ProgressMeasures Subproblem::compute_predicted_reductions(const EvaluationSpace& evaluation_space, const Direction& direction,
+         double step_length) const {
+      return {
+         this->compute_predicted_infeasibility_reduction(evaluation_space, direction.primals, step_length),
+         this->compute_predicted_objective_reduction(evaluation_space, direction.primals, step_length),
+         0.
+         // TODO
+         // inequality_handling_method.compute_predicted_auxiliary_reduction_model(this->problem, this->current_iterate,
+         //   direction.primals, step_length)
+      };
    }
 } // namespace

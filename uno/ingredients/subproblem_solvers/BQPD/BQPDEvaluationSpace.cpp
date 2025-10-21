@@ -78,8 +78,8 @@ namespace uno {
    }
 
    double BQPDEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
-      double quadratic_product = 0.;
       if (subproblem.has_hessian_matrix()) { // explicit matrix
+         double quadratic_product = 0.;
          const size_t number_hessian_nonzeros = this->hessian_values.size();
          for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
             const size_t row_index = static_cast<size_t>(this->hessian_row_indices[nonzero_index]);
@@ -91,6 +91,7 @@ namespace uno {
             const double factor = (row_index != column_index) ? 2. : 1.;
             quadratic_product += factor * entry * vector[row_index] * vector[column_index];
          }
+         return quadratic_product;
       }
       else if (subproblem.has_hessian_operator()) { // linear operator
          // TODO preallocate
@@ -98,12 +99,11 @@ namespace uno {
          // compute Hv
          subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), vector.data(), result.data());
          // compute the dot product <v, Hv>
-         quadratic_product = dot(vector, result);
+         return dot(vector, result);
       }
       else {
          throw std::runtime_error("The Lagrangian Hessian has no appropriate representation");
       }
-      return quadratic_product;
    }
 
    void BQPDEvaluationSpace::evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate,

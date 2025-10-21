@@ -49,8 +49,8 @@ namespace uno {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::generate_initial_iterate(Iterate& /*initial_iterate*/) {
-      // TODO enforce linear constraints
+   void InequalityConstrainedMethod::generate_initial_iterate(Iterate& initial_iterate) {
+      this->compute_progress_measures(*this->problem, initial_iterate);
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
@@ -81,6 +81,13 @@ namespace uno {
       return 0.;
    }
 
+   ProgressMeasures InequalityConstrainedMethod::compute_predicted_reductions(const OptimizationProblem& problem,
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
+         double trust_region_radius, Iterate& current_iterate, const Direction& direction, double step_length) const {
+      const Subproblem subproblem{problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
+      return subproblem.compute_predicted_reductions(this->get_evaluation_space(), direction, step_length);
+   }
+
    EvaluationSpace& InequalityConstrainedMethod::get_evaluation_space() const {
       return this->solver->get_evaluation_space();
    }
@@ -100,9 +107,9 @@ namespace uno {
       evaluation_space.compute_constraint_jacobian_transposed_vector_product(vector, result);
    }
 
-   double InequalityConstrainedMethod::compute_hessian_quadratic_product(const Vector<double>& vector) const {
+   double InequalityConstrainedMethod::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
       const auto& evaluation_space = this->solver->get_evaluation_space();
-      return evaluation_space.compute_hessian_quadratic_product(vector);
+      return evaluation_space.compute_hessian_quadratic_product(subproblem, vector);
    }
 
    // compute dual *displacements*

@@ -95,6 +95,8 @@ namespace uno {
       if (0 < this->problem->number_constraints) {
          // TODO compute least-square multipliers
       }
+
+      this->compute_progress_measures(*this->problem, initial_iterate);
    }
 
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
@@ -201,6 +203,15 @@ namespace uno {
       return std::sqrt(this->barrier_parameter());
    }
 
+   ProgressMeasures PrimalDualInteriorPointMethod::compute_predicted_reductions(const OptimizationProblem& /*problem*/,
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
+         double trust_region_radius, Iterate& current_iterate, const Direction& direction, double step_length) const {
+      // create the subproblem
+      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy,
+         trust_region_radius};
+      return subproblem.compute_predicted_reductions(this->get_evaluation_space(), direction, step_length);
+   }
+
    EvaluationSpace& PrimalDualInteriorPointMethod::get_evaluation_space() const {
       return this->linear_solver->get_evaluation_space();
    }
@@ -221,9 +232,9 @@ namespace uno {
       evaluation_space.compute_constraint_jacobian_transposed_vector_product(vector, result);
    }
 
-   double PrimalDualInteriorPointMethod::compute_hessian_quadratic_product(const Vector<double>& vector) const {
+   double PrimalDualInteriorPointMethod::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
       const auto& evaluation_space = this->linear_solver->get_evaluation_space();
-      return evaluation_space.compute_hessian_quadratic_product(vector);
+      return evaluation_space.compute_hessian_quadratic_product(subproblem, vector);
    }
 
    void PrimalDualInteriorPointMethod::set_auxiliary_measure(Iterate& iterate) {
