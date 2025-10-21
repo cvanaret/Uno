@@ -38,9 +38,10 @@ namespace uno {
    void FeasibilityRestoration::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
          Direction& direction, double trust_region_radius, const Options& options) {
       this->optimality_problem = std::make_unique<const OptimizationProblem>(model);
-      this->feasibility_problem = std::make_unique<const l1RelaxedProblem>(model, 0., this->constraint_violation_coefficient,
-         this->optimality_inequality_handling_method->proximal_coefficient(), this->reference_optimality_primals.data());
       this->reference_optimality_primals.resize(this->optimality_problem->number_variables);
+      this->feasibility_problem = std::make_unique<l1RelaxedProblem>(model, 0., this->constraint_violation_coefficient,
+         this->reference_optimality_primals.data());
+      this->feasibility_problem->set_proximal_coefficient(this->optimality_inequality_handling_method->proximal_coefficient());
 
       // memory allocation
       this->optimality_hessian_model->initialize(model);
@@ -105,6 +106,7 @@ namespace uno {
       DEBUG << "Solving the feasibility subproblem\n";
       statistics.set("phase", "FEAS");
       // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
+      this->feasibility_problem->set_proximal_coefficient(this->optimality_inequality_handling_method->proximal_coefficient());
       this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method, *this->feasibility_problem,
          current_iterate, direction, *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy,
          trust_region_radius, warmstart_information);
@@ -131,6 +133,7 @@ namespace uno {
       this->other_phase_multipliers.lower_bounds.resize(this->feasibility_problem->number_variables);
       this->other_phase_multipliers.upper_bounds.resize(this->feasibility_problem->number_variables);
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
+      this->feasibility_problem->set_proximal_coefficient(this->optimality_inequality_handling_method->proximal_coefficient());
       this->feasibility_inequality_handling_method->set_elastic_variable_values(*this->feasibility_problem, current_iterate);
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(*this->feasibility_problem, current_iterate);
 
@@ -205,6 +208,7 @@ namespace uno {
             direction, step_length, user_callbacks);
       }
       else {
+         this->feasibility_problem->set_proximal_coefficient(this->optimality_inequality_handling_method->proximal_coefficient());
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
             *this->feasibility_problem, *this->feasibility_inequality_handling_method, current_iterate, trial_iterate,
             direction, step_length, user_callbacks);
@@ -235,6 +239,7 @@ namespace uno {
          return ConstraintRelaxationStrategy::check_termination(*this->optimality_problem, iterate);
       }
       else {
+         this->feasibility_problem->set_proximal_coefficient(this->optimality_inequality_handling_method->proximal_coefficient());
          this->feasibility_problem->evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient,
             *this->feasibility_inequality_handling_method, iterate);
          ConstraintRelaxationStrategy::compute_primal_dual_residuals(*this->feasibility_problem, iterate);

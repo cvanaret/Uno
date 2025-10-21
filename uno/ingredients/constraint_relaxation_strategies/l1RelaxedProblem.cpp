@@ -11,18 +11,21 @@
 
 namespace uno {
    l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
-            double proximal_coefficient, double const* proximal_center):
+            double const* proximal_center):
          OptimizationProblem(model, model.number_variables + model.get_inequality_constraints().size() +
             2*model.get_equality_constraints().size(), model.number_constraints),
          number_elastic_variables(model.get_inequality_constraints().size() + 2*model.get_equality_constraints().size()),
          objective_multiplier(objective_multiplier),
          constraint_violation_coefficient(constraint_violation_coefficient),
-         proximal_coefficient(proximal_coefficient),
          proximal_center(proximal_center) {
    }
 
    double l1RelaxedProblem::get_objective_multiplier() const {
       return this->objective_multiplier;
+   }
+
+   void l1RelaxedProblem::set_proximal_coefficient(double proximal_coefficient) {
+      this->proximal_coefficient = proximal_coefficient;
    }
 
    void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
