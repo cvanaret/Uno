@@ -46,8 +46,6 @@ namespace uno {
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 
       // acceptance
-      void set_infeasibility_measure(const Model& model, Iterate& iterate) const;
-      void set_objective_measure(const Model& model, Iterate& iterate) const;
       void compute_progress_measures(const OptimizationProblem& problem, Iterate& iterate);
       [[nodiscard]] virtual ProgressMeasures compute_predicted_reductions(const OptimizationProblem& problem,
          HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,

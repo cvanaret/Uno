@@ -2,6 +2,7 @@
 #include "InequalityHandlingMethod.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
@@ -15,25 +16,10 @@ namespace uno {
       progress_norm(norm_from_string(options.get_string("progress_norm"))) {
    }
 
-   // infeasibility measure: constraint violation
-   void InequalityHandlingMethod::set_infeasibility_measure(const Model& model, Iterate& iterate) const {
-      iterate.evaluate_constraints(model);
-      iterate.progress.infeasibility = model.constraint_violation(iterate.evaluations.constraints, this->progress_norm);
-   }
-
-   // objective measure: scaled objective
-   void InequalityHandlingMethod::set_objective_measure(const Model& model, Iterate& iterate) const {
-      iterate.evaluate_objective(model);
-      const double objective = iterate.evaluations.objective;
-      iterate.progress.objective = [=](double objective_multiplier) {
-         return objective_multiplier * objective;
-      };
-   }
-
    void InequalityHandlingMethod::compute_progress_measures(const OptimizationProblem& problem, Iterate& iterate) {
-      this->set_infeasibility_measure(problem.model, iterate);
-      this->set_objective_measure(problem.model, iterate);
-      this->set_auxiliary_measure(iterate);
+      problem.set_infeasibility_measure(iterate);
+      problem.set_objective_measure(iterate);
+      problem.set_auxiliary_measure(iterate);
    }
 
    bool InequalityHandlingMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -47,7 +33,7 @@ namespace uno {
       if (this->subproblem_definition_changed) {
          DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
          globalization_strategy.reset();
-         this->set_auxiliary_measure(current_iterate);
+         problem.set_auxiliary_measure(current_iterate);
          this->subproblem_definition_changed = false;
       }
       this->compute_progress_measures(problem, trial_iterate);
@@ -60,6 +46,8 @@ namespace uno {
          statistics.set("status", "0 primal step");
       }
       else {
+         const Subproblem subproblem{problem, current_iterate, hessian_model, inertia_correction_strategy,
+            trust_region_radius};
          const ProgressMeasures predicted_reductions = this->compute_predicted_reductions(problem, hessian_model,
             inertia_correction_strategy, trust_region_radius, current_iterate, direction, step_length);
          accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
