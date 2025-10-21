@@ -33,23 +33,24 @@ namespace uno {
 
       // matrix computations
       [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
-      void evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) override;
+      void evaluate_constraint_jacobian(Iterate& iterate) override;
       void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       [[nodiscard]] double compute_hessian_quadratic_product(const Vector<double>& vector) const override;
 
       // progress measures
-      void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) override;
-      [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem, const Iterate&,
-         const Vector<double>&, double) const override;
+      void set_auxiliary_measure(Iterate& iterate) override;
+      [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Iterate&, const Vector<double>&,
+         double step_length) const override;
 
-      void postprocess_iterate(const OptimizationProblem& model, Iterate& iterate) override;
+      void postprocess_iterate(Iterate& iterate) override;
 
       void set_initial_point(const Vector<double>& point) override;
 
       [[nodiscard]] std::string get_name() const override;
 
    protected:
+      const OptimizationProblem* problem{};
       // pointer to allow polymorphism
       std::unique_ptr<InequalityConstrainedSolver> solver{};
       Vector<double> initial_point{};

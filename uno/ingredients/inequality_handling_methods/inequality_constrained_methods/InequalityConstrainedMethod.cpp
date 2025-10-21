@@ -1,6 +1,7 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <cassert>
 #include "InequalityConstrainedMethod.hpp"
 #include "optimization/Iterate.hpp"
 #include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
@@ -21,10 +22,12 @@ namespace uno {
 
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
          HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) {
-      this->initial_point.resize(problem.number_variables);
+      this->problem = &problem; // store the problem as is (no reformulation)
+      assert(this->problem != nullptr);
+      this->initial_point.resize(this->problem->number_variables);
 
       // allocate the LP/QP solver, depending on the presence of curvature in the subproblem
-      const Subproblem subproblem{problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
+      const Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
       if (!subproblem.has_curvature()) {
          if (subproblem.number_constraints == 0) {
             DEBUG << "No curvature and only bound constraints in the subproblems, allocating a box LP solver\n";
@@ -50,11 +53,11 @@ namespace uno {
       // TODO enforce linear constraints
    }
 
-   void InequalityConstrainedMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
+   void InequalityConstrainedMethod::solve(Statistics& statistics, const OptimizationProblem& /*problem*/, Iterate& current_iterate,
          Direction& direction, HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information) {
       // create the subproblem and solve it
-      Subproblem subproblem{problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
+      Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
       this->solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_iterate.multipliers, direction.multipliers);
       ++this->number_subproblems_solved;
@@ -86,9 +89,9 @@ namespace uno {
       return this->solver->get_evaluation_space();
    }
 
-   void InequalityConstrainedMethod::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
+   void InequalityConstrainedMethod::evaluate_constraint_jacobian(Iterate& iterate) {
       auto& evaluation_space = this->solver->get_evaluation_space();
-      evaluation_space.evaluate_constraint_jacobian(problem, iterate);
+      evaluation_space.evaluate_constraint_jacobian(*this->problem, iterate);
    }
 
    void InequalityConstrainedMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
@@ -116,16 +119,16 @@ namespace uno {
    }
 
    // auxiliary measure is 0 in inequality-constrained methods
-   void InequalityConstrainedMethod::set_auxiliary_measure(const OptimizationProblem& /*problem*/, Iterate& iterate) {
+   void InequalityConstrainedMethod::set_auxiliary_measure(Iterate& iterate) {
       iterate.progress.auxiliary = 0.;
    }
 
-   double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const OptimizationProblem& /*problem*/,
-         const Iterate& /*current_iterate*/, const Vector<double>& /*primal_direction*/, double /*step_length*/) const {
+   double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const Iterate& /*current_iterate*/,
+         const Vector<double>& /*primal_direction*/, double /*step_length*/) const {
       return 0.;
    }
 
-   void InequalityConstrainedMethod::postprocess_iterate(const OptimizationProblem& /*problem*/, Iterate& /*iterate*/) {
+   void InequalityConstrainedMethod::postprocess_iterate(Iterate& /*iterate*/) {
       // do nothing
    }
 

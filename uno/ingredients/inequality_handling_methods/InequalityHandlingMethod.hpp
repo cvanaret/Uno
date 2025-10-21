@@ -42,17 +42,17 @@ namespace uno {
 
       // matrix computations
       [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() const = 0;
-      virtual void evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) = 0;
+      virtual void evaluate_constraint_jacobian(Iterate& iterate) = 0;
       virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
       virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
       [[nodiscard]] virtual double compute_hessian_quadratic_product(const Vector<double>& vector) const = 0;
 
       // progress measures
-      virtual void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) = 0;
-      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem,
-         const Iterate& iterate, const Vector<double>& primal_direction, double step_length) const = 0;
+      virtual void set_auxiliary_measure(Iterate& iterate) = 0;
+      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Iterate& iterate,
+         const Vector<double>& primal_direction, double step_length) const = 0;
 
-      virtual void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) = 0;
+      virtual void postprocess_iterate(Iterate& iterate) = 0;
 
       virtual void set_initial_point(const Vector<double>& initial_point) = 0;
 

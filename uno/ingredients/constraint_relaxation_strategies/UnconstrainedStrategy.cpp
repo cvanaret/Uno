@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <cassert>
 #include "UnconstrainedStrategy.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
@@ -23,39 +24,40 @@ namespace uno {
 
    void UnconstrainedStrategy::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
          Direction& direction, double trust_region_radius, const Options& options) {
-      const OptimizationProblem problem{model};
+      this->problem = std::make_unique<const OptimizationProblem>(model);
+      assert(this->problem != nullptr);
+      // TODO form the reformulation wrt inequalities
 
       // memory allocation
       this->hessian_model->initialize(model);
-      this->inequality_handling_method->initialize(problem, initial_iterate, *this->hessian_model,
+      this->inequality_handling_method->initialize(*this->problem, initial_iterate, *this->hessian_model,
          *this->inertia_correction_strategy, trust_region_radius);
-      direction = Direction(problem.number_variables, problem.number_constraints);
+      direction = Direction(this->problem->number_variables, this->problem->number_constraints);
 
       // statistics
       this->inertia_correction_strategy->initialize_statistics(statistics, options);
       this->inequality_handling_method->initialize_statistics(statistics, options);
 
       // initial iterate
-      this->inequality_handling_method->generate_initial_iterate(problem, initial_iterate);
-      this->evaluate_progress_measures(*this->inequality_handling_method, problem, initial_iterate);
+      this->inequality_handling_method->generate_initial_iterate(*this->problem, initial_iterate);
+      this->evaluate_progress_measures(*this->inequality_handling_method, *this->problem, initial_iterate);
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
-      this->inequality_handling_method->evaluate_constraint_jacobian(problem, initial_iterate);
-      problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, *this->inequality_handling_method,
+      this->inequality_handling_method->evaluate_constraint_jacobian(initial_iterate);
+      this->problem->evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, *this->inequality_handling_method,
          initial_iterate);
-      this->compute_primal_dual_residuals(problem, initial_iterate);
+      this->compute_primal_dual_residuals(*this->problem, initial_iterate);
    }
 
    void UnconstrainedStrategy::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& /*globalization_strategy*/,
-         const Model& model, Iterate& current_iterate, Direction& direction, double trust_region_radius,
+         const Model& /*model*/, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
-      const OptimizationProblem problem{model};
-      direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      this->inequality_handling_method->solve(statistics, problem, current_iterate, direction, *this->hessian_model,
+      direction.set_dimensions(this->problem->number_variables, this->problem->number_constraints);
+      this->inequality_handling_method->solve(statistics, *this->problem, current_iterate, direction, *this->hessian_model,
          *this->inertia_correction_strategy, trust_region_radius, warmstart_information);
-      direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
+      direction.norm = norm_inf(view(direction.primals, 0, this->problem->get_number_original_variables()));
       DEBUG3 << direction << '\n';
       warmstart_information.no_changes();
    }
@@ -73,9 +75,8 @@ namespace uno {
    bool UnconstrainedStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
-      const OptimizationProblem problem{model};
       const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
-         problem, *this->inequality_handling_method, current_iterate, trial_iterate, direction, step_length, user_callbacks);
+         *this->problem, *this->inequality_handling_method, current_iterate, trial_iterate, direction, step_length, user_callbacks);
       trial_iterate.status = this->check_termination(model, trial_iterate);
       warmstart_information.no_changes();
       return accept_iterate;
@@ -85,17 +86,16 @@ namespace uno {
       iterate.evaluate_objective_gradient(model);
       iterate.evaluate_constraints(model);
 
-      const OptimizationProblem problem{model};
-      problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, *this->inequality_handling_method, iterate);
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(problem, iterate);
-      return ConstraintRelaxationStrategy::check_termination(problem, iterate);
+      this->problem->evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, *this->inequality_handling_method, iterate);
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(*this->problem, iterate);
+      return ConstraintRelaxationStrategy::check_termination(*this->problem, iterate);
    }
 
    void UnconstrainedStrategy::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
-         const OptimizationProblem& problem, Iterate& iterate) const {
-      this->set_infeasibility_measure(problem.model, iterate);
-      this->set_objective_measure(problem.model, iterate);
-      inequality_handling_method.set_auxiliary_measure(problem, iterate);
+         const OptimizationProblem& /*problem*/, Iterate& iterate) const {
+      this->set_infeasibility_measure(this->problem->model, iterate);
+      this->set_objective_measure(this->problem->model, iterate);
+      inequality_handling_method.set_auxiliary_measure(iterate);
    }
 
    std::string UnconstrainedStrategy::get_name() const {

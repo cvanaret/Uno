@@ -7,14 +7,15 @@
 #include "InteriorPointParameters.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
+#include "tools/Infinity.hpp"
 
 namespace uno {
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
-      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter,
-         const InteriorPointParameters &parameters);
+      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters &parameters);
 
       [[nodiscard]] double get_objective_multiplier() const override;
+      void set_barrier_parameter(double barrier_parameter);
 
       // constraint evaluations
       void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
@@ -23,7 +24,6 @@ namespace uno {
       void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const override;
 
       // sparsity patterns of Jacobian and Hessian
-
       void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
          MatrixOrder matrix_order) const override;
       void compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
@@ -65,7 +65,7 @@ namespace uno {
 
    protected:
       const OptimizationProblem& first_reformulation;
-      const double barrier_parameter;
+      double barrier_parameter{INF<double>};
       const InteriorPointParameters& parameters;
       const Vector<size_t> fixed_variables{};
       const ForwardRange equality_constraints;

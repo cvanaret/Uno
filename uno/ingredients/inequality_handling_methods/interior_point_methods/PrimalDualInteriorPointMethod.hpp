@@ -6,9 +6,10 @@
 
 #include <memory>
 #include "../InequalityHandlingMethod.hpp"
-#include "InteriorPointParameters.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
+#include "InteriorPointParameters.hpp"
+#include "PrimalDualInteriorPointProblem.hpp"
+#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    // forward references
@@ -34,23 +35,24 @@ namespace uno {
 
       // matrix computations
       [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
-      void evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) override;
+      void evaluate_constraint_jacobian(Iterate& iterate) override;
       void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       [[nodiscard]] double compute_hessian_quadratic_product(const Vector<double>& vector) const override;
 
       // progress measures
-      void set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) override;
-      [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem, const Iterate& current_iterate,
+      void set_auxiliary_measure(Iterate& iterate) override;
+      [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const override;
 
-      void postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) override;
+      void postprocess_iterate(Iterate& iterate) override;
 
       void set_initial_point(const Vector<double>& point) override;
 
       [[nodiscard]] std::string get_name() const override;
 
    protected:
+      std::unique_ptr<PrimalDualInteriorPointProblem> barrier_problem{};
       const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
       double previous_barrier_parameter;
