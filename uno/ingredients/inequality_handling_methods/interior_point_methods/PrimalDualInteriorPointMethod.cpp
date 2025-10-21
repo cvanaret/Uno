@@ -45,6 +45,7 @@ namespace uno {
       }
       // reformulate the problem into a barrier problem
       this->barrier_problem = std::make_unique<PrimalDualInteriorPointProblem>(problem, this->parameters);
+      this->barrier_problem->set_barrier_parameter(this->barrier_parameter());
       const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
       this->linear_solver->initialize_augmented_system(subproblem);
    }
