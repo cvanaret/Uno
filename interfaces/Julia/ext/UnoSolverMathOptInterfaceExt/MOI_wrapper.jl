@@ -28,8 +28,8 @@ end
 Create a new Uno optimizer.
 """
 mutable struct Optimizer <: MOI.AbstractOptimizer
-    inner::Union{Nothing,UnoSolver.UnoModel}
-    solver::Union{Nothing,UnoSolver.UnoSolver}
+    inner::Union{Nothing,UnoSolver.Model}
+    solver::Union{Nothing,UnoSolver.Solver}
     name::String
     invalid_model::Bool
     silent::Bool
@@ -1362,8 +1362,8 @@ function MOI.optimize!(model::Optimizer)
         return
     end
     copy_parameters(model)
-    inner = model.inner::UnoSolver.UnoModel
-    solver = model.solver::UnoSolver.UnoSolver
+    inner = model.inner::UnoSolver.Model
+    solver = model.solver::UnoSolver.Solver
 
     # The default logger is "INFO".
     UnoSolver.uno_set_solver_string_option(solver, "logger", model.silent ? "SILENT" : "INFO")

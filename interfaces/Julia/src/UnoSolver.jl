@@ -23,4 +23,4 @@ include("C_wrapper.jl")
 
 global Optimizer
 
-end # module UnoSolver
+end  # module UnoSolver

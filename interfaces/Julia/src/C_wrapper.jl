@@ -13,7 +13,7 @@ end
 
 function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
-  _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
+  _user_data = unsafe_pointer_to_objref(user_data)::Model
   if isnothing(_user_data.user_model)
     _f = _user_data.eval_objective(_x)::Float64
   else
@@ -26,7 +26,7 @@ end
 function uno_constraints(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, constraint_values::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _c = unsafe_wrap(Array, constraint_values, number_constraints)
-  _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
+  _user_data = unsafe_pointer_to_objref(user_data)::Model
   if isnothing(_user_data.user_model)
     _user_data.eval_constraints(_c, _x)
   else
@@ -38,7 +38,7 @@ end
 function uno_objective_gradient(number_variables::Cint, x::Ptr{Float64}, gradient::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _g = unsafe_wrap(Array, gradient, number_variables)
-  _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
+  _user_data = unsafe_pointer_to_objref(user_data)::Model
   if isnothing(_user_data.user_model)
     _user_data.eval_gradient(_g, _x)
   else
@@ -50,7 +50,7 @@ end
 function uno_jacobian(number_variables::Cint, number_jacobian_nonzeros::Cint, x::Ptr{Float64}, jacobian::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _jvals = unsafe_wrap(Array, jacobian, number_jacobian_nonzeros)
-  _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
+  _user_data = unsafe_pointer_to_objref(user_data)::Model
   if isnothing(_user_data.user_model)
     _user_data.eval_jacobian(_jvals, _x)
   else
@@ -63,7 +63,7 @@ function uno_lagrangian_hessian(number_variables::Cint, number_constraints::Cint
   _x = unsafe_wrap(Array, x, number_variables)
   _multipliers = unsafe_wrap(Array, hessian, number_constraints)
   _hvals = unsafe_wrap(Array, hessian, number_hessian_nonzeros)
-  _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
+  _user_data = unsafe_pointer_to_objref(user_data)::Model
   if isnothing(_user_data.user_model)
     _user_data.eval_hessian(_hvals, _x, _multipliers, objective_multiplier)
   else
@@ -76,7 +76,7 @@ function uno_jacobian_operator(number_variables::Cint, number_constraints::Cint,
   _x = unsafe_wrap(Array, x, number_variables)
   _v = unsafe_wrap(Array, vector, number_variables)
   _Jv = unsafe_wrap(Array, result, number_constraints)
-  _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
+  _user_data = unsafe_pointer_to_objref(user_data)::Model
   if isnothing(_user_data.user_model)
     _user_data.eval_Jv(_Jv, _x, _v, evaluate_at_x)
   else
@@ -89,7 +89,7 @@ function uno_jacobian_transposed_operator(number_variables::Cint, number_constra
   _x = unsafe_wrap(Array, x, number_variables)
   _v = unsafe_wrap(Array, vector, number_constraints)
   _Jtv = unsafe_wrap(Array, result, number_variables)
-  _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
+  _user_data = unsafe_pointer_to_objref(user_data)::Model
   if isnothing(_user_data.user_model)
     _user_data.eval_Jtv(_Jtv, _x, _v, evaluate_at_x)
   else
@@ -103,7 +103,7 @@ function uno_lagrangian_hessian_operator(number_variables::Cint, number_constrai
   _multipliers = unsafe_wrap(Array, multipliers, number_constraints)
   _v = unsafe_wrap(Array, vector, number_variables)
   _Hv = unsafe_wrap(Array, result, number_variables)
-  _user_data = unsafe_pointer_to_objref(user_data)::UnoModel
+  _user_data = unsafe_pointer_to_objref(user_data)::Model
   if isnothing(_user_data.user_model)
     _user_data.eval_Hv(_Hv, _x, objective_multiplier, _multipliers, _v, evaluate_at_x)
   else
@@ -112,7 +112,7 @@ function uno_lagrangian_hessian_operator(number_variables::Cint, number_constrai
   return Cint(0)
 end
 
-mutable struct UnoModel{M}
+mutable struct Model{M}
   # Reference to the internal C model of Uno
   c_model::Ptr{Cvoid}
   # Number of variables
@@ -132,14 +132,14 @@ mutable struct UnoModel{M}
   user_model::M
 end
 
-function uno_destroy_model(model::UnoModel)
+function uno_destroy_model(model::Model)
   if model.c_model != C_NULL
     uno_destroy_model(model.c_model)
     model.c_model = C_NULL
   end
 end
 
-Base.unsafe_convert(::Type{Ptr{Cvoid}}, model::UnoModel) = model.c_model
+Base.unsafe_convert(::Type{Ptr{Cvoid}}, model::Model) = model.c_model
 
 function uno_model(
   problem_type::Char,
@@ -178,8 +178,8 @@ function uno_model(
   base_indexing = Cint(1)  # Fortran-style indexing
   c_model = uno_create_model(problem_type, Cint(nvar), lvar, uvar, base_indexing)
   (c_model == C_NULL) && error("Failed to construct Uno model for some unknown reason.")
-  model = UnoModel(c_model, nvar, ncon, eval_objective, eval_constraints, eval_gradient,
-                   eval_jacobian, eval_hessian, eval_Jv, eval_Jtv, eval_Hv, user_model)
+  model = Model(c_model, nvar, ncon, eval_objective, eval_constraints, eval_gradient,
+                eval_jacobian, eval_hessian, eval_Jv, eval_Jtv, eval_Hv, user_model)
 
   user_data = pointer_from_objref(model)::Ptr{Cvoid}
   flag = uno_set_user_data(c_model, user_data)
@@ -226,7 +226,7 @@ function uno_model(
 end
 
 
-function uno_set_initial_primal_iterate(model::UnoModel, initial_primal_iterate::Vector{Float64})
+function uno_set_initial_primal_iterate(model::Model, initial_primal_iterate::Vector{Float64})
   @assert model.c_model != C_NULL
   @assert model.nvar == length(initial_primal_iterate)
   flag = uno_set_initial_primal_iterate(model.c_model, initial_primal_iterate)
@@ -234,7 +234,7 @@ function uno_set_initial_primal_iterate(model::UnoModel, initial_primal_iterate:
   return
 end
 
-function uno_set_initial_dual_iterate(model::UnoModel, initial_dual_iterate::Vector{Float64})
+function uno_set_initial_dual_iterate(model::Model, initial_dual_iterate::Vector{Float64})
   @assert model.c_model != C_NULL
   @assert model.ncon == length(initial_dual_iterate)
   flag = uno_set_initial_dual_iterate(model.c_model, initial_dual_iterate)
@@ -242,24 +242,24 @@ function uno_set_initial_dual_iterate(model::UnoModel, initial_dual_iterate::Vec
   return
 end
 
-mutable struct UnoSolver
+mutable struct Solver
   # Reference to the internal C solver of Uno
   c_solver::Ptr{Cvoid}
 end
 
-function uno_destroy_solver(solver::UnoSolver)
+function uno_destroy_solver(solver::Solver)
   if solver.c_solver != C_NULL
     uno_destroy_solver(solver.c_solver)
     solver.c_solver = C_NULL
   end
 end
 
-Base.unsafe_convert(::Type{Ptr{Cvoid}}, solver::UnoSolver) = solver.c_solver
+Base.unsafe_convert(::Type{Ptr{Cvoid}}, solver::Solver) = solver.c_solver
 
 function uno_solver(; kwargs...)
   c_solver = uno_create_solver()
   (c_solver == C_NULL) && error("Failed to construct Uno solver for some unknown reason.")
-  solver = UnoSolver(c_solver)
+  solver = Solver(c_solver)
 
   # pass options to Uno
   for (k, v) in kwargs
@@ -280,101 +280,101 @@ function uno_solver(; kwargs...)
   return solver
 end
 
-function uno_optimize(solver::UnoSolver, model::UnoModel)
+function uno_optimize(solver::Solver, model::Model)
   @assert (solver.c_solver != C_NULL) && (model.c_model != C_NULL)
   uno_optimize(solver.c_solver, model.c_model)
 end
 
-function uno_get_cpu_time(solver::UnoSolver)
+function uno_get_cpu_time(solver::Solver)
   @assert solver.c_solver != C_NULL
   uno_get_cpu_time(solver.c_solver)
 end
 
-function uno_get_number_iterations(solver::UnoSolver)
+function uno_get_number_iterations(solver::Solver)
   @assert solver.c_solver != C_NULL
   uno_get_number_iterations(solver.c_solver)
 end
 
-function uno_get_number_subproblem_solved_evaluations(solver::UnoSolver)
+function uno_get_number_subproblem_solved_evaluations(solver::Solver)
   @assert solver.c_solver != C_NULL
   uno_get_number_subproblem_solved_evaluations(solver.c_solver)
 end
 
-function uno_set_solver_integer_option(solver::UnoSolver, option_name::String, option_value::Cint)
+function uno_set_solver_integer_option(solver::Solver, option_name::String, option_value::Cint)
   @assert solver.c_solver != C_NULL
   uno_set_solver_integer_option(solver.c_solver, option_name, option_value)
 end
 
-function uno_set_solver_double_option(solver::UnoSolver, option_name::String, option_value::Float64)
+function uno_set_solver_double_option(solver::Solver, option_name::String, option_value::Float64)
   @assert solver.c_solver != C_NULL
   uno_set_solver_double_option(solver.c_solver, option_name, option_value)
 end
 
-function uno_set_solver_bool_option(solver::UnoSolver, option_name::String, option_value::Bool)
+function uno_set_solver_bool_option(solver::Solver, option_name::String, option_value::Bool)
   @assert solver.c_solver != C_NULL
   uno_set_solver_bool_option(solver.c_solver, option_name, option_value)
 end
 
-function uno_set_solver_string_option(solver::UnoSolver, option_name::String, option_value::String)
+function uno_set_solver_string_option(solver::Solver, option_name::String, option_value::String)
   @assert solver.c_solver != C_NULL
   uno_set_solver_string_option(solver.c_solver, option_name, option_value)
 end
 
-function uno_set_solver_preset(solver::UnoSolver, preset_name::String)
+function uno_set_solver_preset(solver::Solver, preset_name::String)
   @assert solver.c_solver != C_NULL
   uno_set_solver_preset(solver.c_solver, preset_name)
 end
 
-function uno_get_optimization_status(solver::UnoSolver)
+function uno_get_optimization_status(solver::Solver)
   @assert solver.c_solver != C_NULL
   return uno_get_optimization_status(solver.c_solver)
 end
 
-function uno_get_solution_status(solver::UnoSolver)
+function uno_get_solution_status(solver::Solver)
   @assert solver.c_solver != C_NULL
   return uno_get_solution_status(solver.c_solver)
 end
 
-function uno_get_solution_objective(solver::UnoSolver)
+function uno_get_solution_objective(solver::Solver)
   @assert solver.c_solver != C_NULL
   return uno_get_solution_objective(solver.c_solver)
 end
 
-function uno_get_primal_solution(solver::UnoSolver, primal_solution::Vector{Float64})
+function uno_get_primal_solution(solver::Solver, primal_solution::Vector{Float64})
   @assert solver.c_solver != C_NULL
   uno_get_primal_solution(solver.c_solver, primal_solution)
   return primal_solution
 end
 
-function uno_get_constraint_dual_solution(solver::UnoSolver, constraint_dual_solution::Vector{Float64})
+function uno_get_constraint_dual_solution(solver::Solver, constraint_dual_solution::Vector{Float64})
   @assert solver.c_solver != C_NULL
   uno_get_constraint_dual_solution(solver.c_solver, constraint_dual_solution)
   return constraint_dual_solution
 end
 
-function uno_get_lower_bound_dual_solution(solver::UnoSolver, lower_bound_dual_solution::Vector{Float64})
+function uno_get_lower_bound_dual_solution(solver::Solver, lower_bound_dual_solution::Vector{Float64})
   @assert solver.c_solver != C_NULL
   uno_get_lower_bound_dual_solution(solver.c_solver, lower_bound_dual_solution)
   return lower_bound_dual_solution
 end
 
-function uno_get_upper_bound_dual_solution(solver::UnoSolver, upper_bound_dual_solution::Vector{Float64})
+function uno_get_upper_bound_dual_solution(solver::Solver, upper_bound_dual_solution::Vector{Float64})
   @assert solver.c_solver != C_NULL
   uno_get_upper_bound_dual_solution(solver.c_solver, upper_bound_dual_solution)
   return upper_bound_dual_solution
 end
 
-function uno_get_solution_primal_feasibility(solver::UnoSolver)
+function uno_get_solution_primal_feasibility(solver::Solver)
   @assert solver.c_solver != C_NULL
   return uno_get_solution_primal_feasibility(solver.c_solver)
 end
 
-function uno_get_solution_stationarity(solver::UnoSolver)
+function uno_get_solution_stationarity(solver::Solver)
   @assert solver.c_solver != C_NULL
   return uno_get_solution_stationarity(solver.c_solver)
 end
 
-function uno_get_solution_complementarity(solver::UnoSolver)
+function uno_get_solution_complementarity(solver::Solver)
   @assert solver.c_solver != C_NULL
   return uno_get_solution_complementarity(solver.c_solver)
 end
