@@ -95,8 +95,7 @@ namespace uno {
       if (0 < this->problem->number_constraints) {
          // TODO compute least-square multipliers
       }
-
-      this->compute_progress_measures(*this->problem, initial_iterate);
+      this->barrier_problem->set_progress_measures(initial_iterate);
    }
 
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
@@ -203,13 +202,23 @@ namespace uno {
       return std::sqrt(this->barrier_parameter());
    }
 
-   ProgressMeasures PrimalDualInteriorPointMethod::compute_predicted_reductions(const OptimizationProblem& /*problem*/,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
-         double trust_region_radius, Iterate& current_iterate, const Direction& direction, double step_length) const {
+   ProgressMeasures PrimalDualInteriorPointMethod::compute_predicted_reductions(HessianModel& hessian_model,
+         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
+         Iterate& current_iterate, const Direction& direction, double step_length) const {
       // create the subproblem
       const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy,
          trust_region_radius};
       return subproblem.compute_predicted_reductions(this->get_evaluation_space(), direction, step_length, this->progress_norm);
+   }
+
+   bool PrimalDualInteriorPointMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
+         double trust_region_radius, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length, UserCallbacks& user_callbacks) {
+      // call the protected member function with the barrier problem
+      return InequalityHandlingMethod::is_iterate_acceptable(statistics, *this->barrier_problem, globalization_strategy,
+         hessian_model, inertia_correction_strategy, trust_region_radius, current_iterate, trial_iterate, direction,
+         step_length, user_callbacks);
    }
 
    void PrimalDualInteriorPointMethod::evaluate_constraint_jacobian(Iterate& iterate) {
@@ -231,19 +240,6 @@ namespace uno {
    double PrimalDualInteriorPointMethod::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
       const auto& evaluation_space = this->linear_solver->get_evaluation_space();
       return evaluation_space.compute_hessian_quadratic_product(subproblem, vector);
-   }
-
-   void PrimalDualInteriorPointMethod::set_auxiliary_measure(Iterate& iterate) {
-      // auxiliary measure: barrier terms
-      this->barrier_problem->set_auxiliary_measure(iterate);
-   }
-
-   double PrimalDualInteriorPointMethod::compute_predicted_auxiliary_reduction_model(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const {
-      const double directional_derivative = this->barrier_problem->compute_barrier_term_directional_derivative(current_iterate,
-         primal_direction);
-      return step_length * (-directional_derivative);
-      // }, "α*(μ*X^{-1} e^T d)"};
    }
 
    void PrimalDualInteriorPointMethod::update_barrier_parameter(const Iterate& current_iterate, const DualResiduals& residuals) {

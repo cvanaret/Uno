@@ -46,25 +46,19 @@ namespace uno {
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 
       // acceptance
-      void compute_progress_measures(const OptimizationProblem& problem, Iterate& iterate);
-      [[nodiscard]] virtual ProgressMeasures compute_predicted_reductions(const OptimizationProblem& problem,
+      [[nodiscard]] virtual ProgressMeasures compute_predicted_reductions(HessianModel& hessian_model,
+         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius, Iterate& current_iterate,
+         const Direction& direction, double step_length) const = 0;
+      [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
-         double trust_region_radius, Iterate& current_iterate, const Direction& direction, double step_length) const = 0;
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const OptimizationProblem& problem, HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
          double trust_region_radius, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         double step_length, UserCallbacks& user_callbacks);
+         double step_length, UserCallbacks& user_callbacks) = 0;
 
       // matrix computations
       virtual void evaluate_constraint_jacobian(Iterate& iterate) = 0;
       virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
       virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
       [[nodiscard]] virtual double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const = 0;
-
-      // progress measures
-      virtual void set_auxiliary_measure(Iterate& iterate) = 0;
-      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Iterate& iterate,
-         const Vector<double>& primal_direction, double step_length) const = 0;
 
       virtual void postprocess_iterate(Iterate& iterate) = 0;
 
@@ -79,6 +73,10 @@ namespace uno {
    protected:
       const Norm progress_norm;
 
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const OptimizationProblem& problem,
+         GlobalizationStrategy& globalization_strategy, HessianModel& hessian_model,
+         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, double step_length, UserCallbacks& user_callbacks);
       [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() const = 0;
    };
 } // namespace

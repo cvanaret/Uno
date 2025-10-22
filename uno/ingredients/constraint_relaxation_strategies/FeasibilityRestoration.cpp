@@ -201,12 +201,12 @@ namespace uno {
       // determine acceptability, depending on the current phase
       if (this->current_phase == Phase::OPTIMALITY) {
          accept_iterate = this->optimality_inequality_handling_method->is_iterate_acceptable(statistics, globalization_strategy,
-            *this->optimality_problem, *this->optimality_hessian_model, *this->optimality_inertia_correction_strategy,
+            *this->optimality_hessian_model, *this->optimality_inertia_correction_strategy,
             trust_region_radius, current_iterate, trial_iterate, direction, step_length, user_callbacks);
       }
       else {
          accept_iterate = this->feasibility_inequality_handling_method->is_iterate_acceptable(statistics, globalization_strategy,
-            *this->feasibility_problem, *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy,
+            *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy,
             trust_region_radius, current_iterate, trial_iterate, direction, step_length, user_callbacks);
       }
       trial_iterate.status = this->check_termination(model, trial_iterate);

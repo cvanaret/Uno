@@ -75,8 +75,8 @@ namespace uno {
          const Model& model, double trust_region_radius, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, globalization_strategy,
-         *this->problem, *this->hessian_model, *this->inertia_correction_strategy, trust_region_radius, current_iterate,
-         trial_iterate, direction, step_length, user_callbacks);
+         *this->hessian_model, *this->inertia_correction_strategy, trust_region_radius, current_iterate, trial_iterate,
+         direction, step_length, user_callbacks);
       trial_iterate.status = this->check_termination(model, trial_iterate);
       warmstart_information.no_changes();
       return accept_iterate;

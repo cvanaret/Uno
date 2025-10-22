@@ -82,9 +82,13 @@ namespace uno {
       [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const;
 
-      void set_infeasibility_measure(Iterate& iterate) const;
-      void set_objective_measure(Iterate& iterate) const;
-      void set_auxiliary_measure(Iterate& iterate) const;
+      virtual void set_infeasibility_measure(Iterate& iterate) const;
+      virtual void set_objective_measure(Iterate& iterate) const;
+      virtual void set_auxiliary_measure(Iterate& iterate) const;
+      void set_progress_measures(Iterate& iterate) const;
+
+      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Iterate&, const Vector<double>&,
+         double step_length) const;
 
    protected:
       const ForwardRange primal_regularization_variables;
