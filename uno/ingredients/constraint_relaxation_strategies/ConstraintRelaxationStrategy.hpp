@@ -49,7 +49,6 @@ namespace uno {
       [[nodiscard]] virtual SolutionStatus check_termination(const Model& model, Iterate& iterate) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
-      [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
       [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
 
    protected:

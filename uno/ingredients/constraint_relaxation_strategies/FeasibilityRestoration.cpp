@@ -246,10 +246,6 @@ namespace uno {
          " regularization";
    }
 
-   size_t FeasibilityRestoration::get_hessian_evaluation_count() const {
-      return this->optimality_hessian_model->evaluation_count + this->feasibility_hessian_model->evaluation_count;
-   }
-
    size_t FeasibilityRestoration::get_number_subproblems_solved() const {
       return this->optimality_inequality_handling_method->number_subproblems_solved +
          this->feasibility_inequality_handling_method->number_subproblems_solved;

@@ -94,11 +94,7 @@ namespace uno {
       return this->inequality_handling_method->get_name() + " with " + this->hessian_model->get_name() + " Hessian and " +
          this->inertia_correction_strategy->get_name() + " regularization";
    }
-
-   size_t UnconstrainedStrategy::get_hessian_evaluation_count() const {
-      return this->hessian_model->evaluation_count;
-   }
-
+   
    size_t UnconstrainedStrategy::get_number_subproblems_solved() const {
       return this->inequality_handling_method->number_subproblems_solved;
    }
