@@ -549,7 +549,7 @@ function test_ad_backend()
     @test MOI.supports(model, attr)
     @test MOI.get(model, attr) == MOI.Nonlinear.SparseReverseMode()
     MOI.optimize!(model)
-    @test model.inner isa UnoSolver.UnoModel
+    @test model.inner isa UnoSolver.Model
     MOI.set(model, attr, MOI.Nonlinear.ExprGraphOnly())
     @test MOI.get(model, attr) == MOI.Nonlinear.ExprGraphOnly()
     @test model.inner === nothing
