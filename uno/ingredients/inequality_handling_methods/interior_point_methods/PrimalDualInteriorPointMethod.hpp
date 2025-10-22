@@ -29,7 +29,6 @@ namespace uno {
          WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
-      void exit_feasibility_problem(Iterate& trial_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
@@ -62,7 +61,6 @@ namespace uno {
       const double least_square_multiplier_max_norm;
       const double l1_constraint_violation_coefficient; // (rho in Section 3.3.1 in IPOPT paper)
 
-      bool solving_feasibility_problem{false};
       bool first_feasibility_iteration{false};
 
       [[nodiscard]] double barrier_parameter() const;

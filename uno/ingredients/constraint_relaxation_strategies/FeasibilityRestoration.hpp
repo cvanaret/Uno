@@ -62,7 +62,7 @@ namespace uno {
       void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
          Iterate& current_iterate, Direction& direction, HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information);
-      void switch_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy,
+      void switch_back_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy,
          Iterate& trial_iterate);
 
       void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,

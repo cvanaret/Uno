@@ -182,9 +182,9 @@ namespace uno {
       return false;
    }
 
-   void FeasibilityRestoration::switch_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy,
+   void FeasibilityRestoration::switch_back_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy,
          Iterate& trial_iterate) {
-      DEBUG << "Switching from restoration to optimality phase\n";
+      DEBUG << "Switching from restoration back to optimality phase\n";
       this->current_phase = Phase::OPTIMALITY;
       globalization_strategy.notify_switch_to_optimality(current_iterate.progress);
 
@@ -193,8 +193,6 @@ namespace uno {
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
       trial_iterate.set_number_variables(this->optimality_problem->number_variables);
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
-
-      this->optimality_inequality_handling_method->exit_feasibility_problem(trial_iterate);
    }
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -217,7 +215,7 @@ namespace uno {
       // possibly go from restoration phase to optimality phase
       if (trial_iterate.status == SolutionStatus::NOT_OPTIMAL && this->current_phase == Phase::FEASIBILITY_RESTORATION &&
             this->can_switch_to_optimality_phase(current_iterate, globalization_strategy, model, trial_iterate, direction, step_length)) {
-         this->switch_to_optimality_phase(current_iterate, globalization_strategy, trial_iterate);
+         this->switch_back_to_optimality_phase(current_iterate, globalization_strategy, trial_iterate);
          // set a cold start in the subproblem solver
          warmstart_information.whole_problem_changed();
       }

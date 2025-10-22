@@ -139,7 +139,6 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::initialize_feasibility_problem(Iterate& current_iterate) {
-      this->solving_feasibility_problem = true;
       this->first_feasibility_iteration = true;
       this->subproblem_definition_changed = true;
 
@@ -158,13 +157,6 @@ namespace uno {
          current_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
       }
        */
-   }
-
-   void PrimalDualInteriorPointMethod::exit_feasibility_problem(Iterate& /*trial_iterate*/) {
-      //assert(this->solving_feasibility_problem && "The barrier subproblem did not know it was solving the feasibility problem.");
-      this->barrier_parameter_update_strategy.set_barrier_parameter(this->previous_barrier_parameter);
-      this->solving_feasibility_problem = false;
-      // TODO compute least-square multipliers
    }
 
    // set the elastic variables of the current iterate

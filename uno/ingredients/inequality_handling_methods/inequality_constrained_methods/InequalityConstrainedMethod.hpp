@@ -27,7 +27,6 @@ namespace uno {
          WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
-      void exit_feasibility_problem(Iterate& trial_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
