@@ -1,5 +1,5 @@
 # Copyright (c) 2013: Iain Dunning, Miles Lubin, and contributors
-# 2025: Adapted for Uno.jl by Alexis Montoison and Charlie Vanaret
+# 2025: Adapted for UnoSolver.jl by Alexis Montoison and Charlie Vanaret
 #
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
@@ -28,8 +28,8 @@ end
 Create a new Uno optimizer.
 """
 mutable struct Optimizer <: MOI.AbstractOptimizer
-    inner::Union{Nothing,Uno.UnoModel}
-    solver::Union{Nothing,Uno.UnoSolver}
+    inner::Union{Nothing,UnoSolver.Model}
+    solver::Union{Nothing,UnoSolver.Solver}
     name::String
     invalid_model::Bool
     silent::Bool
@@ -86,7 +86,7 @@ const _SETS = Union{
     MOI.Interval{Float64},
 }
 
-MOI.get(::Optimizer, ::MOI.SolverVersion) = Uno.uno_version() |> string
+MOI.get(::Optimizer, ::MOI.SolverVersion) = UnoSolver.uno_version() |> string
 
 ### _EmptyNLPEvaluator
 
@@ -751,7 +751,7 @@ function MOI.get(
     # Alexis -- revisit this code when we know how to handle the workspace
     # λ = model.inner.mult_g[row(model, ci)]
     mult_g = Vector{Float64}(undef, model.inner.ncon)
-    Uno.uno_get_constraint_dual_solution(model.solver, mult_g)
+    UnoSolver.uno_get_constraint_dual_solution(model.solver, mult_g)
 
     λ = mult_g[row(model, ci)]
     J = Tuple{Int,Int}[]
@@ -761,7 +761,7 @@ function MOI.get(
     # Alexis -- revisit this code when we know how to handle the workspace
     # _eval_constraint_jacobian(J_val, 0, model.inner.x, f, s)
     sol = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_primal_solution(model.solver, sol)
+    UnoSolver.uno_get_primal_solution(model.solver, sol)
     _eval_constraint_jacobian(J_val, 0, sol, f, s)
 
     dual = zeros(MOI.dimension(s.set))
@@ -1312,7 +1312,7 @@ function _setup_model(model::Optimizer)
     end
     nvar = length(vars)
     ncon = length(g_L)
-    model.inner = Uno.uno_model(
+    model.inner = UnoSolver.uno_model(
         'N',
         model.sense == MOI.MIN_SENSE,
         nvar,
@@ -1339,7 +1339,7 @@ function _setup_model(model::Optimizer)
         lagrangian_sign=1.0,
         user_model=model,
     )
-    model.solver = Uno.uno_solver()
+    model.solver = UnoSolver.uno_solver()
     return
 end
 
@@ -1362,22 +1362,22 @@ function MOI.optimize!(model::Optimizer)
         return
     end
     copy_parameters(model)
-    inner = model.inner::Uno.UnoModel
-    solver = model.solver::Uno.UnoSolver
+    inner = model.inner::UnoSolver.Model
+    solver = model.solver::UnoSolver.Solver
 
     # The default logger is "INFO".
-    Uno.uno_set_solver_string_option(solver, "logger", model.silent ? "SILENT" : "INFO")
+    UnoSolver.uno_set_solver_string_option(solver, "logger", model.silent ? "SILENT" : "INFO")
 
     # Other misc options that over-ride the ones set above.
     for (name, value) in model.options
         if value isa String
-            Uno.uno_set_solver_string_option(solver, name, value)
+            UnoSolver.uno_set_solver_string_option(solver, name, value)
         elseif value isa Float64
-            Uno.uno_set_solver_double_option(solver, name, value)
+            UnoSolver.uno_set_solver_double_option(solver, name, value)
         elseif value isa Integer
-            Uno.uno_set_solver_integer_option(solver, name, Cint(value))
+            UnoSolver.uno_set_solver_integer_option(solver, name, Cint(value))
         elseif value isa Bool
-            Uno.uno_set_solver_bool_option(solver, name, value)
+            UnoSolver.uno_set_solver_bool_option(solver, name, value)
         else
             error(
                 "Unable to add option `\"$name\"` with the value " *
@@ -1394,25 +1394,25 @@ function MOI.optimize!(model::Optimizer)
         else
             clamp(0.0, model.variables.lower[i], model.variables.upper[i])
         end
-        Uno.uno_set_initial_primal_iterate_component(inner, i-1, x0_i)
+        UnoSolver.uno_set_initial_primal_iterate_component(inner, i-1, x0_i)
     end
 
     for (i, start) in enumerate(model.qp_data.mult_g)
         y0_i = _dual_start(model, start, -1)
-        Uno.uno_set_initial_dual_iterate_component(inner, i-1, y0_i)
+        UnoSolver.uno_set_initial_dual_iterate_component(inner, i-1, y0_i)
     end
     offset = length(model.qp_data.mult_g)
     if model.nlp_dual_start === nothing
         for i in offset+1:inner.ncon
-            Uno.uno_set_initial_dual_iterate_component(inner, i-1, 0.0)
+            UnoSolver.uno_set_initial_dual_iterate_component(inner, i-1, 0.0)
         end
         for (key, val) in model.mult_g_nlp
-            Uno.uno_set_initial_dual_iterate_component(inner, offset+key.value-1, val)
+            UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+key.value-1, val)
         end
     else
         for (i, start) in enumerate(model.nlp_dual_start::Vector{Float64})
             y0_i = _dual_start(model, start, -1)
-            Uno.uno_set_initial_dual_iterate_component(inner, offset+i-1, y0_i)
+            UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+i-1, y0_i)
         end
     end
 
@@ -1422,29 +1422,29 @@ function MOI.optimize!(model::Optimizer)
         s.eval_jacobian_timer = 0.0
         s.eval_hessian_lagrangian_timer = 0.0
     end
-    Uno.uno_optimize(solver, inner)
+    UnoSolver.uno_optimize(solver, inner)
     return
 end
 
 function _status_code_mapping(uno_termination_status::Cint, uno_solution_status::Cint)
-    if uno_termination_status == Uno.UNO_ITERATION_LIMIT
+    if uno_termination_status == UnoSolver.UNO_ITERATION_LIMIT
         return (MOI.ITERATION_LIMIT, MOI.UNKNOWN_RESULT_STATUS) # here we could test feasibility
-    elseif uno_termination_status == Uno.UNO_TIME_LIMIT
+    elseif uno_termination_status == UnoSolver.UNO_TIME_LIMIT
         return (MOI.TIME_LIMIT, MOI.UNKNOWN_RESULT_STATUS) # here we could test feasibility
-    elseif uno_termination_status == Uno.UNO_EVALUATION_ERROR
+    elseif uno_termination_status == UnoSolver.UNO_EVALUATION_ERROR
         return (MOI.INVALID_MODEL, MOI.UNKNOWN_RESULT_STATUS)
-    elseif uno_termination_status == Uno.UNO_ALGORITHMIC_ERROR
+    elseif uno_termination_status == UnoSolver.UNO_ALGORITHMIC_ERROR
         return (MOI.OTHER_ERROR, MOI.UNKNOWN_RESULT_STATUS)
     else # UNO_SUCCESS
-        if uno_solution_status == Uno.UNO_FEASIBLE_KKT_POINT
+        if uno_solution_status == UnoSolver.UNO_FEASIBLE_KKT_POINT
             return (MOI.LOCALLY_SOLVED, MOI.FEASIBLE_POINT)
-        elseif uno_solution_status == Uno.UNO_FEASIBLE_FJ_POINT
+        elseif uno_solution_status == UnoSolver.UNO_FEASIBLE_FJ_POINT
             return (MOI.LOCALLY_SOLVED, MOI.FEASIBLE_POINT)
-        elseif uno_solution_status == Uno.UNO_INFEASIBLE_STATIONARY_POINT
+        elseif uno_solution_status == UnoSolver.UNO_INFEASIBLE_STATIONARY_POINT
             return (MOI.LOCALLY_INFEASIBLE, MOI.INFEASIBLE_POINT)
-        elseif uno_solution_status == Uno.UNO_FEASIBLE_SMALL_STEP
+        elseif uno_solution_status == UnoSolver.UNO_FEASIBLE_SMALL_STEP
             return (MOI.SLOW_PROGRESS, MOI.FEASIBLE_POINT)
-        elseif uno_solution_status == Uno.UNO_INFEASIBLE_SMALL_STEP
+        elseif uno_solution_status == UnoSolver.UNO_INFEASIBLE_SMALL_STEP
             return (MOI.SLOW_PROGRESS, MOI.INFEASIBLE_POINT)
         else # UNO_UNBOUNDED
             return (MOI.DUAL_INFEASIBLE, MOI.FEASIBLE_POINT)
@@ -1467,8 +1467,8 @@ function MOI.get(model::Optimizer, ::MOI.TerminationStatus)
     elseif model.inner === nothing || model.solver === nothing
         return MOI.OPTIMIZE_NOT_CALLED
     end
-    uno_termination_status = Uno.uno_get_optimization_status(model.solver)
-    uno_solution_status = Uno.uno_get_solution_status(model.solver)
+    uno_termination_status = UnoSolver.uno_get_optimization_status(model.solver)
+    uno_solution_status = UnoSolver.uno_get_solution_status(model.solver)
     termination_status, _ = _status_code_mapping(uno_termination_status, uno_solution_status)
     return termination_status
 end
@@ -1481,7 +1481,7 @@ function MOI.get(model::Optimizer, ::MOI.RawStatusString)
     elseif model.inner === nothing || model.solver === nothing
         return "Optimize not called"
     end
-    uno_status = Uno.uno_get_optimization_status(model.solver)
+    uno_status = UnoSolver.uno_get_optimization_status(model.solver)
     return string(uno_status)
 end
 
@@ -1491,7 +1491,7 @@ function _manually_evaluated_primal_status(model::Optimizer)
     # Alexis -- revisit this code when we know how to handle the workspace
     # x, g = model.inner.x, model.inner.g
     x = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_primal_solution(model.solver, x)
+    UnoSolver.uno_get_primal_solution(model.solver, x)
     g = Vector{Float64}(undef, model.inner.ncon)
     MOI.eval_constraint(model, g, x)
 
@@ -1522,8 +1522,8 @@ function MOI.get(model::Optimizer, attr::MOI.PrimalStatus)
     if !(1 <= attr.result_index <= MOI.get(model, MOI.ResultCount()))
         return MOI.NO_SOLUTION
     end
-    uno_termination_status = Uno.uno_get_optimization_status(model.solver)
-    uno_solution_status = Uno.uno_get_solution_status(model.solver)
+    uno_termination_status = UnoSolver.uno_get_optimization_status(model.solver)
+    uno_solution_status = UnoSolver.uno_get_solution_status(model.solver)
     _, primal_status = _status_code_mapping(uno_termination_status, uno_solution_status)
     if primal_status == MOI.UNKNOWN_RESULT_STATUS
         return _manually_evaluated_primal_status(model)
@@ -1537,25 +1537,25 @@ function MOI.get(model::Optimizer, attr::MOI.DualStatus)
     if !(1 <= attr.result_index <= MOI.get(model, MOI.ResultCount()))
         return MOI.NO_SOLUTION
     end
-    uno_termination_status = Uno.uno_get_optimization_status(model.solver)
-    uno_solution_status = Uno.uno_get_solution_status(model.solver)
+    uno_termination_status = UnoSolver.uno_get_optimization_status(model.solver)
+    uno_solution_status = UnoSolver.uno_get_solution_status(model.solver)
     _, dual_status = _status_code_mapping(uno_termination_status, uno_solution_status)
     return dual_status
 end
 
 ### MOI.SolveTimeSec
 
-MOI.get(model::Optimizer, ::MOI.SolveTimeSec) = isnothing(model.solver) ? NaN : Uno.uno_get_cpu_time(model.solver)
+MOI.get(model::Optimizer, ::MOI.SolveTimeSec) = isnothing(model.solver) ? NaN : UnoSolver.uno_get_cpu_time(model.solver)
 
 ### MOI.BarrierIterations
 
-MOI.get(model::Optimizer, ::MOI.BarrierIterations) = isnothing(model.solver) ? 0 : Uno.uno_get_number_iterations(model.solver)
+MOI.get(model::Optimizer, ::MOI.BarrierIterations) = isnothing(model.solver) ? 0 : UnoSolver.uno_get_number_iterations(model.solver)
 
 ### MOI.ObjectiveValue
 
 function MOI.get(model::Optimizer, attr::MOI.ObjectiveValue)
     MOI.check_result_index_bounds(model, attr)
-    obj_val = Uno.uno_get_solution_objective(model.solver)
+    obj_val = UnoSolver.uno_get_solution_objective(model.solver)
     return obj_val
 end
 
@@ -1572,7 +1572,7 @@ function MOI.get(
         p = model.parameters[vi]
         return model.nlp_model[p]
     end
-    return Uno.uno_get_primal_solution_component(model.solver, column(vi)-1)
+    return UnoSolver.uno_get_primal_solution_component(model.solver, column(vi)-1)
 end
 
 ### MOI.ConstraintPrimal
@@ -1616,7 +1616,7 @@ function MOI.get(
     # Alexis -- revisit this code when we know how to handle the workspace
     # model.inner.g[row(model, ci)]
     x = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_primal_solution(model.solver, x)
+    UnoSolver.uno_get_primal_solution(model.solver, x)
     g = Vector{Float64}(undef, model.inner.ncon)
     MOI.eval_constraint(model, g, x)
     return g[row(model, ci)]
@@ -1632,7 +1632,7 @@ function MOI.get(
     # Alexis -- revisit this code when we know how to handle the workspace
     # model.inner.x[ci.value]
     x = Vector{Float64}(undef, model.inner.nvar)
-    Uno.uno_get_primal_solution(model.solver, x)
+    UnoSolver.uno_get_primal_solution(model.solver, x)
     return x[ci.value]
 end
 
@@ -1654,7 +1654,7 @@ function MOI.get(
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     s = -_dual_multiplier(model)
-    λ = Uno.uno_get_constraint_dual_solution_component(model.solver, row(model, ci)-1)
+    λ = UnoSolver.uno_get_constraint_dual_solution_component(model.solver, row(model, ci)-1)
     v = s * λ
     return v
 end
@@ -1666,8 +1666,8 @@ function MOI.get(
 )
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-    xL_i = Uno.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
-    xU_i = Uno.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
+    xL_i = UnoSolver.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
+    xU_i = UnoSolver.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
     rc = xL_i - xU_i
     return min(0.0, _dual_multiplier(model) * rc)
 end
@@ -1679,8 +1679,8 @@ function MOI.get(
 )
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-    xL_i = Uno.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
-    xU_i = Uno.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
+    xL_i = UnoSolver.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
+    xU_i = UnoSolver.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
     rc = xL_i - xU_i
     return max(0.0, _dual_multiplier(model) * rc)
 end
@@ -1692,8 +1692,8 @@ function MOI.get(
 )
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-    xL_i = Uno.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
-    xU_i = Uno.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
+    xL_i = UnoSolver.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
+    xU_i = UnoSolver.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
     rc = xL_i - xU_i
     return _dual_multiplier(model) * rc
 end
@@ -1705,8 +1705,8 @@ function MOI.get(
 )
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-    xL_i = Uno.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
-    xU_i = Uno.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
+    xL_i = UnoSolver.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
+    xU_i = UnoSolver.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
     rc = xL_i - xU_i
     return _dual_multiplier(model) * rc
 end
@@ -1719,7 +1719,7 @@ function MOI.get(model::Optimizer, attr::MOI.NLPBlockDual)
     nquad = length(model.qp_data)
     v = Vector{Float64}(undef, model.inner.ncon - nquad)
     for i = nquad+1:model.inner.ncon
-        v[i-nquad] = s * Uno.uno_get_constraint_dual_solution_component(model.solver, i-1)
+        v[i-nquad] = s * UnoSolver.uno_get_constraint_dual_solution_component(model.solver, i-1)
     end
     return v
 end
