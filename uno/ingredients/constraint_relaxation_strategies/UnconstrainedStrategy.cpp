@@ -26,7 +26,6 @@ namespace uno {
          Direction& direction, double trust_region_radius, const Options& options) {
       this->problem = std::make_unique<const OptimizationProblem>(model);
       assert(this->problem != nullptr);
-      // TODO form the reformulation wrt inequalities
 
       // memory allocation
       this->hessian_model->initialize(model);
@@ -94,7 +93,7 @@ namespace uno {
       return this->inequality_handling_method->get_name() + " with " + this->hessian_model->get_name() + " Hessian and " +
          this->inertia_correction_strategy->get_name() + " regularization";
    }
-   
+
    size_t UnconstrainedStrategy::get_number_subproblems_solved() const {
       return this->inequality_handling_method->number_subproblems_solved;
    }

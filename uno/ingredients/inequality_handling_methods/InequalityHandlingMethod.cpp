@@ -1,7 +1,7 @@
 
 #include "InequalityHandlingMethod.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
-#include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
