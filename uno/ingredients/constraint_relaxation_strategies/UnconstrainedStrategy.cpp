@@ -86,6 +86,7 @@ namespace uno {
       iterate.evaluate_objective_gradient(model);
       iterate.evaluate_constraints(model);
 
+      this->inequality_handling_method->evaluate_constraint_jacobian(iterate);
       this->problem->evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, *this->inequality_handling_method, iterate);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(*this->problem, iterate);
       return ConstraintRelaxationStrategy::check_termination(*this->problem, iterate);

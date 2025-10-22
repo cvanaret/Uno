@@ -113,6 +113,7 @@ namespace uno {
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
          const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const {
+      // start with the Lagrangian gradient wrt the initial problem
       this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, inequality_handling_method, iterate);
 
       // barrier terms

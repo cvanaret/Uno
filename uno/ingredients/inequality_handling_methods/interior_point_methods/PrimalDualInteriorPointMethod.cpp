@@ -95,7 +95,7 @@ namespace uno {
       if (0 < this->problem->number_constraints) {
          // TODO compute least-square multipliers
       }
-      this->barrier_problem->set_progress_measures(initial_iterate);
+      this->barrier_problem->set_progress_measures(initial_iterate, this->progress_norm);
    }
 
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,

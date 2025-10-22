@@ -31,7 +31,7 @@ namespace uno {
          problem.set_auxiliary_measure(current_iterate);
          this->subproblem_definition_changed = false;
       }
-      problem.set_progress_measures(trial_iterate);
+      problem.set_progress_measures(trial_iterate, this->progress_norm);
 
       bool accept_iterate = false;
       if (direction.norm == 0.) {

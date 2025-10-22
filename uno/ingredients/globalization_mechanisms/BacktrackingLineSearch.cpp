@@ -74,11 +74,11 @@ namespace uno {
          }
          catch (const EvaluationError&) {
             statistics.set("status", "eval. error");
+            trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
          }
          BacktrackingLineSearch::set_LS_statistics(statistics, number_iterations);
 
          if (is_acceptable) {
-            trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
             GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
             termination = true;
             if (Logger::level == INFO) statistics.print_current_line();
@@ -90,8 +90,7 @@ namespace uno {
          else { // minimum_step_length reached
             DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
             // check if we can terminate at a first-order point
-            termination = BacktrackingLineSearch::terminate_with_small_step_length(statistics, constraint_relaxation_strategy,
-               model, trial_iterate);
+            termination = BacktrackingLineSearch::terminate_with_small_step_length(statistics, trial_iterate);
             if (!termination) {
                // test if we can switch to solving the feasibility problem
                if (constraint_relaxation_strategy.solving_feasibility_problem() || !model.is_constrained()) {
@@ -112,10 +111,8 @@ namespace uno {
       } // end while loop
    }
 
-   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics,
-         ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Model& model, Iterate& trial_iterate) {
+   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, Iterate& trial_iterate) {
       bool termination = false;
-      trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
       if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
          statistics.set("status", "accepted (small step length)");
          GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);

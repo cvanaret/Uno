@@ -207,10 +207,9 @@ namespace uno {
    }
 
    // infeasibility measure: constraint violation
-   void OptimizationProblem::set_infeasibility_measure(Iterate& iterate) const {
+   void OptimizationProblem::set_infeasibility_measure(Iterate& iterate, Norm norm) const {
       iterate.evaluate_constraints(this->model);
-      iterate.progress.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints,
-         Norm::L1 /* TODO this->progress_norm */);
+      iterate.progress.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, norm);
    }
 
    // objective measure: scaled objective
@@ -227,8 +226,8 @@ namespace uno {
       iterate.progress.auxiliary = 0.;
    }
 
-   void OptimizationProblem::set_progress_measures(Iterate& iterate) const {
-      this->set_infeasibility_measure(iterate);
+   void OptimizationProblem::set_progress_measures(Iterate& iterate, Norm norm) const {
+      this->set_infeasibility_measure(iterate, norm);
       this->set_objective_measure(iterate);
       this->set_auxiliary_measure(iterate);
    }

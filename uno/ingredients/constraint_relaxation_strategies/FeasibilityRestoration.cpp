@@ -229,12 +229,14 @@ namespace uno {
       iterate.evaluate_constraints(model);
 
       if (this->current_phase == Phase::OPTIMALITY) {
+         this->optimality_inequality_handling_method->evaluate_constraint_jacobian(iterate);
          this->optimality_problem->evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient,
             *this->optimality_inequality_handling_method, iterate);
          ConstraintRelaxationStrategy::compute_primal_dual_residuals(*this->optimality_problem, iterate);
          return ConstraintRelaxationStrategy::check_termination(*this->optimality_problem, iterate);
       }
       else {
+         this->feasibility_inequality_handling_method->evaluate_constraint_jacobian(iterate);
          this->feasibility_problem->evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient,
             *this->feasibility_inequality_handling_method, iterate);
          ConstraintRelaxationStrategy::compute_primal_dual_residuals(*this->feasibility_problem, iterate);
