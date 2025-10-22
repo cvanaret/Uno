@@ -77,7 +77,7 @@ objective_value(jump_model)     # objective value
 value.(x)                       # primal solution
 ```
 
-If you encounter any issues with the interface for JuMP problems, please [open an issue](https://github.com/JuliaSmoothOptimizers/UnoSolver.jl/issues) so we can fix it.
+If you encounter any issues with the interface for JuMP problems, please [open an issue](https://github.com/cvanaret/Uno/issues) so we can fix it.
 As a temporary workaround, you can use [NLPModelsJuMP.jl](https://github.com/JuliaSmoothOptimizers/NLPModelsJuMP.jl) to wrap a JuMP model into a `MathOptNLPModel`:
 
 ```julia
