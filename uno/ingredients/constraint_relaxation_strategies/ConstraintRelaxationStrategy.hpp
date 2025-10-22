@@ -53,7 +53,6 @@ namespace uno {
       [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
 
    protected:
-      const Norm progress_norm;
       const Norm residual_norm;
       const double residual_scaling_threshold;
       const double primal_tolerance;
@@ -63,8 +62,6 @@ namespace uno {
       size_t loose_tolerance_consecutive_iterations{0};
       const size_t loose_tolerance_consecutive_iteration_threshold;
       const double unbounded_objective_threshold;
-      // first_order_predicted_reduction is true when the predicted reduction can be taken as first-order (e.g. in line-search methods)
-      const bool first_order_predicted_reduction;
 
       void compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate) const;
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;

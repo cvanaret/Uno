@@ -17,7 +17,7 @@
 
 namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(const Options& options):
-         InequalityHandlingMethod(), options(options) {
+         InequalityHandlingMethod(options), options(options) {
    }
 
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,

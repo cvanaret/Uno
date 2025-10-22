@@ -7,6 +7,7 @@
 #include <functional>
 #include <string>
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
+#include "linear_algebra/Norm.hpp"
 
 namespace uno {
    // forward declarations
@@ -29,7 +30,7 @@ namespace uno {
    
    class InequalityHandlingMethod {
    public:
-      InequalityHandlingMethod() = default;
+      explicit InequalityHandlingMethod(const Options& options);
       virtual ~InequalityHandlingMethod() = default;
 
       virtual void initialize(const OptimizationProblem& problem, Iterate& current_iterate,
@@ -70,9 +71,11 @@ namespace uno {
       [[nodiscard]] virtual std::string get_name() const = 0;
 
    protected:
+      const Norm progress_norm;
+      // first_order_predicted_reduction is true when the predicted reduction can be taken as first-order (e.g. in line-search methods)
+      const bool first_order_predicted_reduction;
+
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const;
-      void compute_progress_measures(const OptimizationProblem& problem, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Iterate& trial_iterate);
       [[nodiscard]] double compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const;
       [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const Iterate& current_iterate,
