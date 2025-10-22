@@ -227,12 +227,7 @@ namespace uno {
       const auto& evaluation_space = this->linear_solver->get_evaluation_space();
       return evaluation_space.compute_hessian_quadratic_product(vector);
    }
-
-   void PrimalDualInteriorPointMethod::set_auxiliary_measure(Iterate& iterate) {
-      // auxiliary measure: barrier terms
-      this->barrier_problem->set_auxiliary_measure(iterate);
-   }
-
+   
    double PrimalDualInteriorPointMethod::compute_predicted_auxiliary_reduction_model(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const {
       const double directional_derivative = this->barrier_problem->compute_barrier_term_directional_derivative(current_iterate,

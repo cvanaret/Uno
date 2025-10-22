@@ -40,7 +40,6 @@ namespace uno {
       [[nodiscard]] double compute_hessian_quadratic_product(const Vector<double>& vector) const override;
 
       // progress measures
-      void set_auxiliary_measure(Iterate& iterate) override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const override;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,

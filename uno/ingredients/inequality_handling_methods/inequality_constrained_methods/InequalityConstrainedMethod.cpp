@@ -114,11 +114,6 @@ namespace uno {
       view(direction_multipliers.upper_bounds, 0, current_multipliers.upper_bounds.size()) -= current_multipliers.upper_bounds;
    }
 
-   // auxiliary measure (0 in inequality-constrained methods)
-   void InequalityConstrainedMethod::set_auxiliary_measure(Iterate& iterate) {
-      this->problem->set_auxiliary_measure(iterate);
-   }
-
    double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const Iterate& /*current_iterate*/,
          const Vector<double>& /*primal_direction*/, double /*step_length*/) const {
       return 0.;
