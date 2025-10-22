@@ -18,7 +18,7 @@ UnoNLPModelsExt = "NLPModels"
 
 [compat]
 LinearAlgebra = "1.10"
-MathOptInterface = "1.25"
+MathOptInterface = "1.46"
 NLPModels = "0.21.5"
 OpenBLAS32_jll = "0.3.24"
 Test = "1.10"
