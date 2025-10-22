@@ -1,4 +1,4 @@
-name: Julia tests for the interface Uno.jl
+name: Julia tests for the interface UnoSolver.jl
 on:
   push:
     branches: [main]
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-    name: Uno.jl
+    name: UnoSolver.jl
 
     steps:
       - uses: actions/checkout@v4
@@ -55,11 +55,11 @@ jobs:
         with:
           version: "1.10"
           arch: x64
-      - name: Unit tests of Uno.jl
+      - name: Unit tests of UnoSolver.jl
         shell: julia --color=yes --project=.github/julia {0}
         run: |
           using Pkg
           Pkg.instantiate()
           Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
           Pkg.develop(path="/home/runner/work/Uno/Uno/interfaces/Julia")
-          Pkg.test("Uno")
+          Pkg.test("UnoSolver")

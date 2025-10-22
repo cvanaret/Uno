@@ -8,7 +8,7 @@ This is done using [Clang.jl](https://github.com/JuliaInterop/Clang.jl).
 Activate and instantiate the project environment in this folder
 to install the dependencies `Uno_jll.jl`, `Clang.jl` and `JuliaFormatter.jl`:
 ```julia
-shell> cd Uno.jl/gen
+shell> cd interfaces/Julia/gen
 shell> julia --project
 julia> ]
 (gen) pkg> instantiate

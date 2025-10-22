@@ -1,4 +1,4 @@
-using Uno, Test
+using UnoSolver, Test
 using NLPModels, MathOptInterface, CUTEst
 
 version = uno_version()
