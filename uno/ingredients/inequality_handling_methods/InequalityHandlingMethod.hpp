@@ -4,20 +4,25 @@
 #ifndef UNO_INEQUALITYHANDLINGMETHOD_H
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
+#include <functional>
 #include <string>
+#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 
 namespace uno {
    // forward declarations
    class Direction;
    class EvaluationSpace;
+   class GlobalizationStrategy;
    class HessianModel;
    class Iterate;
    class l1RelaxedProblem;
+   class Model;
    class OptimizationProblem;
    class Options;
    template <typename ElementType>
    class InertiaCorrectionStrategy;
    class Statistics;
+   class UserCallbacks;
    template <typename ElementType>
    class Vector;
    class WarmstartInformation;
@@ -50,6 +55,9 @@ namespace uno {
       virtual void set_auxiliary_measure(Iterate& iterate) = 0;
       [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Iterate& iterate,
          const Vector<double>& primal_direction, double step_length) const = 0;
+      [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         UserCallbacks& user_callbacks) = 0;
 
       virtual void postprocess_iterate(Iterate& iterate) = 0;
 
@@ -60,6 +68,20 @@ namespace uno {
       bool subproblem_definition_changed{false};
 
       [[nodiscard]] virtual std::string get_name() const = 0;
+
+   protected:
+      void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const;
+      void compute_progress_measures(const OptimizationProblem& problem, GlobalizationStrategy& globalization_strategy,
+         Iterate& current_iterate, Iterate& trial_iterate);
+      [[nodiscard]] double compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length) const;
+      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length) const;
+      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const OptimizationProblem& problem,
+         const Iterate& current_iterate, const Direction& direction, double step_length) const;
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         const OptimizationProblem& problem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length, UserCallbacks& user_callbacks);
    };
 } // namespace
 

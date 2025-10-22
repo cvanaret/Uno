@@ -250,31 +250,6 @@ namespace uno {
       direction.multipliers.upper_bounds.scale(bound_dual_step_length);
    }
 
-   void PrimalDualInteriorPointProblem::set_auxiliary_measure(Iterate& iterate) const {
-      // auxiliary measure: barrier terms
-      double barrier_terms = 0.;
-      for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         const double lower_bound = this->first_reformulation.variable_lower_bound(variable_index);
-         const double upper_bound = this->first_reformulation.variable_upper_bound(variable_index);
-         if (is_finite(lower_bound)) {
-            barrier_terms -= std::log(iterate.primals[variable_index] - lower_bound);
-            if (!is_finite(upper_bound)) {
-               // damping
-               barrier_terms += this->parameters.damping_factor*(iterate.primals[variable_index] - lower_bound);
-            }
-         }
-         if (is_finite(upper_bound)) {
-            barrier_terms -= std::log(upper_bound - iterate.primals[variable_index]);
-            if (!is_finite(lower_bound)) {
-               barrier_terms += this->parameters.damping_factor*(upper_bound - iterate.primals[variable_index]);
-            }
-         }
-      }
-      barrier_terms *= this->barrier_parameter;
-      assert(!std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
-      iterate.progress.auxiliary = barrier_terms;
-   }
-
    double PrimalDualInteriorPointProblem::dual_regularization_factor() const {
       return std::pow(this->barrier_parameter, this->parameters.dual_regularization_exponent);
    }
@@ -449,5 +424,33 @@ namespace uno {
          return result;
       }};
       return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
+   }
+
+   void PrimalDualInteriorPointProblem::set_auxiliary_measure(Iterate& iterate) const {
+      // start with the auxiliary measure of the initial problem
+      this->first_reformulation.set_auxiliary_measure(iterate);
+
+      // add the contribution of barrier terms
+      double barrier_terms = 0.;
+      for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
+         const double lower_bound = this->first_reformulation.variable_lower_bound(variable_index);
+         const double upper_bound = this->first_reformulation.variable_upper_bound(variable_index);
+         if (is_finite(lower_bound)) {
+            barrier_terms -= std::log(iterate.primals[variable_index] - lower_bound);
+            if (!is_finite(upper_bound)) {
+               // damping
+               barrier_terms += this->parameters.damping_factor*(iterate.primals[variable_index] - lower_bound);
+            }
+         }
+         if (is_finite(upper_bound)) {
+            barrier_terms -= std::log(upper_bound - iterate.primals[variable_index]);
+            if (!is_finite(lower_bound)) {
+               barrier_terms += this->parameters.damping_factor*(upper_bound - iterate.primals[variable_index]);
+            }
+         }
+      }
+      barrier_terms *= this->barrier_parameter;
+      assert(!std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
+      iterate.progress.auxiliary = barrier_terms;
    }
 } // namespace

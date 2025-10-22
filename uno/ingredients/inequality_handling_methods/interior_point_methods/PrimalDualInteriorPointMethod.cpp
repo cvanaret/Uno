@@ -95,6 +95,8 @@ namespace uno {
       if (0 < this->problem->number_constraints) {
          // TODO compute least-square multipliers
       }
+
+      this->evaluate_progress_measures(*this->barrier_problem, initial_iterate);
    }
 
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
@@ -237,6 +239,13 @@ namespace uno {
          primal_direction);
       return step_length * (-directional_derivative);
       // }, "α*(μ*X^{-1} e^T d)"};
+   }
+
+   bool PrimalDualInteriorPointMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         UserCallbacks& user_callbacks) {
+      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->barrier_problem,
+         current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }
 
    void PrimalDualInteriorPointMethod::update_barrier_parameter(const Iterate& current_iterate, const DualResiduals& residuals) {

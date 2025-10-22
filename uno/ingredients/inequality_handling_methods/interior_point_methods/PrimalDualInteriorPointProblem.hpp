@@ -55,13 +55,14 @@ namespace uno {
       void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const override;
 
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
-      void set_auxiliary_measure(Iterate& iterate) const;
       [[nodiscard]] double dual_regularization_factor() const override;
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
       void postprocess_iterate(Iterate& iterate) const;
       [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
          double shift) const;
+
+      void set_auxiliary_measure(Iterate& iterate) const override;
 
    protected:
       const OptimizationProblem& first_reformulation;

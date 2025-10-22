@@ -84,6 +84,7 @@ namespace uno {
 
       virtual void set_infeasibility_measure(Iterate& iterate, Norm norm) const;
       virtual void set_objective_measure(Iterate& iterate) const;
+      virtual void set_auxiliary_measure(Iterate& iterate) const;
 
    protected:
       const ForwardRange primal_regularization_variables;

@@ -49,8 +49,8 @@ namespace uno {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::generate_initial_iterate(Iterate& /*initial_iterate*/) {
-      // TODO enforce linear constraints
+   void InequalityConstrainedMethod::generate_initial_iterate(Iterate& initial_iterate) {
+      this->evaluate_progress_measures(*this->problem, initial_iterate);
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
@@ -114,14 +114,21 @@ namespace uno {
       view(direction_multipliers.upper_bounds, 0, current_multipliers.upper_bounds.size()) -= current_multipliers.upper_bounds;
    }
 
-   // auxiliary measure is 0 in inequality-constrained methods
+   // auxiliary measure (0 in inequality-constrained methods)
    void InequalityConstrainedMethod::set_auxiliary_measure(Iterate& iterate) {
-      iterate.progress.auxiliary = 0.;
+      this->problem->set_auxiliary_measure(iterate);
    }
 
    double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const Iterate& /*current_iterate*/,
          const Vector<double>& /*primal_direction*/, double /*step_length*/) const {
       return 0.;
+   }
+
+   bool InequalityConstrainedMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         UserCallbacks& user_callbacks) {
+      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->problem,
+         current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }
 
    void InequalityConstrainedMethod::postprocess_iterate(Iterate& /*iterate*/) {

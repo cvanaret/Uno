@@ -41,6 +41,9 @@ namespace uno {
       void set_auxiliary_measure(Iterate& iterate) override;
       [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Iterate&, const Vector<double>&,
          double step_length) const override;
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         UserCallbacks& user_callbacks) override;
 
       void postprocess_iterate(Iterate& iterate) override;
 

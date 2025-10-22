@@ -220,4 +220,8 @@ namespace uno {
          return objective_multiplier * objective;
       };
    }
+
+   void OptimizationProblem::set_auxiliary_measure(Iterate& iterate) const {
+      iterate.progress.auxiliary = 0.;
+   }
 } // namespace
