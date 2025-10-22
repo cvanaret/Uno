@@ -81,7 +81,7 @@ If you encounter any issues with the interface for JuMP problems, please [open a
 As a temporary workaround, you can use [NLPModelsJuMP.jl](https://github.com/JuliaSmoothOptimizers/NLPModelsJuMP.jl) to wrap a JuMP model into a `MathOptNLPModel`:
 
 ```julia
-using NLPModelsJuMP
+using UnoSolver, NLPModelsJuMP
 
 nlp = MathOptNLPModel(jump_model)
 
