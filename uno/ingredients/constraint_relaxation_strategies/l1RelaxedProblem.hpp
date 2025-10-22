@@ -6,15 +6,17 @@
 
 #include <functional>
 #include "optimization/OptimizationProblem.hpp"
+#include "tools/Infinity.hpp"
 
 namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {
    public:
-      l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
-         double proximal_coefficient, double const* proximal_center);
+      l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
       ~l1RelaxedProblem() override = default;
 
       [[nodiscard]] double get_objective_multiplier() const override;
+      void set_proximal_coefficient(double proximal_coefficient);
+      void set_proximal_center(double* proximal_center);
 
       // constraint evaluations
       void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
@@ -60,8 +62,8 @@ namespace uno {
       const size_t number_elastic_variables;
       const double objective_multiplier;
       const double constraint_violation_coefficient;
-      const double proximal_coefficient;
-      double const* proximal_center;
+      double proximal_coefficient{INF<double>};
+      double* proximal_center{};
       const ForwardRange dual_regularization_constraints{0};
    };
 } // namespace

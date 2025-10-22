@@ -11,14 +11,17 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter,
+   PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem,
       const InteriorPointParameters &parameters):
          OptimizationProblem(problem.model, problem.number_variables, problem.number_constraints),
-         first_reformulation(problem), barrier_parameter(barrier_parameter),
-         parameters(parameters), equality_constraints(problem.number_constraints) { }
+         first_reformulation(problem), parameters(parameters), equality_constraints(problem.number_constraints) { }
 
    double PrimalDualInteriorPointProblem::get_objective_multiplier() const {
       return this->first_reformulation.get_objective_multiplier();
+   }
+
+   void PrimalDualInteriorPointProblem::set_barrier_parameter(double barrier_parameter) {
+      this->barrier_parameter = barrier_parameter;
    }
 
    void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {

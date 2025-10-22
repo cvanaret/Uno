@@ -87,7 +87,7 @@ namespace uno {
       if (inequality_handling_method.subproblem_definition_changed) {
          DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
          globalization_strategy.reset();
-         inequality_handling_method.set_auxiliary_measure(problem, current_iterate);
+         inequality_handling_method.set_auxiliary_measure(current_iterate);
          inequality_handling_method.subproblem_definition_changed = false;
       }
       this->evaluate_progress_measures(inequality_handling_method, problem, trial_iterate);
@@ -98,14 +98,14 @@ namespace uno {
       return {
          this->compute_predicted_infeasibility_reduction(inequality_handling_method, problem.model, current_iterate, direction.primals, step_length),
          this->compute_predicted_objective_reduction(inequality_handling_method, current_iterate, direction.primals, step_length),
-         inequality_handling_method.compute_predicted_auxiliary_reduction_model(problem, current_iterate, direction.primals, step_length)
+         inequality_handling_method.compute_predicted_auxiliary_reduction_model(current_iterate, direction.primals, step_length)
       };
    }
 
    bool ConstraintRelaxationStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, UserCallbacks& user_callbacks) const {
-      inequality_handling_method.postprocess_iterate(problem, trial_iterate);
+      inequality_handling_method.postprocess_iterate(trial_iterate);
       const double objective_multiplier = problem.get_objective_multiplier();
       trial_iterate.objective_multiplier = objective_multiplier;
       this->compute_progress_measures(inequality_handling_method, problem, globalization_strategy, current_iterate, trial_iterate);
