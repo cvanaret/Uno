@@ -20,16 +20,16 @@ namespace uno {
    public:
       explicit PrimalDualInteriorPointMethod(const Options& options);
 
-      void initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) override;
+      void initialize(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
+         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
-      void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
-      void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
+      void generate_initial_iterate(Iterate& initial_iterate) override;
+      void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, HessianModel& hessian_model,
+         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
          WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
-      void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
+      void exit_feasibility_problem(Iterate& trial_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
@@ -52,6 +52,7 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
 
    protected:
+      const OptimizationProblem* problem{};
       std::unique_ptr<PrimalDualInteriorPointProblem> barrier_problem{};
       const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       BarrierParameterUpdateStrategy barrier_parameter_update_strategy;
@@ -66,7 +67,7 @@ namespace uno {
 
       [[nodiscard]] double barrier_parameter() const;
       void update_barrier_parameter(const Iterate& current_iterate, const DualResiduals& residuals);
-      [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
+      [[nodiscard]] bool is_small_step(const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
       [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
    };
 } // namespace

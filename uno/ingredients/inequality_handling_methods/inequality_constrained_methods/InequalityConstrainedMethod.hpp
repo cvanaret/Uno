@@ -21,13 +21,13 @@ namespace uno {
       void initialize(const OptimizationProblem& problem, Iterate& current_iterate,
          HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
-      void generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) override;
-      void solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         Direction& direction, HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
-         double trust_region_radius, WarmstartInformation& warmstart_information) override;
+      void generate_initial_iterate(Iterate& initial_iterate) override;
+      void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, HessianModel& hessian_model,
+         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
+         WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
-      void exit_feasibility_problem(const OptimizationProblem& problem, Iterate& trial_iterate) override;
+      void exit_feasibility_problem(Iterate& trial_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
       [[nodiscard]] double proximal_coefficient() const override;
 

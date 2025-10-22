@@ -43,6 +43,7 @@ namespace uno {
       if (!problem.get_fixed_variables().empty()) {
          throw std::runtime_error("The problem has fixed variables. Move them to the set of general constraints.");
       }
+      this->problem = &problem;
       // reformulate the problem into a barrier problem
       this->barrier_problem = std::make_unique<PrimalDualInteriorPointProblem>(problem, this->parameters);
       this->barrier_problem->set_barrier_parameter(this->barrier_parameter());
@@ -54,24 +55,24 @@ namespace uno {
       statistics.add_column("barrier", Statistics::double_width - 5, options.get_int("statistics_barrier_parameter_column_order"));
    }
 
-   void PrimalDualInteriorPointMethod::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
+   void PrimalDualInteriorPointMethod::generate_initial_iterate(Iterate& initial_iterate) {
       // TODO: enforce linear constraints at initial point
       // add the slacks to the initial iterate
-      initial_iterate.set_number_variables(problem.number_variables);
+      initial_iterate.set_number_variables(this->problem->number_variables);
       // make the initial point strictly feasible wrt the bounds
-      for (size_t variable_index: Range(problem.number_variables)) {
+      for (size_t variable_index: Range(this->problem->number_variables)) {
          initial_iterate.primals[variable_index] = this->barrier_problem->push_variable_to_interior(initial_iterate.primals[variable_index],
-            problem.variable_lower_bound(variable_index), problem.variable_upper_bound(variable_index));
+            this->problem->variable_lower_bound(variable_index), this->problem->variable_upper_bound(variable_index));
       }
 
       // set the slack variables (if any)
-      if (!problem.model.get_slacks().is_empty()) {
+      if (!this->problem->model.get_slacks().is_empty()) {
          // set the slacks to the constraint values
-         initial_iterate.evaluate_constraints(problem.model);
-         for (const auto [constraint_index, slack_index]: problem.model.get_slacks()) {
+         initial_iterate.evaluate_constraints(this->problem->model);
+         for (const auto [constraint_index, slack_index]: this->problem->model.get_slacks()) {
             initial_iterate.primals[slack_index] =
                this->barrier_problem->push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index],
-               problem.variable_lower_bound(slack_index), problem.variable_upper_bound(slack_index));
+               this->problem->variable_lower_bound(slack_index), this->problem->variable_upper_bound(slack_index));
          }
          // since the slacks have been set, the function evaluations should also be updated
          initial_iterate.is_objective_gradient_computed = false;
@@ -80,9 +81,9 @@ namespace uno {
       }
 
       // set the bound multipliers
-      for (size_t variable_index: Range(problem.number_variables)) {
-         const double lower_bound = problem.variable_lower_bound(variable_index);
-         const double upper_bound = problem.variable_upper_bound(variable_index);
+      for (size_t variable_index: Range(this->problem->number_variables)) {
+         const double lower_bound = this->problem->variable_lower_bound(variable_index);
+         const double upper_bound = this->problem->variable_upper_bound(variable_index);
          if (is_finite(lower_bound)) {
             initial_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
          }
@@ -91,13 +92,13 @@ namespace uno {
          }
       }
 
-      if (0 < problem.number_constraints) {
+      if (0 < this->problem->number_constraints) {
          // TODO compute least-square multipliers
       }
    }
 
-   void PrimalDualInteriorPointMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         Direction& direction, HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
+   void PrimalDualInteriorPointMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet");
@@ -128,9 +129,7 @@ namespace uno {
       direction.subproblem_objective = this->evaluate_subproblem_objective(direction);
 
       // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
-      const bool is_small_step = PrimalDualInteriorPointMethod::is_small_step(problem, current_iterate.primals,
-         direction.primals);
-      if (is_small_step) {
+      if (PrimalDualInteriorPointMethod::is_small_step(current_iterate.primals, direction.primals)) {
          DEBUG << "This is a small step\n";
       }
    }
@@ -161,7 +160,7 @@ namespace uno {
        */
    }
 
-   void PrimalDualInteriorPointMethod::exit_feasibility_problem(const OptimizationProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+   void PrimalDualInteriorPointMethod::exit_feasibility_problem(Iterate& /*trial_iterate*/) {
       //assert(this->solving_feasibility_problem && "The barrier subproblem did not know it was solving the feasibility problem.");
       this->barrier_parameter_update_strategy.set_barrier_parameter(this->previous_barrier_parameter);
       this->solving_feasibility_problem = false;
@@ -257,9 +256,8 @@ namespace uno {
    }
 
    // Section 3.9 in IPOPT paper
-   bool PrimalDualInteriorPointMethod::is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals,
-         const Vector<double>& direction_primals) const {
-      const Range variables_range = Range(problem.number_variables);
+   bool PrimalDualInteriorPointMethod::is_small_step(const Vector<double>& current_primals, const Vector<double>& direction_primals) const {
+      const Range variables_range = Range(this->problem->number_variables);
       const VectorExpression relative_direction_size{variables_range, [&](size_t variable_index) {
          return direction_primals[variable_index] / (1 + std::abs(current_primals[variable_index]));
       }};

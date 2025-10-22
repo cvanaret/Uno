@@ -49,12 +49,12 @@ namespace uno {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::generate_initial_iterate(const OptimizationProblem& /*problem*/, Iterate& /*initial_iterate*/) {
+   void InequalityConstrainedMethod::generate_initial_iterate(Iterate& /*initial_iterate*/) {
       // TODO enforce linear constraints
    }
 
-   void InequalityConstrainedMethod::solve(Statistics& statistics, const OptimizationProblem& /*problem*/, Iterate& current_iterate,
-         Direction& direction, HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
+   void InequalityConstrainedMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information) {
       // create the subproblem and solve it
       Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
@@ -69,7 +69,7 @@ namespace uno {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::exit_feasibility_problem(const OptimizationProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+   void InequalityConstrainedMethod::exit_feasibility_problem(Iterate& /*trial_iterate*/) {
       // do nothing
    }
 

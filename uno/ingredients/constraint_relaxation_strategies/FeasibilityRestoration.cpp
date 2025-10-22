@@ -59,7 +59,7 @@ namespace uno {
       statistics.set("phase", "OPT");
 
       // initial iterate
-      this->optimality_inequality_handling_method->generate_initial_iterate(*this->optimality_problem, initial_iterate);
+      this->optimality_inequality_handling_method->generate_initial_iterate(initial_iterate);
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
       this->optimality_inequality_handling_method->evaluate_constraint_jacobian(initial_iterate);
@@ -159,7 +159,7 @@ namespace uno {
          InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
          WarmstartInformation& warmstart_information) {
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      inequality_handling_method.solve(statistics, problem, current_iterate, direction, hessian_model, inertia_correction_strategy,
+      inequality_handling_method.solve(statistics, current_iterate, direction, hessian_model, inertia_correction_strategy,
          trust_region_radius, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
@@ -194,7 +194,7 @@ namespace uno {
       trial_iterate.set_number_variables(this->optimality_problem->number_variables);
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
 
-      this->optimality_inequality_handling_method->exit_feasibility_problem(*this->optimality_problem, trial_iterate);
+      this->optimality_inequality_handling_method->exit_feasibility_problem(trial_iterate);
    }
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,

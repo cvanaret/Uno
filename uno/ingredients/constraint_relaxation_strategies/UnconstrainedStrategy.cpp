@@ -39,7 +39,7 @@ namespace uno {
       this->inequality_handling_method->initialize_statistics(statistics, options);
 
       // initial iterate
-      this->inequality_handling_method->generate_initial_iterate(*this->problem, initial_iterate);
+      this->inequality_handling_method->generate_initial_iterate(initial_iterate);
       this->evaluate_progress_measures(*this->inequality_handling_method, *this->problem, initial_iterate);
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
@@ -55,7 +55,7 @@ namespace uno {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
       direction.set_dimensions(this->problem->number_variables, this->problem->number_constraints);
-      this->inequality_handling_method->solve(statistics, *this->problem, current_iterate, direction, *this->hessian_model,
+      this->inequality_handling_method->solve(statistics, current_iterate, direction, *this->hessian_model,
          *this->inertia_correction_strategy, trust_region_radius, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, this->problem->get_number_original_variables()));
       DEBUG3 << direction << '\n';
