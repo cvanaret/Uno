@@ -115,12 +115,11 @@ end interface
 ! uno_set_lagrangian_hessian_operator
 !---------------------------------------------
 interface
-   function uno_set_lagrangian_hessian_operator(model, number_hessian_nonzeros, lagrangian_hessian_operator, &
+   function uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator, &
                                                 lagrangian_sign_convention) result(success) &
       bind(C, name="uno_set_lagrangian_hessian_operator")
-      import :: c_ptr, c_int, c_double, c_bool, c_funptr
+      import :: c_ptr, c_double, c_bool, c_funptr
       type(c_ptr), value :: model
-      integer(c_int), value :: number_hessian_nonzeros
       type(c_funptr), value :: lagrangian_hessian_operator
       real(c_double), value :: lagrangian_sign_convention
       logical(c_bool) :: success
