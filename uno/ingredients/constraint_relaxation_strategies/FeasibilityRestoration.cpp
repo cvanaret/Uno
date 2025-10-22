@@ -245,8 +245,8 @@ namespace uno {
 
    void FeasibilityRestoration::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
          const OptimizationProblem& problem, Iterate& iterate) const {
-      this->set_infeasibility_measure(problem.model, iterate);
-      this->set_objective_measure(problem.model, iterate);
+      problem.set_infeasibility_measure(iterate, this->progress_norm);
+      problem.set_objective_measure(iterate);
       inequality_handling_method.set_auxiliary_measure(iterate);
    }
 

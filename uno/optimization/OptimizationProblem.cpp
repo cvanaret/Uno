@@ -205,4 +205,19 @@ namespace uno {
       }
       return SolutionStatus::NOT_OPTIMAL;
    }
+
+   // infeasibility measure: constraint violation
+   void OptimizationProblem::set_infeasibility_measure(Iterate& iterate, Norm norm) const {
+      iterate.evaluate_constraints(this->model);
+      iterate.progress.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, norm);
+   }
+
+   // objective measure: scaled objective
+   void OptimizationProblem::set_objective_measure(Iterate& iterate) const {
+      iterate.evaluate_objective(this->model);
+      const double objective = iterate.evaluations.objective;
+      iterate.progress.objective = [=](double objective_multiplier) {
+         return objective_multiplier * objective;
+      };
+   }
 } // namespace

@@ -66,8 +66,6 @@ namespace uno {
       // first_order_predicted_reduction is true when the predicted reduction can be taken as first-order (e.g. in line-search methods)
       const bool first_order_predicted_reduction;
 
-      void set_objective_measure(const Model& model, Iterate& iterate) const;
-      void set_infeasibility_measure(const Model& model, Iterate& iterate) const;
       [[nodiscard]] double compute_predicted_infeasibility_reduction(InequalityHandlingMethod& inequality_handling_method,
          const Model& model, const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const;
       [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(InequalityHandlingMethod& inequality_handling_method,

@@ -82,6 +82,9 @@ namespace uno {
       [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const;
 
+      virtual void set_infeasibility_measure(Iterate& iterate, Norm norm) const;
+      virtual void set_objective_measure(Iterate& iterate) const;
+
    protected:
       const ForwardRange primal_regularization_variables;
       const ForwardRange dual_regularization_constraints;

@@ -44,21 +44,6 @@ namespace uno {
    }
    */
 
-   // infeasibility measure: constraint violation
-   void ConstraintRelaxationStrategy::set_infeasibility_measure(const Model& model, Iterate& iterate) const {
-      iterate.evaluate_constraints(model);
-      iterate.progress.infeasibility = model.constraint_violation(iterate.evaluations.constraints, this->progress_norm);
-   }
-
-   // objective measure: scaled objective
-   void ConstraintRelaxationStrategy::set_objective_measure(const Model& model, Iterate& iterate) const {
-      iterate.evaluate_objective(model);
-      const double objective = iterate.evaluations.objective;
-      iterate.progress.objective = [=](double objective_multiplier) {
-         return objective_multiplier * objective;
-      };
-   }
-
    double ConstraintRelaxationStrategy::compute_predicted_infeasibility_reduction(InequalityHandlingMethod& inequality_handling_method,
          const Model& model, const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
