@@ -105,7 +105,7 @@ namespace uno {
 
       // possibly update the barrier parameter
       if (!this->first_feasibility_iteration) {
-         this->update_barrier_parameter(*this->barrier_problem, current_iterate, current_iterate.residuals);
+         this->update_barrier_parameter(current_iterate, current_iterate.residuals);
       }
       else {
          this->first_feasibility_iteration = false;
@@ -248,8 +248,7 @@ namespace uno {
       // }, "α*(μ*X^{-1} e^T d)"};
    }
 
-   void PrimalDualInteriorPointMethod::update_barrier_parameter(const PrimalDualInteriorPointProblem& /*barrier_problem*/,
-         const Iterate& current_iterate, const DualResiduals& residuals) {
+   void PrimalDualInteriorPointMethod::update_barrier_parameter(const Iterate& current_iterate, const DualResiduals& residuals) {
       const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(*this->barrier_problem,
          current_iterate, residuals);
       // the barrier parameter may have been changed earlier when entering restoration

@@ -65,8 +65,7 @@ namespace uno {
       bool first_feasibility_iteration{false};
 
       [[nodiscard]] double barrier_parameter() const;
-      void update_barrier_parameter(const PrimalDualInteriorPointProblem& barrier_problem, const Iterate& current_iterate,
-         const DualResiduals& residuals);
+      void update_barrier_parameter(const Iterate& current_iterate, const DualResiduals& residuals);
       [[nodiscard]] bool is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
       [[nodiscard]] double evaluate_subproblem_objective(const Direction& direction) const;
    };
