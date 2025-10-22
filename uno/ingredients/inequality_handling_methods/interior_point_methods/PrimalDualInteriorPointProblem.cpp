@@ -383,11 +383,17 @@ namespace uno {
       iterate.progress.auxiliary += barrier_terms;
    }
 
-   double PrimalDualInteriorPointProblem::compute_predicted_auxiliary_reduction_model(const Iterate& current_iterate,
+   double PrimalDualInteriorPointProblem::compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const {
+      // start with the predicted auxiliary reduction of the initial problem
+      double predicted_auxiliary_reduction = this->first_reformulation.compute_predicted_auxiliary_reduction(current_iterate,
+         primal_direction, step_length);
+
+      // add the contribution of the barrier terms
       const double directional_derivative = this->compute_barrier_term_directional_derivative(current_iterate,
          primal_direction);
-      return step_length * (-directional_derivative);
+      predicted_auxiliary_reduction += step_length * (-directional_derivative);
+      return predicted_auxiliary_reduction;
       // }, "α*(μ*X^{-1} e^T d)"};
    }
 

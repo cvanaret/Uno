@@ -87,7 +87,7 @@ namespace uno {
       virtual void set_auxiliary_measure(Iterate& iterate) const;
       void set_progress_measures(Iterate& iterate) const;
 
-      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Iterate&, const Vector<double>&,
+      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction(const Iterate&, const Vector<double>&,
          double step_length) const;
 
    protected:

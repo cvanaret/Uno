@@ -222,7 +222,7 @@ namespace uno {
       };
    }
 
-   // auxiliary measure is 0 in inequality-constrained methods
+   // auxiliary measure: proximal terms, barrier terms, ...
    void OptimizationProblem::set_auxiliary_measure(Iterate& iterate) const {
       iterate.progress.auxiliary = 0.;
    }
@@ -233,7 +233,7 @@ namespace uno {
       this->set_auxiliary_measure(iterate);
    }
 
-   double OptimizationProblem::compute_predicted_auxiliary_reduction_model(const Iterate& /*current_iterate*/,
+   double OptimizationProblem::compute_predicted_auxiliary_reduction(const Iterate& /*current_iterate*/,
          const Vector<double>& /*primal_direction*/, double /*step_length*/) const {
       return 0.;
    }

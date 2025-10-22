@@ -255,7 +255,7 @@ namespace uno {
       return {
          this->compute_predicted_infeasibility_reduction(evaluation_space, direction.primals, step_length, progress_norm),
          this->compute_predicted_objective_reduction(evaluation_space, direction.primals, step_length),
-         this->problem.compute_predicted_auxiliary_reduction_model(this->current_iterate, direction.primals, step_length)
+         this->problem.compute_predicted_auxiliary_reduction(this->current_iterate, direction.primals, step_length)
       };
    }
 } // namespace
