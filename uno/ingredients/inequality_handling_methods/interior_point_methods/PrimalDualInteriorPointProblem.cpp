@@ -430,7 +430,7 @@ namespace uno {
       // start with the auxiliary measure of the initial problem
       this->first_reformulation.set_auxiliary_measure(iterate);
 
-      // add the contribution of barrier terms
+      // add the contribution of the barrier terms
       double barrier_terms = 0.;
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
          const double lower_bound = this->first_reformulation.variable_lower_bound(variable_index);
@@ -452,5 +452,18 @@ namespace uno {
       barrier_terms *= this->barrier_parameter;
       assert(!std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
       iterate.progress.auxiliary = barrier_terms;
+   }
+
+   double PrimalDualInteriorPointProblem::compute_predicted_auxiliary_reduction_model(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length) const {
+      // start with the auxiliary measure of the initial problem
+      double predicted_auxiliary_reduction = this->first_reformulation.compute_predicted_auxiliary_reduction_model(current_iterate,
+         primal_direction, step_length);
+
+      // add the contribution of the barrier terms
+      const double directional_derivative = this->compute_barrier_term_directional_derivative(current_iterate, primal_direction);
+      predicted_auxiliary_reduction += step_length * (-directional_derivative);
+      // }, "α*(μ*X^{-1} e^T d)"};
+      return predicted_auxiliary_reduction;
    }
 } // namespace

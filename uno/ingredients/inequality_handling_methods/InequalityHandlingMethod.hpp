@@ -53,8 +53,6 @@ namespace uno {
       [[nodiscard]] virtual double compute_hessian_quadratic_product(const Vector<double>& vector) const = 0;
 
       // progress measures
-      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Iterate& iterate,
-         const Vector<double>& primal_direction, double step_length) const = 0;
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          UserCallbacks& user_callbacks) = 0;

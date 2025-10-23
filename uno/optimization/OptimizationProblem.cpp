@@ -224,4 +224,9 @@ namespace uno {
    void OptimizationProblem::set_auxiliary_measure(Iterate& iterate) const {
       iterate.progress.auxiliary = 0.;
    }
+
+   double OptimizationProblem::compute_predicted_auxiliary_reduction_model(const Iterate& /*current_iterate*/,
+         const Vector<double>& /*primal_direction*/, double /*step_length*/) const {
+      return 0.;
+   }
 } // namespace

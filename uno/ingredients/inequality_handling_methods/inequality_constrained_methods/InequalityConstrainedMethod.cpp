@@ -114,11 +114,6 @@ namespace uno {
       view(direction_multipliers.upper_bounds, 0, current_multipliers.upper_bounds.size()) -= current_multipliers.upper_bounds;
    }
 
-   double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const Iterate& /*current_iterate*/,
-         const Vector<double>& /*primal_direction*/, double /*step_length*/) const {
-      return 0.;
-   }
-
    bool InequalityConstrainedMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          UserCallbacks& user_callbacks) {

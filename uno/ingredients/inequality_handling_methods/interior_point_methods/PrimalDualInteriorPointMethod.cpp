@@ -227,14 +227,6 @@ namespace uno {
       const auto& evaluation_space = this->linear_solver->get_evaluation_space();
       return evaluation_space.compute_hessian_quadratic_product(vector);
    }
-   
-   double PrimalDualInteriorPointMethod::compute_predicted_auxiliary_reduction_model(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const {
-      const double directional_derivative = this->barrier_problem->compute_barrier_term_directional_derivative(current_iterate,
-         primal_direction);
-      return step_length * (-directional_derivative);
-      // }, "α*(μ*X^{-1} e^T d)"};
-   }
 
    bool PrimalDualInteriorPointMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,

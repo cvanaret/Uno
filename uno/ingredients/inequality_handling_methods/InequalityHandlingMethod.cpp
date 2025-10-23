@@ -52,7 +52,7 @@ namespace uno {
       return {
          this->compute_predicted_infeasibility_reduction(problem.model, current_iterate, direction.primals, step_length),
          this->compute_predicted_objective_reduction(current_iterate, direction.primals, step_length),
-         this->compute_predicted_auxiliary_reduction_model(current_iterate, direction.primals, step_length)
+         problem.compute_predicted_auxiliary_reduction_model(current_iterate, direction.primals, step_length)
       };
    }
 

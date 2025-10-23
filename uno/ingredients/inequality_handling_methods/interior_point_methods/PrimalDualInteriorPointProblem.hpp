@@ -62,7 +62,10 @@ namespace uno {
       [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
          double shift) const;
 
+      // progress measures
       void set_auxiliary_measure(Iterate& iterate) const override;
+      [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length) const override;
 
    protected:
       const OptimizationProblem& first_reformulation;
