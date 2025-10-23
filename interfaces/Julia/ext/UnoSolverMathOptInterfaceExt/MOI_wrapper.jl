@@ -1247,11 +1247,10 @@ function _setup_model(model::Optimizer)
             MOI.Nonlinear.Evaluator(model.nlp_model, model.ad_backend, vars),
         )
     end
+    has_oracle = !isempty(model.vector_nonlinear_oracle_constraints)
     has_quadratic_constraints =
         any(isequal(_kFunctionTypeScalarQuadratic), model.qp_data.function_type)
-    has_nlp_constraints =
-        !isempty(model.nlp_data.constraint_bounds) ||
-        !isempty(model.vector_nonlinear_oracle_constraints)
+    has_nlp_constraints = !isempty(model.nlp_data.constraint_bounds) || has_oracle
     has_hessian = :Hess in MOI.features_available(model.nlp_data.evaluator)
     has_jacobian_operator = :JacVec in MOI.features_available(model.nlp_data.evaluator)
     has_hessian_operator = :HessVec in MOI.features_available(model.nlp_data.evaluator)
@@ -1332,9 +1331,9 @@ function _setup_model(model::Optimizer)
         moi_objective_gradient,
         moi_jacobian,
         moi_lagrangian_hessian,
-        has_jacobian_operator ? moi_jacobian_operator : nothing,
-        has_jacobian_operator ? moi_jacobian_transposed_operator : nothing,
-        has_hessian_operator ? moi_lagrangian_hessian_operator : nothing;
+        (has_jacobian_operator && !has_oracle) ? moi_jacobian_operator : nothing,
+        (has_jacobian_operator && !has_oracle) ? moi_jacobian_transposed_operator : nothing,
+        (has_hessian_operator && !has_oracle) ? moi_lagrangian_hessian_operator : nothing;
         hessian_triangle='L',
         lagrangian_sign=1.0,
         user_model=model,
