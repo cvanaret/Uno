@@ -62,8 +62,6 @@ namespace uno {
       virtual void set_initial_point(const Vector<double>& initial_point) = 0;
 
       size_t number_subproblems_solved{0};
-      // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
-      bool subproblem_definition_changed{false};
 
       [[nodiscard]] virtual std::string get_name() const = 0;
 
@@ -71,6 +69,8 @@ namespace uno {
       const Norm progress_norm;
       // first_order_predicted_reduction is true when the predicted reduction can be taken as first-order (e.g. in line-search methods)
       const bool first_order_predicted_reduction;
+      // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
+      bool subproblem_definition_changed{false};
 
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const;
       [[nodiscard]] double compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
