@@ -20,6 +20,10 @@ namespace uno {
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
 
+   ProblemType PythonModel::get_problem_type() const {
+      return this->user_model.problem_type;
+   }
+
    bool PythonModel::has_jacobian_operator() const {
       return (this->user_model.jacobian_operator != nullptr);
    }
