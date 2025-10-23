@@ -1599,7 +1599,7 @@ end
 function MOI.get(
     model::Optimizer,
     attr::MOI.ConstraintPrimal,
-    ci::MOI.ConstraintIndex{F<:_FUNCTIONS,<:_SETS},
+    ci::MOI.ConstraintIndex{<:_FUNCTIONS,<:_SETS},
 )
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
@@ -1633,7 +1633,7 @@ _dual_multiplier(model::Optimizer) = 1.0
 function MOI.get(
     model::Optimizer,
     attr::MOI.ConstraintDual,
-    ci::MOI.ConstraintIndex{F<:_FUNCTIONS,<:_SETS},
+    ci::MOI.ConstraintIndex{<:_FUNCTIONS,<:_SETS},
 )
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
