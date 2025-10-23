@@ -41,6 +41,10 @@ public:
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
 
+   [[nodiscard]] ProblemType get_problem_type() const override {
+      return this->user_model.problem_type;
+   }
+
    // availability of linear operators
    [[nodiscard]] bool has_jacobian_operator() const override {
       return (this->user_model.jacobian_operator != nullptr);

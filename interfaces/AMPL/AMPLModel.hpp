@@ -8,6 +8,7 @@
 #include "model/Model.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/ProblemType.hpp"
 #include "symbolic/CollectionAdapter.hpp"
 #include "tools/NumberModelEvaluations.hpp"
 // include AMPL Solver Library (ASL)
@@ -23,10 +24,11 @@ namespace uno {
    class AMPLModel: public Model {
    public:
       explicit AMPLModel(const std::string& file_name);
+      ~AMPLModel() override;
 
       static constexpr double lagrangian_sign_convention{-1.};
 
-      ~AMPLModel() override;
+      [[nodiscard]] ProblemType get_problem_type() const override;
 
       // availability of linear operators
       [[nodiscard]] bool has_jacobian_operator() const override;
@@ -90,7 +92,8 @@ namespace uno {
 
       // mutable: can be modified by const methods (internal state not seen by user)
       mutable ASL* asl; /*!< Instance of the AMPL Solver Library class */
-      size_t number_asl_hessian_nonzeros{0}; /*!< Number of nonzero elements in the Hessian */
+      const size_t number_asl_hessian_nonzeros; /*!< Number of nonzero elements in the Hessian */
+      const ProblemType problem_type;
 
       // lists of variables and constraints + corresponding collection objects
       ForwardRange linear_constraints;
@@ -103,7 +106,8 @@ namespace uno {
 
       mutable NumberModelEvaluations number_model_evaluations{};
 
-      void compute_lagrangian_hessian_sparsity();
+      [[nodiscard]] size_t compute_lagrangian_hessian_sparsity() const;
+      [[nodiscard]] ProblemType determine_problem_type() const;
    };
 
    // check that an array of integers is in increasing order (x[i] <= x[i+1])
