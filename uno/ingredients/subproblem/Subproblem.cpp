@@ -243,8 +243,10 @@ namespace uno {
          const Vector<double>& primal_direction, double step_length) const {
       // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
       const double directional_derivative = dot(primal_direction, this->current_iterate.evaluations.objective_gradient);
-      const double quadratic_term = false /* TODO this->first_order_predicted_reduction */ ? 0. :
-         evaluation_space.compute_hessian_quadratic_product(primal_direction);
+      // if the regularized Hessian is positive definite (as it usually is in line-search methods), we can compute the
+      // predicted reduction with only first-order information (the directional derivative)
+      const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() && this->performs_dual_regularization();
+      const double quadratic_term = is_regularized_hessian_positive_definite ? 0. : evaluation_space.compute_hessian_quadratic_product(primal_direction);
       return [=](double objective_multiplier) {
          return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
       };

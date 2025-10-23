@@ -4,9 +4,7 @@
 #ifndef UNO_INEQUALITYHANDLINGMETHOD_H
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
-#include <functional>
 #include <string>
-#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/Norm.hpp"
 
 namespace uno {
@@ -69,8 +67,6 @@ namespace uno {
 
    protected:
       const Norm progress_norm;
-      // first_order_predicted_reduction is true when the predicted reduction can be taken as first-order (e.g. in line-search methods)
-      const bool first_order_predicted_reduction;
       // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
       bool subproblem_definition_changed{false};
 

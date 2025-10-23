@@ -14,8 +14,7 @@
 
 namespace uno {
    InequalityHandlingMethod::InequalityHandlingMethod(const Options& options):
-      progress_norm(norm_from_string(options.get_string("progress_norm"))),
-      first_order_predicted_reduction(options.get_string("globalization_mechanism") == "LS") {
+      progress_norm(norm_from_string(options.get_string("progress_norm"))) {
    }
 
    void InequalityHandlingMethod::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const {
