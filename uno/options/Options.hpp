@@ -148,6 +148,7 @@ namespace uno {
          {"barrier_damping_factor", OptionType::DOUBLE},
          {"least_square_multiplier_max_norm", OptionType::DOUBLE},
          {"BQPD_kmax", OptionType::INTEGER},
+         {"quasi_newton_memory_size", OptionType::INTEGER},
          {"QP_solver", OptionType::STRING},
          {"LP_solver", OptionType::STRING},
          {"linear_solver", OptionType::STRING},

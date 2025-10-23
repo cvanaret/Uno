@@ -113,7 +113,7 @@ namespace uno {
       options.set_bool("LS_scale_duals_with_step_length", true);
 
       /* L-BFGS options */
-      options.set("quasi_newton_memory_size", "3");
+      options.set_integer("quasi_newton_memory_size", 3);
 
       /** regularization options **/
       // regularization failure threshold
