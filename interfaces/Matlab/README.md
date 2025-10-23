@@ -1,12 +1,114 @@
-## Uno's MATLAB interface: how to use Uno from MATLAB
+# Uno's Matlab interface
 
-Uno's MATLAB interface allows you to solve an optimization model described in MATLAB.
-The MATLAB MEX functions `uno_optimize` and `uno_options` are compiled via the command `make unomex`.
+Uno's Matlab interface allows you to solve an optimization model described in Matlab using UNO, a modern and modular solver for nonlinearly constrained optimization.
+
+The package can be used in two ways:
+
+- high-level fmincon-style interface through the Matlab function `uno`
+- low-level interface through the Matlab MEX functions `uno_optimize` and `uno_options`; the two functions are compiled via the command `make unomex`.
+
 An example is available in the file [example_hs015.m](example/example_hs015.m).
+
+## Affiliation
+
+This Julia interface is developed and maintained by [Stefano Lovato](https://github.com/stefphd) and [Charlie Vanaret](https://github.com/cvanaret).
+
+## Installation
+
+To install UNO's Matlab interface add the package directory to the Matlab path. The directory is either `<path/to/uno>/bin` or `<path/to/uno>/lib`, depending on your system.
+
+## High-level interface
+
+The high-level interface provides a fmincon-style syntax for defining the optimization problem and calling the UNO solver. It runs on top of the low-level interface, but note that not all UNO features are available this way.
+
+Use `help uno` to display the help text for `uno`.
+
+Define the objective function:
+
+```matlab
+function [fval,grad,hess] = fun(x)
+    % ...
+end
+```
+
+- the objetive value `fval` must be a scalar numeric value;
+- the objective gradient `grad` must be a numeric vector of `length(x)` elements;
+- the objective hessian `hess` must be either a numeric matrix of size `length(x)`-by-`length(x)`.
+
+Define the nonlinear constraint function `c(x)<=0` and `ceq(x)=0`:
+
+```matlab
+function [c,ceq,gradc,gradceq,hessc,hessceq] = nlcon(x)
+    % ...
+end
+```
+
+- the inequality `c` and equality `ceq` constraints must be a numeric vector (possibly empty for no constraint);
+- the inequality `gradc` and equality `gradceq` constraint gradients must be numeric matrices with sizes `length(x)`-by-`length(c)` and `length(x)`-by-`length(ceq)`, respectively. Each column is the gradient of a constraint (possibly empty for no constraint);
+- the inequality `hessc` and equality `hessceq` constraint hessians must be multidimensional numeric matrices with sizes `length(x)`-by-`length(x)`-by-`length(c)` and `length(x)`-by-`length(x)`-by-`length(ceq)`, respectively. Each slice is the hessian of a constraint (possibly empty for no constraint).
+
+Define the linear constraints `A*x<=b` and `Aeq*x=beq`:
+
+```matlab
+A = [ ... ];
+b = [ ... ];
+Aeq = [ ... ];
+beq = [ ... ];
+```
+
+- `b` and `beq` must be numeric vector (possibly empty for no constraint);
+- `A` and `Aeq` must be numeric matrices with sizes `length(b)`-by-`length(x)` and `length(beq)`-by-`length(x)`, respectively (possibly empty for no constraint);
+
+Define the variable lower and upper bounds:
+
+```matlab
+lb = [ ... ];
+ub = [ ... ];
+```
+
+Define the initial guess:
+
+```matlab
+x0 = [ ... ];
+```
+
+Optionally define the options:
+
+```matlab
+options = struct();
+% ...
+```
+
+The default options can be obtained:
+
+```matlab
+options = uno('defaults')
+% or options = uno('defaults',preset) to get the options for a given preset
+```
+
+The low-level interface MEX function `uno_options` can be also used.
+
+Finally, call `uno` function using a fmincon-style syntax:
+
+```
+[x,fval,exitflag,output,lambda,grad,hessian] = uno(@fun,x0,A,b,Aeq,beq,lb,ub,@nlcon,options);
+```
+
+The major differences between `uno` and `fmincon` syntax are that:
+
+- objective and nonlinear constraint gradients must be always given (no finite difference is available);
+- objective and nonlinear constraint hessian are computed in the objective and constraint functions, respectively;
+- if empty hessian matrices are used, these are assumed to be zero.
+
+## Low-level interface
+
+The low-level interface gives you full access to all UNO options and functionality. Use it if you need more control or advanced solver features.
+
+Use `help uno_options` and `help uno_optimize` to display the help text for `uno_options` and `uno_optimize`.
 
 ### Building an optimization model
 
-Create optimization model as a MATLAB struct:
+Create optimization model as a Matlab struct:
 
 ```matlab
 % Problem type: 'L' = Linear, 'Q' = Quadratic, 'N' = Nonlinear
@@ -96,17 +198,17 @@ model.objective_function = @(x) objective_function(x, user_data);
 
 ### Defining UNO solver options
 
-Optionally obtain the default options for the UNO solver as a MATLAB struct:
+Optionally obtain the default options for the UNO solver as a Matlab struct:
 ```matlab
-% Preset can be possibly given: options = uno_options([preset])
 options = uno_options();
+% or options = uno_options(preset) to get the options for a given preset
 ```
 
 Default preset is used if empty or no arguments are given
 
 ### Defining UNO solver callbacks
 
-Optionally define UNO solver callbacks in a MATLAB struct:
+Optionally define UNO solver callbacks in a Matlab struct:
 
 - Logger stream callback (called when printing string to the stream)
 ```matlab

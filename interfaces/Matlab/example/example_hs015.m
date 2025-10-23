@@ -1,4 +1,4 @@
-%% HS015 problem
+%% HS015 problem (low-level interface)
 clc, clear
 
 %% Optimization model

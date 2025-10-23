@@ -1,5 +1,5 @@
-%% Polak5 prolbem
-clc; clear;
+%% Polak5 prolbem (low-level interface)
+clc, clear
 
 %% Optimization model
 % Problem type: 'L' = Linear, 'Q' = Quadratic, 'N' = Nonlinear
