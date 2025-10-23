@@ -115,9 +115,11 @@ namespace uno {
    }
 
    bool InequalityConstrainedMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          UserCallbacks& user_callbacks) {
-      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->problem,
+      const Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
+      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, subproblem,
          current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }
 

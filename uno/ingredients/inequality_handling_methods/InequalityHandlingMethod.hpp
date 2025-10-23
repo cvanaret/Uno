@@ -23,6 +23,7 @@ namespace uno {
    template <typename ElementType>
    class InertiaCorrectionStrategy;
    class Statistics;
+   class Subproblem;
    class UserCallbacks;
    template <typename ElementType>
    class Vector;
@@ -54,6 +55,7 @@ namespace uno {
 
       // progress measures
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          UserCallbacks& user_callbacks) = 0;
 
@@ -77,10 +79,10 @@ namespace uno {
          const Vector<double>& primal_direction, double step_length) const;
       [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const;
-      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const OptimizationProblem& problem,
+      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const Subproblem& subproblem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const OptimizationProblem& problem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         const Subproblem& subproblem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length, UserCallbacks& user_callbacks);
    };
 } // namespace

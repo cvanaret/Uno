@@ -1,6 +1,9 @@
+// Copyright (c) 2025 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "InequalityHandlingMethod.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
@@ -47,40 +50,40 @@ namespace uno {
       };
    }
 
-   ProgressMeasures InequalityHandlingMethod::compute_predicted_reductions(const OptimizationProblem& problem,
+   ProgressMeasures InequalityHandlingMethod::compute_predicted_reductions(const Subproblem& subproblem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const {
       return {
-         this->compute_predicted_infeasibility_reduction(problem.model, current_iterate, direction.primals, step_length),
+         this->compute_predicted_infeasibility_reduction(subproblem.problem.model, current_iterate, direction.primals, step_length),
          this->compute_predicted_objective_reduction(current_iterate, direction.primals, step_length),
-         problem.compute_predicted_auxiliary_reduction_model(current_iterate, direction.primals, step_length)
+         subproblem.problem.compute_predicted_auxiliary_reduction_model(current_iterate, direction.primals, step_length)
       };
    }
 
    bool InequalityHandlingMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const OptimizationProblem& problem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         const Subproblem& subproblem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length, UserCallbacks& user_callbacks) {
       this->postprocess_iterate(trial_iterate);
-      const double objective_multiplier = problem.get_objective_multiplier();
+      const double objective_multiplier = subproblem.problem.get_objective_multiplier();
 
       // evaluate progress measures
       trial_iterate.objective_multiplier = objective_multiplier;
       if (this->subproblem_definition_changed) {
          DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
          globalization_strategy.reset();
-         problem.set_auxiliary_measure(current_iterate);
+         subproblem.problem.set_auxiliary_measure(current_iterate);
          this->subproblem_definition_changed = false;
       }
-      this->evaluate_progress_measures(problem, trial_iterate);
+      this->evaluate_progress_measures(subproblem.problem, trial_iterate);
 
       bool accept_iterate = false;
       if (direction.norm == 0.) {
          DEBUG << "Zero step acceptable\n";
-         trial_iterate.evaluate_objective(problem.model);
+         trial_iterate.evaluate_objective(subproblem.problem.model);
          accept_iterate = true;
          statistics.set("status", "0 primal step");
       }
       else {
-         const ProgressMeasures predicted_reductions = this->compute_predicted_reductions(problem, current_iterate,
+         const ProgressMeasures predicted_reductions = this->compute_predicted_reductions(subproblem, current_iterate,
             direction, step_length);
          accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
             predicted_reductions, objective_multiplier);
