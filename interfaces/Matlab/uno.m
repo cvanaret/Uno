@@ -261,6 +261,7 @@ model.initial_primal_iterate = X;
 
 % Call UNO
 result = uno_optimize(model, options);
+clear uno_optimize
 
 % Results
 X = result.primal_solution(1:length(X));
