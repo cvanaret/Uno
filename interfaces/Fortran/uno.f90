@@ -24,7 +24,7 @@ interface
                              variables_upper_bounds, base_indexing) result(model) &
       bind(C, name="uno_create_model")
       import :: c_char, c_int, c_double, c_ptr
-      character(c_char), value :: problem_type
+      character(c_char), dimension(*) :: problem_type
       integer(c_int), value :: number_variables, base_indexing
       real(c_double), dimension(*) :: variables_lower_bounds, variables_upper_bounds
       type(c_ptr) :: model

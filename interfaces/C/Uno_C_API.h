@@ -19,10 +19,10 @@ extern "C" {
    const double UNO_MULTIPLIER_POSITIVE =  1.0;
    const double UNO_MULTIPLIER_NEGATIVE = -1.0;
 
-   // Problem type: 'L' = Linear, 'Q' = Quadratic, 'N' = Nonlinear
-   const char UNO_PROBLEM_LINEAR    = 'L';
-   const char UNO_PROBLEM_QUADRATIC = 'Q';
-   const char UNO_PROBLEM_NONLINEAR = 'N';
+   // Problem type: "LP" = Linear Problem, "Q" = Quadratic Problem, "NLP" = Nonlinear Problem
+   const char UNO_PROBLEM_LINEAR[]    = "LP";
+   const char UNO_PROBLEM_QUADRATIC[] = "QP";
+   const char UNO_PROBLEM_NONLINEAR[] = "NLP";
 
    // Base indexing style: 0-based (C) or 1-based (Fortran)
    const int32_t UNO_ZERO_BASED_INDEXING = 0;
@@ -146,10 +146,10 @@ extern "C" {
 
    // creates an optimization model that can be solved by Uno.
    // initially, the model contains "number_variables" variables, no objective function, and no constraints.
-   // takes as inputs the type of problem ('L' for linear, 'Q' for quadratic, 'N' for nonlinear), the number of
-   // variables, two arrays of lower and upper bounds of size "number_variables", and the vector indexing (0 for
-   // C-style indexing, 1 for Fortran-style indexing).
-   void* uno_create_model(char problem_type, int32_t number_variables, const double* variables_lower_bounds,
+   // takes as inputs the type of problem (UNO_PROBLEM_LINEAR, UNO_PROBLEM_QUADRATIC, or UNO_PROBLEM_NONLINEAR), the
+   // number of variables, two arrays of lower and upper bounds of size "number_variables", and the vector indexing
+   // (0 for C-style indexing, 1 for Fortran-style indexing).
+   void* uno_create_model(const char* problem_type, int32_t number_variables, const double* variables_lower_bounds,
       const double* variables_upper_bounds, int32_t base_indexing);
 
    // [optional]

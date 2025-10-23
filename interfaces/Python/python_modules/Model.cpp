@@ -16,7 +16,7 @@ namespace uno {
       py::class_<PythonUserModel>(module, "Model")
       // constructor
       // https://stackoverflow.com/a/62310838/16037994
-      .def(py::init<>([](char problem_type, int32_t number_variables, const std::vector<double>& variables_lower_bounds,
+      .def(py::init<>([](const char* problem_type, int32_t number_variables, const std::vector<double>& variables_lower_bounds,
             const std::vector<double>& variables_upper_bounds, int32_t base_indexing) {
          PythonUserModel model(problem_type, number_variables, base_indexing);
          // copy the bounds internally

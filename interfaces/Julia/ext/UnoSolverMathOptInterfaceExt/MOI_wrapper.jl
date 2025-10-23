@@ -1289,15 +1289,15 @@ function _setup_model(model::Optimizer)
         hrows[i], hcols[i] = hessian_sparsity[i]
     end
 
-    problem_type = 'X'
+    problem_type = "X"
     if has_quadratic_constraints || has_nlp_constraints || has_nlp_objective
-        problem_type = 'N'
+        problem_type = "NLP"
     else
         if model.qp_data.objective_function_type == _kFunctionTypeScalarQuadratic
-            problem_type = 'Q'
+            problem_type = "QP"
         else
             if (model.qp_data.objective_function_type == _kFunctionTypeVariableIndex) || (model.qp_data.objective_function_type == _kFunctionTypeScalarAffine)
-                problem_type = 'L'
+                problem_type = "LP"
             end
         end
     end

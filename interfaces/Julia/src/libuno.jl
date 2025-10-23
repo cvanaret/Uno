@@ -4,9 +4,9 @@ const UNO_MAXIMIZE = Cint(-1)
 const UNO_MULTIPLIER_POSITIVE = Cdouble(1.0)
 const UNO_MULTIPLIER_NEGATIVE = Cdouble(-1.0)
 
-const UNO_PROBLEM_LINEAR = Cchar('L')
-const UNO_PROBLEM_QUADRATIC = Cchar('Q')
-const UNO_PROBLEM_NONLINEAR = Cchar('N')
+const UNO_PROBLEM_LINEAR = "LP"
+const UNO_PROBLEM_QUADRATIC = "QP"
+const UNO_PROBLEM_NONLINEAR = "NLP"
 
 const UNO_ZERO_BASED_INDEXING = Cint(0)
 const UNO_ONE_BASED_INDEXING = Cint(1)
@@ -42,7 +42,7 @@ end
 
 function uno_create_model(problem_type, number_variables, variables_lower_bounds,
                           variables_upper_bounds, base_indexing)
-    @ccall libuno.uno_create_model(problem_type::Cchar, number_variables::Int32,
+    @ccall libuno.uno_create_model(problem_type::Cstring, number_variables::Int32,
                                    variables_lower_bounds::Ptr{Cdouble},
                                    variables_upper_bounds::Ptr{Cdouble},
                                    base_indexing::Int32)::Ptr{Cvoid}

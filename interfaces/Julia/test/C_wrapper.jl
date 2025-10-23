@@ -181,7 +181,7 @@ jrows, jcols, nnzj = sparsity_pattern_jacobian_hs71()
 hrows, hcols, nnzh = sparsity_pattern_lagrangian_hessian_hs71()
 
 model = uno_model(
-  'N',
+  "NLP",
   true,
   nvar,
   ncon,

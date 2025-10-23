@@ -52,7 +52,7 @@ end
 function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64}; operators_available::Bool=true)
   jrows, jcols = NLPModels.jac_structure(nlp)
   hrows, hcols = NLPModels.hess_structure(nlp)
-  problem_type = nlp.meta.islp ? 'L' : 'N'
+  problem_type = nlp.meta.islp ? "LP" : "NLP"
   model = UnoSolver.uno_model(
     problem_type,
     nlp.meta.minimize,
