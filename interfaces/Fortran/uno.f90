@@ -209,7 +209,7 @@ end interface
 interface
    function uno_set_solver_integer_option(solver, option_name, option_value) result(success) &
       bind(C, name="uno_set_solver_integer_option")
-      import :: c_ptr, c_char, c_int
+      import :: c_ptr, c_char, c_int, c_bool
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: option_name
       integer(c_int), value :: option_value
@@ -223,7 +223,7 @@ end interface
 interface
    function uno_set_solver_double_option(solver, option_name, option_value) result(success) &
       bind(C, name="uno_set_solver_double_option")
-      import :: c_ptr, c_char, c_double
+      import :: c_ptr, c_char, c_double, c_bool
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: option_name
       real(c_double), value :: option_value
@@ -251,7 +251,7 @@ end interface
 interface
    function uno_set_solver_string_option(solver, option_name, option_value) result(success) &
       bind(C, name="uno_set_solver_string_option")
-      import :: c_ptr, c_char
+      import :: c_ptr, c_char, c_bool
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: option_name
       character(c_char), dimension(*) :: option_value
@@ -278,7 +278,7 @@ end interface
 interface
    function uno_load_solver_option_file(solver, file_name) result(success) &
       bind(C, name="uno_load_solver_option_file")
-      import :: c_ptr, c_char
+      import :: c_ptr, c_char, c_bool
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: file_name
       logical(c_bool) :: success
@@ -291,7 +291,7 @@ end interface
 interface
    function uno_set_solver_preset(solver, preset_name) result(success) &
       bind(C, name="uno_set_solver_preset")
-      import :: c_ptr, c_char
+      import :: c_ptr, c_char, c_bool
       type(c_ptr), value :: solver
       character(c_char), dimension(*) :: preset_name
       logical(c_bool) :: success
@@ -306,7 +306,7 @@ interface
                                      user_termination_callback, user_data) &
                                      result(success) &
       bind(C, name="uno_set_solver_callbacks")
-      import :: c_ptr, c_funptr
+      import :: c_ptr, c_funptr, c_bool
       type(c_ptr), value :: solver, user_data
       type(c_funptr), value :: notify_acceptable_iterate_callback, user_termination_callback
       logical(c_bool) :: success
@@ -320,7 +320,7 @@ interface
    function uno_set_logger_stream_callback(logger_stream_callback, user_data) &
                                            result(success) &
       bind(C, name="uno_set_logger_stream_callback")
-      import :: c_ptr, c_funptr
+      import :: c_ptr, c_funptr, c_bool
       type(c_ptr), value :: user_data
       type(c_funptr), value :: logger_stream_callback
       logical(c_bool) :: success
@@ -333,6 +333,7 @@ end interface
 interface
    function uno_reset_logger_stream() result(success) &
       bind(C, name="uno_reset_logger_stream")
+      import :: c_bool
       logical(c_bool) :: success
    end function uno_reset_logger_stream
 end interface
