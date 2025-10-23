@@ -11,7 +11,7 @@ An example is available in the file [example_hs015.m](example/example_hs015.m).
 
 ## Affiliation
 
-This Julia interface is developed and maintained by [Stefano Lovato](https://github.com/stefphd) and [Charlie Vanaret](https://github.com/cvanaret).
+This Objective interface is developed and maintained by [Stefano Lovato](https://github.com/stefphd) and [Charlie Vanaret](https://github.com/cvanaret).
 
 ## Installation
 
@@ -31,7 +31,7 @@ function [fval,grad,hess] = fun(x)
 end
 ```
 
-- the objetive value `fval` must be a scalar numeric value;
+- the objective value `fval` must be a scalar numeric value;
 - the objective gradient `grad` must be a numeric vector of `length(x)` elements;
 - the objective hessian `hess` must be either a numeric matrix of size `length(x)`-by-`length(x)`.
 
