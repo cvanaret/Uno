@@ -717,6 +717,7 @@ void* uno_create_solver() {
    // Uno solver
    Uno* uno_solver = new Uno;
    Solver* solver = new Solver{uno_solver, options, user_callbacks, nullptr}; // no result yet
+   uno_set_solver_string_option(solver, "logger", "INFO");
    return solver;
 }
 
