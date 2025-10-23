@@ -119,7 +119,7 @@ namespace uno {
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          UserCallbacks& user_callbacks) {
       const Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
-      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, subproblem,
+      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, subproblem, this->get_evaluation_space(),
          current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }
 

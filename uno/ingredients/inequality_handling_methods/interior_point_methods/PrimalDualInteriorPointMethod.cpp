@@ -235,7 +235,7 @@ namespace uno {
       const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy,
          trust_region_radius};
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, subproblem,
-         current_iterate, trial_iterate, direction, step_length, user_callbacks);
+         this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }
 
    void PrimalDualInteriorPointMethod::update_barrier_parameter(const Iterate& current_iterate, const DualResiduals& residuals) {

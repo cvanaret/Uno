@@ -64,7 +64,7 @@ namespace uno {
 
       // progress measures
       void set_auxiliary_measure(Iterate& iterate) const override;
-      [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Iterate& current_iterate,
+      [[nodiscard]] double compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const override;
 
    protected:

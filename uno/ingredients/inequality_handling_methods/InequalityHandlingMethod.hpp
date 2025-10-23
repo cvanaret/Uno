@@ -75,15 +75,9 @@ namespace uno {
       bool subproblem_definition_changed{false};
 
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const;
-      [[nodiscard]] double compute_predicted_infeasibility_reduction(const Model& model, const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const;
-      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const;
-      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const Subproblem& subproblem,
-         const Iterate& current_iterate, const Direction& direction, double step_length) const;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         double step_length, UserCallbacks& user_callbacks);
+         const Subproblem& subproblem, const EvaluationSpace& evaluation_space, Iterate& current_iterate, Iterate& trial_iterate,
+         const Direction& direction, double step_length, UserCallbacks& user_callbacks);
    };
 } // namespace
 

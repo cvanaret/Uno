@@ -4,6 +4,7 @@
 #ifndef UNO_SUBPROBLEM_H
 #define UNO_SUBPROBLEM_H
 
+#include <functional>
 #include "optimization/Iterate.hpp"
 #include "linear_algebra/Matrix.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
@@ -18,6 +19,7 @@ namespace uno {
    // forward declarations
    template <typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
+   class EvaluationSpace;
    class HessianModel;
    template <typename ElementType>
    class InertiaCorrectionStrategy;
@@ -78,6 +80,14 @@ namespace uno {
       [[nodiscard]] size_t number_regularized_augmented_system_nonzeros() const;
 
       [[nodiscard]] double dual_regularization_factor() const;
+
+      // local models of progress measures
+      [[nodiscard]] double compute_predicted_infeasibility_reduction(const EvaluationSpace& evaluation_space, const Model& model,
+         const Vector<double>& primal_direction, double step_length, Norm norm) const;
+      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const EvaluationSpace& evaluation_space,
+         const Vector<double>& primal_direction, double step_length) const;
+      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const EvaluationSpace& evaluation_space,
+         const Direction& direction, double step_length, Norm norm) const;
 
       const OptimizationProblem& problem;
       Iterate& current_iterate;

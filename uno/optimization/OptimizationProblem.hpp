@@ -86,7 +86,7 @@ namespace uno {
       virtual void set_infeasibility_measure(Iterate& iterate, Norm norm) const;
       virtual void set_objective_measure(Iterate& iterate) const;
       virtual void set_auxiliary_measure(Iterate& iterate) const;
-      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const Iterate& current_iterate,
+      [[nodiscard]] virtual double compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const;
 
    protected:
