@@ -128,22 +128,22 @@ end
 
 function uno_set_solver_integer_option(solver, option_name, option_value)
     @ccall libuno.uno_set_solver_integer_option(solver::Ptr{Cvoid}, option_name::Cstring,
-                                                option_value::Int32)::Cvoid
+                                                option_value::Int32)::Bool
 end
 
 function uno_set_solver_double_option(solver, option_name, option_value)
     @ccall libuno.uno_set_solver_double_option(solver::Ptr{Cvoid}, option_name::Cstring,
-                                               option_value::Cdouble)::Cvoid
+                                               option_value::Cdouble)::Bool
 end
 
 function uno_set_solver_bool_option(solver, option_name, option_value)
     @ccall libuno.uno_set_solver_bool_option(solver::Ptr{Cvoid}, option_name::Cstring,
-                                             option_value::Bool)::Cvoid
+                                             option_value::Bool)::Bool
 end
 
 function uno_set_solver_string_option(solver, option_name, option_value)
     @ccall libuno.uno_set_solver_string_option(solver::Ptr{Cvoid}, option_name::Cstring,
-                                               option_value::Cstring)::Cvoid
+                                               option_value::Cstring)::Bool
 end
 
 function uno_get_solver_option_type(solver, option_name)
@@ -152,11 +152,11 @@ function uno_get_solver_option_type(solver, option_name)
 end
 
 function uno_load_solver_option_file(solver, file_name)
-    @ccall libuno.uno_load_solver_option_file(solver::Ptr{Cvoid}, file_name::Cstring)::Cvoid
+    @ccall libuno.uno_load_solver_option_file(solver::Ptr{Cvoid}, file_name::Cstring)::Bool
 end
 
 function uno_set_solver_preset(solver, preset_name)
-    @ccall libuno.uno_set_solver_preset(solver::Ptr{Cvoid}, preset_name::Cstring)::Cvoid
+    @ccall libuno.uno_set_solver_preset(solver::Ptr{Cvoid}, preset_name::Cstring)::Bool
 end
 
 function uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback,
@@ -164,16 +164,16 @@ function uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback,
     @ccall libuno.uno_set_solver_callbacks(solver::Ptr{Cvoid},
                                            notify_acceptable_iterate_callback::Ptr{Cvoid},
                                            user_termination_callback::Ptr{Cvoid},
-                                           user_data::Ptr{Cvoid})::Cvoid
+                                           user_data::Ptr{Cvoid})::Bool
 end
 
 function uno_set_logger_stream_callback(logger_stream_callback, user_data)
     @ccall libuno.uno_set_logger_stream_callback(logger_stream_callback::Ptr{Cvoid},
-                                                 user_data::Ptr{Cvoid})::Cvoid
+                                                 user_data::Ptr{Cvoid})::Bool
 end
 
 function uno_reset_logger_stream()
-    @ccall libuno.uno_reset_logger_stream()::Cvoid
+    @ccall libuno.uno_reset_logger_stream()::Bool
 end
 
 function uno_optimize(solver, model)

@@ -1381,13 +1381,13 @@ function MOI.optimize!(model::Optimizer)
     # Other misc options that over-ride the ones set above.
     for (name, value) in model.options
         if value isa String
-            UnoSolver.uno_set_solver_string_option(solver, name, value)
+            @assert UnoSolver.uno_set_solver_string_option(solver, name, value)
         elseif value isa Float64
-            UnoSolver.uno_set_solver_double_option(solver, name, value)
+            @assert UnoSolver.uno_set_solver_double_option(solver, name, value)
         elseif value isa Integer
-            UnoSolver.uno_set_solver_integer_option(solver, name, Cint(value))
+            @assert UnoSolver.uno_set_solver_integer_option(solver, name, Cint(value))
         elseif value isa Bool
-            UnoSolver.uno_set_solver_bool_option(solver, name, value)
+            @assert UnoSolver.uno_set_solver_bool_option(solver, name, value)
         else
             error(
                 "Unable to add option `\"$name\"` with the value " *

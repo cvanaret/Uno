@@ -235,10 +235,11 @@ extern "C" {
    // sets a particular option in the Uno solver.
    // takes as inputs the name of the option and the value to which it should be set.
    // the possible types are integer, double, bool and string.
-   void uno_set_solver_integer_option(void* solver, const char* option_name, int32_t option_value);
-   void uno_set_solver_double_option(void* solver, const char* option_name, double option_value);
-   void uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value);
-   void uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value);
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_solver_integer_option(void* solver, const char* option_name, int32_t option_value);
+   bool uno_set_solver_double_option(void* solver, const char* option_name, double option_value);
+   bool uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value);
+   bool uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value);
 
    // gets the type of a particular option in the Uno solver.
    // takes as input the name of the option.
@@ -247,23 +248,28 @@ extern "C" {
 
    // [optional] loads the options from a given option file.
    // takes as input the name of the option file.
-   void uno_load_solver_option_file(void* solver, const char* file_name);
+   // returns true if it succeeded, false otherwise.
+   bool uno_load_solver_option_file(void* solver, const char* file_name);
 
    // sets a particular preset in the Uno solver.
-   void uno_set_solver_preset(void* solver, const char* preset_name);
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_solver_preset(void* solver, const char* preset_name);
 
    // [optional]
    // sets the user callbacks for solver.
-   void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
       TerminationUserCallback user_termination_callback, void* user_data);
 
    // [optional]
    // sets the logger stream callback.
-   void uno_set_logger_stream_callback(LoggerStreamUserCallback logger_stream_callback, void* user_data);
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_logger_stream_callback(LoggerStreamUserCallback logger_stream_callback, void* user_data);
 
    // [optional]
    // resets the logger stream to the standard output
-   void uno_reset_logger_stream();
+   // returns true if it succeeded, false otherwise.
+   bool uno_reset_logger_stream();
 
    // optimizes a given model using the Uno solver and given options.
    void uno_optimize(void* solver, void* model);
