@@ -264,13 +264,13 @@ function uno_solver(; kwargs...)
   # pass options to Uno
   for (k, v) in kwargs
     if v isa String
-      uno_set_solver_string_option(c_solver, string(k), v)
+      @assert uno_set_solver_string_option(c_solver, string(k), v)
     elseif v isa Float64
-      uno_set_solver_double_option(solver, string(k), v)
+      @assert uno_set_solver_double_option(solver, string(k), v)
     elseif v isa Integer
-      uno_set_solver_integer_option(solver, string(k), Cint(v))
+      @assert uno_set_solver_integer_option(solver, string(k), Cint(v))
     elseif v isa Bool
-      uno_set_solver_bool_option(solver, string(k), v)
+      @assert uno_set_solver_bool_option(solver, string(k), v)
     else
       @warn "$k does not seem to be a valid Uno option."
     end
