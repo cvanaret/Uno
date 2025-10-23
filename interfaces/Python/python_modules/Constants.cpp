@@ -16,7 +16,7 @@ namespace uno {
       module.attr("MULTIPLIER_POSITIVE") = UNO_MULTIPLIER_POSITIVE;
       module.attr("MULTIPLIER_NEGATIVE") = UNO_MULTIPLIER_NEGATIVE;
 
-      // Problem type: 'L' = Linear, 'Q' = Quadratic, 'N' = Nonlinear
+      // Problem type: "LP" = linear, "QP" = quadratic, "NLP" = nonlinear
       module.attr("PROBLEM_LINEAR") = UNO_PROBLEM_LINEAR;
       module.attr("PROBLEM_QUADRATIC") = UNO_PROBLEM_QUADRATIC;
       module.attr("PROBLEM_NONLINEAR") = UNO_PROBLEM_NONLINEAR;
