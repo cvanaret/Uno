@@ -44,6 +44,10 @@ public:
         this->partition_constraints(this->equality_constraints, this->inequality_constraints);
     }
 
+    [[nodiscard]] ProblemType get_problem_type() const override {
+        return this->user_model.problem_type;
+    }
+
     // availability of linear operators
     [[nodiscard]] bool has_jacobian_operator() const override {
         return this->user_model.jacobian_operator != nullptr;
@@ -156,7 +160,8 @@ public:
 
     void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override {
         // copy the indices of the user sparsity patterns to the Uno vectors
-        for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_hessian_nonzeros))) {
+        const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
+        for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
             row_indices[nonzero_index] = this->user_model.hessian_row_indices[nonzero_index];
             column_indices[nonzero_index] = this->user_model.hessian_column_indices[nonzero_index];
         }
@@ -164,7 +169,7 @@ public:
         // handle the solver indexing
         if (this->user_model.base_indexing != solver_indexing) {
             const int indexing_difference = solver_indexing - this->user_model.base_indexing;
-            for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_hessian_nonzeros))) {
+            for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
                 row_indices[nonzero_index] += indexing_difference;
                 column_indices[nonzero_index] += indexing_difference;
             }
@@ -390,7 +395,12 @@ public:
     }
 
     [[nodiscard]] size_t number_hessian_nonzeros() const override {
-        return static_cast<size_t>(this->user_model.number_hessian_nonzeros);
+        if (this->user_model.number_hessian_nonzeros.has_value()) {
+            return static_cast<size_t>(*this->user_model.number_hessian_nonzeros);
+        }
+        else {
+            throw std::runtime_error("The number of Hessian nonzeros is not available in UnoModel");
+        }
     }
 
     [[nodiscard]] size_t number_model_objective_evaluations() const override {
