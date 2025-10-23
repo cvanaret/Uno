@@ -7,9 +7,9 @@ const UNO_MULTIPLIER_POSITIVE = Cdouble(1.0)
 const UNO_MULTIPLIER_NEGATIVE = Cdouble(-1.0)
 
 # Problem type: "LP" = linear problem, "QP" = quadratic problem, "NLP" = nonlinear problem
-const UNO_PROBLEM_LINEAR    = Cstring("LP")
-const UNO_PROBLEM_QUADRATIC = Cstring("QP")
-const UNO_PROBLEM_NONLINEAR = Cstring("NLP")
+const UNO_PROBLEM_LINEAR    = "LP"
+const UNO_PROBLEM_QUADRATIC = "QP"
+const UNO_PROBLEM_NONLINEAR = "NLP"
 
 # Base indexing style: 0-based (C) or 1-based (Fortran)
 const UNO_ZERO_BASED_INDEXING = Cint(0)
