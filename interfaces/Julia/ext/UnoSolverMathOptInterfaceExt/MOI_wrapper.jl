@@ -86,6 +86,12 @@ const _SETS = Union{
     MOI.Interval{Float64},
 }
 
+const _FUNCTIONS = Union{
+    MOI.ScalarAffineFunction{Float64},
+    MOI.ScalarQuadraticFunction{Float64},
+    MOI.ScalarNonlinearFunction,
+}
+
 MOI.get(::Optimizer, ::MOI.SolverVersion) = UnoSolver.uno_version() |> string
 
 ### _EmptyNLPEvaluator
@@ -231,14 +237,7 @@ end
 
 function MOI.supports_constraint(
     ::Optimizer,
-    ::Type{
-        <:Union{
-            MOI.VariableIndex,
-            MOI.ScalarAffineFunction{Float64},
-            MOI.ScalarQuadraticFunction{Float64},
-            MOI.ScalarNonlinearFunction,
-        },
-    },
+    ::Type{<:Union{MOI.VariableIndex,_FUNCTIONS}},
     ::Type{<:_SETS},
 )
     return true
@@ -543,6 +542,21 @@ function MOI.is_valid(
     return MOI.is_valid(model.nlp_model, index)
 end
 
+function MOI.add_constraint(
+    model::Optimizer,
+    f::MOI.ScalarNonlinearFunction,
+    s::_SETS,
+)
+    _init_nlp_model(model)
+    if !isempty(model.parameters)
+        _replace_parameters(model, f)
+    end
+    index = MOI.Nonlinear.add_constraint(model.nlp_model, f, s)
+    model.inner = nothing
+    model.solver = nothing
+    return MOI.ConstraintIndex{typeof(f),typeof(s)}(index.value)
+end
+
 function MOI.get(
     model::Optimizer,
     attr::MOI.ListOfConstraintIndices{F,S},
@@ -567,21 +581,6 @@ function MOI.get(
         return 0
     end
     return count(v.set isa S for v in values(model.nlp_model.constraints))
-end
-
-function MOI.add_constraint(
-    model::Optimizer,
-    f::MOI.ScalarNonlinearFunction,
-    s::_SETS,
-)
-    _init_nlp_model(model)
-    if !isempty(model.parameters)
-        _replace_parameters(model, f)
-    end
-    index = MOI.Nonlinear.add_constraint(model.nlp_model, f, s)
-    model.inner = nothing
-    model.solver = nothing
-    return MOI.ConstraintIndex{typeof(f),typeof(s)}(index.value)
 end
 
 function MOI.supports(
@@ -1238,20 +1237,17 @@ end
 function _setup_model(model::Optimizer)
     vars = MOI.get(model.variables, MOI.ListOfVariableIndices())
     if isempty(vars)
-        # Don't attempt to create a problem because Uno will error.
         model.invalid_model = true
         return
     end
     if model.nlp_model !== nothing
-        model.nlp_data = MOI.NLPBlockData(
-            MOI.Nonlinear.Evaluator(model.nlp_model, model.ad_backend, vars),
-        )
+        evaluator = MOI.Nonlinear.Evaluator(model.nlp_model, model.ad_backend, vars)
+        model.nlp_data = MOI.NLPBlockData(evaluator)
     end
+    has_oracle = !isempty(model.vector_nonlinear_oracle_constraints)
     has_quadratic_constraints =
         any(isequal(_kFunctionTypeScalarQuadratic), model.qp_data.function_type)
-    has_nlp_constraints =
-        !isempty(model.nlp_data.constraint_bounds) ||
-        !isempty(model.vector_nonlinear_oracle_constraints)
+    has_nlp_constraints = !isempty(model.nlp_data.constraint_bounds) || has_oracle
     has_hessian = :Hess in MOI.features_available(model.nlp_data.evaluator)
     has_jacobian_operator = :JacVec in MOI.features_available(model.nlp_data.evaluator)
     has_hessian_operator = :HessVec in MOI.features_available(model.nlp_data.evaluator)
@@ -1332,9 +1328,9 @@ function _setup_model(model::Optimizer)
         moi_objective_gradient,
         moi_jacobian,
         moi_lagrangian_hessian,
-        has_jacobian_operator ? moi_jacobian_operator : nothing,
-        has_jacobian_operator ? moi_jacobian_transposed_operator : nothing,
-        has_hessian_operator ? moi_lagrangian_hessian_operator : nothing;
+        (has_jacobian_operator && !has_oracle) ? moi_jacobian_operator : nothing,
+        (has_jacobian_operator && !has_oracle) ? moi_jacobian_transposed_operator : nothing,
+        (has_hessian_operator && !has_oracle) ? moi_lagrangian_hessian_operator : nothing;
         hessian_triangle='L',
         lagrangian_sign=1.0,
         user_model=model,
@@ -1603,14 +1599,8 @@ end
 function MOI.get(
     model::Optimizer,
     attr::MOI.ConstraintPrimal,
-    ci::MOI.ConstraintIndex{F,<:_SETS},
-) where {
-    F<:Union{
-        MOI.ScalarAffineFunction{Float64},
-        MOI.ScalarQuadraticFunction{Float64},
-        MOI.ScalarNonlinearFunction,
-    },
-}
+    ci::MOI.ConstraintIndex{<:_FUNCTIONS,<:_SETS},
+)
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     # Alexis -- revisit this code when we know how to handle the workspace
@@ -1643,14 +1633,8 @@ _dual_multiplier(model::Optimizer) = 1.0
 function MOI.get(
     model::Optimizer,
     attr::MOI.ConstraintDual,
-    ci::MOI.ConstraintIndex{F,<:_SETS},
-) where {
-    F<:Union{
-        MOI.ScalarAffineFunction{Float64},
-        MOI.ScalarQuadraticFunction{Float64},
-        MOI.ScalarNonlinearFunction,
-    },
-}
+    ci::MOI.ConstraintIndex{<:_FUNCTIONS,<:_SETS},
+)
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     s = -_dual_multiplier(model)
