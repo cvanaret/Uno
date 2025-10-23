@@ -149,6 +149,7 @@ namespace uno {
          {"least_square_multiplier_max_norm", OptionType::DOUBLE},
          {"quasi_newton_memory_size", OptionType::INTEGER},
          {"BQPD_kmax", OptionType::INTEGER},
+         {"quasi_newton_memory_size", OptionType::INTEGER},
          {"QP_solver", OptionType::STRING},
          {"LP_solver", OptionType::STRING},
          {"linear_solver", OptionType::STRING},
