@@ -11,7 +11,7 @@ An example is available in the file [example_hs015.m](example/example_hs015.m).
 
 ## Affiliation
 
-This Objective interface is developed and maintained by [Stefano Lovato](https://github.com/stefphd) and [Charlie Vanaret](https://github.com/cvanaret).
+This Matlab interface is developed and maintained by [Stefano Lovato](https://github.com/stefphd) and [Charlie Vanaret](https://github.com/cvanaret).
 
 ## Installation
 
