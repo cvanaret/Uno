@@ -18,7 +18,6 @@ namespace uno {
    UnconstrainedStrategy::UnconstrainedStrategy(const Options& options) :
          ConstraintRelaxationStrategy(options),
          inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
-         hessian_model(HessianModelFactory::create(options)),
          inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)) {
    }
 
@@ -26,6 +25,9 @@ namespace uno {
          Direction& direction, double trust_region_radius, const Options& options) {
       this->problem = std::make_unique<const OptimizationProblem>(model);
       assert(this->problem != nullptr);
+
+      // Hessian model
+      this->hessian_model = HessianModelFactory::create(model, options);
 
       // memory allocation
       this->hessian_model->initialize(model);

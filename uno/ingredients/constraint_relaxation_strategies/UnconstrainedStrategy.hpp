@@ -38,7 +38,7 @@ namespace uno {
    private:
       std::unique_ptr<const OptimizationProblem> problem{};
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
-      std::unique_ptr<HessianModel> hessian_model;
+      std::unique_ptr<HessianModel> hessian_model{};
       std::unique_ptr<InertiaCorrectionStrategy<double>> inertia_correction_strategy;
    };
 } // namespace

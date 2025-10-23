@@ -8,6 +8,7 @@
 #include <vector>
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
+#include "optimization/ProblemType.hpp"
 #include "symbolic/VectorExpression.hpp"
 
 namespace uno {
@@ -33,6 +34,8 @@ namespace uno {
       const size_t number_variables; /*!< Number of variables */
       const size_t number_constraints; /*!< Number of constraints */
       const double optimization_sense; /*!< 1: minimization, -1: maximization */
+
+      [[nodiscard]] virtual ProblemType get_problem_type() const = 0;
 
       // availability of linear operators
       [[nodiscard]] virtual bool has_jacobian_operator() const = 0;

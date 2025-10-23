@@ -14,6 +14,10 @@ namespace uno {
    public:
       BoundRelaxedModel(const Model& original_model, const Options& options);
 
+      [[nodiscard]] ProblemType get_problem_type() const override {
+         return this->model.get_problem_type();
+      }
+
       // availability of linear operators
       [[nodiscard]] bool has_jacobian_operator() const override {
          return this->model.has_jacobian_operator();

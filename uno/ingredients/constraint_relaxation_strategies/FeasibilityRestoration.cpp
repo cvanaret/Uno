@@ -25,8 +25,6 @@ namespace uno {
    FeasibilityRestoration::FeasibilityRestoration(const Options& options) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
-         optimality_hessian_model(HessianModelFactory::create(options)),
-         feasibility_hessian_model(HessianModelFactory::create(options)),
          optimality_inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
          feasibility_inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
          optimality_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
@@ -40,6 +38,10 @@ namespace uno {
       this->optimality_problem = std::make_unique<const OptimizationProblem>(model);
       this->reference_optimality_primals.resize(this->optimality_problem->number_variables);
       this->feasibility_problem = std::make_unique<l1RelaxedProblem>(model, 0., this->constraint_violation_coefficient);
+
+      // Hessian models
+      this->optimality_hessian_model = HessianModelFactory::create(model, options);
+      this->feasibility_hessian_model = HessianModelFactory::create(model, options);
 
       // memory allocation
       this->optimality_hessian_model->initialize(model);

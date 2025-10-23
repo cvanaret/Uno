@@ -99,16 +99,11 @@ namespace uno {
          user_model.jacobian_transposed_operator = jacobian_transposed_operator;
       })
 
-      .def("set_lagrangian_hessian_operator", [](PythonUserModel& user_model, int32_t number_hessian_nonzeros,
-            const HessianOperator& lagrangian_hessian_operator, double lagrangian_sign_convention) {
-         if (number_hessian_nonzeros <= 0) {
-            throw std::runtime_error("Please specify a positive number of Lagrangian Hessian nonzeros.");
-         }
+      .def("set_lagrangian_hessian_operator", [](PythonUserModel& user_model, const HessianOperator& lagrangian_hessian_operator,
+            double lagrangian_sign_convention) {
          if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
             throw std::runtime_error("Please specify a correct Lagrangian sign convention.");
          }
-         
-         user_model.number_hessian_nonzeros = number_hessian_nonzeros;
          user_model.lagrangian_hessian_operator = lagrangian_hessian_operator;
          user_model.lagrangian_sign_convention = lagrangian_sign_convention;
       })

@@ -45,8 +45,7 @@ uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator);
 ```
 - a Hessian operator (performs Hessian-vector products);
 ```c
-uno_set_lagrangian_hessian_operator(model, number_hessian_nonzeros,
-   lagrangian_hessian_operator, lagrangian_sign_convention);
+uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator, lagrangian_sign_convention);
 ```
 - user data of an arbitrary type (`void*`);
 ```c

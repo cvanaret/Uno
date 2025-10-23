@@ -18,6 +18,8 @@ namespace uno {
       explicit PythonModel(const PythonUserModel& user_model);
       ~PythonModel() override = default;
 
+      [[nodiscard]] ProblemType get_problem_type() const override;
+
       // availability of linear operators
       [[nodiscard]] bool has_jacobian_operator() const override;
       [[nodiscard]] bool has_jacobian_transposed_operator() const override;

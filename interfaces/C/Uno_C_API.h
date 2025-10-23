@@ -196,13 +196,13 @@ extern "C" {
 
    // [optional]
    // sets the Lagrangian Hessian operator (computes Hessian-vector products) of a given model.
-   // takes as inputs the number of nonzero elements of the Lagrangian Hessian, a function pointer of the Hessian operator,
-   // and a scalar in {-1, +1} that determines the sign convention of the Lagrangian:
+   // takes as inputs a function pointer of the Hessian operator, and a scalar in {-1, +1} that determines the sign
+   // convention of the Lagrangian:
    // if "lagrangian_sign_convention" == 1,  the Lagrangian is rho*f(x) + y^T c(x)
    // if "lagrangian_sign_convention" == -1, the Lagrangian is rho*f(x) - y^T c(x)
    // returns true if it succeeded, false otherwise.
-   bool uno_set_lagrangian_hessian_operator(void* model, int32_t number_hessian_nonzeros,
-      HessianOperator lagrangian_hessian_operator, double lagrangian_sign_convention);
+   bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator,
+      double lagrangian_sign_convention);
 
    // [optional]
    // sets the user data of a given model.
