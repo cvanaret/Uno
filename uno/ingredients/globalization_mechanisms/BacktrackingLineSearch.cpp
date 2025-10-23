@@ -63,8 +63,7 @@ namespace uno {
          bool is_acceptable = false;
          try {
             // take a step as a fraction of the direction
-            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction,
-               step_length,
+            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length,
                // scale or not the constraint dual direction with the LS step length
                this->scale_duals_with_step_length ? step_length : 1.);
             statistics.set("step norm", step_length * direction.norm);

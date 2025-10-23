@@ -5,8 +5,6 @@
 #define UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 
 #include <cstddef>
-#include <functional>
-#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/SolutionStatus.hpp"
@@ -15,15 +13,12 @@ namespace uno {
    // forward declarations
    class Direction;
    class GlobalizationStrategy;
-   class InequalityHandlingMethod;
    class Model;
    class Multipliers;
    class OptimizationProblem;
    class Options;
    class Statistics;
    class UserCallbacks;
-   template <typename ElementType>
-   class Vector;
    class WarmstartInformation;
 
    class ConstraintRelaxationStrategy {
