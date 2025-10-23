@@ -43,8 +43,8 @@ namespace uno {
       const double constraint_violation_coefficient;
       std::unique_ptr<const OptimizationProblem> optimality_problem{};
       std::unique_ptr<l1RelaxedProblem> feasibility_problem{};
-      std::unique_ptr<HessianModel> optimality_hessian_model;
-      std::unique_ptr<HessianModel> feasibility_hessian_model;
+      std::unique_ptr<HessianModel> optimality_hessian_model{};
+      std::unique_ptr<HessianModel> feasibility_hessian_model{};
       std::unique_ptr<InertiaCorrectionStrategy<double>> optimality_inertia_correction_strategy;
       std::unique_ptr<InertiaCorrectionStrategy<double>> feasibility_inertia_correction_strategy;
       std::unique_ptr<InequalityHandlingMethod> optimality_inequality_handling_method;
