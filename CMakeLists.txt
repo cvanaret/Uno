@@ -319,12 +319,14 @@ if(Matlab_FOUND)
 
    # uno_optimize
    matlab_add_mex(NAME unomex-optimize SRC interfaces/Matlab/unomex_optimize.cpp ${MATLAB_SOURCE_FILES}
+      EXCLUDE_FROM_ALL
       OUTPUT_NAME uno_optimize
       LINK_TO ${DEFAULT_UNO_LIB} ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
    target_include_directories(unomex-optimize PUBLIC ${DIRECTORIES})
    
    # uno_options
    matlab_add_mex(NAME unomex-options SRC interfaces/Matlab/unomex_options.cpp ${MATLAB_SOURCE_FILES}
+      EXCLUDE_FROM_ALL
       OUTPUT_NAME uno_options
       LINK_TO ${DEFAULT_UNO_LIB} ${LIBRARIES} ${FORTRAN_LIBS})
    target_include_directories(unomex-options PUBLIC ${DIRECTORIES})
