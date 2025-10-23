@@ -9,11 +9,9 @@ x0 = [-2.0, 1.0];
 [x,fval,exitflag,output,lambda,grad,hessian] = uno(@fun_hs015,x0,[],[],[],[],lb,ub,@nlcon_hs015);
 
 %% Polak5 problem
-lb = [-inf, -inf, -inf]; 
-ub = [ inf,  inf,  inf];
 x0 = [0.1, 0.1, 0.0];
 
-[x,fval,exitflag,output,lambda,grad,hessian] = uno(@fun_polak5,x0,[],[],[],[],lb,ub,@nlcon_polak5);
+[x,fval,exitflag,output,lambda,grad,hessian] = uno(@fun_polak5,x0,[],[],[],[],[],[],@nlcon_polak5);
 
 %% HS015 functions
 % Objective function

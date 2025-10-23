@@ -103,13 +103,12 @@ B = B(:);
 
 % Check for complex X0
 if ~isreal(X)
-    error('uno:ComplexX0', ...
-        getString(message('optimlib:commonMsgs:ComplexX0','Uno')));
+    error('Initial point contains complex values. Uno cannot continue.')
 end
 
 % Check for empty X
 if isempty(X)
-    error(message('optimlib:fmincon:EmptyX'));
+    error('Initial point must be non-empty.');
 end
 
 % Set empty linear constraints
@@ -128,30 +127,40 @@ end
 
 % Check linear constraint sizes
 if size(Aeq,2) ~= length(X)
-    error(message('optimlib:fmincon:WrongNumberOfColumnsInAeq', length(X)))
+    error('Aeq must have %d column(s)', length(X));
 end
 if size(Aeq,1) ~= length(Beq)
-    error(message('optimlib:fmincon:AeqAndBeqInconsistent'))
+    error('Row dimension of Aeq is inconsistent with length of beq.');
 end
 if size(A,2) ~= length(X)
-    error(message('optimlib:fmincon:WrongNumberOfColumnsInA', length(X)))
+    error('A must have %d column(s)', length(X));
 end
 if size(A,1) ~= length(B)
-    error(message('optimlib:fmincon:AeqAndBinInconsistent'))
+    error('Row dimension of A is inconsistent with length of b.');
 end
 
 % Check the bounds
-[X,l,u,msg] = checkbounds(X,LB,UB,length(X));
-if ~isempty(msg)
-    EXITFLAG = -2;
-    [FVAL,LAMBDA,GRAD,HESSIAN] = deal([]);
-    OUTPUT.iterations = 0;
-    OUTPUT.funcCount = 0;
-    OUTPUT.constrviolation  = [];
-    OUTPUT.firstorderopt = [];
-    OUTPUT.message = msg;
-    return
+LB = LB(:);
+UB = UB(:);
+if length(LB) > length(X)
+    LB = LB(1:length(X));
+    warning('Length of lower bounds is > length(x); ignoring extra bounds.')
 end
+if length(UB) > length(X)
+    UB = UB(1:length(X));
+    warning('Length of upper bounds is > length(x); ignoring extra bounds.')
+end
+if any (UB == -Inf)
+    error('-Inf detected in upper bound: upper bounds must be > -Inf.');
+end
+if any (LB == +Inf)
+    error('+Inf detected in upper bound: upper bounds must be < Inf.');
+end
+if anynan(LB) || anynan(UB)
+    error('Lower and upper bounds must not be NaN.');
+end
+LB = [LB; -inf(length(X)-length(LB),1)];
+UB = [UB; +inf(length(X)-length(UB),1)];
 
 % Check [fval,grad,hess] = FUN(x)
 if ~isa(FUN,'function_handle')
@@ -172,10 +181,10 @@ if ~isscalar(fval0)
     error('FUM must return a scalar value.')
 end
 if length(grad0) ~= length(X)
-    error('Dimension of grad is inconsistent with the length of x0.')
+    error('Dimension of grad is inconsistent with the length of x.')
 end
 if ~isempty(hess0) && ~isequal(size(hess0), [length(X), length(X)])
-    error('Dimension of hess is inconsistent with the length of x0.')
+    error('Dimension of hess is inconsistent with the length of x.')
 end
 
 % Check [c,ceq,gradc,gradceq,hessc,hessceq] = NONLCON(x)
@@ -205,16 +214,16 @@ if length(ceq0) ~= size(gradceq0,2)
     error('Column dimension of gradceq is inconsistent with the length of ceq.')
 end
 if ~isempty(c0) && length(X) ~= size(gradc0,1)
-    error('Row dimension of gradc is inconsistent with the length of x0.')
+    error('Row dimension of gradc is inconsistent with the length of x.')
 end
 if ~isempty(ceq0) && length(X) ~= size(gradceq0,1)
-    error('Row dimension of gradceq is inconsistent with the length of x0.')
+    error('Row dimension of gradceq is inconsistent with the length of x.')
 end
 if ~isempty(c0) && ~isempty(hessc0) && ~isequal(size(hessc0), [length(X), length(X), length(c0)])
-    error('Dimension of hess is inconsistent with the length of x0 and c.')
+    error('Dimension of hess is inconsistent with the length of x and c.')
 end
 if ~isempty(ceq0) && ~isempty(hessceq0) && ~isequal(size(hessceq0), [length(X), length(X), length(ceq0)])
-    error('Dimension of hess is inconsistent with the length of x0 and ceq.')
+    error('Dimension of hess is inconsistent with the length of x and ceq.')
 end
 
 % Constraint indexes
@@ -227,8 +236,8 @@ ind_eqnonlin = (numel(Beq)+numel(B)+numel(c0)+1) : (numel(Beq)+numel(B)+numel(c0
 model.problem_type = 'N';
 model.base_indexing = 1;
 model.number_variables = length(X);
-model.variables_lower_bounds = l;
-model.variables_upper_bounds = u;
+model.variables_lower_bounds = LB;
+model.variables_upper_bounds = UB;
 model.optimization_sense = 1;
 model.objective_function = @(x) objective_function(x, FUN); 
 model.objective_gradient = @(x) objective_gradient(x, FUN);
