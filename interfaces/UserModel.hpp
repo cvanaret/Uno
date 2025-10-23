@@ -4,6 +4,7 @@
 #ifndef UNO_USERMODEL_H
 #define UNO_USERMODEL_H
 
+#include <cstring>
 #include <optional>
 #include <vector>
 #include "C/Uno_C_API.h"
@@ -11,10 +12,10 @@
 
 namespace uno {
    inline ProblemType problem_type_from_string(const char* problem_type) {
-      if (problem_type == UNO_PROBLEM_LINEAR) {
+      if (strcmp(problem_type, UNO_PROBLEM_LINEAR) == 0) {
          return ProblemType::LINEAR;
       }
-      else if (problem_type == UNO_PROBLEM_QUADRATIC) {
+      else if (strcmp(problem_type, UNO_PROBLEM_QUADRATIC) == 0) {
          return ProblemType::QUADRATIC;
       }
       else {

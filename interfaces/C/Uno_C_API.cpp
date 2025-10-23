@@ -477,7 +477,8 @@ void* uno_create_model(const char* problem_type, int32_t number_variables, const
       WARNING << "Please specify a positive number of variables."  << std::endl;
       return nullptr;
    }
-   if (problem_type != UNO_PROBLEM_LINEAR && problem_type != UNO_PROBLEM_QUADRATIC && problem_type != UNO_PROBLEM_NONLINEAR) {
+   if (strcmp(problem_type, UNO_PROBLEM_LINEAR) != 0 && strcmp(problem_type, UNO_PROBLEM_QUADRATIC) != 0 &&
+         strcmp(problem_type, UNO_PROBLEM_NONLINEAR) != 0) {
       WARNING << "Please specify a valid problem type."  << std::endl;
       return nullptr;
    }
