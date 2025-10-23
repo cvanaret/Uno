@@ -1362,7 +1362,7 @@ function MOI.optimize!(model::Optimizer)
     solver = model.solver::UnoSolver.Solver
 
     # The default logger is "INFO".
-    UnoSolver.uno_set_solver_string_option(solver, "logger", "INFO") #model.silent ? "SILENT" : "INFO")
+    UnoSolver.uno_set_solver_string_option(solver, "logger", model.silent ? "SILENT" : "INFO")
 
     # Other misc options that over-ride the ones set above.
     for (name, value) in model.options

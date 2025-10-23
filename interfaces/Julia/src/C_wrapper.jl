@@ -197,7 +197,7 @@ function uno_model(
 
     if !isnothing(eval_Hv)
       eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-      flag = uno_set_lagrangian_hessian_operator(c_model, Cint(nnzh), eval_Hv_c, lagrangian_sign)
+      flag = uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c, lagrangian_sign)
       flag || error("Failed to set Hessian operator via uno_set_lagrangian_hessian_operator.")
     end
   end
