@@ -1,0 +1,73 @@
+name: Test the Matlab interface on the example 
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+       matrix:
+        os: [windows-latest]
+        architecture: [x64]
+        
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v2
+        
+      - name: Download dependency (BQPD)
+        shell: bash
+        run: |
+            VERSION_BQPD="1.0.0"
+            PLATFORM="x86_64-w64-mingw32"
+            choco install wget
+            wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
+            mkdir deps
+            tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
+
+      - name: add MinGW64 directory to path
+        run: echo "C:\tools\msys64\mingw64\bin" >> "$GITHUB_PATH"
+      
+      - name: Configure Uno CMake
+        shell: cmd
+        run: |
+          cmake -G "MinGW Makefiles" -B ${{github.workspace}}\build ^
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
+          -DBQPD=${{github.workspace}}\deps\lib\libbqpd.a 
+        
+      - name: Build uno
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j4
+
+      - name: Build unomex
+        run: cmake --build ${{github.workspace}}/build --target unomex --config ${{env.BUILD_TYPE}} -j4
+
+      - name: Run example (high-level interface)
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            addpath('build'); 
+            run('interfaces/Matlab/example/example_uno.m')
+
+      - name: Run example (low-level interface)
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            addpath('build'); 
+            run('interfaces/Matlab/example/example_hs015.m')
+        
