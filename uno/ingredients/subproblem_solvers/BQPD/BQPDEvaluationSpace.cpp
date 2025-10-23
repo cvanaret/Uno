@@ -73,7 +73,7 @@ namespace uno {
       }
    }
 
-   double BQPDEvaluationSpace::compute_hessian_quadratic_product(const Vector<double>& vector) const {
+   double BQPDEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& vector) const {
       double quadratic_product = 0.;
       const size_t number_hessian_nonzeros = this->hessian_values.size();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {

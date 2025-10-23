@@ -223,9 +223,9 @@ namespace uno {
       evaluation_space.compute_constraint_jacobian_transposed_vector_product(vector, result);
    }
 
-   double PrimalDualInteriorPointMethod::compute_hessian_quadratic_product(const Vector<double>& vector) const {
+   double PrimalDualInteriorPointMethod::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
       const auto& evaluation_space = this->linear_solver->get_evaluation_space();
-      return evaluation_space.compute_hessian_quadratic_product(vector);
+      return evaluation_space.compute_hessian_quadratic_product(subproblem, vector);
    }
 
    bool PrimalDualInteriorPointMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
