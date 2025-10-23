@@ -30,6 +30,10 @@ namespace uno {
       }
    }
 
+   ProblemType HomogeneousEqualityConstrainedModel::get_problem_type() const {
+      return this->model.get_problem_type();
+   }
+
    bool HomogeneousEqualityConstrainedModel::has_jacobian_operator() const {
       return this->model.has_jacobian_operator();
    }

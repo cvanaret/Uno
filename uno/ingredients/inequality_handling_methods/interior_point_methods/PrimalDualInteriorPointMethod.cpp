@@ -17,7 +17,7 @@
 
 namespace uno {
    PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(const Options& options):
-         InequalityHandlingMethod(),
+         InequalityHandlingMethod(options),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))),
          barrier_parameter_update_strategy(options),
          previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
@@ -36,15 +36,18 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy, double trust_region_radius) {
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) {
       if (!problem.get_inequality_constraints().empty()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
       if (!problem.get_fixed_variables().empty()) {
          throw std::runtime_error("The problem has fixed variables. Move them to the set of general constraints.");
       }
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-      const Subproblem subproblem{barrier_problem, current_iterate, hessian_model, regularization_strategy, trust_region_radius};
+      this->problem = &problem;
+      // reformulate the problem into a barrier problem
+      this->barrier_problem = std::make_unique<PrimalDualInteriorPointProblem>(problem, this->parameters);
+      this->barrier_problem->set_barrier_parameter(this->barrier_parameter());
+      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
       this->linear_solver->initialize_augmented_system(subproblem);
    }
 
@@ -52,27 +55,24 @@ namespace uno {
       statistics.add_column("barrier", Statistics::double_width - 5, options.get_int("statistics_barrier_parameter_column_order"));
    }
 
-   void PrimalDualInteriorPointMethod::generate_initial_iterate(const OptimizationProblem& problem, Iterate& initial_iterate) {
+   void PrimalDualInteriorPointMethod::generate_initial_iterate(Iterate& initial_iterate) {
       // TODO: enforce linear constraints at initial point
-
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-
       // add the slacks to the initial iterate
-      initial_iterate.set_number_variables(problem.number_variables);
+      initial_iterate.set_number_variables(this->problem->number_variables);
       // make the initial point strictly feasible wrt the bounds
-      for (size_t variable_index: Range(problem.number_variables)) {
-         initial_iterate.primals[variable_index] = barrier_problem.push_variable_to_interior(initial_iterate.primals[variable_index],
-            problem.variable_lower_bound(variable_index), problem.variable_upper_bound(variable_index));
+      for (size_t variable_index: Range(this->problem->number_variables)) {
+         initial_iterate.primals[variable_index] = this->barrier_problem->push_variable_to_interior(initial_iterate.primals[variable_index],
+            this->problem->variable_lower_bound(variable_index), this->problem->variable_upper_bound(variable_index));
       }
 
       // set the slack variables (if any)
-      if (!problem.model.get_slacks().is_empty()) {
+      if (!this->problem->model.get_slacks().is_empty()) {
          // set the slacks to the constraint values
-         initial_iterate.evaluate_constraints(problem.model);
-         for (const auto [constraint_index, slack_index]: problem.model.get_slacks()) {
+         initial_iterate.evaluate_constraints(this->problem->model);
+         for (const auto [constraint_index, slack_index]: this->problem->model.get_slacks()) {
             initial_iterate.primals[slack_index] =
-               barrier_problem.push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index],
-               problem.variable_lower_bound(slack_index), problem.variable_upper_bound(slack_index));
+               this->barrier_problem->push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index],
+               this->problem->variable_lower_bound(slack_index), this->problem->variable_upper_bound(slack_index));
          }
          // since the slacks have been set, the function evaluations should also be updated
          initial_iterate.is_objective_gradient_computed = false;
@@ -81,9 +81,9 @@ namespace uno {
       }
 
       // set the bound multipliers
-      for (size_t variable_index: Range(problem.number_variables)) {
-         const double lower_bound = problem.variable_lower_bound(variable_index);
-         const double upper_bound = problem.variable_upper_bound(variable_index);
+      for (size_t variable_index: Range(this->problem->number_variables)) {
+         const double lower_bound = this->problem->variable_lower_bound(variable_index);
+         const double upper_bound = this->problem->variable_upper_bound(variable_index);
          if (is_finite(lower_bound)) {
             initial_iterate.multipliers.lower_bounds[variable_index] = this->default_multiplier;
          }
@@ -92,23 +92,23 @@ namespace uno {
          }
       }
 
-      if (0 < problem.number_constraints) {
+      if (0 < this->problem->number_constraints) {
          // TODO compute least-square multipliers
       }
+
+      this->evaluate_progress_measures(*this->barrier_problem, initial_iterate);
    }
 
-   void PrimalDualInteriorPointMethod::solve(Statistics& statistics, const OptimizationProblem& problem, Iterate& current_iterate,
-         Direction& direction, HessianModel& hessian_model, RegularizationStrategy<double>& regularization_strategy,
+   void PrimalDualInteriorPointMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet");
       }
 
-
       // possibly update the barrier parameter
       if (!this->first_feasibility_iteration) {
-         const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-         this->update_barrier_parameter(barrier_problem, current_iterate, current_iterate.residuals);
+         this->update_barrier_parameter(current_iterate, current_iterate.residuals);
       }
       else {
          this->first_feasibility_iteration = false;
@@ -116,8 +116,7 @@ namespace uno {
       statistics.set("barrier", this->barrier_parameter());
 
       // create the subproblem
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-      const Subproblem subproblem{barrier_problem, current_iterate, hessian_model, regularization_strategy,
+      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy,
          trust_region_radius};
 
       // compute the primal-dual solution
@@ -132,9 +131,7 @@ namespace uno {
       direction.subproblem_objective = this->evaluate_subproblem_objective(direction);
 
       // determine if the direction is a "small direction" (Section 3.9 of the Ipopt paper) TODO
-      const bool is_small_step = PrimalDualInteriorPointMethod::is_small_step(problem, current_iterate.primals,
-         direction.primals);
-      if (is_small_step) {
+      if (PrimalDualInteriorPointMethod::is_small_step(current_iterate.primals, direction.primals)) {
          DEBUG << "This is a small step\n";
       }
    }
@@ -143,8 +140,7 @@ namespace uno {
       return this->barrier_parameter_update_strategy.get_barrier_parameter();
    }
 
-   void PrimalDualInteriorPointMethod::initialize_feasibility_problem(const l1RelaxedProblem& /*problem*/, Iterate& current_iterate) {
-      this->solving_feasibility_problem = true;
+   void PrimalDualInteriorPointMethod::initialize_feasibility_problem(Iterate& current_iterate) {
       this->first_feasibility_iteration = true;
       this->subproblem_definition_changed = true;
 
@@ -163,13 +159,6 @@ namespace uno {
          current_iterate.multipliers.upper_bounds[variable_index] = -this->default_multiplier;
       }
        */
-   }
-
-   void PrimalDualInteriorPointMethod::exit_feasibility_problem(const OptimizationProblem& /*problem*/, Iterate& /*trial_iterate*/) {
-      //assert(this->solving_feasibility_problem && "The barrier subproblem did not know it was solving the feasibility problem.");
-      this->barrier_parameter_update_strategy.set_barrier_parameter(this->previous_barrier_parameter);
-      this->solving_feasibility_problem = false;
-      // TODO compute least-square multipliers
    }
 
    // set the elastic variables of the current iterate
@@ -218,11 +207,10 @@ namespace uno {
       return this->linear_solver->get_evaluation_space();
    }
 
-   void PrimalDualInteriorPointMethod::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
+   void PrimalDualInteriorPointMethod::evaluate_constraint_jacobian(Iterate& iterate) {
       // create the subproblem
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
       auto& evaluation_space = this->linear_solver->get_evaluation_space();
-      evaluation_space.evaluate_constraint_jacobian(barrier_problem, iterate);
+      evaluation_space.evaluate_constraint_jacobian(*this->barrier_problem, iterate);
    }
 
    void PrimalDualInteriorPointMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
@@ -235,37 +223,32 @@ namespace uno {
       evaluation_space.compute_constraint_jacobian_transposed_vector_product(vector, result);
    }
 
-   double PrimalDualInteriorPointMethod::compute_hessian_quadratic_product(const Vector<double>& vector) const {
+   double PrimalDualInteriorPointMethod::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
       const auto& evaluation_space = this->linear_solver->get_evaluation_space();
-      return evaluation_space.compute_hessian_quadratic_product(vector);
+      return evaluation_space.compute_hessian_quadratic_product(subproblem, vector);
    }
 
-   void PrimalDualInteriorPointMethod::set_auxiliary_measure(const OptimizationProblem& problem, Iterate& iterate) {
-      // auxiliary measure: barrier terms
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-      barrier_problem.set_auxiliary_measure(iterate);
+   bool PrimalDualInteriorPointMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         UserCallbacks& user_callbacks) {
+      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy,
+         trust_region_radius};
+      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, subproblem,
+         this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }
 
-   double PrimalDualInteriorPointMethod::compute_predicted_auxiliary_reduction_model(const OptimizationProblem& problem,
-         const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const {
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-      const double directional_derivative = barrier_problem.compute_barrier_term_directional_derivative(current_iterate, primal_direction);
-      return step_length * (-directional_derivative);
-      // }, "α*(μ*X^{-1} e^T d)"};
-   }
-
-   void PrimalDualInteriorPointMethod::update_barrier_parameter(const PrimalDualInteriorPointProblem& barrier_problem,
-         const Iterate& current_iterate, const DualResiduals& residuals) {
-      const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(barrier_problem,
+   void PrimalDualInteriorPointMethod::update_barrier_parameter(const Iterate& current_iterate, const DualResiduals& residuals) {
+      const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(*this->barrier_problem,
          current_iterate, residuals);
       // the barrier parameter may have been changed earlier when entering restoration
       this->subproblem_definition_changed = this->subproblem_definition_changed || barrier_parameter_updated;
+      this->barrier_problem->set_barrier_parameter(this->barrier_parameter());
    }
 
    // Section 3.9 in IPOPT paper
-   bool PrimalDualInteriorPointMethod::is_small_step(const OptimizationProblem& problem, const Vector<double>& current_primals,
-         const Vector<double>& direction_primals) const {
-      const Range variables_range = Range(problem.number_variables);
+   bool PrimalDualInteriorPointMethod::is_small_step(const Vector<double>& current_primals, const Vector<double>& direction_primals) const {
+      const Range variables_range = Range(this->problem->number_variables);
       const VectorExpression relative_direction_size{variables_range, [&](size_t variable_index) {
          return direction_primals[variable_index] / (1 + std::abs(current_primals[variable_index]));
       }};
@@ -277,9 +260,8 @@ namespace uno {
       return 0.; // TODO (only used in l1Relaxation at the moment)
    }
 
-   void PrimalDualInteriorPointMethod::postprocess_iterate(const OptimizationProblem& problem, Iterate& iterate) {
-      const PrimalDualInteriorPointProblem barrier_problem(problem, this->barrier_parameter(), this->parameters);
-      barrier_problem.postprocess_iterate(iterate);
+   void PrimalDualInteriorPointMethod::postprocess_iterate(Iterate& iterate) {
+      this->barrier_problem->postprocess_iterate(iterate);
    }
 
    void PrimalDualInteriorPointMethod::set_initial_point(const Vector<double>& /*point*/) {

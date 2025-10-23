@@ -1,6 +1,6 @@
-# Uno.jl
+# UnoSolver.jl
 
-Uno.jl is a wrapper for [Uno](https://github.com/cvanaret/Uno), a modern and modular solver for nonlinearly constrained optimization.
+UnoSolver.jl is a wrapper for [Uno](https://github.com/cvanaret/Uno), a modern and modular solver for nonlinearly constrained optimization.
 
 The package has three components:
 
@@ -14,55 +14,55 @@ This Julia interface is developed and maintained by [Alexis Montoison](https://g
 
 ## Installation
 
-`Uno.jl` is not yet a registered Julia package, but it can still be installed and tested through the Julia package manager.
+`UnoSolver.jl` is not yet a registered Julia package, but it can still be installed and tested through the Julia package manager.
 
 ```julia
 julia> using Pkg
 julia> Pkg.add(url="https://github.com/cvanaret/Uno", subdir="interfaces/Julia")
-julia> Pkg.test("Uno")
+julia> Pkg.test("UnoSolver")
 ```
 
-We plan to register `Uno.jl` in the near future (at the latest by JuMP-dev 2025).
+We plan to register `UnoSolver.jl` in the near future (at the latest by JuMP-dev 2025).
 
 ## Examples
 
-Below are examples showing how to use `Uno.jl` with the interfaces for `NLPModels.jl` and `MathOptInterface.jl`.
+Below are examples showing how to use `UnoSolver.jl` with the interfaces for `NLPModels.jl` and `MathOptInterface.jl`.
 
 ```julia
-using Uno, CUTEst
+using UnoSolver, CUTEst
 
 nlp = CUTEstModel{Float64}("HS15")
 model = uno_model(nlp)
 solver = uno_solver(preset="filtersqp", print_solution=true, logger="INFO")
 uno_optimize(solver, model)
 
-timer = Uno.uno_get_cpu_time(solver)
-niter = Uno.uno_get_number_iterations(solver)
-nsub = Uno.uno_get_number_subproblem_solved_evaluations(solver)
-optimization_status = Uno.uno_get_optimization_status(solver)
-solution_status = Uno.uno_get_solution_status(solver)
-solution_objective = Uno.uno_get_solution_objective(solver)
-solution_primal_feasibility = Uno.uno_get_solution_primal_feasibility(solver)
-solution_stationarity = Uno.uno_get_solution_stationarity(solver)
-solution_complementarity = Uno.uno_get_solution_complementarity(solver)
+timer = UnoSolver.uno_get_cpu_time(solver)
+niter = UnoSolver.uno_get_number_iterations(solver)
+nsub = UnoSolver.uno_get_number_subproblem_solved_evaluations(solver)
+optimization_status = UnoSolver.uno_get_optimization_status(solver)
+solution_status = UnoSolver.uno_get_solution_status(solver)
+solution_objective = UnoSolver.uno_get_solution_objective(solver)
+solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
+solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
+solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
 
 primal_solution = Vector{Float64}(undef, nlp.meta.nvar)
-Uno.uno_get_primal_solution(solver, primal_solution)
+UnoSolver.uno_get_primal_solution(solver, primal_solution)
 
 constraint_dual_solution = Vector{Float64}(undef, nlp.meta.ncon)
-Uno.uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+UnoSolver.uno_get_constraint_dual_solution(solver, constraint_dual_solution)
 
 lower_bound_dual_solution = Vector{Float64}(undef, nlp.meta.nvar)
-Uno.uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+UnoSolver.uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
 
 upper_bound_dual_solution = Vector{Float64}(undef, nlp.meta.nvar)
-Uno.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 ```
 
 ```julia
-using Uno, JuMP
+using UnoSolver, JuMP
 
-jump_model = Model(() -> Uno.Optimizer(preset="filtersqp"))
+jump_model = Model(() -> UnoSolver.Optimizer(preset="filtersqp"))
 x0 = [-2, 1]
 uvar = [0.5, Inf]
 @variable(jump_model, x[i = 1:2] ≤ uvar[i], start = x0[i])
@@ -77,11 +77,11 @@ objective_value(jump_model)     # objective value
 value.(x)                       # primal solution
 ```
 
-If you encounter any issues with the interface for JuMP problems, please [open an issue](https://github.com/JuliaSmoothOptimizers/Uno.jl/issues) so we can fix it.
+If you encounter any issues with the interface for JuMP problems, please [open an issue](https://github.com/cvanaret/Uno/issues) so we can fix it.
 As a temporary workaround, you can use [NLPModelsJuMP.jl](https://github.com/JuliaSmoothOptimizers/NLPModelsJuMP.jl) to wrap a JuMP model into a `MathOptNLPModel`:
 
 ```julia
-using NLPModelsJuMP
+using UnoSolver, NLPModelsJuMP
 
 nlp = MathOptNLPModel(jump_model)
 
@@ -95,12 +95,12 @@ uno_optimize(solver, model)
 ## LibHSL
 
 We highly recommend downloading the latest release of [libHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) and installing the official version of `HSL_jll.jl`.
-This optional dependency provides access to more reliable and powerful linear solvers in `Uno.jl`, such as `MA27` and `MA57`.
+This optional dependency provides access to more reliable and powerful linear solvers in `UnoSolver.jl`, such as `MA27` and `MA57`.
 
 ## BLAS and LAPACK demuxer
 
 `Uno_jll.jl` is compiled with [libblastrampoline](https://github.com/JuliaLinearAlgebra/libblastrampoline) (LBT), a library that can switch between BLAS and LAPACK backends at runtime, such as OpenBLAS, Intel MKL, and Apple Accelerate.
-The default BLAS and LAPACK backend used in the Julia interface `Uno.jl` is [OpenBLAS](https://github.com/OpenMathLib/OpenBLAS).
+The default BLAS and LAPACK backend used in the Julia interface `UnoSolver.jl` is [OpenBLAS](https://github.com/OpenMathLib/OpenBLAS).
 
 ### Display backends
 
@@ -110,8 +110,8 @@ You can check which backends are currently loaded with:
 import LinearAlgebra
 LinearAlgebra.BLAS.lbt_get_config()
 ```
-If no `BLAS` or `LAPACK` library compiled with 32-bit integers (`LP64`) is available, `Uno.jl` will automatically load a compatible version of `OpenBLAS`.
-You can run the command again after `using Uno` to verify which backend is in use.
+If no `BLAS` or `LAPACK` library compiled with 32-bit integers (`LP64`) is available, `UnoSolver.jl` will automatically load a compatible version of `OpenBLAS`.
+You can run the command again after `using UnoSolver` to verify which backend is in use.
 
 ### Sequential BLAS and LAPACK
 
@@ -121,7 +121,7 @@ If you have the LP64 reference versions of [BLAS and LAPACK](https://github.com/
 using ReferenceBLAS32_jll, LAPACK32_jll
 LinearAlgebra.BLAS.lbt_forward(libblas32)
 LinearAlgebra.BLAS.lbt_forward(liblapack32)
-using Uno
+using UnoSolver
 ```
 
 ### MKL
@@ -131,7 +131,7 @@ switch to MKL by adding `using MKL` to your code:
 
 ```julia
 using MKL
-using Uno
+using UnoSolver
 ```
 
 ### AppleAccelerate
@@ -140,5 +140,5 @@ If you are using macOS v13.4 or later and you have [AppleAccelerate.jl](https://
 
 ```julia
 using AppleAccelerate
-using Uno
+using UnoSolver
 ```

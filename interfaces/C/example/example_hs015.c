@@ -95,8 +95,7 @@ int main() {
 	assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
 		hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention));
 /*
-	assert(uno_set_lagrangian_hessian_operator(model, number_hessian_nonzeros, lagrangian_hessian_operator,
-		lagrangian_sign_convention));
+	assert(uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator, lagrangian_sign_convention));
 */
 	assert(uno_set_initial_primal_iterate(model, x0));
 

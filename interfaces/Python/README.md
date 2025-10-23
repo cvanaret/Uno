@@ -39,8 +39,7 @@ model.set_jacobian_transposed_operator(jacobian_transposed_operator)
 ```
 - a Hessian operator (performs Hessian-vector products);
 ```python
-model.set_lagrangian_hessian_operator(number_hessian_nonzeros,
-   lagrangian_hessian_operator, lagrangian_sign_convention)
+model.set_lagrangian_hessian_operator(lagrangian_hessian_operator, lagrangian_sign_convention)
 ```
 - user data of an arbitrary type;
 ```python

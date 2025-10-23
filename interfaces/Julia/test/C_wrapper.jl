@@ -207,32 +207,32 @@ model = uno_model(
 
 x0 = Float64[1.0, 5.0, 5.0, 1.0]
 y0 = zeros(Float64, ncon)
-Uno.uno_set_initial_primal_iterate(model, x0)
-Uno.uno_set_initial_dual_iterate(model, y0)
+UnoSolver.uno_set_initial_primal_iterate(model, x0)
+UnoSolver.uno_set_initial_dual_iterate(model, y0)
 
 solver = uno_solver()
 uno_set_solver_preset(solver, "funnelsqp")
 uno_set_solver_bool_option(solver, "print_solution", true)
 uno_optimize(solver, model)
 
-optimization_status = Uno.uno_get_optimization_status(solver)
-solution_status = Uno.uno_get_solution_status(solver)
-solution_objective = Uno.uno_get_solution_objective(solver)
-solution_primal_feasibility = Uno.uno_get_solution_primal_feasibility(solver)
-solution_stationarity = Uno.uno_get_solution_stationarity(solver)
-solution_complementarity = Uno.uno_get_solution_complementarity(solver)
+optimization_status = UnoSolver.uno_get_optimization_status(solver)
+solution_status = UnoSolver.uno_get_solution_status(solver)
+solution_objective = UnoSolver.uno_get_solution_objective(solver)
+solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
+solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
+solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
 
 primal_solution = Vector{Float64}(undef, nvar)
-Uno.uno_get_primal_solution(solver, primal_solution)
+UnoSolver.uno_get_primal_solution(solver, primal_solution)
 
 constraint_dual_solution = Vector{Float64}(undef, ncon)
-Uno.uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+UnoSolver.uno_get_constraint_dual_solution(solver, constraint_dual_solution)
 
 lower_bound_dual_solution = Vector{Float64}(undef, nvar)
-Uno.uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+UnoSolver.uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
 
 upper_bound_dual_solution = Vector{Float64}(undef, nvar)
-Uno.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 
 @test optimization_status == 0  # UNO_SUCCESS
 @test solution_status == 1      # UNO_FEASIBLE_KKT_POINT

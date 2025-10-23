@@ -1,4 +1,4 @@
-name = "Uno"
+name = "UnoSolver"
 uuid = "1baa60ac-02f7-4b39-a7a8-2f4f58486b05"
 authors = ["Alexis Montoison <amontoison@anl.gov>", "Charlie Vanaret <vanaret@zib.de>"]
 version = "0.1.0"
@@ -13,12 +13,12 @@ MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 NLPModels = "a4795742-8479-5a88-8948-cc11e1c8c1a6"
 
 [extensions]
-UnoMathOptInterfaceExt = "MathOptInterface"
-UnoNLPModelsExt = "NLPModels"
+UnoSolverMathOptInterfaceExt = "MathOptInterface"
+UnoSolverNLPModelsExt = "NLPModels"
 
 [compat]
 LinearAlgebra = "1.10"
-MathOptInterface = "1.25"
+MathOptInterface = "1.46"
 NLPModels = "0.21.5"
 OpenBLAS32_jll = "0.3.24"
 Test = "1.10"

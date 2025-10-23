@@ -1,5 +1,5 @@
 # Copyright (c) 2013: Iain Dunning, Miles Lubin, and contributors
-# 2025: Modified for MadNLP.jl and Uno.jl by Alexis Montoison
+# 2025: Modified for MadNLP.jl and UnoSolver.jl by Alexis Montoison
 #
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
@@ -76,7 +76,7 @@ mutable struct QPBlockData{T}
     function QPBlockData{T}() where {T}
         return new(
             zero(MOI.ScalarQuadraticFunction{T}),
-            _kFunctionTypeScalarAffine,
+            _kFunctionTypeScalarQuadratic,
             Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}[],
             T[],
             T[],

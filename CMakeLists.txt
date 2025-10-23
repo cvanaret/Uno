@@ -71,7 +71,7 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/inequality_handling_methods/*.cpp
    uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
    uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
-   uno/ingredients/regularization_strategies/*.cpp
+   uno/ingredients/inertia_correction_strategies/*.cpp
    uno/ingredients/subproblem/*.cpp
    uno/ingredients/subproblem_solvers/*.cpp
    uno/model/*.cpp
@@ -237,7 +237,7 @@ if(BUILD_STATIC_LIBS)
    target_include_directories(uno_static PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_static PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
-   set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h")
+   set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/Fortran/uno.f90")
 endif()
 
 if(BUILD_SHARED_LIBS)
@@ -245,7 +245,7 @@ if(BUILD_SHARED_LIBS)
    target_include_directories(uno_shared PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_shared PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
-   set_target_properties(uno_shared PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h")
+   set_target_properties(uno_shared PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/Fortran/uno.f90")
 endif()
 
 if(BUILD_STATIC_LIBS)

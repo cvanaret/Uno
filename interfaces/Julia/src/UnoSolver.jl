@@ -1,4 +1,4 @@
-module Uno
+module UnoSolver
 
 import Uno_jll
 import Uno_jll: libuno
@@ -23,4 +23,4 @@ include("C_wrapper.jl")
 
 global Optimizer
 
-end # module Uno
+end  # module UnoSolver

@@ -5,8 +5,6 @@
 #define UNO_CONSTRAINTRELAXATIONSTRATEGY_H
 
 #include <cstddef>
-#include <functional>
-#include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/SolutionStatus.hpp"
@@ -15,15 +13,12 @@ namespace uno {
    // forward declarations
    class Direction;
    class GlobalizationStrategy;
-   class InequalityHandlingMethod;
    class Model;
    class Multipliers;
    class OptimizationProblem;
    class Options;
    class Statistics;
    class UserCallbacks;
-   template <typename ElementType>
-   class Vector;
    class WarmstartInformation;
 
    class ConstraintRelaxationStrategy {
@@ -44,16 +39,14 @@ namespace uno {
 
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
+         double trust_region_radius, const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
       [[nodiscard]] virtual SolutionStatus check_termination(const Model& model, Iterate& iterate) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
-      [[nodiscard]] virtual size_t get_hessian_evaluation_count() const = 0;
       [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
 
    protected:
-      const Norm progress_norm;
       const Norm residual_norm;
       const double residual_scaling_threshold;
       const double primal_tolerance;
@@ -63,24 +56,6 @@ namespace uno {
       size_t loose_tolerance_consecutive_iterations{0};
       const size_t loose_tolerance_consecutive_iteration_threshold;
       const double unbounded_objective_threshold;
-      // first_order_predicted_reduction is true when the predicted reduction can be taken as first-order (e.g. in line-search methods)
-      const bool first_order_predicted_reduction;
-
-      void set_objective_measure(const Model& model, Iterate& iterate) const;
-      void set_infeasibility_measure(const Model& model, Iterate& iterate) const;
-      [[nodiscard]] double compute_predicted_infeasibility_reduction(InequalityHandlingMethod& inequality_handling_method,
-         const Model& model, const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const;
-      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(InequalityHandlingMethod& inequality_handling_method,
-         const Iterate& current_iterate, const Vector<double>& primal_direction, double step_length) const;
-      void compute_progress_measures(InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         GlobalizationStrategy& globalization_strategy, Iterate& current_iterate, Iterate& trial_iterate) const;
-      [[nodiscard]] ProgressMeasures compute_predicted_reductions(InequalityHandlingMethod& inequality_handling_method,
-         const OptimizationProblem& problem, const Iterate& current_iterate, const Direction& direction, double step_length) const;
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const OptimizationProblem& problem, InequalityHandlingMethod& inequality_handling_method, Iterate& current_iterate,
-         Iterate& trial_iterate, const Direction& direction, double step_length, UserCallbacks& user_callbacks) const;
-      virtual void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
-         const OptimizationProblem& problem, Iterate& iterate) const = 0;
 
       void compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate) const;
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;

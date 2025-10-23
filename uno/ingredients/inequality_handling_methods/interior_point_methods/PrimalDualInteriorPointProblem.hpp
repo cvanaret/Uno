@@ -7,14 +7,15 @@
 #include "InteriorPointParameters.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
+#include "tools/Infinity.hpp"
 
 namespace uno {
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
-      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, double barrier_parameter,
-         const InteriorPointParameters &parameters);
+      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters &parameters);
 
       [[nodiscard]] double get_objective_multiplier() const override;
+      void set_barrier_parameter(double barrier_parameter);
 
       // constraint evaluations
       void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
@@ -23,7 +24,6 @@ namespace uno {
       void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const override;
 
       // sparsity patterns of Jacobian and Hessian
-
       void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
          MatrixOrder matrix_order) const override;
       void compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
@@ -55,7 +55,6 @@ namespace uno {
       void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const override;
 
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;
-      void set_auxiliary_measure(Iterate& iterate) const;
       [[nodiscard]] double dual_regularization_factor() const override;
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
@@ -63,9 +62,14 @@ namespace uno {
       [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
          double shift) const;
 
+      // progress measures
+      void set_auxiliary_measure(Iterate& iterate) const override;
+      [[nodiscard]] double compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length) const override;
+
    protected:
       const OptimizationProblem& first_reformulation;
-      const double barrier_parameter;
+      double barrier_parameter{INF<double>};
       const InteriorPointParameters& parameters;
       const Vector<size_t> fixed_variables{};
       const ForwardRange equality_constraints;

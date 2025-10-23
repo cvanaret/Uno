@@ -5,7 +5,6 @@
 #include <pybind11/stl.h>
 #include "unopy.hpp"
 #include "Uno.hpp"
-#include "tools/PointerWrapper.hpp"
 
 namespace py = pybind11;
 

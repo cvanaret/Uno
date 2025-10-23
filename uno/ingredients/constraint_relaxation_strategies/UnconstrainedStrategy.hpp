@@ -8,6 +8,7 @@
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
+#include "optimization/OptimizationProblem.hpp"
 
 namespace uno {
    class UnconstrainedStrategy : public ConstraintRelaxationStrategy {
@@ -26,22 +27,19 @@ namespace uno {
          Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) override;
 
       // trial iterate acceptance
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Model& model,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         double trust_region_radius, const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
       [[nodiscard]] SolutionStatus check_termination(const Model& model, Iterate& iterate) override;
 
       [[nodiscard]] std::string get_name() const override;
-      [[nodiscard]] size_t get_hessian_evaluation_count() const override;
       [[nodiscard]] size_t get_number_subproblems_solved() const override;
 
    private:
+      std::unique_ptr<const OptimizationProblem> problem{};
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
-      std::unique_ptr<HessianModel> hessian_model;
-      std::unique_ptr<RegularizationStrategy<double>> regularization_strategy;
-
-      void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         Iterate& iterate) const override;
+      std::unique_ptr<HessianModel> hessian_model{};
+      std::unique_ptr<InertiaCorrectionStrategy<double>> inertia_correction_strategy;
    };
 } // namespace
 

@@ -1,4 +1,4 @@
-name: Julia wrappers for Uno.jl
+name: Julia wrappers for UnoSolver.jl
 on:
   push:
     branches:

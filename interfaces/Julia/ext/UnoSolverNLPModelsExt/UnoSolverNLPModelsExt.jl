@@ -1,6 +1,6 @@
-module UnoNLPModelsExt
+module UnoSolverNLPModelsExt
 
-import Uno
+import UnoSolver
 import NLPModels
 import NLPModels: AbstractNLPModel
 
@@ -49,11 +49,11 @@ function nlpmodels_lagrangian_hessian_operator(nlp::AbstractNLPModel{Float64}, H
   return Hv
 end
 
-function Uno.uno_model(nlp::AbstractNLPModel{Float64}; operators_available::Bool=true)
+function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64}; operators_available::Bool=true)
   jrows, jcols = NLPModels.jac_structure(nlp)
   hrows, hcols = NLPModels.hess_structure(nlp)
   problem_type = nlp.meta.islp ? 'L' : 'N'
-  model = Uno.uno_model(
+  model = UnoSolver.uno_model(
     problem_type,
     nlp.meta.minimize,
     nlp.meta.nvar,
@@ -80,9 +80,9 @@ function Uno.uno_model(nlp::AbstractNLPModel{Float64}; operators_available::Bool
     lagrangian_sign=1.0,
     user_model=nlp,
   )
-  Uno.uno_set_initial_primal_iterate(model, nlp.meta.x0)
-  Uno.uno_set_initial_dual_iterate(model, nlp.meta.y0)
+  UnoSolver.uno_set_initial_primal_iterate(model, nlp.meta.x0)
+  UnoSolver.uno_set_initial_dual_iterate(model, nlp.meta.y0)
   return model
 end
 
-end
+end  # module UnoSolverNLPModelsExt

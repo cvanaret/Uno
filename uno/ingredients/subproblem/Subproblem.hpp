@@ -4,6 +4,7 @@
 #ifndef UNO_SUBPROBLEM_H
 #define UNO_SUBPROBLEM_H
 
+#include <functional>
 #include "optimization/Iterate.hpp"
 #include "linear_algebra/Matrix.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
@@ -18,9 +19,10 @@ namespace uno {
    // forward declarations
    template <typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
+   class EvaluationSpace;
    class HessianModel;
    template <typename ElementType>
-   class RegularizationStrategy;
+   class InertiaCorrectionStrategy;
    class Statistics;
    template <typename ElementType>
    class Vector;
@@ -30,7 +32,7 @@ namespace uno {
       const size_t number_variables, number_constraints;
 
       Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
-         RegularizationStrategy<double>& regularization_strategy, double trust_region_radius);
+         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius);
 
       // sparsity patterns
       void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
@@ -79,12 +81,20 @@ namespace uno {
 
       [[nodiscard]] double dual_regularization_factor() const;
 
+      // local models of progress measures
+      [[nodiscard]] double compute_predicted_infeasibility_reduction(const EvaluationSpace& evaluation_space, const Model& model,
+         const Vector<double>& primal_direction, double step_length, Norm norm) const;
+      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const EvaluationSpace& evaluation_space,
+         const Vector<double>& primal_direction, double step_length) const;
+      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const EvaluationSpace& evaluation_space,
+         const Direction& direction, double step_length, Norm norm) const;
+
       const OptimizationProblem& problem;
       Iterate& current_iterate;
 
    protected:
       HessianModel& hessian_model;
-      RegularizationStrategy<double>& regularization_strategy;
+      InertiaCorrectionStrategy<double>& inertia_correction_strategy;
       const double trust_region_radius;
       const ForwardRange empty_set{0};
    };

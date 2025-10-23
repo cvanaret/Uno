@@ -1,8 +1,8 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_REGULARIZATIONSTRATEGY_H
-#define UNO_REGULARIZATIONSTRATEGY_H
+#ifndef UNO_INERTIACORRECTIONSTRATEGY_H
+#define UNO_INERTIACORRECTIONSTRATEGY_H
 
 #include "Inertia.hpp"
 
@@ -21,10 +21,10 @@ namespace uno {
    class Vector;
 
    template <typename ElementType>
-   class RegularizationStrategy {
+   class InertiaCorrectionStrategy {
    public:
-      RegularizationStrategy() = default;
-      virtual ~RegularizationStrategy() = default;
+      InertiaCorrectionStrategy() = default;
+      virtual ~InertiaCorrectionStrategy() = default;
 
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
 
@@ -49,4 +49,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_REGULARIZATIONSTRATEGY_H
+#endif // UNO_INERTIACORRECTIONSTRATEGY_H
