@@ -20,9 +20,9 @@ extern "C" {
    const double UNO_MULTIPLIER_NEGATIVE = -1.0;
 
    // Problem type: "LP" = Linear Problem, "Q" = Quadratic Problem, "NLP" = Nonlinear Problem
-   const char UNO_PROBLEM_LINEAR[]    = "LP";
-   const char UNO_PROBLEM_QUADRATIC[] = "QP";
-   const char UNO_PROBLEM_NONLINEAR[] = "NLP";
+   static const char UNO_PROBLEM_LINEAR[]    = "LP";
+   static const char UNO_PROBLEM_QUADRATIC[] = "QP";
+   static const char UNO_PROBLEM_NONLINEAR[] = "NLP";
 
    // Base indexing style: 0-based (C) or 1-based (Fortran)
    const int32_t UNO_ZERO_BASED_INDEXING = 0;
