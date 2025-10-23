@@ -142,7 +142,7 @@ end
 Base.unsafe_convert(::Type{Ptr{Cvoid}}, model::Model) = model.c_model
 
 function uno_model(
-  problem_type::Char,
+  problem_type::String,
   minimize::Bool,
   nvar::Int,
   ncon::Int,
@@ -171,8 +171,8 @@ function uno_model(
   @assert nvar == length(lvar) == length(uvar)
   @assert ncon == length(lcon) == length(ucon)
 
-  # 'L' for linear, 'Q' for quadratic, 'N' for nonlinear
-  @assert problem_type == 'L' || problem_type == 'Q' || problem_type == 'N'
+  # "LP" for linear problem, "QP" for quadratic problem, "NLP" for nonlinear problem
+  @assert problem_type == "LP" || problem_type == "QP" || problem_type == "NLP"
   optimization_sense = minimize ? Cint(1) : Cint(-1)
 
   base_indexing = Cint(1)  # Fortran-style indexing

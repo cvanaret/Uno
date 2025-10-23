@@ -6,10 +6,10 @@ const UNO_MAXIMIZE = Cint(-1)
 const UNO_MULTIPLIER_POSITIVE = Cdouble(1.0)
 const UNO_MULTIPLIER_NEGATIVE = Cdouble(-1.0)
 
-# Problem type: 'L' = Linear, 'Q' = Quadratic, 'N' = Nonlinear
-const UNO_PROBLEM_LINEAR    = Cchar('L')
-const UNO_PROBLEM_QUADRATIC = Cchar('Q')
-const UNO_PROBLEM_NONLINEAR = Cchar('N')
+# Problem type: "LP" = linear problem, "QP" = quadratic problem, "NLP" = nonlinear problem
+const UNO_PROBLEM_LINEAR    = Cstring("LP")
+const UNO_PROBLEM_QUADRATIC = Cstring("QP")
+const UNO_PROBLEM_NONLINEAR = Cstring("NLP")
 
 # Base indexing style: 0-based (C) or 1-based (Fortran)
 const UNO_ZERO_BASED_INDEXING = Cint(0)

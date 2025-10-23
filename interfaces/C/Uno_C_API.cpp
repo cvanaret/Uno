@@ -471,7 +471,7 @@ void uno_reset_logger_stream() {
    Logger::set_stream(std::cout);
 }
 
-void* uno_create_model(char problem_type, int32_t number_variables, const double* variables_lower_bounds,
+void* uno_create_model(const char* problem_type, int32_t number_variables, const double* variables_lower_bounds,
       const double* variables_upper_bounds, int32_t base_indexing) {
    if (number_variables <= 0) {
       WARNING << "Please specify a positive number of variables."  << std::endl;
