@@ -4,6 +4,7 @@
 #ifndef UNO_USERMODEL_H
 #define UNO_USERMODEL_H
 
+#include <optional>
 #include <vector>
 #include "C/Uno_C_API.h"
 #include "optimization/ProblemType.hpp"
@@ -61,7 +62,7 @@ namespace uno {
       JacobianTransposedOperator jacobian_transposed_operator{nullptr};
 
       // Hessian
-      int32_t number_hessian_nonzeros{0};
+      std::optional<int32_t> number_hessian_nonzeros{};
       // lower ('L') or upper ('U')
       char hessian_triangular_part{}; // default is empty
       std::vector<int32_t> hessian_row_indices{};

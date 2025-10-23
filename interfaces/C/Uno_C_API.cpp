@@ -125,7 +125,8 @@ public:
 
    void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
-      for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_hessian_nonzeros))) {
+      const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
+      for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
          row_indices[nonzero_index] = this->user_model.hessian_row_indices[nonzero_index];
          column_indices[nonzero_index] = this->user_model.hessian_column_indices[nonzero_index];
       }
@@ -133,7 +134,7 @@ public:
       // handle the solver indexing
       if (this->user_model.base_indexing != solver_indexing) {
          const int indexing_difference = solver_indexing - this->user_model.base_indexing;
-         for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_hessian_nonzeros))) {
+         for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
             row_indices[nonzero_index] += indexing_difference;
             column_indices[nonzero_index] += indexing_difference;
          }
@@ -160,8 +161,9 @@ public:
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
+         const int32_t number_hessian_nonzeros = static_cast<int32_t>(this->number_hessian_nonzeros());
          const int32_t return_code = this->user_model.lagrangian_hessian(this->user_model.number_variables,
-            this->user_model.number_constraints, this->user_model.number_hessian_nonzeros, x.data(), objective_multiplier,
+            this->user_model.number_constraints, number_hessian_nonzeros, x.data(), objective_multiplier,
             multipliers.data(), hessian_values, this->user_model.user_data);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
@@ -293,7 +295,12 @@ public:
    }
 
    [[nodiscard]] size_t number_hessian_nonzeros() const override {
-      return static_cast<size_t>(this->user_model.number_hessian_nonzeros);
+      if (this->user_model.number_hessian_nonzeros.has_value()) {
+         return static_cast<size_t>(*this->user_model.number_hessian_nonzeros);
+      }
+      else {
+         throw std::runtime_error("The number of Hessian nonzeros is not available in UnoModel");
+      }
    }
 
    [[nodiscard]] size_t number_model_objective_evaluations() const override {
@@ -625,7 +632,7 @@ bool uno_set_lagrangian_hessian_operator(void* model, int32_t number_hessian_non
       WARNING << "Please specify a Lagrangian sign convention consistent with that of the Hessian function."  << std::endl;
       return false;
    }
-   user_model->number_hessian_nonzeros = number_hessian_nonzeros;
+   //user_model->number_hessian_nonzeros = number_hessian_nonzeros;
    user_model->lagrangian_hessian_operator = lagrangian_hessian_operator;
    user_model->lagrangian_sign_convention = lagrangian_sign_convention;
    return true;

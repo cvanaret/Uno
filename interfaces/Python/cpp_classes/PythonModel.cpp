@@ -101,13 +101,14 @@ namespace uno {
 
    void PythonModel::compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const {
       // copy the indices of the user sparsity patterns to the Uno vectors
-      std::copy_n(this->user_model.hessian_row_indices.data(), static_cast<size_t>(this->user_model.number_hessian_nonzeros), row_indices);
-      std::copy_n(this->user_model.hessian_column_indices.data(), static_cast<size_t>(this->user_model.number_hessian_nonzeros), column_indices);
+      const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
+      std::copy_n(this->user_model.hessian_row_indices.data(), number_hessian_nonzeros, row_indices);
+      std::copy_n(this->user_model.hessian_column_indices.data(), number_hessian_nonzeros, column_indices);
 
       // handle the solver indexing
       if (this->user_model.base_indexing != solver_indexing) {
          const int indexing_difference = solver_indexing - this->user_model.base_indexing;
-         for (size_t index: Range(static_cast<size_t>(this->user_model.number_hessian_nonzeros))) {
+         for (size_t index: Range(number_hessian_nonzeros)) {
             row_indices[index] += indexing_difference;
             column_indices[index] += indexing_difference;
          }
@@ -287,7 +288,12 @@ namespace uno {
    }
 
    size_t PythonModel::number_hessian_nonzeros() const {
-      return static_cast<size_t>(this->user_model.number_hessian_nonzeros);
+      if (this->user_model.number_hessian_nonzeros.has_value()) {
+         return static_cast<size_t>(*this->user_model.number_hessian_nonzeros);
+      }
+      else {
+         throw std::runtime_error("The number of Hessian nonzeros is not available in UnoModel");
+      }
    }
 
    size_t PythonModel::number_model_objective_evaluations() const {
