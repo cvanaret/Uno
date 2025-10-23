@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 #include <string>
 #include "../cpp_classes/PythonModel.hpp"
 #include "../cpp_classes/UnoSolverWrapper.hpp"

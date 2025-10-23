@@ -17,7 +17,7 @@
 
 namespace uno {
    InequalityConstrainedMethod::InequalityConstrainedMethod(const Options& options):
-         InequalityHandlingMethod(), options(options) {
+         InequalityHandlingMethod(options), options(options) {
    }
 
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
@@ -49,8 +49,8 @@ namespace uno {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::generate_initial_iterate(Iterate& /*initial_iterate*/) {
-      // TODO enforce linear constraints
+   void InequalityConstrainedMethod::generate_initial_iterate(Iterate& initial_iterate) {
+      this->evaluate_progress_measures(*this->problem, initial_iterate);
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
@@ -114,14 +114,13 @@ namespace uno {
       view(direction_multipliers.upper_bounds, 0, current_multipliers.upper_bounds.size()) -= current_multipliers.upper_bounds;
    }
 
-   // auxiliary measure is 0 in inequality-constrained methods
-   void InequalityConstrainedMethod::set_auxiliary_measure(Iterate& iterate) {
-      iterate.progress.auxiliary = 0.;
-   }
-
-   double InequalityConstrainedMethod::compute_predicted_auxiliary_reduction_model(const Iterate& /*current_iterate*/,
-         const Vector<double>& /*primal_direction*/, double /*step_length*/) const {
-      return 0.;
+   bool InequalityConstrainedMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         UserCallbacks& user_callbacks) {
+      const Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
+      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, subproblem, this->get_evaluation_space(),
+         current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }
 
    void InequalityConstrainedMethod::postprocess_iterate(Iterate& /*iterate*/) {

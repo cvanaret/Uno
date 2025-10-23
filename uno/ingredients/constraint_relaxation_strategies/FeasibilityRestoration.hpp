@@ -31,12 +31,11 @@ namespace uno {
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+         double trust_region_radius, const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
       [[nodiscard]] SolutionStatus check_termination(const Model& model, Iterate& iterate) override;
 
       [[nodiscard]] std::string get_name() const override;
-      [[nodiscard]] size_t get_hessian_evaluation_count() const override;
       [[nodiscard]] size_t get_number_subproblems_solved() const override;
 
    private:
@@ -65,8 +64,6 @@ namespace uno {
       void switch_back_to_optimality_phase(Iterate& current_iterate, GlobalizationStrategy& globalization_strategy,
          Iterate& trial_iterate);
 
-      void evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         Iterate& iterate) const override;
       [[nodiscard]] bool can_switch_to_optimality_phase(const Iterate& current_iterate, const GlobalizationStrategy& globalization_strategy,
          const Model& model, const Iterate& trial_iterate, const Direction& direction, double step_length) const;
    };

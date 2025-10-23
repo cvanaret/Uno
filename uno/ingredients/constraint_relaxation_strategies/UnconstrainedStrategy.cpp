@@ -26,7 +26,6 @@ namespace uno {
          Direction& direction, double trust_region_radius, const Options& options) {
       this->problem = std::make_unique<const OptimizationProblem>(model);
       assert(this->problem != nullptr);
-      // TODO form the reformulation wrt inequalities
 
       // memory allocation
       this->hessian_model->initialize(model);
@@ -40,7 +39,6 @@ namespace uno {
 
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate);
-      this->evaluate_progress_measures(*this->inequality_handling_method, *this->problem, initial_iterate);
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
       this->inequality_handling_method->evaluate_constraint_jacobian(initial_iterate);
@@ -73,10 +71,11 @@ namespace uno {
    }
 
    bool UnconstrainedStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
-      const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, globalization_strategy,
-         *this->problem, *this->inequality_handling_method, current_iterate, trial_iterate, direction, step_length, user_callbacks);
+         double trust_region_radius, const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+      const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, globalization_strategy,
+         *this->hessian_model, *this->inertia_correction_strategy, trust_region_radius, current_iterate, trial_iterate,
+         direction, step_length, user_callbacks);
       trial_iterate.status = this->check_termination(model, trial_iterate);
       warmstart_information.no_changes();
       return accept_iterate;
@@ -91,20 +90,9 @@ namespace uno {
       return ConstraintRelaxationStrategy::check_termination(*this->problem, iterate);
    }
 
-   void UnconstrainedStrategy::evaluate_progress_measures(InequalityHandlingMethod& inequality_handling_method,
-         const OptimizationProblem& /*problem*/, Iterate& iterate) const {
-      this->set_infeasibility_measure(this->problem->model, iterate);
-      this->set_objective_measure(this->problem->model, iterate);
-      inequality_handling_method.set_auxiliary_measure(iterate);
-   }
-
    std::string UnconstrainedStrategy::get_name() const {
       return this->inequality_handling_method->get_name() + " with " + this->hessian_model->get_name() + " Hessian and " +
          this->inertia_correction_strategy->get_name() + " regularization";
-   }
-
-   size_t UnconstrainedStrategy::get_hessian_evaluation_count() const {
-      return this->hessian_model->evaluation_count;
    }
 
    size_t UnconstrainedStrategy::get_number_subproblems_solved() const {

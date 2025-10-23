@@ -17,7 +17,7 @@
 
 namespace uno {
    PrimalDualInteriorPointMethod::PrimalDualInteriorPointMethod(const Options& options):
-         InequalityHandlingMethod(),
+         InequalityHandlingMethod(options),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))),
          barrier_parameter_update_strategy(options),
          previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
@@ -95,6 +95,8 @@ namespace uno {
       if (0 < this->problem->number_constraints) {
          // TODO compute least-square multipliers
       }
+
+      this->evaluate_progress_measures(*this->barrier_problem, initial_iterate);
    }
 
    void PrimalDualInteriorPointMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
@@ -226,17 +228,14 @@ namespace uno {
       return evaluation_space.compute_hessian_quadratic_product(vector);
    }
 
-   void PrimalDualInteriorPointMethod::set_auxiliary_measure(Iterate& iterate) {
-      // auxiliary measure: barrier terms
-      this->barrier_problem->set_auxiliary_measure(iterate);
-   }
-
-   double PrimalDualInteriorPointMethod::compute_predicted_auxiliary_reduction_model(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const {
-      const double directional_derivative = this->barrier_problem->compute_barrier_term_directional_derivative(current_iterate,
-         primal_direction);
-      return step_length * (-directional_derivative);
-      // }, "α*(μ*X^{-1} e^T d)"};
+   bool PrimalDualInteriorPointMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         UserCallbacks& user_callbacks) {
+      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy,
+         trust_region_radius};
+      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, subproblem,
+         this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }
 
    void PrimalDualInteriorPointMethod::update_barrier_parameter(const Iterate& current_iterate, const DualResiduals& residuals) {

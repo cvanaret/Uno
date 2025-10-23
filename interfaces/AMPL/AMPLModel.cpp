@@ -9,7 +9,6 @@
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
-#include "options/Options.hpp"
 #include "Uno.hpp"
 
 namespace uno {

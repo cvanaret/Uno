@@ -39,10 +39,11 @@ namespace uno {
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       [[nodiscard]] double compute_hessian_quadratic_product(const Vector<double>& vector) const override;
 
-      // progress measures
-      void set_auxiliary_measure(Iterate& iterate) override;
-      [[nodiscard]] double compute_predicted_auxiliary_reduction_model(const Iterate& current_iterate,
-         const Vector<double>& primal_direction, double step_length) const override;
+      // acceptance
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         UserCallbacks& user_callbacks) override;
 
       void postprocess_iterate(Iterate& iterate) override;
 

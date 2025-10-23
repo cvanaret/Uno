@@ -5,7 +5,6 @@
 #define UNO_BQPDEVALUATIONSPACE_H
 
 #include <cstddef>
-#include <vector>
 #include "linear_algebra/Vector.hpp"
 #include "optimization/EvaluationSpace.hpp"
 
