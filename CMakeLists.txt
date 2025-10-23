@@ -368,6 +368,12 @@ if(TARGET unopy)
 endif()
 if(TARGET unomex)
    list(APPEND INSTALL_TARGETS unomex-optimize unomex-options)
+   set(MATLAB_INSTALL_FILES "interfaces/Matlab/uno.m;interfaces/Matlab/uno_optimize.m;interfaces/Matlab/uno_options.m")
+   if(WIN32)
+      install(FILES ${MATLAB_INSTALL_FILES} DESTINATION "bin")
+   else()
+      install(FILES ${MATLAB_INSTALL_FILES} DESTINATION "lib")
+   endif()
 endif()
 install(TARGETS ${INSTALL_TARGETS}
    COMPONENT libuno

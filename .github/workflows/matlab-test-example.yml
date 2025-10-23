@@ -44,7 +44,7 @@ jobs:
       - name: add MinGW64 directory to path
         run: echo "C:\tools\msys64\mingw64\bin" >> "$GITHUB_PATH"
       
-      - name: Configure Uno CMake
+      - name: Configure CMake
         shell: cmd
         run: |
           cmake -G "MinGW Makefiles" -B ${{github.workspace}}\build ^
@@ -57,17 +57,20 @@ jobs:
       - name: Build unomex
         run: cmake --build ${{github.workspace}}/build --target unomex --config ${{env.BUILD_TYPE}} -j4
 
+      - name: Install unomex
+        run: cmake --install ${{github.workspace}}/build --prefix ${{github.workspace}}/install
+
       - name: Run example (high-level interface)
         uses: matlab-actions/run-command@v2
         with:
           command: |
-            addpath('build'); 
+            addpath('install/bin'); 
             run('interfaces/Matlab/example/example_uno.m')
 
       - name: Run example (low-level interface)
         uses: matlab-actions/run-command@v2
         with:
           command: |
-            addpath('build'); 
+            addpath('install/bin'); 
             run('interfaces/Matlab/example/example_hs015.m')
         
