@@ -1248,6 +1248,7 @@ function _setup_model(model::Optimizer)
     has_quadratic_constraints =
         any(isequal(_kFunctionTypeScalarQuadratic), model.qp_data.function_type)
     has_nlp_constraints = !isempty(model.nlp_data.constraint_bounds) || has_oracle
+    has_nlp_objective = model.nlp_data.has_objective
     has_hessian = :Hess in MOI.features_available(model.nlp_data.evaluator)
     has_jacobian_operator = :JacVec in MOI.features_available(model.nlp_data.evaluator)
     has_hessian_operator = :HessVec in MOI.features_available(model.nlp_data.evaluator)
@@ -1288,6 +1289,19 @@ function _setup_model(model::Optimizer)
         hrows[i], hcols[i] = hessian_sparsity[i]
     end
 
+    problem_type = 'X'
+    if has_quadratic_constraints || has_nlp_constraints || has_nlp_objective
+        problem_type = 'N'
+    else
+        if model.qp_data.objective_function_type == _kFunctionTypeScalarQuadratic
+            problem_type = 'Q'
+        else
+            if (model.qp_data.objective_function_type == _kFunctionTypeVariableIndex) || (model.qp_data.objective_function_type == _kFunctionTypeScalarAffine)
+                problem_type = 'L'
+            end
+        end
+    end
+
     moi_objective(model, x) = MOI.eval_objective(model, x)
     moi_objective_gradient(model, g, x) = MOI.eval_objective_gradient(model, g, x)
     moi_constraints(model, c, x) = MOI.eval_constraint(model, c, x)
@@ -1309,7 +1323,7 @@ function _setup_model(model::Optimizer)
     nvar = length(vars)
     ncon = length(g_L)
     model.inner = UnoSolver.uno_model(
-        'N',
+        problem_type,
         model.sense == MOI.MIN_SENSE,
         nvar,
         ncon,

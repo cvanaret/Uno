@@ -76,7 +76,7 @@ mutable struct QPBlockData{T}
     function QPBlockData{T}() where {T}
         return new(
             zero(MOI.ScalarQuadraticFunction{T}),
-            _kFunctionTypeScalarAffine,
+            _kFunctionTypeScalarQuadratic,
             Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}[],
             T[],
             T[],
