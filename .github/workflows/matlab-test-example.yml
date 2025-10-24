@@ -22,8 +22,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
        matrix:
-        os: [windows-latest]
-        architecture: [x64]
+        include:
+          - os: windows-latest
+            addpath: install/bin
+          - os: macos-14
+            addpath: install/lib
         
     steps:
       - uses: actions/checkout@v4
@@ -35,21 +38,32 @@ jobs:
         shell: bash
         run: |
             VERSION_BQPD="1.0.0"
-            PLATFORM="x86_64-w64-mingw32"
-            choco install wget
-            wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
+            if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+              PLATFORM="x86_64-w64-mingw32"
+              choco install wget
+            else
+              PLATFORM="x86_64-apple-darwin14"
+            fi
+            wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.${PLATFORM}-libgfortran5.tar.gz
             mkdir deps
-            tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
+            tar -xzvf BQPD.v${VERSION_BQPD}.${PLATFORM}-libgfortran5.tar.gz -C deps
 
-      - name: add MinGW64 directory to path
+      - name: Add MinGW64 to PATH (Windows)
+        if: matrix.os == 'windows-latest'
         run: echo "C:\tools\msys64\mingw64\bin" >> "$GITHUB_PATH"
       
       - name: Configure CMake
-        shell: cmd
+        shell: bash
         run: |
-          cmake -G "MinGW Makefiles" -B ${{github.workspace}}\build ^
-          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
-          -DBQPD=${{github.workspace}}\deps\lib\libbqpd.a 
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            cmake -G "MinGW Makefiles" -B "${{github.workspace}}/build" \
+              -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+              -DBQPD="${{github.workspace}}/deps/lib/libbqpd.a"
+          else
+            cmake -B "${{github.workspace}}/build" \
+              -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+              -DBQPD="${{github.workspace}}/deps/lib/libbqpd.a"
+          fi
         
       - name: Build uno
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j4
@@ -64,13 +78,13 @@ jobs:
         uses: matlab-actions/run-command@v2
         with:
           command: |
-            addpath('install/bin'); 
-            run('interfaces/Matlab/example/example_uno.m')
+            addpath('${{ matrix.addpath }}'); 
+            run('interfaces/Matlab/example/example_uno.m');
 
       - name: Run example (low-level interface)
         uses: matlab-actions/run-command@v2
         with:
           command: |
-            addpath('install/bin'); 
-            run('interfaces/Matlab/example/example_hs015.m')
+            addpath('${{ matrix.addpath }}');
+            run('interfaces/Matlab/example/example_hs015.m');
         
