@@ -24,6 +24,7 @@ namespace uno {
         OPTION_TYPE,
         MISSING_FIELD,
         FIELD_CHAR,
+        FIELD_STRING,
         FIELD_POSITIVE_INTEGER,
         FIELD_UNITARY,
         FIELD_VECTOR,

@@ -21,6 +21,7 @@ namespace uno {
         {ErrorType::OPTION_TYPE, "Invalid type of option '%s'."},
         {ErrorType::MISSING_FIELD, "Missing field '%s'."},
         {ErrorType::FIELD_CHAR, "Type of field '%s' must be char."},
+        {ErrorType::FIELD_STRING, "Type of field '%s' must be char array or string."},
         {ErrorType::FIELD_POSITIVE_INTEGER, "Field '%s' must be a positive integer value."},
         {ErrorType::FIELD_UNITARY, "Field '%s' must be either +1 or -1."},
         {ErrorType::FIELD_VECTOR, "Field '%s' must be a vector of %d element(s)."},

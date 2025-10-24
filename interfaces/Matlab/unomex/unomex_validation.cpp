@@ -60,6 +60,31 @@ namespace uno {
         return true;
     }
 
+    bool validate_string_field(const mxArray* arr, const std::vector<std::string> strings, const std::string field_name, std::string& errmsg) {
+        if (!isvalid(arr)) {
+            errmsg = ErrorString::format_error(ErrorType::MISSING_FIELD, field_name.c_str());
+            return false;
+        }
+        if (!isa<char>(arr) && !isa<std::string>(arr)) {
+            errmsg = ErrorString::format_error(ErrorType::FIELD_STRING, field_name.c_str());
+            return false;
+        }
+        if (strings.size()>0) {
+            std::string str = mxArray_to_string(arr);
+            if (std::find(strings.begin(), strings.end(), str) == strings.end()) {
+                errmsg = "Field '" + field_name + "' must be one of { ";
+                for (size_t i: Range(strings.size())) {
+                    if (i > 0) {
+                        errmsg += ", ";
+                    }
+                    errmsg += "'" + strings[i] + "'";
+                }
+                errmsg += " }.";
+                return false;
+            }
+        }
+    }
+
     bool validate_positive_integer_field(const mxArray* arr, const std::string field_name, std::string& errmsg) {
         if (!isvalid(arr)) {
             errmsg = ErrorString::format_error(ErrorType::MISSING_FIELD, field_name.c_str());
