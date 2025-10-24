@@ -410,22 +410,6 @@ void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch) {
    *patch = UNO_VERSION_PATCH;
 }
 
-void uno_set_logger_stream_callback(LoggerStreamUserCallback logger_stream_callback, void* user_data) {
-   delete c_stream_callback;
-   delete ostream;
-   c_stream_callback = new CStreamCallback(logger_stream_callback, user_data);
-   ostream = new UserOStream(c_stream_callback);
-   Logger::set_stream(*ostream);
-}
-
-void uno_reset_logger_stream() {
-   delete ostream;
-   delete c_stream_callback;
-   c_stream_callback = nullptr;
-   ostream = nullptr;
-   Logger::set_stream(std::cout);
-}
-
 void* uno_create_model(const char* problem_type, int32_t number_variables, const double* variables_lower_bounds,
       const double* variables_upper_bounds, int32_t base_indexing) {
    if (number_variables <= 0) {
@@ -731,15 +715,19 @@ bool uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback 
 }
 
 bool uno_set_logger_stream_callback(LoggerStreamUserCallback logger_stream_callback, void* user_data) {
-   delete c_ostream;
-   c_ostream = new COStream(logger_stream_callback, user_data);
-   Logger::set_stream(*c_ostream);
+   delete c_stream_callback;
+   delete ostream;
+   c_stream_callback = new CStreamCallback(logger_stream_callback, user_data);
+   ostream = new UserOStream(c_stream_callback);
+   Logger::set_stream(*ostream);
    return true;
 }
 
 bool uno_reset_logger_stream() {
-   delete c_ostream;
-   c_ostream = nullptr;
+   delete ostream;
+   delete c_stream_callback;
+   c_stream_callback = nullptr;
+   ostream = nullptr;
    Logger::set_stream(std::cout);
    return true;
 }
