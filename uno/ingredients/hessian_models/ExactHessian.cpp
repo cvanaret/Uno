@@ -5,7 +5,7 @@
 #include "model/Model.hpp"
 
 namespace uno {
-   ExactHessian::ExactHessian(const Model& model): HessianModel(), model(model) {
+   ExactHessian::ExactHessian(const Model& model): HessianModel("exact"), model(model) {
    }
 
    bool ExactHessian::has_hessian_operator() const {
@@ -43,9 +43,5 @@ namespace uno {
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) {
       this->model.compute_hessian_vector_product(x, vector, objective_multiplier, constraint_multipliers, result);
       ++this->evaluation_count;
-   }
-
-   std::string ExactHessian::get_name() const {
-      return "exact";
    }
 } // namespace

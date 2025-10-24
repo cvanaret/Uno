@@ -22,7 +22,6 @@ namespace uno {
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) override;
       void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
          const Vector<double>& constraint_multipliers, double* result) override;
-      [[nodiscard]] std::string get_name() const override;
 
    protected:
       const size_t number_variables;

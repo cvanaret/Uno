@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <string>
+#include <string_view>
 
 namespace uno {
    // forward declarations
@@ -15,10 +16,12 @@ namespace uno {
 
    class HessianModel {
    public:
-      HessianModel() = default;
+      explicit HessianModel(const std::string_view name): name(name) {
+      }
       virtual ~HessianModel() = default;
 
       size_t evaluation_count{0};
+      const std::string name;
 
       [[nodiscard]] virtual bool has_hessian_operator() const = 0;
       [[nodiscard]] virtual bool has_hessian_matrix() const = 0;
@@ -31,7 +34,6 @@ namespace uno {
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) = 0;
       virtual void compute_hessian_vector_product(const double* x, const double* vector,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) = 0;
-      [[nodiscard]] virtual std::string get_name() const = 0;
    };
 } // namespace
 

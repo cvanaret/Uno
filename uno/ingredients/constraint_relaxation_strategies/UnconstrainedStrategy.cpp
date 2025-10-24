@@ -91,7 +91,7 @@ namespace uno {
    }
 
    std::string UnconstrainedStrategy::get_name() const {
-      return this->inequality_handling_method->get_name() + " with " + this->hessian_model->get_name() + " Hessian and " +
+      return this->inequality_handling_method->get_name() + " with " + this->hessian_model->name + " Hessian and " +
          this->inertia_correction_strategy->get_name() + " regularization";
    }
 

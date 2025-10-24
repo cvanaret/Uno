@@ -5,7 +5,7 @@
 #include "symbolic/Range.hpp"
 
 namespace uno {
-   ZeroHessian::ZeroHessian(size_t number_variables): number_variables(number_variables) {
+   ZeroHessian::ZeroHessian(size_t number_variables): HessianModel("zero"), number_variables(number_variables) {
    }
 
    bool ZeroHessian::has_hessian_operator() const {
@@ -42,9 +42,5 @@ namespace uno {
       for (size_t variable_index: Range(this->number_variables)) {
          result[variable_index] = 0.;
       }
-   }
-
-   std::string ZeroHessian::get_name() const {
-      return "zero";
    }
 }

@@ -6,7 +6,7 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   IdentityHessian::IdentityHessian(size_t number_variables): number_variables(number_variables) {
+   IdentityHessian::IdentityHessian(size_t number_variables): HessianModel("identity"), number_variables(number_variables) {
    }
 
    bool IdentityHessian::has_hessian_operator() const {
@@ -50,9 +50,5 @@ namespace uno {
       for (size_t variable_index: Range(this->number_variables)) {
          result[variable_index] = vector[variable_index];
       }
-   }
-
-   std::string IdentityHessian::get_name() const {
-      return "identity";
    }
 } // namespace
