@@ -1505,14 +1505,19 @@ function _manually_evaluated_primal_status(model::Optimizer)
     g = Vector{Float64}(undef, model.inner.ncon)
     MOI.eval_constraint(model, g, x)
 
-    m, n = length(g), length(x)
     x_L, x_U = model.variables.lower, model.variables.upper
     g_L, g_U = copy(model.qp_data.g_L), copy(model.qp_data.g_U)
-    # Assuming constraints are guaranteed to be in the order [qp_cons, nlp_cons]
+    # Assuming constraints are guaranteed to be in the order:
+    # [qp_cons, nlp_cons, oracle]
     for bound in model.nlp_data.constraint_bounds
         push!(g_L, bound.lower)
         push!(g_U, bound.upper)
     end
+    for (_, cache) in model.vector_nonlinear_oracle_constraints
+        append!(g_L, cache.set.l)
+        append!(g_U, cache.set.u)
+    end
+    m, n = length(g_L), length(x
     # 1e-8 is the default primal tolerance
     tol = get(model.options, "primal_tolerance", 1e-8)
     if all(x_L[i] - tol <= x[i] <= x_U[i] + tol for i in 1:n) &&
