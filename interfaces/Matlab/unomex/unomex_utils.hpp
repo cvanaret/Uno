@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <vector>
 #include <algorithm>
-#include "linear_algebra\Vector.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "mex.h"
 
 namespace uno {
