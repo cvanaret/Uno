@@ -42,11 +42,11 @@ jobs:
               PLATFORM="x86_64-w64-mingw32"
               choco install wget
             else
-              PLATFORM="x86_64-apple-darwin14"
+              PLATFORM="aarch64-apple-darwin"
             fi
-            wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.${PLATFORM}-libgfortran5.tar.gz
+            wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
             mkdir deps
-            tar -xzvf BQPD.v${VERSION_BQPD}.${PLATFORM}-libgfortran5.tar.gz -C deps
+            tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
 
       - name: Add MinGW64 to PATH (Windows)
         if: matrix.os == 'windows-latest'
