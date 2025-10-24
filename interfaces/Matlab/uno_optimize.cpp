@@ -3,17 +3,9 @@
 
 #include <stdint.h>
 #include <algorithm>
-#include "../UserModel.hpp"
 #include "Uno.hpp"
-#include "linear_algebra/SparseVector.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "model/Model.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Presets.hpp"
-#include "optimization/EvaluationErrors.hpp"
-#include "optimization/Iterate.hpp"
-#include "symbolic/Range.hpp"
-#include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 #include "cpp_classes/MatlabModel.hpp"
 #include "cpp_classes/MatlabUserCallbacks.hpp"
