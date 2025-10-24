@@ -1517,7 +1517,7 @@ function _manually_evaluated_primal_status(model::Optimizer)
         append!(g_L, cache.set.l)
         append!(g_U, cache.set.u)
     end
-    m, n = length(g_L), length(x
+    m, n = length(g_L), length(x)
     # 1e-8 is the default primal tolerance
     tol = get(model.options, "primal_tolerance", 1e-8)
     if all(x_L[i] - tol <= x[i] <= x_U[i] + tol for i in 1:n) &&
