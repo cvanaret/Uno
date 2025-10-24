@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <streambuf>
+#include <cstring>
 #include <optional>
 #include <vector>
 #include <cstring>
@@ -13,11 +14,11 @@
 #include "optimization/ProblemType.hpp"
 
 namespace uno {
-   inline ProblemType problem_type_from_char(char problem_type) {
-      if (problem_type == 'L') {
+   inline ProblemType problem_type_from_string(const char* problem_type) {
+      if (strcmp(problem_type, UNO_PROBLEM_LINEAR) == 0) {
          return ProblemType::LINEAR;
       }
-      else if (problem_type == 'Q') {
+      else if (strcmp(problem_type, UNO_PROBLEM_QUADRATIC) == 0) {
          return ProblemType::QUADRATIC;
       }
       else {
@@ -31,9 +32,9 @@ namespace uno {
       typename DoubleVector, typename UserDataType>
    class UserModel {
    public:
-      // problem_type is 'L' for linear, 'Q' for quadratic, 'N' for nonlinear
-      UserModel(char problem_type, int32_t number_variables, int32_t base_indexing):
-            problem_type(problem_type_from_char(problem_type)),
+      // problem_type is "LP" for linear, "QP" for quadratic, "NLP" for nonlinear
+      UserModel(const char* problem_type, int32_t number_variables, int32_t base_indexing):
+            problem_type(problem_type_from_string(problem_type)),
             base_indexing(base_indexing),
             number_variables(number_variables) {
       }

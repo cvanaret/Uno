@@ -1289,15 +1289,15 @@ function _setup_model(model::Optimizer)
         hrows[i], hcols[i] = hessian_sparsity[i]
     end
 
-    problem_type = 'X'
+    problem_type = "X"
     if has_quadratic_constraints || has_nlp_constraints || has_nlp_objective
-        problem_type = 'N'
+        problem_type = "NLP"
     else
         if model.qp_data.objective_function_type == _kFunctionTypeScalarQuadratic
-            problem_type = 'Q'
+            problem_type = "QP"
         else
             if (model.qp_data.objective_function_type == _kFunctionTypeVariableIndex) || (model.qp_data.objective_function_type == _kFunctionTypeScalarAffine)
-                problem_type = 'L'
+                problem_type = "LP"
             end
         end
     end
@@ -1381,13 +1381,13 @@ function MOI.optimize!(model::Optimizer)
     # Other misc options that over-ride the ones set above.
     for (name, value) in model.options
         if value isa String
-            UnoSolver.uno_set_solver_string_option(solver, name, value)
+            @assert UnoSolver.uno_set_solver_string_option(solver, name, value)
         elseif value isa Float64
-            UnoSolver.uno_set_solver_double_option(solver, name, value)
+            @assert UnoSolver.uno_set_solver_double_option(solver, name, value)
         elseif value isa Integer
-            UnoSolver.uno_set_solver_integer_option(solver, name, Cint(value))
+            @assert UnoSolver.uno_set_solver_integer_option(solver, name, Cint(value))
         elseif value isa Bool
-            UnoSolver.uno_set_solver_bool_option(solver, name, value)
+            @assert UnoSolver.uno_set_solver_bool_option(solver, name, value)
         else
             error(
                 "Unable to add option `\"$name\"` with the value " *
@@ -1505,14 +1505,19 @@ function _manually_evaluated_primal_status(model::Optimizer)
     g = Vector{Float64}(undef, model.inner.ncon)
     MOI.eval_constraint(model, g, x)
 
-    m, n = length(g), length(x)
     x_L, x_U = model.variables.lower, model.variables.upper
     g_L, g_U = copy(model.qp_data.g_L), copy(model.qp_data.g_U)
-    # Assuming constraints are guaranteed to be in the order [qp_cons, nlp_cons]
+    # Assuming constraints are guaranteed to be in the order:
+    # [qp_cons, nlp_cons, oracle]
     for bound in model.nlp_data.constraint_bounds
         push!(g_L, bound.lower)
         push!(g_U, bound.upper)
     end
+    for (_, cache) in model.vector_nonlinear_oracle_constraints
+        append!(g_L, cache.set.l)
+        append!(g_U, cache.set.u)
+    end
+    m, n = length(g_L), length(x)
     # 1e-8 is the default primal tolerance
     tol = get(model.options, "primal_tolerance", 1e-8)
     if all(x_L[i] - tol <= x[i] <= x_U[i] + tol for i in 1:n) &&

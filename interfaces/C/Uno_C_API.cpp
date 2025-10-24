@@ -426,13 +426,14 @@ void uno_reset_logger_stream() {
    Logger::set_stream(std::cout);
 }
 
-void* uno_create_model(char problem_type, int32_t number_variables, const double* variables_lower_bounds,
+void* uno_create_model(const char* problem_type, int32_t number_variables, const double* variables_lower_bounds,
       const double* variables_upper_bounds, int32_t base_indexing) {
    if (number_variables <= 0) {
       WARNING << "Please specify a positive number of variables."  << std::endl;
       return nullptr;
    }
-   if (problem_type != UNO_PROBLEM_LINEAR && problem_type != UNO_PROBLEM_QUADRATIC && problem_type != UNO_PROBLEM_NONLINEAR) {
+   if (strcmp(problem_type, UNO_PROBLEM_LINEAR) != 0 && strcmp(problem_type, UNO_PROBLEM_QUADRATIC) != 0 &&
+         strcmp(problem_type, UNO_PROBLEM_NONLINEAR) != 0) {
       WARNING << "Please specify a valid problem type."  << std::endl;
       return nullptr;
    }
@@ -669,22 +670,25 @@ void* uno_create_solver() {
    return solver;
 }
 
-void uno_set_solver_integer_option(void* solver, const char* option_name, int32_t option_value) {
+bool uno_set_solver_integer_option(void* solver, const char* option_name, int32_t option_value) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->options->set_integer(option_name, option_value);
+   return true;
 }
 
-void uno_set_solver_double_option(void* solver, const char* option_name, double option_value) {
+bool uno_set_solver_double_option(void* solver, const char* option_name, double option_value) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->options->set_double(option_name, option_value);
+   return true;
 }
 
-void uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value) {
+bool uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->options->set_bool(option_name, option_value);
+   return true;
 }
 
-void uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value) {
+bool uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value) {
    // handle the preset separately
    if (strcmp(option_name, "preset") == 0) {
       uno_set_solver_preset(solver, option_value);
@@ -693,6 +697,7 @@ void uno_set_solver_string_option(void* solver, const char* option_name, const c
       Solver* uno_solver = static_cast<Solver*>(solver);
       uno_solver->options->set_string(option_name, option_value);
    }
+   return true;
 }
 
 int32_t uno_get_solver_option_type(void* solver, const char* option_name) {
@@ -705,21 +710,38 @@ int32_t uno_get_solver_option_type(void* solver, const char* option_name) {
    }
 }
 
-void uno_load_solver_option_file(void* solver, const char* file_name) {
+bool uno_load_solver_option_file(void* solver, const char* file_name) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->options->overwrite_with(uno::Options::load_option_file(file_name));
+   return true;
 }
 
-void uno_set_solver_preset(void* solver, const char* preset_name) {
+bool uno_set_solver_preset(void* solver, const char* preset_name) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    Presets::set(*uno_solver->options, preset_name);
+   return true;
 }
 
-void uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
+bool uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
       TerminationUserCallback user_termination_callback, void* user_data) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    delete uno_solver->user_callbacks; // delete the previous callbacks
    uno_solver->user_callbacks = new CUserCallbacks(notify_acceptable_iterate_callback, user_termination_callback, user_data);
+   return true;
+}
+
+bool uno_set_logger_stream_callback(LoggerStreamUserCallback logger_stream_callback, void* user_data) {
+   delete c_ostream;
+   c_ostream = new COStream(logger_stream_callback, user_data);
+   Logger::set_stream(*c_ostream);
+   return true;
+}
+
+bool uno_reset_logger_stream() {
+   delete c_ostream;
+   c_ostream = nullptr;
+   Logger::set_stream(std::cout);
+   return true;
 }
 
 void uno_optimize(void* solver, void* model) {
