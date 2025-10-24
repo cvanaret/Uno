@@ -45,6 +45,7 @@ namespace uno {
       [[nodiscard]] virtual bool performs_primal_regularization() const = 0;
       [[nodiscard]] virtual bool performs_dual_regularization() const = 0;
       [[nodiscard]] virtual double get_primal_regularization_factor() const = 0;
+
       [[nodiscard]] virtual std::string get_name() const = 0;
    };
 } // namespace
