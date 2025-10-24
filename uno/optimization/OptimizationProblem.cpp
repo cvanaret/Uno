@@ -41,11 +41,11 @@ namespace uno {
    }
 
    bool OptimizationProblem::has_curvature(const HessianModel& hessian_model) const {
-      return hessian_model.has_curvature(this->model);
+      return hessian_model.has_curvature();
    }
 
    size_t OptimizationProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
-      return hessian_model.number_nonzeros(this->model);
+      return hessian_model.number_nonzeros();
    }
 
    void OptimizationProblem::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
@@ -55,7 +55,7 @@ namespace uno {
 
    void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
          int* column_indices, int solver_indexing) const {
-      hessian_model.compute_sparsity(this->model, row_indices, column_indices, solver_indexing);
+      hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
    }
 
    void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
@@ -86,14 +86,13 @@ namespace uno {
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
          const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const {
-      hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(),
+      hessian_model.evaluate_hessian(statistics, primal_variables, this->get_objective_multiplier(),
          multipliers.constraints, hessian_values);
    }
 
    void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
          const Multipliers& multipliers, double* result) const {
-      hessian_model.compute_hessian_vector_product(this->model, x, vector, this->get_objective_multiplier(),
-         multipliers.constraints, result);
+      hessian_model.compute_hessian_vector_product(x, vector, this->get_objective_multiplier(), multipliers.constraints, result);
    }
 
    size_t OptimizationProblem::get_number_original_variables() const {
