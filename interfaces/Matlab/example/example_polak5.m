@@ -2,8 +2,8 @@
 clc, clear
 
 %% Optimization model
-% Problem type: 'L' = Linear, 'Q' = Quadratic, 'N' = Nonlinear
-model.problem_type = 'N';  
+% Problem type: 'LP' = Linear, 'QP' = Quadratic, 'NLP' = Nonlinear
+model.problem_type = 'NLP'; 
 % Vector indexing
 model.base_indexing = 1;   
 % Number of variables

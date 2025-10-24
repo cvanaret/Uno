@@ -233,7 +233,7 @@ ind_ineqnonlin = (numel(Beq)+numel(B)+1) : (numel(Beq)+numel(B)+numel(c0));
 ind_eqnonlin = (numel(Beq)+numel(B)+numel(c0)+1) : (numel(Beq)+numel(B)+numel(c0)+numel(ceq0));
 
 % Create the optimization problem
-model.problem_type = 'N';
+model.problem_type = 'NLP';
 model.base_indexing = 1;
 model.number_variables = length(X);
 model.variables_lower_bounds = LB;
