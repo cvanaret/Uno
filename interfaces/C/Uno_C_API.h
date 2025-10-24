@@ -33,7 +33,7 @@ extern "C" {
    const char UNO_UPPER_TRIANGLE = 'U';
 
    // Option type: 0 = integer, 1 = double, 2 = boolean, 3 = string, -1 = not found
-   const int32_t UNO_OPTION_TYPE_INT = 0;
+   const int32_t UNO_OPTION_TYPE_INTEGER = 0;
    const int32_t UNO_OPTION_TYPE_DOUBLE = 1;
    const int32_t UNO_OPTION_TYPE_BOOL = 2;
    const int32_t UNO_OPTION_TYPE_STRING = 3;
