@@ -4,10 +4,10 @@
 #ifndef UNOMEX_CONVERSION_H
 #define UNOMEX_CONVERSION_H
 
-#include "linear_algebra\Vector.hpp"
-#include "options\Options.hpp"
-#include "optimization\Result.hpp"
-#include "../cpp_classes\MxStruct.hpp"
+#include "linear_algebra/Vector.hpp"
+#include "options/Options.hpp"
+#include "optimization/Result.hpp"
+#include "../cpp_classes/MxStruct.hpp"
 #include "unomex_utils.hpp"
 #include "mex.h"
 

@@ -3,7 +3,7 @@
 
 #include "unomex_function.hpp"
 #include "unomex_conversion.hpp"
-#include "../cpp_classes\ErrorString.hpp"
+#include "../cpp_classes/ErrorString.hpp"
 
 namespace uno {
 
