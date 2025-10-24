@@ -52,6 +52,13 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: echo "C:\tools\msys64\mingw64\bin" >> "$GITHUB_PATH"
       
+      - name: Install Fortran compiler (MacOS)
+        if: matrix.os != 'windows-latest'
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '13'
+
       - name: Configure CMake
         shell: bash
         run: |
