@@ -328,7 +328,7 @@ if(Matlab_FOUND)
    matlab_add_mex(NAME unomex-options SRC interfaces/Matlab/uno_options.cpp ${MATLAB_SOURCE_FILES}
       EXCLUDE_FROM_ALL
       OUTPUT_NAME uno_options
-      LINK_TO ${DEFAULT_UNO_LIB} ${LIBRARIES} ${FORTRAN_LIBS})
+      LINK_TO ${DEFAULT_UNO_LIB} ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
    target_include_directories(unomex-options PUBLIC ${DIRECTORIES})
 
    # logical target to compile both mex
