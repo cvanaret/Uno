@@ -5,43 +5,43 @@
 #include "model/Model.hpp"
 
 namespace uno {
-   bool ExactHessian::has_hessian_operator(const Model& model) const {
-      return model.has_hessian_operator();
+   ExactHessian::ExactHessian(const Model& model): HessianModel(), model(model) {
    }
 
-   bool ExactHessian::has_hessian_matrix(const Model& model) const {
-      return model.has_hessian_matrix();
+   bool ExactHessian::has_hessian_operator() const {
+      return this->model.has_hessian_operator();
    }
 
-   bool ExactHessian::has_curvature(const Model& model) const {
-      return (model.get_problem_type() != ProblemType::LINEAR);
+   bool ExactHessian::has_hessian_matrix() const {
+      return this->model.has_hessian_matrix();
    }
 
-   size_t ExactHessian::number_nonzeros(const Model& model) const {
-      return model.number_hessian_nonzeros();
+   bool ExactHessian::has_curvature() const {
+      return (this->model.get_problem_type() != ProblemType::LINEAR);
    }
 
-   void ExactHessian::compute_sparsity(const Model& model, int* row_indices, int* column_indices, int solver_indexing) const {
+   size_t ExactHessian::number_nonzeros() const {
+      return this->model.number_hessian_nonzeros();
+   }
+
+   void ExactHessian::compute_sparsity(int* row_indices, int* column_indices, int solver_indexing) const {
       // Hessian sparsity of the model
-      model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
+      this->model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
    }
 
    bool ExactHessian::is_positive_definite() const {
       return false;
    }
 
-   void ExactHessian::initialize(const Model& /*model*/) {
-   }
-
-   void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& model, const Vector<double>& primal_variables,
+   void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) {
-      model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, hessian_values);
+      this->model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, hessian_values);
       ++this->evaluation_count;
    }
 
-   void ExactHessian::compute_hessian_vector_product(const Model& model, const double* x, const double* vector,
+   void ExactHessian::compute_hessian_vector_product(const double* x, const double* vector,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) {
-      model.compute_hessian_vector_product(x, vector, objective_multiplier, constraint_multipliers, result);
+      this->model.compute_hessian_vector_product(x, vector, objective_multiplier, constraint_multipliers, result);
       ++this->evaluation_count;
    }
 

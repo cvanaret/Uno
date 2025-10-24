@@ -31,11 +31,10 @@ namespace uno {
 
       // direction computation
       virtual void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         WarmstartInformation& warmstart_information) = 0;
+         Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
       virtual void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
+         Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
 
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,

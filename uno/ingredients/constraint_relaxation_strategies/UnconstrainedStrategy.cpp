@@ -30,7 +30,6 @@ namespace uno {
       this->hessian_model = HessianModelFactory::create(model, options);
 
       // memory allocation
-      this->hessian_model->initialize(model);
       this->inequality_handling_method->initialize(*this->problem, initial_iterate, *this->hessian_model,
          *this->inertia_correction_strategy, trust_region_radius);
       direction = Direction(this->problem->number_variables, this->problem->number_constraints);
@@ -50,8 +49,7 @@ namespace uno {
    }
 
    void UnconstrainedStrategy::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& /*globalization_strategy*/,
-         const Model& /*model*/, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         WarmstartInformation& warmstart_information) {
+         Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
       direction.set_dimensions(this->problem->number_variables, this->problem->number_constraints);
@@ -67,7 +65,7 @@ namespace uno {
    }
 
    void UnconstrainedStrategy::switch_to_feasibility_problem(Statistics& /*statistics*/, GlobalizationStrategy& /*globalization_strategy*/,
-         const Model& /*model*/, Iterate& /*current_iterate*/, double /*trust_region_radius*/,
+         Iterate& /*current_iterate*/, double /*trust_region_radius*/,
          WarmstartInformation& /*warmstart_information*/) {
       throw std::runtime_error("The problem is unconstrained, switching to the feasibility problem should not happen");
    }

@@ -9,7 +9,6 @@
 
 namespace uno {
    // forward declarations
-   class Model;
    class Statistics;
    template <typename ElementType>
    class Vector;
@@ -21,17 +20,16 @@ namespace uno {
 
       size_t evaluation_count{0};
 
-      [[nodiscard]] virtual bool has_hessian_operator(const Model& model) const = 0;
-      [[nodiscard]] virtual bool has_hessian_matrix(const Model& model) const = 0;
-      [[nodiscard]] virtual bool has_curvature(const Model& model) const = 0;
-      [[nodiscard]] virtual size_t number_nonzeros(const Model& model) const = 0;
-      virtual void compute_sparsity(const Model& model, int* row_indices, int* column_indices, int solver_indexing) const = 0;
+      [[nodiscard]] virtual bool has_hessian_operator() const = 0;
+      [[nodiscard]] virtual bool has_hessian_matrix() const = 0;
+      [[nodiscard]] virtual bool has_curvature() const = 0;
+      [[nodiscard]] virtual size_t number_nonzeros() const = 0;
+      virtual void compute_sparsity(int* row_indices, int* column_indices, int solver_indexing) const = 0;
       [[nodiscard]] virtual bool is_positive_definite() const = 0;
 
-      virtual void initialize(const Model& model) = 0;
-      virtual void evaluate_hessian(Statistics& statistics, const Model& model, const Vector<double>& primal_variables,
+      virtual void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) = 0;
-      virtual void compute_hessian_vector_product(const Model& model, const double* x, const double* vector,
+      virtual void compute_hessian_vector_product(const double* x, const double* vector,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) = 0;
       [[nodiscard]] virtual std::string get_name() const = 0;
    };

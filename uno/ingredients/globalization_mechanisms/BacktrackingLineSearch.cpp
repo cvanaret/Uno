@@ -34,7 +34,7 @@ namespace uno {
          Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
-      constraint_relaxation_strategy.compute_feasible_direction(statistics, globalization_strategy, model, current_iterate,
+      constraint_relaxation_strategy.compute_feasible_direction(statistics, globalization_strategy, current_iterate,
          direction, INF<double>, warmstart_information);
       BacktrackingLineSearch::check_unboundedness(direction);
       this->backtrack_along_direction(statistics, constraint_relaxation_strategy, globalization_strategy, model, current_iterate,
@@ -100,9 +100,9 @@ namespace uno {
                // switch to solving the feasibility problem
                statistics.set("status", "small step length");
                constraint_relaxation_strategy.switch_to_feasibility_problem(statistics, globalization_strategy,
-                  model, current_iterate, INF<double>, warmstart_information);
+                  current_iterate, INF<double>, warmstart_information);
                constraint_relaxation_strategy.compute_feasible_direction(statistics, globalization_strategy,
-                  model, current_iterate, direction, INF<double>, warmstart_information);
+                  current_iterate, direction, INF<double>, warmstart_information);
                BacktrackingLineSearch::check_unboundedness(direction);
                // restart backtracking
                step_length = 1.;

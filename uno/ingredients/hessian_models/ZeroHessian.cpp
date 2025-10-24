@@ -2,27 +2,29 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "ZeroHessian.hpp"
-#include "model/Model.hpp"
+#include "symbolic/Range.hpp"
 
 namespace uno {
-   bool ZeroHessian::has_hessian_operator(const Model& /*model*/) const {
+   ZeroHessian::ZeroHessian(size_t number_variables): number_variables(number_variables) {
+   }
+
+   bool ZeroHessian::has_hessian_operator() const {
       return true;
    }
 
-   bool ZeroHessian::has_hessian_matrix(const Model& /*model*/) const {
+   bool ZeroHessian::has_hessian_matrix() const {
       return true;
    }
 
-   bool ZeroHessian::has_curvature(const Model& /*model*/) const {
+   bool ZeroHessian::has_curvature() const {
       return false;
    }
 
-   size_t ZeroHessian::number_nonzeros(const Model& /*model*/) const {
+   size_t ZeroHessian::number_nonzeros() const {
       return 0;
    }
 
-   void ZeroHessian::compute_sparsity(const Model& /*model*/, int* /*row_indices*/, int* /*column_indices*/,
-         int /*solver_indexing*/) const {
+   void ZeroHessian::compute_sparsity(int* /*row_indices*/, int* /*column_indices*/, int /*solver_indexing*/) const {
       // empty structure
    }
 
@@ -30,17 +32,14 @@ namespace uno {
       return false;
    }
 
-   void ZeroHessian::initialize(const Model& /*model*/) {
-   }
-
-   void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Model& /*model*/, const Vector<double>& /*primal_variables*/,
+   void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
       // do nothing
    }
 
-   void ZeroHessian::compute_hessian_vector_product(const Model& model, const double* /*x*/, const double* /*vector*/,
+   void ZeroHessian::compute_hessian_vector_product(const double* /*x*/, const double* /*vector*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* result) {
-      for (size_t variable_index: Range(model.number_variables)) {
+      for (size_t variable_index: Range(this->number_variables)) {
          result[variable_index] = 0.;
       }
    }

@@ -54,7 +54,7 @@ namespace uno {
             this->set_TR_statistics(statistics, number_iterations);
 
             // compute the direction within the trust region
-            constraint_relaxation_strategy.compute_feasible_direction(statistics, globalization_strategy, model, current_iterate,
+            constraint_relaxation_strategy.compute_feasible_direction(statistics, globalization_strategy, current_iterate,
                direction, this->radius, warmstart_information);
             statistics.set("step norm", direction.norm);
 

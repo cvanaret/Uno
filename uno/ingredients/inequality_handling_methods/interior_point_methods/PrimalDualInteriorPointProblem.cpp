@@ -80,7 +80,7 @@ namespace uno {
    }
 
    bool PrimalDualInteriorPointProblem::has_curvature(const HessianModel& hessian_model) const {
-      if (hessian_model.has_curvature(this->model)) {
+      if (hessian_model.has_curvature()) {
          return true;
       }
       else {

@@ -87,11 +87,11 @@ namespace uno {
 
    bool l1RelaxedProblem::has_curvature(const HessianModel& hessian_model) const {
       // the l1 relaxation does not introduce curvature
-      return hessian_model.has_curvature(this->model);
+      return hessian_model.has_curvature();
    }
 
    size_t l1RelaxedProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
-      size_t number_nonzeros = hessian_model.number_nonzeros(this->model);
+      size_t number_nonzeros = hessian_model.number_nonzeros();
       // proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
          number_nonzeros += this->model.number_variables;
@@ -125,11 +125,11 @@ namespace uno {
 
    void l1RelaxedProblem::compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
          int* column_indices, int solver_indexing) const {
-      hessian_model.compute_sparsity(this->model, row_indices, column_indices, solver_indexing);
+      hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
 
       // diagonal proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
-         size_t current_index = hessian_model.number_nonzeros(this->model);
+         size_t current_index = hessian_model.number_nonzeros();
          for (size_t variable_index: Range(this->model.number_variables)) {
             row_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
             column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
@@ -214,11 +214,11 @@ namespace uno {
 
    void l1RelaxedProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, double* hessian_values) const {
-      hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(),
+      hessian_model.evaluate_hessian(statistics, primal_variables, this->get_objective_multiplier(),
          multipliers.constraints, hessian_values);
 
       // proximal contribution
-      size_t nonzero_index = hessian_model.number_nonzeros(this->model);
+      size_t nonzero_index = hessian_model.number_nonzeros();
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
@@ -231,8 +231,7 @@ namespace uno {
 
    void l1RelaxedProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
          const Multipliers& multipliers, double* result) const {
-      hessian_model.compute_hessian_vector_product(this->model, x, vector, this->get_objective_multiplier(),
-         multipliers.constraints, result);
+      hessian_model.compute_hessian_vector_product(x, vector, this->get_objective_multiplier(), multipliers.constraints, result);
 
       // proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {

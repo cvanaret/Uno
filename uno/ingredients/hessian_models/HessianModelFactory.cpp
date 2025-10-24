@@ -19,17 +19,17 @@ namespace uno {
          // if no Hessian (matrix or operator) is available, pick a zero Hessian
          if (!model.has_hessian_matrix() && !model.has_hessian_operator()) {
             WARNING << "An exact Hessian (matrix or operator) was not provided, setting a zero Hessian instead\n";
-            return std::make_unique<ZeroHessian>();
+            return std::make_unique<ZeroHessian>(model.number_variables);
          }
          else {
-            return std::make_unique<ExactHessian>();
+            return std::make_unique<ExactHessian>(model);
          }
       }
       else if (hessian_model == "identity") {
-         return std::make_unique<IdentityHessian>();
+         return std::make_unique<IdentityHessian>(model.number_variables);
       }
       else if (hessian_model == "zero") {
-         return std::make_unique<ZeroHessian>();
+         return std::make_unique<ZeroHessian>(model.number_variables);
       }
       throw std::invalid_argument("Hessian model " + hessian_model + " does not exist");
    }

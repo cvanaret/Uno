@@ -9,16 +9,10 @@
 namespace uno {
    // forward declarations
    template <typename ElementType>
-   class Collection;
-   template <typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
-   class HessianModel;
-   class OptimizationProblem;
    class Options;
    class Statistics;
    class Subproblem;
-   template <typename ElementType>
-   class Vector;
 
    template <typename ElementType>
    class InertiaCorrectionStrategy {
