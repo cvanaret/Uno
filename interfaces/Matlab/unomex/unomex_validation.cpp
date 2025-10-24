@@ -83,6 +83,7 @@ namespace uno {
                 return false;
             }
         }
+        return true;
     }
 
     bool validate_positive_integer_field(const mxArray* arr, const std::string field_name, std::string& errmsg) {
