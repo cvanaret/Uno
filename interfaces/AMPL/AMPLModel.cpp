@@ -42,7 +42,7 @@ namespace uno {
 
    AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
          Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_),
-            (asl->i.objtype_[0] == 1) ? -1. : 1. /* optimization sense */),
+            (asl->i.objtype_[0] == 1) ? -1. : 1. /* optimization sense */, AMPLModel::lagrangian_sign_convention),
          asl(asl),
          // compute sparsity pattern and number of nonzeros of Lagrangian Hessian
          number_asl_hessian_nonzeros(this->compute_lagrangian_hessian_sparsity()),

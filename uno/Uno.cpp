@@ -125,6 +125,7 @@ namespace uno {
          optimization_status = OptimizationStatus::EVALUATION_ERROR;
       }
       Result result = this->create_result(model, optimization_status, current_iterate, major_iterations, timer);
+      Uno::postprocess_result(model, result);
       this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
    }
@@ -225,6 +226,17 @@ namespace uno {
          model.number_model_objective_evaluations(), model.number_model_constraints_evaluations(),
          model.number_model_objective_gradient_evaluations(), model.number_model_jacobian_evaluations(),
          model.number_model_hessian_evaluations(), number_subproblems_solved};
+   }
+
+   void Uno::postprocess_result(const Model& model, Result& result) {
+      if ((model.optimization_sense == 1. && model.lagrangian_sign_convention == -1.) ||
+            (model.optimization_sense == -1. && model.lagrangian_sign_convention == 1.)) {
+         // do nothing
+      }
+      else {
+         // change the signs of the constraint multipliers
+         result.constraint_dual_solution.scale(-1.);
+      }
    }
 
    std::string Uno::get_strategy_combination() const {

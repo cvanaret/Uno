@@ -9,7 +9,7 @@ namespace uno {
          Model(original_model.name + " -> no fixed bounds", original_model.number_variables,
             // move the fixed variables to the set of general constraints
             original_model.number_constraints + original_model.get_fixed_variables().size(),
-            original_model.optimization_sense),
+            original_model.optimization_sense, original_model.lagrangian_sign_convention),
          model(original_model),
          equality_constraints(concatenate(this->model.get_equality_constraints(), Range(this->model.number_constraints, this->number_constraints))),
          linear_constraints(concatenate(this->model.get_linear_constraints(), Range(this->model.number_constraints, this->number_constraints))) {
