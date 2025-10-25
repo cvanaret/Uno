@@ -43,13 +43,6 @@ function test_MOI_Test()
             r"test_quadratic_constraint_integration.*",
             r"test_quadratic_constraint_minimize.*",
             r"test_quadratic_duplicate_terms.*",
-            # Operators Jv, Jtv and Hv
-            r"test_nonlinear_expression_hs071.*",
-            r"test_nonlinear_objective.*",
-            r"test_nonlinear_quadratic_1.*",
-            r"test_nonlinear_quadratic_2.*",
-            r"test_nonlinear_quadratic_3.*",
-            r"test_nonlinear_quadratic_4.*",
         ],
     )
     return
