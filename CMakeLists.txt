@@ -297,6 +297,51 @@ if(pybind11_DIR)
    target_include_directories(unopy PUBLIC ${DIRECTORIES})
 endif()
 
+############################
+# optional Matlab bindings #
+############################
+
+find_package(Matlab COMPONENTS MAIN_PROGRAM MEX_COMPILER)
+if(Matlab_FOUND)
+   message(STATUS "Found Matlab")
+   
+   file(GLOB MATLAB_SOURCE_FILES
+      interfaces/Matlab/cpp_classes/*.cpp
+      interfaces/Matlab/unomex/*.cpp
+   )
+
+   get_filename_component(Matlab_MX_LIBRARY_PATH ${Matlab_MX_LIBRARY} DIRECTORY )
+   find_library(MXLIBUT NAMES libut ut 
+                PATHS ${Matlab_MX_LIBRARY_PATH})
+   if(MXLIBUT)
+      add_definitions("-D HAS_MXLIBUT")
+   endif()
+
+   # uno_optimize
+   matlab_add_mex(NAME unomex-optimize SRC interfaces/Matlab/uno_optimize.cpp ${MATLAB_SOURCE_FILES}
+      EXCLUDE_FROM_ALL
+      OUTPUT_NAME uno_optimize
+      LINK_TO ${DEFAULT_UNO_LIB} ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
+   target_include_directories(unomex-optimize PUBLIC ${DIRECTORIES})
+   
+   # uno_options
+   matlab_add_mex(NAME unomex-options SRC interfaces/Matlab/uno_options.cpp ${MATLAB_SOURCE_FILES}
+      EXCLUDE_FROM_ALL
+      OUTPUT_NAME uno_options
+      LINK_TO ${DEFAULT_UNO_LIB} ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
+   target_include_directories(unomex-options PUBLIC ${DIRECTORIES})
+
+   # logical target to compile both mex
+   add_custom_target(unomex DEPENDS unomex-optimize unomex-options)
+   
+   # cf. https://github.com/cvanaret/Uno/pull/360#issuecomment-3431367949
+   if(APPLE)
+      set(MEX_RPATH "${CMAKE_BUILD_RPATH};@executable_path/../extern/bin/maci64;@executable_path/../extern/bin/maca64;@executable_path/../../extern/bin/maci64;@executable_path/../../extern/bin/maca64")
+      set_target_properties(unomex-optimize PROPERTIES BUILD_RPATH ${MEX_RPATH} INSTALL_RPATH ${MEX_RPATH})
+      set_target_properties(unomex-options PROPERTIES BUILD_RPATH ${MEX_RPATH} INSTALL_RPATH ${MEX_RPATH})
+   endif()
+endif()
+
 ##################################
 # optional GoogleTest unit tests #
 ##################################
@@ -326,6 +371,15 @@ if(TARGET uno_ampl)
 endif()
 if(TARGET unopy)
    list(APPEND INSTALL_TARGETS unopy)
+endif()
+if(TARGET unomex)
+   list(APPEND INSTALL_TARGETS unomex-optimize unomex-options)
+   set(MATLAB_INSTALL_FILES "interfaces/Matlab/uno.m;interfaces/Matlab/uno_optimize.m;interfaces/Matlab/uno_options.m")
+   if(WIN32)
+      install(FILES ${MATLAB_INSTALL_FILES} DESTINATION "bin")
+   else()
+      install(FILES ${MATLAB_INSTALL_FILES} DESTINATION "lib")
+   endif()
 endif()
 install(TARGETS ${INSTALL_TARGETS}
    COMPONENT libuno
