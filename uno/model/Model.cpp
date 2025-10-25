@@ -10,9 +10,10 @@
 
 namespace uno {
    // abstract Problem class
-   Model::Model(std::string name, size_t number_variables, size_t number_constraints, double objective_sign) :
+   Model::Model(std::string name, size_t number_variables, size_t number_constraints, double objective_sign,
+      double lagrangian_sign_convention) :
          name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints),
-         optimization_sense(objective_sign) {
+         optimization_sense(objective_sign), lagrangian_sign_convention(lagrangian_sign_convention) {
    }
 
    void Model::project_onto_variable_bounds(Vector<double>& x) const {

@@ -27,13 +27,15 @@ namespace uno {
 
    class Model {
    public:
-      Model(std::string name, size_t number_variables, size_t number_constraints, double optimization_sense);
+      Model(std::string name, size_t number_variables, size_t number_constraints, double optimization_sense,
+         double lagrangian_sign_convention);
       virtual ~Model() = default;
 
       const std::string name;
       const size_t number_variables; /*!< Number of variables */
       const size_t number_constraints; /*!< Number of constraints */
       const double optimization_sense; /*!< 1: minimization, -1: maximization */
+      const double lagrangian_sign_convention; /*!< -1, 1 */
 
       [[nodiscard]] virtual ProblemType get_problem_type() const = 0;
 

@@ -43,9 +43,10 @@ namespace uno {
       [[nodiscard]] static bool termination_criteria(SolutionStatus solution_status, size_t iteration, size_t max_iterations,
          double current_time, double time_limit, bool user_termination, OptimizationStatus& optimization_status);
       [[nodiscard]] Result uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks);
-      static void postprocess_iterate(const Model& model, Iterate& iterate);
+      static void postprocess_solution(const Model& model, Iterate& iterate);
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate& solution,
          size_t major_iterations, const Timer& timer) const;
+      static void postprocess_multipliers_signs(const Model& model, Result& result);
       [[nodiscard]] std::string get_strategy_combination() const;
       void print_optimization_summary(const Result& result, bool print_solution) const;
    };

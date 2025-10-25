@@ -8,7 +8,7 @@
 namespace uno {
    BoundRelaxedModel::BoundRelaxedModel(const Model& original_model, const Options& options):
          Model(original_model.name + " -> bounds relaxed", original_model.number_variables, original_model.number_constraints,
-            original_model.optimization_sense),
+            original_model.optimization_sense, original_model.lagrangian_sign_convention),
          model(original_model),
          relaxation_factor(options.get_double("primal_tolerance")) {
    }
