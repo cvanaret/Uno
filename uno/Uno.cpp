@@ -118,7 +118,7 @@ namespace uno {
          }
          if (Logger::level == INFO) statistics.print_footer();
 
-         Uno::postprocess_iterate(model, current_iterate);
+         Uno::postprocess_solution(model, current_iterate);
       }
       catch (const std::exception& e) {
          DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
@@ -208,7 +208,7 @@ namespace uno {
       return false;
    }
 
-   void Uno::postprocess_iterate(const Model& model, Iterate& iterate) {
+   void Uno::postprocess_solution(const Model& model, Iterate& iterate) {
       // in case the objective was not yet evaluated, evaluate it
       iterate.evaluate_objective(model);
       model.postprocess_solution(iterate);
@@ -228,8 +228,9 @@ namespace uno {
          model.number_model_hessian_evaluations(), number_subproblems_solved};
    }
 
+   // flip the signs of the multipliers, depending on what the sign convention of the Lagrangian is, and whether
+   // we maximize
    void Uno::postprocess_multipliers_signs(const Model& model, Result& result) {
-      /*
       if ((model.optimization_sense == 1. && model.lagrangian_sign_convention == -1.) ||
             (model.optimization_sense == -1. && model.lagrangian_sign_convention == 1.)) {
          // do nothing
@@ -238,12 +239,6 @@ namespace uno {
          // change the signs of the constraint multipliers
          result.constraint_dual_solution.scale(-1.);
       }
-      */
-      // flip the signs of the multipliers, depending on what the sign convention of the Lagrangian is, and whether
-      // we maximize
-      result.constraint_dual_solution.scale(-model.lagrangian_sign_convention * model.optimization_sense);
-      result.lower_bound_dual_solution.scale(-model.lagrangian_sign_convention * model.optimization_sense);
-      result.upper_bound_dual_solution.scale(-model.lagrangian_sign_convention * model.optimization_sense);
       result.solution_objective *= model.optimization_sense;
    }
 
