@@ -236,8 +236,10 @@ namespace uno {
          // do nothing
       }
       else {
-         // change the signs of the constraint multipliers
+         // change the signs of the multipliers
          result.constraint_dual_solution.scale(-1.);
+         result.lower_bound_dual_solution.scale(-1.);
+         result.upper_bound_dual_solution.scale(-1.);
       }
       result.solution_objective *= model.optimization_sense;
    }
