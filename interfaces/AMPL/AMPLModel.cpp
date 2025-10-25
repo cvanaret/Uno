@@ -259,10 +259,8 @@ namespace uno {
       std::copy_n(this->asl->i.pi0_, this->number_constraints, multipliers.begin());
    }
 
-   void AMPLModel::postprocess_solution(Iterate& iterate) const {
-      // due to the different sign convention for the Lagrangian between ASL and Uno,
-      // we need to flip the signs of the constraint multipliers
-      iterate.multipliers.constraints.scale(-1.);
+   void AMPLModel::postprocess_solution(Iterate& /*iterate*/) const {
+      // do nothing
    }
 
    void AMPLModel::write_solution_to_file(Result& result) const {
@@ -284,6 +282,10 @@ namespace uno {
          this->asl->p.solve_code_ = 500;
       }
 
+      // due to the different sign convention for the Lagrangian between ASL and Uno,
+      // we need to flip the signs of the constraint multipliers
+      result.constraint_dual_solution.scale(-1.);
+
       // include the bound duals in the .sol file, using suffixes
       SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
       SufDecl upper_bound_suffix{const_cast<char*>("upper_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
@@ -298,10 +300,8 @@ namespace uno {
       message.append(Uno::current_version()).append(": ").append(solution_status_to_message(result.solution_status));
       write_sol_ASL(this->asl, message.data(), result.primal_solution.data(), result.constraint_dual_solution.data(), &option_info);
 
-      // flip back the signs of the multipliers and the objective back if we maximize
-      result.constraint_dual_solution *= -this->optimization_sense;
-      result.lower_bound_dual_solution *= this->optimization_sense;
-      result.upper_bound_dual_solution *= this->optimization_sense;
+      // flip back the signs of the multipliers
+      result.constraint_dual_solution.scale(-1.);
    }
 
    size_t AMPLModel::number_jacobian_nonzeros() const {
