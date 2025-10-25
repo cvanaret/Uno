@@ -125,7 +125,7 @@ namespace uno {
          optimization_status = OptimizationStatus::EVALUATION_ERROR;
       }
       Result result = this->create_result(model, optimization_status, current_iterate, major_iterations, timer);
-      Uno::postprocess_result(model, result);
+      Uno::postprocess_multipliers_signs(model, result);
       this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
    }
@@ -228,7 +228,8 @@ namespace uno {
          model.number_model_hessian_evaluations(), number_subproblems_solved};
    }
 
-   void Uno::postprocess_result(const Model& model, Result& result) {
+   void Uno::postprocess_multipliers_signs(const Model& model, Result& result) {
+      /*
       if ((model.optimization_sense == 1. && model.lagrangian_sign_convention == -1.) ||
             (model.optimization_sense == -1. && model.lagrangian_sign_convention == 1.)) {
          // do nothing
@@ -237,6 +238,13 @@ namespace uno {
          // change the signs of the constraint multipliers
          result.constraint_dual_solution.scale(-1.);
       }
+      */
+      // flip the signs of the multipliers, depending on what the sign convention of the Lagrangian is, and whether
+      // we maximize
+      result.constraint_dual_solution.scale(-model.lagrangian_sign_convention * model.optimization_sense);
+      result.lower_bound_dual_solution.scale(-model.lagrangian_sign_convention * model.optimization_sense);
+      result.upper_bound_dual_solution.scale(-model.lagrangian_sign_convention * model.optimization_sense);
+      result.solution_objective *= model.optimization_sense;
    }
 
    std::string Uno::get_strategy_combination() const {

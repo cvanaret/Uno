@@ -16,7 +16,7 @@ namespace uno {
       const size_t number_constraints;
       const OptimizationStatus optimization_status;
       const SolutionStatus solution_status;
-      const double solution_objective;
+      double solution_objective;
       const double solution_primal_feasibility;
       const double solution_stationarity;
       const double solution_complementarity;

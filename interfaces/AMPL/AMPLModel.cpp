@@ -259,8 +259,10 @@ namespace uno {
       std::copy_n(this->asl->i.pi0_, this->number_constraints, multipliers.begin());
    }
 
-   void AMPLModel::postprocess_solution(Iterate& /*iterate*/) const {
-      // do nothing
+   void AMPLModel::postprocess_solution(Iterate& iterate) const {
+      // due to the different sign convention for the Lagrangian between ASL and Uno,
+      // we need to flip the signs of the constraint multipliers
+      iterate.multipliers.constraints.scale(-1.);
    }
 
    void AMPLModel::write_solution_to_file(Result& result) const {
@@ -281,13 +283,6 @@ namespace uno {
       else if (result.solution_status == SolutionStatus::INFEASIBLE_SMALL_STEP) {
          this->asl->p.solve_code_ = 500;
       }
-
-      // flip the signs of the multipliers and the objective if we maximize
-      // note: due to the different sign convention for the Lagrangian between ASL and Uno,
-      // we need to flip the signs of the constraint multipliers when minimizing
-      result.constraint_dual_solution *= -this->optimization_sense;
-      result.lower_bound_dual_solution *= this->optimization_sense;
-      result.upper_bound_dual_solution *= this->optimization_sense;
 
       // include the bound duals in the .sol file, using suffixes
       SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
