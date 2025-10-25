@@ -326,4 +326,34 @@ namespace uno {
          elastic_index += 2;
       }
    }
+
+   void l1RelaxedProblem::set_auxiliary_measure(Iterate& iterate) const {
+      iterate.progress.auxiliary = 0.;
+      // form the proximal term: zeta/2 ||D_R (x - x_R)||^2
+      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+         double proximal_term = 0.;
+         for (size_t variable_index: Range(this->model.number_variables)) {
+            const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
+            const double distance_to_center = iterate.primals[variable_index] - this->proximal_center[variable_index];
+            proximal_term += scaling * scaling * distance_to_center * distance_to_center;
+         }
+         proximal_term *= (this->proximal_coefficient / 2.);
+         iterate.progress.auxiliary = proximal_term;
+      }
+   }
+
+   double l1RelaxedProblem::compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length) const {
+      double predicted_auxiliary_reduction = 0.;
+      // form the directional derivative -zeta D_R^2 (x - x_R) and scale it by the step length
+      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+         for (size_t variable_index: Range(this->model.number_variables)) {
+            const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
+            const double distance_to_center = current_iterate.primals[variable_index] - this->proximal_center[variable_index];
+            predicted_auxiliary_reduction += scaling * scaling * distance_to_center * primal_direction[variable_index];
+         }
+         predicted_auxiliary_reduction *= step_length * (-this->proximal_coefficient);
+      }
+      return predicted_auxiliary_reduction;
+   }
 } // namespace

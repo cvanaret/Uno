@@ -58,6 +58,11 @@ namespace uno {
 
       void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>& elastic_setting_function) const;
 
+      // progress measures
+      void set_auxiliary_measure(Iterate& iterate) const override;
+      [[nodiscard]] double compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length) const override;
+
    protected:
       const size_t number_elastic_variables;
       const double objective_multiplier;

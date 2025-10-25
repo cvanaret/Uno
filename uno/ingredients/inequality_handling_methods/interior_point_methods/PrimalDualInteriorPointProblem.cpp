@@ -451,7 +451,7 @@ namespace uno {
       }
       barrier_terms *= this->barrier_parameter;
       assert(!std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
-      iterate.progress.auxiliary = barrier_terms;
+      iterate.progress.auxiliary += barrier_terms;
    }
 
    double PrimalDualInteriorPointProblem::compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
