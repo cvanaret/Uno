@@ -17,7 +17,15 @@ namespace uno {
          HessianModel("L-BFGS"),
          model(model),
          fixed_objective_multiplier(objective_multiplier),
-         memory_size(options.get_unsigned_int("quasi_newton_memory_size")) {
+         memory_size(options.get_unsigned_int("quasi_newton_memory_size")),
+         S_matrix(this->model.number_variables, this->memory_size),
+         Y_matrix(this->model.number_variables, this->memory_size),
+         L_matrix(this->memory_size, this->memory_size),
+         D_matrix(this->memory_size),
+         M_matrix(this->memory_size, this->memory_size),
+         U_matrix(this->model.number_variables, this->memory_size),
+         V_matrix(this->model.number_variables, this->memory_size),
+         Hessian_approximation(this->model.number_variables, this->model.number_variables) {
    }
 
    bool LBFGSHessian::has_hessian_operator() const {
@@ -42,17 +50,6 @@ namespace uno {
 
    bool LBFGSHessian::is_positive_definite() const {
       return true;
-   }
-
-   void LBFGSHessian::initialize(const Model& model) {
-      this->S_matrix = DenseMatrix<double>(this->model.number_variables, this->memory_size);
-      this->Y_matrix = DenseMatrix<double>(this->model.number_variables, this->memory_size);
-      this->L_matrix = DenseMatrix<double, MatrixShape::LOWER_TRIANGULAR>(this->memory_size, this->memory_size);
-      this->D_matrix.resize(this->memory_size);
-      this->M_matrix = DenseMatrix<double>(this->memory_size, this->memory_size);
-      this->U_matrix = DenseMatrix<double>(this->model.number_variables, this->memory_size);
-      this->V_matrix = DenseMatrix<double>(this->model.number_variables, this->memory_size);
-      this->Hessian_approximation = DenseMatrix<double>(this->model.number_variables, this->model.number_variables);
    }
 
    void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
