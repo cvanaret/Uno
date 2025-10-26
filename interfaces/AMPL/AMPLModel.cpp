@@ -42,7 +42,7 @@ namespace uno {
 
    AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
          Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_),
-            (asl->i.objtype_[0] == 1) ? -1. : 1. /* optimization sense */),
+            (asl->i.objtype_[0] == 1) ? -1. : 1. /* optimization sense */, AMPLModel::lagrangian_sign_convention),
          asl(asl),
          // compute sparsity pattern and number of nonzeros of Lagrangian Hessian
          number_asl_hessian_nonzeros(this->compute_lagrangian_hessian_sparsity()),
@@ -282,12 +282,9 @@ namespace uno {
          this->asl->p.solve_code_ = 500;
       }
 
-      // flip the signs of the multipliers and the objective if we maximize
-      // note: due to the different sign convention for the Lagrangian between ASL and Uno,
-      // we need to flip the signs of the constraint multipliers when minimizing
-      result.constraint_dual_solution *= -this->optimization_sense;
-      result.lower_bound_dual_solution *= this->optimization_sense;
-      result.upper_bound_dual_solution *= this->optimization_sense;
+      // due to the different sign convention for the Lagrangian between ASL and Uno,
+      // we need to flip the signs of the constraint multipliers
+      result.constraint_dual_solution.scale(-1.);
 
       // include the bound duals in the .sol file, using suffixes
       SufDecl lower_bound_suffix{const_cast<char*>("lower_bound_duals"), nullptr, ASL_Sufkind_var | ASL_Sufkind_real, 0};
@@ -303,10 +300,8 @@ namespace uno {
       message.append(Uno::current_version()).append(": ").append(solution_status_to_message(result.solution_status));
       write_sol_ASL(this->asl, message.data(), result.primal_solution.data(), result.constraint_dual_solution.data(), &option_info);
 
-      // flip back the signs of the multipliers and the objective back if we maximize
-      result.constraint_dual_solution *= -this->optimization_sense;
-      result.lower_bound_dual_solution *= this->optimization_sense;
-      result.upper_bound_dual_solution *= this->optimization_sense;
+      // flip back the signs of the multipliers
+      result.constraint_dual_solution.scale(-1.);
    }
 
    size_t AMPLModel::number_jacobian_nonzeros() const {

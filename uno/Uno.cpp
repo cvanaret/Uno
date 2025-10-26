@@ -118,13 +118,14 @@ namespace uno {
          }
          if (Logger::level == INFO) statistics.print_footer();
 
-         Uno::postprocess_iterate(model, current_iterate);
+         Uno::postprocess_solution(model, current_iterate);
       }
       catch (const std::exception& e) {
          DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
          optimization_status = OptimizationStatus::EVALUATION_ERROR;
       }
       Result result = this->create_result(model, optimization_status, current_iterate, major_iterations, timer);
+      Uno::postprocess_multipliers_signs(model, result);
       this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
    }
@@ -207,7 +208,7 @@ namespace uno {
       return false;
    }
 
-   void Uno::postprocess_iterate(const Model& model, Iterate& iterate) {
+   void Uno::postprocess_solution(const Model& model, Iterate& iterate) {
       // in case the objective was not yet evaluated, evaluate it
       iterate.evaluate_objective(model);
       model.postprocess_solution(iterate);
@@ -225,6 +226,22 @@ namespace uno {
          model.number_model_objective_evaluations(), model.number_model_constraints_evaluations(),
          model.number_model_objective_gradient_evaluations(), model.number_model_jacobian_evaluations(),
          model.number_model_hessian_evaluations(), number_subproblems_solved};
+   }
+
+   // flip the signs of the multipliers, depending on what the sign convention of the Lagrangian is, and whether
+   // we maximize
+   void Uno::postprocess_multipliers_signs(const Model& model, Result& result) {
+      if ((model.optimization_sense == 1. && model.lagrangian_sign_convention == -1.) ||
+            (model.optimization_sense == -1. && model.lagrangian_sign_convention == 1.)) {
+         // do nothing
+      }
+      else {
+         // change the signs of the multipliers
+         result.constraint_dual_solution.scale(-1.);
+         result.lower_bound_dual_solution.scale(-1.);
+         result.upper_bound_dual_solution.scale(-1.);
+      }
+      result.solution_objective *= model.optimization_sense;
    }
 
    std::string Uno::get_strategy_combination() const {

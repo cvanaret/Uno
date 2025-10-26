@@ -11,7 +11,8 @@ namespace uno {
    // - equality constraints are shifted by their RHS
    HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(const Model& original_model):
          Model(original_model.name + " -> equality constrained", original_model.number_variables +
-            original_model.get_inequality_constraints().size(), original_model.number_constraints, original_model.optimization_sense),
+            original_model.get_inequality_constraints().size(), original_model.number_constraints,
+            original_model.optimization_sense, original_model.lagrangian_sign_convention),
          model(original_model),
          constraint_index_of_inequality_index(this->model.get_inequality_constraints().size()),
          slack_index_of_constraint_index(this->model.number_constraints),
