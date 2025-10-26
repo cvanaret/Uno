@@ -32,9 +32,6 @@ namespace uno {
       return false;
    }
 
-   void ZeroHessian::initialize(const Model& /*model*/) {
-   }
-
    void ZeroHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
    }
 
