@@ -34,7 +34,6 @@ namespace uno {
       virtual void compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const = 0;
       [[nodiscard]] virtual bool is_positive_definite() const = 0;
 
-      virtual void initialize(const Model& model) = 0;
       virtual void initialize_statistics(Statistics& statistics, const Options& options) const = 0;
       virtual void notify_accepted_iterate(Iterate& current_iterate, Iterate& trial_iterate) = 0;
       virtual void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,

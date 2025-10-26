@@ -33,9 +33,6 @@ namespace uno {
       return false;
    }
 
-   void ExactHessian::initialize(const Model& /*model*/) {
-   }
-
    void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
    }
 

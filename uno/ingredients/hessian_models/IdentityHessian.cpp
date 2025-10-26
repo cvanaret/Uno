@@ -37,9 +37,6 @@ namespace uno {
       return true;
    }
 
-   void IdentityHessian::initialize(const Model& /*model*/) {
-   }
-
    void IdentityHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
    }
 
