@@ -14,15 +14,13 @@ This Julia interface is developed and maintained by [Alexis Montoison](https://g
 
 ## Installation
 
-`UnoSolver.jl` is not yet a registered Julia package, but it can still be installed and tested through the Julia package manager.
+`UnoSolver.jl` is a registered Julia package, it can be installed and tested through the Julia package manager.
 
 ```julia
 julia> using Pkg
-julia> Pkg.add(url="https://github.com/cvanaret/Uno", subdir="interfaces/Julia")
+julia> Pkg.add("UnoSolver")
 julia> Pkg.test("UnoSolver")
 ```
-
-We plan to register `UnoSolver.jl` in the near future (at the latest by JuMP-dev 2025).
 
 ## Examples
 
