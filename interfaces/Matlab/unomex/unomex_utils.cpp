@@ -5,7 +5,7 @@
 #include <cmath>
 #include "unomex_utils.hpp"
 #include "unomex_function.hpp"
-#include "../cpp_classes\MxStruct.hpp"
+#include "../cpp_classes/MxStruct.hpp"
 
 namespace uno {
 
