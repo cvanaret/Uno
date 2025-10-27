@@ -310,6 +310,8 @@ if(Matlab_FOUND)
       interfaces/Matlab/unomex/*.cpp
    )
 
+   # libut matlab library
+   # cf. https://undocumentedmatlab.com/articles/mex-ctrl-c-interrupt#:~:text=The%20relevant%20functions%20seem%20to,utLongjmpIfInterruptPending(?)
    get_filename_component(Matlab_MX_LIBRARY_PATH ${Matlab_MX_LIBRARY} DIRECTORY )
    find_library(MXLIBUT NAMES libut ut 
                 PATHS ${Matlab_MX_LIBRARY_PATH})
@@ -317,15 +319,20 @@ if(Matlab_FOUND)
       add_definitions("-D HAS_MXLIBUT")
    endif()
 
+   # compile the Unomex source files once
+   add_library(compiled_unomex_files EXCLUDE_FROM_ALL OBJECT ${MATLAB_SOURCE_FILES})
+   set_property(TARGET compiled_unomex_files PROPERTY POSITION_INDEPENDENT_CODE ON)
+   target_include_directories(compiled_unomex_files PUBLIC ${DIRECTORIES} ${Matlab_INCLUDE_DIRS})
+
    # uno_optimize
-   matlab_add_mex(NAME unomex-optimize SRC interfaces/Matlab/uno_optimize.cpp ${MATLAB_SOURCE_FILES}
+   matlab_add_mex(NAME unomex-optimize SRC $<TARGET_OBJECTS:compiled_unomex_files> interfaces/Matlab/uno_optimize.cpp
       EXCLUDE_FROM_ALL
       OUTPUT_NAME uno_optimize
       LINK_TO ${DEFAULT_UNO_LIB} ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
    target_include_directories(unomex-optimize PUBLIC ${DIRECTORIES})
    
    # uno_options
-   matlab_add_mex(NAME unomex-options SRC interfaces/Matlab/uno_options.cpp ${MATLAB_SOURCE_FILES}
+   matlab_add_mex(NAME unomex-options SRC $<TARGET_OBJECTS:compiled_unomex_files> interfaces/Matlab/uno_options.cpp
       EXCLUDE_FROM_ALL
       OUTPUT_NAME uno_options
       LINK_TO ${DEFAULT_UNO_LIB} ${LIBRARIES} ${FORTRAN_LIBS} ${MXLIBUT})
@@ -375,11 +382,7 @@ endif()
 if(TARGET unomex)
    list(APPEND INSTALL_TARGETS unomex-optimize unomex-options)
    set(MATLAB_INSTALL_FILES "interfaces/Matlab/uno.m;interfaces/Matlab/uno_optimize.m;interfaces/Matlab/uno_options.m")
-   if(WIN32)
-      install(FILES ${MATLAB_INSTALL_FILES} DESTINATION "bin")
-   else()
-      install(FILES ${MATLAB_INSTALL_FILES} DESTINATION "lib")
-   endif()
+   install(FILES ${MATLAB_INSTALL_FILES} DESTINATION $<IF:$<BOOL:${WIN32}>,bin,lib>)
 endif()
 install(TARGETS ${INSTALL_TARGETS}
    COMPONENT libuno
