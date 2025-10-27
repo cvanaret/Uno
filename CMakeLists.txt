@@ -343,9 +343,9 @@ if(Matlab_FOUND)
    
    # cf. https://github.com/cvanaret/Uno/pull/360#issuecomment-3431367949
    if(APPLE)
-      set(MEX_RPATH "${CMAKE_BUILD_RPATH};@executable_path/../extern/bin/maci64;@executable_path/../extern/bin/maca64;@executable_path/../../extern/bin/maci64;@executable_path/../../extern/bin/maca64")
-      set_target_properties(unomex-optimize PROPERTIES BUILD_RPATH ${MEX_RPATH} INSTALL_RPATH ${MEX_RPATH})
-      set_target_properties(unomex-options PROPERTIES BUILD_RPATH ${MEX_RPATH} INSTALL_RPATH ${MEX_RPATH})
+      set(MEX_RPATH "@executable_path/../extern/bin/maci64;@executable_path/../extern/bin/maca64;@executable_path/../../extern/bin/maci64;@executable_path/../../extern/bin/maca64")
+      set_target_properties(unomex-optimize PROPERTIES BUILD_RPATH "${MEX_RPATH};${CMAKE_BUILD_RPATH}" INSTALL_RPATH "${MEX_RPATH};${CMAKE_INSTALL_RPATH}")
+      set_target_properties(unomex-options PROPERTIES BUILD_RPATH "${MEX_RPATH};${CMAKE_BUILD_RPATH}" INSTALL_RPATH "${MEX_RPATH};${CMAKE_INSTALL_RPATH}")
    endif()
 endif()
 
