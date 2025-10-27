@@ -1004,7 +1004,7 @@ function MOI.get(
         MOI.ScalarQuadraticFunction{Float64},
     },
 }
-    return MOI.get(model.qp_data, attr)
+    return convert(F, MOI.get(model.qp_data, attr))
 end
 
 function MOI.set(
