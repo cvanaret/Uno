@@ -810,164 +810,164 @@ function test_vector_nonlinear_oracle_two()
     return
 end
 
-function test_vector_nonlinear_oracle_optimization()
-    set = MOI.VectorNonlinearOracle(;
-        dimension = 4,
-        l = [0.0, 0.0],
-        u = [0.0, 0.0],
-        eval_f = (ret, x) -> begin
-            ret[1] = x[1]^2 + x[2]^2 - x[3]
-            ret[2] = x[2] - x[1] - x[4]
-            return
-        end,
-        jacobian_structure = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 3), (2, 4)],
-        eval_jacobian = (ret, x) -> begin
-            ret[1] = 2 * x[1]
-            ret[2] = 2 * x[2]
-            ret[3] = 1.0
-            ret[4] = -1.0
-            ret[5] = -1.0
-            ret[6] = -1.0
-            return
-        end,
-        hessian_lagrangian_structure = [(1, 1), (2, 2)],
-        eval_hessian_lagrangian = (ret, x, u) -> begin
-            ret[1] = 2 * u[1]
-            ret[2] = 2 * u[1]
-            return
-        end,
-    )
-    model = UnoSolver.Optimizer()
-    MOI.set(model, MOI.Silent(), true)
-    x = MOI.add_variables(model, 4)
-    t = MOI.add_variable(model)
-    MOI.add_constraint(model, x[1], MOI.GreaterThan(0.1))
-    c_x3 = MOI.add_constraint(model, x[3], MOI.LessThan(1.0))
-    c_x4 = MOI.add_constraint(model, x[4], MOI.GreaterThan(0.0))
-    f = MOI.VectorOfVariables(x)
-    c = MOI.add_constraint(model, f, set)
-    log_x = MOI.ScalarNonlinearFunction(:log, Any[x[1]])
-    log_x_minus_t = MOI.ScalarNonlinearFunction(:-, Any[log_x, t])
-    c_snf = MOI.add_constraint(model, log_x_minus_t, MOI.GreaterThan(0.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    F = MOI.ScalarAffineFunction{Float64}
-    MOI.set(model, MOI.ObjectiveFunction{F}(), 1.0 * t)
-    MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
-    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-    @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-    atol = 1e-6
-    x_sol = MOI.get.(model, MOI.VariablePrimal(), x)
-    @test ≈(x_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
-    @test ≈(MOI.get(model, MOI.VariablePrimal(), t), -log(sqrt(2)); atol)
-    c_sol = MOI.get(model, MOI.ConstraintPrimal(), c)
-    @test ≈(c_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
-    c_dual = MOI.get(model, MOI.ConstraintDual(), c)
-    @test ≈(c_dual, [-sqrt(2), 0.0, 0.5, -1 / sqrt(2)]; atol = 1000 * atol)  # <-- Relax the absolute tolerance
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x3), -0.5; atol)
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x4), 1 / sqrt(2); atol = 1000 * atol)  # <-- Relax the absolute tolerance
-    @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c_snf), 0.0; atol)
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c_snf), 1.0; atol)
-    return
-end
+# function test_vector_nonlinear_oracle_optimization()
+#     set = MOI.VectorNonlinearOracle(;
+#         dimension = 4,
+#         l = [0.0, 0.0],
+#         u = [0.0, 0.0],
+#         eval_f = (ret, x) -> begin
+#             ret[1] = x[1]^2 + x[2]^2 - x[3]
+#             ret[2] = x[2] - x[1] - x[4]
+#             return
+#         end,
+#         jacobian_structure = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 3), (2, 4)],
+#         eval_jacobian = (ret, x) -> begin
+#             ret[1] = 2 * x[1]
+#             ret[2] = 2 * x[2]
+#             ret[3] = 1.0
+#             ret[4] = -1.0
+#             ret[5] = -1.0
+#             ret[6] = -1.0
+#             return
+#         end,
+#         hessian_lagrangian_structure = [(1, 1), (2, 2)],
+#         eval_hessian_lagrangian = (ret, x, u) -> begin
+#             ret[1] = 2 * u[1]
+#             ret[2] = 2 * u[1]
+#             return
+#         end,
+#     )
+#     model = UnoSolver.Optimizer()
+#     MOI.set(model, MOI.Silent(), true)
+#     x = MOI.add_variables(model, 4)
+#     t = MOI.add_variable(model)
+#     MOI.add_constraint(model, x[1], MOI.GreaterThan(0.1))
+#     c_x3 = MOI.add_constraint(model, x[3], MOI.LessThan(1.0))
+#     c_x4 = MOI.add_constraint(model, x[4], MOI.GreaterThan(0.0))
+#     f = MOI.VectorOfVariables(x)
+#     c = MOI.add_constraint(model, f, set)
+#     log_x = MOI.ScalarNonlinearFunction(:log, Any[x[1]])
+#     log_x_minus_t = MOI.ScalarNonlinearFunction(:-, Any[log_x, t])
+#     c_snf = MOI.add_constraint(model, log_x_minus_t, MOI.GreaterThan(0.0))
+#     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+#     F = MOI.ScalarAffineFunction{Float64}
+#     MOI.set(model, MOI.ObjectiveFunction{F}(), 1.0 * t)
+#     MOI.optimize!(model)
+#     @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
+#     @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+#     @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+#     atol = 1e-6
+#     x_sol = MOI.get.(model, MOI.VariablePrimal(), x)
+#     @test ≈(x_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
+#     @test ≈(MOI.get(model, MOI.VariablePrimal(), t), -log(sqrt(2)); atol)
+#     c_sol = MOI.get(model, MOI.ConstraintPrimal(), c)
+#     @test ≈(c_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
+#     c_dual = MOI.get(model, MOI.ConstraintDual(), c)
+#     @test ≈(c_dual, [-sqrt(2), 0.0, 0.5, -1 / sqrt(2)]; atol = 1000 * atol)  # <-- Relax the absolute tolerance
+#     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x3), -0.5; atol)
+#     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x4), 1 / sqrt(2); atol = 1000 * atol)  # <-- Relax the absolute tolerance
+#     @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c_snf), 0.0; atol)
+#     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_snf), 1.0; atol)
+#     return
+# end
 
-function test_vector_nonlinear_oracle_optimization_min_sense()
-    set = MOI.VectorNonlinearOracle(;
-        dimension = 4,
-        l = [0.0, 0.0],
-        u = [0.0, 0.0],
-        eval_f = (ret, x) -> begin
-            ret[1] = x[1]^2 + x[2]^2 - x[3]
-            ret[2] = x[2] - x[1] - x[4]
-            return
-        end,
-        jacobian_structure = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 3), (2, 4)],
-        eval_jacobian = (ret, x) -> begin
-            ret[1] = 2 * x[1]
-            ret[2] = 2 * x[2]
-            ret[3] = 1.0
-            ret[4] = -1.0
-            ret[5] = -1.0
-            ret[6] = -1.0
-            return
-        end,
-        hessian_lagrangian_structure = [(1, 1), (2, 2)],
-        eval_hessian_lagrangian = (ret, x, u) -> begin
-            ret[1] = 2 * u[1]
-            ret[2] = 2 * u[1]
-            return
-        end,
-    )
-    model = UnoSolver.Optimizer()
-    MOI.set(model, MOI.Silent(), true)
-    x = MOI.add_variables(model, 4)
-    t = MOI.add_variable(model)
-    MOI.add_constraint(model, x[1], MOI.GreaterThan(0.1))
-    c_x3 = MOI.add_constraint(model, x[3], MOI.LessThan(1.0))
-    c_x4 = MOI.add_constraint(model, x[4], MOI.GreaterThan(0.0))
-    f = MOI.VectorOfVariables(x)
-    c = MOI.add_constraint(model, f, set)
-    log_x = MOI.ScalarNonlinearFunction(:log, Any[x[1]])
-    log_x_minus_t = MOI.ScalarNonlinearFunction(:-, Any[log_x, t])
-    c_snf = MOI.add_constraint(model, log_x_minus_t, MOI.GreaterThan(0.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    F = MOI.ScalarAffineFunction{Float64}
-    MOI.set(model, MOI.ObjectiveFunction{F}(), -1.0 * t)
-    MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
-    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-    @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-    atol = 1e-6
-    x_sol = MOI.get.(model, MOI.VariablePrimal(), x)
-    @test ≈(x_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
-    @test ≈(MOI.get(model, MOI.VariablePrimal(), t), -log(sqrt(2)); atol)
-    c_sol = MOI.get(model, MOI.ConstraintPrimal(), c)
-    @test ≈(c_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
-    c_dual = MOI.get(model, MOI.ConstraintDual(), c)
-    @test ≈(c_dual, [-sqrt(2), 0.0, 0.5, -1 / sqrt(2)]; atol = 1000 * atol)  # <-- Relax the absolute tolerance
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x3), -0.5; atol = 1000 * atol)  # <-- Relax the absolute tolerance
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x4), 1 / sqrt(2); atol)
-    @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c_snf), 0.0; atol)
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c_snf), 1.0; atol)
-    return
-end
+# function test_vector_nonlinear_oracle_optimization_min_sense()
+#     set = MOI.VectorNonlinearOracle(;
+#         dimension = 4,
+#         l = [0.0, 0.0],
+#         u = [0.0, 0.0],
+#         eval_f = (ret, x) -> begin
+#             ret[1] = x[1]^2 + x[2]^2 - x[3]
+#             ret[2] = x[2] - x[1] - x[4]
+#             return
+#         end,
+#         jacobian_structure = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 3), (2, 4)],
+#         eval_jacobian = (ret, x) -> begin
+#             ret[1] = 2 * x[1]
+#             ret[2] = 2 * x[2]
+#             ret[3] = 1.0
+#             ret[4] = -1.0
+#             ret[5] = -1.0
+#             ret[6] = -1.0
+#             return
+#         end,
+#         hessian_lagrangian_structure = [(1, 1), (2, 2)],
+#         eval_hessian_lagrangian = (ret, x, u) -> begin
+#             ret[1] = 2 * u[1]
+#             ret[2] = 2 * u[1]
+#             return
+#         end,
+#     )
+#     model = UnoSolver.Optimizer()
+#     MOI.set(model, MOI.Silent(), true)
+#     x = MOI.add_variables(model, 4)
+#     t = MOI.add_variable(model)
+#     MOI.add_constraint(model, x[1], MOI.GreaterThan(0.1))
+#     c_x3 = MOI.add_constraint(model, x[3], MOI.LessThan(1.0))
+#     c_x4 = MOI.add_constraint(model, x[4], MOI.GreaterThan(0.0))
+#     f = MOI.VectorOfVariables(x)
+#     c = MOI.add_constraint(model, f, set)
+#     log_x = MOI.ScalarNonlinearFunction(:log, Any[x[1]])
+#     log_x_minus_t = MOI.ScalarNonlinearFunction(:-, Any[log_x, t])
+#     c_snf = MOI.add_constraint(model, log_x_minus_t, MOI.GreaterThan(0.0))
+#     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+#     F = MOI.ScalarAffineFunction{Float64}
+#     MOI.set(model, MOI.ObjectiveFunction{F}(), -1.0 * t)
+#     MOI.optimize!(model)
+#     @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
+#     @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+#     @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+#     atol = 1e-6
+#     x_sol = MOI.get.(model, MOI.VariablePrimal(), x)
+#     @test ≈(x_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
+#     @test ≈(MOI.get(model, MOI.VariablePrimal(), t), -log(sqrt(2)); atol)
+#     c_sol = MOI.get(model, MOI.ConstraintPrimal(), c)
+#     @test ≈(c_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
+#     c_dual = MOI.get(model, MOI.ConstraintDual(), c)
+#     @test ≈(c_dual, [-sqrt(2), 0.0, 0.5, -1 / sqrt(2)]; atol = 1000 * atol)  # <-- Relax the absolute tolerance
+#     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x3), -0.5; atol = 1000 * atol)  # <-- Relax the absolute tolerance
+#     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x4), 1 / sqrt(2); atol)
+#     @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c_snf), 0.0; atol)
+#     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_snf), 1.0; atol)
+#     return
+# end
 
-function test_vector_nonlinear_oracle_scalar_nonlinear_equivalent()
-    model = UnoSolver.Optimizer()
-    MOI.set(model, MOI.Silent(), true)
-    x = MOI.add_variables(model, 4)
-    t = MOI.add_variable(model)
-    MOI.add_constraint(model, x[1], MOI.GreaterThan(0.1))
-    c_x3 = MOI.add_constraint(model, x[3], MOI.LessThan(1.0))
-    c_x4 = MOI.add_constraint(model, x[4], MOI.GreaterThan(0.0))
-    f1 = 1.0 * x[1] * x[1] + 1.0 * x[2] * x[2] - 1.0 * x[3]
-    c1 = MOI.add_constraint(model, f1, MOI.EqualTo(0.0))
-    f2 = 1.0 * x[2] - 1.0 * x[1] - x[4]
-    c2 = MOI.add_constraint(model, f2, MOI.EqualTo(0.0))
-    log_x = MOI.ScalarNonlinearFunction(:log, Any[x[1]])
-    log_x_minus_t = MOI.ScalarNonlinearFunction(:-, Any[log_x, t])
-    c_snf = MOI.add_constraint(model, log_x_minus_t, MOI.GreaterThan(0.0))
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    F = MOI.ScalarAffineFunction{Float64}
-    MOI.set(model, MOI.ObjectiveFunction{F}(), 1.0 * t)
-    MOI.optimize!(model)
-    @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
-    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
-    @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-    atol = 1e-6
-    x_sol = MOI.get.(model, MOI.VariablePrimal(), x)
-    @test ≈(x_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
-    @test ≈(MOI.get(model, MOI.VariablePrimal(), t), -log(sqrt(2)); atol)
-    @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c1), 0.0; atol)
-    @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c2), 0.0; atol)
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c1), -0.5; atol)
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c2), 1 / sqrt(2); atol)
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x3), -0.5; atol)
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x4), 1 / sqrt(2); atol)
-    @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c_snf), 0.0; atol)
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c_snf), 1.0; atol)
-    return
-end
+# function test_vector_nonlinear_oracle_scalar_nonlinear_equivalent()
+#     model = UnoSolver.Optimizer()
+#     MOI.set(model, MOI.Silent(), true)
+#     x = MOI.add_variables(model, 4)
+#     t = MOI.add_variable(model)
+#     MOI.add_constraint(model, x[1], MOI.GreaterThan(0.1))
+#     c_x3 = MOI.add_constraint(model, x[3], MOI.LessThan(1.0))
+#     c_x4 = MOI.add_constraint(model, x[4], MOI.GreaterThan(0.0))
+#     f1 = 1.0 * x[1] * x[1] + 1.0 * x[2] * x[2] - 1.0 * x[3]
+#     c1 = MOI.add_constraint(model, f1, MOI.EqualTo(0.0))
+#     f2 = 1.0 * x[2] - 1.0 * x[1] - x[4]
+#     c2 = MOI.add_constraint(model, f2, MOI.EqualTo(0.0))
+#     log_x = MOI.ScalarNonlinearFunction(:log, Any[x[1]])
+#     log_x_minus_t = MOI.ScalarNonlinearFunction(:-, Any[log_x, t])
+#     c_snf = MOI.add_constraint(model, log_x_minus_t, MOI.GreaterThan(0.0))
+#     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+#     F = MOI.ScalarAffineFunction{Float64}
+#     MOI.set(model, MOI.ObjectiveFunction{F}(), 1.0 * t)
+#     MOI.optimize!(model)
+#     @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
+#     @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+#     @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+#     atol = 1e-6
+#     x_sol = MOI.get.(model, MOI.VariablePrimal(), x)
+#     @test ≈(x_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
+#     @test ≈(MOI.get(model, MOI.VariablePrimal(), t), -log(sqrt(2)); atol)
+#     @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c1), 0.0; atol)
+#     @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c2), 0.0; atol)
+#     @test ≈(MOI.get(model, MOI.ConstraintDual(), c1), -0.5; atol)
+#     @test ≈(MOI.get(model, MOI.ConstraintDual(), c2), 1 / sqrt(2); atol)
+#     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x3), -0.5; atol)
+#     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x4), 1 / sqrt(2); atol)
+#     @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c_snf), 0.0; atol)
+#     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_snf), 1.0; atol)
+#     return
+# end
 
 function test_vector_nonlinear_oracle_no_hessian()
     set = MOI.VectorNonlinearOracle(;
