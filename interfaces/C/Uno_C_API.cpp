@@ -31,7 +31,7 @@ class UnoModel: public Model {
 public:
    explicit UnoModel(const CUserModel& user_model):
          Model("C model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
-            static_cast<double>(user_model.optimization_sense)),
+            static_cast<double>(user_model.optimization_sense), user_model.lagrangian_sign_convention),
          user_model(user_model),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints) {
@@ -279,13 +279,8 @@ public:
       }
    }
 
-   void postprocess_solution(Iterate& iterate) const override {
-      // flip the signs of the multipliers, depending on what the sign convention of the Lagrangian is, and whether
-      // we maximize
-      iterate.multipliers.constraints *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
-      iterate.multipliers.lower_bounds *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
-      iterate.multipliers.upper_bounds *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
-      iterate.evaluations.objective *= this->optimization_sense;
+   void postprocess_solution(Iterate& /*iterate*/) const override {
+      // do nothing
    }
 
    [[nodiscard]] size_t number_jacobian_nonzeros() const override {

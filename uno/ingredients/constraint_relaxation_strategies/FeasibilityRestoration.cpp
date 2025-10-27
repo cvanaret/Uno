@@ -44,7 +44,6 @@ namespace uno {
       this->feasibility_hessian_model = HessianModelFactory::create(model, options);
 
       // memory allocation
-      this->optimality_hessian_model->initialize(model);
       this->optimality_inequality_handling_method->initialize(*this->optimality_problem, initial_iterate,
          *this->optimality_hessian_model, *this->optimality_inertia_correction_strategy, trust_region_radius);
       direction = Direction(
@@ -71,8 +70,7 @@ namespace uno {
    }
 
    void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         WarmstartInformation& warmstart_information) {
+         Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) {
       direction.reset();
       // if we are in the optimality phase, solve the optimality problem
       if (this->current_phase == Phase::OPTIMALITY) {
@@ -86,7 +84,7 @@ namespace uno {
                // switch to the feasibility problem, starting from the current direction
                statistics.set("status", std::string("infeasible subproblem"));
                DEBUG << "/!\\ The subproblem is infeasible\n";
-               this->switch_to_feasibility_problem(statistics, globalization_strategy, model, current_iterate,
+               this->switch_to_feasibility_problem(statistics, globalization_strategy, current_iterate,
                   trust_region_radius, warmstart_information);
                this->feasibility_inequality_handling_method->set_initial_point(direction.primals);
             }
@@ -96,7 +94,7 @@ namespace uno {
             }
          }
          catch (const UnstableRegularization&) {
-            this->switch_to_feasibility_problem(statistics, globalization_strategy, model, current_iterate,
+            this->switch_to_feasibility_problem(statistics, globalization_strategy, current_iterate,
                trust_region_radius, warmstart_information);
          }
       }
@@ -117,7 +115,7 @@ namespace uno {
 
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) {
+         Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       globalization_strategy.notify_switch_to_feasibility(current_iterate.progress);
@@ -144,8 +142,6 @@ namespace uno {
       if (this->first_switch_to_feasibility) {
          this->feasibility_inequality_handling_method->initialize(*this->feasibility_problem, current_iterate,
             *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy, trust_region_radius);
-         this->feasibility_hessian_model->initialize(model);
-
          this->first_switch_to_feasibility = false;
       }
 
@@ -246,7 +242,7 @@ namespace uno {
 
    std::string FeasibilityRestoration::get_name() const {
       return "restoration " + this->optimality_inequality_handling_method->get_name() + " with " +
-         this->optimality_hessian_model->get_name() + " Hessian and " + this->optimality_inertia_correction_strategy->get_name() +
+         this->optimality_hessian_model->name + " Hessian and " + this->optimality_inertia_correction_strategy->get_name() +
          " regularization";
    }
 

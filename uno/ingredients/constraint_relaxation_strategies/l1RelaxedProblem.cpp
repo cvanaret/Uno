@@ -87,11 +87,11 @@ namespace uno {
 
    bool l1RelaxedProblem::has_curvature(const HessianModel& hessian_model) const {
       // the l1 relaxation does not introduce curvature
-      return hessian_model.has_curvature(this->model);
+      return hessian_model.has_curvature();
    }
 
    size_t l1RelaxedProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
-      size_t number_nonzeros = hessian_model.number_nonzeros(this->model);
+      size_t number_nonzeros = hessian_model.number_nonzeros();
       // proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
          number_nonzeros += this->model.number_variables;
@@ -125,11 +125,11 @@ namespace uno {
 
    void l1RelaxedProblem::compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
          int* column_indices, int solver_indexing) const {
-      hessian_model.compute_sparsity(this->model, row_indices, column_indices, solver_indexing);
+      hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
 
       // diagonal proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
-         size_t current_index = hessian_model.number_nonzeros(this->model);
+         size_t current_index = hessian_model.number_nonzeros();
          for (size_t variable_index: Range(this->model.number_variables)) {
             row_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
             column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
@@ -214,11 +214,11 @@ namespace uno {
 
    void l1RelaxedProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, double* hessian_values) const {
-      hessian_model.evaluate_hessian(statistics, this->model, primal_variables, this->get_objective_multiplier(),
+      hessian_model.evaluate_hessian(statistics, primal_variables, this->get_objective_multiplier(),
          multipliers.constraints, hessian_values);
 
       // proximal contribution
-      size_t nonzero_index = hessian_model.number_nonzeros(this->model);
+      size_t nonzero_index = hessian_model.number_nonzeros();
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
@@ -231,8 +231,7 @@ namespace uno {
 
    void l1RelaxedProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
          const Multipliers& multipliers, double* result) const {
-      hessian_model.compute_hessian_vector_product(this->model, x, vector, this->get_objective_multiplier(),
-         multipliers.constraints, result);
+      hessian_model.compute_hessian_vector_product(x, vector, this->get_objective_multiplier(), multipliers.constraints, result);
 
       // proximal contribution
       if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
@@ -326,5 +325,35 @@ namespace uno {
          elastic_setting_function(iterate, equality_index, elastic_index + 1, -1.);
          elastic_index += 2;
       }
+   }
+
+   void l1RelaxedProblem::set_auxiliary_measure(Iterate& iterate) const {
+      iterate.progress.auxiliary = 0.;
+      // form the proximal term: zeta/2 ||D_R (x - x_R)||^2
+      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+         double proximal_term = 0.;
+         for (size_t variable_index: Range(this->model.number_variables)) {
+            const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
+            const double distance_to_center = iterate.primals[variable_index] - this->proximal_center[variable_index];
+            proximal_term += scaling * scaling * distance_to_center * distance_to_center;
+         }
+         proximal_term *= (this->proximal_coefficient / 2.);
+         iterate.progress.auxiliary = proximal_term;
+      }
+   }
+
+   double l1RelaxedProblem::compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
+         const Vector<double>& primal_direction, double step_length) const {
+      double predicted_auxiliary_reduction = 0.;
+      // form the directional derivative -zeta D_R^2 (x - x_R) and scale it by the step length
+      if (this->proximal_center != nullptr && this->proximal_coefficient != 0.) {
+         for (size_t variable_index: Range(this->model.number_variables)) {
+            const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
+            const double distance_to_center = current_iterate.primals[variable_index] - this->proximal_center[variable_index];
+            predicted_auxiliary_reduction += scaling * scaling * distance_to_center * primal_direction[variable_index];
+         }
+         predicted_auxiliary_reduction *= step_length * (-this->proximal_coefficient);
+      }
+      return predicted_auxiliary_reduction;
    }
 } // namespace

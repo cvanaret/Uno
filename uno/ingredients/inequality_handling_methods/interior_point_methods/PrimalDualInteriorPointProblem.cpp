@@ -80,7 +80,7 @@ namespace uno {
    }
 
    bool PrimalDualInteriorPointProblem::has_curvature(const HessianModel& hessian_model) const {
-      if (hessian_model.has_curvature(this->model)) {
+      if (hessian_model.has_curvature()) {
          return true;
       }
       else {
@@ -451,7 +451,7 @@ namespace uno {
       }
       barrier_terms *= this->barrier_parameter;
       assert(!std::isnan(barrier_terms) && "The auxiliary measure is not an number.");
-      iterate.progress.auxiliary = barrier_terms;
+      iterate.progress.auxiliary += barrier_terms;
    }
 
    double PrimalDualInteriorPointProblem::compute_predicted_auxiliary_reduction(const Iterate& current_iterate,

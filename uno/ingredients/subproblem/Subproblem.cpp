@@ -155,11 +155,11 @@ namespace uno {
    }
 
    bool Subproblem::has_hessian_operator() const {
-      return this->hessian_model.has_hessian_operator(this->problem.model);
+      return this->hessian_model.has_hessian_operator();
    }
 
    bool Subproblem::has_hessian_matrix() const {
-      return this->hessian_model.has_hessian_matrix(this->problem.model);
+      return this->hessian_model.has_hessian_matrix();
    }
 
    // two sources of curvature: the problem and the regularization strategy
