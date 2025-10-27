@@ -274,13 +274,8 @@ namespace uno {
       }
    }
 
-   void PythonModel::postprocess_solution(Iterate& iterate) const {
-      // flip the signs of the multipliers, depending on what the sign convention of the Lagrangian is, and whether
-      // we maximize
-      iterate.multipliers.constraints *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
-      iterate.multipliers.lower_bounds *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
-      iterate.multipliers.upper_bounds *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
-      iterate.evaluations.objective *= this->optimization_sense;
+   void PythonModel::postprocess_solution(Iterate& /*iterate*/) const {
+      // do nothing
    }
 
    size_t PythonModel::number_jacobian_nonzeros() const {
