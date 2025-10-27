@@ -3,6 +3,7 @@
 
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "linear_algebra/SparseVector.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/UnaryNegation.hpp"
@@ -12,8 +13,8 @@
 
 namespace uno {
    PrimalDualInteriorPointProblem::PrimalDualInteriorPointProblem(const OptimizationProblem& problem,
-      const InteriorPointParameters &parameters):
-         OptimizationProblem(problem.model, problem.number_variables, problem.number_constraints),
+      const InteriorPointParameters& parameters):
+         BarrierProblem(problem.model, problem.number_variables, problem.number_constraints),
          first_reformulation(problem), parameters(parameters), equality_constraints(problem.number_constraints) { }
 
    double PrimalDualInteriorPointProblem::get_objective_multiplier() const {
@@ -22,6 +23,46 @@ namespace uno {
 
    void PrimalDualInteriorPointProblem::set_barrier_parameter(double barrier_parameter) {
       this->barrier_parameter = barrier_parameter;
+   }
+
+   void PrimalDualInteriorPointProblem::generate_initial_iterate(Iterate& initial_iterate) const {
+      // make the initial point strictly feasible wrt the bounds
+      for (size_t variable_index: Range(this->number_variables)) {
+         initial_iterate.primals[variable_index] = this->push_variable_to_interior(initial_iterate.primals[variable_index],
+            this->first_reformulation.variable_lower_bound(variable_index), this->first_reformulation.variable_upper_bound(variable_index));
+      }
+
+      // set the slack variables (if any)
+      if (!this->model.get_slacks().is_empty()) {
+         // set the slacks to the constraint values
+         initial_iterate.evaluate_constraints(this->model);
+         for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
+            initial_iterate.primals[slack_index] =
+               this->push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index],
+               this->first_reformulation.variable_lower_bound(slack_index), this->first_reformulation.variable_upper_bound(slack_index));
+         }
+         // since the slacks have been set, the function evaluations should also be updated
+         initial_iterate.is_objective_gradient_computed = false;
+         initial_iterate.are_constraints_computed = false;
+         initial_iterate.is_constraint_jacobian_computed = false;
+      }
+
+      // set the bound multipliers
+      for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
+         const double lower_bound = this->first_reformulation.variable_lower_bound(variable_index);
+         const double upper_bound = this->first_reformulation.variable_upper_bound(variable_index);
+         if (is_finite(lower_bound)) {
+            initial_iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
+         }
+         if (is_finite(upper_bound)) {
+            initial_iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
+         }
+      }
+
+      // compute least-square multipliers
+      if (0 < this->number_constraints) {
+         // TODO
+      }
    }
 
    void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {

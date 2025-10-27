@@ -40,8 +40,8 @@ namespace uno {
          model.number_constraints << " constraints (" << model.get_equality_constraints().size() <<
          " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
 
-      // reformulate the model if it is to be solved with an interior-point method
-      if (options.get_string("inequality_handling_method") == "primal_dual_interior_point") {
+      // reformulate the model if it is to be solved with an interior-point method with log barrier function
+      if (options.get_string("inequality_handling_method") == "interior_point" && options.get_string("barrier_function") == "log") {
          // move the fixed variables to the set of general constraints
          const FixedBoundsConstraintsModel fixed_bound_model(model);
          // if an equality-constrained problem is required (e.g. interior points or AL), reformulate the model with slacks

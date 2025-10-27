@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cassert>
 #include "BarrierParameterUpdateStrategy.hpp"
-#include "PrimalDualInteriorPointProblem.hpp"
+#include "barrier_problems/PrimalDualInteriorPointProblem.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"
 #include "options/Options.hpp"

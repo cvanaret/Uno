@@ -4,18 +4,20 @@
 #ifndef UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 #define UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 
-#include "InteriorPointParameters.hpp"
+#include "../BarrierProblem.hpp"
+#include "../InteriorPointParameters.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
-   class PrimalDualInteriorPointProblem : public OptimizationProblem {
+   class PrimalDualInteriorPointProblem : public BarrierProblem {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters &parameters);
 
       [[nodiscard]] double get_objective_multiplier() const override;
       void set_barrier_parameter(double barrier_parameter);
+      void generate_initial_iterate(Iterate& initial_iterate) const override;
 
       // constraint evaluations
       void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
@@ -60,7 +62,7 @@ namespace uno {
          const Vector<double>& primal_direction) const;
       void postprocess_iterate(Iterate& iterate) const;
       [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
-         double shift) const;
+         double shift) const override;
 
       // progress measures
       void set_auxiliary_measure(Iterate& iterate) const override;
