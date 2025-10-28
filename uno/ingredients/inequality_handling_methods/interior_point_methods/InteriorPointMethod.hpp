@@ -33,7 +33,7 @@ namespace uno {
          WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
-      void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& constraint_index) override;
+      void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& iterate) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
       // matrix computations
@@ -193,17 +193,17 @@ namespace uno {
 
    template <typename BarrierProblem>
    // set the elastic variables of the current iterate
-   void InteriorPointMethod<BarrierProblem>::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
+   void InteriorPointMethod<BarrierProblem>::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& iterate) {
       DEBUG << "IPM: setting the elastic variables and their duals\n";
 
       for (size_t variable_index: Range(problem.number_variables)) {
          const double lower_bound = problem.variable_lower_bound(variable_index);
          const double upper_bound = problem.variable_upper_bound(variable_index);
          if (is_finite(lower_bound)) {
-            current_iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
+            iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
          }
          if (is_finite(upper_bound)) {
-            current_iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
+            iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
          }
       }
 
@@ -227,7 +227,7 @@ namespace uno {
          assert(0. < iterate.primals[elastic_index] && "The elastic variable is not strictly positive.");
          assert(0. < iterate.multipliers.lower_bounds[elastic_index] && "The elastic dual is not strictly positive.");
       };
-      problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
+      problem.set_elastic_variable_values(iterate, elastic_setting_function);
    }
 
    template <typename BarrierProblem>
