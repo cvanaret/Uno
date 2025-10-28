@@ -11,16 +11,20 @@ In preparation for a release, use the following checklist. These steps can be do
 ````
 ## Pre-release
 
- - [ ] Change the version number in `Uno::current_version()` in `uno/Uno.cpp`
- - [ ] Change the version number in `CITATION.cff` (twice)
- - [ ] Change the version number in `CMakeLists.txt`
- - [ ] Change the version number in `interfaces/C/Uno_C_API.h`
- - [ ] The commit messages in this PR do not contain `[ci skip]`
+- [ ] Change the version number in `Uno::current_version()` in `uno/Uno.cpp`
+- [ ] Change the version number in `CITATION.cff` (twice)
+- [ ] Change the version number in `CMakeLists.txt`
+- [ ] Change the version number in `interfaces/C/Uno_C_API.h`
+- [ ] The commit messages in this PR do not contain `[ci skip]`
 
 ## Post-release
 
- - [ ] update the [Yggdrasil tarballs](https://github.com/JuliaPackaging/Yggdrasil/blob/master/U/Uno/build_tarballs.jl)
- - [ ] Change the `Uno_jll` version number in `interfaces/Julia/Project.toml`
- - [ ] Change the `Uno_jll` version number in `interfaces/Julia/gen/Project.toml`
- - [ ] Update the logo in [the Github settings](https://github.com/cvanaret/Uno/settings)
+- `Uno_jll.jl`
+  - [ ] Update the [Yggdrasil tarballs](https://github.com/JuliaPackaging/Yggdrasil/blob/master/U/Uno/build_tarballs.jl)
+  - [ ] Change the `Uno_jll` version number in `interfaces/Julia/Project.toml`
+  - [ ] Change the `Uno_jll` version number in `interfaces/Julia/gen/Project.toml`
+- `UnoSolver.jl`
+  - [ ] Change the version number in `interfaces/Julia/Project.toml`
+  - [ ] Tag the register bot in a commit: `@JuliaRegistrator register subdir="interfaces/Julia"
+- [ ] Update the logo in [the Github settings](https://github.com/cvanaret/Uno/settings)
 ````
