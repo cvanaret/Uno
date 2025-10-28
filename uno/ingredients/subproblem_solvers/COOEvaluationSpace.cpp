@@ -17,6 +17,9 @@ namespace uno {
       }
       const size_t dimension = subproblem.number_variables;
 
+      // evaluations
+      this->objective_gradient.resize(subproblem.number_variables);
+
       // Hessian
       this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
       this->number_matrix_nonzeros = subproblem.number_regularized_hessian_nonzeros();

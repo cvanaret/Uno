@@ -92,7 +92,7 @@ Options can be set in three different ways (with decreasing precedence):
 
 The following ingredients are currently available:
 - to pick a constraint relaxation strategy, use the argument: ```constraint_relaxation_strategy=[feasibility_restoration]```  
-- to pick an inequality handling method, use the argument: ```inequality_handling_method=[inequality_constrained|primal_dual_interior_point]``` 
+- to pick an inequality handling method, use the argument: ```inequality_handling_method=[inequality_constrained|interior_point]``` 
 - to pick a Hessian model, use the argument: ```hessian_model=[exact|identity|zero]``` 
 - to pick an inertia correction strategy, use the argument: ```inertia_correction_strategy=[primal|primal_dual|none]``` 
 - to pick a globalization strategy, use the argument: ```globalization_strategy=[l1_merit|fletcher_filter_method|waechter_filter_method|funnel_method]```   

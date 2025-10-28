@@ -32,6 +32,7 @@ namespace uno {
    // protected member functions
 
    void HiGHSSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information) {
+      // evaluate the functions and derivatives
       this->evaluation_space.evaluate_functions(statistics, subproblem, warmstart_information);
 
       // variable bounds
