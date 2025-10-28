@@ -4,6 +4,7 @@
 #ifndef UNO_BARRIERPARAMETERUPDATESTRATEGY_H
 #define UNO_BARRIERPARAMETERUPDATESTRATEGY_H
 
+#include <algorithm>
 #include "optimization/DualResiduals.hpp"
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
