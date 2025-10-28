@@ -747,30 +747,18 @@ function MOI.get(
 ) where {F<:MOI.VectorOfVariables,S<:MOI.VectorNonlinearOracle{Float64}}
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-    sign = -_dual_multiplier(model)
     f, s = model.vector_nonlinear_oracle_constraints[ci.value]
-
-    # Alexis -- revisit this code when we know how to handle the workspace
-    # λ = model.inner.mult_g[row(model, ci)]
-    mult_g = Vector{Float64}(undef, model.inner.ncon)
-    UnoSolver.uno_get_constraint_dual_solution(model.solver, mult_g)
-
-    λ = mult_g[row(model, ci)]
-    J = Tuple{Int,Int}[]
-    _jacobian_structure(J, 0, f, s)
-    J_val = zeros(length(J))
-
-    # Alexis -- revisit this code when we know how to handle the workspace
-    # _eval_constraint_jacobian(J_val, 0, model.inner.x, f, s)
-    sol = Vector{Float64}(undef, model.inner.nvar)
-    UnoSolver.uno_get_primal_solution(model.solver, sol)
-    _eval_constraint_jacobian(J_val, 0, sol, f, s)
-
+    J = zeros(length(s.set.jacobian_structure))
+    x = [MOI.get(model, MOI.VariablePrimal(), xi) for xi in f.variables]
+    s.set.eval_jacobian(J, x)
+    λ = Float64[
+        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r - 1)
+        for r in row(model, ci)
+    ]
     dual = zeros(MOI.dimension(s.set))
-    # dual = λ' * J(x)
-    col_to_index = Dict(x.value => j for (j, x) in enumerate(f.variables))
-    for ((row, col), J_rc) in zip(J, J_val)
-        dual[col_to_index[col]] += sign * J_rc * λ[row]
+    sign = _dual_multiplier(model)
+    for ((row, col), J_rc) in zip(s.set.jacobian_structure, J)
+        dual[col] += sign * λ[row] * J_rc
     end
     return dual
 end
@@ -1649,8 +1637,7 @@ end
 ### MOI.ConstraintDual
 
 function _dual_multiplier(model::Optimizer)
-    sign = model.problem_type == "LP" ? 1.0 : -1.0
-    return model.sense == MOI.MIN_SENSE ? sign : -sign
+    return xor(model.problem_type == "LP", model.sense == MOI.MAX_SENSE) ? 1.0 : -1.0
 end
 
 function MOI.get(

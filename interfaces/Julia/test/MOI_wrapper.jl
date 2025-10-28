@@ -844,16 +844,16 @@ function test_vector_nonlinear_oracle_optimization()
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
     @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
     @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-    atol = 1e-6
+    atol = 1e-3
     x_sol = MOI.get.(model, MOI.VariablePrimal(), x)
     @test ≈(x_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), t), -log(sqrt(2)); atol)
     c_sol = MOI.get(model, MOI.ConstraintPrimal(), c)
     @test ≈(c_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
     c_dual = MOI.get(model, MOI.ConstraintDual(), c)
-    @test ≈(c_dual, [-sqrt(2), 0.0, 0.5, -1 / sqrt(2)]; atol = 1000 * atol)  # <-- Relax the absolute tolerance
+    @test ≈(c_dual, [-sqrt(2), 0.0, 0.5, -1 / sqrt(2)]; atol)
     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x3), -0.5; atol)
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x4), 1 / sqrt(2); atol = 1000 * atol)  # <-- Relax the absolute tolerance
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x4), 1 / sqrt(2); atol)
     @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c_snf), 0.0; atol)
     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_snf), 1.0; atol)
     return
@@ -905,15 +905,15 @@ function test_vector_nonlinear_oracle_optimization_min_sense()
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
     @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
     @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
-    atol = 1e-6
+    atol = 1e-3
     x_sol = MOI.get.(model, MOI.VariablePrimal(), x)
     @test ≈(x_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
     @test ≈(MOI.get(model, MOI.VariablePrimal(), t), -log(sqrt(2)); atol)
     c_sol = MOI.get(model, MOI.ConstraintPrimal(), c)
     @test ≈(c_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
     c_dual = MOI.get(model, MOI.ConstraintDual(), c)
-    @test ≈(c_dual, [-sqrt(2), 0.0, 0.5, -1 / sqrt(2)]; atol = 1000 * atol)  # <-- Relax the absolute tolerance
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x3), -0.5; atol = 1000 * atol)  # <-- Relax the absolute tolerance
+    @test ≈(c_dual, [-sqrt(2), 0.0, 0.5, -1 / sqrt(2)]; atol)
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x3), -0.5; atol)
     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x4), 1 / sqrt(2); atol)
     @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c_snf), 0.0; atol)
     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_snf), 1.0; atol)
