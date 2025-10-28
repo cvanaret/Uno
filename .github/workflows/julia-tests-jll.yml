@@ -31,6 +31,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install compilers
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '14'
+        if: matrix.os == 'macos-latest' || matrix.os == 'macos-15-intel'
+
+
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
