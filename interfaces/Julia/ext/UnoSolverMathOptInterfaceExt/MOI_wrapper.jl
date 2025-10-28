@@ -48,6 +48,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     nlp_model::Union{Nothing,MOI.Nonlinear.Model}
     ad_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation
     vector_nonlinear_oracle_constraints::Vector{Tuple{MOI.VectorOfVariables,_VectorNonlinearOracleCache}}
+    problem_type::String
 
     function Optimizer(; kwargs...)
         option_dict = Dict{String,Any}()
@@ -75,6 +76,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
             nothing,
             MOI.Nonlinear.SparseReverseMode(),
             Tuple{MOI.VectorOfVariables,_VectorNonlinearOracleCache}[],
+            "",
         )
     end
 end
@@ -130,6 +132,7 @@ function MOI.empty!(model::Optimizer)
     model.nlp_model = nothing
     # SKIP: model.ad_backend
     empty!(model.vector_nonlinear_oracle_constraints)
+    model.problem_type = ""
     return
 end
 
@@ -744,30 +747,18 @@ function MOI.get(
 ) where {F<:MOI.VectorOfVariables,S<:MOI.VectorNonlinearOracle{Float64}}
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-    sign = -_dual_multiplier(model)
     f, s = model.vector_nonlinear_oracle_constraints[ci.value]
-
-    # Alexis -- revisit this code when we know how to handle the workspace
-    # λ = model.inner.mult_g[row(model, ci)]
-    mult_g = Vector{Float64}(undef, model.inner.ncon)
-    UnoSolver.uno_get_constraint_dual_solution(model.solver, mult_g)
-
-    λ = mult_g[row(model, ci)]
-    J = Tuple{Int,Int}[]
-    _jacobian_structure(J, 0, f, s)
-    J_val = zeros(length(J))
-
-    # Alexis -- revisit this code when we know how to handle the workspace
-    # _eval_constraint_jacobian(J_val, 0, model.inner.x, f, s)
-    sol = Vector{Float64}(undef, model.inner.nvar)
-    UnoSolver.uno_get_primal_solution(model.solver, sol)
-    _eval_constraint_jacobian(J_val, 0, sol, f, s)
-
+    J = zeros(length(s.set.jacobian_structure))
+    x = [MOI.get(model, MOI.VariablePrimal(), xi) for xi in f.variables]
+    s.set.eval_jacobian(J, x)
+    λ = Float64[
+        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r - 1)
+        for r in row(model, ci)
+    ]
     dual = zeros(MOI.dimension(s.set))
-    # dual = λ' * J(x)
-    col_to_index = Dict(x.value => j for (j, x) in enumerate(f.variables))
-    for ((row, col), J_rc) in zip(J, J_val)
-        dual[col_to_index[col]] += sign * J_rc * λ[row]
+    sign = _dual_multiplier(model)
+    for ((row, col), J_rc) in zip(s.set.jacobian_structure, J)
+        dual[col] += sign * λ[row] * J_rc
     end
     return dual
 end
@@ -1288,18 +1279,16 @@ function _setup_model(model::Optimizer)
     for i in 1:nnzh
         hrows[i], hcols[i] = hessian_sparsity[i]
     end
-
-    problem_type = "X"
     if has_quadratic_constraints || has_nlp_constraints || has_nlp_objective
-        problem_type = "NLP"
+        model.problem_type = "NLP"
+    elseif model.qp_data.objective_function_type == _kFunctionTypeScalarQuadratic
+        model.problem_type = "QP"
     else
-        if model.qp_data.objective_function_type == _kFunctionTypeScalarQuadratic
-            problem_type = "QP"
-        else
-            if (model.qp_data.objective_function_type == _kFunctionTypeVariableIndex) || (model.qp_data.objective_function_type == _kFunctionTypeScalarAffine)
-                problem_type = "LP"
-            end
-        end
+        @assert (model.qp_data.objective_function_type == _kFunctionTypeVariableIndex) || (model.qp_data.objective_function_type == _kFunctionTypeScalarAffine)
+        model.problem_type = "LP"
+    end
+    if isempty(hessian_sparsity)
+        model.problem_type = "LP"
     end
 
     moi_objective(model, x) = MOI.eval_objective(model, x)
@@ -1323,7 +1312,7 @@ function _setup_model(model::Optimizer)
     nvar = length(vars)
     ncon = length(g_L)
     model.inner = UnoSolver.uno_model(
-        problem_type,
+        model.problem_type,
         model.sense == MOI.MIN_SENSE,
         nvar,
         ncon,
@@ -1647,7 +1636,9 @@ end
 
 ### MOI.ConstraintDual
 
-_dual_multiplier(model::Optimizer) = 1.0
+function _dual_multiplier(model::Optimizer)
+    return xor(model.problem_type == "LP", model.sense == MOI.MAX_SENSE) ? 1.0 : -1.0
+end
 
 function MOI.get(
     model::Optimizer,
@@ -1656,73 +1647,33 @@ function MOI.get(
 )
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-    s = -_dual_multiplier(model)
     λ = UnoSolver.uno_get_constraint_dual_solution_component(model.solver, row(model, ci)-1)
-    v = s * λ
-    return v
+    return _dual_multiplier(model) * λ
 end
+
+_reduced_cost_to_dual(::Type{S}, rc) where {S} = rc
+_reduced_cost_to_dual(::Type{MOI.GreaterThan{Float64}}, rc) = max(0.0, rc)
+_reduced_cost_to_dual(::Type{MOI.LessThan{Float64}}, rc) = min(0.0, rc)
 
 function MOI.get(
     model::Optimizer,
     attr::MOI.ConstraintDual,
-    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.LessThan{Float64}},
-)
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
+) where {S<:_SETS}
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     xL_i = UnoSolver.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
     xU_i = UnoSolver.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
-    rc = xL_i - xU_i
-    return min(0.0, _dual_multiplier(model) * rc)
-end
-
-function MOI.get(
-    model::Optimizer,
-    attr::MOI.ConstraintDual,
-    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}},
-)
-    MOI.check_result_index_bounds(model, attr)
-    MOI.throw_if_not_valid(model, ci)
-    xL_i = UnoSolver.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
-    xU_i = UnoSolver.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
-    rc = xL_i - xU_i
-    return max(0.0, _dual_multiplier(model) * rc)
-end
-
-function MOI.get(
-    model::Optimizer,
-    attr::MOI.ConstraintDual,
-    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.EqualTo{Float64}},
-)
-    MOI.check_result_index_bounds(model, attr)
-    MOI.throw_if_not_valid(model, ci)
-    xL_i = UnoSolver.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
-    xU_i = UnoSolver.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
-    rc = xL_i - xU_i
-    return _dual_multiplier(model) * rc
-end
-
-function MOI.get(
-    model::Optimizer,
-    attr::MOI.ConstraintDual,
-    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{Float64}},
-)
-    MOI.check_result_index_bounds(model, attr)
-    MOI.throw_if_not_valid(model, ci)
-    xL_i = UnoSolver.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
-    xU_i = UnoSolver.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
-    rc = xL_i - xU_i
-    return _dual_multiplier(model) * rc
+    return _reduced_cost_to_dual(S, _dual_multiplier(model) * (xL_i + xU_i))
 end
 
 ### MOI.NLPBlockDual
 
 function MOI.get(model::Optimizer, attr::MOI.NLPBlockDual)
     MOI.check_result_index_bounds(model, attr)
-    s = -_dual_multiplier(model)
-    nquad = length(model.qp_data)
-    v = Vector{Float64}(undef, model.inner.ncon - nquad)
-    for i = nquad+1:model.inner.ncon
-        v[i-nquad] = s * UnoSolver.uno_get_constraint_dual_solution_component(model.solver, i-1)
-    end
-    return v
+    s = _dual_multiplier(model)
+    return Float64[
+        s * UnoSolver.uno_get_constraint_dual_solution_component(model.solver, i)
+        for i in length(model.qp_data):(model.inner.ncon-1)
+    ]
 end
