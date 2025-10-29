@@ -163,10 +163,10 @@ function uno_model(
   eval_hessian::Function,
   eval_Jv::Union{Function,Nothing},
   eval_Jtv::Union{Function,Nothing},
-  eval_Hv::Union{Function,Nothing};
+  eval_Hv::Union{Function,Nothing},
+  user_model=nothing,
   hessian_triangle::Char='L',
   lagrangian_sign::Float64=1.0,
-  user_model=nothing
 )
   @assert nvar == length(lvar) == length(uvar)
   @assert ncon == length(lcon) == length(ucon)
@@ -225,6 +225,43 @@ function uno_model(
   return model
 end
 
+
+function uno(
+  problem_type::String,
+  minimize::Bool,
+  nvar::Int,
+  ncon::Int,
+  lvar::Vector{Float64},
+  uvar::Vector{Float64},
+  lcon::Vector{Float64},
+  ucon::Vector{Float64},
+  jrows::Vector{Cint},
+  jcols::Vector{Cint},
+  nnzj::Int,
+  hrows::Vector{Cint},
+  hcols::Vector{Cint},
+  nnzh::Int,
+  eval_objective::Function,
+  eval_constraints::Function,
+  eval_gradient::Function,
+  eval_jacobian::Function,
+  eval_hessian::Function,
+  eval_Jv::Union{Function,Nothing},
+  eval_Jtv::Union{Function,Nothing},
+  eval_Hv::Union{Function,Nothing},
+  user_model=nothing,
+  hessian_triangle::Char='L',
+  lagrangian_sign::Float64=1.0;
+  kwargs...
+)
+  model = uno_model(problem_type, minimize, nvar, ncon, lvar, uvar, lcon, ucon, jrows,
+                    jcols, nnzj, hrows, hcols, nnzh, eval_objective, eval_constraints,
+                    eval_gradient, eval_jacobian, eval_hessian, eval_Jv, eval_Jtv,
+                    eval_Hv, user_model, hessian_triangle, lagrangian_sign)
+  solver = uno_solver(; kwargs...)
+  uno_optimize(solver, Model)
+  return model, solver
+end
 
 function uno_set_initial_primal_iterate(model::Model, initial_primal_iterate::Vector{Float64})
   @assert model.c_model != C_NULL
