@@ -103,8 +103,6 @@ All log files can be found [here](https://github.com/cvanaret/nonconvex_solver_c
 
 ## How to cite Uno
 
-### In an article
-
 We have submitted our paper to the Mathematical Programming Computation journal. The preprint is available on [ResearchGate](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization).
 
 Until it is published, you can use the following bibtex entry:
@@ -117,11 +115,6 @@ Until it is published, you can use the following bibtex entry:
   note = {Submitted to Mathematical Programming Computation}
 }
 ```
-
-### On social media
-
-To mention Uno on Twitter, use [@UnoSolver](https://twitter.com/UnoSolver).  
-To mention Uno on LinkedIn, use [#unosolver](https://www.linkedin.com/feed/hashtag/?keywords=unosolver).  
 
 ## Credits
 
