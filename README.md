@@ -1,12 +1,10 @@
-# Uno
+<p align="center">
+   <img src="docs/figures/logo.png" alt="Uno" width="100%" />
+</p>
 
-<div align="center">
+# Uno (Unifying Nonlinear Optimization)
 
-   *A modern, modular solver for nonlinearly constrained optimization*
-
-</div>
-
-Uno (Unifying Nonlinear Optimization) is a C++ library that unifies methods for solving nonlinearly constrained optimization problems of the form:
+Uno is a C++ library that unifies methods for solving nonlinearly constrained optimization problems of the form:
 
 $$
 \begin{align}
@@ -18,25 +16,19 @@ $$
 
 where $f: \mathbb{R}^n \rightarrow \mathbb{R}$ and $c: \mathbb{R}^n \rightarrow \mathbb{R}^m$ are (ideally twice) continuously differentiable.
 
-We consider the family of **Lagrange-Newton (essentially SQP and interior-point) methods** that iteratively solve the optimality (KKT) conditions with Newton's method, and we argue that most Lagrange-Newton methods can be broken down into the following generic ingredients:
-* a **constraint relaxation strategy**: a systematic way to relax the general constraints;
-* an **inequality handling method**: a systematic way to handle the inequality constraints;
-* a **Lagrange-Newton subproblem**: a local Lagrange-Newton approximation of the reformulated problem, composed of:
-	* a **Hessian model**: a model of the Lagrangian Hessian of the original problem;
-	* an **inertia control strategy**: a strategy to correct the inertia of the Lagrangian Hessian or the augmented system of the reformulated problem;
-* a **globalization strategy**: an acceptance test of the trial iterate;
-* a **globalization mechanism**: a recourse action upon rejection of the trial iterate.
+Uno unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods that iteratively solve the optimality (KKT) conditions with Newton's method. It breaks them down into a set of building blocks that interact with one another. Our unification framework can be visualized in the following hypergraph (not all are implemented in Uno yet):
 
-The following graph gives an overview of state-of-the-art strategies:
 <p align="center">
-   <img src="docs/figures/wheel.png" alt="Uno hypergraph" width="55%" />
+   <img src="docs/figures/wheel.png" alt="Uno hypergraph" width="40%" />
 </p>
 
-**Any strategy combination** can be automatically generated without any programming effort from the user. Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches. For more details, check out our [preprint](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization) or my [latest slides](https://www.researchgate.net/publication/390271091).
-
-Uno implements **presets**, that is strategy combinations that correspond to existing solvers (as well as hyperparameter values found in their documentations):
+Thanks to Uno, you can combine these strategies in a ton of different ways. In particular, Uno implements **presets**, that is strategy combinations that mimic existing solvers:
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual inertia correction).
+
+Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches.
+
+For more details on our unification theory, check out the [UNIFICATION](UNIFICATION.md) page, our [preprint](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization), or my [latest slides](https://www.researchgate.net/publication/390271091).
 
 ## Installation instructions
 
@@ -73,7 +65,7 @@ Uno can be used from Julia in two ways:
    An example can be found [here](https://discourse.julialang.org/t/the-uno-unifying-nonconvex-optimization-solver/115883/21).
 
 ### Python
-Uno's Python bindings can be compiled via the command `make unopy` and require pybind11. For more details, see their [README.md](interfaces/Python/README.md).
+Uno's Python bindings can be compiled via the command `make unopy` and require [pybind11](https://github.com/pybind/pybind11). For more details, see their [README.md](interfaces/Python/README.md).
 
 ### C
 Uno's C interface is compiled as part of the Uno library. For more details, see its [README.md](interfaces/C/README.md).
