@@ -4,7 +4,7 @@
 
 # Uno (Unifying Nonlinear Optimization)
 
-Uno is a C++ library that unifies methods for solving nonlinearly constrained optimization problems of the form:
+Uno is a C++ library for solving nonlinearly constrained optimization problems of the form:
 
 $$
 \begin{align}
