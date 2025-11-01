@@ -259,7 +259,7 @@ function uno(
                     eval_gradient, eval_jacobian, eval_hessian, eval_Jv, eval_Jtv,
                     eval_Hv, user_model, hessian_triangle, lagrangian_sign)
   solver = uno_solver(; kwargs...)
-  uno_optimize(solver, Model)
+  uno_optimize(solver, model)
   return model, solver
 end
 
