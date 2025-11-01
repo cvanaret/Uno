@@ -123,6 +123,22 @@ namespace uno {
       }
    }
 
+   std::map<std::string, int32_t> Options::get_integer_options() const {
+      return this->integer_options;
+   }
+
+   std::map<std::string, double> Options::get_double_options() const {
+      return this->double_options;      
+   }
+
+   std::map<std::string, bool> Options::get_bool_options() const {
+      return this->bool_options;      
+   }
+
+   std::map<std::string, std::string> Options::get_string_options() const {
+      return this->string_options;      
+   }
+
    // argv[i] for i = offset..argc-1 are overwriting options
    Options Options::get_command_line_options(int argc, char* argv[], size_t offset) {
       static const std::string delimiter = "=";
