@@ -167,9 +167,13 @@ function uno_model(
   user_model=nothing,
   hessian_triangle::Char='L',
   lagrangian_sign::Float64=1.0,
+  x0::Union{Vector{Float64},Nothing}=nothing,
+  y0::Union{Vector{Float64},Nothing}=nothing,
 )
   @assert nvar == length(lvar) == length(uvar)
   @assert ncon == length(lcon) == length(ucon)
+  @assert isnothing(x0) || nvar == length(x0)
+  @assert isnothing(y0) || ncon == length(y0)
 
   # "LP" for linear problem, "QP" for quadratic problem, "NLP" for nonlinear problem
   @assert problem_type == "LP" || problem_type == "QP" || problem_type == "NLP"
@@ -221,6 +225,14 @@ function uno_model(
     end
   end
 
+  if !isnothing(x0)
+    uno_set_initial_primal_iterate(c_model, x0)
+  end
+
+  if !isnothing(y0)
+    uno_set_initial_dual_iterate(c_model, y0)
+  end
+
   finalizer(uno_destroy_model, model)
   return model
 end
@@ -251,13 +263,15 @@ function uno(
   eval_Hv::Union{Function,Nothing},
   user_model=nothing,
   hessian_triangle::Char='L',
-  lagrangian_sign::Float64=1.0;
+  lagrangian_sign::Float64=1.0,
+  x0::Union{Vector{Float64},Nothing}=nothing,
+  y0::Union{Vector{Float64},Nothing}=nothing;
   kwargs...
 )
   model = uno_model(problem_type, minimize, nvar, ncon, lvar, uvar, lcon, ucon, jrows,
                     jcols, nnzj, hrows, hcols, nnzh, eval_objective, eval_constraints,
                     eval_gradient, eval_jacobian, eval_hessian, eval_Jv, eval_Jtv,
-                    eval_Hv, user_model, hessian_triangle, lagrangian_sign)
+                    eval_Hv, user_model, hessian_triangle, lagrangian_sign, x0, y0)
   solver = uno_solver(; kwargs...)
   uno_optimize(solver, model)
   return model, solver

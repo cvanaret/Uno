@@ -79,16 +79,16 @@ function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}}, op
     nlp,
     'L',
     1.0,
+    nlp.meta.x0,
+    nlp.meta.y0
   )
-  UnoSolver.uno_set_initial_primal_iterate(model, nlp.meta.x0)
-  UnoSolver.uno_set_initial_dual_iterate(model, nlp.meta.y0)
   return model
 end
 
 function UnoSolver.uno(nlp::AbstractNLPModel{Float64, Vector{Float64}}, operators_available::Bool=true; kwargs...)
   model = UnoSolver.uno_model(nlp, operators_available)
   solver = UnoSolver.uno_solver(; kwargs...)
-  uno_optimize(solver, model)
+  UnoSolver.uno_optimize(solver, model)
   return model, solver
 end
 
