@@ -1333,10 +1333,10 @@ function _setup_model(model::Optimizer)
         moi_lagrangian_hessian,
         (has_jacobian_operator && !has_oracle) ? moi_jacobian_operator : nothing,
         (has_jacobian_operator && !has_oracle) ? moi_jacobian_transposed_operator : nothing,
-        (has_hessian_operator && !has_oracle) ? moi_lagrangian_hessian_operator : nothing;
-        hessian_triangle='L',
-        lagrangian_sign=1.0,
-        user_model=model,
+        (has_hessian_operator && !has_oracle) ? moi_lagrangian_hessian_operator : nothing,
+        model,
+        'L',
+        1.0,
     )
     model.solver = UnoSolver.uno_solver()
     return
