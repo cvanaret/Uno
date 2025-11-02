@@ -30,9 +30,7 @@ Below are examples showing how to use `UnoSolver.jl` with the interfaces for `NL
 using UnoSolver, CUTEst
 
 nlp = CUTEstModel{Float64}("HS15")
-model = uno_model(nlp)
-solver = uno_solver(preset="filtersqp", print_solution=true, logger="INFO")
-uno_optimize(solver, model)
+model, solver = uno(nlp, preset="filtersqp", print_solution=true, logger="INFO")
 
 timer = UnoSolver.uno_get_cpu_time(solver)
 niter = UnoSolver.uno_get_number_iterations(solver)
