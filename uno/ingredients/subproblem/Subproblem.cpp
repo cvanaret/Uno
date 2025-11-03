@@ -20,12 +20,12 @@ namespace uno {
          inertia_correction_strategy(inertia_correction_strategy), trust_region_radius(trust_region_radius) {
    }
 
-   void Subproblem::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
-         MatrixOrder matrix_order) const {
+   void Subproblem::compute_constraint_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
+                                                         MatrixOrder matrix_order) const {
       this->problem.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
-   void Subproblem::compute_regularized_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const {
+   void Subproblem::compute_regularized_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const {
       // sparsity of original Lagrangian Hessian
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
@@ -41,8 +41,8 @@ namespace uno {
    }
 
    // lower triangular part of the symmetric augmented matrix
-   void Subproblem::compute_regularized_augmented_matrix_sparsity(int* row_indices, int* column_indices,
-         const int* jacobian_row_indices, const int* jacobian_column_indices, int solver_indexing) const {
+   void Subproblem::compute_regularized_augmented_matrix_sparsity(uno_int *row_indices, uno_int *column_indices,
+                                                                  const uno_int *jacobian_row_indices, const uno_int *jacobian_column_indices, uno_int solver_indexing) const {
       // sparsity of original Lagrangian Hessian in the (1, 1) block
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 

@@ -8,6 +8,7 @@
 #include <vector>
 #include "linear_algebra/Vector.hpp"
 #include "optimization/EvaluationSpace.hpp"
+#include "../interfaces/C/uno_int.h"
 
 namespace uno {
    class COOEvaluationSpace: public EvaluationSpace {
@@ -32,14 +33,14 @@ namespace uno {
 
       // Jacobian
       size_t number_jacobian_nonzeros{};
-      std::vector<int> jacobian_row_indices{};
-      std::vector<int> jacobian_column_indices{};
+      std::vector<uno_int> jacobian_row_indices{};
+      std::vector<uno_int> jacobian_column_indices{};
 
       // symmetric matrix (Hessian or augmented system)
       size_t number_hessian_nonzeros{};
       size_t number_matrix_nonzeros{};
-      std::vector<int> matrix_row_indices{};
-      std::vector<int> matrix_column_indices{};
+      std::vector<uno_int> matrix_row_indices{};
+      std::vector<uno_int> matrix_column_indices{};
       Vector<double> matrix_values;
       Vector<double> rhs{};
       Vector<double> solution{};

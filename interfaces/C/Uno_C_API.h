@@ -7,13 +7,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
+#include "uno_int.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
    // Optimization sense
-   const int32_t UNO_MINIMIZE =  1;
-   const int32_t UNO_MAXIMIZE = -1;
+   const uno_int UNO_MINIMIZE =  1;
+   const uno_int UNO_MAXIMIZE = -1;
 
    // Lagrange multiplier sign convention
    const double UNO_MULTIPLIER_POSITIVE =  1.0;
@@ -25,66 +26,66 @@ extern "C" {
    const char UNO_PROBLEM_NONLINEAR[] = "NLP";
 
    // Base indexing style: 0-based (C) or 1-based (Fortran)
-   const int32_t UNO_ZERO_BASED_INDEXING = 0;
-   const int32_t UNO_ONE_BASED_INDEXING  = 1;
+   const uno_int UNO_ZERO_BASED_INDEXING = 0;
+   const uno_int UNO_ONE_BASED_INDEXING  = 1;
 
    // Triangular part: 'L' = lower, 'U' = upper
    const char UNO_LOWER_TRIANGLE = 'L';
    const char UNO_UPPER_TRIANGLE = 'U';
 
    // Option type: 0 = integer, 1 = double, 2 = boolean, 3 = string, -1 = not found
-   const int32_t UNO_OPTION_TYPE_INTEGER = 0;
-   const int32_t UNO_OPTION_TYPE_DOUBLE = 1;
-   const int32_t UNO_OPTION_TYPE_BOOL = 2;
-   const int32_t UNO_OPTION_TYPE_STRING = 3;
-   const int32_t UNO_OPTION_TYPE_NOT_FOUND = -1;
+   const uno_int UNO_OPTION_TYPE_INTEGER = 0;
+   const uno_int UNO_OPTION_TYPE_DOUBLE = 1;
+   const uno_int UNO_OPTION_TYPE_BOOL = 2;
+   const uno_int UNO_OPTION_TYPE_STRING = 3;
+   const uno_int UNO_OPTION_TYPE_NOT_FOUND = -1;
 
    // Optimization status
-   const int32_t UNO_SUCCESS = 0;
-   const int32_t UNO_ITERATION_LIMIT = 1;
-   const int32_t UNO_TIME_LIMIT = 2;
-   const int32_t UNO_EVALUATION_ERROR = 3;
-   const int32_t UNO_ALGORITHMIC_ERROR = 4;
-   const int32_t UNO_USER_TERMINATION = 5;
+   const uno_int UNO_SUCCESS = 0;
+   const uno_int UNO_ITERATION_LIMIT = 1;
+   const uno_int UNO_TIME_LIMIT = 2;
+   const uno_int UNO_EVALUATION_ERROR = 3;
+   const uno_int UNO_ALGORITHMIC_ERROR = 4;
+   const uno_int UNO_USER_TERMINATION = 5;
 
    // Iterate status
-   const int32_t UNO_NOT_OPTIMAL = 0;
-   const int32_t UNO_FEASIBLE_KKT_POINT = 1; // feasible stationary point
-   const int32_t UNO_FEASIBLE_FJ_POINT = 2; // stationary point without constraint qualification
-   const int32_t UNO_INFEASIBLE_STATIONARY_POINT = 3; // infeasible stationary point of constraint violation
-   const int32_t UNO_FEASIBLE_SMALL_STEP = 4;
-   const int32_t UNO_INFEASIBLE_SMALL_STEP = 5;
-   const int32_t UNO_UNBOUNDED = 6;
+   const uno_int UNO_NOT_OPTIMAL = 0;
+   const uno_int UNO_FEASIBLE_KKT_POINT = 1; // feasible stationary point
+   const uno_int UNO_FEASIBLE_FJ_POINT = 2; // stationary point without constraint qualification
+   const uno_int UNO_INFEASIBLE_STATIONARY_POINT = 3; // infeasible stationary point of constraint violation
+   const uno_int UNO_FEASIBLE_SMALL_STEP = 4;
+   const uno_int UNO_INFEASIBLE_SMALL_STEP = 5;
+   const uno_int UNO_UNBOUNDED = 6;
 
    // current Uno version is 2.3.0
-   const int32_t UNO_VERSION_MAJOR = 2;
-   const int32_t UNO_VERSION_MINOR = 3;
-   const int32_t UNO_VERSION_PATCH = 0;
+   const uno_int UNO_VERSION_MAJOR = 2;
+   const uno_int UNO_VERSION_MINOR = 3;
+   const uno_int UNO_VERSION_PATCH = 0;
 
    // get the current Uno version as v major.minor.patch
-   void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch);
+   void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and
    // stores the objective value of "x" in "objective_value".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int32_t (*Objective)(int32_t number_variables, const double* x, double* objective_value, void* user_data);
+   typedef uno_int (*Objective)(uno_int number_variables, const double* x, double* objective_value, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the constraint
    // values at "x" in the vector "constraint_values" of size "number_constraints".
    // - returns an integer that is 0 if the evaluations succeeded, and positive otherwise.
-   typedef int32_t (*Constraints)(int32_t number_variables, int32_t number_constraints, const double* x, double* constraint_values,
+   typedef uno_int (*Constraints)(uno_int number_variables, uno_int number_constraints, const double* x, double* constraint_values,
       void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the dense objective
    // gradient at "x" in the vector "gradient" of size "number_variables".
    // - returns an integer that is 0 if the evaluations succeeded, and positive otherwise.
-   typedef int32_t (*ObjectiveGradient)(int32_t number_variables, const double* x, double* gradient, void* user_data);
+   typedef uno_int (*ObjectiveGradient)(uno_int number_variables, const double* x, double* gradient, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the entries of the
    // sparse constraint Jacobian in the vector "jacobian" of size "number_jacobian_nonzeros". The values should be in
    // the same order as the indices provided in "constraint_jacobian_sparsity".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int32_t (*Jacobian)(int32_t number_variables, int32_t number_jacobian_nonzeros, const double* x, double* jacobian,
+   typedef uno_int (*Jacobian)(uno_int number_variables, uno_int number_jacobian_nonzeros, const double* x, double* jacobian,
       void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", an objective multiplier, a vector "multipliers" of
@@ -93,7 +94,7 @@ extern "C" {
    // the same order as the indices provided in "constraint_jacobian_sparsity".
    // Only the lower triangular part of the symmetric Lagrangian Hessian should be provided.
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int32_t (*Hessian)(int32_t number_variables, int32_t number_constraints, int32_t number_hessian_nonzeros,
+   typedef uno_int (*Hessian)(uno_int number_variables, uno_int number_constraints, uno_int number_hessian_nonzeros,
       const double* x, double objective_multiplier, const double* multipliers, double* hessian, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
@@ -101,7 +102,7 @@ extern "C" {
    // of size "number_variables" and an object "user_data", and stores the Jacobian-vector product in the vector
    // "result" of size "number_constraints".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int32_t (*JacobianOperator)(int32_t number_variables, int32_t number_constraints, const double* x,
+   typedef uno_int (*JacobianOperator)(uno_int number_variables, uno_int number_constraints, const double* x,
       bool evaluate_at_x, const double* vector, double* result, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
@@ -109,7 +110,7 @@ extern "C" {
    // of size "number_constraints" and an object "user_data", and stores the Jacobian transposed-vector product in the
    // vector "result" of size "number_variables".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int32_t (*JacobianTransposedOperator)(int32_t number_variables, int32_t number_constraints, const double* x,
+   typedef uno_int (*JacobianTransposedOperator)(uno_int number_variables, uno_int number_constraints, const double* x,
       bool evaluate_at_x, const double* vector, double* result, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
@@ -118,7 +119,7 @@ extern "C" {
    // size "number_variables", and an object "user_data", and stores the Hessian-vector product in the vector "result"
    // of size "number_variables".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
-   typedef int32_t (*HessianOperator)(int32_t number_variables, int32_t number_constraints, const double* x,
+   typedef uno_int (*HessianOperator)(uno_int number_variables, uno_int number_constraints, const double* x,
       bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
       double* result, void* user_data);
 
@@ -126,7 +127,7 @@ extern "C" {
    // the lower and upper bound multipliers of size "number_variables", a vector "constraint_multipliers" of size
    // "number_constraints", an objective multiplier, the primal feasibility residual, the dual feasibility residual, and
    // the complementarity residual.
-   typedef void (*NotifyAcceptableIterateUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals,
+   typedef void (*NotifyAcceptableIterateUserCallback)(uno_int number_variables, uno_int number_constraints, const double* primals,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
       double objective_multiplier, double primal_feasibility_residual, double stationarity_residual,
       double complementarity_residual, void* user_data);
@@ -136,28 +137,28 @@ extern "C" {
    // "number_constraints", an objective multiplier, the primal feasibility residual, the dual feasibility residual, and
    // the complementarity residual.
    // returns true for user termination.
-   typedef bool (*TerminationUserCallback)(int32_t number_variables, int32_t number_constraints, const double* primals,
+   typedef bool (*TerminationUserCallback)(uno_int number_variables, uno_int number_constraints, const double* primals,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
       double objective_multiplier, double primal_feasibility_residual, double stationarity_residual,
       double complementarity_residual, void* user_data);
 
    // - takes as inputs a vector "buffer" of size "length".
-   typedef int32_t (*LoggerStreamUserCallback)(const char* buffer, int32_t length, void* user_data);
+   typedef uno_int (*LoggerStreamUserCallback)(const char* buffer, uno_int length, void* user_data);
 
    // creates an optimization model that can be solved by Uno.
    // initially, the model contains "number_variables" variables, no objective function, and no constraints.
    // takes as inputs the type of problem (UNO_PROBLEM_LINEAR, UNO_PROBLEM_QUADRATIC, or UNO_PROBLEM_NONLINEAR), the
    // number of variables, two arrays of lower and upper bounds of size "number_variables", and the vector indexing
    // (0 for C-style indexing, 1 for Fortran-style indexing).
-   void* uno_create_model(const char* problem_type, int32_t number_variables, const double* variables_lower_bounds,
-      const double* variables_upper_bounds, int32_t base_indexing);
+   void* uno_create_model(const char* problem_type, uno_int number_variables, const double* variables_lower_bounds,
+      const double* variables_upper_bounds, uno_int base_indexing);
 
    // [optional]
    // sets the objective and objective gradient of a given model.
    // takes as inputs the optimization sense (UNO_MINIMIZE or UNO_MAXIMIZE), a function pointer of the objective
    // function and a function pointer of its gradient function.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_objective(void* model, int32_t optimization_sense, Objective objective_function,
+   bool uno_set_objective(void* model, uno_int optimization_sense, Objective objective_function,
       ObjectiveGradient objective_gradient);
 
    // [optional]
@@ -166,9 +167,9 @@ extern "C" {
    // upper bounds of size "number_constraints", the number of nonzero elements of the Jacobian, two arrays of row and
    // column indices for the constraint Jacobian in COOrdinate format, and a function pointer of the constraint Jacobian.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
-      const double* constraints_lower_bounds, const double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
-      const int32_t* jacobian_row_indices, const int32_t* jacobian_column_indices, Jacobian constraint_jacobian);
+   bool uno_set_constraints(void* model, uno_int number_constraints, Constraints constraint_functions,
+      const double* constraints_lower_bounds, const double* constraints_upper_bounds, uno_int number_jacobian_nonzeros,
+      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, Jacobian constraint_jacobian);
 
    // [optional]
    // sets the Jacobian operator (computes Jacobian-vector products) of a given model.
@@ -190,8 +191,8 @@ extern "C" {
    // if "lagrangian_sign_convention" == 1,  the Lagrangian is rho*f(x) + y^T c(x)
    // if "lagrangian_sign_convention" == -1, the Lagrangian is rho*f(x) - y^T c(x)
    // returns true if it succeeded, false otherwise.
-   bool uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
-      const int32_t* hessian_row_indices, const int32_t* hessian_column_indices, Hessian lagrangian_hessian,
+   bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
+      const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, Hessian lagrangian_hessian,
       double lagrangian_sign_convention);
 
    // [optional]
@@ -212,12 +213,12 @@ extern "C" {
    // [optional]
    // sets one component of the initial primal iterate for a given model.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_initial_primal_iterate_component(void* model, int32_t index, double initial_primal_component);
+   bool uno_set_initial_primal_iterate_component(void* model, uno_int index, double initial_primal_component);
 
    // [optional]
    // sets one component of the initial dual iterate for a given model.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_initial_dual_iterate_component(void* model, int32_t index, double initial_dual_component);
+   bool uno_set_initial_dual_iterate_component(void* model, uno_int index, double initial_dual_component);
 
    // [optional]
    // sets the initial primal iterate of a given model.
@@ -236,7 +237,7 @@ extern "C" {
    // takes as inputs the name of the option and the value to which it should be set.
    // the possible types are integer, double, bool and string.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_solver_integer_option(void* solver, const char* option_name, int32_t option_value);
+   bool uno_set_solver_integer_option(void* solver, const char* option_name, uno_int option_value);
    bool uno_set_solver_double_option(void* solver, const char* option_name, double option_value);
    bool uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value);
    bool uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value);
@@ -244,7 +245,7 @@ extern "C" {
    // gets the type of a particular option in the Uno solver.
    // takes as input the name of the option.
    // the possible types are integer, double, bool and string.
-   int32_t uno_get_solver_option_type(void* solver, const char* option_name);
+   uno_int uno_get_solver_option_type(void* solver, const char* option_name);
 
    // [optional] loads the options from a given option file.
    // takes as input the name of the option file.
@@ -283,25 +284,25 @@ extern "C" {
    const char* uno_get_solver_string_option(void* solver, const char* option_name);
 
    // gets the optimization status (once the model was solved)
-   int32_t uno_get_optimization_status(void* solver);
+   uno_int uno_get_optimization_status(void* solver);
 
    // gets the iterate status (once the model was solved)
-   int32_t uno_get_solution_status(void* solver);
+   uno_int uno_get_solution_status(void* solver);
 
    // gets the objective value at the solution (once the model was solved)
    double uno_get_solution_objective(void* solver);
 
    // gets one component of the primal solution (once the model was solved)
-   double uno_get_primal_solution_component(void* solver, int32_t index);
+   double uno_get_primal_solution_component(void* solver, uno_int index);
 
    // gets one component of the constraint dual solution (once the model was solved)
-   double uno_get_constraint_dual_solution_component(void* solver, int32_t index);
+   double uno_get_constraint_dual_solution_component(void* solver, uno_int index);
 
    // gets one component of the lower bound dual solution (once the model was solved)
-   double uno_get_lower_bound_dual_solution_component(void* solver, int32_t index);
+   double uno_get_lower_bound_dual_solution_component(void* solver, uno_int index);
 
    // gets one component of the upper bound dual solution (once the model was solved)
-   double uno_get_upper_bound_dual_solution_component(void* solver, int32_t index);
+   double uno_get_upper_bound_dual_solution_component(void* solver, uno_int index);
 
    // gets the primal solution (once the model was solved)
    void uno_get_primal_solution(void* solver, double* primal_solution);
@@ -325,28 +326,28 @@ extern "C" {
    double uno_get_solution_complementarity(void* solver);
 
    // gets the number of outer iterations required by the solver (once the model was solved)
-   int32_t uno_get_number_iterations(void* solver);
+   uno_int uno_get_number_iterations(void* solver);
 
    // gets the CPU time required by the solver (once the model was solved)
    double uno_get_cpu_time(void* solver);
 
    // gets the number of objective evaluations required by the solver (once the model was solved)
-   int32_t uno_get_number_objective_evaluations(void* solver);
+   uno_int uno_get_number_objective_evaluations(void* solver);
 
    // gets the number of constraint evaluations required by the solver (once the model was solved)
-   int32_t uno_get_number_constraint_evaluations(void* solver);
+   uno_int uno_get_number_constraint_evaluations(void* solver);
 
    // gets the number of objective gradient evaluations required by the solver (once the model was solved)
-   int32_t uno_get_number_objective_gradient_evaluations(void* solver);
+   uno_int uno_get_number_objective_gradient_evaluations(void* solver);
 
    // gets the number of constraint Jacobian evaluations required by the solver (once the model was solved)
-   int32_t uno_get_number_jacobian_evaluations(void* solver);
+   uno_int uno_get_number_jacobian_evaluations(void* solver);
 
    // gets the number of Lagrangian Hessian evaluations required by the solver (once the model was solved)
-   int32_t uno_get_number_hessian_evaluations(void* solver);
+   uno_int uno_get_number_hessian_evaluations(void* solver);
 
    // gets the number of subproblems solved by the solver (once the model was solved)
-   int32_t uno_get_number_subproblem_solved_evaluations(void* solver);
+   uno_int uno_get_number_subproblem_solved_evaluations(void* solver);
 
    // destroys a given Uno model. Once destroyed, the model cannot be used anymore.
    void uno_destroy_model(void* model);

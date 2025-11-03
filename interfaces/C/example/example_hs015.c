@@ -4,25 +4,25 @@
 #include <math.h>
 #include "Uno_C_API.h"
 
-int32_t objective_function(int32_t /*number_variables*/, const double* x, double* objective_value, void* /*user_data*/) {
+uno_int objective_function(uno_int /*number_variables*/, const double* x, double* objective_value, void* /*user_data*/) {
 	*objective_value = 100.*pow(x[1] - pow(x[0], 2.), 2.) + pow(1. - x[0], 2.);
 	return 0;
 }
 
-int32_t constraint_functions(int32_t /*number_variables*/, int32_t /*number_constraints*/, const double* x,
+uno_int constraint_functions(uno_int /*number_variables*/, uno_int /*number_constraints*/, const double* x,
 		double* constraint_values, void* /*user_data*/) {
 	constraint_values[0] = x[0]*x[1];
 	constraint_values[1] = x[0] + pow(x[1], 2.);
 	return 0;
 }
 
-int32_t objective_gradient(int32_t /*number_variables*/, const double* x, double* gradient, void* /*user_data*/) {
+uno_int objective_gradient(uno_int /*number_variables*/, const double* x, double* gradient, void* /*user_data*/) {
 	gradient[0] = 400.*pow(x[0], 3.) - 400.*x[0]*x[1] + 2.*x[0] - 2.;
 	gradient[1] = 200.*(x[1] - pow(x[0], 2.));
 	return 0;
 }
 
-int32_t constraint_jacobian(int32_t /*number_variables*/, int32_t /*number_jacobian_nonzeros*/, const double* x,
+uno_int constraint_jacobian(uno_int /*number_variables*/, uno_int /*number_jacobian_nonzeros*/, const double* x,
 		double* jacobian, void* /*user_data*/) {
 	jacobian[0] = x[1];
 	jacobian[1] = 1.;
@@ -31,7 +31,7 @@ int32_t constraint_jacobian(int32_t /*number_variables*/, int32_t /*number_jacob
 	return 0.;
 }
 
-int32_t lagrangian_hessian(int32_t /*number_variables*/, int32_t /*number_constraints*/, int32_t /*number_hessian_nonzeros*/,
+uno_int lagrangian_hessian(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_hessian_nonzeros*/,
       const double* x, double objective_multiplier, const double* multipliers, double* hessian, void* /*user_data*/) {
 	hessian[0] = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
 	hessian[1] = -400.*objective_multiplier*x[0] - multipliers[0];
@@ -39,7 +39,7 @@ int32_t lagrangian_hessian(int32_t /*number_variables*/, int32_t /*number_constr
 	return 0;
 }
 
-int32_t lagrangian_hessian_operator(int32_t number_variables, int32_t number_constraints, const double* x,
+uno_int lagrangian_hessian_operator(uno_int number_variables, uno_int number_constraints, const double* x,
       bool evaluate_at_x, double objective_multiplier, const double* multipliers, const double* vector,
       double* result, void* user_data) {
 	const double hessian00 = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
@@ -50,7 +50,7 @@ int32_t lagrangian_hessian_operator(int32_t number_variables, int32_t number_con
 	return 0;
 }
 
-void print_vector(const double* vector, int32_t size) {
+void print_vector(const double* vector, uno_int size) {
 	for (size_t index = 0; index < size; ++index) {
 		printf("%g ", vector[index]);
 	}
@@ -58,30 +58,30 @@ void print_vector(const double* vector, int32_t size) {
 }
 
 int main() {
-	int32_t uno_major, uno_minor, uno_patch;
+	uno_int uno_major, uno_minor, uno_patch;
 	uno_get_version(&uno_major, &uno_minor, &uno_patch);
 	printf("Uno v%d.%d.%d\n", uno_major, uno_minor, uno_patch);
 
 	// model creation
-	const int32_t base_indexing = UNO_ZERO_BASED_INDEXING;
+	const uno_int base_indexing = UNO_ZERO_BASED_INDEXING;
 	// variables
-	const int32_t number_variables = 2;
+	const uno_int number_variables = 2;
 	double variables_lower_bounds[] = {-INFINITY, -INFINITY};
 	double variables_upper_bounds[] = {0.5, INFINITY};
 	// objective
-	const int32_t optimization_sense = UNO_MINIMIZE;
+	const uno_int optimization_sense = UNO_MINIMIZE;
 	// constraints
-	const int32_t number_constraints = 2;
+	const uno_int number_constraints = 2;
 	double constraints_lower_bounds[] = {1., 0.};
 	double constraints_upper_bounds[] = {INFINITY, INFINITY};
-	const int32_t number_jacobian_nonzeros = 4;
-	int32_t jacobian_row_indices[] = {0, 1, 0, 1};
-	int32_t jacobian_column_indices[] = {0, 0, 1, 1};
+	const uno_int number_jacobian_nonzeros = 4;
+	uno_int jacobian_row_indices[] = {0, 1, 0, 1};
+	uno_int jacobian_column_indices[] = {0, 0, 1, 1};
 	// Hessian
-	const int32_t number_hessian_nonzeros = 3;
+	const uno_int number_hessian_nonzeros = 3;
 	const char hessian_triangular_part = UNO_LOWER_TRIANGLE;
-	int32_t hessian_row_indices[] = {0, 1, 1};
-	int32_t hessian_column_indices[] = {0, 0, 1};
+	uno_int hessian_row_indices[] = {0, 1, 1};
+	uno_int hessian_column_indices[] = {0, 0, 1};
 	const double lagrangian_sign_convention = UNO_MULTIPLIER_NEGATIVE;
 	// initial point
 	double x0[] = {-2., 1.};
@@ -108,9 +108,9 @@ int main() {
 	uno_optimize(solver, model);
 
 	// get the solution
-	const int32_t optimization_status = uno_get_optimization_status(solver);
+	const uno_int optimization_status = uno_get_optimization_status(solver);
 	assert(optimization_status == UNO_SUCCESS);
-	const int32_t iterate_status = uno_get_solution_status(solver);
+	const uno_int iterate_status = uno_get_solution_status(solver);
 	assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
 	const double solution_objective = uno_get_solution_objective(solver);
 	printf("\nReading the result from the C file:\n");

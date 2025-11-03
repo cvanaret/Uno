@@ -16,8 +16,8 @@ namespace uno {
       py::class_<PythonUserModel>(module, "Model")
       // constructor
       // https://stackoverflow.com/a/62310838/16037994
-      .def(py::init<>([](const char* problem_type, int32_t number_variables, const std::vector<double>& variables_lower_bounds,
-            const std::vector<double>& variables_upper_bounds, int32_t base_indexing) {
+      .def(py::init<>([](const char* problem_type, uno_int number_variables, const std::vector<double>& variables_lower_bounds,
+            const std::vector<double>& variables_upper_bounds, uno_int base_indexing) {
          PythonUserModel model(problem_type, number_variables, base_indexing);
          // copy the bounds internally
          const size_t unsigned_number_variables = static_cast<size_t>(number_variables);
@@ -31,7 +31,7 @@ namespace uno {
       }), "Constructor")
 
       // methods
-      .def("set_objective", [](PythonUserModel& user_model, int32_t optimization_sense, const Objective& objective_function,
+      .def("set_objective", [](PythonUserModel& user_model, uno_int optimization_sense, const Objective& objective_function,
             const ObjectiveGradient& objective_gradient) {
          if (optimization_sense != UNO_MINIMIZE && optimization_sense != UNO_MAXIMIZE) {
             throw std::runtime_error("Please specify a valid objective sense.");
@@ -41,9 +41,9 @@ namespace uno {
          user_model.objective_gradient = objective_gradient;
       })
 
-      .def("set_constraints", [](PythonUserModel& user_model, int32_t number_constraints, const Constraints& constraint_functions,
-            std::vector<double>& constraints_lower_bounds, std::vector<double>& constraints_upper_bounds, int32_t number_jacobian_nonzeros,
-            const std::vector<int32_t>& jacobian_row_indices, const std::vector<int32_t>& jacobian_column_indices,
+      .def("set_constraints", [](PythonUserModel& user_model, uno_int number_constraints, const Constraints& constraint_functions,
+            std::vector<double>& constraints_lower_bounds, std::vector<double>& constraints_upper_bounds, uno_int number_jacobian_nonzeros,
+            const std::vector<uno_int>& jacobian_row_indices, const std::vector<uno_int>& jacobian_column_indices,
             const Jacobian& constraint_jacobian) {
          if (number_constraints <= 0) {
             throw std::runtime_error("Please specify a positive number of constraints.");
@@ -63,8 +63,8 @@ namespace uno {
          user_model.constraint_jacobian = constraint_jacobian;
       })
 
-      .def("set_lagrangian_hessian", [](PythonUserModel& user_model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
-            const std::vector<int32_t>& hessian_row_indices, const std::vector<int32_t>& hessian_column_indices,
+      .def("set_lagrangian_hessian", [](PythonUserModel& user_model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
+            const std::vector<uno_int>& hessian_row_indices, const std::vector<uno_int>& hessian_column_indices,
             const Hessian& lagrangian_hessian, double lagrangian_sign_convention) {
          if (number_hessian_nonzeros <= 0) {
             throw std::runtime_error("Please specify a positive number of Lagrangian Hessian nonzeros.");

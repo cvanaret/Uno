@@ -10,6 +10,7 @@
 #include "linear_algebra/Norm.hpp"
 #include "optimization/ProblemType.hpp"
 #include "symbolic/VectorExpression.hpp"
+#include "../interfaces/C/uno_int.h"
 
 namespace uno {
    // forward declarations
@@ -53,9 +54,9 @@ namespace uno {
       virtual void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const = 0;
 
       // sparsity patterns of Jacobian and Hessian
-      virtual void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
+      virtual void compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const = 0;
-      virtual void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const = 0;
+      virtual void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const = 0;
 
       // numerical evaluations of Jacobian and Hessian
       virtual void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const = 0;
