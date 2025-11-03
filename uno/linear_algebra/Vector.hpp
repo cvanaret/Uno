@@ -26,6 +26,7 @@ namespace uno {
       Vector(std::initializer_list<ElementType> initializer_list): vector(initializer_list) { }
       Vector(const Vector<ElementType>& other) noexcept : vector(other.vector) { }
       Vector(Vector<ElementType>&& other) noexcept : vector(std::move(other.vector)) { }
+      Vector(const_iterator begin, const_iterator end): vector(begin, end) { }
       ~Vector() = default;
 
       // copy assignment operator

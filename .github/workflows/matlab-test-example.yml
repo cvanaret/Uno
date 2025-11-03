@@ -1,0 +1,97 @@
+name: Test the Matlab interface on the example 
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+       matrix:
+        include:
+          - os: windows-latest
+            addpath: install/bin
+          - os: macos-14
+            addpath: install/lib
+        
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v2
+        
+      - name: Download dependency (BQPD)
+        shell: bash
+        run: |
+            VERSION_BQPD="1.0.0"
+            if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+              PLATFORM="x86_64-w64-mingw32"
+              choco install wget
+            else
+              PLATFORM="aarch64-apple-darwin"
+            fi
+            wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
+            mkdir deps
+            tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
+
+      - name: Add MinGW64 to PATH (Windows)
+        if: matrix.os == 'windows-latest'
+        run: echo "C:\tools\msys64\mingw64\bin" >> "$GITHUB_PATH"
+      
+      - name: Install Fortran compiler (MacOS)
+        if: matrix.os != 'windows-latest'
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '13'
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            cmake -G "MinGW Makefiles" -B "${{github.workspace}}/build" \
+              -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+              -DBQPD="${{github.workspace}}/deps/lib/libbqpd.a"
+          else
+            cmake -B "${{github.workspace}}/build" \
+              -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+              -DBQPD="${{github.workspace}}/deps/lib/libbqpd.a"
+          fi
+        
+      - name: Build uno
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j4
+
+      - name: Build unomex
+        run: cmake --build ${{github.workspace}}/build --target unomex --config ${{env.BUILD_TYPE}} -j4
+
+      - name: Install unomex
+        run: cmake --install ${{github.workspace}}/build --prefix ${{github.workspace}}/install
+
+      - name: Run example (high-level interface)
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            addpath('${{ matrix.addpath }}'); 
+            run('interfaces/Matlab/example/example_uno.m');
+
+      - name: Run example (low-level interface)
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            addpath('${{ matrix.addpath }}');
+            run('interfaces/Matlab/example/example_hs015.m');
+        
