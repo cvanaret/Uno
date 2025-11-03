@@ -6,10 +6,6 @@
 
 #include <cstdint>
 
-#ifdef USE_64BIT_INTEGERS
-using UnoInt = int64_t;
-#else
-using UnoInt = int32_t;
-#endif
+using uno_int = int32_t;
 
 #endif // UNO_INTEGERTYPE_H

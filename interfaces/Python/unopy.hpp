@@ -15,24 +15,24 @@
 namespace py = pybind11;
 
 namespace uno {
-   using Objective = std::function<int(int32_t, const Vector<double>&, PointerWrapper<double>, const py::object&)>;
+   using Objective = std::function<int(uno_int, const Vector<double>&, PointerWrapper<double>, const py::object&)>;
 
-   using Constraints = std::function<int(int32_t, int32_t, const Vector<double>&, PointerWrapper<double>, const py::object&)>;
+   using Constraints = std::function<int(uno_int, uno_int, const Vector<double>&, PointerWrapper<double>, const py::object&)>;
 
-   using ObjectiveGradient = std::function<int(int32_t, const Vector<double>&, PointerWrapper<double>, const py::object&)>;
+   using ObjectiveGradient = std::function<int(uno_int, const Vector<double>&, PointerWrapper<double>, const py::object&)>;
 
-   using Jacobian = std::function<int(int32_t, int32_t, const Vector<double>&, PointerWrapper<double>, const py::object&)>;
+   using Jacobian = std::function<int(uno_int, uno_int, const Vector<double>&, PointerWrapper<double>, const py::object&)>;
 
-   using Hessian = std::function<int(int32_t, int32_t, int32_t, const Vector<double>&, double, const Vector<double>&,
+   using Hessian = std::function<int(uno_int, uno_int, uno_int, const Vector<double>&, double, const Vector<double>&,
       PointerWrapper<double>, const py::object&)>;
 
-   using JacobianOperator = std::function<int(int32_t, int32_t, PointerWrapper<const double>, bool, PointerWrapper<const double>,
+   using JacobianOperator = std::function<int(uno_int, uno_int, PointerWrapper<const double>, bool, PointerWrapper<const double>,
       PointerWrapper<double>, const py::object&)>;
 
-   using JacobianTransposedOperator = std::function<int(int32_t, int32_t, PointerWrapper<const double>, bool,
+   using JacobianTransposedOperator = std::function<int(uno_int, uno_int, PointerWrapper<const double>, bool,
       PointerWrapper<const double>, PointerWrapper<double>, const py::object&)>;
 
-   using HessianOperator = std::function<int(int32_t, int32_t, PointerWrapper<const double>, bool, double,
+   using HessianOperator = std::function<int(uno_int, uno_int, PointerWrapper<const double>, bool, double,
       const Vector<double>&, PointerWrapper<const double>, PointerWrapper<double>, const py::object&)>;
 
    using PythonUserModel = UserModel<std::optional<Objective>, std::optional<ObjectiveGradient>, std::optional<Constraints>,

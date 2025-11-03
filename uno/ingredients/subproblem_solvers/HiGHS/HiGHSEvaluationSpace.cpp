@@ -34,7 +34,7 @@ namespace uno {
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(),
-         this->jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
+                                                      this->jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
       // HiGHS matrix in CSC format (variable after variable)
       this->model.lp_.a_matrix_.index_.resize(number_jacobian_nonzeros); // constraint indices
       this->model.lp_.a_matrix_.start_.resize(subproblem.number_variables + 1);
@@ -146,7 +146,7 @@ namespace uno {
       this->hessian_row_indices.resize(number_regularized_hessian_nonzeros);
       this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
       subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
-         this->hessian_column_indices.data(), Indexing::C_indexing);
+                                                      this->hessian_column_indices.data(), Indexing::C_indexing);
 
       // HiGHS requires a lower-triangular CSC Hessian: the entries should be in increasing column indices.
       // Since the COO format does not require this, we need to convert from COO to CSC by permutating the entries. To

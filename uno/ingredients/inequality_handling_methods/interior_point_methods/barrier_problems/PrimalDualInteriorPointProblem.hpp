@@ -26,10 +26,10 @@ namespace uno {
       void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const override;
 
       // sparsity patterns of Jacobian and Hessian
-      void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
+      void compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const override;
-      void compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
-         int* column_indices, int solver_indexing) const override;
+      void compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,
+         uno_int* column_indices, uno_int solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;

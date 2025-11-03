@@ -30,7 +30,7 @@ namespace uno {
    class UserModel {
    public:
       // problem_type is "LP" for linear, "QP" for quadratic, "NLP" for nonlinear
-      UserModel(const char* problem_type, int32_t number_variables, int32_t base_indexing):
+      UserModel(const char* problem_type, uno_int number_variables, uno_int base_indexing):
             problem_type(problem_type_from_string(problem_type)),
             base_indexing(base_indexing),
             number_variables(number_variables) {
@@ -39,10 +39,10 @@ namespace uno {
       ~UserModel() = default;
 
       const ProblemType problem_type;
-      const int32_t base_indexing; // 0 for C-style indexing, 1 for Fortran-style indexing
+      const uno_int base_indexing; // 0 for C-style indexing, 1 for Fortran-style indexing
 
       // variables
-      const int32_t number_variables;
+      const uno_int number_variables;
       DoubleVector variables_lower_bounds{};
       DoubleVector variables_upper_bounds{};
 
@@ -51,23 +51,23 @@ namespace uno {
       ObjectiveGradient objective_gradient{nullptr};
 
       // constraints
-      int32_t number_constraints{0};
+      uno_int number_constraints{0};
       Constraints constraint_functions{nullptr};
       DoubleVector constraints_lower_bounds{};
       DoubleVector constraints_upper_bounds{};
-      int32_t number_jacobian_nonzeros{0};
-      std::vector<int32_t> jacobian_row_indices{};
-      std::vector<int32_t> jacobian_column_indices{};
+      uno_int number_jacobian_nonzeros{0};
+      std::vector<uno_int> jacobian_row_indices{};
+      std::vector<uno_int> jacobian_column_indices{};
       Jacobian constraint_jacobian{nullptr};
       JacobianOperator jacobian_operator{nullptr};
       JacobianTransposedOperator jacobian_transposed_operator{nullptr};
 
       // Hessian
-      std::optional<int32_t> number_hessian_nonzeros{};
+      std::optional<uno_int> number_hessian_nonzeros{};
       // lower ('L') or upper ('U')
       char hessian_triangular_part{}; // default is empty
-      std::vector<int32_t> hessian_row_indices{};
-      std::vector<int32_t> hessian_column_indices{};
+      std::vector<uno_int> hessian_row_indices{};
+      std::vector<uno_int> hessian_column_indices{};
       Hessian lagrangian_hessian{nullptr};
       HessianOperator lagrangian_hessian_operator{nullptr};
       double lagrangian_sign_convention{UNO_MULTIPLIER_NEGATIVE};
@@ -76,7 +76,7 @@ namespace uno {
       UserDataType user_data{};
 
       // Optimization sense
-      int32_t optimization_sense{UNO_MINIMIZE};
+      uno_int optimization_sense{UNO_MINIMIZE};
 
       // initial iterate
       DoubleVector initial_primal_iterate{};

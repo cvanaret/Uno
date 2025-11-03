@@ -3,36 +3,36 @@
 #include <math.h>
 #include "Uno_C_API.h"
 
-int32_t objective_function(int32_t /*number_variables*/, const double* x, double* objective_value, void* /*user_data*/) {
+uno_int objective_function(uno_int /*number_variables*/, const double* x, double* objective_value, void* /*user_data*/) {
 	*objective_value = 100.*pow(x[1] - pow(x[0], 2.), 2.) + pow(1. - x[0], 2.);
 	return 0;
 }
 
-int32_t objective_function_max(int32_t /*number_variables*/, const double* x, double* objective_value, void* /*user_data*/) {
+uno_int objective_function_max(uno_int /*number_variables*/, const double* x, double* objective_value, void* /*user_data*/) {
 	*objective_value = -(100.*pow(x[1] - pow(x[0], 2.), 2.) + pow(1. - x[0], 2.));
 	return 0;
 }
 
-int32_t constraint_functions(int32_t /*number_variables*/, int32_t /*number_constraints*/, const double* x,
+uno_int constraint_functions(uno_int /*number_variables*/, uno_int /*number_constraints*/, const double* x,
 		double* constraint_values, void* /*user_data*/) {
 	constraint_values[0] = x[0]*x[1];
 	constraint_values[1] = x[0] + pow(x[1], 2.);
 	return 0;
 }
 
-int32_t objective_gradient(int32_t /*number_variables*/, const double* x, double* gradient, void* /*user_data*/) {
+uno_int objective_gradient(uno_int /*number_variables*/, const double* x, double* gradient, void* /*user_data*/) {
 	gradient[0] = 400.*pow(x[0], 3.) - 400.*x[0]*x[1] + 2.*x[0] - 2.;
 	gradient[1] = 200.*(x[1] - pow(x[0], 2.));
 	return 0;
 }
 
-int32_t objective_gradient_max(int32_t /*number_variables*/, const double* x, double* gradient, void* /*user_data*/) {
+uno_int objective_gradient_max(uno_int /*number_variables*/, const double* x, double* gradient, void* /*user_data*/) {
 	gradient[0] = -(400.*pow(x[0], 3.) - 400.*x[0]*x[1] + 2.*x[0] - 2.);
 	gradient[1] = -(200.*(x[1] - pow(x[0], 2.)));
 	return 0;
 }
 
-int32_t constraint_jacobian(int32_t /*number_variables*/, int32_t /*number_jacobian_nonzeros*/, const double* x,
+uno_int constraint_jacobian(uno_int /*number_variables*/, uno_int /*number_jacobian_nonzeros*/, const double* x,
 		double* jacobian, void* /*user_data*/) {
 	jacobian[0] = x[1];
 	jacobian[1] = 1.;
@@ -41,7 +41,7 @@ int32_t constraint_jacobian(int32_t /*number_variables*/, int32_t /*number_jacob
 	return 0.;
 }
 
-int32_t lagrangian_hessian_negative_sign(int32_t /*number_variables*/, int32_t /*number_constraints*/, int32_t /*number_hessian_nonzeros*/,
+uno_int lagrangian_hessian_negative_sign(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_hessian_nonzeros*/,
       const double* x, double objective_multiplier, const double* multipliers, double* hessian, void* /*user_data*/) {
 	hessian[0] = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
 	hessian[1] = -400.*objective_multiplier*x[0] - multipliers[0];
@@ -49,7 +49,7 @@ int32_t lagrangian_hessian_negative_sign(int32_t /*number_variables*/, int32_t /
 	return 0;
 }
 
-int32_t lagrangian_hessian_positive_sign(int32_t /*number_variables*/, int32_t /*number_constraints*/, int32_t /*number_hessian_nonzeros*/,
+uno_int lagrangian_hessian_positive_sign(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_hessian_nonzeros*/,
       const double* x, double objective_multiplier, const double* multipliers, double* hessian, void* /*user_data*/) {
 	hessian[0] = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
 	hessian[1] = -400.*objective_multiplier*x[0] + multipliers[0];
@@ -57,7 +57,7 @@ int32_t lagrangian_hessian_positive_sign(int32_t /*number_variables*/, int32_t /
 	return 0;
 }
 
-int32_t lagrangian_hessian_max_negative_sign(int32_t /*number_variables*/, int32_t /*number_constraints*/, int32_t /*number_hessian_nonzeros*/,
+uno_int lagrangian_hessian_max_negative_sign(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_hessian_nonzeros*/,
 		const double* x, double objective_multiplier, const double* multipliers, double* hessian, void* /*user_data*/) {
 	hessian[0] = -objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
 	hessian[1] = -400.*-objective_multiplier*x[0] - multipliers[0];
@@ -65,7 +65,7 @@ int32_t lagrangian_hessian_max_negative_sign(int32_t /*number_variables*/, int32
 	return 0;
 }
 
-int32_t lagrangian_hessian_max_positive_sign(int32_t /*number_variables*/, int32_t /*number_constraints*/, int32_t /*number_hessian_nonzeros*/,
+uno_int lagrangian_hessian_max_positive_sign(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_hessian_nonzeros*/,
 		const double* x, double objective_multiplier, const double* multipliers, double* hessian, void* /*user_data*/) {
 	hessian[0] = -objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
 	hessian[1] = -400.*-objective_multiplier*x[0] + multipliers[0];
@@ -73,34 +73,34 @@ int32_t lagrangian_hessian_max_positive_sign(int32_t /*number_variables*/, int32
 	return 0;
 }
 
-void print_vector(const double* vector, int32_t size) {
+void print_vector(const double* vector, uno_int size) {
 	for (size_t index = 0; index < size; ++index) {
 		printf("%g ", vector[index]);
 	}
 	printf("\n");
 }
 
-void solve_instance(int32_t optimization_sense, double lagrangian_sign_convention, double reference_objective,
+void solve_instance(uno_int optimization_sense, double lagrangian_sign_convention, double reference_objective,
 		const double reference_primal_solution[], const double reference_constraint_dual_solution[],
 		const double reference_lower_bound_dual_solution[], const double reference_upper_bound_dual_solution[]) {
 	// model creation
-	const int32_t base_indexing = UNO_ZERO_BASED_INDEXING;
+	const uno_int base_indexing = UNO_ZERO_BASED_INDEXING;
 	// variables
-	const int32_t number_variables = 2;
+	const uno_int number_variables = 2;
 	double variables_lower_bounds[] = {-INFINITY, -INFINITY};
 	double variables_upper_bounds[] = {0.5, INFINITY};
 	// constraints
-	const int32_t number_constraints = 2;
+	const uno_int number_constraints = 2;
 	double constraints_lower_bounds[] = {1., 0.};
 	double constraints_upper_bounds[] = {INFINITY, INFINITY};
-	const int32_t number_jacobian_nonzeros = 4;
-	int32_t jacobian_row_indices[] = {0, 1, 0, 1};
-	int32_t jacobian_column_indices[] = {0, 0, 1, 1};
+	const uno_int number_jacobian_nonzeros = 4;
+	uno_int jacobian_row_indices[] = {0, 1, 0, 1};
+	uno_int jacobian_column_indices[] = {0, 0, 1, 1};
 	// Hessian
-	const int32_t number_hessian_nonzeros = 3;
+	const uno_int number_hessian_nonzeros = 3;
 	const char hessian_triangular_part = UNO_LOWER_TRIANGLE;
-	int32_t hessian_row_indices[] = {0, 1, 1};
-	int32_t hessian_column_indices[] = {0, 0, 1};
+	uno_int hessian_row_indices[] = {0, 1, 1};
+	uno_int hessian_column_indices[] = {0, 0, 1};
 	// initial point
 	double x0[] = {-2., 1.};
 	
@@ -150,9 +150,9 @@ void solve_instance(int32_t optimization_sense, double lagrangian_sign_conventio
 	uno_optimize(solver, model);
 	
 	// tests
-	const int32_t optimization_status = uno_get_optimization_status(solver);
+	const uno_int optimization_status = uno_get_optimization_status(solver);
 	assert(optimization_status == UNO_SUCCESS);
-	const int32_t iterate_status = uno_get_solution_status(solver);
+	const uno_int iterate_status = uno_get_solution_status(solver);
 	assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
 	// objective
 	const double solution_objective = uno_get_solution_objective(solver);

@@ -10,7 +10,7 @@
 
 namespace uno {
    // setters
-   void Options::set_integer(const std::string& option_name, int32_t option_value, bool flag_as_overwritten) {
+   void Options::set_integer(const std::string& option_name, uno_int option_value, bool flag_as_overwritten) {
       this->integer_options[option_name] = option_value;
       this->overwritten_options[option_name] = flag_as_overwritten;
    }
@@ -53,7 +53,7 @@ namespace uno {
    }
 
    // getters
-   int Options::get_int(const std::string& option_name) const {
+   uno_int Options::get_int(const std::string& option_name) const {
       this->used[option_name] = true;
       try {
          return this->integer_options.at(option_name);

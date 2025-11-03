@@ -30,7 +30,7 @@ namespace uno {
          this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_values.resize(number_regularized_hessian_nonzeros);
          subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
-            this->hessian_column_indices.data(), Indexing::C_indexing);
+                                                         this->hessian_column_indices.data(), Indexing::C_indexing);
       }
       else {
          // TODO allocate some vector to contain the result of Hv (see compute_hessian_quadratic_product)
@@ -141,7 +141,7 @@ namespace uno {
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(),
-         this->jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
+                                                      this->jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
 
       // BQPD (sparse) requires a (weak) CSR Jacobian: the entries should be in increasing constraint indices.
       // Since the COO format does not require this, we need to convert from COO to CSR by permutating the entries. To

@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <string>
 #include <string_view>
+#include "tools/uno_int.hpp"
 
 namespace uno {
    // forward declarations
@@ -27,7 +28,7 @@ namespace uno {
       [[nodiscard]] virtual bool has_hessian_matrix() const = 0;
       [[nodiscard]] virtual bool has_curvature() const = 0;
       [[nodiscard]] virtual size_t number_nonzeros() const = 0;
-      virtual void compute_sparsity(int* row_indices, int* column_indices, int solver_indexing) const = 0;
+      virtual void compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const = 0;
       [[nodiscard]] virtual bool is_positive_definite() const = 0;
 
       virtual void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,

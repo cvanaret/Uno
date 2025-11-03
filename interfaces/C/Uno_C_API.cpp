@@ -66,7 +66,7 @@ public:
    [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override {
       double objective_value{0.};
       if (this->user_model.objective_function != nullptr) {
-         const int32_t return_code = this->user_model.objective_function(this->user_model.number_variables, x.data(),
+         const uno_int return_code = this->user_model.objective_function(this->user_model.number_variables, x.data(),
             &objective_value, this->user_model.user_data);
          if (0 < return_code) {
             throw FunctionEvaluationError();
@@ -79,7 +79,7 @@ public:
 
    void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override {
       if (this->user_model.constraint_functions != nullptr) {
-         const int32_t return_code = this->user_model.constraint_functions(this->user_model.number_variables,
+         const uno_int return_code = this->user_model.constraint_functions(this->user_model.number_variables,
             this->user_model.number_constraints, x.data(), constraints.data(), this->user_model.user_data);
          if (0 < return_code) {
             throw FunctionEvaluationError();
@@ -91,7 +91,7 @@ public:
    // dense objective gradient
    void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override {
       if (this->user_model.objective_gradient != nullptr) {
-         const int32_t return_code = this->user_model.objective_gradient(this->user_model.number_variables, x.data(),
+         const uno_int return_code = this->user_model.objective_gradient(this->user_model.number_variables, x.data(),
             gradient.data(), this->user_model.user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
@@ -104,8 +104,8 @@ public:
    }
 
    // sparsity patterns of Jacobian and Hessian
-   void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
-         MatrixOrder /*matrix_order*/) const override {
+   void compute_constraint_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
+                                             MatrixOrder /*matrix_order*/) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
       for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
          row_indices[nonzero_index] = this->user_model.jacobian_row_indices[nonzero_index];
@@ -115,7 +115,7 @@ public:
 
       // handle the solver indexing
       if (this->user_model.base_indexing != solver_indexing) {
-         const int indexing_difference = solver_indexing - this->user_model.base_indexing;
+         const uno_int indexing_difference = solver_indexing - this->user_model.base_indexing;
          for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
             row_indices[nonzero_index] += indexing_difference;
             column_indices[nonzero_index] += indexing_difference;
@@ -123,7 +123,7 @@ public:
       }
    }
 
-   void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override {
+   void compute_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
       const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
@@ -133,7 +133,7 @@ public:
 
       // handle the solver indexing
       if (this->user_model.base_indexing != solver_indexing) {
-         const int indexing_difference = solver_indexing - this->user_model.base_indexing;
+         const uno_int indexing_difference = solver_indexing - this->user_model.base_indexing;
          for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
             row_indices[nonzero_index] += indexing_difference;
             column_indices[nonzero_index] += indexing_difference;
@@ -144,7 +144,7 @@ public:
    // numerical evaluations of Jacobian and Hessian
    void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override {
       if (this->user_model.constraint_jacobian != nullptr) {
-         const int32_t return_code = this->user_model.constraint_jacobian(this->user_model.number_variables,
+         const uno_int return_code = this->user_model.constraint_jacobian(this->user_model.number_variables,
             this->user_model.number_jacobian_nonzeros, x.data(), jacobian_values, this->user_model.user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
@@ -161,8 +161,8 @@ public:
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
-         const int32_t number_hessian_nonzeros = static_cast<int32_t>(this->number_hessian_nonzeros());
-         const int32_t return_code = this->user_model.lagrangian_hessian(this->user_model.number_variables,
+         const uno_int number_hessian_nonzeros = static_cast<uno_int>(this->number_hessian_nonzeros());
+         const uno_int return_code = this->user_model.lagrangian_hessian(this->user_model.number_variables,
             this->user_model.number_constraints, number_hessian_nonzeros, x.data(), objective_multiplier,
             multipliers.data(), hessian_values, this->user_model.user_data);
          // flip the signs of the multipliers back
@@ -181,7 +181,7 @@ public:
 
    void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const override {
       if (this->user_model.jacobian_operator != nullptr) {
-         const int32_t return_code = this->user_model.jacobian_operator(this->user_model.number_variables,
+         const uno_int return_code = this->user_model.jacobian_operator(this->user_model.number_variables,
             this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
@@ -194,7 +194,7 @@ public:
 
    void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const override {
       if (this->user_model.jacobian_transposed_operator != nullptr) {
-         const int32_t return_code = this->user_model.jacobian_transposed_operator(this->user_model.number_variables,
+         const uno_int return_code = this->user_model.jacobian_transposed_operator(this->user_model.number_variables,
             this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
@@ -213,7 +213,7 @@ public:
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
-         const int32_t return_code = this->user_model.lagrangian_hessian_operator(this->user_model.number_variables,
+         const uno_int return_code = this->user_model.lagrangian_hessian_operator(this->user_model.number_variables,
             this->user_model.number_constraints, x, true, objective_multiplier, multipliers.data(), vector, result, this->user_model.user_data);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
@@ -345,8 +345,8 @@ public:
    void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
          double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) override {
       if (this->notify_acceptable_iterate_callback != nullptr) {
-         this->notify_acceptable_iterate_callback(static_cast<int32_t>(primals.size()),
-            static_cast<int32_t>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(),
+         this->notify_acceptable_iterate_callback(static_cast<uno_int>(primals.size()),
+            static_cast<uno_int>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(),
             multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility_residual,
             stationarity_residual, complementarity_residual, this->user_data);
       }
@@ -355,8 +355,8 @@ public:
    bool user_termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
          double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) override {
       if (this->user_termination_callback) {
-         return this->user_termination_callback(static_cast<int32_t>(primals.size()),
-            static_cast<int32_t>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(),
+         return this->user_termination_callback(static_cast<uno_int>(primals.size()),
+            static_cast<uno_int>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(),
             multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility_residual,
             stationarity_residual, complementarity_residual, this->user_data);
       }
@@ -416,9 +416,9 @@ private:
       std::ptrdiff_t current_used_buffer_size = this->pptr() - this->pbase();
       if (current_used_buffer_size > 0) {
          // call user logger callback
-         const int32_t callback_result = this->logger_stream_callback(this->pbase(), static_cast<int32_t>(current_used_buffer_size),
+         const uno_int callback_result = this->logger_stream_callback(this->pbase(), static_cast<uno_int>(current_used_buffer_size),
             this->user_data);
-         if (callback_result != static_cast<int32_t>(current_used_buffer_size)) {
+         if (callback_result != static_cast<uno_int>(current_used_buffer_size)) {
             return -1;
          }
          // move buffer pointer
@@ -448,14 +448,14 @@ struct Solver {
    Result* result;
 };
 
-void uno_get_version(int32_t* major, int32_t* minor, int32_t* patch) {
+void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch) {
    *major = UNO_VERSION_MAJOR;
    *minor = UNO_VERSION_MINOR;
    *patch = UNO_VERSION_PATCH;
 }
 
-void* uno_create_model(const char* problem_type, int32_t number_variables, const double* variables_lower_bounds,
-      const double* variables_upper_bounds, int32_t base_indexing) {
+void* uno_create_model(const char* problem_type, uno_int number_variables, const double* variables_lower_bounds,
+      const double* variables_upper_bounds, uno_int base_indexing) {
    if (number_variables <= 0) {
       WARNING << "Please specify a positive number of variables."  << std::endl;
       return nullptr;
@@ -488,7 +488,7 @@ void* uno_create_model(const char* problem_type, int32_t number_variables, const
    return user_model;
 }
 
-bool uno_set_objective(void* model, int32_t optimization_sense, Objective objective_function,
+bool uno_set_objective(void* model, uno_int optimization_sense, Objective objective_function,
       ObjectiveGradient objective_gradient) {
    if (optimization_sense != UNO_MINIMIZE && optimization_sense != UNO_MAXIMIZE) {
       WARNING << "Please specify a valid objective sense."  << std::endl;
@@ -503,9 +503,9 @@ bool uno_set_objective(void* model, int32_t optimization_sense, Objective object
    return true;
 }
 
-bool uno_set_constraints(void* model, int32_t number_constraints, Constraints constraint_functions,
-      const double* constraints_lower_bounds, const double* constraints_upper_bounds, int32_t number_jacobian_nonzeros,
-      const int32_t* jacobian_row_indices, const int32_t* jacobian_column_indices, Jacobian constraint_jacobian) {
+bool uno_set_constraints(void* model, uno_int number_constraints, Constraints constraint_functions,
+      const double* constraints_lower_bounds, const double* constraints_upper_bounds, uno_int number_jacobian_nonzeros,
+      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, Jacobian constraint_jacobian) {
    if (number_constraints <= 0) {
       WARNING << "Please specify a positive number of constraints."  << std::endl;
       return false;
@@ -556,8 +556,8 @@ bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperato
    return true;
 }
 
-bool uno_set_lagrangian_hessian(void* model, int32_t number_hessian_nonzeros, char hessian_triangular_part,
-      const int32_t* hessian_row_indices, const int32_t* hessian_column_indices, Hessian lagrangian_hessian,
+bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
+      const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, Hessian lagrangian_hessian,
       double lagrangian_sign_convention) {
    if (number_hessian_nonzeros <= 0) {
       WARNING << "Please specify a positive number of Lagrangian Hessian nonzeros."  << std::endl;
@@ -623,7 +623,7 @@ bool uno_set_user_data(void* model, void* user_data) {
    return true;
 }
 
-bool uno_set_initial_primal_iterate_component(void* model, int32_t index, double initial_primal_component) {
+bool uno_set_initial_primal_iterate_component(void* model, uno_int index, double initial_primal_component) {
    assert(model != nullptr);
    CUserModel* user_model = static_cast<CUserModel*>(model);
    if (0 <= index && index < user_model->number_variables) {
@@ -634,7 +634,7 @@ bool uno_set_initial_primal_iterate_component(void* model, int32_t index, double
    return false;
 }
 
-bool uno_set_initial_dual_iterate_component(void* model, int32_t index, double initial_dual_component) {
+bool uno_set_initial_dual_iterate_component(void* model, uno_int index, double initial_dual_component) {
    assert(model != nullptr);
    CUserModel* user_model = static_cast<CUserModel*>(model);
    if (0 <= index && index < user_model->number_constraints) {
@@ -698,7 +698,7 @@ void* uno_create_solver() {
    return solver;
 }
 
-bool uno_set_solver_integer_option(void* solver, const char* option_name, int32_t option_value) {
+bool uno_set_solver_integer_option(void* solver, const char* option_name, uno_int option_value) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->options->set_integer(option_name, option_value);
    return true;
@@ -728,10 +728,10 @@ bool uno_set_solver_string_option(void* solver, const char* option_name, const c
    return true;
 }
 
-int32_t uno_get_solver_option_type(void* solver, const char* option_name) {
+uno_int uno_get_solver_option_type(void* solver, const char* option_name) {
    Solver* uno_solver = static_cast<Solver*>(solver);
    try {
-      return static_cast<int32_t>(uno_solver->options->get_option_type(option_name));
+      return static_cast<uno_int>(uno_solver->options->get_option_type(option_name));
    }
    catch(const std::out_of_range&) {
       return UNO_OPTION_TYPE_NOT_FOUND;
@@ -828,14 +828,14 @@ Result* uno_get_result(void* solver) {
    return uno_solver->result;
 }
 
-int32_t uno_get_optimization_status(void* solver) {
+uno_int uno_get_optimization_status(void* solver) {
    const Result* result = uno_get_result(solver);
-   return static_cast<int32_t>(result->optimization_status);
+   return static_cast<uno_int>(result->optimization_status);
 }
 
-int32_t uno_get_solution_status(void* solver) {
+uno_int uno_get_solution_status(void* solver) {
    const Result* result = uno_get_result(solver);
-   return static_cast<int32_t>(result->solution_status);
+   return static_cast<uno_int>(result->solution_status);
 }
 
 double uno_get_solution_objective(void* solver) {
@@ -843,28 +843,28 @@ double uno_get_solution_objective(void* solver) {
    return result->solution_objective;
 }
 
-double uno_get_primal_solution_component(void* solver, int32_t index) {
+double uno_get_primal_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
    const size_t unsigned_index = static_cast<size_t>(index);
    assert(0 <= index && unsigned_index < result->number_variables);
    return result->primal_solution[unsigned_index];
 }
 
-double uno_get_constraint_dual_solution_component(void* solver, int32_t index) {
+double uno_get_constraint_dual_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
    const size_t unsigned_index = static_cast<size_t>(index);
    assert(0 <= index && unsigned_index < result->number_constraints);
    return result->constraint_dual_solution[unsigned_index];
 }
 
-double uno_get_lower_bound_dual_solution_component(void* solver, int32_t index) {
+double uno_get_lower_bound_dual_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
    const size_t unsigned_index = static_cast<size_t>(index);
    assert(0 <= index && unsigned_index < result->number_variables);
    return result->lower_bound_dual_solution[unsigned_index];
 }
 
-double uno_get_upper_bound_dual_solution_component(void* solver, int32_t index) {
+double uno_get_upper_bound_dual_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
    const size_t unsigned_index = static_cast<size_t>(index);
    assert(0 <= index && unsigned_index < result->number_variables);
@@ -914,9 +914,9 @@ double uno_get_solution_complementarity(void* solver) {
    return result->solution_complementarity;
 }
 
-int32_t uno_get_number_iterations(void* solver) {
+uno_int uno_get_number_iterations(void* solver) {
    const Result* result = uno_get_result(solver);
-   return static_cast<int32_t>(result->number_iterations);
+   return static_cast<uno_int>(result->number_iterations);
 }
 
 double uno_get_cpu_time(void* solver) {
@@ -924,34 +924,34 @@ double uno_get_cpu_time(void* solver) {
    return result->cpu_time;
 }
 
-int32_t uno_get_number_objective_evaluations(void* solver) {
+uno_int uno_get_number_objective_evaluations(void* solver) {
    const Result* result = uno_get_result(solver);
-   return static_cast<int32_t>(result->number_objective_evaluations);
+   return static_cast<uno_int>(result->number_objective_evaluations);
 }
 
-int32_t uno_get_number_constraint_evaluations(void* solver) {
+uno_int uno_get_number_constraint_evaluations(void* solver) {
    const Result* result = uno_get_result(solver);
-   return static_cast<int32_t>(result->number_constraint_evaluations);
+   return static_cast<uno_int>(result->number_constraint_evaluations);
 }
 
-int32_t uno_get_number_objective_gradient_evaluations(void* solver) {
+uno_int uno_get_number_objective_gradient_evaluations(void* solver) {
    const Result* result = uno_get_result(solver);
-   return static_cast<int32_t>(result->number_objective_gradient_evaluations);
+   return static_cast<uno_int>(result->number_objective_gradient_evaluations);
 }
 
-int32_t uno_get_number_jacobian_evaluations(void* solver) {
+uno_int uno_get_number_jacobian_evaluations(void* solver) {
    const Result* result = uno_get_result(solver);
-   return static_cast<int32_t>(result->number_jacobian_evaluations);
+   return static_cast<uno_int>(result->number_jacobian_evaluations);
 }
 
-int32_t uno_get_number_hessian_evaluations(void* solver) {
+uno_int uno_get_number_hessian_evaluations(void* solver) {
    const Result* result = uno_get_result(solver);
-   return static_cast<int32_t>(result->number_hessian_evaluations);
+   return static_cast<uno_int>(result->number_hessian_evaluations);
 }
 
-int32_t uno_get_number_subproblem_solved_evaluations(void* solver) {
+uno_int uno_get_number_subproblem_solved_evaluations(void* solver) {
    const Result* result = uno_get_result(solver);
-   return static_cast<int32_t>(result->number_subproblems_solved);
+   return static_cast<uno_int>(result->number_subproblems_solved);
 }
 
 void uno_destroy_model(void* model) {

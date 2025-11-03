@@ -53,8 +53,8 @@ namespace uno {
       this->model.evaluate_objective_gradient(x, gradient);
    }
 
-   void FixedBoundsConstraintsModel::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices,
-         int solver_indexing, MatrixOrder matrix_order) const {
+   void FixedBoundsConstraintsModel::compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices,
+         uno_int solver_indexing, MatrixOrder matrix_order) const {
       // original constraints
       this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
 
@@ -69,7 +69,7 @@ namespace uno {
       }
    }
 
-   void FixedBoundsConstraintsModel::compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const {
+   void FixedBoundsConstraintsModel::compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const {
       this->model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
    }
 

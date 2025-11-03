@@ -34,9 +34,9 @@ namespace uno {
       void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
 
       // sparsity patterns of Jacobian and Hessian
-      void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
-         MatrixOrder matrix_format) const override;
-      void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override;
+      void compute_constraint_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
+                                                MatrixOrder matrix_format) const override;
+      void compute_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
       void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override;

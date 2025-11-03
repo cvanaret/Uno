@@ -7,6 +7,7 @@
 #include <cstddef>
 #include "linear_algebra/Vector.hpp"
 #include "optimization/EvaluationSpace.hpp"
+#include "tools/uno_int.hpp"
 
 namespace uno {
    // forward declarations
@@ -30,15 +31,15 @@ namespace uno {
 
       Vector<double> constraints{};
       Vector<double> gradients{};
-      Vector<int> gradient_sparsity{};
+      Vector<uno_int> gradient_sparsity{};
       // COO constraint Jacobian
-      Vector<int> jacobian_row_indices{};
-      Vector<int> jacobian_column_indices{};
+      Vector<uno_int> jacobian_row_indices{};
+      Vector<uno_int> jacobian_column_indices{};
       Vector<double> jacobian_values{};
       Vector<size_t> permutation_vector{};
       // COO Hessian
-      Vector<int> hessian_row_indices{};
-      Vector<int> hessian_column_indices{};
+      Vector<uno_int> hessian_row_indices{};
+      Vector<uno_int> hessian_column_indices{};
       Vector<double> hessian_values{};
       bool evaluate_hessian{false};
 

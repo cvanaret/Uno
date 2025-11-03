@@ -4,11 +4,11 @@
 #ifndef UNO_OPTIONS_H
 #define UNO_OPTIONS_H
 
-#include <cstdint>
 #include <map>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include "tools/uno_int.hpp"
 
 namespace uno {
    enum class OptionType {INTEGER, DOUBLE, BOOL, STRING};
@@ -17,14 +17,14 @@ namespace uno {
    public:
       Options() = default;
 
-      void set_integer(const std::string& option_name, int32_t option_value, bool flag_as_overwritten = false);
+      void set_integer(const std::string& option_name, uno_int option_value, bool flag_as_overwritten = false);
       void set_double(const std::string& option_name, double option_value, bool flag_as_overwritten = false);
       void set_bool(const std::string& option_name, bool option_value, bool flag_as_overwritten = false);
       void set_string(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten = false);
       // setter for option with unknown type
       void set(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten = false);
 
-      [[nodiscard]] int get_int(const std::string& option_name) const;
+      [[nodiscard]] uno_int get_int(const std::string& option_name) const;
       [[nodiscard]] size_t get_unsigned_int(const std::string& option_name) const;
       [[nodiscard]] double get_double(const std::string& option_name) const;
       [[nodiscard]] bool get_bool(const std::string& option_name) const;
@@ -39,7 +39,7 @@ namespace uno {
       void print_used_overwritten() const;
 
    private:
-      std::map<std::string, int32_t> integer_options{};
+      std::map<std::string, uno_int> integer_options{};
       std::map<std::string, double> double_options{};
       std::map<std::string, bool> bool_options{};
       std::map<std::string, std::string> string_options{};
