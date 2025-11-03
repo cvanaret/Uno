@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         version: ['1']
-        os: [ubuntu-latest, windows-latest, macos-13]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         arch: ['x64']
         allow_failure: [false]
         include:
@@ -36,7 +36,7 @@ jobs:
         with:
           compiler: 'gcc'
           version: '14'
-        if: matrix.os == 'macos-latest' || matrix.os == 'macos-13'
+        if: matrix.os == 'macos-latest'
 
       - uses: julia-actions/setup-julia@v2
         with:
