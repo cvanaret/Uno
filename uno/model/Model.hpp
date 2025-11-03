@@ -10,7 +10,7 @@
 #include "linear_algebra/Norm.hpp"
 #include "optimization/ProblemType.hpp"
 #include "symbolic/VectorExpression.hpp"
-#include "tools/uno_int.hpp"
+#include "../interfaces/C/uno_int.h"
 
 namespace uno {
    // forward declarations

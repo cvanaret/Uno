@@ -7,12 +7,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
+#include "uno_int.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-   typedef int32_t uno_int;
-
    // Optimization sense
    const uno_int UNO_MINIMIZE =  1;
    const uno_int UNO_MAXIMIZE = -1;

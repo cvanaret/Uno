@@ -8,7 +8,7 @@
 #include "optimization/EvaluationSpace.hpp"
 #include "Highs.h"
 #include "linear_algebra/Vector.hpp"
-#include "tools/uno_int.hpp"
+#include "../interfaces/C/uno_int.h"
 
 namespace uno {
    // forward declarations

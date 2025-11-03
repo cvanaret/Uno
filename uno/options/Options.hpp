@@ -8,7 +8,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include "tools/uno_int.hpp"
+#include "../interfaces/C/uno_int.h"
 
 namespace uno {
    enum class OptionType {INTEGER, DOUBLE, BOOL, STRING};

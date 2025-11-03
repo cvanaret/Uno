@@ -8,7 +8,7 @@
 #include <vector>
 #include "linear_algebra/Vector.hpp"
 #include "optimization/EvaluationSpace.hpp"
-#include "tools/uno_int.hpp"
+#include "../interfaces/C/uno_int.h"
 
 namespace uno {
    class COOEvaluationSpace: public EvaluationSpace {

@@ -7,7 +7,7 @@
 #include <cstddef>
 #include <string>
 #include <string_view>
-#include "tools/uno_int.hpp"
+#include "../interfaces/C/uno_int.h"
 
 namespace uno {
    // forward declarations
