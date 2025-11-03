@@ -4,6 +4,7 @@
 #include <string>
 #include "ConstraintRelaxationStrategyFactory.hpp"
 #include "FeasibilityRestoration.hpp"
+#include "l1Relaxation.hpp"
 #include "UnconstrainedStrategy.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -19,6 +20,9 @@ namespace uno {
       const std::string constraint_relaxation_type = options.get_string("constraint_relaxation_strategy");
       if (constraint_relaxation_type == "feasibility_restoration") {
          return std::make_unique<FeasibilityRestoration>(options);
+      }
+      else if (constraint_relaxation_type == "l1_relaxation") {
+         return std::make_unique<l1Relaxation>(options);
       }
       throw std::invalid_argument("ConstraintRelaxationStrategy " + constraint_relaxation_type + " is not supported");
    }
