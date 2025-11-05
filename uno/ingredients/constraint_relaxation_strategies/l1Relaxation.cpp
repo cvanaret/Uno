@@ -291,7 +291,7 @@ namespace uno {
       double lower_bound = 0.;
       double upper_bound = 1.;
       bool termination = false;
-      while (not termination) {
+      while (!termination) {
          DEBUG2 << "Testing the interpolation weight " << weight << '\n';
          trial_direction = weight * feasibility_direction.primals + (1 - weight) * optimality_direction.primals;
          // update reduction in linearized feasibility model
