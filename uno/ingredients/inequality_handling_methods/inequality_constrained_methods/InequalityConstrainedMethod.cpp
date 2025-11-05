@@ -100,11 +100,6 @@ namespace uno {
       evaluation_space.compute_constraint_jacobian_transposed_vector_product(vector, result);
    }
 
-   double InequalityConstrainedMethod::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
-      const auto& evaluation_space = this->solver->get_evaluation_space();
-      return evaluation_space.compute_hessian_quadratic_product(subproblem, vector);
-   }
-
    // compute dual *displacements*
    // because of the way we form LPs/QPs, we get the new *multipliers* back from the solver. To get the dual displacements/direction,
    // we need to subtract the current multipliers

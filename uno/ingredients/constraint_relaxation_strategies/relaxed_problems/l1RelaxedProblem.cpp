@@ -27,16 +27,20 @@ namespace uno {
          constraint_violation_coefficient(constraint_violation_coefficient) {
    }
 
+   void l1RelaxedProblem::set_objective_multiplier(double new_objective_multiplier) {
+      this->objective_multiplier = new_objective_multiplier;
+   }
+
    double l1RelaxedProblem::get_objective_multiplier() const {
       return this->objective_multiplier;
    }
 
-   void l1RelaxedProblem::set_proximal_coefficient(double proximal_coefficient) {
-      this->proximal_coefficient = proximal_coefficient;
+   void l1RelaxedProblem::set_proximal_coefficient(double new_proximal_coefficient) {
+      this->proximal_coefficient = new_proximal_coefficient;
    }
 
-   void l1RelaxedProblem::set_proximal_center(double* proximal_center) {
-      this->proximal_center = proximal_center;
+   void l1RelaxedProblem::set_proximal_center(double* new_proximal_center) {
+      this->proximal_center = new_proximal_center;
    }
 
    void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {

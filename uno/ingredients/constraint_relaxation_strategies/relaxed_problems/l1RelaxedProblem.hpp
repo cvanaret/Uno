@@ -16,9 +16,10 @@ namespace uno {
          bool relax_linear_constraints);
       ~l1RelaxedProblem() override = default;
 
+      void set_objective_multiplier(double new_objective_multiplier);
       [[nodiscard]] double get_objective_multiplier() const override;
-      void set_proximal_coefficient(double proximal_coefficient);
-      void set_proximal_center(double* proximal_center);
+      void set_proximal_coefficient(double new_proximal_coefficient);
+      void set_proximal_center(double* new_proximal_center);
 
       // constraint evaluations
       void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
@@ -56,7 +57,7 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
 
       [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
-         double dual_tolerance) const;
+         double dual_tolerance) const override;
 
       void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>& elastic_setting_function) const;
 
@@ -68,7 +69,7 @@ namespace uno {
    protected:
       ElasticVariables elastic_variables;
       const size_t number_elastic_variables;
-      const double objective_multiplier;
+      double objective_multiplier;
       const double constraint_violation_coefficient;
       double proximal_coefficient{INF<double>};
       double* proximal_center{};

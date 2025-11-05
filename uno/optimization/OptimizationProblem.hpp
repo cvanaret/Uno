@@ -79,7 +79,7 @@ namespace uno {
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
 
-      [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
+      [[nodiscard]] virtual SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const;
 
       // progress measures

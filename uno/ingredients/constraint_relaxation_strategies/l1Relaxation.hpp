@@ -11,6 +11,16 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 
 namespace uno {
+   struct l1RelaxationParameters {
+      double beta;
+      double theta;
+      double kappa_rho;
+      double kappa_lambda;
+      double epsilon;
+      double omega;
+      double delta;
+   };
+
    class l1Relaxation : public ConstraintRelaxationStrategy {
    public:
       explicit l1Relaxation(const Options& options);
@@ -35,14 +45,28 @@ namespace uno {
       [[nodiscard]] std::string get_name() const override;
       [[nodiscard]] size_t get_number_subproblems_solved() const override;
 
-   private:
-      std::unique_ptr<const l1RelaxedProblem> relaxed_problem{};
+   protected:
+      std::unique_ptr<l1RelaxedProblem> relaxed_problem{};
       std::unique_ptr<const l1RelaxedProblem> feasibility_problem{};
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
+      std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
       std::unique_ptr<HessianModel> hessian_model{};
       std::unique_ptr<InertiaCorrectionStrategy<double>> inertia_correction_strategy;
-      const double constraint_violation_coefficient;
-      double penalty_parameter{1.}; // TODO
+      Multipliers feasibility_multipliers;
+      double penalty_parameter;
+      const double tolerance;
+      const l1RelaxationParameters parameters;
+
+      // auxiliary functions with the notations of the paper
+      [[nodiscard]] double v(const Iterate& current_iterate) const;
+      [[nodiscard]] double l(const Direction& direction, const Iterate& current_iterate) const;
+      [[nodiscard]] double delta_l(const Direction& direction, const Iterate& current_iterate) const;
+      [[nodiscard]] double Ropt(Iterate& current_iterate, double objective_multiplier, const Multipliers& multipliers) const;
+      [[nodiscard]] double Rinf(Iterate& current_iterate, const Multipliers& multipliers) const;
+      [[nodiscard]] double delta_m(const Direction& direction, const Iterate& current_iterate, double objective_multiplier) const;
+      [[nodiscard]] double compute_zeta(const Direction& direction, const Iterate& current_iterate) const;
+      [[nodiscard]] double compute_w(const Direction& feasibility_direction, const Direction& optimality_direction, const Iterate& current_iterate);
+      void check_exact_relaxation(const Iterate& iterate) const;
    };
 } // namespace
 
