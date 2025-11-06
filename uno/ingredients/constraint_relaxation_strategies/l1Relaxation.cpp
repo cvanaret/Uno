@@ -58,18 +58,12 @@ namespace uno {
       this->hessian_model = HessianModelFactory::create(model, options);
       this->feasibility_hessian_model = HessianModelFactory::create(model, options);
 
-      std::cout << "step 1\n";
-
       // memory allocation
       this->inequality_handling_method->initialize(*this->relaxed_problem, initial_iterate, *this->hessian_model,
          *this->inertia_correction_strategy, trust_region_radius);
-      std::cout << "step 2\n";
       this->feasibility_inequality_handling_method->initialize(*this->feasibility_problem, initial_iterate,
          *this->feasibility_hessian_model, *this->inertia_correction_strategy, trust_region_radius);
-      std::cout << "step 3\n";
       direction = Direction(this->relaxed_problem->number_variables, this->relaxed_problem->number_constraints);
-
-      std::cout << "step 4\n";
 
       // statistics
       this->inertia_correction_strategy->initialize_statistics(statistics, options);
@@ -128,8 +122,7 @@ namespace uno {
          DEBUG << "Penalty parameter updated to " << this->penalty_parameter << '\n';
 
          // update current multipliers according to (3.14)
-         const double multipliers_distance = norm_2(
-               current_iterate.multipliers.constraints + (-1) * this->feasibility_multipliers.constraints);
+         const double multipliers_distance = norm_2(current_iterate.multipliers.constraints + (-1) * this->feasibility_multipliers.constraints);
          const double alpha = std::min(1., this->parameters.kappa_lambda * feasibility_dual_error * feasibility_dual_error / multipliers_distance);
          current_iterate.multipliers.constraints = alpha * current_iterate.multipliers.constraints +
             (1. - alpha) * this->feasibility_multipliers.constraints;
@@ -140,7 +133,7 @@ namespace uno {
       DEBUG << "\nSolving the regular l1 relaxed problem\n";
       this->relaxed_problem->set_objective_multiplier(this->penalty_parameter);
       //this->subproblem->set_initial_point(feasibility_direction.primals);
-      warmstart_information.only_objective_changed();
+      // warmstart_information.only_objective_changed();
       Direction optimality_direction(direction.number_variables, direction.number_constraints);
       this->inequality_handling_method->solve(statistics, current_iterate, optimality_direction, *this->hessian_model,
          *this->inertia_correction_strategy, trust_region_radius, warmstart_information);
@@ -176,12 +169,14 @@ namespace uno {
       const double delta_l = this->delta_l(direction, current_iterate);
       if (delta_m >= this->parameters.epsilon * delta_l && w >= this->parameters.omega) {
          this->penalty_parameter *= this->parameters.delta;
+         DEBUG << "Penalty parameter updated to " << this->penalty_parameter << '\n';
       }
       else if (delta_m < this->parameters.epsilon * delta_l) {
          const double zeta = this->compute_zeta(direction, current_iterate);
          this->penalty_parameter = std::min(this->parameters.delta * this->penalty_parameter, zeta);
+         DEBUG << "Penalty parameter updated to " << this->penalty_parameter << '\n';
       }
-      DEBUG << "Penalty parameter updated to " << this->penalty_parameter << '\n';
+      assert(this->penalty_parameter >= 0);
 
       // construct the final direction
       direction.multipliers = optimality_direction.multipliers;
