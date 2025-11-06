@@ -30,6 +30,7 @@ namespace uno {
          ConstraintRelaxationStrategy(options),
          inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
          inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
+         feasibility_inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
          penalty_parameter(0.1), // TODO add option
          tolerance(options.get_double("primal_tolerance")),
          parameters({
@@ -41,6 +42,9 @@ namespace uno {
             1. - 1e-18, /* omega */
             0.5 /* delta */
          }) {
+      assert(this->inequality_handling_method != nullptr);
+      assert(this->inertia_correction_strategy != nullptr);
+      assert(this->feasibility_inequality_handling_method != nullptr);
    }
 
    void l1Relaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
@@ -50,13 +54,22 @@ namespace uno {
       this->feasibility_problem = std::make_unique<const l1RelaxedProblem>(model, 0., 1.);
       assert(this->feasibility_problem != nullptr);
 
-      // Hessian model
+      // Hessian models
       this->hessian_model = HessianModelFactory::create(model, options);
+      this->feasibility_hessian_model = HessianModelFactory::create(model, options);
+
+      std::cout << "step 1\n";
 
       // memory allocation
       this->inequality_handling_method->initialize(*this->relaxed_problem, initial_iterate, *this->hessian_model,
          *this->inertia_correction_strategy, trust_region_radius);
+      std::cout << "step 2\n";
+      this->feasibility_inequality_handling_method->initialize(*this->feasibility_problem, initial_iterate,
+         *this->feasibility_hessian_model, *this->inertia_correction_strategy, trust_region_radius);
+      std::cout << "step 3\n";
       direction = Direction(this->relaxed_problem->number_variables, this->relaxed_problem->number_constraints);
+
+      std::cout << "step 4\n";
 
       // statistics
       this->inertia_correction_strategy->initialize_statistics(statistics, options);
@@ -80,8 +93,8 @@ namespace uno {
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
       this->inequality_handling_method->evaluate_constraint_jacobian(initial_iterate);
-      this->relaxed_problem->evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, *this->inequality_handling_method,
-         initial_iterate);
+      this->relaxed_problem->evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
+         *this->inequality_handling_method, initial_iterate);
       this->compute_primal_dual_residuals(*this->relaxed_problem, initial_iterate);
    }
 
@@ -94,8 +107,8 @@ namespace uno {
       DEBUG << "Solving the l1 feasibility problem\n";
       Direction feasibility_direction(this->feasibility_problem->number_variables, this->feasibility_problem->number_constraints);
       std::swap(current_iterate.multipliers, this->feasibility_multipliers);
-      this->feasibility_inequality_handling_method->solve(statistics, current_iterate, feasibility_direction, *this->hessian_model,
-         *this->inertia_correction_strategy, trust_region_radius, warmstart_information);
+      this->feasibility_inequality_handling_method->solve(statistics, current_iterate, feasibility_direction,
+         *this->feasibility_hessian_model, *this->inertia_correction_strategy, trust_region_radius, warmstart_information);
       assert(direction.status == SubproblemStatus::OPTIMAL && "The feasibility subproblem was not solved to optimality");
       std::swap(current_iterate.multipliers, this->feasibility_multipliers);
       // assemble multipliers for feasibility problem

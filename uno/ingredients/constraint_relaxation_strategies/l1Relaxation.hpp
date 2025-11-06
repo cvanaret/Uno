@@ -47,11 +47,13 @@ namespace uno {
 
    protected:
       std::unique_ptr<l1RelaxedProblem> relaxed_problem{};
-      std::unique_ptr<const l1RelaxedProblem> feasibility_problem{};
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
-      std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
       std::unique_ptr<HessianModel> hessian_model{};
       std::unique_ptr<InertiaCorrectionStrategy<double>> inertia_correction_strategy;
+      // feasibility problem
+      std::unique_ptr<const l1RelaxedProblem> feasibility_problem{};
+      std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
+      std::unique_ptr<HessianModel> feasibility_hessian_model{};
       Multipliers feasibility_multipliers;
       double penalty_parameter;
       const double tolerance;
