@@ -163,6 +163,7 @@ namespace uno {
       if (this->penalty_parameter * multipliers_inf_norm > 1.) {
          this->penalty_parameter = std::min(this->parameters.delta * this->penalty_parameter, (1. - this->parameters.epsilon) / multipliers_inf_norm);
          DEBUG << "Penalty parameter updated to " << this->penalty_parameter << '\n';
+         assert(this->penalty_parameter >= 0);
       }
       // update the penalty parameter (3.19)
       const double delta_m = this->delta_m(direction, current_iterate, this->penalty_parameter);
@@ -170,13 +171,16 @@ namespace uno {
       if (delta_m >= this->parameters.epsilon * delta_l && w >= this->parameters.omega) {
          this->penalty_parameter *= this->parameters.delta;
          DEBUG << "Penalty parameter updated to " << this->penalty_parameter << '\n';
+         assert(this->penalty_parameter >= 0);
       }
       else if (delta_m < this->parameters.epsilon * delta_l) {
-         const double zeta = this->compute_zeta(direction, current_iterate);
+         double zeta = this->compute_zeta(direction, current_iterate);
+         // TODO remove this line:
+         zeta = std::max(zeta, this->penalty_parameter);
          this->penalty_parameter = std::min(this->parameters.delta * this->penalty_parameter, zeta);
          DEBUG << "Penalty parameter updated to " << this->penalty_parameter << '\n';
+         assert(this->penalty_parameter >= 0);
       }
-      assert(this->penalty_parameter >= 0);
 
       // construct the final direction
       direction.multipliers = optimality_direction.multipliers;
@@ -190,8 +194,7 @@ namespace uno {
    }
 
    void l1Relaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, GlobalizationStrategy& /*globalization_strategy*/,
-         Iterate& /*current_iterate*/, double /*trust_region_radius*/,
-         WarmstartInformation& /*warmstart_information*/) {
+         Iterate& /*current_iterate*/, double /*trust_region_radius*/, WarmstartInformation& /*warmstart_information*/) {
       throw std::runtime_error("l1Relaxation::switch_to_feasibility_problem is not implemented\n");
    }
 
@@ -269,17 +272,15 @@ namespace uno {
 
    // Rinf: measure that combines stationarity error and complementarity error for feasibility problem
    double l1Relaxation::Rinf(Iterate& current_iterate, const Multipliers& multipliers) const {
-      /*
       // stationarity error
-      this->feasibility_problem.evaluate_lagrangian_gradient(current_iterate.feasibility_residuals.lagrangian_gradient, current_iterate, multipliers);
-      const auto scaled_lagrangian = current_iterate.feasibility_residuals.lagrangian_gradient.constraints_contribution;
-      double error = norm_inf(scaled_lagrangian);
+      this->relaxed_problem->evaluate_lagrangian_gradient(current_iterate.residuals.lagrangian_gradient,
+         *this->inequality_handling_method, current_iterate);
+      double error = OptimizationProblem::stationarity_error(current_iterate.residuals.lagrangian_gradient, 0., this->residual_norm);
 
       // complementarity error
-      error += this->feasibility_problem.complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints, multipliers, 0., Norm::INF);
+      error += this->feasibility_problem->complementarity_error(current_iterate.primals, current_iterate.evaluations.constraints,
+         multipliers, 0., this->residual_norm);
       return error;
-      */
-      return 0.;
    }
 
    // m: predicted reduction of the l1 merit function
