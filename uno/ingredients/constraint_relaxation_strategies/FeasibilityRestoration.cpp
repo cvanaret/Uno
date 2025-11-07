@@ -3,7 +3,7 @@
 
 #include <functional>
 #include "FeasibilityRestoration.hpp"
-#include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
+#include "relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"

@@ -61,6 +61,7 @@ file(GLOB UNO_SOURCE_FILES
    interfaces/C/Uno_C_API.cpp
    uno/Uno.cpp
    uno/ingredients/constraint_relaxation_strategies/*.cpp
+   uno/ingredients/constraint_relaxation_strategies/relaxed_problems/*.cpp
    uno/ingredients/globalization_mechanisms/*.cpp
    uno/ingredients/globalization_strategies/*.cpp
    uno/ingredients/globalization_strategies/switching_methods/*.cpp
