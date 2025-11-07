@@ -159,12 +159,11 @@ namespace uno {
       statistics.set("status", "initial point");
 
       model.project_onto_variable_bounds(current_iterate.primals);
-      // TODO here we don't know if there's a trust-region radius yet!
-      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, this->direction, INF<double>, options);
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate);
       GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
+      this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction,
+         *this->constraint_relaxation_strategy, options);
       this->globalization_strategy->initialize(statistics, current_iterate, options);
-      this->globalization_mechanism->initialize(statistics, options);
 
       options.print_used_overwritten();
       if (Logger::level == INFO) {

@@ -31,7 +31,9 @@ namespace uno {
       assert(1. < this->decrease_factor && "The trust-region decrease factor should be > 1");
    }
 
-   void TrustRegionStrategy::initialize(Statistics& statistics, const Options& options) {
+   void TrustRegionStrategy::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Direction& direction, ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) {
+      constraint_relaxation_strategy.initialize(statistics, model, current_iterate, direction, this->radius, options);
       statistics.add_column("TR iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
       statistics.add_column("TR radius", Statistics::double_width - 4, options.get_int("statistics_TR_radius_column_order"));
       statistics.set("TR radius", this->radius);

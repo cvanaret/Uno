@@ -35,6 +35,7 @@ public:
          Model("C model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
             static_cast<double>(user_model.optimization_sense), user_model.lagrangian_sign_convention),
          user_model(user_model),
+         nonlinear_constraints(this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints) {
       this->find_fixed_variables(this->fixed_variables);
@@ -264,6 +265,10 @@ public:
       return this->linear_constraints;
    }
 
+   [[nodiscard]] const Collection<size_t>& get_nonlinear_constraints() const override {
+      return this->nonlinear_constraints;
+   }
+
    void initial_primal_point(Vector<double>& x) const override {
       // copy the initial primal point
       for (size_t variable_index: Range(static_cast<size_t>(this->user_model.number_variables))) {
@@ -328,6 +333,7 @@ protected:
    const SparseVector<size_t> slacks{};
    Vector<size_t> fixed_variables{};
    const ForwardRange linear_constraints{0};
+   const ForwardRange nonlinear_constraints;
    std::vector<size_t> equality_constraints;
    CollectionAdapter<std::vector<size_t>> equality_constraints_collection;
    std::vector<size_t> inequality_constraints;

@@ -157,6 +157,10 @@ namespace uno {
       return this->slacks;
    }
 
+   const Vector<size_t>& HomogeneousEqualityConstrainedModel::get_fixed_variables() const {
+      return this->model.get_fixed_variables();
+   }
+
    double HomogeneousEqualityConstrainedModel::constraint_lower_bound(size_t /*constraint_index*/) const {
       return 0.; // c(x) = 0
    }
@@ -177,8 +181,8 @@ namespace uno {
       return this->model.get_linear_constraints();
    }
 
-   const Vector<size_t>& HomogeneousEqualityConstrainedModel::get_fixed_variables() const {
-      return this->model.get_fixed_variables();
+   const Collection<size_t>& HomogeneousEqualityConstrainedModel::get_nonlinear_constraints() const {
+      return this->model.get_nonlinear_constraints();
    }
 
    void HomogeneousEqualityConstrainedModel::initial_primal_point(Vector<double>& x) const {

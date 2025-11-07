@@ -6,7 +6,7 @@
 
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
-#include "l1RelaxedProblem.hpp"
+#include "relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "linear_algebra/Vector.hpp"

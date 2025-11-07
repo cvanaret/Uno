@@ -8,7 +8,7 @@
 #include "../InequalityHandlingMethod.hpp"
 #include "BarrierParameterUpdateStrategy.hpp"
 #include "InteriorPointParameters.hpp"
-#include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
+#include "ingredients/constraint_relaxation_strategies/relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "optimization/Direction.hpp"

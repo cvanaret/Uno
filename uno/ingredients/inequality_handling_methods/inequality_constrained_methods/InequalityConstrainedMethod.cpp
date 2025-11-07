@@ -4,7 +4,7 @@
 #include <cassert>
 #include "InequalityConstrainedMethod.hpp"
 #include "optimization/Iterate.hpp"
-#include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
+#include "ingredients/constraint_relaxation_strategies/relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/BoxLPSolverFactory.hpp"
