@@ -133,6 +133,19 @@ namespace uno {
          preset_options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
          preset_options.set_bool("protect_actual_reduction_against_roundoff", false);
       }
+      else if (preset_name == "squid") {
+         preset_options.set_string("constraint_relaxation_strategy", "l1_relaxation");
+         preset_options.set_string("inequality_handling_method", "inequality_constrained");
+         preset_options.set_string("hessian_model", "exact");
+         preset_options.set_string("inertia_correction_strategy", "primal");
+         preset_options.set_string("globalization_mechanism", "LS");
+         preset_options.set_string("globalization_strategy", "l1_merit");
+         preset_options.set_string("progress_norm", "L1");
+         preset_options.set_string("residual_norm", "INF");
+         preset_options.set_double("l1_constraint_violation_coefficient", 1.);
+         preset_options.set_double("primal_tolerance", 1e-6);
+         preset_options.set_double("dual_tolerance", 1e-6);
+      }
       else {
          throw std::runtime_error("The preset " + preset_name + " is not known");
       }
