@@ -6,7 +6,7 @@
 
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
-#include "l1RelaxedProblem.hpp"
+#include "relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 

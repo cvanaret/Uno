@@ -87,7 +87,7 @@ namespace uno {
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, double* primal_regularization_values) {
       assert(hessian_values != nullptr);
       const size_t number_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
-      
+
       this->regularization_factor = 0.;
       bool good_inertia = false;
       while (!good_inertia) {

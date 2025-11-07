@@ -49,9 +49,11 @@ namespace uno {
 
    void l1Relaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
          Direction& direction, double trust_region_radius, const Options& options) {
-      this->relaxed_problem = std::make_unique<l1RelaxedProblem>(model, this->penalty_parameter, 1.);
+      // relax the linear constraints in the l1 relaxed problem only if we are using a trust-region constraint
+      const bool relax_linear_constraints = (trust_region_radius < INF<double>);
+      this->relaxed_problem = std::make_unique<l1RelaxedProblem>(model, this->penalty_parameter, 1., relax_linear_constraints);
       assert(this->relaxed_problem != nullptr);
-      this->feasibility_problem = std::make_unique<const l1RelaxedProblem>(model, 0., 1.);
+      this->feasibility_problem = std::make_unique<const l1RelaxedProblem>(model, 0., 1., relax_linear_constraints);
       assert(this->feasibility_problem != nullptr);
 
       // Hessian models
