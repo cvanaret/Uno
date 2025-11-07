@@ -11,6 +11,7 @@ namespace uno {
       Model("Python model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
          static_cast<double>(user_model.optimization_sense), user_model.lagrangian_sign_convention),
          user_model(user_model),
+         nonlinear_constraints(this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints) {
       // find fixed variables
@@ -251,6 +252,10 @@ namespace uno {
 
    const Collection<size_t>& PythonModel::get_linear_constraints() const {
       return this->linear_constraints;
+   }
+
+   const Collection<size_t>& PythonModel::get_nonlinear_constraints() const {
+      return this->nonlinear_constraints;
    }
 
    void PythonModel::initial_primal_point(Vector<double>& x) const {

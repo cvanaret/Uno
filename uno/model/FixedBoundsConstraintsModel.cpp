@@ -169,11 +169,17 @@ namespace uno {
    const Collection<size_t>& FixedBoundsConstraintsModel::get_equality_constraints() const {
       return this->equality_constraints;
    }
+
    const Collection<size_t>& FixedBoundsConstraintsModel::get_inequality_constraints() const {
       return this->model.get_inequality_constraints();
    }
+
    const Collection<size_t>& FixedBoundsConstraintsModel::get_linear_constraints() const {
       return this->linear_constraints;
+   }
+
+   const Collection<size_t>& FixedBoundsConstraintsModel::get_nonlinear_constraints() const {
+      return this->model.get_nonlinear_constraints();
    }
 
    void FixedBoundsConstraintsModel::initial_primal_point(Vector<double>& x) const {
