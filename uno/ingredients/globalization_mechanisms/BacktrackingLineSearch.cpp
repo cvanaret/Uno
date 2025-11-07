@@ -24,7 +24,9 @@ namespace uno {
       assert(0 < this->minimum_step_length && this->minimum_step_length < 1. && "The LS minimum step length should be in (0, 1)");
    }
 
-   void BacktrackingLineSearch::initialize(Statistics& statistics, const Options& options) {
+   void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Direction& direction, ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) {
+      constraint_relaxation_strategy.initialize(statistics, model, current_iterate, direction, INF<double>, options);
       statistics.add_column("LS iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
       statistics.add_column("step length", Statistics::double_width - 4, options.get_int("statistics_LS_step_length_column_order"));
    }

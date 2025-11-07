@@ -12,7 +12,8 @@ namespace uno {
       explicit TrustRegionStrategy(const Options& options);
       ~TrustRegionStrategy() override = default;
 
-      void initialize(Statistics& statistics, const Options& options) override;
+      void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Direction& direction,
+         ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) override;
       void compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
          GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
