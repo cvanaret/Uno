@@ -38,7 +38,7 @@ namespace uno {
       this->optimality_problem = std::make_unique<const OptimizationProblem>(model);
       this->reference_optimality_primals.resize(this->optimality_problem->number_variables);
       // relax the linear constraints in the l1 relaxed problem only if we are using a trust-region constraint
-      const bool relax_linear_constraints = (trust_region_radius < INF<double>);
+      const bool relax_linear_constraints = true; // (trust_region_radius < INF<double>);
       this->feasibility_problem = std::make_unique<l1RelaxedProblem>(model, 0., this->constraint_violation_coefficient,
          relax_linear_constraints);
 
