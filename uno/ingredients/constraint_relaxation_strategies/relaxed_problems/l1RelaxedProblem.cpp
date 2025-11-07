@@ -140,9 +140,11 @@ namespace uno {
       size_t nonzero_index = this->model.number_jacobian_nonzeros();
       for ([[maybe_unused]] const auto _: this->elastic_variables.positive) {
          jacobian_values[nonzero_index] = -1.;
+         ++nonzero_index;
       }
       for ([[maybe_unused]] const auto _: this->elastic_variables.negative) {
          jacobian_values[nonzero_index] = 1.;
+         ++nonzero_index;
       }
    }
 
