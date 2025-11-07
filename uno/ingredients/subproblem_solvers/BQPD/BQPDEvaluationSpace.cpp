@@ -42,8 +42,8 @@ namespace uno {
 
       // copy the Jacobian with permutation into &this->gradients[subproblem.number_variables]
       for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
-         const size_t permutated_nonzero_index = this->permutation_vector[nonzero_index];
-         this->gradients[problem.number_variables + nonzero_index] = this->jacobian_values[permutated_nonzero_index];
+         const size_t permuted_nonzero_index = this->permutation_vector[nonzero_index];
+         this->gradients[problem.number_variables + nonzero_index] = this->jacobian_values[permuted_nonzero_index];
       }
    }
 
@@ -160,14 +160,14 @@ namespace uno {
       // copy the COO format into BQPD's CSR format
       int current_constraint = 0;
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
-         const size_t permutated_nonzero_index = this->permutation_vector[jacobian_nonzero_index];
+         const size_t permuted_nonzero_index = this->permutation_vector[jacobian_nonzero_index];
          // variable index
-         const int variable_index = this->jacobian_column_indices[permutated_nonzero_index];
+         const int variable_index = this->jacobian_column_indices[permuted_nonzero_index];
          this->gradient_sparsity[1 + subproblem.number_variables + jacobian_nonzero_index] = variable_index +
             Indexing::Fortran_indexing;
 
          // constraint index
-         const int constraint_index = this->jacobian_row_indices[permutated_nonzero_index];
+         const int constraint_index = this->jacobian_row_indices[permuted_nonzero_index];
          assert(current_constraint <= constraint_index);
          while (current_constraint < constraint_index) {
             ++current_constraint;

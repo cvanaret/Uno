@@ -35,7 +35,13 @@ namespace uno {
    }
 
    void HiGHSEvaluationSpace::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
-      problem.evaluate_constraint_jacobian(iterate, this->model.lp_.a_matrix_.value_.data());
+      problem.evaluate_constraint_jacobian(iterate, this->jacobian_values.data());
+
+      // copy the Jacobian with permutation into this->model.lp_.a_matrix_.value_
+      for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
+         const size_t permuted_nonzero_index = this->jacobian_permutation_vector[nonzero_index];
+         this->model.lp_.a_matrix_.value_[nonzero_index] = this->jacobian_values[permuted_nonzero_index];
+      }
    }
 
    void HiGHSEvaluationSpace::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
@@ -100,8 +106,8 @@ namespace uno {
          subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data());
          // copy the Hessian with permutation into this->model.hessian_.value_
          for (size_t nonzero_index: Range(subproblem.number_regularized_hessian_nonzeros())) {
-            const size_t permutated_nonzero_index = this->hessian_permutation_vector[nonzero_index];
-            this->model.hessian_.value_[nonzero_index] = this->hessian_values[permutated_nonzero_index];
+            const size_t permuted_nonzero_index = this->hessian_permutation_vector[nonzero_index];
+            this->model.hessian_.value_[nonzero_index] = this->hessian_values[permuted_nonzero_index];
          }
          subproblem.regularize_lagrangian_hessian(statistics, this->model.hessian_.value_.data());
       }
@@ -114,6 +120,7 @@ namespace uno {
       // compute the COO sparsity pattern
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
+      this->jacobian_values.resize(number_jacobian_nonzeros);
       subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(),
          this->jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
       // HiGHS matrix in CSC format (variable after variable)
@@ -198,13 +205,13 @@ namespace uno {
       this->model.hessian_.start_[0] = 0;
       int current_column = 0;
       for (size_t hessian_nonzero_index: Range(number_regularized_hessian_nonzeros)) {
-         const size_t permutated_nonzero_index = this->hessian_permutation_vector[hessian_nonzero_index];
+         const size_t permuted_nonzero_index = this->hessian_permutation_vector[hessian_nonzero_index];
          // row index
-         const HighsInt row_index = static_cast<HighsInt>(this->hessian_row_indices[permutated_nonzero_index]);
+         const HighsInt row_index = static_cast<HighsInt>(this->hessian_row_indices[permuted_nonzero_index]);
          this->model.hessian_.index_[hessian_nonzero_index] = row_index;
 
          // column index
-         const int column_index = this->hessian_column_indices[permutated_nonzero_index];
+         const int column_index = this->hessian_column_indices[permuted_nonzero_index];
          assert(current_column <= column_index);
          while (current_column < column_index) {
             ++current_column;

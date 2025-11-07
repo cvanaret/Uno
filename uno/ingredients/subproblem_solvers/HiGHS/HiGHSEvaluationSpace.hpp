@@ -37,6 +37,7 @@ namespace uno {
       // constraint Jacobian in COO format
       Vector<uno_int> jacobian_row_indices{};
       Vector<uno_int> jacobian_column_indices{};
+      Vector<double> jacobian_values{};
       Vector<size_t> jacobian_permutation_vector{};
       // Lagrangian Hessian in COO format
       Vector<uno_int> hessian_row_indices{};
