@@ -161,9 +161,9 @@ namespace uno {
       model.project_onto_variable_bounds(current_iterate.primals);
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate);
       GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
-      this->globalization_strategy->initialize(statistics, current_iterate, options);
       this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction,
          *this->constraint_relaxation_strategy, options);
+      this->globalization_strategy->initialize(statistics, current_iterate, options);
 
       options.print_used_overwritten();
       if (Logger::level == INFO) {
