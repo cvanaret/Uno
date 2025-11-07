@@ -5,13 +5,15 @@
 #define UNO_L1RELAXEDPROBLEM_H
 
 #include <functional>
+#include "ElasticVariables.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {
    public:
-      l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
+      l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
+         bool relax_linear_constraints);
       ~l1RelaxedProblem() override = default;
 
       [[nodiscard]] double get_objective_multiplier() const override;
@@ -64,12 +66,17 @@ namespace uno {
          const Vector<double>& primal_direction, double step_length) const override;
 
    protected:
+      ElasticVariables elastic_variables;
       const size_t number_elastic_variables;
       const double objective_multiplier;
       const double constraint_violation_coefficient;
       double proximal_coefficient{INF<double>};
       double* proximal_center{};
       const ForwardRange dual_regularization_constraints{0};
+
+      // delegating constructor
+      l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,
+         double constraint_violation_coefficient);
    };
 } // namespace
 

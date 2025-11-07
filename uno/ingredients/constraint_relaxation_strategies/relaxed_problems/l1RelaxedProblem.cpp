@@ -10,10 +10,19 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient):
-         OptimizationProblem(model, model.number_variables + model.get_inequality_constraints().size() +
-            2*model.get_equality_constraints().size(), model.number_constraints),
-         number_elastic_variables(model.get_inequality_constraints().size() + 2*model.get_equality_constraints().size()),
+   l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
+         bool relax_linear_constraints):
+      // call delegating constructor
+      l1RelaxedProblem(model, ElasticVariables::generate(model, relax_linear_constraints), objective_multiplier,
+         constraint_violation_coefficient) {
+   }
+
+   // delegating constructor
+   l1RelaxedProblem::l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,
+            double constraint_violation_coefficient):
+         OptimizationProblem(model, model.number_variables + elastic_variables.size(), model.number_constraints),
+         elastic_variables(elastic_variables),
+         number_elastic_variables(elastic_variables.size()),
          objective_multiplier(objective_multiplier),
          constraint_violation_coefficient(constraint_violation_coefficient) {
    }
