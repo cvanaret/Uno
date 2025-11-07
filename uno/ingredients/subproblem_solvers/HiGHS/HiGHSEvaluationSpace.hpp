@@ -37,13 +37,15 @@ namespace uno {
       // constraint Jacobian in COO format
       Vector<uno_int> jacobian_row_indices{};
       Vector<uno_int> jacobian_column_indices{};
+      Vector<size_t> jacobian_permutation_vector{};
       // Lagrangian Hessian in COO format
       Vector<uno_int> hessian_row_indices{};
       Vector<uno_int> hessian_column_indices{};
       Vector<double> hessian_values{};
-      Vector<size_t> permutation_vector{};
+      Vector<size_t> hessian_permutation_vector{};
 
    protected:
+      void compute_jacobian_sparsity(const Subproblem& subproblem);
       void compute_hessian_sparsity(const Subproblem& subproblem);
    };
 } // namespace

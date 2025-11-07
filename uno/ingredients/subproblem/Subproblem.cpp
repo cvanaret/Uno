@@ -21,7 +21,7 @@ namespace uno {
    }
 
    void Subproblem::compute_constraint_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
-                                                         MatrixOrder matrix_order) const {
+         MatrixOrder matrix_order) const {
       this->problem.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
@@ -42,7 +42,7 @@ namespace uno {
 
    // lower triangular part of the symmetric augmented matrix
    void Subproblem::compute_regularized_augmented_matrix_sparsity(uno_int *row_indices, uno_int *column_indices,
-                                                                  const uno_int *jacobian_row_indices, const uno_int *jacobian_column_indices, uno_int solver_indexing) const {
+         const uno_int *jacobian_row_indices, const uno_int *jacobian_column_indices, uno_int solver_indexing) const {
       // sparsity of original Lagrangian Hessian in the (1, 1) block
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
