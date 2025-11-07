@@ -42,8 +42,9 @@ namespace uno {
       result.fill(0.);
       const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
       for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
-         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
-         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
+         const size_t permuted_nonzero_index = this->jacobian_permutation_vector[nonzero_index];
+         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[permuted_nonzero_index]);
+         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[permuted_nonzero_index]);
          const double derivative = this->model.lp_.a_matrix_.value_[nonzero_index];
 
          // a safeguard to make sure we take only the correct part of the Jacobian
@@ -57,8 +58,9 @@ namespace uno {
       result.fill(0.);
       const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
       for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
-         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
-         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
+         const size_t permuted_nonzero_index = this->jacobian_permutation_vector[nonzero_index];
+         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[permuted_nonzero_index]);
+         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[permuted_nonzero_index]);
          const double derivative = this->model.lp_.a_matrix_.value_[nonzero_index];
          assert(constraint_index < vector.size());
          assert(variable_index < result.size());
