@@ -249,7 +249,7 @@ namespace uno {
    }
 
    // delta_l: predicted (linear model) reduction of constraint violation
-   // ||c(x_k)||_1 - ||c(x_k) + \alpha \nabla c(x_k)^T d||_1
+   // ||c(x_k)||_1 - ||c(x_k) + \nabla c(x_k)^T d||_1
    double l1Relaxation::delta_l(const Direction& direction, const Iterate& current_iterate) const {
       return this->v(current_iterate) - this->l(direction, current_iterate);
    }
