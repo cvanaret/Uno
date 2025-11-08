@@ -1,8 +1,8 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_UNCONSTRAINEDSTRATEGY_H
-#define UNO_UNCONSTRAINEDSTRATEGY_H
+#ifndef UNO_NORELAXATION_H
+#define UNO_NORELAXATION_H
 
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
@@ -12,10 +12,10 @@
 #include "optimization/OptimizationProblem.hpp"
 
 namespace uno {
-   class UnconstrainedStrategy : public ConstraintRelaxationStrategy {
+   class NoRelaxation : public ConstraintRelaxationStrategy {
    public:
-      UnconstrainedStrategy(const Model& model, const Options& options);
-      ~UnconstrainedStrategy() override = default;
+      NoRelaxation(const Model& model, const Options& options);
+      ~NoRelaxation() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
          double trust_region_radius, const Options& options) override;
@@ -45,4 +45,4 @@ namespace uno {
    };
 } // namespace
 
-#endif //UNO_UNCONSTRAINEDSTRATEGY_H
+#endif //UNO_NORELAXATION_H

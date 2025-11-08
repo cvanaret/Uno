@@ -1,8 +1,7 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "UnconstrainedStrategy.hpp"
-#include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
+#include "NoRelaxation.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
@@ -14,7 +13,7 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   UnconstrainedStrategy::UnconstrainedStrategy(const Model& model, const Options& options) :
+   NoRelaxation::NoRelaxation(const Model& model, const Options& options):
          ConstraintRelaxationStrategy(options),
          problem(model),
          inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
@@ -23,7 +22,7 @@ namespace uno {
          globalization_strategy(options) {
    }
 
-   void UnconstrainedStrategy::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
+   void NoRelaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
          Direction& direction, double trust_region_radius, const Options& options) {
       // memory allocation
       this->inequality_handling_method->initialize(this->problem, initial_iterate, *this->hessian_model,
@@ -45,7 +44,7 @@ namespace uno {
       this->globalization_strategy.initialize(statistics, initial_iterate, options);
    }
 
-   void UnconstrainedStrategy::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+   void NoRelaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          double trust_region_radius, WarmstartInformation& warmstart_information) {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
@@ -57,16 +56,16 @@ namespace uno {
       warmstart_information.no_changes();
    }
 
-   bool UnconstrainedStrategy::solving_feasibility_problem() const {
+   bool NoRelaxation::solving_feasibility_problem() const {
       return false;
    }
 
-   void UnconstrainedStrategy::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/,
+   void NoRelaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/,
          double /*trust_region_radius*/, WarmstartInformation& /*warmstart_information*/) {
-      throw std::runtime_error("The problem is unconstrained, switching to the feasibility problem should not happen");
+      throw std::runtime_error("Switching to the feasibility problem should not happen");
    }
 
-   bool UnconstrainedStrategy::is_iterate_acceptable(Statistics& statistics, double trust_region_radius, const Model& model,
+   bool NoRelaxation::is_iterate_acceptable(Statistics& statistics, double trust_region_radius, const Model& model,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
@@ -77,7 +76,7 @@ namespace uno {
       return accept_iterate;
    }
 
-   SolutionStatus UnconstrainedStrategy::check_termination(const Model& model, Iterate& iterate) {
+   SolutionStatus NoRelaxation::check_termination(const Model& model, Iterate& iterate) {
       iterate.evaluate_objective_gradient(model);
       iterate.evaluate_constraints(model);
 
@@ -86,12 +85,12 @@ namespace uno {
       return ConstraintRelaxationStrategy::check_termination(this->problem, iterate);
    }
 
-   std::string UnconstrainedStrategy::get_name() const {
+   std::string NoRelaxation::get_name() const {
       return this->globalization_strategy.get_name() + " " + this->inequality_handling_method->get_name() + " with " +
          this->hessian_model->name + " Hessian and " + this->inertia_correction_strategy->get_name() + " regularization";
    }
 
-   size_t UnconstrainedStrategy::get_number_subproblems_solved() const {
+   size_t NoRelaxation::get_number_subproblems_solved() const {
       return this->inequality_handling_method->number_subproblems_solved;
    }
 } // namespace
