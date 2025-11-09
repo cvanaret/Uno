@@ -146,8 +146,7 @@ namespace uno {
    }
 
    void Uno::pick_ingredients(const Model& model, const Options& options) {
-      const bool unconstrained_model = (model.number_constraints == 0);
-      this->globalization_strategy = GlobalizationStrategyFactory::create(unconstrained_model, options);
+      this->globalization_strategy = GlobalizationStrategyFactory::create(model, options);
       this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
    }
 

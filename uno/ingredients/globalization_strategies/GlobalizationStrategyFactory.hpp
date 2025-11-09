@@ -10,11 +10,12 @@
 namespace uno {
    // forward declarations
    class GlobalizationStrategy;
+   class Model;
    class Options;
 
    class GlobalizationStrategyFactory {
    public:
-      static std::unique_ptr<GlobalizationStrategy> create(bool unconstrained_model, const Options& options);
+      static std::unique_ptr<GlobalizationStrategy> create(const Model& model, const Options& options);
 
       constexpr static std::array available_strategies{
          "l1_merit", "fletcher_filter_method", "waechter_filter_method", "funnel_method"
