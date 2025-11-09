@@ -33,8 +33,7 @@ namespace uno {
       const FilterStrategyParameters parameters; /*!< Set of constants */
 
       [[nodiscard]] double compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility,
-         double trial_objective_measure);
-      void set_statistics(Statistics& statistics) const override;
+         double trial_objective_measure) const;
    };
 } // namespace
 

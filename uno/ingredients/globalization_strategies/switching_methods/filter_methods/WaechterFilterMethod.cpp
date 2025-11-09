@@ -22,8 +22,8 @@ namespace uno {
       FilterMethod::initialize(statistics, initial_iterate, options);
    }
 
-   bool WaechterFilterMethod::is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) {
+   bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double /*objective_multiplier*/) {
       // in filter methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
       const double current_merit = FilterMethod::unconstrained_merit_function(current_progress);
       const double trial_merit = FilterMethod::unconstrained_merit_function(trial_progress);
