@@ -9,10 +9,10 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(bool unconstrained_model,
+   std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(const Model& model,
          const Options& options) {
       // set unconstrained strategy automatically
-      if (unconstrained_model) {
+      if (model.number_constraints == 0) {
          INFO << "The model is unconstrained, picking an unconstrained constraint relaxation strategy\n";
          return std::make_unique<UnconstrainedStrategy>(options);
       }

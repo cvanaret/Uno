@@ -10,11 +10,12 @@
 namespace uno {
    // forward declarations
    class ConstraintRelaxationStrategy;
+   class Model;
    class Options;
 
    class ConstraintRelaxationStrategyFactory {
    public:
-      static std::unique_ptr<ConstraintRelaxationStrategy> create(bool unconstrained_model, const Options& options);
+      static std::unique_ptr<ConstraintRelaxationStrategy> create(const Model& model, const Options& options);
 
       constexpr static std::array available_strategies{
          "feasibility_restoration"
