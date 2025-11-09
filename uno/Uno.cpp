@@ -95,8 +95,8 @@ namespace uno {
 
                // compute an acceptable iterate by solving a subproblem at the current point
                warmstart_information.iterate_changed();
-               this->globalization_mechanism->compute_next_iterate(statistics, *this->globalization_strategy, model,
-                  current_iterate, trial_iterate, this->direction, warmstart_information, user_callbacks);
+               this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate,
+                  this->direction, warmstart_information, user_callbacks);
                GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
                const bool user_termination = user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers,
                   trial_iterate.objective_multiplier, trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity,
@@ -146,7 +146,6 @@ namespace uno {
    }
 
    void Uno::pick_ingredients(const Model& model, const Options& options) {
-      this->globalization_strategy = GlobalizationStrategyFactory::create(model, options);
       this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
    }
 
@@ -159,7 +158,6 @@ namespace uno {
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate);
       GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
       this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction, options);
-      this->globalization_strategy->initialize(statistics, current_iterate, options);
 
       options.print_used_overwritten();
       if (Logger::level == INFO) {
@@ -240,7 +238,7 @@ namespace uno {
    }
 
    std::string Uno::get_strategy_combination() const {
-      return this->globalization_mechanism->get_name() + " " + this->globalization_strategy->get_name();
+      return this->globalization_mechanism->get_name();
    }
 
    void Uno::print_optimization_summary(const Result& result, bool print_solution) const {

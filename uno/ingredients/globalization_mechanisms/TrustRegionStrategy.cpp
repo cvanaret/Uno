@@ -17,7 +17,7 @@
 
 namespace uno {
    TrustRegionStrategy::TrustRegionStrategy(const Model& model, const Options& options) :
-         GlobalizationMechanism(model, options),
+         GlobalizationMechanism(model, true, options),
          radius(options.get_double("TR_radius")),
          increase_factor(options.get_double("TR_increase_factor")),
          decrease_factor(options.get_double("TR_decrease_factor")),
@@ -39,9 +39,8 @@ namespace uno {
       statistics.set("TR radius", this->radius);
    }
 
-   void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, Direction& direction,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+   void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
       this->reset_radius();
 
@@ -56,8 +55,8 @@ namespace uno {
             this->set_TR_statistics(statistics, number_iterations);
 
             // compute the direction within the trust region
-            this->constraint_relaxation_strategy->compute_feasible_direction(statistics, globalization_strategy,
-               current_iterate, direction, this->radius, warmstart_information);
+            this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction,
+               this->radius, warmstart_information);
             statistics.set("step norm", direction.norm);
 
             // deal with errors in the subproblem
@@ -80,8 +79,8 @@ namespace uno {
                GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, 1., 1.);
                this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
 
-               is_acceptable = this->is_iterate_acceptable(statistics, globalization_strategy, model, current_iterate,
-                  trial_iterate, direction, warmstart_information, user_callbacks);
+               is_acceptable = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, direction,
+                  warmstart_information, user_callbacks);
                GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate);
                if (is_acceptable) {
                   GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
@@ -130,11 +129,10 @@ namespace uno {
    }
 
    // the trial iterate is accepted by the constraint relaxation strategy or if the step is small and we cannot switch to solving the feasibility problem
-   bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
-      bool accept_iterate = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, globalization_strategy,
-         this->radius, model, current_iterate, trial_iterate, direction, 1., warmstart_information, user_callbacks);
+   bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+      bool accept_iterate = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, this->radius, model,
+         current_iterate, trial_iterate, direction, 1., warmstart_information, user_callbacks);
       this->set_primal_statistics(statistics, model, trial_iterate);
       if (accept_iterate) {
          // trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);

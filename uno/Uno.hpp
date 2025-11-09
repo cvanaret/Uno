@@ -31,7 +31,6 @@ namespace uno {
       static void print_available_strategies();
 
    private:
-      std::unique_ptr<GlobalizationStrategy> globalization_strategy{};
       std::unique_ptr<GlobalizationMechanism> globalization_mechanism{};
       Direction direction{};
 

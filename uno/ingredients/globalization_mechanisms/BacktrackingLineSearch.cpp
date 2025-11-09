@@ -15,7 +15,7 @@
 
 namespace uno {
    BacktrackingLineSearch::BacktrackingLineSearch(const Model& model, const Options& options):
-         GlobalizationMechanism(model, options),
+         GlobalizationMechanism(model, false, options),
          backtracking_ratio(options.get_double("LS_backtracking_ratio")),
          minimum_step_length(options.get_double("LS_min_step_length")),
          scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")) {
@@ -31,16 +31,15 @@ namespace uno {
       statistics.add_column("step length", Statistics::double_width - 4, options.get_int("statistics_LS_step_length_column_order"));
    }
 
-   void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, Direction& direction,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+   void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
-      this->constraint_relaxation_strategy->compute_feasible_direction(statistics, globalization_strategy, current_iterate,
-         direction, INF<double>, warmstart_information);
+      this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction, INF<double>,
+         warmstart_information);
       BacktrackingLineSearch::check_unboundedness(direction);
-      this->backtrack_along_direction(statistics, globalization_strategy, model, current_iterate, trial_iterate, direction,
-         warmstart_information, user_callbacks);
+      this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, direction, warmstart_information,
+         user_callbacks);
    }
 
    std::string BacktrackingLineSearch::get_name() const {
@@ -50,9 +49,8 @@ namespace uno {
    // protected member functions
 
    // go a fraction along the direction by finding an acceptable step length
-   void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate, Direction& direction,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const {
+   void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const {
       double step_length = 1.;
       bool termination = false;
       size_t number_iterations = 0;
@@ -70,8 +68,8 @@ namespace uno {
                this->scale_duals_with_step_length ? step_length : 1.);
             statistics.set("step norm", step_length * direction.norm);
 
-            is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, globalization_strategy,
-               INF<double>, model, current_iterate, trial_iterate, direction, step_length, warmstart_information, user_callbacks);
+            is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, INF<double>, model,
+               current_iterate, trial_iterate, direction, step_length, warmstart_information, user_callbacks);
             GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate);
          }
          catch (const EvaluationError&) {
@@ -100,10 +98,10 @@ namespace uno {
                }
                // switch to solving the feasibility problem
                statistics.set("status", "small step length");
-               this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, globalization_strategy,
-                  current_iterate, INF<double>, warmstart_information);
-               this->constraint_relaxation_strategy->compute_feasible_direction(statistics, globalization_strategy,
-                  current_iterate, direction, INF<double>, warmstart_information);
+               this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, INF<double>,
+                  warmstart_information);
+               this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction,
+                  INF<double>, warmstart_information);
                BacktrackingLineSearch::check_unboundedness(direction);
                // restart backtracking
                step_length = 1.;

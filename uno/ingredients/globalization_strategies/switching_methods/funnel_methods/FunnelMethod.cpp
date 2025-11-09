@@ -96,7 +96,7 @@ namespace uno {
 
    bool FunnelMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress, const ProgressMeasures& trial_progress) const {
       return this->funnel.acceptable(trial_progress.infeasibility) &&
-             trial_progress.infeasibility <= this->parameters.beta * reference_progress.infeasibility;
+         trial_progress.infeasibility <= this->parameters.beta * reference_progress.infeasibility;
    }
 
    void FunnelMethod::reset() {

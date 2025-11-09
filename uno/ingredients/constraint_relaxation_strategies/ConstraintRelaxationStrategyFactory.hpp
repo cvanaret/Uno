@@ -15,7 +15,7 @@ namespace uno {
 
    class ConstraintRelaxationStrategyFactory {
    public:
-      static std::unique_ptr<ConstraintRelaxationStrategy> create(const Model& model, const Options& options);
+      static std::unique_ptr<ConstraintRelaxationStrategy> create(const Model& model, bool use_trust_region, const Options& options);
 
       constexpr static std::array available_strategies{
          "feasibility_restoration"

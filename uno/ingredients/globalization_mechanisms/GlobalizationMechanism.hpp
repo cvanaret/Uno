@@ -11,7 +11,6 @@
 namespace uno {
    // forward declarations
    class Direction;
-   class GlobalizationStrategy;
    class Iterate;
    class Model;
    class Options;
@@ -21,13 +20,12 @@ namespace uno {
 
    class GlobalizationMechanism {
    public:
-      GlobalizationMechanism(const Model& model, const Options& options);
+      GlobalizationMechanism(const Model& model, bool use_trust_region, const Options& options);
       virtual ~GlobalizationMechanism() = default;
 
       virtual void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Direction& direction, const Options& options) = 0;
-      virtual void compute_next_iterate(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+      virtual void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
 
       static void set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate);

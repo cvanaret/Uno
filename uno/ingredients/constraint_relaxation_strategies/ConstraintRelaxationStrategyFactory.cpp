@@ -10,15 +10,15 @@
 
 namespace uno {
    std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(const Model& model,
-         const Options& options) {
+         bool use_trust_region, const Options& options) {
       // set unconstrained strategy automatically
       if (model.number_constraints == 0) {
          INFO << "The model is unconstrained, picking an unconstrained constraint relaxation strategy\n";
-         return std::make_unique<UnconstrainedStrategy>(options);
+         return std::make_unique<UnconstrainedStrategy>(model, options);
       }
       const std::string constraint_relaxation_type = options.get_string("constraint_relaxation_strategy");
       if (constraint_relaxation_type == "feasibility_restoration") {
-         return std::make_unique<FeasibilityRestoration>(options);
+         return std::make_unique<FeasibilityRestoration>(model, use_trust_region, options);
       }
       throw std::invalid_argument("ConstraintRelaxationStrategy " + constraint_relaxation_type + " is not supported");
    }
