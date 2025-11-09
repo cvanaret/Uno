@@ -95,9 +95,8 @@ namespace uno {
 
                // compute an acceptable iterate by solving a subproblem at the current point
                warmstart_information.iterate_changed();
-               this->globalization_mechanism->compute_next_iterate(statistics, *this->constraint_relaxation_strategy,
-                  *this->globalization_strategy, model, current_iterate, trial_iterate, this->direction, warmstart_information,
-                  user_callbacks);
+               this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate,
+                  this->direction, warmstart_information, user_callbacks);
                GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
                const bool user_termination = user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers,
                   trial_iterate.objective_multiplier, trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity,
@@ -147,10 +146,7 @@ namespace uno {
    }
 
    void Uno::pick_ingredients(const Model& model, const Options& options) {
-      const bool unconstrained_model = (model.number_constraints == 0);
-      this->constraint_relaxation_strategy = ConstraintRelaxationStrategyFactory::create(unconstrained_model, options);
-      this->globalization_strategy = GlobalizationStrategyFactory::create(unconstrained_model, options);
-      this->globalization_mechanism = GlobalizationMechanismFactory::create(options);
+      this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
    }
 
    void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) {
@@ -161,9 +157,7 @@ namespace uno {
       model.project_onto_variable_bounds(current_iterate.primals);
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate);
       GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
-      this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction,
-         *this->constraint_relaxation_strategy, options);
-      this->globalization_strategy->initialize(statistics, current_iterate, options);
+      this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction, options);
 
       options.print_used_overwritten();
       if (Logger::level == INFO) {
@@ -214,9 +208,9 @@ namespace uno {
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 
-   Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, Iterate& solution, size_t major_iterations,
-         const Timer& timer) const {
-      const size_t number_subproblems_solved = this->constraint_relaxation_strategy->get_number_subproblems_solved();
+   Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
+         size_t major_iterations, const Timer& timer) const {
+      const size_t number_subproblems_solved = this->globalization_mechanism->get_number_subproblems_solved();
       //const size_t number_hessian_evaluations = this->constraint_relaxation_strategy->get_hessian_evaluation_count();
       return {model.number_variables, model.number_constraints, optimization_status, solution.status,
          solution.evaluations.objective, solution.progress.infeasibility, solution.residuals.stationarity,
@@ -244,8 +238,7 @@ namespace uno {
    }
 
    std::string Uno::get_strategy_combination() const {
-      return this->globalization_mechanism->get_name() + " " + this->globalization_strategy->get_name() + " " +
-         this->constraint_relaxation_strategy->get_name();
+      return this->globalization_mechanism->get_name();
    }
 
    void Uno::print_optimization_summary(const Result& result, bool print_solution) const {

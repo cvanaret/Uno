@@ -9,13 +9,12 @@
 namespace uno {
    class BacktrackingLineSearch : public GlobalizationMechanism {
    public:
-      explicit BacktrackingLineSearch(const Options& options);
+      BacktrackingLineSearch(const Model& model, const Options& options);
       ~BacktrackingLineSearch() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Direction& direction,
-         ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) override;
-      void compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         const Options& options) override;
+      void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       [[nodiscard]] std::string get_name() const override;
@@ -25,11 +24,9 @@ namespace uno {
       const double minimum_step_length;
       const bool scale_duals_with_step_length;
 
-      void backtrack_along_direction(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+      void backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const;
-      [[nodiscard]] static bool terminate_with_small_step_length(Statistics& statistics,
-         ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Model& model, Iterate& trial_iterate);
+      [[nodiscard]] bool terminate_with_small_step_length(Statistics& statistics, const Model& model, Iterate& trial_iterate) const;
       [[nodiscard]] double decrease_step_length(double step_length) const;
       static void check_unboundedness(const Direction& direction);
 

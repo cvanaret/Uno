@@ -9,13 +9,12 @@
 namespace uno {
    class TrustRegionStrategy : public GlobalizationMechanism {
    public:
-      explicit TrustRegionStrategy(const Options& options);
+      TrustRegionStrategy(const Model& model, const Options& options);
       ~TrustRegionStrategy() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Direction& direction,
-         ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) override;
-      void compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         const Options& options) override;
+      void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       [[nodiscard]] std::string get_name() const override;
@@ -30,9 +29,8 @@ namespace uno {
       const double radius_reset_threshold;
       const double primal_tolerance;
 
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks);
       void possibly_increase_radius(double step_norm);
       void decrease_radius(double step_norm);
       void decrease_radius();

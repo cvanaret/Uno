@@ -5,7 +5,6 @@
 #define UNO_H
 
 #include <memory>
-#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "optimization/Direction.hpp"
@@ -32,8 +31,6 @@ namespace uno {
       static void print_available_strategies();
 
    private:
-      std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy{};
-      std::unique_ptr<GlobalizationStrategy> globalization_strategy{};
       std::unique_ptr<GlobalizationMechanism> globalization_mechanism{};
       Direction direction{};
 
@@ -44,7 +41,7 @@ namespace uno {
          double current_time, double time_limit, bool user_termination, OptimizationStatus& optimization_status);
       [[nodiscard]] Result uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks);
       static void postprocess_solution(const Model& model, Iterate& iterate);
-      [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, Iterate& solution,
+      [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
          size_t major_iterations, const Timer& timer) const;
       static void postprocess_multipliers_signs(const Model& model, Result& result);
       [[nodiscard]] std::string get_strategy_combination() const;

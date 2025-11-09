@@ -13,10 +13,10 @@ namespace uno {
          SwitchingMethod(options),
          funnel(options),
          parameters({
-               options.get_double("funnel_ubd"),
-               options.get_double("funnel_fact"),
-               options.get_double("funnel_beta"),
-               options.get_double("funnel_gamma"),
+            options.get_double("funnel_ubd"),
+            options.get_double("funnel_fact"),
+            options.get_double("funnel_beta"),
+            options.get_double("funnel_gamma"),
          }),
          require_acceptance_wrt_current_iterate(options.get_bool("funnel_require_acceptance_wrt_current_iterate")) {
    }
@@ -30,8 +30,9 @@ namespace uno {
       statistics.set("funnel width", this->funnel.current_width());
    }
 
-   bool FunnelMethod::is_regular_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
-         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction) {
+   bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
+         const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double /*objective_multiplier*/) {
+      statistics.set("funnel width", this->funnel.current_width());
       // in filter and funnel methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
       const double current_merit = SwitchingMethod::unconstrained_merit_function(current_progress);
       const double trial_merit = SwitchingMethod::unconstrained_merit_function(trial_progress);
@@ -96,7 +97,7 @@ namespace uno {
 
    bool FunnelMethod::is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress, const ProgressMeasures& trial_progress) const {
       return this->funnel.acceptable(trial_progress.infeasibility) &&
-             trial_progress.infeasibility <= this->parameters.beta * reference_progress.infeasibility;
+         trial_progress.infeasibility <= this->parameters.beta * reference_progress.infeasibility;
    }
 
    void FunnelMethod::reset() {
@@ -130,16 +131,12 @@ namespace uno {
       return "funnel";
    }
 
-   double FunnelMethod::compute_actual_objective_reduction(double current_objective_measure, double trial_objective_measure) {
+   double FunnelMethod::compute_actual_objective_reduction(double current_objective_measure, double trial_objective_measure) const {
       double actual_reduction = current_objective_measure - trial_objective_measure;
       if (this->protect_actual_reduction_against_roundoff) {
          static double machine_epsilon = std::numeric_limits<double>::epsilon();
          actual_reduction += 10. * machine_epsilon * std::abs(current_objective_measure);
       }
       return actual_reduction;
-   }
-
-   void FunnelMethod::set_statistics(Statistics& statistics) const {
-      statistics.set("funnel width", this->funnel.current_width());
    }
 } // namespace
