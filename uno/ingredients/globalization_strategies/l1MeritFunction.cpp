@@ -12,7 +12,7 @@ namespace uno {
    }
 
    void l1MeritFunction::initialize(Statistics& statistics, const Iterate& /*initial_iterate*/, const Options& options) {
-      statistics.add_column("penalty", Statistics::double_width - 5, options.get_int("statistics_penalty_parameter_column_order"));
+      statistics.add_column("penalty", Statistics::double_width, options.get_int("statistics_penalty_parameter_column_order"));
    }
 
    bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
