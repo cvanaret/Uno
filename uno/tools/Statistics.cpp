@@ -11,9 +11,9 @@
 namespace uno {
    // TODO move this to the option file
    int Statistics::int_width = 7;
-   int Statistics::double_width = 17;
-   int Statistics::string_width = 26;
-   int Statistics::numerical_format_size = 4;
+   int Statistics::double_width = 11;
+   int Statistics::string_width = 15;
+   int Statistics::numerical_format_size = 3;
 
    void Statistics::add_column(std::string_view name, int width, int order) {
       this->columns[order] = name;

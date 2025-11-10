@@ -64,7 +64,7 @@ namespace uno {
 
    template <typename ElementType>
    void PrimalInertiaCorrection<ElementType>::initialize_statistics(Statistics& statistics, const Options& options) {
-      statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_primal_regularization_column_order"));
+      statistics.add_column("regulariz", Statistics::double_width, options.get_int("statistics_primal_regularization_column_order"));
    }
 
    // Nocedal and Wright, p51

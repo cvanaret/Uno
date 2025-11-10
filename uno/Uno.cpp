@@ -155,9 +155,9 @@ namespace uno {
       statistics.set("status", "initial point");
 
       model.project_onto_variable_bounds(current_iterate.primals);
+      this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction, options);
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate);
       GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
-      this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction, options);
 
       options.print_used_overwritten();
       if (Logger::level == INFO) {
@@ -170,14 +170,14 @@ namespace uno {
    Statistics Uno::create_statistics(const Model& model, const Options& options) {
       Statistics statistics{};
       statistics.add_column("iter", Statistics::int_width, options.get_int("statistics_major_column_order"));
-      statistics.add_column("step norm", Statistics::double_width - 5, options.get_int("statistics_step_norm_column_order"));
-      statistics.add_column("objective", Statistics::double_width - 5, options.get_int("statistics_objective_column_order"));
+      statistics.add_column("step norm", Statistics::double_width, options.get_int("statistics_step_norm_column_order"));
+      statistics.add_column("objective", Statistics::double_width, options.get_int("statistics_objective_column_order"));
       if (model.is_constrained()) {
-         statistics.add_column("primal feas", Statistics::double_width - 4, options.get_int("statistics_primal_feasibility_column_order"));
+         statistics.add_column("primal feas", Statistics::double_width + 1, options.get_int("statistics_primal_feasibility_column_order"));
       }
-      statistics.add_column("stationarity", Statistics::double_width - 3, options.get_int("statistics_stationarity_column_order"));
-      statistics.add_column("complementarity", Statistics::double_width, options.get_int("statistics_complementarity_column_order"));
-      statistics.add_column("status", Statistics::string_width - 9, options.get_int("statistics_status_column_order"));
+      statistics.add_column("stationarity", Statistics::double_width + 2, options.get_int("statistics_stationarity_column_order"));
+      statistics.add_column("complementarity", Statistics::double_width + 5, options.get_int("statistics_complementarity_column_order"));
+      statistics.add_column("status", Statistics::string_width, options.get_int("statistics_status_column_order"));
       return statistics;
    }
 

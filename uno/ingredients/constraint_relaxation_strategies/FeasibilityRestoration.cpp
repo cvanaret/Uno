@@ -58,7 +58,7 @@ namespace uno {
       this->optimality_inequality_handling_method->initialize_statistics(statistics, options);
       this->feasibility_inertia_correction_strategy->initialize_statistics(statistics, options);
       this->feasibility_inequality_handling_method->initialize_statistics(statistics, options);
-      statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
+      statistics.add_column("phase", Statistics::int_width - 1, options.get_int("statistics_restoration_phase_column_order"));
       statistics.set("phase", "OPT");
 
       // initial iterate
@@ -86,7 +86,7 @@ namespace uno {
                trust_region_radius, warmstart_information);
             if (direction.status == SubproblemStatus::INFEASIBLE) {
                // switch to the feasibility problem, starting from the current direction
-               statistics.set("status", std::string("infeasible subproblem"));
+               statistics.set("status", std::string("infeasible"));
                DEBUG << "/!\\ The subproblem is infeasible\n";
                this->switch_to_feasibility_problem(statistics, current_iterate, trust_region_radius, warmstart_information);
                this->feasibility_inequality_handling_method->set_initial_point(direction.primals);
