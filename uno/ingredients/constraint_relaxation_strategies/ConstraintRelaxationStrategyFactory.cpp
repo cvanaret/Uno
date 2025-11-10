@@ -16,11 +16,6 @@ namespace uno {
          INFO << "The model is unconstrained, picking no relaxation\n";
          return std::make_unique<NoRelaxation>(model, options);
       }
-      // if only linear constraints and no trust region
-      else if (model.get_nonlinear_constraints().empty() && !use_trust_region) {
-         INFO << "No nonlinear constraints, picking no relaxation\n";
-         return std::make_unique<NoRelaxation>(model, options);
-      }
       const std::string constraint_relaxation_type = options.get_string("constraint_relaxation_strategy");
       if (constraint_relaxation_type == "feasibility_restoration") {
          return std::make_unique<FeasibilityRestoration>(model, use_trust_region, options);
