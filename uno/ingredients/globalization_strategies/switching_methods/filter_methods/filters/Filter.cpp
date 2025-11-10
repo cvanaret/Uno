@@ -70,7 +70,7 @@ namespace uno {
    }
 
    bool Filter::infeasibility_sufficient_reduction(double current_infeasibility, double trial_infeasibility) const {
-      return (trial_infeasibility < this->parameters.beta * current_infeasibility);
+      return (trial_infeasibility <= this->parameters.beta * current_infeasibility);
    }
 
    double Filter::compute_actual_objective_reduction(double current_objective, double /*current_infeasibility*/, double trial_objective) {
