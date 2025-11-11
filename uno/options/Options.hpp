@@ -36,7 +36,7 @@ namespace uno {
       [[nodiscard]] static Options load_option_file(const std::string& file_name);
 
       void overwrite_with(const Options& overwriting_options);
-      void print_used_overwritten() const;
+      void print_non_default() const;
 
    private:
       std::map<std::string, uno_int> integer_options{};

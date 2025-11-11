@@ -74,7 +74,7 @@ namespace uno {
 
    template <typename ElementType>
    void PrimalDualInertiaCorrection<ElementType>::initialize_statistics(Statistics& statistics, const Options& options) {
-      statistics.add_column("regulariz", Statistics::double_width, options.get_int("statistics_primal_regularization_column_order"));
+      statistics.add_column("Regulariz", Statistics::double_width, 2, options.get_int("statistics_primal_regularization_column_order"));
    }
 
    template <typename ElementType>
@@ -142,7 +142,7 @@ namespace uno {
 
       if (estimated_inertia == expected_inertia) {
          DEBUG << "The inertia is correct\n";
-         statistics.set("regulariz", this->primal_regularization);
+         statistics.set("Regulariz", this->primal_regularization);
          return;
       }
 
@@ -209,7 +209,7 @@ namespace uno {
             }
          }
       }
-      statistics.set("regulariz", this->primal_regularization);
+      statistics.set("Regulariz", this->primal_regularization);
    }
 
    template <typename ElementType>

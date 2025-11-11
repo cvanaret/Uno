@@ -91,7 +91,7 @@ namespace uno {
             while (!termination) {
                ++major_iterations;
                statistics.start_new_line();
-               statistics.set("iter", major_iterations);
+               statistics.set("Major", major_iterations);
                DEBUG << "\n### Outer iteration " << major_iterations << '\n';
 
                // compute an acceptable iterate by solving a subproblem at the current point
@@ -111,7 +111,7 @@ namespace uno {
          }
          catch (std::exception& exception) {
             statistics.start_new_line();
-            statistics.set("status", exception.what());
+            statistics.set("Status", exception.what());
             if (Logger::level == INFO) statistics.print_current_line();
             DEBUG << exception.what() << '\n';
             optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
@@ -152,15 +152,15 @@ namespace uno {
 
    void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) {
       statistics.start_new_line();
-      statistics.set("iter", 0);
-      statistics.set("status", "initial point");
+      statistics.set("Major", 0);
+      statistics.set("Status", "initial point");
 
       model.project_onto_variable_bounds(current_iterate.primals);
       this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction, options);
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate);
       GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
 
-      options.print_used_overwritten();
+      options.print_non_default();
       if (Logger::level == INFO) {
          statistics.print_header();
          statistics.print_current_line();
@@ -170,15 +170,15 @@ namespace uno {
 
    Statistics Uno::create_statistics(const Model& model, const Options& options) {
       Statistics statistics{};
-      statistics.add_column("iter", Statistics::int_width, options.get_int("statistics_major_column_order"));
-      statistics.add_column("step norm", Statistics::double_width, options.get_int("statistics_step_norm_column_order"));
-      statistics.add_column("objective", Statistics::double_width, options.get_int("statistics_objective_column_order"));
+      statistics.add_column("Major", Statistics::int_width, 3, options.get_int("statistics_major_column_order"));
+      statistics.add_column("||Step||", Statistics::double_width, 2, options.get_int("statistics_step_norm_column_order"));
+      statistics.add_column("Objective", Statistics::double_width + 1, 3, options.get_int("statistics_objective_column_order"));
       if (model.is_constrained()) {
-         statistics.add_column("primal feas", Statistics::double_width + 1, options.get_int("statistics_primal_feasibility_column_order"));
+         statistics.add_column("Infeas", Statistics::double_width, 2, options.get_int("statistics_primal_feasibility_column_order"));
       }
-      statistics.add_column("stationarity", Statistics::double_width + 2, options.get_int("statistics_stationarity_column_order"));
-      statistics.add_column("complementarity", Statistics::double_width + 5, options.get_int("statistics_complementarity_column_order"));
-      statistics.add_column("status", Statistics::string_width, options.get_int("statistics_status_column_order"));
+      statistics.add_column("Statio", Statistics::double_width, 2, options.get_int("statistics_stationarity_column_order"));
+      statistics.add_column("Compl", Statistics::double_width, 2, options.get_int("statistics_complementarity_column_order"));
+      statistics.add_column("Status", Statistics::string_width, 3, options.get_int("statistics_status_column_order"));
       return statistics;
    }
 

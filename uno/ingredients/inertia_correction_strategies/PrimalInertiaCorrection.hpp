@@ -64,7 +64,7 @@ namespace uno {
 
    template <typename ElementType>
    void PrimalInertiaCorrection<ElementType>::initialize_statistics(Statistics& statistics, const Options& options) {
-      statistics.add_column("regulariz", Statistics::double_width, options.get_int("statistics_primal_regularization_column_order"));
+      statistics.add_column("Regulariz", Statistics::double_width, 2, options.get_int("statistics_primal_regularization_column_order"));
    }
 
    // Nocedal and Wright, p51
@@ -120,7 +120,7 @@ namespace uno {
             }
          }
       }
-      statistics.set("regulariz", this->regularization_factor);
+      statistics.set("Regulariz", this->regularization_factor);
    }
 
    template <typename ElementType>

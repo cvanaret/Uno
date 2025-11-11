@@ -8,19 +8,16 @@
 #include <map>
 
 namespace uno {
-   // forward declaration
-   class Options;
-
    class Statistics {
    public:
       Statistics() = default;
 
-      static int int_width;
-      static int double_width;
-      static int string_width;
-      static int numerical_format_size;
+      static size_t int_width;
+      static size_t double_width;
+      static size_t string_width;
+      static size_t numerical_format_size;
 
-      void add_column(std::string_view name, int width, int order);
+      void add_column(std::string_view name, size_t width, size_t precision, int order);
       void start_new_line();
       void set(std::string_view name, std::string value);
       void set(std::string_view name, int value);
@@ -34,7 +31,8 @@ namespace uno {
 
    private:
       std::map<int, std::string> columns{};
-      std::map<std::string_view, int> widths{};
+      std::map<std::string_view, size_t> widths{};
+      std::map<std::string_view, size_t> precisions{};
       std::map<std::string_view, std::string> current_line{};
       static std::string_view symbol(std::string_view value);
    };

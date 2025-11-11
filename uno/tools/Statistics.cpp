@@ -5,19 +5,18 @@
 #include <iostream>
 #include <iomanip>
 #include "Statistics.hpp"
-#include "options/Options.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
    // TODO move this to the option file
-   int Statistics::int_width = 7;
-   int Statistics::double_width = 11;
-   int Statistics::string_width = 15;
-   int Statistics::numerical_format_size = 3;
+   size_t Statistics::int_width = 7;
+   size_t Statistics::double_width = 10;
+   size_t Statistics::string_width = 15;
 
-   void Statistics::add_column(std::string_view name, int width, int order) {
+   void Statistics::add_column(std::string_view name, size_t width, size_t precision, int order) {
       this->columns[order] = name;
       this->widths[name] = width;
+      this->precisions[name] = precision;
    }
    
    void Statistics::start_new_line() {
@@ -40,14 +39,16 @@ namespace uno {
 
    void Statistics::set(std::string_view name, double value) {
       std::ostringstream stream;
-      stream << std::scientific << std::setprecision(Statistics::numerical_format_size) << value;
+      // get the associated precision
+      const size_t precision = this->precisions.at(name);
+      stream << std::scientific << std::setprecision(static_cast<int>(precision)) << value;
       this->set(name, stream.str());
    }
    
    void Statistics::print_horizontal_line() {
       for (const auto& element: this->columns) {
          std::string header = element.second;
-         for (int j = 0; j < this->widths[header]; j++) {
+         for (size_t j = 0; j < this->widths[header]; j++) {
             INFO << Statistics::symbol("top");
          }
       }
@@ -58,10 +59,12 @@ namespace uno {
       /* line above */
       this->print_horizontal_line();
       /* headers */
+      INFO << "  Iterations                                                             Residuals\n";
       for (const auto& element: this->columns) {
          const std::string& header = element.second;
          INFO << " " << header;
-         for (int j = 0; j < this->widths[header] - static_cast<int>(header.size()) - 1; j++) {
+         const unsigned long zero = 0;
+         for (size_t j = 0; j < std::max(this->widths[header] - header.size() - 1, zero); j++) {
             INFO << " ";
          }
       }
@@ -84,18 +87,19 @@ namespace uno {
    void Statistics::print_current_line() {
       for (const auto& element: this->columns) {
          const auto& header = element.second;
-         int length;
+         size_t length;
          try {
             const auto& value = this->current_line.at(header);
             INFO << " " << value;
-            length = 1 + static_cast<int>(length_utf8(value));
+            length = 1 + length_utf8(value);
          }
          catch (const std::out_of_range&) {
             INFO << " -";
             length = 2;
          }
-         int number_spaces = (length <= this->widths[header]) ? this->widths[header] - length : 0;
-         for (int j = 0; j < number_spaces; j++) {
+         const size_t number_spaces = (length <= this->widths[header]) ? this->widths[header] - length : 0;
+         const size_t zero = 0;
+         for (size_t j = 0; j < std::max(number_spaces, zero); j++) {
             INFO << " ";
          }
       }
@@ -106,7 +110,7 @@ namespace uno {
       /*
       for (const auto& element: this->columns) {
          const auto& header = element.second;
-         for (int j = 0; j < this->widths[header]; j++) {
+         for (size_t j = 0; j < this->widths[header]; j++) {
             INFO << Statistics::symbol("bottom");
          }
       }

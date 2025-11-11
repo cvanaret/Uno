@@ -186,18 +186,18 @@ namespace uno {
       //this->set(option_name, option_value, flag_as_overwritten);
    }
 
-   void Options::print_used_overwritten() const {
+   void Options::print_non_default() const {
       size_t number_used_options = 0;
       std::string option_list{};
       for (const auto& [option_name, option_value]: this->string_options) {
          if (this->used[option_name] && this->overwritten_options[option_name]) {
             ++number_used_options;
-            option_list.append("- ").append(option_name).append(" = ").append(option_value).append("\n");
+            option_list.append(option_name).append(" = ").append(option_value).append("\n");
          }
       }
       // print the overwritten options
       if (number_used_options > 0) {
-         DISCRETE << "\nUsed overwritten options:\n" << option_list << '\n';
+         DISCRETE << "\nNon-default options:\n" << option_list << '\n';
       }
    }
 } // namespace

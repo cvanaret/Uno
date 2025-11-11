@@ -114,7 +114,7 @@ namespace uno {
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::initialize_statistics(Statistics& statistics, const Options& options) {
-      statistics.add_column("barrier", Statistics::double_width, options.get_int("statistics_barrier_parameter_column_order"));
+      statistics.add_column("barrier", Statistics::double_width, 2, options.get_int("statistics_barrier_parameter_column_order"));
    }
 
    template <typename BarrierProblem>

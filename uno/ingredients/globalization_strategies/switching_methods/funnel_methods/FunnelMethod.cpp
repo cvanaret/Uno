@@ -26,13 +26,13 @@ namespace uno {
       this->funnel.set_infeasibility_upper_bound(upper_bound);
       DEBUG << "Current funnel width: " << this->funnel.current_width() << '\n';
 
-      statistics.add_column("funnel width", Statistics::double_width + 2, options.get_int("statistics_funnel_width_column_order"));
-      statistics.set("funnel width", this->funnel.current_width());
+      statistics.add_column("Funnel", Statistics::double_width + 2, 3, options.get_int("statistics_funnel_width_column_order"));
+      statistics.set("Funnel", this->funnel.current_width());
    }
 
    bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double /*objective_multiplier*/) {
-      statistics.set("funnel width", this->funnel.current_width());
+      statistics.set("Funnel", this->funnel.current_width());
       // in filter and funnel methods, we construct an unconstrained measure by ignoring infeasibility and scaling the objective measure by 1
       const double current_merit = SwitchingMethod::unconstrained_merit_function(current_progress);
       const double trial_merit = SwitchingMethod::unconstrained_merit_function(trial_progress);
@@ -70,7 +70,7 @@ namespace uno {
 
                DEBUG << "\t\tEntering funnel reduction mechanism\n";
                this->funnel.update(current_progress.infeasibility, trial_progress.infeasibility);
-               statistics.set("funnel width", this->funnel.current_width());
+               statistics.set("Funnel", this->funnel.current_width());
                scenario = "h-type";
             }
             else {
@@ -88,7 +88,7 @@ namespace uno {
          scenario = "funnel";
       }
 
-      statistics.set("status", std::string(accept ? "✔" : "✘") + " (" + scenario + ")");
+      statistics.set("Status", std::string(accept ? "✔" : "✘") + " (" + scenario + ")");
       if (accept) {
          this->funnel.print();
       }

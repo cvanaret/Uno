@@ -27,8 +27,8 @@ namespace uno {
    void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Direction& direction, const Options& options) {
       this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, direction, INF<double>, options);
-      statistics.add_column("LS iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
-      statistics.add_column("step length", Statistics::double_width + 1, options.get_int("statistics_LS_step_length_column_order"));
+      statistics.add_column("Minor", Statistics::int_width, 3, options.get_int("statistics_minor_column_order"));
+      statistics.add_column("Steplength", Statistics::double_width + 1, 2, options.get_int("statistics_LS_step_length_column_order"));
    }
 
    void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate,
@@ -58,7 +58,7 @@ namespace uno {
          ++number_iterations;
          DEBUG << "\n\tLine-search iteration " << number_iterations << ", step_length " << step_length << '\n';
          if (1 < number_iterations) { statistics.start_new_line(); }
-         statistics.set("step length", step_length);
+         statistics.set("Steplength", step_length);
 
          bool is_acceptable = false;
          try {
@@ -66,14 +66,14 @@ namespace uno {
             GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length,
                // scale or not the constraint dual direction with the LS step length
                this->scale_duals_with_step_length ? step_length : 1.);
-            statistics.set("step norm", step_length * direction.norm);
+            statistics.set("||Step||", step_length * direction.norm);
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction, step_length, warmstart_information, user_callbacks);
             GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate);
          }
          catch (const EvaluationError&) {
-            statistics.set("status", "eval. error");
+            statistics.set("Status", "eval. error");
          }
          BacktrackingLineSearch::set_LS_statistics(statistics, number_iterations);
 
@@ -97,7 +97,7 @@ namespace uno {
                   throw std::runtime_error("LS failed");
                }
                // switch to solving the feasibility problem
-               statistics.set("status", "small step length");
+               statistics.set("Status", "small step length");
                this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, INF<double>,
                   warmstart_information);
                this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction,
@@ -116,7 +116,7 @@ namespace uno {
       bool termination = false;
       trial_iterate.status = this->constraint_relaxation_strategy->check_termination(model, trial_iterate);
       if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
-         statistics.set("status", "accepted (small step length)");
+         statistics.set("Status", "accepted (small step length)");
          GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
          termination = true;
       }
@@ -138,6 +138,6 @@ namespace uno {
    }
 
    void BacktrackingLineSearch::set_LS_statistics(Statistics& statistics, size_t number_iterations) {
-      statistics.set("LS iter", number_iterations);
+      statistics.set("Minor", number_iterations);
    }
 } // namespace
