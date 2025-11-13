@@ -54,7 +54,7 @@ namespace uno {
       DenseMatrix<double> Hessian_approximation;
       double initial_identity_multiple{1.}; // referred to as delta in Numerical optimization
 
-      void update_memory(Iterate& current_iterate, Iterate& trial_iterate);
+      void update_limited_memory(Iterate& current_iterate, Iterate& trial_iterate);
       void update_S_matrix(const Iterate& current_iterate, const Iterate& trial_iterate);
       void update_Y_matrix(Iterate& current_iterate, Iterate& trial_iterate);
       void update_D_matrix();
