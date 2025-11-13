@@ -23,7 +23,7 @@ namespace uno {
       {"Phase", 20},
       {"Regulariz", 21},
       {"Funnel", 25},
-      {"QN |memory|", 26},
+      {"|BFGS|", 26},
       {"||Step||", 31},
       {"Objective", 100},
       {"Infeas", 101},

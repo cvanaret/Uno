@@ -32,6 +32,7 @@ namespace uno {
       // statistics
       this->inertia_correction_strategy->initialize_statistics(statistics);
       this->inequality_handling_method->initialize_statistics(statistics);
+      // this->hessian_model->initialize_statistics(statistics, options);
 
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate);

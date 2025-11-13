@@ -53,15 +53,12 @@ namespace uno {
    }
 
    void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
-      statistics.add_column("QN |memory|", Statistics::double_width - 4, 2, Statistics::column_order.at("QN |memory|"));
+      statistics.add_column("|BFGS|", Statistics::double_width - 4, 2, Statistics::column_order.at("|BFGS|"));
    }
 
    void LBFGSHessian::notify_accepted_iterate(Iterate& current_iterate, Iterate& trial_iterate) {
-      DEBUG << "Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
-      // this->current_available_slot lives in [0, this->memory_size)
       this->update_memory(current_iterate, trial_iterate);
-      this->hessian_recomputation_required = true;
-      // TODO set "QN |memory|"
+      // TODO set "|BFGS|"
    }
 
    void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
@@ -121,6 +118,7 @@ namespace uno {
       DEBUG << "> Y: " << this->Y_matrix;
       DEBUG << "> D: "; print_vector(DEBUG, this->D_matrix);
 
+      // this->current_available_slot lives in [0, this->memory_size)
       // check that the latest D entry s^T y is > 0
       if (0. < this->D_matrix[this->current_memory_slot]) {
          DEBUG << "Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
