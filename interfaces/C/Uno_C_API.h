@@ -283,6 +283,9 @@ extern "C" {
    bool uno_get_solver_bool_option(void* solver, const char* option_name);
    const char* uno_get_solver_string_option(void* solver, const char* option_name);
 
+   // gets the method used by the solver as the result of the strategy combination
+   const char* uno_get_solver_method(void* solver);
+
    // gets the optimization status (once the model was solved)
    uno_int uno_get_optimization_status(void* solver);
 

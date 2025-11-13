@@ -834,6 +834,12 @@ Result* uno_get_result(void* solver) {
    return uno_solver->result;
 }
 
+const char* uno_get_solver_method(void* solver) {
+   assert(solver != nullptr);
+   Solver* uno_solver = static_cast<Solver*>(solver);
+   return uno_solver->solver->get_strategy_combination().c_str();
+}
+
 uno_int uno_get_optimization_status(void* solver) {
    const Result* result = uno_get_result(solver);
    return static_cast<uno_int>(result->optimization_status);

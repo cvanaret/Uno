@@ -142,6 +142,12 @@ namespace uno {
       std::cout << "- Presets: filtersqp, ipopt\n";
    }
 
+   const std::string& Uno::get_strategy_combination() const {
+      return this->strategy_combination;
+   }
+
+   // private member functions
+
    void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) {
       statistics.start_new_line();
       statistics.set("iter", 0);
@@ -233,10 +239,6 @@ namespace uno {
          result.upper_bound_dual_solution.scale(-1.);
       }
       result.solution_objective *= model.optimization_sense;
-   }
-
-   const std::string& Uno::get_strategy_combination() const {
-      return this->strategy_combination;
    }
 
    void Uno::print_optimization_summary(const Result& result, bool print_solution) const {

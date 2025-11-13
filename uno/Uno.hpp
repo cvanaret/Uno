@@ -29,6 +29,7 @@ namespace uno {
 
       static std::string current_version();
       static void print_available_strategies();
+      [[nodiscard]] const std::string& get_strategy_combination() const;
 
    private:
       std::unique_ptr<GlobalizationMechanism> globalization_mechanism{};
@@ -44,7 +45,6 @@ namespace uno {
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
          size_t major_iterations, const Timer& timer) const;
       static void postprocess_multipliers_signs(const Model& model, Result& result);
-      [[nodiscard]] const std::string& get_strategy_combination() const;
       void print_optimization_summary(const Result& result, bool print_solution) const;
    };
 } // namespace
