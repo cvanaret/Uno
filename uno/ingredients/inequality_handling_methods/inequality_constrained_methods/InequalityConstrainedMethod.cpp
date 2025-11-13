@@ -5,7 +5,6 @@
 #include "InequalityConstrainedMethod.hpp"
 #include "optimization/Iterate.hpp"
 #include "ingredients/constraint_relaxation_strategies/relaxed_problems/l1RelaxedProblem.hpp"
-#include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/BoxLPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
@@ -55,7 +54,7 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-        double trust_region_radius, WarmstartInformation& warmstart_information) {
+        double trust_region_radius, const std::optional<Scaling>& /*scaling*/, WarmstartInformation& warmstart_information) {
       // solve the subproblem
       this->solver->solve(statistics, *this->subproblem, trust_region_radius, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_iterate.multipliers, direction.multipliers);
@@ -99,8 +98,8 @@ namespace uno {
    }
 
    bool InequalityConstrainedMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) {
+         const std::optional<Scaling>& /*scaling*/, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length, UserCallbacks& user_callbacks) {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
          this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }

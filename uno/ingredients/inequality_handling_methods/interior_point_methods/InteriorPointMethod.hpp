@@ -29,7 +29,7 @@ namespace uno {
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(Iterate& initial_iterate) override;
       void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         WarmstartInformation& warmstart_information) override;
+         const std::optional<Scaling>& scaling, WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& iterate) override;
@@ -41,8 +41,8 @@ namespace uno {
 
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) override;
+         const std::optional<Scaling>& scaling, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length, UserCallbacks& user_callbacks) override;
 
       void postprocess_iterate(Iterate& iterate) override;
 
@@ -128,7 +128,7 @@ namespace uno {
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, WarmstartInformation& warmstart_information) {
+         double trust_region_radius, const std::optional<Scaling>& /*scaling*/, WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet");
       }
@@ -208,7 +208,8 @@ namespace uno {
       // where jacobian_coefficient = -1 for p, +1 for n
       // Note: IPOPT uses a '+' sign because they define the Lagrangian as f(x) + \lambda^T c(x)
       const double mu = this->barrier_parameter();
-      const auto elastic_setting_function = [&](Iterate& iterate, size_t /*constraint_index*/, size_t elastic_index, double jacobian_coefficient) {
+      const auto elastic_setting_function = [&](Iterate& iterate, size_t /*constraint_index*/, size_t elastic_index,
+            double jacobian_coefficient) {
          // precomputations
          const double constraint_j = 0.; // TODO the constraints are not stored here any more... this->constraints[constraint_index];
          const double rho = this->l1_constraint_violation_coefficient;
@@ -244,8 +245,8 @@ namespace uno {
 
    template <typename BarrierProblem>
    bool InteriorPointMethod<BarrierProblem>::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) {
+         const std::optional<Scaling>& /*scaling*/, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length, UserCallbacks& user_callbacks) {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
          this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }

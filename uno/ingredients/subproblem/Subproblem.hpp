@@ -5,11 +5,13 @@
 #define UNO_SUBPROBLEM_H
 
 #include <functional>
+#include <optional>
 #include "optimization/Iterate.hpp"
 #include "linear_algebra/Matrix.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/OptimizationProblem.hpp"
+#include "optimization/Scaling.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/UnaryNegation.hpp"
 #include "symbolic/VectorView.hpp"
