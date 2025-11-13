@@ -62,9 +62,6 @@ namespace uno {
    // protected solve function
    Result Uno::uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks) {
       const Timer timer{};
-      model.reset_number_evaluations();
-      // pick the ingredients based on the user-defined options
-      Uno::pick_ingredients(model, options);
       Statistics statistics = Uno::create_statistics(model, options);
       WarmstartInformation warmstart_information{};
       warmstart_information.whole_problem_changed();
@@ -145,14 +142,15 @@ namespace uno {
       std::cout << "- Presets: filtersqp, ipopt\n";
    }
 
-   void Uno::pick_ingredients(const Model& model, const Options& options) {
-      this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
-   }
-
    void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) {
       statistics.start_new_line();
       statistics.set("iter", 0);
       statistics.set("status", "initial point");
+
+      model.reset_number_evaluations();
+      // pick the ingredients based on the user-defined options
+      this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
+      this->strategy_combination = this->globalization_mechanism->get_strategy_combination();
 
       model.project_onto_variable_bounds(current_iterate.primals);
       this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction, options);
@@ -237,8 +235,8 @@ namespace uno {
       result.solution_objective *= model.optimization_sense;
    }
 
-   std::string Uno::get_strategy_combination() const {
-      return this->globalization_mechanism->get_name();
+   const std::string& Uno::get_strategy_combination() const {
+      return this->strategy_combination;
    }
 
    void Uno::print_optimization_summary(const Result& result, bool print_solution) const {

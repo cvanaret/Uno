@@ -242,7 +242,7 @@ namespace uno {
       }
    }
 
-   std::string FeasibilityRestoration::get_name() const {
+   std::string FeasibilityRestoration::get_strategy_combination() const {
       return this->optimality_globalization_strategy->get_name() + " restoration " + this->optimality_inequality_handling_method->get_name() +
          " with " + this->optimality_hessian_model->name + " Hessian and " + this->optimality_inertia_correction_strategy->get_name() +
          " regularization";

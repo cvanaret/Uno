@@ -15,7 +15,7 @@
 
 namespace uno {
    BacktrackingLineSearch::BacktrackingLineSearch(const Model& model, const Options& options):
-         GlobalizationMechanism(model, false, options),
+         GlobalizationMechanism("LS", model, false, options),
          backtracking_ratio(options.get_double("LS_backtracking_ratio")),
          minimum_step_length(options.get_double("LS_min_step_length")),
          scale_duals_with_step_length(options.get_bool("LS_scale_duals_with_step_length")) {
@@ -40,10 +40,6 @@ namespace uno {
       BacktrackingLineSearch::check_unboundedness(direction);
       this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, direction, warmstart_information,
          user_callbacks);
-   }
-
-   std::string BacktrackingLineSearch::get_name() const {
-      return "LS " + this->constraint_relaxation_strategy->get_name();
    }
 
    // protected member functions

@@ -11,7 +11,9 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   GlobalizationMechanism::GlobalizationMechanism(const Model& model, bool use_trust_region, const Options& options):
+   GlobalizationMechanism::GlobalizationMechanism(std::string name, const Model& model, bool use_trust_region,
+         const Options& options):
+      name(std::move(name)),
       constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(model, use_trust_region, options)) {
    }
 
@@ -50,6 +52,10 @@ namespace uno {
    void GlobalizationMechanism::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) {
       statistics.set("stationarity", iterate.residuals.stationarity);
       statistics.set("complementarity", iterate.residuals.complementarity);
+   }
+
+   std::string GlobalizationMechanism::get_strategy_combination() const {
+      return this->name + " " + this->constraint_relaxation_strategy->get_strategy_combination();
    }
 
    size_t GlobalizationMechanism::get_number_subproblems_solved() const {

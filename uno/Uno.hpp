@@ -33,8 +33,8 @@ namespace uno {
    private:
       std::unique_ptr<GlobalizationMechanism> globalization_mechanism{};
       Direction direction{};
+      std::string strategy_combination{};
 
-      void pick_ingredients(const Model& model, const Options& options);
       void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options);
       [[nodiscard]] static Statistics create_statistics(const Model& model, const Options& options);
       [[nodiscard]] static bool termination_criteria(SolutionStatus solution_status, size_t iteration, size_t max_iterations,
@@ -44,7 +44,7 @@ namespace uno {
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
          size_t major_iterations, const Timer& timer) const;
       static void postprocess_multipliers_signs(const Model& model, Result& result);
-      [[nodiscard]] std::string get_strategy_combination() const;
+      [[nodiscard]] const std::string& get_strategy_combination() const;
       void print_optimization_summary(const Result& result, bool print_solution) const;
    };
 } // namespace

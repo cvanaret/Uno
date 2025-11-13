@@ -85,7 +85,7 @@ namespace uno {
       return ConstraintRelaxationStrategy::check_termination(this->problem, iterate);
    }
 
-   std::string NoRelaxation::get_name() const {
+   std::string NoRelaxation::get_strategy_combination() const {
       return this->globalization_strategy.get_name() + " " + this->inequality_handling_method->get_name() + " with " +
          this->hessian_model->name + " Hessian and " + this->inertia_correction_strategy->get_name() + " regularization";
    }
