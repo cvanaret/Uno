@@ -8,12 +8,16 @@
 #include "ExactHessian.hpp"
 #include "IdentityHessian.hpp"
 #include "ZeroHessian.hpp"
+#ifdef HAS_LAPACK
+#include "quasi_newton/LBFGSHessian.hpp"
+#endif
 #include "model/Model.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
-   std::unique_ptr<HessianModel> HessianModelFactory::create(const Model& model, const Options& options) {
+   std::unique_ptr<HessianModel> HessianModelFactory::create(const Model& model, [[maybe_unused]] double objective_multiplier,
+         const Options& options) {
       const std::string& hessian_model = options.get_string("hessian_model");
       if (hessian_model == "exact") {
          // if no Hessian (matrix or operator) is available, pick a zero Hessian
@@ -28,6 +32,11 @@ namespace uno {
       else if (hessian_model == "identity") {
          return std::make_unique<IdentityHessian>(model.number_variables);
       }
+#ifdef HAS_LAPACK
+      else if (hessian_model == "L-BFGS") {
+         return std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
+      }
+#endif
       else if (hessian_model == "zero") {
          return std::make_unique<ZeroHessian>(model.number_variables);
       }
