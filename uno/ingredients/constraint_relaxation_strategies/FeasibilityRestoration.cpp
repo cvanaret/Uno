@@ -59,6 +59,8 @@ namespace uno {
       this->optimality_inequality_handling_method->initialize_statistics(statistics, options);
       this->feasibility_inertia_correction_strategy->initialize_statistics(statistics, options);
       this->feasibility_inequality_handling_method->initialize_statistics(statistics, options);
+      this->optimality_hessian_model->initialize_statistics(statistics, options);
+      this->feasibility_hessian_model->initialize_statistics(statistics, options);
       statistics.add_column("phase", Statistics::int_width - 1, options.get_int("statistics_restoration_phase_column_order"));
       statistics.set("phase", "OPT");
 
