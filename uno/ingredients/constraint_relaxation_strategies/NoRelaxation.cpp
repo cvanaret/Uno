@@ -9,6 +9,7 @@
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
@@ -42,6 +43,12 @@ namespace uno {
       this->problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, evaluation_space, initial_iterate);
       this->compute_primal_dual_residuals(this->problem, initial_iterate);
       this->globalization_strategy.initialize(statistics, initial_iterate, options);
+
+      // optional scaling
+      if (options.get_bool("use_function_scaling")) {
+         this->scaling.emplace(initial_iterate, this->inequality_handling_method->get_evaluation_space(),
+            options.get_double("function_scaling_threshold"));
+      }
    }
 
    void NoRelaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,

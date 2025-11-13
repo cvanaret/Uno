@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <vector>
+#include "linear_algebra/Norm.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/EvaluationSpace.hpp"
 #include "../interfaces/C/uno_int.h"
@@ -23,6 +24,7 @@ namespace uno {
       void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector,
          Vector<double>& result) const override;
+      void compute_constraint_jacobian_norms(Vector<double>& row_norms) const override;
       [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
       void set_up_linear_system(Statistics& statistics, const Subproblem& subproblem, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,

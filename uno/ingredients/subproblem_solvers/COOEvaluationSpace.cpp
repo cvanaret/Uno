@@ -95,6 +95,17 @@ namespace uno {
       }
    }
 
+   // compute the inf norm of each row
+   void COOEvaluationSpace::compute_constraint_jacobian_norms(Vector<double>& row_norms) const {
+      row_norms.fill(0.);
+      const size_t offset = this->number_hessian_nonzeros;
+      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
+         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
+         const double derivative = this->matrix_values[offset + nonzero_index];
+         row_norms[constraint_index] = std::max(row_norms[constraint_index], std::abs(derivative));
+      }
+   }
+
    double COOEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& /*vector*/) const {
       return 0.;
    }

@@ -5,11 +5,13 @@
 #define UNO_NORELAXATION_H
 
 #include <memory>
+#include <optional>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/l1MeritFunction.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "optimization/OptimizationProblem.hpp"
+#include "optimization/Scaling.hpp"
 
 namespace uno {
    class NoRelaxation : public ConstraintRelaxationStrategy {
@@ -42,6 +44,7 @@ namespace uno {
       std::unique_ptr<HessianModel> hessian_model;
       std::unique_ptr<InertiaCorrectionStrategy<double>> inertia_correction_strategy;
       l1MeritFunction globalization_strategy;
+      std::optional<Scaling> scaling{};
    };
 } // namespace
 

@@ -76,6 +76,16 @@ namespace uno {
       }
    }
 
+   void BQPDEvaluationSpace::compute_constraint_jacobian_norms(Vector<double>& row_norms) const {
+      row_norms.fill(0.);
+      const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
+      for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
+         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
+         const double derivative = this->jacobian_values[nonzero_index];
+         row_norms[constraint_index] = std::max(row_norms[constraint_index], std::abs(derivative));
+      }
+   }
+
    double BQPDEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
       if (subproblem.has_hessian_operator()) { // linear operator
          // TODO preallocate

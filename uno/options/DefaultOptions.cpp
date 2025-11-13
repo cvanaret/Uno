@@ -58,8 +58,8 @@ namespace uno {
       // Hessian model (exact|zero)
       options.set_string("hessian_model", "exact");
       options.set_string("inertia_correction_strategy", "primal");
-      // scale the functions (yes|no)
-      options.set_bool("scale_functions", false);
+      // use function scaling based on derivatives at the initial point (yes|no)
+      options.set_bool("use_function_scaling", false);
       options.set_double("function_scaling_threshold", 100.);
       // factor scaling
       options.set_double("function_scaling_factor", 100.);

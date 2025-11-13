@@ -73,6 +73,12 @@ namespace uno {
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, initial_iterate);
       this->optimality_globalization_strategy->initialize(statistics, initial_iterate, options);
       this->feasibility_globalization_strategy.initialize(statistics, initial_iterate, options);
+
+      // optional scaling
+      if (options.get_bool("use_function_scaling")) {
+         this->scaling.emplace(initial_iterate, this->optimality_inequality_handling_method->get_evaluation_space(),
+            options.get_double("function_scaling_threshold"));
+      }
    }
 
    void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
