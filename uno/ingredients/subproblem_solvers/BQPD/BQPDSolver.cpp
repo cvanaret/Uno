@@ -37,16 +37,24 @@ extern "C" {
 namespace uno {
    #define BIG 1e30
 
-   // heuristic to select kmax (the maximum size of the nullspace)
-   // source: Minotaur code
+   // heuristics to select kmax (the maximum size of the nullspace)
+
+   // approach implemented in filterSQP
+   int pick_kmax_filtersqp(size_t number_variables, size_t /*number_constraints*/) {
+      return std::min(static_cast<int>(number_variables), 500);
+   }
+
+   // approach implemented in Minotaur
    // https://github.com/coin-or/minotaur/blob/51a8bb78241a0b2e9ae94802aa76af8319f99192/src/interfaces/UnoEngine.cpp#L277
-   int pick_kmax_heuristically(size_t number_variables, size_t number_constraints) {
+   int pick_kmax_minotaur(size_t number_variables, size_t number_constraints) {
       size_t kmax = 0;
       if (number_variables <= 1500) {
          kmax = number_variables;
-      } else if (number_variables <= 5000) {
+      }
+      else if (number_variables <= 5000) {
          kmax = number_variables - number_constraints/5;
-      } else {
+      }
+      else {
          kmax = 5000;
       }
       return static_cast<int>(kmax);
@@ -55,6 +63,8 @@ namespace uno {
    // preallocate a bunch of stuff
    BQPDSolver::BQPDSolver(const Options& options):
          QPSolver(),
+         // select a heuristic to pick kmax (the max size of the nullspace)
+         pick_kmax(options.get_string("BQPD_kmax_heuristic") == "minotaur" ? pick_kmax_minotaur : pick_kmax_filtersqp),
          alp(static_cast<size_t>(this->mlp)),
          lp(static_cast<size_t>(this->mlp)),
          print_subproblem(options.get_bool("print_subproblem")) {
@@ -82,8 +92,7 @@ namespace uno {
       }
 
       // determine whether the subproblem has curvature
-      this->kmax = subproblem.has_curvature() ? pick_kmax_heuristically(subproblem.number_variables,
-         subproblem.number_constraints) : 0;
+      this->kmax = subproblem.has_curvature() ? pick_kmax(subproblem.number_variables, subproblem.number_constraints) : 0;
 
       // allocation of integer and real workspaces
       this->mxws = static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * subproblem.number_variables +

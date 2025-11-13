@@ -5,7 +5,6 @@
 #define UNO_BQPDSOLVER_H
 
 #include <array>
-#include <memory>
 #include <vector>
 #include "ingredients/subproblem_solvers/QPSolver.hpp"
 #include "BQPDEvaluationSpace.hpp"
@@ -56,6 +55,7 @@ namespace uno {
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
 
       int kmax{0};
+      int (*pick_kmax)(size_t number_variables, size_t number_constraints);
       int mlp{1000};
       const size_t nprof{2000000};
       std::array<int, 100> info{};

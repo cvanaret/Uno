@@ -147,7 +147,7 @@ namespace uno {
          {"barrier_push_variable_to_interior_k2", OptionType::DOUBLE},
          {"barrier_damping_factor", OptionType::DOUBLE},
          {"least_square_multiplier_max_norm", OptionType::DOUBLE},
-         {"BQPD_kmax", OptionType::INTEGER},
+         {"BQPD_kmax_heuristic", OptionType::STRING},
          {"QP_solver", OptionType::STRING},
          {"LP_solver", OptionType::STRING},
          {"linear_solver", OptionType::STRING},

@@ -167,7 +167,7 @@ namespace uno {
       options.set_double("least_square_multiplier_max_norm", 1e3);
 
       /** BQPD options **/
-      options.set_integer("BQPD_kmax", 500);
+      options.set_string("BQPD_kmax_heuristic", "filtersqp");
    }
 
    // determine default subproblem solvers, based on the available external dependencies
