@@ -41,6 +41,7 @@ namespace uno {
       options.set_integer("statistics_SOC_column_order", 9);
       options.set_integer("statistics_TR_radius_column_order", 10);
       options.set_integer("statistics_LS_step_length_column_order", 10);
+      options.set_integer("statistics_quasi_newton_memory_size_order", 11);
       options.set_integer("statistics_restoration_phase_column_order", 20);
       options.set_integer("statistics_primal_regularization_column_order", 21);
       options.set_integer("statistics_funnel_width_column_order", 25);
