@@ -205,11 +205,17 @@ namespace uno {
          accept_iterate = this->optimality_inequality_handling_method->is_iterate_acceptable(statistics,
             *this->optimality_globalization_strategy, *this->optimality_hessian_model, *this->optimality_inertia_correction_strategy,
             trust_region_radius, current_iterate, trial_iterate, direction, step_length, user_callbacks);
+         if (accept_iterate) {
+            this->optimality_hessian_model->notify_accepted_iterate(current_iterate, trial_iterate);
+         }
       }
       else {
          accept_iterate = this->feasibility_inequality_handling_method->is_iterate_acceptable(statistics,
             this->feasibility_globalization_strategy, *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy,
             trust_region_radius, current_iterate, trial_iterate, direction, step_length, user_callbacks);
+         if (accept_iterate) {
+            this->feasibility_hessian_model->notify_accepted_iterate(current_iterate, trial_iterate);
+         }
       }
       trial_iterate.status = this->check_termination(model, trial_iterate);
 
