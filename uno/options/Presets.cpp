@@ -58,7 +58,7 @@ namespace uno {
          preset_options.set_double("l1_constraint_violation_coefficient", 1000.);
          preset_options.set_string("progress_norm", "L1");
          preset_options.set_string("residual_norm", "INF");
-         preset_options.set_bool("scale_functions", true);
+         preset_options.set_bool("use_function_scaling", true);
          preset_options.set_double("primal_tolerance", 1e-8);
          preset_options.set_double("dual_tolerance", 1e-8);
          preset_options.set_double("loose_primal_tolerance", 1e-6);

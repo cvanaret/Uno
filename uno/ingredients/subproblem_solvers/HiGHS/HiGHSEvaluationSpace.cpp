@@ -75,7 +75,19 @@ namespace uno {
       }
    }
 
-   double HiGHSEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& vector) const {
+   void HiGHSEvaluationSpace::compute_constraint_jacobian_norms(Vector<double>& row_norms) const {
+      row_norms.fill(0.);
+      const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
+      for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
+         const size_t permuted_nonzero_index = this->jacobian_permutation_vector[nonzero_index];
+         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[permuted_nonzero_index]);
+         const double derivative = this->model.lp_.a_matrix_.value_[nonzero_index];
+         row_norms[constraint_index] = std::max(row_norms[constraint_index], std::abs(derivative));
+      }
+   }
+
+   double HiGHSEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const std::optional<Scaling>& /*scaling*/,
+         const Vector<double>& vector) const {
       double quadratic_product = 0.;
       const size_t number_hessian_nonzeros = this->hessian_values.size();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
@@ -92,10 +104,10 @@ namespace uno {
    }
 
    void HiGHSEvaluationSpace::evaluate_functions(Statistics& statistics, const Subproblem& subproblem,
-         const WarmstartInformation& warmstart_information) {
+         const std::optional<Scaling>& scaling, const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       if (warmstart_information.objective_changed) {
-         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data());
+         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data(), scaling);
       }
       if (warmstart_information.constraints_changed) {
          subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints);
@@ -103,7 +115,7 @@ namespace uno {
       }
       // evaluate the Hessian and regularize it
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data());
+         subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data(), scaling);
          // copy the Hessian with permutation into this->model.hessian_.value_
          for (size_t nonzero_index: Range(subproblem.number_regularized_hessian_nonzeros())) {
             const size_t permuted_nonzero_index = this->hessian_permutation_vector[nonzero_index];

@@ -20,8 +20,9 @@ namespace uno {
    }
 
    void HiGHSSolver::solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& /*initial_point*/, Direction& direction, const WarmstartInformation& warmstart_information) {
-      this->set_up_subproblem(statistics, subproblem, trust_region_radius, warmstart_information);
+         const std::optional<Scaling>& scaling, const Vector<double>& /*initial_point*/, Direction& direction,
+         const WarmstartInformation& warmstart_information) {
+      this->set_up_subproblem(statistics, subproblem, trust_region_radius, scaling, warmstart_information);
       this->solve_subproblem(subproblem, direction);
    }
 
@@ -32,9 +33,9 @@ namespace uno {
    // protected member functions
 
    void HiGHSSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const WarmstartInformation& warmstart_information) {
+         const std::optional<Scaling>& scaling, const WarmstartInformation& warmstart_information) {
       // evaluate the functions and derivatives
-      this->evaluation_space.evaluate_functions(statistics, subproblem, warmstart_information);
+      this->evaluation_space.evaluate_functions(statistics, subproblem, scaling, warmstart_information);
 
       // variable bounds
       if (warmstart_information.variable_bounds_changed) {

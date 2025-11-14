@@ -94,10 +94,10 @@ namespace uno {
       dmumps_c(&this->workspace);
    }
 
-   void MUMPSSolver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const WarmstartInformation& warmstart_information) {
+   void MUMPSSolver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, const std::optional<Scaling>& scaling,
+         Direction& direction, const WarmstartInformation& warmstart_information) {
       // set up the linear system by evaluating the functions at the current iterate
-      this->evaluation_space.set_up_linear_system(statistics, subproblem, *this, warmstart_information);
+      this->evaluation_space.set_up_linear_system(statistics, subproblem, scaling, *this, warmstart_information);
       // solve the linear system
       this->solve_indefinite_system(this->evaluation_space.matrix_values, this->evaluation_space.rhs, this->evaluation_space.solution);
       // assemble the full primal-dual direction

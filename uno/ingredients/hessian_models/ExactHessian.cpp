@@ -34,13 +34,20 @@ namespace uno {
    }
 
    void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& primal_variables,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) {
+         double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values,
+         const std::optional<Scaling>& scaling) {
+      if (scaling.has_value()) {
+         objective_multiplier *= scaling->get_objective_scaling();
+      }
       this->model.evaluate_lagrangian_hessian(primal_variables, objective_multiplier, constraint_multipliers, hessian_values);
       ++this->evaluation_count;
    }
 
-   void ExactHessian::compute_hessian_vector_product(const double* x, const double* vector,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) {
+   void ExactHessian::compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, double* result, const std::optional<Scaling>& scaling) {
+      if (scaling.has_value()) {
+         objective_multiplier *= scaling->get_objective_scaling();
+      }
       this->model.compute_hessian_vector_product(x, vector, objective_multiplier, constraint_multipliers, result);
       ++this->evaluation_count;
    }

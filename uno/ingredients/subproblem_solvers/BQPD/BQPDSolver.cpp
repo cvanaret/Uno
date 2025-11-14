@@ -98,17 +98,17 @@ namespace uno {
       this->mxws = static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * subproblem.number_variables +
          subproblem.number_constraints /* (required by bqpd.f) */ + 5 * subproblem.number_variables + this->nprof /* (required
          by sparseL.f) */;
-      // 6 pointers hidden in lws
-      constexpr size_t hidden_pointers_size = 6*sizeof(intptr_t);
+      // 7 pointers hidden in lws
+      constexpr size_t hidden_pointers_size = 7*sizeof(intptr_t);
       this->mxlws = hidden_pointers_size + static_cast<size_t>(this->kmax) /* (required by bqpd.f) */ +
          9 * subproblem.number_variables + subproblem.number_constraints /* (required by sparseL.f) */;
       this->ws.resize(this->mxws);
       this->lws.resize(this->mxlws);
    }
 
-   void BQPDSolver::solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
+   void BQPDSolver::solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const std::optional<Scaling>& scaling,
          const Vector<double>& initial_point, Direction& direction, const WarmstartInformation& warmstart_information) {
-      this->set_up_subproblem(statistics, subproblem, trust_region_radius, warmstart_information);
+      this->set_up_subproblem(statistics, subproblem, trust_region_radius, scaling, warmstart_information);
       if (this->print_subproblem) {
          this->display_subproblem(subproblem, initial_point);
       }
@@ -122,14 +122,14 @@ namespace uno {
    // protected member functions
 
    void BQPDSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const WarmstartInformation& warmstart_information) {
+         const std::optional<Scaling>& scaling, const WarmstartInformation& warmstart_information) {
       // initialize wsc_ common block (Hessian & workspace for BQPD)
       // setting the common block here ensures that several instances of BQPD can run simultaneously
       WSC.mxws = static_cast<int>(this->mxws);
       WSC.mxlws = static_cast<int>(this->mxlws);
 
       // evaluate the functions and derivatives
-      this->evaluation_space.evaluate_functions(subproblem.problem, subproblem.current_iterate, warmstart_information);
+      this->evaluation_space.evaluate_functions(subproblem, scaling, subproblem.current_iterate, warmstart_information);
 
       // variable bounds
       if (warmstart_information.variable_bounds_changed) {
@@ -149,7 +149,7 @@ namespace uno {
          this->upper_bounds[variable_index] = std::min(BIG, this->upper_bounds[variable_index]);
       }
 
-      this->hide_pointers_in_workspace(statistics, subproblem);
+      this->hide_pointers_in_workspace(statistics, subproblem, scaling);
    }
 
    void BQPDSolver::display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const {
@@ -242,7 +242,8 @@ namespace uno {
    }
 
    // hide pointers to arbitrary objects into this->workspace_sparsity (BQPD's lws)
-   void BQPDSolver::hide_pointers_in_workspace(Statistics& statistics, const Subproblem& subproblem) {
+   void BQPDSolver::hide_pointers_in_workspace(Statistics& statistics, const Subproblem& subproblem,
+         const std::optional<Scaling>& scaling) {
       WSC.kk = 0; // length of ws that is used by gdotx
       WSC.ll = 0; // length of lws that is used by gdotx
 
@@ -253,11 +254,13 @@ namespace uno {
       WSC.ll += sizeof(intptr_t);
       hide_pointer(2, this->lws.data(), subproblem);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(3, this->lws.data(), this->evaluation_space.hessian_row_indices);
+      hide_pointer(3, this->lws.data(), scaling);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(4, this->lws.data(), this->evaluation_space.hessian_column_indices);
+      hide_pointer(4, this->lws.data(), this->evaluation_space.hessian_row_indices);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(5, this->lws.data(), this->evaluation_space.hessian_values);
+      hide_pointer(5, this->lws.data(), this->evaluation_space.hessian_column_indices);
+      WSC.ll += sizeof(intptr_t);
+      hide_pointer(6, this->lws.data(), this->evaluation_space.hessian_values);
       WSC.ll += sizeof(intptr_t);
    }
 
@@ -343,12 +346,14 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
    bool* evaluate_hessian = uno::retrieve_pointer<bool>(0, lws);
    uno::Statistics* statistics = uno::retrieve_pointer<uno::Statistics>(1, lws);
    uno::Subproblem* subproblem = uno::retrieve_pointer<uno::Subproblem>(2, lws);
-   uno::Vector<int>* hessian_row_indices = uno::retrieve_pointer<uno::Vector<int>>(3, lws);
-   uno::Vector<int>* hessian_column_indices = uno::retrieve_pointer<uno::Vector<int>>(4, lws);
-   uno::Vector<double>* hessian_values = uno::retrieve_pointer<uno::Vector<double>>(5, lws);
+   const std::optional<uno::Scaling>* scaling = uno::retrieve_pointer<const std::optional<uno::Scaling>>(3, lws);
+   uno::Vector<int>* hessian_row_indices = uno::retrieve_pointer<uno::Vector<int>>(4, lws);
+   uno::Vector<int>* hessian_column_indices = uno::retrieve_pointer<uno::Vector<int>>(5, lws);
+   uno::Vector<double>* hessian_values = uno::retrieve_pointer<uno::Vector<double>>(6, lws);
    assert(evaluate_hessian != nullptr);
    assert(statistics != nullptr);
    assert(subproblem != nullptr);
+   assert(scaling != nullptr);
    assert(hessian_row_indices != nullptr);
    assert(hessian_column_indices != nullptr);
    assert(hessian_values != nullptr);
@@ -360,7 +365,7 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
       if (subproblem->has_hessian_matrix()) {
          // if the Hessian has not been evaluated at the current point, evaluate it
          if (*evaluate_hessian) {
-            subproblem->evaluate_lagrangian_hessian(*statistics, hessian_values->data());
+            subproblem->evaluate_lagrangian_hessian(*statistics, hessian_values->data(), *scaling);
             subproblem->regularize_lagrangian_hessian(*statistics, hessian_values->data());
             *evaluate_hessian = false;
          }
@@ -381,6 +386,6 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
    }
    // otherwise, try to perform a Hessian-vector product if possible
    else if (subproblem->has_hessian_operator()) {
-      subproblem->compute_hessian_vector_product(subproblem->current_iterate.primals.data(), vector, result);
+      subproblem->compute_hessian_vector_product(subproblem->current_iterate.primals.data(), vector, result, *scaling);
    }
 }

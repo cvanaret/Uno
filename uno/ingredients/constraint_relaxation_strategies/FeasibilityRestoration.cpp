@@ -69,7 +69,14 @@ namespace uno {
       const auto& evaluation_space = this->optimality_inequality_handling_method->get_evaluation_space();
       this->optimality_inequality_handling_method->evaluate_constraint_jacobian(initial_iterate);
       this->optimality_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
-         evaluation_space, initial_iterate);
+         evaluation_space, initial_iterate, this->scaling);
+
+      // optional scaling
+      if (options.get_bool("use_function_scaling")) {
+         this->scaling.emplace(initial_iterate, this->optimality_inequality_handling_method->get_evaluation_space(),
+            options.get_double("function_scaling_threshold"));
+      }
+      this->optimality_inequality_handling_method->evaluate_progress_measures(initial_iterate, this->scaling);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, initial_iterate);
       this->optimality_globalization_strategy->initialize(statistics, initial_iterate, options);
       this->feasibility_globalization_strategy.initialize(statistics, initial_iterate, options);
@@ -157,7 +164,8 @@ namespace uno {
          const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) {
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      inequality_handling_method.solve(statistics, current_iterate, direction, trust_region_radius, warmstart_information);
+      inequality_handling_method.solve(statistics, current_iterate, direction, trust_region_radius, this->scaling,
+         warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
    }
@@ -200,11 +208,13 @@ namespace uno {
       // determine acceptability, depending on the current phase
       if (this->current_phase == Phase::OPTIMALITY) {
          accept_iterate = this->optimality_inequality_handling_method->is_iterate_acceptable(statistics,
-            *this->optimality_globalization_strategy, current_iterate, trial_iterate, direction, step_length, user_callbacks);
+            *this->optimality_globalization_strategy, this->scaling, current_iterate, trial_iterate, direction,
+            step_length, user_callbacks);
       }
       else {
          accept_iterate = this->feasibility_inequality_handling_method->is_iterate_acceptable(statistics,
-            this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, step_length, user_callbacks);
+            this->feasibility_globalization_strategy, this->scaling, current_iterate, trial_iterate, direction,
+            step_length, user_callbacks);
       }
       trial_iterate.status = this->check_termination(model, trial_iterate);
 
@@ -227,13 +237,13 @@ namespace uno {
 
       if (this->current_phase == Phase::OPTIMALITY) {
          this->optimality_problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient,
-            this->optimality_inequality_handling_method->get_evaluation_space(), iterate);
+            this->optimality_inequality_handling_method->get_evaluation_space(), iterate, this->scaling);
          ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, iterate);
          return ConstraintRelaxationStrategy::check_termination(this->optimality_problem, iterate);
       }
       else {
          this->feasibility_problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient,
-            this->feasibility_inequality_handling_method->get_evaluation_space(), iterate);
+            this->feasibility_inequality_handling_method->get_evaluation_space(), iterate, this->scaling);
          ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->feasibility_problem, iterate);
          return ConstraintRelaxationStrategy::check_termination(this->feasibility_problem, iterate);
       }

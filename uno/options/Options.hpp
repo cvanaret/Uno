@@ -82,7 +82,7 @@ namespace uno {
          {"globalization_strategy", OptionType::STRING},
          {"hessian_model", OptionType::STRING},
          {"inertia_correction_strategy", OptionType::STRING},
-         {"scale_functions", OptionType::BOOL},
+         {"use_function_scaling", OptionType::BOOL},
          {"function_scaling_threshold", OptionType::DOUBLE},
          {"function_scaling_factor", OptionType::DOUBLE},
          {"scale_residuals", OptionType::BOOL},

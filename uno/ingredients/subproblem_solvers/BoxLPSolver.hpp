@@ -18,7 +18,11 @@ namespace uno {
       void compute_constraint_jacobian_vector_product(const Vector<double>& /*vector*/, Vector<double>& /*result*/) const override { }
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& /*vector*/,
          Vector<double>& /*result*/) const override { }
-      [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& /*vector*/) const override {
+      void compute_constraint_jacobian_norms(Vector<double>& row_norms) const override {
+         row_norms.fill(0.);
+      }
+      [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const std::optional<Scaling>& /*scaling*/,
+            const Vector<double>& /*vector*/) const override {
          return 0.;
       }
 
@@ -32,8 +36,8 @@ namespace uno {
 
       void initialize_memory(const Subproblem& subproblem) override;
 
-      void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) override;
+      void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const std::optional<Scaling>& scaling,
+         const Vector<double>& initial_point, Direction& direction, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] EvaluationSpace& get_evaluation_space() override;
 

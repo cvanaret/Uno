@@ -69,8 +69,9 @@ namespace uno {
       this->first_reformulation.evaluate_constraints(iterate, constraints);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
-      this->first_reformulation.evaluate_objective_gradient(iterate, objective_gradient);
+   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient,
+         const std::optional<Scaling>& scaling) const {
+      this->first_reformulation.evaluate_objective_gradient(iterate, objective_gradient, scaling);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
@@ -153,8 +154,8 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const EvaluationSpace& evaluation_space, Iterate& iterate) const {
-      this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, evaluation_space, iterate);
+         const EvaluationSpace& evaluation_space, Iterate& iterate, const std::optional<Scaling>& scaling) const {
+      this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, evaluation_space, iterate, scaling);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
@@ -179,9 +180,10 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, double* hessian_values) const {
+         const Multipliers& multipliers, double* hessian_values, const std::optional<Scaling>& scaling) const {
       // original Lagrangian Hessian
-      this->first_reformulation.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers, hessian_values);
+      this->first_reformulation.evaluate_lagrangian_hessian(statistics, hessian_model, primal_variables, multipliers,
+         hessian_values, scaling);
 
       // barrier terms
       size_t nonzero_index = this->first_reformulation.number_hessian_nonzeros(hessian_model);
@@ -205,9 +207,9 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x,
-         const double* vector, const Multipliers& multipliers, double* result) const {
+         const double* vector, const Multipliers& multipliers, double* result, const std::optional<Scaling>& scaling) const {
       // original Lagrangian Hessian
-      this->first_reformulation.compute_hessian_vector_product(hessian_model, x, vector, multipliers, result);
+      this->first_reformulation.compute_hessian_vector_product(hessian_model, x, vector, multipliers, result, scaling);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
