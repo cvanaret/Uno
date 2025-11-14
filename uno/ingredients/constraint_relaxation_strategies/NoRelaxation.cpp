@@ -38,8 +38,8 @@ namespace uno {
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
       this->inequality_handling_method->evaluate_constraint_jacobian(initial_iterate);
-      this->problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, *this->inequality_handling_method,
-         initial_iterate);
+      const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
+      this->problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, evaluation_space, initial_iterate);
       this->compute_primal_dual_residuals(this->problem, initial_iterate);
       this->globalization_strategy.initialize(statistics, initial_iterate, options);
    }
@@ -78,7 +78,8 @@ namespace uno {
       iterate.evaluate_objective_gradient(model);
       iterate.evaluate_constraints(model);
 
-      this->problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, *this->inequality_handling_method, iterate);
+      const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
+      this->problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, evaluation_space, iterate);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->problem, iterate);
       return ConstraintRelaxationStrategy::check_termination(this->problem, iterate);
    }

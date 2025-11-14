@@ -89,16 +89,6 @@ namespace uno {
       evaluation_space.evaluate_constraint_jacobian(*this->problem, iterate);
    }
 
-   void InequalityConstrainedMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      const auto& evaluation_space = this->solver->get_evaluation_space();
-      evaluation_space.compute_constraint_jacobian_vector_product(vector, result);
-   }
-
-   void InequalityConstrainedMethod::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      const auto& evaluation_space = this->solver->get_evaluation_space();
-      evaluation_space.compute_constraint_jacobian_transposed_vector_product(vector, result);
-   }
-
    // compute dual *displacements*
    // because of the way we form LPs/QPs, we get the new *multipliers* back from the solver. To get the dual displacements/direction,
    // we need to subtract the current multipliers

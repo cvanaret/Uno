@@ -38,8 +38,6 @@ namespace uno {
       // matrix computations
       [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
       void evaluate_constraint_jacobian(Iterate& iterate) override;
-      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
-      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
 
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -244,18 +242,6 @@ namespace uno {
       evaluation_space.evaluate_constraint_jacobian(*this->barrier_problem, iterate);
    }
 
-   template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      const auto& evaluation_space = this->linear_solver->get_evaluation_space();
-      evaluation_space.compute_constraint_jacobian_vector_product(vector, result);
-   }
-
-   template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      const auto& evaluation_space = this->linear_solver->get_evaluation_space();
-      evaluation_space.compute_constraint_jacobian_transposed_vector_product(vector, result);
-   }
-   
    template <typename BarrierProblem>
    bool InteriorPointMethod<BarrierProblem>::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,

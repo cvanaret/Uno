@@ -46,8 +46,6 @@ namespace uno {
       // matrix computations
       [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() const = 0;
       virtual void evaluate_constraint_jacobian(Iterate& iterate) = 0;
-      virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
-      virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
 
       // progress measures
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
