@@ -133,7 +133,7 @@ namespace uno {
 
       // variable bounds
       if (warmstart_information.variable_bounds_changed) {
-         subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds);
+         subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds, subproblem.trust_region_radius);
       }
 
       // constraint bounds

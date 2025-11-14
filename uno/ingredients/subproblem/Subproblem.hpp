@@ -56,7 +56,8 @@ namespace uno {
       void assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const;
 
       // variables bounds
-      void set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds) const;
+      void set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,
+         double trust_region_radius) const;
 
       // constraints bounds
       template <typename Array>
@@ -91,11 +92,11 @@ namespace uno {
 
       const OptimizationProblem& problem;
       Iterate& current_iterate;
+      const double trust_region_radius;
 
    protected:
       HessianModel& hessian_model;
       InertiaCorrectionStrategy<double>& inertia_correction_strategy;
-      const double trust_region_radius;
       const ForwardRange empty_set{0};
    };
 
