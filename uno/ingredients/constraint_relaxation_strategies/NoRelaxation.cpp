@@ -37,7 +37,6 @@ namespace uno {
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate);
       initial_iterate.evaluate_objective_gradient(model);
-      initial_iterate.evaluate_constraints(model);
       this->inequality_handling_method->evaluate_constraint_jacobian(initial_iterate);
       const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
       this->problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, evaluation_space,
@@ -51,6 +50,8 @@ namespace uno {
             options.get_double("function_scaling_threshold"));
       }
       this->inequality_handling_method->evaluate_progress_measures(initial_iterate, this->scaling);
+      this->compute_primal_dual_residuals(this->problem, initial_iterate);
+      this->globalization_strategy.initialize(statistics, initial_iterate, options);
    }
 
    void NoRelaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
