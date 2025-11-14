@@ -32,8 +32,6 @@ namespace uno {
       // matrix computations
       [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
       void evaluate_constraint_jacobian(Iterate& iterate) override;
-      void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
-      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
 
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
