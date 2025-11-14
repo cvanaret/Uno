@@ -108,7 +108,7 @@ namespace uno {
       // reformulate the problem into a barrier problem
       this->barrier_problem = std::make_unique<BarrierProblem>(problem, this->parameters);
       this->barrier_problem->set_barrier_parameter(this->barrier_parameter());
-      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
+      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy};
       this->linear_solver->initialize_augmented_system(subproblem);
    }
 
@@ -144,8 +144,7 @@ namespace uno {
       statistics.set("barrier", this->barrier_parameter());
 
       // create the subproblem
-      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy,
-         trust_region_radius};
+      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy};
 
       // compute the primal-dual solution
       this->linear_solver->solve_indefinite_system(statistics, subproblem, direction, warmstart_information);
@@ -270,8 +269,7 @@ namespace uno {
          HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          UserCallbacks& user_callbacks) {
-      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy,
-         trust_region_radius};
+      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy};
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, subproblem,
          this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }

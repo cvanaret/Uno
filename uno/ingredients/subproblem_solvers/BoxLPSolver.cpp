@@ -13,8 +13,8 @@ namespace uno {
       this->evaluation_space.objective_gradient.resize(subproblem.number_variables);
    }
 
-   void BoxLPSolver::solve(Statistics& /*statistics*/, Subproblem& subproblem, const Vector<double>& /*initial_point*/,
-         Direction& direction, const WarmstartInformation& /*warmstart_information*/) {
+   void BoxLPSolver::solve(Statistics& /*statistics*/, Subproblem& subproblem, double trust_region_radius,
+         const Vector<double>& /*initial_point*/, Direction& direction, const WarmstartInformation& /*warmstart_information*/) {
       if (0 < subproblem.number_constraints) {
          throw std::runtime_error("BoxLPSolver cannot solve problems with general constraints");
       }
@@ -22,7 +22,7 @@ namespace uno {
       subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->evaluation_space.objective_gradient.data());
 
       // compute the variables bounds
-      subproblem.set_variables_bounds(this->variable_lower_bounds, this->variable_upper_bounds, subproblem.trust_region_radius);
+      subproblem.set_variables_bounds(this->variable_lower_bounds, this->variable_upper_bounds, trust_region_radius);
 
       // move the variables to one of their bounds
       direction.subproblem_objective = 0.;

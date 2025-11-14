@@ -27,7 +27,7 @@ namespace uno {
       this->initial_point.resize(this->problem->number_variables);
 
       // allocate the LP/QP solver, depending on the presence of curvature in the subproblem
-      const Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
+      const Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy};
       if (!subproblem.has_curvature()) {
          if (subproblem.number_constraints == 0) {
             DEBUG << "No curvature and only bound constraints in the subproblems, allocating a box LP solver\n";
@@ -57,8 +57,8 @@ namespace uno {
          HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information) {
       // create the subproblem and solve it
-      Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
-      this->solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
+      Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy};
+      this->solver->solve(statistics, subproblem, trust_region_radius, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_iterate.multipliers, direction.multipliers);
       ++this->number_subproblems_solved;
       // reset the initial point
@@ -118,7 +118,7 @@ namespace uno {
          HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          UserCallbacks& user_callbacks) {
-      const Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
+      const Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy};
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, subproblem, this->get_evaluation_space(),
          current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }

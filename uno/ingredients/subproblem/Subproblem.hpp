@@ -32,7 +32,7 @@ namespace uno {
       const size_t number_variables, number_constraints;
 
       Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
-         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius);
+         InertiaCorrectionStrategy<double>& inertia_correction_strategy);
 
       // sparsity patterns
       void compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
@@ -92,7 +92,6 @@ namespace uno {
 
       const OptimizationProblem& problem;
       Iterate& current_iterate;
-      const double trust_region_radius;
 
    protected:
       HessianModel& hessian_model;

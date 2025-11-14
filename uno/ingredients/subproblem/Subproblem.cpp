@@ -14,10 +14,10 @@
 
 namespace uno {
    Subproblem::Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
-      InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius):
+      InertiaCorrectionStrategy<double>& inertia_correction_strategy):
          number_variables(problem.number_variables), number_constraints(problem.number_constraints),
-         problem(problem), current_iterate(current_iterate), trust_region_radius(trust_region_radius),
-         hessian_model(hessian_model), inertia_correction_strategy(inertia_correction_strategy) {
+         problem(problem), current_iterate(current_iterate), hessian_model(hessian_model),
+         inertia_correction_strategy(inertia_correction_strategy) {
    }
 
    void Subproblem::compute_constraint_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
