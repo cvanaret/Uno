@@ -39,7 +39,8 @@ namespace uno {
    }
 
    void ZeroHessian::compute_hessian_vector_product(const double* /*x*/, const double* /*vector*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* result) {
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* result,
+         const std::optional<Scaling>& /*scaling*/) {
       for (size_t variable_index: Range(this->number_variables)) {
          result[variable_index] = 0.;
       }

@@ -41,7 +41,7 @@ namespace uno {
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, double* hessian_values, const std::optional<Scaling>& scaling) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
-         const Multipliers& multipliers, double* result) const override;
+         const Multipliers& multipliers, double* result, const std::optional<Scaling>& scaling) const override;
 
       [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
       [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;

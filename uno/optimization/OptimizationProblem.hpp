@@ -56,7 +56,7 @@ namespace uno {
          const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values,
          const std::optional<Scaling>& scaling) const;
       virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
-         const Multipliers& multipliers, double* result) const;
+         const Multipliers& multipliers, double* result, const std::optional<Scaling>& scaling) const;
 
       [[nodiscard]] size_t get_number_original_variables() const;
       [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const;

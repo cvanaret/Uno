@@ -92,9 +92,11 @@ namespace uno {
       }
    }
 
-   void Subproblem::compute_hessian_vector_product(const double* x, const double* vector, double* result) const {
+   void Subproblem::compute_hessian_vector_product(const double* x, const double* vector, double* result,
+         const std::optional<Scaling>& scaling) const {
       // unregularized Hessian-vector product
-      this->problem.compute_hessian_vector_product(this->hessian_model, x, vector, this->current_iterate.multipliers, result);
+      this->problem.compute_hessian_vector_product(this->hessian_model, x, vector, this->current_iterate.multipliers,
+         result, scaling);
 
       // contribution of the regularization strategy
       const double regularization_factor = this->inertia_correction_strategy.get_primal_regularization_factor();
@@ -248,7 +250,7 @@ namespace uno {
       // predicted reduction with only first-order information (the directional derivative)
       const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() && this->performs_primal_regularization();
       const double quadratic_term = is_regularized_hessian_positive_definite ? 0. :
-         evaluation_space.compute_hessian_quadratic_product(*this, primal_direction);
+         evaluation_space.compute_hessian_quadratic_product(*this, scaling, primal_direction);
       const double objective_scaling = scaling.has_value() ? scaling->get_objective_scaling() : 1.;
       return [=](double objective_multiplier) {
          return step_length * (-objective_multiplier * objective_scaling * directional_derivative) -

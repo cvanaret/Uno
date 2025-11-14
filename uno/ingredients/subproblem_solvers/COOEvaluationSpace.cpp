@@ -106,7 +106,8 @@ namespace uno {
       }
    }
 
-   double COOEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& /*vector*/) const {
+   double COOEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const std::optional<Scaling>& /*scaling*/,
+         const Vector<double>& /*vector*/) const {
       return 0.;
    }
 

@@ -386,6 +386,6 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
    }
    // otherwise, try to perform a Hessian-vector product if possible
    else if (subproblem->has_hessian_operator()) {
-      subproblem->compute_hessian_vector_product(subproblem->current_iterate.primals.data(), vector, result);
+      subproblem->compute_hessian_vector_product(subproblem->current_iterate.primals.data(), vector, result, *scaling);
    }
 }

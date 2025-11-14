@@ -43,8 +43,11 @@ namespace uno {
       ++this->evaluation_count;
    }
 
-   void ExactHessian::compute_hessian_vector_product(const double* x, const double* vector,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) {
+   void ExactHessian::compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
+         const Vector<double>& constraint_multipliers, double* result, const std::optional<Scaling>& scaling) {
+      if (scaling.has_value()) {
+         objective_multiplier *= scaling->get_objective_scaling();
+      }
       this->model.compute_hessian_vector_product(x, vector, objective_multiplier, constraint_multipliers, result);
       ++this->evaluation_count;
    }

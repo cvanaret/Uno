@@ -37,7 +37,8 @@ namespace uno {
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values,
          const std::optional<Scaling>& scaling) = 0;
       virtual void compute_hessian_vector_product(const double* x, const double* vector,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) = 0;
+         double objective_multiplier, const Vector<double>& constraint_multipliers, double* result,
+         const std::optional<Scaling>& scaling) = 0;
    };
 } // namespace
 

@@ -94,8 +94,9 @@ namespace uno {
    }
 
    void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
-         const Multipliers& multipliers, double* result) const {
-      hessian_model.compute_hessian_vector_product(x, vector, this->get_objective_multiplier(), multipliers.constraints, result);
+         const Multipliers& multipliers, double* result, const std::optional<Scaling>& scaling) const {
+      hessian_model.compute_hessian_vector_product(x, vector, this->get_objective_multiplier(), multipliers.constraints,
+         result, scaling);
    }
 
    size_t OptimizationProblem::get_number_original_variables() const {

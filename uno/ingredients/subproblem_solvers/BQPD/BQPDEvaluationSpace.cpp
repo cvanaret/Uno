@@ -86,12 +86,13 @@ namespace uno {
       }
    }
 
-   double BQPDEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
+   double BQPDEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& subproblem, const std::optional<Scaling>& scaling,
+         const Vector<double>& vector) const {
       if (subproblem.has_hessian_operator()) { // linear operator
          // TODO preallocate
          Vector<double> result(subproblem.number_variables);
          // compute Hv
-         subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), vector.data(), result.data());
+         subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), vector.data(), result.data(), scaling);
          // compute the dot product <v, Hv>
          return dot(vector, result);
       }
