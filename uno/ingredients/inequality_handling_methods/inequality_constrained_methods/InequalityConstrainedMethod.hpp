@@ -22,8 +22,7 @@ namespace uno {
          HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(Iterate& initial_iterate) override;
-      void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, HessianModel& hessian_model,
-         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
+      void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
@@ -35,11 +34,9 @@ namespace uno {
       void evaluate_constraint_jacobian(Iterate& iterate) override;
       void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
-      [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          UserCallbacks& user_callbacks) override;
 
@@ -51,6 +48,7 @@ namespace uno {
 
    protected:
       const OptimizationProblem* problem{};
+      std::unique_ptr<Subproblem> subproblem{};
       // pointer to allow polymorphism
       std::unique_ptr<InequalityConstrainedSolver> solver{};
       Vector<double> initial_point{};

@@ -68,8 +68,8 @@ namespace uno {
                this->scale_duals_with_step_length ? step_length : 1.);
             statistics.set("step norm", step_length * direction.norm);
 
-            is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, INF<double>, model,
-               current_iterate, trial_iterate, direction, step_length, warmstart_information, user_callbacks);
+            is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
+               trial_iterate, direction, step_length, warmstart_information, user_callbacks);
             GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate);
          }
          catch (const EvaluationError&) {

@@ -82,8 +82,7 @@ namespace uno {
          try {
             DEBUG << "Solving the optimality subproblem\n";
             this->solve_subproblem(statistics, *this->optimality_inequality_handling_method, this->optimality_problem,
-               current_iterate, direction, *this->optimality_hessian_model, *this->optimality_inertia_correction_strategy,
-               trust_region_radius, warmstart_information);
+               current_iterate, direction, trust_region_radius, warmstart_information);
             if (direction.status == SubproblemStatus::INFEASIBLE) {
                // switch to the feasibility problem, starting from the current direction
                statistics.set("status", std::string("infeasible"));
@@ -107,8 +106,7 @@ namespace uno {
       // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
       this->feasibility_problem.set_proximal_coefficient(this->optimality_inequality_handling_method->proximal_coefficient());
       this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method, this->feasibility_problem,
-         current_iterate, direction, *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy,
-         trust_region_radius, warmstart_information);
+         current_iterate, direction, trust_region_radius, warmstart_information);
    }
 
    bool FeasibilityRestoration::solving_feasibility_problem() const {
@@ -154,12 +152,10 @@ namespace uno {
    }
 
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
-         const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction, HessianModel& hessian_model,
-         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
+         const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) {
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
-      inequality_handling_method.solve(statistics, current_iterate, direction, hessian_model, inertia_correction_strategy,
-         trust_region_radius, warmstart_information);
+      inequality_handling_method.solve(statistics, current_iterate, direction, trust_region_radius, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
    }
@@ -194,20 +190,18 @@ namespace uno {
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
    }
 
-   bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, double trust_region_radius, const Model& model,
+   bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, const Model& model,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       bool accept_iterate = false;
       // determine acceptability, depending on the current phase
       if (this->current_phase == Phase::OPTIMALITY) {
          accept_iterate = this->optimality_inequality_handling_method->is_iterate_acceptable(statistics,
-            *this->optimality_globalization_strategy, *this->optimality_hessian_model, *this->optimality_inertia_correction_strategy,
-            trust_region_radius, current_iterate, trial_iterate, direction, step_length, user_callbacks);
+            *this->optimality_globalization_strategy, current_iterate, trial_iterate, direction, step_length, user_callbacks);
       }
       else {
          accept_iterate = this->feasibility_inequality_handling_method->is_iterate_acceptable(statistics,
-            this->feasibility_globalization_strategy, *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy,
-            trust_region_radius, current_iterate, trial_iterate, direction, step_length, user_callbacks);
+            this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, step_length, user_callbacks);
       }
       trial_iterate.status = this->check_termination(model, trial_iterate);
 

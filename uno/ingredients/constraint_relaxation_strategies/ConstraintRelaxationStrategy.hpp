@@ -36,8 +36,8 @@ namespace uno {
          WarmstartInformation& warmstart_information) = 0;
 
       // trial iterate acceptance
-      [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, double trust_region_radius, const Model& model,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+      [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction,
          double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
       [[nodiscard]] virtual SolutionStatus check_termination(const Model& model, Iterate& iterate) = 0;
 

@@ -28,9 +28,9 @@ namespace uno {
          WarmstartInformation& warmstart_information) override;
 
       // trial iterate acceptance
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, double trust_region_radius, const Model& model,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, double step_length, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) override;
       [[nodiscard]] SolutionStatus check_termination(const Model& model, Iterate& iterate) override;
 
       [[nodiscard]] std::string get_name() const override;
