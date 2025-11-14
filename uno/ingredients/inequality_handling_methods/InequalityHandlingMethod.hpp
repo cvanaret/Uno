@@ -36,8 +36,7 @@ namespace uno {
          HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) = 0;
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
       virtual void generate_initial_iterate(Iterate& initial_iterate) = 0;
-      virtual void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, HessianModel& hessian_model,
-         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
+      virtual void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) = 0;
 
       virtual void initialize_feasibility_problem(Iterate& current_iterate) = 0;
@@ -49,11 +48,9 @@ namespace uno {
       virtual void evaluate_constraint_jacobian(Iterate& iterate) = 0;
       virtual void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
       virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
-      [[nodiscard]] virtual double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const = 0;
 
       // progress measures
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          UserCallbacks& user_callbacks) = 0;
 

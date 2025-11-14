@@ -32,7 +32,7 @@ namespace uno {
       const size_t number_variables, number_constraints;
 
       Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
-         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius);
+         InertiaCorrectionStrategy<double>& inertia_correction_strategy);
 
       // sparsity patterns
       void compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
@@ -56,7 +56,8 @@ namespace uno {
       void assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const;
 
       // variables bounds
-      void set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds) const;
+      void set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,
+         double trust_region_radius) const;
 
       // constraints bounds
       template <typename Array>
@@ -95,7 +96,6 @@ namespace uno {
    protected:
       HessianModel& hessian_model;
       InertiaCorrectionStrategy<double>& inertia_correction_strategy;
-      const double trust_region_radius;
       const ForwardRange empty_set{0};
    };
 

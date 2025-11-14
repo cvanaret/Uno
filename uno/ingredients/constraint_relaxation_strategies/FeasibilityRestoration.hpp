@@ -32,9 +32,9 @@ namespace uno {
          WarmstartInformation& warmstart_information) override;
 
       // trial iterate acceptance
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, double trust_region_radius, const Model& model,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, double step_length, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) override;
       [[nodiscard]] SolutionStatus check_termination(const Model& model, Iterate& iterate) override;
 
       [[nodiscard]] std::string get_name() const override;
@@ -63,8 +63,7 @@ namespace uno {
       bool first_switch_to_feasibility{true};
 
       void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         Iterate& current_iterate, Direction& direction, HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
-         double trust_region_radius, WarmstartInformation& warmstart_information);
+         Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information);
       void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 
       [[nodiscard]] bool can_switch_to_optimality_phase(const Iterate& current_iterate, const Model& model,

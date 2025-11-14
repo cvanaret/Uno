@@ -45,7 +45,7 @@ namespace uno {
 
       void initialize_memory(const Subproblem& subproblem) override;
 
-      void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
+      void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] EvaluationSpace& get_evaluation_space() override;
@@ -73,13 +73,13 @@ namespace uno {
 
       const bool print_subproblem;
 
-      void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information);
+      void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+         const WarmstartInformation& warmstart_information);
       void display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const;
       void solve_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);
       [[nodiscard]] static BQPDMode determine_mode(const WarmstartInformation& warmstart_information);
       void hide_pointers_in_workspace(Statistics& statistics, const Subproblem& subproblem);
-      void compute_gradients_sparsity(const Subproblem& subproblem);
       void set_multipliers(size_t number_variables, Multipliers& direction_multipliers) const;
       [[nodiscard]] static BQPDStatus bqpd_status_from_int(int ifail);
       [[nodiscard]] bool check_sufficient_workspace_size(BQPDStatus bqpd_status);

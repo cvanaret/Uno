@@ -28,8 +28,7 @@ namespace uno {
          InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(Iterate& initial_iterate) override;
-      void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, HessianModel& hessian_model,
-         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
+      void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
@@ -41,11 +40,9 @@ namespace uno {
       void evaluate_constraint_jacobian(Iterate& iterate) override;
       void compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
-      [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          UserCallbacks& user_callbacks) override;
 
@@ -58,6 +55,7 @@ namespace uno {
    protected:
       const OptimizationProblem* problem{};
       std::unique_ptr<BarrierProblem> barrier_problem{}; // generic barrier problem
+      std::unique_ptr<Subproblem> subproblem{};
       const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       BarrierParameterUpdateStrategy<BarrierProblem> barrier_parameter_update_strategy;
       double previous_barrier_parameter;
@@ -98,6 +96,9 @@ namespace uno {
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
          HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) {
+      if (trust_region_radius < INF<double>) {
+         throw std::runtime_error("A trust-region radius is not supported.");
+      }
       if (!problem.get_inequality_constraints().empty()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
       }
@@ -108,8 +109,9 @@ namespace uno {
       // reformulate the problem into a barrier problem
       this->barrier_problem = std::make_unique<BarrierProblem>(problem, this->parameters);
       this->barrier_problem->set_barrier_parameter(this->barrier_parameter());
-      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
-      this->linear_solver->initialize_augmented_system(subproblem);
+      this->subproblem = std::make_unique<Subproblem>(*this->barrier_problem, current_iterate, hessian_model,
+         inertia_correction_strategy);
+      this->linear_solver->initialize_augmented_system(*this->subproblem);
    }
 
    template <typename BarrierProblem>
@@ -128,7 +130,6 @@ namespace uno {
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
          double trust_region_radius, WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet");
@@ -143,12 +144,8 @@ namespace uno {
       }
       statistics.set("barrier", this->barrier_parameter());
 
-      // create the subproblem
-      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy,
-         trust_region_radius};
-
       // compute the primal-dual solution
-      this->linear_solver->solve_indefinite_system(statistics, subproblem, direction, warmstart_information);
+      this->linear_solver->solve_indefinite_system(statistics, *this->subproblem, direction, warmstart_information);
       ++this->number_subproblems_solved;
 
       // check whether the augmented matrix was singular, in which case the subproblem is infeasible
@@ -258,21 +255,12 @@ namespace uno {
       const auto& evaluation_space = this->linear_solver->get_evaluation_space();
       evaluation_space.compute_constraint_jacobian_transposed_vector_product(vector, result);
    }
-
-   template <typename BarrierProblem>
-   double InteriorPointMethod<BarrierProblem>::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
-      const auto& evaluation_space = this->linear_solver->get_evaluation_space();
-      return evaluation_space.compute_hessian_quadratic_product(subproblem, vector);
-   }
-
+   
    template <typename BarrierProblem>
    bool InteriorPointMethod<BarrierProblem>::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          UserCallbacks& user_callbacks) {
-      const Subproblem subproblem{*this->barrier_problem, current_iterate, hessian_model, inertia_correction_strategy,
-         trust_region_radius};
-      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, subproblem,
+      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
          this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }
 

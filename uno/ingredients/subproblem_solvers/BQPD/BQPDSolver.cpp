@@ -106,9 +106,9 @@ namespace uno {
       this->lws.resize(this->mxlws);
    }
 
-   void BQPDSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) {
-      this->set_up_subproblem(statistics, subproblem, warmstart_information);
+   void BQPDSolver::solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
+         const Vector<double>& initial_point, Direction& direction, const WarmstartInformation& warmstart_information) {
+      this->set_up_subproblem(statistics, subproblem, trust_region_radius, warmstart_information);
       if (this->print_subproblem) {
          this->display_subproblem(subproblem, initial_point);
       }
@@ -121,7 +121,7 @@ namespace uno {
 
    // protected member functions
 
-   void BQPDSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem,
+   void BQPDSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
          const WarmstartInformation& warmstart_information) {
       // initialize wsc_ common block (Hessian & workspace for BQPD)
       // setting the common block here ensures that several instances of BQPD can run simultaneously
@@ -133,7 +133,7 @@ namespace uno {
 
       // variable bounds
       if (warmstart_information.variable_bounds_changed) {
-         subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds);
+         subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds, trust_region_radius);
       }
 
       // constraint bounds

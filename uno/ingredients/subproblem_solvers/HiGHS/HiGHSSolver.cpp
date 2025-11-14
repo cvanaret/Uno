@@ -19,9 +19,9 @@ namespace uno {
       this->evaluation_space.initialize_memory(subproblem);
    }
 
-   void HiGHSSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& /*initial_point*/,
-         Direction& direction, const WarmstartInformation& warmstart_information) {
-      this->set_up_subproblem(statistics, subproblem, warmstart_information);
+   void HiGHSSolver::solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
+         const Vector<double>& /*initial_point*/, Direction& direction, const WarmstartInformation& warmstart_information) {
+      this->set_up_subproblem(statistics, subproblem, trust_region_radius, warmstart_information);
       this->solve_subproblem(subproblem, direction);
    }
 
@@ -31,13 +31,15 @@ namespace uno {
 
    // protected member functions
 
-   void HiGHSSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information) {
+   void HiGHSSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
+         const WarmstartInformation& warmstart_information) {
       // evaluate the functions and derivatives
       this->evaluation_space.evaluate_functions(statistics, subproblem, warmstart_information);
 
       // variable bounds
       if (warmstart_information.variable_bounds_changed) {
-         subproblem.set_variables_bounds(this->evaluation_space.model.lp_.col_lower_, this->evaluation_space.model.lp_.col_upper_);
+         subproblem.set_variables_bounds(this->evaluation_space.model.lp_.col_lower_, this->evaluation_space.model.lp_.col_upper_,
+            trust_region_radius);
       }
 
       // constraint bounds
