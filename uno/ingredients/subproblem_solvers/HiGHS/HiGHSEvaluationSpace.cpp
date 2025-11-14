@@ -103,10 +103,10 @@ namespace uno {
    }
 
    void HiGHSEvaluationSpace::evaluate_functions(Statistics& statistics, const Subproblem& subproblem,
-         const WarmstartInformation& warmstart_information) {
+         const std::optional<Scaling>& scaling, const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       if (warmstart_information.objective_changed) {
-         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data());
+         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data(), scaling);
       }
       if (warmstart_information.constraints_changed) {
          subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints);
@@ -114,7 +114,7 @@ namespace uno {
       }
       // evaluate the Hessian and regularize it
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
-         subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data());
+         subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data(), scaling);
          // copy the Hessian with permutation into this->model.hessian_.value_
          for (size_t nonzero_index: Range(subproblem.number_regularized_hessian_nonzeros())) {
             const size_t permuted_nonzero_index = this->hessian_permutation_vector[nonzero_index];

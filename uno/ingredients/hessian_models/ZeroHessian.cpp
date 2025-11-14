@@ -33,7 +33,8 @@ namespace uno {
    }
 
    void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/,
+         const std::optional<Scaling>& /*scaling*/) {
       // do nothing
    }
 

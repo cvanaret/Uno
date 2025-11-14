@@ -23,6 +23,7 @@ namespace uno {
          double trust_region_radius) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(Iterate& initial_iterate) override;
+      void evaluate_progress_measures(Iterate& iterate, const std::optional<Scaling>& scaling) const override;
       void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          const std::optional<Scaling>& scaling, WarmstartInformation& warmstart_information) override;
 

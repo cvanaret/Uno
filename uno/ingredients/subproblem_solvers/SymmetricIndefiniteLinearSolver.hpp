@@ -5,6 +5,8 @@
 #define UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 
 #include <cstddef>
+#include <optional>
+#include "optimization/Scaling.hpp"
 
 namespace uno {
    // forward declarations
@@ -27,8 +29,8 @@ namespace uno {
 
       virtual void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<ElementType>& rhs,
          Vector<ElementType>& result) = 0;
-      virtual void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const WarmstartInformation& warmstart_information) = 0;
+      virtual void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, const std::optional<Scaling>& scaling,
+         Direction& direction, const WarmstartInformation& warmstart_information) = 0;
 
       [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() = 0;
    };

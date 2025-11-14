@@ -17,15 +17,17 @@ namespace uno {
       progress_norm(norm_from_string(options.get_string("progress_norm"))) {
    }
 
-   void InequalityHandlingMethod::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const {
+   void InequalityHandlingMethod::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate,
+         const std::optional<Scaling>& scaling) const {
       problem.set_infeasibility_measure(iterate, this->progress_norm);
-      problem.set_objective_measure(iterate);
+      problem.set_objective_measure(iterate, scaling);
       problem.set_auxiliary_measure(iterate);
    }
 
    bool InequalityHandlingMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, const EvaluationSpace& evaluation_space, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double step_length, UserCallbacks& user_callbacks) {
+         const Subproblem& subproblem, const std::optional<Scaling>& scaling, const EvaluationSpace& evaluation_space,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         UserCallbacks& user_callbacks) {
       this->postprocess_iterate(trial_iterate);
       const double objective_multiplier = subproblem.problem.get_objective_multiplier();
 
@@ -37,7 +39,7 @@ namespace uno {
          subproblem.problem.set_auxiliary_measure(current_iterate);
          this->subproblem_definition_changed = false;
       }
-      this->evaluate_progress_measures(subproblem.problem, trial_iterate);
+      this->evaluate_progress_measures(subproblem.problem, trial_iterate, scaling);
 
       bool accept_iterate = false;
       if (direction.norm == 0.) {

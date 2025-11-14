@@ -110,11 +110,11 @@ namespace uno {
       return 0.;
    }
 
-   void COOEvaluationSpace::set_up_linear_system(Statistics& statistics, const Subproblem& subproblem,
+   void COOEvaluationSpace::set_up_linear_system(Statistics& statistics, const Subproblem& subproblem, const std::optional<Scaling>& scaling,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       if (warmstart_information.objective_changed) {
-         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data());
+         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data(), scaling);
       }
       if (warmstart_information.constraints_changed) {
          subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints);
@@ -128,7 +128,7 @@ namespace uno {
             this->analysis_performed = true;
          }
          // assemble the augmented matrix
-         subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data());
+         subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data(), scaling);
          // regularize the augmented matrix (this calls the analysis and the factorization)
          subproblem.regularize_augmented_matrix(statistics, this->matrix_values.data(),
             subproblem.dual_regularization_factor(), linear_solver);

@@ -18,8 +18,8 @@ namespace uno {
 
       void initialize_memory(const Subproblem& subproblem) override;
 
-      void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) override;
+      void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const std::optional<Scaling>& scaling,
+         const Vector<double>& initial_point, Direction& direction, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] EvaluationSpace& get_evaluation_space() override;
 
@@ -30,7 +30,7 @@ namespace uno {
       const bool print_subproblem;
 
       void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const WarmstartInformation& warmstart_information);
+         const std::optional<Scaling>& scaling, const WarmstartInformation& warmstart_information);
       void solve_subproblem(const Subproblem& subproblem, Direction& direction);
    };
 } // namespace

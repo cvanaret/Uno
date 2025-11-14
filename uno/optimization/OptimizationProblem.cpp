@@ -30,10 +30,11 @@ namespace uno {
       constraints = iterate.evaluations.constraints;
    }
 
-   void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
+   void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, const std::optional<Scaling>& scaling) const {
       iterate.evaluate_objective_gradient(this->model);
+      const double objective_scaling = scaling.has_value() ? scaling->get_objective_scaling() : 1.;
       for (size_t index: Range(this->number_variables)) {
-         objective_gradient[index] = iterate.evaluations.objective_gradient[index];
+         objective_gradient[index] = objective_scaling * iterate.evaluations.objective_gradient[index];
       }
    }
 
@@ -50,12 +51,12 @@ namespace uno {
    }
 
    void OptimizationProblem::compute_constraint_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
-                                                                  MatrixOrder matrix_order) const {
+         MatrixOrder matrix_order) const {
       this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
    void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int *row_indices,
-                                                      uno_int *column_indices, uno_int solver_indexing) const {
+         uno_int *column_indices, uno_int solver_indexing) const {
       hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
    }
 
@@ -66,12 +67,12 @@ namespace uno {
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
    // split in two parts: objective contribution and constraints' contribution
    void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const EvaluationSpace& evaluation_space, Iterate& iterate) const {
+         const EvaluationSpace& evaluation_space, Iterate& iterate, const std::optional<Scaling>& scaling) const {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // ∇f(x_k)
-      this->evaluate_objective_gradient(iterate, lagrangian_gradient.objective_contribution.data());
+      this->evaluate_objective_gradient(iterate, lagrangian_gradient.objective_contribution.data(), scaling);
 
       // ∇c(x_k) λ_k
       evaluation_space.compute_constraint_jacobian_transposed_vector_product(iterate.multipliers.constraints,
@@ -86,9 +87,10 @@ namespace uno {
    }
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
-         const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const {
+         const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values,
+         const std::optional<Scaling>& scaling) const {
       hessian_model.evaluate_hessian(statistics, primal_variables, this->get_objective_multiplier(),
-         multipliers.constraints, hessian_values);
+         multipliers.constraints, hessian_values, scaling);
    }
 
    void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
@@ -213,11 +215,12 @@ namespace uno {
    }
 
    // objective measure: scaled objective
-   void OptimizationProblem::set_objective_measure(Iterate& iterate) const {
+   void OptimizationProblem::set_objective_measure(Iterate& iterate, const std::optional<Scaling>& scaling) const {
       iterate.evaluate_objective(this->model);
-      const double objective = iterate.evaluations.objective;
+      const double objective_value = iterate.evaluations.objective;
+      const double objective_scaling = scaling.has_value() ? scaling->get_objective_scaling() : 1.;
       iterate.progress.objective = [=](double objective_multiplier) {
-         return objective_multiplier * objective;
+         return objective_multiplier * objective_scaling * objective_value;
       };
    }
 

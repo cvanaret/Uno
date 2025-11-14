@@ -7,8 +7,8 @@
 #include "Evaluations.hpp"
 #include "SolutionStatus.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
-#include "optimization/Multipliers.hpp"
 #include "optimization/DualResiduals.hpp"
+#include "optimization/Multipliers.hpp"
 
 namespace uno {
    // forward declaration

@@ -5,9 +5,11 @@
 #define UNO_HIGHSEVALUATIONSPACE_H
 
 #include <cstddef>
+#include <optional>
 #include "optimization/EvaluationSpace.hpp"
 #include "Highs.h"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/Scaling.hpp"
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
@@ -30,7 +32,8 @@ namespace uno {
       void compute_constraint_jacobian_norms(Vector<double>& row_norms) const override;
       [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
-      void evaluate_functions(Statistics& statistics, const Subproblem& subproblem, const WarmstartInformation& warmstart_information);
+      void evaluate_functions(Statistics& statistics, const Subproblem& subproblem, const std::optional<Scaling>& scaling,
+         const WarmstartInformation& warmstart_information);
 
       HighsModel model;
       Vector<double> constraints{};

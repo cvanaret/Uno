@@ -53,13 +53,14 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
+   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, const std::optional<Scaling>& scaling) const {
       // scale nabla f(x) by rho
       if (this->objective_multiplier != 0.) {
          iterate.evaluate_objective_gradient(this->model);
          // TODO change this
+         const double objective_scaling = scaling.has_value() ? scaling->get_objective_scaling() : 1.;
          for (size_t index: Range(this->model.number_variables)) {
-            objective_gradient[index] = this->objective_multiplier * iterate.evaluations.objective_gradient[index];
+            objective_gradient[index] = this->objective_multiplier * objective_scaling * iterate.evaluations.objective_gradient[index];
          }
       }
       else {
@@ -151,7 +152,7 @@ namespace uno {
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
    void l1RelaxedProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const EvaluationSpace& evaluation_space, Iterate& iterate) const {
+         const EvaluationSpace& evaluation_space, Iterate& iterate, const std::optional<Scaling>& /*scaling*/) const {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
 
@@ -191,9 +192,9 @@ namespace uno {
    }
 
    void l1RelaxedProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, double* hessian_values) const {
+         const Multipliers& multipliers, double* hessian_values, const std::optional<Scaling>& scaling) const {
       hessian_model.evaluate_hessian(statistics, primal_variables, this->get_objective_multiplier(),
-         multipliers.constraints, hessian_values);
+         multipliers.constraints, hessian_values, scaling);
 
       // proximal contribution
       size_t nonzero_index = hessian_model.number_nonzeros();

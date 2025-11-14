@@ -40,7 +40,8 @@ namespace uno {
       initial_iterate.evaluate_constraints(model);
       this->inequality_handling_method->evaluate_constraint_jacobian(initial_iterate);
       const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
-      this->problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, evaluation_space, initial_iterate);
+      this->problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, evaluation_space,
+         initial_iterate, this->scaling);
       this->compute_primal_dual_residuals(this->problem, initial_iterate);
       this->globalization_strategy.initialize(statistics, initial_iterate, options);
 
@@ -49,6 +50,7 @@ namespace uno {
          this->scaling.emplace(initial_iterate, this->inequality_handling_method->get_evaluation_space(),
             options.get_double("function_scaling_threshold"));
       }
+      this->inequality_handling_method->evaluate_progress_measures(initial_iterate, this->scaling);
    }
 
    void NoRelaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
@@ -87,7 +89,7 @@ namespace uno {
       iterate.evaluate_constraints(model);
 
       const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
-      this->problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, evaluation_space, iterate);
+      this->problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, evaluation_space, iterate, this->scaling);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->problem, iterate);
       return ConstraintRelaxationStrategy::check_termination(this->problem, iterate);
    }

@@ -74,10 +74,10 @@ namespace uno {
       }
    }
 
-   void Subproblem::evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
+   void Subproblem::evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values, const std::optional<Scaling>& scaling) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
-         this->current_iterate.multipliers, hessian_values);
+         this->current_iterate.multipliers, hessian_values, scaling);
    }
 
    void Subproblem::regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
@@ -105,10 +105,10 @@ namespace uno {
       }
    }
 
-   void Subproblem::assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values) const {
+   void Subproblem::assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values, const std::optional<Scaling>& scaling) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
-         this->current_iterate.multipliers, augmented_matrix_values);
+         this->current_iterate.multipliers, augmented_matrix_values, scaling);
 
       // Jacobian of general constraints
       this->problem.evaluate_constraint_jacobian(this->current_iterate, augmented_matrix_values + this->number_hessian_nonzeros());

@@ -4,11 +4,13 @@
 #ifndef UNO_MODEL_H
 #define UNO_MODEL_H
 
+#include <optional>
 #include <string>
 #include <vector>
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "optimization/ProblemType.hpp"
+#include "optimization/Scaling.hpp"
 #include "symbolic/VectorExpression.hpp"
 #include "../interfaces/C/uno_int.h"
 

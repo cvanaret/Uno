@@ -28,6 +28,7 @@ namespace uno {
          InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) override;
       void initialize_statistics(Statistics& statistics, const Options& options) override;
       void generate_initial_iterate(Iterate& initial_iterate) override;
+      void evaluate_progress_measures(Iterate& iterate, const std::optional<Scaling>& scaling) const override;
       void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          const std::optional<Scaling>& scaling, WarmstartInformation& warmstart_information) override;
 
@@ -123,12 +124,16 @@ namespace uno {
       // resize the initial iterate
       initial_iterate.set_number_variables(this->barrier_problem->number_variables);
       this->barrier_problem->generate_initial_iterate(initial_iterate);
-      this->evaluate_progress_measures(*this->barrier_problem, initial_iterate);
+   }
+
+   template <typename BarrierProblem>
+   void InteriorPointMethod<BarrierProblem>::evaluate_progress_measures(Iterate& iterate, const std::optional<Scaling>& scaling) const {
+      InequalityHandlingMethod::evaluate_progress_measures(*this->barrier_problem, iterate, scaling);
    }
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, const std::optional<Scaling>& /*scaling*/, WarmstartInformation& warmstart_information) {
+         double trust_region_radius, const std::optional<Scaling>& scaling, WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet");
       }
@@ -143,7 +148,7 @@ namespace uno {
       statistics.set("barrier", this->barrier_parameter());
 
       // compute the primal-dual solution
-      this->linear_solver->solve_indefinite_system(statistics, *this->subproblem, direction, warmstart_information);
+      this->linear_solver->solve_indefinite_system(statistics, *this->subproblem, scaling, direction, warmstart_information);
       ++this->number_subproblems_solved;
 
       // check whether the augmented matrix was singular, in which case the subproblem is infeasible
@@ -245,10 +250,10 @@ namespace uno {
 
    template <typename BarrierProblem>
    bool InteriorPointMethod<BarrierProblem>::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const std::optional<Scaling>& /*scaling*/, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         const std::optional<Scaling>& scaling, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length, UserCallbacks& user_callbacks) {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
-         this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
+         scaling, this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }
 
    template <typename BarrierProblem>

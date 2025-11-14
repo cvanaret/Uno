@@ -5,10 +5,12 @@
 #define UNO_COOEVALUATIONSPACE_H
 
 #include <cstddef>
+#include <optional>
 #include <vector>
 #include "linear_algebra/Norm.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/EvaluationSpace.hpp"
+#include "optimization/Scaling.hpp"
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
@@ -27,8 +29,8 @@ namespace uno {
       void compute_constraint_jacobian_norms(Vector<double>& row_norms) const override;
       [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
-      void set_up_linear_system(Statistics& statistics, const Subproblem& subproblem, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         const WarmstartInformation& warmstart_information);
+      void set_up_linear_system(Statistics& statistics, const Subproblem& subproblem, const std::optional<Scaling>& scaling,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, const WarmstartInformation& warmstart_information);
 
       Vector<double> objective_gradient{}; /*!< Sparse Jacobian of the objective */
       Vector<double> constraints{}; /*!< Constraint values (size \f$m)\f$ */

@@ -39,6 +39,7 @@ namespace uno {
          double trust_region_radius) = 0;
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
       virtual void generate_initial_iterate(Iterate& initial_iterate) = 0;
+      virtual void evaluate_progress_measures(Iterate& iterate, const std::optional<Scaling>& scaling) const = 0;
       virtual void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          const std::optional<Scaling>& scaling, WarmstartInformation& warmstart_information) = 0;
 
@@ -68,10 +69,11 @@ namespace uno {
       // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
       bool subproblem_definition_changed{false};
 
-      void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const;
+      void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, const std::optional<Scaling>& scaling) const;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, const EvaluationSpace& evaluation_space, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double step_length, UserCallbacks& user_callbacks);
+         const Subproblem& subproblem, const std::optional<Scaling>& scaling, const EvaluationSpace& evaluation_space,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         UserCallbacks& user_callbacks);
    };
 } // namespace
 
