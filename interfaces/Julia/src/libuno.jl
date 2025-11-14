@@ -199,6 +199,10 @@ function uno_get_solver_string_option(solver, option_name)
                                                option_name::Cstring)::Cstring
 end
 
+function uno_get_solver_method(solver)
+    @ccall libuno.uno_get_solver_method(solver::Ptr{Cvoid})::Cstring
+end
+
 function uno_get_optimization_status(solver)
     @ccall libuno.uno_get_optimization_status(solver::Ptr{Cvoid})::Int32
 end

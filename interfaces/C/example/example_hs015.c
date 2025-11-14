@@ -108,6 +108,7 @@ int main() {
 	uno_optimize(solver, model);
 
 	// get the solution
+	printf("Solved with: %s", uno_get_solver_method(solver));
 	const uno_int optimization_status = uno_get_optimization_status(solver);
 	assert(optimization_status == UNO_SUCCESS);
 	const uno_int iterate_status = uno_get_solution_status(solver);

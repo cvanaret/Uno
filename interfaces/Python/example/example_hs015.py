@@ -91,7 +91,8 @@ if __name__ == '__main__':
 	result = uno_solver.optimize(model)
 
 	# optimization summary
-	print("\nReading optimization summary from Python:")
+	print("\nSolved with: ", uno_solver.get_solver_method())
+	print("Reading optimization summary from Python:")
 	print("Number of iterations:", result.optimization_status)
 	print("Number of iterations:", result.solution_status)
 	print("Objective at solution:", result.solution_objective)

@@ -17,8 +17,6 @@ namespace uno {
       void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
-      [[nodiscard]] std::string get_name() const override;
-
    private:
       double radius; /*!< Current trust region radius */
       const double increase_factor;

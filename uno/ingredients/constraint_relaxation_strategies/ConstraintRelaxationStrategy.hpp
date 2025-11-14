@@ -41,7 +41,7 @@ namespace uno {
          double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
       [[nodiscard]] virtual SolutionStatus check_termination(const Model& model, Iterate& iterate) = 0;
 
-      [[nodiscard]] virtual std::string get_name() const = 0;
+      [[nodiscard]] virtual std::string get_strategy_combination() const = 0;
       [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
 
    protected:

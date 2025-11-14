@@ -36,6 +36,10 @@ namespace uno {
          Presets::set(solver.options, preset_name);
       }, py::arg("preset_name"))
 
+      .def("get_solver_method", [](const UnoSolverWrapper& solver) {
+         return solver.uno_solver.get_strategy_combination();
+      })
+
       .def("optimize", [](UnoSolverWrapper& solver, const PythonUserModel& user_model) {
          return solver.optimize(user_model);
       }, py::arg("model"), "Optimize an optimization model with the Uno solver");
