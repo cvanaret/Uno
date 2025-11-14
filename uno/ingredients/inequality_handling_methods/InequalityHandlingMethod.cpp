@@ -50,7 +50,7 @@ namespace uno {
       }
       else {
          const ProgressMeasures predicted_reductions = subproblem.compute_predicted_reductions(evaluation_space, direction,
-            step_length, this->progress_norm);
+            step_length, this->progress_norm, scaling);
          accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
             predicted_reductions, objective_multiplier);
       }

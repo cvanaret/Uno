@@ -241,7 +241,7 @@ namespace uno {
    }
 
    std::function<double(double)> Subproblem::compute_predicted_objective_reduction(const EvaluationSpace& evaluation_space,
-         const Vector<double>& primal_direction, double step_length) const {
+         const Vector<double>& primal_direction, double step_length, const std::optional<Scaling>& scaling) const {
       // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
       const double directional_derivative = dot(primal_direction, this->current_iterate.evaluations.objective_gradient);
       // if the regularized Hessian is positive definite (as it usually is in line-search methods), we can compute the
@@ -249,17 +249,19 @@ namespace uno {
       const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() && this->performs_primal_regularization();
       const double quadratic_term = is_regularized_hessian_positive_definite ? 0. :
          evaluation_space.compute_hessian_quadratic_product(*this, primal_direction);
+      const double objective_scaling = scaling.has_value() ? scaling->get_objective_scaling() : 1.;
       return [=](double objective_multiplier) {
-         return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
+         return step_length * (-objective_multiplier * objective_scaling * directional_derivative) -
+            step_length*step_length/2. * quadratic_term;
       };
    }
 
    ProgressMeasures Subproblem::compute_predicted_reductions(const EvaluationSpace& evaluation_space, const Direction& direction,
-         double step_length, Norm norm) const {
+         double step_length, Norm norm, const std::optional<Scaling>& scaling) const {
       return {
          this->compute_predicted_infeasibility_reduction(evaluation_space, this->problem.model, direction.primals,
             step_length, norm),
-         this->compute_predicted_objective_reduction(evaluation_space, direction.primals, step_length),
+         this->compute_predicted_objective_reduction(evaluation_space, direction.primals, step_length, scaling),
          this->problem.compute_predicted_auxiliary_reduction(this->current_iterate, direction.primals, step_length)
       };
    }

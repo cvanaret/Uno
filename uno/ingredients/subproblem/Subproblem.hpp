@@ -88,9 +88,9 @@ namespace uno {
       [[nodiscard]] double compute_predicted_infeasibility_reduction(const EvaluationSpace& evaluation_space, const Model& model,
          const Vector<double>& primal_direction, double step_length, Norm norm) const;
       [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const EvaluationSpace& evaluation_space,
-         const Vector<double>& primal_direction, double step_length) const;
+         const Vector<double>& primal_direction, double step_length, const std::optional<Scaling>& scaling) const;
       [[nodiscard]] ProgressMeasures compute_predicted_reductions(const EvaluationSpace& evaluation_space,
-         const Direction& direction, double step_length, Norm norm) const;
+         const Direction& direction, double step_length, Norm norm, const std::optional<Scaling>& scaling) const;
 
       const OptimizationProblem& problem;
       Iterate& current_iterate;
