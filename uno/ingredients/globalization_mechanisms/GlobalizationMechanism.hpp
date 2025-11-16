@@ -20,7 +20,7 @@ namespace uno {
 
    class GlobalizationMechanism {
    public:
-      GlobalizationMechanism(const Model& model, bool use_trust_region, const Options& options);
+      GlobalizationMechanism(std::string name, const Model& model, bool use_trust_region, const Options& options);
       virtual ~GlobalizationMechanism() = default;
 
       virtual void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
@@ -31,10 +31,11 @@ namespace uno {
       static void set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate);
       static void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate);
 
-      [[nodiscard]] virtual std::string get_name() const = 0;
+      [[nodiscard]] std::string get_strategy_combination() const;
       [[nodiscard]] size_t get_number_subproblems_solved() const;
 
    protected:
+      const std::string name;
       const std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy{};
 
       static void assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate,

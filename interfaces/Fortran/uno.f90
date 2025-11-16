@@ -407,6 +407,18 @@ interface
 end interface
 
 !---------------------------------------------
+! uno_get_solver_method
+!---------------------------------------------
+interface
+   function uno_get_solver_method(solver) result(solver_method) &
+      bind(C, name="uno_get_solver_method")
+      import :: c_ptr
+      type(c_ptr), value :: solver
+      type(c_ptr) :: solver_method
+   end function uno_get_solver_method
+end interface
+
+!---------------------------------------------
 ! uno_get_solution_status
 !---------------------------------------------
 interface

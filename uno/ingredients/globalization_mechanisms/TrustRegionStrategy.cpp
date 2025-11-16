@@ -17,7 +17,7 @@
 
 namespace uno {
    TrustRegionStrategy::TrustRegionStrategy(const Model& model, const Options& options) :
-         GlobalizationMechanism(model, true, options),
+         GlobalizationMechanism("TR", model, true, options),
          radius(options.get_double("TR_radius")),
          increase_factor(options.get_double("TR_increase_factor")),
          decrease_factor(options.get_double("TR_decrease_factor")),
@@ -105,10 +105,6 @@ namespace uno {
             throw std::runtime_error("Small radius");
          }
       }
-   }
-
-   std::string TrustRegionStrategy::get_name() const {
-      return "TR " + this->constraint_relaxation_strategy->get_name();
    }
 
    // protected member functions
