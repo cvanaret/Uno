@@ -27,7 +27,7 @@ namespace uno {
       this->matrix_column_indices.resize(this->number_matrix_nonzeros);
       // compute the COO sparse representation
       subproblem.compute_regularized_hessian_sparsity(this->matrix_row_indices.data(), this->matrix_column_indices.data(),
-                                                      Indexing::Fortran_indexing);
+         Indexing::Fortran_indexing);
       this->matrix_values.resize(this->number_matrix_nonzeros);
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
@@ -48,7 +48,7 @@ namespace uno {
       this->jacobian_row_indices.resize(this->number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(this->number_jacobian_nonzeros);
       subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-                                                      Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
+         Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
 
       // augmented system
       this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
@@ -57,7 +57,7 @@ namespace uno {
       this->matrix_column_indices.resize(this->number_matrix_nonzeros);
       // compute the COO sparse representation
       subproblem.compute_regularized_augmented_matrix_sparsity(this->matrix_row_indices.data(), this->matrix_column_indices.data(),
-                                                               this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), Indexing::Fortran_indexing);
+         this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), Indexing::Fortran_indexing);
       this->matrix_values.resize(this->number_matrix_nonzeros);
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
