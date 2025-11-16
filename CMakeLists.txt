@@ -76,6 +76,7 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/inertia_correction_strategies/*.cpp
    uno/ingredients/subproblem/*.cpp
    uno/ingredients/subproblem_solvers/*.cpp
+   uno/ingredients/subproblem_solvers/dogleg/*.cpp
    uno/model/*.cpp
    uno/optimization/*.cpp
    uno/options/*.cpp
