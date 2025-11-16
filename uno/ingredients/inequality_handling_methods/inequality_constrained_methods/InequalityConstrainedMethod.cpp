@@ -7,7 +7,7 @@
 #include "ingredients/constraint_relaxation_strategies/relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "ingredients/subproblem_solvers/BoxLPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/BoxLPSolver.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "optimization/Direction.hpp"
@@ -32,7 +32,7 @@ namespace uno {
       if (!this->subproblem->has_curvature()) {
          if (this->subproblem->number_constraints == 0) {
             DEBUG << "No curvature and only bound constraints in the subproblems, allocating a box LP solver\n";
-            this->solver = BoxLPSolverFactory::create();
+            this->solver = std::make_unique<BoxLPSolver>();
          }
          else {
             DEBUG << "No curvature in the subproblems, allocating an LP solver\n";
