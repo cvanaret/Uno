@@ -56,7 +56,7 @@ UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 ```
 
 Note that if your `AbstractNLPModel` does not support Hessian-vector products with `NLPModels.hprod!`,
-you need to specify this with the optional Boolean argument `operators_available` in the functions `uno_model` and `uno`.
+you need to specify this with the optional boolean argument `operators_available` in the functions `uno_model` and `uno`.
 This is required by `BQPD` inside `Uno`.
 
 ```julia
