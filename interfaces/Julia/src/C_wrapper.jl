@@ -318,10 +318,10 @@ function uno_solver(; kwargs...)
       @assert uno_set_solver_string_option(c_solver, string(k), v)
     elseif v isa Float64
       @assert uno_set_solver_double_option(solver, string(k), v)
-    elseif v isa Integer
-      @assert uno_set_solver_integer_option(solver, string(k), Cint(v))
     elseif v isa Bool
       @assert uno_set_solver_bool_option(solver, string(k), v)
+    elseif v isa Integer
+      @assert uno_set_solver_integer_option(solver, string(k), Cint(v))
     else
       @warn "$k does not seem to be a valid Uno option."
     end

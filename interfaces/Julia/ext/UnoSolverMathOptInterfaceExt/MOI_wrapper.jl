@@ -1373,10 +1373,10 @@ function MOI.optimize!(model::Optimizer)
             @assert UnoSolver.uno_set_solver_string_option(solver, name, value)
         elseif value isa Float64
             @assert UnoSolver.uno_set_solver_double_option(solver, name, value)
-        elseif value isa Integer
-            @assert UnoSolver.uno_set_solver_integer_option(solver, name, Cint(value))
         elseif value isa Bool
             @assert UnoSolver.uno_set_solver_bool_option(solver, name, value)
+        elseif value isa Integer
+            @assert UnoSolver.uno_set_solver_integer_option(solver, name, Cint(value))
         else
             error(
                 "Unable to add option `\"$name\"` with the value " *
