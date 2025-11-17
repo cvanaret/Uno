@@ -70,6 +70,9 @@ namespace uno {
          UserCallbacks& user_callbacks) {
       const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
          current_iterate, trial_iterate, direction, step_length, user_callbacks);
+      if (accept_iterate) {
+         this->hessian_model->notify_accepted_iterate(current_iterate, trial_iterate);
+      }
       trial_iterate.status = this->check_termination(model, trial_iterate);
       warmstart_information.no_changes();
       return accept_iterate;
