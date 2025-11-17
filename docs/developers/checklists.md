@@ -15,6 +15,7 @@ In preparation for an Uno release, use the following checklist. The PR should ha
 - [ ] Change the version number in `CITATION.cff` (twice)
 - [ ] Change the version number in `CMakeLists.txt`
 - [ ] Change the version number in `interfaces/C/Uno_C_API.h`
+- [ ] Update the logo in `docs/figures/logo.png`
 - [ ] The commit messages in this PR do not contain `[ci skip]`
 
 ## Post-release
