@@ -10,6 +10,7 @@
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "../interfaces/C/Uno_C_API.h"
 #include "linear_algebra/Vector.hpp"
 #include "model/BoundRelaxedModel.hpp"
 #include "model/FixedBoundsConstraintsModel.hpp"
@@ -130,7 +131,7 @@ namespace uno {
    }
    
    std::string Uno::current_version() {
-      return "2.3.1";
+      return std::to_string(UNO_VERSION_MAJOR) + "." + std::to_string(UNO_VERSION_MINOR) + "." + std::to_string(UNO_VERSION_PATCH);
    }
    
    void Uno::print_available_strategies() {
