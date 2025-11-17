@@ -55,6 +55,18 @@ upper_bound_dual_solution = Vector{Float64}(undef, nlp.meta.nvar)
 UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 ```
 
+Note that if your `AbstractNLPModel` does not support Hessian-vector products with `NLPModels.hprod!`,
+you need to specify this with the optional Boolean argument `operators_available` in the functions `uno_model` and `uno`.
+This is required by `BQPD` inside `Uno`.
+
+```julia
+using UnoSolver, CUTEst
+
+nlp = CUTEstModel{Float64}("HS10")
+operators_available = false
+model, solver = uno(nlp, operators_available; preset="filtersqp", print_solution=true, logger="INFO")
+```
+
 ```julia
 using UnoSolver, JuMP
 
