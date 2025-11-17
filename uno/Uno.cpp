@@ -130,7 +130,7 @@ namespace uno {
    }
    
    std::string Uno::current_version() {
-      return "2.3.0";
+      return "2.3.1";
    }
    
    void Uno::print_available_strategies() {
