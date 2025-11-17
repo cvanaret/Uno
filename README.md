@@ -28,7 +28,7 @@ Thanks to Uno, you can combine these strategies in a ton of different ways. In p
 
 Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches.
 
-For more details on our unification theory, check out the [UNIFICATION](UNIFICATION.md) page, our [preprint](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization), or my [latest slides](https://www.researchgate.net/publication/390271091).
+For more details on our unification theory, check out the [UNIFICATION](UNIFICATION.md) page, our [preprint](https://www.researchgate.net/publication/397446552_Implementing_a_unified_solver_for_nonlinearly_constrained_optimization), or my [latest slides](https://www.researchgate.net/publication/390271091).
 
 ## Installation instructions
 
