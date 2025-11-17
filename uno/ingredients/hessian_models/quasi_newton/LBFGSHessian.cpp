@@ -25,8 +25,7 @@ namespace uno {
          D_matrix(this->memory_size),
          M_matrix(this->memory_size, this->memory_size),
          U_matrix(this->model.number_variables, this->memory_size),
-         V_matrix(this->model.number_variables, this->memory_size),
-         Hessian_approximation(this->model.number_variables, this->model.number_variables) {
+         V_matrix(this->model.number_variables, this->memory_size) {
    }
 
    bool LBFGSHessian::has_hessian_operator() const {
@@ -55,7 +54,7 @@ namespace uno {
 
    void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
       statistics.add_column("|BFGS|", Statistics::double_width - 4, 2, Statistics::column_order.at("|BFGS|"));
-      statistics.set("|BFGS|", 0);
+      statistics.set("|BFGS|", this->number_entries_in_memory);
    }
 
    void LBFGSHessian::notify_accepted_iterate(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate) {
