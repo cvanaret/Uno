@@ -55,11 +55,31 @@ namespace uno {
 
    void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
       statistics.add_column("|BFGS|", Statistics::double_width - 4, 2, Statistics::column_order.at("|BFGS|"));
+      statistics.set("|BFGS|", 0);
    }
 
-   void LBFGSHessian::notify_accepted_iterate(Iterate& current_iterate, Iterate& trial_iterate) {
-      this->update_limited_memory(current_iterate, trial_iterate);
-      // TODO set "|BFGS|"
+   void LBFGSHessian::notify_accepted_iterate(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate) {
+      DEBUG << "\n*** Updating the BFGS memory\n";
+      // update the matrices S, Y and D
+      // TODO check that the S entry isn't too small
+      this->update_S_matrix(current_iterate, trial_iterate);
+      this->update_Y_matrix(current_iterate, trial_iterate);
+      this->update_D_matrix();
+      DEBUG << "> S: " << this->S_matrix;
+      DEBUG << "> Y: " << this->Y_matrix;
+      DEBUG << "> diag(D): "; print_vector(DEBUG, this->D_matrix);
+
+      // check that the latest D entry s^T y is > 0
+      if (0. < this->D_matrix[this->current_memory_slot]) {
+         DEBUG << "Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
+         this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
+         this->hessian_recomputation_required = true;
+         DEBUG << "There are now " << this->number_entries_in_memory << " entries in memory (capacity " << this->memory_size << ")\n";
+      }
+      else {
+         DEBUG << "Skipping the update\n";
+      }
+      statistics.set("|BFGS|", this->number_entries_in_memory);
    }
 
    void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
@@ -108,29 +128,6 @@ namespace uno {
    }
 
    // protected member functions
-
-   void LBFGSHessian::update_limited_memory(Iterate& current_iterate, Iterate& trial_iterate) {
-      DEBUG << "\n*** Updating the BFGS memory\n";
-      // update the matrices S, Y and D
-      // TODO check that the S entry isn't too small
-      this->update_S_matrix(current_iterate, trial_iterate);
-      this->update_Y_matrix(current_iterate, trial_iterate);
-      this->update_D_matrix();
-      DEBUG << "> S: " << this->S_matrix;
-      DEBUG << "> Y: " << this->Y_matrix;
-      DEBUG << "> diag(D): "; print_vector(DEBUG, this->D_matrix);
-
-      // check that the latest D entry s^T y is > 0
-      if (0. < this->D_matrix[this->current_memory_slot]) {
-         DEBUG << "Adding vector to L-BFGS memory at slot " << this->current_memory_slot << '\n';
-         this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
-         this->hessian_recomputation_required = true;
-         DEBUG << "There are now " << this->number_entries_in_memory << " entries in memory (capacity " << this->memory_size << ")\n";
-      }
-      else {
-         DEBUG << "Skipping the update\n";
-      }
-   }
 
    void LBFGSHessian::update_S_matrix(const Iterate& current_iterate, const Iterate& trial_iterate) {
       this->S_matrix.column(this->current_memory_slot) = view(trial_iterate.primals, 0, this->model.number_variables) -

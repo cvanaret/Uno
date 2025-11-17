@@ -32,7 +32,7 @@ namespace uno {
       options.set_double("unbounded_objective_threshold", -1e20);
       // enforce linear constraints at the initial point (yes|no)
       options.set_bool("enforce_linear_constraints", false);
-      
+
       /** main options **/
       // logging level (SILENT|DISCRETE|WARNING|INFO|DEBUG|DEBUG2|DEBUG3)
       options.set_string("logger", "INFO");

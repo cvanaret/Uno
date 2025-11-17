@@ -29,7 +29,7 @@ namespace uno {
       [[nodiscard]] bool is_positive_definite() const override;
 
       void initialize_statistics(Statistics& statistics, const Options& options) const override;
-      void notify_accepted_iterate(Iterate& current_iterate, Iterate& trial_iterate) override;
+      void notify_accepted_iterate(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate) override;
       void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) override;
       void compute_hessian_vector_product(const double* x, const double* vector,
@@ -54,7 +54,6 @@ namespace uno {
       DenseMatrix<double> Hessian_approximation;
       double initial_identity_multiple{1.}; // referred to as delta in Numerical optimization
 
-      void update_limited_memory(Iterate& current_iterate, Iterate& trial_iterate);
       void update_S_matrix(const Iterate& current_iterate, const Iterate& trial_iterate);
       void update_Y_matrix(Iterate& current_iterate, Iterate& trial_iterate);
       void update_D_matrix();

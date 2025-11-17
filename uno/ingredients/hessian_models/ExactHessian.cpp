@@ -36,7 +36,7 @@ namespace uno {
    void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
    }
 
-   void ExactHessian::notify_accepted_iterate(Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
+   void ExactHessian::notify_accepted_iterate(Statistics& /*statistics*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
    }
 
    void ExactHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& primal_variables,

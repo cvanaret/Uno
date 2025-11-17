@@ -40,7 +40,7 @@ namespace uno {
    void IdentityHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
    }
 
-   void IdentityHessian::notify_accepted_iterate(Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
+   void IdentityHessian::notify_accepted_iterate(Statistics& /*statistics*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
    }
 
    void IdentityHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
