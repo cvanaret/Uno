@@ -26,7 +26,11 @@ end
 
 function nlpmodels_lagrangian_hessian(nlp::AbstractNLPModel{Float64, Vector{Float64}}, hvals::Vector{Float64}, x::Vector{Float64},
                                       multipliers::Vector{Float64}, objective_multiplier::Float64)
-NLPModels.hess_coord!(nlp, x, multipliers, hvals, obj_weight=objective_multiplier)
+  if nlp.meta.ncon == 0
+    NLPModels.hess_coord!(nlp, x, hvals, obj_weight=objective_multiplier)
+  else
+    NLPModels.hess_coord!(nlp, x, multipliers, hvals, obj_weight=objective_multiplier)
+  end
   return hvals
 end
 
@@ -45,7 +49,11 @@ end
 function nlpmodels_lagrangian_hessian_operator(nlp::AbstractNLPModel{Float64, Vector{Float64}}, Hv::Vector{Float64},
                                                x::Vector{Float64}, objective_multiplier::Float64, multipliers::Vector{Float64},
                                                v::Vector{Float64}, evaluate_at_x::Bool)
-  NLPModels.hprod!(nlp, x, multipliers, v, Hv; obj_weight=objective_multiplier)
+  if nlp.meta.ncon == 0
+    NLPModels.hprod!(nlp, x, v, Hv; obj_weight=objective_multiplier)
+  else
+    NLPModels.hprod!(nlp, x, multipliers, v, Hv; obj_weight=objective_multiplier)
+  end
   return Hv
 end
 
