@@ -44,7 +44,9 @@ find_library(HSL hsl)
 find_library(MA57 ma57)
 find_library(MA27 ma27)
 find_library(BQPD bqpd)
-if(HSL OR MA57 OR MA27 OR BQPD)
+option(WITH_LAPACK "Enable LAPACK" OFF)
+find_package(LAPACK)
+if(HSL OR MA57 OR MA27 OR BQPD OR (WITH_LAPACK AND LAPACK_FOUND))
    message(STATUS "Fortran compiler required")
    enable_language(Fortran)
    include(FortranCInterface)
@@ -89,6 +91,7 @@ file(GLOB TESTS_UNO_SOURCE_FILES
    unotest/unit_tests/ConcatenationTests.cpp
    unotest/unit_tests/COOSparseStorageTests.cpp
    unotest/unit_tests/CSCSparseStorageTests.cpp
+   unotest/unit_tests/DenseMatrixTests.cpp
    unotest/unit_tests/RangeTests.cpp
    unotest/unit_tests/ScalarMultipleTests.cpp
    unotest/unit_tests/SparseVectorTests.cpp
@@ -101,6 +104,7 @@ file(GLOB TESTS_UNO_SOURCE_FILES
 # external dependencies #
 #########################
 set(LIBRARIES "")
+set(TEST_LIBRARIES "")
 
 # function that links an existing library to Uno
 function(link_to_uno library_name library_path)
@@ -142,6 +146,20 @@ if(HSL OR MA27)
 
    find_package(BLAS REQUIRED)
    list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+endif()
+
+# LAPACK
+if(WITH_LAPACK)
+	find_package(LAPACK)
+	if(NOT LAPACK_FOUND)
+		message(WARNING "Optional library LAPACK was not found.")
+	else()
+		link_to_uno(LAPACK ${LAPACK_LIBRARIES})
+		set(TEST_LIBRARIES ${TEST_LIBRARIES} ${LAPACK_LIBRARIES})
+		# enable the use of quasi-Newton methods
+		list(APPEND UNO_SOURCE_FILES uno/ingredients/hessian_models/quasi_newton/LBFGSHessian.cpp)
+		list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/LAPACKTests.cpp)
+	endif()
 endif()
 
 # METIS
