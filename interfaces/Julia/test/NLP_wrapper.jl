@@ -1,10 +1,14 @@
 @testset "ADNLPModel" begin
-    v = rand(10)
-    obj(t) = sum(abs2, t)/2 + dot(t,v)
+    function testme()
+        v = rand(10)
+        obj(t) = sum(abs2, t)/2 + dot(t,v)
 
-    nlp = ADNLPModel(obj, ones(10); backend=:generic)
-    (model, solver) = uno(nlp, false; preset="filtersqp", print_solution=false)
-    solution = UnoSolver.uno_get_primal_solution(solver, zeros(length(v)))
+        nlp = ADNLPModel(obj, ones(10); backend=:generic)
+        (model, solver) = uno(nlp, false; preset="filtersqp", print_solution=false)
+        solution = UnoSolver.uno_get_primal_solution(solver, zeros(length(v)))
+    end
+
+    testme()
 end
 
 @testset "uno_model -- uno_solver -- uno_optimize" begin
