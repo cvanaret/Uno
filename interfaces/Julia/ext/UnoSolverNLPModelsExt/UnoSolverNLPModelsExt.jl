@@ -27,9 +27,9 @@ end
 function nlpmodels_lagrangian_hessian(nlp::AbstractNLPModel{Float64, Vector{Float64}}, hvals::Vector{Float64}, x::Vector{Float64},
                                       multipliers::Vector{Float64}, objective_multiplier::Float64)
   if nlp.meta.ncon == 0
-    NLPModels.hess_coord!(nlp, x, hvals, obj_weight=objective_multiplier)
+    NLPModels.hess_coord!(nlp, x, hvals; obj_weight=objective_multiplier)
   else
-    NLPModels.hess_coord!(nlp, x, multipliers, hvals, obj_weight=objective_multiplier)
+    NLPModels.hess_coord!(nlp, x, multipliers, hvals; obj_weight=objective_multiplier)
   end
   return hvals
 end
