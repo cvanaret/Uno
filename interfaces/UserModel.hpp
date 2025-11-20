@@ -35,6 +35,7 @@ namespace uno {
             base_indexing(base_indexing),
             number_variables(number_variables) {
       }
+      UserModel(const UserModel& other) = default;
 
       ~UserModel() = default;
 
