@@ -328,7 +328,7 @@ public:
    }
 
 protected:
-   const CUserModel& user_model;
+   const CUserModel user_model; // make a copy
    mutable NumberModelEvaluations number_model_evaluations{};
    const SparseVector<size_t> slacks{};
    Vector<size_t> fixed_variables{};
