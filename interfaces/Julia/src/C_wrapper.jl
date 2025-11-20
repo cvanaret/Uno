@@ -68,17 +68,17 @@ function uno_jacobian(number_variables::Cint, number_jacobian_nonzeros::Cint, x:
 end
 
 function uno_lagrangian_hessian(number_variables::Cint, number_constraints::Cint, number_hessian_nonzeros::Cint, x::Ptr{Float64}, objective_multiplier::Float64, multipliers::Ptr{Float64}, hessian::Ptr{Float64}, user_data::Ptr{Cvoid})
-  GC.@preserve x multipliers hessian user_data begin
-      _x = unsafe_wrap(Array, x, number_variables)
-      _multipliers = unsafe_wrap(Array, multipliers, number_constraints)
-      _hvals = unsafe_wrap(Array, hessian, number_hessian_nonzeros)
-      _user_data = unsafe_pointer_to_objref(user_data)::Model
-      if isnothing(_user_data.user_model)
-        _user_data.eval_hessian(_hvals, _x, _multipliers, objective_multiplier)
-      else
-        _user_data.eval_hessian(_user_data.user_model, _hvals, _x, _multipliers, objective_multiplier)
-      end
-  end
+  #GC.@preserve x multipliers hessian user_data begin
+  #    _x = unsafe_wrap(Array, x, number_variables)
+  #    _multipliers = unsafe_wrap(Array, multipliers, number_constraints)
+  #    _hvals = unsafe_wrap(Array, hessian, number_hessian_nonzeros)
+  #    _user_data = unsafe_pointer_to_objref(user_data)::Model
+  #    if isnothing(_user_data.user_model)
+  #      _user_data.eval_hessian(_hvals, _x, _multipliers, objective_multiplier)
+  #    else
+  #      _user_data.eval_hessian(_user_data.user_model, _hvals, _x, _multipliers, objective_multiplier)
+  #    end
+  #end
   return Cint(0)
 end
 
