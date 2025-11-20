@@ -5,7 +5,7 @@
     nlp = ADNLPModel(obj, ones(10); backend=:generic)
     (model, solver) = uno(nlp, false; preset="filtersqp", print_solution=false)
     solution = UnoSolver.uno_get_primal_solution(solver, zeros(length(v)))
-testme()
+end
 
 @testset "uno_model -- uno_solver -- uno_optimize" begin
     nlp = CUTEstModel{Float64}("HS15")
