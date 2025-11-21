@@ -44,7 +44,7 @@ namespace uno {
          DEBUG << "Zero step acceptable\n";
          trial_iterate.evaluate_objective(subproblem.problem.model);
          accept_iterate = true;
-         statistics.set("status", "0 primal step");
+         statistics.set("Status", "0 primal step");
       }
       else {
          const ProgressMeasures predicted_reductions = subproblem.compute_predicted_reductions(evaluation_space, direction,

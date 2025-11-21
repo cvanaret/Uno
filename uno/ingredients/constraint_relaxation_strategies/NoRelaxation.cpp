@@ -23,15 +23,15 @@ namespace uno {
    }
 
    void NoRelaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
-         Direction& direction, double trust_region_radius, const Options& options) {
+         Direction& direction, double trust_region_radius) {
       // memory allocation
       this->inequality_handling_method->initialize(this->problem, initial_iterate, *this->hessian_model,
          *this->inertia_correction_strategy, trust_region_radius);
       direction = Direction(this->problem.number_variables, this->problem.number_constraints);
 
       // statistics
-      this->inertia_correction_strategy->initialize_statistics(statistics, options);
-      this->inequality_handling_method->initialize_statistics(statistics, options);
+      this->inertia_correction_strategy->initialize_statistics(statistics);
+      this->inequality_handling_method->initialize_statistics(statistics);
 
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate);
@@ -41,7 +41,7 @@ namespace uno {
       const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
       this->problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, evaluation_space, initial_iterate);
       this->compute_primal_dual_residuals(this->problem, initial_iterate);
-      this->globalization_strategy.initialize(statistics, initial_iterate, options);
+      this->globalization_strategy.initialize(statistics, initial_iterate);
    }
 
    void NoRelaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,

@@ -26,7 +26,7 @@ namespace uno {
 
       void initialize(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
          InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) override;
-      void initialize_statistics(Statistics& statistics, const Options& options) override;
+      void initialize_statistics(Statistics& statistics) override;
       void generate_initial_iterate(Iterate& initial_iterate) override;
       void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) override;
@@ -113,8 +113,8 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::initialize_statistics(Statistics& statistics, const Options& options) {
-      statistics.add_column("barrier", Statistics::double_width, options.get_int("statistics_barrier_parameter_column_order"));
+   void InteriorPointMethod<BarrierProblem>::initialize_statistics(Statistics& statistics) {
+      statistics.add_column("Barrier", Statistics::double_width, 2, Statistics::column_order.at("Barrier"));
    }
 
    template <typename BarrierProblem>
@@ -140,7 +140,7 @@ namespace uno {
       else {
          this->first_feasibility_iteration = false;
       }
-      statistics.set("barrier", this->barrier_parameter());
+      statistics.set("Barrier", this->barrier_parameter());
 
       // compute the primal-dual solution
       this->linear_solver->solve_indefinite_system(statistics, *this->subproblem, direction, warmstart_information);

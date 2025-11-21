@@ -17,7 +17,7 @@ namespace uno {
          }) {
    }
 
-   void FilterMethod::initialize(Statistics& /*statistics*/, const Iterate& initial_iterate, const Options& /*options*/) {
+   void FilterMethod::initialize(Statistics& /*statistics*/, const Iterate& initial_iterate) {
       // set the filter upper bound
       const double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_factor * initial_iterate.progress.infeasibility);
       this->filter->set_infeasibility_upper_bound(upper_bound);

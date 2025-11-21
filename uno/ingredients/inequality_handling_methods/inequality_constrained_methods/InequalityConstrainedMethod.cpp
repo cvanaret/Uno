@@ -46,7 +46,7 @@ namespace uno {
       this->solver->initialize_memory(*this->subproblem);
    }
 
-   void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
+   void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/) {
       // do nothing
    }
 
