@@ -4,28 +4,28 @@ import UnoSolver
 import NLPModels
 import NLPModels: AbstractNLPModel
 
-function nlpmodels_objective(nlp, x)
+function nlpmodels_objective(nlp::AbstractNLPModel{Float64, Vector{Float64}}, x::Vector{Float64})
   f = NLPModels.obj(nlp, x)
   return f
 end
 
-function nlpmodels_constraints(nlp, c, x)
+function nlpmodels_constraints(nlp::AbstractNLPModel{Float64, Vector{Float64}}, c::Vector{Float64}, x::Vector{Float64})
   NLPModels.cons!(nlp, x, c)
   return c
 end
 
-function nlpmodels_objective_gradient(nlp, g, x)
+function nlpmodels_objective_gradient(nlp::AbstractNLPModel{Float64, Vector{Float64}}, g::Vector{Float64}, x::Vector{Float64})
   NLPModels.grad!(nlp, x, g)
   return g
 end
 
-function nlpmodels_jacobian(nlp, jvals, x)
+function nlpmodels_jacobian(nlp::AbstractNLPModel{Float64, Vector{Float64}}, jvals::Vector{Float64}, x::Vector{Float64})
   NLPModels.jac_coord!(nlp, x, jvals)
   return jvals
 end
 
-function nlpmodels_lagrangian_hessian(nlp, hvals, x,
-                                      multipliers, objective_multiplier)
+function nlpmodels_lagrangian_hessian(nlp::AbstractNLPModel{Float64, Vector{Float64}}, hvals::Vector{Float64}, x::Vector{Float64},
+                                      multipliers::Vector{Float64}, objective_multiplier::Float64)
   if nlp.meta.ncon == 0
     NLPModels.hess_coord!(nlp, x, hvals; obj_weight=objective_multiplier)
   else
@@ -34,21 +34,21 @@ function nlpmodels_lagrangian_hessian(nlp, hvals, x,
   return hvals
 end
 
-function nlpmodels_jacobian_operator(nlp, Jv, x,
-                                     v, evaluate_at_x)
+function nlpmodels_jacobian_operator(nlp::AbstractNLPModel{Float64, Vector{Float64}}, Jv::Vector{Float64}, x::Vector{Float64},
+                                     v::Vector{Float64}, evaluate_at_x::Bool)
   NLPModels.jprod!(nlp, x, v, Jv)
   return Jv
 end
 
-function nlpmodels_jacobian_transposed_operator(nlp, Jtv,
-                                                x, v, evaluate_at_x)
+function nlpmodels_jacobian_transposed_operator(nlp::AbstractNLPModel{Float64, Vector{Float64}}, Jtv::Vector{Float64},
+                                                x::Vector{Float64}, v::Vector{Float64}, evaluate_at_x::Bool)
   NLPModels.jtprod!(nlp, x, v, Jtv)
   return Jtv
 end
 
-function nlpmodels_lagrangian_hessian_operator(nlp, Hv,
-                                               x, objective_multiplier, multipliers,
-                                               v, evaluate_at_x)
+function nlpmodels_lagrangian_hessian_operator(nlp::AbstractNLPModel{Float64, Vector{Float64}}, Hv::Vector{Float64},
+                                               x::Vector{Float64}, objective_multiplier::Float64, multipliers::Vector{Float64},
+                                               v::Vector{Float64}, evaluate_at_x::Bool)
   if nlp.meta.ncon == 0
     NLPModels.hprod!(nlp, x, v, Hv; obj_weight=objective_multiplier)
   else
@@ -57,7 +57,7 @@ function nlpmodels_lagrangian_hessian_operator(nlp, Hv,
   return Hv
 end
 
-function UnoSolver.uno_model(nlp, operators_available=true)
+function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}}, operators_available::Bool=true)
   jrows, jcols = NLPModels.jac_structure(nlp)
   hrows, hcols = NLPModels.hess_structure(nlp)
   # copy sparsity patterns into C vectors
@@ -107,7 +107,7 @@ function UnoSolver.uno_model(nlp, operators_available=true)
   return model
 end
 
-function UnoSolver.uno(nlp, operators_available=true; kwargs...)
+function UnoSolver.uno(nlp::AbstractNLPModel{Float64, Vector{Float64}}, operators_available::Bool=true; kwargs...)
   model = UnoSolver.uno_model(nlp, operators_available)
   solver = UnoSolver.uno_solver(; kwargs...)
   UnoSolver.uno_optimize(solver, model)
