@@ -25,10 +25,10 @@ namespace uno {
    }
 
    void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Direction& direction, const Options& options) {
-      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, direction, INF<double>, options);
-      statistics.add_column("Minor", Statistics::int_width, 3, options.get_int("statistics_minor_column_order"));
-      statistics.add_column("Steplength", Statistics::double_width + 1, 2, options.get_int("statistics_LS_step_length_column_order"));
+         Direction& direction) {
+      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, direction, INF<double>);
+      statistics.add_column("Minor", Statistics::int_width, 3, Statistics::column_order.at("Minor"));
+      statistics.add_column("Steplength", Statistics::double_width + 1, 2, Statistics::column_order.at("Steplength"));
    }
 
    void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate,

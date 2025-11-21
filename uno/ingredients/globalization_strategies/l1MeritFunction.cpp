@@ -11,8 +11,8 @@ namespace uno {
    l1MeritFunction::l1MeritFunction(const Options& options): GlobalizationStrategy(options) {
    }
 
-   void l1MeritFunction::initialize(Statistics& statistics, const Iterate& /*initial_iterate*/, const Options& options) {
-      statistics.add_column("Penalty", Statistics::double_width, 2, options.get_int("statistics_penalty_parameter_column_order"));
+   void l1MeritFunction::initialize(Statistics& statistics, const Iterate& /*initial_iterate*/) {
+      statistics.add_column("Penalty", Statistics::double_width, 2, Statistics::column_order.at("Penalty"));
    }
 
    bool l1MeritFunction::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,

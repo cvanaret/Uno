@@ -66,7 +66,7 @@ namespace uno {
       model.reset_number_evaluations();
       // pick the ingredients based on the user-defined options
       Uno::pick_ingredients(model, options);
-      Statistics statistics = Uno::create_statistics(model, options);
+      Statistics statistics = Uno::create_statistics(model);
       WarmstartInformation warmstart_information{};
       warmstart_information.whole_problem_changed();
 
@@ -156,7 +156,7 @@ namespace uno {
       statistics.set("Status", "initial point");
 
       model.project_onto_variable_bounds(current_iterate.primals);
-      this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction, options);
+      this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction);
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate);
       GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
 
@@ -168,17 +168,17 @@ namespace uno {
       current_iterate.status = SolutionStatus::NOT_OPTIMAL;
    }
 
-   Statistics Uno::create_statistics(const Model& model, const Options& options) {
+   Statistics Uno::create_statistics(const Model& model) {
       Statistics statistics{};
-      statistics.add_column("Major", Statistics::int_width, 3, options.get_int("statistics_major_column_order"));
-      statistics.add_column("||Step||", Statistics::double_width, 2, options.get_int("statistics_step_norm_column_order"));
-      statistics.add_column("Objective", Statistics::double_width + 1, 3, options.get_int("statistics_objective_column_order"));
+      statistics.add_column("Major", Statistics::int_width, 3, Statistics::column_order.at("Major"));
+      statistics.add_column("||Step||", Statistics::double_width, 2, Statistics::column_order.at("||Step||"));
+      statistics.add_column("Objective", Statistics::double_width + 1, 3, Statistics::column_order.at("Objective"));
       if (model.is_constrained()) {
-         statistics.add_column("Infeas", Statistics::double_width, 2, options.get_int("statistics_primal_feasibility_column_order"));
+         statistics.add_column("Infeas", Statistics::double_width, 2, Statistics::column_order.at("Infeas"));
       }
-      statistics.add_column("Statio", Statistics::double_width, 2, options.get_int("statistics_stationarity_column_order"));
-      statistics.add_column("Compl", Statistics::double_width, 2, options.get_int("statistics_complementarity_column_order"));
-      statistics.add_column("Status", Statistics::string_width, 3, options.get_int("statistics_status_column_order"));
+      statistics.add_column("Statio", Statistics::double_width, 2, Statistics::column_order.at("Statio"));
+      statistics.add_column("Compl", Statistics::double_width, 2, Statistics::column_order.at("Compl"));
+      statistics.add_column("Status", Statistics::string_width, 3, Statistics::column_order.at("Status"));
       return statistics;
    }
 

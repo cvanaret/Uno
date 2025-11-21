@@ -21,12 +21,12 @@ namespace uno {
          require_acceptance_wrt_current_iterate(options.get_bool("funnel_require_acceptance_wrt_current_iterate")) {
    }
 
-   void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) {
+   void FunnelMethod::initialize(Statistics& statistics, const Iterate& initial_iterate) {
       const double upper_bound = std::max(this->parameters.initial_upper_bound, this->parameters.infeasibility_factor * initial_iterate.progress.infeasibility);
       this->funnel.set_infeasibility_upper_bound(upper_bound);
       DEBUG << "Current funnel width: " << this->funnel.current_width() << '\n';
 
-      statistics.add_column("Funnel", Statistics::double_width + 2, 3, options.get_int("statistics_funnel_width_column_order"));
+      statistics.add_column("Funnel", Statistics::double_width + 2, 3, Statistics::column_order.at("Funnel"));
       statistics.set("Funnel", this->funnel.current_width());
    }
 

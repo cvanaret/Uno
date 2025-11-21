@@ -17,9 +17,9 @@ namespace uno {
 
    WaechterFilterMethod::~WaechterFilterMethod() { }
 
-   void WaechterFilterMethod::initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) {
+   void WaechterFilterMethod::initialize(Statistics& statistics, const Iterate& initial_iterate) {
       this->initial_infeasibility = initial_iterate.progress.infeasibility;
-      FilterMethod::initialize(statistics, initial_iterate, options);
+      FilterMethod::initialize(statistics, initial_iterate);
    }
 
    bool WaechterFilterMethod::is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,

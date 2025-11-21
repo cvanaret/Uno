@@ -21,7 +21,7 @@ namespace uno {
    public:
       explicit PrimalDualInertiaCorrection(const Options& options);
 
-      void initialize_statistics(Statistics& statistics, const Options& options) override;
+      void initialize_statistics(Statistics& statistics) override;
 
       void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const double* hessian_values,
          const Inertia& expected_inertia, double* primal_regularization_values) override;
@@ -73,8 +73,8 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void PrimalDualInertiaCorrection<ElementType>::initialize_statistics(Statistics& statistics, const Options& options) {
-      statistics.add_column("Regulariz", Statistics::double_width, 2, options.get_int("statistics_primal_regularization_column_order"));
+   void PrimalDualInertiaCorrection<ElementType>::initialize_statistics(Statistics& statistics) {
+      statistics.add_column("Regulariz", Statistics::double_width, 2, Statistics::column_order.at("Regulariz"));
    }
 
    template <typename ElementType>

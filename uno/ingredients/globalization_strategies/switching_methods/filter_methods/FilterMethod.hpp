@@ -22,7 +22,7 @@ namespace uno {
       explicit FilterMethod(const Options& options);
       ~FilterMethod() override = default;
 
-      void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) override;
+      void initialize(Statistics& statistics, const Iterate& initial_iterate) override;
       void reset() override;
       void notify_switch_to_feasibility(const ProgressMeasures& current_progress) override;
       void notify_switch_to_optimality(const ProgressMeasures& current_progress) override;

@@ -13,7 +13,25 @@ namespace uno {
    size_t Statistics::double_width = 10;
    size_t Statistics::string_width = 15;
 
-   void Statistics::add_column(std::string_view name, size_t width, size_t precision, int order) {
+   const std::map<std::string_view, size_t> Statistics::column_order = {
+      {"Major", 1},
+      {"Minor", 2},
+      {"Penalty", 5},
+      {"Barrier", 8},
+      {"Steplength", 10},
+      {"Radius", 11},
+      {"Phase", 20},
+      {"Regulariz", 21},
+      {"Funnel", 25},
+      {"||Step||", 31},
+      {"Objective", 100},
+      {"Infeas", 101},
+      {"Statio", 104},
+      {"Compl", 105},
+      {"Status", 200},
+   };
+
+   void Statistics::add_column(std::string_view name, size_t width, size_t precision, size_t order) {
       this->columns[order] = name;
       this->widths[name] = width;
       this->precisions[name] = precision;

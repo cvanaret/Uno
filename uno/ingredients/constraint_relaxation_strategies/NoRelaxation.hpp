@@ -18,7 +18,7 @@ namespace uno {
       ~NoRelaxation() override = default;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         double trust_region_radius, const Options& options) override;
+         double trust_region_radius) override;
 
       // direction computation
       void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,

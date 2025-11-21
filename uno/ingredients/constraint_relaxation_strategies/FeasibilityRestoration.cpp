@@ -43,7 +43,7 @@ namespace uno {
    }
 
    void FeasibilityRestoration::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
-         Direction& direction, double trust_region_radius, const Options& options) {
+         Direction& direction, double trust_region_radius) {
       this->reference_optimality_primals.resize(this->optimality_problem.number_variables);
 
       // memory allocation
@@ -55,11 +55,11 @@ namespace uno {
       );
 
       // statistics
-      this->optimality_inertia_correction_strategy->initialize_statistics(statistics, options);
-      this->optimality_inequality_handling_method->initialize_statistics(statistics, options);
-      this->feasibility_inertia_correction_strategy->initialize_statistics(statistics, options);
-      this->feasibility_inequality_handling_method->initialize_statistics(statistics, options);
-      statistics.add_column("Phase", Statistics::int_width - 1, 3, options.get_int("statistics_restoration_phase_column_order"));
+      this->optimality_inertia_correction_strategy->initialize_statistics(statistics);
+      this->optimality_inequality_handling_method->initialize_statistics(statistics);
+      this->feasibility_inertia_correction_strategy->initialize_statistics(statistics);
+      this->feasibility_inequality_handling_method->initialize_statistics(statistics);
+      statistics.add_column("Phase", Statistics::int_width - 1, 3, Statistics::column_order.at("Phase"));
       statistics.set("Phase", "OPT");
 
       // initial iterate
@@ -71,8 +71,8 @@ namespace uno {
       this->optimality_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
          evaluation_space, initial_iterate);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, initial_iterate);
-      this->optimality_globalization_strategy->initialize(statistics, initial_iterate, options);
-      this->feasibility_globalization_strategy.initialize(statistics, initial_iterate, options);
+      this->optimality_globalization_strategy->initialize(statistics, initial_iterate);
+      this->feasibility_globalization_strategy.initialize(statistics, initial_iterate);
    }
 
    void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,

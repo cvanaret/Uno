@@ -17,7 +17,7 @@ namespace uno {
       static size_t string_width;
       static size_t numerical_format_size;
 
-      void add_column(std::string_view name, size_t width, size_t precision, int order);
+      void add_column(std::string_view name, size_t width, size_t precision, size_t order);
       void start_new_line();
       void set(std::string_view name, std::string value);
       void set(std::string_view name, int value);
@@ -29,8 +29,10 @@ namespace uno {
       void print_current_line();
       void print_footer();
 
+      static const std::map<std::string_view, size_t> column_order;
+
    private:
-      std::map<int, std::string> columns{};
+      std::map<size_t, std::string> columns{};
       std::map<std::string_view, size_t> widths{};
       std::map<std::string_view, size_t> precisions{};
       std::map<std::string_view, std::string> current_line{};
