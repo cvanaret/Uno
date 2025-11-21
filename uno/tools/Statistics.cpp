@@ -74,10 +74,10 @@ namespace uno {
    }
 
    void Statistics::print_header() {
-      /* line above */
+      // line above
       this->print_horizontal_line();
-      /* headers */
-      INFO << "  Iterations                                                             Residuals\n";
+      // headers
+      INFO << "  Iterations\n";
       for (const auto& element: this->columns) {
          const std::string& header = element.second;
          INFO << " " << header;
@@ -87,7 +87,7 @@ namespace uno {
          }
       }
       INFO << '\n';
-      /* line below */
+      // line below
       this->print_horizontal_line();
    }
 
