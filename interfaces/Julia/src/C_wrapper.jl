@@ -11,6 +11,26 @@ function uno_version()
     return VersionNumber(major[], minor[], patch[])
 end
 
+mutable struct Model{M}
+  # Reference to the internal C model of Uno
+  c_model::Ptr{Cvoid}
+  # Number of variables
+  nvar::Int
+  # Number of constraints
+  ncon::Int
+  # Callbacks
+  eval_objective::Function
+  eval_constraints::Function
+  eval_gradient::Function
+  eval_jacobian::Function
+  eval_hessian::Function
+  eval_Jv::Union{Function,Nothing}
+  eval_Jtv::Union{Function,Nothing}
+  eval_Hv::Union{Function,Nothing}
+  # User data
+  user_model::M
+end
+
 function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value::Ptr{Float64}, user_data::Ptr{Cvoid})
   GC.@preserve x user_data begin
       _x = unsafe_wrap(Array, x, number_variables)
@@ -126,26 +146,6 @@ function uno_lagrangian_hessian_operator(number_variables::Cint, number_constrai
       end
   end
   return Cint(0)
-end
-
-mutable struct Model{M}
-  # Reference to the internal C model of Uno
-  c_model::Ptr{Cvoid}
-  # Number of variables
-  nvar::Int
-  # Number of constraints
-  ncon::Int
-  # Callbacks
-  eval_objective::Function
-  eval_constraints::Function
-  eval_gradient::Function
-  eval_jacobian::Function
-  eval_hessian::Function
-  eval_Jv::Union{Function,Nothing}
-  eval_Jtv::Union{Function,Nothing}
-  eval_Hv::Union{Function,Nothing}
-  # User data
-  user_model::M
 end
 
 function uno_destroy_model(model::Model)
