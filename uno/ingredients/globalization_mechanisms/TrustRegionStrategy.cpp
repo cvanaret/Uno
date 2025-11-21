@@ -32,11 +32,11 @@ namespace uno {
    }
 
    void TrustRegionStrategy::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Direction& direction, const Options& options) {
-      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, direction, this->radius, options);
-      statistics.add_column("TR iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
-      statistics.add_column("TR radius", Statistics::double_width, options.get_int("statistics_TR_radius_column_order"));
-      statistics.set("TR radius", this->radius);
+         Direction& direction) {
+      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, direction, this->radius);
+      statistics.add_column("Minor", Statistics::int_width, 3, Statistics::column_order.at("Minor"));
+      statistics.add_column("Radius", Statistics::double_width, 2, Statistics::column_order.at("Radius"));
+      statistics.set("Radius", this->radius);
    }
 
    void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate,
@@ -57,18 +57,18 @@ namespace uno {
             // compute the direction within the trust region
             this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction,
                this->radius, warmstart_information);
-            statistics.set("step norm", direction.norm);
+            statistics.set("||Step||", direction.norm);
 
             // deal with errors in the subproblem
             if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
                // the subproblem is always bounded, but the objective may exceed a very large negative value
-               statistics.set("status", "unbounded subproblem");
+               statistics.set("Status", "unbounded subproblem");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius_aggressively();
                warmstart_information.variable_bounds_changed = true;
             }
             else if (direction.status == SubproblemStatus::ERROR) {
-               statistics.set("status", "solver error");
+               statistics.set("Status", "solver error");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius();
                // reset the Hessian representation of the subproblem solver
@@ -95,7 +95,7 @@ namespace uno {
          }
          // if an evaluation error occurs, decrease the radius
          catch (const EvaluationError&) {
-            statistics.set("status", "eval. error");
+            statistics.set("Status", "eval. error");
             if (Logger::level == INFO) statistics.print_current_line();
             DEBUG << "A function could not be evaluated. The trust-region radius will be reduced\n";
             this->decrease_radius();
@@ -190,7 +190,7 @@ namespace uno {
    }
 
    void TrustRegionStrategy::set_TR_statistics(Statistics& statistics, size_t number_iterations) const {
-      statistics.set("TR iter", number_iterations);
-      statistics.set("TR radius", this->radius);
+      statistics.set("Minor", number_iterations);
+      statistics.set("Radius", this->radius);
    }
 } // namespace

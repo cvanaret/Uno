@@ -20,7 +20,7 @@ namespace uno {
       InertiaCorrectionStrategy() = default;
       virtual ~InertiaCorrectionStrategy() = default;
 
-      virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
+      virtual void initialize_statistics(Statistics& statistics) = 0;
 
       virtual void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const double* hessian_values,
          const Inertia& expected_inertia, double* primal_regularization_values) = 0;

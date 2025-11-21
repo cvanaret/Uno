@@ -34,7 +34,7 @@ namespace uno {
 
       virtual void initialize(const OptimizationProblem& problem, Iterate& current_iterate,
          HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) = 0;
-      virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
+      virtual void initialize_statistics(Statistics& statistics) = 0;
       virtual void generate_initial_iterate(Iterate& initial_iterate) = 0;
       virtual void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) = 0;

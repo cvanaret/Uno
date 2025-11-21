@@ -43,7 +43,7 @@ namespace uno {
    }
 
    void FeasibilityRestoration::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
-         Direction& direction, double trust_region_radius, const Options& options) {
+         Direction& direction, double trust_region_radius) {
       this->reference_optimality_primals.resize(this->optimality_problem.number_variables);
 
       // memory allocation
@@ -55,12 +55,12 @@ namespace uno {
       );
 
       // statistics
-      this->optimality_inertia_correction_strategy->initialize_statistics(statistics, options);
-      this->optimality_inequality_handling_method->initialize_statistics(statistics, options);
-      this->feasibility_inertia_correction_strategy->initialize_statistics(statistics, options);
-      this->feasibility_inequality_handling_method->initialize_statistics(statistics, options);
-      statistics.add_column("phase", Statistics::int_width - 1, options.get_int("statistics_restoration_phase_column_order"));
-      statistics.set("phase", "OPT");
+      this->optimality_inertia_correction_strategy->initialize_statistics(statistics);
+      this->optimality_inequality_handling_method->initialize_statistics(statistics);
+      this->feasibility_inertia_correction_strategy->initialize_statistics(statistics);
+      this->feasibility_inequality_handling_method->initialize_statistics(statistics);
+      statistics.add_column("Phase", Statistics::int_width - 1, 3, Statistics::column_order.at("Phase"));
+      statistics.set("Phase", "OPT");
 
       // initial iterate
       this->optimality_inequality_handling_method->generate_initial_iterate(initial_iterate);
@@ -71,8 +71,8 @@ namespace uno {
       this->optimality_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
          evaluation_space, initial_iterate);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, initial_iterate);
-      this->optimality_globalization_strategy->initialize(statistics, initial_iterate, options);
-      this->feasibility_globalization_strategy.initialize(statistics, initial_iterate, options);
+      this->optimality_globalization_strategy->initialize(statistics, initial_iterate);
+      this->feasibility_globalization_strategy.initialize(statistics, initial_iterate);
    }
 
    void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
@@ -80,14 +80,14 @@ namespace uno {
       direction.reset();
       // if we are in the optimality phase, solve the optimality problem
       if (this->current_phase == Phase::OPTIMALITY) {
-         statistics.set("phase", "OPT");
+         statistics.set("Phase", "OPT");
          try {
             DEBUG << "Solving the optimality subproblem\n";
             this->solve_subproblem(statistics, *this->optimality_inequality_handling_method, this->optimality_problem,
                current_iterate, direction, trust_region_radius, warmstart_information);
             if (direction.status == SubproblemStatus::INFEASIBLE) {
                // switch to the feasibility problem, starting from the current direction
-               statistics.set("status", std::string("infeasible"));
+               statistics.set("Status", std::string("infeasible"));
                DEBUG << "/!\\ The subproblem is infeasible\n";
                this->switch_to_feasibility_problem(statistics, current_iterate, trust_region_radius, warmstart_information);
                this->feasibility_inequality_handling_method->set_initial_point(direction.primals);
@@ -104,7 +104,7 @@ namespace uno {
 
       // solve the feasibility problem (minimize the constraint violation)
       DEBUG << "Solving the feasibility subproblem\n";
-      statistics.set("phase", "FEAS");
+      statistics.set("Phase", "FEAS");
       // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
       this->feasibility_problem.set_proximal_coefficient(this->optimality_inequality_handling_method->proximal_coefficient());
       this->solve_subproblem(statistics, *this->feasibility_inequality_handling_method, this->feasibility_problem,

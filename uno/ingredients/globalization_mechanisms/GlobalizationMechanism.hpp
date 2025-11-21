@@ -24,7 +24,7 @@ namespace uno {
       virtual ~GlobalizationMechanism() = default;
 
       virtual void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Direction& direction, const Options& options) = 0;
+         Direction& direction) = 0;
       virtual void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
 

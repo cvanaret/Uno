@@ -40,16 +40,16 @@ namespace uno {
 
    void GlobalizationMechanism::set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) {
       if (iterate.is_objective_computed) {
-         statistics.set("objective", iterate.evaluations.objective);
+         statistics.set("Objective", iterate.evaluations.objective);
       }
       if (model.is_constrained()) {
-         statistics.set("primal feas", iterate.progress.infeasibility);
+         statistics.set("Infeas", iterate.progress.infeasibility);
       }
    }
 
    void GlobalizationMechanism::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) {
-      statistics.set("stationarity", iterate.residuals.stationarity);
-      statistics.set("complementarity", iterate.residuals.complementarity);
+      statistics.set("Statio", iterate.residuals.stationarity);
+      statistics.set("Compl", iterate.residuals.complementarity);
    }
 
    size_t GlobalizationMechanism::get_number_subproblems_solved() const {
