@@ -32,7 +32,7 @@ mutable struct Model{M}
 end
 
 function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value::Ptr{Float64}, user_data::Ptr{Cvoid})
-  GC.@preserve x user_data begin
+  #GC.@preserve x user_data begin
       _x = unsafe_wrap(Array, x, number_variables)
       _user_data = unsafe_pointer_to_objref(user_data)::Model
       if isnothing(_user_data.user_model)
@@ -41,7 +41,7 @@ function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value:
         _f = _user_data.eval_objective(_user_data.user_model, _x)::Float64
       end
       unsafe_store!(objective_value, _f)
-  end
+  #end
   return Cint(0)
 end
 
