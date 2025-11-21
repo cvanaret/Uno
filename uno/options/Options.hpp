@@ -35,6 +35,9 @@ namespace uno {
       [[nodiscard]] static Options get_command_line_options(int argc, char* argv[], size_t offset);
       [[nodiscard]] static Options load_option_file(const std::string& file_name);
 
+      // Print all available options with their type and default value
+      static void dump_default_options();
+
       void overwrite_with(const Options& overwriting_options);
       void print_used_overwritten() const;
 
