@@ -1,3 +1,17 @@
+@testset "ADNLPModel" begin
+    function testme()
+        n = 10
+        v = rand(n)
+        obj(t) = sum(abs2, t)/2 + dot(t,v)
+
+        nlp = ADNLPModel(obj, ones(n); backend=:generic)
+        (model, solver) = uno(nlp, false; preset="filtersqp", logger="DEBUG3", print_subproblem=true)
+        solution = UnoSolver.uno_get_primal_solution(solver, zeros(n))
+    end
+
+    testme()
+end
+
 @testset "uno_model -- uno_solver -- uno_optimize" begin
     nlp = CUTEstModel{Float64}("HS15")
     model = uno_model(nlp)

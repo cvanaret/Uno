@@ -60,6 +60,20 @@ end
 function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}}, operators_available::Bool=true)
   jrows, jcols = NLPModels.jac_structure(nlp)
   hrows, hcols = NLPModels.hess_structure(nlp)
+  # copy sparsity patterns into C vectors
+  jrows_c = Vector{Cint}(undef, nlp.meta.nnzj)
+  jcols_c = Vector{Cint}(undef, nlp.meta.nnzj)
+  for i in 1:nlp.meta.nnzj
+    jrows_c[i] = jrows[i]
+    jcols_c[i] = jcols[i]
+  end
+  hrows_c = Vector{Cint}(undef, nlp.meta.nnzh)
+  hcols_c = Vector{Cint}(undef, nlp.meta.nnzh)
+  for i in 1:nlp.meta.nnzh
+    hrows_c[i] = hrows[i]
+    hcols_c[i] = hcols[i]
+  end
+
   problem_type = nlp.meta.islp ? "LP" : "NLP"
   model = UnoSolver.uno_model(
     problem_type,
@@ -70,11 +84,11 @@ function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}}, op
     nlp.meta.uvar,
     nlp.meta.lcon,
     nlp.meta.ucon,
-    Cint.(jrows),
-    Cint.(jcols),
+    jrows_c,
+    jcols_c,
     nlp.meta.nnzj,
-    Cint.(hrows),
-    Cint.(hcols),
+    hrows_c,
+    hcols_c,
     nlp.meta.nnzh,
     nlpmodels_objective,
     nlpmodels_constraints,
