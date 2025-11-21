@@ -201,8 +201,10 @@ function uno_model(
   model = Model(c_model, nvar, ncon, eval_objective, eval_constraints, eval_gradient,
                 eval_jacobian, eval_hessian, eval_Jv, eval_Jtv, eval_Hv, user_model)
 
-  user_data = pointer_from_objref(model)::Ptr{Cvoid}
-  flag = uno_set_user_data(c_model, user_data)
+  GC.@preserve model begin
+    user_data = pointer_from_objref(model)::Ptr{Cvoid}
+    flag = uno_set_user_data(c_model, user_data)
+  end
   flag || error("Failed to set user data via uno_set_user_data.")
 
   eval_objective_c = @cfunction(uno_objective, Cint, (Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
