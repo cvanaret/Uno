@@ -81,7 +81,7 @@ namespace uno {
       for (const auto& element: this->columns) {
          const std::string& header = element.second;
          INFO << " " << header;
-         for (size_t j = 0; j < std::max(this->widths[header] - header.size() - 1, 0u); j++) {
+         for (size_t j = 0; j < std::max(this->widths[header] - header.size() - 1, size_t(0)); j++) {
             INFO << " ";
          }
       }
@@ -115,7 +115,7 @@ namespace uno {
             length = 2;
          }
          const size_t number_spaces = (length <= this->widths[header]) ? this->widths[header] - length : 0;
-         for (size_t j = 0; j < std::max(number_spaces, 0u); j++) {
+         for (size_t j = 0; j < std::max(number_spaces, size_t(0)); j++) {
             INFO << " ";
          }
       }
