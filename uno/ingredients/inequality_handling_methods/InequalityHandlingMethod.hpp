@@ -4,8 +4,10 @@
 #ifndef UNO_INEQUALITYHANDLINGMETHOD_H
 #define UNO_INEQUALITYHANDLINGMETHOD_H
 
+#include <optional>
 #include <string>
 #include "linear_algebra/Norm.hpp"
+#include "optimization/Scaling.hpp"
 
 namespace uno {
    // forward declarations
@@ -33,11 +35,13 @@ namespace uno {
       virtual ~InequalityHandlingMethod() = default;
 
       virtual void initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) = 0;
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
+         double trust_region_radius) = 0;
       virtual void initialize_statistics(Statistics& statistics, const Options& options) = 0;
       virtual void generate_initial_iterate(Iterate& initial_iterate) = 0;
+      virtual void evaluate_progress_measures(Iterate& iterate, const std::optional<Scaling>& scaling) const = 0;
       virtual void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         WarmstartInformation& warmstart_information) = 0;
+         const std::optional<Scaling>& scaling, WarmstartInformation& warmstart_information) = 0;
 
       virtual void initialize_feasibility_problem(Iterate& current_iterate) = 0;
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
@@ -49,8 +53,8 @@ namespace uno {
 
       // progress measures
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) = 0;
+         const std::optional<Scaling>& scaling, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+         double step_length, UserCallbacks& user_callbacks) = 0;
 
       virtual void postprocess_iterate(Iterate& iterate) = 0;
 
@@ -65,10 +69,11 @@ namespace uno {
       // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
       bool subproblem_definition_changed{false};
 
-      void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const;
+      void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, const std::optional<Scaling>& scaling) const;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, const EvaluationSpace& evaluation_space, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double step_length, UserCallbacks& user_callbacks);
+         const Subproblem& subproblem, const std::optional<Scaling>& scaling, const EvaluationSpace& evaluation_space,
+         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
+         UserCallbacks& user_callbacks);
    };
 } // namespace
 

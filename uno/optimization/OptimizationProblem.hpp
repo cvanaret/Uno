@@ -37,7 +37,7 @@ namespace uno {
       virtual void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const;
 
       // dense objective gradient
-      virtual void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const;
+      virtual void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, const std::optional<Scaling>& scaling) const;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
@@ -51,11 +51,12 @@ namespace uno {
       // numerical evaluations of Jacobian and Hessian
       virtual void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const;
       virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const EvaluationSpace& evaluation_space, Iterate& iterate) const;
-      virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, double* hessian_values) const;
+         const EvaluationSpace& evaluation_space, Iterate& iterate, const std::optional<Scaling>& scaling) const;
+      virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
+         const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values,
+         const std::optional<Scaling>& scaling) const;
       virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
-         const Multipliers& multipliers, double* result) const;
+         const Multipliers& multipliers, double* result, const std::optional<Scaling>& scaling) const;
 
       [[nodiscard]] size_t get_number_original_variables() const;
       [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const;
@@ -69,11 +70,12 @@ namespace uno {
       [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const;
       [[nodiscard]] virtual const Collection<size_t>& get_dual_regularization_constraints() const;
 
-      virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
+      virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution,
+         Direction& direction) const;
       [[nodiscard]] virtual double dual_regularization_factor() const;
 
-      [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
-         Norm residual_norm);
+      [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient,
+         double objective_multiplier, Norm residual_norm);
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
 
@@ -82,7 +84,7 @@ namespace uno {
 
       // progress measures
       virtual void set_infeasibility_measure(Iterate& iterate, Norm norm) const;
-      virtual void set_objective_measure(Iterate& iterate) const;
+      virtual void set_objective_measure(Iterate& iterate, const std::optional<Scaling>& scaling) const;
       virtual void set_auxiliary_measure(Iterate& iterate) const;
       [[nodiscard]] virtual double compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const;

@@ -19,9 +19,10 @@ namespace uno {
       [[nodiscard]] bool is_positive_definite() const override;
 
       void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) override;
+         double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values,
+         const std::optional<Scaling>& scaling) override;
       void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
-         const Vector<double>& constraint_multipliers, double* result) override;
+         const Vector<double>& constraint_multipliers, double* result, const std::optional<Scaling>& scaling) override;
 
    protected:
       const size_t number_variables;

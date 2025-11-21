@@ -91,12 +91,13 @@ namespace uno {
 
    double AMPLModel::evaluate_objective(const Vector<double>& x) const {
       fint error_flag = 0;
-      const double result = this->optimization_sense * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
+      double objective_value = (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
       if (0 < error_flag) {
          throw FunctionEvaluationError();
       }
+      objective_value *= this->optimization_sense;
       ++this->number_model_evaluations.objective;
-      return result;
+      return objective_value;
    }
 
    /*

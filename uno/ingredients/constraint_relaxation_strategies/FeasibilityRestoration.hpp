@@ -5,6 +5,7 @@
 #define UNO_FEASIBILITYRESTORATION_H
 
 #include <memory>
+#include <optional>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
@@ -12,6 +13,7 @@
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/Scaling.hpp"
 
 namespace uno {
    // forward declaration
@@ -56,6 +58,7 @@ namespace uno {
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
       std::unique_ptr<GlobalizationStrategy> optimality_globalization_strategy;
       l1MeritFunction feasibility_globalization_strategy;
+      std::optional<Scaling> scaling{};
       // the class maintains multipliers for the other phase (feasibility multipliers if we are in the optimality phase,
       // and vice versa). These multipliers and those of the iterate are swapped whenever we switch phases.
       Multipliers other_phase_multipliers;

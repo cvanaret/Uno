@@ -74,10 +74,10 @@ namespace uno {
       }
    }
 
-   void Subproblem::evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
+   void Subproblem::evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values, const std::optional<Scaling>& scaling) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
-         this->current_iterate.multipliers, hessian_values);
+         this->current_iterate.multipliers, hessian_values, scaling);
    }
 
    void Subproblem::regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
@@ -92,9 +92,11 @@ namespace uno {
       }
    }
 
-   void Subproblem::compute_hessian_vector_product(const double* x, const double* vector, double* result) const {
+   void Subproblem::compute_hessian_vector_product(const double* x, const double* vector, double* result,
+         const std::optional<Scaling>& scaling) const {
       // unregularized Hessian-vector product
-      this->problem.compute_hessian_vector_product(this->hessian_model, x, vector, this->current_iterate.multipliers, result);
+      this->problem.compute_hessian_vector_product(this->hessian_model, x, vector, this->current_iterate.multipliers,
+         result, scaling);
 
       // contribution of the regularization strategy
       const double regularization_factor = this->inertia_correction_strategy.get_primal_regularization_factor();
@@ -105,10 +107,10 @@ namespace uno {
       }
    }
 
-   void Subproblem::assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values) const {
+   void Subproblem::assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values, const std::optional<Scaling>& scaling) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
-         this->current_iterate.multipliers, augmented_matrix_values);
+         this->current_iterate.multipliers, augmented_matrix_values, scaling);
 
       // Jacobian of general constraints
       this->problem.evaluate_constraint_jacobian(this->current_iterate, augmented_matrix_values + this->number_hessian_nonzeros());
@@ -241,25 +243,27 @@ namespace uno {
    }
 
    std::function<double(double)> Subproblem::compute_predicted_objective_reduction(const EvaluationSpace& evaluation_space,
-         const Vector<double>& primal_direction, double step_length) const {
+         const Vector<double>& primal_direction, double step_length, const std::optional<Scaling>& scaling) const {
       // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
       const double directional_derivative = dot(primal_direction, this->current_iterate.evaluations.objective_gradient);
       // if the regularized Hessian is positive definite (as it usually is in line-search methods), we can compute the
       // predicted reduction with only first-order information (the directional derivative)
       const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() && this->performs_primal_regularization();
       const double quadratic_term = is_regularized_hessian_positive_definite ? 0. :
-         evaluation_space.compute_hessian_quadratic_product(*this, primal_direction);
+         evaluation_space.compute_hessian_quadratic_product(*this, scaling, primal_direction);
+      const double objective_scaling = scaling.has_value() ? scaling->get_objective_scaling() : 1.;
       return [=](double objective_multiplier) {
-         return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
+         return step_length * (-objective_multiplier * objective_scaling * directional_derivative) -
+            step_length*step_length/2. * quadratic_term;
       };
    }
 
    ProgressMeasures Subproblem::compute_predicted_reductions(const EvaluationSpace& evaluation_space, const Direction& direction,
-         double step_length, Norm norm) const {
+         double step_length, Norm norm, const std::optional<Scaling>& scaling) const {
       return {
          this->compute_predicted_infeasibility_reduction(evaluation_space, this->problem.model, direction.primals,
             step_length, norm),
-         this->compute_predicted_objective_reduction(evaluation_space, direction.primals, step_length),
+         this->compute_predicted_objective_reduction(evaluation_space, direction.primals, step_length, scaling),
          this->problem.compute_predicted_auxiliary_reduction(this->current_iterate, direction.primals, step_length)
       };
    }

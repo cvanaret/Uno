@@ -76,12 +76,23 @@ namespace uno {
       }
    }
 
-   double BQPDEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
+   void BQPDEvaluationSpace::compute_constraint_jacobian_norms(Vector<double>& row_norms) const {
+      row_norms.fill(0.);
+      const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
+      for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
+         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
+         const double derivative = this->jacobian_values[nonzero_index];
+         row_norms[constraint_index] = std::max(row_norms[constraint_index], std::abs(derivative));
+      }
+   }
+
+   double BQPDEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& subproblem, const std::optional<Scaling>& scaling,
+         const Vector<double>& vector) const {
       if (subproblem.has_hessian_operator()) { // linear operator
          // TODO preallocate
          Vector<double> result(subproblem.number_variables);
          // compute Hv
-         subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), vector.data(), result.data());
+         subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), vector.data(), result.data(), scaling);
          // compute the dot product <v, Hv>
          return dot(vector, result);
       }
@@ -105,16 +116,16 @@ namespace uno {
       }
    }
 
-   void BQPDEvaluationSpace::evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate,
-         const WarmstartInformation& warmstart_information) {
+   void BQPDEvaluationSpace::evaluate_functions(const Subproblem& subproblem, const std::optional<Scaling>& scaling,
+         Iterate& current_iterate, const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
       if (warmstart_information.objective_changed) {
-         problem.evaluate_objective_gradient(current_iterate, this->gradients.data());
+         subproblem.problem.evaluate_objective_gradient(current_iterate, this->gradients.data(), scaling);
       }
       if (warmstart_information.constraints_changed) {
-         problem.evaluate_constraints(current_iterate, this->constraints);
-         this->evaluate_constraint_jacobian(problem, current_iterate);
+         subproblem.problem.evaluate_constraints(current_iterate, this->constraints);
+         this->evaluate_constraint_jacobian(subproblem.problem, current_iterate);
       }
       if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->evaluate_hessian = true;

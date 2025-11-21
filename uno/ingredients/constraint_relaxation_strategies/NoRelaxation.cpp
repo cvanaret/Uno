@@ -9,6 +9,7 @@
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "options/Options.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
@@ -36,10 +37,19 @@ namespace uno {
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate);
       initial_iterate.evaluate_objective_gradient(model);
-      initial_iterate.evaluate_constraints(model);
       this->inequality_handling_method->evaluate_constraint_jacobian(initial_iterate);
       const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
-      this->problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, evaluation_space, initial_iterate);
+      this->problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, evaluation_space,
+         initial_iterate, this->scaling);
+      this->compute_primal_dual_residuals(this->problem, initial_iterate);
+      this->globalization_strategy.initialize(statistics, initial_iterate, options);
+
+      // optional scaling
+      if (options.get_bool("use_function_scaling")) {
+         this->scaling.emplace(initial_iterate, this->inequality_handling_method->get_evaluation_space(),
+            options.get_double("function_scaling_threshold"));
+      }
+      this->inequality_handling_method->evaluate_progress_measures(initial_iterate, this->scaling);
       this->compute_primal_dual_residuals(this->problem, initial_iterate);
       this->globalization_strategy.initialize(statistics, initial_iterate, options);
    }
@@ -49,7 +59,8 @@ namespace uno {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
       direction.set_dimensions(this->problem.number_variables, this->problem.number_constraints);
-      this->inequality_handling_method->solve(statistics, current_iterate, direction, trust_region_radius, warmstart_information);
+      this->inequality_handling_method->solve(statistics, current_iterate, direction, trust_region_radius, this->scaling,
+         warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, this->problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
       warmstart_information.no_changes();
@@ -68,7 +79,7 @@ namespace uno {
          Iterate& trial_iterate, const Direction& direction, double step_length, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) {
       const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
-         current_iterate, trial_iterate, direction, step_length, user_callbacks);
+         this->scaling, current_iterate, trial_iterate, direction, step_length, user_callbacks);
       trial_iterate.status = this->check_termination(model, trial_iterate);
       warmstart_information.no_changes();
       return accept_iterate;
@@ -79,7 +90,7 @@ namespace uno {
       iterate.evaluate_constraints(model);
 
       const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
-      this->problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, evaluation_space, iterate);
+      this->problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, evaluation_space, iterate, this->scaling);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->problem, iterate);
       return ConstraintRelaxationStrategy::check_termination(this->problem, iterate);
    }

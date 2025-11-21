@@ -5,11 +5,13 @@
 #define UNO_SUBPROBLEM_H
 
 #include <functional>
+#include <optional>
 #include "optimization/Iterate.hpp"
 #include "linear_algebra/Matrix.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/OptimizationProblem.hpp"
+#include "optimization/Scaling.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/UnaryNegation.hpp"
 #include "symbolic/VectorView.hpp"
@@ -42,12 +44,12 @@ namespace uno {
          const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, uno_int solver_indexing) const;
 
       // regularized Hessian
-      void evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const;
+      void evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values, const std::optional<Scaling>& scaling) const;
       void regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const;
-      void compute_hessian_vector_product(const double* x, const double* vector, double* result) const;
+      void compute_hessian_vector_product(const double* x, const double* vector, double* result, const std::optional<Scaling>& scaling) const;
 
       // augmented system
-      void assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values) const;
+      void assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values, const std::optional<Scaling>& scaling) const;
       void regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
       template <typename IndexType>
@@ -86,9 +88,9 @@ namespace uno {
       [[nodiscard]] double compute_predicted_infeasibility_reduction(const EvaluationSpace& evaluation_space, const Model& model,
          const Vector<double>& primal_direction, double step_length, Norm norm) const;
       [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const EvaluationSpace& evaluation_space,
-         const Vector<double>& primal_direction, double step_length) const;
+         const Vector<double>& primal_direction, double step_length, const std::optional<Scaling>& scaling) const;
       [[nodiscard]] ProgressMeasures compute_predicted_reductions(const EvaluationSpace& evaluation_space,
-         const Direction& direction, double step_length, Norm norm) const;
+         const Direction& direction, double step_length, Norm norm, const std::optional<Scaling>& scaling) const;
 
       const OptimizationProblem& problem;
       Iterate& current_iterate;

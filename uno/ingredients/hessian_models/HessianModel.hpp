@@ -5,9 +5,11 @@
 #define UNO_HESSIANMODEL_H
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <string_view>
 #include "../interfaces/C/uno_int.h"
+#include "optimization/Scaling.hpp"
 
 namespace uno {
    // forward declarations
@@ -32,9 +34,11 @@ namespace uno {
       [[nodiscard]] virtual bool is_positive_definite() const = 0;
 
       virtual void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) = 0;
+         double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values,
+         const std::optional<Scaling>& scaling) = 0;
       virtual void compute_hessian_vector_product(const double* x, const double* vector,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) = 0;
+         double objective_multiplier, const Vector<double>& constraint_multipliers, double* result,
+         const std::optional<Scaling>& scaling) = 0;
    };
 } // namespace
 

@@ -4,6 +4,9 @@
 #ifndef UNO_INEQUALITYCONSTRAINEDSOLVER_H
 #define UNO_INEQUALITYCONSTRAINEDSOLVER_H
 
+#include <optional>
+#include "optimization/Scaling.hpp"
+
 namespace uno {
    // forward declarations
    class Direction;
@@ -22,7 +25,8 @@ namespace uno {
       virtual void initialize_memory(const Subproblem& subproblem) = 0;
 
       virtual void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& initial_point, Direction& direction, const WarmstartInformation& warmstart_information) = 0;
+         const std::optional<Scaling>& scaling, const Vector<double>& initial_point, Direction& direction,
+         const WarmstartInformation& warmstart_information) = 0;
 
       [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() = 0;
    };
