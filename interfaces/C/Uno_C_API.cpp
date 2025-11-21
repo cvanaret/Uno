@@ -328,7 +328,7 @@ public:
    }
 
 protected:
-   const CUserModel user_model; // make a copy
+   const CUserModel& user_model;
    mutable NumberModelEvaluations number_model_evaluations{};
    const SparseVector<size_t> slacks{};
    Vector<size_t> fixed_variables{};
@@ -655,16 +655,6 @@ bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_it
    assert(model != nullptr);
    if (initial_primal_iterate != nullptr) {
       CUserModel* user_model = static_cast<CUserModel*>(model);
-      DEBUG << "Current x0 in CUserModel:";
-      for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
-         DEBUG << " " << user_model->initial_primal_iterate[variable_index];
-      }
-      DEBUG  << std::endl;
-      DEBUG << "User's x0:";
-      for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
-         DEBUG << " " << initial_primal_iterate[variable_index];
-      }
-      DEBUG  << std::endl;
       // copy the initial primal point
       for (size_t variable_index: Range(static_cast<size_t>(user_model->number_variables))) {
          user_model->initial_primal_iterate[variable_index] = initial_primal_iterate[variable_index];
