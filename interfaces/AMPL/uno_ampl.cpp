@@ -52,6 +52,9 @@ int main(int argc, char *argv[]) {
     } else if (argc == 2 && std::string(argv[1]) == "--dump-options") {
       // Print all available options (type + default value) for automated tools
       Options::dump_default_options();
+    } else if (argc == 2 && std::string(argv[1]) == "--dump-options") {
+      // Print all available options (type + default value) for automated tools
+      Options::dump_default_options();
     } else if (argc == 2 && std::string(argv[1]) == "--strategies") {
       Uno::print_available_strategies();
     } else {
