@@ -1,0 +1,527 @@
+[
+  {
+    "name": "BQPD_kmax_heuristic",
+    "type": "STRING",
+    "default": "\"filtersqp\""
+  },
+  {
+    "name": "LP_solver",
+    "type": "STRING",
+    "default": "*LPSolverFactory::available_solvers.begin("
+  },
+  {
+    "name": "LS_backtracking_ratio",
+    "type": "DOUBLE",
+    "default": "0.5"
+  },
+  {
+    "name": "LS_min_step_length",
+    "type": "DOUBLE",
+    "default": "1e-12"
+  },
+  {
+    "name": "LS_scale_duals_with_step_length",
+    "type": "BOOL",
+    "default": "true"
+  },
+  {
+    "name": "QP_solver",
+    "type": "STRING",
+    "default": "*QPSolverFactory::available_solvers.begin("
+  },
+  {
+    "name": "TR_activity_tolerance",
+    "type": "DOUBLE",
+    "default": "1e-6"
+  },
+  {
+    "name": "TR_aggressive_decrease_factor",
+    "type": "DOUBLE",
+    "default": "4"
+  },
+  {
+    "name": "TR_decrease_factor",
+    "type": "DOUBLE",
+    "default": "2"
+  },
+  {
+    "name": "TR_increase_factor",
+    "type": "DOUBLE",
+    "default": "2"
+  },
+  {
+    "name": "TR_min_radius",
+    "type": "DOUBLE",
+    "default": "1e-7"
+  },
+  {
+    "name": "TR_radius",
+    "type": "DOUBLE",
+    "default": "10."
+  },
+  {
+    "name": "TR_radius_reset_threshold",
+    "type": "DOUBLE",
+    "default": "1e-4"
+  },
+  {
+    "name": "armijo_decrease_fraction",
+    "type": "DOUBLE",
+    "default": "1e-4"
+  },
+  {
+    "name": "armijo_tolerance",
+    "type": "DOUBLE",
+    "default": "1e-9"
+  },
+  {
+    "name": "barrier_damping_factor",
+    "type": "DOUBLE",
+    "default": "1e-5"
+  },
+  {
+    "name": "barrier_default_multiplier",
+    "type": "DOUBLE",
+    "default": "1"
+  },
+  {
+    "name": "barrier_function",
+    "type": "STRING",
+    "default": "\"log\""
+  },
+  {
+    "name": "barrier_initial_parameter",
+    "type": "DOUBLE",
+    "default": "0.1"
+  },
+  {
+    "name": "barrier_k_epsilon",
+    "type": "DOUBLE",
+    "default": "10"
+  },
+  {
+    "name": "barrier_k_mu",
+    "type": "DOUBLE",
+    "default": "0.2"
+  },
+  {
+    "name": "barrier_k_sigma",
+    "type": "DOUBLE",
+    "default": "1e10"
+  },
+  {
+    "name": "barrier_push_variable_to_interior_k1",
+    "type": "DOUBLE",
+    "default": "1e-2"
+  },
+  {
+    "name": "barrier_push_variable_to_interior_k2",
+    "type": "DOUBLE",
+    "default": "1e-2"
+  },
+  {
+    "name": "barrier_regularization_exponent",
+    "type": "DOUBLE",
+    "default": "0.25"
+  },
+  {
+    "name": "barrier_small_direction_factor",
+    "type": "DOUBLE",
+    "default": "10."
+  },
+  {
+    "name": "barrier_smax",
+    "type": "DOUBLE",
+    "default": "100"
+  },
+  {
+    "name": "barrier_tau_min",
+    "type": "DOUBLE",
+    "default": "0.99"
+  },
+  {
+    "name": "barrier_theta_mu",
+    "type": "DOUBLE",
+    "default": "1.5"
+  },
+  {
+    "name": "barrier_update_fraction",
+    "type": "DOUBLE",
+    "default": "10"
+  },
+  {
+    "name": "constraint_relaxation_strategy",
+    "type": "STRING",
+    "default": "<unset>"
+  },
+  {
+    "name": "dual_regularization_fraction",
+    "type": "DOUBLE",
+    "default": "1e-8"
+  },
+  {
+    "name": "dual_tolerance",
+    "type": "DOUBLE",
+    "default": "1e-8"
+  },
+  {
+    "name": "enforce_linear_constraints",
+    "type": "BOOL",
+    "default": "false"
+  },
+  {
+    "name": "filter_beta",
+    "type": "DOUBLE",
+    "default": "0.999"
+  },
+  {
+    "name": "filter_capacity",
+    "type": "INTEGER",
+    "default": "50"
+  },
+  {
+    "name": "filter_fact",
+    "type": "DOUBLE",
+    "default": "1.25"
+  },
+  {
+    "name": "filter_gamma",
+    "type": "DOUBLE",
+    "default": "0.001"
+  },
+  {
+    "name": "filter_sufficient_infeasibility_decrease_factor",
+    "type": "DOUBLE",
+    "default": "0.9"
+  },
+  {
+    "name": "filter_type",
+    "type": "STRING",
+    "default": "\"standard\""
+  },
+  {
+    "name": "filter_ubd",
+    "type": "DOUBLE",
+    "default": "1e2"
+  },
+  {
+    "name": "function_scaling_factor",
+    "type": "DOUBLE",
+    "default": "100."
+  },
+  {
+    "name": "function_scaling_threshold",
+    "type": "DOUBLE",
+    "default": "100."
+  },
+  {
+    "name": "funnel_beta",
+    "type": "DOUBLE",
+    "default": "0.9999"
+  },
+  {
+    "name": "funnel_fact",
+    "type": "DOUBLE",
+    "default": "1.5"
+  },
+  {
+    "name": "funnel_gamma",
+    "type": "DOUBLE",
+    "default": "0.001"
+  },
+  {
+    "name": "funnel_kappa",
+    "type": "DOUBLE",
+    "default": "0.5"
+  },
+  {
+    "name": "funnel_require_acceptance_wrt_current_iterate",
+    "type": "BOOL",
+    "default": "false"
+  },
+  {
+    "name": "funnel_ubd",
+    "type": "DOUBLE",
+    "default": "1.0"
+  },
+  {
+    "name": "funnel_update_strategy",
+    "type": "INTEGER",
+    "default": "1"
+  },
+  {
+    "name": "globalization_mechanism",
+    "type": "STRING",
+    "default": "<unset>"
+  },
+  {
+    "name": "globalization_strategy",
+    "type": "STRING",
+    "default": "<unset>"
+  },
+  {
+    "name": "hessian_model",
+    "type": "STRING",
+    "default": "\"exact\""
+  },
+  {
+    "name": "inequality_handling_method",
+    "type": "STRING",
+    "default": "<unset>"
+  },
+  {
+    "name": "inertia_correction_strategy",
+    "type": "STRING",
+    "default": "\"primal\""
+  },
+  {
+    "name": "l1_constraint_violation_coefficient",
+    "type": "DOUBLE",
+    "default": "1"
+  },
+  {
+    "name": "least_square_multiplier_max_norm",
+    "type": "DOUBLE",
+    "default": "1e3"
+  },
+  {
+    "name": "linear_solver",
+    "type": "STRING",
+    "default": "linear_solvers[0], true"
+  },
+  {
+    "name": "logger",
+    "type": "STRING",
+    "default": "\"INFO\""
+  },
+  {
+    "name": "loose_dual_tolerance",
+    "type": "DOUBLE",
+    "default": "1e-6"
+  },
+  {
+    "name": "loose_primal_tolerance",
+    "type": "DOUBLE",
+    "default": "1e-6"
+  },
+  {
+    "name": "loose_tolerance_consecutive_iteration_threshold",
+    "type": "INTEGER",
+    "default": "15"
+  },
+  {
+    "name": "max_iterations",
+    "type": "INTEGER",
+    "default": "2000"
+  },
+  {
+    "name": "nonmonotone_filter_number_dominated_entries",
+    "type": "INTEGER",
+    "default": "3"
+  },
+  {
+    "name": "preset",
+    "type": "STRING",
+    "default": "<unset>"
+  },
+  {
+    "name": "primal_regularization_decrease_factor",
+    "type": "DOUBLE",
+    "default": "3."
+  },
+  {
+    "name": "primal_regularization_fast_increase_factor",
+    "type": "DOUBLE",
+    "default": "100."
+  },
+  {
+    "name": "primal_regularization_initial_factor",
+    "type": "DOUBLE",
+    "default": "1e-4"
+  },
+  {
+    "name": "primal_regularization_lb",
+    "type": "DOUBLE",
+    "default": "1e-20"
+  },
+  {
+    "name": "primal_regularization_slow_increase_factor",
+    "type": "DOUBLE",
+    "default": "8."
+  },
+  {
+    "name": "primal_tolerance",
+    "type": "DOUBLE",
+    "default": "1e-8"
+  },
+  {
+    "name": "print_solution",
+    "type": "BOOL",
+    "default": "false"
+  },
+  {
+    "name": "print_subproblem",
+    "type": "BOOL",
+    "default": "false"
+  },
+  {
+    "name": "progress_norm",
+    "type": "STRING",
+    "default": "\"L1\""
+  },
+  {
+    "name": "protect_actual_reduction_against_roundoff",
+    "type": "BOOL",
+    "default": "false"
+  },
+  {
+    "name": "regularization_failure_threshold",
+    "type": "DOUBLE",
+    "default": "1e40"
+  },
+  {
+    "name": "regularization_increase_factor",
+    "type": "DOUBLE",
+    "default": "2"
+  },
+  {
+    "name": "regularization_initial_value",
+    "type": "DOUBLE",
+    "default": "1e-4"
+  },
+  {
+    "name": "residual_norm",
+    "type": "STRING",
+    "default": "\"INF\""
+  },
+  {
+    "name": "residual_scaling_threshold",
+    "type": "DOUBLE",
+    "default": "100."
+  },
+  {
+    "name": "scale_functions",
+    "type": "BOOL",
+    "default": "false"
+  },
+  {
+    "name": "scale_residuals",
+    "type": "BOOL",
+    "default": "true"
+  },
+  {
+    "name": "statistics_LS_step_length_column_order",
+    "type": "INTEGER",
+    "default": "10"
+  },
+  {
+    "name": "statistics_SOC_column_order",
+    "type": "INTEGER",
+    "default": "9"
+  },
+  {
+    "name": "statistics_TR_radius_column_order",
+    "type": "INTEGER",
+    "default": "10"
+  },
+  {
+    "name": "statistics_barrier_parameter_column_order",
+    "type": "INTEGER",
+    "default": "8"
+  },
+  {
+    "name": "statistics_complementarity_column_order",
+    "type": "INTEGER",
+    "default": "105"
+  },
+  {
+    "name": "statistics_dual_feasibility_column_order",
+    "type": "INTEGER",
+    "default": "102"
+  },
+  {
+    "name": "statistics_funnel_width_column_order",
+    "type": "INTEGER",
+    "default": "25"
+  },
+  {
+    "name": "statistics_major_column_order",
+    "type": "INTEGER",
+    "default": "1"
+  },
+  {
+    "name": "statistics_minor_column_order",
+    "type": "INTEGER",
+    "default": "2"
+  },
+  {
+    "name": "statistics_objective_column_order",
+    "type": "INTEGER",
+    "default": "100"
+  },
+  {
+    "name": "statistics_penalty_parameter_column_order",
+    "type": "INTEGER",
+    "default": "5"
+  },
+  {
+    "name": "statistics_primal_feasibility_column_order",
+    "type": "INTEGER",
+    "default": "101"
+  },
+  {
+    "name": "statistics_primal_regularization_column_order",
+    "type": "INTEGER",
+    "default": "21"
+  },
+  {
+    "name": "statistics_restoration_phase_column_order",
+    "type": "INTEGER",
+    "default": "20"
+  },
+  {
+    "name": "statistics_stationarity_column_order",
+    "type": "INTEGER",
+    "default": "104"
+  },
+  {
+    "name": "statistics_status_column_order",
+    "type": "INTEGER",
+    "default": "200"
+  },
+  {
+    "name": "statistics_step_norm_column_order",
+    "type": "INTEGER",
+    "default": "31"
+  },
+  {
+    "name": "switch_to_optimality_requires_linearized_feasibility",
+    "type": "BOOL",
+    "default": "true"
+  },
+  {
+    "name": "switching_delta",
+    "type": "DOUBLE",
+    "default": "0.999"
+  },
+  {
+    "name": "switching_infeasibility_exponent",
+    "type": "DOUBLE",
+    "default": "2"
+  },
+  {
+    "name": "threshold_unsuccessful_attempts",
+    "type": "INTEGER",
+    "default": "8"
+  },
+  {
+    "name": "time_limit",
+    "type": "DOUBLE",
+    "default": "inf"
+  },
+  {
+    "name": "unbounded_objective_threshold",
+    "type": "DOUBLE",
+    "default": "-1e20"
+  }
+]
