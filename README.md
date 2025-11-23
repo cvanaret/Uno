@@ -110,7 +110,7 @@ Until it is published, you can use the following bibtex entry:
 ```
 @unpublished{VanaretLeyffer2024,
   author = {Vanaret, Charlie and Leyffer, Sven},
-  title = {Unifying nonlinearly constrained nonconvex optimization},
+  title = {Implementing a unified solver for nonlinearly constrained optimization},
   year = {2024},
   note = {Submitted to Mathematical Programming Computation}
 }
