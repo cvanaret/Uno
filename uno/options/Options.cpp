@@ -111,10 +111,8 @@ void Options::set_integer(const std::string &option_name, uno_int option_value,
 void Options::dump_default_options() {
   Options defaults;
   DefaultOptions::load(defaults);
-
   // Header (tab-separated for easy parsing)
   std::cout << "name\ttype\tdefault\n";
-
   for (const auto &[option_name, option_type] : defaults.option_types) {
     std::cout << option_name << '\t';
     try {
@@ -162,6 +160,7 @@ void Options::dump_default_options() {
     std::cout << '\n';
   }
 }
+
 void Options::set_double(const std::string &option_name, double option_value,
                          bool flag_as_overwritten) {
   this->double_options[option_name] = option_value;
@@ -178,6 +177,12 @@ void Options::set_string(const std::string &option_name,
                          const std::string &option_value,
                          bool flag_as_overwritten) {
   this->string_options[option_name] = option_value;
+  this->overwritten_options[option_name] = flag_as_overwritten;
+}
+
+void Options::set_double(const std::string &option_name, double option_value,
+                         bool flag_as_overwritten) {
+  this->double_options[option_name] = option_value;
   this->overwritten_options[option_name] = flag_as_overwritten;
 }
 

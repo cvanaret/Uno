@@ -1,15 +1,14 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
-// Licensed under the MIT license. See LICENSE file in the project directory for
-// details.
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <string>
 #include "AMPLModel.hpp"
-#include "Uno.hpp"
 #include "optimization/Result.hpp"
 #include "options/DefaultOptions.hpp"
 #include "options/Options.hpp"
 #include "options/Presets.hpp"
 #include "tools/Logger.hpp"
-#include <string>
+#include "Uno.hpp"
 
 /*
 size_t memory_allocation_amount = 0;
@@ -49,9 +48,6 @@ int main(int argc, char *argv[]) {
   try {
     if (argc == 1 || (argc == 2 && std::string(argv[1]) == "--v")) {
       std::cout << "Uno " << Uno::current_version() << '\n';
-    } else if (argc == 2 && std::string(argv[1]) == "--dump-options") {
-      // Print all available options (type + default value) for automated tools
-      Options::dump_default_options();
     } else if (argc == 2 && std::string(argv[1]) == "--dump-options") {
       // Print all available options (type + default value) for automated tools
       Options::dump_default_options();
