@@ -24,7 +24,7 @@ namespace uno {
       {"logger", OptionType::STRING},
       {"constraint_relaxation_strategy", OptionType::STRING},
       {"inequality_handling_method", OptionType::STRING},
-      {"globalization_mechanism", OptionType::STRING},
+      {"globalization_mechanism",OptionType::STRING},
       {"globalization_strategy", OptionType::STRING},
       {"hessian_model", OptionType::STRING},
       {"inertia_correction_strategy", OptionType::STRING},
@@ -168,11 +168,6 @@ namespace uno {
    void Options::set_string(const std::string& option_name, const std::string& option_value, bool flag_as_overwritten) {
       this->string_options[option_name] = option_value;
       this->overwritten_options[option_name] = flag_as_overwritten;
-   }
-
-   void Options::set_double(const std::string &option_name, double option_value, bool flag_as_overwritten) {
-       this->double_options[option_name] = option_value;
-       this->overwritten_options[option_name] = flag_as_overwritten;
    }
 
    // setter for option with unknown type
@@ -331,7 +326,6 @@ namespace uno {
       //this->set(option_name, option_value, flag_as_overwritten);
    }
 
-
    void Options::print_non_default() const {
       size_t number_used_options = 0;
       std::string option_list{};
@@ -340,7 +334,7 @@ namespace uno {
             ++number_used_options;
             option_list.append(option_name).append(" = ").append(option_value).append("\n");
          }
-  }
+      }
       // print the overwritten options
       if (number_used_options > 0) {
          DISCRETE << "\nNon-default options:\n" << option_list << '\n';
