@@ -58,10 +58,10 @@ int main(int argc, char* argv[]) {
          Uno::print_available_strategies();
       }
       else {
-         // AMPL expects: ./uno_ampl model.nl [-AMPL] [option_name=option_value,
-         // ...] model name
-         const char *model_name = argv[1];
-         
+         // AMPL expects: ./uno_ampl model.nl [-AMPL] [option_name=option_value,...]
+         // model name
+         const char* model_name = argv[1];
+
          // gather the options
          Options options;
          DefaultOptions::load(options);
