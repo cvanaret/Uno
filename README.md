@@ -78,7 +78,7 @@ It may be modified in future minor releases.
 Options can be set in three different ways (with decreasing precedence):
 - passing an option file (`option_file=file`) that contains `option value` on each line;
 - setting a preset that mimics an existing solver (`preset=[filtersqp|ipopt]`);
-- setting individual options (see the [default options](https://github.com/cvanaret/Uno/blob/main/uno/options/DefaultOptions.cpp)).
+- setting individual options (see the [default options](https://github.com/cvanaret/Uno/blob/main/docs/options.md)).
 
 ### Combining strategies on the fly
 
