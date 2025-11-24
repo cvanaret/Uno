@@ -6,7 +6,8 @@
 
         nlp = ADNLPModel(obj, ones(n); backend=:generic)
         (model, solver) = uno(nlp, false; preset="filtersqp", logger="DEBUG3", print_subproblem=true)
-        solution = UnoSolver.uno_get_primal_solution(solver, zeros(n))
+        primal_solution = Vector{Float64}(undef, nlp.meta.nvar)
+        UnoSolver.uno_get_primal_solution(solver, primal_solution)
     end
 
     testme()
