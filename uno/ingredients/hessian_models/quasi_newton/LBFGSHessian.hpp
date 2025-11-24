@@ -28,7 +28,7 @@ namespace uno {
       void compute_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override;
       [[nodiscard]] bool is_positive_definite() const override;
 
-      void initialize_statistics(Statistics& statistics, const Options& options) const override;
+      void initialize_statistics(Statistics& statistics) const override;
       void notify_accepted_iterate(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate) override;
       void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) override;

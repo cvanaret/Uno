@@ -52,8 +52,8 @@ namespace uno {
       return true;
    }
 
-   void LBFGSHessian::initialize_statistics(Statistics& statistics, const Options& options) const {
-      statistics.add_column("|BFGS|", Statistics::double_width - 4, 2, Statistics::column_order.at("|BFGS|"));
+   void LBFGSHessian::initialize_statistics(Statistics& statistics) const {
+      statistics.add_column("|BFGS|", Statistics::double_width - 2, 2, Statistics::column_order.at("|BFGS|"));
       statistics.set("|BFGS|", this->number_entries_in_memory);
    }
 

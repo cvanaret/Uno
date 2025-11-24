@@ -33,7 +33,7 @@ namespace uno {
       return false;
    }
 
-   void ExactHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+   void ExactHessian::initialize_statistics(Statistics& /*statistics*/) const {
    }
 
    void ExactHessian::notify_accepted_iterate(Statistics& /*statistics*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {

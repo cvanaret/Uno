@@ -32,7 +32,7 @@ namespace uno {
       return false;
    }
 
-   void ZeroHessian::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) const {
+   void ZeroHessian::initialize_statistics(Statistics& /*statistics*/) const {
    }
 
    void ZeroHessian::notify_accepted_iterate(Statistics& /*statistics*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
