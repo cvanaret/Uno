@@ -40,7 +40,7 @@ mutable struct Model{M}
   f_jtv_c::Ptr{Cvoid}
   f_hv_c::Ptr{Cvoid}
 
-  # --- Keep @cfunction alive! ---
+  # Keep @cfunction alive!
   f_obj_c_ref::Any
   f_grad_c_ref::Any
   f_con_c_ref::Any
@@ -52,8 +52,8 @@ mutable struct Model{M}
 end
 
 function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value::Ptr{Float64}, user_data::Ptr{Cvoid})
-  #GC.@preserve x user_data begin
-      _x = unsafe_wrap(Array, x, number_variables; own=false)
+  GC.@preserve x user_data begin
+      _x = unsafe_wrap(Array, x, number_variables)
       _user_data = unsafe_pointer_to_objref(user_data)::Model
       if isnothing(_user_data.user_model)
         _f = _user_data.eval_objective(_x)::Float64
@@ -61,14 +61,14 @@ function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value:
         _f = _user_data.eval_objective(_user_data.user_model, _x)::Float64
       end
       unsafe_store!(objective_value, _f)
-  #end
+  end
   return Cint(0)
 end
 
 function uno_constraints(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, constraint_values::Ptr{Float64}, user_data::Ptr{Cvoid})
   GC.@preserve x constraint_values user_data begin
-      _x = unsafe_wrap(Array, x, number_variables; own=false)
-      _c = unsafe_wrap(Array, constraint_values, number_constraints; own=false)
+      _x = unsafe_wrap(Array, x, number_variables)
+      _c = unsafe_wrap(Array, constraint_values, number_constraints)
       _user_data = unsafe_pointer_to_objref(user_data)::Model
       if isnothing(_user_data.user_model)
         _user_data.eval_constraints(_c, _x)
@@ -81,8 +81,8 @@ end
 
 function uno_objective_gradient(number_variables::Cint, x::Ptr{Float64}, gradient::Ptr{Float64}, user_data::Ptr{Cvoid})
   GC.@preserve x gradient user_data begin
-      _x = unsafe_wrap(Array, x, number_variables; own=false)
-      _g = unsafe_wrap(Array, gradient, number_variables; own=false)
+      _x = unsafe_wrap(Array, x, number_variables)
+      _g = unsafe_wrap(Array, gradient, number_variables)
       _user_data = unsafe_pointer_to_objref(user_data)::Model
       if isnothing(_user_data.user_model)
         _user_data.eval_gradient(_g, _x)
@@ -95,8 +95,8 @@ end
 
 function uno_jacobian(number_variables::Cint, number_jacobian_nonzeros::Cint, x::Ptr{Float64}, jacobian::Ptr{Float64}, user_data::Ptr{Cvoid})
   GC.@preserve x jacobian user_data begin
-      _x = unsafe_wrap(Array, x, number_variables; own=false)
-      _jvals = unsafe_wrap(Array, jacobian, number_jacobian_nonzeros; own=false)
+      _x = unsafe_wrap(Array, x, number_variables)
+      _jvals = unsafe_wrap(Array, jacobian, number_jacobian_nonzeros)
       _user_data = unsafe_pointer_to_objref(user_data)::Model
       if isnothing(_user_data.user_model)
         _user_data.eval_jacobian(_jvals, _x)
@@ -109,9 +109,9 @@ end
 
 function uno_lagrangian_hessian(number_variables::Cint, number_constraints::Cint, number_hessian_nonzeros::Cint, x::Ptr{Float64}, objective_multiplier::Float64, multipliers::Ptr{Float64}, hessian::Ptr{Float64}, user_data::Ptr{Cvoid})
   GC.@preserve x multipliers hessian user_data begin
-      _x = unsafe_wrap(Array, x, number_variables; own=false)
-      _multipliers = unsafe_wrap(Array, multipliers, number_constraints; own=false)
-      _hvals = unsafe_wrap(Array, hessian, number_hessian_nonzeros; own=false)
+      _x = unsafe_wrap(Array, x, number_variables)
+      _multipliers = unsafe_wrap(Array, multipliers, number_constraints)
+      _hvals = unsafe_wrap(Array, hessian, number_hessian_nonzeros)
       _user_data = unsafe_pointer_to_objref(user_data)::Model
       if isnothing(_user_data.user_model)
         _user_data.eval_hessian(_hvals, _x, _multipliers, objective_multiplier)
@@ -124,9 +124,9 @@ end
 
 function uno_jacobian_operator(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, evaluate_at_x::Bool, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
   GC.@preserve x vector result user_data begin
-      _x = unsafe_wrap(Array, x, number_variables; own=false)
-      _v = unsafe_wrap(Array, vector, number_variables; own=false)
-      _Jv = unsafe_wrap(Array, result, number_constraints; own=false)
+      _x = unsafe_wrap(Array, x, number_variables)
+      _v = unsafe_wrap(Array, vector, number_variables)
+      _Jv = unsafe_wrap(Array, result, number_constraints)
       _user_data = unsafe_pointer_to_objref(user_data)::Model
       if isnothing(_user_data.user_model)
         _user_data.eval_Jv(_Jv, _x, _v, evaluate_at_x)
@@ -139,9 +139,9 @@ end
 
 function uno_jacobian_transposed_operator(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, evaluate_at_x::Bool, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
   GC.@preserve x vector result user_data begin
-      _x = unsafe_wrap(Array, x, number_variables; own=false)
-      _v = unsafe_wrap(Array, vector, number_constraints; own=false)
-      _Jtv = unsafe_wrap(Array, result, number_variables; own=false)
+      _x = unsafe_wrap(Array, x, number_variables)
+      _v = unsafe_wrap(Array, vector, number_constraints)
+      _Jtv = unsafe_wrap(Array, result, number_variables)
       _user_data = unsafe_pointer_to_objref(user_data)::Model
       if isnothing(_user_data.user_model)
         _user_data.eval_Jtv(_Jtv, _x, _v, evaluate_at_x)
@@ -154,10 +154,10 @@ end
 
 function uno_lagrangian_hessian_operator(number_variables::Cint, number_constraints::Cint, x::Ptr{Float64}, evaluate_at_x::Bool, objective_multiplier::Float64, multipliers::Ptr{Float64}, vector::Ptr{Float64}, result::Ptr{Float64}, user_data::Ptr{Cvoid})
   GC.@preserve x multipliers vector result user_data begin
-      _x = unsafe_wrap(Array, x, number_variables; own=false)
-      _multipliers = unsafe_wrap(Array, multipliers, number_constraints; own=false)
-      _v = unsafe_wrap(Array, vector, number_variables; own=false)
-      _Hv = unsafe_wrap(Array, result, number_variables; own=false)
+      _x = unsafe_wrap(Array, x, number_variables)
+      _multipliers = unsafe_wrap(Array, multipliers, number_constraints)
+      _v = unsafe_wrap(Array, vector, number_variables)
+      _Hv = unsafe_wrap(Array, result, number_variables)
       _user_data = unsafe_pointer_to_objref(user_data)::Model
       if isnothing(_user_data.user_model)
         _user_data.eval_Hv(_Hv, _x, objective_multiplier, _multipliers, _v, evaluate_at_x)
