@@ -132,7 +132,7 @@ namespace uno {
                    case OptionType::BOOL:
                        std::cout << "BOOL\t";
                        if (defaults.bool_options.find(option_name) != defaults.bool_options.end())
-                           std::cout << (defaults.bool_options.at(option_name) ? "true";
+                           std::cout << (defaults.bool_options.at(option_name) ? "true"
                                                                                : "false");
                        else
                            std::cout << "<unset>";
