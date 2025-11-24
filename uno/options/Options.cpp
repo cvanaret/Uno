@@ -2,8 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include "Options.hpp"
+#include "DefaultOptions.hpp"
 #include "Presets.hpp"
 #include "tools/Logger.hpp"
 
@@ -104,6 +106,55 @@ namespace uno {
       this->overwritten_options[option_name] = flag_as_overwritten;
    }
 
+   void Options::dump_default_options() {
+       Options defaults;
+       DefaultOptions::load(defaults);
+       // Header (tab-separated for easy parsing)
+       std::cout << "name\ttype\tdefault\n";
+       for (const auto &[option_name, option_type] : defaults.option_types) {
+           std::cout << option_name << '\t';
+           try {
+               switch (option_type) {
+                   case OptionType::INTEGER: 
+                       std::cout << "INTEGER\t";
+                       if (defaults.integer_options.find(option_name) != defaults.integer_options.end())
+                           std::cout << defaults.integer_options.at(option_name);
+                       else
+                           std::cout << "<unset>";
+                       break;
+                   case OptionType::DOUBLE:
+                       std::cout << "DOUBLE\t";
+                       if (defaults.double_options.find(option_name) != defaults.double_options.end())
+                           std::cout << defaults.double_options.at(option_name);
+                       else
+                           std::cout << "<unset>";
+                       break;
+                   case OptionType::BOOL:
+                       std::cout << "BOOL\t";
+                       if (defaults.bool_options.find(option_name) != defaults.bool_options.end())
+                           std::cout << (defaults.bool_options.at(option_name) ? "true"
+                                                                               : "false");
+                       else
+                           std::cout << "<unset>";
+                       break;
+                   case OptionType::STRING:
+                       std::cout << "STRING\t";
+                       if (defaults.string_options.find(option_name) != defaults.string_options.end())
+                           std::cout << defaults.string_options.at(option_name);
+                       else
+                           std::cout << "<unset>";
+                       break;
+                   default:
+                       std::cout << "UNKNOWN\t<unset>";
+                       break;
+               }
+           } catch (const std::out_of_range &) {
+               std::cout << "<error>";
+           }
+           std::cout << '\n';
+       }
+   }
+   
    void Options::set_double(const std::string& option_name, double option_value, bool flag_as_overwritten) {
       this->double_options[option_name] = option_value;
       this->overwritten_options[option_name] = flag_as_overwritten;
