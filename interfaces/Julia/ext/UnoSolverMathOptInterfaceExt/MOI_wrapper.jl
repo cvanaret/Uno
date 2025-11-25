@@ -251,7 +251,7 @@ end
 _add_scalar_nonlinear_constraints(ret, ::Nothing) = nothing
 
 function _add_scalar_nonlinear_constraints(ret, nlp_model::MOI.Nonlinear.Model)
-    for v in values(nlp_optimizer.constraints)
+    for v in values(nlp_model.constraints)
         F, S = MOI.ScalarNonlinearFunction, typeof(v.set)
         if !((F, S) in ret)
             push!(ret, (F, S))
@@ -568,7 +568,7 @@ function MOI.get(
     if optimizer.nlp_model === nothing
         return ret
     end
-    for (k, v) in optimizer.nlp_optimizer.constraints
+    for (k, v) in optimizer.nlp_model.constraints
         if v.set isa S
             push!(ret, MOI.ConstraintIndex{F,S}(k.value))
         end
@@ -583,7 +583,7 @@ function MOI.get(
     if optimizer.nlp_model === nothing
         return 0
     end
-    return count(v.set isa S for v in values(optimizer.nlp_optimizer.constraints))
+    return count(v.set isa S for v in values(optimizer.nlp_model.constraints))
 end
 
 function MOI.supports(
@@ -627,7 +627,7 @@ function MOI.set(
     MOI.throw_if_not_valid(optimizer, ci)
     index = MOI.Nonlinear.ConstraintIndex(ci.value)
     func = optimizer.nlp_model[index].expression
-    optimizer.nlp_optimizer.constraints[index] = MOI.Nonlinear.Constraint(func, set)
+    optimizer.nlp_model.constraints[index] = MOI.Nonlinear.Constraint(func, set)
     optimizer.model = nothing
     optimizer.solver = nothing
     return
@@ -966,7 +966,7 @@ MOI.get(optimizer::Optimizer, ::MOI.ObjectiveSense) = optimizer.sense
 ### ObjectiveFunction
 
 function MOI.get(optimizer::Optimizer, attr::MOI.ObjectiveFunctionType)
-    if optimizer.nlp_model !== nothing && optimizer.nlp_optimizer.objective !== nothing
+    if optimizer.nlp_model !== nothing && optimizer.nlp_model.objective !== nothing
         return MOI.ScalarNonlinearFunction
     end
     return MOI.get(optimizer.qp_data, attr)
