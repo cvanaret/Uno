@@ -38,14 +38,12 @@ namespace uno {
    }
 
    void BQPDEvaluationSpace::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
-      if (0 < problem.number_constraints) {
-         problem.evaluate_constraint_jacobian(iterate, this->jacobian_values.data());
+      problem.evaluate_constraint_jacobian(iterate, this->jacobian_values.data());
 
-         // copy the Jacobian with permutation into &this->gradients[subproblem.number_variables]
-         for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
-            const size_t permuted_nonzero_index = this->permutation_vector[nonzero_index];
-            this->gradients[problem.number_variables + nonzero_index] = this->jacobian_values[permuted_nonzero_index];
-         }
+      // copy the Jacobian with permutation into &this->gradients[subproblem.number_variables]
+      for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
+         const size_t permuted_nonzero_index = this->permutation_vector[nonzero_index];
+         this->gradients[problem.number_variables + nonzero_index] = this->jacobian_values[permuted_nonzero_index];
       }
    }
 

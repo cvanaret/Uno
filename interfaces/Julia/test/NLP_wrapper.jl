@@ -5,7 +5,7 @@
         obj(t) = sum(abs2, t)/2 + dot(t,v)
 
         nlp = ADNLPModel(obj, ones(n); backend=:generic)
-        (model, solver) = uno(nlp, false; preset="filtersqp", logger="DEBUG3", print_subproblem=true)
+        (model, solver) = uno(nlp, false; preset="filtersqp")
         primal_solution = Vector{Float64}(undef, nlp.meta.nvar)
         UnoSolver.uno_get_primal_solution(solver, primal_solution)
     end
@@ -16,7 +16,7 @@ end
 @testset "uno_model -- uno_solver -- uno_optimize" begin
     nlp = CUTEstModel{Float64}("HS15")
     model = uno_model(nlp)
-    solver = uno_solver(preset="funnelsqp", print_solution=true)
+    solver = uno_solver(preset="filtersqp", print_solution=true)
     uno_optimize(solver, model)
 
     optimization_status = UnoSolver.uno_get_optimization_status(solver)
@@ -51,7 +51,7 @@ end
 
 @testset "uno" begin
     nlp = CUTEstModel{Float64}("BYRDSPHR")
-    model, solver = uno(nlp, preset="funnelsqp", print_solution=true)
+    model, solver = uno(nlp, preset="filtersqp", print_solution=true)
 
     optimization_status = UnoSolver.uno_get_optimization_status(solver)
     solution_status = UnoSolver.uno_get_solution_status(solver)

@@ -31,45 +31,44 @@ using CUserModel = UserModel<Objective, ObjectiveGradient, Constraints, Jacobian
 // UnoModel contains an instance of UserModel and complies with the Model interface
 class UnoModel: public Model {
 public:
-   explicit UnoModel(const CUserModel* user_model):
-         Model("C model", static_cast<size_t>(user_model->number_variables), static_cast<size_t>(user_model->number_constraints),
-            static_cast<double>(user_model->optimization_sense), user_model->lagrangian_sign_convention),
+   explicit UnoModel(const CUserModel& user_model):
+         Model("C model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
+            static_cast<double>(user_model.optimization_sense), user_model.lagrangian_sign_convention),
          user_model(user_model),
          nonlinear_constraints(this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints) {
-      // std::cout << "UnoModel: this->user_model has address " << this->user_model << '\n' << std::flush;
       this->find_fixed_variables(this->fixed_variables);
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
 
    [[nodiscard]] ProblemType get_problem_type() const override {
-      return this->user_model->problem_type;
+      return this->user_model.problem_type;
    }
 
    // availability of linear operators
    [[nodiscard]] bool has_jacobian_operator() const override {
-      return (this->user_model->jacobian_operator != nullptr);
+      return (this->user_model.jacobian_operator != nullptr);
    }
 
    [[nodiscard]] bool has_jacobian_transposed_operator() const override {
-      return (this->user_model->jacobian_transposed_operator != nullptr);
+      return (this->user_model.jacobian_transposed_operator != nullptr);
    }
 
    [[nodiscard]] bool has_hessian_operator() const override {
-      return (this->user_model->lagrangian_hessian_operator != nullptr);
+      return (this->user_model.lagrangian_hessian_operator != nullptr);
    }
 
    [[nodiscard]] bool has_hessian_matrix() const override {
-      return (this->user_model->lagrangian_hessian != nullptr);
+      return (this->user_model.lagrangian_hessian != nullptr);
    }
 
    // function evaluations
    [[nodiscard]] double evaluate_objective(const Vector<double>& x) const override {
       double objective_value{0.};
-      if (this->user_model->objective_function != nullptr) {
-         const uno_int return_code = this->user_model->objective_function(this->user_model->number_variables, x.data(),
-            &objective_value, this->user_model->user_data);
+      if (this->user_model.objective_function != nullptr) {
+         const uno_int return_code = this->user_model.objective_function(this->user_model.number_variables, x.data(),
+            &objective_value, this->user_model.user_data);
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
@@ -80,9 +79,9 @@ public:
    }
 
    void evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const override {
-      if (this->user_model->constraint_functions != nullptr) {
-         const uno_int return_code = this->user_model->constraint_functions(this->user_model->number_variables,
-            this->user_model->number_constraints, x.data(), constraints.data(), this->user_model->user_data);
+      if (this->user_model.constraint_functions != nullptr) {
+         const uno_int return_code = this->user_model.constraint_functions(this->user_model.number_variables,
+            this->user_model.number_constraints, x.data(), constraints.data(), this->user_model.user_data);
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
@@ -92,9 +91,9 @@ public:
 
    // dense objective gradient
    void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override {
-      if (this->user_model->objective_gradient != nullptr) {
-         const uno_int return_code = this->user_model->objective_gradient(this->user_model->number_variables, x.data(),
-            gradient.data(), this->user_model->user_data);
+      if (this->user_model.objective_gradient != nullptr) {
+         const uno_int return_code = this->user_model.objective_gradient(this->user_model.number_variables, x.data(),
+            gradient.data(), this->user_model.user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -107,18 +106,18 @@ public:
 
    // sparsity patterns of Jacobian and Hessian
    void compute_constraint_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
-         MatrixOrder /*matrix_order*/) const override {
+                                             MatrixOrder /*matrix_order*/) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
-      for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model->number_jacobian_nonzeros))) {
-         row_indices[nonzero_index] = this->user_model->jacobian_row_indices[nonzero_index];
-         column_indices[nonzero_index] = this->user_model->jacobian_column_indices[nonzero_index];
+      for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
+         row_indices[nonzero_index] = this->user_model.jacobian_row_indices[nonzero_index];
+         column_indices[nonzero_index] = this->user_model.jacobian_column_indices[nonzero_index];
       }
       // TODO matrix_order
 
       // handle the solver indexing
-      if (this->user_model->base_indexing != solver_indexing) {
-         const uno_int indexing_difference = solver_indexing - this->user_model->base_indexing;
-         for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model->number_jacobian_nonzeros))) {
+      if (this->user_model.base_indexing != solver_indexing) {
+         const uno_int indexing_difference = solver_indexing - this->user_model.base_indexing;
+         for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
             row_indices[nonzero_index] += indexing_difference;
             column_indices[nonzero_index] += indexing_difference;
          }
@@ -129,13 +128,13 @@ public:
       // copy the indices of the user sparsity patterns to the Uno vectors
       const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
-         row_indices[nonzero_index] = this->user_model->hessian_row_indices[nonzero_index];
-         column_indices[nonzero_index] = this->user_model->hessian_column_indices[nonzero_index];
+         row_indices[nonzero_index] = this->user_model.hessian_row_indices[nonzero_index];
+         column_indices[nonzero_index] = this->user_model.hessian_column_indices[nonzero_index];
       }
 
       // handle the solver indexing
-      if (this->user_model->base_indexing != solver_indexing) {
-         const uno_int indexing_difference = solver_indexing - this->user_model->base_indexing;
+      if (this->user_model.base_indexing != solver_indexing) {
+         const uno_int indexing_difference = solver_indexing - this->user_model.base_indexing;
          for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
             row_indices[nonzero_index] += indexing_difference;
             column_indices[nonzero_index] += indexing_difference;
@@ -145,9 +144,9 @@ public:
 
    // numerical evaluations of Jacobian and Hessian
    void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override {
-      if (this->user_model->constraint_jacobian != nullptr) {
-         const uno_int return_code = this->user_model->constraint_jacobian(this->user_model->number_variables,
-            this->user_model->number_jacobian_nonzeros, x.data(), jacobian_values, this->user_model->user_data);
+      if (this->user_model.constraint_jacobian != nullptr) {
+         const uno_int return_code = this->user_model.constraint_jacobian(this->user_model.number_variables,
+            this->user_model.number_jacobian_nonzeros, x.data(), jacobian_values, this->user_model.user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -157,19 +156,18 @@ public:
 
    void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const override {
-      // std::cout << "evaluate_lagrangian_hessian: this->user_model has address " << this->user_model << '\n' << std::flush;
-      if (this->user_model->lagrangian_hessian != nullptr) {
+      if (this->user_model.lagrangian_hessian != nullptr) {
          objective_multiplier *= this->optimization_sense;
          // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
-         if (this->user_model->lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
          const uno_int number_hessian_nonzeros = static_cast<uno_int>(this->number_hessian_nonzeros());
-         const uno_int return_code = this->user_model->lagrangian_hessian(this->user_model->number_variables,
-            this->user_model->number_constraints, number_hessian_nonzeros, x.data(), objective_multiplier,
-            multipliers.data(), hessian_values, this->user_model->user_data);
+         const uno_int return_code = this->user_model.lagrangian_hessian(this->user_model.number_variables,
+            this->user_model.number_constraints, number_hessian_nonzeros, x.data(), objective_multiplier,
+            multipliers.data(), hessian_values, this->user_model.user_data);
          // flip the signs of the multipliers back
-         if (this->user_model->lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
          if (0 < return_code) {
@@ -183,9 +181,9 @@ public:
    }
 
    void compute_jacobian_vector_product(const double* x, const double* vector, double* result) const override {
-      if (this->user_model->jacobian_operator != nullptr) {
-         const uno_int return_code = this->user_model->jacobian_operator(this->user_model->number_variables,
-            this->user_model->number_constraints, x, true, vector, result, this->user_model->user_data);
+      if (this->user_model.jacobian_operator != nullptr) {
+         const uno_int return_code = this->user_model.jacobian_operator(this->user_model.number_variables,
+            this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -196,9 +194,9 @@ public:
    }
 
    void compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const override {
-      if (this->user_model->jacobian_transposed_operator != nullptr) {
-         const uno_int return_code = this->user_model->jacobian_transposed_operator(this->user_model->number_variables,
-            this->user_model->number_constraints, x, true, vector, result, this->user_model->user_data);
+      if (this->user_model.jacobian_transposed_operator != nullptr) {
+         const uno_int return_code = this->user_model.jacobian_transposed_operator(this->user_model.number_variables,
+            this->user_model.number_constraints, x, true, vector, result, this->user_model.user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -210,23 +208,16 @@ public:
 
    void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier, const Vector<double>& multipliers,
          double* result) const override {
-      // std::cout << "compute_hessian_vector_product\n" << std::flush;
-      // std::cout << "this->user_model has address " << this->user_model << '\n' << std::flush;
-      // std::cout << "this->user_model->lagrangian_hessian_operator has address " << this->user_model->lagrangian_hessian_operator << '\n' << std::flush;
-      // std::cout << "this->user_model->number_variables = " << this->user_model->number_variables << '\n' << std::flush;
-      // std::cout << "this->user_model->number_constraints = " << this->user_model->number_constraints << '\n' << std::flush;
-      // std::cout << "this->user_model->user_data has address " << this->user_model->user_data << '\n' << std::flush;
-
-      if (this->user_model->lagrangian_hessian_operator != nullptr) {
+      if (this->user_model.lagrangian_hessian_operator != nullptr) {
          objective_multiplier *= this->optimization_sense;
          // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
-         if (this->user_model->lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
-         const uno_int return_code = this->user_model->lagrangian_hessian_operator(this->user_model->number_variables,
-            this->user_model->number_constraints, x, true, objective_multiplier, multipliers.data(), vector, result, this->user_model->user_data);
+         const uno_int return_code = this->user_model.lagrangian_hessian_operator(this->user_model.number_variables,
+            this->user_model.number_constraints, x, true, objective_multiplier, multipliers.data(), vector, result, this->user_model.user_data);
          // flip the signs of the multipliers back
-         if (this->user_model->lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
          if (0 < return_code) {
@@ -239,11 +230,11 @@ public:
    }
 
    [[nodiscard]] double variable_lower_bound(size_t variable_index) const override {
-      return this->user_model->variables_lower_bounds[variable_index];
+      return this->user_model.variables_lower_bounds[variable_index];
    }
 
    [[nodiscard]] double variable_upper_bound(size_t variable_index) const override {
-      return this->user_model->variables_upper_bounds[variable_index];
+      return this->user_model.variables_upper_bounds[variable_index];
    }
 
    [[nodiscard]] const SparseVector<size_t>& get_slacks() const override {
@@ -255,11 +246,11 @@ public:
    }
 
    [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override {
-      return this->user_model->constraints_lower_bounds[constraint_index];
+      return this->user_model.constraints_lower_bounds[constraint_index];
    }
 
    [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override {
-      return this->user_model->constraints_upper_bounds[constraint_index];
+      return this->user_model.constraints_upper_bounds[constraint_index];
    }
 
    [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override {
@@ -280,17 +271,17 @@ public:
 
    void initial_primal_point(Vector<double>& x) const override {
       // copy the initial primal point
-      for (size_t variable_index: Range(static_cast<size_t>(this->user_model->number_variables))) {
-         x[variable_index] = this->user_model->initial_primal_iterate[variable_index];
+      for (size_t variable_index: Range(static_cast<size_t>(this->user_model.number_variables))) {
+         x[variable_index] = this->user_model.initial_primal_iterate[variable_index];
       }
    }
 
    void initial_dual_point(Vector<double>& multipliers) const override {
       // copy the initial dual point
-      for (size_t constraint_index: Range(static_cast<size_t>(this->user_model->number_constraints))) {
-         multipliers[constraint_index] = this->user_model->initial_dual_iterate[constraint_index];
+      for (size_t constraint_index: Range(static_cast<size_t>(this->user_model.number_constraints))) {
+         multipliers[constraint_index] = this->user_model.initial_dual_iterate[constraint_index];
       }
-      if (this->user_model->lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+      if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
          multipliers.scale(-1.);
       }
    }
@@ -300,12 +291,12 @@ public:
    }
 
    [[nodiscard]] size_t number_jacobian_nonzeros() const override {
-      return static_cast<size_t>(this->user_model->number_jacobian_nonzeros);
+      return static_cast<size_t>(this->user_model.number_jacobian_nonzeros);
    }
 
    [[nodiscard]] size_t number_hessian_nonzeros() const override {
-      if (this->user_model->number_hessian_nonzeros.has_value()) {
-         return static_cast<size_t>(*this->user_model->number_hessian_nonzeros);
+      if (this->user_model.number_hessian_nonzeros.has_value()) {
+         return static_cast<size_t>(*this->user_model.number_hessian_nonzeros);
       }
       else {
          throw std::runtime_error("The number of Hessian nonzeros is not available in UnoModel");
@@ -337,7 +328,7 @@ public:
    }
 
 protected:
-   const CUserModel* user_model;
+   const CUserModel& user_model;
    mutable NumberModelEvaluations number_model_evaluations{};
    const SparseVector<size_t> slacks{};
    Vector<size_t> fixed_variables{};
@@ -790,7 +781,7 @@ void uno_optimize(void* solver, void* model) {
    Solver* uno_solver = static_cast<Solver*>(solver);
 
    // create an instance of UnoModel, a subclass of Model, and solve the model using Uno
-   const UnoModel uno_model(user_model);
+   const UnoModel uno_model(*user_model);
    Logger::set_logger(uno_solver->options->get_string("logger"));
    Result result = uno_solver->solver->solve(uno_model, *uno_solver->options, *uno_solver->user_callbacks);
    // clean up the previous result (if any)
@@ -816,13 +807,13 @@ int uno_get_solver_integer_option(void* solver, const char* option_name) {
 bool uno_get_solver_bool_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
-   return uno_solver->options->get_bool(option_name);   
+   return uno_solver->options->get_bool(option_name);
 }
 
 const char* uno_get_solver_string_option(void* solver, const char* option_name) {
    assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
-   return uno_solver->options->get_string(option_name).c_str();     
+   return uno_solver->options->get_string(option_name).c_str();
 }
 
 // auxiliary function
@@ -961,14 +952,12 @@ uno_int uno_get_number_subproblem_solved_evaluations(void* solver) {
 
 void uno_destroy_model(void* model) {
    if (model != nullptr) {
-      std::cout << "Destroying the model\n" << std::flush;
       delete static_cast<CUserModel*>(model);
    }
 }
 
 void uno_destroy_solver(void* solver) {
    if (solver != nullptr) {
-      std::cout << "Destroying the solver\n" << std::flush;
       Solver* uno_solver = static_cast<Solver*>(solver);
       delete uno_solver->solver;
       delete uno_solver->options;
