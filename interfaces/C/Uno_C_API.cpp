@@ -38,7 +38,7 @@ public:
          nonlinear_constraints(this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints) {
-      std::cout << "UnoModel: this->user_model has address " << this->user_model << '\n' << std::flush;
+      // std::cout << "UnoModel: this->user_model has address " << this->user_model << '\n' << std::flush;
       this->find_fixed_variables(this->fixed_variables);
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
@@ -157,7 +157,7 @@ public:
 
    void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const override {
-      std::cout << "evaluate_lagrangian_hessian: this->user_model has address " << this->user_model << '\n' << std::flush;
+      // std::cout << "evaluate_lagrangian_hessian: this->user_model has address " << this->user_model << '\n' << std::flush;
       if (this->user_model->lagrangian_hessian != nullptr) {
          objective_multiplier *= this->optimization_sense;
          // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
@@ -210,12 +210,12 @@ public:
 
    void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier, const Vector<double>& multipliers,
          double* result) const override {
-      std::cout << "compute_hessian_vector_product\n" << std::flush;
-      std::cout << "this->user_model has address " << this->user_model << '\n' << std::flush;
-      std::cout << "this->user_model->lagrangian_hessian_operator has address " << this->user_model->lagrangian_hessian_operator << '\n' << std::flush;
-      std::cout << "this->user_model->number_variables = " << this->user_model->number_variables << '\n' << std::flush;
-      std::cout << "this->user_model->number_constraints = " << this->user_model->number_constraints << '\n' << std::flush;
-      std::cout << "this->user_model->user_data has address " << this->user_model->user_data << '\n' << std::flush;
+      // std::cout << "compute_hessian_vector_product\n" << std::flush;
+      // std::cout << "this->user_model has address " << this->user_model << '\n' << std::flush;
+      // std::cout << "this->user_model->lagrangian_hessian_operator has address " << this->user_model->lagrangian_hessian_operator << '\n' << std::flush;
+      // std::cout << "this->user_model->number_variables = " << this->user_model->number_variables << '\n' << std::flush;
+      // std::cout << "this->user_model->number_constraints = " << this->user_model->number_constraints << '\n' << std::flush;
+      // std::cout << "this->user_model->user_data has address " << this->user_model->user_data << '\n' << std::flush;
 
       if (this->user_model->lagrangian_hessian_operator != nullptr) {
          objective_multiplier *= this->optimization_sense;
@@ -961,12 +961,14 @@ uno_int uno_get_number_subproblem_solved_evaluations(void* solver) {
 
 void uno_destroy_model(void* model) {
    if (model != nullptr) {
+      std::cout << "Destroying the model\n" << std::flush;
       delete static_cast<CUserModel*>(model);
    }
 }
 
 void uno_destroy_solver(void* solver) {
    if (solver != nullptr) {
+      std::cout << "Destroying the solver\n" << std::flush;
       Solver* uno_solver = static_cast<Solver*>(solver);
       delete uno_solver->solver;
       delete uno_solver->options;
