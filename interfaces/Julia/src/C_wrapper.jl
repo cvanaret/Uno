@@ -289,7 +289,7 @@ function uno_model(
     uno_set_initial_dual_iterate(c_model, y0)
   end
 
-  finalizer(uno_destroy_model, c_model)
+  finalizer(uno_destroy_model, model.c_model)
   return model
 end
 
