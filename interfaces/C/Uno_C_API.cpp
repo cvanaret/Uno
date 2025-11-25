@@ -38,6 +38,7 @@ public:
          nonlinear_constraints(this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints) {
+      std::cout << "UnoModel: this->user_model has address " << this->user_model << '\n';
       this->find_fixed_variables(this->fixed_variables);
       this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
@@ -106,7 +107,7 @@ public:
 
    // sparsity patterns of Jacobian and Hessian
    void compute_constraint_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
-                                             MatrixOrder /*matrix_order*/) const override {
+         MatrixOrder /*matrix_order*/) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
       for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model->number_jacobian_nonzeros))) {
          row_indices[nonzero_index] = this->user_model->jacobian_row_indices[nonzero_index];
@@ -156,6 +157,7 @@ public:
 
    void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const override {
+      std::cout << "evaluate_lagrangian_hessian: this->user_model has address " << this->user_model << '\n';
       if (this->user_model->lagrangian_hessian != nullptr) {
          objective_multiplier *= this->optimization_sense;
          // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
@@ -208,6 +210,7 @@ public:
 
    void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier, const Vector<double>& multipliers,
          double* result) const override {
+      std::cout << "compute_hessian_vector_product: this->user_model has address " << this->user_model << '\n';
       if (this->user_model->lagrangian_hessian_operator != nullptr) {
          objective_multiplier *= this->optimization_sense;
          // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
