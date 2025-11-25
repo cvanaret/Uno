@@ -5,7 +5,9 @@
         obj(t) = sum(abs2, t)/2 + dot(t,v)
 
         nlp = ADNLPModel(obj, ones(n); backend=:generic)
-        (model, solver) = uno(nlp, false; preset="filtersqp", logger="DEBUG3", print_subproblem=true)
+        model = uno_model(nlp, false)
+        solver = uno_solver(preset="filtersqp", logger="DEBUG3", print_subproblem=true)
+        uno_optimize(solver, model)
         primal_solution = Vector{Float64}(undef, nlp.meta.nvar)
         UnoSolver.uno_get_primal_solution(solver, primal_solution)
     end
