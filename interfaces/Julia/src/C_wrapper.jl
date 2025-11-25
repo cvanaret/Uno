@@ -391,7 +391,9 @@ end
 
 function uno_optimize(solver::Solver, model::Model)
   @assert (solver.c_solver != C_NULL) && (model.c_model != C_NULL)
-  uno_optimize(solver.c_solver, model.c_model)
+  GC.@preserve solver model begin
+    uno_optimize(solver.c_solver, model.c_model)
+  end
 end
 
 function uno_get_cpu_time(solver::Solver)

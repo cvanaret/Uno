@@ -110,7 +110,9 @@ end
 function UnoSolver.uno(nlp::AbstractNLPModel{Float64, Vector{Float64}}, operators_available::Bool=true; kwargs...)
   model = UnoSolver.uno_model(nlp, operators_available)
   solver = UnoSolver.uno_solver(; kwargs...)
-  UnoSolver.uno_optimize(solver, model)
+  GC.@preserve solver model begin
+    UnoSolver.uno_optimize(solver, model)
+  end
   return model, solver
 end
 
