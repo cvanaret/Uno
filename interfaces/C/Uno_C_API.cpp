@@ -31,8 +31,16 @@ using CUserModel = UserModel<Objective, ObjectiveGradient, Constraints, Jacobian
 // UnoModel contains an instance of UserModel and complies with the Model interface
 class UnoModel: public Model {
 public:
-   // cast and call delegating constructor
-   explicit UnoModel(const void* user_model): UnoModel(static_cast<const CUserModel*>(user_model)) {
+   explicit UnoModel(const CUserModel* user_model):
+         Model("C model", static_cast<size_t>(user_model->number_variables), static_cast<size_t>(user_model->number_constraints),
+            static_cast<double>(user_model->optimization_sense), user_model->lagrangian_sign_convention),
+         user_model(user_model),
+         nonlinear_constraints(this->number_constraints),
+         equality_constraints_collection(this->equality_constraints),
+         inequality_constraints_collection(this->inequality_constraints) {
+      std::cout << "UnoModel: this->user_model has address " << this->user_model << '\n' << std::flush;
+      this->find_fixed_variables(this->fixed_variables);
+      this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
 
    [[nodiscard]] ProblemType get_problem_type() const override {
@@ -326,20 +334,6 @@ public:
 
    void reset_number_evaluations() const override {
       this->number_model_evaluations.reset();
-   }
-
-private:
-   // delegating constructor
-   explicit UnoModel(const CUserModel* user_model):
-      Model("C model", static_cast<size_t>(user_model->number_variables), static_cast<size_t>(user_model->number_constraints),
-            static_cast<double>(user_model->optimization_sense), user_model->lagrangian_sign_convention),
-         user_model(user_model),
-         nonlinear_constraints(this->number_constraints),
-         equality_constraints_collection(this->equality_constraints),
-         inequality_constraints_collection(this->inequality_constraints) {
-      std::cout << "UnoModel: this->user_model has address " << this->user_model << '\n' << std::flush;
-      this->find_fixed_variables(this->fixed_variables);
-      this->partition_constraints(this->equality_constraints, this->inequality_constraints);
    }
 
 protected:
@@ -796,7 +790,7 @@ void uno_optimize(void* solver, void* model) {
    Solver* uno_solver = static_cast<Solver*>(solver);
 
    // create an instance of UnoModel, a subclass of Model, and solve the model using Uno
-   const UnoModel uno_model(model);
+   const UnoModel uno_model(user_model);
    Logger::set_logger(uno_solver->options->get_string("logger"));
    Result result = uno_solver->solver->solve(uno_model, *uno_solver->options, *uno_solver->user_callbacks);
    // clean up the previous result (if any)
