@@ -210,7 +210,13 @@ public:
 
    void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier, const Vector<double>& multipliers,
          double* result) const override {
-      std::cout << "compute_hessian_vector_product: this->user_model has address " << this->user_model << '\n' << std::flush;
+      std::cout << "compute_hessian_vector_product\n" << std::flush;
+      std::cout << "this->user_model has address " << this->user_model << '\n' << std::flush;
+      std::cout << "this->user_model->lagrangian_hessian_operator has address " << this->user_model->lagrangian_hessian_operator << '\n' << std::flush;
+      std::cout << "this->user_model->number_variables = " << this->user_model->number_variables << '\n' << std::flush;
+      std::cout << "this->user_model->number_constraints = " << this->user_model->number_constraints << '\n' << std::flush;
+      std::cout << "this->user_model->user_data has address " << this->user_model->user_data << '\n' << std::flush;
+
       if (this->user_model->lagrangian_hessian_operator != nullptr) {
          objective_multiplier *= this->optimization_sense;
          // if the model has a different sign convention for the Lagrangian than Uno, flip the signs of the multipliers
