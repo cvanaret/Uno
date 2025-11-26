@@ -11,6 +11,26 @@ function uno_version()
     return VersionNumber(major[], minor[], patch[])
 end
 
+mutable struct Model{M}
+  # Reference to the internal C model of Uno
+  c_model::Ptr{Cvoid}
+  # Number of variables
+  nvar::Int
+  # Number of constraints
+  ncon::Int
+  # Callbacks
+  eval_objective::Function
+  eval_constraints::Function
+  eval_gradient::Function
+  eval_jacobian::Function
+  eval_hessian::Function
+  eval_Jv::Union{Function,Nothing}
+  eval_Jtv::Union{Function,Nothing}
+  eval_Hv::Union{Function,Nothing}
+  # User data
+  user_model::M
+end
+
 function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
@@ -112,26 +132,6 @@ function uno_lagrangian_hessian_operator(number_variables::Cint, number_constrai
   return Cint(0)
 end
 
-mutable struct Model{M}
-  # Reference to the internal C model of Uno
-  c_model::Ptr{Cvoid}
-  # Number of variables
-  nvar::Int
-  # Number of constraints
-  ncon::Int
-  # Callbacks
-  eval_objective::Function
-  eval_constraints::Function
-  eval_gradient::Function
-  eval_jacobian::Function
-  eval_hessian::Function
-  eval_Jv::Union{Function,Nothing}
-  eval_Jtv::Union{Function,Nothing}
-  eval_Hv::Union{Function,Nothing}
-  # User data
-  user_model::M
-end
-
 function uno_destroy_model(model::Model)
   if model.c_model != C_NULL
     uno_destroy_model(model.c_model)
@@ -185,8 +185,10 @@ function uno_model(
   model = Model(c_model, nvar, ncon, eval_objective, eval_constraints, eval_gradient,
                 eval_jacobian, eval_hessian, eval_Jv, eval_Jtv, eval_Hv, user_model)
 
-  user_data = pointer_from_objref(model)::Ptr{Cvoid}
-  flag = uno_set_user_data(c_model, user_data)
+  GC.@preserve model begin
+    user_data = pointer_from_objref(model)::Ptr{Cvoid}
+    flag = uno_set_user_data(c_model, user_data)
+  end
   flag || error("Failed to set user data via uno_set_user_data.")
 
   eval_objective_c = @cfunction(uno_objective, Cint, (Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
@@ -273,7 +275,9 @@ function uno(
                     eval_gradient, eval_jacobian, eval_hessian, eval_Jv, eval_Jtv,
                     eval_Hv, user_model, hessian_triangle, lagrangian_sign, x0, y0)
   solver = uno_solver(; kwargs...)
-  uno_optimize(solver, model)
+  GC.@preserve solver model begin
+    uno_optimize(solver, model)
+  end
   return model, solver
 end
 
@@ -333,7 +337,9 @@ end
 
 function uno_optimize(solver::Solver, model::Model)
   @assert (solver.c_solver != C_NULL) && (model.c_model != C_NULL)
-  uno_optimize(solver.c_solver, model.c_model)
+  GC.@preserve solver model begin
+    uno_optimize(solver.c_solver, model.c_model)
+  end
 end
 
 function uno_get_cpu_time(solver::Solver)
