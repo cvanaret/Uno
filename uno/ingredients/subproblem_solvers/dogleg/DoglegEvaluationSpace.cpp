@@ -4,6 +4,7 @@
 #include "DoglegEvaluationSpace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolver.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 
@@ -13,7 +14,7 @@ namespace uno {
       this->objective_gradient.resize(subproblem.number_variables);
       this->newton_step.resize(subproblem.number_variables);
       // Cauchy step
-      this->hessian_objective_product.resize(subproblem.number_variables);
+      this->hessian_gradient_product.resize(subproblem.number_variables);
       this->cauchy_step.resize(subproblem.number_variables);
    }
 
@@ -35,13 +36,19 @@ namespace uno {
       throw std::runtime_error("Not implemented yet");
    }
 
-   void DoglegEvaluationSpace::compute_newton_step(const Subproblem& subproblem, SymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
-         const WarmstartInformation& warmstart_information) {
+   void DoglegEvaluationSpace::evaluate_objective_gradient(const Subproblem& subproblem, const WarmstartInformation& warmstart_information) {
+      if (warmstart_information.objective_changed) {
+         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data());
+      }
+   }
+
+   void DoglegEvaluationSpace::compute_newton_step(Statistics& statistics, const Subproblem& subproblem,
+         SymmetricIndefiniteLinearSolver<double>& linear_solver, Direction& direction, const WarmstartInformation& warmstart_information) {
       if (warmstart_information.objective_changed) {
          // g = ∇f(x_k)
          subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data());
-         // TODO compute Newton step
-         // linear_solver.solve_indefinite_system(statistics, subproblem, direction, warmstart_information);
+         linear_solver.solve_indefinite_system(statistics, subproblem, direction, warmstart_information);
+         this->newton_step = direction.primals;
          this->newton_step_squared_norm = dot(this->newton_step, this->newton_step);
       }
    }
@@ -60,17 +67,15 @@ namespace uno {
          this->objective_gradient_squared_norm = dot(this->objective_gradient, this->objective_gradient);
          // B g = H_k ∇f(x_k)
          subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), this->objective_gradient.data(),
-            this->hessian_objective_product.data());
+            this->hessian_gradient_product.data());
          // g^T B g = ∇f(x_k)^T H_k ∇f(x_k)
-         this->hessian_quadratic_product = dot(this->objective_gradient,
-            this->hessian_objective_product);
+         this->hessian_quadratic_product = dot(this->objective_gradient, this->hessian_gradient_product);
          if (this->hessian_quadratic_product <= 0.) {
             throw std::runtime_error("The objective Hessian is not positive definite");
          }
          // Cauchy step: d_C = - (g^T g)/(g^T B g) g
          this->cauchy_step = this->objective_gradient;
-         const double scaling_factor = -this->objective_gradient_squared_norm /
-            this->hessian_quadratic_product;
+         const double scaling_factor = -this->objective_gradient_squared_norm / this->hessian_quadratic_product;
          this->cauchy_step.scale(scaling_factor);
       }
    }
