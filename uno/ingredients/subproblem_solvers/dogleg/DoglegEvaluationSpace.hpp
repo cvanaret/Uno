@@ -25,7 +25,7 @@ namespace uno {
       double newton_step_squared_norm{INF<double>};
       // Cauchy step
       double objective_gradient_squared_norm{INF<double>};
-      Vector<double> hessian_objective_product{};
+      Vector<double> hessian_gradient_product{};
       double hessian_quadratic_product{INF<double>};
       Vector<double> cauchy_step{};
 
@@ -37,8 +37,9 @@ namespace uno {
       [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& subproblem,
          const Vector<double>& vector) const override;
 
-      void compute_newton_step(const Subproblem& subproblem, SymmetricIndefiniteLinearSolver<double>& linear_solver,
-         const WarmstartInformation& warmstart_information);
+      void evaluate_objective_gradient(const Subproblem& subproblem, const WarmstartInformation& warmstart_information);
+      void compute_newton_step(Statistics& statistics, const Subproblem& subproblem,
+         SymmetricIndefiniteLinearSolver<double>& linear_solver, Direction& direction, const WarmstartInformation& warmstart_information);
       void compute_dogleg(const Subproblem& subproblem, Direction& direction, const WarmstartInformation& warmstart_information);
 
    private:
