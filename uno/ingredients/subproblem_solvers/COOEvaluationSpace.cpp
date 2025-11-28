@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <stdexcept>
-#include "tools/Infinity.hpp"
 #include "COOEvaluationSpace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
@@ -10,6 +9,7 @@
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "tools/Infinity.hpp"
 
 namespace uno {
    void COOEvaluationSpace::initialize_hessian(const Subproblem& subproblem) {
