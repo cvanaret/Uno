@@ -22,7 +22,7 @@ Uno unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods
    <img src="docs/figures/wheel.png" alt="Uno hypergraph" width="40%" />
 </p>
 
-Thanks to Uno, you can combine these strategies in a ton of different ways. In particular, Uno implements **presets**, that is strategy combinations that mimic existing solvers:
+Thanks to Uno, you can combine these strategies in a ton of different ways (see [the list of options](docs/options.md)). In particular, Uno implements **presets**, that is strategy combinations that mimic existing solvers:
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual inertia correction).
 
@@ -37,14 +37,7 @@ See the [INSTALL](INSTALL.md) file for instructions on how to compile Uno from s
 ## Interfaces
 
 ### AMPL/nl files
-To solve an AMPL model in the [.nl format](https://en.wikipedia.org/wiki/Nl_(format)), move to the `build` directory and:
-- run `cmake` with the path to the ASL library: `-DAMPLSOLVER=path`;
-- compile the executable ```make uno_ampl```.
-- run the command ```./uno_ampl model.nl [-AMPL] [option=value ...]``` where ```[option=value ...]``` is a list of options separated by spaces. If the `-AMPL` flag is supplied, the solution is written to the AMPL solution file `model.sol`.
-
-For an overview of the available strategies, type: ```./uno_ampl --strategies```:
-
-A couple of CUTEst instances are available in the `/examples` directory.
+Uno's AMPL executable can be compiled via the command `make uno_ampl` and requires the [AMPL Solver Library (ASL)](https://www.netlib.org/ampl/solvers/). For more details, see the [README.md](interfaces/AMPL/README.md).
 
 ### Julia
 Uno can be used from Julia in two ways:
@@ -70,25 +63,6 @@ Uno's Python bindings can be compiled via the command `make unopy` and require [
 ### C
 Uno's C interface is compiled as part of the Uno library. For more details, see its [README.md](interfaces/C/README.md).
 It may be modified in future minor releases.
-
-## Solving a problem with Uno
-
-### Controlling Uno via options
-
-Options can be set in three different ways (with decreasing precedence):
-- passing an option file (`option_file=file`) that contains `option value` on each line;
-- setting a preset that mimics an existing solver (`preset=[filtersqp|ipopt]`);
-- setting individual options (see the [default options](https://github.com/cvanaret/Uno/blob/main/docs/options.md)).
-
-### Combining strategies on the fly
-
-The following ingredients are currently available:
-- to pick a constraint relaxation strategy, use the argument: ```constraint_relaxation_strategy=[feasibility_restoration]```  
-- to pick an inequality handling method, use the argument: ```inequality_handling_method=[inequality_constrained|interior_point]``` 
-- to pick a Hessian model, use the argument: ```hessian_model=[exact|identity|zero]``` 
-- to pick an inertia correction strategy, use the argument: ```inertia_correction_strategy=[primal|primal_dual|none]``` 
-- to pick a globalization strategy, use the argument: ```globalization_strategy=[l1_merit|fletcher_filter_method|waechter_filter_method|funnel_method]```   
-- to pick a globalization mechanism, use the argument : ```globalization_mechanism=[TR|LS]```  
 
 ## Latest results (August 13, 2025)
 
