@@ -22,7 +22,7 @@ Uno unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods
    <img src="docs/figures/wheel.png" alt="Uno hypergraph" width="40%" />
 </p>
 
-Thanks to Uno, you can combine these strategies in a ton of different ways (see [the list of options](docs/options.md)). In particular, Uno implements **presets**, that is strategy combinations that mimic existing solvers:
+You can combine these strategies in a ton of different ways via [options](docs/options.md). Uno also implements **presets**, that is strategy combinations that mimic existing solvers:
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual inertia correction).
 
