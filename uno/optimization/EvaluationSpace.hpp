@@ -28,10 +28,10 @@ namespace uno {
       [[nodiscard]] virtual double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const = 0;
 
       // clone the concrete evaluation space (used to evaluate trial iterates without mutating the current space)
-      [[nodiscard]] virtual EvaluationSpace* clone() const = 0;
+      [[nodiscard]] virtual EvaluationSpace* clone() const { return nullptr; }
 
       // check whether any stored numeric entries are NaN or infinite
-      [[nodiscard]] virtual bool contains_nan() const = 0;
+      [[nodiscard]] virtual bool contains_nan() const { return false; }
    };
 } // namespace
 
