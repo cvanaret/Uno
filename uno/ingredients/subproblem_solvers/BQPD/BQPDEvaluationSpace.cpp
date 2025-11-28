@@ -3,12 +3,12 @@
 
 #include <algorithm>
 #include <numeric>
-#include "tools/Infinity.hpp"
 #include "BQPDEvaluationSpace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "tools/Infinity.hpp"
 
 namespace uno {
    void BQPDEvaluationSpace::initialize(const Subproblem& subproblem) {
