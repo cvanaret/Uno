@@ -17,9 +17,7 @@ namespace uno {
    public:
       static std::unique_ptr<GlobalizationMechanism> create(const Model& model, const Options& options);
 
-      constexpr static std::array available_strategies{
-         "TR", "LS"
-      };
+      constexpr static std::array available_strategies{"TR", "LS"};
    };
 } // namespace
 
