@@ -103,7 +103,7 @@ All log files can be found [here](https://github.com/cvanaret/nonconvex_solver_c
 
 ## How to cite Uno
 
-We have submitted our paper to the Mathematical Programming Computation journal. The preprint is available on [ResearchGate](https://www.researchgate.net/publication/381522383_Unifying_nonlinearly_constrained_nonconvex_optimization).
+We have submitted our paper to the Mathematical Programming Computation journal. The preprint is available on [ResearchGate](https://www.researchgate.net/publication/397446552_Implementing_a_unified_solver_for_nonlinearly_constrained_optimization).
 
 Until it is published, you can use the following bibtex entry:
 
