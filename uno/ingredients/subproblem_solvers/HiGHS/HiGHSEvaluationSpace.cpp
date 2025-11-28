@@ -2,12 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
-#include "tools/Infinity.hpp"
 #include "HiGHSEvaluationSpace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "tools/Infinity.hpp"
 
 namespace uno {
    void HiGHSEvaluationSpace::initialize_memory(const Subproblem& subproblem) {
