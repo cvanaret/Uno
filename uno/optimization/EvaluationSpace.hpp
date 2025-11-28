@@ -26,6 +26,12 @@ namespace uno {
       virtual void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector,
          Vector<double>& result) const = 0;
       [[nodiscard]] virtual double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const = 0;
+
+      // clone the concrete evaluation space (used to evaluate trial iterates without mutating the current space)
+      [[nodiscard]] virtual EvaluationSpace* clone() const = 0;
+
+      // check whether any stored numeric entries are NaN or infinite
+      [[nodiscard]] virtual bool contains_nan() const = 0;
    };
 } // namespace
 

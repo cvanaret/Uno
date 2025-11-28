@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include "tools/Infinity.hpp"
 #include "BQPDEvaluationSpace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
@@ -183,4 +184,17 @@ namespace uno {
       // the Jacobian will be evaluated in this vector, and copied with permutation into this->gradients
       this->jacobian_values.resize(number_jacobian_nonzeros);
    }
+
+      EvaluationSpace* BQPDEvaluationSpace::clone() const {
+         return new BQPDEvaluationSpace(*this);
+      }
+
+      bool BQPDEvaluationSpace::contains_nan() const {
+         // check double containers for NaN/Inf
+         if (std::any_of(this->constraints.begin(), this->constraints.end(), [](double v){ return !is_finite(v); })) return true;
+         if (std::any_of(this->gradients.begin(), this->gradients.end(), [](double v){ return !is_finite(v); })) return true;
+         if (std::any_of(this->jacobian_values.begin(), this->jacobian_values.end(), [](double v){ return !is_finite(v); })) return true;
+         if (std::any_of(this->hessian_values.begin(), this->hessian_values.end(), [](double v){ return !is_finite(v); })) return true;
+         return false;
+      }
 } // namespace
