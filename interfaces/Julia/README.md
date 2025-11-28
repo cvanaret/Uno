@@ -100,10 +100,66 @@ uno_set_solver_bool_option(solver, "print_solution", true)
 uno_optimize(solver, model)
 ```
 
-## LibHSL
+## Linear solvers
 
-We highly recommend downloading the latest release of [libHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) and installing the official version of `HSL_jll.jl`.
-This optional dependency provides access to more reliable and powerful linear solvers in `UnoSolver.jl`, such as `MA27` and `MA57`.
+`UnoSolver.jl` supports a number of linear solvers.
+
+### LibHSL
+
+We highly recommend downloading the latest release of [libHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) and installing the official version of `HSL_jll.jl` into your current environment using:
+```julia
+import Pkg
+Pkg.develop(path = "/full/path/to/HSL_jll.jl")
+```
+
+This optional dependency provides access to more reliable and powerful linear solvers. Currently, `UnoSolver.jl` supports `MA27` and `MA57`.
+Pick a linear solver by setting the `linear_solver` attribute:
+```julia
+using JuMP, UnoSolver
+import HSL_jll
+model = Model(() -> UnoSolver.Optimizer(preset="ipopt"))
+set_attribute(model, "linear_solver", "MA57")
+```
+
+### MUMPS
+
+MUMPS can be used by setting the `linear_solver` attribute:
+```julia
+using JuMP, UnoSolver
+model = Model(() -> UnoSolver.Optimizer(preset="ipopt"))
+set_attribute(model, "linear_solver", "MUMPS")
+```
+
+## QP solvers
+
+### BQPD
+
+BQPD can be used by setting the `QP_solver` attribute:
+```julia
+using JuMP, UnoSolver
+model = Model(() -> UnoSolver.Optimizer(preset="filtersqp"))
+set_attribute(model, "QP_solver", "BQPD")
+```
+
+## LP solvers
+
+### BQPD
+
+BQPD can be used by setting the `LP_solver` attribute:
+```julia
+using JuMP, UnoSolver
+model = Model(() -> UnoSolver.Optimizer(preset="filterslp"))
+set_attribute(model, "LP_solver", "BQPD")
+```
+
+### HiGHS
+
+HiGHS can be used by setting the `LP_solver` attribute:
+```julia
+using JuMP, UnoSolver
+model = Model(() -> UnoSolver.Optimizer(preset="filterslp"))
+set_attribute(model, "LP_solver", "HiGHS")
+```
 
 ## BLAS and LAPACK demuxer
 
