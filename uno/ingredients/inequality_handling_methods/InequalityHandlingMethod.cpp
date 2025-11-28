@@ -1,19 +1,20 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <memory>
+#include <algorithm>
 #include "InequalityHandlingMethod.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/EvaluationSpace.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "options/Options.hpp"
+#include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/UserCallbacks.hpp"
-#include "tools/Infinity.hpp"
-#include <memory>
-#include <algorithm>
 
 namespace uno {
    InequalityHandlingMethod::InequalityHandlingMethod(const Options& options):
@@ -31,34 +32,6 @@ namespace uno {
          const Direction& direction, double step_length, UserCallbacks& user_callbacks) {
       this->postprocess_iterate(trial_iterate);
       const double objective_multiplier = subproblem.problem.get_objective_multiplier();
-
-      // Quick check: evaluate gradient and constraint Jacobian at the trial iterate in a cloned
-      // evaluation space to detect NaNs early without mutating the solver's current evaluation space.
-      try {
-         std::unique_ptr<EvaluationSpace> trial_space(evaluation_space.clone());
-         // evaluate objective gradient and constraints on the trial iterate
-         trial_iterate.evaluate_objective_gradient(subproblem.problem.model);
-         trial_iterate.evaluate_constraints(subproblem.problem.model);
-         // evaluate the Jacobian into the cloned space
-         trial_space->evaluate_constraint_jacobian(subproblem.problem, trial_iterate);
-         // check gradient and cloned evaluation space for NaNs or infinite values
-         bool bad = false;
-         if (trial_iterate.is_objective_gradient_computed) {
-            bad = std::any_of(trial_iterate.evaluations.objective_gradient.begin(),
-                              trial_iterate.evaluations.objective_gradient.end(), [](double v){ return !is_finite(v); });
-         }
-         if (!bad) {
-            bad = trial_space->contains_nan();
-         }
-         if (bad) {
-            DEBUG << "Trial iterate rejected: NaN or infinite values detected in gradient/Jacobian evaluations\n";
-            return false;
-         }
-      }
-      catch (const std::exception& e) {
-         DEBUG << "Trial iterate rejected: exception while evaluating trial functions: " << e.what() << '\n';
-         return false;
-      }
 
       // evaluate progress measures
       trial_iterate.objective_multiplier = objective_multiplier;
