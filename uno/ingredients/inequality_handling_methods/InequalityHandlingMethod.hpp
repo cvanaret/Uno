@@ -15,7 +15,7 @@ namespace uno {
    class HessianModel;
    class Iterate;
    class l1RelaxedProblem;
-   class Model;
+   class Multipliers;
    class OptimizationProblem;
    class Options;
    template <typename ElementType>

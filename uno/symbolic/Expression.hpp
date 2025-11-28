@@ -5,6 +5,7 @@
 #define UNO_EXPRESSION_H
 
 #include "ScalarMultiple.hpp"
+#include "Subtraction.hpp"
 #include "Sum.hpp"
 #include "UnaryNegation.hpp"
 

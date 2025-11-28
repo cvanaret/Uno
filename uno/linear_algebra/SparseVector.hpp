@@ -132,7 +132,7 @@ namespace uno {
       }
       return norm;
    }
-	
+
    template <typename Vector, typename ElementType>
    ElementType dot(const Vector& x, const SparseVector<ElementType>& y) {
       static_assert(std::is_same_v<typename Vector::value_type, ElementType>);

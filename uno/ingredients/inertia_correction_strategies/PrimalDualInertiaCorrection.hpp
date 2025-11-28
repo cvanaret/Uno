@@ -40,6 +40,7 @@ namespace uno {
       [[nodiscard]] bool performs_primal_regularization() const override;
       [[nodiscard]] bool performs_dual_regularization() const override;
       [[nodiscard]] double get_primal_regularization_factor() const override;
+
       [[nodiscard]] std::string get_name() const override;
 
    protected:

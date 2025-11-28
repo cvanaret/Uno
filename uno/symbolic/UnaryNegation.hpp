@@ -19,7 +19,7 @@ namespace uno {
       [[nodiscard]] typename UnaryNegation::value_type operator[](size_t index) const { return -this->expression[index]; }
 
    protected:
-      Expression expression;
+      const Expression expression;
    };
 
    // free function

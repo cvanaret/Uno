@@ -32,9 +32,14 @@ namespace uno {
       return false;
    }
 
+   void ZeroHessian::initialize_statistics(Statistics& /*statistics*/) const {
+   }
+
+   void ZeroHessian::notify_accepted_iterate(Statistics& /*statistics*/, Iterate& /*current_iterate*/, Iterate& /*trial_iterate*/) {
+   }
+
    void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
-      // do nothing
    }
 
    void ZeroHessian::compute_hessian_vector_product(const double* /*x*/, const double* /*vector*/,
