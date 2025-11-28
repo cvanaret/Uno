@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <algorithm>
 #include <stdexcept>
 #include "COOEvaluationSpace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
@@ -9,6 +10,7 @@
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/WarmstartInformation.hpp"
+#include "tools/Infinity.hpp"
 
 namespace uno {
    void COOEvaluationSpace::initialize_hessian(const Subproblem& subproblem) {
@@ -128,4 +130,17 @@ namespace uno {
          subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, jacobian, this->rhs);
       }
    }
+
+      EvaluationSpace* COOEvaluationSpace::clone() const {
+         return new COOEvaluationSpace(*this);
+      }
+
+      bool COOEvaluationSpace::contains_nan() const {
+         // check double containers for NaN/Inf
+         if (std::any_of(this->constraints.begin(), this->constraints.end(), [](double v){ return !is_finite(v); })) return true;
+         if (std::any_of(this->gradients.begin(), this->gradients.end(), [](double v){ return !is_finite(v); })) return true;
+         if (std::any_of(this->jacobian_values.begin(), this->jacobian_values.end(), [](double v){ return !is_finite(v); })) return true;
+         if (std::any_of(this->hessian_values.begin(), this->hessian_values.end(), [](double v){ return !is_finite(v); })) return true;
+         return false;
+      }
 } // namespace

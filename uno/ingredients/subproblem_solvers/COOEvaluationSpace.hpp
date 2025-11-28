@@ -16,6 +16,9 @@ namespace uno {
       COOEvaluationSpace() = default;
       ~COOEvaluationSpace() override = default;
 
+      [[nodiscard]] EvaluationSpace* clone() const override;
+      [[nodiscard]] bool contains_nan() const override;
+
       void initialize_hessian(const Subproblem& subproblem);
       void initialize_augmented_system(const Subproblem& subproblem);
 

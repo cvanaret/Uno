@@ -19,6 +19,9 @@ namespace uno {
       BQPDEvaluationSpace() = default;
       ~BQPDEvaluationSpace() override = default;
 
+      [[nodiscard]] EvaluationSpace* clone() const override;
+      [[nodiscard]] bool contains_nan() const override;
+
       void initialize(const Subproblem& subproblem);
 
       void evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) override;
