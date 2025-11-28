@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <stdexcept>
+#include "tools/Infinity.hpp"
 #include "COOEvaluationSpace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
@@ -127,5 +128,18 @@ namespace uno {
             this->matrix_values.data() + this->number_hessian_nonzeros};
          subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, jacobian, this->rhs);
       }
+   }
+
+   EvaluationSpace* COOEvaluationSpace::clone() const {
+      return new COOEvaluationSpace(*this);
+   }
+
+   bool COOEvaluationSpace::contains_nan() const {
+      if (std::any_of(this->objective_gradient.begin(), this->objective_gradient.end(), [](double v){ return !is_finite(v); })) return true;
+      if (std::any_of(this->constraints.begin(), this->constraints.end(), [](double v){ return !is_finite(v); })) return true;
+      if (std::any_of(this->matrix_values.begin(), this->matrix_values.end(), [](double v){ return !is_finite(v); })) return true;
+      if (std::any_of(this->rhs.begin(), this->rhs.end(), [](double v){ return !is_finite(v); })) return true;
+      if (std::any_of(this->solution.begin(), this->solution.end(), [](double v){ return !is_finite(v); })) return true;
+      return false;
    }
 } // namespace

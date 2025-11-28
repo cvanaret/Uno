@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
+#include "tools/Infinity.hpp"
 #include "HiGHSEvaluationSpace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
@@ -227,4 +228,16 @@ namespace uno {
       // the Hessian will be evaluated in this vector, and copied with permutation into this->model.hessian_.value_
       this->hessian_values.resize(number_regularized_hessian_nonzeros);
    }
+
+      EvaluationSpace* HiGHSEvaluationSpace::clone() const {
+         return new HiGHSEvaluationSpace(*this);
+      }
+
+      bool HiGHSEvaluationSpace::contains_nan() const {
+         if (std::any_of(this->linear_objective.begin(), this->linear_objective.end(), [](double v){ return !is_finite(v); })) return true;
+         if (std::any_of(this->constraints.begin(), this->constraints.end(), [](double v){ return !is_finite(v); })) return true;
+         if (std::any_of(this->jacobian_values.begin(), this->jacobian_values.end(), [](double v){ return !is_finite(v); })) return true;
+         if (std::any_of(this->hessian_values.begin(), this->hessian_values.end(), [](double v){ return !is_finite(v); })) return true;
+         return false;
+      }
 } // namespace
