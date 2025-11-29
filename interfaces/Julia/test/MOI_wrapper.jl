@@ -500,10 +500,10 @@ function test_ad_backend()
     @test MOI.supports(model, attr)
     @test MOI.get(model, attr) == MOI.Nonlinear.SparseReverseMode()
     MOI.optimize!(model)
-    @test model.inner isa UnoSolver.Model
+    @test model.model isa UnoSolver.Model
     MOI.set(model, attr, MOI.Nonlinear.ExprGraphOnly())
     @test MOI.get(model, attr) == MOI.Nonlinear.ExprGraphOnly()
-    @test model.inner === nothing
+    @test model.model === nothing
     f = MOI.ScalarNonlinearFunction(:^, Any[x, 4])
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
@@ -706,9 +706,9 @@ function test_vector_nonlinear_oracle()
     @test !((F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent()))
     @test isempty(MOI.get(model, MOI.ListOfConstraintIndices{F,S}()))
     @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 0
-    @test model.inner !== nothing
+    @test model.model !== nothing
     c = MOI.add_constraint(model, f, set)
-    @test model.inner === nothing
+    @test model.model === nothing
     @test MOI.is_valid(model, c)
     @test !MOI.is_valid(model, typeof(c)(c.value - 1))
     @test !MOI.is_valid(model, typeof(c)(c.value + 1))
