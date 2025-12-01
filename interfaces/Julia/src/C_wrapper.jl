@@ -279,14 +279,18 @@ end
 
 function uno_set_initial_primal_iterate(model::Model, initial_primal_iterate::Vector{Float64})
   @assert model.nvar == length(initial_primal_iterate)
-  flag = uno_set_initial_primal_iterate(model.c_model, initial_primal_iterate)
+  GC.@preserve model begin
+    flag = uno_set_initial_primal_iterate(model.c_model, initial_primal_iterate)
+  end
   flag || error("Failed to set initial primal iterate via uno_set_initial_primal_iterate.")
   return
 end
 
 function uno_set_initial_dual_iterate(model::Model, initial_dual_iterate::Vector{Float64})
   @assert model.ncon == length(initial_dual_iterate)
-  flag = uno_set_initial_dual_iterate(model.c_model, initial_dual_iterate)
+  GC.@preserve model begin
+    flag = uno_set_initial_dual_iterate(model.c_model, initial_dual_iterate)
+  end
   flag || error("Failed to set initial dual iterate via uno_set_initial_dual_iterate.")
   return
 end
@@ -315,11 +319,11 @@ function uno_solver(; kwargs...)
     if v isa String
       @assert uno_set_solver_string_option(c_solver, string(k), v)
     elseif v isa Float64
-      @assert uno_set_solver_double_option(solver, string(k), v)
+      @assert uno_set_solver_double_option(c_solver, string(k), v)
     elseif v isa Bool
-      @assert uno_set_solver_bool_option(solver, string(k), v)
+      @assert uno_set_solver_bool_option(c_solver, string(k), v)
     elseif v isa Integer
-      @assert uno_set_solver_integer_option(solver, string(k), Cint(v))
+      @assert uno_set_solver_integer_option(c_solver, string(k), Cint(v))
     else
       @warn "$k does not seem to be a valid Uno option."
     end
