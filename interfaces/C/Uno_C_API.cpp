@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
-#include <cassert>
 #include <cstring>
 #include <iostream>
 #include <streambuf>
@@ -500,8 +499,10 @@ bool uno_set_objective(void* model, uno_int optimization_sense, Objective object
       WARNING << "Please specify a valid objective sense."  << std::endl;
       return false;
    }
-
-   assert(model != nullptr);
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->optimization_sense = optimization_sense;
    user_model->objective_function = objective_function;
@@ -516,8 +517,10 @@ bool uno_set_constraints(void* model, uno_int number_constraints, Constraints co
       WARNING << "Please specify a positive number of constraints."  << std::endl;
       return false;
    }
-
-   assert(model != nullptr);
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->number_constraints = number_constraints;
    user_model->constraint_functions = constraint_functions;
@@ -549,14 +552,20 @@ bool uno_set_constraints(void* model, uno_int number_constraints, Constraints co
 }
 
 bool uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator) {
-   assert(model != nullptr);
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->jacobian_operator = jacobian_operator;
    return true;
 }
 
 bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator) {
-   assert(model != nullptr);
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->jacobian_transposed_operator = jacobian_transposed_operator;
    return true;
@@ -579,8 +588,10 @@ bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, ch
          UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;
       return false;
    }
-
-   assert(model != nullptr);
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    // make sure that the sign convention is consistent with that of the Hessian operator
    if (user_model->lagrangian_hessian_operator != nullptr && user_model->lagrangian_sign_convention != lagrangian_sign_convention) {
@@ -609,8 +620,10 @@ bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian
          UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;
       return false;
    }
-
-   assert(model != nullptr);
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    // make sure that the sign convention is consistent with that of the Hessian function
    if (user_model->lagrangian_hessian != nullptr && user_model->lagrangian_sign_convention != lagrangian_sign_convention) {
@@ -623,14 +636,20 @@ bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian
 }
 
 bool uno_set_user_data(void* model, void* user_data) {
-   assert(model != nullptr);
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->user_data = user_data;
    return true;
 }
 
 bool uno_set_initial_primal_iterate_component(void* model, uno_int index, double initial_primal_component) {
-   assert(model != nullptr);
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    if (0 <= index && index < user_model->number_variables) {
       const size_t unsigned_index = static_cast<size_t>(index);
@@ -641,7 +660,10 @@ bool uno_set_initial_primal_iterate_component(void* model, uno_int index, double
 }
 
 bool uno_set_initial_dual_iterate_component(void* model, uno_int index, double initial_dual_component) {
-   assert(model != nullptr);
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    if (0 <= index && index < user_model->number_constraints) {
       const size_t unsigned_index = static_cast<size_t>(index);
@@ -652,7 +674,10 @@ bool uno_set_initial_dual_iterate_component(void* model, uno_int index, double i
 }
 
 bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_iterate) {
-   assert(model != nullptr);
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
    if (initial_primal_iterate != nullptr) {
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // copy the initial primal point
@@ -665,7 +690,10 @@ bool uno_set_initial_primal_iterate(void* model, const double* initial_primal_it
 }
 
 bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterate) {
-   assert(model != nullptr);
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
    if (initial_dual_iterate != nullptr) {
       CUserModel* user_model = static_cast<CUserModel*>(model);
       // copy the initial dual point
@@ -695,24 +723,40 @@ void* uno_create_solver() {
 }
 
 bool uno_set_solver_integer_option(void* solver, const char* option_name, uno_int option_value) {
+   if (solver == nullptr) {
+      WARNING << "Please specify a valid solver."  << std::endl;
+      return false;
+   }
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->options->set_integer(option_name, option_value);
    return true;
 }
 
 bool uno_set_solver_double_option(void* solver, const char* option_name, double option_value) {
+   if (solver == nullptr) {
+      WARNING << "Please specify a valid solver."  << std::endl;
+      return false;
+   }
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->options->set_double(option_name, option_value);
    return true;
 }
 
 bool uno_set_solver_bool_option(void* solver, const char* option_name, bool option_value) {
+   if (solver == nullptr) {
+      WARNING << "Please specify a valid solver."  << std::endl;
+      return false;
+   }
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->options->set_bool(option_name, option_value);
    return true;
 }
 
 bool uno_set_solver_string_option(void* solver, const char* option_name, const char* option_value) {
+   if (solver == nullptr) {
+      WARNING << "Please specify a valid solver."  << std::endl;
+      return false;
+   }
    // handle the preset separately
    if (strcmp(option_name, "preset") == 0) {
       uno_set_solver_preset(solver, option_value);
@@ -725,6 +769,10 @@ bool uno_set_solver_string_option(void* solver, const char* option_name, const c
 }
 
 uno_int uno_get_solver_option_type(void* solver, const char* option_name) {
+   if (solver == nullptr) {
+      WARNING << "Please specify a valid solver."  << std::endl;
+      return false;
+   }
    Solver* uno_solver = static_cast<Solver*>(solver);
    try {
       return static_cast<uno_int>(uno_solver->options->get_option_type(option_name));
@@ -735,12 +783,20 @@ uno_int uno_get_solver_option_type(void* solver, const char* option_name) {
 }
 
 bool uno_load_solver_option_file(void* solver, const char* file_name) {
+   if (solver == nullptr) {
+      WARNING << "Please specify a valid solver."  << std::endl;
+      return false;
+   }
    Solver* uno_solver = static_cast<Solver*>(solver);
    uno_solver->options->overwrite_with(uno::Options::load_option_file(file_name));
    return true;
 }
 
 bool uno_set_solver_preset(void* solver, const char* preset_name) {
+   if (solver == nullptr) {
+      WARNING << "Please specify a valid solver."  << std::endl;
+      return false;
+   }
    Solver* uno_solver = static_cast<Solver*>(solver);
    Presets::set(*uno_solver->options, preset_name);
    return true;
@@ -748,6 +804,10 @@ bool uno_set_solver_preset(void* solver, const char* preset_name) {
 
 bool uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
       TerminationUserCallback user_termination_callback, void* user_data) {
+   if (solver == nullptr) {
+      WARNING << "Please specify a valid solver."  << std::endl;
+      return false;
+   }
    Solver* uno_solver = static_cast<Solver*>(solver);
    delete uno_solver->user_callbacks; // delete the previous callbacks
    uno_solver->user_callbacks = new CUserCallbacks(notify_acceptable_iterate_callback, user_termination_callback, user_data);
@@ -769,15 +829,17 @@ bool uno_reset_logger_stream() {
 }
 
 void uno_optimize(void* solver, void* model) {
-   // check the model
-   assert(model != nullptr);
+   if (model == nullptr) {
+      throw std::runtime_error("Please specify a valid model.");
+   }
+   if (solver == nullptr) {
+      throw std::runtime_error("Please specify a valid solver.");
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    if (!user_model->objective_function && !user_model->constraint_functions) {
       WARNING << "Please specify at least an objective or constraints."  << std::endl;
       return;
    }
-
-   assert(solver != nullptr);
    Solver* uno_solver = static_cast<Solver*>(solver);
 
    // create an instance of UnoModel, a subclass of Model, and solve the model using Uno
@@ -793,34 +855,46 @@ void uno_optimize(void* solver, void* model) {
 }
 
 double uno_get_solver_double_option(void* solver, const char* option_name) {
-   assert(solver != nullptr);
+   if (solver == nullptr) {
+      throw std::runtime_error("Please specify a valid solver.");
+   }
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_double(option_name);
 }
 
 int uno_get_solver_integer_option(void* solver, const char* option_name) {
-   assert(solver != nullptr);
+   if (solver == nullptr) {
+      throw std::runtime_error("Please specify a valid solver.");
+   }
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_int(option_name);
 }
 
 bool uno_get_solver_bool_option(void* solver, const char* option_name) {
-   assert(solver != nullptr);
+   if (solver == nullptr) {
+      throw std::runtime_error("Please specify a valid solver.");
+   }
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_bool(option_name);
 }
 
 const char* uno_get_solver_string_option(void* solver, const char* option_name) {
-   assert(solver != nullptr);
+   if (solver == nullptr) {
+      throw std::runtime_error("Please specify a valid solver.");
+   }
    Solver* uno_solver = static_cast<Solver*>(solver);
    return uno_solver->options->get_string(option_name).c_str();
 }
 
 // auxiliary function
 Result* uno_get_result(void* solver) {
-   assert(solver != nullptr);
+   if (solver == nullptr) {
+      throw std::runtime_error("Please specify a valid solver.");
+   }
    Solver* uno_solver = static_cast<Solver*>(solver);
-   assert(uno_solver->result != nullptr);
+   if (uno_solver->result == nullptr) {
+      throw std::runtime_error("The result is not available.");
+   }
    return uno_solver->result;
 }
 
@@ -842,28 +916,36 @@ double uno_get_solution_objective(void* solver) {
 double uno_get_primal_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
    const size_t unsigned_index = static_cast<size_t>(index);
-   assert(0 <= index && unsigned_index < result->number_variables);
+   if (index < 0 || result->number_variables <= unsigned_index) {
+      throw std::runtime_error("The index is not valid.");
+   }
    return result->primal_solution[unsigned_index];
 }
 
 double uno_get_constraint_dual_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
    const size_t unsigned_index = static_cast<size_t>(index);
-   assert(0 <= index && unsigned_index < result->number_constraints);
+   if (index < 0 || result->number_constraints <= unsigned_index) {
+      throw std::runtime_error("The index is not valid.");
+   }
    return result->constraint_dual_solution[unsigned_index];
 }
 
 double uno_get_lower_bound_dual_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
    const size_t unsigned_index = static_cast<size_t>(index);
-   assert(0 <= index && unsigned_index < result->number_variables);
+   if (index < 0 || result->number_variables <= unsigned_index) {
+      throw std::runtime_error("The index is not valid.");
+   }
    return result->lower_bound_dual_solution[unsigned_index];
 }
 
 double uno_get_upper_bound_dual_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
    const size_t unsigned_index = static_cast<size_t>(index);
-   assert(0 <= index && unsigned_index < result->number_variables);
+   if (index < 0 || result->number_variables <= unsigned_index) {
+      throw std::runtime_error("The index is not valid.");
+   }
    return result->upper_bound_dual_solution[unsigned_index];
 }
 
