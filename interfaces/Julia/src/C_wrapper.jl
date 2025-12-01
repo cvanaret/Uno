@@ -185,10 +185,8 @@ function uno_model(
   model = Model(c_model, nvar, ncon, eval_objective, eval_constraints, eval_gradient,
                 eval_jacobian, eval_hessian, eval_Jv, eval_Jtv, eval_Hv, user_model)
 
-  GC.@preserve model begin
-    user_data = pointer_from_objref(model)::Ptr{Cvoid}
-    flag = uno_set_user_data(c_model, user_data)
-  end
+  user_data = pointer_from_objref(model)::Ptr{Cvoid}
+  flag = uno_set_user_data(c_model, user_data)
   flag || error("Failed to set user data via uno_set_user_data.")
 
   eval_objective_c = @cfunction(uno_objective, Cint, (Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
@@ -275,24 +273,24 @@ function uno(
                     eval_gradient, eval_jacobian, eval_hessian, eval_Jv, eval_Jtv,
                     eval_Hv, user_model, hessian_triangle, lagrangian_sign, x0, y0)
   solver = uno_solver(; kwargs...)
-  GC.@preserve solver model begin
-    uno_optimize(solver, model)
-  end
+  uno_optimize(solver, model)
   return model, solver
 end
 
 function uno_set_initial_primal_iterate(model::Model, initial_primal_iterate::Vector{Float64})
-  @assert model.c_model != C_NULL
   @assert model.nvar == length(initial_primal_iterate)
-  flag = uno_set_initial_primal_iterate(model.c_model, initial_primal_iterate)
+  GC.@preserve model begin
+    flag = uno_set_initial_primal_iterate(model.c_model, initial_primal_iterate)
+  end
   flag || error("Failed to set initial primal iterate via uno_set_initial_primal_iterate.")
   return
 end
 
 function uno_set_initial_dual_iterate(model::Model, initial_dual_iterate::Vector{Float64})
-  @assert model.c_model != C_NULL
   @assert model.ncon == length(initial_dual_iterate)
-  flag = uno_set_initial_dual_iterate(model.c_model, initial_dual_iterate)
+  GC.@preserve model begin
+    flag = uno_set_initial_dual_iterate(model.c_model, initial_dual_iterate)
+  end
   flag || error("Failed to set initial dual iterate via uno_set_initial_dual_iterate.")
   return
 end
@@ -321,11 +319,11 @@ function uno_solver(; kwargs...)
     if v isa String
       @assert uno_set_solver_string_option(c_solver, string(k), v)
     elseif v isa Float64
-      @assert uno_set_solver_double_option(solver, string(k), v)
+      @assert uno_set_solver_double_option(c_solver, string(k), v)
     elseif v isa Bool
-      @assert uno_set_solver_bool_option(solver, string(k), v)
+      @assert uno_set_solver_bool_option(c_solver, string(k), v)
     elseif v isa Integer
-      @assert uno_set_solver_integer_option(solver, string(k), Cint(v))
+      @assert uno_set_solver_integer_option(c_solver, string(k), Cint(v))
     else
       @warn "$k does not seem to be a valid Uno option."
     end
@@ -333,105 +331,4 @@ function uno_solver(; kwargs...)
 
   finalizer(uno_destroy_solver, solver)
   return solver
-end
-
-function uno_optimize(solver::Solver, model::Model)
-  @assert (solver.c_solver != C_NULL) && (model.c_model != C_NULL)
-  GC.@preserve solver model begin
-    uno_optimize(solver.c_solver, model.c_model)
-  end
-end
-
-function uno_get_cpu_time(solver::Solver)
-  @assert solver.c_solver != C_NULL
-  uno_get_cpu_time(solver.c_solver)
-end
-
-function uno_get_number_iterations(solver::Solver)
-  @assert solver.c_solver != C_NULL
-  uno_get_number_iterations(solver.c_solver)
-end
-
-function uno_get_number_subproblem_solved_evaluations(solver::Solver)
-  @assert solver.c_solver != C_NULL
-  uno_get_number_subproblem_solved_evaluations(solver.c_solver)
-end
-
-function uno_set_solver_integer_option(solver::Solver, option_name::String, option_value::Cint)
-  @assert solver.c_solver != C_NULL
-  uno_set_solver_integer_option(solver.c_solver, option_name, option_value)
-end
-
-function uno_set_solver_double_option(solver::Solver, option_name::String, option_value::Float64)
-  @assert solver.c_solver != C_NULL
-  uno_set_solver_double_option(solver.c_solver, option_name, option_value)
-end
-
-function uno_set_solver_bool_option(solver::Solver, option_name::String, option_value::Bool)
-  @assert solver.c_solver != C_NULL
-  uno_set_solver_bool_option(solver.c_solver, option_name, option_value)
-end
-
-function uno_set_solver_string_option(solver::Solver, option_name::String, option_value::String)
-  @assert solver.c_solver != C_NULL
-  uno_set_solver_string_option(solver.c_solver, option_name, option_value)
-end
-
-function uno_set_solver_preset(solver::Solver, preset_name::String)
-  @assert solver.c_solver != C_NULL
-  uno_set_solver_preset(solver.c_solver, preset_name)
-end
-
-function uno_get_optimization_status(solver::Solver)
-  @assert solver.c_solver != C_NULL
-  return uno_get_optimization_status(solver.c_solver)
-end
-
-function uno_get_solution_status(solver::Solver)
-  @assert solver.c_solver != C_NULL
-  return uno_get_solution_status(solver.c_solver)
-end
-
-function uno_get_solution_objective(solver::Solver)
-  @assert solver.c_solver != C_NULL
-  return uno_get_solution_objective(solver.c_solver)
-end
-
-function uno_get_primal_solution(solver::Solver, primal_solution::Vector{Float64})
-  @assert solver.c_solver != C_NULL
-  uno_get_primal_solution(solver.c_solver, primal_solution)
-  return primal_solution
-end
-
-function uno_get_constraint_dual_solution(solver::Solver, constraint_dual_solution::Vector{Float64})
-  @assert solver.c_solver != C_NULL
-  uno_get_constraint_dual_solution(solver.c_solver, constraint_dual_solution)
-  return constraint_dual_solution
-end
-
-function uno_get_lower_bound_dual_solution(solver::Solver, lower_bound_dual_solution::Vector{Float64})
-  @assert solver.c_solver != C_NULL
-  uno_get_lower_bound_dual_solution(solver.c_solver, lower_bound_dual_solution)
-  return lower_bound_dual_solution
-end
-
-function uno_get_upper_bound_dual_solution(solver::Solver, upper_bound_dual_solution::Vector{Float64})
-  @assert solver.c_solver != C_NULL
-  uno_get_upper_bound_dual_solution(solver.c_solver, upper_bound_dual_solution)
-  return upper_bound_dual_solution
-end
-
-function uno_get_solution_primal_feasibility(solver::Solver)
-  @assert solver.c_solver != C_NULL
-  return uno_get_solution_primal_feasibility(solver.c_solver)
-end
-
-function uno_get_solution_stationarity(solver::Solver)
-  @assert solver.c_solver != C_NULL
-  return uno_get_solution_stationarity(solver.c_solver)
-end
-
-function uno_get_solution_complementarity(solver::Solver)
-  @assert solver.c_solver != C_NULL
-  return uno_get_solution_complementarity(solver.c_solver)
 end
