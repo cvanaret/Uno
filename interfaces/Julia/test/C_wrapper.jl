@@ -6,18 +6,18 @@
 # Start at (1, 5, 5, 1)
 # End at (1.000..., 4.743..., 3.821..., 1.379...)
 
-function c_objective(x::Vector{Float64})
+function c_objective(userdata::Nothing, x::Vector{Float64})
   f = x[1] * x[4] * (x[1] + x[2] + x[3]) + x[3]
   return f
 end
 
-function c_constraints(c::Vector{Float64}, x::Vector{Float64})
+function c_constraints(userdata::Nothing, c::Vector{Float64}, x::Vector{Float64})
   c[1] = x[1] * x[2] * x[3] * x[4]
   c[2] = x[1]^2 + x[2]^2 + x[3]^2 + x[4]^2
   return c
 end
 
-function c_objective_gradient(g::Vector{Float64}, x::Vector{Float64})
+function c_objective_gradient(userdata::Nothing, g::Vector{Float64}, x::Vector{Float64})
   g[1] = x[1] * x[4] + x[4] * (x[1] + x[2] + x[3])
   g[2] = x[1] * x[4]
   g[3] = x[1] * x[4] + 1
@@ -25,7 +25,7 @@ function c_objective_gradient(g::Vector{Float64}, x::Vector{Float64})
   return g
 end
 
-function c_jacobian(jvals::Vector{Float64}, x::Vector{Float64})
+function c_jacobian(userdata::Nothing, jvals::Vector{Float64}, x::Vector{Float64})
   # Constraint (row) 1
   jvals[1] = x[2] * x[3] * x[4]  # 1,1
   jvals[2] = x[1] * x[3] * x[4]  # 1,2
@@ -40,6 +40,7 @@ function c_jacobian(jvals::Vector{Float64}, x::Vector{Float64})
 end
 
 function c_lagrangian_hessian(
+  userdata::Nothing,
   hvals::Vector{Float64},
   x::Vector{Float64},
   multipliers::Vector{Float64},
@@ -75,6 +76,7 @@ function c_lagrangian_hessian(
 end
 
 function c_jacobian_operator(
+  userdata::Nothing,
   Jv::Vector{Float64},
   x::Vector{Float64},
   v::Vector{Float64},
@@ -86,6 +88,7 @@ function c_jacobian_operator(
 end
 
 function c_jacobian_transposed_operator(
+  userdata::Nothing,
   Jtv::Vector{Float64},
   x::Vector{Float64},
   v::Vector{Float64},
@@ -99,6 +102,7 @@ function c_jacobian_transposed_operator(
 end
 
 function c_lagrangian_hessian_operator(
+  userdata::Nothing,
   Hv::Vector{Float64},
   x::Vector{Float64},
   objective_multiplier::Float64,
