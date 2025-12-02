@@ -102,7 +102,7 @@ uno_optimize(solver, model)
 
 ## Linear solvers
 
-`UnoSolver.jl` supports a number of linear solvers.
+`UnoSolver.jl` supports a number of linear solvers. If not specified by the user, the default linear solver is picked in this order (if available): MA57, MA27, MUMPS.
 
 ### LibHSL
 
@@ -132,6 +132,8 @@ set_attribute(model, "linear_solver", "MUMPS")
 
 ## QP solvers
 
+If not specified by the user, the default QP solver is BQPD.
+
 ### BQPD
 
 BQPD can be used by setting the `QP_solver` attribute:
@@ -142,6 +144,8 @@ set_attribute(model, "QP_solver", "BQPD")
 ```
 
 ## LP solvers
+
+If not specified by the user, the default LP solver is BQPD.
 
 ### BQPD
 
