@@ -21,6 +21,9 @@ namespace uno {
       HiGHSEvaluationSpace() = default;
       ~HiGHSEvaluationSpace() override = default;
 
+      [[nodiscard]] EvaluationSpace* clone() const override;
+      [[nodiscard]] bool contains_nan() const override;
+
       void initialize_memory(const Subproblem& subproblem);
 
       void evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) override;
