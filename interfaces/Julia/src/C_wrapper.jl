@@ -34,11 +34,7 @@ end
 function uno_objective(number_variables::Cint, x::Ptr{Float64}, objective_value::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
-  if isnothing(_user_data.user_model)
-    _f = _user_data.eval_objective(_x)::Float64
-  else
-    _f = _user_data.eval_objective(_user_data.user_model, _x)::Float64
-  end
+  _f = _user_data.eval_objective(_user_data.user_model, _x)::Float64
   unsafe_store!(objective_value, _f)
   return Cint(0)
 end
@@ -47,11 +43,7 @@ function uno_constraints(number_variables::Cint, number_constraints::Cint, x::Pt
   _x = unsafe_wrap(Array, x, number_variables)
   _c = unsafe_wrap(Array, constraint_values, number_constraints)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
-  if isnothing(_user_data.user_model)
-    _user_data.eval_constraints(_c, _x)
-  else
-    _user_data.eval_constraints(_user_data.user_model, _c, _x)
-  end
+  _user_data.eval_constraints(_user_data.user_model, _c, _x)
   return Cint(0)
 end
 
@@ -59,11 +51,7 @@ function uno_objective_gradient(number_variables::Cint, x::Ptr{Float64}, gradien
   _x = unsafe_wrap(Array, x, number_variables)
   _g = unsafe_wrap(Array, gradient, number_variables)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
-  if isnothing(_user_data.user_model)
-    _user_data.eval_gradient(_g, _x)
-  else
-    _user_data.eval_gradient(_user_data.user_model, _g, _x)
-  end
+  _user_data.eval_gradient(_user_data.user_model, _g, _x)
   return Cint(0)
 end
 
@@ -71,11 +59,7 @@ function uno_jacobian(number_variables::Cint, number_jacobian_nonzeros::Cint, x:
   _x = unsafe_wrap(Array, x, number_variables)
   _jvals = unsafe_wrap(Array, jacobian, number_jacobian_nonzeros)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
-  if isnothing(_user_data.user_model)
-    _user_data.eval_jacobian(_jvals, _x)
-  else
-    _user_data.eval_jacobian(_user_data.user_model, _jvals, _x)
-  end
+  _user_data.eval_jacobian(_user_data.user_model, _jvals, _x)
   return Cint(0)
 end
 
@@ -84,11 +68,7 @@ function uno_lagrangian_hessian(number_variables::Cint, number_constraints::Cint
   _multipliers = unsafe_wrap(Array, multipliers, number_constraints)
   _hvals = unsafe_wrap(Array, hessian, number_hessian_nonzeros)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
-  if isnothing(_user_data.user_model)
-    _user_data.eval_hessian(_hvals, _x, _multipliers, objective_multiplier)
-  else
-    _user_data.eval_hessian(_user_data.user_model, _hvals, _x, _multipliers, objective_multiplier)
-  end
+  _user_data.eval_hessian(_user_data.user_model, _hvals, _x, _multipliers, objective_multiplier)
   return Cint(0)
 end
 
@@ -97,11 +77,7 @@ function uno_jacobian_operator(number_variables::Cint, number_constraints::Cint,
   _v = unsafe_wrap(Array, vector, number_variables)
   _Jv = unsafe_wrap(Array, result, number_constraints)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
-  if isnothing(_user_data.user_model)
-    _user_data.eval_Jv(_Jv, _x, _v, evaluate_at_x)
-  else
-    _user_data.eval_Jv(_user_data.user_model, _Jv, _x, _v, evaluate_at_x)
-  end
+  _user_data.eval_Jv(_user_data.user_model, _Jv, _x, _v, evaluate_at_x)
   return Cint(0)
 end
 
@@ -110,11 +86,7 @@ function uno_jacobian_transposed_operator(number_variables::Cint, number_constra
   _v = unsafe_wrap(Array, vector, number_constraints)
   _Jtv = unsafe_wrap(Array, result, number_variables)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
-  if isnothing(_user_data.user_model)
-    _user_data.eval_Jtv(_Jtv, _x, _v, evaluate_at_x)
-  else
-    _user_data.eval_Jtv(_user_data.user_model, _Jtv, _x, _v, evaluate_at_x)
-  end
+  _user_data.eval_Jtv(_user_data.user_model, _Jtv, _x, _v, evaluate_at_x)
   return Cint(0)
 end
 
@@ -124,11 +96,7 @@ function uno_lagrangian_hessian_operator(number_variables::Cint, number_constrai
   _v = unsafe_wrap(Array, vector, number_variables)
   _Hv = unsafe_wrap(Array, result, number_variables)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
-  if isnothing(_user_data.user_model)
-    _user_data.eval_Hv(_Hv, _x, objective_multiplier, _multipliers, _v, evaluate_at_x)
-  else
-    _user_data.eval_Hv(_user_data.user_model, _Hv, _x, objective_multiplier, _multipliers, _v, evaluate_at_x)
-  end
+  _user_data.eval_Hv(_user_data.user_model, _Hv, _x, objective_multiplier, _multipliers, _v, evaluate_at_x)
   return Cint(0)
 end
 
