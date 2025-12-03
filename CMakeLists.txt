@@ -115,6 +115,14 @@ elseif(OS STREQUAL "Windows")
 endif()
 message(STATUS "Platform detected: ${ARCH}-${OS}")
 
+# link with Fortran libraries (filtered for Apple architectures) even when static libraries are linked
+set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+if(APPLE)
+   list(REMOVE_ITEM FORTRAN_LIBS gcc)
+   list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
+   list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
+endif()
+
 set(LIBRARIES "")
 
 # function that links an existing library to Uno
@@ -178,6 +186,7 @@ file(ARCHIVE_EXTRACT
 message(STATUS "Found BQPD")
 add_library(bqpd STATIC IMPORTED)
 set_target_properties(bqpd PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/bqpd/lib/libbqpd.a)
+target_link_libraries(bqpd PUBLIC ${FORTRAN_LIBS})
 add_definitions("-D HAS_BQPD")
 
 # HiGHS
@@ -240,13 +249,6 @@ endif()
 ###############
 # Uno library #
 ###############
-# link with Fortran libraries (filtered for Apple architectures) even when static libraries are linked
-set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
-if(APPLE)
-   list(REMOVE_ITEM FORTRAN_LIBS gcc)
-   list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
-   list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
-endif()
 
 # compile the Uno source files once, whatever the compilation type is (static or shared)
 add_library(compiled_uno_files OBJECT ${UNO_SOURCE_FILES})
