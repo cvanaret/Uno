@@ -32,6 +32,8 @@ endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders)
 
+include(FetchContent)
+
 # options
 option(BUILD_STATIC_LIBS "Build using static libraries" ON)
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
@@ -39,19 +41,12 @@ if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
    message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
 endif()
 
-# determine whether a Fortran compiler is required, based on the available optional dependencies
-find_library(HSL hsl)
-find_library(MA57 ma57)
-find_library(MA27 ma27)
-find_library(BQPD bqpd)
-if(HSL OR MA57 OR MA27 OR BQPD)
-   message(STATUS "Fortran compiler required")
-   enable_language(Fortran)
-   include(FortranCInterface)
-   FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
-           MACRO_NAMESPACE "FC_"
-           SYMBOL_NAMESPACE "FC_")
-endif()
+message(STATUS "Fortran compiler required")
+enable_language(Fortran)
+include(FortranCInterface)
+FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
+        MACRO_NAMESPACE "FC_"
+        SYMBOL_NAMESPACE "FC_")
 
 # directories
 set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
@@ -76,6 +71,7 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/inertia_correction_strategies/*.cpp
    uno/ingredients/subproblem/*.cpp
    uno/ingredients/subproblem_solvers/*.cpp
+   uno/ingredients/subproblem_solvers/BQPD/*.cpp
    uno/model/*.cpp
    uno/optimization/*.cpp
    uno/options/*.cpp
@@ -85,6 +81,7 @@ file(GLOB UNO_SOURCE_FILES
 # unit test source files
 file(GLOB TESTS_UNO_SOURCE_FILES
    unotest/unotest.cpp
+   unotest/functional_tests/BQPDSolverTests.cpp
    unotest/unit_tests/CollectionAdapterTests.cpp
    unotest/unit_tests/ConcatenationTests.cpp
    unotest/unit_tests/COOSparseStorageTests.cpp
@@ -100,6 +97,24 @@ file(GLOB TESTS_UNO_SOURCE_FILES
 #########################
 # external dependencies #
 #########################
+# detect architecture and OS
+string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" ARCH_RAW)
+set(ARCH "${ARCH_RAW}")
+if(ARCH MATCHES "x86_64|amd64")
+   set(ARCH "x86_64")
+elseif(ARCH MATCHES "aarch64|arm64")
+   set(ARCH "aarch64")
+endif()
+set(OS "${CMAKE_SYSTEM_NAME}")
+if(OS STREQUAL "Darwin")
+   set(OS "apple-darwin")
+elseif(OS STREQUAL "Linux")
+   set(OS "linux-gnu")
+elseif(OS STREQUAL "Windows")
+   set(OS "w64-mingw32")
+endif()
+message(STATUS "Platform detected: ${ARCH}-${OS}")
+
 set(LIBRARIES "")
 
 # function that links an existing library to Uno
@@ -151,14 +166,19 @@ if(METIS)
 endif()
 
 # BQPD
-find_library(BQPD bqpd)
-if(BQPD)
-   list(APPEND UNO_SOURCE_FILES
-           uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
-           uno/ingredients/subproblem_solvers/BQPD/BQPDEvaluationSpace.cpp)
-   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/BQPDSolverTests.cpp)
-   link_to_uno(bqpd ${BQPD})
-endif()
+set(BQPD_VERSION "v1.0.0")
+set(BQPD_REPOSITORY "https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-${BQPD_VERSION}%2B0/")
+set(BQPD_ASSET_FILE "BQPD.${BQPD_VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz")
+message(STATUS "Downloading BQPD artifact")
+file(DOWNLOAD "${BQPD_REPOSITORY}${BQPD_ASSET_FILE}" ${CMAKE_BINARY_DIR}/bqpd.tar.gz SHOW_PROGRESS)
+file(ARCHIVE_EXTRACT
+   INPUT ${CMAKE_BINARY_DIR}/bqpd.tar.gz
+   DESTINATION ${CMAKE_BINARY_DIR}/bqpd
+)
+message(STATUS "Found BQPD")
+add_library(bqpd STATIC IMPORTED)
+set_target_properties(bqpd PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/bqpd/lib/libbqpd.a)
+add_definitions("-D HAS_BQPD")
 
 # HiGHS
 find_package(HIGHS)
@@ -233,11 +253,13 @@ add_library(compiled_uno_files OBJECT ${UNO_SOURCE_FILES})
 set_property(TARGET compiled_uno_files PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(compiled_uno_files PUBLIC ${DIRECTORIES})
 target_link_libraries(compiled_uno_files PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
+target_link_libraries(compiled_uno_files PRIVATE bqpd)
 
 if(BUILD_STATIC_LIBS)
    add_library(uno_static STATIC $<TARGET_OBJECTS:compiled_uno_files>)
    target_include_directories(uno_static PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_static PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
+   target_link_libraries(uno_static PRIVATE bqpd)
    set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
    set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno.f90")
 endif()
@@ -246,6 +268,7 @@ if(BUILD_SHARED_LIBS)
    add_library(uno_shared SHARED $<TARGET_OBJECTS:compiled_uno_files>)
    target_include_directories(uno_shared PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_shared PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
+   target_link_libraries(uno_shared PRIVATE bqpd)
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
    set_target_properties(uno_shared PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno.f90")
 endif()
