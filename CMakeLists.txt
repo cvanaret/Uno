@@ -186,7 +186,7 @@ file(ARCHIVE_EXTRACT
 message(STATUS "Found BQPD")
 add_library(bqpd STATIC IMPORTED)
 set_target_properties(bqpd PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/bqpd/lib/libbqpd.a)
-target_link_libraries(bqpd PUBLIC ${FORTRAN_LIBS})
+target_link_libraries(bqpd INTERFACE ${FORTRAN_LIBS})
 add_definitions("-D HAS_BQPD")
 
 # HiGHS
