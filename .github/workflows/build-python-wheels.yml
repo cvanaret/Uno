@@ -47,7 +47,7 @@ jobs:
           CIBW_BUILD: "cp3?-*"
           MACOSX_DEPLOYMENT_TARGET: 15.0
 
-          # download BQPD and put the library in third_party/bqpd/lib/
+          # download BQPD and put the library in interfaces/Python/third_party/bqpd/lib/
           CIBW_BEFORE_BUILD: >
             bash interfaces/Python/scripts/download_bqpd.sh
 

@@ -47,8 +47,8 @@ jobs:
           VERSION_BQPD="1.0.0"
           PLATFORM="x86_64-linux-gnu"
           wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
-          mkdir -p third_party/bqpd
-          tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C third_party/bqpd
+          mkdir -p interfaces/Python/third_party/bqpd
+          tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C interfaces/Python/third_party/bqpd
 
       - name: Compile and install unopy
         working-directory: ${{github.workspace}}/interfaces/Python

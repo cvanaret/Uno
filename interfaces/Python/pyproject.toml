@@ -15,5 +15,5 @@ description = "Pybind11 bindings of Uno"
 cmake.verbose = true
 
 # Add support for passing BQPD from environment to CMake
-cmake.define = { BQPD = "../../third_party/bqpd/lib/libbqpd.a" }
+cmake.define = { BQPD = "third_party/bqpd/lib/libbqpd.a" }
 # cmake -DBQPD=/path/.../libbqpd.a

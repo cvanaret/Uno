@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-mkdir -p third_party/bqpd
-cd third_party/bqpd
+mkdir -p interfaces/Python/third_party/bqpd
+cd interfaces/Python/third_party/bqpd
 
 VERSION="v1.0.0"
 
@@ -29,4 +29,3 @@ curl -L -o bqpd.tar.gz "$ASSET_URL"
 tar xf bqpd.tar.gz
 
 ls -l
-pwd
