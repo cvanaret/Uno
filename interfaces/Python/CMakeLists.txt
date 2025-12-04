@@ -81,6 +81,4 @@ pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_M
 target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
 target_include_directories(unopy PUBLIC ${DIRECTORIES})
 
-if(SKBUILD)
-	install(TARGETS unopy LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX})
-endif()
+install(TARGETS unopy LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX})
