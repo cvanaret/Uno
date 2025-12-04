@@ -39,11 +39,11 @@ jobs:
         if: matrix.os == 'windows-latest'
 
       - name: Install Fortran compiler on macOS
-          uses: fortran-lang/setup-fortran@main
-          with:
-            compiler: 'gcc'
-            version: '13'
-          if: matrix.os == 'macos-latest'
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '13'
+        if: matrix.os == 'macos-latest'
       
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.3.0
