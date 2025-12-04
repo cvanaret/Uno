@@ -42,8 +42,8 @@ jobs:
         run: sudo apt install -y python3-pybind11 pybind11-dev
 
       - name: Compile and install unopy
-        working-directory: ${{github.workspace}}/interfaces/Python/example
-        run: pip install interfaces/Python/ -v
+        working-directory: ${{github.workspace}}/interfaces/Python
+        run: pip install . -v
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
