@@ -4,8 +4,7 @@ set -e
 mkdir -p third_party/bqpd
 cd third_party/bqpd
 
-RELEASE_TAG="v1.0.0"
-VERSION="1.2.3"
+VERSION="v1.0.0"
 
 # detect OS
 OS_NAME="$(uname -s)"
