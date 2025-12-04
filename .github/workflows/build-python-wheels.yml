@@ -48,7 +48,7 @@ jobs:
         if: matrix.os == 'macos-latest'
 
       - name: Build wheels
-        run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse --project-dir interfaces/Python
+        run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse interfaces/Python
         env:
           CIBW_BUILD: "cp3?-*"
 
