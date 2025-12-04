@@ -46,6 +46,7 @@ jobs:
         if: matrix.os == 'macos-latest'
       
       - name: Build wheels
+        working-directory: ${{github.workspace}}/interfaces/Python
         uses: pypa/cibuildwheel@v3.3.0
         env:
           CIBW_BUILD: "cp3?-*"
@@ -53,14 +54,16 @@ jobs:
 
           # Step 1: Download
           CIBW_BEFORE_BUILD: >
-            bash interfaces/Python/scripts/download_bqpd.sh
+            bash scripts/download_bqpd.sh
 
           CIBW_BEFORE_BUILD_WINDOWS: >
-            pwsh interfaces/Python/scripts/download_bqpd.ps1
+            pwsh scripts/download_bqpd.ps1
 
           # Step 2: Tell scikit-build-core where the static library is
           CIBW_ENVIRONMENT: >
-            BQPD="third_party/bqpd/lib/libbqpd.a"
+            BQPD="${{github.workspace}}/third_party/bqpd/lib/libbqpd.a"
 
           CIBW_ENVIRONMENT_WINDOWS: >
-            BQPD="third_party/bqpd/lib/libbqpd.a"
+            BQPD="${{github.workspace}}/third_party/bqpd/lib/libbqpd.a"
+        with:
+          output-dir: ${{github.workspace}}/wheelhouse
