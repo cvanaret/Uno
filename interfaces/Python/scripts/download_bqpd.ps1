@@ -44,4 +44,4 @@ tar -xzf $archiveName
 Write-Output "Contents extracted:"
 Get-ChildItem -Force
 
-Write-Output "`nExpected result: mylib.lib should now be present in $dest"
+Write-Output "`nExpected result: libbqpd.a should now be present in $dest/lib"

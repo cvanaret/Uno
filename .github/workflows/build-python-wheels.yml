@@ -1,7 +1,19 @@
 name: Build Python wheels
 # https://github.com/pypa/cibuildwheel/blob/main/examples/github-minimal.yml
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
 
 jobs:
   build_wheels:

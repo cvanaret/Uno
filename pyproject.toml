@@ -17,6 +17,3 @@ cmake.verbose = true
 # Add support for passing BQPD from environment to CMake
 cmake.define = { BQPD = "${BQPD}" }
 # cmake -DBQPD=/path/.../libbqpd.a
-
-# Ensure CMake installs the module into the wheel correctly
-wheel.packager = "pip"
