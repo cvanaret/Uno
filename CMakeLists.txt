@@ -297,7 +297,7 @@ if(pybind11_DIR)
    pybind11_add_module(unopy SHARED EXCLUDE_FROM_ALL $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
    target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    target_include_directories(unopy PUBLIC ${DIRECTORIES})
-   install(TARGETS unopy LIBRARY DESTINATION unopy)
+   install(TARGETS unopy LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif()
 
 ##################################
