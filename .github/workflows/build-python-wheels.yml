@@ -48,7 +48,10 @@ jobs:
 
           # install Fortran compiler on Windows
           CIBW_BEFORE_ALL_WINDOWS: >
-            choco install mingw cmake
+            choco install mingw cmake -y
+            refreshenv
+            choco install mingw-w64-gfortran -y
+            refreshenv
 
           # Step 1: Download
           CIBW_BEFORE_BUILD: >
