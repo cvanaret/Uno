@@ -32,10 +32,6 @@ jobs:
           python-version: "3.11"
 
       - run: pip install cibuildwheel
-      
-      - name: Install Fortran compiler on Windows
-        uses: msys2/setup-msys2@v2
-        if: matrix.os == 'windows-latest'
 
       - name: Install Fortran compiler on macOS
         uses: fortran-lang/setup-fortran@main
@@ -48,6 +44,10 @@ jobs:
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse interfaces/Python
         env:
           CIBW_BUILD: "cp3?-*"
+
+          # install Fortran compiler on Windows
+          CIBW_BEFORE_ALL_WINDOWS: >
+            choco install mingw cmake
 
           # Step 1: Download
           CIBW_BEFORE_BUILD: >
