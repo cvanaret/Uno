@@ -46,15 +46,15 @@ jobs:
           CIBW_BUILD: "cp3?-*"
           MACOSX_DEPLOYMENT_TARGET: 15.0
 
-          # Step 1: Download BQPD
-          # and install Fortran compiler on Windows
+          # download BQPD and put the library in third_party/bqpd/lib/
           CIBW_BEFORE_BUILD: >
             bash interfaces/Python/scripts/download_bqpd.sh
 
+          # install Fortran compiler on Windows
           CIBW_BEFORE_BUILD_WINDOWS: |
-            pwsh interfaces/Python/scripts/download_bqpd.ps1 &&
-            choco install mingw cmake -y -v &&
-            choco install mingw-w64-gfortran -y -v &&
+            pwsh interfaces/Python/scripts/download_bqpd.ps1
+            choco install mingw cmake -y -v
+            choco install mingw-w64-gfortran -y -v
             refreshenv
 
           CIBW_CMAKE_ARGS_WINDOWS: |
@@ -63,12 +63,7 @@ jobs:
             -DCMAKE_CXX_COMPILER=g++
             -DCMAKE_Fortran_COMPILER=gfortran
 
-          # Step 2: Tell scikit-build-core where the static library is
-          CIBW_ENVIRONMENT: >
-            BQPD="third_party/bqpd/lib/libbqpd.a"
-
           CIBW_ENVIRONMENT_WINDOWS: |
-            BQPD="third_party/bqpd/lib/libbqpd.a"
             PATH=C:\ProgramData\mingw64\mingw64\bin;%PATH%
 
       - uses: actions/upload-artifact@v4
