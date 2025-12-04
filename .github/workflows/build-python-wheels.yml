@@ -52,9 +52,9 @@ jobs:
             bash interfaces/Python/scripts/download_bqpd.sh
 
           CIBW_BEFORE_BUILD_WINDOWS: >
-            pwsh interfaces/Python/scripts/download_bqpd.ps1
-            choco install mingw cmake -y
-            choco install mingw-w64-gfortran -y
+            pwsh interfaces/Python/scripts/download_bqpd.ps1 &&
+            choco install mingw cmake -y &&
+            choco install mingw-w64-gfortran -y &&
             refreshenv
 
           # Step 2: Tell scikit-build-core where the static library is
@@ -62,7 +62,7 @@ jobs:
             BQPD="third_party/bqpd/lib/libbqpd.a"
 
           CIBW_ENVIRONMENT_WINDOWS: >
-            BQPD="third_party/bqpd/lib/libbqpd.a"
+            BQPD="third_party/bqpd/lib/libbqpd.a" &&
             PATH=C:\ProgramData\mingw64\mingw64\bin;%PATH%
 
       - uses: actions/upload-artifact@v4
