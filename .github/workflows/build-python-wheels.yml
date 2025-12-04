@@ -38,5 +38,3 @@ jobs:
 
           CIBW_ENVIRONMENT_WINDOWS: >
             BQPD="third_party/bqpd/lib/libbqpd.a"
-
-        run: cibuildwheel --output-dir wheelhouse
