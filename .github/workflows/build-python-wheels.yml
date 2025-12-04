@@ -46,6 +46,8 @@ jobs:
           CIBW_BUILD: "cp3?-*"
           MACOSX_DEPLOYMENT_TARGET: 15.0
 
+          CIBW_CMAKE_ARGS_WINDOWS: -G "MinGW Makefiles"
+
           # Step 1: Download BQPD
           # and install Fortran compiler on Windows
           CIBW_BEFORE_BUILD: >
