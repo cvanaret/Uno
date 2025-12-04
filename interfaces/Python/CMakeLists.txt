@@ -11,7 +11,7 @@ endif()
 
 find_library(BQPD bqpd)
 if(BQPD)
-	message(STATUS "Found BQPD")
+	message(STATUS "Found BQPD: ${BQPD}")
 	add_definitions("-D HAS_BQPD")
 else()
     message(FATAL_ERROR "BQPD not found")
