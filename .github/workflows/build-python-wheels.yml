@@ -46,12 +46,6 @@ jobs:
           CIBW_BUILD: "cp3?-*"
           MACOSX_DEPLOYMENT_TARGET: 15.0
 
-          CIBW_CMAKE_ARGS_WINDOWS: >
-            -G "MinGW Makefiles"
-            -DCMAKE_C_COMPILER=gcc
-            -DCMAKE_CXX_COMPILER=g++
-            -DCMAKE_Fortran_COMPILER=gfortran
-
           # Step 1: Download BQPD
           # and install Fortran compiler on Windows
           CIBW_BEFORE_BUILD: >
@@ -62,6 +56,12 @@ jobs:
             choco install mingw cmake -y
             choco install mingw-w64-gfortran -y
             refreshenv
+
+          CIBW_CMAKE_ARGS_WINDOWS: >
+            -G "MinGW Makefiles"
+            -DCMAKE_C_COMPILER=gcc
+            -DCMAKE_CXX_COMPILER=g++
+            -DCMAKE_Fortran_COMPILER=gfortran
 
           # Step 2: Tell scikit-build-core where the static library is
           CIBW_ENVIRONMENT: >
