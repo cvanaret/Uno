@@ -43,7 +43,7 @@ jobs:
 
       - name: Compile and install unopy
         working-directory: ${{github.workspace}}/interfaces/Python/example
-        run: pip install . -v
+        run: pip install interfaces/Python -v
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
