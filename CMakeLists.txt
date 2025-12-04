@@ -279,8 +279,8 @@ endif()
 # optional Python bindings #
 ############################
 
-set(PYBIND11_FINDPYTHON ON)
-find_package(pybind11)
+# set(PYBIND11_FINDPYTHON ON)
+find_package(pybind11 CONFIG)
 if(pybind11_DIR)
    # link-time optimization
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
