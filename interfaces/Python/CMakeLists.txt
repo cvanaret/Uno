@@ -78,7 +78,7 @@ file(GLOB PYTHON_MODULE_FILES
 add_definitions("-D PYBIND11_DETAILED_ERROR_MESSAGES")
 pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
 
-target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
+target_link_libraries(unopy PUBLIC ${BQPD} ${FORTRAN_LIBS})
 target_include_directories(unopy PUBLIC ${DIRECTORIES})
 
 install(TARGETS unopy LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX})
