@@ -64,7 +64,7 @@ jobs:
             -DCMAKE_Fortran_COMPILER=gfortran
 
           CIBW_ENVIRONMENT_WINDOWS: |
-            PATH=C:\ProgramData\mingw64\mingw64\bin;%PATH%
+            PATH=C:\ProgramData\mingw64\mingw64\bin:$PATH
 
       - uses: actions/upload-artifact@v4
         with:
