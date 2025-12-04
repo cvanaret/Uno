@@ -54,14 +54,14 @@ jobs:
 
           # Step 1: Download
           CIBW_BEFORE_BUILD: >
-            bash scripts/download_bqpd.sh
+            bash interfaces/Python/scripts/download_bqpd.sh
 
           CIBW_BEFORE_BUILD_WINDOWS: >
-            pwsh scripts/download_bqpd.ps1
+            pwsh interfaces/Python/scripts/download_bqpd.ps1
 
           # Step 2: Tell scikit-build-core where the static library is
           CIBW_ENVIRONMENT: >
-            BQPD="${{github.workspace}}/third_party/bqpd/lib/libbqpd.a"
+            BQPD="third_party/bqpd/lib/libbqpd.a"
 
           CIBW_ENVIRONMENT_WINDOWS: >
-            BQPD="${{github.workspace}}/third_party/bqpd/lib/libbqpd.a"
+            BQPD="third_party/bqpd/lib/libbqpd.a"
