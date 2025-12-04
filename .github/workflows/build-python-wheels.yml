@@ -27,10 +27,10 @@ jobs:
 
           # Step 1: Download
           CIBW_BEFORE_BUILD: >
-            bash ./interfaces/Python/scripts/download_bqpd.sh
+            bash interfaces/Python/scripts/download_bqpd.sh
 
           CIBW_BEFORE_BUILD_WINDOWS: >
-            pwsh ./interfaces/Python/scripts/download_bqpd.ps1
+            pwsh interfaces/Python/scripts/download_bqpd.ps1
 
           # Step 2: Tell scikit-build-core where the static library is
           CIBW_ENVIRONMENT: >
