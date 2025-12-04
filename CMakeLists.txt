@@ -275,31 +275,6 @@ if(AMPLSOLVER)
    include_directories(${directory})
 endif()
 
-############################
-# optional Python bindings #
-############################
-
-# set(PYBIND11_FINDPYTHON ON)
-find_package(pybind11 CONFIG)
-if(pybind11_DIR)
-   # link-time optimization
-   if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto=auto")
-   endif()
-   
-   file(GLOB PYTHON_MODULE_FILES
-      interfaces/Python/cpp_classes/*.cpp
-      interfaces/Python/python_modules/*.cpp
-      interfaces/Python/unopy.cpp
-   )
-
-   add_definitions("-D PYBIND11_DETAILED_ERROR_MESSAGES")
-   pybind11_add_module(unopy SHARED EXCLUDE_FROM_ALL $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
-   target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
-   target_include_directories(unopy PUBLIC ${DIRECTORIES})
-   install(TARGETS unopy LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX})
-endif()
-
 ##################################
 # optional GoogleTest unit tests #
 ##################################
