@@ -31,12 +31,19 @@ jobs:
         with:
           python-version: "3.11"
       
-      - name: Install Fortran compiler
+      - name: Install Fortran compiler on Windows
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: 'intel'
           version: '2025.0'
         if: matrix.os == 'windows-latest'
+
+      - name: Install Fortran compiler on macOS
+          uses: fortran-lang/setup-fortran@main
+          with:
+            compiler: 'gcc'
+            version: '13'
+          if: matrix.os == 'macos-latest'
       
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.3.0
