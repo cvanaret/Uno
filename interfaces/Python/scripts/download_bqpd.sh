@@ -22,7 +22,7 @@ case "$ARCH_NAME" in
     *) echo "Unknown architecture '$ARCH_NAME'."; exit 1;;
 esac
 
-ASSET_URL="https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-${VERSION}%2B0/BQPD.${VERSION}.${ARCH_NAME}-${OS}-libgfortran5.tar.gz"
+ASSET_URL="https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-${VERSION}%2B0/BQPD.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
 
 echo "Downloading: ${ASSET_URL}"
 curl -L -o bqpd.tar.gz "$ASSET_URL"
