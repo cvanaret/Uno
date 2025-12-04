@@ -34,10 +34,7 @@ jobs:
       - run: pip install cibuildwheel
       
       - name: Install Fortran compiler on Windows
-        uses: fortran-lang/setup-fortran@main
-        with:
-          compiler: 'intel'
-          version: '2025.0'
+        uses: msys2/setup-msys2@v2
         if: matrix.os == 'windows-latest'
 
       - name: Install Fortran compiler on macOS
