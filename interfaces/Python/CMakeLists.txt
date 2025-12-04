@@ -9,9 +9,11 @@ if(NOT DEFINED BQPD)
     message(FATAL_ERROR "BQPD must be provided to CMake.")
 endif()
 
+find_library(BQPD bqpd)
 if(NOT EXISTS "${BQPD}")
     message(FATAL_ERROR "Static library not found: ${BQPD}")
 endif()
+message(STATUS "Found BQPD")
 
 add_definitions("-D HAS_BQPD")
 message(STATUS "Fortran compiler required")
