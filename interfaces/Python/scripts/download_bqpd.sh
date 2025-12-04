@@ -18,7 +18,7 @@ esac
 ARCH_NAME="$(uname -m)"
 case "$ARCH_NAME" in
     x86_64|amd64) ARCH="x86_64";;
-    arm64|aarch64) ARCH="arm64";;
+    arm64|aarch64) ARCH="aarch64";;
     *) echo "Unknown architecture '$ARCH_NAME'."; exit 1;;
 esac
 
