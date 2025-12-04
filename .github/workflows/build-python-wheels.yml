@@ -30,6 +30,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - run: pip install cibuildwheel
       
       - name: Install Fortran compiler on Windows
         uses: fortran-lang/setup-fortran@main
@@ -44,10 +46,10 @@ jobs:
           compiler: 'gcc'
           version: '13'
         if: matrix.os == 'macos-latest'
-      
+
       - name: Build wheels
         working-directory: ${{github.workspace}}/interfaces/Python
-        uses: pypa/cibuildwheel@v3.3.0
+        run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
           CIBW_BUILD: "cp3?-*"
           CIBW_SKIP: "pp*"
@@ -65,5 +67,3 @@ jobs:
 
           CIBW_ENVIRONMENT_WINDOWS: >
             BQPD="${{github.workspace}}/third_party/bqpd/lib/libbqpd.a"
-        with:
-          output-dir: ${{github.workspace}}/wheelhouse
