@@ -44,6 +44,7 @@ jobs:
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse interfaces/Python
         env:
           CIBW_BUILD: "cp3?-*"
+          MACOSX_DEPLOYMENT_TARGET: 15.0
 
           # install Fortran compiler on Windows
           CIBW_BEFORE_ALL_WINDOWS: >
