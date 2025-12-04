@@ -75,6 +75,9 @@ jobs:
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: interfaces/Python
     steps:
       - uses: actions/checkout@v5
 
