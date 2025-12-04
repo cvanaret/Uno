@@ -51,13 +51,13 @@ jobs:
           CIBW_BEFORE_BUILD: >
             bash interfaces/Python/scripts/download_bqpd.sh
 
-          CIBW_BEFORE_BUILD_WINDOWS: >
+          CIBW_BEFORE_BUILD_WINDOWS: |
             pwsh interfaces/Python/scripts/download_bqpd.ps1
-            choco install mingw cmake -y
-            choco install mingw-w64-gfortran -y
+            choco install mingw cmake -y -v
+            choco install mingw-w64-gfortran -y -v
             refreshenv
 
-          CIBW_CMAKE_ARGS_WINDOWS: >
+          CIBW_CMAKE_ARGS_WINDOWS: |
             -G "MinGW Makefiles"
             -DCMAKE_C_COMPILER=gcc
             -DCMAKE_CXX_COMPILER=g++
