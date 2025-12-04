@@ -52,9 +52,9 @@ jobs:
             bash interfaces/Python/scripts/download_bqpd.sh
 
           CIBW_BEFORE_BUILD_WINDOWS: |
-            pwsh interfaces/Python/scripts/download_bqpd.ps1
-            choco install mingw cmake -y -v
-            choco install mingw-w64-gfortran -y -v
+            pwsh interfaces/Python/scripts/download_bqpd.ps1 &&
+            choco install mingw cmake -y -v &&
+            choco install mingw-w64-gfortran -y -v &&
             refreshenv
 
           CIBW_CMAKE_ARGS_WINDOWS: |
