@@ -83,11 +83,10 @@ if __name__ == '__main__':
 	model.set_user_data(user_data)
 	
 	uno_solver = unopy.UnoSolver()
-	uno_solver.set_preset("filtersqp")
-	#uno_solver.set_option("print_subproblem", "yes")
-	#uno_solver.set_option("print_solution", "yes")
-	#uno_solver.set_option("logger", "DEBUG3")
 	
+	# solve with the filtersqp preset
+	uno_solver.set_preset("filtersqp")
+	uno_solver.set_option("QP_solver", "BQPD")
 	result = uno_solver.optimize(model)
 
 	# optimization summary
@@ -110,3 +109,8 @@ if __name__ == '__main__':
 	print("Number of Jacobian evaluations:", result.number_jacobian_evaluations)
 	print("Number of Hessian evaluations:", result.number_hessian_evaluations)
 	print("Number of subproblems solved:", result.number_subproblems_solved)
+	
+	# solve with the ipopt preset
+	uno_solver.set_preset("ipopt")
+	uno_solver.set_option("linear_solver", "MUMPS")
+	result = uno_solver.optimize(model)
