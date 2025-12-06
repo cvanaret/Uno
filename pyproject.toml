@@ -12,6 +12,7 @@ requires-python = ">=3.8"
 description = "Pybind11 bindings of Uno"
 
 [tool.scikit-build]
+cmake.source-dir = "interfaces/Python"
 cmake.verbose = true
 
 # Add support for passing BQPD from environment to CMake
