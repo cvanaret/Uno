@@ -28,19 +28,19 @@ jobs:
       MACOSX_DEPLOYMENT_TARGET: 15.0
 
       # download the dependencies in interfaces/Python/third_party/
-      CIBW_BEFORE_BUILD: ./interfaces/Python/scripts/download_dependencies.sh
+      CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
       CIBW_BEFORE_BUILD_WINDOWS: |
-        "C:\Program Files\Git\bin\bash.exe" -lc "./interfaces/Python/scripts/download_dependencies.sh"
+        pwsh interfaces/Python/scripts/download_dependencies.ps1
         choco install mingw -y -v
         choco install mingw-w64-gcc mingw-w64-gcc-g++ mingw-w64-gfortran -y -v
         
       CIBW_BEFORE_BUILD_LINUX: |
-        ./interfaces/Python/scripts/download_dependencies.sh
+        bash interfaces/Python/scripts/download_dependencies.sh
         sudo apt-get update
         sudo apt-get install -y gcc g++ gfortran
         
       CIBW_BEFORE_BUILD_MACOS: |
-        ./interfaces/Python/scripts/download_dependencies.sh
+        bash interfaces/Python/scripts/download_dependencies.sh
         brew install gcc
 
       CIBW_CMAKE_ARGS_WINDOWS: |
