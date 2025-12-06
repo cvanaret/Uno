@@ -16,5 +16,5 @@ cmake.source-dir = "interfaces/Python"
 cmake.verbose = true
 
 # Add support for passing BQPD from environment to CMake
-cmake.define = { BQPD = "third_party/bqpd/lib/libbqpd.a" }
+cmake.define = { BQPD = "interfaces/Python/third_party/bqpd/lib/libbqpd.a" }
 # cmake -DBQPD=/path/.../libbqpd.a
