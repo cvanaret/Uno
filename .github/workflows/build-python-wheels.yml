@@ -78,6 +78,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Download dependencies
+        run: bash interfaces/Python/scripts/download_bqpd.sh
+
       - name: Build sdist
         run: pipx run build --sdist
 
