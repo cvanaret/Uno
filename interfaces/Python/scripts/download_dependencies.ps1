@@ -30,10 +30,10 @@ $asset_name = "BQPD.$version.$ARCH-$OS-libgfortran5.tar.gz"
 $asset_url = "$repo/$asset_name"
 Write-Output "Downloading: $asset_url"
 New-Item -ItemType Directory -Force -Path "bqpd" | Out-Null
-Set-Location "$third_party_dir/bqpd"
+Set-Location "bqpd"
 Invoke-WebRequest -Uri $asset_url -OutFile "$asset_name"
 tar -xzvf "$asset_name"
-Set-Location "$third_party_dir"
+Pop-Location
 
 # download HiGHS
 $version = "v1.11.0"
@@ -43,6 +43,6 @@ $asset_url = "$repo/$asset_name"
 Write-Output "Downloading: $asset_url"
 New-Item -ItemType Directory -Force -Path "highs" | Out-Null
 Set-Location "$third_party_dir/highs"
-Invoke-WebRequest -Uri $asset_url -OutFile "highs/$asset_name"
+Invoke-WebRequest -Uri $asset_url -OutFile "$asset_name"
 tar -xzvf "highs/$asset_name"
-Set-Location "$third_party_dir"
+Pop-Location
