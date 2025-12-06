@@ -38,7 +38,17 @@ jobs:
         -DCMAKE_Fortran_COMPILER=gfortran
 
       CIBW_ENVIRONMENT_WINDOWS: |
-        PATH=C:\ProgramData\mingw64\mingw64\bin:$PATH
+        PATH=C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin:$PATH
+
+      CC_LINUX: gcc
+      CXX_LINUX: g++
+      FC_LINUX: gfortran
+      CC_MACOS: gcc
+      CXX_MACOS: g++
+      FC_MACOS: gfortran
+      CC_WINDOWS: gcc
+      CXX_WINDOWS: g++
+      FC_WINDOWS: gfortran
 
     steps:
       - uses: actions/checkout@v5
