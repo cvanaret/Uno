@@ -42,7 +42,7 @@ $asset_name = "HiGHS_static.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
 $asset_url = "$repo/$asset_name"
 Write-Output "Downloading: $asset_url"
 New-Item -ItemType Directory -Force -Path "highs" | Out-Null
-Set-Location "$third_party_dir/highs"
+Set-Location "highs"
 Invoke-WebRequest -Uri $asset_url -OutFile "$asset_name"
-tar -xzvf "highs/$asset_name"
+tar -xzvf "$asset_name"
 Pop-Location
