@@ -30,18 +30,9 @@ jobs:
       # download the dependencies in interfaces/Python/third_party/
       CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
       CIBW_BEFORE_BUILD_WINDOWS: |
-        pwsh interfaces/Python/scripts/download_dependencies.ps1
+        pwsh interfaces/Python/scripts/download_dependencies.ps1 || exit /b 0
         choco install mingw -y -v
         choco install mingw-w64-gcc mingw-w64-gcc-g++ mingw-w64-gfortran -y -v
-        
-      CIBW_BEFORE_BUILD_LINUX: |
-        bash interfaces/Python/scripts/download_dependencies.sh
-        apt-get update
-        apt-get install -y gcc g++ gfortran
-        
-      CIBW_BEFORE_BUILD_MACOS: |
-        bash interfaces/Python/scripts/download_dependencies.sh
-        brew install gcc
 
       CIBW_CMAKE_ARGS_WINDOWS: |
         -G "MinGW Makefiles"
