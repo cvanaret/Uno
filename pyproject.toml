@@ -15,6 +15,7 @@ description = "Pybind11 bindings of Uno"
 cmake.source-dir = "interfaces/Python"
 cmake.verbose = true
 
-# Add support for passing BQPD from environment to CMake
-cmake.define = { BQPD = "interfaces/Python/third_party/bqpd/lib/libbqpd.a" }
+# support for passing paths to dependencies from environment to CMake
+[tool.scikit-build.cmake.define]
+BQPD = "interfaces/Python/third_party/bqpd/lib/libbqpd.a"
 # cmake -DBQPD=/path/.../libbqpd.a
