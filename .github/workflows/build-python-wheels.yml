@@ -36,8 +36,8 @@ jobs:
         
       CIBW_BEFORE_BUILD_LINUX: |
         bash interfaces/Python/scripts/download_dependencies.sh
-        sudo apt-get update
-        sudo apt-get install -y gcc g++ gfortran
+        apt-get update
+        apt-get install -y gcc g++ gfortran
         
       CIBW_BEFORE_BUILD_MACOS: |
         bash interfaces/Python/scripts/download_dependencies.sh
