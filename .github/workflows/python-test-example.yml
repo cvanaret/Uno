@@ -51,7 +51,6 @@ jobs:
           tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C interfaces/Python/third_party/bqpd
 
       - name: Compile and install unopy
-        working-directory: ${{github.workspace}}/interfaces/Python
         run: pip install . -v
 
       - name: Run example

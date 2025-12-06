@@ -29,3 +29,4 @@ curl -L -o bqpd.tar.gz "$ASSET_URL"
 tar xf bqpd.tar.gz
 
 ls -l
+pwd
