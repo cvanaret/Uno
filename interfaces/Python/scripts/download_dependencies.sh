@@ -29,6 +29,7 @@ mkdir bqpd && cd bqpd
 curl -L -o bqpd.tar.gz "$ASSET_URL"
 tar xf bqpd.tar.gz
 ls -l
+pwd
 cd ..
 
 # download MUMPS
@@ -39,4 +40,5 @@ mkdir mumps && cd mumps
 curl -L -o mumps.tar.gz "$ASSET_URL"
 tar xf mumps.tar.gz
 ls -l
+pwd
 cd ..
