@@ -47,13 +47,13 @@ jobs:
           CIBW_BUILD: "cp3?-*"
           MACOSX_DEPLOYMENT_TARGET: 15.0
 
-          # download BQPD and put the library in interfaces/Python/third_party/bqpd/lib/
+          # download the dependencies in interfaces/Python/third_party/
           CIBW_BEFORE_BUILD: >
-            bash interfaces/Python/scripts/download_bqpd.sh
+            bash interfaces/Python/scripts/download_dependencies.sh
 
           # install Fortran compiler on Windows
           CIBW_BEFORE_BUILD_WINDOWS: |
-            pwsh interfaces/Python/scripts/download_bqpd.ps1
+            pwsh interfaces/Python/scripts/download_dependencies.ps1
             choco install mingw cmake -y -v
             choco install mingw-w64-gfortran -y -v
             refreshenv
@@ -79,7 +79,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Download dependencies
-        run: bash interfaces/Python/scripts/download_bqpd.sh
+        run: bash interfaces/Python/scripts/download_dependencies.sh
 
       - name: Build sdist
         run: pipx run build --sdist
