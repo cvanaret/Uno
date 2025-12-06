@@ -1,0 +1,52 @@
+name: unopy on Python example
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        architecture: [x64]
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        # This is the version of the action for setting up Python, not the Python version.
+        uses: actions/setup-python@v5
+        with:
+          # Semantic version range syntax or exact version of a Python version
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.architecture }}
+          
+      - name: Install pybind11 on Linux
+        if: runner.os == 'Linux'
+        run: sudo apt install -y python3-pybind11 pybind11-dev
+
+      - name: Download dependencies
+        run: bash interfaces/Python/scripts/download_dependencies.sh
+
+      - name: Compile and install unopy
+        run: pip install . -v
+
+      - name: Run example
+        working-directory: ${{github.workspace}}/interfaces/Python/example
+        run: python example_hs015.py
