@@ -12,7 +12,7 @@ requires-python = ">=3.8"
 description = "Pybind11 bindings of Uno"
 
 [tool.scikit-build]
-cmake.source-dir = "interfaces/Python"
+cmake.source-dir = "."
 cmake.verbose = true
 
 # support for passing paths to dependencies from environment to CMake
