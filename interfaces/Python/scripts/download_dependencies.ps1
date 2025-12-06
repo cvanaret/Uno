@@ -1,21 +1,12 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# Destination directory for third-party static libs
-$dest = "interfaces/Python/third_party/bqpd"
-New-Item -ItemType Directory -Force -Path $dest | Out-Null
-Set-Location $dest
-
-# ---------------------------------
-
 # --- Detect architecture ---
 $arch = $env:PROCESSOR_ARCHITECTURE
-
 # If running under WOW64 (x86 on x64), detect real architecture
 if ($arch -eq "x86" -and $env:PROCESSOR_ARCHITEW6432) {
     $arch = $env:PROCESSOR_ARCHITEW6432
 }
-
 switch ($arch.ToLower()) {
     "amd64" { $ARCH = "x86_64" }
     "arm64" { $ARCH = "aarch64" }
@@ -24,24 +15,30 @@ switch ($arch.ToLower()) {
         exit 1
     }
 }
-
-Write-Output "Detected architecture: $ARCH"
-
-# --- Construct archive URL ---
-$version = "v1.0.0"
 $OS = "w64-mingw32"
-$archiveName = "BQPD.$version.$ARCH-$OS-libgfortran5.tar.gz"
-$assetUrl = "https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-$version%2B0/$archiveName"
-Write-Output "Downloading archive: $assetUrl"
+Write-Output "Detected architecture: $ARCH $OS"
 
-Invoke-WebRequest -Uri $assetUrl -OutFile $archiveName
+# destination directory for third-party static libs
+$third_party_dir = "interfaces/Python/third_party"
+New-Item -ItemType Directory -Force -Path $third_party_dir | Out-Null
+Set-Location $third_party_dir
 
-# ---------- Extract Archive ----------
-Write-Output "Extracting tar.gz archive..."
-tar -xzf $archiveName
+# download BQPD
+$version = "v1.0.0"
+$repo = "https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-$version%2B0"
+$asset_name = "BQPD.$version.$ARCH-$OS-libgfortran5.tar.gz"
+$asset_url = "$repo/$asset_name"
+Write-Output "Downloading: $asset_url"
+New-Item -ItemType Directory -Force -Path "bqpd" | Out-Null
+Invoke-WebRequest -Uri $asset_url -OutFile "bqpd/$asset_name"
+tar -xzvf "bqpd/$asset_name"
 
-# ---------- Show results ----------
-Write-Output "Contents extracted:"
-Get-ChildItem -Force
-
-Write-Output "`nExpected result: libbqpd.a should now be present in $dest/lib"
+# download HiGHS
+$version = "v1.11.0"
+$repo = "https://github.com/amontoison/HiGHS_static_jll.jl/releases/download/HiGHS_static-${VERSION}%2B0"
+$asset_name = "HiGHS_static.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
+$asset_url = "$repo/$asset_name"
+Write-Output "Downloading: $asset_url"
+New-Item -ItemType Directory -Force -Path "highs" | Out-Null
+Invoke-WebRequest -Uri $asset_url -OutFile "highs/$asset_name"
+tar -xzvf "highs/$asset_name"
