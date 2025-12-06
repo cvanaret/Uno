@@ -29,7 +29,7 @@ jobs:
 
       # download the dependencies in interfaces/Python/third_party/
       CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
-      CIBW_BEFORE_BUILD_WINDOWS: pwsh build_windows.ps1
+      CIBW_BEFORE_BUILD_WINDOWS: pwsh interfaces/Python/scripts/build_windows.ps1
 
       CIBW_CMAKE_ARGS_WINDOWS: |
         -G "MinGW Makefiles"
