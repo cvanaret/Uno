@@ -298,6 +298,7 @@ if(SKBUILD)
    add_definitions("-D PYBIND11_DETAILED_ERROR_MESSAGES")
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
 
+   message(STATUS "Libraries: ${LIBRARIES}")
    target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    target_include_directories(unopy PUBLIC ${DIRECTORIES})
 

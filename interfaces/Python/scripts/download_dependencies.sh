@@ -23,9 +23,9 @@ cd interfaces/Python/third_party
 
 # download BQPD
 VERSION="v1.0.0"
-REPO = "https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-${VERSION}%2B0"
-ASSET_NAME = "BQPD.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
-ASSET_URL = "${REPO}/${ASSET_NAME}"
+REPO="https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-${VERSION}%2B0"
+ASSET_NAME="BQPD.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
+ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 mkdir bqpd && cd bqpd
 curl -L -o bqpd.tar.gz "$ASSET_URL"
@@ -35,8 +35,8 @@ cd ..
 
 # download MUMPS
 VERSION="v5.8.0"
-REPO = "https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/MUMPS_static-${VERSION}%2B0"
-ASSET_NAME = "MUMPS_static.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
+REPO="https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/MUMPS_static-${VERSION}%2B0"
+ASSET_NAME="MUMPS_static.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 mkdir mumps && cd mumps
@@ -47,8 +47,8 @@ cd ..
 
 # download HiGHS
 VERSION="v1.11.0"
-REPO = "https://github.com/amontoison/HiGHS_static_jll.jl/releases/download/HiGHS_static-${VERSION}%2B0"
-ASSET_NAME = "HiGHS_static.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
+REPO="https://github.com/amontoison/HiGHS_static_jll.jl/releases/download/HiGHS_static-${VERSION}%2B0"
+ASSET_NAME="HiGHS_static.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 mkdir highs && cd highs
