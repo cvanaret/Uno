@@ -27,8 +27,7 @@ ASSET_URL="https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-${VERSI
 echo "Downloading: ${ASSET_URL}"
 mkdir bqpd && cd bqpd
 curl -L -o bqpd.tar.gz "$ASSET_URL"
-tar xf bqpd.tar.gz
-ls -l
+tar -xzvf bqpd.tar.gz
 pwd
 cd ..
 
@@ -38,7 +37,18 @@ ASSET_URL="https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/M
 echo "Downloading: ${ASSET_URL}"
 mkdir mumps && cd mumps
 curl -L -o mumps.tar.gz "$ASSET_URL"
-tar xf mumps.tar.gz
-ls -l
+tar -xzvf mumps.tar.gz
+pwd
+cd ..
+
+
+
+# download HiGHS
+VERSION="v1.11.0"
+ASSET_URL="https://github.com/amontoison/HiGHS_static_jll.jl/releases/download/HiGHS_static-${VERSION}%2B0/HiGHS_static.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
+echo "Downloading: ${ASSET_URL}"
+mkdir highs && cd highs
+curl -L -o highs.tar.gz "$ASSET_URL"
+tar -xzvf highs.tar.gz
 pwd
 cd ..
