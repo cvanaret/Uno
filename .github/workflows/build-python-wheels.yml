@@ -23,6 +23,34 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      CIBW_BUILD: "cp3?-*"
+      MACOSX_DEPLOYMENT_TARGET: 15.0
+
+      # download the dependencies in interfaces/Python/third_party/
+      CIBW_BEFORE_BUILD: ./interfaces/Python/scripts/download_dependencies.sh
+      CIBW_BEFORE_BUILD_WINDOWS: |
+        "C:\Program Files\Git\bin\bash.exe" -lc "./interfaces/Python/scripts/download_dependencies.sh"
+        choco install mingw -y -v
+        choco install mingw-w64-gcc mingw-w64-gcc-g++ mingw-w64-gfortran -y -v
+        
+      CIBW_BEFORE_BUILD_LINUX: |
+        ./interfaces/Python/scripts/download_dependencies.sh
+        sudo apt-get update
+        sudo apt-get install -y gcc g++ gfortran
+        
+      CIBW_BEFORE_BUILD_MACOS: |
+        ./interfaces/Python/scripts/download_dependencies.sh
+        brew install gcc
+
+      CIBW_CMAKE_ARGS_WINDOWS: |
+        -G "MinGW Makefiles"
+        -DCMAKE_C_COMPILER=gcc
+        -DCMAKE_CXX_COMPILER=g++
+        -DCMAKE_Fortran_COMPILER=gfortran
+
+      CIBW_ENVIRONMENT_WINDOWS: |
+        PATH=C:\ProgramData\mingw64\mingw64\bin:$PATH
 
     steps:
       - uses: actions/checkout@v5
@@ -42,29 +70,6 @@ jobs:
 
       - name: Build wheels
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
-        env:
-          CIBW_BUILD: "cp3?-*"
-          MACOSX_DEPLOYMENT_TARGET: 15.0
-
-          # download the dependencies in interfaces/Python/third_party/
-          CIBW_BEFORE_BUILD: >
-            bash interfaces/Python/scripts/download_dependencies.sh
-
-          # install Fortran compiler on Windows
-          CIBW_BEFORE_BUILD_WINDOWS: |
-            pwsh interfaces/Python/scripts/download_dependencies.ps1
-            choco install mingw cmake -y -v
-            choco install mingw-w64-gfortran -y -v
-            refreshenv
-
-          CIBW_CMAKE_ARGS_WINDOWS: |
-            -G "MinGW Makefiles"
-            -DCMAKE_C_COMPILER=gcc
-            -DCMAKE_CXX_COMPILER=g++
-            -DCMAKE_Fortran_COMPILER=gfortran
-
-          CIBW_ENVIRONMENT_WINDOWS: |
-            PATH=C:\ProgramData\mingw64\mingw64\bin:$PATH
 
       - uses: actions/upload-artifact@v4
         with:
