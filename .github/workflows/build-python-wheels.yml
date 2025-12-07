@@ -49,12 +49,6 @@ jobs:
           # download the dependencies in interfaces/Python/third_party/
           CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
 
-          CIBW_ENVIRONMENT: |
-            MY_BQPD=${GITHUB_WORKSPACE}/interfaces/Python/third_party/bqpd/lib/libbqpd.a
-            
-          CMAKE_ARGS: |
-            -DBQPD=$MY_BQPD
-
       - uses: actions/upload-artifact@v4
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
