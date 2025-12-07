@@ -23,7 +23,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-    # windows-latest
 
     steps:
       - uses: actions/checkout@v5
@@ -48,24 +47,7 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: 15.0
 
           # download the dependencies in interfaces/Python/third_party/
-          CIBW_BEFORE_BUILD: >
-            bash interfaces/Python/scripts/download_dependencies.sh
-
-          # install Fortran compiler on Windows
-          CIBW_BEFORE_BUILD_WINDOWS: |
-            pwsh interfaces/Python/scripts/download_dependencies.ps1
-            choco install mingw cmake -y -v
-            choco install mingw-w64-gfortran -y -v
-            refreshenv
-
-          CIBW_CMAKE_ARGS_WINDOWS: |
-            -G "MinGW Makefiles"
-            -DCMAKE_C_COMPILER=gcc
-            -DCMAKE_CXX_COMPILER=g++
-            -DCMAKE_Fortran_COMPILER=gfortran
-
-          CIBW_ENVIRONMENT_WINDOWS: |
-            PATH=C:\ProgramData\mingw64\mingw64\bin:$PATH
+          CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
 
       - uses: actions/upload-artifact@v4
         with:
