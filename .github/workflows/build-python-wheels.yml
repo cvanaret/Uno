@@ -31,9 +31,6 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install BLAS and LAPACK
-        run: sudo apt install -y libblas-dev liblapack-dev
-
       - run: pip install cibuildwheel
 
       - name: Install Fortran compiler on macOS
