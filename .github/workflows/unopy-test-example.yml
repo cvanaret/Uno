@@ -40,10 +40,7 @@ jobs:
       - name: Install pybind11 on Linux
         if: runner.os == 'Linux'
         run: sudo apt install -y python3-pybind11 pybind11-dev
-
-      - name: Download dependencies
-        run: bash interfaces/Python/scripts/download_dependencies.sh
-
+        
       - name: Compile and install unopy
         run: pip install . -v
 

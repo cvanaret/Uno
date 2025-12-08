@@ -16,19 +16,22 @@ cmake.source-dir = "."
 cmake.verbose = true
 wheel.cmake = true
 
+[tool.cibuildwheel]
+before-build = "bash interfaces/Python/scripts/download_dependencies.sh"
+
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
 # BQPD (cmake -DBQPD=/path/.../libbqpd.a)
 BQPD = "interfaces/Python/third_party/bqpd/lib/libbqpd.a"
 # MUMPS
-MUMPS_INCLUDE_DIR = "interfaces/Python/third_party/mumps/include"
-METIS_INCLUDE_DIR = "interfaces/Python/third_party/mumps/include"
-METIS_LIBRARY = "interfaces/Python/third_party/mumps/lib/libmetis.a"
-MUMPS_LIBRARY = "interfaces/Python/third_party/mumps/lib/libdmumps.a"
-MUMPS_COMMON_LIBRARY = "interfaces/Python/third_party/mumps/lib/libmumps_common.a"
-MUMPS_PORD_LIBRARY = "interfaces/Python/third_party/mumps/lib/libpord.a"
-MUMPS_MPISEQ_LIBRARY = "interfaces/Python/third_party/mumps/lib/libmpiseq.a"
-BLAS_LIBRARIES = "$(pwd)/interfaces/Python/third_party/mumps/lib/libblas.a"
-LAPACK_LIBRARIES = "$(pwd)/interfaces/Python/third_party/mumps/lib/liblapack.a"
+#MUMPS_INCLUDE_DIR = "interfaces/Python/third_party/mumps/include"
+#METIS_INCLUDE_DIR = "interfaces/Python/third_party/mumps/include"
+#METIS_LIBRARY = "interfaces/Python/third_party/mumps/lib/libmetis.a"
+#MUMPS_LIBRARY = "interfaces/Python/third_party/mumps/lib/libdmumps.a"
+#MUMPS_COMMON_LIBRARY = "interfaces/Python/third_party/mumps/lib/libmumps_common.a"
+#MUMPS_PORD_LIBRARY = "interfaces/Python/third_party/mumps/lib/libpord.a"
+#MUMPS_MPISEQ_LIBRARY = "interfaces/Python/third_party/mumps/lib/libmpiseq.a"
+#BLAS_LIBRARIES = "$(pwd)/interfaces/Python/third_party/mumps/lib/libblas.a"
+#LAPACK_LIBRARIES = "$(pwd)/interfaces/Python/third_party/mumps/lib/liblapack.a"
 # HiGHS
 HIGHS_DIR = "interfaces/Python/third_party/highs/lib/cmake/highs"
