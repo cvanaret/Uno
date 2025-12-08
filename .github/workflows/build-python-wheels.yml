@@ -32,7 +32,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install BLAS and LAPACK (Linux)
-        run: sudo apt install -y libblas-dev liblapack-dev
+        run: sudo apt install -y libopenblas-dev liblapack-dev
         if: matrix.os == 'ubuntu-latest'
 
       - name: Install BLAS and LAPACK (macOS)
