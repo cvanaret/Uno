@@ -31,10 +31,6 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install BLAS and LAPACK (macOS)
-        run: brew install lapack openblas
-        if: matrix.os == 'macos-latest'
-
       - run: pip install cibuildwheel
 
       - name: Install Fortran compiler on macOS
@@ -52,10 +48,6 @@ jobs:
 
           # download the dependencies in interfaces/Python/third_party/
           CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
-
-          CIBW_BEFORE_BUILD_LINUX: >
-            bash interfaces/Python/scripts/download_dependencies.sh &&
-            yum install -y openblas-devel lapack-devel
 
       - uses: actions/upload-artifact@v4
         with:

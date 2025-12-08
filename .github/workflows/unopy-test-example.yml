@@ -44,9 +44,6 @@ jobs:
       - name: Download dependencies
         run: bash interfaces/Python/scripts/download_dependencies.sh
 
-      - name: Install BLAS and LAPACK
-        run: sudo apt update && sudo apt install -y libopenblas-dev liblapack-dev
-
       - name: Compile and install unopy
         run: pip install . -v
 
