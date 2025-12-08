@@ -275,18 +275,20 @@ if(AMPLSOLVER)
    include_directories(${directory})
 endif()
 
-############################
-# optional Python bindings #
-############################
+#############################
+# unopy (pybind11 bindings) #
+#############################
+if(SKBUILD)
+   message(STATUS "Building Python extension (SKBUILD detected).")
 
-set(PYBIND11_FINDPYTHON ON)
-find_package(pybind11)
-if(pybind11_DIR)
+   # set(PYBIND11_FINDPYTHON ON)
+   find_package(pybind11 CONFIG REQUIRED)
+
    # link-time optimization
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto=auto")
    endif()
-   
+
    file(GLOB PYTHON_MODULE_FILES
       interfaces/Python/cpp_classes/*.cpp
       interfaces/Python/python_modules/*.cpp
@@ -294,9 +296,14 @@ if(pybind11_DIR)
    )
 
    add_definitions("-D PYBIND11_DETAILED_ERROR_MESSAGES")
-   pybind11_add_module(unopy SHARED EXCLUDE_FROM_ALL $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
+   pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
+
    target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    target_include_directories(unopy PUBLIC ${DIRECTORIES})
+
+   install(TARGETS unopy LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX})
+else()
+   message(STATUS "SKBUILD not detected, skipping Python extension.")
 endif()
 
 ##################################
@@ -325,9 +332,6 @@ if(TARGET uno_shared)
 endif()
 if(TARGET uno_ampl)
    list(APPEND INSTALL_TARGETS uno_ampl)
-endif()
-if(TARGET unopy)
-   list(APPEND INSTALL_TARGETS unopy)
 endif()
 install(TARGETS ${INSTALL_TARGETS}
    COMPONENT libuno

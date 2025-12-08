@@ -1,0 +1,71 @@
+name: Build Python wheels
+# https://github.com/pypa/cibuildwheel/blob/main/examples/github-minimal.yml
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v5
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install cibuildwheel
+
+      - name: Install Fortran compiler on macOS
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '13'
+        if: matrix.os == 'macos-latest'
+
+      - name: Build wheels
+        run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
+        env:
+          CIBW_BUILD: "cp3?-*"
+          MACOSX_DEPLOYMENT_TARGET: 15.0
+
+          CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ${{github.workspace}}/wheelhouse/*.whl
+
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download dependencies
+        run: bash interfaces/Python/scripts/download_dependencies.sh
+
+      - name: Build sdist
+        run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-sdist
+          path: dist/*.tar.gz
