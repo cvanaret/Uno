@@ -46,8 +46,7 @@ jobs:
           CIBW_BUILD: "cp3?-*"
           MACOSX_DEPLOYMENT_TARGET: 15.0
 
-          # download the dependencies in interfaces/Python/third_party/
-          #CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
+          CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
 
       - uses: actions/upload-artifact@v4
         with:

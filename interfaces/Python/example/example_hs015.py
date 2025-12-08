@@ -109,11 +109,6 @@ if __name__ == '__main__':
 	print("Number of Jacobian evaluations:", result.number_jacobian_evaluations)
 	print("Number of Hessian evaluations:", result.number_hessian_evaluations)
 	print("Number of subproblems solved:", result.number_subproblems_solved)
-	
-	# solve with the ipopt preset
-	#uno_solver.set_preset("ipopt")
-	#uno_solver.set_option("linear_solver", "MUMPS")
-	#result = uno_solver.optimize(model)
 
 	# solve with the filterslp preset
 	uno_solver.set_preset("filterslp")

@@ -134,14 +134,14 @@ if(HSL OR MA57)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
 
    find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES BLAS::BLAS)
+   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 endif()
 if(HSL OR MA27)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA27/MA27Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA27SolverTests.cpp)
 
    find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES BLAS::BLAS)
+   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 endif()
 
 # METIS
@@ -205,10 +205,10 @@ if(MUMPS_LIBRARY)
    list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
 
    find_package(LAPACK REQUIRED)
-   list(APPEND LIBRARIES LAPACK::LAPACK)
+   list(APPEND LIBRARIES ${LAPACK_LIBRARIES})
 
    find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES BLAS::BLAS)
+   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 
    find_package(OpenMP REQUIRED)
    list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
@@ -298,7 +298,6 @@ if(SKBUILD)
    add_definitions("-D PYBIND11_DETAILED_ERROR_MESSAGES")
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
 
-   message(STATUS "Libraries: ${LIBRARIES}")
    target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    target_include_directories(unopy PUBLIC ${DIRECTORIES})
 

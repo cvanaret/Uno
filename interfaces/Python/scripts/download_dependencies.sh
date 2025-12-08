@@ -18,8 +18,8 @@ case "$ARCH_NAME" in
 esac
 
 # create and change directory
-mkdir -p interfaces/Python/third_party
-cd interfaces/Python/third_party
+mkdir -p interfaces/Python/dependencies
+cd interfaces/Python/dependencies
 
 # download BQPD
 VERSION="v1.0.0"

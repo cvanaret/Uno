@@ -2,7 +2,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 # Destination directory for third-party static libs
-$dest = "interfaces/Python/third_party/bqpd"
+$dest = "interfaces/Python/dependencies/bqpd"
 New-Item -ItemType Directory -Force -Path $dest | Out-Null
 Set-Location $dest
 
