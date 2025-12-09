@@ -1,16 +1,12 @@
-@testset "ADNLPModel" begin
-    function testme()
-        n = 10
-        v = rand(n)
-        obj(t) = sum(abs2, t)/2 + dot(t,v)
+@testset "uno -- ADNLPModel" begin
+    n = 10
+    v = rand(n)
+    obj(t) = sum(abs2, t)/2 + dot(t,v)
 
-        nlp = ADNLPModel(obj, ones(n); backend=:generic)
-        (model, solver) = uno(nlp, false; preset="filtersqp")
-        primal_solution = Vector{Float64}(undef, nlp.meta.nvar)
-        UnoSolver.uno_get_primal_solution(solver, primal_solution)
-    end
-
-    testme()
+    nlp = ADNLPModel(obj, ones(n); backend=:generic)
+    (model, solver) = uno(nlp; preset="filtersqp")
+    primal_solution = Vector{Float64}(undef, nlp.meta.nvar)
+    UnoSolver.uno_get_primal_solution(solver, primal_solution)
 end
 
 @testset "uno_model -- uno_solver -- uno_optimize" begin
@@ -49,7 +45,7 @@ end
     end
 end
 
-@testset "uno" begin
+@testset "uno -- CUTEst" begin
     nlp = CUTEstModel{Float64}("BYRDSPHR")
     model, solver = uno(nlp, preset="filtersqp", print_solution=true)
 
