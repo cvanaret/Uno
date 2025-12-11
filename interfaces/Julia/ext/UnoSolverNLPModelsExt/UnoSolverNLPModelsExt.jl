@@ -57,7 +57,8 @@ function nlpmodels_lagrangian_hessian_operator(nlp::AbstractNLPModel{Float64, Ve
   return Hv
 end
 
-function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}}, operators_available::Bool=true)
+function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}})
+  @assert nlp.meta.grad_available && (nlp.meta.ncon == 0 || nlp.meta.jac_available)
   jrows, jcols = NLPModels.jac_structure(nlp)
   hrows, hcols = NLPModels.hess_structure(nlp)
   problem_type = nlp.meta.islp ? "LP" : "NLP"
@@ -80,10 +81,10 @@ function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}}, op
     nlpmodels_constraints,
     nlpmodels_objective_gradient,
     nlpmodels_jacobian,
-    nlpmodels_lagrangian_hessian,
-    operators_available ? nlpmodels_jacobian_operator : nothing,
-    operators_available ? nlpmodels_jacobian_transposed_operator : nothing,
-    operators_available ? nlpmodels_lagrangian_hessian_operator : nothing,
+    nlp.meta.hess_available ? nlpmodels_lagrangian_hessian : nothing,
+    nlp.meta.jprod_available ? nlpmodels_jacobian_operator : nothing,
+    nlp.meta.jtprod_available ? nlpmodels_jacobian_transposed_operator : nothing,
+    nlp.meta.hprod_available ? nlpmodels_lagrangian_hessian_operator : nothing,
     nlp,
     'L',
     1.0,
@@ -93,8 +94,8 @@ function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}}, op
   return model
 end
 
-function UnoSolver.uno(nlp::AbstractNLPModel{Float64, Vector{Float64}}, operators_available::Bool=true; kwargs...)
-  model = UnoSolver.uno_model(nlp, operators_available)
+function UnoSolver.uno(nlp::AbstractNLPModel{Float64, Vector{Float64}}; kwargs...)
+  model = UnoSolver.uno_model(nlp)
   solver = UnoSolver.uno_solver(; kwargs...)
   UnoSolver.uno_optimize(solver, model)
   return model, solver

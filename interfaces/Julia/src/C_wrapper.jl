@@ -23,7 +23,7 @@ mutable struct Model{M}
   eval_constraints::Function
   eval_gradient::Function
   eval_jacobian::Function
-  eval_hessian::Function
+  eval_hessian::Union{Function,Nothing}
   eval_Jv::Union{Function,Nothing}
   eval_Jtv::Union{Function,Nothing}
   eval_Hv::Union{Function,Nothing}
@@ -128,7 +128,7 @@ function uno_model(
   eval_constraints::Function,
   eval_gradient::Function,
   eval_jacobian::Function,
-  eval_hessian::Function,
+  eval_hessian::Union{Function,Nothing},
   eval_Jv::Union{Function,Nothing},
   eval_Jtv::Union{Function,Nothing},
   eval_Hv::Union{Function,Nothing},
@@ -163,9 +163,11 @@ function uno_model(
   flag || error("Failed to set objective and gradient via uno_set_objective.")
 
   if nnzh > 0
-    eval_hessian_c = @cfunction(uno_lagrangian_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-    flag = uno_set_lagrangian_hessian(c_model, Cint(nnzh), hessian_triangle, hrows, hcols, eval_hessian_c, lagrangian_sign)
-    flag || error("Failed to set Lagrangian Hessian via uno_set_lagrangian_hessian.")
+    if !isnothing(eval_hessian)
+      eval_hessian_c = @cfunction(uno_lagrangian_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+      flag = uno_set_lagrangian_hessian(c_model, Cint(nnzh), hessian_triangle, hrows, hcols, eval_hessian_c, lagrangian_sign)
+      flag || error("Failed to set Lagrangian Hessian via uno_set_lagrangian_hessian.")
+    end
 
     if !isnothing(eval_Hv)
       eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
