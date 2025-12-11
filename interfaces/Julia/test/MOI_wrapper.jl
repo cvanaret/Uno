@@ -53,6 +53,8 @@ function test_MOI_Test()
             # These tests hit LocallyInfeasible instead of solving
             r"^test_quadratic_SecondOrderCone_basic$",
             r"^test_quadratic_nonconvex_constraint_basic$",
+            # These tests require the support of MOI.LagrangeMultiplier
+            r"^test_VectorNonlinearOracle_LagrangeMultipliers$",
         ],
     )
     return
