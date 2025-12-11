@@ -54,7 +54,8 @@ function test_MOI_Test()
             r"^test_quadratic_SecondOrderCone_basic$",
             r"^test_quadratic_nonconvex_constraint_basic$",
             # These tests require the support of MOI.LagrangeMultiplier
-            r"^test_VectorNonlinearOracle_LagrangeMultipliers$",
+            r"^test_VectorNonlinearOracle_LagrangeMultipliers_MIN_SENSE$",
+            r"^test_VectorNonlinearOracle_LagrangeMultipliers_MAX_SENSE$",
         ],
     )
     return
