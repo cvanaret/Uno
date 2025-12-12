@@ -2,7 +2,10 @@
 
 Uno's Python bindings allows you to solve an optimization model described by callback functions.
 The Python module `unopy` is compiled via the command `make unopy` using pybind11, and is (for the moment) installed via `make install`.
-An example is available in the file [example_hs015.c](example/example_hs015.py).
+
+## Example
+
+An implementation example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.c](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/example/example_hs015.py).
 
 ### Building an optimization model
 
