@@ -1,11 +1,13 @@
-## Uno's Python bindings
+## Uno
 
-Uno's Python bindings allows you to solve an optimization model described by callback functions.
-The Python module `unopy` is compiled via the command `make unopy` using pybind11, and is (for the moment) installed via `make install`.
+Uno is a solver for nonlinearly constrained optimization that unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods.
+It breaks them down into a set of building blocks (e.g., strategies to compute descent directions and techniques to enforce globalization).
+
+`unopy`, Uno's Python interface, allows you to solve an optimization model described by callback functions.
 
 ## Example
 
-An implementation example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.c](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/example/example_hs015.py).
+An implementation example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.py](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/example/example_hs015.py).
 
 ### Building an optimization model
 
@@ -70,12 +72,14 @@ uno_solver = unopy.UnoSolver()
 
 Options can be passed to the Uno solver:
 ```python
-uno_solver.set_option("print_solution", "yes")
+uno_solver.set_option("print_solution", True)
 ```
 
-Setting a preset has Uno mimic an existing solver:
+Uno mimics the state-of-the-art solvers filterSQP and IPOPT via presets:
 ```python
 uno_solver.set_preset("filtersqp")
+# or
+uno_solver.set_preset("ipopt")
 ```
 
 ### Solving the model
