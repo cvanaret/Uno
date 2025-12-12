@@ -109,14 +109,10 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
-      if (warmstart_information.objective_changed) {
+      if (warmstart_information.new_iterate) {
          problem.evaluate_objective_gradient(current_iterate, this->gradients.data());
-      }
-      if (warmstart_information.constraints_changed) {
          problem.evaluate_constraints(current_iterate, this->constraints);
          this->evaluate_constraint_jacobian(problem, current_iterate);
-      }
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->evaluate_hessian = true;
       }
    }
