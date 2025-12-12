@@ -102,14 +102,9 @@ namespace uno {
    void COOEvaluationSpace::set_up_linear_system(Statistics& statistics, const Subproblem& subproblem,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
-      if (warmstart_information.objective_changed) {
+      if (warmstart_information.new_iterate) {
          subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data());
-      }
-      if (warmstart_information.constraints_changed) {
          subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints);
-      }
-
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
             DEBUG << "Performing symbolic analysis of the indefinite system\n";
