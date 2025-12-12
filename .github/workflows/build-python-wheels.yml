@@ -72,7 +72,10 @@ jobs:
 
   upload_pypi:
     needs: [build_wheels, build_sdist]
+    # if the latest commit message contains '[unopy] Release', trigger the upload to PyPi
     name: Upload release to TestPyPI
+    if: >-
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[unopy] Release'))
     runs-on: ubuntu-latest
     permissions:
       id-token: write
