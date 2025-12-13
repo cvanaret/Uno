@@ -38,7 +38,7 @@ jobs:
         with:
           compiler: 'gcc'
           version: '13'
-        if: matrix.os == 'macos-latest'
+        if: startsWith(matrix.os, 'macos')
 
       - name: Build wheels
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
