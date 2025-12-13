@@ -60,7 +60,9 @@ end
 function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}})
   @assert nlp.meta.grad_available && (nlp.meta.ncon == 0 || nlp.meta.jac_available)
   jrows, jcols = NLPModels.jac_structure(nlp)
-  hrows, hcols = NLPModels.hess_structure(nlp)
+  if nlp.meta.hess_available
+    hrows, hcols = NLPModels.hess_structure(nlp)
+  end
   problem_type = nlp.meta.islp ? "LP" : "NLP"
   model = UnoSolver.uno_model(
     problem_type,
@@ -74,8 +76,8 @@ function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}})
     Cint.(jrows),
     Cint.(jcols),
     nlp.meta.nnzj,
-    Cint.(hrows),
-    Cint.(hcols),
+    nlp.meta.hess_available ? Cint.(hrows) : Cint[],
+    nlp.meta.hess_available ? Cint.(hcols) : Cint[],
     nlp.meta.nnzh,
     nlpmodels_objective,
     nlpmodels_constraints,
