@@ -53,9 +53,6 @@ function test_MOI_Test()
             # These tests hit LocallyInfeasible instead of solving
             r"^test_quadratic_SecondOrderCone_basic$",
             r"^test_quadratic_nonconvex_constraint_basic$",
-            # These tests require the support of MOI.LagrangeMultiplier
-            r"^test_VectorNonlinearOracle_LagrangeMultipliers_MIN_SENSE$",
-            r"^test_VectorNonlinearOracle_LagrangeMultipliers_MAX_SENSE$",
         ],
     )
     return
@@ -898,9 +895,14 @@ function test_vector_nonlinear_oracle_optimization_min_sense()
     c_x4 = MOI.add_constraint(model, x[4], MOI.GreaterThan(0.0))
     f = MOI.VectorOfVariables(x)
     c = MOI.add_constraint(model, f, set)
+    MOI.supports(model, MOI.LagrangeMultiplierStart(), typeof(c))
+    @test MOI.get(model, MOI.LagrangeMultiplierStart(), c) === nothing
+    MOI.set(model, MOI.LagrangeMultiplierStart(), c, [-0.5, 0.7])
+    @test MOI.get(model, MOI.LagrangeMultiplierStart(), c) == [-0.5, 0.7]
     log_x = MOI.ScalarNonlinearFunction(:log, Any[x[1]])
     log_x_minus_t = MOI.ScalarNonlinearFunction(:-, Any[log_x, t])
     c_snf = MOI.add_constraint(model, log_x_minus_t, MOI.GreaterThan(0.0))
+    MOI.set(model, MOI.ConstraintDualStart(), c_snf, 1.0)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     F = MOI.ScalarAffineFunction{Float64}
     MOI.set(model, MOI.ObjectiveFunction{F}(), -1.0 * t)
@@ -916,10 +918,14 @@ function test_vector_nonlinear_oracle_optimization_min_sense()
     @test ≈(c_sol, [1 / sqrt(2), 1 / sqrt(2), 1.0, 0.0]; atol)
     c_dual = MOI.get(model, MOI.ConstraintDual(), c)
     @test ≈(c_dual, [-sqrt(2), 0.0, 0.5, -1 / sqrt(2)]; atol)
+    c_lambda = MOI.get(model, MOI.LagrangeMultiplier(), c)
+    @test ≈(c_lambda, [-0.5, 1 / sqrt(2)]; atol)
     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x3), -0.5; atol)
     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_x4), 1 / sqrt(2); atol)
     @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c_snf), 0.0; atol)
     @test ≈(MOI.get(model, MOI.ConstraintDual(), c_snf), 1.0; atol)
+    MOI.set(model, MOI.LagrangeMultiplierStart(), c, nothing)
+    @test MOI.get(model, MOI.LagrangeMultiplierStart(), c) === nothing
     return
 end
 
