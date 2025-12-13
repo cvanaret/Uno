@@ -51,8 +51,8 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     vector_nonlinear_oracle_constraints::Vector{Tuple{MOI.VectorOfVariables,_VectorNonlinearOracleCache}}
     jrows::Vector{Cint}
     jcols::Vector{Cint}
-    hrows::Union{Nothing,Vector{Cint}}
-    hcols::Union{Nothing,Vector{Cint}}
+    hrows::Vector{Cint}
+    hcols::Vector{Cint}
     needs_new_inner::Bool
     hess_available::Bool
     jprod_available::Bool
@@ -88,8 +88,8 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
             Tuple{MOI.VectorOfVariables,_VectorNonlinearOracleCache}[],
             Cint[],
             Cint[],
-            nothing,
-            nothing,
+            Cint[],
+            Cint[],
             true,
             false,
             false,
@@ -153,8 +153,8 @@ function MOI.empty!(model::Optimizer)
     empty!(model.vector_nonlinear_oracle_constraints)
     model.jrows = Cint[]
     model.jcols = Cint[]
-    model.hrows = nothing
-    model.hcols = nothing
+    model.hrows = Cint[]
+    model.hcols = Cint[]
     model.needs_new_inner = true
     model.hess_available = false
     model.jprod_available = false
