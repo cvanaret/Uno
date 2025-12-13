@@ -49,6 +49,15 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     nlp_model::Union{Nothing,MOI.Nonlinear.Model}
     ad_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation
     vector_nonlinear_oracle_constraints::Vector{Tuple{MOI.VectorOfVariables,_VectorNonlinearOracleCache}}
+    jrows::Vector{Cint}
+    jcols::Vector{Cint}
+    hrows::Union{Nothing,Vector{Cint}}
+    hcols::Union{Nothing,Vector{Cint}}
+    needs_new_inner::Bool
+    hess_available::Bool
+    jprod_available::Bool
+    jtprod_available::Bool
+    hprod_available::Bool
     problem_type::String
 
     function Optimizer(; kwargs...)
@@ -77,6 +86,15 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
             nothing,
             MOI.Nonlinear.SparseReverseMode(),
             Tuple{MOI.VectorOfVariables,_VectorNonlinearOracleCache}[],
+            Cint[],
+            Cint[],
+            nothing,
+            nothing,
+            true,
+            false,
+            false,
+            false,
+            false,
             "",
         )
     end
@@ -133,6 +151,15 @@ function MOI.empty!(model::Optimizer)
     model.nlp_model = nothing
     # SKIP: model.ad_backend
     empty!(model.vector_nonlinear_oracle_constraints)
+    model.jrows = Cint[]
+    model.jcols = Cint[]
+    model.hrows = nothing
+    model.hcols = nothing
+    model.needs_new_inner = true
+    model.hess_available = false
+    model.jprod_available = false
+    model.jtprod_available = false
+    model.hprod_available = false
     model.problem_type = ""
     return
 end
@@ -403,7 +430,7 @@ function MOI.set(
     set::S,
 ) where {S<:_SETS}
     MOI.set(model.variables, MOI.ConstraintSet(), ci, set)
-    model.inner = nothing
+    model.needs_new_inner = true
     model.solver = nothing
     return
 end
@@ -485,7 +512,7 @@ function MOI.set(
     S<:_SETS,
 }
     MOI.set(model.qp_data, MOI.ConstraintSet(), ci, set)
-    model.inner = nothing
+    model.needs_new_inner = true
     model.solver = nothing
     return
 end
@@ -629,7 +656,7 @@ function MOI.set(
     index = MOI.Nonlinear.ConstraintIndex(ci.value)
     func = model.nlp_model[index].expression
     model.nlp_model.constraints[index] = MOI.Nonlinear.Constraint(func, set)
-    model.inner = nothing
+    model.needs_new_inner = true
     model.solver = nothing
     return
 end
@@ -999,7 +1026,7 @@ function MOI.set(
     sense::MOI.OptimizationSense,
 )
     model.sense = sense
-    model.inner = nothing
+    model.needs_new_inner = true
     model.solver = nothing
     return
 end
@@ -1307,6 +1334,11 @@ function _setup_model(model::Optimizer)
     end
     MOI.initialize(model.nlp_data.evaluator, init_feat)
 
+    model.hess_available = has_hessian
+    model.jprod_available = has_jacobian_operator && !has_oracle
+    model.jtprod_available = has_jacobian_operator && !has_oracle
+    model.hprod_available = has_hessian_operator && !has_oracle
+
     jacobian_sparsity = MOI.jacobian_structure(model)
     nnzj = length(jacobian_sparsity)
     jrows = Vector{Cint}(undef, nnzj)
@@ -1314,6 +1346,8 @@ function _setup_model(model::Optimizer)
     for i in 1:nnzj
         jrows[i], jcols[i] = jacobian_sparsity[i]
     end
+    model.jrows = jrows
+    model.jcols = jcols
 
     hessian_sparsity = has_hessian ? MOI.hessian_lagrangian_structure(model) : Tuple{Int,Int}[]
     nnzh = length(hessian_sparsity)
@@ -1322,6 +1356,9 @@ function _setup_model(model::Optimizer)
     for i in 1:nnzh
         hrows[i], hcols[i] = hessian_sparsity[i]
     end
+    model.hrows = hrows
+    model.hcols = hcols
+
     if has_quadratic_constraints || has_nlp_constraints || has_nlp_objective
         model.problem_type = "NLP"
     elseif model.qp_data.objective_function_type == _kFunctionTypeScalarQuadratic
@@ -1333,6 +1370,27 @@ function _setup_model(model::Optimizer)
     if isempty(hessian_sparsity)
         model.problem_type = "LP"
     end
+    model.needs_new_inner = true
+    return
+end
+
+function _setup_inner(model::Optimizer)::UnoSolver.Model
+    if !model.needs_new_inner
+        return model.inner
+    end
+    g_L, g_U = copy(model.qp_data.g_L), copy(model.qp_data.g_U)
+    for (_, s) in model.vector_nonlinear_oracle_constraints
+        append!(g_L, s.set.l)
+        append!(g_U, s.set.u)
+    end
+    for bound in model.nlp_data.constraint_bounds
+        push!(g_L, bound.lower)
+        push!(g_U, bound.upper)
+    end
+    nvar = length(model.variables.lower)
+    ncon = length(g_L)
+    nnzj = length(model.jrows)
+    nnzh = length(model.hrows)
 
     moi_objective(model, x) = MOI.eval_objective(model, x)
     moi_objective_gradient(model, g, x) = MOI.eval_objective_gradient(model, g, x)
@@ -1343,17 +1401,6 @@ function _setup_model(model::Optimizer)
     moi_jacobian_transposed_operator(model, Jtv, x, v, evaluate_at_x) = MOI.eval_constraint_jacobian_transpose_product(model, Jtv, x, v)
     moi_lagrangian_hessian_operator(model, Hv, x, objective_multiplier, multipliers, v, evaluate_at_x) = MOI.eval_hessian_lagrangian_product(model, Hv, x, v, objective_multiplier, multipliers)
 
-    g_L, g_U = copy(model.qp_data.g_L), copy(model.qp_data.g_U)
-    for (_, s) in model.vector_nonlinear_oracle_constraints
-        append!(g_L, s.set.l)
-        append!(g_U, s.set.u)
-    end
-    for bound in model.nlp_data.constraint_bounds
-        push!(g_L, bound.lower)
-        push!(g_U, bound.upper)
-    end
-    nvar = length(vars)
-    ncon = length(g_L)
     model.inner = UnoSolver.uno_model(
         model.problem_type,
         model.sense == MOI.MIN_SENSE,
@@ -1363,49 +1410,51 @@ function _setup_model(model::Optimizer)
         model.variables.upper,
         g_L,
         g_U,
-        jrows,
-        jcols,
+        model.jrows,
+        model.jcols,
         nnzj,
-        hrows,
-        hcols,
+        model.hrows,
+        model.hcols,
         nnzh,
         moi_objective,
         moi_constraints,
         moi_objective_gradient,
         moi_jacobian,
-        moi_lagrangian_hessian,
-        (has_jacobian_operator && !has_oracle) ? moi_jacobian_operator : nothing,
-        (has_jacobian_operator && !has_oracle) ? moi_jacobian_transposed_operator : nothing,
-        (has_hessian_operator && !has_oracle) ? moi_lagrangian_hessian_operator : nothing,
+        model.hess_available ? moi_lagrangian_hessian : nothing,
+        model.jprod_available ? moi_jacobian_operator : nothing,
+        model.jtprod_available ? moi_jacobian_transposed_operator : nothing,
+        model.hprod_available ? moi_lagrangian_hessian_operator : nothing,
         model,
         'L',
         1.0,
     )
-    model.solver = UnoSolver.uno_solver()
-    return
+    model.needs_new_inner = false
+    return model.inner
 end
 
-function copy_parameters(model::Optimizer)
-    if model.nlp_model === nothing
-        return
-    end
-    empty!(model.qp_data.parameters)
-    for (p, index) in model.parameters
-        model.qp_data.parameters[p.value] = model.nlp_model[index]
-    end
-    return
+function _setup_solver(model::Optimizer)::UnoSolver.Solver
+    # We could reuse the C++ workspace in the future
+    model.solver = UnoSolver.uno_solver()
+    return model.solver
 end
 
 function MOI.optimize!(model::Optimizer)
-    if model.inner === nothing || model.solver == nothing
+    if model.inner === nothing
         _setup_model(model)
     end
     if model.invalid_model
         return
     end
-    copy_parameters(model)
-    inner = model.inner::UnoSolver.Model
-    solver = model.solver::UnoSolver.Solver
+
+    inner = _setup_inner(model)
+    solver = _setup_solver(model)
+
+    if model.nlp_model !== nothing
+        empty!(model.qp_data.parameters)
+        for (p, index) in model.parameters
+            model.qp_data.parameters[p.value] = model.nlp_model[index]
+        end
+    end
 
     # The default logger is "INFO".
     UnoSolver.uno_set_solver_string_option(solver, "logger", model.silent ? "SILENT" : "INFO")
@@ -1431,11 +1480,10 @@ function MOI.optimize!(model::Optimizer)
     # Initialize the starting point, projecting variables from 0 onto their
     # bounds if VariablePrimalStart is not provided.
     for i in 1:length(model.variable_primal_start)
-        x0_i = if model.variable_primal_start[i] !== nothing
-            model.variable_primal_start[i]
-        else
-            clamp(0.0, model.variables.lower[i], model.variables.upper[i])
-        end
+        x0_i = something(
+            model.variable_primal_start[i],
+            clamp(0.0, model.variables.lower[i], model.variables.upper[i]),
+        )
         UnoSolver.uno_set_initial_primal_iterate_component(inner, i-1, x0_i)
     end
 
