@@ -82,7 +82,8 @@ jobs:
       - name: Check latest commit message
         id: check
         run: |
-          commit_message="$(git log -1 --pretty=%B)"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          commit_message="$(git log -1 --pretty=%B "$HEAD_SHA")"
           echo "Latest commit message:"
           echo "$commit_message"
           if echo "$commit_message" | grep -q '\[unopy\] Release'; then
