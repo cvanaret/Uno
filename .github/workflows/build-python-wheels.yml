@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+        os: [ubuntu-latest, macos-latest]
       # ubuntu-22.04, macos-15-intel, , ubuntu-22.04-arm, macos-14
 
     steps:
@@ -75,8 +75,8 @@ jobs:
     needs: [ build_wheels, build_sdist ]
     # if the latest commit message contains '[unopy] Release', trigger the upload to PyPi
     name: Upload release to TestPyPI
-    #if: >-
-    #  (github.event_name == 'pull_request' && contains(github.event.head_commit.message, '[unopy] Release'))
+    if: >-
+      (github.event_name == 'pull_request' && startsWith(github.event.head_commit.message, '[unopy] Release'))
     runs-on: ubuntu-latest
     permissions:
       id-token: write
