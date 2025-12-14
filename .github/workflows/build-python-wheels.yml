@@ -76,7 +76,8 @@ jobs:
     # if the latest commit message contains '[unopy] Release', trigger the upload to PyPi
     name: Upload release to TestPyPI
     if: >-
-      (github.event_name == 'pull_request' && startsWith(github.event.head_commit.message, '[unopy] Release'))
+      (github.event_name == 'pull_request')
+    # && startsWith(github.event.head_commit.message, '[unopy] Release'))
     runs-on: ubuntu-latest
     permissions:
       id-token: write
