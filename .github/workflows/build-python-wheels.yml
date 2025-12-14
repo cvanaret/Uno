@@ -71,12 +71,29 @@ jobs:
           name: cibw-sdist
           path: dist/*.tar.gz
 
+  check-release:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.release_commit }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # check if the latest commit message contains '[unopy] Release'
+      - name: Check latest commit message
+        id: check
+        run: |
+          commit_message="$(git log -1 --pretty=%B)"
+          if echo "commit_message" | grep -q '\[unopy\] Release'; then
+            echo "release_commit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "release_commit=false" >> "$GITHUB_OUTPUT"
+          fi
+
   upload_testpypi:
-    needs: [ build_wheels, build_sdist ]
+    needs: [build_wheels, build_sdist, check-release]
     # if the latest commit message contains '[unopy] Release', trigger the upload to PyPi
     name: Upload release to TestPyPI
-    if: startsWith(github.event.pull_request.head.commit.message, '[unopy] Release')
-    # && startsWith(github.event.head_commit.message, '[unopy] Release'))
+    if: needs.check-release.outputs.release_commit == 'true'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
