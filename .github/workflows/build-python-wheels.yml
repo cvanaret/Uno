@@ -72,18 +72,20 @@ jobs:
           path: dist/*.tar.gz
 
   check-release:
+    name: Check latest commit message
     runs-on: ubuntu-latest
     outputs:
       run: ${{ steps.check.outputs.release_commit }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       # check if the latest commit message contains '[unopy] Release'
       - name: Check latest commit message
         id: check
         run: |
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          commit_message="$(git log -1 --pretty=%B "$HEAD_SHA")"
+          commit_message="$(git log -1 --pretty=%B)"
           echo "Latest commit message:"
           echo "$commit_message"
           if echo "$commit_message" | grep -q '\[unopy\] Release'; then
