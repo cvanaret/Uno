@@ -83,7 +83,9 @@ jobs:
         id: check
         run: |
           commit_message="$(git log -1 --pretty=%B)"
-          if echo "commit_message" | grep -q '\[unopy\] Release'; then
+          echo "Latest commit message:"
+          echo "$commit_message"
+          if echo "$commit_message" | grep -q '\[unopy\] Release'; then
             echo "release_commit=true" >> "$GITHUB_OUTPUT"
           else
             echo "release_commit=false" >> "$GITHUB_OUTPUT"
