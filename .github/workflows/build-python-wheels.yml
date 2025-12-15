@@ -73,6 +73,7 @@ jobs:
   check-release:
     name: Check latest commit message
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     outputs:
       test_release_commit: ${{ steps.check.outputs.test_release_commit }}
     steps:
