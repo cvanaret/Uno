@@ -110,3 +110,18 @@ To inspect the result of the optimization, read the attributes of the `result` o
 - the number of Jacobian evaluations: `result.number_jacobian_evaluations`
 - the number of Hessian evaluations: `result.number_hessian_evaluations`
 - the number of subproblems solved: `result.number_subproblems_solved`
+
+## How to cite Uno
+
+We have submitted our paper to the Mathematical Programming Computation journal. The preprint is available on [ResearchGate](https://www.researchgate.net/publication/397446552_Implementing_a_unified_solver_for_nonlinearly_constrained_optimization).
+
+Until it is published, you can use the following bibtex entry:
+
+```
+@unpublished{VanaretLeyffer2024,
+  author = {Vanaret, Charlie and Leyffer, Sven},
+  title = {Implementing a unified solver for nonlinearly constrained optimization},
+  year = {2024},
+  note = {Submitted to Mathematical Programming Computation}
+}
+```

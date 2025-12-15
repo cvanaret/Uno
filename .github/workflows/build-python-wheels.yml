@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-22.04, ubuntu-24.04-arm, ubuntu-22.04-arm, macos-latest, macos-14, macos-15-intel]
+        os: [ubuntu-latest, ubuntu-22.04-arm, macos-latest, macos-15-intel]
 
     steps:
       - uses: actions/checkout@v5
@@ -70,19 +70,36 @@ jobs:
           name: cibw-sdist
           path: dist/*.tar.gz
 
-  upload_pypi:
-    needs: [build_wheels, build_sdist]
-    # if the latest commit message contains '[unopy] Release', trigger the upload to PyPi
+  check-release:
+    name: Check latest commit message
+    runs-on: ubuntu-latest
+    outputs:
+      test_release_commit: ${{ steps.check.outputs.test_release_commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      # check if the latest PR commit message contains '[unopy] Test release'
+      - name: Check latest commit message
+        id: check
+        run: |
+          commit_message="$(git log -1 --pretty=%B)"
+          echo "Latest commit message: $commit_message"
+          if echo "$commit_message" | grep -q '\[unopy\] Test release'; then
+            echo "test_release_commit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "test_release_commit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  upload_testpypi:
+    needs: [build_wheels, build_sdist, check-release]
+    # if the latest PR commit message contains '[unopy] Test release', trigger the upload to TestPyPi
     name: Upload release to TestPyPI
-    if: >-
-      (github.event_name == 'push' && contains(github.event.head_commit.message, '[unopy] Release'))
+    if: needs.check-release.outputs.test_release_commit == 'true'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-    # upload to PyPI on every tag starting with 'v'
-    # if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    # alternatively, to publish when a GitHub Release is created, use the following rule:
-    #if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -91,6 +108,28 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - uses: pypa/gh-action-pypi-publish@v1.13.0
-        #with:
-        #  repository-url: https://test.pypi.org/legacy/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
+
+  upload_pypi:
+    needs: [build_wheels, build_sdist]
+    # if the merge commit message contains '[unopy] Release', trigger the upload to PyPi
+    name: Upload release to PyPI
+    if: >-
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[unopy] Release'))
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          # unpacks all CIBW artifacts into dist/
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
