@@ -22,8 +22,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-22.04-arm, macos-latest, macos-15-intel]
-      # ubuntu-22.04, macos-15-intel, macos-14
+        os: [ubuntu-latest, ubuntu-22.04-arm, macos-latest, macos-15-intel, macos-14]
+      # ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v5
@@ -81,7 +81,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      # check if the latest commit message contains '[unopy] Release'
+      # check if the latest PR commit message contains '[unopy] Test release'
       - name: Check latest commit message
         id: check
         run: |
@@ -95,7 +95,7 @@ jobs:
 
   upload_testpypi:
     needs: [build_wheels, build_sdist, check-release]
-    # if the latest commit message contains '[unopy] Release', trigger the upload to PyPi
+    # if the latest PR commit message contains '[unopy] Test release', trigger the upload to TestPyPi
     name: Upload release to TestPyPI
     if: needs.check-release.outputs.test_release_commit == 'true'
     runs-on: ubuntu-latest
@@ -116,7 +116,7 @@ jobs:
 
   upload_pypi:
     needs: [build_wheels, build_sdist]
-    # if the latest commit message contains '[unopy] Release', trigger the upload to PyPi
+    # if the merge commit message contains '[unopy] Release', trigger the upload to PyPi
     name: Upload release to PyPI
     if: >-
       (github.event_name == 'push' && contains(github.event.head_commit.message, '[unopy] Release'))
