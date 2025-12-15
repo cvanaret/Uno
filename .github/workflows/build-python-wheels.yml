@@ -75,7 +75,7 @@ jobs:
     name: Check latest commit message
     runs-on: ubuntu-latest
     outputs:
-      run: ${{ steps.check.outputs.release_commit }}
+      test_release_commit: ${{ steps.check.outputs.test_release_commit }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -87,17 +87,17 @@ jobs:
         run: |
           commit_message="$(git log -1 --pretty=%B)"
           echo "Latest commit message: $commit_message"
-          if echo "$commit_message" | grep -q '\[unopy\] Release'; then
-            echo "release_commit=true" >> "$GITHUB_OUTPUT"
+          if echo "$commit_message" | grep -q '\[unopy\] Test release'; then
+            echo "test_release_commit=true" >> "$GITHUB_OUTPUT"
           else
-            echo "release_commit=false" >> "$GITHUB_OUTPUT"
+            echo "test_release_commit=false" >> "$GITHUB_OUTPUT"
           fi
 
   upload_testpypi:
     needs: [build_wheels, build_sdist, check-release]
     # if the latest commit message contains '[unopy] Release', trigger the upload to PyPi
     name: Upload release to TestPyPI
-    if: needs.check-release.outputs.release_commit == 'true'
+    if: needs.check-release.outputs.test_release_commit == 'true'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
