@@ -7,10 +7,10 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "unopy"
-# TestPyPi
-version = "0.1.9"
 # PyPi
 # version = "0.1.0"
+# TestPyPi
+version = "0.1.10"
 #requires-python = ">=3.8"
 description = "Uno, a highly customizable SQP & barrier solver for nonlinearly constrained optimization"
 readme = "interfaces/Python/README.md"
