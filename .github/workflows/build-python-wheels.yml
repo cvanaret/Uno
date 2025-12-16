@@ -42,6 +42,13 @@ jobs:
           pacboy: >-
             python:p python-pip:p gcc:p cmake:p
 
+      - name: Set environment variables (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          echo "CC=gcc" >> $env:GITHUB_ENV
+          echo "CXX=g++" >> $env:GITHUB_ENV
+          echo "FC=gfortran" >> $env:GITHUB_ENV
+
       - run: pip install cibuildwheel
 
       - name: Install Fortran compiler on macOS
