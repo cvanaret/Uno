@@ -55,8 +55,8 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: 15.0
           CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
           CIBW_ENVIRONMENT_WINDOWS: CC=gcc CXX=g++ FC=gfortran
-          # Skip CPython 3.6 and CPython 3.7
-          CIBW_SKIP: cp36-* cp37-*
+          # Skip CPython 3.6, CPython 3.7 and PyPy
+          CIBW_SKIP: cp36-* cp37-* pp*
 
       - uses: actions/upload-artifact@v4
         with:
