@@ -51,7 +51,7 @@ jobs:
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
       
-      - name: Install Fortran compiler on macOS
+      - name: Install Fortran compiler (macOS)
         if: startsWith(matrix.os, 'macos')
         uses: fortran-lang/setup-fortran@main
         with:
