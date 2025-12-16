@@ -54,6 +54,10 @@ jobs:
         env:
           MACOSX_DEPLOYMENT_TARGET: 15.0
           CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
+          # Package the DLL dependencies in the wheel for windows (done by default for the other platforms).
+          # delvewheel cannot mangle the libraries, stripping does not work.
+          CIBW_BEFORE_BUILD_WINDOWS: pip install delvewheel
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel show {wheel} && delvewheel repair -w {dest_dir} {wheel} --no-mangle-all"
 
       - uses: actions/upload-artifact@v4
         with:
