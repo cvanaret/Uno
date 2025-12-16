@@ -31,19 +31,14 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install compilers (Windows)
-        if: matrix.os == 'windows-latest'
-        id: install_cc
-        uses: rlalik/setup-cpp-compiler@master
-        with:
-          compiler: gcc
+      - name: Provide gfortran (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
 
-      - name: Set environment variables (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Tell distutils to use mingw (Windows)
+        if: runner.os == 'Windows'
         run: |
-          echo "CC=gcc" >> $env:GITHUB_ENV
-          echo "CXX=g++" >> $env:GITHUB_ENV
-          echo "FC=gfortran" >> $env:GITHUB_ENV
+          echo "[build]`ncompiler=mingw32" | Out-File -Encoding ASCII ~/pydistutils.cfg
 
       - run: pip install cibuildwheel
 
