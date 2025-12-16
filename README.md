@@ -58,7 +58,7 @@ Uno can be used from Julia in two ways:
    An example can be found [here](https://discourse.julialang.org/t/the-uno-unifying-nonconvex-optimization-solver/115883/21).
 
 ### Python
-Uno's Python bindings can be compiled via the command `make unopy` and require [pybind11](https://github.com/pybind/pybind11). For more details, see their [README.md](interfaces/Python/README.md).
+[unopy](https://pypi.org/project/unopy/) is Uno's registered Python package. For more details, see [README.md](interfaces/Python/README.md).
 
 ### C
 Uno's C interface is compiled as part of the Uno library. For more details, see its [README.md](interfaces/C/README.md).
