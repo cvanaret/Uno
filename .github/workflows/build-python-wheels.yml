@@ -40,8 +40,6 @@ jobs:
         run: |
           echo "[build]`ncompiler=mingw32" | Out-File -Encoding ASCII ~/pydistutils.cfg
 
-      - run: pip install cibuildwheel
-
       - name: Install Fortran compiler on macOS
         uses: fortran-lang/setup-fortran@main
         with:
@@ -50,7 +48,7 @@ jobs:
         if: startsWith(matrix.os, 'macos')
 
       - name: Build wheels
-        run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
+        uses: pypa/cibuildwheel@v2.0.0
         env:
           MACOSX_DEPLOYMENT_TARGET: 15.0
 
