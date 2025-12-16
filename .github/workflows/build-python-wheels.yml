@@ -48,8 +48,6 @@ jobs:
           version: '13'
         if: startsWith(matrix.sys.os, 'macos')
 
-      - run: pip install cibuildwheel
-
       - name: Install Fortran compiler on macOS
         if: startsWith(matrix.os, 'macos')
         uses: fortran-lang/setup-fortran@main
