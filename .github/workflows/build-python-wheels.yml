@@ -27,6 +27,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Provide gfortran (Windows)
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
@@ -36,6 +40,8 @@ jobs:
         run: |
           echo "[build]`ncompiler=mingw32" | Out-File -Encoding ASCII ~/pydistutils.cfg
 
+      - run: pip install cibuildwheel
+
       - name: Install Fortran compiler on macOS
         uses: fortran-lang/setup-fortran@main
         with:
@@ -44,10 +50,9 @@ jobs:
         if: startsWith(matrix.os, 'macos')
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.0.0
+        run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
           MACOSX_DEPLOYMENT_TARGET: 15.0
-
           CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
 
       - uses: actions/upload-artifact@v4
