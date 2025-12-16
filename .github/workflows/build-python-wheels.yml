@@ -112,7 +112,6 @@ jobs:
           # Skip some builds
           CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
-
       - name: Store artifacts
         uses: actions/upload-artifact@v4
         with:
