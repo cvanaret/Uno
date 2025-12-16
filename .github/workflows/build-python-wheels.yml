@@ -34,6 +34,11 @@ jobs:
       - name: Provide gfortran (Windows)
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          path-type: inherit
+          install: >-
+            mingw-w64-x86_64-gcc-fortran
 
       - run: pip install cibuildwheel
 
