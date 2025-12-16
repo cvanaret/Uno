@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-22.04-arm, macos-latest, macos-15-intel, windows-latest]
+        os: [ubuntu-latest, ubuntu-22.04-arm, macos-latest, macos-15-intel, windows-2022]
 
     steps:
       - uses: actions/checkout@v5
@@ -31,7 +31,16 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Provide gfortran (Windows)
+      - run: pip install cibuildwheel
+
+      - name: Install Fortran compiler (macOS)
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '13'
+        if: startsWith(matrix.os, 'macos')
+
+      - name: Install MINGW (Windows)
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
@@ -40,17 +49,8 @@ jobs:
           install: >-
             mingw-w64-x86_64-gcc-fortran
 
-      - run: pip install cibuildwheel
-
-      - name: Install Fortran compiler on macOS
-        uses: fortran-lang/setup-fortran@main
-        with:
-          compiler: 'gcc'
-          version: '13'
-        if: startsWith(matrix.os, 'macos')
-
       - name: Build wheels
-        run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
+        uses: pypa/cibuildwheel@v2.22.0
         env:
           MACOSX_DEPLOYMENT_TARGET: 15.0
           CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
