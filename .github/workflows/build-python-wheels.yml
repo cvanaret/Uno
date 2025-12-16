@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-22.04-arm, macos-latest, macos-15-intel, windows-2022]
+        os: [ubuntu-latest, ubuntu-22.04-arm, macos-latest, macos-15-intel, windows-latest]
 
     steps:
       - uses: actions/checkout@v5
@@ -31,44 +31,16 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: win_amd64 - install rtools
-        if:  matrix.os == 'windows-2022'
-        run: |
-          # mingw-w64
-          choco install rtools -y --no-progress --force --version=4.0.0.20220206
-          echo "c:\rtools40\ucrt64\bin;" >> $env:GITHUB_PATH
-
-      - name: windows - set PKG_CONFIG_PATH
-        if: matrix.os == 'windows-2022'
-        run: |
-          $env:CIBW = "${{ github.workspace }}"
-          # It seems somewhere in the env passing, `\` is not passed through, so convert it to '/'
-          $env:CIBW=$env:CIBW.replace("\","/")
-          echo "CIBW_ENVIRONMENT=PKG_CONFIG_PATH=$env:CIBW" >> $env:GITHUB_ENV
-
-      - name: Setup LLVM for Windows
-        if: matrix.os == 'windows-2022'
-        # Copyright (c) 2005-2025, NumPy Developers.
-        # All rights reserved.
-        shell: pwsh
-        run: |
-          Invoke-WebRequest https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.6/LLVM-20.1.6-woa64.exe -UseBasicParsing -OutFile LLVM-woa64.exe
-          $expectedHash = "92f69a1134e32e54b07d51c6e24d9594852f6476f32c3d70471ae00fffc2d462"
-          $fileHash = (Get-FileHash -Path "LLVM-woa64.exe" -Algorithm SHA256).Hash
-          if ($fileHash -ne $expectedHash) {
-              Write-Error "Checksum verification failed. The downloaded file may be corrupted or tampered with."
-              exit 1
-          }
-          Start-Process -FilePath ".\LLVM-woa64.exe" -ArgumentList "/S" -Wait
-          echo "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          echo "CC=clang-cl" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          echo "CXX=clang-cl" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          echo "FC=flang-new" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: pkg-config-for-win
-        if: startsWith(runner.os, 'windows')
-        run: |
-          choco install -y --no-progress --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+      - uses: msys2/setup-msys2@v2
+        if: matrix.os == 'windows-latest'
+        with:
+          msystem: mingw64
+          path-type: minimal
+          update: true
+          install: >-
+            base-devel git
+          pacboy: >-
+            python:p python-pip:p gcc:p cmake:p
 
       - run: pip install cibuildwheel
 
