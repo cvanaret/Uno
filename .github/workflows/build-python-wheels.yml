@@ -47,7 +47,11 @@ jobs:
           msystem: MINGW64
           path-type: inherit
           install: >-
-            mingw-w64-x86_64-gcc-fortran
+            mingw-w64-x86_64-ninja
+
+      - name: Put MSYS2_MinGW64 on PATH
+        if: runner.os == 'Windows'
+        run: echo "D:/a/_temp/msys64/mingw64/bin" >> $GITHUB_PATH
       
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
