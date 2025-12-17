@@ -54,7 +54,10 @@ jobs:
         env:
           MACOSX_DEPLOYMENT_TARGET: 15.0
           CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
-          CIBW_ENVIRONMENT_WINDOWS: CC=gcc CXX=g++ FC=gfortran
+          CIBW_ENVIRONMENT_WINDOWS:
+            echo "CC=gcc" >> $GITHUB_ENV
+            echo "CXX=g++" >> $GITHUB_ENV
+            echo "FC=gfortran" >> $GITHUB_ENV
           # Skip some builds
           CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
