@@ -16,7 +16,7 @@ namespace uno {
       .def(py::init<>(), "Constructor")
 
       // methods
-      .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, int32_t option_value) {
+      .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, uno_int option_value) {
          solver.options.set_integer(option_name, option_value);
       }, py::arg("option_name"), py::arg("option_value"))
 

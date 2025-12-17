@@ -17,7 +17,7 @@ namespace uno {
          }) {
    }
 
-   void FilterMethod::initialize(Statistics& /*statistics*/, const Iterate& initial_iterate, const Options& /*options*/) {
+   void FilterMethod::initialize(Statistics& /*statistics*/, const Iterate& initial_iterate) {
       // set the filter upper bound
       const double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_factor * initial_iterate.progress.infeasibility);
       this->filter->set_infeasibility_upper_bound(upper_bound);
@@ -37,7 +37,7 @@ namespace uno {
       this->filter->add(current_progress.infeasibility, current_objective_measure);
    }
 
-   double FilterMethod::compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility, double trial_objective_measure) {
+   double FilterMethod::compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility, double trial_objective_measure) const {
       double actual_reduction = this->filter->compute_actual_objective_reduction(current_objective_measure, current_infeasibility, trial_objective_measure);
       if (this->protect_actual_reduction_against_roundoff) {
          // TODO put constant in option file
@@ -45,9 +45,5 @@ namespace uno {
          actual_reduction += 10. * machine_epsilon * std::abs(current_objective_measure);
       }
       return actual_reduction;
-   }
-
-   void FilterMethod::set_statistics(Statistics& /*statistics*/) const {
-      // do nothing
    }
 } // namespace

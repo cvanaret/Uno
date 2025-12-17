@@ -6,18 +6,18 @@
 # Start at (1, 5, 5, 1)
 # End at (1.000..., 4.743..., 3.821..., 1.379...)
 
-function c_objective(x::Vector{Float64})
+function c_objective(userdata::Nothing, x::Vector{Float64})
   f = x[1] * x[4] * (x[1] + x[2] + x[3]) + x[3]
   return f
 end
 
-function c_constraints(c::Vector{Float64}, x::Vector{Float64})
+function c_constraints(userdata::Nothing, c::Vector{Float64}, x::Vector{Float64})
   c[1] = x[1] * x[2] * x[3] * x[4]
   c[2] = x[1]^2 + x[2]^2 + x[3]^2 + x[4]^2
   return c
 end
 
-function c_objective_gradient(g::Vector{Float64}, x::Vector{Float64})
+function c_objective_gradient(userdata::Nothing, g::Vector{Float64}, x::Vector{Float64})
   g[1] = x[1] * x[4] + x[4] * (x[1] + x[2] + x[3])
   g[2] = x[1] * x[4]
   g[3] = x[1] * x[4] + 1
@@ -25,7 +25,7 @@ function c_objective_gradient(g::Vector{Float64}, x::Vector{Float64})
   return g
 end
 
-function c_jacobian(jvals::Vector{Float64}, x::Vector{Float64})
+function c_jacobian(userdata::Nothing, jvals::Vector{Float64}, x::Vector{Float64})
   # Constraint (row) 1
   jvals[1] = x[2] * x[3] * x[4]  # 1,1
   jvals[2] = x[1] * x[3] * x[4]  # 1,2
@@ -40,6 +40,7 @@ function c_jacobian(jvals::Vector{Float64}, x::Vector{Float64})
 end
 
 function c_lagrangian_hessian(
+  userdata::Nothing,
   hvals::Vector{Float64},
   x::Vector{Float64},
   multipliers::Vector{Float64},
@@ -75,6 +76,7 @@ function c_lagrangian_hessian(
 end
 
 function c_jacobian_operator(
+  userdata::Nothing,
   Jv::Vector{Float64},
   x::Vector{Float64},
   v::Vector{Float64},
@@ -86,6 +88,7 @@ function c_jacobian_operator(
 end
 
 function c_jacobian_transposed_operator(
+  userdata::Nothing,
   Jtv::Vector{Float64},
   x::Vector{Float64},
   v::Vector{Float64},
@@ -99,6 +102,7 @@ function c_jacobian_transposed_operator(
 end
 
 function c_lagrangian_hessian_operator(
+  userdata::Nothing,
   Hv::Vector{Float64},
   x::Vector{Float64},
   objective_multiplier::Float64,
@@ -180,67 +184,134 @@ ucon = [2.0e19, 40.0]
 jrows, jcols, nnzj = sparsity_pattern_jacobian_hs71()
 hrows, hcols, nnzh = sparsity_pattern_lagrangian_hessian_hs71()
 
-model = uno_model(
-  "NLP",
-  true,
-  nvar,
-  ncon,
-  lvar,
-  uvar,
-  lcon,
-  ucon,
-  jrows,
-  jcols,
-  nnzj,
-  hrows,
-  hcols,
-  nnzh,
-  c_objective,
-  c_constraints,
-  c_objective_gradient,
-  c_jacobian,
-  c_lagrangian_hessian,
-  c_jacobian_operator,
-  c_jacobian_transposed_operator,
-  c_lagrangian_hessian_operator,
-)
-
 x0 = Float64[1.0, 5.0, 5.0, 1.0]
 y0 = zeros(Float64, ncon)
-UnoSolver.uno_set_initial_primal_iterate(model, x0)
-UnoSolver.uno_set_initial_dual_iterate(model, y0)
 
-solver = uno_solver()
-uno_set_solver_preset(solver, "funnelsqp")
-uno_set_solver_bool_option(solver, "print_solution", true)
-uno_optimize(solver, model)
+@testset "uno_model -- uno_solver -- uno_optimize" begin
+  model = uno_model(
+    "NLP",
+    true,
+    nvar,
+    ncon,
+    lvar,
+    uvar,
+    lcon,
+    ucon,
+    jrows,
+    jcols,
+    nnzj,
+    hrows,
+    hcols,
+    nnzh,
+    c_objective,
+    c_constraints,
+    c_objective_gradient,
+    c_jacobian,
+    c_lagrangian_hessian,
+    c_jacobian_operator,
+    c_jacobian_transposed_operator,
+    c_lagrangian_hessian_operator,
+  )
 
-optimization_status = UnoSolver.uno_get_optimization_status(solver)
-solution_status = UnoSolver.uno_get_solution_status(solver)
-solution_objective = UnoSolver.uno_get_solution_objective(solver)
-solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
-solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
-solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
+  UnoSolver.uno_set_initial_primal_iterate(model, x0)
+  UnoSolver.uno_set_initial_dual_iterate(model, y0)
 
-primal_solution = Vector{Float64}(undef, nvar)
-UnoSolver.uno_get_primal_solution(solver, primal_solution)
+  solver = uno_solver()
+  uno_set_solver_preset(solver, "funnelsqp")
+  uno_set_solver_bool_option(solver, "print_solution", true)
+  uno_optimize(solver, model)
 
-constraint_dual_solution = Vector{Float64}(undef, ncon)
-UnoSolver.uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+  optimization_status = UnoSolver.uno_get_optimization_status(solver)
+  solution_status = UnoSolver.uno_get_solution_status(solver)
+  solution_objective = UnoSolver.uno_get_solution_objective(solver)
+  solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
+  solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
+  solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
 
-lower_bound_dual_solution = Vector{Float64}(undef, nvar)
-UnoSolver.uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+  primal_solution = Vector{Float64}(undef, nvar)
+  UnoSolver.uno_get_primal_solution(solver, primal_solution)
 
-upper_bound_dual_solution = Vector{Float64}(undef, nvar)
-UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+  constraint_dual_solution = Vector{Float64}(undef, ncon)
+  UnoSolver.uno_get_constraint_dual_solution(solver, constraint_dual_solution)
 
-@test optimization_status == 0  # UNO_SUCCESS
-@test solution_status == 1      # UNO_FEASIBLE_KKT_POINT
-@test primal_solution[1] ≈ 1.0000000000000000 atol = 1e-5
-@test primal_solution[2] ≈ 4.7429996418092970 atol = 1e-5
-@test primal_solution[3] ≈ 3.8211499817883077 atol = 1e-5
-@test primal_solution[4] ≈ 1.3794082897556983 atol = 1e-5
-@test solution_objective ≈ 17.014017145179164 atol = 1e-5
-@test solution_primal_feasibility ≈ 0.0 atol = 1e-5
-@test solution_stationarity ≈ 0.0 atol = 1e-5
-@test solution_complementarity ≈ 0.0 atol = 1e-5
+  lower_bound_dual_solution = Vector{Float64}(undef, nvar)
+  UnoSolver.uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+
+  upper_bound_dual_solution = Vector{Float64}(undef, nvar)
+  UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+
+  @test optimization_status == 0  # UNO_SUCCESS
+  @test solution_status == 1      # UNO_FEASIBLE_KKT_POINT
+  @test primal_solution[1] ≈ 1.0000000000000000 atol = 1e-5
+  @test primal_solution[2] ≈ 4.7429996418092970 atol = 1e-5
+  @test primal_solution[3] ≈ 3.8211499817883077 atol = 1e-5
+  @test primal_solution[4] ≈ 1.3794082897556983 atol = 1e-5
+  @test solution_objective ≈ 17.014017145179164 atol = 1e-5
+  @test solution_primal_feasibility ≈ 0.0 atol = 1e-5
+  @test solution_stationarity ≈ 0.0 atol = 1e-5
+  @test solution_complementarity ≈ 0.0 atol = 1e-5
+end
+
+@testset "uno" begin
+  model, solver = uno(
+    "NLP",
+    true,
+    nvar,
+    ncon,
+    lvar,
+    uvar,
+    lcon,
+    ucon,
+    jrows,
+    jcols,
+    nnzj,
+    hrows,
+    hcols,
+    nnzh,
+    c_objective,
+    c_constraints,
+    c_objective_gradient,
+    c_jacobian,
+    c_lagrangian_hessian,
+    c_jacobian_operator,
+    c_jacobian_transposed_operator,
+    c_lagrangian_hessian_operator,
+    nothing,
+    'L',
+    1.0,
+    x0,
+    y0;
+    preset="funnelsqp",
+    print_solution=true,
+  )
+
+  optimization_status = UnoSolver.uno_get_optimization_status(solver)
+  solution_status = UnoSolver.uno_get_solution_status(solver)
+  solution_objective = UnoSolver.uno_get_solution_objective(solver)
+  solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
+  solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
+  solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
+
+  primal_solution = Vector{Float64}(undef, nvar)
+  UnoSolver.uno_get_primal_solution(solver, primal_solution)
+
+  constraint_dual_solution = Vector{Float64}(undef, ncon)
+  UnoSolver.uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+
+  lower_bound_dual_solution = Vector{Float64}(undef, nvar)
+  UnoSolver.uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+
+  upper_bound_dual_solution = Vector{Float64}(undef, nvar)
+  UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+
+  @test optimization_status == 0  # UNO_SUCCESS
+  @test solution_status == 1      # UNO_FEASIBLE_KKT_POINT
+  @test primal_solution[1] ≈ 1.0000000000000000 atol = 1e-5
+  @test primal_solution[2] ≈ 4.7429996418092970 atol = 1e-5
+  @test primal_solution[3] ≈ 3.8211499817883077 atol = 1e-5
+  @test primal_solution[4] ≈ 1.3794082897556983 atol = 1e-5
+  @test solution_objective ≈ 17.014017145179164 atol = 1e-5
+  @test solution_primal_feasibility ≈ 0.0 atol = 1e-5
+  @test solution_stationarity ≈ 0.0 atol = 1e-5
+  @test solution_complementarity ≈ 0.0 atol = 1e-5
+end

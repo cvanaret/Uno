@@ -11,6 +11,7 @@ namespace uno {
       Model("Python model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
          static_cast<double>(user_model.optimization_sense), user_model.lagrangian_sign_convention),
          user_model(user_model),
+         nonlinear_constraints(this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints) {
       // find fixed variables
@@ -44,7 +45,7 @@ namespace uno {
       double objective_value = 0.;
       if (this->user_model.objective_function.has_value()) {
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.objective_function)(static_cast<int32_t>(this->number_variables),
+         const uno_int return_code = (*this->user_model.objective_function)(static_cast<uno_int>(this->number_variables),
             x, &objective_value, user_data);
          if (0 < return_code) {
             throw FunctionEvaluationError();
@@ -58,8 +59,8 @@ namespace uno {
    void PythonModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       if (this->user_model.constraint_functions.has_value()) {
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.constraint_functions)(static_cast<int32_t>(this->number_variables),
-            static_cast<int32_t>(this->number_constraints), x, constraints.data(), user_data);
+         const uno_int return_code = (*this->user_model.constraint_functions)(static_cast<uno_int>(this->number_variables),
+            static_cast<uno_int>(this->number_constraints), x, constraints.data(), user_data);
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
@@ -70,7 +71,7 @@ namespace uno {
    void PythonModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       if (this->user_model.objective_gradient.has_value()) {
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.objective_gradient)(static_cast<int32_t>(this->number_variables),
+         const uno_int return_code = (*this->user_model.objective_gradient)(static_cast<uno_int>(this->number_variables),
             x, gradient.data(), user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
@@ -82,8 +83,8 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
-         MatrixOrder /*matrix_format*/) const {
+   void PythonModel::compute_constraint_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
+                                                          MatrixOrder /*matrix_format*/) const {
       // copy the indices of the user sparsity patterns to the Uno vectors
       std::copy_n(this->user_model.jacobian_row_indices.data(), static_cast<size_t>(this->user_model.number_jacobian_nonzeros), row_indices);
       std::copy_n(this->user_model.jacobian_column_indices.data(), static_cast<size_t>(this->user_model.number_jacobian_nonzeros), column_indices);
@@ -99,7 +100,7 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const {
+   void PythonModel::compute_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const {
       // copy the indices of the user sparsity patterns to the Uno vectors
       const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
       std::copy_n(this->user_model.hessian_row_indices.data(), number_hessian_nonzeros, row_indices);
@@ -118,8 +119,8 @@ namespace uno {
    void PythonModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
       if (this->user_model.constraint_jacobian.has_value()) {
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.constraint_jacobian)(static_cast<int32_t>(this->number_variables),
-            static_cast<int32_t>(this->number_jacobian_nonzeros()), x, jacobian_values, user_data);
+         const uno_int return_code = (*this->user_model.constraint_jacobian)(static_cast<uno_int>(this->number_variables),
+            static_cast<uno_int>(this->number_jacobian_nonzeros()), x, jacobian_values, user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -136,8 +137,8 @@ namespace uno {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.lagrangian_hessian)(static_cast<int32_t>(this->number_variables),
-            static_cast<int32_t>(this->number_constraints), static_cast<int32_t>(this->number_hessian_nonzeros()), x,
+         const uno_int return_code = (*this->user_model.lagrangian_hessian)(static_cast<uno_int>(this->number_variables),
+            static_cast<uno_int>(this->number_constraints), static_cast<uno_int>(this->number_hessian_nonzeros()), x,
             objective_multiplier, multipliers, hessian_values, user_data);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
@@ -156,8 +157,8 @@ namespace uno {
    void PythonModel::compute_jacobian_vector_product(const double* x, const double* vector, double* result) const {
       if (this->user_model.jacobian_operator.has_value()) {
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.jacobian_operator)(static_cast<int32_t>(this->number_variables),
-            static_cast<int32_t>(this->number_constraints), x, true, vector, result, user_data);
+         const uno_int return_code = (*this->user_model.jacobian_operator)(static_cast<uno_int>(this->number_variables),
+            static_cast<uno_int>(this->number_constraints), x, true, vector, result, user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -170,8 +171,8 @@ namespace uno {
    void PythonModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const {
       if (this->user_model.jacobian_transposed_operator.has_value()) {
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.jacobian_transposed_operator)(static_cast<int32_t>(this->number_variables),
-            static_cast<int32_t>(this->number_constraints), x, true, vector, result, user_data);
+         const uno_int return_code = (*this->user_model.jacobian_transposed_operator)(static_cast<uno_int>(this->number_variables),
+            static_cast<uno_int>(this->number_constraints), x, true, vector, result, user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -190,8 +191,8 @@ namespace uno {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const int32_t return_code = (*this->user_model.lagrangian_hessian_operator)(static_cast<int32_t>(this->number_variables),
-            static_cast<int32_t>(this->number_constraints), x, true, objective_multiplier, multipliers, vector, result, user_data);
+         const uno_int return_code = (*this->user_model.lagrangian_hessian_operator)(static_cast<uno_int>(this->number_variables),
+            static_cast<uno_int>(this->number_constraints), x, true, objective_multiplier, multipliers, vector, result, user_data);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
@@ -253,6 +254,10 @@ namespace uno {
       return this->linear_constraints;
    }
 
+   const Collection<size_t>& PythonModel::get_nonlinear_constraints() const {
+      return this->nonlinear_constraints;
+   }
+
    void PythonModel::initial_primal_point(Vector<double>& x) const {
       if (this->user_model.initial_primal_iterate.has_value()) {
          std::copy_n(this->user_model.initial_primal_iterate->begin(), this->user_model.number_variables, x.begin());
@@ -274,13 +279,8 @@ namespace uno {
       }
    }
 
-   void PythonModel::postprocess_solution(Iterate& iterate) const {
-      // flip the signs of the multipliers, depending on what the sign convention of the Lagrangian is, and whether
-      // we maximize
-      iterate.multipliers.constraints *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
-      iterate.multipliers.lower_bounds *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
-      iterate.multipliers.upper_bounds *= -this->user_model.lagrangian_sign_convention * this->optimization_sense;
-      iterate.evaluations.objective *= this->optimization_sense;
+   void PythonModel::postprocess_solution(Iterate& /*iterate*/) const {
+      // do nothing
    }
 
    size_t PythonModel::number_jacobian_nonzeros() const {

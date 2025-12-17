@@ -1,0 +1,49 @@
+[build-system]
+requires = [
+    "scikit-build-core>=0.8",
+    "pybind11>=2.11"
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "unopy"
+# PyPi
+version = "0.1.2"
+# TestPyPi
+#version = "0.1.12"
+#requires-python = ">=3.8"
+description = "Uno, a highly customizable SQP & barrier solver for nonlinearly constrained optimization"
+readme = "interfaces/Python/README.md"
+authors = [
+    {name = "Charlie Vanaret", email = "vanaret@zib.de"}
+]
+maintainers = [
+    {name = "Charlie Vanaret", email = "vanaret@zib.de"}
+]
+license = "MIT"
+
+[project.urls]
+Repository = "https://github.com/cvanaret/Uno"
+Issues = "https://github.com/cvanaret/Uno/issues"
+
+[tool.scikit-build]
+cmake.source-dir = "."
+cmake.verbose = true
+wheel.cmake = true
+
+# support for passing paths to dependencies from environment to CMake
+[tool.scikit-build.cmake.define]
+# BQPD (cmake -DBQPD=/path/.../libbqpd.a)
+BQPD = "interfaces/Python/dependencies/bqpd/lib/libbqpd.a"
+# MUMPS
+#MUMPS_INCLUDE_DIR = "interfaces/Python/dependencies/mumps/include"
+#METIS_INCLUDE_DIR = "interfaces/Python/dependencies/mumps/include"
+#METIS_LIBRARY = "interfaces/Python/dependencies/mumps/lib/libmetis.a"
+#MUMPS_LIBRARY = "interfaces/Python/dependencies/mumps/lib/libdmumps.a"
+#MUMPS_COMMON_LIBRARY = "interfaces/Python/dependencies/mumps/lib/libmumps_common.a"
+#MUMPS_PORD_LIBRARY = "interfaces/Python/dependencies/mumps/lib/libpord.a"
+#MUMPS_MPISEQ_LIBRARY = "interfaces/Python/dependencies/mumps/lib/libmpiseq.a"
+#BLAS_LIBRARIES = "interfaces/Python/dependencies/mumps/lib/libblas.a"
+#LAPACK_LIBRARIES = "interfaces/Python/dependencies/mumps/lib/liblapack.a"
+# HiGHS
+HIGHS_DIR = "interfaces/Python/dependencies/highs/lib/cmake/highs"

@@ -18,7 +18,7 @@ namespace uno {
       explicit GlobalizationStrategy(const Options& options);
       virtual ~GlobalizationStrategy() = default;
 
-      virtual void initialize(Statistics& statistics, const Iterate& initial_iterate, const Options& options) = 0;
+      virtual void initialize(Statistics& statistics, const Iterate& initial_iterate) = 0;
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
          const ProgressMeasures& trial_progress, const ProgressMeasures& predicted_reduction, double objective_multiplier) = 0;
       [[nodiscard]] virtual bool is_infeasibility_sufficiently_reduced(const ProgressMeasures& reference_progress,

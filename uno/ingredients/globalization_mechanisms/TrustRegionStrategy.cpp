@@ -16,8 +16,8 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   TrustRegionStrategy::TrustRegionStrategy(const Options& options) :
-         GlobalizationMechanism(),
+   TrustRegionStrategy::TrustRegionStrategy(const Model& model, const Options& options) :
+         GlobalizationMechanism(model, true, options),
          radius(options.get_double("TR_radius")),
          increase_factor(options.get_double("TR_increase_factor")),
          decrease_factor(options.get_double("TR_decrease_factor")),
@@ -31,15 +31,16 @@ namespace uno {
       assert(1. < this->decrease_factor && "The trust-region decrease factor should be > 1");
    }
 
-   void TrustRegionStrategy::initialize(Statistics& statistics, const Options& options) {
-      statistics.add_column("TR iter", Statistics::int_width + 2, options.get_int("statistics_minor_column_order"));
-      statistics.add_column("TR radius", Statistics::double_width - 4, options.get_int("statistics_TR_radius_column_order"));
-      statistics.set("TR radius", this->radius);
+   void TrustRegionStrategy::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Direction& direction) {
+      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, direction, this->radius);
+      statistics.add_column("Minor", Statistics::int_width, 3, Statistics::column_order.at("Minor"));
+      statistics.add_column("Radius", Statistics::double_width, 2, Statistics::column_order.at("Radius"));
+      statistics.set("Radius", this->radius);
    }
 
-   void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+   void TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
       this->reset_radius();
 
@@ -54,20 +55,20 @@ namespace uno {
             this->set_TR_statistics(statistics, number_iterations);
 
             // compute the direction within the trust region
-            constraint_relaxation_strategy.compute_feasible_direction(statistics, globalization_strategy, current_iterate,
-               direction, this->radius, warmstart_information);
-            statistics.set("step norm", direction.norm);
+            this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction,
+               this->radius, warmstart_information);
+            statistics.set("||Step||", direction.norm);
 
             // deal with errors in the subproblem
             if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
                // the subproblem is always bounded, but the objective may exceed a very large negative value
-               statistics.set("status", "unbounded subproblem");
+               statistics.set("Status", "unbounded subproblem");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius_aggressively();
                warmstart_information.variable_bounds_changed = true;
             }
             else if (direction.status == SubproblemStatus::ERROR) {
-               statistics.set("status", "solver error");
+               statistics.set("Status", "solver error");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius();
                // reset the Hessian representation of the subproblem solver
@@ -78,8 +79,8 @@ namespace uno {
                GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, 1., 1.);
                this->reset_active_trust_region_multipliers(model, direction, trial_iterate);
 
-               is_acceptable = this->is_iterate_acceptable(statistics, constraint_relaxation_strategy, globalization_strategy,
-                  model, current_iterate, trial_iterate, direction, warmstart_information, user_callbacks);
+               is_acceptable = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, direction,
+                  warmstart_information, user_callbacks);
                GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate);
                if (is_acceptable) {
                   GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
@@ -94,7 +95,7 @@ namespace uno {
          }
          // if an evaluation error occurs, decrease the radius
          catch (const EvaluationError&) {
-            statistics.set("status", "eval. error");
+            statistics.set("Status", "eval. error");
             if (Logger::level == INFO) statistics.print_current_line();
             DEBUG << "A function could not be evaluated. The trust-region radius will be reduced\n";
             this->decrease_radius();
@@ -107,7 +108,7 @@ namespace uno {
    }
 
    std::string TrustRegionStrategy::get_name() const {
-      return "TR";
+      return "TR " + this->constraint_relaxation_strategy->get_name();
    }
 
    // protected member functions
@@ -128,11 +129,10 @@ namespace uno {
    }
 
    // the trial iterate is accepted by the constraint relaxation strategy or if the step is small and we cannot switch to solving the feasibility problem
-   bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-         GlobalizationStrategy& globalization_strategy, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
-      bool accept_iterate = constraint_relaxation_strategy.is_iterate_acceptable(statistics, globalization_strategy,
-         this->radius, model, current_iterate, trial_iterate, direction, 1., warmstart_information, user_callbacks);
+   bool TrustRegionStrategy::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+      bool accept_iterate = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
+         trial_iterate, direction, 1., warmstart_information, user_callbacks);
       this->set_primal_statistics(statistics, model, trial_iterate);
       if (accept_iterate) {
          // trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
@@ -190,7 +190,7 @@ namespace uno {
    }
 
    void TrustRegionStrategy::set_TR_statistics(Statistics& statistics, size_t number_iterations) const {
-      statistics.set("TR iter", number_iterations);
-      statistics.set("TR radius", this->radius);
+      statistics.set("Minor", number_iterations);
+      statistics.set("Radius", this->radius);
    }
 } // namespace

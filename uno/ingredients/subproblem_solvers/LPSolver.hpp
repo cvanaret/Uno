@@ -14,7 +14,7 @@ namespace uno {
 
       void initialize_memory(const Subproblem& subproblem) override = 0;
 
-      void solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
+      void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override = 0;
 
       [[nodiscard]] EvaluationSpace& get_evaluation_space() override = 0;

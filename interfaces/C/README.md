@@ -96,7 +96,7 @@ uno_load_solver_option_file(solver, "uno.opt");
 
 Getting typed value of an option from the Uno solver:
 ```c
-int uno_get_solver_integer_option(solver, "max_iterations");
+uno_int uno_get_solver_integer_option(solver, "max_iterations");
 size_t uno_get_solver_unsigned_integer_option(solver, "max_iterations");
 double uno_set_solver_double_option(solver, "primal_tolerance");
 bool uno_get_solver_bool_option(solver, "print_solution");
@@ -141,7 +141,7 @@ uno_get_optimization_status(solver);
 ```
 - the solution status (`UNO_NOT_OPTIMAL`, `UNO_FEASIBLE_KKT_POINT`, `UNO_FEASIBLE_FJ_POINT`, `UNO_INFEASIBLE_STATIONARY_POINT`, `UNO_FEASIBLE_SMALL_STEP`, `UNO_INFEASIBLE_SMALL_STEP`, `UNO_UNBOUNDED`):
 ```c
-int32_t uno_get_solution_status(solver);
+uno_int uno_get_solution_status(solver);
 ```
 - the objective value of the solution:
 ```c

@@ -4,6 +4,7 @@
 #ifndef UNO_INERTIACORRECTIONSTRATEGYFACTORY_H
 #define UNO_INERTIACORRECTIONSTRATEGYFACTORY_H
 
+#include <array>
 #include <memory>
 #include "InertiaCorrectionStrategy.hpp"
 
@@ -14,6 +15,8 @@ namespace uno {
    class InertiaCorrectionStrategyFactory {
    public:
       static std::unique_ptr<InertiaCorrectionStrategy<double>> create(const Options& options);
+
+      constexpr static std::array available_strategies{"primal", "primal_dual", "none"};
    };
 } // namespace
 

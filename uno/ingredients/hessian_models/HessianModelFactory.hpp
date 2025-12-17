@@ -4,6 +4,7 @@
 #ifndef UNO_HESSIANMODELFACTORY_H
 #define UNO_HESSIANMODELFACTORY_H
 
+#include <array>
 #include <memory>
 
 namespace uno {
@@ -15,6 +16,8 @@ namespace uno {
    class HessianModelFactory {
    public:
       static std::unique_ptr<HessianModel> create(const Model& model, const Options& options);
+
+      constexpr static std::array available_strategies{"exact", "identity", "zero"};
    };
 } // namespace
 

@@ -12,7 +12,7 @@ namespace uno {
    public:
       explicit NoInertiaCorrection() = default;
 
-      void initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) override {
+      void initialize_statistics(Statistics& /*statistics*/) override {
          // do nothing
       }
 

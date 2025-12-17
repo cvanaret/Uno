@@ -5,13 +5,15 @@
 #define UNO_L1RELAXEDPROBLEM_H
 
 #include <functional>
+#include "ElasticVariables.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {
    public:
-      l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient);
+      l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
+         bool relax_linear_constraints);
       ~l1RelaxedProblem() override = default;
 
       [[nodiscard]] double get_objective_multiplier() const override;
@@ -28,15 +30,15 @@ namespace uno {
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
-      void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
+      void compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const override;
-      void compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
-         int* column_indices, int solver_indexing) const override;
+      void compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices, uno_int* column_indices,
+         uno_int solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
       void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const override;
       void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const override;
+         const EvaluationSpace& evaluation_space, Iterate& iterate) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, double* hessian_values) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
@@ -64,12 +66,17 @@ namespace uno {
          const Vector<double>& primal_direction, double step_length) const override;
 
    protected:
+      ElasticVariables elastic_variables;
       const size_t number_elastic_variables;
       const double objective_multiplier;
       const double constraint_violation_coefficient;
       double proximal_coefficient{INF<double>};
       double* proximal_center{};
       const ForwardRange dual_regularization_constraints{0};
+
+      // delegating constructor
+      l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,
+         double constraint_violation_coefficient);
    };
 } // namespace
 

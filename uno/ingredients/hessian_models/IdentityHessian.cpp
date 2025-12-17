@@ -25,7 +25,7 @@ namespace uno {
       return this->number_variables;
    }
 
-   void IdentityHessian::compute_sparsity(int* row_indices, int* column_indices, int solver_indexing) const {
+   void IdentityHessian::compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const {
       // diagonal structure
       for (size_t variable_index: Range(this->number_variables)) {
          row_indices[variable_index] = static_cast<int>(variable_index) + solver_indexing;

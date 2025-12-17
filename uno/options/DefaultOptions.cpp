@@ -33,25 +33,6 @@ namespace uno {
       // enforce linear constraints at the initial point (yes|no)
       options.set_bool("enforce_linear_constraints", false);
 
-      /** statistics table **/
-      options.set_integer("statistics_major_column_order", 1);
-      options.set_integer("statistics_minor_column_order", 2);
-      options.set_integer("statistics_penalty_parameter_column_order", 5);
-      options.set_integer("statistics_barrier_parameter_column_order", 8);
-      options.set_integer("statistics_SOC_column_order", 9);
-      options.set_integer("statistics_TR_radius_column_order", 10);
-      options.set_integer("statistics_LS_step_length_column_order", 10);
-      options.set_integer("statistics_restoration_phase_column_order", 20);
-      options.set_integer("statistics_primal_regularization_column_order", 21);
-      options.set_integer("statistics_funnel_width_column_order", 25);
-      options.set_integer("statistics_step_norm_column_order", 31);
-      options.set_integer("statistics_objective_column_order", 100);
-      options.set_integer("statistics_primal_feasibility_column_order", 101);
-      options.set_integer("statistics_dual_feasibility_column_order", 102);
-      options.set_integer("statistics_stationarity_column_order", 104);
-      options.set_integer("statistics_complementarity_column_order", 105);
-      options.set_integer("statistics_status_column_order", 200);
-
       /** main options **/
       // logging level (SILENT|DISCRETE|WARNING|INFO|DEBUG|DEBUG2|DEBUG3)
       options.set_string("logger", "INFO");
@@ -148,6 +129,7 @@ namespace uno {
       options.set_double("l1_constraint_violation_coefficient", 1);
 
       /** barrier subproblem options **/
+      options.set_string("barrier_function", "log");
       options.set_double("barrier_initial_parameter", 0.1);
       options.set_double("barrier_default_multiplier", 1);
       // Ipopt parameters
@@ -166,7 +148,7 @@ namespace uno {
       options.set_double("least_square_multiplier_max_norm", 1e3);
 
       /** BQPD options **/
-      options.set_integer("BQPD_kmax", 500);
+      options.set_string("BQPD_kmax_heuristic", "filtersqp");
    }
 
    // determine default subproblem solvers, based on the available external dependencies

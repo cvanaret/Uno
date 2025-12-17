@@ -6,6 +6,7 @@
 #include "GlobalizationStrategy.hpp"
 #include "GlobalizationStrategyFactory.hpp"
 #include "l1MeritFunction.hpp"
+#include "model/Model.hpp"
 #include "options/Options.hpp"
 #include "switching_methods/filter_methods/FletcherFilterMethod.hpp"
 #include "switching_methods/filter_methods/WaechterFilterMethod.hpp"
@@ -13,9 +14,9 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(bool unconstrained_model, const Options& options) {
+   std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(const Model& model, const Options& options) {
       // set unconstrained strategy automatically
-      if (unconstrained_model) {
+      if (model.number_constraints == 0) {
          INFO << "The model is unconstrained, picking a merit function as globalization strategy\n";
          return std::make_unique<l1MeritFunction>(options);
       }

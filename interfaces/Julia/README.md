@@ -14,15 +14,13 @@ This Julia interface is developed and maintained by [Alexis Montoison](https://g
 
 ## Installation
 
-`UnoSolver.jl` is not yet a registered Julia package, but it can still be installed and tested through the Julia package manager.
+`UnoSolver.jl` is a registered Julia package, it can be installed and tested through the Julia package manager.
 
 ```julia
 julia> using Pkg
-julia> Pkg.add(url="https://github.com/cvanaret/Uno", subdir="interfaces/Julia")
+julia> Pkg.add("UnoSolver")
 julia> Pkg.test("UnoSolver")
 ```
-
-We plan to register `UnoSolver.jl` in the near future (at the latest by JuMP-dev 2025).
 
 ## Examples
 
@@ -32,9 +30,7 @@ Below are examples showing how to use `UnoSolver.jl` with the interfaces for `NL
 using UnoSolver, CUTEst
 
 nlp = CUTEstModel{Float64}("HS15")
-model = uno_model(nlp)
-solver = uno_solver(preset="filtersqp", print_solution=true, logger="INFO")
-uno_optimize(solver, model)
+model, solver = uno(nlp, preset="filtersqp", print_solution=true, logger="INFO")
 
 timer = UnoSolver.uno_get_cpu_time(solver)
 niter = UnoSolver.uno_get_number_iterations(solver)
@@ -92,10 +88,70 @@ uno_set_solver_bool_option(solver, "print_solution", true)
 uno_optimize(solver, model)
 ```
 
-## LibHSL
+## Linear solvers
 
-We highly recommend downloading the latest release of [libHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) and installing the official version of `HSL_jll.jl`.
-This optional dependency provides access to more reliable and powerful linear solvers in `UnoSolver.jl`, such as `MA27` and `MA57`.
+`UnoSolver.jl` supports a number of linear solvers. If not specified by the user, the default linear solver is picked in this order (if available): MA57, MA27, MUMPS.
+
+### LibHSL
+
+We highly recommend downloading the latest release of [libHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) and installing the official version of `HSL_jll.jl` into your current environment using:
+```julia
+import Pkg
+Pkg.develop(path = "/full/path/to/HSL_jll.jl")
+```
+
+This optional dependency provides access to more reliable and powerful linear solvers. Currently, `UnoSolver.jl` supports `MA27` and `MA57`.
+Pick a linear solver by setting the `linear_solver` attribute:
+```julia
+using JuMP, UnoSolver
+import HSL_jll
+model = Model(() -> UnoSolver.Optimizer(preset="ipopt"))
+set_attribute(model, "linear_solver", "MA57")
+```
+
+### MUMPS
+
+MUMPS can be used by setting the `linear_solver` attribute:
+```julia
+using JuMP, UnoSolver
+model = Model(() -> UnoSolver.Optimizer(preset="ipopt"))
+set_attribute(model, "linear_solver", "MUMPS")
+```
+
+## QP solvers
+
+If not specified by the user, the default QP solver is BQPD.
+
+### BQPD
+
+BQPD can be used by setting the `QP_solver` attribute:
+```julia
+using JuMP, UnoSolver
+model = Model(() -> UnoSolver.Optimizer(preset="filtersqp"))
+set_attribute(model, "QP_solver", "BQPD")
+```
+
+## LP solvers
+
+If not specified by the user, the default LP solver is BQPD.
+
+### BQPD
+
+BQPD can be used by setting the `LP_solver` attribute:
+```julia
+using JuMP, UnoSolver
+model = Model(() -> UnoSolver.Optimizer(preset="filterslp"))
+set_attribute(model, "LP_solver", "BQPD")
+```
+
+### HiGHS
+
+HiGHS can be used by setting the `LP_solver` attribute:
+```julia
+using JuMP, UnoSolver
+model = Model(() -> UnoSolver.Optimizer(preset="filterslp"))
+set_attribute(model, "LP_solver", "HiGHS")
+```
 
 ## BLAS and LAPACK demuxer
 

@@ -50,12 +50,12 @@ namespace uno {
       }
 
       // sparsity patterns of Jacobian and Hessian
-      void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
+      void compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
             MatrixOrder matrix_order) const override {
          this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
       }
 
-      void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override {
+      void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override {
          this->model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
       }
 
@@ -92,6 +92,7 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override { return this->model.get_equality_constraints(); }
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override { return this->model.get_inequality_constraints(); }
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override { return this->model.get_linear_constraints(); }
+      [[nodiscard]] const Collection<size_t>& get_nonlinear_constraints() const override { return this->model.get_nonlinear_constraints(); }
 
       void initial_primal_point(Vector<double>& x) const override { this->model.initial_primal_point(x); }
       void initial_dual_point(Vector<double>& multipliers) const override { this->model.initial_dual_point(multipliers); }

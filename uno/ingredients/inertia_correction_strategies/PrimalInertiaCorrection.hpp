@@ -22,7 +22,7 @@ namespace uno {
    public:
       explicit PrimalInertiaCorrection(const Options& options);
 
-      void initialize_statistics(Statistics& statistics, const Options& options) override;
+      void initialize_statistics(Statistics& statistics) override;
 
       void regularize_hessian(Statistics& statistics, const Subproblem& subproblem, const double* hessian_values,
          const Inertia& expected_inertia, double* primal_regularization_values) override;
@@ -63,8 +63,8 @@ namespace uno {
    }
 
    template <typename ElementType>
-   void PrimalInertiaCorrection<ElementType>::initialize_statistics(Statistics& statistics, const Options& options) {
-      statistics.add_column("regulariz", Statistics::double_width - 4, options.get_int("statistics_primal_regularization_column_order"));
+   void PrimalInertiaCorrection<ElementType>::initialize_statistics(Statistics& statistics) {
+      statistics.add_column("Regulariz", Statistics::double_width, 2, Statistics::column_order.at("Regulariz"));
    }
 
    // Nocedal and Wright, p51
@@ -86,27 +86,31 @@ namespace uno {
          const double* hessian_values, const Inertia& expected_inertia,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, double* primal_regularization_values) {
       assert(hessian_values != nullptr);
+      const size_t number_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
 
-      DEBUG << "Current Hessian:\n" << hessian_values << '\n';
-      const double smallest_diagonal_entry = 0.; // TODO hessian_values.smallest_diagonal_entry(expected_inertia.positive);
-      DEBUG << "The minimal diagonal entry of the matrix is " << smallest_diagonal_entry << '\n';
-
-      this->regularization_factor = (smallest_diagonal_entry > 0.) ? 0. : this->regularization_initial_value - smallest_diagonal_entry;
+      this->regularization_factor = 0.;
       bool good_inertia = false;
       while (!good_inertia) {
          DEBUG << "Testing factorization with regularization factor " << this->regularization_factor << '\n';
          for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
             primal_regularization_values[index] = this->regularization_factor;
          }
-         DEBUG << "Current Hessian:\n" << hessian_values;
+         DEBUG << "Current Hessian:";
+         for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
+            DEBUG << ' ' << hessian_values[nonzero_index];
+         }
+         DEBUG << '\n';
 
+         // perform factorization to get an estimate of the inertia
          linear_solver.do_numerical_factorization(hessian_values);
+
+         // check inertia
          const Inertia estimated_inertia = linear_solver.get_inertia();
          DEBUG << "Expected inertia: " << expected_inertia << '\n';
          DEBUG << "Estimated inertia: " << estimated_inertia << '\n';
          if (estimated_inertia == expected_inertia) {
             good_inertia = true;
-            DEBUG << "Factorization was a success";
+            DEBUG << "Factorization was a success\n";
          }
          else {
             this->regularization_factor = (this->regularization_factor == 0.) ? this->regularization_initial_value :
@@ -115,9 +119,8 @@ namespace uno {
                throw UnstableRegularization();
             }
          }
-         DEBUG << '\n';
       }
-      statistics.set("regulariz", this->regularization_factor);
+      statistics.set("Regulariz", this->regularization_factor);
    }
 
    template <typename ElementType>

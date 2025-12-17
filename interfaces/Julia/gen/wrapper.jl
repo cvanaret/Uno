@@ -18,7 +18,7 @@ function main()
                "JacobianSparsity", "Jacobian", "HessianSparsity", "Hessian",
                "NotifyAcceptableIterateUserCallback", "TerminationUserCallback",
                "LoggerStreamUserCallback"]
-  options["general"]["output_ignorelist"] = callbacks
+  options["general"]["output_ignorelist"] = [callbacks; "uno_int"]
 
   args = get_default_args()
   push!(args, "-I$include_dir")
@@ -32,6 +32,7 @@ function main()
   for callback in callbacks
     wrappers = replace(wrappers, callback => "Ptr{Cvoid}")
   end
+  wrappers = replace(wrappers, "uno_int" => "Int32")
   write(path, wrappers)
   format_file(path, YASStyle())
   return nothing

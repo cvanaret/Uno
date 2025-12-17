@@ -1,0 +1,52 @@
+name: UnoSolver.jl
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: JLL - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.allow_failure }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['1']
+        os: [ubuntu-latest, windows-latest]
+        arch: ['x64']
+        allow_failure: [false]
+        include:
+          - os: ubuntu-24.04-arm
+            arch: 'arm64'
+            version: '1'
+            allow_failure: false
+          - os: macos-latest
+            arch: 'arm64'
+            version: '1'
+            allow_failure: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install compilers
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '14'
+        if: matrix.os == 'macos-latest'
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+
+      - name: Test UnoSolver.jl
+        if: >-
+          (github.event_name == 'push' && contains(github.event.head_commit.message, '[UnoSolver.jl] Release')) ||
+          (github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[UnoSolver.jl] Release'))
+        shell: bash
+        run: |
+          julia --color=no -e 'using Pkg; Pkg.develop(path="interfaces/Julia"); Pkg.test("UnoSolver")'

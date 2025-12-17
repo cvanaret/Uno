@@ -4,18 +4,20 @@
 #ifndef UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 #define UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 
-#include "InteriorPointParameters.hpp"
+#include "../BarrierProblem.hpp"
+#include "../InteriorPointParameters.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
-   class PrimalDualInteriorPointProblem : public OptimizationProblem {
+   class PrimalDualInteriorPointProblem : public BarrierProblem {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters &parameters);
 
       [[nodiscard]] double get_objective_multiplier() const override;
-      void set_barrier_parameter(double barrier_parameter);
+      void set_barrier_parameter(double barrier_parameter) override;
+      void generate_initial_iterate(Iterate& initial_iterate) const override;
 
       // constraint evaluations
       void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
@@ -24,10 +26,10 @@ namespace uno {
       void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const override;
 
       // sparsity patterns of Jacobian and Hessian
-      void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
+      void compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const override;
-      void compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
-         int* column_indices, int solver_indexing) const override;
+      void compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,
+         uno_int* column_indices, uno_int solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
@@ -35,7 +37,7 @@ namespace uno {
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
       void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const override;
       void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const override;
+         const EvaluationSpace& evaluation_space, Iterate& iterate) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, double* hessian_values) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
@@ -58,9 +60,9 @@ namespace uno {
       [[nodiscard]] double dual_regularization_factor() const override;
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
-      void postprocess_iterate(Iterate& iterate) const;
+      void postprocess_iterate(Iterate& iterate) const override;
       [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
-         double shift) const;
+         double shift) const override;
 
       // progress measures
       void set_auxiliary_measure(Iterate& iterate) const override;

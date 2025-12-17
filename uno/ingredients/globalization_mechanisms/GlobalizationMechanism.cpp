@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "GlobalizationMechanism.hpp"
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
+#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
@@ -9,6 +11,10 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
+   GlobalizationMechanism::GlobalizationMechanism(const Model& model, bool use_trust_region, const Options& options):
+      constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(model, use_trust_region, options)) {
+   }
+
    void GlobalizationMechanism::assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double primal_step_length, double dual_step_length) {
       trial_iterate.set_number_variables(current_iterate.primals.size());
@@ -34,15 +40,19 @@ namespace uno {
 
    void GlobalizationMechanism::set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) {
       if (iterate.is_objective_computed) {
-         statistics.set("objective", iterate.evaluations.objective);
+         statistics.set("Objective", iterate.evaluations.objective);
       }
       if (model.is_constrained()) {
-         statistics.set("primal feas", iterate.progress.infeasibility);
+         statistics.set("Infeas", iterate.progress.infeasibility);
       }
    }
 
    void GlobalizationMechanism::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) {
-      statistics.set("stationarity", iterate.residuals.stationarity);
-      statistics.set("complementarity", iterate.residuals.complementarity);
+      statistics.set("Statio", iterate.residuals.stationarity);
+      statistics.set("Compl", iterate.residuals.complementarity);
+   }
+
+   size_t GlobalizationMechanism::get_number_subproblems_solved() const {
+      return this->constraint_relaxation_strategy->get_number_subproblems_solved();
    }
 } // namespace

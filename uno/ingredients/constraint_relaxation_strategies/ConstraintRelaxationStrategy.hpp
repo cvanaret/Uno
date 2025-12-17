@@ -12,7 +12,6 @@
 namespace uno {
    // forward declarations
    class Direction;
-   class GlobalizationStrategy;
    class Model;
    class Multipliers;
    class OptimizationProblem;
@@ -27,18 +26,18 @@ namespace uno {
       virtual ~ConstraintRelaxationStrategy();
 
       virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         double trust_region_radius, const Options& options) = 0;
+         double trust_region_radius) = 0;
 
       // direction computation
-      virtual void compute_feasible_direction(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
+      virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+         double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
-      virtual void switch_to_feasibility_problem(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
+      virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
+         WarmstartInformation& warmstart_information) = 0;
 
       // trial iterate acceptance
-      [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         double trust_region_radius, const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+      [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction,
          double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
       [[nodiscard]] virtual SolutionStatus check_termination(const Model& model, Iterate& iterate) = 0;
 

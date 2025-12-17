@@ -8,6 +8,7 @@
 #include "optimization/EvaluationSpace.hpp"
 #include "Highs.h"
 #include "linear_algebra/Vector.hpp"
+#include "../interfaces/C/uno_int.h"
 
 namespace uno {
    // forward declarations
@@ -34,15 +35,18 @@ namespace uno {
       Vector<double> constraints{};
       Vector<double> linear_objective{};
       // constraint Jacobian in COO format
-      Vector<int> jacobian_row_indices{};
-      Vector<int> jacobian_column_indices{};
+      Vector<uno_int> jacobian_row_indices{};
+      Vector<uno_int> jacobian_column_indices{};
+      Vector<double> jacobian_values{};
+      Vector<size_t> jacobian_permutation_vector{};
       // Lagrangian Hessian in COO format
-      Vector<int> hessian_row_indices{};
-      Vector<int> hessian_column_indices{};
+      Vector<uno_int> hessian_row_indices{};
+      Vector<uno_int> hessian_column_indices{};
       Vector<double> hessian_values{};
-      Vector<size_t> permutation_vector{};
+      Vector<size_t> hessian_permutation_vector{};
 
    protected:
+      void compute_jacobian_sparsity(const Subproblem& subproblem);
       void compute_hessian_sparsity(const Subproblem& subproblem);
    };
 } // namespace

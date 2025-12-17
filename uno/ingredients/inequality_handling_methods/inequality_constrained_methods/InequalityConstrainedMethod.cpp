@@ -4,10 +4,10 @@
 #include <cassert>
 #include "InequalityConstrainedMethod.hpp"
 #include "optimization/Iterate.hpp"
-#include "ingredients/constraint_relaxation_strategies/l1RelaxedProblem.hpp"
+#include "ingredients/constraint_relaxation_strategies/relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "ingredients/subproblem_solvers/BoxLPSolverFactory.hpp"
+#include "ingredients/subproblem_solvers/BoxLPSolver.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "optimization/Direction.hpp"
@@ -21,17 +21,18 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) {
+         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double /*trust_region_radius*/) {
       this->problem = &problem; // store the problem as is (no reformulation)
       assert(this->problem != nullptr);
       this->initial_point.resize(this->problem->number_variables);
 
       // allocate the LP/QP solver, depending on the presence of curvature in the subproblem
-      const Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
-      if (!subproblem.has_curvature()) {
-         if (subproblem.number_constraints == 0) {
+      this->subproblem = std::make_unique<Subproblem>(*this->problem, current_iterate, hessian_model,
+         inertia_correction_strategy);
+      if (!this->subproblem->has_curvature()) {
+         if (this->subproblem->number_constraints == 0) {
             DEBUG << "No curvature and only bound constraints in the subproblems, allocating a box LP solver\n";
-            this->solver = BoxLPSolverFactory::create();
+            this->solver = std::make_unique<BoxLPSolver>();
          }
          else {
             DEBUG << "No curvature in the subproblems, allocating an LP solver\n";
@@ -42,10 +43,10 @@ namespace uno {
          DEBUG << "Curvature in the subproblems, allocating a QP solver\n";
          this->solver = QPSolverFactory::create(this->options);
       }
-      this->solver->initialize_memory(subproblem);
+      this->solver->initialize_memory(*this->subproblem);
    }
 
-   void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/, const Options& /*options*/) {
+   void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/) {
       // do nothing
    }
 
@@ -54,11 +55,9 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy,
-         double trust_region_radius, WarmstartInformation& warmstart_information) {
-      // create the subproblem and solve it
-      Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
-      this->solver->solve(statistics, subproblem, this->initial_point, direction, warmstart_information);
+        double trust_region_radius, WarmstartInformation& warmstart_information) {
+      // solve the subproblem
+      this->solver->solve(statistics, *this->subproblem, trust_region_radius, this->initial_point, direction, warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_iterate.multipliers, direction.multipliers);
       ++this->number_subproblems_solved;
       // reset the initial point
@@ -90,21 +89,6 @@ namespace uno {
       evaluation_space.evaluate_constraint_jacobian(*this->problem, iterate);
    }
 
-   void InequalityConstrainedMethod::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      const auto& evaluation_space = this->solver->get_evaluation_space();
-      evaluation_space.compute_constraint_jacobian_vector_product(vector, result);
-   }
-
-   void InequalityConstrainedMethod::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      const auto& evaluation_space = this->solver->get_evaluation_space();
-      evaluation_space.compute_constraint_jacobian_transposed_vector_product(vector, result);
-   }
-
-   double InequalityConstrainedMethod::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
-      const auto& evaluation_space = this->solver->get_evaluation_space();
-      return evaluation_space.compute_hessian_quadratic_product(subproblem, vector);
-   }
-
    // compute dual *displacements*
    // because of the way we form LPs/QPs, we get the new *multipliers* back from the solver. To get the dual displacements/direction,
    // we need to subtract the current multipliers
@@ -115,12 +99,10 @@ namespace uno {
    }
 
    bool InequalityConstrainedMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          UserCallbacks& user_callbacks) {
-      const Subproblem subproblem{*this->problem, current_iterate, hessian_model, inertia_correction_strategy, trust_region_radius};
-      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, subproblem, this->get_evaluation_space(),
-         current_iterate, trial_iterate, direction, step_length, user_callbacks);
+      return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
+         this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
    }
 
    void InequalityConstrainedMethod::postprocess_iterate(Iterate& /*iterate*/) {

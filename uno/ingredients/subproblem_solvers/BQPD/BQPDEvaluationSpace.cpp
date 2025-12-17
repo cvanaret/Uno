@@ -30,7 +30,7 @@ namespace uno {
          this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_values.resize(number_regularized_hessian_nonzeros);
          subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
-            this->hessian_column_indices.data(), Indexing::C_indexing);
+                                                         this->hessian_column_indices.data(), Indexing::C_indexing);
       }
       else {
          // TODO allocate some vector to contain the result of Hv (see compute_hessian_quadratic_product)
@@ -42,8 +42,8 @@ namespace uno {
 
       // copy the Jacobian with permutation into &this->gradients[subproblem.number_variables]
       for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
-         const size_t permutated_nonzero_index = this->permutation_vector[nonzero_index];
-         this->gradients[problem.number_variables + nonzero_index] = this->jacobian_values[permutated_nonzero_index];
+         const size_t permuted_nonzero_index = this->permutation_vector[nonzero_index];
+         this->gradients[problem.number_variables + nonzero_index] = this->jacobian_values[permuted_nonzero_index];
       }
    }
 
@@ -109,14 +109,10 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
-      if (warmstart_information.objective_changed) {
+      if (warmstart_information.new_iterate) {
          problem.evaluate_objective_gradient(current_iterate, this->gradients.data());
-      }
-      if (warmstart_information.constraints_changed) {
          problem.evaluate_constraints(current_iterate, this->constraints);
          this->evaluate_constraint_jacobian(problem, current_iterate);
-      }
-      if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
          this->evaluate_hessian = true;
       }
    }
@@ -141,7 +137,7 @@ namespace uno {
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(),
-         this->jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
+                                                      this->jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
 
       // BQPD (sparse) requires a (weak) CSR Jacobian: the entries should be in increasing constraint indices.
       // Since the COO format does not require this, we need to convert from COO to CSR by permutating the entries. To
@@ -160,14 +156,14 @@ namespace uno {
       // copy the COO format into BQPD's CSR format
       int current_constraint = 0;
       for (size_t jacobian_nonzero_index: Range(number_jacobian_nonzeros)) {
-         const size_t permutated_nonzero_index = this->permutation_vector[jacobian_nonzero_index];
+         const size_t permuted_nonzero_index = this->permutation_vector[jacobian_nonzero_index];
          // variable index
-         const int variable_index = this->jacobian_column_indices[permutated_nonzero_index];
+         const int variable_index = this->jacobian_column_indices[permuted_nonzero_index];
          this->gradient_sparsity[1 + subproblem.number_variables + jacobian_nonzero_index] = variable_index +
             Indexing::Fortran_indexing;
 
          // constraint index
-         const int constraint_index = this->jacobian_row_indices[permutated_nonzero_index];
+         const int constraint_index = this->jacobian_row_indices[permuted_nonzero_index];
          assert(current_constraint <= constraint_index);
          while (current_constraint < constraint_index) {
             ++current_constraint;

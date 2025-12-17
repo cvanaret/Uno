@@ -4,16 +4,26 @@
 #include "l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
+#include "optimization/EvaluationSpace.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/UnaryNegation.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
-   l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient):
-         OptimizationProblem(model, model.number_variables + model.get_inequality_constraints().size() +
-            2*model.get_equality_constraints().size(), model.number_constraints),
-         number_elastic_variables(model.get_inequality_constraints().size() + 2*model.get_equality_constraints().size()),
+   l1RelaxedProblem::l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
+         bool relax_linear_constraints):
+      // call delegating constructor
+      l1RelaxedProblem(model, ElasticVariables::generate(model, relax_linear_constraints), objective_multiplier,
+         constraint_violation_coefficient) {
+   }
+
+   // delegating constructor
+   l1RelaxedProblem::l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,
+            double constraint_violation_coefficient):
+         OptimizationProblem(model, model.number_variables + elastic_variables.size(), model.number_constraints),
+         elastic_variables(elastic_variables),
+         number_elastic_variables(elastic_variables.size()),
          objective_multiplier(objective_multiplier),
          constraint_violation_coefficient(constraint_violation_coefficient) {
    }
@@ -35,19 +45,11 @@ namespace uno {
       constraints = iterate.evaluations.constraints;
 
       // add the contribution of the elastic variables
-      size_t elastic_index = this->model.number_variables;
-      for (size_t inequality_index: this->model.get_inequality_constraints()) {
-         if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
-            constraints[inequality_index] += iterate.primals[elastic_index];
-         }
-         else { // positive part
-            constraints[inequality_index] -= iterate.primals[elastic_index];
-         }
-         ++elastic_index;
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
+         constraints[constraint_index] -= iterate.primals[elastic_index];
       }
-      for (size_t equality_index: this->model.get_equality_constraints()) {
-         constraints[equality_index] += (iterate.primals[elastic_index] - iterate.primals[elastic_index + 1]);
-         elastic_index += 2;
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+         constraints[constraint_index] += iterate.primals[elastic_index];
       }
    }
 
@@ -99,32 +101,26 @@ namespace uno {
       return number_nonzeros;
    }
 
-   void l1RelaxedProblem::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
+   void l1RelaxedProblem::compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const {
       this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
 
       // add the contribution of the elastic variables
-      int elastic_index = static_cast<int>(this->model.number_variables);
-      size_t current_index = this->model.number_jacobian_nonzeros();
-      for (size_t inequality_index: this->model.get_inequality_constraints()) {
-         row_indices[current_index] = static_cast<int>(inequality_index) + solver_indexing;
-         column_indices[current_index] = elastic_index + solver_indexing;
-         ++elastic_index;
-         ++current_index;
+      size_t nonzero_index = this->model.number_jacobian_nonzeros();
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
+         row_indices[nonzero_index] = static_cast<int>(constraint_index) + solver_indexing;
+         column_indices[nonzero_index] = static_cast<uno_int>(elastic_index) + solver_indexing;
+         ++nonzero_index;
       }
-      for (size_t equality_index: this->model.get_equality_constraints()) {
-         row_indices[current_index] = static_cast<int>(equality_index) + solver_indexing;
-         column_indices[current_index] = elastic_index + solver_indexing;
-         ++current_index;
-         row_indices[current_index] = static_cast<int>(equality_index) + solver_indexing;
-         column_indices[current_index] = elastic_index + 1 + solver_indexing;
-         elastic_index += 2;
-         ++current_index;
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+         row_indices[nonzero_index] = static_cast<int>(constraint_index) + solver_indexing;
+         column_indices[nonzero_index] = static_cast<uno_int>(elastic_index) + solver_indexing;
+         ++nonzero_index;
       }
    }
 
-   void l1RelaxedProblem::compute_hessian_sparsity(const HessianModel& hessian_model, int* row_indices,
-         int* column_indices, int solver_indexing) const {
+   void l1RelaxedProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,
+         uno_int* column_indices, uno_int solver_indexing) const {
       hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
 
       // diagonal proximal contribution
@@ -143,25 +139,19 @@ namespace uno {
 
       // add the contribution of the elastic variables
       size_t nonzero_index = this->model.number_jacobian_nonzeros();
-      for (size_t inequality_index: this->model.get_inequality_constraints()) {
-         if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
-            jacobian_values[nonzero_index] = 1.;
-         }
-         else { // positive part
-            jacobian_values[nonzero_index] = -1.;
-         }
+      for ([[maybe_unused]] const auto _: this->elastic_variables.positive) {
+         jacobian_values[nonzero_index] = -1.;
          ++nonzero_index;
       }
-      for ([[maybe_unused]] size_t _: this->model.get_equality_constraints()) {
+      for ([[maybe_unused]] const auto _: this->elastic_variables.negative) {
          jacobian_values[nonzero_index] = 1.;
-         jacobian_values[nonzero_index + 1] = -1.;
-         nonzero_index += 2;
+         ++nonzero_index;
       }
    }
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
    void l1RelaxedProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const InequalityHandlingMethod& inequality_handling_method, Iterate& iterate) const {
+         const EvaluationSpace& evaluation_space, Iterate& iterate) const {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
 
@@ -169,7 +159,7 @@ namespace uno {
       lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
 
       // ∇c(x_k) λ_k
-      inequality_handling_method.compute_constraint_jacobian_transposed_vector_product(iterate.multipliers.constraints,
+      evaluation_space.compute_constraint_jacobian_transposed_vector_product(iterate.multipliers.constraints,
          lagrangian_gradient.constraints_contribution);
       lagrangian_gradient.constraints_contribution = -lagrangian_gradient.constraints_contribution;
 
@@ -180,25 +170,13 @@ namespace uno {
       }
 
       // elastic variables
-      size_t elastic_index = this->model.number_variables;
-      for (size_t inequality_index: this->model.get_inequality_constraints()) {
-         if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
-            lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
-               iterate.multipliers.constraints[inequality_index] - iterate.multipliers.lower_bounds[elastic_index];
-         }
-         else { // positive part
-            lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
-               iterate.multipliers.constraints[inequality_index] - iterate.multipliers.lower_bounds[elastic_index];
-         }
-         ++elastic_index;
-      }
-      for (size_t equality_index: this->model.get_equality_constraints()) {
-         lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
-            iterate.multipliers.constraints[equality_index] - iterate.multipliers.lower_bounds[elastic_index];
-         ++elastic_index;
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
          lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
-            iterate.multipliers.constraints[equality_index] - iterate.multipliers.lower_bounds[elastic_index];
-         ++elastic_index;
+            iterate.multipliers.constraints[constraint_index] - iterate.multipliers.lower_bounds[elastic_index];
+      }
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+         lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
+            iterate.multipliers.constraints[constraint_index] - iterate.multipliers.lower_bounds[elastic_index];
       }
 
       // proximal contribution
@@ -310,20 +288,11 @@ namespace uno {
    void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t,
          double)>& elastic_setting_function) const {
       iterate.set_number_variables(this->number_variables);
-      size_t elastic_index = this->model.number_variables;
-      for (size_t inequality_index: this->model.get_inequality_constraints()) {
-         if (is_finite(this->model.constraint_lower_bound(inequality_index))) { // negative part
-            elastic_setting_function(iterate, inequality_index, elastic_index, 1.);
-         }
-         else { // positive part
-            elastic_setting_function(iterate, inequality_index, elastic_index, -1.);
-         }
-         ++elastic_index;
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
+         elastic_setting_function(iterate, constraint_index, elastic_index, -1.);
       }
-      for (size_t equality_index: this->model.get_equality_constraints()) {
-         elastic_setting_function(iterate, equality_index, elastic_index, 1.);
-         elastic_setting_function(iterate, equality_index, elastic_index + 1, -1.);
-         elastic_index += 2;
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+         elastic_setting_function(iterate, constraint_index, elastic_index, 1.);
       }
    }
 

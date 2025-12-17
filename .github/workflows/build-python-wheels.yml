@@ -1,0 +1,135 @@
+name: Build Python wheels
+# https://github.com/pypa/cibuildwheel/blob/main/examples/github-minimal.yml
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-22.04-arm, macos-latest, macos-15-intel]
+
+    steps:
+      - uses: actions/checkout@v5
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install cibuildwheel
+
+      - name: Install Fortran compiler on macOS
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '13'
+        if: startsWith(matrix.os, 'macos')
+
+      - name: Build wheels
+        run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
+        env:
+          MACOSX_DEPLOYMENT_TARGET: 15.0
+
+          CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ${{github.workspace}}/wheelhouse/*.whl
+
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download dependencies
+        run: bash interfaces/Python/scripts/download_dependencies.sh
+
+      - name: Build sdist
+        run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-sdist
+          path: dist/*.tar.gz
+
+  check-release:
+    name: Check latest commit message
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    outputs:
+      test_release_commit: ${{ steps.check.outputs.test_release_commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      # check if the latest PR commit message contains '[unopy] Test release'
+      - name: Check latest commit message
+        id: check
+        run: |
+          commit_message="$(git log -1 --pretty=%B)"
+          echo "Latest commit message: $commit_message"
+          if echo "$commit_message" | grep -q '\[unopy\] Test release'; then
+            echo "test_release_commit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "test_release_commit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  upload_testpypi:
+    needs: [build_wheels, build_sdist, check-release]
+    # if the latest PR commit message contains '[unopy] Test release', trigger the upload to TestPyPi
+    name: Upload release to TestPyPI
+    if: needs.check-release.outputs.test_release_commit == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          # unpacks all CIBW artifacts into dist/
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
+
+  upload_pypi:
+    needs: [build_wheels, build_sdist]
+    # if the merge commit message contains '[unopy] Release', trigger the upload to PyPi
+    name: Upload release to PyPI
+    if: >-
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[unopy] Release'))
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          # unpacks all CIBW artifacts into dist/
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true

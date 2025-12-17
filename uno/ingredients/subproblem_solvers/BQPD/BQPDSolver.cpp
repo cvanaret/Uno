@@ -37,16 +37,24 @@ extern "C" {
 namespace uno {
    #define BIG 1e30
 
-   // heuristic to select kmax (the maximum size of the nullspace)
-   // source: Minotaur code
+   // heuristics to select kmax (the maximum size of the nullspace)
+
+   // approach implemented in filterSQP
+   int pick_kmax_filtersqp(size_t number_variables, size_t /*number_constraints*/) {
+      return std::min(static_cast<int>(number_variables), 500);
+   }
+
+   // approach implemented in Minotaur
    // https://github.com/coin-or/minotaur/blob/51a8bb78241a0b2e9ae94802aa76af8319f99192/src/interfaces/UnoEngine.cpp#L277
-   int pick_kmax_heuristically(size_t number_variables, size_t number_constraints) {
+   int pick_kmax_minotaur(size_t number_variables, size_t number_constraints) {
       size_t kmax = 0;
       if (number_variables <= 1500) {
          kmax = number_variables;
-      } else if (number_variables <= 5000) {
+      }
+      else if (number_variables <= 5000) {
          kmax = number_variables - number_constraints/5;
-      } else {
+      }
+      else {
          kmax = 5000;
       }
       return static_cast<int>(kmax);
@@ -55,6 +63,8 @@ namespace uno {
    // preallocate a bunch of stuff
    BQPDSolver::BQPDSolver(const Options& options):
          QPSolver(),
+         // select a heuristic to pick kmax (the max size of the nullspace)
+         pick_kmax(options.get_string("BQPD_kmax_heuristic") == "minotaur" ? pick_kmax_minotaur : pick_kmax_filtersqp),
          alp(static_cast<size_t>(this->mlp)),
          lp(static_cast<size_t>(this->mlp)),
          print_subproblem(options.get_bool("print_subproblem")) {
@@ -82,8 +92,7 @@ namespace uno {
       }
 
       // determine whether the subproblem has curvature
-      this->kmax = subproblem.has_curvature() ? pick_kmax_heuristically(subproblem.number_variables,
-         subproblem.number_constraints) : 0;
+      this->kmax = subproblem.has_curvature() ? pick_kmax(subproblem.number_variables, subproblem.number_constraints) : 0;
 
       // allocation of integer and real workspaces
       this->mxws = static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * subproblem.number_variables +
@@ -97,9 +106,9 @@ namespace uno {
       this->lws.resize(this->mxlws);
    }
 
-   void BQPDSolver::solve(Statistics& statistics, Subproblem& subproblem, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) {
-      this->set_up_subproblem(statistics, subproblem, warmstart_information);
+   void BQPDSolver::solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
+         const Vector<double>& initial_point, Direction& direction, const WarmstartInformation& warmstart_information) {
+      this->set_up_subproblem(statistics, subproblem, trust_region_radius, warmstart_information);
       if (this->print_subproblem) {
          this->display_subproblem(subproblem, initial_point);
       }
@@ -112,7 +121,7 @@ namespace uno {
 
    // protected member functions
 
-   void BQPDSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem,
+   void BQPDSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
          const WarmstartInformation& warmstart_information) {
       // initialize wsc_ common block (Hessian & workspace for BQPD)
       // setting the common block here ensures that several instances of BQPD can run simultaneously
@@ -124,11 +133,11 @@ namespace uno {
 
       // variable bounds
       if (warmstart_information.variable_bounds_changed) {
-         subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds);
+         subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds, trust_region_radius);
       }
 
       // constraint bounds
-      if (warmstart_information.constraint_bounds_changed || warmstart_information.constraints_changed) {
+      if (warmstart_information.constraint_bounds_changed || warmstart_information.new_iterate) {
          auto constraints_lower_bounds = view(this->lower_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
          auto constraints_upper_bounds = view(this->upper_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
          subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, this->evaluation_space.constraints);
@@ -219,14 +228,14 @@ namespace uno {
    }
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {
-      BQPDMode mode = BQPDMode::USER_DEFINED;
+      BQPDMode mode = BQPDMode::USER_DEFINED_ACTIVE_SET;
       // if problem structure changed, use cold start
       if (warmstart_information.hessian_sparsity_changed || warmstart_information.jacobian_sparsity_changed) {
          mode = BQPDMode::ACTIVE_SET_EQUALITIES;
       }
       // if only the variable bounds changed, reuse the active set estimate and the Jacobian information
-      else if (warmstart_information.variable_bounds_changed && !warmstart_information.objective_changed &&
-               !warmstart_information.constraints_changed && !warmstart_information.constraint_bounds_changed) {
+      else if (warmstart_information.variable_bounds_changed && !warmstart_information.new_iterate &&
+            !warmstart_information.constraint_bounds_changed) {
          mode = BQPDMode::UNCHANGED_ACTIVE_SET_AND_JACOBIAN;
       }
       return mode;

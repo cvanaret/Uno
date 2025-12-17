@@ -37,7 +37,8 @@ namespace uno {
       // shortcuts for state-of-the-art combinations
       if (preset_name == "ipopt") {
          preset_options.set_string("constraint_relaxation_strategy", "feasibility_restoration");
-         preset_options.set_string("inequality_handling_method", "primal_dual_interior_point");
+         preset_options.set_string("inequality_handling_method", "interior_point");
+         preset_options.set_string("barrier_function", "log");
          preset_options.set_string("hessian_model", "exact");
          preset_options.set_string("inertia_correction_strategy", "primal_dual");
          preset_options.set_string("globalization_mechanism", "LS");

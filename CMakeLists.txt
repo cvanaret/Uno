@@ -11,7 +11,7 @@ endif()
 ######################
 
 # define the project
-project(Uno VERSION 2.3.0
+project(Uno VERSION 2.3.1
         DESCRIPTION "Uno (Unifying Nonlinear Optimization)"
         LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
@@ -61,6 +61,7 @@ file(GLOB UNO_SOURCE_FILES
    interfaces/C/Uno_C_API.cpp
    uno/Uno.cpp
    uno/ingredients/constraint_relaxation_strategies/*.cpp
+   uno/ingredients/constraint_relaxation_strategies/relaxed_problems/*.cpp
    uno/ingredients/globalization_mechanisms/*.cpp
    uno/ingredients/globalization_strategies/*.cpp
    uno/ingredients/globalization_strategies/switching_methods/*.cpp
@@ -71,6 +72,7 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/inequality_handling_methods/*.cpp
    uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
    uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
+   uno/ingredients/inequality_handling_methods/interior_point_methods/barrier_problems/*.cpp
    uno/ingredients/inertia_correction_strategies/*.cpp
    uno/ingredients/subproblem/*.cpp
    uno/ingredients/subproblem_solvers/*.cpp
@@ -237,7 +239,7 @@ if(BUILD_STATIC_LIBS)
    target_include_directories(uno_static PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_static PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
-   set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/Fortran/uno.f90")
+   set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno.f90")
 endif()
 
 if(BUILD_SHARED_LIBS)
@@ -245,7 +247,7 @@ if(BUILD_SHARED_LIBS)
    target_include_directories(uno_shared PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_shared PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
-   set_target_properties(uno_shared PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/Fortran/uno.f90")
+   set_target_properties(uno_shared PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno.f90")
 endif()
 
 if(BUILD_STATIC_LIBS)
@@ -273,18 +275,20 @@ if(AMPLSOLVER)
    include_directories(${directory})
 endif()
 
-############################
-# optional Python bindings #
-############################
+#############################
+# unopy (pybind11 bindings) #
+#############################
+if(SKBUILD)
+   message(STATUS "Building Python extension (SKBUILD detected).")
 
-set(PYBIND11_FINDPYTHON ON)
-find_package(pybind11)
-if(pybind11_DIR)
+   # set(PYBIND11_FINDPYTHON ON)
+   find_package(pybind11 CONFIG REQUIRED)
+
    # link-time optimization
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto=auto")
    endif()
-   
+
    file(GLOB PYTHON_MODULE_FILES
       interfaces/Python/cpp_classes/*.cpp
       interfaces/Python/python_modules/*.cpp
@@ -292,9 +296,14 @@ if(pybind11_DIR)
    )
 
    add_definitions("-D PYBIND11_DETAILED_ERROR_MESSAGES")
-   pybind11_add_module(unopy SHARED EXCLUDE_FROM_ALL $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
+   pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
+
    target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    target_include_directories(unopy PUBLIC ${DIRECTORIES})
+
+   install(TARGETS unopy LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX})
+else()
+   message(STATUS "SKBUILD not detected, skipping Python extension.")
 endif()
 
 ############################
@@ -375,14 +384,6 @@ if(TARGET uno_shared)
 endif()
 if(TARGET uno_ampl)
    list(APPEND INSTALL_TARGETS uno_ampl)
-endif()
-if(TARGET unopy)
-   list(APPEND INSTALL_TARGETS unopy)
-endif()
-if(TARGET unomex)
-   list(APPEND INSTALL_TARGETS unomex-optimize unomex-options)
-   set(MATLAB_INSTALL_FILES "interfaces/Matlab/uno.m;interfaces/Matlab/uno_optimize.m;interfaces/Matlab/uno_options.m")
-   install(FILES ${MATLAB_INSTALL_FILES} DESTINATION $<IF:$<BOOL:${WIN32}>,bin,lib>)
 endif()
 install(TARGETS ${INSTALL_TARGETS}
    COMPONENT libuno

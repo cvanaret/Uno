@@ -6,8 +6,7 @@
 
 namespace uno {
    void WarmstartInformation::display() const {
-      std::cout << "Objective changed: " << std::boolalpha << this->objective_changed << '\n';
-      std::cout << "Constraints changed: " << std::boolalpha << this->constraints_changed << '\n';
+      std::cout << "New iterate: " << std::boolalpha << this->new_iterate << '\n';
       std::cout << "Constraint bounds changed: " << std::boolalpha << this->constraint_bounds_changed << '\n';
       std::cout << "Variable bounds changed: " << std::boolalpha << this->variable_bounds_changed << '\n';
       std::cout << "Hessian sparsity changed: " << std::boolalpha << this->hessian_sparsity_changed << '\n';
@@ -15,8 +14,7 @@ namespace uno {
    }
 
    void WarmstartInformation::no_changes() {
-      this->objective_changed = false;
-      this->constraints_changed = false;
+      this->new_iterate = false;
       this->constraint_bounds_changed = false;
       this->variable_bounds_changed = false;
       this->hessian_sparsity_changed = false;
@@ -24,15 +22,13 @@ namespace uno {
    }
 
    void WarmstartInformation::iterate_changed() {
-      this->objective_changed = true;
-      this->constraints_changed = true;
+      this->new_iterate = true;
       this->constraint_bounds_changed = true;
       this->variable_bounds_changed = true;
    }
 
    void WarmstartInformation::whole_problem_changed() {
-      this->objective_changed = true;
-      this->constraints_changed = true;
+      this->new_iterate = true;
       this->constraint_bounds_changed = true;
       this->variable_bounds_changed = true;
       this->hessian_sparsity_changed = true;
@@ -40,8 +36,7 @@ namespace uno {
    }
 
    void WarmstartInformation::only_objective_changed() {
-      this->objective_changed = true;
-      this->constraints_changed = false;
+      this->new_iterate = true;
       this->constraint_bounds_changed = false;
       this->variable_bounds_changed = false;
       this->hessian_sparsity_changed = false;

@@ -1,8 +1,13 @@
-## Uno's Python bindings
+## Uno
 
-Uno's Python bindings allows you to solve an optimization model described by callback functions.
-The Python module `unopy` is compiled via the command `make unopy` using pybind11, and is (for the moment) installed via `make install`.
-An example is available in the file [example_hs015.c](example/example_hs015.py).
+Uno is a solver for nonlinearly constrained optimization that unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods.
+It breaks them down into a set of building blocks (e.g., strategies to compute descent directions and techniques to enforce globalization).
+
+`unopy`, Uno's Python interface, allows you to solve an optimization model described by callback functions.
+
+## Example
+
+An implementation example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.py](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/example/example_hs015.py).
 
 ### Building an optimization model
 
@@ -67,12 +72,14 @@ uno_solver = unopy.UnoSolver()
 
 Options can be passed to the Uno solver:
 ```python
-uno_solver.set_option("print_solution", "yes")
+uno_solver.set_option("print_solution", True)
 ```
 
-Setting a preset has Uno mimic an existing solver:
+Uno mimics the state-of-the-art solvers filterSQP and IPOPT via presets:
 ```python
 uno_solver.set_preset("filtersqp")
+# or
+uno_solver.set_preset("ipopt")
 ```
 
 ### Solving the model
@@ -103,3 +110,18 @@ To inspect the result of the optimization, read the attributes of the `result` o
 - the number of Jacobian evaluations: `result.number_jacobian_evaluations`
 - the number of Hessian evaluations: `result.number_hessian_evaluations`
 - the number of subproblems solved: `result.number_subproblems_solved`
+
+## How to cite Uno
+
+We have submitted our paper to the Mathematical Programming Computation journal. The preprint is available on [ResearchGate](https://www.researchgate.net/publication/397446552_Implementing_a_unified_solver_for_nonlinearly_constrained_optimization).
+
+Until it is published, you can use the following bibtex entry:
+
+```
+@unpublished{VanaretLeyffer2024,
+  author = {Vanaret, Charlie and Leyffer, Sven},
+  title = {Implementing a unified solver for nonlinearly constrained optimization},
+  year = {2024},
+  note = {Submitted to Mathematical Programming Computation}
+}
+```

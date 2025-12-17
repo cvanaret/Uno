@@ -49,6 +49,7 @@ namespace uno {
          problem_type(this->determine_problem_type()),
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
+         nonlinear_constraints(0, static_cast<size_t>(this->asl->i.nlc_)),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints) {
       // Jacobian storage: use goff fields of struct cgrad
@@ -129,7 +130,7 @@ namespace uno {
       ++this->number_model_evaluations.objective_gradient;
    }
 
-   void AMPLModel::compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
+   void AMPLModel::compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const {
       // by default, AMPLModel computes the Jacobian in a column-wise order (variable by variable).
       // if a row-wise evaluation is wished, modify the goff fields of the ASL "Cgrad" structures
@@ -157,7 +158,7 @@ namespace uno {
       }
    }
 
-   void AMPLModel::compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const {
+   void AMPLModel::compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const {
       const fint* asl_column_start = this->asl->i.sputinfo_->hcolstarts;
       const fint* asl_row_index = this->asl->i.sputinfo_->hrownos;
       size_t current_index = 0;
@@ -245,6 +246,10 @@ namespace uno {
 
    const Collection<size_t>& AMPLModel::get_linear_constraints() const {
       return this->linear_constraints;
+   }
+
+   const Collection<size_t>& AMPLModel::get_nonlinear_constraints() const {
+      return this->nonlinear_constraints;
    }
 
    // initial primal point

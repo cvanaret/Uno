@@ -36,9 +36,9 @@ namespace uno {
       void evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const override;
 
       // sparsity patterns of Jacobian and Hessian
-      void compute_constraint_jacobian_sparsity(int* row_indices, int* column_indices, int solver_indexing,
+      void compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const override;
-      void compute_hessian_sparsity(int* row_indices, int* column_indices, int solver_indexing) const override;
+      void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian
       void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override;
@@ -61,6 +61,7 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
+      [[nodiscard]] const Collection<size_t>& get_nonlinear_constraints() const override;
 
       void initial_primal_point(Vector<double>& x) const override;
       void initial_dual_point(Vector<double>& multipliers) const override;

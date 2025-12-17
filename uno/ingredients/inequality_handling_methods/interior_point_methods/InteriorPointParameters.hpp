@@ -12,6 +12,7 @@ struct InteriorPointParameters {
    double push_variable_to_interior_k1;
    double push_variable_to_interior_k2;
    double damping_factor; // (Section 3.7 in IPOPT paper)
+   double default_multiplier;
 };
 
 #endif // UNO_INTERIORPOINTPARAMETERS_H
