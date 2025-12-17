@@ -50,7 +50,7 @@ jobs:
       - name: Provide gfortran (Windows)
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
-      
+
       - name: Install Fortran compiler (macOS)
         if: startsWith(matrix.os, 'macos')
         uses: fortran-lang/setup-fortran@main
@@ -70,11 +70,26 @@ jobs:
             echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
           fi
 
+      - name: Install MINGW (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          path-type: inherit
+          install: >-
+            mingw-w64-x86_64-gcc-fortran
+
+      - name: Set environment (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
+          echo "FC=gfortran" >> $GITHUB_ENV
+
       - name: Build wheels (Linux)
         if: runner.os == 'Linux'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
-        env:
-          CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
 
       - name: Build wheels (macOS)
         if: startsWith(matrix.os, 'macos')
