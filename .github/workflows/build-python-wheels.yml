@@ -49,15 +49,19 @@ jobs:
           install: >-
             mingw-w64-x86_64-gcc-fortran
 
+      - name: Set environment (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
+          echo "FC=gfortran" >> $GITHUB_ENV
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
         env:
           MACOSX_DEPLOYMENT_TARGET: 15.0
           CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
-          CIBW_ENVIRONMENT_WINDOWS:
-            echo "CC=gcc" >> $GITHUB_ENV
-            echo "CXX=g++" >> $GITHUB_ENV
-            echo "FC=gfortran" >> $GITHUB_ENV
           # Skip some builds
           CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
