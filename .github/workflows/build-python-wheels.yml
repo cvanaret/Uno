@@ -48,15 +48,7 @@ jobs:
           path-type: inherit
           install: >-
             mingw-w64-x86_64-gcc-fortran
-
-      - name: Set environment (Windows)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          echo "CC=gcc" >> $GITHUB_ENV
-          echo "CXX=g++" >> $GITHUB_ENV
-          echo "FC=gfortran" >> $GITHUB_ENV
-
+      
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
         env:
