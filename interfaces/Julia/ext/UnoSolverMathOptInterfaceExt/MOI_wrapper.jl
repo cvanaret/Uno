@@ -1245,6 +1245,7 @@ function MOI.eval_hessian_lagrangian(model::Optimizer, H, x, σ, μ)
 end
 
 function MOI.eval_constraint_jacobian_product(model::Optimizer, y, x, w)
+    @assert isempty(model.vector_nonlinear_oracle_constraints)
     fill!(y, 0.0)
     qp_offset = length(model.qp_data)
     y_nlp = view(y, (qp_offset+1):length(y))
@@ -1254,6 +1255,7 @@ function MOI.eval_constraint_jacobian_product(model::Optimizer, y, x, w)
 end
 
 function MOI.eval_constraint_jacobian_transpose_product(model::Optimizer, y, x, w)
+    @assert isempty(model.vector_nonlinear_oracle_constraints)
     fill!(y, 0.0)
     qp_offset = length(model.qp_data)
     w_nlp = view(w, (qp_offset+1):length(w))
@@ -1263,6 +1265,7 @@ function MOI.eval_constraint_jacobian_transpose_product(model::Optimizer, y, x, 
 end
 
 function MOI.eval_hessian_lagrangian_product(model::Optimizer, H, x, v, σ, μ)
+    @assert isempty(model.vector_nonlinear_oracle_constraints)
     fill!(H, 0.0)
     qp_offset = length(model.qp_data)
     μ_nlp = view(μ, (qp_offset+1):length(μ))
