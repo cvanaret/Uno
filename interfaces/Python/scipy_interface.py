@@ -4,15 +4,24 @@ import numpy as np
 import unopy
 from scipy.optimize import LinearConstraint, NonlinearConstraint, OptimizeResult
 from scipy.optimize._minimize import standardize_bounds, _validate_bounds, Bounds
-from scipy.sparse import csr_array, find
+
 Inf = float("inf")
 
 
-def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "filtersqp", jac: callable = None,
-             hess: callable = None,
-             hessp: callable = None, bounds: Iterable | None | Bounds = None,
-             constraints: Iterable = (),
-             tol: float | None = None, callback=None, options: dict | None = None) -> OptimizeResult:
+def minimize(
+    fun: callable,
+    x0: np.ndarray,
+    args: tuple = (),
+    method: str = "filtersqp",
+    jac: callable = None,
+    hess: callable = None,
+    hessp: callable = None,
+    bounds: Iterable | None | Bounds = None,
+    constraints: Iterable = (),
+    tol: float | None = None,
+    callback=None,
+    options: dict | None = None,
+) -> OptimizeResult:
     """Minimization of scalar function of one or more variables.
 
     Parameters
@@ -236,7 +245,7 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
         args = (args,)
 
     if method not in ["filterslp", "filtersqp", "funnelsqp", "ipopt"]:
-        raise ValueError(f'Unknown solver {method}')
+        raise ValueError(f"Unknown solver {method}")
 
     def _objective(_, x, objective_value, user_data):
         x = np.fromiter(x, dtype="float64")
@@ -262,10 +271,10 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
                 n_constr += len(val)
             if c_type == "ineq":
                 constr_upper_bounds.append(Inf)
-                constr_lower_bounds.append(0.)
+                constr_lower_bounds.append(0.0)
             elif c_type == "eq":
-                constr_upper_bounds.append(0.)
-                constr_lower_bounds.append(0.)
+                constr_upper_bounds.append(0.0)
+                constr_lower_bounds.append(0.0)
             else:
                 raise ValueError(f"Unknown constraint type: {c_type}.")
         elif isinstance(constr, LinearConstraint):
@@ -287,14 +296,14 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
         i_max = 0
         for constr in constraints:
             if isinstance(constr, dict):
-                val = constr['fun'](x)
+                val = constr["fun"](x)
             else:
                 val = constr.fun(x)
             if isinstance(val, float):
                 n_v = 1
             else:
                 n_v = len(val)
-            constraint_values[i_max:i_max + n_v] = val
+            constraint_values[i_max : i_max + n_v] = val
             i_max += n_v
         return 0
 
@@ -322,13 +331,13 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
                 n_v = number_variables
             else:
                 n_v = len(val) * number_variables
-            jacobian_values[i_max:i_max + n_v] = val.flatten()
+            jacobian_values[i_max : i_max + n_v] = val.flatten()
             i_max += n_v
         return 0
 
     if bounds is not None:
         # convert to new-style bounds so we only have to consider one case
-        _bounds = standardize_bounds(bounds, x0, 'new')
+        _bounds = standardize_bounds(bounds, x0, "new")
         _bounds: Bounds = _validate_bounds(_bounds, x0, method)
 
         lb = _bounds.lb.tolist()
@@ -337,8 +346,9 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
         lb = [-Inf] * number_variables
         ub = [Inf] * number_variables
 
-    model = unopy.Model(unopy.PROBLEM_NONLINEAR, number_variables, lb, ub,
-                        unopy.ZERO_BASED_INDEXING)
+    model = unopy.Model(
+        unopy.PROBLEM_NONLINEAR, number_variables, lb, ub, unopy.ZERO_BASED_INDEXING
+    )
     if jac is not None:
         model.set_objective(unopy.MINIMIZE, _objective, _objective_gradient)
     else:
@@ -346,13 +356,24 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
 
     if n_constr > 0:
         number_jacobian_nonzeros = number_variables * n_constr
-        jacobian_row_indices = np.tile(np.arange(number_variables), n_constr).tolist()  # [0, 1, 0, 1]
+        jacobian_row_indices = np.tile(
+            np.arange(number_variables), n_constr
+        ).tolist()  # [0, 1, 0, 1]
         print("jacobian_row_indices", jacobian_row_indices)
-        jacobian_column_indices = np.repeat(np.arange(number_variables), n_constr).tolist()  # [0, 0, 1, 1]
+        jacobian_column_indices = np.repeat(
+            np.arange(number_variables), n_constr
+        ).tolist()  # [0, 0, 1, 1]
         print("jacobian_column_indices", jacobian_column_indices)
-        model.set_constraints(n_constr, _constraints, constr_lower_bounds, constr_upper_bounds,
-                              number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices,
-                              _constraint_jacobian)
+        model.set_constraints(
+            n_constr,
+            _constraints,
+            constr_lower_bounds,
+            constr_upper_bounds,
+            number_jacobian_nonzeros,
+            jacobian_row_indices,
+            jacobian_column_indices,
+            _constraint_jacobian,
+        )
     # model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
     #                             hessian_column_indices, _lagrangian_hessian, unopy.MULTIPLIER_NEGATIVE)
     # model.set_lagrangian_hessian_operator(lagrangian_hessian_operator, unopy.MULTIPLIER_NEGATIVE)
@@ -387,13 +408,19 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
             uno_solver.set_option(opt_key, opt_value)
 
     result = uno_solver.optimize(model)
-    return OptimizeResult(x=result.primal_solution,
-                          success=str(result.optimization_status) == "OptimizationStatus.SUCCESS",
-                          status=result.solution_status, message=result.optimization_status,
-                          fun=result.solution_objective,
-                          nfev=result.number_objective_evaluations, njev=result.number_jacobian_evaluations,
-                          nhev=result.number_hessian_evaluations, nit=result.number_iterations,
-                          maxcv=result.solution_primal_feasibility)
+    return OptimizeResult(
+        x=result.primal_solution,
+        success=str(result.optimization_status) == "OptimizationStatus.SUCCESS",
+        status=result.solution_status,
+        message=result.optimization_status,
+        fun=result.solution_objective,
+        nfev=result.number_objective_evaluations,
+        njev=result.number_jacobian_evaluations,
+        nhev=result.number_hessian_evaluations,
+        nit=result.number_iterations,
+        maxcv=result.solution_primal_feasibility,
+    )
+
 
 #
 # "primal_tolerance", OptionType::DOUBLE},
