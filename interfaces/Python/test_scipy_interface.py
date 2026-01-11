@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Francois Gallard
+# Licensed under the MIT license. See LICENSE file in the project directory for details.
+
 import numpy as np
 import pytest
 from scipy.optimize import rosen, rosen_der, NonlinearConstraint, LinearConstraint
