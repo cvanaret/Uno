@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Francois Gallard
+# Licensed under the MIT license. See LICENSE file in the project directory for details.
 from numbers import Number
 from typing import Iterable
 
@@ -21,7 +23,9 @@ def minimize(
     tol: float | None = None,
     options: dict | None = None,
 ) -> OptimizeResult:
-    """Minimization of scalar function of one or more variables.
+    """A scipy.optimize.minimize like interface for Uno.
+
+    Minimization of scalar function of one or more variables under bounds and general constraints.
 
     Parameters
     ----------
