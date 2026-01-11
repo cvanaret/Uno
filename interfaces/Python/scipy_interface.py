@@ -1,3 +1,4 @@
+from numbers import Number
 from typing import Iterable
 
 import numpy as np
@@ -6,6 +7,7 @@ from scipy.optimize import LinearConstraint, NonlinearConstraint, OptimizeResult
 from scipy.optimize._minimize import standardize_bounds, _validate_bounds, Bounds
 
 Inf = float("inf")
+AVAILABLE_METHODS = ["filterslp", "filtersqp", "funnelsqp", "ipopt"]
 
 
 def minimize(
@@ -14,12 +16,9 @@ def minimize(
     args: tuple = (),
     method: str = "filtersqp",
     jac: callable = None,
-    hess: callable = None,
-    hessp: callable = None,
     bounds: Iterable | None | Bounds = None,
     constraints: Iterable = (),
     tol: float | None = None,
-    callback=None,
     options: dict | None = None,
 ) -> OptimizeResult:
     """Minimization of scalar function of one or more variables.
@@ -46,12 +45,14 @@ def minimize(
         where ""n"" is the number of independent variables.
     args : tuple, optional
         Extra arguments passed to the objective function and its
-        derivatives ("fun", "jac" and "hess" functions).
-    method : str or callable, optional
-        Type of solver.  Should be one of
+        derivatives ("fun", "jac" functions).
+    method : str
+        The UNO preset.  Should be one of
 
         - 'filtersqp'
-        - 'filterslp'
+        - 'filterslp
+        - "funnelsqp"
+        - "ipopt"
 
     jac : {callable}, optional
         Method for computing the gradient vector.
@@ -61,35 +62,10 @@ def minimize(
             jac(x, *args) -> array_like, shape (n,)
 
         where ""x"" is an array with shape (n,) and ""args"" is a tuple with
-        the fixed parameters. If "jac" is a Boolean and is True, "fun" is
-        assumed to return a tuple ""(f, g)"" containing the objective
-        function and the gradient.
-        Methods 'Newton-CG', 'trust-ncg', 'dogleg', 'trust-exact', and
-        'trust-krylov' require that either a callable be supplied, or that
-        "fun" return the objective and gradient.
-        If None or False, the gradient will be estimated using 2-point finite
-        difference estimation with an absolute step size.
-        Alternatively, the keywords  {'2-point', '3-point', 'cs'} can be used
-        to select a finite difference scheme for numerical estimation of the
-        gradient with a relative step size. These finite difference schemes
-        obey any specified "bounds".
+        the fixed parameters.
 
-    hessp : callable, optional
-        Hessian of objective function times an arbitrary vector p. Only for
-        Newton-CG, trust-ncg, trust-krylov, trust-constr.
-        Only one of "hessp" or "hess" needs to be given. If "hess" is
-        provided, then "hessp" will be ignored. "hessp" must compute the
-        Hessian times an arbitrary vector::
-
-            hessp(x, p, *args) ->  ndarray shape (n,)
-
-        where ""x"" is a (n,) ndarray, ""p"" is an arbitrary vector with
-        dimension (n,) and ""args"" is a tuple with the fixed
-        parameters.
     bounds : sequence or "Bounds", optional
-        Bounds on variables for Nelder-Mead, L-BFGS-B, TNC, SLSQP, Powell,
-        trust-constr, COBYLA, and COBYQA methods. There are two ways to specify
-        the bounds:
+        Bounds on variables. There are two ways to specify the bounds:
 
         1. Instance of "Bounds" class.
         2. Sequence of ""(min, max)"" pairs for each element in "x". None
@@ -98,15 +74,13 @@ def minimize(
     constraints : {Constraint, dict} or List of {Constraint, dict}, optional
         Constraints definition.
 
-        Constraints for 'trust-constr', 'cobyqa', and 'cobyla' are defined as a single
-        object or a list of objects specifying constraints to the optimization problem.
         Available constraints are:
 
         - "LinearConstraint"
         - "NonlinearConstraint"
+        - list of dictionaries.
 
-        Constraints for COBYLA, SLSQP are defined as a list of dictionaries.
-        Each dictionary with fields:
+        For lists of dictionaries, each dictionary with fields:
 
         type : str
             Constraint type: 'eq' for equality, 'ineq' for inequality.
@@ -123,21 +97,100 @@ def minimize(
     tol : float, optional
         Tolerance for termination. When "tol" is specified, the selected
         minimization algorithm sets some relevant solver-specific tolerance(s)
-        equal to "tol". For detailed control, use solver-specific
-        options.
+        equal to "tol".
 
     options : dict, optional
         A dictionary of solver options.
 
-        maxiter : int
-            Maximum number of iterations to perform. Depending on the
-            method each iteration may use several function evaluations.
+        The available options and their types are:
 
-            For "TNC" use "maxfun" instead of "maxiter".
-        disp : bool
-            Set to True to print convergence messages.
+        "primal_tolerance" : float
+        "dual_tolerance" : float
+        "loose_primal_tolerance" : float
+        "loose_dual_tolerance" : float
+        "loose_tolerance_consecutive_iteration_threshold" : int
+        "max_iterations" or "max_iter: int
+        "time_limit" : float
+        "print_solution" : bool
+        "unbounded_objective_threshold" : float
+        "enforce_linear_constraints" : bool
+        "logger" : str,
+        "constraint_relaxation_strategy" : str,
+        "inequality_handling_method" : str,
+        "globalization_mechanism" : str
+        "globalization_strategy" : str,
+        "hessian_model" : str,
+        "inertia_correction_strategy" : str,
+        "scale_functions" : bool
+        "function_scaling_threshold" : float
+        "function_scaling_factor" : float
+        "scale_residuals" : bool
+        "progress_norm" : str,
+        "residual_norm" : str,
+        "residual_scaling_threshold" : float
+        "protect_actual_reduction_against_roundoff" : bool
+        "print_subproblem" : bool
+        "armijo_decrease_fraction" : float
+        "armijo_tolerance" : float
+        "switching_delta" : float
+        "switching_infeasibility_exponent" : float
+        "filter_type" : str,
+        "filter_beta" : float
+        "filter_gamma" : float
+        "filter_ubd" : float
+        "filter_fact" : float
+        "filter_capacity" : int
+        "filter_sufficient_infeasibility_decrease_factor" : float
+        "nonmonotone_filter_number_dominated_entries" : int
+        "funnel_kappa" : float
+        "funnel_beta" : float
+        "funnel_gamma" : float
+        "funnel_ubd" : float
+        "funnel_fact" : float
+        "funnel_update_strategy" : int
+        "funnel_require_acceptance_wrt_current_iterate" : bool
+        "LS_backtracking_ratio" : float
+        "LS_min_step_length" : float
+        "LS_scale_duals_with_step_length" : bool
+        "regularization_failure_threshold" : float
+        "regularization_initial_value" : float
+        "regularization_increase_factor" : float
+        "primal_regularization_initial_factor" : float
+        "dual_regularization_fraction" : float
+        "primal_regularization_lb" : float
+        "primal_regularization_decrease_factor" : float
+        "primal_regularization_fast_increase_factor" : float
+        "primal_regularization_slow_increase_factor" : float
+        "threshold_unsuccessful_attempts" : int
+        "TR_radius" : float
+        "TR_increase_factor" : float
+        "TR_decrease_factor" : float
+        "TR_aggressive_decrease_factor" : float
+        "TR_activity_tolerance" : float
+        "TR_min_radius" : float
+        "TR_radius_reset_threshold" : float
+        "switch_to_optimality_requires_linearized_feasibility" : bool
+        "l1_constraint_violation_coefficient" : float
+        "barrier_initial_parameter" : float
+        "barrier_default_multiplier" : float
+        "barrier_tau_min" : float
+        "barrier_k_sigma" : float
+        "barrier_smax" : float
+        "barrier_k_mu" : float
+        "barrier_theta_mu" : float
+        "barrier_k_epsilon" : float
+        "barrier_update_fraction" : float
+        "barrier_regularization_exponent" : float
+        "barrier_small_direction_factor" : float
+        "barrier_push_variable_to_interior_k1" : float
+        "barrier_push_variable_to_interior_k2" : float
+        "barrier_damping_factor" : float
+        "least_square_multiplier_max_norm" : float
+        "BQPD_kmax_heuristic" : str
+        "QP_solver" : str
+        "LP_solver" : str
+        "linear_solver" : str
 
-        For method-specific options, see :func:"show_options()".
 
     Returns
     -------
@@ -150,87 +203,19 @@ def minimize(
 
     Examples
     --------
-    Let us consider the problem of minimizing the Rosenbrock function. This
-    function (and its respective derivatives) is implemented in "rosen"
-    (resp. "rosen_der", "rosen_hess") in the "scipy.optimize".
+    Let us consider the problem of minimizing the Rosenbrock function under constraints:
+    0.1 <= x**2 <= 0.8.
 
-    >>> from unopy import minimize
-
-    A simple application of the *Nelder-Mead* method is:
-
-    >>> x0 = [1.3, 0.7, 0.8, 1.9, 1.2]
-    >>> res = minimize(rosen, x0, method='filtersqp', tol=1e-6)
+    >>> res = minimize(rosen, x0 = np.array([1.3, 0.7, 0.8]), jac=rosen_der, method="filtersqp", tol=1e-3,
+    >>>                constraints=[NonlinearConstraint(fun=lambda x: x**2,  jac=lambda x: 2 * np.diag(x),
+    >>>                                                 lb=np.full(3, 0.1), ub=np.full(3, 0.8))],
+    >>>                options={"max_iterations": 10000})
     >>> res.x
-    array([ 1.,  1.,  1.,  1.,  1.])
 
-    Now using the *BFGS* algorithm, using the first derivative and a few
-    options:
+    array([ 0.894427, 0.801979, 0.643170])
 
-    >>> res = minimize(rosen, x0, method='BFGS', jac=rosen_der,
-    ...                options={'gtol': 1e-6, 'disp': True})
-    Optimization terminated successfully.
-             Current function value: 0.000000
-             Iterations: 26
-             Function evaluations: 31
-             Gradient evaluations: 31
-    >>> res.x
-    array([ 1.,  1.,  1.,  1.,  1.])
-    >>> print(res.message)
-    Optimization terminated successfully.
-
-    Next, consider a minimization problem with several constraints (namely
-    Example 16.4 from [5]_). The objective function is:
-
-    >>> fun = lambda x: (x[0] - 1)**2 + (x[1] - 2.5)**2
-
-    There are three constraints defined as:
-
-    >>> cons = ({'type': 'ineq', 'fun': lambda x:  x[0] - 2 * x[1] + 2},
-    ...         {'type': 'ineq', 'fun': lambda x: -x[0] - 2 * x[1] + 6},
-    ...         {'type': 'ineq', 'fun': lambda x: -x[0] + 2 * x[1] + 2})
-
-    And variables must be positive, hence the following bounds:
-
-    >>> bnds = ((0, None), (0, None))
-
-    The optimization problem is solved using the SLSQP method as:
-
-    >>> res = minimize(fun, (2, 0), method='SLSQP', bounds=bnds, constraints=cons)
-
-    It should converge to the theoretical solution ""[1.4 ,1.7]"". *SLSQP* also
-    returns the multipliers that are used in the solution of the problem. These
-    multipliers, when the problem constraints are linear, can be thought of as the
-    Karush-Kuhn-Tucker (KKT) multipliers, which are a generalization
-    of Lagrange multipliers to inequality-constrained optimization problems ([20]_).
-
-    Notice that at the solution, the first constraint is active. Let's evaluate the
-    function at solution:
-
-    >>> cons[0]['fun'](res.x)
-    np.float64(1.4901224698604665e-09)
-
-    Also, notice that at optimality there is a non-zero multiplier:
-
-    >>> res.multipliers
-    array([0.8, 0. , 0. ])
-
-    This can be understood as the local sensitivity of the optimal value of the
-    objective function with respect to changes in the first constraint. If we
-    tighten the constraint by a small amount ""eps"":
-
-    >>> eps = 0.01
-    >>> cons[0]['fun'] = lambda x: x[0] - 2 * x[1] + 2 - eps
-
-    we expect the optimal value of the objective function to increase by
-    approximately ""eps * res.multipliers[0]"":
-
-    >>> eps * res.multipliers[0]  # Expected change in f0
-    np.float64(0.008000000027153205)
-    >>> f0 = res.fun  # Keep track of the previous optimal value
-    >>> res = minimize(fun, (2, 0), method='SLSQP', bounds=bnds, constraints=cons)
-    >>> f1 = res.fun  # New optimal value
-    >>> f1 - f0
-    np.float64(0.008019998807885509)
+    To define linear and non-linear constraints, please read the scipy.optimize. minimize documentation:
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html
 
     """
     x0 = np.atleast_1d(np.asarray(x0))
@@ -244,7 +229,7 @@ def minimize(
     if not isinstance(args, tuple):
         args = (args,)
 
-    if method not in ["filterslp", "filtersqp", "funnelsqp", "ipopt"]:
+    if method not in AVAILABLE_METHODS:
         raise ValueError(f"Unknown solver {method}")
 
     def _objective(_, x, objective_value, user_data):
@@ -264,32 +249,42 @@ def minimize(
     for constr in constraints:
         if isinstance(constr, dict):
             c_type = constr["type"]
-            val = constr["fun"](x0).size
-            if isinstance(val, float):
-                n_constr += 1
+            val = constr["fun"](x0)
+            if isinstance(val, Number):
+                nc = 1
             else:
-                n_constr += len(val)
+                nc = len(val)
             if c_type == "ineq":
-                constr_upper_bounds.append(Inf)
-                constr_lower_bounds.append(0.0)
+                ub = np.full(nc, Inf)
+                lb = np.zeros(nc)
             elif c_type == "eq":
-                constr_upper_bounds.append(0.0)
-                constr_lower_bounds.append(0.0)
+                ub = np.zeros(nc)
+                lb = np.zeros(nc)
             else:
                 raise ValueError(f"Unknown constraint type: {c_type}.")
         elif isinstance(constr, LinearConstraint):
-            constr_lower_bounds.append(constr.lb)
-            constr_upper_bounds.append(constr.ub)
-            n_constr += constr.A.shape[0]
-        elif isinstance(constr, NonlinearConstraint):
-            val = constr.fun(x0).size
-            if isinstance(val, float):
-                n_constr += 1
-            else:
-                n_constr += len(val)
+            nc = constr.A.shape[0]
+            lb = constr.lb
+            ub = constr.ub
 
-            constr_lower_bounds.append(constr.lb)
-            constr_upper_bounds.append(constr.ub)
+        elif isinstance(constr, NonlinearConstraint):
+            val = constr.fun(x0)
+            if isinstance(val, Number):
+                nc = 1
+            else:
+                nc = len(val)
+
+            lb = constr.lb
+            ub = constr.ub
+        else:
+            raise TypeError(f"Unsupported constraint type {type(constr)}")
+        n_constr += nc
+        if not isinstance(lb, np.ndarray):
+            raise ValueError(f"Unsupported lower bound type {type(lb)}")
+        if not isinstance(ub, np.ndarray):
+            raise ValueError(f"Unsupported upper bound type {type(lb)}")
+        constr_lower_bounds.append(lb)
+        constr_upper_bounds.append(ub)
 
     def _constraints(_, nc, x, constraint_values, user_data):
         x = np.fromiter(x, dtype="float64")
@@ -298,12 +293,16 @@ def minimize(
             if isinstance(constr, dict):
                 val = constr["fun"](x)
             else:
-                val = constr.fun(x)
-            if isinstance(val, float):
+                if isinstance(constr, LinearConstraint):
+                    val = constr.A @ x
+                else:
+                    val = constr.fun(x)
+            if isinstance(val, Number):
                 n_v = 1
             else:
                 n_v = len(val)
-            constraint_values[i_max : i_max + n_v] = val
+            for i, v in enumerate(val):
+                constraint_values[i_max + i] = v
             i_max += n_v
         return 0
 
@@ -326,13 +325,15 @@ def minimize(
             if isinstance(constr, dict):
                 val = constr["jac"](x)
             else:
-                val = constr.jac(x)
-            if isinstance(val, float):
-                n_v = number_variables
-            else:
-                n_v = len(val) * number_variables
-            jacobian_values[i_max : i_max + n_v] = val.flatten()
-            i_max += n_v
+                if isinstance(constr, LinearConstraint):
+                    val = constr.A
+                else:
+                    val = constr.jac(x)
+
+            val_flat = val.flatten()
+            for i, v in enumerate(val_flat):
+                jacobian_values[i_max + i] = v
+            i_max += val_flat.size
         return 0
 
     if bounds is not None:
@@ -356,14 +357,13 @@ def minimize(
 
     if n_constr > 0:
         number_jacobian_nonzeros = number_variables * n_constr
-        jacobian_row_indices = np.tile(
-            np.arange(number_variables), n_constr
-        ).tolist()  # [0, 1, 0, 1]
-        print("jacobian_row_indices", jacobian_row_indices)
+        jacobian_row_indices = np.tile(np.arange(number_variables), n_constr).tolist()
         jacobian_column_indices = np.repeat(
             np.arange(number_variables), n_constr
-        ).tolist()  # [0, 0, 1, 1]
-        print("jacobian_column_indices", jacobian_column_indices)
+        ).tolist()
+        constr_lower_bounds = np.concatenate(constr_lower_bounds)
+        constr_upper_bounds = np.concatenate(constr_upper_bounds)
+
         model.set_constraints(
             n_constr,
             _constraints,
@@ -374,9 +374,6 @@ def minimize(
             jacobian_column_indices,
             _constraint_jacobian,
         )
-    # model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
-    #                             hessian_column_indices, _lagrangian_hessian, unopy.MULTIPLIER_NEGATIVE)
-    # model.set_lagrangian_hessian_operator(lagrangian_hessian_operator, unopy.MULTIPLIER_NEGATIVE)
     model.set_initial_primal_iterate(x0.tolist())
     if args:
         model.set_user_data(args)
@@ -420,92 +417,3 @@ def minimize(
         nit=result.number_iterations,
         maxcv=result.solution_primal_feasibility,
     )
-
-
-#
-# "primal_tolerance", OptionType::DOUBLE},
-# "dual_tolerance", OptionType::DOUBLE},
-# "loose_primal_tolerance", OptionType::DOUBLE},
-# "loose_dual_tolerance", OptionType::DOUBLE},
-# "loose_tolerance_consecutive_iteration_threshold", OptionType::INTEGER},
-# "max_iterations", OptionType::INTEGER},
-# "time_limit", OptionType::DOUBLE},
-# "print_solution", OptionType::BOOL},
-# "unbounded_objective_threshold", OptionType::DOUBLE},
-# "enforce_linear_constraints", OptionType::BOOL},
-# "logger", OptionType::STRING},
-# "constraint_relaxation_strategy", OptionType::STRING},
-# "inequality_handling_method", OptionType::STRING},
-# "globalization_mechanism",OptionType::STRING},
-# "globalization_strategy", OptionType::STRING},
-# "hessian_model", OptionType::STRING},
-# "inertia_correction_strategy", OptionType::STRING},
-# "scale_functions", OptionType::BOOL},
-# "function_scaling_threshold", OptionType::DOUBLE},
-# "function_scaling_factor", OptionType::DOUBLE},
-# "scale_residuals", OptionType::BOOL},
-# "progress_norm", OptionType::STRING},
-# "residual_norm", OptionType::STRING},
-# "residual_scaling_threshold", OptionType::DOUBLE},
-# "protect_actual_reduction_against_roundoff", OptionType::BOOL},
-# "print_subproblem", OptionType::BOOL},
-# "armijo_decrease_fraction", OptionType::DOUBLE},
-# "armijo_tolerance", OptionType::DOUBLE},
-# "switching_delta", OptionType::DOUBLE},
-# "switching_infeasibility_exponent", OptionType::DOUBLE},
-# "filter_type", OptionType::STRING},
-# "filter_beta", OptionType::DOUBLE},
-# "filter_gamma", OptionType::DOUBLE},
-# "filter_ubd", OptionType::DOUBLE},
-# "filter_fact", OptionType::DOUBLE},
-# "filter_capacity", OptionType::INTEGER},
-# "filter_sufficient_infeasibility_decrease_factor", OptionType::DOUBLE},
-# "nonmonotone_filter_number_dominated_entries", OptionType::INTEGER},
-# "funnel_kappa", OptionType::DOUBLE},
-# "funnel_beta", OptionType::DOUBLE},
-# "funnel_gamma", OptionType::DOUBLE},
-# "funnel_ubd", OptionType::DOUBLE},
-# "funnel_fact", OptionType::DOUBLE},
-# "funnel_update_strategy", OptionType::INTEGER},
-# "funnel_require_acceptance_wrt_current_iterate", OptionType::BOOL},
-# "LS_backtracking_ratio", OptionType::DOUBLE},
-# "LS_min_step_length", OptionType::DOUBLE},
-# "LS_scale_duals_with_step_length", OptionType::BOOL},
-# "regularization_failure_threshold", OptionType::DOUBLE},
-# "regularization_initial_value", OptionType::DOUBLE},
-# "regularization_increase_factor", OptionType::DOUBLE},
-# "primal_regularization_initial_factor", OptionType::DOUBLE},
-# "dual_regularization_fraction", OptionType::DOUBLE},
-# "primal_regularization_lb", OptionType::DOUBLE},
-# "primal_regularization_decrease_factor", OptionType::DOUBLE},
-# "primal_regularization_fast_increase_factor", OptionType::DOUBLE},
-# "primal_regularization_slow_increase_factor", OptionType::DOUBLE},
-# "threshold_unsuccessful_attempts", OptionType::INTEGER},
-# "TR_radius", OptionType::DOUBLE},
-# "TR_increase_factor", OptionType::DOUBLE},
-# "TR_decrease_factor", OptionType::DOUBLE},
-# "TR_aggressive_decrease_factor", OptionType::DOUBLE},
-# "TR_activity_tolerance", OptionType::DOUBLE},
-# "TR_min_radius", OptionType::DOUBLE},
-# "TR_radius_reset_threshold", OptionType::DOUBLE},
-# "switch_to_optimality_requires_linearized_feasibility", OptionType::BOOL},
-# "l1_constraint_violation_coefficient", OptionType::DOUBLE},
-# "barrier_initial_parameter", OptionType::DOUBLE},
-# "barrier_default_multiplier", OptionType::DOUBLE},
-# "barrier_tau_min", OptionType::DOUBLE},
-# "barrier_k_sigma", OptionType::DOUBLE},
-# "barrier_smax", OptionType::DOUBLE},
-# "barrier_k_mu", OptionType::DOUBLE},
-# "barrier_theta_mu", OptionType::DOUBLE},
-# "barrier_k_epsilon", OptionType::DOUBLE},
-# "barrier_update_fraction", OptionType::DOUBLE},
-# "barrier_regularization_exponent", OptionType::DOUBLE},
-# "barrier_small_direction_factor", OptionType::DOUBLE},
-# "barrier_push_variable_to_interior_k1", OptionType::DOUBLE},
-# "barrier_push_variable_to_interior_k2", OptionType::DOUBLE},
-# "barrier_damping_factor",
-# "least_square_multiplier_max_norm",
-# "BQPD_kmax_heuristic",
-# "QP_solver"
-# "LP_solver"
-# "linear_solver"
