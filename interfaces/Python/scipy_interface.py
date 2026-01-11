@@ -4,7 +4,7 @@ import numpy as np
 import unopy
 from scipy.optimize import LinearConstraint, NonlinearConstraint, OptimizeResult
 from scipy.optimize._minimize import standardize_bounds, _validate_bounds, Bounds
-
+from scipy.sparse import csr_array, find
 Inf = float("inf")
 
 
@@ -239,14 +239,14 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
         raise ValueError(f'Unknown solver {method}')
 
     def _objective(_, x, objective_value, user_data):
-        x= np.fromiter(x, dtype="float64")
+        x = np.fromiter(x, dtype="float64")
         if args:
             val = fun(x, *args)
         else:
             val = fun(x)
         if isinstance(val, np.ndarray):
-            val=val[0]
-        objective_value[0]=val
+            val = val[0]
+        objective_value[0] = val
         return 0
 
     n_constr = 0
@@ -289,7 +289,7 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
             if isinstance(constr, dict):
                 val = constr['fun'](x)
             else:
-                val=constr.fun(x)
+                val = constr.fun(x)
             if isinstance(val, float):
                 n_v = 1
             else:
@@ -299,6 +299,7 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
         return 0
 
     number_variables = x0.size
+
     def _objective_gradient(_, x, gradient, user_data):
         x = np.fromiter(x, dtype="float64")
         if args:
@@ -306,10 +307,8 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
         else:
             val = jac(x)
         for i in range(number_variables):
-            gradient[i]=val[i]
+            gradient[i] = val[i]
         return 0
-
-
 
     def _constraint_jacobian(_, ncnz, x, jacobian_values, user_data):
         x = np.fromiter(x, dtype="float64")
@@ -322,11 +321,10 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
             if isinstance(val, float):
                 n_v = number_variables
             else:
-                n_v = len(val)*number_variables
+                n_v = len(val) * number_variables
             jacobian_values[i_max:i_max + n_v] = val.flatten()
             i_max += n_v
         return 0
-
 
     if bounds is not None:
         # convert to new-style bounds so we only have to consider one case
@@ -346,7 +344,7 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
     else:
         raise ValueError("Jacobian of objective is required.")
 
-    if n_constr>0:
+    if n_constr > 0:
         number_jacobian_nonzeros = number_variables * n_constr
         jacobian_row_indices = np.tile(np.arange(number_variables), n_constr).tolist()  # [0, 1, 0, 1]
         print("jacobian_row_indices", jacobian_row_indices)
@@ -372,7 +370,7 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
         uno_solver.set_option("loose_tolerance_consecutive_iteration_threshold", tol)
         uno_solver.set_option("primal_tolerance", tol)
 
-    if method in ["filterslp" ]:
+    if method in ["filterslp"]:
         if options is None or "LP_solver" not in options:
             uno_solver.set_option("LP_solver", "HiGHS")
     if method in ["ipopt"]:
@@ -382,19 +380,20 @@ def minimize(fun: callable, x0: np.ndarray, args: tuple = (), method: str = "fil
             except ValueError:
                 uno_solver.set_option("linear_solver", "MA57")
 
-    if options is not None :
+    if options is not None:
         if "max_iter" in options:
             uno_solver.set_option("max_iter", options["max_iter"])
         for opt_key, opt_value in options.items():
             uno_solver.set_option(opt_key, opt_value)
 
-
     result = uno_solver.optimize(model)
-    return OptimizeResult(x=result.primal_solution, success=result.optimization_status == "UNO_SUCCESS",
-                   status=result.solution_status, message=result.optimization_status, fun=result.solution_objective,
-                   nfev=result.number_objective_evaluations, njev=result.number_jacobian_evaluations,
-                   nhev=result.number_hessian_evaluations, nit=result.number_iterations,
-                   maxcv=result.solution_primal_feasibility)
+    return OptimizeResult(x=result.primal_solution,
+                          success=str(result.optimization_status) == "OptimizationStatus.SUCCESS",
+                          status=result.solution_status, message=result.optimization_status,
+                          fun=result.solution_objective,
+                          nfev=result.number_objective_evaluations, njev=result.number_jacobian_evaluations,
+                          nhev=result.number_hessian_evaluations, nit=result.number_iterations,
+                          maxcv=result.solution_primal_feasibility)
 
 #
 # "primal_tolerance", OptionType::DOUBLE},

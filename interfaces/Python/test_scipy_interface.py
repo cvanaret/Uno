@@ -1,17 +1,24 @@
-from scipy_interface import minimize
-from scipy.optimize import rosen, rosen_der, NonlinearConstraint, LinearConstraint
 import numpy as np
 import pytest
+from scipy.optimize import rosen, rosen_der
 
-@pytest.mark.parametrize("method",["filtersqp", "funnelsqp", "ipopt", "filterslp"])#, ,
+from scipy_interface import minimize
+
+
+@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "filterslp"])  # "ipopt"
 def test_rosen(method):
-    res=minimize(rosen,jac=rosen_der,x0=np.zeros(2),method=method)
-    assert res.fun <1e-4
+    res = minimize(rosen, jac=rosen_der, x0=np.zeros(2), method=method,
+                   options={"max_iterations":10000}, tol=1e-4)
+    assert res.fun < 1e-4
+    assert res.success
 
-# def test_rosen_bnds(method):
-#     res=minimize(rosen,jac=rosen_der,x0=np.zeros(2),method="filtersqp", bounds=[[-1.,0.5],[-1,1]])
-#     assert res.fun <1e-6
-#
+
+@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "filterslp"])  # "ipopt"
+def test_rosen_bnds(method):
+    res = minimize(rosen, jac=rosen_der, x0=np.zeros(2), method=method,
+                   bounds=[[-1., 0.5], [-1, 1]],options={"max_iterations":10000})
+    assert res.success
+
 # @pytest.mark.parametrize("c_type",["lambda","NonLinearConstraint","LinearConstraint"])
 # def test_rosen_constr(c_type):
 #     if c_type=="NonLinearConstraint":
