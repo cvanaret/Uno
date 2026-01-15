@@ -253,7 +253,7 @@ y0 = zeros(Float64, ncon)
 end
 
 @testset "uno" begin
-  model, solver = uno(
+  stats = uno(
     "NLP",
     true,
     nvar,
@@ -285,33 +285,14 @@ end
     print_solution=true,
   )
 
-  optimization_status = UnoSolver.uno_get_optimization_status(solver)
-  solution_status = UnoSolver.uno_get_solution_status(solver)
-  solution_objective = UnoSolver.uno_get_solution_objective(solver)
-  solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
-  solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
-  solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
-
-  primal_solution = Vector{Float64}(undef, nvar)
-  UnoSolver.uno_get_primal_solution(solver, primal_solution)
-
-  constraint_dual_solution = Vector{Float64}(undef, ncon)
-  UnoSolver.uno_get_constraint_dual_solution(solver, constraint_dual_solution)
-
-  lower_bound_dual_solution = Vector{Float64}(undef, nvar)
-  UnoSolver.uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
-
-  upper_bound_dual_solution = Vector{Float64}(undef, nvar)
-  UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
-
-  @test optimization_status == 0  # UNO_SUCCESS
-  @test solution_status == 1      # UNO_FEASIBLE_KKT_POINT
-  @test primal_solution[1] ≈ 1.0000000000000000 atol = 1e-5
-  @test primal_solution[2] ≈ 4.7429996418092970 atol = 1e-5
-  @test primal_solution[3] ≈ 3.8211499817883077 atol = 1e-5
-  @test primal_solution[4] ≈ 1.3794082897556983 atol = 1e-5
-  @test solution_objective ≈ 17.014017145179164 atol = 1e-5
-  @test solution_primal_feasibility ≈ 0.0 atol = 1e-5
-  @test solution_stationarity ≈ 0.0 atol = 1e-5
-  @test solution_complementarity ≈ 0.0 atol = 1e-5
+  @test stats.optimization_status == 0  # UNO_SUCCESS
+  @test stats.solution_status == 1      # UNO_FEASIBLE_KKT_POINT
+  @test stats.primal_solution[1] ≈ 1.0000000000000000 atol = 1e-5
+  @test stats.primal_solution[2] ≈ 4.7429996418092970 atol = 1e-5
+  @test stats.primal_solution[3] ≈ 3.8211499817883077 atol = 1e-5
+  @test stats.primal_solution[4] ≈ 1.3794082897556983 atol = 1e-5
+  @test stats.solution_objective ≈ 17.014017145179164 atol = 1e-5
+  @test stats.solution_primal_feasibility ≈ 0.0 atol = 1e-5
+  @test stats.solution_stationarity ≈ 0.0 atol = 1e-5
+  @test stats.solution_complementarity ≈ 0.0 atol = 1e-5
 end

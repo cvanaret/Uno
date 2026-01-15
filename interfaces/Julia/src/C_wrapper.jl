@@ -207,46 +207,6 @@ function uno_model(
   return model
 end
 
-
-function uno(
-  problem_type::String,
-  minimize::Bool,
-  nvar::Int,
-  ncon::Int,
-  lvar::Vector{Float64},
-  uvar::Vector{Float64},
-  lcon::Vector{Float64},
-  ucon::Vector{Float64},
-  jrows::Vector{Cint},
-  jcols::Vector{Cint},
-  nnzj::Int,
-  hrows::Vector{Cint},
-  hcols::Vector{Cint},
-  nnzh::Int,
-  eval_objective::Function,
-  eval_constraints::Function,
-  eval_gradient::Function,
-  eval_jacobian::Function,
-  eval_hessian::Function,
-  eval_Jv::Union{Function,Nothing},
-  eval_Jtv::Union{Function,Nothing},
-  eval_Hv::Union{Function,Nothing},
-  user_model=nothing,
-  hessian_triangle::Char='L',
-  lagrangian_sign::Float64=1.0,
-  x0::Union{Vector{Float64},Nothing}=nothing,
-  y0::Union{Vector{Float64},Nothing}=nothing;
-  kwargs...
-)
-  model = uno_model(problem_type, minimize, nvar, ncon, lvar, uvar, lcon, ucon, jrows,
-                    jcols, nnzj, hrows, hcols, nnzh, eval_objective, eval_constraints,
-                    eval_gradient, eval_jacobian, eval_hessian, eval_Jv, eval_Jtv,
-                    eval_Hv, user_model, hessian_triangle, lagrangian_sign, x0, y0)
-  solver = uno_solver(; kwargs...)
-  uno_optimize(solver, model)
-  return model, solver
-end
-
 function uno_set_initial_primal_iterate(model::Model, initial_primal_iterate::Vector{Float64})
   @assert model.nvar == length(initial_primal_iterate)
   GC.@preserve model begin
@@ -301,4 +261,103 @@ function uno_solver(; kwargs...)
 
   finalizer(uno_destroy_solver, solver)
   return solver
+end
+
+mutable struct Statistics{M}
+  model::Model{M}
+  solver::Solver
+
+  primal_solution::Vector{Float64}
+  constraint_dual_solution::Vector{Float64}
+  lower_bound_dual_solution::Vector{Float64}
+  upper_bound_dual_solution::Vector{Float64}
+
+  cpu_time::Float64
+  solution_objective::Float64
+  solution_primal_feasibility::Float64
+  solution_stationarity::Float64
+  solution_complementarity::Float64
+
+  optimization_status::Cint
+  solution_status::Cint
+  number_iterations::Cint
+  number_subproblem_solved_evaluations::Cint
+  number_objective_evaluations::Cint
+  number_constraint_evaluations::Cint
+  number_objective_gradient_evaluations::Cint
+  number_jacobian_evaluations::Cint
+  number_hessian_evaluations::Cint
+end
+
+function uno_statistics(model::Model, solver::Solver)
+  primal_solution = Vector{Float64}(undef, model.nvar)
+  UnoSolver.uno_get_primal_solution(solver, primal_solution)
+  constraint_dual_solution = Vector{Float64}(undef, model.ncon)
+  UnoSolver.uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+  lower_bound_dual_solution = Vector{Float64}(undef, model.nvar)
+  UnoSolver.uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
+  upper_bound_dual_solution = Vector{Float64}(undef, model.nvar)
+  UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+
+  cpu_time = UnoSolver.uno_get_cpu_time(solver)
+  solution_objective = UnoSolver.uno_get_solution_objective(solver)
+  solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
+  solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
+  solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
+
+  optimization_status = UnoSolver.uno_get_optimization_status(solver)
+  solution_status = UnoSolver.uno_get_solution_status(solver)
+  number_iterations = UnoSolver.uno_get_number_iterations(solver)
+  number_subproblem_solved_evaluations = UnoSolver.uno_get_number_subproblem_solved_evaluations(solver)
+  number_objective_evaluations = UnoSolver.uno_get_number_objective_evaluations(solver)
+  number_constraint_evaluations = UnoSolver.uno_get_number_constraint_evaluations(solver)
+  number_objective_gradient_evaluations = UnoSolver.uno_get_number_objective_gradient_evaluations(solver)
+  number_jacobian_evaluations = UnoSolver.uno_get_number_jacobian_evaluations(solver)
+  number_hessian_evaluations = UnoSolver.uno_get_number_hessian_evaluations(solver)
+
+  stats = Statistics(model, solver, primal_solution, constraint_dual_solution, lower_bound_dual_solution, upper_bound_dual_solution,
+                     cpu_time, solution_objective, solution_primal_feasibility, solution_stationarity, solution_complementarity,
+                     optimization_status, solution_status, number_iterations, number_subproblem_solved_evaluations,
+                     number_objective_evaluations, number_constraint_evaluations, number_objective_gradient_evaluations,
+                     number_jacobian_evaluations, number_hessian_evaluations)
+end
+
+function uno(
+  problem_type::String,
+  minimize::Bool,
+  nvar::Int,
+  ncon::Int,
+  lvar::Vector{Float64},
+  uvar::Vector{Float64},
+  lcon::Vector{Float64},
+  ucon::Vector{Float64},
+  jrows::Vector{Cint},
+  jcols::Vector{Cint},
+  nnzj::Int,
+  hrows::Vector{Cint},
+  hcols::Vector{Cint},
+  nnzh::Int,
+  eval_objective::Function,
+  eval_constraints::Function,
+  eval_gradient::Function,
+  eval_jacobian::Function,
+  eval_hessian::Union{Function,Nothing},
+  eval_Jv::Union{Function,Nothing},
+  eval_Jtv::Union{Function,Nothing},
+  eval_Hv::Union{Function,Nothing},
+  user_model=nothing,
+  hessian_triangle::Char='L',
+  lagrangian_sign::Float64=1.0,
+  x0::Union{Vector{Float64},Nothing}=nothing,
+  y0::Union{Vector{Float64},Nothing}=nothing;
+  kwargs...
+)
+  model = uno_model(problem_type, minimize, nvar, ncon, lvar, uvar, lcon, ucon, jrows,
+                    jcols, nnzj, hrows, hcols, nnzh, eval_objective, eval_constraints,
+                    eval_gradient, eval_jacobian, eval_hessian, eval_Jv, eval_Jtv,
+                    eval_Hv, user_model, hessian_triangle, lagrangian_sign, x0, y0)
+  solver = uno_solver(; kwargs...)
+  uno_optimize(solver, model)
+  stats = uno_statistics(model, solver)
+  return stats
 end
