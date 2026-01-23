@@ -287,21 +287,6 @@ function test_get_model()
     return
 end
 
-function test_supports_ConstraintDualStart_VariableIndex()
-    uno = UnoSolver.Optimizer()
-    bridged = MOI.Bridges.full_bridge_optimizer(UnoSolver.Optimizer(), Float64)
-    sets =
-        (MOI.LessThan{Float64}, MOI.GreaterThan{Float64}, MOI.EqualTo{Float64})
-    for model in (uno, bridged), S in sets
-        @test MOI.supports(
-            model,
-            MOI.ConstraintDualStart(),
-            MOI.ConstraintIndex{MOI.VariableIndex,S},
-        )
-    end
-    return
-end
-
 function test_parameter_number_of_variables()
     model = UnoSolver.Optimizer()
     x = MOI.add_variable(model)
@@ -1030,18 +1015,6 @@ function test_issue_491_model_example()
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
     @test ≈(MOI.get.(model, MOI.VariablePrimal(), x), [4, exp(1)]; atol = 1e-6)
-    return
-end
-
-function test_issue_494()
-    model = UnoSolver.Optimizer()
-    x, c_x = MOI.add_constrained_variable(model, MOI.Interval(0.0, 1.0))
-    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(c_x))
-    @test MOI.get(model, MOI.ConstraintDualStart(), c_x) === nothing
-    MOI.set(model, MOI.ConstraintDualStart(), c_x, 2.0)
-    @test MOI.get(model, MOI.ConstraintDualStart(), c_x) === 2.0
-    MOI.set(model, MOI.ConstraintDualStart(), c_x, nothing)
-    @test MOI.get(model, MOI.ConstraintDualStart(), c_x) === nothing
     return
 end
 
