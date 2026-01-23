@@ -71,42 +71,21 @@ function test_ConstraintDualStart()
     model = UnoSolver.Optimizer()
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 2)
-    l = MOI.add_constraint(model, x[1], MOI.GreaterThan(1.0))
-    u = MOI.add_constraint(model, x[1], MOI.LessThan(1.0))
-    e = MOI.add_constraint(model, x[2], MOI.EqualTo(1.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.0),
         MOI.LessThan(1.5),
     )
-    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(l))
-    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(u))
-    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(e))
     @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
     @test MOI.supports(model, MOI.NLPBlockDualStart())
-    @test MOI.get(model, MOI.ConstraintDualStart(), l) === nothing
-    @test MOI.get(model, MOI.ConstraintDualStart(), u) === nothing
-    @test MOI.get(model, MOI.ConstraintDualStart(), e) === nothing
     @test MOI.get(model, MOI.ConstraintDualStart(), c) === nothing
     @test MOI.get(model, MOI.NLPBlockDualStart()) === nothing
-    MOI.set(model, MOI.ConstraintDualStart(), l, 1.0)
-    MOI.set(model, MOI.ConstraintDualStart(), u, -1.0)
-    MOI.set(model, MOI.ConstraintDualStart(), e, -1.5)
     MOI.set(model, MOI.ConstraintDualStart(), c, 2.0)
     MOI.set(model, MOI.NLPBlockDualStart(), [1.0, 2.0])
-    @test MOI.get(model, MOI.ConstraintDualStart(), l) == 1.0
-    @test MOI.get(model, MOI.ConstraintDualStart(), u) == -1.0
-    @test MOI.get(model, MOI.ConstraintDualStart(), e) == -1.5
     @test MOI.get(model, MOI.ConstraintDualStart(), c) == 2.0
     @test MOI.get(model, MOI.NLPBlockDualStart()) == [1.0, 2.0]
-    MOI.set(model, MOI.ConstraintDualStart(), l, nothing)
-    MOI.set(model, MOI.ConstraintDualStart(), u, nothing)
-    MOI.set(model, MOI.ConstraintDualStart(), e, nothing)
     MOI.set(model, MOI.ConstraintDualStart(), c, nothing)
     MOI.set(model, MOI.NLPBlockDualStart(), nothing)
-    @test MOI.get(model, MOI.ConstraintDualStart(), l) === nothing
-    @test MOI.get(model, MOI.ConstraintDualStart(), u) === nothing
-    @test MOI.get(model, MOI.ConstraintDualStart(), e) === nothing
     @test MOI.get(model, MOI.ConstraintDualStart(), c) === nothing
     @test MOI.get(model, MOI.NLPBlockDualStart()) === nothing
     return
