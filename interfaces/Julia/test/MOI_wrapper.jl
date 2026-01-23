@@ -71,42 +71,21 @@ function test_ConstraintDualStart()
     model = UnoSolver.Optimizer()
     MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 2)
-    l = MOI.add_constraint(model, x[1], MOI.GreaterThan(1.0))
-    u = MOI.add_constraint(model, x[1], MOI.LessThan(1.0))
-    e = MOI.add_constraint(model, x[2], MOI.EqualTo(1.0))
     c = MOI.add_constraint(
         model,
         MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(1.0, x), 0.0),
         MOI.LessThan(1.5),
     )
-    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(l))
-    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(u))
-    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(e))
     @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
     @test MOI.supports(model, MOI.NLPBlockDualStart())
-    @test MOI.get(model, MOI.ConstraintDualStart(), l) === nothing
-    @test MOI.get(model, MOI.ConstraintDualStart(), u) === nothing
-    @test MOI.get(model, MOI.ConstraintDualStart(), e) === nothing
     @test MOI.get(model, MOI.ConstraintDualStart(), c) === nothing
     @test MOI.get(model, MOI.NLPBlockDualStart()) === nothing
-    MOI.set(model, MOI.ConstraintDualStart(), l, 1.0)
-    MOI.set(model, MOI.ConstraintDualStart(), u, -1.0)
-    MOI.set(model, MOI.ConstraintDualStart(), e, -1.5)
     MOI.set(model, MOI.ConstraintDualStart(), c, 2.0)
     MOI.set(model, MOI.NLPBlockDualStart(), [1.0, 2.0])
-    @test MOI.get(model, MOI.ConstraintDualStart(), l) == 1.0
-    @test MOI.get(model, MOI.ConstraintDualStart(), u) == -1.0
-    @test MOI.get(model, MOI.ConstraintDualStart(), e) == -1.5
     @test MOI.get(model, MOI.ConstraintDualStart(), c) == 2.0
     @test MOI.get(model, MOI.NLPBlockDualStart()) == [1.0, 2.0]
-    MOI.set(model, MOI.ConstraintDualStart(), l, nothing)
-    MOI.set(model, MOI.ConstraintDualStart(), u, nothing)
-    MOI.set(model, MOI.ConstraintDualStart(), e, nothing)
     MOI.set(model, MOI.ConstraintDualStart(), c, nothing)
     MOI.set(model, MOI.NLPBlockDualStart(), nothing)
-    @test MOI.get(model, MOI.ConstraintDualStart(), l) === nothing
-    @test MOI.get(model, MOI.ConstraintDualStart(), u) === nothing
-    @test MOI.get(model, MOI.ConstraintDualStart(), e) === nothing
     @test MOI.get(model, MOI.ConstraintDualStart(), c) === nothing
     @test MOI.get(model, MOI.NLPBlockDualStart()) === nothing
     return
@@ -131,48 +110,6 @@ function test_ConstraintDualStart_ScalarNonlinearFunction()
     @test MOI.get(model, MOI.ConstraintDualStart(), c) === nothing
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
-    return
-end
-
-function test_ConstraintDualStart_variable_bound_min_greater_than()
-    model = UnoSolver.Optimizer()
-    MOI.set(model, MOI.Silent(), true)
-    x, c = MOI.add_constrained_variable(model, MOI.GreaterThan(1.0))
-    MOI.set(model, MOI.VariablePrimalStart(), x, 1.0)
-    MOI.set(model, MOI.ConstraintDualStart(), c, 1.0)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
-    MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.ConstraintDual(), c), 1.0; atol = 1e-6)
-    @test MOI.get(model, MOI.ConstraintDualStart(), c) == 1.0
-    return
-end
-
-function test_ConstraintDualStart_variable_bound_max_less_than()
-    model = UnoSolver.Optimizer()
-    MOI.set(model, MOI.Silent(), true)
-    x, c = MOI.add_constrained_variable(model, MOI.LessThan(1.0))
-    MOI.set(model, MOI.VariablePrimalStart(), x, 1.0)
-    MOI.set(model, MOI.ConstraintDualStart(), c, -1.0)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
-    MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.ConstraintDual(), c), -1.0; atol = 1e-6)
-    @test MOI.get(model, MOI.ConstraintDualStart(), c) == -1.0
-    return
-end
-
-function test_ConstraintDualStart_variable_bound_min_equal_to()
-    model = UnoSolver.Optimizer()
-    MOI.set(model, MOI.Silent(), true)
-    x, c = MOI.add_constrained_variable(model, MOI.EqualTo(1.0))
-    MOI.set(model, MOI.VariablePrimalStart(), x, 1.0)
-    MOI.set(model, MOI.ConstraintDualStart(), c, 1.0)
-    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
-    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
-    MOI.optimize!(model)
-    @test isapprox(MOI.get(model, MOI.ConstraintDual(), c), 1.0; atol = 1e-6)
-    @test MOI.get(model, MOI.ConstraintDualStart(), c) == 1.0
     return
 end
 
@@ -284,21 +221,6 @@ function test_get_model()
         MOI.Utilities.substitute_variables(x -> index_map[x], obj_model),
         obj_uno,
     )
-    return
-end
-
-function test_supports_ConstraintDualStart_VariableIndex()
-    uno = UnoSolver.Optimizer()
-    bridged = MOI.Bridges.full_bridge_optimizer(UnoSolver.Optimizer(), Float64)
-    sets =
-        (MOI.LessThan{Float64}, MOI.GreaterThan{Float64}, MOI.EqualTo{Float64})
-    for model in (uno, bridged), S in sets
-        @test MOI.supports(
-            model,
-            MOI.ConstraintDualStart(),
-            MOI.ConstraintIndex{MOI.VariableIndex,S},
-        )
-    end
     return
 end
 
@@ -1030,18 +952,6 @@ function test_issue_491_model_example()
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.LOCALLY_SOLVED
     @test ≈(MOI.get.(model, MOI.VariablePrimal(), x), [4, exp(1)]; atol = 1e-6)
-    return
-end
-
-function test_issue_494()
-    model = UnoSolver.Optimizer()
-    x, c_x = MOI.add_constrained_variable(model, MOI.Interval(0.0, 1.0))
-    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(c_x))
-    @test MOI.get(model, MOI.ConstraintDualStart(), c_x) === nothing
-    MOI.set(model, MOI.ConstraintDualStart(), c_x, 2.0)
-    @test MOI.get(model, MOI.ConstraintDualStart(), c_x) === 2.0
-    MOI.set(model, MOI.ConstraintDualStart(), c_x, nothing)
-    @test MOI.get(model, MOI.ConstraintDualStart(), c_x) === nothing
     return
 end
 
