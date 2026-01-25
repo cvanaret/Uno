@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Francois Gallard
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 from numbers import Number
-from typing import Iterable
+from typing import Iterable, Sequence, Any
 
 import numpy as np
 import unopy
@@ -19,7 +19,7 @@ def minimize(
     method: str = "filtersqp",
     jac: callable = None,
     bounds: Iterable | None | Bounds = None,
-    constraints: Iterable = (),
+    constraints: Iterable[dict[str:Any] | NonlinearConstraint | LinearConstraint] = (),
     tol: float | None = None,
     options: dict | None = None,
 ) -> OptimizeResult:
@@ -236,7 +236,7 @@ def minimize(
     if method not in AVAILABLE_METHODS:
         raise ValueError(f"Unknown solver {method}")
 
-    def _objective(_, x, objective_value, user_data):
+    def _objective(_, x: Sequence, objective_value: Sequence, user_data: Sequence):
         x = np.fromiter(x, dtype="float64")
         if args:
             val = fun(x, *args)
@@ -290,7 +290,9 @@ def minimize(
         constr_lower_bounds.append(lb)
         constr_upper_bounds.append(ub)
 
-    def _constraints(_, nc, x, constraint_values, user_data):
+    def _constraints(
+        _, nc: int, x: Sequence, constraint_values: Sequence, user_data: Sequence
+    ):
         x = np.fromiter(x, dtype="float64")
         i_max = 0
         for constr in constraints:
