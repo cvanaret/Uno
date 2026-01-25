@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Francois Gallard
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 from numbers import Number
-from typing import Iterable, Sequence, Any
+from typing import Iterable, Sequence, Any, Callable
 
 import numpy as np
 import unopy
@@ -13,11 +13,11 @@ AVAILABLE_METHODS = ["filterslp", "filtersqp", "funnelsqp", "ipopt"]
 
 
 def minimize(
-    fun: callable,
+    fun: Callable,
     x0: np.ndarray,
     args: tuple = (),
     method: str = "filtersqp",
-    jac: callable = None,
+    jac: Callable | None = None,
     bounds: Iterable | None | Bounds = None,
     constraints: Iterable[dict[str:Any] | NonlinearConstraint | LinearConstraint] = (),
     tol: float | None = None,
@@ -29,7 +29,7 @@ def minimize(
 
     Parameters
     ----------
-    fun : callable
+    fun :
         The objective function to be minimized::
 
             fun(x, *args) -> float
@@ -44,13 +44,13 @@ def minimize(
         only ""x""; e.g., pass ""fun=lambda x: f0(x, *my_args, **my_kwargs)"" as the
         callable, where ""my_args"" (tuple) and ""my_kwargs"" (dict) have been
         gathered before invoking this function.
-    x0 : ndarray, shape (n,)
+    x0 :
         Initial guess. Array of real elements of size (n,),
         where ""n"" is the number of independent variables.
-    args : tuple, optional
+    args :
         Extra arguments passed to the objective function and its
         derivatives ("fun", "jac" functions).
-    method : str
+    method :
         The UNO preset.  Should be one of
 
         - 'filtersqp'
@@ -58,7 +58,7 @@ def minimize(
         - "funnelsqp"
         - "ipopt"
 
-    jac : {callable}, optional
+    jac :
         Method for computing the gradient vector.
         It should be a function that returns the gradient
         vector::
@@ -68,14 +68,14 @@ def minimize(
         where ""x"" is an array with shape (n,) and ""args"" is a tuple with
         the fixed parameters.
 
-    bounds : sequence or "Bounds", optional
+    bounds :
         Bounds on variables. There are two ways to specify the bounds:
 
         1. Instance of "Bounds" class.
         2. Sequence of ""(min, max)"" pairs for each element in "x". None
            is used to specify no bound.
 
-    constraints : {Constraint, dict} or List of {Constraint, dict}, optional
+    constraints :
         Constraints definition.
 
         Available constraints are:
@@ -98,12 +98,12 @@ def minimize(
         Equality constraint means that the constraint function result is to
         be zero whereas inequality means that it is to be non-negative.
 
-    tol : float, optional
+    tol :
         Tolerance for termination. When "tol" is specified, the selected
         minimization algorithm sets some relevant solver-specific tolerance(s)
         equal to "tol".
 
-    options : dict, optional
+    options :
         A dictionary of solver options.
 
         The available options and their types are:
@@ -198,7 +198,7 @@ def minimize(
 
     Returns
     -------
-    res : OptimizeResult
+    res :
         The optimization result represented as a ""OptimizeResult"" object.
         Important attributes are: ""x"" the solution array, ""success"" a
         Boolean flag indicating if the optimizer exited successfully and
