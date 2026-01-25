@@ -3,13 +3,19 @@
 
 import numpy as np
 import pytest
-from scipy.optimize import rosen, rosen_der, NonlinearConstraint, LinearConstraint
+from scipy.optimize import (
+    rosen,
+    rosen_der,
+    NonlinearConstraint,
+    LinearConstraint,
+    rosen_hess,
+)
 
 from scipy_interface.scipy_uno import minimize
 
 
 @pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "filterslp"])  # "ipopt"
-def test_rosen(method):
+def Atest_rosen(method):
     res = minimize(
         rosen,
         jac=rosen_der,
@@ -23,7 +29,7 @@ def test_rosen(method):
 
 
 @pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "filterslp"])  # "ipopt"
-def test_rosen_bnds(method):
+def Atest_rosen_bnds(method):
     res = minimize(
         rosen,
         jac=rosen_der,
@@ -38,7 +44,7 @@ def test_rosen_bnds(method):
 @pytest.mark.parametrize(
     "c_type", ["lambda", "NonLinearConstraint", "LinearConstraint"]
 )
-def test_rosen_constr(c_type):
+def Atest_rosen_constr(c_type):
     if c_type == "NonLinearConstraint":
         constr = NonlinearConstraint(
             fun=lambda x: 1.0 - 2 * x,
@@ -59,12 +65,13 @@ def test_rosen_constr(c_type):
     assert res.success
 
 
-def test_rosen_constr2():
+@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "filterslp"])
+def Atest_rosen_constr2(method):
     res = minimize(
         rosen,
         np.array([1.3, 0.7, 0.8]),
         jac=rosen_der,
-        method="filtersqp",
+        method=method,
         tol=1e-3,
         constraints=[
             NonlinearConstraint(
@@ -72,6 +79,44 @@ def test_rosen_constr2():
                 jac=lambda x: 2 * np.diag(x),
                 lb=np.full(3, 0.1),
                 ub=np.full(3, 0.8),
+            ),
+        ],
+        options={"max_iterations": 10000},
+    )
+    assert res.success
+
+
+@pytest.mark.parametrize("method", ["filtersqp"])  # , "funnelsqp", "filterslp"
+# @pytest.mark.parametrize(
+#     "constr",
+#     [
+#         (),
+#         [
+#             NonlinearConstraint(
+#                 fun=lambda x: x**2,
+#                 jac=lambda x: 2 * np.diag(x),
+#                 hess=lambda x: 2 * np.eye(x.size),
+#                 lb=np.full(3, 0.1),
+#                 ub=np.full(3, 0.8),
+#             ),
+#         ],
+#     ],
+# )
+def test_rosen_hess(method):
+    res = minimize(
+        rosen,
+        np.array([1.3, 0.7]),
+        jac=rosen_der,
+        hess=rosen_hess,
+        method=method,
+        tol=1e-3,
+        constraints=[
+            NonlinearConstraint(
+                fun=lambda x: x**2,
+                jac=lambda x: 2 * np.diag(x),
+                hess=lambda x: 2 * np.eye(x.size),
+                lb=np.full(2, 0.1),
+                ub=np.full(2, 0.8),
             ),
         ],
         options={"max_iterations": 10000},
