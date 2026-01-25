@@ -2,6 +2,7 @@
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 import unopy
+
 Inf = float("inf")
 
 # hs015.mod
