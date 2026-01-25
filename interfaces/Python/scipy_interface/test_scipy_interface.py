@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from scipy.optimize import rosen, rosen_der, NonlinearConstraint, LinearConstraint
 
-from scipy_interface import minimize
+from scipy_interface.scipy_uno import minimize
 
 
 @pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "filterslp"])  # "ipopt"
