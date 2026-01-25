@@ -59,12 +59,13 @@ def test_rosen_constr(c_type):
     assert res.success
 
 
-def test_rosen_constr2():
+@pytest.mark.parametrize("method", ["filtersqp", "funnelsqp", "filterslp"])
+def test_rosen_constr2(method):
     res = minimize(
         rosen,
         np.array([1.3, 0.7, 0.8]),
         jac=rosen_der,
-        method="filtersqp",
+        method=method,
         tol=1e-3,
         constraints=[
             NonlinearConstraint(
