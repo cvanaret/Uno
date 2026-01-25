@@ -1,10 +1,11 @@
 # Copyright (c) 2026 Francois Gallard
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 from numbers import Number
-from typing import Iterable, Sequence, Any
+from typing import Iterable, Sequence, Any, Callable
 
 import numpy as np
 import unopy
+from numpy import triu_indices
 from scipy.optimize import LinearConstraint, NonlinearConstraint, OptimizeResult
 from scipy.optimize._minimize import standardize_bounds, _validate_bounds, Bounds
 
@@ -13,11 +14,12 @@ AVAILABLE_METHODS = ["filterslp", "filtersqp", "funnelsqp", "ipopt"]
 
 
 def minimize(
-    fun: callable,
+    fun: Callable,
     x0: np.ndarray,
     args: tuple = (),
     method: str = "filtersqp",
-    jac: callable = None,
+    jac: Callable | None = None,
+    hess: Callable | None = None,
     bounds: Iterable | None | Bounds = None,
     constraints: Iterable[dict[str:Any] | NonlinearConstraint | LinearConstraint] = (),
     tol: float | None = None,
@@ -29,7 +31,7 @@ def minimize(
 
     Parameters
     ----------
-    fun : callable
+    fun :
         The objective function to be minimized::
 
             fun(x, *args) -> float
@@ -44,10 +46,10 @@ def minimize(
         only ""x""; e.g., pass ""fun=lambda x: f0(x, *my_args, **my_kwargs)"" as the
         callable, where ""my_args"" (tuple) and ""my_kwargs"" (dict) have been
         gathered before invoking this function.
-    x0 : ndarray, shape (n,)
+    x0 :
         Initial guess. Array of real elements of size (n,),
         where ""n"" is the number of independent variables.
-    args : tuple, optional
+    args :
         Extra arguments passed to the objective function and its
         derivatives ("fun", "jac" functions).
     method : str
@@ -58,7 +60,7 @@ def minimize(
         - "funnelsqp"
         - "ipopt"
 
-    jac : {callable}, optional
+    jac :
         Method for computing the gradient vector.
         It should be a function that returns the gradient
         vector::
@@ -68,14 +70,17 @@ def minimize(
         where ""x"" is an array with shape (n,) and ""args"" is a tuple with
         the fixed parameters.
 
-    bounds : sequence or "Bounds", optional
+    hess :
+        Method for computing the Hessian matrix.
+
+    bounds :
         Bounds on variables. There are two ways to specify the bounds:
 
         1. Instance of "Bounds" class.
         2. Sequence of ""(min, max)"" pairs for each element in "x". None
            is used to specify no bound.
 
-    constraints : {Constraint, dict} or List of {Constraint, dict}, optional
+    constraints :
         Constraints definition.
 
         Available constraints are:
@@ -88,9 +93,9 @@ def minimize(
 
         type : str
             Constraint type: 'eq' for equality, 'ineq' for inequality.
-        fun : callable
+        fun :
             The function defining the constraint.
-        jac : callable, optional
+        jac :
             The Jacobian of "fun" (only for SLSQP).
         args : sequence, optional
             Extra arguments to be passed to the function and Jacobian.
@@ -98,12 +103,12 @@ def minimize(
         Equality constraint means that the constraint function result is to
         be zero whereas inequality means that it is to be non-negative.
 
-    tol : float, optional
+    tol :
         Tolerance for termination. When "tol" is specified, the selected
         minimization algorithm sets some relevant solver-specific tolerance(s)
         equal to "tol".
 
-    options : dict, optional
+    options :
         A dictionary of solver options.
 
         The available options and their types are:
@@ -198,7 +203,7 @@ def minimize(
 
     Returns
     -------
-    res : OptimizeResult
+    res :
         The optimization result represented as a ""OptimizeResult"" object.
         Important attributes are: ""x"" the solution array, ""success"" a
         Boolean flag indicating if the optimizer exited successfully and
@@ -315,7 +320,7 @@ def minimize(
     number_variables = x0.size
 
     def _objective_gradient(_, x, gradient, user_data):
-        x = np.fromiter(x, dtype="float64")
+        x = np.fromiter(x, dtype="float")
         if args:
             val = jac(x, *args)
         else:
@@ -325,7 +330,7 @@ def minimize(
         return 0
 
     def _constraint_jacobian(_, ncnz, x, jacobian_values, user_data):
-        x = np.fromiter(x, dtype="float64")
+        x = np.fromiter(x, dtype="float")
         i_max = 0
         for constr in constraints:
             if isinstance(constr, dict):
@@ -340,6 +345,43 @@ def minimize(
             for i, v in enumerate(val_flat):
                 jacobian_values[i_max + i] = v
             i_max += val_flat.size
+        return 0
+
+    hess_row_indices, hess_col_indices = (
+        triu_indices(number_variables) if hess is not None else (None, None)
+    )
+
+    def _lagrangian_hessian(
+        number_variables,
+        number_constraints,
+        number_hessian_nonzeros,
+        x,
+        objective_multiplier,
+        multipliers,
+        hessian_values,
+        user_data,
+    ):
+        x = np.fromiter(x, dtype="float")
+        for i, j in zip(hess_row_indices, hess_col_indices):
+            hessian_values[j + number_variables * i] = (
+                objective_multiplier * hess(x)[i, j]
+            )
+        i_mult = 0
+        for constr in constraints:
+            mult = multipliers[i_mult]
+            i_mult += 1
+            if isinstance(constr, dict):
+                val = constr["hess"](x) * mult
+            else:
+                if isinstance(constr, LinearConstraint):
+                    val = float("NaN")
+                else:
+                    val = constr.hess(x) * mult
+
+            if val != float("NaN"):
+                for i, j in zip(hess_row_indices, hess_col_indices):
+                    hessian_values[j + number_variables * i] += val[i, j]
+
         return 0
 
     if bounds is not None:
@@ -362,22 +404,14 @@ def minimize(
         raise ValueError("Jacobian of objective is required.")
 
     if n_constr > 0:
-        number_jacobian_nonzeros = number_variables * n_constr
-        jacobian_row_indices = np.tile(np.arange(number_variables), n_constr).tolist()
-        jacobian_column_indices = np.repeat(
-            np.arange(number_variables), n_constr
-        ).tolist()
-        constr_lower_bounds = np.concatenate(constr_lower_bounds)
-        constr_upper_bounds = np.concatenate(constr_upper_bounds)
-
         model.set_constraints(
             n_constr,
             _constraints,
-            constr_lower_bounds,
-            constr_upper_bounds,
-            number_jacobian_nonzeros,
-            jacobian_row_indices,
-            jacobian_column_indices,
+            np.concatenate(constr_lower_bounds),
+            np.concatenate(constr_upper_bounds),
+            number_variables * n_constr,
+            np.tile(np.arange(number_variables), n_constr).tolist(),
+            np.repeat(np.arange(number_variables), n_constr).tolist(),
             _constraint_jacobian,
         )
     model.set_initial_primal_iterate(x0.tolist())
@@ -409,6 +443,16 @@ def minimize(
             uno_solver.set_option("max_iter", options["max_iter"])
         for opt_key, opt_value in options.items():
             uno_solver.set_option(opt_key, opt_value)
+
+    if hess is not None:
+        model.set_lagrangian_hessian(
+            int(number_variables * (number_variables + 1) / 2),
+            unopy.LOWER_TRIANGLE,
+            hess_col_indices.tolist(),  # Inverted on purpose
+            hess_row_indices.tolist(),
+            _lagrangian_hessian,
+            unopy.MULTIPLIER_NEGATIVE,
+        )
 
     result = uno_solver.optimize(model)
     return OptimizeResult(
