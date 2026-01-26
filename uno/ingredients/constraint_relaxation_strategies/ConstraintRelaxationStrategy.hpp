@@ -52,7 +52,7 @@ namespace uno {
       const double loose_primal_tolerance;
       const double loose_dual_tolerance;
       size_t loose_tolerance_consecutive_iterations{0};
-      const size_t loose_tolerance_consecutive_iteration_threshold;
+      const size_t loose_tolerance_iteration_threshold;
       const double unbounded_objective_threshold;
 
       void compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate) const;
@@ -89,7 +89,7 @@ namespace uno {
          return SolutionStatus::NOT_OPTIMAL;
       }
       // check if loose tolerance achieved for enough consecutive iterations
-      if (this->loose_tolerance_consecutive_iteration_threshold <= this->loose_tolerance_consecutive_iterations) {
+      if (this->loose_tolerance_iteration_threshold <= this->loose_tolerance_consecutive_iterations) {
          return status_loose_tolerance;
       }
       else {

@@ -25,14 +25,12 @@ barrier_push_variable_to_interior_k1	DOUBLE	1e-2
 barrier_push_variable_to_interior_k2	DOUBLE	1e-2
 barrier_regularization_exponent	DOUBLE	0.25
 barrier_small_direction_factor	DOUBLE	10.
-barrier_smax	DOUBLE	100
 barrier_tau_min	DOUBLE	0.99
 barrier_theta_mu	DOUBLE	1.5
 barrier_update_fraction	DOUBLE	10
 constraint_relaxation_strategy	STRING	<unset>
 dual_regularization_fraction	DOUBLE	1e-8
 dual_tolerance	DOUBLE	1e-8
-enforce_linear_constraints	BOOL	false
 filter_beta	DOUBLE	0.999
 filter_capacity	INTEGER	50
 filter_fact	DOUBLE	1.25
@@ -40,8 +38,6 @@ filter_gamma	DOUBLE	0.001
 filter_sufficient_infeasibility_decrease_factor	DOUBLE	0.9
 filter_type	STRING	"standard"
 filter_ubd	DOUBLE	1e2
-function_scaling_factor	DOUBLE	100.
-function_scaling_threshold	DOUBLE	100.
 funnel_beta	DOUBLE	0.9999
 funnel_fact	DOUBLE	1.5
 funnel_gamma	DOUBLE	0.001
@@ -60,7 +56,7 @@ linear_solver	STRING	linear_solvers[0], true
 logger	STRING	"INFO"
 loose_dual_tolerance	DOUBLE	1e-6
 loose_primal_tolerance	DOUBLE	1e-6
-loose_tolerance_consecutive_iteration_threshold	INTEGER	15
+loose_tolerance_iteration_threshold	INTEGER	15
 max_iterations	INTEGER	2000
 nonmonotone_filter_number_dominated_entries	INTEGER	3
 preset	STRING	<unset>
@@ -76,11 +72,8 @@ progress_norm	STRING	"L1"
 protect_actual_reduction_against_roundoff	BOOL	false
 regularization_failure_threshold	DOUBLE	1e40
 regularization_increase_factor	DOUBLE	2
-regularization_initial_value	DOUBLE	1e-4
 residual_norm	STRING	"INF"
 residual_scaling_threshold	DOUBLE	100.
-scale_functions	BOOL	false
-scale_residuals	BOOL	true
 statistics_LS_step_length_column_order	INTEGER	10
 statistics_SOC_column_order	INTEGER	9
 statistics_TR_radius_column_order	INTEGER	10

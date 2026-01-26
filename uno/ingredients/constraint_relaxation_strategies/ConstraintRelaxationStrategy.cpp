@@ -21,7 +21,7 @@ namespace uno {
          dual_tolerance(options.get_double("dual_tolerance")),
          loose_primal_tolerance(options.get_double("loose_primal_tolerance")),
          loose_dual_tolerance(options.get_double("loose_dual_tolerance")),
-         loose_tolerance_consecutive_iteration_threshold(options.get_unsigned_int("loose_tolerance_consecutive_iteration_threshold")),
+         loose_tolerance_iteration_threshold(options.get_unsigned_int("loose_tolerance_iteration_threshold")),
          unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")) {
    }
 

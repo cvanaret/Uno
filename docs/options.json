@@ -130,11 +130,6 @@
     "default": "10."
   },
   {
-    "name": "barrier_smax",
-    "type": "DOUBLE",
-    "default": "100"
-  },
-  {
     "name": "barrier_tau_min",
     "type": "DOUBLE",
     "default": "0.99"
@@ -163,11 +158,6 @@
     "name": "dual_tolerance",
     "type": "DOUBLE",
     "default": "1e-8"
-  },
-  {
-    "name": "enforce_linear_constraints",
-    "type": "BOOL",
-    "default": "false"
   },
   {
     "name": "filter_beta",
@@ -203,16 +193,6 @@
     "name": "filter_ubd",
     "type": "DOUBLE",
     "default": "1e2"
-  },
-  {
-    "name": "function_scaling_factor",
-    "type": "DOUBLE",
-    "default": "100."
-  },
-  {
-    "name": "function_scaling_threshold",
-    "type": "DOUBLE",
-    "default": "100."
   },
   {
     "name": "funnel_beta",
@@ -305,7 +285,7 @@
     "default": "1e-6"
   },
   {
-    "name": "loose_tolerance_consecutive_iteration_threshold",
+    "name": "loose_tolerance_iteration_threshold",
     "type": "INTEGER",
     "default": "15"
   },
@@ -385,11 +365,6 @@
     "default": "2"
   },
   {
-    "name": "regularization_initial_value",
-    "type": "DOUBLE",
-    "default": "1e-4"
-  },
-  {
     "name": "residual_norm",
     "type": "STRING",
     "default": "\"INF\""
@@ -398,16 +373,6 @@
     "name": "residual_scaling_threshold",
     "type": "DOUBLE",
     "default": "100."
-  },
-  {
-    "name": "scale_functions",
-    "type": "BOOL",
-    "default": "false"
-  },
-  {
-    "name": "scale_residuals",
-    "type": "BOOL",
-    "default": "true"
   },
   {
     "name": "statistics_LS_step_length_column_order",

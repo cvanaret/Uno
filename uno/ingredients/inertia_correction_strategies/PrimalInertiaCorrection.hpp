@@ -48,7 +48,7 @@ namespace uno {
       const std::string& optional_linear_solver_name;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> optional_linear_solver{};
       double regularization_factor{0.};
-      const double regularization_initial_value{};
+      const double regularization_initial_factor{};
       const double regularization_increase_factor{};
       const double regularization_failure_threshold{};
    };
@@ -57,7 +57,7 @@ namespace uno {
    PrimalInertiaCorrection<ElementType>::PrimalInertiaCorrection(const Options& options):
          InertiaCorrectionStrategy<ElementType>(),
          optional_linear_solver_name(options.get_string("linear_solver")),
-         regularization_initial_value(options.get_double("regularization_initial_value")),
+         regularization_initial_factor(options.get_double("primal_regularization_initial_factor")),
          regularization_increase_factor(options.get_double("regularization_increase_factor")),
          regularization_failure_threshold(options.get_double("regularization_failure_threshold")) {
    }
@@ -113,7 +113,7 @@ namespace uno {
             DEBUG << "Factorization was a success\n";
          }
          else {
-            this->regularization_factor = (this->regularization_factor == 0.) ? this->regularization_initial_value :
+            this->regularization_factor = (this->regularization_factor == 0.) ? this->regularization_initial_factor :
                this->regularization_increase_factor * this->regularization_factor;
             if (this->regularization_factor > this->regularization_failure_threshold) {
                throw UnstableRegularization();
