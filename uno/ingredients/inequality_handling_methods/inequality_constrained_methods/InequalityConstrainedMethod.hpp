@@ -19,7 +19,7 @@ namespace uno {
       ~InequalityConstrainedMethod() override = default;
 
       void initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) override;
+         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, double trust_region_radius) override;
       void initialize_statistics(Statistics& statistics) override;
       void generate_initial_iterate(Iterate& initial_iterate) override;
       void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,

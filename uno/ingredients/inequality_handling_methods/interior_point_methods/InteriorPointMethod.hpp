@@ -25,7 +25,7 @@ namespace uno {
       explicit InteriorPointMethod(const Options& options);
 
       void initialize(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
-         InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) override;
+         InertiaCorrectionStrategy& inertia_correction_strategy, double trust_region_radius) override;
       void initialize_statistics(Statistics& statistics) override;
       void generate_initial_iterate(Iterate& initial_iterate) override;
       void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
@@ -93,7 +93,7 @@ namespace uno {
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) {
+         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, double trust_region_radius) {
       if (trust_region_radius < INF<double>) {
          throw std::runtime_error("A trust-region radius is not supported.");
       }

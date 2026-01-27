@@ -14,7 +14,6 @@ namespace uno {
    class Statistics;
    class Subproblem;
 
-   template <typename ElementType>
    class InertiaCorrectionStrategy {
    public:
       InertiaCorrectionStrategy() = default;
@@ -28,11 +27,11 @@ namespace uno {
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          double* primal_regularization_values) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         const double* augmented_matrix_values, ElementType dual_regularization_parameter,
+         const double* augmented_matrix_values, double dual_regularization_parameter,
          const Inertia& expected_inertia, double* primal_regularization_values,
          double* dual_regularization_values) = 0;
       virtual void regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         const double* augmented_matrix_values, ElementType dual_regularization_parameter,
+         const double* augmented_matrix_values, double dual_regularization_parameter,
          const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          double* primal_regularization_values, double* dual_regularization_values) = 0;
 

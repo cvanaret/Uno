@@ -11,7 +11,7 @@ This document lists the configuration options that Uno accepts, their types and 
 | `hessian_model` | `exact`, `identity`, `zero` |
 | `inertia_correction_strategy` | `primal`, `primal_dual`, `none` |
 | `globalization_mechanism` | `TR`, `LS` |
-| `globalization_strategy` | `l1_merit`, `fletcher_filter_method`, `waechter_filter_method`, `funnel_method` |
+| `globalization_strategy` | `merit_function`, `fletcher_filter_method`, `waechter_filter_method`, `funnel_method` |
 
 ## Subproblem solver
 
