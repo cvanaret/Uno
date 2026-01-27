@@ -6,7 +6,7 @@
 
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
-#include "ingredients/globalization_strategies/l1MeritFunction.hpp"
+#include "ingredients/globalization_strategies/MeritFunction.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "optimization/OptimizationProblem.hpp"
@@ -40,8 +40,8 @@ namespace uno {
       const OptimizationProblem problem;
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
       std::unique_ptr<HessianModel> hessian_model;
-      std::unique_ptr<InertiaCorrectionStrategy<double>> inertia_correction_strategy;
-      l1MeritFunction globalization_strategy;
+      std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy;
+      MeritFunction globalization_strategy;
    };
 } // namespace
 

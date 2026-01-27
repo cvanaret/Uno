@@ -9,9 +9,9 @@
 #include "tools/Infinity.hpp"
 
 namespace uno {
-   class l1MeritFunction : public GlobalizationStrategy {
+   class MeritFunction : public GlobalizationStrategy {
    public:
-      explicit l1MeritFunction(const Options& options);
+      explicit MeritFunction(const Options& options);
 
       void initialize(Statistics& statistics, const Iterate& initial_iterate) override;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const ProgressMeasures& current_progress,
