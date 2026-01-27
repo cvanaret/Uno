@@ -145,7 +145,7 @@ MOI.eval_objective(::Issue136, x) = x[1]
 MOI.eval_constraint(::Issue136, g, x) = (g[1] = x[1]^(1 / 3))
 MOI.eval_objective_gradient(::Issue136, grad_f, x) = (grad_f[1] = 1.0)
 MOI.jacobian_structure(::Issue136) = Tuple{Int64,Int64}[(1, 1)]
-function MOI.eval_jacobian(::Issue136, J, x)
+function MOI.eval_constraint_jacobian(::Issue136, J, x)
     J[1] = (1 / 3) * x[1]^(1 / 3 - 1)
     return
 end
@@ -513,7 +513,7 @@ function test_empty_nlp_evaluator()
     @test MOI.eval_constraint(evaluator, Float64[], x) === nothing
     @test MOI.jacobian_structure(evaluator) == Tuple{Int,Int}[]
     @test MOI.hessian_lagrangian_structure(evaluator) == Tuple{Int,Int}[]
-    @test MOI.eval_jacobian(evaluator, Float64[], x) === nothing
+    @test MOI.eval_constraint_jacobian(evaluator, Float64[], x) === nothing
     H, mu = Float64[], Float64[]
     @test MOI.eval_hessian_lagrangian(evaluator, H, x, 1.0, mu) === nothing
     return
@@ -589,7 +589,7 @@ function test_vector_nonlinear_oracle()
             return
         end,
         jacobian_structure = [(1, 1), (2, 2), (2, 3), (1, 4), (2, 5)],
-        eval_jacobian = (ret, x) -> begin
+        eval_constraint_jacobian = (ret, x) -> begin
             sleep(0.5)  # to make timing test more robust
             @test length(ret) == 5
             @test length(x) == 5
@@ -646,7 +646,7 @@ function test_vector_nonlinear_oracle()
     # Test timers with plenty of buffer to avoid a flakey test
     for (_, cache) in model.vector_nonlinear_oracle_constraints
         @test 0.9 < cache.eval_f_timer < 3
-        @test 0.9 < cache.eval_jacobian_timer < 5
+        @test 0.9 < cache.eval_constraint_jacobian_timer < 5
         @test 0.9 < cache.eval_hessian_lagrangian_timer < 5
     end
     # Test that optimize! resets the timers. Upper bounds are chosen such that
@@ -654,7 +654,7 @@ function test_vector_nonlinear_oracle()
     MOI.optimize!(model)
     for (_, cache) in model.vector_nonlinear_oracle_constraints
         @test 0.9 < cache.eval_f_timer < 3
-        @test 0.9 < cache.eval_jacobian_timer < 5
+        @test 0.9 < cache.eval_constraint_jacobian_timer < 5
         @test 0.9 < cache.eval_hessian_lagrangian_timer < 5
     end
     MOI.set(model, MOI.RawOptimizerAttribute("max_iterations"), 0)
@@ -674,7 +674,7 @@ function test_vector_nonlinear_oracle_two()
             return
         end,
         jacobian_structure = [(1, 1), (2, 2), (2, 3), (1, 4), (2, 5)],
-        eval_jacobian = (ret, x) -> begin
+        eval_constraint_jacobian = (ret, x) -> begin
             ret[1] = 2 * x[1]
             ret[2] = 2 * x[2]
             ret[3] = 3 * x[3]^2
@@ -731,7 +731,7 @@ function test_vector_nonlinear_oracle_optimization()
             return
         end,
         jacobian_structure = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 3), (2, 4)],
-        eval_jacobian = (ret, x) -> begin
+        eval_constraint_jacobian = (ret, x) -> begin
             ret[1] = 2 * x[1]
             ret[2] = 2 * x[2]
             ret[3] = 1.0
@@ -792,7 +792,7 @@ function test_vector_nonlinear_oracle_optimization_min_sense()
             return
         end,
         jacobian_structure = [(1, 1), (1, 2), (2, 2), (2, 1), (1, 3), (2, 4)],
-        eval_jacobian = (ret, x) -> begin
+        eval_constraint_jacobian = (ret, x) -> begin
             ret[1] = 2 * x[1]
             ret[2] = 2 * x[2]
             ret[3] = 1.0
@@ -899,7 +899,7 @@ function test_vector_nonlinear_oracle_no_hessian()
             return
         end,
         jacobian_structure = [(1, 1), (2, 2), (2, 3), (1, 4), (2, 5)],
-        eval_jacobian = (ret, x) -> begin
+        eval_constraint_jacobian = (ret, x) -> begin
             ret[1] = 2 * x[1]
             ret[2] = 2 * x[2]
             ret[3] = 3 * x[3]^2

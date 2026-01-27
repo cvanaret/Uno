@@ -120,10 +120,10 @@ MOI.initialize(::_EmptyNLPEvaluator, ::Any) = nothing
 MOI.eval_constraint(::_EmptyNLPEvaluator, g, x) = nothing
 MOI.jacobian_structure(::_EmptyNLPEvaluator) = Tuple{Int64,Int64}[]
 MOI.hessian_lagrangian_structure(::_EmptyNLPEvaluator) = Tuple{Int64,Int64}[]
-MOI.eval_jacobian(::_EmptyNLPEvaluator, J, x) = nothing
+MOI.eval_constraint_jacobian(::_EmptyNLPEvaluator, J, x) = nothing
 MOI.eval_hessian_lagrangian(::_EmptyNLPEvaluator, H, x, σ, μ) = nothing
-MOI.eval_jacobian_product(d::_EmptyNLPEvaluator, y, x, w) = nothing
-MOI.eval_jacobian_transpose_product(::_EmptyNLPEvaluator, y, x, w) = nothing
+MOI.eval_constraint_jacobian_product(d::_EmptyNLPEvaluator, y, x, w) = nothing
+MOI.eval_constraint_jacobian_transpose_product(::_EmptyNLPEvaluator, y, x, w) = nothing
 MOI.eval_hessian_lagrangian_product(::_EmptyNLPEvaluator, H, x, v, σ, μ) = nothing
 
 function MOI.empty!(model::Optimizer)
@@ -1071,7 +1071,7 @@ function MOI.jacobian_structure(model::Optimizer)
     return J
 end
 
-function _eval_jacobian(
+function _eval_constraint_jacobian(
     values::AbstractVector,
     offset::Int,
     x::AbstractVector,
@@ -1087,14 +1087,14 @@ function _eval_jacobian(
     return offset + nnz
 end
 
-function MOI.eval_jacobian(model::Optimizer, values, x)
-    offset = MOI.eval_jacobian(model.qp_data, values, x)
+function MOI.eval_constraint_jacobian(model::Optimizer, values, x)
+    offset = MOI.eval_constraint_jacobian(model.qp_data, values, x)
     offset -= 1  # .qp_data returns one-indexed offset
     for (f, s) in model.vector_nonlinear_oracle_constraints
-        offset = _eval_jacobian(values, offset, x, f, s)
+        offset = _eval_constraint_jacobian(values, offset, x, f, s)
     end
     nlp_values = view(values, (offset+1):length(values))
-    MOI.eval_jacobian(model.nlp_data.evaluator, nlp_values, x)
+    MOI.eval_constraint_jacobian(model.nlp_data.evaluator, nlp_values, x)
     return
 end
 
@@ -1152,23 +1152,23 @@ function MOI.eval_hessian_lagrangian(model::Optimizer, H, x, σ, μ)
     return
 end
 
-function MOI.eval_jacobian_product(model::Optimizer, y, x, w)
+function MOI.eval_constraint_jacobian_product(model::Optimizer, y, x, w)
     @assert isempty(model.vector_nonlinear_oracle_constraints)
     fill!(y, 0.0)
     qp_offset = length(model.qp_data)
     y_nlp = view(y, (qp_offset+1):length(y))
-    MOI.eval_jacobian_product(model.nlp_data.evaluator, y_nlp, x, w)
-    MOI.eval_jacobian_product(model.qp_data, y, x, w)
+    MOI.eval_constraint_jacobian_product(model.nlp_data.evaluator, y_nlp, x, w)
+    MOI.eval_constraint_jacobian_product(model.qp_data, y, x, w)
     return
 end
 
-function MOI.eval_jacobian_transpose_product(model::Optimizer, y, x, w)
+function MOI.eval_constraint_jacobian_transpose_product(model::Optimizer, y, x, w)
     @assert isempty(model.vector_nonlinear_oracle_constraints)
     fill!(y, 0.0)
     qp_offset = length(model.qp_data)
     w_nlp = view(w, (qp_offset+1):length(w))
-    MOI.eval_jacobian_transpose_product(model.nlp_data.evaluator, y, x, w_nlp)
-    MOI.eval_jacobian_transpose_product(model.qp_data, y, x, w)
+    MOI.eval_constraint_jacobian_transpose_product(model.nlp_data.evaluator, y, x, w_nlp)
+    MOI.eval_constraint_jacobian_transpose_product(model.qp_data, y, x, w)
     return
 end
 
@@ -1306,10 +1306,10 @@ function _setup_inner(model::Optimizer)::UnoSolver.Model
     moi_objective(model, x) = MOI.eval_objective(model, x)
     moi_objective_gradient(model, g, x) = MOI.eval_objective_gradient(model, g, x)
     moi_constraints(model, c, x) = MOI.eval_constraint(model, c, x)
-    moi_jacobian(model, jvals, x) = MOI.eval_jacobian(model, jvals, x)
+    moi_jacobian(model, jvals, x) = MOI.eval_constraint_jacobian(model, jvals, x)
     moi_lagrangian_hessian(model, hvals, x, multipliers, objective_multiplier) = MOI.eval_hessian_lagrangian(model, hvals, x, objective_multiplier, multipliers)
-    moi_jacobian_operator(model, Jv, x, v, evaluate_at_x) = MOI.eval_jacobian_product(model, Jv, x, v)
-    moi_jacobian_transposed_operator(model, Jtv, x, v, evaluate_at_x) = MOI.eval_jacobian_transpose_product(model, Jtv, x, v)
+    moi_jacobian_operator(model, Jv, x, v, evaluate_at_x) = MOI.eval_constraint_jacobian_product(model, Jv, x, v)
+    moi_jacobian_transposed_operator(model, Jtv, x, v, evaluate_at_x) = MOI.eval_constraint_jacobian_transpose_product(model, Jtv, x, v)
     moi_lagrangian_hessian_operator(model, Hv, x, objective_multiplier, multipliers, v, evaluate_at_x) = MOI.eval_hessian_lagrangian_product(model, Hv, x, v, objective_multiplier, multipliers)
 
     model.inner = UnoSolver.uno_model(

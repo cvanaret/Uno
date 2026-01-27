@@ -613,7 +613,7 @@ function MOI.jacobian_structure(block::QPBlockData)
     return J
 end
 
-function MOI.eval_jacobian(
+function MOI.eval_constraint_jacobian(
     block::QPBlockData{T},
     J::AbstractVector{T},
     x::AbstractVector{T},
@@ -651,7 +651,7 @@ function MOI.eval_hessian_lagrangian(
     return i
 end
 
-function MOI.eval_jacobian_product(
+function MOI.eval_constraint_jacobian_product(
     block::QPBlockData{T},
     y::AbstractVector{T},
     x::AbstractVector{T},
@@ -663,7 +663,7 @@ function MOI.eval_jacobian_product(
     return
 end
 
-function MOI.eval_jacobian_transpose_product(
+function MOI.eval_constraint_jacobian_transpose_product(
     block::QPBlockData{T},
     y::AbstractVector{T},
     x::AbstractVector{T},
