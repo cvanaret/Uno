@@ -33,7 +33,7 @@ namespace uno {
       bool is_objective_computed{false};
       bool are_constraints_computed{false};
       bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the objective gradient has already been computed */
-      bool is_constraint_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
+      bool is_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
       // primal-dual residuals
       double primal_feasibility{INF<double>};

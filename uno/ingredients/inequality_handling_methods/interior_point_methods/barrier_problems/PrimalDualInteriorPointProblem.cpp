@@ -44,7 +44,7 @@ namespace uno {
          // since the slacks have been set, the function evaluations should also be updated
          initial_iterate.is_objective_gradient_computed = false;
          initial_iterate.are_constraints_computed = false;
-         initial_iterate.is_constraint_jacobian_computed = false;
+         initial_iterate.is_jacobian_computed = false;
       }
 
       // set the bound multipliers
@@ -93,9 +93,9 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices,
+   void PrimalDualInteriorPointProblem::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices,
          uno_int solver_indexing, MatrixOrder matrix_order) const {
-      this->first_reformulation.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+      this->first_reformulation.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
    void PrimalDualInteriorPointProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,
@@ -148,8 +148,8 @@ namespace uno {
       return number_nonzeros;
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
-      this->first_reformulation.evaluate_constraint_jacobian(iterate, jacobian_values);
+   void PrimalDualInteriorPointProblem::evaluate_jacobian(Iterate& iterate, double* jacobian_values) const {
+      this->first_reformulation.evaluate_jacobian(iterate, jacobian_values);
    }
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,

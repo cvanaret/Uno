@@ -130,7 +130,7 @@ namespace uno {
       ++this->number_model_evaluations.objective_gradient;
    }
 
-   void AMPLModel::compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
+   void AMPLModel::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const {
       // by default, AMPLModel computes the Jacobian in a column-wise order (variable by variable).
       // if a row-wise evaluation is wished, modify the goff fields of the ASL "Cgrad" structures
@@ -172,7 +172,7 @@ namespace uno {
       }
    }
 
-   void AMPLModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
+   void AMPLModel::evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const {
       fint error_flag = 0;
       (*(this->asl)->p.Jacval)(this->asl, const_cast<double*>(x.data()), jacobian_values, &error_flag);
       if (0 < error_flag) {

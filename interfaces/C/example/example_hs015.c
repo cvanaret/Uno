@@ -22,7 +22,7 @@ uno_int objective_gradient(uno_int /*number_variables*/, const double* x, double
 	return 0;
 }
 
-uno_int constraint_jacobian(uno_int /*number_variables*/, uno_int /*number_jacobian_nonzeros*/, const double* x,
+uno_int jacobian(uno_int /*number_variables*/, uno_int /*number_jacobian_nonzeros*/, const double* x,
 		double* jacobian, void* /*user_data*/) {
 	jacobian[0] = x[1];
 	jacobian[1] = 1.;
@@ -91,7 +91,7 @@ int main() {
 	assert(uno_set_objective(model, optimization_sense, objective_function, objective_gradient));
 	assert(uno_set_constraints(model, number_constraints, constraint_functions,
 		constraints_lower_bounds, constraints_upper_bounds, number_jacobian_nonzeros,
-		jacobian_row_indices, jacobian_column_indices, constraint_jacobian));
+		jacobian_row_indices, jacobian_column_indices, jacobian));
 	assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
 		hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention));
 /*

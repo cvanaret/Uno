@@ -50,17 +50,17 @@ namespace uno {
       }
 
       // sparsity patterns of Jacobian and Hessian
-      void compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
+      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
             MatrixOrder matrix_order) const override {
-         this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+         this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
       }
 
       void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override {
          this->model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
       }
 
-      void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override {
-         this->model.evaluate_constraint_jacobian(x, jacobian_values);
+      void evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const override {
+         this->model.evaluate_jacobian(x, jacobian_values);
       }
 
       void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,

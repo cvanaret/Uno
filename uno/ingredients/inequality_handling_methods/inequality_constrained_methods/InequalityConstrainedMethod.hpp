@@ -31,7 +31,7 @@ namespace uno {
 
       // matrix computations
       [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
-      void evaluate_constraint_jacobian(Iterate& iterate) override;
+      void evaluate_jacobian(Iterate& iterate) override;
 
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,

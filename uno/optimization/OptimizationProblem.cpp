@@ -49,9 +49,9 @@ namespace uno {
       return hessian_model.number_nonzeros();
    }
 
-   void OptimizationProblem::compute_constraint_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
+   void OptimizationProblem::compute_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
                                                                   MatrixOrder matrix_order) const {
-      this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+      this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
    void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int *row_indices,
@@ -59,8 +59,8 @@ namespace uno {
       hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
    }
 
-   void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
-      this->model.evaluate_constraint_jacobian(iterate.primals, jacobian_values);
+   void OptimizationProblem::evaluate_jacobian(Iterate& iterate, double* jacobian_values) const {
+      this->model.evaluate_jacobian(iterate.primals, jacobian_values);
    }
 
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
@@ -74,7 +74,7 @@ namespace uno {
       this->evaluate_objective_gradient(iterate, lagrangian_gradient.objective_contribution.data());
 
       // ∇c(x_k) λ_k
-      evaluation_space.compute_constraint_jacobian_transposed_vector_product(iterate.multipliers.constraints,
+      evaluation_space.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints,
          lagrangian_gradient.constraints_contribution);
       lagrangian_gradient.constraints_contribution = -lagrangian_gradient.constraints_contribution;
 

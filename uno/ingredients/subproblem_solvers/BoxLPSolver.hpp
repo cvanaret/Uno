@@ -14,9 +14,9 @@ namespace uno {
    public:
       BoxLPSolverEvaluationSpace() = default;
 
-      void evaluate_constraint_jacobian(const OptimizationProblem& /*problem*/, Iterate& /*iterate*/) override { }
-      void compute_constraint_jacobian_vector_product(const Vector<double>& /*vector*/, Vector<double>& /*result*/) const override { }
-      void compute_constraint_jacobian_transposed_vector_product(const Vector<double>& /*vector*/,
+      void evaluate_jacobian(const OptimizationProblem& /*problem*/, Iterate& /*iterate*/) override { }
+      void compute_jacobian_vector_product(const Vector<double>& /*vector*/, Vector<double>& /*result*/) const override { }
+      void compute_jacobian_transposed_vector_product(const Vector<double>& /*vector*/,
          Vector<double>& /*result*/) const override { }
       [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& /*vector*/) const override {
          return 0.;

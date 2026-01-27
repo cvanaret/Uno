@@ -72,9 +72,9 @@ namespace uno {
       this->model.evaluate_objective_gradient(x, gradient);
    }
 
-   void HomogeneousEqualityConstrainedModel::compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices,
+   void HomogeneousEqualityConstrainedModel::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices,
          uno_int solver_indexing, MatrixOrder matrix_order) const {
-      this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+      this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
 
       // add the slack contributions
       size_t nonzero_index = this->model.number_jacobian_nonzeros();
@@ -90,8 +90,8 @@ namespace uno {
       this->model.compute_hessian_sparsity(row_indices, column_indices, solver_indexing);
    }
 
-   void HomogeneousEqualityConstrainedModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
-      this->model.evaluate_constraint_jacobian(x, jacobian_values);
+   void HomogeneousEqualityConstrainedModel::evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const {
+      this->model.evaluate_jacobian(x, jacobian_values);
 
       // add the slack contributions
       size_t nonzero_index = this->model.number_jacobian_nonzeros();

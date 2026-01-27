@@ -145,7 +145,7 @@ MOI.eval_objective(::Issue136, x) = x[1]
 MOI.eval_constraint(::Issue136, g, x) = (g[1] = x[1]^(1 / 3))
 MOI.eval_objective_gradient(::Issue136, grad_f, x) = (grad_f[1] = 1.0)
 MOI.jacobian_structure(::Issue136) = Tuple{Int64,Int64}[(1, 1)]
-function MOI.eval_constraint_jacobian(::Issue136, J, x)
+function MOI.eval_jacobian(::Issue136, J, x)
     J[1] = (1 / 3) * x[1]^(1 / 3 - 1)
     return
 end
@@ -513,7 +513,7 @@ function test_empty_nlp_evaluator()
     @test MOI.eval_constraint(evaluator, Float64[], x) === nothing
     @test MOI.jacobian_structure(evaluator) == Tuple{Int,Int}[]
     @test MOI.hessian_lagrangian_structure(evaluator) == Tuple{Int,Int}[]
-    @test MOI.eval_constraint_jacobian(evaluator, Float64[], x) === nothing
+    @test MOI.eval_jacobian(evaluator, Float64[], x) === nothing
     H, mu = Float64[], Float64[]
     @test MOI.eval_hessian_lagrangian(evaluator, H, x, 1.0, mu) === nothing
     return

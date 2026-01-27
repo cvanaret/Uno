@@ -37,7 +37,7 @@ namespace uno {
       this->inequality_handling_method->generate_initial_iterate(initial_iterate);
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
-      this->inequality_handling_method->evaluate_constraint_jacobian(initial_iterate);
+      this->inequality_handling_method->evaluate_jacobian(initial_iterate);
       const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
       this->problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, evaluation_space, initial_iterate);
       this->compute_primal_dual_residuals(this->problem, initial_iterate);

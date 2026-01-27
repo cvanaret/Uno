@@ -20,9 +20,9 @@ namespace uno {
          inertia_correction_strategy(inertia_correction_strategy) {
    }
 
-   void Subproblem::compute_constraint_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
+   void Subproblem::compute_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const {
-      this->problem.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+      this->problem.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
    void Subproblem::compute_regularized_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const {
@@ -111,7 +111,7 @@ namespace uno {
          this->current_iterate.multipliers, augmented_matrix_values);
 
       // Jacobian of general constraints
-      this->problem.evaluate_constraint_jacobian(this->current_iterate, augmented_matrix_values + this->number_hessian_nonzeros());
+      this->problem.evaluate_jacobian(this->current_iterate, augmented_matrix_values + this->number_hessian_nonzeros());
    }
 
    void Subproblem::regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
@@ -234,7 +234,7 @@ namespace uno {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
       const double current_constraint_violation = model.constraint_violation(this->current_iterate.evaluations.constraints, norm);
       Vector<double> result(model.number_constraints);
-      evaluation_space.compute_constraint_jacobian_vector_product(primal_direction, result);
+      evaluation_space.compute_jacobian_vector_product(primal_direction, result);
       const double trial_linearized_constraint_violation = model.constraint_violation(this->current_iterate.evaluations.constraints +
          step_length * result, norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
