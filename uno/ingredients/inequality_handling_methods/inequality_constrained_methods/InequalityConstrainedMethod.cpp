@@ -21,7 +21,7 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double /*trust_region_radius*/) {
+         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, double /*trust_region_radius*/) {
       this->problem = &problem; // store the problem as is (no reformulation)
       assert(this->problem != nullptr);
       this->initial_point.resize(this->problem->number_variables);

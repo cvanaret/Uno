@@ -21,7 +21,6 @@ namespace uno {
    class DirectSymmetricIndefiniteLinearSolver;
    class EvaluationSpace;
    class HessianModel;
-   template <typename ElementType>
    class InertiaCorrectionStrategy;
    class Statistics;
    template <typename ElementType>
@@ -32,7 +31,7 @@ namespace uno {
       const size_t number_variables, number_constraints;
 
       Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
-         InertiaCorrectionStrategy<double>& inertia_correction_strategy);
+         InertiaCorrectionStrategy& inertia_correction_strategy);
 
       // sparsity patterns
       void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
@@ -95,7 +94,7 @@ namespace uno {
 
    protected:
       HessianModel& hessian_model;
-      InertiaCorrectionStrategy<double>& inertia_correction_strategy;
+      InertiaCorrectionStrategy& inertia_correction_strategy;
       const ForwardRange empty_set{0};
    };
 
