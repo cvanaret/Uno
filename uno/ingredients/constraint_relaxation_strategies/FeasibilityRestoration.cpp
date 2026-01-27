@@ -67,7 +67,7 @@ namespace uno {
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
       const auto& evaluation_space = this->optimality_inequality_handling_method->get_evaluation_space();
-      this->optimality_inequality_handling_method->evaluate_constraint_jacobian(initial_iterate);
+      this->optimality_inequality_handling_method->evaluate_jacobian(initial_iterate);
       this->optimality_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
          evaluation_space, initial_iterate);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, initial_iterate);
@@ -147,7 +147,7 @@ namespace uno {
          this->first_switch_to_feasibility = false;
       }
 
-      this->feasibility_inequality_handling_method->evaluate_constraint_jacobian(current_iterate);
+      this->feasibility_inequality_handling_method->evaluate_jacobian(current_iterate);
 
       if (Logger::level == INFO) statistics.print_current_line();
       warmstart_information.whole_problem_changed();
@@ -173,7 +173,7 @@ namespace uno {
          // TODO preallocate
          Vector<double> result(model.number_constraints);
          const auto& evaluation_space = this->feasibility_inequality_handling_method->get_evaluation_space();
-         evaluation_space.compute_constraint_jacobian_vector_product(direction.primals, result);
+         evaluation_space.compute_jacobian_vector_product(direction.primals, result);
          const double trial_linearized_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints +
             step_length * result, this->residual_norm);
          return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);

@@ -83,7 +83,7 @@ extern "C" {
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the entries of the
    // sparse constraint Jacobian in the vector "jacobian" of size "number_jacobian_nonzeros". The values should be in
-   // the same order as the indices provided in "constraint_jacobian_sparsity".
+   // the same order as the indices provided in "jacobian_sparsity".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
    typedef uno_int (*Jacobian)(uno_int number_variables, uno_int number_jacobian_nonzeros, const double* x, double* jacobian,
       void* user_data);
@@ -91,7 +91,7 @@ extern "C" {
    // - takes as inputs a vector "x" of size "number_variables", an objective multiplier, a vector "multipliers" of
    // Lagrange multipliers of size "number_constraints", and an object "user_data", and stores the entries of the
    // sparse Lagrangian Hessian in the vector "hessian" of size "number_hessian_nonzeros". The values should be in
-   // the same order as the indices provided in "constraint_jacobian_sparsity".
+   // the same order as the indices provided in "jacobian_sparsity".
    // Only the lower triangular part of the symmetric Lagrangian Hessian should be provided.
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
    typedef uno_int (*Hessian)(uno_int number_variables, uno_int number_constraints, uno_int number_hessian_nonzeros,
@@ -169,7 +169,7 @@ extern "C" {
    // returns true if it succeeded, false otherwise.
    bool uno_set_constraints(void* model, uno_int number_constraints, Constraints constraint_functions,
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, uno_int number_jacobian_nonzeros,
-      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, Jacobian constraint_jacobian);
+      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, Jacobian jacobian);
 
    // [optional]
    // sets the Jacobian operator (computes Jacobian-vector products) of a given model.

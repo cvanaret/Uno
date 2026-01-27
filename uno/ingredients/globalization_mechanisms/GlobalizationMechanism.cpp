@@ -34,7 +34,7 @@ namespace uno {
       trial_iterate.is_objective_computed = false;
       trial_iterate.is_objective_gradient_computed = false;
       trial_iterate.are_constraints_computed = false;
-      trial_iterate.is_constraint_jacobian_computed = false;
+      trial_iterate.is_jacobian_computed = false;
       trial_iterate.status = SolutionStatus::NOT_OPTIMAL;
    }
 

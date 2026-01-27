@@ -27,7 +27,7 @@ model.set_objective(optimization_sense, objective_function, objective_gradient)
 ```python
 model.set_constraints(number_constraints, constraint_functions,
    constraints_lower_bounds, constraints_upper_bounds, number_jacobian_nonzeros,
-   jacobian_row_indices, jacobian_column_indices, constraint_jacobian)
+   jacobian_row_indices, jacobian_column_indices, jacobian)
 ```
 - the Lagrangian Hessian;
 ```python

@@ -59,12 +59,12 @@ interface
    function uno_set_constraints(model, number_constraints, constraint_functions,        &
                                 constraints_lower_bounds, constraints_upper_bounds,     &
                                 number_jacobian_nonzeros, jacobian_row_indices,         &
-                                jacobian_column_indices, constraint_jacobian) result(success) &
+                                jacobian_column_indices, jacobian) result(success) &
       bind(C, name="uno_set_constraints")
       import :: c_ptr, uno_int, c_double, c_bool, c_funptr
       type(c_ptr), value :: model
       integer(uno_int), value :: number_constraints, number_jacobian_nonzeros
-      type(c_funptr), value :: constraint_functions, constraint_jacobian
+      type(c_funptr), value :: constraint_functions, jacobian
       real(c_double), dimension(*) :: constraints_lower_bounds, constraints_upper_bounds
       integer(uno_int), dimension(*) :: jacobian_row_indices, jacobian_column_indices
       logical(c_bool) :: success

@@ -47,7 +47,7 @@ namespace uno {
       this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
       this->jacobian_row_indices.resize(this->number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(this->number_jacobian_nonzeros);
-      subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
+      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
          Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
 
       // augmented system
@@ -63,11 +63,11 @@ namespace uno {
       this->solution.resize(dimension);
    }
 
-   void COOEvaluationSpace::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
-      problem.evaluate_constraint_jacobian(iterate, this->matrix_values.data() + this->number_hessian_nonzeros);
+   void COOEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
+      problem.evaluate_jacobian(iterate, this->matrix_values.data() + this->number_hessian_nonzeros);
    }
 
-   void COOEvaluationSpace::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+   void COOEvaluationSpace::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
       const size_t offset = this->number_hessian_nonzeros;
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
@@ -81,7 +81,7 @@ namespace uno {
       }
    }
 
-   void COOEvaluationSpace::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+   void COOEvaluationSpace::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
       const size_t offset = this->number_hessian_nonzeros;
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {

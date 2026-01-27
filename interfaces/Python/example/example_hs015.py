@@ -21,7 +21,7 @@ def objective_gradient(number_variables, x, gradient, user_data):
 	gradient[1] = 200.*(x[1] - x[0]**2)
 	return 0
 
-def constraint_jacobian(number_variables, number_jacobian_nonzeros, x, jacobian_values, user_data):
+def jacobian(number_variables, number_jacobian_nonzeros, x, jacobian_values, user_data):
 	jacobian_values[0] = x[1]
 	jacobian_values[1] = 1.
 	jacobian_values[2] = x[0]
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 	model = unopy.Model(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing)
 	model.set_objective(optimization_sense, objective, objective_gradient)
 	model.set_constraints(number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds,
-	  number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, constraint_jacobian)
+	  number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, jacobian)
 	model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
 		hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
 	#model.set_lagrangian_hessian_operator(lagrangian_hessian_operator, lagrangian_sign_convention)

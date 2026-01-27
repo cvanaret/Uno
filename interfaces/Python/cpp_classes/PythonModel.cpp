@@ -83,7 +83,7 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_constraint_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
+   void PythonModel::compute_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
                                                           MatrixOrder /*matrix_format*/) const {
       // copy the indices of the user sparsity patterns to the Uno vectors
       std::copy_n(this->user_model.jacobian_row_indices.data(), static_cast<size_t>(this->user_model.number_jacobian_nonzeros), row_indices);
@@ -116,10 +116,10 @@ namespace uno {
       }
    }
 
-   void PythonModel::evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const {
-      if (this->user_model.constraint_jacobian.has_value()) {
+   void PythonModel::evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const {
+      if (this->user_model.jacobian.has_value()) {
          const py::object user_data = this->user_model.user_data.has_value() ? *this->user_model.user_data : py::cast(nullptr);
-         const uno_int return_code = (*this->user_model.constraint_jacobian)(static_cast<uno_int>(this->number_variables),
+         const uno_int return_code = (*this->user_model.jacobian)(static_cast<uno_int>(this->number_variables),
             static_cast<uno_int>(this->number_jacobian_nonzeros()), x, jacobian_values, user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();

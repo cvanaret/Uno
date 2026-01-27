@@ -34,8 +34,8 @@ namespace uno {
       this->compute_hessian_sparsity(subproblem);
    }
 
-   void HiGHSEvaluationSpace::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
-      problem.evaluate_constraint_jacobian(iterate, this->jacobian_values.data());
+   void HiGHSEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
+      problem.evaluate_jacobian(iterate, this->jacobian_values.data());
 
       // copy the Jacobian with permutation into this->model.lp_.a_matrix_.value_
       for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
@@ -44,10 +44,10 @@ namespace uno {
       }
    }
 
-   void HiGHSEvaluationSpace::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+   void HiGHSEvaluationSpace::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
-      const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
-      for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
+      const size_t number_jacobian_nonzeros = this->jacobian_row_indices.size();
+      for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t permuted_nonzero_index = this->jacobian_permutation_vector[nonzero_index];
          const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[permuted_nonzero_index]);
          const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[permuted_nonzero_index]);
@@ -60,10 +60,10 @@ namespace uno {
       }
    }
 
-   void HiGHSEvaluationSpace::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+   void HiGHSEvaluationSpace::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
-      const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
-      for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
+      const size_t number_jacobian_nonzeros = this->jacobian_row_indices.size();
+      for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t permuted_nonzero_index = this->jacobian_permutation_vector[nonzero_index];
          const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[permuted_nonzero_index]);
          const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[permuted_nonzero_index]);
@@ -97,7 +97,7 @@ namespace uno {
       if (warmstart_information.new_iterate) {
          subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data());
          subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints);
-         this->evaluate_constraint_jacobian(subproblem.problem, subproblem.current_iterate);
+         this->evaluate_jacobian(subproblem.problem, subproblem.current_iterate);
          // evaluate the Hessian and regularize it
          subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data());
          // copy the Hessian with permutation into this->model.hessian_.value_
@@ -117,7 +117,7 @@ namespace uno {
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       this->jacobian_values.resize(number_jacobian_nonzeros);
-      subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(),
+      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(),
          this->jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
       // HiGHS matrix in CSC format (variable after variable)
       this->model.lp_.a_matrix_.index_.resize(number_jacobian_nonzeros); // constraint indices

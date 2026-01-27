@@ -37,7 +37,7 @@ namespace uno {
 
       // matrix computations
       [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
-      void evaluate_constraint_jacobian(Iterate& iterate) override;
+      void evaluate_jacobian(Iterate& iterate) override;
 
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -236,10 +236,10 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::evaluate_constraint_jacobian(Iterate& iterate) {
+   void InteriorPointMethod<BarrierProblem>::evaluate_jacobian(Iterate& iterate) {
       // create the subproblem
       auto& evaluation_space = this->linear_solver->get_evaluation_space();
-      evaluation_space.evaluate_constraint_jacobian(*this->barrier_problem, iterate);
+      evaluation_space.evaluate_jacobian(*this->barrier_problem, iterate);
    }
 
    template <typename BarrierProblem>

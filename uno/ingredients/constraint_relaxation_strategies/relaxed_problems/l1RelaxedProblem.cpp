@@ -101,9 +101,9 @@ namespace uno {
       return number_nonzeros;
    }
 
-   void l1RelaxedProblem::compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
+   void l1RelaxedProblem::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const {
-      this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+      this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
 
       // add the contribution of the elastic variables
       size_t nonzero_index = this->model.number_jacobian_nonzeros();
@@ -134,8 +134,8 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
-      this->model.evaluate_constraint_jacobian(iterate.primals, jacobian_values);
+   void l1RelaxedProblem::evaluate_jacobian(Iterate& iterate, double* jacobian_values) const {
+      this->model.evaluate_jacobian(iterate.primals, jacobian_values);
 
       // add the contribution of the elastic variables
       size_t nonzero_index = this->model.number_jacobian_nonzeros();
@@ -159,7 +159,7 @@ namespace uno {
       lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
 
       // ∇c(x_k) λ_k
-      evaluation_space.compute_constraint_jacobian_transposed_vector_product(iterate.multipliers.constraints,
+      evaluation_space.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints,
          lagrangian_gradient.constraints_contribution);
       lagrangian_gradient.constraints_contribution = -lagrangian_gradient.constraints_contribution;
 

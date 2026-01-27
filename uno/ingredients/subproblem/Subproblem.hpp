@@ -35,7 +35,7 @@ namespace uno {
          InertiaCorrectionStrategy<double>& inertia_correction_strategy);
 
       // sparsity patterns
-      void compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
+      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const;
       void compute_regularized_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
       void compute_regularized_augmented_matrix_sparsity(uno_int* row_indices, uno_int* column_indices,
@@ -52,7 +52,7 @@ namespace uno {
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
       template <typename IndexType>
       void assemble_augmented_rhs(const Vector<double>& objective_gradient, const Vector<double>& constraints,
-         const Matrix<IndexType>& constraint_jacobian, Vector<double>& rhs) const;
+         const Matrix<IndexType>& jacobian, Vector<double>& rhs) const;
       void assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const;
 
       // variables bounds
@@ -101,7 +101,7 @@ namespace uno {
 
    template <typename IndexType>
    void Subproblem::assemble_augmented_rhs(const Vector<double>& objective_gradient, const Vector<double>& constraints,
-         const Matrix<IndexType>& constraint_jacobian, Vector<double>& rhs) const {
+         const Matrix<IndexType>& jacobian, Vector<double>& rhs) const {
       rhs.fill(0.);
 
       // objective gradient
@@ -109,7 +109,7 @@ namespace uno {
 
       // Jacobian
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
-         const auto [constraint_index, variable_index, derivative] = constraint_jacobian[nonzero_index];
+         const auto [constraint_index, variable_index, derivative] = jacobian[nonzero_index];
          rhs[static_cast<size_t>(variable_index)] +=
             this->current_iterate.multipliers.constraints[static_cast<size_t>(constraint_index)] * derivative;
       }

@@ -58,7 +58,7 @@ end
 function uno_set_constraints(model, number_constraints, constraint_functions,
                              constraints_lower_bounds, constraints_upper_bounds,
                              number_jacobian_nonzeros, jacobian_row_indices,
-                             jacobian_column_indices, constraint_jacobian)
+                             jacobian_column_indices, jacobian)
     @ccall libuno.uno_set_constraints(model::Ptr{Cvoid}, number_constraints::Int32,
                                       constraint_functions::Ptr{Cvoid},
                                       constraints_lower_bounds::Ptr{Cdouble},
@@ -66,7 +66,7 @@ function uno_set_constraints(model, number_constraints, constraint_functions,
                                       number_jacobian_nonzeros::Int32,
                                       jacobian_row_indices::Ptr{Int32},
                                       jacobian_column_indices::Ptr{Int32},
-                                      constraint_jacobian::Ptr{Cvoid})::Bool
+                                      jacobian::Ptr{Cvoid})::Bool
 end
 
 function uno_set_jacobian_operator(model, jacobian_operator)

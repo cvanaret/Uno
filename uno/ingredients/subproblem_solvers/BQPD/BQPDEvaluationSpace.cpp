@@ -37,8 +37,8 @@ namespace uno {
       }
    }
 
-   void BQPDEvaluationSpace::evaluate_constraint_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
-      problem.evaluate_constraint_jacobian(iterate, this->jacobian_values.data());
+   void BQPDEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
+      problem.evaluate_jacobian(iterate, this->jacobian_values.data());
 
       // copy the Jacobian with permutation into &this->gradients[subproblem.number_variables]
       for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
@@ -47,10 +47,10 @@ namespace uno {
       }
    }
 
-   void BQPDEvaluationSpace::compute_constraint_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+   void BQPDEvaluationSpace::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
-      const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
-      for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
+      const size_t number_jacobian_nonzeros = this->jacobian_row_indices.size();
+      for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
          const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
          const double derivative = this->jacobian_values[nonzero_index];
@@ -62,10 +62,10 @@ namespace uno {
       }
    }
 
-   void BQPDEvaluationSpace::compute_constraint_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+   void BQPDEvaluationSpace::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
-      const size_t number_constraint_jacobian_nonzeros = this->jacobian_row_indices.size();
-      for (size_t nonzero_index: Range(number_constraint_jacobian_nonzeros)) {
+      const size_t number_jacobian_nonzeros = this->jacobian_row_indices.size();
+      for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
          const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
          const double derivative = this->jacobian_values[nonzero_index];
@@ -112,7 +112,7 @@ namespace uno {
       if (warmstart_information.new_iterate) {
          problem.evaluate_objective_gradient(current_iterate, this->gradients.data());
          problem.evaluate_constraints(current_iterate, this->constraints);
-         this->evaluate_constraint_jacobian(problem, current_iterate);
+         this->evaluate_jacobian(problem, current_iterate);
          this->evaluate_hessian = true;
       }
    }
@@ -136,7 +136,7 @@ namespace uno {
       // get the Jacobian sparsity in COO format
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
-      subproblem.compute_constraint_jacobian_sparsity(this->jacobian_row_indices.data(),
+      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(),
                                                       this->jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
 
       // BQPD (sparse) requires a (weak) CSR Jacobian: the entries should be in increasing constraint indices.

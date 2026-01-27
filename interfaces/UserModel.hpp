@@ -58,7 +58,7 @@ namespace uno {
       uno_int number_jacobian_nonzeros{0};
       std::vector<uno_int> jacobian_row_indices{};
       std::vector<uno_int> jacobian_column_indices{};
-      Jacobian constraint_jacobian{nullptr};
+      Jacobian jacobian{nullptr};
       JacobianOperator jacobian_operator{nullptr};
       JacobianTransposedOperator jacobian_transposed_operator{nullptr};
 

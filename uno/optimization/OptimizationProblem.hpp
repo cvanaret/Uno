@@ -43,13 +43,13 @@ namespace uno {
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
       [[nodiscard]] virtual bool has_curvature(const HessianModel& hessian_model) const;
       [[nodiscard]] virtual size_t number_hessian_nonzeros(const HessianModel& hessian_model) const;
-      virtual void compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
+      virtual void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const;
       virtual void compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,
          uno_int* column_indices, uno_int solver_indexing) const;
 
       // numerical evaluations of Jacobian and Hessian
-      virtual void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const;
+      virtual void evaluate_jacobian(Iterate& iterate, double* jacobian_values) const;
       virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
          const EvaluationSpace& evaluation_space, Iterate& iterate) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,

@@ -104,7 +104,7 @@ public:
    }
 
    // sparsity patterns of Jacobian and Hessian
-   void compute_constraint_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
+   void compute_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
                                              MatrixOrder /*matrix_order*/) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
       for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
@@ -142,9 +142,9 @@ public:
    }
 
    // numerical evaluations of Jacobian and Hessian
-   void evaluate_constraint_jacobian(const Vector<double>& x, double* jacobian_values) const override {
-      if (this->user_model.constraint_jacobian != nullptr) {
-         const uno_int return_code = this->user_model.constraint_jacobian(this->user_model.number_variables,
+   void evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const override {
+      if (this->user_model.jacobian != nullptr) {
+         const uno_int return_code = this->user_model.jacobian(this->user_model.number_variables,
             this->user_model.number_jacobian_nonzeros, x.data(), jacobian_values, this->user_model.user_data);
          if (0 < return_code) {
             throw GradientEvaluationError();
@@ -512,7 +512,7 @@ bool uno_set_objective(void* model, uno_int optimization_sense, Objective object
 
 bool uno_set_constraints(void* model, uno_int number_constraints, Constraints constraint_functions,
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, uno_int number_jacobian_nonzeros,
-      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, Jacobian constraint_jacobian) {
+      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, Jacobian jacobian) {
    if (number_constraints <= 0) {
       WARNING << "Please specify a positive number of constraints."  << std::endl;
       return false;
@@ -542,7 +542,7 @@ bool uno_set_constraints(void* model, uno_int number_constraints, Constraints co
       user_model->jacobian_row_indices[index] = jacobian_row_indices[index];
       user_model->jacobian_column_indices[index] = jacobian_column_indices[index];
    }
-   user_model->constraint_jacobian = constraint_jacobian;
+   user_model->jacobian = jacobian;
    // create the initial dual point
    user_model->initial_dual_iterate.resize(unsigned_number_constraints);
    for (size_t constraint_index: Range(unsigned_number_constraints)) {
