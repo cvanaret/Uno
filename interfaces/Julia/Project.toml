@@ -1,7 +1,7 @@
 name = "UnoSolver"
 uuid = "1baa60ac-02f7-4b39-a7a8-2f4f58486b05"
 authors = ["Alexis Montoison <amontoison@anl.gov>", "Charlie Vanaret <vanaret@zib.de>"]
-version = "0.1.9"
+version = "0.2.0"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
