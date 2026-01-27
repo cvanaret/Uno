@@ -15,7 +15,7 @@ mutable struct _VectorNonlinearOracleCache
     x::Vector{Float64}
     start::Union{Nothing,Vector{Float64}}
     eval_f_timer::Float64
-    eval_constraint_jacobian_timer::Float64
+    eval_jacobian_timer::Float64
     eval_hessian_lagrangian_timer::Float64
 
     function _VectorNonlinearOracleCache(set::MOI.VectorNonlinearOracle{Float64})
@@ -768,7 +768,7 @@ function MOI.get(
     f, s = model.vector_nonlinear_oracle_constraints[ci.value]
     J = zeros(length(s.set.jacobian_structure))
     x = [MOI.get(model, MOI.VariablePrimal(), xi) for xi in f.variables]
-    s.set.eval_constraint_jacobian(J, x)
+    s.set.eval_jacobian(J, x)
     λ = Float64[
         UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r - 1)
         for r in row(model, ci)
@@ -1082,8 +1082,8 @@ function _eval_constraint_jacobian(
         s.x[i] = x[f.variables[i].value]
     end
     nnz = length(s.set.jacobian_structure)
-    s.eval_constraint_jacobian_timer +=
-        @elapsed s.set.eval_constraint_jacobian(view(values, offset .+ (1:nnz)), s.x)
+    s.eval_jacobian_timer +=
+        @elapsed s.set.eval_jacobian(view(values, offset .+ (1:nnz)), s.x)
     return offset + nnz
 end
 
@@ -1430,7 +1430,7 @@ function MOI.optimize!(model::Optimizer)
     # Clear timers
     for (_, s) in model.vector_nonlinear_oracle_constraints
         s.eval_f_timer = 0.0
-        s.eval_constraint_jacobian_timer = 0.0
+        s.eval_jacobian_timer = 0.0
         s.eval_hessian_lagrangian_timer = 0.0
     end
     UnoSolver.uno_optimize(solver, inner)
