@@ -30,29 +30,30 @@ Below are examples showing how to use `UnoSolver.jl` with the interfaces for `NL
 using UnoSolver, CUTEst
 
 nlp = CUTEstModel{Float64}("HS15")
-model, solver = uno(nlp, preset="filtersqp", print_solution=true, logger="INFO")
+stats = uno(nlp, preset="filtersqp", print_solution=true, logger="INFO")
+model, solver = stats.model, stats.solver
 
-timer = UnoSolver.uno_get_cpu_time(solver)
-niter = UnoSolver.uno_get_number_iterations(solver)
-nsub = UnoSolver.uno_get_number_subproblem_solved_evaluations(solver)
-optimization_status = UnoSolver.uno_get_optimization_status(solver)
-solution_status = UnoSolver.uno_get_solution_status(solver)
-solution_objective = UnoSolver.uno_get_solution_objective(solver)
-solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
-solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
-solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
+primal_solution = stats.primal_solution
+constraint_dual_solution = stats.constraint_dual_solution
+lower_bound_dual_solution = stats.lower_bound_dual_solution
+upper_bound_dual_solution = stats.upper_bound_dual_solution
 
-primal_solution = Vector{Float64}(undef, nlp.meta.nvar)
-UnoSolver.uno_get_primal_solution(solver, primal_solution)
+timer = stats.cpu_time
+solution_objective = stats.solution_objective
+solution_primal_feasibility = stats.solution_primal_feasibility
+solution_stationarity = stats.solution_stationarity
+solution_complementarity = stats.solution_complementarity
 
-constraint_dual_solution = Vector{Float64}(undef, nlp.meta.ncon)
-UnoSolver.uno_get_constraint_dual_solution(solver, constraint_dual_solution)
+niter = stats.number_iterations
+nsub = stats.number_subproblem_solved_evaluations
+optimization_status = stats.optimization_status
+solution_status = stats.solution_status
 
-lower_bound_dual_solution = Vector{Float64}(undef, nlp.meta.nvar)
-UnoSolver.uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
-
-upper_bound_dual_solution = Vector{Float64}(undef, nlp.meta.nvar)
-UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+number_objective_evaluations = stats.number_objective_evaluations
+number_constraint_evaluations = stats.number_constraint_evaluations
+number_objective_gradient_evaluations = stats.number_objective_gradient_evaluations
+number_jacobian_evaluations = stats.number_jacobian_evaluations
+number_hessian_evaluations = stats.number_hessian_evaluations
 ```
 
 ```julia
@@ -86,6 +87,7 @@ solver = uno_solver()
 uno_set_solver_preset(solver, "filtersqp")
 uno_set_solver_bool_option(solver, "print_solution", true)
 uno_optimize(solver, model)
+stats = uno_statistics(solver, model)
 ```
 
 ## Linear solvers

@@ -16,7 +16,7 @@ end
 export uno, uno_model, uno_solver, uno_optimize, uno_version
 export uno_set_solver_integer_option, uno_set_solver_double_option
 export uno_set_solver_bool_option, uno_set_solver_string_option
-export uno_set_solver_preset
+export uno_set_solver_preset, uno_statistics
 
 include("libuno.jl")
 include("C_wrapper.jl")

@@ -100,7 +100,8 @@ function UnoSolver.uno(nlp::AbstractNLPModel{Float64, Vector{Float64}}; kwargs..
   model = UnoSolver.uno_model(nlp)
   solver = UnoSolver.uno_solver(; kwargs...)
   UnoSolver.uno_optimize(solver, model)
-  return model, solver
+  stats = UnoSolver.uno_statistics(model, solver)
+  return stats
 end
 
 end  # module UnoSolverNLPModelsExt

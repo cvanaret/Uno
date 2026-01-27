@@ -28,7 +28,6 @@ julia = "1.10"
 [extras]
 CUTEst = "1b53aba6-35b6-5f92-a507-53c67d53f819"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-ADNLPModels = "54578032-b7ea-4c30-94aa-7cbd1cce6c9a"
 
 [targets]
-test = ["CUTEst", "MathOptInterface", "NLPModels", "ADNLPModels", "Test"]
+test = ["CUTEst", "MathOptInterface", "NLPModels", "Test"]

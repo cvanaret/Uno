@@ -1,6 +1,6 @@
-using UnoSolver, Test
+using UnoSolver
 using NLPModels, MathOptInterface, CUTEst
-using ADNLPModels, LinearAlgebra
+using LinearAlgebra, Test
 
 version = uno_version()
 println("The version of Uno is $version.")
