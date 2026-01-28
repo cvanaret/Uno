@@ -9,27 +9,6 @@ namespace uno {
    template <typename Vector>
    class VectorView {
    public:
-      /*
-      class iterator {
-      public:
-         using value_type = std::pair<size_t, typename std::remove_reference_t<Expression>::value_type>;
-
-         iterator(const VectorView<Expression>& view, size_t index) : view(view), index(index) { }
-
-         value_type operator*() {
-            // copy the element in the pair. Cheap only for trivial types
-            return {this->index, this->view[this->index]};
-         }
-         
-         iterator& operator++() { ++this->index; return *this; }
-
-         friend bool operator!=(const iterator& a, const iterator& b) { return &a.view != &b.view || a.index != b.index; };
-
-      private:
-         const VectorView<Expression>& view;
-         size_t index;
-      };
-   */
       using value_type = typename std::remove_reference_t<Vector>::value_type;
 
       VectorView(Vector&& vector, size_t start, size_t end):

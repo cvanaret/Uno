@@ -20,7 +20,7 @@ namespace uno {
 
    protected:
       const value_type factor;
-      Expression expression;
+      const Expression expression;
    };
 
    // free function

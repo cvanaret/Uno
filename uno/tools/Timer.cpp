@@ -6,6 +6,7 @@
 #include <ctime>
 
 namespace uno {
+   // timer starts upon creation
    Timer::Timer(): start_time(std::clock()) {
    }
 
