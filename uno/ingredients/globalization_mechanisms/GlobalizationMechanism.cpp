@@ -7,7 +7,8 @@
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/Expression.hpp"
+#include "symbolic/ScalarMultiple.hpp"
+#include "symbolic/Sum.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {

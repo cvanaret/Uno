@@ -18,7 +18,7 @@ namespace uno {
       double stationarity_scaling{INF<double>};
       double complementarity_scaling{INF<double>};
 
-      LagrangianGradient<double> lagrangian_gradient;
+      LagrangianGradient lagrangian_gradient;
    };
 } // namespace
 

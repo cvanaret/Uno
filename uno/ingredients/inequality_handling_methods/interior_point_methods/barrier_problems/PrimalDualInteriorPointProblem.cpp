@@ -152,7 +152,7 @@ namespace uno {
       this->first_reformulation.evaluate_jacobian(iterate, jacobian_values);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
+   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
          const EvaluationSpace& evaluation_space, Iterate& iterate) const {
       this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, evaluation_space, iterate);
 

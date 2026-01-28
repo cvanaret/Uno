@@ -30,12 +30,15 @@ namespace uno {
          throw std::out_of_range("The logger level " + logger_level + " was not found");
       }
    }
+
    void Logger::set_stream(std::ostream& output_stream) {
       Logger::stream = &output_stream;
    }
+
    void Logger::flush() {
       Logger::stream->flush();
    }
+
    const Level& operator<<(const Level& level, std::ostream& (*element)(std::ostream&)) {
       if (level <= Logger::level) {
          (*Logger::stream) << element;

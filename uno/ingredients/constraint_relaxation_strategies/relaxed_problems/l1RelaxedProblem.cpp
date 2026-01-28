@@ -150,7 +150,7 @@ namespace uno {
    }
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
-   void l1RelaxedProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
+   void l1RelaxedProblem::evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
          const EvaluationSpace& evaluation_space, Iterate& iterate) const {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);

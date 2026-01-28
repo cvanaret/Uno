@@ -50,7 +50,7 @@ namespace uno {
 
       // numerical evaluations of Jacobian and Hessian
       virtual void evaluate_jacobian(Iterate& iterate, double* jacobian_values) const;
-      virtual void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
+      virtual void evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
          const EvaluationSpace& evaluation_space, Iterate& iterate) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, double* hessian_values) const;
@@ -72,7 +72,7 @@ namespace uno {
       virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
       [[nodiscard]] virtual double dual_regularization_factor() const;
 
-      [[nodiscard]] static double stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
+      [[nodiscard]] static double stationarity_error(const LagrangianGradient& lagrangian_gradient, double objective_multiplier,
          Norm residual_norm);
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const;

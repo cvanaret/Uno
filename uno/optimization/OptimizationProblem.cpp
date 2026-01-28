@@ -7,7 +7,9 @@
 #include "linear_algebra/MatrixOrder.hpp"
 #include "optimization/EvaluationSpace.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/Expression.hpp"
+#include "symbolic/ScalarMultiple.hpp"
+#include "symbolic/Sum.hpp"
+#include "symbolic/UnaryNegation.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -65,7 +67,7 @@ namespace uno {
 
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
    // split in two parts: objective contribution and constraints' contribution
-   void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
+   void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
          const EvaluationSpace& evaluation_space, Iterate& iterate) const {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
@@ -144,7 +146,7 @@ namespace uno {
       return 0.;
    }
 
-   double OptimizationProblem::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
+   double OptimizationProblem::stationarity_error(const LagrangianGradient& lagrangian_gradient, double objective_multiplier,
          Norm residual_norm) {
       // norm of the scaled Lagrangian gradient
       const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
