@@ -28,7 +28,7 @@ real(c_double), parameter :: UNO_MULTIPLIER_NEGATIVE = -1.0_c_double
 !---------------------------------------------
 ! Problem type
 !---------------------------------------------
-character(c_char), parameter :: UNO_PROBLEM_LINEAR(3) = [ 'L', 'P', c_null_char ]
+character(c_char), parameter :: UNO_PROBLEM_LINEAR(3)    = [ 'L', 'P', c_null_char ]
 character(c_char), parameter :: UNO_PROBLEM_QUADRATIC(3) = [ 'Q', 'P', c_null_char ]
 character(c_char), parameter :: UNO_PROBLEM_NONLINEAR(4) = [ 'N', 'L', 'P', c_null_char ]
 
@@ -56,23 +56,23 @@ integer(uno_int), parameter :: UNO_OPTION_TYPE_NOT_FOUND = -1
 !---------------------------------------------
 ! Optimization status
 !---------------------------------------------
-integer(uno_int), parameter :: UNO_SUCCESS            = 0
-integer(uno_int), parameter :: UNO_ITERATION_LIMIT    = 1
-integer(uno_int), parameter :: UNO_TIME_LIMIT         = 2
-integer(uno_int), parameter :: UNO_EVALUATION_ERROR   = 3
-integer(uno_int), parameter :: UNO_ALGORITHMIC_ERROR  = 4
-integer(uno_int), parameter :: UNO_USER_TERMINATION   = 5
+integer(uno_int), parameter :: UNO_SUCCESS           = 0
+integer(uno_int), parameter :: UNO_ITERATION_LIMIT   = 1
+integer(uno_int), parameter :: UNO_TIME_LIMIT        = 2
+integer(uno_int), parameter :: UNO_EVALUATION_ERROR  = 3
+integer(uno_int), parameter :: UNO_ALGORITHMIC_ERROR = 4
+integer(uno_int), parameter :: UNO_USER_TERMINATION  = 5
 
 !---------------------------------------------
 ! Iterate status
 !---------------------------------------------
-integer(uno_int), parameter :: UNO_NOT_OPTIMAL                  = 0
-integer(uno_int), parameter :: UNO_FEASIBLE_KKT_POINT           = 1
-integer(uno_int), parameter :: UNO_FEASIBLE_FJ_POINT            = 2
-integer(uno_int), parameter :: UNO_INFEASIBLE_STATIONARY_POINT  = 3
-integer(uno_int), parameter :: UNO_FEASIBLE_SMALL_STEP          = 4
-integer(uno_int), parameter :: UNO_INFEASIBLE_SMALL_STEP        = 5
-integer(uno_int), parameter :: UNO_UNBOUNDED                    = 6
+integer(uno_int), parameter :: UNO_NOT_OPTIMAL                 = 0
+integer(uno_int), parameter :: UNO_FEASIBLE_KKT_POINT          = 1
+integer(uno_int), parameter :: UNO_FEASIBLE_FJ_POINT           = 2
+integer(uno_int), parameter :: UNO_INFEASIBLE_STATIONARY_POINT = 3
+integer(uno_int), parameter :: UNO_FEASIBLE_SMALL_STEP         = 4
+integer(uno_int), parameter :: UNO_INFEASIBLE_SMALL_STEP       = 5
+integer(uno_int), parameter :: UNO_UNBOUNDED                   = 6
 
 !---------------------------------------------
 ! Uno version
@@ -80,183 +80,6 @@ integer(uno_int), parameter :: UNO_UNBOUNDED                    = 6
 integer(uno_int), parameter :: UNO_VERSION_MAJOR = 2
 integer(uno_int), parameter :: UNO_VERSION_MINOR = 3
 integer(uno_int), parameter :: UNO_VERSION_PATCH = 1
-
-!---------------------------------------------
-! Objective
-!---------------------------------------------
-abstract interface
-   function Objective(number_variables, x, objective_value, user_data) &
-      bind(C)
-      import :: c_double, c_ptr, uno_int
-      integer(uno_int) :: Objective
-      integer(uno_int), value :: number_variables
-      real(c_double) :: x(number_variables)
-      real(c_double) :: objective_value
-      type(c_ptr), value :: user_data
-   end function
-end interface
-
-!---------------------------------------------
-! Constraints
-!---------------------------------------------
-abstract interface
-   function Constraints(number_variables, number_constraints, x, constraint_values, user_data) &
-      bind(C)
-      import :: c_double, c_ptr, uno_int
-      integer(uno_int) :: Constraints
-      integer(uno_int), value :: number_variables, number_constraints
-      real(c_double) :: x(*)
-      real(c_double) :: constraint_values(*)
-      type(c_ptr), value :: user_data
-   end function
-end interface
-
-!---------------------------------------------
-! ObjectiveGradient
-!---------------------------------------------
-abstract interface
-   function ObjectiveGradient(number_variables, x, gradient, user_data) &
-      bind(C)
-      import :: c_double, c_ptr, uno_int
-      integer(uno_int) :: ObjectiveGradient
-      integer(uno_int), value :: number_variables
-      real(c_double) :: x(*)
-      real(c_double) :: gradient(*)
-      type(c_ptr), value :: user_data
-   end function
-end interface
-
-!---------------------------------------------
-! Jacobian
-!---------------------------------------------
-abstract interface
-   function Jacobian(number_variables, number_jacobian_nonzeros, x, jacobian, user_data) &
-      bind(C)
-      import :: c_double, c_ptr, uno_int
-      integer(uno_int) :: Jacobian
-      integer(uno_int), value :: number_variables, number_jacobian_nonzeros
-      real(c_double) :: x(*)
-      real(c_double) :: jacobian(*)
-      type(c_ptr), value :: user_data
-   end function
-end interface
-
-!---------------------------------------------
-! Hessian
-!---------------------------------------------
-abstract interface
-   function Hessian(number_variables, number_constraints, number_hessian_nonzeros, x, objective_multiplier, multipliers, hessian, user_data) &
-      bind(C)
-      import :: c_double, c_ptr, uno_int
-      integer(uno_int) :: Hessian
-      integer(uno_int), value :: number_variables, number_constraints, number_hessian_nonzeros
-      real(c_double) :: x(*)
-      real(c_double), value :: objective_multiplier
-      real(c_double) :: multipliers(*)
-      real(c_double) :: hessian(*)
-      type(c_ptr), value :: user_data
-   end function
-end interface
-
-!---------------------------------------------
-! JacobianOperator
-!---------------------------------------------
-abstract interface
-   function JacobianOperator(number_variables, number_constraints, x, evaluate_at_x, vector, result, user_data) &
-      bind(C)
-      import :: c_double, c_bool, c_ptr, uno_int
-      integer(uno_int) :: JacobianOperator
-      integer(uno_int), value :: number_variables, number_constraints
-      real(c_double) :: x(*)
-      logical(c_bool), value :: evaluate_at_x
-      real(c_double) :: vector(*)
-      real(c_double) :: result(*)
-      type(c_ptr), value :: user_data
-   end function
-end interface
-
-!---------------------------------------------
-! JacobianTransposedOperator
-!---------------------------------------------
-abstract interface
-   function JacobianTransposedOperator(number_variables, number_constraints, x, evaluate_at_x, vector, result, user_data) &
-      bind(C)
-      import :: c_double, c_bool, c_ptr, uno_int
-      integer(uno_int) :: JacobianTransposedOperator
-      integer(uno_int), value :: number_variables, number_constraints
-      real(c_double) :: x(*)
-      logical(c_bool), value :: evaluate_at_x
-      real(c_double) :: vector(*)
-      real(c_double) :: result(*)
-      type(c_ptr), value :: user_data
-   end function
-end interface
-
-!---------------------------------------------
-! HessianOperator
-!---------------------------------------------
-abstract interface
-   function HessianOperator(number_variables, number_constraints, x, evaluate_at_x, objective_multiplier, multipliers, vector, result, user_data) &
-      bind(C)
-      import :: c_double, c_bool, c_ptr, uno_int
-      integer(uno_int) :: HessianOperator
-      integer(uno_int), value :: number_variables, number_constraints
-      real(c_double) :: x(*)
-      logical(c_bool), value :: evaluate_at_x
-      real(c_double), value :: objective_multiplier
-      real(c_double) :: multipliers(*)
-      real(c_double) :: vector(*)
-      real(c_double) :: result(*)
-      type(c_ptr), value :: user_data
-   end function
-end interface
-
-!---------------------------------------------
-! NotifyAcceptableIterateUserCallback
-!---------------------------------------------
-abstract interface
-   subroutine NotifyAcceptableIterateUserCallback(number_variables, number_constraints, primals, lower_bound_multipliers, upper_bound_multipliers, constraint_multipliers, objective_multiplier, primal_feasibility_residual, stationarity_residual, complementarity_residual, user_data) &
-      bind(C)
-      import :: c_double, c_ptr, uno_int
-      integer(uno_int), value :: number_variables, number_constraints
-      real(c_double) :: primals(*)
-      real(c_double) :: lower_bound_multipliers(*), upper_bound_multipliers(*), constraint_multipliers(*)
-      real(c_double), value :: objective_multiplier, primal_feasibility_residual
-      real(c_double), value :: stationarity_residual, complementarity_residual
-      type(c_ptr), value :: user_data
-   end subroutine
-end interface
-
-!---------------------------------------------
-! TerminationUserCallback
-!---------------------------------------------
-abstract interface
-   function TerminationUserCallback(number_variables, number_constraints, primals, lower_bound_multipliers, upper_bound_multipliers, constraint_multipliers, objective_multiplier, primal_feasibility_residual, stationarity_residual, complementarity_residual, user_data) &
-      bind(C)
-      import :: c_double, c_bool, c_ptr, uno_int
-      logical(c_bool) :: TerminationUserCallback
-      integer(uno_int), value :: number_variables, number_constraints
-      real(c_double) :: primals(*), lower_bound_multipliers(*)
-      real(c_double) :: upper_bound_multipliers(*), constraint_multipliers(*)
-      real(c_double), value :: objective_multiplier, primal_feasibility_residual
-      real(c_double), value :: stationarity_residual, complementarity_residual
-      type(c_ptr), value :: user_data
-   end function
-end interface
-
-!---------------------------------------------
-! LoggerStreamUserCallback
-!---------------------------------------------
-abstract interface
-   function LoggerStreamUserCallback(buffer, length, user_data) &
-      bind(C)
-      import :: c_char, c_ptr, uno_int
-      integer(uno_int) :: LoggerStreamUserCallback
-      character(c_char) :: buffer(*)
-      integer(uno_int), value :: length
-      type(c_ptr), value :: user_data
-   end function
-end interface
 
 !---------------------------------------------
 ! uno_get_version
