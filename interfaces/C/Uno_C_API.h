@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Alexis Montoison and Charlie Vanaret
+// Copyright (c) 2026 Alexis Montoison and Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_C_API_H
@@ -61,9 +61,6 @@ extern "C" {
    const uno_int UNO_VERSION_MAJOR = 2;
    const uno_int UNO_VERSION_MINOR = 3;
    const uno_int UNO_VERSION_PATCH = 1;
-
-   // get the current Uno version as v major.minor.patch
-   void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch);
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and
    // stores the objective value of "x" in "objective_value".
@@ -144,6 +141,9 @@ extern "C" {
 
    // - takes as inputs a vector "buffer" of size "length".
    typedef uno_int (*LoggerStreamUserCallback)(const char* buffer, uno_int length, void* user_data);
+
+   // get the current Uno version as v major.minor.patch
+   void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch);
 
    // creates an optimization model that can be solved by Uno.
    // initially, the model contains "number_variables" variables, no objective function, and no constraints.

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Alexis Montoison and Charlie Vanaret
+# Licensed under the MIT license. See LICENSE file in the project directory for details.
+
 # Optimization sense
 const UNO_MINIMIZE = Cint(1)
 const UNO_MAXIMIZE = Cint(-1)
