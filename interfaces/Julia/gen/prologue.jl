@@ -1,6 +1,3 @@
-# Copyright (c) 2026 Alexis Montoison and Charlie Vanaret
-# Licensed under the MIT license. See LICENSE file in the project directory for details.
-
 # Optimization sense
 const UNO_MINIMIZE = Cint(1)
 const UNO_MAXIMIZE = Cint(-1)
@@ -30,18 +27,18 @@ const UNO_OPTION_TYPE_STRING    = Cint(3)
 const UNO_OPTION_TYPE_NOT_FOUND = Cint(-1)
 
 # Optimization status
-const UNO_SUCCESS = Cint(0)
-const UNO_ITERATION_LIMIT = Cint(1)
-const UNO_TIME_LIMIT = Cint(2)
-const UNO_EVALUATION_ERROR = Cint(3)
+const UNO_SUCCESS           = Cint(0)
+const UNO_ITERATION_LIMIT   = Cint(1)
+const UNO_TIME_LIMIT        = Cint(2)
+const UNO_EVALUATION_ERROR  = Cint(3)
 const UNO_ALGORITHMIC_ERROR = Cint(4)
-const UNO_USER_TERMINATION = Cint(5)
+const UNO_USER_TERMINATION  = Cint(5)
 
 # Iterate status
-const UNO_NOT_OPTIMAL = Cint(0)
-const UNO_FEASIBLE_KKT_POINT = Cint(1)
-const UNO_FEASIBLE_FJ_POINT = Cint(2)
+const UNO_NOT_OPTIMAL                 = Cint(0)
+const UNO_FEASIBLE_KKT_POINT          = Cint(1)
+const UNO_FEASIBLE_FJ_POINT           = Cint(2)
 const UNO_INFEASIBLE_STATIONARY_POINT = Cint(3)
-const UNO_FEASIBLE_SMALL_STEP = Cint(4)
-const UNO_INFEASIBLE_SMALL_STEP = Cint(5)
-const UNO_UNBOUNDED = Cint(6)
+const UNO_FEASIBLE_SMALL_STEP         = Cint(4)
+const UNO_INFEASIBLE_SMALL_STEP       = Cint(5)
+const UNO_UNBOUNDED                   = Cint(6)
