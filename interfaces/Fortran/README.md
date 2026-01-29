@@ -13,6 +13,24 @@ Start by including the Uno Fortran interface:
 include 'uno.f90'
 ```
 
+### Using `uno.f90` as a module (optional)
+
+If you prefer to use the Fortran interface as a module, you can wrap it in a simple module like this:
+
+```fortran
+module uno
+  include 'uno.f90'
+end module
+```
+
+Then you can `use uno` in your code instead of `include 'uno.f90'`:
+
+```fortran
+use uno
+```
+
+**Note:** This approach works with most compilers, but `uno.f90` was originally written as an include file, so some compilers may issue warnings. 
+
 ### Building an optimization model
 
 Building an optimization model is incremental and starts with the variables:
