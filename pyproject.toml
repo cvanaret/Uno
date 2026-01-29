@@ -31,6 +31,10 @@ cmake.source-dir = "."
 cmake.verbose = true
 wheel.cmake = true
 
+[[tool.cibuildwheel.overrides]]
+select = "*-win_amd64"
+environment = { PKG_CONFIG_PATH="c:/opt/64/lib/pkgconfig" }
+
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
 # BQPD (cmake -DBQPD=/path/.../libbqpd.a)
