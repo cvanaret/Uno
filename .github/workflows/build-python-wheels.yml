@@ -78,6 +78,7 @@ jobs:
           msystem: MINGW64
           install: |
             mingw-w64-x86_64-gcc-fortran
+            mingw-w64-x86_64-cmake
 
       - name: Set environment (Windows)
         if: runner.os == 'Windows'
