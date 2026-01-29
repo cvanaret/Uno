@@ -1,7 +1,7 @@
 ﻿# Copyright (c) 2018-2025 Charlie Vanaret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.12)
 
 ######################
 # project definition #
