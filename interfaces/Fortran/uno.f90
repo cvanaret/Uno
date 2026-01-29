@@ -1,14 +1,84 @@
+! Copyright (c) 2026 Alexis Montoison and Charlie Vanaret
+! Licensed under the MIT license. See LICENSE file in the project directory for details.
+
 !==============================================================
 !  UNO C API Fortran interfaces
 !==============================================================
 
 use, intrinsic :: iso_c_binding
-implicit none
 
 !---------------------------------------------
 ! uno_int
 !---------------------------------------------
 integer, parameter :: uno_int = c_int32_t
+
+!---------------------------------------------
+! Optimization sense
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_MINIMIZE =  1
+integer(uno_int), parameter :: UNO_MAXIMIZE = -1
+
+!---------------------------------------------
+! Lagrange multiplier sign convention
+!---------------------------------------------
+real(c_double), parameter :: UNO_MULTIPLIER_POSITIVE =  1.0_c_double
+real(c_double), parameter :: UNO_MULTIPLIER_NEGATIVE = -1.0_c_double
+
+!---------------------------------------------
+! Problem type
+!---------------------------------------------
+character(c_char), parameter :: UNO_PROBLEM_LINEAR(3)    = [ 'L', 'P', c_null_char ]
+character(c_char), parameter :: UNO_PROBLEM_QUADRATIC(3) = [ 'Q', 'P', c_null_char ]
+character(c_char), parameter :: UNO_PROBLEM_NONLINEAR(4) = [ 'N', 'L', 'P', c_null_char ]
+
+!---------------------------------------------
+! Base indexing style
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_ZERO_BASED_INDEXING = 0
+integer(uno_int), parameter :: UNO_ONE_BASED_INDEXING  = 1
+
+!---------------------------------------------
+! Triangular part
+!---------------------------------------------
+character(c_char), parameter :: UNO_LOWER_TRIANGLE = 'L'
+character(c_char), parameter :: UNO_UPPER_TRIANGLE = 'U'
+
+!---------------------------------------------
+! Option type
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_OPTION_TYPE_INTEGER   =  0
+integer(uno_int), parameter :: UNO_OPTION_TYPE_DOUBLE    =  1
+integer(uno_int), parameter :: UNO_OPTION_TYPE_BOOL      =  2
+integer(uno_int), parameter :: UNO_OPTION_TYPE_STRING    =  3
+integer(uno_int), parameter :: UNO_OPTION_TYPE_NOT_FOUND = -1
+
+!---------------------------------------------
+! Optimization status
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_SUCCESS           = 0
+integer(uno_int), parameter :: UNO_ITERATION_LIMIT   = 1
+integer(uno_int), parameter :: UNO_TIME_LIMIT        = 2
+integer(uno_int), parameter :: UNO_EVALUATION_ERROR  = 3
+integer(uno_int), parameter :: UNO_ALGORITHMIC_ERROR = 4
+integer(uno_int), parameter :: UNO_USER_TERMINATION  = 5
+
+!---------------------------------------------
+! Iterate status
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_NOT_OPTIMAL                 = 0
+integer(uno_int), parameter :: UNO_FEASIBLE_KKT_POINT          = 1
+integer(uno_int), parameter :: UNO_FEASIBLE_FJ_POINT           = 2
+integer(uno_int), parameter :: UNO_INFEASIBLE_STATIONARY_POINT = 3
+integer(uno_int), parameter :: UNO_FEASIBLE_SMALL_STEP         = 4
+integer(uno_int), parameter :: UNO_INFEASIBLE_SMALL_STEP       = 5
+integer(uno_int), parameter :: UNO_UNBOUNDED                   = 6
+
+!---------------------------------------------
+! Uno version
+!---------------------------------------------
+integer(uno_int), parameter :: UNO_VERSION_MAJOR = 2
+integer(uno_int), parameter :: UNO_VERSION_MINOR = 3
+integer(uno_int), parameter :: UNO_VERSION_PATCH = 1
 
 !---------------------------------------------
 ! uno_get_version

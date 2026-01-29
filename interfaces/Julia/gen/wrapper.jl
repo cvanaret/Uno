@@ -33,6 +33,7 @@ function main()
     wrappers = replace(wrappers, callback => "Ptr{Cvoid}")
   end
   wrappers = replace(wrappers, "uno_int" => "Int32")
+  wrappers = "# Copyright (c) 2026 Alexis Montoison and Charlie Vanaret\n# Licensed under the MIT license. See LICENSE file in the project directory for details.\n\n" * wrappers
   write(path, wrappers)
   format_file(path, YASStyle())
   return nothing
