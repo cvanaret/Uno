@@ -49,6 +49,8 @@ jobs:
           install: |
             mingw-w64-x86_64-gcc-fortran
             mingw-w64-x86_64-cmake
+          pacboy: >-
+            python:p python-pip:p gcc:p cmake:p
       
       - name: Build wheels
         run: pipx run cibuildwheel
