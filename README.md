@@ -67,7 +67,7 @@ It may be modified in future minor releases.
 ### Fortran
 Uno provides a native Fortran interface built on top of its C API using `iso_c_binding`.
 It closely mirrors the C interface and is designed as a lightweight wrapper with minimal overhead, making it suitable for integration into existing Fortran codes while retaining full access to Uno's features.
-For more details, see the [README.md](interfaces/Fortran/README.md).
+For more details, see its [README.md](interfaces/Fortran/README.md).
 
 ## Latest results (August 13, 2025)
 
