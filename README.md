@@ -64,6 +64,11 @@ Uno can be used from Julia in two ways:
 Uno's C interface is compiled as part of the Uno library. For more details, see its [README.md](interfaces/C/README.md).
 It may be modified in future minor releases.
 
+### Fortran
+Uno provides a native Fortran interface built on top of its C API using `iso_c_binding`.
+It closely mirrors the C interface and is designed as a lightweight wrapper with minimal overhead, making it suitable for integration into existing Fortran codes while retaining full access to Uno's features.
+For more details, see the [README.md](interfaces/Fortran/README.md).
+
 ## Latest results (August 13, 2025)
 
 Uno presets have been tested against state-of-the-art solvers on 429 small problems of the [CUTEst benchmark](https://arnold-neumaier.at/glopt/coconut/Benchmark/Library2_new_v1.html).
