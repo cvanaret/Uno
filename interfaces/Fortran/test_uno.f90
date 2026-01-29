@@ -1,7 +1,5 @@
 program test_uno
-    use iso_c_binding
     include 'uno.f90'
-    implicit none
 
     integer(uno_int) :: major, minor, patch
     integer(uno_int), parameter :: number_variables = 2, number_constraints = 2
@@ -16,10 +14,12 @@ program test_uno
     real(c_double), dimension(number_constraints) :: constraint_dual_solution
     real(c_double) :: solution_primal_feasibility, solution_stationarity, solution_complementarity
     integer(uno_int) :: optimization_status, iterate_status
+    logical(c_bool) :: success, option_bool = .true.
     integer(uno_int), parameter :: base_indexing = UNO_ONE_BASED_INDEXING
     integer(uno_int), parameter :: optimization_sense = UNO_MINIMIZE
     character(len=1), parameter :: hessian_triangular_part = UNO_LOWER_TRIANGLE
     real(c_double), parameter :: lagrangian_sign_convention = UNO_MULTIPLIER_NEGATIVE
+    type(c_funptr) :: objective, gradient, constraints, jacobian, lagrangian_hessian
 
     !---------------------------------------------------
     ! Versions
@@ -53,22 +53,31 @@ program test_uno
     hessian_column_indices = [1, 1, 2]
 
     !---------------------------------------------------
+    ! Callbacks for Uno
+    !---------------------------------------------------
+    objective = c_funloc(objective_hs15)
+    gradient = c_funloc(objective_hs15)
+    constraints = c_funloc(constraints_hs15)
+    jacobian = c_funloc(jacobian_hs15)
+    lagrangian_hessian = c_funloc(lagrangian_hessian_hs15)
+
+    !---------------------------------------------------
     ! Model creation
     !---------------------------------------------------
     model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing)
 
-    call uno_set_objective(model, optimization_sense, c_f_procedure(objective), c_f_procedure(objective))
-    call uno_set_constraints(model, number_constraints, c_f_procedure(constraints), constraints_lower_bounds, constraints_upper_bounds, &
-                             number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, c_f_procedure(jacobian))
-    call uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices, &
-                                    hessian_column_indices, c_f_procedure(lagrangian_hessian), lagrangian_sign_convention)
-    call uno_set_initial_primal_iterate(model, x0)
+    success = uno_set_objective(model, optimization_sense, objective, gradient)
+    success = uno_set_constraints(model, number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds, &
+                                  number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, jacobian)
+    success = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices, &
+                                         hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
+    success = uno_set_initial_primal_iterate(model, x0)
 
     !---------------------------------------------------
     ! Solver creation
     !---------------------------------------------------
     solver = uno_create_solver()
-    call uno_set_solver_bool_option(solver, "print_solution", .true.)
+    success = uno_set_solver_bool_option(solver, "print_solution", option_bool)
 
     !---------------------------------------------------
     ! Solve
@@ -116,9 +125,8 @@ program test_uno
 contains
 
     ! Objective
-    function objective(number_variables, x, objective_value, user_data) result(res)
-        use iso_c_binding, only: c_double, c_ptr
-        implicit none
+    function objective_hs15(number_variables, x, objective_value, user_data) result(res) &
+        bind(C)
         integer(uno_int), value :: number_variables
         real(c_double), intent(in) :: x(*)
         real(c_double), intent(out) :: objective_value
@@ -127,12 +135,11 @@ contains
 
         objective_value = 100.0d0 * (x(2) - x(1)**2)**2 + (1.0d0 - x(1))**2
         res = 0
-    end function objective
+    end function objective_hs15
 
     ! Gradient
-    function gradient(number_variables, x, gradient, user_data) result(res)
-        use iso_c_binding, only: c_double, c_ptr
-        implicit none
+    function gradient_hs15(number_variables, x, gradient, user_data) result(res) &
+        bind(C)
         integer(uno_int), value :: number_variables
         real(c_double), intent(in) :: x(*)
         real(c_double), intent(out) :: gradient(*)
@@ -142,12 +149,11 @@ contains
         gradient(1) = 400.0d0*x(1)**3 - 400.0d0*x(1)*x(2) + 2.0d0*x(1) - 2.0d0
         gradient(2) = 200.0d0*(x(2) - x(1)**2)
         res = 0
-    end function gradient
+    end function gradient_hs15
 
     ! Constraints
-    function constraints(number_variables, number_constraints, x, constraint_values, user_data) result(res)
-        use iso_c_binding, only: c_double, c_ptr
-        implicit none
+    function constraints_hs15(number_variables, number_constraints, x, constraint_values, user_data) result(res) &
+        bind(C)
         integer(uno_int), value :: number_variables, number_constraints
         real(c_double), intent(in) :: x(*)
         real(c_double), intent(out) :: constraint_values(*)
@@ -157,12 +163,11 @@ contains
         constraint_values(1) = x(1) * x(2)
         constraint_values(2) = x(1) + x(2)**2
         res = 0
-    end function constraints
+    end function constraints_hs15
 
     ! Jacobian
-    function jacobian(number_variables, number_jacobian_nonzeros, x, jacobian_values, user_data) result(res)
-        use iso_c_binding, only: c_double, c_ptr
-        implicit none
+    function jacobian_hs15(number_variables, number_jacobian_nonzeros, x, jacobian_values, user_data) result(res) &
+        bind(C)
         integer(uno_int), value :: number_variables, number_jacobian_nonzeros
         real(c_double), intent(in) :: x(*)
         real(c_double), intent(out) :: jacobian_values(*)
@@ -174,13 +179,12 @@ contains
         jacobian_values(3) = x(1)
         jacobian_values(4) = 2.0d0*x(2)
         res = 0
-    end function jacobian
+    end function jacobian_hs15
 
     ! Lagrangian Hessian
-    function lagrangian_hessian(number_variables, number_constraints, number_hessian_nonzeros, &
-            x, objective_multiplier, multipliers, hessian_values, user_data) result(res)
-        use iso_c_binding, only: c_double, c_ptr
-        implicit none
+    function lagrangian_hessian_hs15(number_variables, number_constraints, number_hessian_nonzeros, &
+                                     x, objective_multiplier, multipliers, hessian_values, user_data) result(res) &
+        bind(C)
         integer(uno_int), value :: number_variables, number_constraints, number_hessian_nonzeros
         real(c_double), intent(in) :: x(*), multipliers(*)
         real(c_double), intent(out) :: hessian_values(*)
@@ -192,6 +196,6 @@ contains
         hessian_values(2) = -400.0d0*objective_multiplier*x(1) - multipliers(1)
         hessian_values(3) = 200.0d0*objective_multiplier - 2.0d0*multipliers(2)
         res = 0
-    end function lagrangian_hessian
+    end function lagrangian_hessian_hs15
 
 end program test_uno
