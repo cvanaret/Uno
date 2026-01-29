@@ -29,7 +29,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: 3.11
 
       - run: pip install cibuildwheel
 
@@ -44,9 +44,8 @@ jobs:
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
-          msystem: MINGW64
           path-type: inherit
-          install: >-
+          install: |
             mingw-w64-x86_64-gcc-fortran
       
       - name: Build wheels
@@ -57,10 +56,11 @@ jobs:
           # Skip some builds
           CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
-      - uses: actions/upload-artifact@v4
+      - name: Store artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
-          path: ${{github.workspace}}/wheelhouse/*.whl
+          path: wheelhouse/*.whl
 
   build_sdist:
     name: Build source distribution
