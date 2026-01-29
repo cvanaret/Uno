@@ -28,7 +28,7 @@ Issues = "https://github.com/cvanaret/Uno/issues"
 
 [tool.scikit-build]
 cmake.source-dir = "."
-cmake.verbose = true
+build.verbose = true
 wheel.cmake = true
 
 [[tool.cibuildwheel.overrides]]

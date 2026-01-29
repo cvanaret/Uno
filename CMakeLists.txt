@@ -1,10 +1,7 @@
 ﻿# Copyright (c) 2018-2025 Charlie Vanaret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-cmake_minimum_required(VERSION 3.7)
-if(${CMAKE_VERSION} VERSION_LESS 3.12)
-   cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
-endif()
+cmake_minimum_required(VERSION 3.23)
 
 ######################
 # project definition #
