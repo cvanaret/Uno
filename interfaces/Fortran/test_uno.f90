@@ -56,7 +56,7 @@ program test_uno
     ! Callbacks for Uno
     !---------------------------------------------------
     objective = c_funloc(objective_hs15)
-    gradient = c_funloc(objective_hs15)
+    gradient = c_funloc(gradient_hs15)
     constraints = c_funloc(constraints_hs15)
     jacobian = c_funloc(jacobian_hs15)
     lagrangian_hessian = c_funloc(lagrangian_hessian_hs15)
