@@ -143,36 +143,36 @@ Options can be passed individually:
 
 ```fortran
 logical(c_bool) :: success
-integer(uno_int) :: integer_option = 1000
-real(c_double) :: double_option = 1.0d-6
-logical(c_bool) :: bool_option = .true.
-character(len=6) :: string_option = "exact"//c_null_char
+integer(uno_int) :: max_iterations = 1000
+real(c_double) :: primal_tolerance = 1.0d-6
+logical(c_bool) :: print_solution = .true.
+character(len=6) :: hessian_model = "exact"//c_null_char
 
-success = uno_set_solver_integer_option(solver, "max_iterations"//c_null_char, integer_option)
-success = uno_set_solver_double_option(solver, "primal_tolerance"//c_null_char, double_option)
-success = uno_set_solver_bool_option(solver, "print_solution"//c_null_char, bool_option)
-success = uno_set_solver_string_option(solver, "hessian_model"//c_null_char, string_option)
+success = uno_set_solver_integer_option(solver, "max_iterations"//c_null_char, max_iterations)
+success = uno_set_solver_double_option(solver, "primal_tolerance"//c_null_char, primal_tolerance)
+success = uno_set_solver_bool_option(solver, "print_solution"//c_null_char, print_solution)
+success = uno_set_solver_string_option(solver, "hessian_model"//c_null_char, hessian_model)
 ```
 
 Loading options from a file:
 
 ```fortran
 logical(c_bool) :: success
-character(len=8) :: filename = "uno.opt"//c_null_char
+character(len=8) :: option_file = "uno.opt"//c_null_char
 
-success = uno_load_solver_option_file(solver, filename)
+success = uno_load_solver_option_file(solver, option_file)
 ```
 
 Getting option values:
 
 ```fortran
-integer(uno_int) :: itmax
-real(c_double) :: tol
-logical(c_bool) :: flag
+integer(uno_int) :: max_iterations
+real(c_double) :: primal_tolerance
+logical(c_bool) :: print_solution
 
-itmax = uno_get_solver_integer_option(solver, "max_iterations"//c_null_char)
-tol   = uno_get_solver_double_option(solver, "primal_tolerance"//c_null_char)
-flag  = uno_get_solver_bool_option(solver, "print_solution"//c_null_char)
+max_iterations = uno_get_solver_integer_option(solver, "max_iterations"//c_null_char)
+primal_tolerance   = uno_get_solver_double_option(solver, "primal_tolerance"//c_null_char)
+print_solution  = uno_get_solver_bool_option(solver, "print_solution"//c_null_char)
 ```
 
 Setting a preset:
@@ -197,22 +197,22 @@ The following routines allow you to inspect the solution:
 * optimization status:
 
 ```fortran
-integer(uno_int) :: opt_status
-opt_status = uno_get_optimization_status(solver)
+integer(uno_int) :: optimization_status
+optimization_status = uno_get_optimization_status(solver)
 ```
 
 * solution status:
 
 ```fortran
-integer(uno_int) :: sol_status
-sol_status = uno_get_solution_status(solver)
+integer(uno_int) :: solution_status
+solution_status = uno_get_solution_status(solver)
 ```
 
 * objective value:
 
 ```fortran
-real(c_double) :: obj
-obj = uno_get_solution_objective(solver)
+real(c_double) :: objective
+objective = uno_get_solution_objective(solver)
 ```
 
 * primal solution:
@@ -236,25 +236,25 @@ call uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 * optimality measures:
 
 ```fortran
-real(c_double) :: pf, st, cp
-pf = uno_get_solution_primal_feasibility(solver)
-st = uno_get_solution_stationarity(solver)
-cp = uno_get_solution_complementarity(solver)
+real(c_double) :: primal_feasibility, stationarity, complementarity
+primal_feasibility = uno_get_solution_primal_feasibility(solver)
+stationarity = uno_get_solution_stationarity(solver)
+complementarity = uno_get_solution_complementarity(solver)
 ```
 
 * solver statistics:
 
 ```fortran
-integer(uno_int) :: it
-real(c_double) :: cpu
+integer(uno_int) :: number_iterations
+real(c_double) :: cpu_time
 
-it  = uno_get_number_iterations(solver)
-cpu = uno_get_cpu_time(solver)
+number_iterations  = uno_get_number_iterations(solver)
+cpu_time = uno_get_cpu_time(solver)
 ```
 
 ### Notes
 
-* The Fortran interface closely mirrors the C API: most routines correspond one-to-one with their C counterparts.
+* The Fortran interface closely mirrors the C API: most routines correspond one-to-one to their C counterparts.
 * All callbacks must follow the C interoperability rules (`bind(C)` and compatible argument types).
 * Strings passed to Uno follow the C convention and must be null-terminated (e.g., `"max_iterations"//c_null_char`).
 
