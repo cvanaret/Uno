@@ -43,12 +43,9 @@ jobs:
           install: |
             mingw-w64-x86_64-gcc-fortran
             mingw-w64-x86_64-cmake
+            mingw-w64-python
           pacboy: >-
             python:p python-pip:p gcc:p cmake:p
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
 
       - run: pip install cibuildwheel
 
