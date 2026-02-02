@@ -1,4 +1,4 @@
-program test_uno
+program example_uno
     include 'uno.f90'
 
     integer(uno_int) :: major, minor, patch
@@ -14,7 +14,7 @@ program test_uno
     real(c_double), dimension(number_constraints) :: constraint_dual_solution
     real(c_double) :: solution_primal_feasibility, solution_stationarity, solution_complementarity
     integer(uno_int) :: optimization_status, iterate_status
-    logical(c_bool) :: success, option_bool = .true.
+    logical(c_bool) :: success, bool_option = .true.
     integer(uno_int), parameter :: base_indexing = UNO_ONE_BASED_INDEXING
     integer(uno_int), parameter :: optimization_sense = UNO_MINIMIZE
     character(len=1), parameter :: hessian_triangular_part = UNO_LOWER_TRIANGLE
@@ -77,7 +77,8 @@ program test_uno
     ! Solver creation
     !---------------------------------------------------
     solver = uno_create_solver()
-    success = uno_set_solver_bool_option(solver, "print_solution", option_bool)
+    success = uno_set_solver_bool_option(solver, "print_solution"//c_null_char, bool_option)
+    success = uno_set_solver_preset(solver, "filtersqp"//c_null_char)
 
     !---------------------------------------------------
     ! Solve
@@ -199,4 +200,4 @@ contains
         res = 0
     end function lagrangian_hessian_hs15
 
-end program test_uno
+end program example_uno
