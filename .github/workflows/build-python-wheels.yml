@@ -46,11 +46,9 @@ jobs:
             mingw-w64-x86_64-python
           pacboy: >-
             python:p python-pip:p gcc:p cmake:p
-
-      - run: pip install cibuildwheel
-
+      
       - name: Build wheels
-        run: pipx run cibuildwheel
+        uses: pypa/cibuildwheel@v2.22.0
         env:
           MACOSX_DEPLOYMENT_TARGET: 15.0
           CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
