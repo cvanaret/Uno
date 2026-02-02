@@ -27,12 +27,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
-
-      - run: pip install cibuildwheel
-
       - name: Install Fortran compiler (macOS)
         uses: fortran-lang/setup-fortran@main
         with:
@@ -51,7 +45,13 @@ jobs:
             mingw-w64-x86_64-cmake
           pacboy: >-
             python:p python-pip:p gcc:p cmake:p
-      
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - run: pip install cibuildwheel
+
       - name: Build wheels
         run: pipx run cibuildwheel
         env:
