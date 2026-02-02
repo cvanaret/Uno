@@ -37,6 +37,7 @@ environment = { PKG_CONFIG_PATH="c:/opt/64/lib/pkgconfig" }
 
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
+CMAKE_GENERATOR = "MinGW Makefiles"
 # BQPD (cmake -DBQPD=/path/.../libbqpd.a)
 BQPD = "interfaces/Python/dependencies/bqpd/lib/libbqpd.a"
 # MUMPS
