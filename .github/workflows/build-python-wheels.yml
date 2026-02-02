@@ -43,7 +43,7 @@ jobs:
           install: |
             mingw-w64-x86_64-gcc-fortran
             mingw-w64-x86_64-cmake
-            mingw-w64-python
+            mingw-w64-x86_64-python
           pacboy: >-
             python:p python-pip:p gcc:p cmake:p
 
