@@ -73,7 +73,9 @@ namespace uno {
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // ∇f(x_k)
-      this->evaluate_objective_gradient(iterate, lagrangian_gradient.objective_contribution.data());
+      for (size_t index: Range(this->number_variables)) {
+         lagrangian_gradient.objective_contribution[index] = iterate.evaluations.objective_gradient[index];
+      }
 
       // ∇c(x_k) λ_k
       evaluation_space.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints,

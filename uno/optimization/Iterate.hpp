@@ -16,11 +16,6 @@ namespace uno {
 
    class Iterate {
    public:
-      Iterate(size_t number_variables, size_t number_constraints);
-      Iterate(const Iterate& other) = default;
-      Iterate(Iterate&& other) = default;
-      Iterate& operator=(Iterate&& other) = default;
-
       size_t number_variables;
       size_t number_constraints;
       Vector<double> primals;
@@ -44,6 +39,12 @@ namespace uno {
 
       // status
       SolutionStatus status{SolutionStatus::NOT_OPTIMAL};
+
+      // member functions
+      Iterate(size_t number_variables, size_t number_constraints);
+      Iterate(const Iterate& other) = default;
+      Iterate(Iterate&& other) = default;
+      Iterate& operator=(Iterate&& other) = default;
 
       void evaluate_objective(const Model& model);
       void evaluate_constraints(const Model& model);

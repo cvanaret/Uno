@@ -68,6 +68,7 @@ namespace uno {
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
       const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
+      initial_iterate.evaluate_objective_gradient(this->original_problem.model);
       this->inequality_handling_method->evaluate_jacobian(initial_iterate.primals);
       this->original_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
          evaluation_space, initial_iterate);
