@@ -148,8 +148,8 @@ namespace uno {
       return number_nonzeros;
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_jacobian(Iterate& iterate, double* jacobian_values) const {
-      this->first_reformulation.evaluate_jacobian(iterate, jacobian_values);
+   void PrimalDualInteriorPointProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values) const {
+      this->first_reformulation.evaluate_jacobian(primals, jacobian_values);
    }
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,

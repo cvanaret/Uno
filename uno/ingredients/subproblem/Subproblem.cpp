@@ -111,7 +111,7 @@ namespace uno {
          this->current_iterate.multipliers, augmented_matrix_values);
 
       // Jacobian of general constraints
-      this->problem.evaluate_jacobian(this->current_iterate, augmented_matrix_values + this->number_hessian_nonzeros());
+      this->problem.evaluate_jacobian(this->current_iterate.primals, augmented_matrix_values + this->number_hessian_nonzeros());
    }
 
    void Subproblem::regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,

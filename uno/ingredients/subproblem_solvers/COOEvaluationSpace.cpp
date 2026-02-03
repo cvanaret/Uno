@@ -63,8 +63,8 @@ namespace uno {
       this->solution.resize(dimension);
    }
 
-   void COOEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
-      problem.evaluate_jacobian(iterate, this->matrix_values.data() + this->number_hessian_nonzeros);
+   void COOEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) {
+      problem.evaluate_jacobian(primals, this->matrix_values.data() + this->number_hessian_nonzeros);
    }
 
    void COOEvaluationSpace::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {

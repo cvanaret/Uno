@@ -49,7 +49,7 @@ namespace uno {
          uno_int* column_indices, uno_int solver_indexing) const;
 
       // numerical evaluations of Jacobian and Hessian
-      virtual void evaluate_jacobian(Iterate& iterate, double* jacobian_values) const;
+      virtual void evaluate_jacobian(const Vector<double>& primals, double* jacobian_values) const;
       virtual void evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
          const EvaluationSpace& evaluation_space, Iterate& iterate) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,

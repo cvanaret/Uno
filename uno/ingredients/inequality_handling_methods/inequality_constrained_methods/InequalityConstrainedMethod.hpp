@@ -31,7 +31,7 @@ namespace uno {
 
       // matrix computations
       [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
-      void evaluate_jacobian(Iterate& iterate) override;
+      void evaluate_jacobian(const Vector<double>& primals) override;
 
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,

@@ -8,7 +8,6 @@ namespace uno {
    // forward declaration
    template <typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
-   class Iterate;
    class OptimizationProblem;
    class Statistics;
    class Subproblem;
@@ -21,7 +20,7 @@ namespace uno {
       EvaluationSpace() = default;
       virtual ~EvaluationSpace() = default;
 
-      virtual void evaluate_jacobian(const OptimizationProblem& problem, Iterate& iterate) = 0;
+      virtual void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) = 0;
       virtual void compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;
       virtual void compute_jacobian_transposed_vector_product(const Vector<double>& vector,
          Vector<double>& result) const = 0;
