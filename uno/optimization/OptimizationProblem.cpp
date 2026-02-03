@@ -61,8 +61,8 @@ namespace uno {
       hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
    }
 
-   void OptimizationProblem::evaluate_jacobian(Iterate& iterate, double* jacobian_values) const {
-      this->model.evaluate_jacobian(iterate.primals, jacobian_values);
+   void OptimizationProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values) const {
+      this->model.evaluate_jacobian(primals, jacobian_values);
    }
 
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k

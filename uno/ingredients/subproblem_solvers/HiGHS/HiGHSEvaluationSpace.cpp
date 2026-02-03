@@ -34,8 +34,8 @@ namespace uno {
       this->compute_hessian_sparsity(subproblem);
    }
 
-   void HiGHSEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
-      problem.evaluate_jacobian(iterate, this->jacobian_values.data());
+   void HiGHSEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) {
+      problem.evaluate_jacobian(primals, this->jacobian_values.data());
 
       // copy the Jacobian with permutation into this->model.lp_.a_matrix_.value_
       for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
@@ -97,7 +97,7 @@ namespace uno {
       if (warmstart_information.new_iterate) {
          subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data());
          subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints);
-         this->evaluate_jacobian(subproblem.problem, subproblem.current_iterate);
+         this->evaluate_jacobian(subproblem.problem, subproblem.current_iterate.primals);
          // evaluate the Hessian and regularize it
          subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data());
          // copy the Hessian with permutation into this->model.hessian_.value_

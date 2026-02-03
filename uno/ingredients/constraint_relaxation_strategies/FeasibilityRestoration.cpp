@@ -68,7 +68,7 @@ namespace uno {
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
       const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
-      this->inequality_handling_method->evaluate_jacobian(initial_iterate);
+      this->inequality_handling_method->evaluate_jacobian(initial_iterate.primals);
       this->original_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
          evaluation_space, initial_iterate);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, initial_iterate);
@@ -148,7 +148,7 @@ namespace uno {
          this->first_switch_to_feasibility = false;
       }
 
-      this->feasibility_inequality_handling_method->evaluate_jacobian(current_iterate);
+      this->feasibility_inequality_handling_method->evaluate_jacobian(current_iterate.primals);
 
       if (Logger::level == INFO) statistics.print_current_line();
       warmstart_information.whole_problem_changed();

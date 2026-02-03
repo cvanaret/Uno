@@ -84,9 +84,9 @@ namespace uno {
       return this->solver->get_evaluation_space();
    }
 
-   void InequalityConstrainedMethod::evaluate_jacobian(Iterate& iterate) {
+   void InequalityConstrainedMethod::evaluate_jacobian(const Vector<double>& primals) {
       auto& evaluation_space = this->solver->get_evaluation_space();
-      evaluation_space.evaluate_jacobian(*this->problem, iterate);
+      evaluation_space.evaluate_jacobian(*this->problem, primals);
    }
 
    // compute dual *displacements*
