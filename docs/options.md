@@ -1,6 +1,8 @@
 # Options
 
-This document lists the configuration options that Uno accepts, their types and default values. Options are grouped by functional area. Defaults are taken from `uno/options/DefaultOptions.cpp`.
+This document lists the configuration options that Uno accepts, their types and default values.
+Options are grouped by functional area.
+Defaults are taken from `uno/options/DefaultOptions.cpp`.
 
 ## Ingredients
 
