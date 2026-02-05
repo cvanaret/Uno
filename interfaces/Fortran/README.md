@@ -1,35 +1,51 @@
 ## Uno's Fortran interface: how to use Uno from Fortran
 
-Uno's Fortran interface provides access to the full Uno C API through a lightweight wrapper based on `iso_c_binding`.  
-It exposes the same model-building, solver configuration, callback mechanisms, and solution inspection routines as the C interface.
+Uno's Fortran interface provides full access to the Uno C API through a lightweight wrapper based on `iso_c_binding`.
+It exposes the same functionality as the C interface, including model creation, solver configuration, callback registration, and solution inspection, with some convenient Fortran wrappers for handling strings.
 
-The Fortran interface is provided in the file `uno.f90` and must be included in your source code and linked against the Uno library (`libuno`).
+The interface is split into two files: `uno.f90` and `uno_f.f90`.
+Include them in your source code and link against the Uno library (`libuno`).
 
-An example is available in [`example_uno.f90`](example_uno.f90).
+An example program is available in [`example_uno.f90`](example_uno.f90).
 
-Start by including the Uno Fortran interface:
+### Basic usage
+
+Start by including the Fortran interface:
 
 ```fortran
 include 'uno.f90'
+...
+contains
+  include 'uno_f.f90'
+...
 ```
 
-### Using `uno.f90` as a module (optional)
+### Using the interface as a Fortran module (optional)
 
-If you prefer to use the Fortran interface as a module, you can wrap it in a simple module like this:
+You can also wrap the interface in a module for cleaner `use` statements:
 
 ```fortran
 module uno
   include 'uno.f90'
+contains
+  include 'uno_f.f90'
 end module
 ```
 
-Then you can `use uno` in your code instead of `include 'uno.f90'`:
+Then simply use it in your program:
 
 ```fortran
-use uno
+program my_program
+  use uno
+  ...
+end program
 ```
 
-**Note:** This approach works with most compilers, but `uno.f90` was originally written as an include file, so some compilers may issue warnings. 
+This approach avoids `include` statements scattered in your code and allows standard module scoping.
+
+**Remark**: We provide the Fortran interface as include files rather than a precompiled module to maximize portability.
+Fortran `.mod` files are compiler-specific and can cause issues when cross-compiling or using different compilers.
+By including the source directly, users avoid these problems and can build the interface consistently across platforms.
 
 ### Building an optimization model
 
@@ -37,9 +53,9 @@ Building an optimization model is incremental and starts with the variables:
 
 ```fortran
 type(c_ptr) :: model
-model = uno_create_model(problem_type, number_variables, &
-                         variables_lower_bounds, variables_upper_bounds, &
-                         base_indexing)
+model = uno_create_model_f(problem_type, number_variables, &
+                           variables_lower_bounds, variables_upper_bounds, &
+                           base_indexing)
 ```
 
 The following optional elements can be added to the model separately:
@@ -146,21 +162,21 @@ logical(c_bool) :: success
 integer(uno_int) :: max_iterations = 1000
 real(c_double) :: primal_tolerance = 1.0d-6
 logical(c_bool) :: print_solution = .true.
-character(len=6) :: hessian_model = "exact"//c_null_char
+character(len=*) :: hessian_model = "exact"
 
-success = uno_set_solver_integer_option(solver, "max_iterations"//c_null_char, max_iterations)
-success = uno_set_solver_double_option(solver, "primal_tolerance"//c_null_char, primal_tolerance)
-success = uno_set_solver_bool_option(solver, "print_solution"//c_null_char, print_solution)
-success = uno_set_solver_string_option(solver, "hessian_model"//c_null_char, hessian_model)
+success = uno_set_solver_integer_option_f(solver, "max_iterations", max_iterations)
+success = uno_set_solver_double_option_f(solver, "primal_tolerance", primal_tolerance)
+success = uno_set_solver_bool_option_f(solver, "print_solution", print_solution)
+success = uno_set_solver_string_option_f(solver, "hessian_model", hessian_model)
 ```
 
 Loading options from a file:
 
 ```fortran
 logical(c_bool) :: success
-character(len=8) :: option_file = "uno.opt"//c_null_char
+character(len=*) :: option_file = "uno.opt"
 
-success = uno_load_solver_option_file(solver, option_file)
+success = uno_load_solver_option_file_f(solver, option_file)
 ```
 
 Getting option values:
@@ -170,16 +186,16 @@ integer(uno_int) :: max_iterations
 real(c_double) :: primal_tolerance
 logical(c_bool) :: print_solution
 
-max_iterations = uno_get_solver_integer_option(solver, "max_iterations"//c_null_char)
-primal_tolerance   = uno_get_solver_double_option(solver, "primal_tolerance"//c_null_char)
-print_solution  = uno_get_solver_bool_option(solver, "print_solution"//c_null_char)
+max_iterations = uno_get_solver_integer_option_f(solver, "max_iterations")
+primal_tolerance = uno_get_solver_double_option_f(solver, "primal_tolerance")
+print_solution = uno_get_solver_bool_option_f(solver, "print_solution")
 ```
 
 Setting a preset:
 
 ```fortran
 logical(c_bool) :: success
-success = uno_set_solver_preset(solver, "filtersqp"//c_null_char)
+success = uno_set_solver_preset_f(solver, "filtersqp")
 ```
 
 ### Solving the model
@@ -254,8 +270,10 @@ cpu_time = uno_get_cpu_time(solver)
 
 ### Notes
 
-* The Fortran interface closely mirrors the C API: most routines correspond one-to-one to their C counterparts.
-* All callbacks must follow the C interoperability rules (`bind(C)` and compatible argument types).
-* Strings passed to Uno follow the C convention and must be null-terminated (e.g., `"max_iterations"//c_null_char`).
+The Fortran interface in `uno.f90` mirrors the Uno C API, including constants, while `uno_f.f90` provides a Fortran-friendly variant for a subset of routines that handle C `char*` inputs or outputs.
 
-For a complete list of available routines and constants, see [`uno.f90`](uno.f90).
+The only difference that necessitates `uno_f.f90` is the handling of strings: C `char*` arguments are converted internally and exposed as standard Fortran `character(len=*)` or allocatable strings.
+Null-termination is managed automatically.
+Routines using this conversion have the suffix `_f` to distinguish them from the direct C bindings.
+
+For a complete list of available routines and constants, see [`uno.f90`](uno.f90) and [`uno_f.f90`](uno_f.f90).
