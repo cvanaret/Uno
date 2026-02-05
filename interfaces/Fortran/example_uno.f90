@@ -1,6 +1,5 @@
 program example_uno
     include 'uno.f90'
-
     integer(uno_int) :: major, minor, patch
     integer(uno_int), parameter :: number_variables = 2, number_constraints = 2
     integer(uno_int), parameter :: number_jacobian_nonzeros = 4, number_hessian_nonzeros = 3
@@ -13,11 +12,13 @@ program example_uno
     real(c_double), dimension(number_variables) :: primal_solution, lower_bound_dual_solution, upper_bound_dual_solution
     real(c_double), dimension(number_constraints) :: constraint_dual_solution
     real(c_double) :: solution_primal_feasibility, solution_stationarity, solution_complementarity
-    integer(uno_int) :: optimization_status, iterate_status
+    integer(uno_int) :: optimization_status, iterate_status, option_type
     logical(c_bool) :: success, print_solution = .true.
-    integer(uno_int) :: max_iterations = 1000
-    real(c_double) :: primal_tolerance = 1.0d-6
-    character(len=*), parameter :: hessian_model = "exact"//c_null_char
+    integer(uno_int) :: number_iterations, max_iterations = 1000
+    real(c_double) ::  cpu_time, dual_tolerance, primal_tolerance = 1.0d-6
+    character(:), allocatable :: logger
+    character(len=*), parameter :: hessian_model = "exact"
+    character(len=*), parameter :: problem_type = UNO_PROBLEM_NONLINEAR_F
     integer(uno_int), parameter :: base_indexing = UNO_ONE_BASED_INDEXING
     integer(uno_int), parameter :: optimization_sense = UNO_MINIMIZE
     character(len=1), parameter :: hessian_triangular_part = UNO_LOWER_TRIANGLE
@@ -72,7 +73,7 @@ program example_uno
     !---------------------------------------------------
     ! Model creation
     !---------------------------------------------------
-    model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing)
+    model = uno_create_model_f(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing)
 
     success = uno_set_objective(model, optimization_sense, objective, gradient)
     success = uno_set_constraints(model, number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds, &
@@ -89,11 +90,11 @@ program example_uno
     ! Solver creation
     !---------------------------------------------------
     solver = uno_create_solver()
-    success = uno_set_solver_integer_option(solver, "max_iterations"//c_null_char, max_iterations)
-    success = uno_set_solver_double_option(solver, "primal_tolerance"//c_null_char, primal_tolerance)
-    success = uno_set_solver_bool_option(solver, "print_solution"//c_null_char, print_solution)
-    success = uno_set_solver_string_option(solver, "hessian_model"//c_null_char, hessian_model)
-    success = uno_set_solver_preset(solver, "filtersqp"//c_null_char)
+    success = uno_set_solver_integer_option_f(solver, "max_iterations", max_iterations)
+    success = uno_set_solver_double_option_f(solver, "primal_tolerance", primal_tolerance)
+    success = uno_set_solver_bool_option_f(solver, "print_solution", print_solution)
+    success = uno_set_solver_string_option_f(solver, "hessian_model", hessian_model)
+    success = uno_set_solver_preset_f(solver, "filtersqp")
 
     !---------------------------------------------------
     ! Solve
@@ -101,8 +102,32 @@ program example_uno
     call uno_optimize(solver, model)
 
     !---------------------------------------------------
+    ! Get options
+    !---------------------------------------------------
+    max_iterations = uno_get_solver_integer_option_f(solver, "max_iterations")
+    print *, 'max_iterations = ', max_iterations
+
+    dual_tolerance = uno_get_solver_double_option_f(solver, "dual_tolerance")
+    print *, 'dual_tolerance = ', dual_tolerance
+
+    print_solution = uno_get_solver_bool_option_f(solver, "print_solution")
+    print *, 'print_solution = ', print_solution
+
+    logger = uno_get_solver_string_option_f(solver, "logger")
+    print *, 'logger = ', logger
+
+    option_type = uno_get_solver_option_type_f(solver, "linear_solver")
+    print *, 'option_type for the option linear_solver = ', option_type
+
+    !---------------------------------------------------
     ! Get solution
     !---------------------------------------------------
+    number_iterations = uno_get_number_iterations(solver)
+    print *, 'number_iterations = ', number_iterations
+
+    cpu_time = uno_get_cpu_time(solver)
+    print *, 'cpu_time = ', cpu_time
+
     optimization_status = uno_get_optimization_status(solver)
     print *, 'optimization_status = ', optimization_status
 
@@ -140,6 +165,7 @@ program example_uno
     call uno_destroy_model(model)
 
 contains
+    include 'uno_f.f90'
 
     ! Objective
     function objective_hs15(number_variables, x, objective_value, user_data) result(res) &
