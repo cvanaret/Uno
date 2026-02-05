@@ -63,4 +63,5 @@ jobs:
           using Pkg
           Pkg.instantiate()
           Pkg.develop(path="/home/runner/.julia/dev/Uno_jll")
+          Pkg.add(name="HiGHS_jll", version="1.12.0")
           include("/home/runner/work/Uno/Uno/.github/julia/runtests_${{matrix.UNO_PRESET}}.jl")
