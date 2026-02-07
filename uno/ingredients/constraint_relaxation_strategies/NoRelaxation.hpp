@@ -37,7 +37,7 @@ namespace uno {
       [[nodiscard]] size_t get_number_subproblems_solved() const override;
 
    private:
-      const OptimizationProblem problem;
+      const OptimizationProblem original_problem;
       std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
       std::unique_ptr<HessianModel> hessian_model;
       std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy;

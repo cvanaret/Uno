@@ -15,7 +15,7 @@
 namespace uno {
    NoRelaxation::NoRelaxation(const Model& model, const Options& options):
          ConstraintRelaxationStrategy(options),
-         problem(model),
+         original_problem(model),
          inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
          hessian_model(HessianModelFactory::create(model, options)),
          inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
@@ -25,9 +25,9 @@ namespace uno {
    void NoRelaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
          Direction& direction, double trust_region_radius) {
       // memory allocation
-      this->inequality_handling_method->initialize(this->problem, initial_iterate, *this->hessian_model,
+      this->inequality_handling_method->initialize(this->original_problem, initial_iterate, *this->hessian_model,
          *this->inertia_correction_strategy, trust_region_radius);
-      direction = Direction(this->problem.number_variables, this->problem.number_constraints);
+      direction = Direction(this->original_problem.number_variables, this->original_problem.number_constraints);
 
       // statistics
       this->inertia_correction_strategy->initialize_statistics(statistics);
@@ -37,10 +37,11 @@ namespace uno {
       this->inequality_handling_method->generate_initial_iterate(initial_iterate);
       initial_iterate.evaluate_objective_gradient(model);
       initial_iterate.evaluate_constraints(model);
-      this->inequality_handling_method->evaluate_jacobian(initial_iterate);
+      this->inequality_handling_method->evaluate_jacobian(initial_iterate.primals);
       const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
-      this->problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, evaluation_space, initial_iterate);
-      this->compute_primal_dual_residuals(this->problem, initial_iterate);
+      initial_iterate.evaluate_objective_gradient(this->original_problem.model);
+      this->original_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient, evaluation_space, initial_iterate);
+      this->compute_primal_dual_residuals(this->original_problem, initial_iterate);
       this->globalization_strategy.initialize(statistics, initial_iterate);
    }
 
@@ -48,9 +49,9 @@ namespace uno {
          double trust_region_radius, WarmstartInformation& warmstart_information) {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
-      direction.set_dimensions(this->problem.number_variables, this->problem.number_constraints);
+      direction.set_dimensions(this->original_problem.number_variables, this->original_problem.number_constraints);
       this->inequality_handling_method->solve(statistics, current_iterate, direction, trust_region_radius, warmstart_information);
-      direction.norm = norm_inf(view(direction.primals, 0, this->problem.get_number_original_variables()));
+      direction.norm = norm_inf(view(direction.primals, 0, this->original_problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
       warmstart_information.no_changes();
    }
@@ -79,9 +80,9 @@ namespace uno {
       iterate.evaluate_constraints(model);
 
       const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
-      this->problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, evaluation_space, iterate);
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->problem, iterate);
-      return ConstraintRelaxationStrategy::check_termination(this->problem, iterate);
+      this->original_problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, evaluation_space, iterate);
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, iterate);
+      return ConstraintRelaxationStrategy::check_termination(this->original_problem, iterate);
    }
 
    std::string NoRelaxation::get_name() const {

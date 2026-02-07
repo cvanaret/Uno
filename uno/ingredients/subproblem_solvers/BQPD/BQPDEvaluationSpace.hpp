@@ -11,6 +11,7 @@
 
 namespace uno {
    // forward declarations
+   class Iterate;
    class Subproblem;
    class WarmstartInformation;
 
@@ -21,7 +22,7 @@ namespace uno {
 
       void initialize(const Subproblem& subproblem);
 
-      void evaluate_jacobian(const OptimizationProblem& problem, Iterate& iterate) override;
+      void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) override;
       void compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_jacobian_transposed_vector_product(const Vector<double>& vector,
          Vector<double>& result) const override;

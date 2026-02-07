@@ -46,15 +46,15 @@ namespace uno {
    private:
       Phase current_phase{Phase::OPTIMALITY};
       const double constraint_violation_coefficient;
-      const OptimizationProblem optimality_problem;
+      const OptimizationProblem original_problem;
       l1RelaxedProblem feasibility_problem;
-      std::unique_ptr<HessianModel> optimality_hessian_model;
+      std::unique_ptr<HessianModel> hessian_model;
       std::unique_ptr<HessianModel> feasibility_hessian_model;
-      std::unique_ptr<InertiaCorrectionStrategy> optimality_inertia_correction_strategy;
+      std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy;
       std::unique_ptr<InertiaCorrectionStrategy> feasibility_inertia_correction_strategy;
-      std::unique_ptr<InequalityHandlingMethod> optimality_inequality_handling_method;
+      std::unique_ptr<InequalityHandlingMethod> inequality_handling_method;
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
-      std::unique_ptr<GlobalizationStrategy> optimality_globalization_strategy;
+      std::unique_ptr<GlobalizationStrategy> globalization_strategy;
       MeritFunction feasibility_globalization_strategy;
       // the class maintains multipliers for the other phase (feasibility multipliers if we are in the optimality phase,
       // and vice versa). These multipliers and those of the iterate are swapped whenever we switch phases.
