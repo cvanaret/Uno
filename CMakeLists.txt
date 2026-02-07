@@ -199,20 +199,17 @@ if(MUMPS_LIBRARY)
       # link dummy parallel library (provided by MUMPS distribution)
       link_to_uno(MUMPS_MPISEQ_LIBRARY ${MUMPS_MPISEQ_LIBRARY})
    endif()
+   
+   get_filename_component(MUMPS_LIBS_DIRECTORY ${MUMPS_LIBRARY} DIRECTORY)
+   set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH} ${MUMPS_LIBS_DIRECTORY}")
 
-	# get the path where all the libraries are
-	get_filename_component(MUMPS_LIBS_DIRECTORY ${MUMPS_LIBRARY} DIRECTORY)
-
-   find_package(METIS PATHS ${MUMPS_LIBS_DIRECTORY} NO_DEFAULT_PATH)
    find_package(METIS REQUIRED)
    list(APPEND LIBRARIES ${METIS_LIBRARY})
    list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
 
-   find_package(LAPACK PATHS ${MUMPS_LIBS_DIRECTORY} NO_DEFAULT_PATH)
    find_package(LAPACK REQUIRED)
    list(APPEND LIBRARIES ${LAPACK_LIBRARIES})
 
-   find_package(BLAS PATHS ${MUMPS_LIBS_DIRECTORY} NO_DEFAULT_PATH)
    find_package(BLAS REQUIRED)
    list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 
