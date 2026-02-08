@@ -2,7 +2,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.2.8"
+version = v"2026.2.9"
 
 # Collection of sources
 sources = [
@@ -136,9 +136,9 @@ if gfortran -c -fallow-argument-mismatch empty.f >/dev/null 2>&1; then
 fi
 rm -f empty.*
 
-make_args+=(OPTF="-O3"
-            OPTL="-O3"
-            OPTC="-O3"
+make_args+=(OPTF="-fPIC -O3"
+            OPTL="-fPIC -O3"
+            OPTC="-fPIC -O3"
             CDEFS=-DAdd_
             LMETISDIR=${libdir}
             IMETIS=-I${includedir}
