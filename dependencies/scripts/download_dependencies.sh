@@ -18,9 +18,8 @@ case "$ARCH_NAME" in
     *) echo "Unknown architecture '$ARCH_NAME'."; exit 1;;
 esac
 
-# create and change directory
-mkdir -p interfaces/Python/dependencies
-cd interfaces/Python/dependencies
+# change directory
+cd dependencies
 
 # download BQPD
 VERSION="v1.0.0"
@@ -43,5 +42,4 @@ tar -xzvf UnoUtils.tar.gz
 pwd
 
 # delete unwanted directories
-rm -rf lib/cmake
-rm -rf lib/pkgconfig
+rm -rf lib/cmake lib/pkgconfig

@@ -34,16 +34,16 @@ wheel.cmake = true
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
 # BQPD (cmake -DBQPD=/path/.../libbqpd.a)
-BQPD = "interfaces/Python/dependencies/lib/libbqpd.a"
+BQPD = "dependencies/lib/libbqpd.a"
 # MUMPS
-MUMPS_INCLUDE_DIR = "interfaces/Python/dependencies/include"
-METIS_INCLUDE_DIR = "interfaces/Python/dependencies/include"
-METIS_LIBRARY = "interfaces/Python/dependencies/lib/libmetis.a"
-MUMPS_LIBRARY = "interfaces/Python/dependencies/lib/libdmumps.a"
-MUMPS_COMMON_LIBRARY = "interfaces/Python/dependencies/lib/libmumps_common.a"
-MUMPS_PORD_LIBRARY = "interfaces/Python/dependencies/lib/libpord.a"
-MUMPS_MPISEQ_LIBRARY = "interfaces/Python/dependencies/lib/libmpiseq.a"
-BLAS_LIBRARIES = "interfaces/Python/dependencies/lib/libblas.a"
-LAPACK_LIBRARIES = "interfaces/Python/dependencies/lib/liblapack.a"
+MUMPS_INCLUDE_DIR = "dependencies/include"
+METIS_INCLUDE_DIR = "dependencies/include"
+METIS_LIBRARY = "dependencies/lib/libmetis.a"
+MUMPS_LIBRARY = "dependencies/lib/libdmumps.a"
+MUMPS_COMMON_LIBRARY = "dependencies/lib/libmumps_common.a"
+MUMPS_PORD_LIBRARY = "dependencies/lib/libpord.a"
+MUMPS_MPISEQ_LIBRARY = "dependencies/lib/libmpiseq.a"
+BLAS_LIBRARIES = "dependencies/lib/libblas.a"
+LAPACK_LIBRARIES = "dependencies/lib/liblapack.a"
 # HiGHS
-HIGHS_DIR = "interfaces/Python/dependencies/lib/cmake/highs"
+HIGHS_DIR = "dependencies/lib/cmake/highs"
