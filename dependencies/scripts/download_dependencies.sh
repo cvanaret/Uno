@@ -42,7 +42,5 @@ tar -xzvf UnoUtils.tar.gz
 pwd
 
 # delete unwanted directories
-rm -rf lib/cmake/cblas* lib/cmake/lapack* lib/pkgconfig
-
-# fix highs-targets.cmake
-sed -i '' 's/INTERFACE_LINK_LIBRARIES .*/INTERFACE_LINK_LIBRARIES "Threads::Threads"/' lib/cmake/highs/highs-targets.cmake
+# rm -rf lib/cmake/cblas* lib/cmake/lapack* lib/pkgconfig
+rm -rf lib/cmake lib/pkgconfig
