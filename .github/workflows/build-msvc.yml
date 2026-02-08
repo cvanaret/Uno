@@ -43,6 +43,7 @@ jobs:
       run: |
         VERSION_BQPD="1.0.0"
         VERSION_MUMPS="5.8.0"
+        VERSION_HIGHS="1.11.0"
         if [[ "${{matrix.architecture}}" == "x64" ]]; then
           PLATFORM="x86_64-w64-mingw32"
         else
@@ -51,9 +52,11 @@ jobs:
         choco install wget
         wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
         wget https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/MUMPS_static-v${VERSION_MUMPS}%2B0/MUMPS_static.v${VERSION_MUMPS}.$PLATFORM-libgfortran5.tar.gz
+        wget https://github.com/amontoison/HiGHS_static_jll.jl/releases/download/HiGHS_static-v${VERSION_HIGHS}%2B0/HiGHS_static.v${VERSION_HIGHS}.$PLATFORM-libgfortran5.tar.gz
         mkdir deps
         tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
         tar -xzvf MUMPS_static.v${VERSION_MUMPS}.$PLATFORM-libgfortran5.tar.gz -C deps
+        tar -xzvf HiGHS_static.v${VERSION_HIGHS}.$PLATFORM-libgfortran5.tar.gz -C deps
 
     - name: Install Fortran compiler
       uses: fortran-lang/setup-fortran@main
@@ -70,16 +73,17 @@ jobs:
                 -DCMAKE_C_COMPILER=cl ^
                 -DCMAKE_CXX_COMPILER=cl ^
                 -DCMAKE_Fortran_COMPILER=ifx ^
-                -DMUMPS_INCLUDE_DIR=${{github.workspace}}\deps\include ^
-                -DMETIS_INCLUDE_DIR=${{github.workspace}}\deps\include ^
-                -DBQPD=${{github.workspace}}\deps\lib\libbqpd.a ^
-                -DMETIS_LIBRARY=${{github.workspace}}\deps\lib\libmetis.a ^
-                -DMUMPS_LIBRARY=${{github.workspace}}\deps\lib\libdmumps.a ^
-                -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\deps\lib\libmumps_common.a ^
-                -DMUMPS_PORD_LIBRARY=${{github.workspace}}\deps\lib\libpord.a ^
-                -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\deps\lib\libmpiseq.a ^
-                -DBLAS_LIBRARIES=${{github.workspace}}\deps\lib\libblas.a ^
-                -DLAPACK_LIBRARIES=${{github.workspace}}\deps\lib\liblapack.a ^
+                -DMUMPS_INCLUDE_DIR="${{github.workspace}}\deps\include" ^
+                -DMETIS_INCLUDE_DIR="${{github.workspace}}\deps\include" ^
+                -DBQPD="${{github.workspace}}\deps\lib\libbqpd.a" ^
+                -DMETIS_LIBRARY="${{github.workspace}}\deps\lib\libmetis.a" ^
+                -DMUMPS_LIBRARY="${{github.workspace}}\deps\lib\libdmumps.a" ^
+                -DMUMPS_COMMON_LIBRARY="${{github.workspace}}\deps\lib\libmumps_common.a" ^
+                -DMUMPS_PORD_LIBRARY="${{github.workspace}}\deps\lib\libpord.a" ^
+                -DMUMPS_MPISEQ_LIBRARY="${{github.workspace}}\deps\lib\libmpiseq.a" ^
+                -DBLAS_LIBRARIES="${{github.workspace}}\deps\lib\libblas.a" ^
+                -DLAPACK_LIBRARIES="${{github.workspace}}\deps\lib\liblapack.a" ^
+                -DHIGHS_DIR="${{github.workspace}}\deps" ^
                 -DBUILD_STATIC_LIBS=ON ^
                 -DBUILD_SHARED_LIBS=OFF .
         ) else (
