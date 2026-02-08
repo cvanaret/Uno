@@ -114,3 +114,8 @@ if __name__ == '__main__':
 	uno_solver.set_preset("ipopt")
 	uno_solver.set_option("linear_solver", "MUMPS")
 	result = uno_solver.optimize(model)
+	
+	# solve with the filterslp preset
+	uno_solver.set_preset("filterslp")
+	uno_solver.set_option("LP_solver", "HiGHS")
+	result = uno_solver.optimize(model)

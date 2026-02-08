@@ -39,16 +39,14 @@ if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
    message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
 endif()
 
-# fix paths of BLAS and LAPACK
+# convert relative paths of BLAS and LAPACK to absolute paths
 if(BLAS_LIBRARIES)
 	get_filename_component(ABSOLUTE_BLAS_LIBRARIES ${BLAS_LIBRARIES} ABSOLUTE)
 	set(BLAS_LIBRARIES ${ABSOLUTE_BLAS_LIBRARIES} CACHE STRING "BLAS libraries" FORCE)
-	message(STATUS "BLAS_LIBRARIES = ${BLAS_LIBRARIES}")
 endif()
 if(LAPACK_LIBRARIES)
 	get_filename_component(ABSOLUTE_LAPACK_LIBRARIES ${LAPACK_LIBRARIES} ABSOLUTE)
 	set(LAPACK_LIBRARIES ${ABSOLUTE_LAPACK_LIBRARIES} CACHE STRING "LAPACK libraries" FORCE)
-	message(STATUS "LAPACK_LIBRARIES = ${LAPACK_LIBRARIES}")
 endif()
 
 # determine whether a Fortran compiler is required, based on the available optional dependencies
