@@ -172,6 +172,7 @@ cmake .. \
     -DHIPO=ON \
     -DBUILD_TESTING=OFF \
     -DUILD_CXX_EXE=OFF \
+    -DMETIS_ROOT=${prefix} \
     -DBLAS_LIBRARIES="${prefix}/lib/libcblas.a;${prefix}/lib/libblas.a;${libdir}/${LIBGFORTRAN}.${dlext}"
 
 if [[ "${target}" == *-linux-* ]]; then
