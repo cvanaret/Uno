@@ -40,14 +40,14 @@ if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
 endif()
 
 # fix paths of BLAS and LAPACK
-if(BLAS_LIBRARIES)
-	get_filename_component(BLAS_LIBRARIES ${BLAS_LIBRARIES} ABSOLUTE)
-	message(STATUS "BLAS_LIBRARIES = ${BLAS_LIBRARIES}")
-endif()
-if(LAPACK_LIBRARIES)
-	get_filename_component(LAPACK_LIBRARIES ${LAPACK_LIBRARIES} ABSOLUTE)
-	message(STATUS "LAPACK_LIBRARIES = ${LAPACK_LIBRARIES}")
-endif()
+#if(BLAS_LIBRARIES)
+#	get_filename_component(BLAS_LIBRARIES ${BLAS_LIBRARIES} ABSOLUTE)
+#	message(STATUS "BLAS_LIBRARIES = ${BLAS_LIBRARIES}")
+#endif()
+#if(LAPACK_LIBRARIES)
+#	get_filename_component(LAPACK_LIBRARIES ${LAPACK_LIBRARIES} ABSOLUTE)
+#	message(STATUS "LAPACK_LIBRARIES = ${LAPACK_LIBRARIES}")
+#endif()
 
 # determine whether a Fortran compiler is required, based on the available optional dependencies
 find_library(HSL hsl)
@@ -144,14 +144,14 @@ if(HSL OR MA57)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
 
    find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+   list(APPEND LIBRARIES BLAS::BLAS)
 endif()
 if(HSL OR MA27)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA27/MA27Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA27SolverTests.cpp)
 
    find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+   list(APPEND LIBRARIES BLAS::BLAS)
 endif()
 
 # METIS
@@ -215,10 +215,10 @@ if(MUMPS_LIBRARY)
    list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
 
    find_package(LAPACK REQUIRED)
-   list(APPEND LIBRARIES ${LAPACK_LIBRARIES})
+   list(APPEND LIBRARIES LAPACK::LAPACK)
 
    find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+   list(APPEND LIBRARIES BLAS::BLAS)
 
    find_package(OpenMP REQUIRED)
    list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
