@@ -28,32 +28,19 @@ REPO="https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-${VERSION}%2
 ASSET_NAME="BQPD.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
-mkdir bqpd && cd bqpd
-curl -L -o bqpd.tar.gz "$ASSET_URL"
-tar -xzvf bqpd.tar.gz
+curl -L -o BQPD.tar.gz "$ASSET_URL"
+tar -xzvf BQPD.tar.gz
 pwd
-cd ..
 
-# download MUMPS
-VERSION="v5.8.0"
-REPO="https://github.com/amontoison/MUMPS_static_jll.jl/releases/download/MUMPS_static-${VERSION}%2B0"
-ASSET_NAME="MUMPS_static.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
+# download MUMPS (+ METIS, BLAS and LAPACK) and HiGHS
+VERSION="2026.2.9"
+REPO="https://github.com/amontoison/UnoUtils_jll.jl/releases/download/UnoUtils-v${VERSION}%2B0"
+ASSET_NAME="UnoUtils.v${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
+<<<<<<< HEAD
 mkdir mumps && cd mumps
 curl -L -o mumps.tar.gz "$ASSET_URL"
 tar -xzvf mumps.tar.gz
-pwd
-cd ..
-
-# download HiGHS
-VERSION="v1.11.0"
-REPO="https://github.com/amontoison/HiGHS_static_jll.jl/releases/download/HiGHS_static-${VERSION}%2B0"
-ASSET_NAME="HiGHS_static.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
-ASSET_URL="${REPO}/${ASSET_NAME}"
-echo "Downloading: ${ASSET_URL}"
-mkdir highs && cd highs
-curl -L -o highs.tar.gz "$ASSET_URL"
-tar -xzvf highs.tar.gz
 pwd
 cd ..
