@@ -38,9 +38,10 @@ REPO="https://github.com/amontoison/UnoUtils_jll.jl/releases/download/UnoUtils-v
 ASSET_NAME="UnoUtils.v${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
-<<<<<<< HEAD
-mkdir mumps && cd mumps
-curl -L -o mumps.tar.gz "$ASSET_URL"
-tar -xzvf mumps.tar.gz
+curl -L -o UnoUtils.tar.gz "$ASSET_URL"
+tar -xzvf UnoUtils.tar.gz
 pwd
-cd ..
+
+# delete unwanted directories
+rm -rf lib/cmake
+rm -rf lib/pkgconfig
