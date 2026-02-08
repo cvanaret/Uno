@@ -2,7 +2,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.2.7"
+version = v"2026.2.8"
 
 # Collection of sources
 sources = [
@@ -28,9 +28,12 @@ sources = [
     # MUMPS v5.8.2
     ArchiveSource("https://mumps-solver.org/MUMPS_5.8.2.tar.gz",
                   "eb515aa688e6dbab414bb6e889ff4c8b23f1691a843c68da5230a33ac4db7039"),
-    # HiGHS v1.13.0
+    # HiGHS v1.12.0
     GitSource("https://github.com/ERGO-Code/HiGHS.git",
-              "1bce6d5c801398dab6d2e6f98ac8935f3d4eec9c"),
+              "755a8e027a99a8d4ecf153a8dde4b2a767cdf384"),
+    # HiGHS v1.13.0
+    # GitSource("https://github.com/ERGO-Code/HiGHS.git",
+    #           "1bce6d5c801398dab6d2e6f98ac8935f3d4eec9c"),
 ]
 
 # Bash recipe for building across all platforms
