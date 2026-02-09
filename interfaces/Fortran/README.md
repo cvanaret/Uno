@@ -1,10 +1,20 @@
 ## Uno's Fortran interface: how to use Uno from Fortran
 
-Uno's Fortran interface provides full access to the Uno C API through a lightweight wrapper based on `iso_c_binding`.
-It exposes the same functionality as the C interface, including model creation, solver configuration, callback registration, and solution inspection, with some convenient Fortran wrappers for handling strings.
+Uno provides a Fortran interface built on top of the Uno C API using the module `iso_c_binding`.
 
-The interface is split into two files: `uno-c.f90` and `uno_fortran.f90`.
-Include them in your source code and link against the Uno library (`libuno`).
+To balance completeness and Fortran usability, the interface is split into two files:
+
+* [`uno_c.f90`](uno_c.f90)
+* [`uno_fortran.f90`](uno_fortran.f90)
+
+The file `uno_c.f90` defines low-level C bindings for all routines that do not involve C strings, together with all Uno constants, enumerations, and type definitions.
+Functions whose signatures contain `char *` arguments or return values are intentionally excluded.
+
+The file `uno_fortran.f90` complements this layer by providing Fortran-friendly wrappers for all string-based C API routines.
+These wrappers handle the conversion between Fortran `character` variables and null-terminated C strings, as well as the associated memory management.
+
+Used together, `uno_c.f90` and `uno_fortran.f90` provide complete access to the Uno C API.
+Both files must be included when using Uno from Fortran and linked against the Uno library (`libuno`).
 
 An example program is available in [`example_uno.f90`](example_uno.f90).
 
@@ -267,12 +277,3 @@ real(c_double) :: cpu_time
 number_iterations  = uno_get_number_iterations(solver)
 cpu_time = uno_get_cpu_time(solver)
 ```
-
-### Notes
-
-The Fortran interface in `uno_c.f90` mirrors the Uno C API for all routines / functions without C-strings, including constants, while `uno_fortran.f90` provides a Fortran-friendly variant for a subset of routines that handle C `char*` inputs or outputs.
-
-The only difference that necessitates `uno_f.f90` is the handling of strings: C `char*` arguments are converted internally and exposed as standard Fortran `character(len=*)` or allocatable strings.
-Null-termination is managed automatically.
-
-For a complete list of available routines, functions and constants, see [`uno_c.f90`](uno_c.f90) and [`uno_fortran.f90`](uno_fortran.f90).
