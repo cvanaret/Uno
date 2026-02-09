@@ -47,5 +47,4 @@ BLAS_LIBRARIES = "dependencies/lib/libblas.a"
 LAPACK_LIBRARIES = "dependencies/lib/liblapack.a"
 # HiGHS
 # HIGHS_DIR = "dependencies/lib/cmake/highs"
-HIGHS_INCLUDE_DIR = "dependencies/lib/cmake/highs"
-HIGHS_INCLUDE_DIR = "dependencies/lib/cmake/highs"
+HIGHS = "dependencies/lib/libhighs.a"

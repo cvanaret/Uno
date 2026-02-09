@@ -182,7 +182,8 @@ if(HIGHS)
    # add a preprocessor definition
    add_definitions("-D HAS_HIGHS")
    # include the corresponding directory
-   set(DIRECTORIES ${DIRECTORIES} ${HIGHS}/../include/highs)
+   get_filename_component(HIGHS_DIRECTORY ${HIGHS} DIRECTORY)
+   set(DIRECTORIES ${DIRECTORIES} ${HIGHS_DIRECTORY}/../include/highs)
    message(STATUS "Found HIGHS")
 endif()
 
