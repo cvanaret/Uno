@@ -2,7 +2,7 @@
 ! Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 !==============================================================
-!  UNO C API Fortran interfaces
+! Fortran interfaces -- uno_c.f90
 !==============================================================
 
 use, intrinsic :: iso_c_binding

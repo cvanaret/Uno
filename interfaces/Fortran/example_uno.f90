@@ -230,7 +230,7 @@ contains
         bind(C)
         integer(uno_int), value :: number_variables, number_constraints
         real(c_double), intent(in) :: x(*)
-        logical, value :: evaluate_at_x
+        logical(c_bool), value :: evaluate_at_x
         real(c_double), intent(in) :: vector(*)
         real(c_double), intent(out) :: result(*)
         type(c_ptr), value :: user_data
@@ -247,7 +247,7 @@ contains
         bind(C)
         integer(uno_int), value :: number_variables, number_constraints
         real(c_double), intent(in) :: x(*)
-        logical, value :: evaluate_at_x
+        logical(c_bool), value :: evaluate_at_x
         real(c_double), intent(in) :: vector(*)
         real(c_double), intent(out) :: result(*)
         type(c_ptr), value :: user_data
@@ -280,13 +280,13 @@ contains
                                               objective_multiplier, multipliers, vector, result, user_data) result(res) bind(C)
         integer(uno_int), value :: number_variables, number_constraints
         real(c_double), intent(in) :: x(*)
-        logical, value :: evaluate_at_x
+        logical(c_bool), value :: evaluate_at_x
         real(c_double), value :: objective_multiplier
         real(c_double), intent(in) :: multipliers(*), vector(*)
         real(c_double), intent(out) :: result(*)
         type(c_ptr), value :: user_data
         integer(uno_int) :: res
-        real(c_double) :: hessian00, hessian10, hessian11
+        real(c_double) :: hessian11, hessian12, hessian22
 
         hessian11 = objective_multiplier * (1200.0d0 * x(1)**2 - 400.0d0 * x(2) + 2.0d0)
         hessian12 = -400.0d0 * objective_multiplier * x(1) - multipliers(1)

@@ -1,3 +1,10 @@
+! Copyright (c) 2026 Alexis Montoison and Charlie Vanaret
+! Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+!==============================================================
+! Fortran interfaces -- uno_fortran.f90
+!==============================================================
+
 !---------------------------------------------
 ! uno_create_model
 !---------------------------------------------
