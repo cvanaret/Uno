@@ -2,7 +2,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.2.10"
+version = v"2026.2.11"
 
 # Collection of sources
 sources = [
@@ -66,7 +66,7 @@ cd $WORKSPACE/srcdir/lapack
 mkdir build
 cd build
 cmake .. \
- -DCBLAS=OFF \
+ -DCBLAS=ON \
  -DLAPACKE=OFF \
  -DCMAKE_INSTALL_PREFIX=${prefix} \
  -DCMAKE_TOOLCHAIN_FILE="${CMAKE_TARGET_TOOLCHAIN}" \
@@ -196,6 +196,7 @@ platforms = expand_gfortran_versions(platforms)
 products = [
     FileProduct("lib/libmetis.a", :libmetis_a),
     FileProduct("lib/libblas.a", :libblas_a),
+    FileProduct("lib/libcblas.a", :libcblas_a),
     FileProduct("lib/liblapack.a", :liblapack_a),
     # FileProduct("lib/libopenblas.a", :libopenblas_a),
     FileProduct("lib/libpord.a", :libpord_a),
