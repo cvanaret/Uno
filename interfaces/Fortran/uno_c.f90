@@ -27,13 +27,9 @@ real(c_double), parameter :: UNO_MULTIPLIER_NEGATIVE = -1.0_c_double
 !---------------------------------------------
 ! Problem type
 !---------------------------------------------
-character(c_char), parameter :: UNO_PROBLEM_LINEAR(3)    = [ 'L', 'P', c_null_char ]
-character(c_char), parameter :: UNO_PROBLEM_QUADRATIC(3) = [ 'Q', 'P', c_null_char ]
-character(c_char), parameter :: UNO_PROBLEM_NONLINEAR(4) = [ 'N', 'L', 'P', c_null_char ]
-
-character(len=2), parameter :: UNO_PROBLEM_LINEAR_F = "LP"
-character(len=2), parameter :: UNO_PROBLEM_QUADRATIC_F = "QP"
-character(len=3), parameter :: UNO_PROBLEM_NONLINEAR_F = "NLP"
+character(len=2), parameter :: UNO_PROBLEM_LINEAR = "LP"
+character(len=2), parameter :: UNO_PROBLEM_QUADRATIC = "QP"
+character(len=3), parameter :: UNO_PROBLEM_NONLINEAR = "NLP"
 
 !---------------------------------------------
 ! Base indexing style

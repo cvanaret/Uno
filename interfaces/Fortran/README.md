@@ -3,7 +3,7 @@
 Uno's Fortran interface provides full access to the Uno C API through a lightweight wrapper based on `iso_c_binding`.
 It exposes the same functionality as the C interface, including model creation, solver configuration, callback registration, and solution inspection, with some convenient Fortran wrappers for handling strings.
 
-The interface is split into two files: `uno.f90` and `uno_f.f90`.
+The interface is split into two files: `uno-c.f90` and `uno_fortran.f90`.
 Include them in your source code and link against the Uno library (`libuno`).
 
 An example program is available in [`example_uno.f90`](example_uno.f90).
@@ -13,10 +13,10 @@ An example program is available in [`example_uno.f90`](example_uno.f90).
 Start by including the Fortran interface:
 
 ```fortran
-include 'uno.f90'
+include 'uno_c.f90'
 ...
 contains
-  include 'uno_f.f90'
+  include 'uno_fortran.f90'
 ...
 ```
 
@@ -26,9 +26,9 @@ You can also wrap the interface in a module for cleaner `use` statements:
 
 ```fortran
 module uno
-  include 'uno.f90'
+  include 'uno_c.f90'
 contains
-  include 'uno_f.f90'
+  include 'uno_fortran.f90'
 end module
 ```
 
@@ -53,9 +53,9 @@ Building an optimization model is incremental and starts with the variables:
 
 ```fortran
 type(c_ptr) :: model
-model = uno_create_model_f(problem_type, number_variables, &
-                           variables_lower_bounds, variables_upper_bounds, &
-                           base_indexing)
+model = uno_create_model(problem_type, number_variables, &
+                         variables_lower_bounds, variables_upper_bounds, &
+                         base_indexing)
 ```
 
 The following optional elements can be added to the model separately:
@@ -164,10 +164,10 @@ real(c_double) :: primal_tolerance = 1.0d-6
 logical(c_bool) :: print_solution = .true.
 character(len=*) :: hessian_model = "exact"
 
-success = uno_set_solver_integer_option_f(solver, "max_iterations", max_iterations)
-success = uno_set_solver_double_option_f(solver, "primal_tolerance", primal_tolerance)
-success = uno_set_solver_bool_option_f(solver, "print_solution", print_solution)
-success = uno_set_solver_string_option_f(solver, "hessian_model", hessian_model)
+success = uno_set_solver_integer_option(solver, "max_iterations", max_iterations)
+success = uno_set_solver_double_option(solver, "primal_tolerance", primal_tolerance)
+success = uno_set_solver_bool_option(solver, "print_solution", print_solution)
+success = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
 ```
 
 Loading options from a file:
@@ -176,7 +176,7 @@ Loading options from a file:
 logical(c_bool) :: success
 character(len=*) :: option_file = "uno.opt"
 
-success = uno_load_solver_option_file_f(solver, option_file)
+success = uno_load_solver_option_file(solver, option_file)
 ```
 
 Getting option values:
@@ -186,16 +186,16 @@ integer(uno_int) :: max_iterations
 real(c_double) :: primal_tolerance
 logical(c_bool) :: print_solution
 
-max_iterations = uno_get_solver_integer_option_f(solver, "max_iterations")
-primal_tolerance = uno_get_solver_double_option_f(solver, "primal_tolerance")
-print_solution = uno_get_solver_bool_option_f(solver, "print_solution")
+max_iterations = uno_get_solver_integer_option(solver, "max_iterations")
+primal_tolerance = uno_get_solver_double_option(solver, "primal_tolerance")
+print_solution = uno_get_solver_bool_option(solver, "print_solution")
 ```
 
 Setting a preset:
 
 ```fortran
 logical(c_bool) :: success
-success = uno_set_solver_preset_f(solver, "filtersqp")
+success = uno_set_solver_preset(solver, "filtersqp")
 ```
 
 ### Solving the model
@@ -270,10 +270,9 @@ cpu_time = uno_get_cpu_time(solver)
 
 ### Notes
 
-The Fortran interface in `uno.f90` mirrors the Uno C API, including constants, while `uno_f.f90` provides a Fortran-friendly variant for a subset of routines that handle C `char*` inputs or outputs.
+The Fortran interface in `uno_c.f90` mirrors the Uno C API for all routines / functions without C-strings, including constants, while `uno_fortran.f90` provides a Fortran-friendly variant for a subset of routines that handle C `char*` inputs or outputs.
 
 The only difference that necessitates `uno_f.f90` is the handling of strings: C `char*` arguments are converted internally and exposed as standard Fortran `character(len=*)` or allocatable strings.
 Null-termination is managed automatically.
-Routines using this conversion have the suffix `_f` to distinguish them from the direct C bindings.
 
-For a complete list of available routines and constants, see [`uno.f90`](uno.f90) and [`uno_f.f90`](uno_f.f90).
+For a complete list of available routines, functions and constants, see [`uno_c.f90`](uno_c.f90) and [`uno_fortran.f90`](uno_fortran.f90).
