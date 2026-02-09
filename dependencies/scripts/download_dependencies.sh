@@ -31,7 +31,7 @@ curl -L -o BQPD.tar.gz "$ASSET_URL"
 tar -xzvf BQPD.tar.gz
 pwd
 
-# download MUMPS (+ METIS, BLAS and LAPACK) and HiGHS
+# download UnoUtils: MUMPS (+ METIS, BLAS and LAPACK) and HiGHS
 VERSION="2026.2.10"
 REPO="https://github.com/amontoison/UnoUtils_jll.jl/releases/download/UnoUtils-v${VERSION}%2B0"
 ASSET_NAME="UnoUtils.v${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
@@ -44,3 +44,14 @@ pwd
 # delete unwanted directories
 # rm -rf lib/cmake/cblas* lib/cmake/lapack* lib/pkgconfig
 rm -rf lib/cmake lib/pkgconfig
+
+# download HiGHS
+VERSION="v1.11.0"
+REPO="https://github.com/amontoison/HiGHS_static_jll.jl/releases/download/HiGHS_static-${VERSION}%2B0"
+ASSET_NAME="HiGHS_static.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
+ASSET_URL="${REPO}/${ASSET_NAME}"
+echo "Downloading: ${ASSET_URL}"
+curl -L -o highs.tar.gz "$ASSET_URL"
+# overwrite cmake subdirectory
+tar -xvf highs.tar.gz lib/cmake
+pwd
