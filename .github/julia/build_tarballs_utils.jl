@@ -2,7 +2,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.2.9"
+version = v"2026.2.10"
 
 # Collection of sources
 sources = [
@@ -66,7 +66,7 @@ cd $WORKSPACE/srcdir/lapack
 mkdir build
 cd build
 cmake .. \
- -DCBLAS=ON \
+ -DCBLAS=OFF \
  -DLAPACKE=OFF \
  -DCMAKE_INSTALL_PREFIX=${prefix} \
  -DCMAKE_TOOLCHAIN_FILE="${CMAKE_TARGET_TOOLCHAIN}" \
@@ -159,21 +159,17 @@ cp lib/*.a ${prefix}/lib
 cd $WORKSPACE/srcdir/HiGHS
 mkdir build
 cd build
-if [[ "${target}" == *-mingw* ]]; then
-    LIBGFORTRAN=libgfortran-5
-else
-    LIBGFORTRAN=libgfortran
-fi
 cmake .. \
     -DCMAKE_INSTALL_PREFIX=${prefix} \
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
     -DHIPO=ON \
+    -DBUILD_EXAMPLES=OFF \
     -DBUILD_TESTING=OFF \
     -DBUILD_CXX_EXE=OFF \
     -DMETIS_ROOT=${prefix} \
-    -DBLAS_LIBRARIES="${prefix}/lib/libcblas.a;${prefix}/lib/libblas.a;${libdir}/${LIBGFORTRAN}.${dlext}"
+    -DBLAS_LIBRARIES=${prefix}/lib/libblas.a
 
 if [[ "${target}" == *-linux-* ]]; then
         make -j ${nproc}
@@ -185,6 +181,10 @@ else
     fi
 fi
 make install
+
+# Clean
+rm -r ${prefix}/bin
+rm ${prefix}/lib/libsmumps.a
 """
 
 # These are the platforms we will build for by default, unless further
@@ -194,10 +194,8 @@ platforms = expand_gfortran_versions(platforms)
 
 # The products that we will ensure are always built
 products = [
-    FileProduct("lib/libbqpd.a", :libbqpd_a),
     FileProduct("lib/libmetis.a", :libmetis_a),
     FileProduct("lib/libblas.a", :libblas_a),
-    FileProduct("lib/libcblas.a", :libcblas_a),
     FileProduct("lib/liblapack.a", :liblapack_a),
     # FileProduct("lib/libopenblas.a", :libopenblas_a),
     FileProduct("lib/libpord.a", :libpord_a),
@@ -209,8 +207,6 @@ products = [
 
 # Dependencies that must be installed before this package can be built
 dependencies = [
-    BuildDependency(PackageSpec(name="BQPD_jll", uuid="1325ac01-0a49-589f-8355-43321054aaab")),
-    HostBuildDependency(PackageSpec(name="CompilerSupportLibraries_jll", uuid="e66e0078-7015-5450-92f7-15fbd957f2ae")),
     HostBuildDependency(PackageSpec(name="CMake_jll", uuid="3f4e10e2-61f2-5801-8945-23b9d642d0e6")),
 ]
 
