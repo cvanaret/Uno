@@ -171,15 +171,19 @@ if(BQPD)
 endif()
 
 # HiGHS
-find_package(HIGHS)
-if(HIGHS_FOUND)
+find_library(HIGHS highs)
+if(HIGHS)
    list(APPEND UNO_SOURCE_FILES
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSEvaluationSpace.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
-   list(APPEND LIBRARIES highs::highs)
+   # add the library
+   set(LIBRARIES ${LIBRARIES} ${HIGHS})
+   # add a preprocessor definition
    add_definitions("-D HAS_HIGHS")
-   message(STATUS "Found HiGHS")
+   # include the corresponding directory
+   set(DIRECTORIES ${DIRECTORIES} ${HIGHS}/../include/highs)
+   message(STATUS "Found HIGHS")
 endif()
 
 # MUMPS
