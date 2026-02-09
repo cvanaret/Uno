@@ -63,6 +63,13 @@ namespace uno {
       this->solution.resize(dimension);
    }
 
+   void COOEvaluationSpace::evaluate_current_objective(const Model& model, const Vector<double>& primals) {}
+   void COOEvaluationSpace::evaluate_current_constraints(const Model& model, const Vector<double>& primals) {}
+   void COOEvaluationSpace::evaluate_current_objective_gradient(const Model& model, const Vector<double>& primals) {}
+   void COOEvaluationSpace::evaluate_trial_objective(const Model& model, const Vector<double>& primals) {}
+   void COOEvaluationSpace::evaluate_trial_constraints(const Model& model, const Vector<double>& primals) {}
+   void COOEvaluationSpace::evaluate_trial_objective_gradient(const Model& model, const Vector<double>& primals) {}
+
    void COOEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) {
       problem.evaluate_jacobian(primals, this->matrix_values.data() + this->number_hessian_nonzeros);
    }
@@ -103,8 +110,9 @@ namespace uno {
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       if (warmstart_information.new_iterate) {
-         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data());
-         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints);
+         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data(),
+            this->current_evaluations);
+         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints, this->current_evaluations);
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
             DEBUG << "Performing symbolic analysis of the indefinite system\n";

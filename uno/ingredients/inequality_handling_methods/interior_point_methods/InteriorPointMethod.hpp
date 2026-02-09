@@ -122,7 +122,8 @@ namespace uno {
       // TODO: enforce linear constraints at initial point
       // resize the initial iterate
       initial_iterate.set_number_variables(this->barrier_problem->number_variables);
-      this->barrier_problem->generate_initial_iterate(initial_iterate);
+      const auto& evaluation_space = this->get_evaluation_space();
+      this->barrier_problem->generate_initial_iterate(initial_iterate, evaluation_space.current_evaluations);
       this->evaluate_progress_measures(*this->barrier_problem, initial_iterate);
    }
 

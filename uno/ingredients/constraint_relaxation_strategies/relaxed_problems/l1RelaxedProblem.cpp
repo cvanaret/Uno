@@ -40,9 +40,8 @@ namespace uno {
       this->proximal_center = proximal_center;
    }
 
-   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
-      iterate.evaluate_constraints(this->model);
-      constraints = iterate.evaluations.constraints;
+   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints, const Evaluations& evaluations) const {
+      constraints = evaluations.constraints;
 
       // add the contribution of the elastic variables
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
@@ -53,13 +52,12 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
+   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, const Evaluations& evaluations) const {
       // scale nabla f(x) by rho
       if (this->objective_multiplier != 0.) {
-         iterate.evaluate_objective_gradient(this->model);
          // TODO change this
          for (size_t index: Range(this->model.number_variables)) {
-            objective_gradient[index] = this->objective_multiplier * iterate.evaluations.objective_gradient[index];
+            objective_gradient[index] = this->objective_multiplier * evaluations.objective_gradient[index];
          }
       }
       else {
@@ -150,16 +148,16 @@ namespace uno {
    }
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
-   void l1RelaxedProblem::evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
-         const EvaluationSpace& evaluation_space, Iterate& iterate) const {
+   void l1RelaxedProblem::evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient, Iterate& iterate,
+         Evaluations& evaluations) const {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // objective gradient
-      lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
+      lagrangian_gradient.objective_contribution = evaluations.objective_gradient;
 
       // ∇c(x_k) λ_k
-      evaluation_space.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints,
+      evaluations.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints,
          lagrangian_gradient.constraints_contribution);
       lagrangian_gradient.constraints_contribution = -lagrangian_gradient.constraints_contribution;
 

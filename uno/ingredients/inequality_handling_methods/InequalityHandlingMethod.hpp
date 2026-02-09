@@ -66,7 +66,7 @@ namespace uno {
 
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, const EvaluationSpace& evaluation_space, Iterate& current_iterate, Iterate& trial_iterate,
+         const Subproblem& subproblem, EvaluationSpace& evaluation_space, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double step_length, UserCallbacks& user_callbacks);
    };
 } // namespace

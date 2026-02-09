@@ -11,9 +11,11 @@ namespace uno {
    Iterate::Iterate(size_t number_variables, size_t number_constraints) :
          number_variables(number_variables), number_constraints(number_constraints),
          primals(number_variables), multipliers(number_variables, number_constraints),
-         evaluations(number_variables, number_constraints), residuals(number_variables) {
+         // evaluations(number_variables, number_constraints),
+         residuals(number_variables) {
    }
 
+   /*
    void Iterate::evaluate_objective(const Model& model) {
       if (!this->is_objective_computed) {
          // evaluate the objective
@@ -49,11 +51,12 @@ namespace uno {
          this->is_objective_gradient_computed = true;
       }
    }
+   */
 
    void Iterate::set_number_variables(size_t new_number_variables) {
       this->number_variables = new_number_variables;
       this->primals.resize(new_number_variables);
-      this->evaluations.objective_gradient.reserve(new_number_variables);
+      //this->evaluations.objective_gradient.reserve(new_number_variables);
       this->residuals.lagrangian_gradient.resize(new_number_variables);
    }
 
@@ -62,7 +65,7 @@ namespace uno {
       stream << "            ┌ Constraint: " << iterate.multipliers.constraints << '\n';
       stream << "Multipliers │ Lower bound: " << iterate.multipliers.lower_bounds << '\n';
       stream << "            └ Upper bound: " << iterate.multipliers.upper_bounds << '\n';
-      stream << "Objective value: " << iterate.evaluations.objective << '\n';
+      //stream << "Objective value: " << iterate.evaluations.objective << '\n';
       stream << "Primal feasibility: " << iterate.primal_feasibility << '\n';
 
       stream << "          ┌ Stationarity: " << iterate.residuals.stationarity << '\n';

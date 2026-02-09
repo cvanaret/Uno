@@ -4,10 +4,13 @@
 #ifndef UNO_EVALUATIONSPACE_H
 #define UNO_EVALUATIONSPACE_H
 
+#include "Evaluations.hpp"
+
 namespace uno {
    // forward declaration
    template <typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
+   class Model;
    class OptimizationProblem;
    class Statistics;
    class Subproblem;

@@ -22,8 +22,6 @@ namespace uno {
       Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
       double objective_multiplier{1.};
 
-      // evaluations
-      Evaluations evaluations;
       // lazy evaluation flags
       bool is_objective_computed{false};
       bool are_constraints_computed{false};
@@ -45,10 +43,6 @@ namespace uno {
       Iterate(const Iterate& other) = default;
       Iterate(Iterate&& other) = default;
       Iterate& operator=(Iterate&& other) = default;
-
-      void evaluate_objective(const Model& model);
-      void evaluate_constraints(const Model& model);
-      void evaluate_objective_gradient(const Model& model);
 
       void set_number_variables(size_t number_variables);
 

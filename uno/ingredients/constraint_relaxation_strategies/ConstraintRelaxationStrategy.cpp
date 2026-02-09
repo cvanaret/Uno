@@ -42,18 +42,19 @@ namespace uno {
    // - for KKT conditions: with standard multipliers and current objective multiplier
    // - for FJ conditions: with standard multipliers and 0 objective multiplier
    // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
-   void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate) const {
+   void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate,
+         const Evaluations& evaluations) const {
       iterate.residuals.stationarity = OptimizationProblem::stationarity_error(iterate.residuals.lagrangian_gradient,
          problem.get_objective_multiplier(), this->residual_norm);
 
       // constraint violation of the original problem
-      iterate.primal_feasibility = problem.model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
+      iterate.primal_feasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
 
       // complementarity error
       constexpr double shift_value = 0.;
       // TODO preallocate constraints
       Vector<double> constraints(problem.number_constraints);
-      problem.evaluate_constraints(iterate, constraints);
+      problem.evaluate_constraints(iterate, constraints, evaluations);
       iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, constraints,
          iterate.multipliers, shift_value, this->residual_norm);
 

@@ -22,6 +22,13 @@ namespace uno {
 
       void initialize(const Subproblem& subproblem);
 
+      void evaluate_current_objective(const Model& model, const Vector<double>& primals) override;
+      void evaluate_current_constraints(const Model& model, const Vector<double>& primals) override;
+      void evaluate_current_objective_gradient(const Model& model, const Vector<double>& primals) override;
+      void evaluate_trial_objective(const Model& model, const Vector<double>& primals) override;
+      void evaluate_trial_constraints(const Model& model, const Vector<double>& primals) override;
+      void evaluate_trial_objective_gradient(const Model& model, const Vector<double>& primals) override;
+
       void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) override;
       void compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const override;
       void compute_jacobian_transposed_vector_product(const Vector<double>& vector,
@@ -42,7 +49,7 @@ namespace uno {
       Vector<uno_int> hessian_row_indices{};
       Vector<uno_int> hessian_column_indices{};
       Vector<double> hessian_values{};
-      bool evaluate_hessian{false};
+      bool hessian_evaluation_required{false};
 
    protected:
       void compute_gradients_sparsity(const Subproblem& subproblem);

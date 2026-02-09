@@ -41,7 +41,7 @@ namespace uno {
 
    void GlobalizationMechanism::set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) {
       if (iterate.is_objective_computed) {
-         statistics.set("Objective", iterate.evaluations.objective);
+         statistics.set("Objective", 0. /* TODO */);
       }
       if (model.is_constrained()) {
          statistics.set("Infeas", iterate.progress.infeasibility);

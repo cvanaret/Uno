@@ -232,10 +232,10 @@ namespace uno {
    double Subproblem::compute_predicted_infeasibility_reduction(const EvaluationSpace& evaluation_space, const Model& model,
          const Vector<double>& primal_direction, double step_length, Norm norm) const {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
-      const double current_constraint_violation = model.constraint_violation(this->current_iterate.evaluations.constraints, norm);
+      const double current_constraint_violation = model.constraint_violation(evaluation_space.current_evaluations.constraints, norm);
       Vector<double> result(model.number_constraints);
       evaluation_space.compute_jacobian_vector_product(primal_direction, result);
-      const double trial_linearized_constraint_violation = model.constraint_violation(this->current_iterate.evaluations.constraints +
+      const double trial_linearized_constraint_violation = model.constraint_violation(evaluation_space.current_evaluations.constraints +
          step_length * result, norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
    }
@@ -243,7 +243,7 @@ namespace uno {
    std::function<double(double)> Subproblem::compute_predicted_objective_reduction(const EvaluationSpace& evaluation_space,
          const Vector<double>& primal_direction, double step_length) const {
       // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
-      const double directional_derivative = dot(primal_direction, this->current_iterate.evaluations.objective_gradient);
+      const double directional_derivative = dot(primal_direction, evaluation_space.current_evaluations.objective_gradient);
       // if the regularized Hessian is positive definite (as it usually is in line-search methods), we can compute the
       // predicted reduction with only first-order information (the directional derivative)
       const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() && this->performs_primal_regularization();

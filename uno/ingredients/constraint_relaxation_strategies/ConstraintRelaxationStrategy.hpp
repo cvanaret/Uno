@@ -12,6 +12,8 @@
 namespace uno {
    // forward declarations
    class Direction;
+   class EvaluationCache;
+   class Evaluations;
    class Model;
    class Multipliers;
    class OptimizationProblem;
@@ -26,7 +28,7 @@ namespace uno {
       virtual ~ConstraintRelaxationStrategy();
 
       virtual void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         double trust_region_radius) = 0;
+         double trust_region_radius, EvaluationCache& evaluation_cache) = 0;
 
       // direction computation
       virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
@@ -37,9 +39,9 @@ namespace uno {
 
       // trial iterate acceptance
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, const Direction& direction,
-         double step_length, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
-      [[nodiscard]] virtual SolutionStatus check_termination(const Model& model, Iterate& iterate) = 0;
+         Iterate& trial_iterate, const Direction& direction, double step_length, EvaluationCache& evaluation_cache,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
+      [[nodiscard]] virtual SolutionStatus check_termination(const Model& model, Iterate& trial_iterate, Evaluations& evaluations) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
@@ -55,17 +57,17 @@ namespace uno {
       const size_t loose_tolerance_iteration_threshold;
       const double unbounded_objective_threshold;
 
-      void compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate) const;
+      void compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate, const Evaluations& evaluations) const;
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;
 
       template <typename Problem>
-      [[nodiscard]] SolutionStatus check_termination(const Problem& problem, Iterate& iterate);
+      [[nodiscard]] SolutionStatus check_termination(const Problem& problem, Iterate& iterate, double objective);
    };
 
    template <typename Problem>
-   SolutionStatus ConstraintRelaxationStrategy::check_termination(const Problem& problem, Iterate& iterate) {
-      if (iterate.is_objective_computed && iterate.evaluations.objective < this->unbounded_objective_threshold) {
+   SolutionStatus ConstraintRelaxationStrategy::check_termination(const Problem& problem, Iterate& iterate, double objective) {
+      if (iterate.is_objective_computed && objective < this->unbounded_objective_threshold) {
          return SolutionStatus::UNBOUNDED;
       }
 

@@ -27,15 +27,13 @@ namespace uno {
       return 1.;
    }
 
-   void OptimizationProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
-      iterate.evaluate_constraints(this->model);
-      constraints = iterate.evaluations.constraints;
+   void OptimizationProblem::evaluate_constraints(Iterate& /*iterate*/, Vector<double>& constraints, const Evaluations& evaluations) const {
+      constraints = evaluations.constraints;
    }
 
-   void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
-      iterate.evaluate_objective_gradient(this->model);
+   void OptimizationProblem::evaluate_objective_gradient(Iterate& /*iterate*/, double* objective_gradient, const Evaluations& evaluations) const {
       for (size_t index: Range(this->number_variables)) {
-         objective_gradient[index] = iterate.evaluations.objective_gradient[index];
+         objective_gradient[index] = evaluations.objective_gradient[index];
       }
    }
 
@@ -68,17 +66,18 @@ namespace uno {
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
    // split in two parts: objective contribution and constraints' contribution
    void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
-         const EvaluationSpace& evaluation_space, Iterate& iterate) const {
+         Iterate& iterate, Evaluations& evaluations) const {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // ∇f(x_k)
       for (size_t index: Range(this->number_variables)) {
-         lagrangian_gradient.objective_contribution[index] = iterate.evaluations.objective_gradient[index];
+         // TODO
+         lagrangian_gradient.objective_contribution[index] = evaluations.objective_gradient[index];
       }
 
       // ∇c(x_k) λ_k
-      evaluation_space.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints,
+      evaluations.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints,
          lagrangian_gradient.constraints_contribution);
       lagrangian_gradient.constraints_contribution = -lagrangian_gradient.constraints_contribution;
 
@@ -211,15 +210,13 @@ namespace uno {
    }
 
    // infeasibility measure: constraint violation
-   void OptimizationProblem::set_infeasibility_measure(Iterate& iterate, Norm norm) const {
-      iterate.evaluate_constraints(this->model);
-      iterate.progress.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, norm);
+   void OptimizationProblem::set_infeasibility_measure(Iterate& iterate, const Evaluations& evaluations, Norm norm) const {
+      iterate.progress.infeasibility = this->model.constraint_violation(evaluations.constraints, norm);
    }
 
    // objective measure: scaled objective
-   void OptimizationProblem::set_objective_measure(Iterate& iterate) const {
-      iterate.evaluate_objective(this->model);
-      const double objective = iterate.evaluations.objective;
+   void OptimizationProblem::set_objective_measure(Iterate& iterate, const Evaluations& evaluations) const {
+      const double objective = evaluations.objective;
       iterate.progress.objective = [=](double objective_multiplier) {
          return objective_multiplier * objective;
       };

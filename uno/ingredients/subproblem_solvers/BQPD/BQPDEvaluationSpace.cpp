@@ -11,6 +11,11 @@
 
 namespace uno {
    void BQPDEvaluationSpace::initialize(const Subproblem& subproblem) {
+      this->current_evaluations.constraints.resize(subproblem.number_constraints);
+      this->current_evaluations.objective_gradient.resize(subproblem.number_variables);
+      this->trial_evaluations.constraints.resize(subproblem.number_constraints);
+      this->trial_evaluations.objective_gradient.resize(subproblem.number_variables);
+
       this->constraints.resize(subproblem.number_constraints);
 
       // Jacobian + objective gradient
@@ -30,11 +35,35 @@ namespace uno {
          this->hessian_column_indices.resize(number_regularized_hessian_nonzeros);
          this->hessian_values.resize(number_regularized_hessian_nonzeros);
          subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
-                                                         this->hessian_column_indices.data(), Indexing::C_indexing);
+            this->hessian_column_indices.data(), Indexing::C_indexing);
       }
       else {
          // TODO allocate some vector to contain the result of Hv (see compute_hessian_quadratic_product)
       }
+   }
+
+   void BQPDEvaluationSpace::evaluate_current_objective(const Model& model, const Vector<double>& primals) {
+      this->current_evaluations.objective = model.evaluate_objective(primals);
+   }
+
+   void BQPDEvaluationSpace::evaluate_current_constraints(const Model& model, const Vector<double>& primals) {
+      model.evaluate_constraints(primals, this->current_evaluations.constraints);
+   }
+
+   void BQPDEvaluationSpace::evaluate_current_objective_gradient(const Model& model, const Vector<double>& primals) {
+      model.evaluate_objective_gradient(primals, this->current_evaluations.objective_gradient);
+   }
+
+   void BQPDEvaluationSpace::evaluate_trial_objective(const Model& model, const Vector<double>& primals) {
+      this->trial_evaluations.objective = model.evaluate_objective(primals);
+   }
+
+   void BQPDEvaluationSpace::evaluate_trial_constraints(const Model& model, const Vector<double>& primals) {
+      model.evaluate_constraints(primals, this->trial_evaluations.constraints);
+   }
+
+   void BQPDEvaluationSpace::evaluate_trial_objective_gradient(const Model& model, const Vector<double>& primals) {
+      model.evaluate_objective_gradient(primals, this->trial_evaluations.objective_gradient);
    }
 
    void BQPDEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) {
@@ -110,10 +139,10 @@ namespace uno {
       // evaluate the functions based on warmstart information
       // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
       if (warmstart_information.new_iterate) {
-         problem.evaluate_objective_gradient(current_iterate, this->gradients.data());
-         problem.evaluate_constraints(current_iterate, this->constraints);
+         problem.evaluate_objective_gradient(current_iterate, this->gradients.data(), this->current_evaluations);
+         problem.evaluate_constraints(current_iterate, this->constraints, this->current_evaluations);
          this->evaluate_jacobian(problem, current_iterate.primals);
-         this->evaluate_hessian = true;
+         this->hessian_evaluation_required = true;
       }
    }
 

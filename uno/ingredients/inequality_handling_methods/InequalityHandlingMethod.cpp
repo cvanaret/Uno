@@ -5,6 +5,7 @@
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/EvaluationSpace.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "options/Options.hpp"
@@ -18,13 +19,14 @@ namespace uno {
    }
 
    void InequalityHandlingMethod::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const {
-      problem.set_infeasibility_measure(iterate, this->progress_norm);
-      problem.set_objective_measure(iterate);
+      const auto& evaluation_space = this->get_evaluation_space();
+      problem.set_infeasibility_measure(iterate, evaluation_space.trial_evaluations, this->progress_norm);
+      problem.set_objective_measure(iterate, evaluation_space.trial_evaluations);
       problem.set_auxiliary_measure(iterate);
    }
 
    bool InequalityHandlingMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, const EvaluationSpace& evaluation_space, Iterate& current_iterate, Iterate& trial_iterate,
+         const Subproblem& subproblem, EvaluationSpace& evaluation_space, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double step_length, UserCallbacks& user_callbacks) {
       this->postprocess_iterate(trial_iterate);
       const double objective_multiplier = subproblem.problem.get_objective_multiplier();
@@ -42,7 +44,7 @@ namespace uno {
       bool accept_iterate = false;
       if (direction.norm == 0.) {
          DEBUG << "Zero step acceptable\n";
-         trial_iterate.evaluate_objective(subproblem.problem.model);
+         evaluation_space.trial_evaluations.objective = subproblem.problem.model.evaluate_objective(trial_iterate.primals);
          accept_iterate = true;
          statistics.set("Status", "0 primal step");
       }

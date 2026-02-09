@@ -13,6 +13,7 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
 #include "ingredients/inertia_correction_strategies/UnstableRegularization.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/EvaluationCache.hpp"
 #include "optimization/EvaluationSpace.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
@@ -44,7 +45,7 @@ namespace uno {
    }
 
    void FeasibilityRestoration::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
-         Direction& direction, double trust_region_radius) {
+         Direction& direction, double trust_region_radius, EvaluationCache& evaluation_cache) {
       this->reference_optimality_primals.resize(this->original_problem.number_variables);
 
       // memory allocation
@@ -65,13 +66,14 @@ namespace uno {
 
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate);
-      initial_iterate.evaluate_objective_gradient(model);
-      initial_iterate.evaluate_constraints(model);
-      const auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
-      this->inequality_handling_method->evaluate_jacobian(initial_iterate.primals);
+      evaluation_cache.current_evaluations.evaluate_objective_gradient(model, initial_iterate.primals);
+      evaluation_cache.current_evaluations.evaluate_constraints(model, initial_iterate.primals);
+      auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
+      evaluation_space.evaluate_jacobian(this->original_problem, initial_iterate.primals);
       this->original_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
-         evaluation_space, initial_iterate);
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, initial_iterate);
+         initial_iterate, evaluation_cache.current_evaluations);
+      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, initial_iterate,
+         evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
       this->feasibility_globalization_strategy.initialize(statistics, initial_iterate);
    }
@@ -163,8 +165,8 @@ namespace uno {
       DEBUG3 << direction << '\n';
    }
 
-   bool FeasibilityRestoration::can_switch_to_optimality_phase(const Iterate& current_iterate, const Model& model,
-         const Iterate& trial_iterate, const Direction& direction, double step_length) const {
+   bool FeasibilityRestoration::can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,
+         const Direction& direction, double step_length, EvaluationCache& evaluation_cache) const {
       if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->reference_optimality_progress,
             trial_iterate.progress)) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {
@@ -175,7 +177,7 @@ namespace uno {
          Vector<double> result(model.number_constraints);
          const auto& evaluation_space = this->feasibility_inequality_handling_method->get_evaluation_space();
          evaluation_space.compute_jacobian_vector_product(direction.primals, result);
-         const double trial_linearized_constraint_violation = model.constraint_violation(current_iterate.evaluations.constraints +
+         const double trial_linearized_constraint_violation = model.constraint_violation(evaluation_cache.trial_evaluations.constraints +
             step_length * result, this->residual_norm);
          return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
       }
@@ -196,7 +198,7 @@ namespace uno {
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, const Model& model,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       bool accept_iterate = false;
       // determine acceptability, depending on the current phase
       if (this->current_phase == Phase::OPTIMALITY) {
@@ -207,11 +209,11 @@ namespace uno {
          accept_iterate = this->feasibility_inequality_handling_method->is_iterate_acceptable(statistics,
             this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, step_length, user_callbacks);
       }
-      trial_iterate.status = this->check_termination(model, trial_iterate);
+      trial_iterate.status = this->check_termination(model, trial_iterate, evaluation_cache.trial_evaluations);
 
       // possibly go from restoration phase to optimality phase
       if (trial_iterate.status == SolutionStatus::NOT_OPTIMAL && this->current_phase == Phase::FEASIBILITY_RESTORATION &&
-            this->can_switch_to_optimality_phase(current_iterate, model, trial_iterate, direction, step_length)) {
+            this->can_switch_to_optimality_phase(model, trial_iterate, direction, step_length, evaluation_cache)) {
          this->switch_back_to_optimality_phase(current_iterate, trial_iterate);
          // set a cold start in the subproblem solver
          warmstart_information.whole_problem_changed();
@@ -222,21 +224,24 @@ namespace uno {
       return accept_iterate;
    }
 
-   SolutionStatus FeasibilityRestoration::check_termination(const Model& model, Iterate& iterate) {
-      iterate.evaluate_objective_gradient(model);
-      iterate.evaluate_constraints(model);
+   SolutionStatus FeasibilityRestoration::check_termination(const Model& model, Iterate& trial_iterate,
+         Evaluations& trial_evaluations) {
+      trial_evaluations.evaluate_constraints(model, trial_iterate.primals);
 
       if (this->current_phase == Phase::OPTIMALITY) {
-         this->original_problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient,
-            this->inequality_handling_method->get_evaluation_space(), iterate);
-         ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, iterate);
-         return ConstraintRelaxationStrategy::check_termination(this->original_problem, iterate);
+         trial_evaluations.evaluate_objective_gradient(model, trial_iterate.primals);
+
+         this->original_problem.evaluate_lagrangian_gradient(trial_iterate.residuals.lagrangian_gradient,
+            trial_iterate, trial_evaluations);
+         ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, trial_iterate, trial_evaluations);
+         return ConstraintRelaxationStrategy::check_termination(this->original_problem, trial_iterate,
+            trial_evaluations.objective);
       }
       else {
-         this->feasibility_problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient,
-            this->feasibility_inequality_handling_method->get_evaluation_space(), iterate);
-         ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->feasibility_problem, iterate);
-         return ConstraintRelaxationStrategy::check_termination(this->feasibility_problem, iterate);
+         this->feasibility_problem.evaluate_lagrangian_gradient(trial_iterate.residuals.lagrangian_gradient,
+            trial_iterate, trial_evaluations);
+         ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
+         return ConstraintRelaxationStrategy::check_termination(this->feasibility_problem, trial_iterate, trial_evaluations.objective);
       }
    }
 

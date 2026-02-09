@@ -15,6 +15,7 @@ namespace uno {
    template <typename ElementType>
    class Collection;
    class Direction;
+   class Evaluations;
    class EvaluationSpace;
    class HessianModel;
    class Iterate;
@@ -34,10 +35,10 @@ namespace uno {
       [[nodiscard]] virtual double get_objective_multiplier() const;
 
       // constraint evaluations
-      virtual void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const;
+      virtual void evaluate_constraints(Iterate& iterate, Vector<double>& constraints, const Evaluations& evaluations) const;
 
       // dense objective gradient
-      virtual void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const;
+      virtual void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, const Evaluations& evaluations) const;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
@@ -50,10 +51,10 @@ namespace uno {
 
       // numerical evaluations of Jacobian and Hessian
       virtual void evaluate_jacobian(const Vector<double>& primals, double* jacobian_values) const;
-      virtual void evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
-         const EvaluationSpace& evaluation_space, Iterate& iterate) const;
-      virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
-         const Multipliers& multipliers, double* hessian_values) const;
+      virtual void evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient, Iterate& iterate,
+         Evaluations& evaluations) const;
+      virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
+         const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const;
       virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
          const Multipliers& multipliers, double* result) const;
 
@@ -81,8 +82,8 @@ namespace uno {
          double dual_tolerance) const;
 
       // progress measures
-      virtual void set_infeasibility_measure(Iterate& iterate, Norm norm) const;
-      virtual void set_objective_measure(Iterate& iterate) const;
+      virtual void set_infeasibility_measure(Iterate& iterate, const Evaluations& evaluations, Norm norm) const;
+      virtual void set_objective_measure(Iterate& iterate, const Evaluations& evaluations) const;
       virtual void set_auxiliary_measure(Iterate& iterate) const;
       [[nodiscard]] virtual double compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const;

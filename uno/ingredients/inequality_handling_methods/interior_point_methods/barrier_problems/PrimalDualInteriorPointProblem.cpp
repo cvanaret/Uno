@@ -25,7 +25,7 @@ namespace uno {
       this->barrier_parameter = barrier_parameter;
    }
 
-   void PrimalDualInteriorPointProblem::generate_initial_iterate(Iterate& initial_iterate) const {
+   void PrimalDualInteriorPointProblem::generate_initial_iterate(Iterate& initial_iterate, const Evaluations& evaluations) const {
       // make the initial point strictly feasible wrt the bounds
       for (size_t variable_index: Range(this->number_variables)) {
          initial_iterate.primals[variable_index] = this->push_variable_to_interior(initial_iterate.primals[variable_index],
@@ -35,10 +35,9 @@ namespace uno {
       // set the slack variables (if any)
       if (!this->model.get_slacks().is_empty()) {
          // set the slacks to the constraint values
-         initial_iterate.evaluate_constraints(this->model);
          for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
             initial_iterate.primals[slack_index] =
-               this->push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index],
+               this->push_variable_to_interior(evaluations.constraints[constraint_index],
                this->first_reformulation.variable_lower_bound(slack_index), this->first_reformulation.variable_upper_bound(slack_index));
          }
          // since the slacks have been set, the function evaluations should also be updated
@@ -65,12 +64,12 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
-      this->first_reformulation.evaluate_constraints(iterate, constraints);
+   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints, const Evaluations& evaluations) const {
+      this->first_reformulation.evaluate_constraints(iterate, constraints, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
-      this->first_reformulation.evaluate_objective_gradient(iterate, objective_gradient);
+   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, const Evaluations& evaluations) const {
+      this->first_reformulation.evaluate_objective_gradient(iterate, objective_gradient, evaluations);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
@@ -153,8 +152,8 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
-         const EvaluationSpace& evaluation_space, Iterate& iterate) const {
-      this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, evaluation_space, iterate);
+         Iterate& iterate, Evaluations& evaluations) const {
+      this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, iterate, evaluations);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
