@@ -70,7 +70,7 @@ if __name__ == '__main__':
 	# initial point
 	x0 = [-2., 1.]
 	# user data
-	user_data = {"offset": -306.5}
+	user_data = {"offset": 0.}
 
 	model = unopy.Model(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing)
 	model.set_objective(optimization_sense, objective, objective_gradient)
@@ -109,8 +109,16 @@ if __name__ == '__main__':
 	print("Number of Jacobian evaluations:", result.number_jacobian_evaluations)
 	print("Number of Hessian evaluations:", result.number_hessian_evaluations)
 	print("Number of subproblems solved:", result.number_subproblems_solved)
+	assert abs(result.solution_objective - 306.5) <= 1e-4
 
+	# solve with the ipopt preset
+	uno_solver.set_preset("ipopt")
+	uno_solver.set_option("linear_solver", "MUMPS")
+	result = uno_solver.optimize(model)
+	assert abs(result.solution_objective - 306.5) <= 1e-4
+	
 	# solve with the filterslp preset
 	uno_solver.set_preset("filterslp")
 	uno_solver.set_option("LP_solver", "HiGHS")
 	result = uno_solver.optimize(model)
+	assert abs(result.solution_objective - 306.5) <= 1e-4

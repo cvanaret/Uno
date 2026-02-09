@@ -39,6 +39,24 @@ if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
    message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
 endif()
 
+# convert relative paths of BLAS and LAPACK to absolute paths
+if(BLAS_LIBRARIES)
+   set(ABSOLUTE_BLAS_LIBRARIES)
+   foreach(relative_path IN LISTS BLAS_LIBRARIES)
+      get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
+      list(APPEND ABSOLUTE_BLAS_LIBRARIES "${absolute_path}")
+   endforeach()
+   set(BLAS_LIBRARIES ${ABSOLUTE_BLAS_LIBRARIES} CACHE STRING "BLAS libraries" FORCE)
+endif()
+if(LAPACK_LIBRARIES)
+    set(ABSOLUTE_LAPACK_LIBRARIES)
+    foreach(relative_path IN LISTS LAPACK_LIBRARIES)
+       get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
+       list(APPEND ABSOLUTE_LAPACK_LIBRARIES "${absolute_path}")
+    endforeach()
+    set(LAPACK_LIBRARIES ${ABSOLUTE_LAPACK_LIBRARIES} CACHE STRING "LAPACK libraries" FORCE)
+endif()
+
 # determine whether a Fortran compiler is required, based on the available optional dependencies
 find_library(HSL hsl)
 find_library(MA57 ma57)
@@ -134,14 +152,14 @@ if(HSL OR MA57)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
 
    find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+   list(APPEND LIBRARIES BLAS::BLAS)
 endif()
 if(HSL OR MA27)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA27/MA27Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA27SolverTests.cpp)
 
    find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+   list(APPEND LIBRARIES BLAS::BLAS)
 endif()
 
 # METIS
@@ -161,15 +179,20 @@ if(BQPD)
 endif()
 
 # HiGHS
-find_package(HIGHS)
-if(HIGHS_FOUND)
+find_library(HIGHS highs)
+if(HIGHS)
    list(APPEND UNO_SOURCE_FILES
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSEvaluationSpace.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
-   list(APPEND LIBRARIES highs::highs)
+   # add the library
+   set(LIBRARIES ${LIBRARIES} ${HIGHS})
+   # add a preprocessor definition
    add_definitions("-D HAS_HIGHS")
-   message(STATUS "Found HiGHS")
+   # include the corresponding directory
+   get_filename_component(HIGHS_DIRECTORY ${HIGHS} DIRECTORY)
+   set(DIRECTORIES ${DIRECTORIES} ${HIGHS_DIRECTORY}/../include/highs)
+   message(STATUS "Found HIGHS")
 endif()
 
 # MUMPS
@@ -199,16 +222,16 @@ if(MUMPS_LIBRARY)
       # link dummy parallel library (provided by MUMPS distribution)
       link_to_uno(MUMPS_MPISEQ_LIBRARY ${MUMPS_MPISEQ_LIBRARY})
    endif()
-
+   
    find_package(METIS REQUIRED)
    list(APPEND LIBRARIES ${METIS_LIBRARY})
    list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
 
    find_package(LAPACK REQUIRED)
-   list(APPEND LIBRARIES ${LAPACK_LIBRARIES})
+   list(APPEND LIBRARIES LAPACK::LAPACK)
 
    find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
+   list(APPEND LIBRARIES BLAS::BLAS)
 
    find_package(OpenMP REQUIRED)
    list(APPEND LIBRARIES OpenMP::OpenMP_CXX)

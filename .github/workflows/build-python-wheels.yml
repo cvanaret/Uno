@@ -45,7 +45,7 @@ jobs:
         env:
           MACOSX_DEPLOYMENT_TARGET: 15.0
 
-          CIBW_BEFORE_BUILD: bash interfaces/Python/scripts/download_dependencies.sh
+          CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
 
       - uses: actions/upload-artifact@v4
         with:
@@ -59,7 +59,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Download dependencies
-        run: bash interfaces/Python/scripts/download_dependencies.sh
+        run: bash dependencies/scripts/download_dependencies.sh
 
       - name: Build sdist
         run: pipx run build --sdist
