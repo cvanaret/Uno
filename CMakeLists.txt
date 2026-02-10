@@ -38,6 +38,7 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
    message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
 endif()
+option(ENABLE_TESTS "Build unit tests" OFF)
 
 # convert relative paths of BLAS and LAPACK to absolute paths
 if(BLAS_LIBRARIES)
@@ -332,12 +333,20 @@ endif()
 ##################################
 # optional GoogleTest unit tests #
 ##################################
-find_package(GTest)
-if(GTest_FOUND)
-   message(STATUS "Found GoogleTest")
+if(ENABLE_TESTS)
+   include(FetchContent)
+
+   FetchContent_Declare(
+      googletest
+      URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+   )
+   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+   FetchContent_MakeAvailable(googletest)
+   message(STATUS "Fetched GoogleTest")
+
    add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
    target_include_directories(run_unotest PUBLIC ${DIRECTORIES} ${GTEST_INCLUDE_DIR})
-   target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES})
+   target_link_libraries(run_unotest PUBLIC GTest::gtest GTest::gtest_main ${DEFAULT_UNO_LIB} ${LIBRARIES})
    if (MSVC)
       set_target_properties(run_unotest PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
    endif()

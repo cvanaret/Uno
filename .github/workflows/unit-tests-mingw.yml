@@ -42,7 +42,6 @@ jobs:
           mingw-w64-x86_64-gcc-fortran
           mingw-w64-x86_64-cmake
           mingw-w64-x86_64-make
-          mingw-w64-x86_64-gtest
 
     - name: Download dependencies
       shell: bash
@@ -64,9 +63,7 @@ jobs:
       run: |
         cmake -G "MinGW Makefiles" ^
                 -S . -B ${{github.workspace}}\build ^
-                -DGTEST_INCLUDE_DIR=/mingw64/include ^
-                -DGTEST_LIBRARY=/mingw64/lib/libgtest.a ^
-                -DGTEST_MAIN_LIBRARY=/mingw64/lib/libgtest_main.a ^
+                -DENABLE_TESTS=ON ^
                 -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc ^
                 -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ ^
                 -DCMAKE_Fortran_COMPILER=x86_64-w64-mingw32-gfortran ^
