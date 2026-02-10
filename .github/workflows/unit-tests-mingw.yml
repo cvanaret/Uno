@@ -63,7 +63,7 @@ jobs:
       shell: cmd
       run: |
         cmake -G "MinGW Makefiles" ^
-                -B ${{github.workspace}}\build ^
+                -S -B ${{github.workspace}}\build ^
                 -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc ^
                 -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ ^
                 -DCMAKE_Fortran_COMPILER=x86_64-w64-mingw32-gfortran ^
@@ -79,10 +79,6 @@ jobs:
                 -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.a;${{github.workspace}}\dependencies\lib\libcblas.a" ^
                 -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.a ^
                 -DHIGHS=${{github.workspace}}\dependencies\lib\libhighs.a ^
-                -DGTEST_ROOT=/mingw64 ^
-                -DGTEST_INCLUDE_DIR=/mingw64/include ^
-                -DGTEST_LIBRARY=/mingw64/lib/libgtest.a ^
-                -DGTEST_MAIN_LIBRARY=/mingw64/lib/libgtest_main.a ^
                 -DBUILD_STATIC_LIBS=ON ^
                 -DBUILD_SHARED_LIBS=OFF .
 
