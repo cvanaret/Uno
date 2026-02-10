@@ -39,7 +39,8 @@ jobs:
         msystem: MINGW64
         update: true
         install: |
-          mingw-w64-x86_64-gcc-fortran
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-fortran
           mingw-w64-x86_64-cmake
           mingw-w64-x86_64-make
           mingw-w64-x86_64-gtest
@@ -53,10 +54,10 @@ jobs:
       run: |
         cmake -G "MinGW Makefiles" ^
                 -B ${{github.workspace}}\build ^
+                -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc ^
+                -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ ^
+                -DCMAKE_Fortran_COMPILER=x86_64-w64-mingw32-gfortran ^
                 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
-                -DCMAKE_C_COMPILER=cl ^
-                -DCMAKE_CXX_COMPILER=cl ^
-                -DCMAKE_Fortran_COMPILER=ifx ^
                 -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
                 -DMETIS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
                 -DBQPD=${{github.workspace}}\dependencies\lib\libbqpd.a ^
