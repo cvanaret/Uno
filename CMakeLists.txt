@@ -332,7 +332,7 @@ endif()
 ##################################
 # optional GoogleTest unit tests #
 ##################################
-find_package(GTest CONFIG)
+find_package(GTest)
 if(GTest_DIR)
    message(STATUS "Found GoogleTest")
    add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
