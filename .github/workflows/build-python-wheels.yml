@@ -56,7 +56,8 @@ jobs:
 
       - name: Prepend MSYS2 to PATH (Windows)
         if: runner.os == 'Windows'
-        run: echo "##[set-env name=PATH]C:/msys64/mingw64/bin;C:/Windows/System32;C:/Windows;C:/Windows/System32/WindowsPowerShell/v1.0;${PATH}"
+        run: |
+          echo "PATH=C:/msys64/mingw64/bin;C:/Windows/System32;C:/Windows;C:/Windows/System32/WindowsPowerShell/v1.0;${PATH}" >> $GITHUB_ENV
       
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
