@@ -59,6 +59,10 @@ jobs:
         env:
           MACOSX_DEPLOYMENT_TARGET: 15.0
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
+          CIBW_ENVIRONMENT_WINDOWS: |
+            CMAKE_C_COMPILER=x86_64-w64-mingw32-gcc 
+            CMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++
+            CMAKE_Fortran_COMPILER=x86_64-w64-mingw32-gfortran
           # Skip some builds
           CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
