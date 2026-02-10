@@ -63,7 +63,7 @@ jobs:
       shell: cmd
       run: |
         cmake -G "MinGW Makefiles" ^
-                -S -B ${{github.workspace}}\build ^
+                -S . -B ${{github.workspace}}\build ^
                 -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc ^
                 -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ ^
                 -DCMAKE_Fortran_COMPILER=x86_64-w64-mingw32-gfortran ^
