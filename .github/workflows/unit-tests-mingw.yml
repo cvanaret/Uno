@@ -25,6 +25,10 @@ jobs:
         os: [windows-latest]
         architecture: [x64]
 
+    defaults:
+      run:
+        shell: msys2 {0}
+
     steps:
     - uses: actions/checkout@v4
 
@@ -33,6 +37,7 @@ jobs:
       with:
         path-type: inherit
         msystem: MINGW64
+        update: true
         install: |
           mingw-w64-x86_64-gcc-fortran
           mingw-w64-x86_64-cmake
