@@ -31,7 +31,7 @@ jobs:
       with:
         tag: v1.14.0
 
-    - name: Download dependencies (BQPD and MUMPS_static)
+    - name: Download dependencies
       shell: bash
       run: bash dependencies/scripts/download_dependencies.sh
 

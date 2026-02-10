@@ -36,15 +36,17 @@ jobs:
         tag: v1.14.0
         build-type: ${{env.BUILD_TYPE}}
 
-    - name: Download dependencies (BQPD and MUMPS_static)
+    - name: Install MINGW
+      uses: msys2/setup-msys2@v2
+      with:
+        path-type: inherit
+        msystem: MINGW64
+        install: |
+          mingw-w64-x86_64-gcc-fortran
+
+    - name: Download dependencies
       shell: bash
       run: bash dependencies/scripts/download_dependencies.sh
-
-    - name: Install Fortran compiler
-      uses: fortran-lang/setup-fortran@main
-      with:
-        compiler: 'intel'
-        version: '2025.0'
 
     - name: Configure CMake
       shell: cmd
