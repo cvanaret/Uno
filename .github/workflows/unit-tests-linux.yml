@@ -27,9 +27,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: Bacondish2023/setup-googletest@v1
-      with:
-        tag: v1.14.0
 
     - name: Download dependencies
       shell: bash
@@ -38,6 +35,7 @@ jobs:
     - name: Configure CMake
       run: |
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                                             -DENABLE_TESTS=ON \
                                              -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
                                              -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
                                              -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \

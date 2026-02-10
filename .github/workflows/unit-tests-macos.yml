@@ -28,14 +28,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: Bacondish2023/setup-googletest@v1
-      with:
-        tag: v1.14.0
-        build-type: ${{env.BUILD_TYPE}}
 
     - name: Configure CMake
       run: |
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                                             -DENABLE_TESTS=ON \
                                              -DBLAS_LIBRARIES=${{github.workspace}}/deps/lib/libblas.a \
                                              -DLAPACK_LIBRARIES=${{github.workspace}}/deps/lib/liblapack.a \
                                              -DBUILD_STATIC_LIBS=ON \
