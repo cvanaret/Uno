@@ -1,4 +1,4 @@
-name: Unit tests on MSVC
+name: Unit tests on Windows + MinGW
 
 on:
   push:
@@ -27,16 +27,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Set up environment to compile C++ with MSVC
-      uses: ilammy/msvc-dev-cmd@v1
-    
+
     - uses: Bacondish2023/setup-googletest@v1
       with:
         tag: v1.14.0
         build-type: ${{env.BUILD_TYPE}}
 
-    - name: Install MINGW
+    - name: Install MinGW
       uses: msys2/setup-msys2@v2
       with:
         path-type: inherit
