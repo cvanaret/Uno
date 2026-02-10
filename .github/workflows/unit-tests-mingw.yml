@@ -64,7 +64,9 @@ jobs:
       run: |
         cmake -G "MinGW Makefiles" ^
                 -S . -B ${{github.workspace}}\build ^
-                -DCMAKE_PREFIX_PATH=/mingw64 ^
+                -DGTEST_INCLUDE_DIR=/mingw64/include ^
+                -DGTEST_LIBRARY=/mingw64/lib/libgtest.a ^
+                -DGTEST_MAIN_LIBRARY=/mingw64/lib/libgtest_main.a ^
                 -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc ^
                 -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ ^
                 -DCMAKE_Fortran_COMPILER=x86_64-w64-mingw32-gfortran ^
