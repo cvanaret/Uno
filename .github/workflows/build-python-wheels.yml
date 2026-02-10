@@ -17,12 +17,20 @@ on:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.sys.os }}
+    runs-on: ${{ matrix.sys.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-22.04-arm, macos-latest, macos-15-intel, windows-2022]
+        sys:
+          - { os: ubuntu-latest, shell: bash }
+          - { os: ubuntu-22.04-arm, shell: bash }
+          - { os: macos-latest, shell: bash }
+          - { os: macos-15-intel, shell: bash }
+          - { os: windows-2022, shell: 'msys2 {0}' }
+    defaults:
+      run:
+        shell: ${{ matrix.sys.shell }}
 
     steps:
       - uses: actions/checkout@v5
@@ -32,20 +40,19 @@ jobs:
         with:
           compiler: 'gcc'
           version: '13'
-        if: startsWith(matrix.os, 'macos')
+        if: startsWith(matrix.sys.os, 'macos')
 
-      - name: Install MINGW (Windows)
+      - name: Install MinGW (Windows)
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
           path-type: inherit
           msystem: MINGW64
+          update: true
           install: |
             mingw-w64-x86_64-gcc-fortran
             mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-python
-          pacboy: >-
-            python:p python-pip:p gcc:p cmake:p
+            mingw-w64-x86_64-make
       
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
@@ -58,7 +65,7 @@ jobs:
       - name: Store artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          name: cibw-wheels-${{ matrix.sys.os }}-${{ strategy.job-index }}
           path: wheelhouse/*.whl
 
   build_sdist:
