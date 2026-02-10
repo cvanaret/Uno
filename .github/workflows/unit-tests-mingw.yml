@@ -32,7 +32,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install MinGW and GTest
+    - name: Install MinGW
       uses: msys2/setup-msys2@v2
       with:
         path-type: inherit
@@ -46,18 +46,7 @@ jobs:
     - name: Download dependencies
       shell: bash
       run: bash dependencies/scripts/download_dependencies.sh
-
-    - name: Debug GTest paths
-      run: |
-        echo "MSYSTEM=$MSYSTEM"
-        ls /mingw64/include/gtest
-        ls /mingw64/lib | grep gtest
-
-    - name: Debug CMake
-      run: |
-        which cmake
-        cmake --version
-
+    
     - name: Configure CMake
       shell: cmd
       run: |
