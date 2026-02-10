@@ -32,6 +32,11 @@ jobs:
       run:
         shell: ${{ matrix.sys.shell }}
 
+    # add PATH for Windows to include system dirs + MSYS2 ---
+    env:
+      # Windows-only PATH: MSYS2 bin first, then system dirs
+      PATH: ${{ runner.os == 'Windows' && 'C:/msys64/mingw64/bin;C:/Windows/System32;C:/Windows;C:/Windows/System32/WindowsPowerShell/v1.0;' || '' }}${{ env.PATH }}
+
     steps:
       - uses: actions/checkout@v5
 
