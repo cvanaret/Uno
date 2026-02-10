@@ -48,6 +48,12 @@ jobs:
       shell: bash
       run: bash dependencies/scripts/download_dependencies.sh
 
+    - name: Debug GTest paths
+      run: |
+        echo "MSYSTEM=$MSYSTEM"
+        ls /mingw64/include/gtest
+        ls /mingw64/lib | grep gtest
+
     - name: Configure CMake
       shell: cmd
       run: |
