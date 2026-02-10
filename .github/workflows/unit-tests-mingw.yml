@@ -54,6 +54,11 @@ jobs:
         ls /mingw64/include/gtest
         ls /mingw64/lib | grep gtest
 
+    - name: Debug CMake
+      run: |
+        which cmake
+        cmake --version
+
     - name: Configure CMake
       shell: cmd
       run: |
