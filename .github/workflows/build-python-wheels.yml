@@ -32,11 +32,6 @@ jobs:
       run:
         shell: ${{ matrix.sys.shell }}
 
-    # add PATH for Windows to include system dirs + MSYS2 ---
-    env:
-      # Windows-only PATH: MSYS2 bin first, then system dirs
-      PATH: ${{ runner.os == 'Windows' && 'C:/msys64/mingw64/bin;C:/Windows/System32;C:/Windows;C:/Windows/System32/WindowsPowerShell/v1.0;' || '' }}${{ env.PATH }}
-
     steps:
       - uses: actions/checkout@v5
 
@@ -58,6 +53,10 @@ jobs:
             mingw-w64-x86_64-gcc-fortran
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-make
+
+      - name: Prepend MSYS2 to PATH (Windows)
+        if: runner.os == 'Windows'
+        run: echo "##[set-env name=PATH]C:/msys64/mingw64/bin;C:/Windows/System32;C:/Windows;C:/Windows/System32/WindowsPowerShell/v1.0;${PATH}"
       
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
