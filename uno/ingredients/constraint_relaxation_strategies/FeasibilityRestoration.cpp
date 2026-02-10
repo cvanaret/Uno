@@ -65,7 +65,7 @@ namespace uno {
       statistics.set("Phase", "OPT");
 
       // initial iterate
-      this->inequality_handling_method->generate_initial_iterate(initial_iterate);
+      this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache);
       evaluation_cache.current_evaluations.evaluate_objective_gradient(model, initial_iterate.primals);
       evaluation_cache.current_evaluations.evaluate_constraints(model, initial_iterate.primals);
       auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();

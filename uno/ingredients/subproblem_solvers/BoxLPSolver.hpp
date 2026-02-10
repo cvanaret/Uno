@@ -14,13 +14,6 @@ namespace uno {
    public:
       BoxLPSolverEvaluationSpace() = default;
 
-      void evaluate_current_objective(const Model& model, const Vector<double>& primals) { }
-      void evaluate_current_constraints(const Model& model, const Vector<double>& primals) { }
-      void evaluate_current_objective_gradient(const Model& model, const Vector<double>& primals) { }
-      void evaluate_trial_objective(const Model& model, const Vector<double>& primals) { }
-      void evaluate_trial_constraints(const Model& model, const Vector<double>& primals) { }
-      void evaluate_trial_objective_gradient(const Model& model, const Vector<double>& primals) { }
-
       void evaluate_jacobian(const OptimizationProblem& /*problem*/, const Vector<double>& /*primals*/) override { }
       void compute_jacobian_vector_product(const Vector<double>& /*vector*/, Vector<double>& /*result*/) const override { }
       void compute_jacobian_transposed_vector_product(const Vector<double>& /*vector*/,

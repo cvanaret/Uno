@@ -12,6 +12,7 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/EvaluationCache.hpp"
 #include "optimization/EvaluationSpace.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "options/Options.hpp"
@@ -27,7 +28,7 @@ namespace uno {
       void initialize(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
          InertiaCorrectionStrategy& inertia_correction_strategy, double trust_region_radius) override;
       void initialize_statistics(Statistics& statistics) override;
-      void generate_initial_iterate(Iterate& initial_iterate) override;
+      void generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) override;
       void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          WarmstartInformation& warmstart_information) override;
 
@@ -118,13 +119,12 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::generate_initial_iterate(Iterate& initial_iterate) {
+   void InteriorPointMethod<BarrierProblem>::generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) {
       // TODO: enforce linear constraints at initial point
       // resize the initial iterate
       initial_iterate.set_number_variables(this->barrier_problem->number_variables);
-      const auto& evaluation_space = this->get_evaluation_space();
-      this->barrier_problem->generate_initial_iterate(initial_iterate, evaluation_space.current_evaluations);
-      this->evaluate_progress_measures(*this->barrier_problem, initial_iterate);
+      this->barrier_problem->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
+      this->evaluate_progress_measures(*this->barrier_problem, initial_iterate, evaluation_cache);
    }
 
    template <typename BarrierProblem>

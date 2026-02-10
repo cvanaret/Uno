@@ -5,6 +5,7 @@
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/EvaluationCache.hpp"
 #include "optimization/EvaluationSpace.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
@@ -18,16 +19,16 @@ namespace uno {
       progress_norm(norm_from_string(options.get_string("progress_norm"))) {
    }
 
-   void InequalityHandlingMethod::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate) const {
-      const auto& evaluation_space = this->get_evaluation_space();
-      problem.set_infeasibility_measure(iterate, evaluation_space.trial_evaluations, this->progress_norm);
-      problem.set_objective_measure(iterate, evaluation_space.trial_evaluations);
+   void InequalityHandlingMethod::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate,
+         const EvaluationCache& evaluation_cache) const {
+      problem.set_infeasibility_measure(iterate, evaluation_cache.trial_evaluations, this->progress_norm);
+      problem.set_objective_measure(iterate, evaluation_cache.trial_evaluations);
       problem.set_auxiliary_measure(iterate);
    }
 
    bool InequalityHandlingMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, EvaluationSpace& evaluation_space, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double step_length, UserCallbacks& user_callbacks) {
+         const Direction& direction, double step_length, EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) {
       this->postprocess_iterate(trial_iterate);
       const double objective_multiplier = subproblem.problem.get_objective_multiplier();
 
@@ -39,12 +40,12 @@ namespace uno {
          subproblem.problem.set_auxiliary_measure(current_iterate);
          this->subproblem_definition_changed = false;
       }
-      this->evaluate_progress_measures(subproblem.problem, trial_iterate);
+      this->evaluate_progress_measures(subproblem.problem, trial_iterate, evaluation_cache);
 
       bool accept_iterate = false;
       if (direction.norm == 0.) {
          DEBUG << "Zero step acceptable\n";
-         evaluation_space.trial_evaluations.objective = subproblem.problem.model.evaluate_objective(trial_iterate.primals);
+         evaluation_cache.trial_evaluations.objective = subproblem.problem.model.evaluate_objective(trial_iterate.primals);
          accept_iterate = true;
          statistics.set("Status", "0 primal step");
       }

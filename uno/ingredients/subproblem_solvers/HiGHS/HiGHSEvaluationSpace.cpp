@@ -34,13 +34,6 @@ namespace uno {
       this->compute_hessian_sparsity(subproblem);
    }
 
-   void HiGHSEvaluationSpace::evaluate_current_objective(const Model& model, const Vector<double>& primals) {}
-   void HiGHSEvaluationSpace::evaluate_current_constraints(const Model& model, const Vector<double>& primals) {}
-   void HiGHSEvaluationSpace::evaluate_current_objective_gradient(const Model& model, const Vector<double>& primals) {}
-   void HiGHSEvaluationSpace::evaluate_trial_objective(const Model& model, const Vector<double>& primals) {}
-   void HiGHSEvaluationSpace::evaluate_trial_constraints(const Model& model, const Vector<double>& primals) {}
-   void HiGHSEvaluationSpace::evaluate_trial_objective_gradient(const Model& model, const Vector<double>& primals) {}
-
    void HiGHSEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) {
       problem.evaluate_jacobian(primals, this->jacobian_values.data());
 

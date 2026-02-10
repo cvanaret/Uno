@@ -11,11 +11,6 @@
 
 namespace uno {
    void BQPDEvaluationSpace::initialize(const Subproblem& subproblem) {
-      this->current_evaluations.constraints.resize(subproblem.number_constraints);
-      this->current_evaluations.objective_gradient.resize(subproblem.number_variables);
-      this->trial_evaluations.constraints.resize(subproblem.number_constraints);
-      this->trial_evaluations.objective_gradient.resize(subproblem.number_variables);
-
       this->constraints.resize(subproblem.number_constraints);
 
       // Jacobian + objective gradient
@@ -40,30 +35,6 @@ namespace uno {
       else {
          // TODO allocate some vector to contain the result of Hv (see compute_hessian_quadratic_product)
       }
-   }
-
-   void BQPDEvaluationSpace::evaluate_current_objective(const Model& model, const Vector<double>& primals) {
-      this->current_evaluations.objective = model.evaluate_objective(primals);
-   }
-
-   void BQPDEvaluationSpace::evaluate_current_constraints(const Model& model, const Vector<double>& primals) {
-      model.evaluate_constraints(primals, this->current_evaluations.constraints);
-   }
-
-   void BQPDEvaluationSpace::evaluate_current_objective_gradient(const Model& model, const Vector<double>& primals) {
-      model.evaluate_objective_gradient(primals, this->current_evaluations.objective_gradient);
-   }
-
-   void BQPDEvaluationSpace::evaluate_trial_objective(const Model& model, const Vector<double>& primals) {
-      this->trial_evaluations.objective = model.evaluate_objective(primals);
-   }
-
-   void BQPDEvaluationSpace::evaluate_trial_constraints(const Model& model, const Vector<double>& primals) {
-      model.evaluate_constraints(primals, this->trial_evaluations.constraints);
-   }
-
-   void BQPDEvaluationSpace::evaluate_trial_objective_gradient(const Model& model, const Vector<double>& primals) {
-      model.evaluate_objective_gradient(primals, this->trial_evaluations.objective_gradient);
    }
 
    void BQPDEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) {

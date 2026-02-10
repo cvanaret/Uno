@@ -62,14 +62,7 @@ namespace uno {
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
    }
-
-   void COOEvaluationSpace::evaluate_current_objective(const Model& model, const Vector<double>& primals) {}
-   void COOEvaluationSpace::evaluate_current_constraints(const Model& model, const Vector<double>& primals) {}
-   void COOEvaluationSpace::evaluate_current_objective_gradient(const Model& model, const Vector<double>& primals) {}
-   void COOEvaluationSpace::evaluate_trial_objective(const Model& model, const Vector<double>& primals) {}
-   void COOEvaluationSpace::evaluate_trial_constraints(const Model& model, const Vector<double>& primals) {}
-   void COOEvaluationSpace::evaluate_trial_objective_gradient(const Model& model, const Vector<double>& primals) {}
-
+   
    void COOEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) {
       problem.evaluate_jacobian(primals, this->matrix_values.data() + this->number_hessian_nonzeros);
    }

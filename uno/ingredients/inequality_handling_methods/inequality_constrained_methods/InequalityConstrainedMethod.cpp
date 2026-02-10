@@ -50,8 +50,8 @@ namespace uno {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::generate_initial_iterate(Iterate& initial_iterate) {
-      this->evaluate_progress_measures(*this->problem, initial_iterate);
+   void InequalityConstrainedMethod::generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) {
+      this->evaluate_progress_measures(*this->problem, initial_iterate, evaluation_cache);
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,

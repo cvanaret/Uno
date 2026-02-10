@@ -36,7 +36,7 @@ namespace uno {
       this->inequality_handling_method->initialize_statistics(statistics);
 
       // initial iterate
-      this->inequality_handling_method->generate_initial_iterate(initial_iterate);
+      this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache);
       evaluation_cache.current_evaluations.evaluate_objective_gradient(model, initial_iterate.primals);
       evaluation_cache.current_evaluations.evaluate_constraints(model, initial_iterate.primals);
       this->inequality_handling_method->evaluate_jacobian(initial_iterate.primals);
