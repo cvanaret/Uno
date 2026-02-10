@@ -51,7 +51,7 @@ jobs:
                                              -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
                                              -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
                                              -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
-                                             -DBLAS_LIBRARIES=${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a \
+                                             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
                                              -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
                                              -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a
 
