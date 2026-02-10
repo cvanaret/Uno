@@ -87,12 +87,6 @@ cd $WORKSPACE/srcdir/Uno
 mkdir -p build
 cd build
 
-if [[ "${target}" == *mingw* ]]; then
-    HIGHS_DIR=${prefix}/lib
-else
-    HIGHS_DIR=${libdir}
-fi
-
 if [[ "${target}" == *apple* ]] || [[ "${target}" == *freebsd* ]]; then
     OMP=omp
 else
@@ -105,7 +99,7 @@ cmake \
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
     -DCMAKE_BUILD_TYPE=Release \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
-    -DHIGHS_DIR=${HIGHS_DIR} \
+    -DHIGHS=${libdir}/libhighs.${dlext} \
     -DBQPD=${prefix}/lib/libbqpd.a \
     -DHSL=${libdir}/libhsl.${dlext} \
     -DMUMPS_INCLUDE_DIR=${includedir} \
