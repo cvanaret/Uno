@@ -60,7 +60,6 @@ jobs:
         run: |
           pacman -Syu --noconfirm
           pacman -S --noconfirm mingw-w64-x86_64-python3
-          pacman -S --noconfirm mingw-w64-x86_64-python3-pip
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
