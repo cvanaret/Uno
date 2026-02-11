@@ -55,6 +55,13 @@ jobs:
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-make
 
+      - name: Install MSYS2 Python (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm mingw-w64-x86_64-python3
+          pacman -S --noconfirm mingw-w64-x86_64-python3-pip
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
         env:
@@ -63,6 +70,8 @@ jobs:
           CIBW_BEFORE_BUILD_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh"
           CIBW_ENVIRONMENT_WINDOWS: |
+            PATH=C:/msys64/mingw64/bin;C:/msys64/usr/bin;${PATH}
+            PYTHON_EXE=C:/msys64/mingw64/bin/python.exe
             CMAKE_GENERATOR=MinGW\ Makefiles
             CMAKE_MAKE_PROGRAM=C:/msys64/mingw64/bin/mingw32-make.exe
             CMAKE_C_COMPILER=C:/msys64/mingw64/bin/gcc.exe
