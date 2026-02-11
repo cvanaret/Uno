@@ -42,14 +42,22 @@ jobs:
           version: '13'
         if: startsWith(matrix.sys.os, 'macos')
 
-      - name: Install LLVM-MinGW (MSVCRT, x86_64)
+      #- name: Install MinGW (Windows)
+      #  if: runner.os == 'Windows'
+      #  uses: msys2/setup-msys2@v2
+      #  with:
+      #    msystem: MINGW64
+      #    update: false
+      #    path-type: prepend
+      #    install: |
+      #      mingw-w64-x86_64-gcc=11.2.0-1
+      #      mingw-w64-x86_64-gcc-fortran=11.2.0-1
+      #      mingw-w64-x86_64-gcc-libs=11.2.0-1
+      #      mingw-w64-x86_64-cmake
+      #      mingw-w64-x86_64-make
+
+      - run: choco install mingw --version 11.2.0.07112021 --allow-downgrade
         if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          $url = "https://github.com/mstorsjo/llvm-mingw/releases/download/20221115/llvm-mingw-20221115-msvcrt-x86_64.zip"
-          Invoke-WebRequest -Uri $url -OutFile llvm-mingw.zip
-          Expand-Archive llvm-mingw.zip -DestinationPath .
-          echo "$PWD\llvm-mingw-20221115-msvcrt-x86_64\bin" >> $env:GITHUB_PATH
 
       #- name: Install MSYS2 Python (Windows)
       #  if: runner.os == 'Windows'
@@ -67,9 +75,9 @@ jobs:
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_GENERATOR="MinGW Makefiles"
             CMAKE_MAKE_PROGRAM=C:/msys64/mingw64/bin/mingw32-make.exe
-            CMAKE_C_COMPILER=x86_64-w64-mingw32-clang
-            CMAKE_CXX_COMPILER=x86_64-w64-mingw32-clang++
-            CMAKE_Fortran_COMPILER=x86_64-w64-mingw32-gfortran
+            CMAKE_C_COMPILER=C:/msys64/mingw64/bin/gcc.exe
+            CMAKE_CXX_COMPILER=C:/msys64/mingw64/bin/g++.exe
+            CMAKE_Fortran_COMPILER=C:/msys64/mingw64/bin/gfortran.exe
           # Skip some builds
           CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
