@@ -80,6 +80,7 @@ jobs:
           install: |
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-gcc-fortran
+            mingw-w64-x86_64-gcc-libs
             mingw-w64-x86_64-cmake
 
       - name: Set environment (Windows)
