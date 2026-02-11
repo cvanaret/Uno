@@ -68,7 +68,7 @@ jobs:
           CIBW_BEFORE_BUILD: bash {package}/dependencies/scripts/download_dependencies.sh
           CIBW_BEFORE_BUILD_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh"
-          CIBW_ENVIRONMENT_WINDOWS: |
+          CIBW_ENVIRONMENT_WINDOWS: >
             PATH="C:/msys64/mingw64/bin;C:/msys64/usr/bin;${PATH}"
             PYTHON_EXE=C:/msys64/mingw64/bin/python.exe
             CMAKE_GENERATOR="MinGW Makefiles"
