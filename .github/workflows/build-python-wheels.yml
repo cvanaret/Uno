@@ -63,9 +63,9 @@ jobs:
         uses: pypa/cibuildwheel@v2.22.0
         env:
           MACOSX_DEPLOYMENT_TARGET: 15.0
-          CIBW_BEFORE_BUILD: bash {project}/dependencies/scripts/download_dependencies.sh
+          CIBW_BEFORE_BUILD: bash {package}/dependencies/scripts/download_dependencies.sh
           CIBW_BEFORE_BUILD_WINDOWS: >
-            C:/msys64/usr/bin/bash -lc "$(cygpath -u \"$PWD/dependencies/scripts/download_dependencies.sh\")"
+            C:/msys64/usr/bin/bash -lc "$(cygpath -u '{package}')/dependencies/scripts/download_dependencies.sh"
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_GENERATOR="MinGW Makefiles"
             CMAKE_C_COMPILER=x86_64-w64-mingw32-gcc
