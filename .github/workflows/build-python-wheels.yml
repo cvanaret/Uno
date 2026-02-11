@@ -27,7 +27,7 @@ jobs:
           - { os: ubuntu-22.04-arm, shell: bash }
           - { os: macos-latest, shell: bash }
           - { os: macos-15-intel, shell: bash }
-          - { os: windows-2022, shell: 'msys2 {0}' }
+          - { os: windows-latest, shell: 'msys2 {0}' }
     defaults:
       run:
         shell: ${{ matrix.sys.shell }}
@@ -42,22 +42,21 @@ jobs:
           version: '13'
         if: startsWith(matrix.sys.os, 'macos')
 
-      #- name: Install MinGW (Windows)
-      #  if: runner.os == 'Windows'
-      #  uses: msys2/setup-msys2@v2
-      #  with:
-      #    msystem: MINGW64
-      #    update: false
-      #    path-type: prepend
-      #    install: |
-      #      mingw-w64-x86_64-gcc=11.2.0-1
-      #      mingw-w64-x86_64-gcc-fortran=11.2.0-1
-      #      mingw-w64-x86_64-gcc-libs=11.2.0-1
-      #      mingw-w64-x86_64-cmake
-      #      mingw-w64-x86_64-make
-
-      - run: choco install mingw --version 11.2.0.07112021 --allow-downgrade
+      - name: Install MinGW (Windows)
         if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          path-type: prepend
+          install: |
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-gcc-fortran
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-make
+
+      #- run: choco install mingw --version 11.2.0.07112021 --allow-downgrade
+      #  if: runner.os == 'Windows'
 
       #- name: Install MSYS2 Python (Windows)
       #  if: runner.os == 'Windows'
