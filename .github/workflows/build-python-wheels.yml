@@ -47,19 +47,20 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          update: true
+          update: false
           path-type: prepend
           install: |
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-gcc-fortran
+            mingw-w64-x86_64-gcc=11.2.0-1
+            mingw-w64-x86_64-gcc-fortran=11.2.0-1
+            mingw-w64-x86_64-gcc-libs=11.2.0-1
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-make
 
-      - name: Install MSYS2 Python (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          pacman -Syu --noconfirm
-          pacman -S --noconfirm mingw-w64-x86_64-python3
+      #- name: Install MSYS2 Python (Windows)
+      #  if: runner.os == 'Windows'
+      #  run: |
+      #    pacman -Syu --noconfirm
+      #    pacman -S --noconfirm mingw-w64-x86_64-python3
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
