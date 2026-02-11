@@ -47,7 +47,7 @@ MUMPS_LIBRARY = "dependencies/lib/libdmumps.a"
 MUMPS_COMMON_LIBRARY = "dependencies/lib/libmumps_common.a"
 MUMPS_PORD_LIBRARY = "dependencies/lib/libpord.a"
 MUMPS_MPISEQ_LIBRARY = "dependencies/lib/libmpiseq.a"
-BLAS_LIBRARIES = "dependencies/lib/libblas.a;dependencies/lib/libcblas.a;dependencies/lib/libmsvcrt.a"
+BLAS_LIBRARIES = "dependencies/lib/libblas.a;dependencies/lib/libcblas.a;dependencies/lib/gcc/x86_64-w64-mingw32/14/libmsvcrt.a"
 LAPACK_LIBRARIES = "dependencies/lib/liblapack.a"
 # HiGHS
 # HIGHS_DIR = "dependencies/lib/cmake/highs"
