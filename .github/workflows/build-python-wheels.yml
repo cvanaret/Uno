@@ -65,7 +65,7 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: 15.0
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
           CIBW_BEFORE_BUILD_WINDOWS: >
-            C:/msys64/usr/bin/bash -lc "cd $PWD && ./dependencies/scripts/download_dependencies.sh"
+            C:/msys64/usr/bin/bash -lc "./dependencies/scripts/download_dependencies.sh"
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_GENERATOR="MinGW Makefiles"
             CMAKE_C_COMPILER=x86_64-w64-mingw32-gcc
