@@ -7,11 +7,9 @@ tags:
 authors:
   - name: Alexis Montoison
     orcid: 0000-0002-3403-5450
-    equal-contrib: true
     affiliation: 1
   - name: Charlie Vanaret
     orcid: 0000-0002-1131-7631
-    equal-contrib: true
     affiliation: 2
 affiliations:
  - name: Mathematics and Computer Science Division, Argonne National Laboratory, USA
@@ -24,15 +22,8 @@ bibliography: paper.bib
 
 # Summary
 
-The forces on stars, galaxies, and dark matter under external gravitational
-fields lead to the dynamical evolution of structures in the universe. The orbits
-of these bodies are therefore key to understanding the formation, history, and
-future state of galaxies. The field of "galactic dynamics," which aims to model
-the gravitating components of galaxies to study their structure and evolution,
-is now well-established, commonly taught, and frequently used in astronomy.
-Aside from toy problems and demonstrations, the majority of problems require
-efficient numerical tools, many of which require the same base code (e.g., for
-performing numerical orbit integration).
+`UnoSolver.jl` is the Julia interface to Uno, a modular C++ solver for nonlinearly constrained optimization. Uno unifies Lagrange-Newton methods such as SQP and barrier methods by combining building blocks such as strategies to compute descent directions, problem reformulations, and globalization techniques.
+
 
 # Statement of need
 
@@ -56,7 +47,7 @@ design, and support for Astropy functionality in `Gala` will enable exciting
 scientific explorations of forthcoming data releases from the *Gaia* mission
 [@gaia] by students and experts alike.
 
-# State of the field                                                                                                                  
+# State of the field
 
 Several tools exist for galactic dynamics computations:                                                     
 `galpy` [@Bovy:2015] is a Python package with similar goals,
