@@ -4,7 +4,6 @@
 #include "MeritFunction.hpp"
 #include "ProgressMeasures.hpp"
 #include "tools/Logger.hpp"
-#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {

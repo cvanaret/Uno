@@ -7,7 +7,6 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
-#include "../subproblem_solvers/SolverWorkspace.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"

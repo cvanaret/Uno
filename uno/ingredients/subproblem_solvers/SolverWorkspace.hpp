@@ -1,22 +1,14 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_EVALUATIONSPACE_H
-#define UNO_EVALUATIONSPACE_H
-
-#include "../../optimization/Evaluations.hpp"
+#ifndef UNO_SOLVERWORKSPACE_H
+#define UNO_SOLVERWORKSPACE_H
 
 namespace uno {
-   // forward declaration
-   template <typename ElementType>
-   class DirectSymmetricIndefiniteLinearSolver;
-   class Model;
-   class OptimizationProblem;
-   class Statistics;
+   // forward declarations
    class Subproblem;
    template <typename ElementType>
    class Vector;
-   class WarmstartInformation;
 
    class SolverWorkspace {
    public:
@@ -27,4 +19,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_EVALUATIONSPACE_H
+#endif // UNO_SOLVERWORKSPACE_H

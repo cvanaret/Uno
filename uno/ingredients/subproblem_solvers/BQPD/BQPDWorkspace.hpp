@@ -11,7 +11,9 @@
 
 namespace uno {
    // forward declarations
+   class Evaluations;
    class Iterate;
+   class OptimizationProblem;
    class Subproblem;
    class WarmstartInformation;
 

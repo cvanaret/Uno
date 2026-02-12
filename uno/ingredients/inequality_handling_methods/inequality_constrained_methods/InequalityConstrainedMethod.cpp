@@ -11,7 +11,6 @@
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "optimization/Direction.hpp"
-#include "../../subproblem_solvers/SolverWorkspace.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"

@@ -11,6 +11,13 @@
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
+   // forward declarations
+   template <typename ElementType>
+   class DirectSymmetricIndefiniteLinearSolver;
+   class Evaluations;
+   class Statistics;
+   class WarmstartInformation;
+
    class COOWorkspace: public SolverWorkspace {
    public:
       COOWorkspace() = default;
