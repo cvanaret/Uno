@@ -35,9 +35,6 @@ namespace uno {
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& iterate) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
-      // matrix computations
-      [[nodiscard]] SolverWorkspace& get_solver_workspace() const override;
-
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
@@ -230,16 +227,11 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   SolverWorkspace& InteriorPointMethod<BarrierProblem>::get_solver_workspace() const {
-      return this->linear_solver->get_workspace();
-   }
-
-   template <typename BarrierProblem>
    bool InteriorPointMethod<BarrierProblem>::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
-         this->get_solver_workspace(), current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
+         this->linear_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
    }
 
    template <typename BarrierProblem>

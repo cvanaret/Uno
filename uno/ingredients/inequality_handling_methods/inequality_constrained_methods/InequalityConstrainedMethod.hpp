@@ -29,9 +29,6 @@ namespace uno {
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
-      // matrix computations
-      [[nodiscard]] SolverWorkspace& get_solver_workspace() const override;
-
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,

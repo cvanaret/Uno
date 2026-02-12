@@ -44,9 +44,6 @@ namespace uno {
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 
-      // matrix computations
-      [[nodiscard]] virtual SolverWorkspace& get_solver_workspace() const = 0;
-
       // progress measures
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
