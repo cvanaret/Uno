@@ -14,14 +14,14 @@ namespace uno {
    }
 
    void BoxLPSolver::solve(Statistics& /*statistics*/, Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& /*initial_point*/, Direction& direction, Evaluations& /*current_evaluations*/,
+         const Vector<double>& /*initial_point*/, Direction& direction, Evaluations& current_evaluations,
          const WarmstartInformation& /*warmstart_information*/) {
       if (0 < subproblem.number_constraints) {
          throw std::runtime_error("BoxLPSolver cannot solve problems with general constraints");
       }
       // compute the objective gradient
-      // TODO subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->evaluation_space.objective_gradient.data(),
-      //   this->evaluation_space.current_evaluations);
+      subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->evaluation_space.objective_gradient.data(),
+        current_evaluations);
 
       // compute the variables bounds
       subproblem.set_variables_bounds(this->variable_lower_bounds, this->variable_upper_bounds, trust_region_radius);
