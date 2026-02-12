@@ -26,7 +26,7 @@ namespace uno {
 
       void backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) const;
-      [[nodiscard]] bool terminate_with_small_step_length(Statistics& statistics, const Model& model, Iterate& trial_iterate,
+      [[nodiscard]] bool terminate_with_small_step_length(Statistics& statistics, Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) const;
       [[nodiscard]] double decrease_step_length(double step_length) const;
       static void check_unboundedness(const Direction& direction);

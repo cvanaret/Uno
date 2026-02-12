@@ -37,8 +37,6 @@ namespace uno {
 
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache);
-      this->original_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
-         initial_iterate, evaluation_cache.current_evaluations);
       this->compute_primal_dual_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy.initialize(statistics, initial_iterate);
    }
@@ -64,22 +62,17 @@ namespace uno {
       throw std::runtime_error("Switching to the feasibility problem should not happen");
    }
 
-   bool NoRelaxation::is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
+   bool NoRelaxation::is_iterate_acceptable(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
          current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
-      trial_iterate.status = this->check_termination(model, trial_iterate, evaluation_cache.trial_evaluations);
+      trial_iterate.status = this->check_termination(trial_iterate, evaluation_cache.trial_evaluations);
       warmstart_information.no_changes();
       return accept_iterate;
    }
 
-   SolutionStatus NoRelaxation::check_termination(const Model& model, Iterate& trial_iterate, Evaluations& trial_evaluations) {
-      trial_evaluations.evaluate_constraints(model, trial_iterate.primals);
-      trial_evaluations.evaluate_objective_gradient(model, trial_iterate.primals);
-
-      this->original_problem.evaluate_lagrangian_gradient(trial_iterate.residuals.lagrangian_gradient, trial_iterate,
-         trial_evaluations);
+   SolutionStatus NoRelaxation::check_termination(Iterate& trial_iterate, Evaluations& trial_evaluations) {
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, trial_iterate, trial_evaluations);
       return ConstraintRelaxationStrategy::check_termination(this->original_problem, trial_iterate, trial_evaluations);
    }

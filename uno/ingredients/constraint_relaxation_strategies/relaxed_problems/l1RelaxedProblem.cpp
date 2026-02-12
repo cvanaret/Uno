@@ -153,19 +153,7 @@ namespace uno {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
 
-      // objective gradient
-      lagrangian_gradient.objective_contribution = evaluations.objective_gradient;
-
-      // ∇c(x_k) λ_k
-      evaluations.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints,
-         lagrangian_gradient.constraints_contribution);
-      lagrangian_gradient.constraints_contribution = -lagrangian_gradient.constraints_contribution;
-
-      // bound constraints of original variables
-      for (size_t variable_index: Range(this->model.number_variables)) {
-         lagrangian_gradient.constraints_contribution[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
-            iterate.multipliers.upper_bounds[variable_index]);
-      }
+      OptimizationProblem::evaluate_lagrangian_gradient(lagrangian_gradient, iterate, evaluations);
 
       // elastic variables
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
