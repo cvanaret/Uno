@@ -65,10 +65,7 @@ namespace uno {
       statistics.set("Phase", "OPT");
 
       // initial iterate
-      DEBUG << "Evaluating functions at the current iterate\n";
       this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache);
-      this->original_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
-         initial_iterate, evaluation_cache.current_evaluations);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, initial_iterate,
          evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
@@ -174,7 +171,7 @@ namespace uno {
          // TODO preallocate
          Vector<double> result(model.number_constraints);
          evaluation_cache.current_evaluations.compute_jacobian_vector_product(direction.primals, result);
-         const double trial_linearized_constraint_violation = model.constraint_violation(evaluation_cache.trial_evaluations.constraints +
+         const double trial_linearized_constraint_violation = model.constraint_violation(evaluation_cache.current_evaluations.constraints +
             step_length * result, this->residual_norm);
          return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
       }
@@ -207,7 +204,7 @@ namespace uno {
             this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, step_length,
             evaluation_cache, user_callbacks);
       }
-      trial_iterate.status = this->check_termination(model, trial_iterate, evaluation_cache.trial_evaluations);
+      trial_iterate.status = this->check_termination(trial_iterate, evaluation_cache.trial_evaluations);
 
       // possibly go from restoration phase to optimality phase
       if (trial_iterate.status == SolutionStatus::NOT_OPTIMAL && this->current_phase == Phase::FEASIBILITY_RESTORATION &&
@@ -222,21 +219,12 @@ namespace uno {
       return accept_iterate;
    }
 
-   SolutionStatus FeasibilityRestoration::check_termination(const Model& model, Iterate& trial_iterate,
-         Evaluations& trial_evaluations) {
-      trial_evaluations.evaluate_constraints(model, trial_iterate.primals);
-
+   SolutionStatus FeasibilityRestoration::check_termination(Iterate& trial_iterate, Evaluations& trial_evaluations) {
       if (this->current_phase == Phase::OPTIMALITY) {
-         trial_evaluations.evaluate_objective_gradient(model, trial_iterate.primals);
-
-         this->original_problem.evaluate_lagrangian_gradient(trial_iterate.residuals.lagrangian_gradient,
-            trial_iterate, trial_evaluations);
          ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, trial_iterate, trial_evaluations);
          return ConstraintRelaxationStrategy::check_termination(this->original_problem, trial_iterate, trial_evaluations);
       }
       else {
-         this->feasibility_problem.evaluate_lagrangian_gradient(trial_iterate.residuals.lagrangian_gradient,
-            trial_iterate, trial_evaluations);
          ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
          return ConstraintRelaxationStrategy::check_termination(this->feasibility_problem, trial_iterate, trial_evaluations);
       }
