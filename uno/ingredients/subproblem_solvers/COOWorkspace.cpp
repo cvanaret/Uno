@@ -72,9 +72,9 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       if (warmstart_information.new_iterate) {
-         // TODO subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data(),
-         //   this->current_evaluations);
-         // TODO subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints, this->current_evaluations);
+         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data(),
+            evaluations);
+         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints, evaluations);
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
             DEBUG << "Performing symbolic analysis of the indefinite system\n";
