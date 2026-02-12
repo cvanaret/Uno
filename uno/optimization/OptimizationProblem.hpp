@@ -16,7 +16,7 @@ namespace uno {
    class Collection;
    class Direction;
    class Evaluations;
-   class EvaluationSpace;
+   class SolverWorkspace;
    class HessianModel;
    class Iterate;
    class Multipliers;

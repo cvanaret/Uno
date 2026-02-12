@@ -7,12 +7,12 @@
 #include <vector>
 #include "InequalityConstrainedSolver.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "optimization/EvaluationSpace.hpp"
+#include "SolverWorkspace.hpp"
 
 namespace uno {
-   class BoxLPSolverEvaluationSpace: public EvaluationSpace {
+   class BoxLPSolverWorkspace: public SolverWorkspace {
    public:
-      BoxLPSolverEvaluationSpace() = default;
+      BoxLPSolverWorkspace() = default;
 
       void evaluate_jacobian(const OptimizationProblem& /*problem*/, const Vector<double>& /*primals*/) override { }
       void compute_jacobian_vector_product(const Vector<double>& /*vector*/, Vector<double>& /*result*/) const override { }
@@ -35,12 +35,12 @@ namespace uno {
       void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override;
 
-      [[nodiscard]] EvaluationSpace& get_evaluation_space() override;
+      [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    protected:
       std::vector<double> variable_lower_bounds;
       std::vector<double> variable_upper_bounds;
-      BoxLPSolverEvaluationSpace evaluation_space{};
+      BoxLPSolverWorkspace evaluation_space{};
    };
 } // namespace
 

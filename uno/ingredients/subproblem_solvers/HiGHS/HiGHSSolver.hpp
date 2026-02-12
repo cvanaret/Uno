@@ -6,7 +6,7 @@
 
 #include "ingredients/subproblem_solvers/QPSolver.hpp"
 #include "Highs.h"
-#include "HiGHSEvaluationSpace.hpp"
+#include "HiGHSWorkspace.hpp"
 
 namespace uno {
    // forward declaration
@@ -21,11 +21,11 @@ namespace uno {
       void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
          Direction& direction, const WarmstartInformation& warmstart_information) override;
 
-      [[nodiscard]] EvaluationSpace& get_evaluation_space() override;
+      [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    protected:
       Highs highs_solver;
-      HiGHSEvaluationSpace evaluation_space;
+      HiGHSWorkspace evaluation_space;
 
       const bool print_subproblem;
 

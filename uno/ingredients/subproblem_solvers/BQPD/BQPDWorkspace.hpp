@@ -1,12 +1,12 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_BQPDEVALUATIONSPACE_H
-#define UNO_BQPDEVALUATIONSPACE_H
+#ifndef UNO_BQPDWORKSPACE_H
+#define UNO_BQPDWORKSPACE_H
 
 #include <cstddef>
 #include "linear_algebra/Vector.hpp"
-#include "optimization/EvaluationSpace.hpp"
+#include "../SolverWorkspace.hpp"
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
@@ -15,10 +15,10 @@ namespace uno {
    class Subproblem;
    class WarmstartInformation;
 
-   class BQPDEvaluationSpace: public EvaluationSpace {
+   class BQPDWorkspace: public SolverWorkspace {
    public:
-      BQPDEvaluationSpace() = default;
-      ~BQPDEvaluationSpace() override = default;
+      BQPDWorkspace() = default;
+      ~BQPDWorkspace() override = default;
 
       void initialize(const Subproblem& subproblem);
 
@@ -32,7 +32,7 @@ namespace uno {
 
       Vector<double> constraints{};
       Vector<double> gradients{};
-      Vector<uno_int> gradient_sparsity{};
+      Vector<uno_int> gradients_sparsity{};
       // COO constraint Jacobian
       Vector<uno_int> jacobian_row_indices{};
       Vector<uno_int> jacobian_column_indices{};
@@ -49,4 +49,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_BQPDEVALUATIONSPACE_H
+#endif // UNO_BQPDWORKSPACE_H

@@ -7,7 +7,7 @@
 #include <array>
 #include <vector>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "../COOEvaluationSpace.hpp"
+#include "../COOWorkspace.hpp"
 
 namespace uno {
    // forward declaration
@@ -54,11 +54,11 @@ namespace uno {
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
 
-      [[nodiscard]] EvaluationSpace& get_evaluation_space() override;
+      [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    private:
       MA27Workspace workspace{};
-      COOEvaluationSpace evaluation_space{};
+      COOWorkspace evaluation_space{};
 
       bool analysis_performed{false};
       bool factorization_performed{false};

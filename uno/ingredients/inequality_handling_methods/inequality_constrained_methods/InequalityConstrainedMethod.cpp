@@ -11,7 +11,7 @@
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/EvaluationSpace.hpp"
+#include "../../subproblem_solvers/SolverWorkspace.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
@@ -80,13 +80,13 @@ namespace uno {
       return 0.;
    }
 
-   EvaluationSpace& InequalityConstrainedMethod::get_evaluation_space() const {
-      return this->solver->get_evaluation_space();
+   SolverWorkspace& InequalityConstrainedMethod::get_solver_workspace() const {
+      return this->solver->get_workspace();
    }
 
    void InequalityConstrainedMethod::evaluate_jacobian(const Vector<double>& primals) {
-      auto& evaluation_space = this->solver->get_evaluation_space();
-      evaluation_space.evaluate_jacobian(*this->problem, primals);
+      auto& solver_workspace = this->solver->get_workspace();
+      solver_workspace.evaluate_jacobian(*this->problem, primals);
    }
 
    // compute dual *displacements*
@@ -100,9 +100,9 @@ namespace uno {
 
    bool InequalityConstrainedMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) {
+         EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
-         this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
+         this->get_solver_workspace(), current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
    }
 
    void InequalityConstrainedMethod::postprocess_iterate(Iterate& /*iterate*/) {

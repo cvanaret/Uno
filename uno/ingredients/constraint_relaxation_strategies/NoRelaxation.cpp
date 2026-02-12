@@ -7,7 +7,7 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
-#include "optimization/EvaluationSpace.hpp"
+#include "../subproblem_solvers/SolverWorkspace.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -70,7 +70,7 @@ namespace uno {
          Iterate& trial_iterate, const Direction& direction, double step_length, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
-         current_iterate, trial_iterate, direction, step_length, user_callbacks);
+         current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
       trial_iterate.status = this->check_termination(model, trial_iterate, evaluation_cache.trial_evaluations);
       warmstart_information.no_changes();
       return accept_iterate;

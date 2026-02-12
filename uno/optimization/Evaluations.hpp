@@ -22,6 +22,7 @@ namespace uno {
       void evaluate_constraints(const Model& model, const Vector<double>& primals);
       void evaluate_objective_gradient(const Model& model, const Vector<double>& primals);
 
+      void compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const;
       void compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const;
    };
 } // namespace

@@ -7,7 +7,7 @@
 namespace uno {
    // forward declarations
    class Direction;
-   class EvaluationSpace;
+   class SolverWorkspace;
    class Statistics;
    class Subproblem;
    template <typename ElementType>
@@ -24,7 +24,7 @@ namespace uno {
       virtual void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
          const Vector<double>& initial_point, Direction& direction, const WarmstartInformation& warmstart_information) = 0;
 
-      [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() = 0;
+      [[nodiscard]] virtual SolverWorkspace& get_workspace() = 0;
    };
 } // namespace
 

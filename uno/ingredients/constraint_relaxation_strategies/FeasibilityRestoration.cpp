@@ -12,9 +12,9 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
 #include "ingredients/inertia_correction_strategies/UnstableRegularization.hpp"
+#include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
-#include "optimization/EvaluationSpace.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -68,7 +68,7 @@ namespace uno {
       this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache);
       evaluation_cache.current_evaluations.evaluate_objective_gradient(model, initial_iterate.primals);
       evaluation_cache.current_evaluations.evaluate_constraints(model, initial_iterate.primals);
-      auto& evaluation_space = this->inequality_handling_method->get_evaluation_space();
+      auto& evaluation_space = this->inequality_handling_method->get_solver_workspace();
       evaluation_space.evaluate_jacobian(this->original_problem, initial_iterate.primals);
       this->original_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
          initial_iterate, evaluation_cache.current_evaluations);
@@ -175,7 +175,7 @@ namespace uno {
          // compute the linearized constraint violation
          // TODO preallocate
          Vector<double> result(model.number_constraints);
-         const auto& evaluation_space = this->feasibility_inequality_handling_method->get_evaluation_space();
+         const auto& evaluation_space = this->feasibility_inequality_handling_method->get_solver_workspace();
          evaluation_space.compute_jacobian_vector_product(direction.primals, result);
          const double trial_linearized_constraint_violation = model.constraint_violation(evaluation_cache.trial_evaluations.constraints +
             step_length * result, this->residual_norm);
@@ -202,12 +202,13 @@ namespace uno {
       bool accept_iterate = false;
       // determine acceptability, depending on the current phase
       if (this->current_phase == Phase::OPTIMALITY) {
-         accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics,
-            *this->globalization_strategy, current_iterate, trial_iterate, direction, step_length, user_callbacks);
+         accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, *this->globalization_strategy,
+            current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
       }
       else {
          accept_iterate = this->feasibility_inequality_handling_method->is_iterate_acceptable(statistics,
-            this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, step_length, user_callbacks);
+            this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, step_length,
+            evaluation_cache, user_callbacks);
       }
       trial_iterate.status = this->check_termination(model, trial_iterate, evaluation_cache.trial_evaluations);
 

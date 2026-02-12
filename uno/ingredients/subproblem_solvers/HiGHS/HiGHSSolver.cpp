@@ -25,7 +25,7 @@ namespace uno {
       this->solve_subproblem(subproblem, direction);
    }
 
-   EvaluationSpace& HiGHSSolver::get_evaluation_space() {
+   SolverWorkspace& HiGHSSolver::get_workspace() {
       return this->evaluation_space;
    }
 

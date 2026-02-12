@@ -13,7 +13,7 @@
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
-#include "optimization/EvaluationSpace.hpp"
+#include "../../subproblem_solvers/SolverWorkspace.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -37,13 +37,13 @@ namespace uno {
       [[nodiscard]] double proximal_coefficient() const override;
 
       // matrix computations
-      [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
+      [[nodiscard]] SolverWorkspace& get_solver_workspace() const override;
       void evaluate_jacobian(const Vector<double>& primals) override;
 
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) override;
+         EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) override;
 
       void postprocess_iterate(Iterate& iterate) override;
 
@@ -232,23 +232,23 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   EvaluationSpace& InteriorPointMethod<BarrierProblem>::get_evaluation_space() const {
-      return this->linear_solver->get_evaluation_space();
+   SolverWorkspace& InteriorPointMethod<BarrierProblem>::get_solver_workspace() const {
+      return this->linear_solver->get_workspace();
    }
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::evaluate_jacobian(const Vector<double>& primals) {
       // create the subproblem
-      auto& evaluation_space = this->linear_solver->get_evaluation_space();
-      evaluation_space.evaluate_jacobian(*this->barrier_problem, primals);
+      auto& solver_workspace = this->linear_solver->get_workspace();
+      solver_workspace.evaluate_jacobian(*this->barrier_problem, primals);
    }
 
    template <typename BarrierProblem>
    bool InteriorPointMethod<BarrierProblem>::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) {
+         EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
-         this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
+         this->get_solver_workspace(), current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
    }
 
    template <typename BarrierProblem>

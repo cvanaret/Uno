@@ -30,13 +30,13 @@ namespace uno {
       [[nodiscard]] double proximal_coefficient() const override;
 
       // matrix computations
-      [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
+      [[nodiscard]] SolverWorkspace& get_solver_workspace() const override;
       void evaluate_jacobian(const Vector<double>& primals) override;
 
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) override;
+         EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) override;
 
       void postprocess_iterate(Iterate& iterate) override;
 

@@ -4,7 +4,7 @@
 #ifndef UNO_EVALUATIONSPACE_H
 #define UNO_EVALUATIONSPACE_H
 
-#include "Evaluations.hpp"
+#include "../../optimization/Evaluations.hpp"
 
 namespace uno {
    // forward declaration
@@ -18,10 +18,10 @@ namespace uno {
    class Vector;
    class WarmstartInformation;
 
-   class EvaluationSpace {
+   class SolverWorkspace {
    public:
-      EvaluationSpace() = default;
-      virtual ~EvaluationSpace() = default;
+      SolverWorkspace() = default;
+      virtual ~SolverWorkspace() = default;
 
       virtual void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) = 0;
       virtual void compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const = 0;

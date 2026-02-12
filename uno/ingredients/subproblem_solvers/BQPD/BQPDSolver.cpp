@@ -115,7 +115,7 @@ namespace uno {
       this->solve_subproblem(subproblem, initial_point, direction, warmstart_information);
    }
 
-   EvaluationSpace& BQPDSolver::get_evaluation_space() {
+   SolverWorkspace& BQPDSolver::get_workspace() {
       return this->evaluation_space;
    }
 
@@ -206,7 +206,7 @@ namespace uno {
       bool termination = false;
       while (!termination) {
          DEBUG2 << "Running BQPD\n";
-         BQPD(&n, &m, &this->k, &this->kmax, this->evaluation_space.gradients.data(), this->evaluation_space.gradient_sparsity.data(),
+         BQPD(&n, &m, &this->k, &this->kmax, this->evaluation_space.gradients.data(), this->evaluation_space.gradients_sparsity.data(),
             direction.primals.data(), this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective,
             &this->fmin, this->gradient_solution.data(), this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(),
             this->alp.data(), this->lp.data(), &this->mlp, &this->peq_solution, this->ws.data(), this->lws.data(), &mode_integer,

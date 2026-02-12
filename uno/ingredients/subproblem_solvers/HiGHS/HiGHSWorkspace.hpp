@@ -1,11 +1,11 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_HIGHSEVALUATIONSPACE_H
-#define UNO_HIGHSEVALUATIONSPACE_H
+#ifndef UNO_HIGHSWORKSPACE_H
+#define UNO_HIGHSWORKSPACE_H
 
 #include <cstddef>
-#include "optimization/EvaluationSpace.hpp"
+#include "../SolverWorkspace.hpp"
 #include "Highs.h"
 #include "linear_algebra/Vector.hpp"
 #include "../interfaces/C/uno_int.h"
@@ -16,10 +16,10 @@ namespace uno {
    class Subproblem;
    class WarmstartInformation;
 
-   class HiGHSEvaluationSpace: public EvaluationSpace {
+   class HiGHSWorkspace: public SolverWorkspace {
    public:
-      HiGHSEvaluationSpace() = default;
-      ~HiGHSEvaluationSpace() override = default;
+      HiGHSWorkspace() = default;
+      ~HiGHSWorkspace() override = default;
 
       void initialize_memory(const Subproblem& subproblem);
 
@@ -51,4 +51,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_HIGHSEVALUATIONSPACE_H
+#endif // UNO_HIGHSWORKSPACE_H

@@ -268,7 +268,7 @@ namespace uno {
          static_cast<size_t>(this->workspace.n);
    }
 
-   EvaluationSpace& MA27Solver::get_evaluation_space() {
+   SolverWorkspace& MA27Solver::get_workspace() {
       return this->evaluation_space;
    }
 

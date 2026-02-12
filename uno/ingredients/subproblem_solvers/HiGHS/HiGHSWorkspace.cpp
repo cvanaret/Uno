@@ -2,14 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
-#include "HiGHSEvaluationSpace.hpp"
+#include "HiGHSWorkspace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/WarmstartInformation.hpp"
 
 namespace uno {
-   void HiGHSEvaluationSpace::initialize_memory(const Subproblem& subproblem) {
+   void HiGHSWorkspace::initialize_memory(const Subproblem& subproblem) {
       this->model.lp_.num_col_ = static_cast<HighsInt>(subproblem.number_variables);
       this->model.lp_.num_row_ = static_cast<HighsInt>(subproblem.number_constraints);
 
@@ -34,7 +34,7 @@ namespace uno {
       this->compute_hessian_sparsity(subproblem);
    }
 
-   void HiGHSEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) {
+   void HiGHSWorkspace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) {
       problem.evaluate_jacobian(primals, this->jacobian_values.data());
 
       // copy the Jacobian with permutation into this->model.lp_.a_matrix_.value_
@@ -44,7 +44,7 @@ namespace uno {
       }
    }
 
-   void HiGHSEvaluationSpace::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+   void HiGHSWorkspace::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
       const size_t number_jacobian_nonzeros = this->jacobian_row_indices.size();
       for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
@@ -60,7 +60,7 @@ namespace uno {
       }
    }
 
-   void HiGHSEvaluationSpace::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
+   void HiGHSWorkspace::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
       result.fill(0.);
       const size_t number_jacobian_nonzeros = this->jacobian_row_indices.size();
       for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
@@ -75,7 +75,7 @@ namespace uno {
       }
    }
 
-   double HiGHSEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& vector) const {
+   double HiGHSWorkspace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& vector) const {
       double quadratic_product = 0.;
       const size_t number_hessian_nonzeros = this->hessian_values.size();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
@@ -91,13 +91,13 @@ namespace uno {
       return quadratic_product;
    }
 
-   void HiGHSEvaluationSpace::evaluate_functions(Statistics& statistics, const Subproblem& subproblem,
+   void HiGHSWorkspace::evaluate_functions(Statistics& statistics, const Subproblem& subproblem,
          const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       if (warmstart_information.new_iterate) {
-         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data(),
-            this->current_evaluations);
-         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints, this->current_evaluations);
+         // TODO subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data(),
+         //   this->current_evaluations);
+         // TODO subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints, this->current_evaluations);
          this->evaluate_jacobian(subproblem.problem, subproblem.current_iterate.primals);
          // evaluate the Hessian and regularize it
          subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data());
@@ -110,7 +110,7 @@ namespace uno {
       }
    }
 
-   void HiGHSEvaluationSpace::compute_jacobian_sparsity(const Subproblem& subproblem) {
+   void HiGHSWorkspace::compute_jacobian_sparsity(const Subproblem& subproblem) {
       // column-wise constraint Jacobian
       this->model.lp_.a_matrix_.format_ = MatrixFormat::kColwise;
       const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
@@ -160,7 +160,7 @@ namespace uno {
    }
 
    // column-wise lower triangular Lagrangian Hessian
-   void HiGHSEvaluationSpace::compute_hessian_sparsity(const Subproblem& subproblem) {
+   void HiGHSWorkspace::compute_hessian_sparsity(const Subproblem& subproblem) {
       if (!subproblem.has_hessian_matrix()) {
          throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with HiGHS");
       }

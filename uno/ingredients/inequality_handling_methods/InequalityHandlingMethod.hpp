@@ -11,7 +11,7 @@ namespace uno {
    // forward declarations
    class Direction;
    class EvaluationCache;
-   class EvaluationSpace;
+   class SolverWorkspace;
    class GlobalizationStrategy;
    class HessianModel;
    class Iterate;
@@ -44,13 +44,13 @@ namespace uno {
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 
       // matrix computations
-      [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() const = 0;
+      [[nodiscard]] virtual SolverWorkspace& get_solver_workspace() const = 0;
       virtual void evaluate_jacobian(const Vector<double>& primals) = 0;
 
       // progress measures
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) = 0;
+         EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) = 0;
 
       virtual void postprocess_iterate(Iterate& iterate) = 0;
 
@@ -67,7 +67,7 @@ namespace uno {
 
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, const EvaluationCache& evaluation_cache) const;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, EvaluationSpace& evaluation_space, Iterate& current_iterate, Iterate& trial_iterate,
+         const Subproblem& subproblem, SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double step_length, EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks);
    };
 } // namespace

@@ -7,7 +7,7 @@
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/EvaluationSpace.hpp"
+#include "../subproblem_solvers/SolverWorkspace.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/Sum.hpp"
@@ -229,37 +229,37 @@ namespace uno {
    }
 
    // local models of progress measures
-   double Subproblem::compute_predicted_infeasibility_reduction(const EvaluationSpace& evaluation_space, const Model& model,
-         const Vector<double>& primal_direction, double step_length, Norm norm) const {
+   double Subproblem::compute_predicted_infeasibility_reduction(const Model& model, const Vector<double>& primal_direction,
+         double step_length, Norm norm, const Evaluations& current_evaluations) const {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
-      const double current_constraint_violation = model.constraint_violation(evaluation_space.current_evaluations.constraints, norm);
+      const double current_constraint_violation = model.constraint_violation(current_evaluations.constraints, norm);
       Vector<double> result(model.number_constraints);
-      evaluation_space.compute_jacobian_vector_product(primal_direction, result);
-      const double trial_linearized_constraint_violation = model.constraint_violation(evaluation_space.current_evaluations.constraints +
+      current_evaluations.compute_jacobian_vector_product(primal_direction, result);
+      const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
          step_length * result, norm);
       return current_constraint_violation - trial_linearized_constraint_violation;
    }
 
-   std::function<double(double)> Subproblem::compute_predicted_objective_reduction(const EvaluationSpace& evaluation_space,
-         const Vector<double>& primal_direction, double step_length) const {
+   std::function<double(double)> Subproblem::compute_predicted_objective_reduction(const Vector<double>& primal_direction,
+         double step_length, const Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const {
       // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
-      const double directional_derivative = dot(primal_direction, evaluation_space.current_evaluations.objective_gradient);
+      const double directional_derivative = dot(primal_direction, current_evaluations.objective_gradient);
       // if the regularized Hessian is positive definite (as it usually is in line-search methods), we can compute the
       // predicted reduction with only first-order information (the directional derivative)
       const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() && this->performs_primal_regularization();
       const double quadratic_term = is_regularized_hessian_positive_definite ? 0. :
-         evaluation_space.compute_hessian_quadratic_product(*this, primal_direction);
+         solver_workspace.compute_hessian_quadratic_product(*this, primal_direction);
       return [=](double objective_multiplier) {
          return step_length * (-objective_multiplier*directional_derivative) - step_length*step_length/2. * quadratic_term;
       };
    }
 
-   ProgressMeasures Subproblem::compute_predicted_reductions(const EvaluationSpace& evaluation_space, const Direction& direction,
-         double step_length, Norm norm) const {
+   ProgressMeasures Subproblem::compute_predicted_reductions(const Direction& direction, double step_length, Norm norm,
+         const Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const {
       return {
-         this->compute_predicted_infeasibility_reduction(evaluation_space, this->problem.model, direction.primals,
-            step_length, norm),
-         this->compute_predicted_objective_reduction(evaluation_space, direction.primals, step_length),
+         this->compute_predicted_infeasibility_reduction(this->problem.model, direction.primals, step_length, norm,
+            current_evaluations),
+         this->compute_predicted_objective_reduction(direction.primals, step_length, current_evaluations, solver_workspace),
          this->problem.compute_predicted_auxiliary_reduction(this->current_iterate, direction.primals, step_length)
       };
    }
