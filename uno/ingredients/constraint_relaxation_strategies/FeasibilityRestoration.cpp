@@ -44,8 +44,8 @@ namespace uno {
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
    }
 
-   void FeasibilityRestoration::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
-         Direction& direction, double trust_region_radius, EvaluationCache& evaluation_cache) {
+   void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction,
+         double trust_region_radius, EvaluationCache& evaluation_cache) {
       this->reference_optimality_primals.resize(this->original_problem.number_variables);
 
       // memory allocation
@@ -67,10 +67,6 @@ namespace uno {
       // initial iterate
       DEBUG << "Evaluating functions at the current iterate\n";
       this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache);
-      evaluation_cache.current_evaluations.evaluate_objective(model, initial_iterate.primals);
-      evaluation_cache.current_evaluations.evaluate_constraints(model, initial_iterate.primals);
-      evaluation_cache.current_evaluations.evaluate_objective_gradient(model, initial_iterate.primals);
-      evaluation_cache.current_evaluations.evaluate_jacobian(model, initial_iterate.primals);
       this->original_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
          initial_iterate, evaluation_cache.current_evaluations);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, initial_iterate,

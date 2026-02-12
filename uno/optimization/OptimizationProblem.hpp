@@ -82,8 +82,8 @@ namespace uno {
          double dual_tolerance) const;
 
       // progress measures
-      virtual void set_infeasibility_measure(Iterate& iterate, const Evaluations& evaluations, Norm norm) const;
-      virtual void set_objective_measure(Iterate& iterate, const Evaluations& evaluations) const;
+      virtual void set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const;
+      virtual void set_objective_measure(Iterate& iterate, Evaluations& evaluations) const;
       virtual void set_auxiliary_measure(Iterate& iterate) const;
       [[nodiscard]] virtual double compute_predicted_auxiliary_reduction(const Iterate& current_iterate,
          const Vector<double>& primal_direction, double step_length) const;

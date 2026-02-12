@@ -66,7 +66,7 @@ namespace uno {
       // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
       bool subproblem_definition_changed{false};
 
-      void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, const EvaluationCache& evaluation_cache) const;
+      void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          const Subproblem& subproblem, SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double step_length, EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks);

@@ -24,8 +24,8 @@ namespace uno {
          globalization_strategy(options) {
    }
 
-   void NoRelaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
-         Direction& direction, double trust_region_radius, EvaluationCache& evaluation_cache) {
+   void NoRelaxation::initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction,
+         double trust_region_radius, EvaluationCache& evaluation_cache) {
       // memory allocation
       this->inequality_handling_method->initialize(this->original_problem, initial_iterate, *this->hessian_model,
          *this->inertia_correction_strategy, trust_region_radius);
@@ -37,9 +37,6 @@ namespace uno {
 
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache);
-      evaluation_cache.current_evaluations.evaluate_objective_gradient(model, initial_iterate.primals);
-      evaluation_cache.current_evaluations.evaluate_constraints(model, initial_iterate.primals);
-      this->inequality_handling_method->evaluate_jacobian(initial_iterate.primals);
       this->original_problem.evaluate_lagrangian_gradient(initial_iterate.residuals.lagrangian_gradient,
          initial_iterate, evaluation_cache.current_evaluations);
       this->compute_primal_dual_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);

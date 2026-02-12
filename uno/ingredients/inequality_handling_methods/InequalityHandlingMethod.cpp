@@ -20,9 +20,9 @@ namespace uno {
    }
 
    void InequalityHandlingMethod::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate,
-         const EvaluationCache& evaluation_cache) const {
-      problem.set_infeasibility_measure(iterate, evaluation_cache.trial_evaluations, this->progress_norm);
-      problem.set_objective_measure(iterate, evaluation_cache.trial_evaluations);
+         Evaluations& evaluations) const {
+      problem.set_infeasibility_measure(iterate, evaluations, this->progress_norm);
+      problem.set_objective_measure(iterate, evaluations);
       problem.set_auxiliary_measure(iterate);
    }
 
@@ -40,7 +40,7 @@ namespace uno {
          subproblem.problem.set_auxiliary_measure(current_iterate);
          this->subproblem_definition_changed = false;
       }
-      this->evaluate_progress_measures(subproblem.problem, trial_iterate, evaluation_cache);
+      this->evaluate_progress_measures(subproblem.problem, trial_iterate, evaluation_cache.trial_evaluations);
 
       bool accept_iterate = false;
       if (direction.norm == 0.) {

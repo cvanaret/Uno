@@ -166,7 +166,7 @@ namespace uno {
       statistics.set("Status", "initial point");
 
       model.project_onto_variable_bounds(current_iterate.primals);
-      this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction, evaluation_cache);
+      this->globalization_mechanism->initialize(statistics, current_iterate, this->direction, evaluation_cache);
       GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
       GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
 

@@ -25,8 +25,8 @@ namespace uno {
       GlobalizationMechanism(const Model& model, bool use_trust_region, const Options& options);
       virtual ~GlobalizationMechanism() = default;
 
-      virtual void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Direction& direction, EvaluationCache& evaluation_cache) = 0;
+      virtual void initialize(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+         EvaluationCache& evaluation_cache) = 0;
       virtual void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) = 0;

@@ -71,12 +71,13 @@ namespace uno {
       lagrangian_gradient.constraints_contribution.fill(0.);
 
       // ∇f(x_k)
+      evaluations.evaluate_objective_gradient(this->model, iterate.primals);
       for (size_t index: Range(this->number_variables)) {
-         // TODO
          lagrangian_gradient.objective_contribution[index] = evaluations.objective_gradient[index];
       }
 
       // ∇c(x_k) λ_k
+      evaluations.evaluate_jacobian(this->model, iterate.primals);
       evaluations.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints,
          lagrangian_gradient.constraints_contribution);
       lagrangian_gradient.constraints_contribution = -lagrangian_gradient.constraints_contribution;
@@ -210,12 +211,14 @@ namespace uno {
    }
 
    // infeasibility measure: constraint violation
-   void OptimizationProblem::set_infeasibility_measure(Iterate& iterate, const Evaluations& evaluations, Norm norm) const {
+   void OptimizationProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
       iterate.progress.infeasibility = this->model.constraint_violation(evaluations.constraints, norm);
    }
 
    // objective measure: scaled objective
-   void OptimizationProblem::set_objective_measure(Iterate& iterate, const Evaluations& evaluations) const {
+   void OptimizationProblem::set_objective_measure(Iterate& iterate, Evaluations& evaluations) const {
+      evaluations.evaluate_objective(this->model, iterate.primals);
       const double objective = evaluations.objective;
       iterate.progress.objective = [=](double objective_multiplier) {
          return objective_multiplier * objective;

@@ -124,7 +124,7 @@ namespace uno {
       // resize the initial iterate
       initial_iterate.set_number_variables(this->barrier_problem->number_variables);
       this->barrier_problem->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
-      this->evaluate_progress_measures(*this->barrier_problem, initial_iterate, evaluation_cache);
+      this->evaluate_progress_measures(*this->barrier_problem, initial_iterate, evaluation_cache.current_evaluations);
    }
 
    template <typename BarrierProblem>

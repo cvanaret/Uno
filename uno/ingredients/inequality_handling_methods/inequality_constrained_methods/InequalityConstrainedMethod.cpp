@@ -12,6 +12,7 @@
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "optimization/Direction.hpp"
 #include "../../subproblem_solvers/SolverWorkspace.hpp"
+#include "optimization/EvaluationCache.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
@@ -51,7 +52,7 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) {
-      this->evaluate_progress_measures(*this->problem, initial_iterate, evaluation_cache);
+      this->evaluate_progress_measures(*this->problem, initial_iterate, evaluation_cache.current_evaluations);
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
