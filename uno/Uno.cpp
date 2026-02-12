@@ -132,7 +132,8 @@ namespace uno {
          DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
          optimization_status = OptimizationStatus::EVALUATION_ERROR;
       }
-      Result result = this->create_result(model, optimization_status, current_iterate, major_iterations, timer);
+      Result result = this->create_result(model, optimization_status, current_iterate, evaluation_cache.current_evaluations,
+         major_iterations, timer);
       Uno::postprocess_multipliers_signs(model, result);
       this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
@@ -221,11 +222,11 @@ namespace uno {
    }
 
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
-         size_t major_iterations, const Timer& timer) const {
+         const Evaluations& evaluations, size_t major_iterations, const Timer& timer) const {
       const size_t number_subproblems_solved = this->globalization_mechanism->get_number_subproblems_solved();
       //const size_t number_hessian_evaluations = this->constraint_relaxation_strategy->get_hessian_evaluation_count();
       return {model.number_variables, model.number_constraints, optimization_status, solution.status,
-         0. /* TODO */, solution.progress.infeasibility, solution.residuals.stationarity,
+         evaluations.objective, solution.progress.infeasibility, solution.residuals.stationarity,
          solution.residuals.complementarity, solution.primals, solution.multipliers.constraints,
          solution.multipliers.lower_bounds, solution.multipliers.upper_bounds, major_iterations, timer.get_duration(),
          model.number_model_objective_evaluations(), model.number_model_constraints_evaluations(),

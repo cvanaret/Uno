@@ -43,7 +43,7 @@ namespace uno {
       [[nodiscard]] Result uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks);
       static void postprocess_solution(const Model& model, Iterate& iterate);
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
-         size_t major_iterations, const Timer& timer) const;
+         const Evaluations& evaluations, size_t major_iterations, const Timer& timer) const;
       static void postprocess_multipliers_signs(const Model& model, Result& result);
       [[nodiscard]] std::string get_strategy_combination() const;
       void print_optimization_summary(const Result& result, bool print_solution) const;
