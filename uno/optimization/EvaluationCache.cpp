@@ -1,4 +1,5 @@
 #include "EvaluationCache.hpp"
+#include "linear_algebra/Indexing.hpp"
 #include "model/Model.hpp"
 
 namespace uno {
@@ -12,6 +13,6 @@ namespace uno {
       this->jacobian_sparsity.row_indices.resize(this->number_jacobian_nonzeros);
       this->jacobian_sparsity.column_indices.resize(this->number_jacobian_nonzeros);
       model.compute_jacobian_sparsity(this->jacobian_sparsity.row_indices.data(), this->jacobian_sparsity.column_indices.data(),
-         0, MatrixOrder::COLUMN_MAJOR); // TODO
+         Indexing::C_indexing, MatrixOrder::ROW_MAJOR); // TODO
    }
 } // namespace

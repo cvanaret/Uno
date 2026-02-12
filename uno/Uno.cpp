@@ -108,12 +108,13 @@ namespace uno {
                const bool user_termination = user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers,
                   trial_iterate.objective_multiplier, trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity,
                   trial_iterate.residuals.complementarity);
-               termination = Uno::termination_criteria(trial_iterate.status, major_iterations, max_iterations,
+               termination = Uno::check_termination(trial_iterate.status, major_iterations, max_iterations,
                   timer.get_duration(), time_limit, user_termination, optimization_status);
                
                // the trial iterate becomes the current iterate for the next iteration
                std::swap(current_iterate, trial_iterate);
                std::swap(evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations);
+               evaluation_cache.trial_evaluations.reset();
             }
          }
          catch (std::exception& exception) {
@@ -192,7 +193,7 @@ namespace uno {
       return statistics;
    }
 
-   bool Uno::termination_criteria(SolutionStatus solution_status, size_t iteration, size_t max_iterations, double current_time,
+   bool Uno::check_termination(SolutionStatus solution_status, size_t iteration, size_t max_iterations, double current_time,
          double time_limit, bool user_termination, OptimizationStatus& optimization_status) {
       if (solution_status != SolutionStatus::NOT_OPTIMAL) {
          return true;

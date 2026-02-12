@@ -38,7 +38,7 @@ namespace uno {
       void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options,
          EvaluationCache& evaluation_cache);
       [[nodiscard]] static Statistics create_statistics(const Model& model);
-      [[nodiscard]] static bool termination_criteria(SolutionStatus solution_status, size_t iteration, size_t max_iterations,
+      [[nodiscard]] static bool check_termination(SolutionStatus solution_status, size_t iteration, size_t max_iterations,
          double current_time, double time_limit, bool user_termination, OptimizationStatus& optimization_status);
       [[nodiscard]] Result uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks);
       static void postprocess_solution(const Model& model, Iterate& iterate);

@@ -50,17 +50,20 @@ namespace uno {
    }
 
    void OptimizationProblem::compute_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
-                                                                  MatrixOrder matrix_order) const {
+         MatrixOrder matrix_order) const {
       this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
    void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int *row_indices,
-                                                      uno_int *column_indices, uno_int solver_indexing) const {
+         uno_int *column_indices, uno_int solver_indexing) const {
       hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
    }
 
-   void OptimizationProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values) const {
-      this->model.evaluate_jacobian(primals, jacobian_values);
+   void OptimizationProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const {
+      evaluations.evaluate_jacobian(this->model, primals);
+      for (size_t nonzero_index: Range(this->model.number_jacobian_nonzeros())) {
+         jacobian_values[nonzero_index] = evaluations.jacobian_values[nonzero_index];
+      }
    }
 
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k

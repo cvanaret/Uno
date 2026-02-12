@@ -19,11 +19,10 @@ namespace uno {
       void initialize_hessian(const Subproblem& subproblem);
       void initialize_augmented_system(const Subproblem& subproblem);
 
-      void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) override;
       [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
       void set_up_linear_system(Statistics& statistics, const Subproblem& subproblem, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
-         const WarmstartInformation& warmstart_information);
+         Evaluations& evaluations, const WarmstartInformation& warmstart_information);
 
       Vector<double> objective_gradient{}; /*!< Sparse Jacobian of the objective */
       Vector<double> constraints{}; /*!< Constraint values (size \f$m)\f$ */

@@ -56,8 +56,16 @@ namespace uno {
    }
 
    void Evaluations::evaluate_jacobian(const Model& model, const Vector<double>& primals) {
-      model.evaluate_jacobian(primals, this->jacobian_values.data());
-      this->is_jacobian_computed = true;
+      if (!this->is_jacobian_computed) {
+         model.evaluate_jacobian(primals, this->jacobian_values.data());
+         // check finiteness
+         if (std::any_of(this->jacobian_values.begin(), this->jacobian_values.end(), [](double derivative) {
+            return !is_finite(derivative);
+         })) {
+            throw GradientEvaluationError();
+         }
+         this->is_jacobian_computed = true;
+      }
    }
 
    void Evaluations::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
@@ -86,5 +94,12 @@ namespace uno {
 
          result[variable_index] += derivative * vector[constraint_index];
       }
+   }
+
+   void Evaluations::reset() {
+      this->is_objective_computed = false;
+      this->are_constraints_computed = false;
+      this->is_objective_gradient_computed = false;
+      this->is_jacobian_computed = false;
    }
 } // namespace

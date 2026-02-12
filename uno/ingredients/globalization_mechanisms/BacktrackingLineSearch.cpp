@@ -89,6 +89,7 @@ namespace uno {
          }
          else if (step_length >= this->minimum_step_length) {
             step_length = this->decrease_step_length(step_length);
+            evaluation_cache.trial_evaluations.reset();
             if (Logger::level == INFO) statistics.print_current_line();
          }
          else { // minimum_step_length reached
@@ -101,6 +102,7 @@ namespace uno {
                   throw std::runtime_error("LS failed");
                }
                // switch to solving the feasibility problem
+               evaluation_cache.trial_evaluations.reset();
                statistics.set("Status", "small step length");
                this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, INF<double>,
                   warmstart_information);

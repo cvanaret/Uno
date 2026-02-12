@@ -14,7 +14,6 @@ namespace uno {
    public:
       BoxLPSolverWorkspace() = default;
 
-      void evaluate_jacobian(const OptimizationProblem& /*problem*/, const Vector<double>& /*primals*/) override { }
       [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& /*vector*/) const override {
          return 0.;
       }
@@ -30,7 +29,7 @@ namespace uno {
       void initialize_memory(const Subproblem& subproblem) override;
 
       void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
-         Direction& direction, const Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
+         Direction& direction, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 

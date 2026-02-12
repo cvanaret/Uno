@@ -30,7 +30,7 @@ namespace uno {
       void initialize_statistics(Statistics& statistics) override;
       void generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) override;
       void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
+         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& iterate) override;
@@ -38,7 +38,6 @@ namespace uno {
 
       // matrix computations
       [[nodiscard]] SolverWorkspace& get_solver_workspace() const override;
-      void evaluate_jacobian(const Vector<double>& primals) override;
 
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
@@ -129,7 +128,7 @@ namespace uno {
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
+         double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet");
       }
@@ -234,13 +233,6 @@ namespace uno {
    template <typename BarrierProblem>
    SolverWorkspace& InteriorPointMethod<BarrierProblem>::get_solver_workspace() const {
       return this->linear_solver->get_workspace();
-   }
-
-   template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::evaluate_jacobian(const Vector<double>& primals) {
-      // create the subproblem
-      auto& solver_workspace = this->linear_solver->get_workspace();
-      solver_workspace.evaluate_jacobian(*this->barrier_problem, primals);
    }
 
    template <typename BarrierProblem>

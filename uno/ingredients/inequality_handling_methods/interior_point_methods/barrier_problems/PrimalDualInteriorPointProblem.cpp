@@ -35,6 +35,7 @@ namespace uno {
 
       // set the slack variables (if any)
       if (!this->model.get_slacks().is_empty()) {
+         evaluations.evaluate_constraints(this->model, initial_iterate.primals);
          // set the slacks to the constraint values
          for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
             initial_iterate.primals[slack_index] =
@@ -42,8 +43,8 @@ namespace uno {
                this->first_reformulation.variable_lower_bound(slack_index), this->first_reformulation.variable_upper_bound(slack_index));
          }
          // since the slacks have been set, the function evaluations should also be updated
-         evaluations.is_objective_gradient_computed = false;
          evaluations.are_constraints_computed = false;
+         evaluations.is_objective_gradient_computed = false;
          evaluations.is_jacobian_computed = false;
       }
 
@@ -148,8 +149,8 @@ namespace uno {
       return number_nonzeros;
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values) const {
-      this->first_reformulation.evaluate_jacobian(primals, jacobian_values);
+   void PrimalDualInteriorPointProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const {
+      this->first_reformulation.evaluate_jacobian(primals, jacobian_values, evaluations);
    }
 
    void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,

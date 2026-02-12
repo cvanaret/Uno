@@ -132,8 +132,11 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values) const {
-      this->model.evaluate_jacobian(primals, jacobian_values);
+   void l1RelaxedProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const {
+      evaluations.evaluate_jacobian(this->model, primals);
+      for (size_t nonzeros_index: Range(this->model.number_jacobian_nonzeros())) {
+         jacobian_values[nonzeros_index] = evaluations.jacobian_values[nonzeros_index];
+      }
 
       // add the contribution of the elastic variables
       size_t nonzero_index = this->model.number_jacobian_nonzeros();

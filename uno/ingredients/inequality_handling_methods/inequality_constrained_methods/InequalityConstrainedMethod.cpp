@@ -56,7 +56,7 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-        double trust_region_radius, const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
+        double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       // solve the subproblem
       this->solver->solve(statistics, *this->subproblem, trust_region_radius, this->initial_point, direction, current_evaluations,
          warmstart_information);
@@ -84,11 +84,6 @@ namespace uno {
 
    SolverWorkspace& InequalityConstrainedMethod::get_solver_workspace() const {
       return this->solver->get_workspace();
-   }
-
-   void InequalityConstrainedMethod::evaluate_jacobian(const Vector<double>& primals) {
-      auto& solver_workspace = this->solver->get_workspace();
-      solver_workspace.evaluate_jacobian(*this->problem, primals);
    }
 
    // compute dual *displacements*

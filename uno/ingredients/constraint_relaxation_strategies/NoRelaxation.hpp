@@ -22,7 +22,7 @@ namespace uno {
 
       // direction computation
       void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
+         double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
          WarmstartInformation& warmstart_information) override;

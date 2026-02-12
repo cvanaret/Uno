@@ -92,6 +92,7 @@ namespace uno {
                else {
                   this->decrease_radius(direction.norm);
                   warmstart_information.variable_bounds_changed = true;
+                  evaluation_cache.trial_evaluations.reset();
                }
                if (Logger::level == INFO) statistics.print_current_line();
             }

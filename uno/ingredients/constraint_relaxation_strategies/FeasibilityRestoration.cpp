@@ -73,7 +73,7 @@ namespace uno {
    }
 
    void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
+         double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       direction.reset();
       // if we are in the optimality phase, solve the optimality problem
       if (this->current_phase == Phase::OPTIMALITY) {
@@ -144,15 +144,13 @@ namespace uno {
          this->first_switch_to_feasibility = false;
       }
 
-      this->feasibility_inequality_handling_method->evaluate_jacobian(current_iterate.primals);
-
       if (Logger::level == INFO) statistics.print_current_line();
       warmstart_information.whole_problem_changed();
    }
 
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method,
          const OptimizationProblem& problem, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
+         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       direction.set_dimensions(problem.number_variables, problem.number_constraints);
       inequality_handling_method.solve(statistics, current_iterate, direction, trust_region_radius, current_evaluations,
          warmstart_information);

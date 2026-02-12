@@ -15,7 +15,7 @@ namespace uno {
       void initialize_memory(const Subproblem& subproblem) override = 0;
 
       void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
-         Direction& direction, const Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override = 0;
+         Direction& direction, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override = 0;
    };
 } // namespace
 

@@ -40,6 +40,7 @@ namespace uno {
          statistics.set("Status", "✔ (Armijo)");
       }
       else {
+         DEBUG << "Trial iterate was rejected by Armijo condition\n";
          statistics.set("Status", "✘ (Armijo)");
       }
       return accept;

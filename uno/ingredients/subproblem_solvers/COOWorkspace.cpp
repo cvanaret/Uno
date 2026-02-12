@@ -62,17 +62,14 @@ namespace uno {
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
    }
-   
-   void COOWorkspace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) {
-      problem.evaluate_jacobian(primals, this->matrix_values.data() + this->number_hessian_nonzeros);
-   }
 
    double COOWorkspace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& /*vector*/) const {
       return 0.;
    }
 
    void COOWorkspace::set_up_linear_system(Statistics& statistics, const Subproblem& subproblem,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, const WarmstartInformation& warmstart_information) {
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, Evaluations& evaluations,
+         const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       if (warmstart_information.new_iterate) {
          // TODO subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data(),
@@ -85,7 +82,7 @@ namespace uno {
             this->analysis_performed = true;
          }
          // assemble the augmented matrix
-         subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data());
+         subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data(), evaluations);
          // regularize the augmented matrix (this calls the analysis and the factorization)
          subproblem.regularize_augmented_matrix(statistics, this->matrix_values.data(),
             subproblem.dual_regularization_factor(), linear_solver);

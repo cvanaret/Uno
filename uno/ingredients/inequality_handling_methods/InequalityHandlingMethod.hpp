@@ -38,7 +38,7 @@ namespace uno {
       virtual void initialize_statistics(Statistics& statistics) = 0;
       virtual void generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) = 0;
       virtual void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
+         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
 
       virtual void initialize_feasibility_problem(Iterate& current_iterate) = 0;
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
@@ -46,7 +46,6 @@ namespace uno {
 
       // matrix computations
       [[nodiscard]] virtual SolverWorkspace& get_solver_workspace() const = 0;
-      virtual void evaluate_jacobian(const Vector<double>& primals) = 0;
 
       // progress measures
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,

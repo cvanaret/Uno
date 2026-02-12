@@ -42,7 +42,7 @@ namespace uno {
    }
 
    void NoRelaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
+         double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
       direction.set_dimensions(this->original_problem.number_variables, this->original_problem.number_constraints);

@@ -38,6 +38,9 @@ namespace uno {
 
       void compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const;
       void compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const;
+
+      // reset the evaluation flags
+      void reset();
    };
 } // namespace
 

@@ -105,13 +105,14 @@ namespace uno {
       }
    }
 
-   void Subproblem::assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values) const {
+   void Subproblem::assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values, Evaluations& evaluations) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
          this->current_iterate.multipliers, augmented_matrix_values);
 
       // Jacobian of general constraints
-      this->problem.evaluate_jacobian(this->current_iterate.primals, augmented_matrix_values + this->number_hessian_nonzeros());
+      this->problem.evaluate_jacobian(this->current_iterate.primals, augmented_matrix_values + this->number_hessian_nonzeros(),
+         evaluations);
    }
 
    void Subproblem::regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
@@ -230,9 +231,13 @@ namespace uno {
 
    // local models of progress measures
    double Subproblem::compute_predicted_infeasibility_reduction(const Model& model, const Vector<double>& primal_direction,
-         double step_length, Norm norm, const Evaluations& current_evaluations) const {
+         double step_length, Norm norm, Evaluations& current_evaluations) const {
       // predicted infeasibility reduction: "‖c(x)‖ - ‖c(x) + ∇c(x)^T (αd)‖"
+      current_evaluations.evaluate_constraints(model, this->current_iterate.primals);
+      current_evaluations.evaluate_jacobian(model, this->current_iterate.primals);
+
       const double current_constraint_violation = model.constraint_violation(current_evaluations.constraints, norm);
+      // TODO preallocate
       Vector<double> result(model.number_constraints);
       current_evaluations.compute_jacobian_vector_product(primal_direction, result);
       const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
@@ -255,7 +260,7 @@ namespace uno {
    }
 
    ProgressMeasures Subproblem::compute_predicted_reductions(const Direction& direction, double step_length, Norm norm,
-         const Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const {
+         Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const {
       return {
          this->compute_predicted_infeasibility_reduction(this->problem.model, direction.primals, step_length, norm,
             current_evaluations),

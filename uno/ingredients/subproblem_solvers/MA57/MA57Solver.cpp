@@ -204,9 +204,9 @@ namespace uno {
    }
 
    void MA57Solver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // set up the linear system by evaluating the functions at the current iterate
-      this->coo_workspace.set_up_linear_system(statistics, subproblem, *this, warmstart_information);
+      this->coo_workspace.set_up_linear_system(statistics, subproblem, *this, current_evaluations, warmstart_information);
       // solve the linear system
       this->solve_indefinite_system(this->coo_workspace.matrix_values, this->coo_workspace.rhs, this->coo_workspace.solution);
       // assemble the full primal-dual direction

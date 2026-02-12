@@ -37,16 +37,6 @@ namespace uno {
       }
    }
 
-   void BQPDWorkspace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) {
-      problem.evaluate_jacobian(primals, this->jacobian_values.data());
-
-      // copy the Jacobian with permutation into &this->gradients[problem.number_variables]
-      for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
-         const size_t permuted_nonzero_index = this->permutation_vector[nonzero_index];
-         this->gradients[problem.number_variables + nonzero_index] = this->jacobian_values[permuted_nonzero_index];
-      }
-   }
-
    double BQPDWorkspace::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
       if (subproblem.has_hessian_operator()) { // linear operator
          // TODO preallocate
@@ -77,13 +67,13 @@ namespace uno {
    }
 
    void BQPDWorkspace::evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate,
-         const Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
       if (warmstart_information.new_iterate) {
          problem.evaluate_objective_gradient(current_iterate, this->gradients.data(), current_evaluations);
          problem.evaluate_constraints(current_iterate, this->constraints, current_evaluations);
-         this->evaluate_jacobian(problem, current_iterate.primals);
+         this->evaluate_jacobian(problem, current_iterate.primals, current_evaluations);
          this->hessian_evaluation_required = true;
       }
    }
@@ -149,5 +139,16 @@ namespace uno {
 
       // the Jacobian will be evaluated in this vector, and copied with permutation into this->gradients
       this->jacobian_values.resize(number_jacobian_nonzeros);
+   }
+
+   void BQPDWorkspace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals,
+         Evaluations& evaluations) {
+      problem.evaluate_jacobian(primals, this->jacobian_values.data(), evaluations);
+
+      // copy the Jacobian with permutation into &this->gradients[problem.number_variables]
+      for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
+         const size_t permuted_nonzero_index = this->permutation_vector[nonzero_index];
+         this->gradients[problem.number_variables + nonzero_index] = this->jacobian_values[permuted_nonzero_index];
+      }
    }
 } // namespace

@@ -23,10 +23,9 @@ namespace uno {
 
       void initialize_memory(const Subproblem& subproblem);
 
-      void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) override;
       [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
-      void evaluate_functions(Statistics& statistics, const Subproblem& subproblem, const Evaluations& current_evaluations,
+      void evaluate_functions(Statistics& statistics, const Subproblem& subproblem, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information);
 
       HighsModel model;
@@ -46,6 +45,7 @@ namespace uno {
    protected:
       void compute_jacobian_sparsity(const Subproblem& subproblem);
       void compute_hessian_sparsity(const Subproblem& subproblem);
+      void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals, Evaluations& evaluations);
    };
 } // namespace
 

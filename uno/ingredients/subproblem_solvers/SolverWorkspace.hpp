@@ -23,7 +23,6 @@ namespace uno {
       SolverWorkspace() = default;
       virtual ~SolverWorkspace() = default;
 
-      virtual void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals) = 0;
       [[nodiscard]] virtual double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const = 0;
    };
 } // namespace
