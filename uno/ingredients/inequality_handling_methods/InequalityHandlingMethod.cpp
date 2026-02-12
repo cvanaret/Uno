@@ -27,7 +27,7 @@ namespace uno {
    }
 
    bool InequalityHandlingMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate,
+         const Subproblem& subproblem, const SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double step_length, EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) {
       this->postprocess_iterate(trial_iterate);
       const double objective_multiplier = subproblem.problem.get_objective_multiplier();

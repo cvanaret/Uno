@@ -36,7 +36,7 @@ namespace uno {
    protected:
       std::vector<double> variable_lower_bounds;
       std::vector<double> variable_upper_bounds;
-      BoxLPSolverWorkspace evaluation_space{};
+      BoxLPSolverWorkspace workspace{};
    };
 } // namespace
 
