@@ -67,34 +67,6 @@ namespace uno {
       problem.evaluate_jacobian(primals, this->matrix_values.data() + this->number_hessian_nonzeros);
    }
 
-   void COOWorkspace::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t offset = this->number_hessian_nonzeros;
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
-         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
-         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
-         const double derivative = this->matrix_values[offset + nonzero_index];
-
-         if (constraint_index < result.size() && variable_index < vector.size()) {
-            result[constraint_index] += derivative * vector[variable_index];
-         }
-      }
-   }
-
-   void COOWorkspace::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t offset = this->number_hessian_nonzeros;
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
-         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
-         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
-         const double derivative = this->matrix_values[offset + nonzero_index];
-
-         if (variable_index < result.size() && constraint_index < vector.size()) {
-            result[variable_index] += derivative * vector[constraint_index];
-         }
-      }
-   }
-
    double COOWorkspace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& /*vector*/) const {
       return 0.;
    }

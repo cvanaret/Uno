@@ -53,7 +53,7 @@ namespace uno {
       void do_numerical_factorization(const double* matrix_values) override;
       void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) override;
       void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const WarmstartInformation& warmstart_information) override;
+         const Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -65,7 +65,7 @@ namespace uno {
 
    private:
       MA57Workspace workspace{};
-      COOWorkspace evaluation_space{};
+      COOWorkspace coo_workspace{};
 
       bool analysis_performed{false};
       bool factorization_performed{false};

@@ -46,12 +46,12 @@ namespace uno {
       void initialize_memory(const Subproblem& subproblem) override;
 
       void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) override;
+         Direction& direction, const Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    private:
-      BQPDWorkspace evaluation_space;
+      BQPDWorkspace workspace;
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
 
       int kmax{0};
@@ -74,7 +74,7 @@ namespace uno {
       const bool print_subproblem;
 
       void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const WarmstartInformation& warmstart_information);
+         const Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
       void display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const;
       void solve_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);

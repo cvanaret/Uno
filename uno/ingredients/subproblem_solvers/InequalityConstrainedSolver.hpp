@@ -7,6 +7,7 @@
 namespace uno {
    // forward declarations
    class Direction;
+   class Evaluations;
    class SolverWorkspace;
    class Statistics;
    class Subproblem;
@@ -22,7 +23,8 @@ namespace uno {
       virtual void initialize_memory(const Subproblem& subproblem) = 0;
 
       virtual void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& initial_point, Direction& direction, const WarmstartInformation& warmstart_information) = 0;
+         const Vector<double>& initial_point, Direction& direction, const Evaluations& current_evaluations,
+         const WarmstartInformation& warmstart_information) = 0;
 
       [[nodiscard]] virtual SolverWorkspace& get_workspace() = 0;
    };

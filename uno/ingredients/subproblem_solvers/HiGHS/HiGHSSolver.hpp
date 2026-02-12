@@ -19,18 +19,18 @@ namespace uno {
       void initialize_memory(const Subproblem& subproblem) override;
 
       void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) override;
+         Direction& direction, const Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    protected:
       Highs highs_solver;
-      HiGHSWorkspace evaluation_space;
+      HiGHSWorkspace workspace;
 
       const bool print_subproblem;
 
       void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const WarmstartInformation& warmstart_information);
+         const Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
       void solve_subproblem(const Subproblem& subproblem, Direction& direction);
    };
 } // namespace

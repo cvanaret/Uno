@@ -4,16 +4,12 @@
 #ifndef UNO_ITERATE_H
 #define UNO_ITERATE_H
 
-#include "Evaluations.hpp"
 #include "SolutionStatus.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/DualResiduals.hpp"
 
 namespace uno {
-   // forward declaration
-   class Model;
-
    class Iterate {
    public:
       size_t number_variables;
@@ -21,12 +17,6 @@ namespace uno {
       Vector<double> primals;
       Multipliers multipliers; /*!< \f$\mathbb{R}^n\f$ Lagrange multipliers/dual variables */
       double objective_multiplier{1.};
-
-      // lazy evaluation flags
-      bool is_objective_computed{false};
-      bool are_constraints_computed{false};
-      bool is_objective_gradient_computed{false}; /*!< Flag that indicates if the objective gradient has already been computed */
-      bool is_jacobian_computed{false}; /*!< Flag that indicates if the constraint Jacobian has already been computed */
 
       // primal-dual residuals
       double primal_feasibility{INF<double>};

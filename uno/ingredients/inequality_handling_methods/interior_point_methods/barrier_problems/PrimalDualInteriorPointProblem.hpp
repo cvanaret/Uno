@@ -17,7 +17,7 @@ namespace uno {
 
       [[nodiscard]] double get_objective_multiplier() const override;
       void set_barrier_parameter(double barrier_parameter) override;
-      void generate_initial_iterate(Iterate& initial_iterate, const Evaluations& evaluations) const override;
+      void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
 
       // constraint evaluations
       void evaluate_constraints(Iterate& iterate, Vector<double>& constraints, const Evaluations& evaluations) const override;

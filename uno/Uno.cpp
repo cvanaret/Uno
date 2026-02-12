@@ -79,7 +79,7 @@ namespace uno {
       model.initial_dual_point(current_iterate.multipliers.constraints);
 
       // evaluation cache
-      EvaluationCache evaluation_cache{model.number_variables, model.number_constraints};
+      EvaluationCache evaluation_cache{model};
 
       size_t major_iterations = 0;
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
@@ -113,6 +113,7 @@ namespace uno {
                
                // the trial iterate becomes the current iterate for the next iteration
                std::swap(current_iterate, trial_iterate);
+               std::swap(evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations);
             }
          }
          catch (std::exception& exception) {
@@ -166,7 +167,7 @@ namespace uno {
 
       model.project_onto_variable_bounds(current_iterate.primals);
       this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction, evaluation_cache);
-      GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate);
+      GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
       GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
 
       options.print_non_default();

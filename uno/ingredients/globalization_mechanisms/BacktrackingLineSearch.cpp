@@ -38,7 +38,7 @@ namespace uno {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
       this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction, INF<double>,
-         warmstart_information);
+         evaluation_cache.current_evaluations, warmstart_information);
       BacktrackingLineSearch::check_unboundedness(direction);
       this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, direction, evaluation_cache,
          warmstart_information, user_callbacks);
@@ -73,7 +73,7 @@ namespace uno {
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction, step_length, evaluation_cache, warmstart_information, user_callbacks);
-            GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate);
+            GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.current_evaluations);
          }
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
@@ -106,7 +106,7 @@ namespace uno {
                this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, INF<double>,
                   warmstart_information);
                this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction,
-                  INF<double>, warmstart_information);
+                  INF<double>, evaluation_cache.current_evaluations, warmstart_information);
                BacktrackingLineSearch::check_unboundedness(direction);
                // restart backtracking
                step_length = 1.;

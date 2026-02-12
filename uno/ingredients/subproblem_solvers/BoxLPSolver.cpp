@@ -14,7 +14,8 @@ namespace uno {
    }
 
    void BoxLPSolver::solve(Statistics& /*statistics*/, Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& /*initial_point*/, Direction& direction, const WarmstartInformation& /*warmstart_information*/) {
+         const Vector<double>& /*initial_point*/, Direction& direction, const Evaluations& current_evaluations,
+         const WarmstartInformation& /*warmstart_information*/) {
       if (0 < subproblem.number_constraints) {
          throw std::runtime_error("BoxLPSolver cannot solve problems with general constraints");
       }

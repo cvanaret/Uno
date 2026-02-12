@@ -47,21 +47,21 @@ namespace uno {
    }
 
    void MUMPSSolver::initialize_hessian(const Subproblem& subproblem) {
-      this->evaluation_space.initialize_hessian(subproblem);
+      this->coo_workspace.initialize_hessian(subproblem);
 
       // workspace*
       const size_t dimension = subproblem.number_variables;
       this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
+      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
    }
 
    void MUMPSSolver::initialize_augmented_system(const Subproblem& subproblem) {
-      this->evaluation_space.initialize_augmented_system(subproblem);
+      this->coo_workspace.initialize_augmented_system(subproblem);
 
       // workspace
       const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
       this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
+      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
    }
 
    void MUMPSSolver::do_symbolic_analysis() {
@@ -69,8 +69,8 @@ namespace uno {
 
       this->workspace.job = MUMPSSolver::JOB_ANALYSIS;
       // connect the local sparsity with the pointers in the workspace
-      this->workspace.irn = this->evaluation_space.matrix_row_indices.data();
-      this->workspace.jcn = this->evaluation_space.matrix_column_indices.data();
+      this->workspace.irn = this->coo_workspace.matrix_row_indices.data();
+      this->workspace.jcn = this->coo_workspace.matrix_column_indices.data();
       dmumps_c(&this->workspace);
       this->workspace.icntl[7] = 8; // ICNTL(8) = 8: recompute scaling before factorization
       this->analysis_performed = true;
@@ -95,13 +95,13 @@ namespace uno {
    }
 
    void MUMPSSolver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const WarmstartInformation& warmstart_information) {
+         const Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // set up the linear system by evaluating the functions at the current iterate
-      this->evaluation_space.set_up_linear_system(statistics, subproblem, *this, warmstart_information);
+      this->coo_workspace.set_up_linear_system(statistics, subproblem, *this, warmstart_information);
       // solve the linear system
-      this->solve_indefinite_system(this->evaluation_space.matrix_values, this->evaluation_space.rhs, this->evaluation_space.solution);
+      this->solve_indefinite_system(this->coo_workspace.matrix_values, this->coo_workspace.rhs, this->coo_workspace.solution);
       // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(this->evaluation_space.solution, direction);
+      subproblem.assemble_primal_dual_direction(this->coo_workspace.solution, direction);
       if (this->matrix_is_singular()) {
          direction.status = SubproblemStatus::INFEASIBLE;
       }
@@ -134,7 +134,7 @@ namespace uno {
       return this->workspace.n - this->number_zero_eigenvalues();
    }
 
-   EvaluationSpace& MUMPSSolver::get_evaluation_space() {
-      return this->evaluation_space;
+   COOWorkspace& MUMPSSolver::get_workspace() {
+      return this->coo_workspace;
    }
 } // namespace

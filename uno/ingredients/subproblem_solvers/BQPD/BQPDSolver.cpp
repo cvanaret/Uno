@@ -75,7 +75,7 @@ namespace uno {
          throw std::runtime_error("The Hessian cannot be evaluated implicitly or explicitly");
       }
 
-      this->evaluation_space.initialize(subproblem);
+      this->workspace.initialize(subproblem);
 
       this->w.resize(subproblem.number_variables + subproblem.number_constraints);
       this->gradient_solution.resize(subproblem.number_variables);
@@ -107,8 +107,9 @@ namespace uno {
    }
 
    void BQPDSolver::solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& initial_point, Direction& direction, const WarmstartInformation& warmstart_information) {
-      this->set_up_subproblem(statistics, subproblem, trust_region_radius, warmstart_information);
+         const Vector<double>& initial_point, Direction& direction, const Evaluations& current_evaluations,
+         const WarmstartInformation& warmstart_information) {
+      this->set_up_subproblem(statistics, subproblem, trust_region_radius, current_evaluations, warmstart_information);
       if (this->print_subproblem) {
          this->display_subproblem(subproblem, initial_point);
       }
@@ -116,20 +117,21 @@ namespace uno {
    }
 
    SolverWorkspace& BQPDSolver::get_workspace() {
-      return this->evaluation_space;
+      return this->workspace;
    }
 
    // protected member functions
 
    void BQPDSolver::set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const WarmstartInformation& warmstart_information) {
+         const Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // initialize wsc_ common block (Hessian & workspace for BQPD)
       // setting the common block here ensures that several instances of BQPD can run simultaneously
       WSC.mxws = static_cast<int>(this->mxws);
       WSC.mxlws = static_cast<int>(this->mxlws);
 
       // evaluate the functions and derivatives
-      this->evaluation_space.evaluate_functions(subproblem.problem, subproblem.current_iterate, warmstart_information);
+      this->workspace.evaluate_functions(subproblem.problem, subproblem.current_iterate, current_evaluations,
+         warmstart_information);
 
       // variable bounds
       if (warmstart_information.variable_bounds_changed) {
@@ -140,7 +142,7 @@ namespace uno {
       if (warmstart_information.constraint_bounds_changed || warmstart_information.new_iterate) {
          auto constraints_lower_bounds = view(this->lower_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
          auto constraints_upper_bounds = view(this->upper_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
-         subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, this->evaluation_space.constraints);
+         subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, this->workspace.constraints);
       }
 
       // replace INFs with large finite values (TODO: is that really useful?)
@@ -154,10 +156,10 @@ namespace uno {
 
    void BQPDSolver::display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const {
       DEBUG << "Subproblem:\n";
-      DEBUG << "Linear objective part: " << view(this->evaluation_space.gradients, 0, subproblem.number_variables) << '\n';
+      DEBUG << "Linear objective part: " << view(this->workspace.gradients, 0, subproblem.number_variables) << '\n';
       // note: Hessian values may not be available yet
       // DEBUG << "Hessian: " << this->hessian_values << '\n';
-      DEBUG << "Jacobian: " << view(this->evaluation_space.gradients, subproblem.number_variables, subproblem.number_variables +
+      DEBUG << "Jacobian: " << view(this->workspace.gradients, subproblem.number_variables, subproblem.number_variables +
          subproblem.number_jacobian_nonzeros()) << '\n';
       for (size_t variable_index: Range(subproblem.number_variables)) {
          DEBUG << "d" << variable_index << " in [" << this->lower_bounds[variable_index] << ", " << this->upper_bounds[variable_index] << "]\n";
@@ -206,7 +208,7 @@ namespace uno {
       bool termination = false;
       while (!termination) {
          DEBUG2 << "Running BQPD\n";
-         BQPD(&n, &m, &this->k, &this->kmax, this->evaluation_space.gradients.data(), this->evaluation_space.gradients_sparsity.data(),
+         BQPD(&n, &m, &this->k, &this->kmax, this->workspace.gradients.data(), this->workspace.gradients_sparsity.data(),
             direction.primals.data(), this->lower_bounds.data(), this->upper_bounds.data(), &direction.subproblem_objective,
             &this->fmin, this->gradient_solution.data(), this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(),
             this->alp.data(), this->lp.data(), &this->mlp, &this->peq_solution, this->ws.data(), this->lws.data(), &mode_integer,
@@ -247,17 +249,17 @@ namespace uno {
       WSC.ll = 0; // length of lws that is used by gdotx
 
       // hide pointer to hessian_evaluation_required, statistics, subproblem and Hessian information
-      hide_pointer(0, this->lws.data(), this->evaluation_space.hessian_evaluation_required);
+      hide_pointer(0, this->lws.data(), this->workspace.hessian_evaluation_required);
       WSC.ll += sizeof(intptr_t);
       hide_pointer(1, this->lws.data(), statistics);
       WSC.ll += sizeof(intptr_t);
       hide_pointer(2, this->lws.data(), subproblem);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(3, this->lws.data(), this->evaluation_space.hessian_row_indices);
+      hide_pointer(3, this->lws.data(), this->workspace.hessian_row_indices);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(4, this->lws.data(), this->evaluation_space.hessian_column_indices);
+      hide_pointer(4, this->lws.data(), this->workspace.hessian_column_indices);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(5, this->lws.data(), this->evaluation_space.hessian_values);
+      hide_pointer(5, this->lws.data(), this->workspace.hessian_values);
       WSC.ll += sizeof(intptr_t);
    }
 

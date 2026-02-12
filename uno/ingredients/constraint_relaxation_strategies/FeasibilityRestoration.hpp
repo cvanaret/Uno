@@ -29,7 +29,7 @@ namespace uno {
 
       // direction computation
       void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, WarmstartInformation& warmstart_information) override;
+         double trust_region_radius, const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
          WarmstartInformation& warmstart_information) override;
@@ -66,7 +66,8 @@ namespace uno {
       bool first_switch_to_feasibility{true};
 
       void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information);
+         Iterate& current_iterate, Direction& direction, double trust_region_radius, const Evaluations& current_evaluations,
+         WarmstartInformation& warmstart_information);
       void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 
       [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,

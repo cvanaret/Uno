@@ -5,6 +5,7 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/UnaryNegation.hpp"
 #include "symbolic/VectorView.hpp"
@@ -25,7 +26,7 @@ namespace uno {
       this->barrier_parameter = barrier_parameter;
    }
 
-   void PrimalDualInteriorPointProblem::generate_initial_iterate(Iterate& initial_iterate, const Evaluations& evaluations) const {
+   void PrimalDualInteriorPointProblem::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
       // make the initial point strictly feasible wrt the bounds
       for (size_t variable_index: Range(this->number_variables)) {
          initial_iterate.primals[variable_index] = this->push_variable_to_interior(initial_iterate.primals[variable_index],
@@ -41,9 +42,9 @@ namespace uno {
                this->first_reformulation.variable_lower_bound(slack_index), this->first_reformulation.variable_upper_bound(slack_index));
          }
          // since the slacks have been set, the function evaluations should also be updated
-         initial_iterate.is_objective_gradient_computed = false;
-         initial_iterate.are_constraints_computed = false;
-         initial_iterate.is_jacobian_computed = false;
+         evaluations.is_objective_gradient_computed = false;
+         evaluations.are_constraints_computed = false;
+         evaluations.is_jacobian_computed = false;
       }
 
       // set the bound multipliers

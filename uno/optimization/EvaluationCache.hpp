@@ -5,15 +5,21 @@
 #define UNO_EVALUATIONCACHE_H
 
 #include "Evaluations.hpp"
+#include "linear_algebra/COOSparsity.hpp"
 
 namespace uno {
+   // forward declaration
+   class Model;
+
    class EvaluationCache {
    public:
+      const size_t number_jacobian_nonzeros;
+      COOSparsity jacobian_sparsity;
       // evaluations at current and trial iterates
       Evaluations current_evaluations;
       Evaluations trial_evaluations;
 
-      EvaluationCache(size_t number_variables, size_t number_constraints);
+      explicit EvaluationCache(const Model& model);
    };
 } // namespace
 

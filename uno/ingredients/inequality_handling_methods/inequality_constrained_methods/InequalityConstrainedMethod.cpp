@@ -55,9 +55,10 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-        double trust_region_radius, WarmstartInformation& warmstart_information) {
+        double trust_region_radius, const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       // solve the subproblem
-      this->solver->solve(statistics, *this->subproblem, trust_region_radius, this->initial_point, direction, warmstart_information);
+      this->solver->solve(statistics, *this->subproblem, trust_region_radius, this->initial_point, direction, current_evaluations,
+         warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_iterate.multipliers, direction.multipliers);
       ++this->number_subproblems_solved;
       // reset the initial point

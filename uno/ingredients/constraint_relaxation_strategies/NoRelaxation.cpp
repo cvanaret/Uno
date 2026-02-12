@@ -47,11 +47,12 @@ namespace uno {
    }
 
    void NoRelaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, WarmstartInformation& warmstart_information) {
+         double trust_region_radius, const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
       direction.set_dimensions(this->original_problem.number_variables, this->original_problem.number_constraints);
-      this->inequality_handling_method->solve(statistics, current_iterate, direction, trust_region_radius, warmstart_information);
+      this->inequality_handling_method->solve(statistics, current_iterate, direction, trust_region_radius, current_evaluations,
+         warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, this->original_problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
       warmstart_information.no_changes();
@@ -83,7 +84,7 @@ namespace uno {
       this->original_problem.evaluate_lagrangian_gradient(trial_iterate.residuals.lagrangian_gradient, trial_iterate,
          trial_evaluations);
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, trial_iterate, trial_evaluations);
-      return ConstraintRelaxationStrategy::check_termination(this->original_problem, trial_iterate, trial_evaluations.objective);
+      return ConstraintRelaxationStrategy::check_termination(this->original_problem, trial_iterate, trial_evaluations);
    }
 
    std::string NoRelaxation::get_name() const {

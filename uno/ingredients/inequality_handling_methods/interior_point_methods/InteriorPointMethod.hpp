@@ -30,7 +30,7 @@ namespace uno {
       void initialize_statistics(Statistics& statistics) override;
       void generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) override;
       void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         WarmstartInformation& warmstart_information) override;
+         const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& iterate) override;
@@ -129,7 +129,7 @@ namespace uno {
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, WarmstartInformation& warmstart_information) {
+         double trust_region_radius, const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       if (is_finite(trust_region_radius)) {
          throw std::runtime_error("The interior-point subproblem has a trust region. This is not implemented yet");
       }
@@ -144,7 +144,7 @@ namespace uno {
       statistics.set("Barrier", this->barrier_parameter());
 
       // compute the primal-dual solution
-      this->linear_solver->solve_indefinite_system(statistics, *this->subproblem, direction, warmstart_information);
+      this->linear_solver->solve_indefinite_system(statistics, *this->subproblem, direction, current_evaluations, warmstart_information);
       ++this->number_subproblems_solved;
 
       // check whether the augmented matrix was singular, in which case the subproblem is infeasible

@@ -44,37 +44,6 @@ namespace uno {
       }
    }
 
-   void HiGHSWorkspace::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t number_jacobian_nonzeros = this->jacobian_row_indices.size();
-      for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
-         const size_t permuted_nonzero_index = this->jacobian_permutation_vector[nonzero_index];
-         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[permuted_nonzero_index]);
-         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[permuted_nonzero_index]);
-         const double derivative = this->model.lp_.a_matrix_.value_[nonzero_index];
-
-         // a safeguard to make sure we take only the correct part of the Jacobian
-         if (variable_index < vector.size() && constraint_index < result.size()) {
-            result[constraint_index] += derivative * vector[variable_index];
-         }
-      }
-   }
-
-   void HiGHSWorkspace::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t number_jacobian_nonzeros = this->jacobian_row_indices.size();
-      for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
-         const size_t permuted_nonzero_index = this->jacobian_permutation_vector[nonzero_index];
-         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[permuted_nonzero_index]);
-         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[permuted_nonzero_index]);
-         const double derivative = this->model.lp_.a_matrix_.value_[nonzero_index];
-         assert(constraint_index < vector.size());
-         assert(variable_index < result.size());
-
-         result[variable_index] += derivative * vector[constraint_index];
-      }
-   }
-
    double HiGHSWorkspace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& vector) const {
       double quadratic_product = 0.;
       const size_t number_hessian_nonzeros = this->hessian_values.size();
@@ -92,7 +61,7 @@ namespace uno {
    }
 
    void HiGHSWorkspace::evaluate_functions(Statistics& statistics, const Subproblem& subproblem,
-         const WarmstartInformation& warmstart_information) {
+         const Evaluations& /*current_evaluations*/, const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       if (warmstart_information.new_iterate) {
          // TODO subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data(),

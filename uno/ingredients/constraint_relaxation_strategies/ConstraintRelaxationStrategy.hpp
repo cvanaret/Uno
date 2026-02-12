@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include "linear_algebra/Norm.hpp"
+#include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/SolutionStatus.hpp"
 
@@ -32,7 +33,7 @@ namespace uno {
 
       // direction computation
       virtual void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, WarmstartInformation& warmstart_information) = 0;
+         double trust_region_radius, const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
       [[nodiscard]] virtual bool solving_feasibility_problem() const = 0;
       virtual void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
          WarmstartInformation& warmstart_information) = 0;
@@ -41,7 +42,7 @@ namespace uno {
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
-      [[nodiscard]] virtual SolutionStatus check_termination(const Model& model, Iterate& trial_iterate, Evaluations& evaluations) = 0;
+      [[nodiscard]] virtual SolutionStatus check_termination(const Model& model, Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
@@ -62,17 +63,18 @@ namespace uno {
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;
 
       template <typename Problem>
-      [[nodiscard]] SolutionStatus check_termination(const Problem& problem, Iterate& iterate, double objective);
+      [[nodiscard]] SolutionStatus check_termination(const Problem& problem, Iterate& trial_iterate, const Evaluations& trial_evaluations);
    };
 
    template <typename Problem>
-   SolutionStatus ConstraintRelaxationStrategy::check_termination(const Problem& problem, Iterate& iterate, double objective) {
-      if (iterate.is_objective_computed && objective < this->unbounded_objective_threshold) {
+   SolutionStatus ConstraintRelaxationStrategy::check_termination(const Problem& problem, Iterate& trial_iterate,
+         const Evaluations& trial_evaluations) {
+      if (trial_evaluations.is_objective_computed && trial_evaluations.objective < this->unbounded_objective_threshold) {
          return SolutionStatus::UNBOUNDED;
       }
 
       // test convergence wrt the tight tolerance
-      const SolutionStatus status_tight_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
+      const SolutionStatus status_tight_tolerance = problem.check_first_order_convergence(trial_iterate, this->primal_tolerance,
          this->dual_tolerance);
       if (status_tight_tolerance != SolutionStatus::NOT_OPTIMAL || (this->loose_primal_tolerance <= this->primal_tolerance &&
             this->loose_dual_tolerance <= this->dual_tolerance)) {
@@ -80,7 +82,7 @@ namespace uno {
       }
 
       // if not converged, check convergence wrt loose tolerance (provided it is strictly looser than the tight tolerance)
-      const SolutionStatus status_loose_tolerance = problem.check_first_order_convergence(iterate, this->primal_tolerance,
+      const SolutionStatus status_loose_tolerance = problem.check_first_order_convergence(trial_iterate, this->primal_tolerance,
          this->loose_dual_tolerance);
       // if converged, keep track of the number of consecutive iterations
       if (status_loose_tolerance != SolutionStatus::NOT_OPTIMAL) {

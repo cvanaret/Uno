@@ -12,6 +12,7 @@ namespace uno {
    // forward declarations
    class Direction;
    class EvaluationCache;
+   class Evaluations;
    class Iterate;
    class Model;
    class Options;
@@ -30,7 +31,8 @@ namespace uno {
          Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) = 0;
 
-      static void set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate);
+      static void set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate,
+         const Evaluations& current_evaluations);
       static void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate);
 
       [[nodiscard]] virtual std::string get_name() const = 0;

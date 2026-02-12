@@ -23,7 +23,7 @@ namespace uno {
       void initialize_statistics(Statistics& statistics) override;
       void generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) override;
       void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         WarmstartInformation& warmstart_information) override;
+         const Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;

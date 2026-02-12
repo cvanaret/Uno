@@ -6,6 +6,7 @@
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/Sum.hpp"
@@ -32,16 +33,13 @@ namespace uno {
       trial_iterate.multipliers.lower_bounds = current_iterate.multipliers.lower_bounds + direction.multipliers.lower_bounds;
       trial_iterate.multipliers.upper_bounds = current_iterate.multipliers.upper_bounds + direction.multipliers.upper_bounds;
       trial_iterate.progress.reset();
-      trial_iterate.is_objective_computed = false;
-      trial_iterate.is_objective_gradient_computed = false;
-      trial_iterate.are_constraints_computed = false;
-      trial_iterate.is_jacobian_computed = false;
       trial_iterate.status = SolutionStatus::NOT_OPTIMAL;
    }
 
-   void GlobalizationMechanism::set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate) {
-      if (iterate.is_objective_computed) {
-         statistics.set("Objective", 0. /* TODO */);
+   void GlobalizationMechanism::set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate,
+         const Evaluations& current_evaluations) {
+      if (current_evaluations.is_objective_computed) {
+         statistics.set("Objective", current_evaluations.objective);
       }
       if (model.is_constrained()) {
          statistics.set("Infeas", iterate.progress.infeasibility);
