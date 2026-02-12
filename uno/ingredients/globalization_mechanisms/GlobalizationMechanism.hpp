@@ -32,7 +32,7 @@ namespace uno {
          UserCallbacks& user_callbacks) = 0;
 
       static void set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate,
-         const Evaluations& current_evaluations);
+         const Evaluations& evaluations);
       static void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate);
 
       [[nodiscard]] virtual std::string get_name() const = 0;

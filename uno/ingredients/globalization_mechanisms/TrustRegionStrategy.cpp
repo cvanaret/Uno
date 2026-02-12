@@ -84,7 +84,7 @@ namespace uno {
 
                is_acceptable = this->is_iterate_acceptable(statistics, model, current_iterate, trial_iterate, direction,
                   evaluation_cache, warmstart_information, user_callbacks);
-               GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.current_evaluations);
+               GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
                if (is_acceptable) {
                   GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
                   termination = true;
@@ -138,7 +138,7 @@ namespace uno {
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       bool accept_iterate = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
          trial_iterate, direction, 1., evaluation_cache, warmstart_information, user_callbacks);
-      this->set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.current_evaluations);
+      this->set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
       if (accept_iterate) {
          // trial_iterate.status = constraint_relaxation_strategy.check_termination(model, trial_iterate);
          // possibly increase the radius if trust region is active
