@@ -3,7 +3,6 @@
 
 #include "l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
-#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/UnaryNegation.hpp"
@@ -162,7 +161,7 @@ namespace uno {
       lagrangian_gradient = -lagrangian_gradient;
 
       // z_k
-      for (size_t variable_index: Range(this->number_variables)) {
+      for (size_t variable_index: Range(this->model.number_variables)) {
          lagrangian_gradient[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
             iterate.multipliers.upper_bounds[variable_index]);
       }
