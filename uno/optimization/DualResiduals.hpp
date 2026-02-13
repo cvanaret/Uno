@@ -4,7 +4,7 @@
 #ifndef UNO_DUALRESIDUALS_H
 #define UNO_DUALRESIDUALS_H
 
-#include "optimization/LagrangianGradient.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "tools/Infinity.hpp"
 
 namespace uno {
@@ -18,7 +18,7 @@ namespace uno {
       double stationarity_scaling{INF<double>};
       double complementarity_scaling{INF<double>};
 
-      LagrangianGradient lagrangian_gradient;
+      Vector<double> lagrangian_gradient;
    };
 } // namespace
 

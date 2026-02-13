@@ -70,26 +70,24 @@ namespace uno {
 
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
    // split in two parts: objective contribution and constraints' contribution
-   void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
+   void OptimizationProblem::evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient,
          Iterate& iterate, Evaluations& evaluations) const {
-      lagrangian_gradient.objective_contribution.fill(0.);
-      lagrangian_gradient.constraints_contribution.fill(0.);
+      lagrangian_gradient.fill(0.);
+
+      // ∇c(x_k) λ_k
+      evaluations.evaluate_jacobian(this->model, iterate.primals);
+      evaluations.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints, lagrangian_gradient);
+      lagrangian_gradient = -lagrangian_gradient;
 
       // ∇f(x_k)
       evaluations.evaluate_objective_gradient(this->model, iterate.primals);
       for (size_t index: Range(this->number_variables)) {
-         lagrangian_gradient.objective_contribution[index] = evaluations.objective_gradient[index];
+         lagrangian_gradient[index] += evaluations.objective_gradient[index];
       }
-
-      // ∇c(x_k) λ_k
-      evaluations.evaluate_jacobian(this->model, iterate.primals);
-      evaluations.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints,
-         lagrangian_gradient.constraints_contribution);
-      lagrangian_gradient.constraints_contribution = -lagrangian_gradient.constraints_contribution;
 
       // z_k
       for (size_t variable_index: Range(this->number_variables)) {
-         lagrangian_gradient.constraints_contribution[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
+         lagrangian_gradient[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
             iterate.multipliers.upper_bounds[variable_index]);
       }
    }
@@ -153,11 +151,9 @@ namespace uno {
       return 0.;
    }
 
-   double OptimizationProblem::stationarity_error(const LagrangianGradient& lagrangian_gradient, double objective_multiplier,
+   double OptimizationProblem::stationarity_error(const Vector<double>& lagrangian_gradient, double objective_multiplier,
          Norm residual_norm) {
-      // norm of the scaled Lagrangian gradient
-      const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
-      return norm(residual_norm, scaled_lagrangian);
+      return norm(residual_norm, lagrangian_gradient);
    }
 
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,

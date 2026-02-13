@@ -37,7 +37,7 @@ namespace uno {
 
       // numerical evaluations of Jacobian and Hessian
       void evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const override;
-      void evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient, Iterate& iterate,
+      void evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient, Iterate& iterate,
          Evaluations& evaluations) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, double* hessian_values) const override;

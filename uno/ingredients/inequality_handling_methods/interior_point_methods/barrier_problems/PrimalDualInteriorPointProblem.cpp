@@ -153,7 +153,7 @@ namespace uno {
       this->first_reformulation.evaluate_jacobian(primals, jacobian_values, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
+   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient,
          Iterate& iterate, Evaluations& evaluations) const {
       this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, iterate, evaluations);
 
@@ -175,7 +175,7 @@ namespace uno {
             }
          }
          // the objective contribution of the Lagrangian gradient may be scaled. Barrier terms go into the constraint contribution
-         lagrangian_gradient.constraints_contribution[variable_index] += barrier_term;
+         lagrangian_gradient[variable_index] += barrier_term;
       }
    }
 

@@ -6,6 +6,7 @@
 
 #include "../BarrierProblem.hpp"
 #include "../InteriorPointParameters.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
@@ -36,7 +37,7 @@ namespace uno {
       [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
       void evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const override;
-      void evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient, Iterate& iterate, Evaluations& evaluations) const override;
+      void evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient, Iterate& iterate, Evaluations& evaluations) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, double* hessian_values) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
