@@ -69,6 +69,7 @@ namespace uno {
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius_aggressively();
                warmstart_information.variable_bounds_changed = true;
+               evaluation_cache.trial_evaluations.reset();
             }
             else if (direction.status == SubproblemStatus::ERROR) {
                statistics.set("Status", "solver error");
@@ -76,6 +77,7 @@ namespace uno {
                this->decrease_radius();
                // reset the Hessian representation of the subproblem solver
                warmstart_information.whole_problem_changed();
+               evaluation_cache.trial_evaluations.reset();
             }
             else {
                // take full primal-dual step
