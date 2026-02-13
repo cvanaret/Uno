@@ -123,27 +123,27 @@ namespace uno {
    }
 
    void MA27Solver::initialize_hessian(const Subproblem& subproblem) {
-      this->evaluation_space.initialize_hessian(subproblem);
+      this->coo_workspace.initialize_hessian(subproblem);
 
       // workspace
       const size_t dimension = subproblem.number_variables;
       this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
+      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
       // 20% more than 2*nnz + 3*n + 1
-      this->workspace.iw.resize((2 * this->evaluation_space.number_matrix_nonzeros + 3 * dimension + 1) * 6 / 5);
+      this->workspace.iw.resize((2 * this->coo_workspace.number_matrix_nonzeros + 3 * dimension + 1) * 6 / 5);
       this->workspace.ikeep.resize(3 * dimension);
       this->workspace.iw1.resize(2 * dimension);
    }
 
    void MA27Solver::initialize_augmented_system(const Subproblem& subproblem) {
-      this->evaluation_space.initialize_augmented_system(subproblem);
+      this->coo_workspace.initialize_augmented_system(subproblem);
 
       // workspace
       const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
       this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(this->evaluation_space.number_matrix_nonzeros);
+      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
       // 20% more than 2*nnz + 3*n + 1
-      this->workspace.iw.resize((2 * this->evaluation_space.number_matrix_nonzeros + 3 * dimension + 1) * 6 / 5);
+      this->workspace.iw.resize((2 * this->coo_workspace.number_matrix_nonzeros + 3 * dimension + 1) * 6 / 5);
       this->workspace.ikeep.resize(3 * dimension);
       this->workspace.iw1.resize(2 * dimension);
    }
@@ -153,7 +153,7 @@ namespace uno {
 
       int liw = static_cast<int>(this->workspace.iw.size());
       MA27_symbolic_analysis(&this->workspace.n, &this->workspace.nnz,              /* size info */
-         this->evaluation_space.matrix_row_indices.data(), this->evaluation_space.matrix_column_indices.data(),                     /* matrix indices */
+         this->coo_workspace.matrix_row_indices.data(), this->coo_workspace.matrix_column_indices.data(),                     /* matrix indices */
          this->workspace.iw.data(), &liw, this->workspace.ikeep.data(), this->workspace.iw1.data(),  /* solver workspace */
          &this->workspace.nsteps, &this->workspace.iflag, this->workspace.icntl.data(), this->workspace.cntl.data(),
          this->workspace.info.data(), &this->workspace.ops);
@@ -187,8 +187,8 @@ namespace uno {
 
          int la = static_cast<int>(this->workspace.factor.size());
          int liw = static_cast<int>(this->workspace.iw.size());
-         MA27_numerical_factorization(&this->workspace.n, &this->workspace.nnz, this->evaluation_space.matrix_row_indices.data(),
-            this->evaluation_space.matrix_column_indices.data(), this->workspace.factor.data(), &la, this->workspace.iw.data(), &liw,
+         MA27_numerical_factorization(&this->workspace.n, &this->workspace.nnz, this->coo_workspace.matrix_row_indices.data(),
+            this->coo_workspace.matrix_column_indices.data(), this->workspace.factor.data(), &la, this->workspace.iw.data(), &liw,
             this->workspace.ikeep.data(), &this->workspace.nsteps, &this->workspace.maxfrt, this->workspace.iw1.data(),
             this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data());
          factorization_done = true;
@@ -232,13 +232,13 @@ namespace uno {
    }
 
    void MA27Solver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const WarmstartInformation& warmstart_information) {
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // set up the linear system by evaluating the functions at the current iterate
-      this->evaluation_space.set_up_linear_system(statistics, subproblem, *this, warmstart_information);
+      this->coo_workspace.set_up_linear_system(statistics, subproblem, *this, current_evaluations, warmstart_information);
       // solve the linear system
-      this->solve_indefinite_system(this->evaluation_space.matrix_values, this->evaluation_space.rhs, this->evaluation_space.solution);
+      this->solve_indefinite_system(this->coo_workspace.matrix_values, this->coo_workspace.rhs, this->coo_workspace.solution);
       // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(this->evaluation_space.solution, direction);
+      subproblem.assemble_primal_dual_direction(this->coo_workspace.solution, direction);
       if (this->matrix_is_singular()) {
          direction.status = SubproblemStatus::INFEASIBLE;
       }
@@ -268,8 +268,8 @@ namespace uno {
          static_cast<size_t>(this->workspace.n);
    }
 
-   EvaluationSpace& MA27Solver::get_evaluation_space() {
-      return this->evaluation_space;
+   SolverWorkspace& MA27Solver::get_workspace() {
+      return this->coo_workspace;
    }
 
    void MA27Solver::check_factorization_status() {

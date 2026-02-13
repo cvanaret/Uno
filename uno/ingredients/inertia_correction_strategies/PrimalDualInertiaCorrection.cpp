@@ -75,7 +75,11 @@ namespace uno {
       for (size_t index: Range(subproblem.get_dual_regularization_constraints().size())) {
          dual_regularization_values[index] = -this->dual_regularization;
       }
-      DEBUG2 << "Original matrix values\n" << augmented_matrix_values << '\n';
+      DEBUG2 << "Original matrix values:";
+      for (size_t nonzero_index: Range(subproblem.number_regularized_augmented_system_nonzeros())) {
+         DEBUG2 << " " << augmented_matrix_values[nonzero_index];
+      }
+      DEBUG2 << '\n';
       DEBUG << "Testing factorization with regularization factors (0, 0)\n";
       size_t number_attempts = 1;
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";

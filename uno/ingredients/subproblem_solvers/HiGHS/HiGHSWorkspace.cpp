@@ -2,14 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <algorithm>
-#include "HiGHSEvaluationSpace.hpp"
+#include "HiGHSWorkspace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/WarmstartInformation.hpp"
 
 namespace uno {
-   void HiGHSEvaluationSpace::initialize_memory(const Subproblem& subproblem) {
+   void HiGHSWorkspace::initialize_memory(const Subproblem& subproblem) {
       this->model.lp_.num_col_ = static_cast<HighsInt>(subproblem.number_variables);
       this->model.lp_.num_row_ = static_cast<HighsInt>(subproblem.number_constraints);
 
@@ -34,48 +34,7 @@ namespace uno {
       this->compute_hessian_sparsity(subproblem);
    }
 
-   void HiGHSEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
-      problem.evaluate_jacobian(iterate, this->jacobian_values.data());
-
-      // copy the Jacobian with permutation into this->model.lp_.a_matrix_.value_
-      for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
-         const size_t permuted_nonzero_index = this->jacobian_permutation_vector[nonzero_index];
-         this->model.lp_.a_matrix_.value_[nonzero_index] = this->jacobian_values[permuted_nonzero_index];
-      }
-   }
-
-   void HiGHSEvaluationSpace::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t number_jacobian_nonzeros = this->jacobian_row_indices.size();
-      for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
-         const size_t permuted_nonzero_index = this->jacobian_permutation_vector[nonzero_index];
-         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[permuted_nonzero_index]);
-         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[permuted_nonzero_index]);
-         const double derivative = this->model.lp_.a_matrix_.value_[nonzero_index];
-
-         // a safeguard to make sure we take only the correct part of the Jacobian
-         if (variable_index < vector.size() && constraint_index < result.size()) {
-            result[constraint_index] += derivative * vector[variable_index];
-         }
-      }
-   }
-
-   void HiGHSEvaluationSpace::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t number_jacobian_nonzeros = this->jacobian_row_indices.size();
-      for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
-         const size_t permuted_nonzero_index = this->jacobian_permutation_vector[nonzero_index];
-         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[permuted_nonzero_index]);
-         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[permuted_nonzero_index]);
-         const double derivative = this->model.lp_.a_matrix_.value_[nonzero_index];
-         assert(constraint_index < vector.size());
-         assert(variable_index < result.size());
-
-         result[variable_index] += derivative * vector[constraint_index];
-      }
-   }
-
-   double HiGHSEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& vector) const {
+   double HiGHSWorkspace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& vector) const {
       double quadratic_product = 0.;
       const size_t number_hessian_nonzeros = this->hessian_values.size();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
@@ -91,13 +50,14 @@ namespace uno {
       return quadratic_product;
    }
 
-   void HiGHSEvaluationSpace::evaluate_functions(Statistics& statistics, const Subproblem& subproblem,
-         const WarmstartInformation& warmstart_information) {
+   void HiGHSWorkspace::evaluate_functions(Statistics& statistics, const Subproblem& subproblem,
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       if (warmstart_information.new_iterate) {
-         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data());
-         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints);
-         this->evaluate_jacobian(subproblem.problem, subproblem.current_iterate);
+         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data(),
+            current_evaluations);
+         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints, current_evaluations);
+         this->evaluate_jacobian(subproblem.problem, subproblem.current_iterate.primals, current_evaluations);
          // evaluate the Hessian and regularize it
          subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data());
          // copy the Hessian with permutation into this->model.hessian_.value_
@@ -109,7 +69,7 @@ namespace uno {
       }
    }
 
-   void HiGHSEvaluationSpace::compute_jacobian_sparsity(const Subproblem& subproblem) {
+   void HiGHSWorkspace::compute_jacobian_sparsity(const Subproblem& subproblem) {
       // column-wise constraint Jacobian
       this->model.lp_.a_matrix_.format_ = MatrixFormat::kColwise;
       const size_t number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
@@ -159,7 +119,7 @@ namespace uno {
    }
 
    // column-wise lower triangular Lagrangian Hessian
-   void HiGHSEvaluationSpace::compute_hessian_sparsity(const Subproblem& subproblem) {
+   void HiGHSWorkspace::compute_hessian_sparsity(const Subproblem& subproblem) {
       if (!subproblem.has_hessian_matrix()) {
          throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with HiGHS");
       }
@@ -222,5 +182,16 @@ namespace uno {
 
       // the Hessian will be evaluated in this vector, and copied with permutation into this->model.hessian_.value_
       this->hessian_values.resize(number_regularized_hessian_nonzeros);
+   }
+
+   void HiGHSWorkspace::evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals,
+         Evaluations& evaluations) {
+      problem.evaluate_jacobian(primals, this->jacobian_values.data(), evaluations);
+
+      // copy the Jacobian with permutation into this->model.lp_.a_matrix_.value_
+      for (size_t nonzero_index: Range(problem.number_jacobian_nonzeros())) {
+         const size_t permuted_nonzero_index = this->jacobian_permutation_vector[nonzero_index];
+         this->model.lp_.a_matrix_.value_[nonzero_index] = this->jacobian_values[permuted_nonzero_index];
+      }
    }
 } // namespace

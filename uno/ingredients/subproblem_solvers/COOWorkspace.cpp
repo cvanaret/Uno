@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <stdexcept>
-#include "COOEvaluationSpace.hpp"
+#include "COOWorkspace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "linear_algebra/COOMatrix.hpp"
@@ -11,7 +11,7 @@
 #include "optimization/WarmstartInformation.hpp"
 
 namespace uno {
-   void COOEvaluationSpace::initialize_hessian(const Subproblem& subproblem) {
+   void COOWorkspace::initialize_hessian(const Subproblem& subproblem) {
       if (!subproblem.has_hessian_matrix()) {
          throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
       }
@@ -33,7 +33,7 @@ namespace uno {
       this->solution.resize(dimension);
    }
 
-   void COOEvaluationSpace::initialize_augmented_system(const Subproblem& subproblem) {
+   void COOWorkspace::initialize_augmented_system(const Subproblem& subproblem) {
       if (!subproblem.has_hessian_matrix()) {
          throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
       }
@@ -63,48 +63,18 @@ namespace uno {
       this->solution.resize(dimension);
    }
 
-   void COOEvaluationSpace::evaluate_jacobian(const OptimizationProblem& problem, Iterate& iterate) {
-      problem.evaluate_jacobian(iterate, this->matrix_values.data() + this->number_hessian_nonzeros);
-   }
-
-   void COOEvaluationSpace::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t offset = this->number_hessian_nonzeros;
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
-         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
-         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
-         const double derivative = this->matrix_values[offset + nonzero_index];
-
-         if (constraint_index < result.size() && variable_index < vector.size()) {
-            result[constraint_index] += derivative * vector[variable_index];
-         }
-      }
-   }
-
-   void COOEvaluationSpace::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
-      const size_t offset = this->number_hessian_nonzeros;
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros)) {
-         const size_t constraint_index = static_cast<size_t>(this->jacobian_row_indices[nonzero_index]);
-         const size_t variable_index = static_cast<size_t>(this->jacobian_column_indices[nonzero_index]);
-         const double derivative = this->matrix_values[offset + nonzero_index];
-
-         if (variable_index < result.size() && constraint_index < vector.size()) {
-            result[variable_index] += derivative * vector[constraint_index];
-         }
-      }
-   }
-
-   double COOEvaluationSpace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& /*vector*/) const {
+   double COOWorkspace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/, const Vector<double>& /*vector*/) const {
       return 0.;
    }
 
-   void COOEvaluationSpace::set_up_linear_system(Statistics& statistics, const Subproblem& subproblem,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, const WarmstartInformation& warmstart_information) {
+   void COOWorkspace::set_up_linear_system(Statistics& statistics, const Subproblem& subproblem,
+         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, Evaluations& evaluations,
+         const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       if (warmstart_information.new_iterate) {
-         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data());
-         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints);
+         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data(),
+            evaluations);
+         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints, evaluations);
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
             DEBUG << "Performing symbolic analysis of the indefinite system\n";
@@ -112,7 +82,7 @@ namespace uno {
             this->analysis_performed = true;
          }
          // assemble the augmented matrix
-         subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data());
+         subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data(), evaluations);
          // regularize the augmented matrix (this calls the analysis and the factorization)
          subproblem.regularize_augmented_matrix(statistics, this->matrix_values.data(),
             subproblem.dual_regularization_factor(), linear_solver);

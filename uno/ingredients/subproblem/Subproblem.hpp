@@ -19,7 +19,7 @@ namespace uno {
    // forward declarations
    template <typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
-   class EvaluationSpace;
+   class SolverWorkspace;
    class HessianModel;
    class InertiaCorrectionStrategy;
    class Statistics;
@@ -46,7 +46,7 @@ namespace uno {
       void compute_hessian_vector_product(const double* x, const double* vector, double* result) const;
 
       // augmented system
-      void assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values) const;
+      void assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values, Evaluations& evaluations) const;
       void regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
       template <typename IndexType>
@@ -82,12 +82,12 @@ namespace uno {
       [[nodiscard]] double dual_regularization_factor() const;
 
       // local models of progress measures
-      [[nodiscard]] double compute_predicted_infeasibility_reduction(const EvaluationSpace& evaluation_space, const Model& model,
-         const Vector<double>& primal_direction, double step_length, Norm norm) const;
-      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const EvaluationSpace& evaluation_space,
-         const Vector<double>& primal_direction, double step_length) const;
-      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const EvaluationSpace& evaluation_space,
-         const Direction& direction, double step_length, Norm norm) const;
+      [[nodiscard]] double compute_predicted_infeasibility_reduction(const Model& model, const Vector<double>& primal_direction,
+         double step_length, Norm norm, Evaluations& current_evaluations) const;
+      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const Vector<double>& primal_direction,
+         double step_length, const Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const;
+      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const Direction& direction, double step_length, Norm norm,
+         Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const;
 
       const OptimizationProblem& problem;
       Iterate& current_iterate;

@@ -3,8 +3,7 @@
 
 #include "l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
-#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
-#include "optimization/EvaluationSpace.hpp"
+#include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/UnaryNegation.hpp"
 #include "tools/Infinity.hpp"
@@ -40,9 +39,9 @@ namespace uno {
       this->proximal_center = proximal_center;
    }
 
-   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
-      iterate.evaluate_constraints(this->model);
-      constraints = iterate.evaluations.constraints;
+   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
+      constraints = evaluations.constraints;
 
       // add the contribution of the elastic variables
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
@@ -53,13 +52,12 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
+   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
       // scale nabla f(x) by rho
       if (this->objective_multiplier != 0.) {
-         iterate.evaluate_objective_gradient(this->model);
-         // TODO change this
+         evaluations.evaluate_objective_gradient(this->model, iterate.primals);
          for (size_t index: Range(this->model.number_variables)) {
-            objective_gradient[index] = this->objective_multiplier * iterate.evaluations.objective_gradient[index];
+            objective_gradient[index] = this->objective_multiplier * evaluations.objective_gradient[index];
          }
       }
       else {
@@ -134,8 +132,11 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_jacobian(Iterate& iterate, double* jacobian_values) const {
-      this->model.evaluate_jacobian(iterate.primals, jacobian_values);
+   void l1RelaxedProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const {
+      evaluations.evaluate_jacobian(this->model, primals);
+      for (size_t nonzeros_index: Range(this->model.number_jacobian_nonzeros())) {
+         jacobian_values[nonzeros_index] = evaluations.jacobian_values[nonzeros_index];
+      }
 
       // add the contribution of the elastic variables
       size_t nonzero_index = this->model.number_jacobian_nonzeros();
@@ -150,32 +151,28 @@ namespace uno {
    }
 
    // Lagrangian gradient split in two parts: objective contribution and constraints' contribution
-   void l1RelaxedProblem::evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
-         const EvaluationSpace& evaluation_space, Iterate& iterate) const {
-      lagrangian_gradient.objective_contribution.fill(0.);
-      lagrangian_gradient.constraints_contribution.fill(0.);
-
-      // objective gradient
-      lagrangian_gradient.objective_contribution = iterate.evaluations.objective_gradient;
+   void l1RelaxedProblem::evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient, Iterate& iterate,
+         Evaluations& evaluations) const {
+      lagrangian_gradient.fill(0.);
 
       // ∇c(x_k) λ_k
-      evaluation_space.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints,
-         lagrangian_gradient.constraints_contribution);
-      lagrangian_gradient.constraints_contribution = -lagrangian_gradient.constraints_contribution;
+      evaluations.evaluate_jacobian(this->model, iterate.primals);
+      evaluations.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints, lagrangian_gradient);
+      lagrangian_gradient = -lagrangian_gradient;
 
-      // bound constraints of original variables
+      // z_k
       for (size_t variable_index: Range(this->model.number_variables)) {
-         lagrangian_gradient.constraints_contribution[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
+         lagrangian_gradient[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
             iterate.multipliers.upper_bounds[variable_index]);
       }
 
       // elastic variables
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
-         lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient +
+         lagrangian_gradient[elastic_index] += this->constraint_violation_coefficient +
             iterate.multipliers.constraints[constraint_index] - iterate.multipliers.lower_bounds[elastic_index];
       }
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
-         lagrangian_gradient.constraints_contribution[elastic_index] += this->constraint_violation_coefficient -
+         lagrangian_gradient[elastic_index] += this->constraint_violation_coefficient -
             iterate.multipliers.constraints[constraint_index] - iterate.multipliers.lower_bounds[elastic_index];
       }
 
@@ -184,7 +181,7 @@ namespace uno {
          for (size_t variable_index: Range(this->model.number_variables)) {
             const double scaling = std::min(1., 1./std::abs(this->proximal_center[variable_index]));
             const double proximal_term = this->proximal_coefficient * scaling * scaling;
-            lagrangian_gradient.constraints_contribution[variable_index] += proximal_term * (iterate.primals[variable_index] -
+            lagrangian_gradient[variable_index] += proximal_term * (iterate.primals[variable_index] -
                this->proximal_center[variable_index]);
          }
       }

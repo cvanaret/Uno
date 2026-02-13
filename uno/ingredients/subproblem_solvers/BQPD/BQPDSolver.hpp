@@ -7,7 +7,7 @@
 #include <array>
 #include <vector>
 #include "ingredients/subproblem_solvers/QPSolver.hpp"
-#include "BQPDEvaluationSpace.hpp"
+#include "BQPDWorkspace.hpp"
 #include "ingredients/subproblem_solvers/SubproblemStatus.hpp"
 
 namespace uno {
@@ -46,12 +46,12 @@ namespace uno {
       void initialize_memory(const Subproblem& subproblem) override;
 
       void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) override;
+         Direction& direction, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
-      [[nodiscard]] EvaluationSpace& get_evaluation_space() override;
+      [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    private:
-      BQPDEvaluationSpace evaluation_space;
+      BQPDWorkspace workspace;
       std::vector<double> lower_bounds{}, upper_bounds{}; // lower and upper bounds of variables and constraints
 
       int kmax{0};
@@ -74,7 +74,7 @@ namespace uno {
       const bool print_subproblem;
 
       void set_up_subproblem(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
-         const WarmstartInformation& warmstart_information);
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
       void display_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point) const;
       void solve_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information);

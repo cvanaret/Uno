@@ -11,7 +11,7 @@
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/EvaluationSpace.hpp"
+#include "optimization/EvaluationCache.hpp"
 #include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
@@ -50,14 +50,15 @@ namespace uno {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::generate_initial_iterate(Iterate& initial_iterate) {
-      this->evaluate_progress_measures(*this->problem, initial_iterate);
+   void InequalityConstrainedMethod::generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) {
+      this->evaluate_progress_measures(*this->problem, initial_iterate, evaluation_cache.current_evaluations);
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-        double trust_region_radius, WarmstartInformation& warmstart_information) {
+        double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       // solve the subproblem
-      this->solver->solve(statistics, *this->subproblem, trust_region_radius, this->initial_point, direction, warmstart_information);
+      this->solver->solve(statistics, *this->subproblem, trust_region_radius, this->initial_point, direction, current_evaluations,
+         warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_iterate.multipliers, direction.multipliers);
       ++this->number_subproblems_solved;
       // reset the initial point
@@ -80,15 +81,6 @@ namespace uno {
       return 0.;
    }
 
-   EvaluationSpace& InequalityConstrainedMethod::get_evaluation_space() const {
-      return this->solver->get_evaluation_space();
-   }
-
-   void InequalityConstrainedMethod::evaluate_jacobian(Iterate& iterate) {
-      auto& evaluation_space = this->solver->get_evaluation_space();
-      evaluation_space.evaluate_jacobian(*this->problem, iterate);
-   }
-
    // compute dual *displacements*
    // because of the way we form LPs/QPs, we get the new *multipliers* back from the solver. To get the dual displacements/direction,
    // we need to subtract the current multipliers
@@ -100,9 +92,9 @@ namespace uno {
 
    bool InequalityConstrainedMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) {
+         EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
-         this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
+         this->solver->get_workspace(), current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
    }
 
    void InequalityConstrainedMethod::postprocess_iterate(Iterate& /*iterate*/) {

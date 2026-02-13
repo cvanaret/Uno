@@ -4,7 +4,6 @@
 #include "MeritFunction.hpp"
 #include "ProgressMeasures.hpp"
 #include "tools/Logger.hpp"
-#include "options/Options.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
@@ -40,6 +39,7 @@ namespace uno {
          statistics.set("Status", "✔ (Armijo)");
       }
       else {
+         DEBUG << "Trial iterate was rejected by Armijo condition\n";
          statistics.set("Status", "✘ (Armijo)");
       }
       return accept;

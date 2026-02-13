@@ -18,6 +18,7 @@
 #include "model/FixedBoundsConstraintsModel.hpp"
 #include "model/HomogeneousEqualityConstrainedModel.hpp"
 #include "model/Model.hpp"
+#include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "tools/Logger.hpp"
@@ -77,13 +78,16 @@ namespace uno {
       model.initial_primal_point(current_iterate.primals);
       model.initial_dual_point(current_iterate.multipliers.constraints);
 
+      // evaluation cache
+      EvaluationCache evaluation_cache{model};
+
       size_t major_iterations = 0;
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
       const size_t max_iterations = options.get_unsigned_int("max_iterations"); // maximum number of iterations
       const double time_limit = options.get_double("time_limit"); // CPU time limit (can be inf)
       try {
          // use the initial primal-dual point to initialize the strategies and generate the initial iterate
-         this->initialize(statistics, model, current_iterate, options);
+         this->initialize(statistics, model, current_iterate, options, evaluation_cache);
          // allocate the trial iterate once and for all here
          Iterate trial_iterate(current_iterate);
 
@@ -99,16 +103,18 @@ namespace uno {
                // compute an acceptable iterate by solving a subproblem at the current point
                warmstart_information.iterate_changed();
                this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate,
-                  this->direction, warmstart_information, user_callbacks);
+                  this->direction, evaluation_cache, warmstart_information, user_callbacks);
                GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
                const bool user_termination = user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers,
                   trial_iterate.objective_multiplier, trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity,
                   trial_iterate.residuals.complementarity);
-               termination = Uno::termination_criteria(trial_iterate.status, major_iterations, max_iterations,
+               termination = Uno::check_termination(trial_iterate.status, major_iterations, max_iterations,
                   timer.get_duration(), time_limit, user_termination, optimization_status);
                
                // the trial iterate becomes the current iterate for the next iteration
                std::swap(current_iterate, trial_iterate);
+               std::swap(evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations);
+               evaluation_cache.trial_evaluations.reset();
             }
          }
          catch (std::exception& exception) {
@@ -126,7 +132,8 @@ namespace uno {
          DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
          optimization_status = OptimizationStatus::EVALUATION_ERROR;
       }
-      Result result = this->create_result(model, optimization_status, current_iterate, major_iterations, timer);
+      Result result = this->create_result(model, optimization_status, current_iterate, evaluation_cache.current_evaluations,
+         major_iterations, timer);
       Uno::postprocess_multipliers_signs(model, result);
       this->print_optimization_summary(result, options.get_bool("print_solution"));
       return result;
@@ -154,14 +161,15 @@ namespace uno {
       this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
    }
 
-   void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options) {
+   void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options,
+         EvaluationCache& evaluation_cache) {
       statistics.start_new_line();
       statistics.set("Major", 0);
       statistics.set("Status", "initial point");
 
       model.project_onto_variable_bounds(current_iterate.primals);
-      this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction);
-      GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate);
+      this->globalization_mechanism->initialize(statistics, current_iterate, this->direction, evaluation_cache);
+      GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
       GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
 
       options.print_non_default();
@@ -186,7 +194,7 @@ namespace uno {
       return statistics;
    }
 
-   bool Uno::termination_criteria(SolutionStatus solution_status, size_t iteration, size_t max_iterations, double current_time,
+   bool Uno::check_termination(SolutionStatus solution_status, size_t iteration, size_t max_iterations, double current_time,
          double time_limit, bool user_termination, OptimizationStatus& optimization_status) {
       if (solution_status != SolutionStatus::NOT_OPTIMAL) {
          return true;
@@ -208,17 +216,17 @@ namespace uno {
 
    void Uno::postprocess_solution(const Model& model, Iterate& iterate) {
       // in case the objective was not yet evaluated, evaluate it
-      iterate.evaluate_objective(model);
+      // TODO iterate.evaluate_objective(model);
       model.postprocess_solution(iterate);
       DEBUG2 << "Final iterate:\n" << iterate;
    }
 
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
-         size_t major_iterations, const Timer& timer) const {
+         const Evaluations& evaluations, size_t major_iterations, const Timer& timer) const {
       const size_t number_subproblems_solved = this->globalization_mechanism->get_number_subproblems_solved();
       //const size_t number_hessian_evaluations = this->constraint_relaxation_strategy->get_hessian_evaluation_count();
       return {model.number_variables, model.number_constraints, optimization_status, solution.status,
-         solution.evaluations.objective, solution.progress.infeasibility, solution.residuals.stationarity,
+         evaluations.objective, solution.progress.infeasibility, solution.residuals.stationarity,
          solution.residuals.complementarity, solution.primals, solution.multipliers.constraints,
          solution.multipliers.lower_bounds, solution.multipliers.upper_bounds, major_iterations, timer.get_duration(),
          model.number_model_objective_evaluations(), model.number_model_constraints_evaluations(),

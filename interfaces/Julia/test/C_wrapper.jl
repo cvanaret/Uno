@@ -217,7 +217,7 @@ y0 = zeros(Float64, ncon)
   UnoSolver.uno_set_initial_dual_iterate(model, y0)
 
   solver = uno_solver()
-  uno_set_solver_preset(solver, "funnelsqp")
+  uno_set_solver_preset(solver, "filtersqp")
   uno_set_solver_bool_option(solver, "print_solution", true)
   uno_optimize(solver, model)
 
@@ -281,7 +281,7 @@ end
     1.0,
     x0,
     y0;
-    preset="funnelsqp",
+    preset="filtersqp",
     print_solution=true,
   )
 

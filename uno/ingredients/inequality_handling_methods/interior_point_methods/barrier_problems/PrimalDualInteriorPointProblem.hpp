@@ -6,6 +6,7 @@
 
 #include "../BarrierProblem.hpp"
 #include "../InteriorPointParameters.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 #include "tools/Infinity.hpp"
@@ -17,13 +18,13 @@ namespace uno {
 
       [[nodiscard]] double get_objective_multiplier() const override;
       void set_barrier_parameter(double barrier_parameter) override;
-      void generate_initial_iterate(Iterate& initial_iterate) const override;
+      void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
 
       // constraint evaluations
-      void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
+      void evaluate_constraints(Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const override;
 
       // dense objective gradient
-      void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const override;
+      void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const override;
 
       // sparsity patterns of Jacobian and Hessian
       void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
@@ -35,9 +36,8 @@ namespace uno {
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
-      void evaluate_jacobian(Iterate& iterate, double* jacobian_values) const override;
-      void evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
-         const EvaluationSpace& evaluation_space, Iterate& iterate) const override;
+      void evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const override;
+      void evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient, Iterate& iterate, Evaluations& evaluations) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, double* hessian_values) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,

@@ -5,6 +5,7 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/UnaryNegation.hpp"
 #include "symbolic/VectorView.hpp"
@@ -25,7 +26,7 @@ namespace uno {
       this->barrier_parameter = barrier_parameter;
    }
 
-   void PrimalDualInteriorPointProblem::generate_initial_iterate(Iterate& initial_iterate) const {
+   void PrimalDualInteriorPointProblem::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
       // make the initial point strictly feasible wrt the bounds
       for (size_t variable_index: Range(this->number_variables)) {
          initial_iterate.primals[variable_index] = this->push_variable_to_interior(initial_iterate.primals[variable_index],
@@ -34,17 +35,17 @@ namespace uno {
 
       // set the slack variables (if any)
       if (!this->model.get_slacks().is_empty()) {
+         evaluations.evaluate_constraints(this->model, initial_iterate.primals);
          // set the slacks to the constraint values
-         initial_iterate.evaluate_constraints(this->model);
          for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
             initial_iterate.primals[slack_index] =
-               this->push_variable_to_interior(initial_iterate.evaluations.constraints[constraint_index],
+               this->push_variable_to_interior(evaluations.constraints[constraint_index],
                this->first_reformulation.variable_lower_bound(slack_index), this->first_reformulation.variable_upper_bound(slack_index));
          }
          // since the slacks have been set, the function evaluations should also be updated
-         initial_iterate.is_objective_gradient_computed = false;
-         initial_iterate.are_constraints_computed = false;
-         initial_iterate.is_jacobian_computed = false;
+         evaluations.are_constraints_computed = false;
+         evaluations.is_objective_gradient_computed = false;
+         evaluations.is_jacobian_computed = false;
       }
 
       // set the bound multipliers
@@ -65,12 +66,12 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
-      this->first_reformulation.evaluate_constraints(iterate, constraints);
+   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const {
+      this->first_reformulation.evaluate_constraints(iterate, constraints, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
-      this->first_reformulation.evaluate_objective_gradient(iterate, objective_gradient);
+   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
+      this->first_reformulation.evaluate_objective_gradient(iterate, objective_gradient, evaluations);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
@@ -148,13 +149,13 @@ namespace uno {
       return number_nonzeros;
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_jacobian(Iterate& iterate, double* jacobian_values) const {
-      this->first_reformulation.evaluate_jacobian(iterate, jacobian_values);
+   void PrimalDualInteriorPointProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const {
+      this->first_reformulation.evaluate_jacobian(primals, jacobian_values, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(LagrangianGradient& lagrangian_gradient,
-         const EvaluationSpace& evaluation_space, Iterate& iterate) const {
-      this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, evaluation_space, iterate);
+   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient,
+         Iterate& iterate, Evaluations& evaluations) const {
+      this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, iterate, evaluations);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
@@ -174,7 +175,7 @@ namespace uno {
             }
          }
          // the objective contribution of the Lagrangian gradient may be scaled. Barrier terms go into the constraint contribution
-         lagrangian_gradient.constraints_contribution[variable_index] += barrier_term;
+         lagrangian_gradient[variable_index] += barrier_term;
       }
    }
 

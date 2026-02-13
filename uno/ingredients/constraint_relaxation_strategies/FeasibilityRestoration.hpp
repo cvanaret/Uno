@@ -24,21 +24,21 @@ namespace uno {
       FeasibilityRestoration(const Model& model, bool use_trust_region, const Options& options);
       ~FeasibilityRestoration() override = default;
 
-      void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
-         double trust_region_radius) override;
+      void initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction, double trust_region_radius,
+         EvaluationCache& evaluation_cache) override;
 
       // direction computation
       void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         double trust_region_radius, WarmstartInformation& warmstart_information) override;
+         double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
          WarmstartInformation& warmstart_information) override;
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, const Direction& direction, double step_length, WarmstartInformation& warmstart_information,
-         UserCallbacks& user_callbacks) override;
-      [[nodiscard]] SolutionStatus check_termination(const Model& model, Iterate& iterate) override;
+         Iterate& trial_iterate, const Direction& direction, double step_length, EvaluationCache& evaluation_cache,
+         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+      [[nodiscard]] SolutionStatus check_termination(Iterate& trial_iterate, Evaluations& trial_evaluations) override;
 
       [[nodiscard]] std::string get_name() const override;
       [[nodiscard]] size_t get_number_subproblems_solved() const override;
@@ -66,11 +66,12 @@ namespace uno {
       bool first_switch_to_feasibility{true};
 
       void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         Iterate& current_iterate, Direction& direction, double trust_region_radius, WarmstartInformation& warmstart_information);
+         Iterate& current_iterate, Direction& direction, double trust_region_radius, Evaluations& current_evaluations,
+         WarmstartInformation& warmstart_information);
       void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 
-      [[nodiscard]] bool can_switch_to_optimality_phase(const Iterate& current_iterate, const Model& model,
-         const Iterate& trial_iterate, const Direction& direction, double step_length) const;
+      [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,
+         const Direction& direction, double step_length, EvaluationCache& evaluation_cache) const;
    };
 } // namespace
 
