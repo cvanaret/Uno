@@ -27,11 +27,13 @@ namespace uno {
       return 1.;
    }
 
-   void OptimizationProblem::evaluate_constraints(Iterate& /*iterate*/, Vector<double>& constraints, const Evaluations& evaluations) const {
+   void OptimizationProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
       constraints = evaluations.constraints;
    }
 
-   void OptimizationProblem::evaluate_objective_gradient(Iterate& /*iterate*/, double* objective_gradient, const Evaluations& evaluations) const {
+   void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
+      evaluations.evaluate_objective_gradient(this->model, iterate.primals);
       for (size_t index: Range(this->number_variables)) {
          objective_gradient[index] = evaluations.objective_gradient[index];
       }

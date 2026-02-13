@@ -66,11 +66,11 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints, const Evaluations& evaluations) const {
+   void PrimalDualInteriorPointProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const {
       this->first_reformulation.evaluate_constraints(iterate, constraints, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, const Evaluations& evaluations) const {
+   void PrimalDualInteriorPointProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
       this->first_reformulation.evaluate_objective_gradient(iterate, objective_gradient, evaluations);
 
       // barrier terms

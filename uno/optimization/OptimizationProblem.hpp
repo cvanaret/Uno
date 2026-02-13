@@ -35,10 +35,10 @@ namespace uno {
       [[nodiscard]] virtual double get_objective_multiplier() const;
 
       // constraint evaluations
-      virtual void evaluate_constraints(Iterate& iterate, Vector<double>& constraints, const Evaluations& evaluations) const;
+      virtual void evaluate_constraints(Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const;
 
       // dense objective gradient
-      virtual void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, const Evaluations& evaluations) const;
+      virtual void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;

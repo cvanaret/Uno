@@ -20,10 +20,10 @@ namespace uno {
       void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
 
       // constraint evaluations
-      void evaluate_constraints(Iterate& iterate, Vector<double>& constraints, const Evaluations& evaluations) const override;
+      void evaluate_constraints(Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const override;
 
       // dense objective gradient
-      void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, const Evaluations& evaluations) const override;
+      void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const override;
 
       // sparsity patterns of Jacobian and Hessian
       void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,

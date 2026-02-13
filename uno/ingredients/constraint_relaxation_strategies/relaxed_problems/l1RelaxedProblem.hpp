@@ -21,10 +21,10 @@ namespace uno {
       void set_proximal_center(double* proximal_center);
 
       // constraint evaluations
-      void evaluate_constraints(Iterate& iterate, Vector<double>& constraints, const Evaluations& evaluations) const override;
+      void evaluate_constraints(Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const override;
 
       // dense objective gradient
-      void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, const Evaluations& evaluations) const override;
+      void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const override;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;

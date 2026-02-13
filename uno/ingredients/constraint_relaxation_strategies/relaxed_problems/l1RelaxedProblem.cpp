@@ -6,6 +6,7 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/UnaryNegation.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
@@ -39,7 +40,8 @@ namespace uno {
       this->proximal_center = proximal_center;
    }
 
-   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints, const Evaluations& evaluations) const {
+   void l1RelaxedProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
       constraints = evaluations.constraints;
 
       // add the contribution of the elastic variables
@@ -51,10 +53,10 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, const Evaluations& evaluations) const {
+   void l1RelaxedProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
       // scale nabla f(x) by rho
       if (this->objective_multiplier != 0.) {
-         // TODO change this
+         evaluations.evaluate_objective_gradient(this->model, iterate.primals);
          for (size_t index: Range(this->model.number_variables)) {
             objective_gradient[index] = this->objective_multiplier * evaluations.objective_gradient[index];
          }
@@ -155,7 +157,17 @@ namespace uno {
       lagrangian_gradient.objective_contribution.fill(0.);
       lagrangian_gradient.constraints_contribution.fill(0.);
 
-      OptimizationProblem::evaluate_lagrangian_gradient(lagrangian_gradient, iterate, evaluations);
+      // ∇c(x_k) λ_k
+      evaluations.evaluate_jacobian(this->model, iterate.primals);
+      evaluations.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints,
+         lagrangian_gradient.constraints_contribution);
+      lagrangian_gradient.constraints_contribution = -lagrangian_gradient.constraints_contribution;
+
+      // z_k
+      for (size_t variable_index: Range(this->number_variables)) {
+         lagrangian_gradient.constraints_contribution[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
+            iterate.multipliers.upper_bounds[variable_index]);
+      }
 
       // elastic variables
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
