@@ -3,7 +3,7 @@ title: 'UNO: A composable framework for nonlinear constrained optimization'
 tags:
   - nonlinear programming
   - constrained optimization
-  - SQP
+  - sequential quadratic programming
   - interior-point methods
   - Lagrange-Newton methods
   - optimization frameworks
@@ -33,13 +33,15 @@ bibliography: paper.bib
 
 UNO is a composable software framework for nonlinear constrained optimization written in modern C++.
 It implements a unified Lagrange-Newton approach by decomposing classical algorithms into reusable components.
-Supported methods include Sequential Quadratic Programming (SQP), interior-point barrier methods, and augmented Lagrangian approaches.
+Supported methods include sequential quadratic programming, interior-point barrier methods, and augmented Lagrangian approaches.
 
-Optimization algorithms in UNO are structured as compositions of building blocks: search directions, constraint treatments, globalization strategies, and acceptance mechanisms.
-This design allows classical and hybrid methods to be expressed, configured, and compared within the same framework.
+Optimization algorithms in UNO are assembled from modular components such as search directions, constraint handling, globalization, and acceptance criteria.
+This structure allows classical and hybrid methods to be configured and compared within a single framework.
 
-The core C++ implementation separates mathematical concepts from implementation details.
-Language bindings for Julia, Python, C, and Fortran make UNO accessible across scientific computing environments. Precompiled libraries and executables are provided on GitHub, and the solver can be used directly via `UnoSolver.jl` in Julia or `unopy` in Python.
+The core C++ implementation separates mathematical abstractions from implementation details through a clear software abstraction layer.
+Bindings for Julia, Python, C, and Fortran support use across scientific computing environments.
+Precompiled artifacts are available on GitHub.
+The solver can be accessed directly via `UnoSolver.jl` in Julia or `unopy` in Python.
 
 # Statement of need
 
