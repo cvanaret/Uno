@@ -29,7 +29,7 @@ TEST(LAPACK, CholeskyFactorization) {
 
 // compute high-rank update I + v v^T
 TEST(LAPACK, SymmetricHighRank1Update) {
-   size_t dimension = 3;
+   int dimension = 3;
    // identity matrix
    std::vector<double> matrix{
       1., 0., 0.,
@@ -39,12 +39,11 @@ TEST(LAPACK, SymmetricHighRank1Update) {
    std::vector<double> vector{2., 3., 4.};
    char uplo = 'L'; // lower triangular
    char trans = 'N';
-   int dim = static_cast<int>(dimension);
    int k = 1; // rank of the update
    double alpha = 1.;
    double beta = 1.;
-   LAPACK_symmetric_high_rank_update(&uplo, &trans, &dim, &k, &alpha, vector.data(), &dim, &beta,
-      matrix.data(), &dim);
+   LAPACK_symmetric_high_rank_update(&uplo, &trans, &dimension, &k, &alpha, vector.data(), &dimension, &beta,
+      matrix.data(), &dimension);
    // output matrix should be
    //   5., 6., 8.,
    //   0., 10., 12.,
@@ -59,7 +58,7 @@ TEST(LAPACK, SymmetricHighRank1Update) {
 
 // compute high-rank update 0 + L L^T
 TEST(LAPACK, SymmetricHighRank3Update) {
-   size_t dimension = 3;
+   int dimension = 3;
    std::vector<double> matrix{
       0., 0., 0.,
       0., 0., 0.,
@@ -73,12 +72,11 @@ TEST(LAPACK, SymmetricHighRank3Update) {
    };
    char uplo = 'L'; // lower triangular
    char trans = 'N';
-   int dim = static_cast<int>(dimension);
-   int k = dim; // rank of the update
+   int k = dimension; // rank of the update
    double alpha = 1.;
    double beta = 1.;
-   LAPACK_symmetric_high_rank_update(&uplo, &trans, &dim, &k, &alpha, lower_triangular_matrix.data(), &dim, &beta,
-      matrix.data(), &dim);
+   LAPACK_symmetric_high_rank_update(&uplo, &trans, &dimension, &k, &alpha, lower_triangular_matrix.data(), &dimension,
+      &beta, matrix.data(), &dimension);
    const double tolerance = 1e-6;
    // output matrix should be
    //    0., 0., 0.,

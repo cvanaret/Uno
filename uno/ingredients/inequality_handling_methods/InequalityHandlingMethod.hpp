@@ -17,7 +17,6 @@ namespace uno {
    class HessianModel;
    class Iterate;
    class l1RelaxedProblem;
-   class Model;
    class OptimizationProblem;
    class Options;
    class InertiaCorrectionStrategy;

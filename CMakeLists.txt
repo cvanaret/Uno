@@ -86,6 +86,7 @@ file(GLOB TESTS_UNO_SOURCE_FILES
    unotest/unit_tests/ConcatenationTests.cpp
    unotest/unit_tests/COOSparseStorageTests.cpp
    unotest/unit_tests/CSCSparseStorageTests.cpp
+   unotest/unit_tests/DenseMatrixTests.cpp
    unotest/unit_tests/RangeTests.cpp
    unotest/unit_tests/ScalarMultipleTests.cpp
    unotest/unit_tests/SparseVectorTests.cpp
@@ -133,6 +134,19 @@ endif()
 if(HSL OR MA27)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA27/MA27Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA27SolverTests.cpp)
+endif()
+
+# LAPACK
+if(WITH_LAPACK)
+   find_package(LAPACK)
+   if(NOT LAPACK_FOUND)
+      message(WARNING "Optional library LAPACK was not found.")
+   else()
+      link_to_uno(LAPACK ${LAPACK_LIBRARIES})
+      # enable the use of quasi-Newton methods
+      list(APPEND UNO_SOURCE_FILES uno/ingredients/hessian_models/quasi_newton/LBFGSHessian.cpp)
+      list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/LAPACKTests.cpp)
+   endif()
 endif()
 
 # METIS
