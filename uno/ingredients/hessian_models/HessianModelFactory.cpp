@@ -9,6 +9,9 @@
 #include "quasi_newton/LBFGSHessian.hpp"
 #include "IdentityHessian.hpp"
 #include "ZeroHessian.hpp"
+#ifdef HAS_LAPACK
+#include "quasi_newton/LBFGSHessian.hpp"
+#endif
 #include "model/Model.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -43,6 +46,11 @@ namespace uno {
       else if (hessian_model == "zero") {
          return std::make_unique<ZeroHessian>(model.number_variables);
       }
+#ifdef HAS_LAPACK
+      else if (hessian_model == "L-BFGS") {
+         return std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
+      }
+#endif
       throw std::invalid_argument("Hessian model " + hessian_model + " does not exist");
    }
 } // namespace
