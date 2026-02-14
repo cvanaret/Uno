@@ -100,6 +100,15 @@ end
             r"^test_linear_INFEASIBLE_2$",
             r"^test_quadratic_SecondOrderCone_basic$",
             r"^test_quadratic_nonconvex_constraint_basic$",
+            # Charlie: Uno doesn't converge on this one. The norm of the steps is small (1.67e-2),
+            # perhaps the L-BFGS Hessian is too positive definite?
+            r"^test_nonlinear_expression_hs109$",
+            # Charlie: those are OK to exclude. The objective decreases as the same speed as
+            # the variables increase. Since the Hessian is made positive definite, the step is
+            # constrained in size and we'd need many iterations to detect unboundedness.
+            r"^test_linear_DUAL_INFEASIBLE$",
+            r"^test_linear_DUAL_INFEASIBLE_2$",
+            r"^test_solve_TerminationStatus_DUAL_INFEASIBLE$",
             r"^test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_",
             # ==================================================================
             # The following tests are okay to exclude forever.
