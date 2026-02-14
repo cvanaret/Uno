@@ -153,9 +153,9 @@ namespace uno {
       this->first_reformulation.evaluate_jacobian(primals, jacobian_values, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient,
-         const Iterate& iterate, Evaluations& evaluations) const {
-      this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, iterate, evaluations);
+   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
+         Vector<double>& lagrangian_gradient) const {
+      this->first_reformulation.evaluate_lagrangian_gradient(iterate, evaluations, lagrangian_gradient);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {

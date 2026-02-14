@@ -195,7 +195,7 @@ namespace uno {
          accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, *this->globalization_strategy,
             current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
          if (accept_iterate) {
-            this->hessian_model->notify_accepted_iterate(statistics, current_iterate, trial_iterate);
+            this->hessian_model->notify_accepted_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
          }
       }
       else {
@@ -203,7 +203,7 @@ namespace uno {
             this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, step_length,
             evaluation_cache, user_callbacks);
          if (accept_iterate) {
-            this->feasibility_hessian_model->notify_accepted_iterate(statistics, current_iterate, trial_iterate);
+            this->feasibility_hessian_model->notify_accepted_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
          }
       }
 

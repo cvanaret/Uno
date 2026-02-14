@@ -70,7 +70,7 @@ namespace uno {
       this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
       if (accept_iterate) {
-         this->hessian_model->notify_accepted_iterate(statistics, current_iterate, trial_iterate);
+         this->hessian_model->notify_accepted_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
       }
       warmstart_information.no_changes();
       return accept_iterate;

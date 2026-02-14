@@ -5,6 +5,10 @@
 #include <utility>
 #include "Model.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "linear_algebra/VectorView.hpp"
+#include "optimization/Evaluations.hpp"
+#include "optimization/Iterate.hpp"
+#include "symbolic/ScalarMultiple.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
@@ -14,6 +18,27 @@ namespace uno {
       double lagrangian_sign_convention) :
          name(std::move(name)), number_variables(number_variables), number_constraints(number_constraints),
          optimization_sense(objective_sign), lagrangian_sign_convention(lagrangian_sign_convention) {
+   }
+
+   // Lagrangian gradient ρ ∇f(x_k) - ∇c(x_k) y_k - z_k
+   void Model::evaluate_lagrangian_gradient(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+         Evaluations& evaluations, Vector<double>& lagrangian_gradient) const {
+      lagrangian_gradient.fill(0.);
+
+      // ∇c(x_k) λ_k
+      evaluations.evaluate_jacobian(*this, primals);
+      evaluations.compute_jacobian_transposed_vector_product(multipliers.constraints, lagrangian_gradient);
+      lagrangian_gradient.scale(-1.);
+
+      // ∇f(x_k)
+      if (objective_multiplier != 0.) {
+         evaluations.evaluate_objective_gradient(*this, primals);
+         view(lagrangian_gradient, 0, this->number_variables) += objective_multiplier * evaluations.objective_gradient;
+      }
+
+      // z_k
+      view(lagrangian_gradient, 0, this->number_variables) -= view(multipliers.lower_bounds, 0, this->number_variables);
+      view(lagrangian_gradient, 0, this->number_variables) -= view(multipliers.upper_bounds, 0, this->number_variables);
    }
 
    void Model::project_onto_variable_bounds(Vector<double>& x) const {

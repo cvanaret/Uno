@@ -6,6 +6,7 @@
 #include "options/Options.hpp"
 #include "linear_algebra/LAPACK.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/ScalarMultiple.hpp"
@@ -58,12 +59,13 @@ namespace uno {
       statistics.set("|BFGS|", this->number_entries_in_memory);
    }
 
-   void LBFGSHessian::notify_accepted_iterate(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate) {
+   void LBFGSHessian::notify_accepted_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
+         EvaluationCache& evaluation_cache) {
       DEBUG << "\n*** Updating the BFGS memory\n";
       // update the matrices S, Y and D
       // TODO check that the S entry isn't too small
       this->update_S_matrix(current_iterate, trial_iterate);
-      this->update_Y_matrix(current_iterate, trial_iterate);
+      this->update_Y_matrix(current_iterate, trial_iterate, evaluation_cache);
       this->update_D_matrix();
       DEBUG << "> S: " << this->S_matrix;
       DEBUG << "> Y: " << this->Y_matrix;
@@ -135,24 +137,17 @@ namespace uno {
    }
    
    // fill the Y matrix: y = \nabla L(x_k, y_k, z_k) - \nabla L(x_{k-1}, y_k, z_k)
-   void LBFGSHessian::update_Y_matrix(Iterate& current_iterate, Iterate& trial_iterate) {
+   void LBFGSHessian::update_Y_matrix(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache) {
       // evaluate Lagrangian gradients at the current and trial iterates, both with the trial multipliers
       // TODO preallocate
-      /*
-      std::vector<double> current_jacobian_values(this->model.number_jacobian_nonzeros());
-      std::vector<double> trial_jacobian_values(this->model.number_jacobian_nonzeros());
-      current_iterate.evaluate_objective_gradient(this->model);
-      trial_iterate.evaluate_objective_gradient(this->model);
-      this->model.evaluate_constraint_jacobian(current_iterate.primals, current_jacobian_values.data());
-      this->model.evaluate_constraint_jacobian(trial_iterate.primals, trial_jacobian_values.data());
-      LagrangianGradient<double> current_split_lagrangian_gradient(this->model.number_variables);
-      LagrangianGradient<double> trial_split_lagrangian_gradient(this->model.number_variables);
-      const auto current_lagrangian_gradient = this->fixed_objective_multiplier * current_split_lagrangian_gradient.objective_contribution
-         + current_split_lagrangian_gradient.constraints_contribution;
-      const auto trial_lagrangian_gradient = this->fixed_objective_multiplier * trial_split_lagrangian_gradient.objective_contribution
-         + trial_split_lagrangian_gradient.constraints_contribution;
+      Vector<double> current_lagrangian_gradient(this->model.number_variables);
+      Vector<double> trial_lagrangian_gradient(this->model.number_variables);
+      // note: trial_iterate.multipliers are used in both calls
+      this->model.evaluate_lagrangian_gradient(current_iterate.primals, trial_iterate.multipliers, this->fixed_objective_multiplier,
+         evaluation_cache.current_evaluations, current_lagrangian_gradient);
+      this->model.evaluate_lagrangian_gradient(trial_iterate.primals, trial_iterate.multipliers, this->fixed_objective_multiplier,
+         evaluation_cache.trial_evaluations, trial_lagrangian_gradient);
       this->Y_matrix.column(this->current_memory_slot) = trial_lagrangian_gradient - current_lagrangian_gradient;
-      */
    }
 
    void LBFGSHessian::update_D_matrix() {
