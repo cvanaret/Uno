@@ -40,37 +40,13 @@ if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
 endif()
 option(ENABLE_TESTS "Build unit tests" OFF)
 
-# convert relative paths of BLAS and LAPACK to absolute paths
-if(BLAS_LIBRARIES)
-   set(ABSOLUTE_BLAS_LIBRARIES)
-   foreach(relative_path IN LISTS BLAS_LIBRARIES)
-      get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
-      list(APPEND ABSOLUTE_BLAS_LIBRARIES "${absolute_path}")
-   endforeach()
-   set(BLAS_LIBRARIES ${ABSOLUTE_BLAS_LIBRARIES} CACHE STRING "BLAS libraries" FORCE)
-endif()
-if(LAPACK_LIBRARIES)
-    set(ABSOLUTE_LAPACK_LIBRARIES)
-    foreach(relative_path IN LISTS LAPACK_LIBRARIES)
-       get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
-       list(APPEND ABSOLUTE_LAPACK_LIBRARIES "${absolute_path}")
-    endforeach()
-    set(LAPACK_LIBRARIES ${ABSOLUTE_LAPACK_LIBRARIES} CACHE STRING "LAPACK libraries" FORCE)
-endif()
-
-# determine whether a Fortran compiler is required, based on the available optional dependencies
-find_library(HSL hsl)
-find_library(MA57 ma57)
-find_library(MA27 ma27)
-find_library(BQPD bqpd)
-if(HSL OR MA57 OR MA27 OR BQPD)
-   message(STATUS "Fortran compiler required")
-   enable_language(Fortran)
-   include(FortranCInterface)
-   FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
-           MACRO_NAMESPACE "FC_"
-           SYMBOL_NAMESPACE "FC_")
-endif()
+# use Fortran compiler for name mangling with Fortran
+message(STATUS "Fortran compiler required")
+enable_language(Fortran)
+include(FortranCInterface)
+FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
+        MACRO_NAMESPACE "FC_"
+        SYMBOL_NAMESPACE "FC_")
 
 # directories
 set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
@@ -104,6 +80,8 @@ file(GLOB UNO_SOURCE_FILES
 # unit test source files
 file(GLOB TESTS_UNO_SOURCE_FILES
    unotest/unotest.cpp
+   unotest/functional_tests/BLASTests.cpp
+   unotest/functional_tests/LAPACKTests.cpp
    unotest/unit_tests/CollectionAdapterTests.cpp
    unotest/unit_tests/ConcatenationTests.cpp
    unotest/unit_tests/COOSparseStorageTests.cpp
@@ -134,6 +112,29 @@ function(link_to_uno library_name library_path)
    message(STATUS "Found ${library_name}")
 endfunction()
 
+# BLAS and LAPACK
+# convert relative paths of BLAS and LAPACK to absolute paths
+if(BLAS_LIBRARIES)
+   set(ABSOLUTE_BLAS_LIBRARIES)
+   foreach(relative_path IN LISTS BLAS_LIBRARIES)
+      get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
+      list(APPEND ABSOLUTE_BLAS_LIBRARIES "${absolute_path}")
+   endforeach()
+   set(BLAS_LIBRARIES ${ABSOLUTE_BLAS_LIBRARIES} CACHE STRING "BLAS libraries" FORCE)
+endif()
+if(LAPACK_LIBRARIES)
+   set(ABSOLUTE_LAPACK_LIBRARIES)
+   foreach(relative_path IN LISTS LAPACK_LIBRARIES)
+      get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
+      list(APPEND ABSOLUTE_LAPACK_LIBRARIES "${absolute_path}")
+   endforeach()
+   set(LAPACK_LIBRARIES ${ABSOLUTE_LAPACK_LIBRARIES} CACHE STRING "LAPACK libraries" FORCE)
+endif()
+find_package(BLAS REQUIRED)
+list(APPEND LIBRARIES BLAS::BLAS)
+find_package(LAPACK REQUIRED)
+list(APPEND LIBRARIES LAPACK::LAPACK)
+
 # HSL or MA57
 find_library(HSL hsl)
 if(HSL)
@@ -151,16 +152,10 @@ endif()
 if(HSL OR MA57)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA57/MA57Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
-
-   find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES BLAS::BLAS)
 endif()
 if(HSL OR MA27)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA27/MA27Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA27SolverTests.cpp)
-
-   find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES BLAS::BLAS)
 endif()
 
 # METIS
@@ -227,12 +222,6 @@ if(MUMPS_LIBRARY)
    find_package(METIS REQUIRED)
    list(APPEND LIBRARIES ${METIS_LIBRARY})
    list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
-
-   find_package(LAPACK REQUIRED)
-   list(APPEND LIBRARIES LAPACK::LAPACK)
-
-   find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES BLAS::BLAS)
 
    find_package(OpenMP REQUIRED)
    list(APPEND LIBRARIES OpenMP::OpenMP_CXX)

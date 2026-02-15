@@ -24,24 +24,41 @@ jobs:
       matrix:
         os: [macos-14]
         architecture: [arm64]
-        compiler: [clang]
+        compiler: [gcc]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Configure CMake
-      run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-                                             -DENABLE_TESTS=ON \
-                                             -DBLAS_LIBRARIES=${{github.workspace}}/deps/lib/libblas.a \
-                                             -DLAPACK_LIBRARIES=${{github.workspace}}/deps/lib/liblapack.a \
-                                             -DBUILD_STATIC_LIBS=ON \
-                                             -DBUILD_SHARED_LIBS=OFF .
+      - name: Install Fortran compiler
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '13'
 
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build --target run_unotest --config ${{env.BUILD_TYPE}} -j4
+      - name: Download dependencies
+        shell: bash
+        run: bash dependencies/scripts/download_dependencies.sh
 
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      # Execute unit tests
-      run: ./run_unotest
+      - name: Configure CMake
+        run: |
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                                               -DENABLE_TESTS=ON \
+                                               -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+                                               -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+                                               -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+                                               -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
+                                               -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
+                                               -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
+                                               -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
+                                               -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
+                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
+                                               -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+                                               -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a .
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --target run_unotest --config ${{env.BUILD_TYPE}} -j4
+
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        # Execute unit tests
+        run: ./run_unotest
