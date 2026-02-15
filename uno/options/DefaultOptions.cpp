@@ -88,7 +88,7 @@ namespace uno {
       options.set_bool("LS_scale_duals_with_step_length", true);
 
       /* quasi-Newton options */
-      options.set_integer("quasi_newton_memory_size", 3);
+      options.set_integer("quasi_newton_memory_size", 6);
 
       /** regularization options **/
       // regularization failure threshold

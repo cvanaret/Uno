@@ -10,7 +10,7 @@ Defaults are taken from `uno/options/DefaultOptions.cpp`.
 | :---       | :---                 |
 | `constraint_relaxation_strategy` | `feasibility_restoration` |
 | `inequality_handling_method` | `inequality_constrained`, `interior_point` |
-| `hessian_model` | `exact`, `identity`, `zero` |
+| `hessian_model` | `exact`, `LBFGS`, `identity`, `zero` |
 | `inertia_correction_strategy` | `primal`, `primal_dual`, `none` |
 | `globalization_mechanism` | `TR`, `LS` |
 | `globalization_strategy` | `merit_function`, `fletcher_filter_method`, `waechter_filter_method`, `funnel_method` |
@@ -129,6 +129,12 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `primal_regularization_fast_increase_factor` | double  | 100.0   | Fast increase factor for the primal inertia correction coefficient |
 | `primal_regularization_slow_increase_factor` | double  | 8.0     | Slow increase factor for the primal inertia correction coefficient |
 | `threshold_unsuccessful_attempts`            | integer | 8       | Number of unsuccessful attempts until inertia correction becomes more aggressive |
+
+## Quasi-Newton options
+
+| Option                     | Type    | Default | Description |
+| :---                       | :---    | :---    | :---        |
+| `quasi_newton_memory_size` | integer | 6       | Size of the quasi-Newton limited memory |
 
 ## Trust region options
 

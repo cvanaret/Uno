@@ -36,7 +36,7 @@ namespace uno {
          return std::make_unique<ZeroHessian>(model.number_variables);
       }
 #ifdef HAS_LAPACK
-      else if (hessian_model == "L-BFGS") {
+      else if (hessian_model == "LBFGS") {
          return std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
       }
 #endif
