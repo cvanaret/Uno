@@ -154,8 +154,7 @@ namespace uno {
    }
 
    inline double dot(const Vector<double>& x, const Vector<double>& y) {
-      assert(x.size() == y.size());
-      const int size = static_cast<int>(x.size());
+      const int size = static_cast<int>(std::min(x.size(), y.size()));
       constexpr int increment = 1;
       return BLAS_dot_product(&size, x.data(), &increment, y.data(), &increment);
    }
