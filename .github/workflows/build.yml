@@ -186,15 +186,12 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_C_COMPILER=clang \
           -DCMAKE_CXX_COMPILER=clang++ \
-          -DCMAKE_FORTRAN_COMPILER=gfortran \
+          -DCMAKE_Fortran_COMPILER=gfortran \
           -DOpenMP_C_FLAGS="-Xpreprocessor -fopenmp" \
           -DOpenMP_C_LIB_NAMES="omp" \
           -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp" \
           -DOpenMP_CXX_LIB_NAMES="omp" \
           -DOpenMP_omp_LIBRARY=${{ env.OPENMP_LIB }} \
-          -DCMAKE_C_COMPILER_WORKS=TRUE \
-          -DCMAKE_CXX_COMPILER_WORKS=TRUE \
-          -DCMAKE_Fortran_COMPILER_WORKS=TRUE \
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
