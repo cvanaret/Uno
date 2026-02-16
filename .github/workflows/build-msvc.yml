@@ -85,8 +85,9 @@ jobs:
               -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
               -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.lib;${{github.workspace}}\dependencies\lib\libcblas.lib" ^
               -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
+              -DHIGHS=${{github.workspace}}\dependencies\lib\libhighs.a ^
               -DBUILD_STATIC_LIBS=ON ^
-              -DBUILD_SHARED_LIBS=ON .
+              -DBUILD_SHARED_LIBS=OFF .
 
     - name: Build
       run: nmake
