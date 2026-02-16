@@ -172,7 +172,7 @@ jobs:
           -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
           -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
-          -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
+          -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
           -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
           -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
           -DBUILD_STATIC_LIBS=ON \
@@ -185,8 +185,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_C_COMPILER=clang \
           -DCMAKE_CXX_COMPILER=clang++ \
-          -DCMAKE_Fortran_COMPILER=gfortran \
-          -DCMAKE_LINKER=gfortran \
+          -DCMAKE_Fortran_COMPILER=gfortran-15 \
           -DOpenMP_C_FLAGS="-Xpreprocessor -fopenmp" \
           -DOpenMP_C_LIB_NAMES="omp" \
           -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp" \
@@ -200,7 +199,7 @@ jobs:
           -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
           -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
-          -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
+          -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
           -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
           -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
           -DBUILD_STATIC_LIBS=ON \
@@ -222,7 +221,7 @@ jobs:
           -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\dependencies\lib\libmumps_common.a ^
           -DMUMPS_PORD_LIBRARY=${{github.workspace}}\dependencies\lib\libpord.a ^
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
-          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.a;${{github.workspace}}\dependencies\lib\libcblas.a" ^
+          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.a;${{github.workspace}}\dependencies\lib\libblas.a" ^
           -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.a ^
           -DHIGHS=${{github.workspace}}\dependencies\bin\libhighs.dll ^
           -DBUILD_STATIC_LIBS=ON ^
@@ -246,7 +245,7 @@ jobs:
           -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\dependencies\lib\libmumps_common.a ^
           -DMUMPS_PORD_LIBRARY=${{github.workspace}}\dependencies\lib\libpord.a ^
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
-          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.lib;${{github.workspace}}\dependencies\lib\libcblas.lib" ^
+          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.lib;${{github.workspace}}\dependencies\lib\libblas.lib" ^
           -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
           -DBUILD_STATIC_LIBS=ON ^
           -DBUILD_SHARED_LIBS=OFF .
@@ -260,7 +259,7 @@ jobs:
           -DCMAKE_C_COMPILER=cl ^
           -DCMAKE_CXX_COMPILER=cl ^
           -DCMAKE_Fortran_COMPILER=ifx ^
-          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.lib;${{github.workspace}}\dependencies\lib\libcblas.lib" ^
+          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.lib;${{github.workspace}}\dependencies\lib\libblas.lib" ^
           -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
           -DBUILD_STATIC_LIBS=OFF ^
           -DBUILD_SHARED_LIBS=ON .
