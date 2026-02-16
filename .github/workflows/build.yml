@@ -49,13 +49,6 @@ jobs:
           toolchain: mingw
           build_type: Debug
           shell: msys2 {0}
-          library: static
-
-        - os: windows-latest
-          toolchain: mingw
-          build_type: Debug
-          shell: msys2 {0}
-          library: shared
 
         # -------- Windows MSVC --------
         - os: windows-latest
@@ -171,7 +164,6 @@ jobs:
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_FORTRAN_COMPILER=gfortran \
-          -DCMAKE_LINKER=gfortran \
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
@@ -194,6 +186,7 @@ jobs:
           -DCMAKE_C_COMPILER=clang \
           -DCMAKE_CXX_COMPILER=clang++ \
           -DCMAKE_Fortran_COMPILER=gfortran \
+          -DCMAKE_LINKER=gfortran \
           -DOpenMP_C_FLAGS="-Xpreprocessor -fopenmp" \
           -DOpenMP_C_LIB_NAMES="omp" \
           -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp" \
@@ -214,8 +207,8 @@ jobs:
           -DBUILD_SHARED_LIBS=ON
 
     # ----- MinGW -----
-    - name: Configure (MinGW static)
-      if: matrix.toolchain == 'mingw' && matrix.library == 'static'
+    - name: Configure (MinGW)
+      if: matrix.toolchain == 'mingw'
       shell: cmd
       run: |
         cmake -G "MinGW Makefiles" ^
@@ -224,30 +217,15 @@ jobs:
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
           -DMETIS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
           -DBQPD=${{github.workspace}}\dependencies\lib\libbqpd.a ^
-          -DMETIS_LIBRARY=${{github.workspace}}\dependencies\lib\libmetis.a ^
+          -DMETIS_LIBRARY=${{github.workspace}}\dependencies\bin\libmetis.dll ^
           -DMUMPS_LIBRARY=${{github.workspace}}\dependencies\lib\libdmumps.a ^
           -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\dependencies\lib\libmumps_common.a ^
           -DMUMPS_PORD_LIBRARY=${{github.workspace}}\dependencies\lib\libpord.a ^
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
           -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.a;${{github.workspace}}\dependencies\lib\libcblas.a" ^
           -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.a ^
-          -DHIGHS=${{github.workspace}}\dependencies\lib\libhighs.a ^
+          -DHIGHS=${{github.workspace}}\dependencies\bin\libhighs.dll ^
           -DBUILD_STATIC_LIBS=ON ^
-          -DBUILD_SHARED_LIBS=OFF .
-
-    - name: Configure (MinGW shared)
-      if: matrix.toolchain == 'mingw' && matrix.library == 'shared'
-      shell: cmd
-      run: |
-        cmake -G "MinGW Makefiles" ^
-          -B build ^
-          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
-          -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
-          -DMETIS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
-          -DBQPD=${{github.workspace}}\dependencies\lib\libbqpd.a ^
-          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.a;${{github.workspace}}\dependencies\lib\libcblas.a" ^
-          -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.a ^
-          -DBUILD_STATIC_LIBS=OFF ^
           -DBUILD_SHARED_LIBS=ON .
 
     # ----- MSVC -----
