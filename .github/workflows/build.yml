@@ -94,7 +94,13 @@ jobs:
 
     - name: Install libomp (macOS)
       if: startsWith(matrix.os, 'macos')
-      run: brew install libomp
+      run: |
+        brew install libomp
+        if [[ $(uname -m) == 'arm64' ]]; then
+          echo "OPENMP_LIB=/opt/homebrew/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
+        else
+          echo "OPENMP_LIB=/usr/local/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
+        fi
 
     # ----- MSVC -----
     - name: MSVC environment
@@ -185,6 +191,11 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_C_COMPILER=clang \
           -DCMAKE_CXX_COMPILER=clang++ \
+          -DOpenMP_C_FLAGS="-Xpreprocessor -fopenmp" \
+          -DOpenMP_C_LIB_NAMES="omp" \
+          -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp" \
+          -DOpenMP_CXX_LIB_NAMES="omp" \
+          -DOpenMP_omp_LIBRARY=${{ env.OPENMP_LIB }} \
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
