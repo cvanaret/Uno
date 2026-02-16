@@ -92,6 +92,10 @@ jobs:
         compiler: 'gcc'
         version: '14'
 
+    - name: Install libomp (macOS)
+      if: startsWith(matrix.os, 'macos')
+      run: brew install libomp
+
     # ----- MSVC -----
     - name: MSVC environment
       if: matrix.toolchain == 'msvc'
