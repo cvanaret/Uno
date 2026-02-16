@@ -46,6 +46,9 @@ jobs:
     - name: Compile BLAS and LAPACK
       shell: cmd
       run: |
+        rm ${{github.workspace}}\dependencies\lib\libblas.a
+        rm ${{github.workspace}}\dependencies\lib\libcblas.a
+        rm ${{github.workspace}}\dependencies\lib\liblapack.a
         git clone https://github.com/Reference-LAPACK/lapack.git
         cd lapack
         mkdir build
@@ -62,11 +65,7 @@ jobs:
           -DBUILD_INDEX64_EXT_API=OFF ^
           -DTEST_FORTRAN_COMPILER=OFF
         nmake
-        rm ${{github.workspace}}\dependencies\lib\libblas.a
-        rm ${{github.workspace}}\dependencies\lib\libcblas.a
-        rm ${{github.workspace}}\dependencies\lib\liblapack.a
         nmake install
-        ls ${{github.workspace}}\dependencies\lib
 
     - name: Configure CMake
       shell: cmd
@@ -84,8 +83,8 @@ jobs:
               -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\dependencies\lib\libmumps_common.a ^
               -DMUMPS_PORD_LIBRARY=${{github.workspace}}\dependencies\lib\libpord.a ^
               -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
-              -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.a;${{github.workspace}}\dependencies\lib\libcblas.a" ^
-              -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.a ^
+              -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.lib;${{github.workspace}}\dependencies\lib\libcblas.lib" ^
+              -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
               -DHIGHS=${{github.workspace}}\dependencies\lib\libhighs.a ^
               -DBUILD_STATIC_LIBS=ON ^
               -DBUILD_SHARED_LIBS=ON .
