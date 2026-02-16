@@ -192,7 +192,9 @@ jobs:
           -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp" \
           -DOpenMP_CXX_LIB_NAMES="omp" \
           -DOpenMP_omp_LIBRARY=${{ env.OPENMP_LIB }} \
-          -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
+          -DCMAKE_C_COMPILER_WORKS=TRUE \
+          -DCMAKE_CXX_COMPILER_WORKS=TRUE \
+          -DCMAKE_Fortran_COMPILER_WORKS=TRUE \
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
@@ -285,5 +287,10 @@ jobs:
     # BUILD
     # =========================================================
 
-    - name: Build
+    - name: Build (not MSVC)
+      if: matrix.toolchain != 'msvc'
       run: cmake --build build --config ${{env.BUILD_TYPE}} -j4
+
+    - name: Build (MSVC)
+      if: matrix.toolchain == 'msvc'
+      run: nmake
