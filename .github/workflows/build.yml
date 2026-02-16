@@ -85,16 +85,10 @@ jobs:
     # =========================================================
 
     # ----- macOS -----
-    - name: Setup Fortran (macOS)
-      if: startsWith(matrix.os, 'macos')
-      uses: fortran-lang/setup-fortran@main
-      with:
-        compiler: 'gcc'
-        version: '14'
-
-    - name: Install libomp (macOS)
+    - name: Install libomp and gfortran (macOS)
       if: startsWith(matrix.os, 'macos')
       run: |
+        brew install gcc
         brew install libomp
         if [[ $(uname -m) == 'arm64' ]]; then
           echo "OPENMP_LIB=/opt/homebrew/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
@@ -170,6 +164,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_FORTRAN_COMPILER=gfortran \
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
@@ -191,6 +186,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_C_COMPILER=clang \
           -DCMAKE_CXX_COMPILER=clang++ \
+          -DCMAKE_FORTRAN_COMPILER=gfortran \
           -DOpenMP_C_FLAGS="-Xpreprocessor -fopenmp" \
           -DOpenMP_C_LIB_NAMES="omp" \
           -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp" \
