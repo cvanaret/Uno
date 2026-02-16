@@ -36,12 +36,7 @@ jobs:
 
       - name: Download dependency (BQPD)
         shell: bash
-        run: |
-          VERSION_BQPD="1.0.0"
-          PLATFORM="x86_64-linux-gnu"
-          wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
-          mkdir deps
-          tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
+        run: bash dependencies/scripts/download_dependencies.sh
 
       - name: Configure Uno CMake
         shell: bash
@@ -49,7 +44,9 @@ jobs:
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
         run: |
           cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-                                               -DBQPD=${{github.workspace}}/deps/lib/libbqpd.a \
+                                               -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
+                                               -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
                                                -DBUILD_STATIC_LIBS=ON \
                                                -DBUILD_SHARED_LIBS=ON .
 

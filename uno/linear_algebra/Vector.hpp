@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <initializer_list>
+#include "linear_algebra/BLAS.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
@@ -151,15 +152,11 @@ namespace uno {
       }
       return result;
    }
-   
-   template <typename Vector>
-   typename Vector::value_type dot(const Vector& x, const Vector& y) {
-      typename Vector::value_type dot_product = 0;
-      const size_t size = std::min(x.size(), y.size());
-      for (size_t index: Range(size)) {
-         dot_product += x[index] * y[index];
-      }
-      return dot_product;
+
+   inline double dot(const Vector<double>& x, const Vector<double>& y) {
+      const int size = static_cast<int>(std::min(x.size(), y.size()));
+      constexpr int increment = 1;
+      return BLAS_dot_product(&size, x.data(), &increment, y.data(), &increment);
    }
 } // namespace
 
