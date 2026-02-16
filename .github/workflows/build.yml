@@ -171,6 +171,7 @@ jobs:
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_FORTRAN_COMPILER=gfortran \
+          -DCMAKE_LINKER=gfortran \
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
