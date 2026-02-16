@@ -42,16 +42,6 @@ curl -L -o UnoUtils.tar.gz "$ASSET_URL"
 tar -xzvf UnoUtils.tar.gz
 pwd
 
-# download libmsvcrt.a for Windows
-VERSION="1.3.1"
-REPO="https://github.com/JuliaBinaryWrappers/CompilerSupportLibraries_jll.jl/releases/download/CompilerSupportLibraries-v${VERSION}%2B0"
-ASSET_NAME="CompilerSupportLibraries.v${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
-ASSET_URL="${REPO}/${ASSET_NAME}"
-echo "Downloading: ${ASSET_URL}"
-curl -L -o CSL.tar.gz "$ASSET_URL"
-tar -xzvf CSL.tar.gz
-pwd
-
 # delete unwanted directories
 # rm -rf lib/cmake/cblas* lib/cmake/lapack* lib/pkgconfig
 rm -rf lib/cmake lib/pkgconfig
