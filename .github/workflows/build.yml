@@ -85,10 +85,16 @@ jobs:
     # =========================================================
 
     # ----- macOS -----
-    - name: Install libomp and gfortran (macOS)
+    - name: Install Fortran compiler (macOS)
+      if: startsWith(matrix.os, 'macos')
+      uses: fortran-lang/setup-fortran@main
+      with:
+        compiler: 'gcc'
+        version: '14'
+
+    - name: Install libomp (macOS)
       if: startsWith(matrix.os, 'macos')
       run: |
-        brew install gcc
         brew install libomp
         if [[ $(uname -m) == 'arm64' ]]; then
           echo "OPENMP_LIB=/opt/homebrew/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
