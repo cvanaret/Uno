@@ -2,7 +2,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.2.11"
+version = v"2026.2.16"
 
 # Collection of sources
 sources = [
@@ -34,6 +34,10 @@ sources = [
     # HiGHS v1.13.0
     # GitSource("https://github.com/ERGO-Code/HiGHS.git",
     #           "1bce6d5c801398dab6d2e6f98ac8935f3d4eec9c"),
+
+    # Package compiler for Windows
+    ArchiveSource("https://github.com/JuliaLang/PackageCompiler.jl/releases/download/v1.0.0/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.tar.gz",
+                  "fe3f401bc936fbe6af940b26c5e0f266f762a3416f979c706e599b24082dc5c7"),
 ]
 
 # Bash recipe for building across all platforms
@@ -185,6 +189,42 @@ make install
 # Clean
 rm -r ${prefix}/bin
 rm ${prefix}/lib/libsmumps.a
+
+# Compile some shared libraries for Windows
+if [ $target = "x86_64-w64-mingw32" ] || [ $target = "i686-w64-mingw32" ]; then
+    ## METIS
+    cd $WORKSPACE/srcdir/METIS
+    mkdir -p build_shared
+    cd build_shared
+    cmake .. \
+        -DCMAKE_INSTALL_PREFIX=$prefix \
+        -DCMAKE_TOOLCHAIN_FILE="${CMAKE_TARGET_TOOLCHAIN}" \
+        -DCMAKE_VERBOSE_MAKEFILE=1 \
+        -DGKLIB_PATH=$WORKSPACE/srcdir/METIS/GKlib \
+        -DSHARED=1
+    make -j${nproc}
+    make install
+
+    # HiGHS
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libgfortran.a ${prefix}/lib/libgfortran.a
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libquadmath.a ${prefix}/lib/libquadmath.a
+    cd $WORKSPACE/srcdir/HiGHS
+    mkdir build_shared
+    cd build_shared
+    cmake .. \
+        -DCMAKE_INSTALL_PREFIX=${prefix} \
+        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SHARED_LIBS=ON \
+        -DHIPO=ON \
+        -DBUILD_EXAMPLES=OFF \
+        -DBUILD_TESTING=OFF \
+        -DBUILD_CXX_EXE=OFF \
+        -DMETIS_ROOT=${prefix} \
+        -DBLAS_LIBRARIES="${prefix}/lib/libcblas.a;${prefix}/lib/libblas.a;${prefix}/lib/libgfortran.a;${prefix}/lib/libquadmath.a"
+    cmake --build . --config Release
+    make install
+fi
 """
 
 # These are the platforms we will build for by default, unless further
