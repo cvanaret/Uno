@@ -196,6 +196,7 @@ jobs:
           -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp" \
           -DOpenMP_CXX_LIB_NAMES="omp" \
           -DOpenMP_omp_LIBRARY=${{ env.OPENMP_LIB }} \
+          -DCMAKE_EXE_LINKER_FLAGS="-lgfortran" \
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
