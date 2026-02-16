@@ -44,6 +44,24 @@ jobs:
         compiler: 'intel'
         version: '2025.0'
 
+    - name: Compile BLAS and LAPACK
+      shell: cmd
+      run: |
+        git clone https://github.com/Reference-LAPACK/lapack.git
+        cd lapack
+        mkdir build
+        cd build
+        cmake -G "NMake Makefiles" .. ^
+          -DCBLAS=ON ^
+          -DLAPACKE=OFF ^
+          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\dependencies ^
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
+          -DBUILD_SHARED_LIBS=OFF ^
+          -DBUILD_INDEX64_EXT_API=OFF ^
+          -DTEST_FORTRAN_COMPILER=OFF
+        nmake
+        nmake install
+
     - name: Configure CMake
       shell: cmd
       run: |
