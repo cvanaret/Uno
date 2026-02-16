@@ -2,7 +2,16 @@
 
 ### Packages and libraries
 
-* download the AMPL solver library (ASL): http://www.netlib.org/ampl/solvers/
+* install BLAS and LAPACK:
+```console
+sudo apt install libblas-dev liblapack-dev
+```
+* install cmake (and optionally ccmake, CMake curses interface):
+```console
+sudo apt install cmake cmake-curses-gui
+```
+
+* **(optional)** download the AMPL solver library (ASL): http://www.netlib.org/ampl/solvers/
 
 * **(optional)** download  solvers:
     * BQPD (null-space active set solver for nonconvex quadratic programming): get a precompiled binary for your architecture (https://github.com/leyffer/BQPD_jll.jl/releases) or get in touch with Sven Leyffer to apply for an academic license (https://www.mcs.anl.gov/~leyffer/solvers.html)
@@ -16,15 +25,6 @@
 INCS = $(INCSEQ)
 LIBS = $(LIBSEQ)
 LIBSEQNEEDED = libseqneeded
-```
-
-* **(optional)** install BLAS and LAPACK:
-```console
-sudo apt install libblas-dev liblapack-dev
-```
-* install cmake (and optionally ccmake, CMake curses interface):
-```console
-sudo apt install cmake cmake-curses-gui
 ```
 
 ### Compilation
@@ -41,12 +41,11 @@ You can pass the following options:
 - build type: `-DCMAKE_BUILD_TYPE=[Release|Debug]`
 - build the Uno static library `uno_static`: `-DBUILD_STATIC_LIBS=[ON|OFF]`
 - build the Uno shared library `uno_shared`: `-DBUILD_SHARED_LIBS=[ON|OFF]`
-- enable LAPACK: `-DWITH_LAPACK=[ON|OFF]`
 - path to the BQPD library: `-DBQPD=path_to_bqpd_lib`
 - path to the MA27 library: `-DMA57=path_to_MA27_lib`
 - path to the MA57 library: `-DMA57=path_to_MA57_lib`
 - path to ASL library: `-DAMPLSOLVER=path_to_amplsolver_lib`
-- path to HiGHS install directory: `-DHIGHS_DIR=path_to_highs_install_dir`
+- path to HiGHS library: `-DHIGHS=path_to_highs_lib`
 - path to HSL library: `-DHSL=path_to_hsl_lib`
 - path to METIS library (`fakemetis` is built with MA57): `-DMETIS=path_to_metis_lib`
 - path to MUMPS library: `-DMUMPS_LIBRARY=path_to_mumps_lib`
