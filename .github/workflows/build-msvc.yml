@@ -33,15 +33,15 @@ jobs:
     - name: Set up environment to compile C++ with MSVC
       uses: ilammy/msvc-dev-cmd@v1
 
-    - name: Download dependencies
-      shell: bash
-      run: bash dependencies/scripts/download_dependencies.sh
-
     - name: Install Fortran compiler
       uses: fortran-lang/setup-fortran@main
       with:
         compiler: 'intel'
         version: '2025.0'
+
+    - name: Download dependencies
+      shell: bash
+      run: bash dependencies/scripts/download_dependencies.sh
 
     - name: Compile BLAS and LAPACK
       shell: cmd
@@ -83,8 +83,6 @@ jobs:
               -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\dependencies\lib\libmumps_common.a ^
               -DMUMPS_PORD_LIBRARY=${{github.workspace}}\dependencies\lib\libpord.a ^
               -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
-              -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.lib;${{github.workspace}}\dependencies\lib\libcblas.lib" ^
-              -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
               -DHIGHS=${{github.workspace}}\dependencies\lib\libhighs.a ^
               -DBUILD_STATIC_LIBS=ON ^
               -DBUILD_SHARED_LIBS=ON .
