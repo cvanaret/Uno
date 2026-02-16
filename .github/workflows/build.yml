@@ -1,4 +1,4 @@
-name: Buildatforms)
+name: Build
 
 on:
   push:
@@ -161,7 +161,9 @@ jobs:
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
           -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
           -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
-          -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a
+          -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+          -DBUILD_STATIC_LIBS=ON \
+          -DBUILD_SHARED_LIBS=ON
 
     # ----- MinGW -----
     - name: Configure (MinGW)
@@ -181,7 +183,9 @@ jobs:
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
           -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.a;${{github.workspace}}\dependencies\lib\libcblas.a" ^
           -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.a ^
-          -DHIGHS=${{github.workspace}}\dependencies\lib\libhighs.a .
+          -DHIGHS=${{github.workspace}}\dependencies\lib\libhighs.a ^
+          -DBUILD_STATIC_LIBS=ON ^
+          -DBUILD_SHARED_LIBS=ON .
 
     # ----- MSVC -----
     - name: Configure (MSVC static)
