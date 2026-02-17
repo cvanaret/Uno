@@ -30,6 +30,15 @@ Note that all combinations do not necessarily result in sensible algorithms, or 
 
 For more details on our unification theory, check out the [UNIFICATION](UNIFICATION.md) page, our [preprint](https://www.researchgate.net/publication/397446552_Implementing_a_unified_solver_for_nonlinearly_constrained_optimization), or my [latest slides](https://www.researchgate.net/publication/390271091).
 
+## Who uses Uno?
+
+Uno is used as a nonlinear optimization solver in: 
+- [JuMP.jl](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers)
+- [Vecchia.jl](https://github.com/cgeoga/Vecchia.jl), a package for Gaussian processes approximation
+- [DNLP](https://github.com/cvxgrp/DNLP/pull/119), an extension of [CVXPY](https://www.cvxpy.org/) to general nonlinear programming
+- [FelooPy](https://www.linkedin.com/posts/k-tafakkori_optimization101-operationsresearch-decisionscience-activity-7397646574035697664-AzmK), a user-friendly tool for coding, modeling, and solving decision problems
+- [Industrial Algorithms Limited](https://www.industrialgorithms.ca/)
+
 ## Installation instructions
 
 See the [INSTALL](INSTALL.md) file for instructions on how to compile Uno from source or use the precompiled libraries and executables.
