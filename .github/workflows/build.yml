@@ -94,7 +94,7 @@ jobs:
           echo "LIBGFORTRAN_FOLDER=/opt/homebrew/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
         else
           echo "OPENMP_LIB=/usr/local/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
-          echo "LIBGFORTRAN_FOLDER=/usr/local/opt/libomp/lib/gcc/15" >> $GITHUB_ENV
+          echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
         fi
 
     # ----- MSVC -----
