@@ -1,0 +1,281 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+
+        # ---------- LINUX ----------
+        - os: ubuntu-latest
+          toolchain: gcc
+          build_type: Debug
+          shell: bash
+
+        - os: ubuntu-24.04-arm
+          toolchain: gcc
+          build_type: Debug
+          shell: bash
+
+        # ---------- MACOS ----------
+        - os: macos-latest
+          toolchain: gcc
+          build_type: Debug
+          shell: bash
+
+        - os: macos-15-intel
+          toolchain: gcc
+          build_type: Debug
+          shell: bash
+
+        # ---------- WINDOWS MINGW ----------
+        - os: windows-latest
+          toolchain: mingw
+          build_type: Debug
+          shell: msys2 {0}
+
+        # -------- Windows MSVC --------
+        - os: windows-latest
+          toolchain: msvc
+          build_type: Debug
+          shell: cmd
+          library: static
+
+        - os: windows-latest
+          toolchain: msvc
+          build_type: Debug
+          shell: cmd
+          library: shared
+
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # =========================================================
+    # TOOLCHAIN SETUP
+    # =========================================================
+
+    # ----- macOS -----
+    - name: Install Fortran compiler (macOS)
+      if: startsWith(matrix.os, 'macos')
+      uses: fortran-lang/setup-fortran@main
+      with:
+        compiler: 'gcc'
+        version: '14'
+
+    - name: Install libomp (macOS)
+      if: startsWith(matrix.os, 'macos')
+      run: |
+        brew install libomp
+        if [[ $(uname -m) == 'arm64' ]]; then
+          echo "OPENMP_LIB=/opt/homebrew/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
+          echo "LIBGFORTRAN_FOLDER=/opt/homebrew/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
+        else
+          echo "OPENMP_LIB=/usr/local/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
+          echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
+        fi
+
+    # ----- MSVC -----
+    - name: MSVC environment
+      if: matrix.toolchain == 'msvc'
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Intel Fortran
+      if: matrix.toolchain == 'msvc'
+      uses: fortran-lang/setup-fortran@main
+      with:
+        compiler: intel
+        version: '2025.0'
+
+    # ----- MinGW -----
+    - name: Setup MSYS2
+      if: matrix.toolchain == 'mingw'
+      uses: msys2/setup-msys2@v2
+      with:
+        path-type: inherit
+        msystem: MINGW64
+        update: true
+        install: |
+          mingw-w64-x86_64-gcc-fortran
+          mingw-w64-x86_64-cmake
+          mingw-w64-x86_64-make
+
+    # =========================================================
+    # DEPENDENCIES
+    # =========================================================
+
+    - name: Download dependencies
+      run: bash dependencies/scripts/download_dependencies.sh
+
+    # =========================================================
+    # MSVC: BUILD BLAS/LAPACK
+    # =========================================================
+
+    - name: Build LAPACK (MSVC)
+      if: matrix.toolchain == 'msvc'
+      shell: cmd
+      run: |
+        git clone https://github.com/Reference-LAPACK/lapack.git
+        cd lapack
+        mkdir build
+        cd build
+        cmake -G "NMake Makefiles" .. ^
+          -DCBLAS=ON ^
+          -DLAPACKE=OFF ^
+          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\dependencies ^
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
+          -DCMAKE_C_COMPILER=cl ^
+          -DCMAKE_CXX_COMPILER=cl ^
+          -DCMAKE_Fortran_COMPILER=ifx ^
+          -DBUILD_SHARED_LIBS=OFF ^
+          -DTEST_FORTRAN_COMPILER=OFF
+        nmake
+        nmake install
+
+    # =========================================================
+    # CONFIGURE
+    # =========================================================
+
+    - name: Configure (Linux)
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_FORTRAN_COMPILER=gfortran \
+          -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+          -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+          -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+          -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
+          -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
+          -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
+          -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
+          -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
+          -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
+          -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+          -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+          -DBUILD_STATIC_LIBS=ON \
+          -DBUILD_SHARED_LIBS=ON
+
+    - name: Configure (Mac)
+      if: startsWith(matrix.os, 'macos')
+      run: |
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DCMAKE_Fortran_COMPILER=gfortran-15 \
+          -DCMAKE_EXE_LINKER_FLAGS="-L${{env.LIBGFORTRAN_FOLDER}}" \
+          -DCMAKE_SHARED_LINKER_FLAGS="-L${{env.LIBGFORTRAN_FOLDER}}" \
+          -DOpenMP_C_FLAGS="-Xpreprocessor -fopenmp" \
+          -DOpenMP_C_LIB_NAMES="omp" \
+          -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp" \
+          -DOpenMP_CXX_LIB_NAMES="omp" \
+          -DOpenMP_omp_LIBRARY=${{ env.OPENMP_LIB }} \
+          -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+          -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+          -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+          -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
+          -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
+          -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
+          -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
+          -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
+          -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
+          -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+          -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+          -DBUILD_STATIC_LIBS=ON \
+          -DBUILD_SHARED_LIBS=ON
+
+    # ----- MinGW -----
+    - name: Configure (MinGW)
+      if: matrix.toolchain == 'mingw'
+      shell: cmd
+      run: |
+        cmake -G "MinGW Makefiles" ^
+          -B build ^
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
+          -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
+          -DMETIS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
+          -DBQPD=${{github.workspace}}\dependencies\lib\libbqpd.a ^
+          -DMETIS_LIBRARY=${{github.workspace}}\dependencies\bin\libmetis.dll ^
+          -DMUMPS_LIBRARY=${{github.workspace}}\dependencies\lib\libdmumps.a ^
+          -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\dependencies\lib\libmumps_common.a ^
+          -DMUMPS_PORD_LIBRARY=${{github.workspace}}\dependencies\lib\libpord.a ^
+          -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
+          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.a;${{github.workspace}}\dependencies\lib\libblas.a" ^
+          -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.a ^
+          -DHIGHS=${{github.workspace}}\dependencies\bin\libhighs.dll ^
+          -DBUILD_STATIC_LIBS=ON ^
+          -DBUILD_SHARED_LIBS=ON .
+
+    # ----- MSVC -----
+    - name: Configure (MSVC static)
+      if: matrix.toolchain == 'msvc' && matrix.library == 'static'
+      shell: cmd
+      run: |
+        cmake -G "NMake Makefiles" ^
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
+          -DCMAKE_C_COMPILER=cl ^
+          -DCMAKE_CXX_COMPILER=cl ^
+          -DCMAKE_Fortran_COMPILER=ifx ^
+          -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
+          -DMETIS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
+          -DBQPD=${{github.workspace}}\dependencies\lib\libbqpd.a ^
+          -DMETIS_LIBRARY=${{github.workspace}}\dependencies\lib\libmetis.a ^
+          -DMUMPS_LIBRARY=${{github.workspace}}\dependencies\lib\libdmumps.a ^
+          -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\dependencies\lib\libmumps_common.a ^
+          -DMUMPS_PORD_LIBRARY=${{github.workspace}}\dependencies\lib\libpord.a ^
+          -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
+          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.lib;${{github.workspace}}\dependencies\lib\libblas.lib" ^
+          -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
+          -DBUILD_STATIC_LIBS=ON ^
+          -DBUILD_SHARED_LIBS=OFF .
+
+    - name: Configure (MSVC shared)
+      if: matrix.toolchain == 'msvc' && matrix.library == 'shared'
+      shell: cmd
+      run: |
+        cmake -G "NMake Makefiles" ^
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
+          -DCMAKE_C_COMPILER=cl ^
+          -DCMAKE_CXX_COMPILER=cl ^
+          -DCMAKE_Fortran_COMPILER=ifx ^
+          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.lib;${{github.workspace}}\dependencies\lib\libblas.lib" ^
+          -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
+          -DBUILD_STATIC_LIBS=OFF ^
+          -DBUILD_SHARED_LIBS=ON .
+
+    # =========================================================
+    # BUILD
+    # =========================================================
+
+    - name: Build (not MSVC)
+      if: matrix.toolchain != 'msvc'
+      run: cmake --build build --config ${{env.BUILD_TYPE}} -j4
+
+    - name: Build (MSVC)
+      if: matrix.toolchain == 'msvc'
+      run: nmake
