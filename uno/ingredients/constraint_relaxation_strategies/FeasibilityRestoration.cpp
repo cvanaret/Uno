@@ -66,8 +66,7 @@ namespace uno {
 
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache);
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, initial_iterate,
-         evaluation_cache.current_evaluations);
+      this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy->initialize(statistics, initial_iterate);
       this->feasibility_globalization_strategy.initialize(statistics, initial_iterate);
    }
@@ -202,7 +201,6 @@ namespace uno {
             this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, step_length,
             evaluation_cache, user_callbacks);
       }
-      trial_iterate.status = this->check_termination(trial_iterate, evaluation_cache.trial_evaluations);
 
       // possibly go from restoration phase to optimality phase
       if (trial_iterate.status == SolutionStatus::NOT_OPTIMAL && this->current_phase == Phase::FEASIBILITY_RESTORATION &&
@@ -214,18 +212,19 @@ namespace uno {
       else {
          warmstart_information.no_changes();
       }
-      return accept_iterate;
-   }
 
-   SolutionStatus FeasibilityRestoration::check_termination(Iterate& trial_iterate, Evaluations& trial_evaluations) {
+      // check termination
       if (this->current_phase == Phase::OPTIMALITY) {
-         ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, trial_iterate, trial_evaluations);
-         return ConstraintRelaxationStrategy::check_termination(this->original_problem, trial_iterate, trial_evaluations);
+         this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
+         trial_iterate.status = this->check_termination(this->original_problem, trial_iterate,
+            evaluation_cache.trial_evaluations);
       }
       else {
-         ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->feasibility_problem, trial_iterate, trial_evaluations);
-         return ConstraintRelaxationStrategy::check_termination(this->feasibility_problem, trial_iterate, trial_evaluations);
+         this->compute_residuals(this->feasibility_problem, trial_iterate, evaluation_cache.trial_evaluations);
+         trial_iterate.status = this->check_termination(this->feasibility_problem, trial_iterate,
+            evaluation_cache.trial_evaluations);
       }
+      return accept_iterate;
    }
 
    std::string FeasibilityRestoration::get_name() const {

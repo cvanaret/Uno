@@ -150,12 +150,7 @@ namespace uno {
    double OptimizationProblem::dual_regularization_factor() const {
       return 0.;
    }
-
-   double OptimizationProblem::stationarity_error(const Vector<double>& lagrangian_gradient, double objective_multiplier,
-         Norm residual_norm) {
-      return norm(residual_norm, lagrangian_gradient);
-   }
-
+   
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints

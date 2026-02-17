@@ -36,7 +36,7 @@ namespace uno {
 
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache);
-      this->compute_primal_dual_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
+      this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy.initialize(statistics, initial_iterate);
    }
 
@@ -66,14 +66,10 @@ namespace uno {
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
          current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
-      trial_iterate.status = this->check_termination(trial_iterate, evaluation_cache.trial_evaluations);
+      this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
+      trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
       warmstart_information.no_changes();
       return accept_iterate;
-   }
-
-   SolutionStatus NoRelaxation::check_termination(Iterate& trial_iterate, Evaluations& trial_evaluations) {
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->original_problem, trial_iterate, trial_evaluations);
-      return ConstraintRelaxationStrategy::check_termination(this->original_problem, trial_iterate, trial_evaluations);
    }
 
    std::string NoRelaxation::get_name() const {
