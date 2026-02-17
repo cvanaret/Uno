@@ -32,12 +32,19 @@ For more details on our unification theory, check out the [UNIFICATION](UNIFICAT
 
 ## Who uses Uno?
 
-Uno is used as a nonlinear optimization solver in: 
+Uno is currently used as a nonlinear optimization solver in: 
 - [JuMP.jl](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers)
-- [Vecchia.jl](https://github.com/cgeoga/Vecchia.jl), a package for Gaussian processes approximation
 - [DNLP](https://github.com/cvxgrp/DNLP/pull/119), an extension of [CVXPY](https://www.cvxpy.org/) to general nonlinear programming
+- [Vecchia.jl](https://github.com/cgeoga/Vecchia.jl), a package for Gaussian processes approximation
 - [FelooPy](https://www.linkedin.com/posts/k-tafakkori_optimization101-operationsresearch-decisionscience-activity-7397646574035697664-AzmK), a user-friendly tool for coding, modeling, and solving decision problems
 - [Industrial Algorithms Limited](https://www.industrialgorithms.ca/)
+
+and more to come:
+- [CasADi](https://github.com/casadi/casadi/issues/3908)
+- [Pyomo](https://github.com/cvanaret/Uno/issues/319)
+- [pyOptSparse](https://github.com/cvanaret/Uno/issues/318)
+- [Minotaur](https://github.com/cvanaret/Uno/issues/107)
+- [NEOS Server](https://neos-server.org/neos/solvers/)
 
 ## Installation instructions
 
