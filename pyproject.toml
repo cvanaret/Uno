@@ -52,6 +52,4 @@ HIGHS = "dependencies/lib/libhighs.a"
 
 [[tool.cibuildwheel.overrides]]
 select = "*-win_amd64"
-environment = { PKG_CONFIG_PATH="c:/opt/64/lib/pkgconfig" }
-METIS_LIBRARY = "dependencies/bin/libmetis.dll"
-HIGHS = "dependencies/bin/libhighs.dll"
+environment = {PKG_CONFIG_PATH="c:/opt/64/lib/pkgconfig", METIS_LIBRARY="dependencies/bin/libmetis.dll", HIGHS="dependencies/bin/libhighs.dll"}
