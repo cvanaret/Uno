@@ -202,11 +202,16 @@ namespace uno {
             evaluation_cache, user_callbacks);
       }
       // check termination
-      const OptimizationProblem& current_problem = (this->current_phase == Phase::OPTIMALITY) ? this->original_problem :
-         this->feasibility_problem;
-      ConstraintRelaxationStrategy::compute_residuals(current_problem, trial_iterate, evaluation_cache.trial_evaluations);
-      trial_iterate.status = ConstraintRelaxationStrategy::check_termination(current_problem, trial_iterate,
-         evaluation_cache.trial_evaluations);
+      if (this->current_phase == Phase::OPTIMALITY) {
+         ConstraintRelaxationStrategy::compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
+         trial_iterate.status = ConstraintRelaxationStrategy::check_termination(this->original_problem, trial_iterate,
+            evaluation_cache.trial_evaluations);
+      }
+      else {
+         ConstraintRelaxationStrategy::compute_residuals(this->feasibility_problem, trial_iterate, evaluation_cache.trial_evaluations);
+         trial_iterate.status = ConstraintRelaxationStrategy::check_termination(this->feasibility_problem, trial_iterate,
+            evaluation_cache.trial_evaluations);
+      }
 
       // possibly go from restoration phase to optimality phase
       if (trial_iterate.status == SolutionStatus::NOT_OPTIMAL && this->current_phase == Phase::FEASIBILITY_RESTORATION &&
