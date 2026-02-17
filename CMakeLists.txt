@@ -216,7 +216,7 @@ if(BLAS_LIBRARIES)
       list(APPEND ABSOLUTE_BLAS_LIBRARIES "${absolute_path}")
    endforeach()
    set(BLAS_LIBRARIES ${ABSOLUTE_BLAS_LIBRARIES} CACHE STRING "BLAS libraries" FORCE)
-else
+else()
    find_package(BLAS REQUIRED)
 endif()
 
@@ -227,7 +227,7 @@ if(LAPACK_LIBRARIES)
       list(APPEND ABSOLUTE_LAPACK_LIBRARIES "${absolute_path}")
    endforeach()
    set(LAPACK_LIBRARIES ${ABSOLUTE_LAPACK_LIBRARIES} CACHE STRING "LAPACK libraries" FORCE)
-else
+else()
    find_package(LAPACK REQUIRED)
 endif()
 
