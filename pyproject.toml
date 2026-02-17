@@ -15,10 +15,12 @@ version = "0.2.0"
 description = "Uno, a highly customizable SQP & barrier solver for nonlinearly constrained optimization"
 readme = "interfaces/Python/README.md"
 authors = [
-    {name = "Charlie Vanaret", email = "vanaret@zib.de"}
+    {name = "Charlie Vanaret", email = "vanaret@zib.de"},
+    {name = "Alexis Montoison", email = "amontoison@anl.gov"}
 ]
 maintainers = [
-    {name = "Charlie Vanaret", email = "vanaret@zib.de"}
+    {name = "Charlie Vanaret", email = "vanaret@zib.de"},
+    {name = "Alexis Montoison", email = "amontoison@anl.gov"}
 ]
 license = "MIT"
 
@@ -34,6 +36,8 @@ wheel.cmake = true
 [[tool.cibuildwheel.overrides]]
 select = "*-win_amd64"
 environment = { PKG_CONFIG_PATH="c:/opt/64/lib/pkgconfig" }
+METIS_LIBRARY = "dependencies/bin/libmetis.dll"
+HIGHS = "dependencies/bin/libhighs.dll"
 
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
@@ -42,7 +46,7 @@ BQPD = "dependencies/lib/libbqpd.a"
 # MUMPS
 MUMPS_INCLUDE_DIR = "dependencies/include"
 METIS_INCLUDE_DIR = "dependencies/include"
-METIS_LIBRARY = "dependencies/bin/libmetis.dll"
+METIS_LIBRARY = "dependencies/lib/libmetis.a"
 MUMPS_LIBRARY = "dependencies/lib/libdmumps.a"
 MUMPS_COMMON_LIBRARY = "dependencies/lib/libmumps_common.a"
 MUMPS_PORD_LIBRARY = "dependencies/lib/libpord.a"
@@ -50,5 +54,4 @@ MUMPS_MPISEQ_LIBRARY = "dependencies/lib/libmpiseq.a"
 BLAS_LIBRARIES = "dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
 LAPACK_LIBRARIES = "dependencies/lib/liblapack.a"
 # HiGHS
-# HIGHS_DIR = "dependencies/lib/cmake/highs"
-HIGHS = "dependencies/bin/libhighs.dll"
+HIGHS = "dependencies/lib/libhighs.a"
