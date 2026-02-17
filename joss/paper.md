@@ -1,5 +1,5 @@
 ---
-title: 'UNO: A composable framework for nonlinear constrained optimization'
+title: 'Uno: a composable framework for nonlinearly constrained optimization'
 tags:
   - nonlinear programming
   - constrained optimization
@@ -31,60 +31,59 @@ bibliography: paper.bib
 
 # Summary
 
-UNO is a composable software framework for nonlinear constrained optimization written in modern C++.
-It implements a unified Lagrange-Newton approach by decomposing classical algorithms into reusable components.
-Supported methods include sequential quadratic programming, interior-point barrier methods, and augmented Lagrangian approaches.
+Uno is a composable software framework for nonlinearly constrained optimization written in modern C\texttt{++}. It unifies the workflows of Lagrange-Newton methods, i.e., gradient-based algorithms that iteratively solve the KKT optimality conditions with Newton's method. As of February 2026, Uno supports sequential (convex and nonconvex) quadratic programming, interior-point (barrier) methods, and sequential linear programming.
 
-Optimization algorithms in UNO are assembled from modular components such as search directions, constraint handling, globalization, and acceptance criteria.
-This structure allows classical and hybrid methods to be configured and compared within a single framework.
+Uno breaks down optimization algorithms into reusable modular components such as step computation, constraint reformulation, globalization techniques, and acceptance criteria.
+This allows classical and hybrid methods to be configured and compared within a single framework.
 
-The core C++ implementation separates mathematical abstractions from implementation details through a clear software abstraction layer.
-Bindings for Julia, Python, C, and Fortran support use across scientific computing environments.
+The core C\texttt{++} implementation separates mathematical abstractions from implementation details through a clear software abstraction layer.
+Bindings for Julia, Python, C, and Fortran support the use of Uno across scientific computing environments.
 Precompiled artifacts are available on GitHub.
 The solver can be accessed directly via `UnoSolver.jl` in Julia or `unopy` in Python.
 
 # Statement of need
 
-Nonlinear constrained optimization is central to engineering, optimal control, machine learning, and scientific modeling.
-Existing solvers are typically monolithic, exposing only parameter tuning rather than structural composition.
+Nonlinearly constrained optimization is central to engineering, optimal control, machine learning, and scientific modeling. It also plays a central role in mixed-integer nonlinear optimization (MINLP) in which a sequence of continuous relaxations is solved.
+Existing nonlinear programming solvers are typically monolithic, exposing only parameter tuning rather than structural composition.
 
 This creates limitations for algorithmic research:
 
 * Implementing new methods requires modifying complex legacy code.
-* Comparisons of algorithmic strategies are difficult to reproduce.
+* The comparison of algorithmic strategies is difficult to reproduce.
 * Hybrid methods combining multiple paradigms are hard to prototype.
 * Teaching algorithmic components is challenging.
 
-UNO addresses these gaps by enabling users to assemble algorithms from fundamental building blocks corresponding to mathematical concepts such as step computation, constraint modeling, penalty or barrier handling, and globalization strategies.
-It serves both as a practical solver and as a platform for research and education.
+Uno addresses these gaps by enabling users to assemble algorithms from fundamental building blocks that correspond to mathematical concepts such as step computation, constraint reformulation (penalty or barrier), and globalization techniques.
+Uno serves both as a practical solver and as a platform for research and education.
 
 # State of the field
 
-Nonlinear constrained optimization solvers typically implement:
+Nonlinearly constrained optimization solvers typically implement:
 
 * Sequential Quadratic Programming
-* Interior-point barrier methods
+* Interior-point/barrier methods
 * Augmented Lagrangian methods
 
 Existing solvers are robust but structurally rigid, which makes it difficult to exchange components or combine methods.
-Modeling frameworks simplify problem formulation but rely on external solvers and do not expose internal algorithmic structure.
+Modeling frameworks simplify the problem formulation but rely on external solvers, and do not expose internal algorithmic structure.
 Research codes sometimes implement specialized methods, but components are not interchangeable, globalization strategies are hard-wired, and combining paradigms requires significant reimplementation.
 
-UNO differs by expressing algorithms as compositions of reusable modules.
-Classical solvers emerge as configurations within the same framework rather than independent implementations.
-This enables reproducible research, controlled comparisons, and systematic exploration of hybrid methods.
+Uno differs in that algorithms emerge as possible combinations of strategies within a single composable framework, rather than independent implementations. This enables reproducible research, controlled comparisons, and systematic exploration of hybrid methods.
+An extended wheel of strategies, organized as layers and ingredients, is shown in \autoref{fig:wheel}. Note that all strategies are not available in Uno yet. (TODO: use 2 different colors: one for implemented, one for not yet).
+
+![Unification framework: wheel of strategies.\label{fig:wheel}](https://raw.githubusercontent.com/cvanaret/Uno/refs/heads/main/docs/figures/wheel.png){ width=60% }
 
 # Software design
 
-...
+The architecture of Uno follows a usual object-oriented design in which abstract classes define interfaces that should be implemented by subclasses. For instance, `BacktrackingLineSearch` and `TrustRegionMethod` both inherit from the abstract class `GlobalizationMechanism` and implement its interface. 
 
 # Research impact statement
 
 ...
 
-UNO is also a production-quality solver.
-Its C++ core is designed to be efficient, and language bindings for Julia, Python, C, and Fortran make it directly usable in scientific and engineering workflows.
+Uno is also a production-quality solver.
+Its C\texttt{++} core is designed to be efficient, and language bindings for Julia, Python, C, and Fortran make it directly usable in scientific and engineering workflows.
 By representing classical algorithms within a single framework, experiments isolate algorithmic ideas from implementation details.
-UNO functions as both a state-of-the-art solver and a platform for algorithmic research.
+Uno functions as both a state-of-the-art solver and a platform for algorithmic research.
 
 # References
