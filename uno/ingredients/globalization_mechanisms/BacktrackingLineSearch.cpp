@@ -66,19 +66,19 @@ namespace uno {
          bool is_acceptable = false;
          try {
             // take a step as a fraction of the direction
-            GlobalizationMechanism::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length,
+            this->assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length,
                // scale or not the constraint dual direction with the LS step length
                this->scale_duals_with_step_length ? step_length : 1.);
             statistics.set("||Step||", step_length * direction.norm);
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction, step_length, evaluation_cache, warmstart_information, user_callbacks);
-            GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
+            this->set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
          }
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
          }
-         BacktrackingLineSearch::set_LS_statistics(statistics, number_iterations);
+         this->set_LS_statistics(statistics, number_iterations);
 
          if (is_acceptable) {
             GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
@@ -106,7 +106,7 @@ namespace uno {
                   warmstart_information);
                this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction,
                   INF<double>, evaluation_cache.current_evaluations, warmstart_information);
-               BacktrackingLineSearch::check_unboundedness(direction);
+               this->check_unboundedness(direction);
                // restart backtracking
                step_length = 1.;
                number_iterations = 0;

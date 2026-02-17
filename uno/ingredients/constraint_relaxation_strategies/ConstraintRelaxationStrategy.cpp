@@ -44,13 +44,11 @@ namespace uno {
    // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
    void ConstraintRelaxationStrategy::compute_residuals(const OptimizationProblem& problem, Iterate& iterate,
          Evaluations& evaluations) const {
-      // compute the Lagrangian gradient
+      // stationarity error
       problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, iterate, evaluations);
+      iterate.residuals.stationarity = norm(this->residual_norm, iterate.residuals.lagrangian_gradient);
 
-      iterate.residuals.stationarity = OptimizationProblem::stationarity_error(iterate.residuals.lagrangian_gradient,
-         problem.get_objective_multiplier(), this->residual_norm);
-
-      // constraint violation of the original problem
+      // primal feasibility/constraint violation of the model
       evaluations.evaluate_constraints(problem.model, iterate.primals);
       iterate.primal_feasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
 
