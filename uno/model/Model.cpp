@@ -24,8 +24,9 @@ namespace uno {
    void Model::evaluate_lagrangian_gradient(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
          Evaluations& evaluations, Vector<double>& lagrangian_gradient) const {
       lagrangian_gradient.fill(0.);
-
-      // ∇c(x_k) λ_k
+      
+      // - ∇c(x_k) λ_k
+      // TODO test whether λ_k != 0
       evaluations.evaluate_jacobian(*this, primals);
       evaluations.compute_jacobian_transposed_vector_product(multipliers.constraints, lagrangian_gradient);
       lagrangian_gradient.scale(-1.);

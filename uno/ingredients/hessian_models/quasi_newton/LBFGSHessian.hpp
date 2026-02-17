@@ -7,6 +7,7 @@
 #include <vector>
 #include "../HessianModel.hpp"
 #include "linear_algebra/DenseMatrix.hpp"
+#include "linear_algebra/Vector.hpp"
 
 namespace uno {
    // forward declarations
@@ -46,21 +47,23 @@ namespace uno {
       const size_t memory_size; // user defined
       size_t number_entries_in_memory{0}; // 0 <= used_memory_size <= memory_size
       size_t current_memory_slot{0}; // 0 <= current_available_slot < memory_size
-      // memory
-      DenseMatrix<double> S_matrix;
-      DenseMatrix<double> Y_matrix;
-      // Hessian representation: Bk = B0 - U U^T + V V^T
-      bool hessian_recomputation_required{false};
-      DenseMatrix<double, MatrixShape::LOWER_TRIANGULAR> L_matrix;
-      std::vector<double> D_matrix; // diagonal
-      DenseMatrix<double> M_matrix;
-      DenseMatrix<double> U_matrix;
-      DenseMatrix<double> V_matrix;
+      // limited memory
+      DenseMatrix<double> S;
+      DenseMatrix<double> Y;
+      DenseMatrix<double, MatrixShape::LOWER_TRIANGULAR> L;
+      std::vector<double> D; // diagonal
+      DenseMatrix<double> M;
+      // Hessian representation: Bk = B0 - U U^T + V V^T where B0 = delta I
+      DenseMatrix<double> U;
+      DenseMatrix<double> V;
+      Vector<double> current_lagrangian_gradient;
+      Vector<double> trial_lagrangian_gradient;
       double initial_identity_multiple{1.}; // referred to as delta in Numerical optimization
+      bool hessian_recomputation_required{false};
 
-      void update_S_matrix(const Iterate& current_iterate, const Iterate& trial_iterate);
-      void update_Y_matrix(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache);
-      void update_D_matrix();
+      void update_S(const Iterate& current_iterate, const Iterate& trial_iterate);
+      void update_Y(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache);
+      void update_D();
       void recompute_hessian_representation();
       [[nodiscard]] double compute_initial_identity_factor() const;
 

@@ -92,6 +92,12 @@ namespace uno {
       constexpr int increment = 1;
       return BLAS_dot_product(&size, x.data(), &increment, y.data(), &increment);
    }
+
+   inline double dot(const BLASVector<double>& x, const double* y) {
+      const int size = static_cast<int>(x.size());
+      constexpr int increment = 1;
+      return BLAS_dot_product(&size, x.data(), &increment, y, &increment);
+   }
 } // namespace
 
 #endif //UNO_BLASVECTOR_H

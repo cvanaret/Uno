@@ -90,7 +90,7 @@ namespace uno {
       [[nodiscard]] DenseColumn<const DenseMatrix<ElementType, Shape>> column(size_t column_index) const;
 
       [[nodiscard]] ElementType* data();
-      void clear();
+      void fill(ElementType value);
       void print(std::ostream& stream) const;
 
    protected:
@@ -156,10 +156,10 @@ namespace uno {
    }
 
    template <typename ElementType, MatrixShape Shape>
-   void DenseMatrix<ElementType, Shape>::clear() {
+   void DenseMatrix<ElementType, Shape>::fill(ElementType value) {
       for (size_t column_index: Range(this->number_columns)) {
          for (size_t row_index: Range(this->number_rows)) {
-            this->entry(row_index, column_index) = ElementType(0);
+            this->entry(row_index, column_index) = value;
          }
       }
    }
