@@ -207,31 +207,33 @@ if(MUMPS_LIBRARY)
    message(STATUS "Found MUMPS")
 endif()
 
-# BLAS and LAPACK
-# convert relative paths of BLAS and LAPACK to absolute paths
-if(BLAS_LIBRARIES)
-   set(ABSOLUTE_BLAS_LIBRARIES)
-   foreach(relative_path IN LISTS BLAS_LIBRARIES)
-      get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
-      list(APPEND ABSOLUTE_BLAS_LIBRARIES "${absolute_path}")
-   endforeach()
-   set(BLAS_LIBRARIES ${ABSOLUTE_BLAS_LIBRARIES} CACHE STRING "BLAS libraries" FORCE)
-else()
-   find_package(BLAS REQUIRED)
-endif()
-
+# LAPACK
+# convert relative paths of LAPACK to absolute paths
 if(LAPACK_LIBRARIES)
    set(ABSOLUTE_LAPACK_LIBRARIES)
    foreach(relative_path IN LISTS LAPACK_LIBRARIES)
       get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
       list(APPEND ABSOLUTE_LAPACK_LIBRARIES "${absolute_path}")
    endforeach()
-   set(LAPACK_LIBRARIES ${ABSOLUTE_LAPACK_LIBRARIES} CACHE STRING "LAPACK libraries" FORCE)
+   list(APPEND LIBRARIES ${ABSOLUTE_LAPACK_LIBRARIES})
 else()
    find_package(LAPACK REQUIRED)
+   list(APPEND LIBRARIES LAPACK::LAPACK)
 endif()
 
-list(APPEND LIBRARIES LAPACK::LAPACK BLAS::BLAS)
+# BLAS
+# convert relative paths of BLAS to absolute paths
+if(BLAS_LIBRARIES)
+   set(ABSOLUTE_BLAS_LIBRARIES)
+   foreach(relative_path IN LISTS BLAS_LIBRARIES)
+      get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
+      list(APPEND ABSOLUTE_BLAS_LIBRARIES "${absolute_path}")
+   endforeach()
+   list(APPEND LIBRARIES ${ABSOLUTE_BLAS_LIBRARIES})
+else()
+   find_package(BLAS REQUIRED)
+   list(APPEND LIBRARIES BLAS::BLAS)
+endif()
 
 ###############
 # Uno library #
