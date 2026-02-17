@@ -2,7 +2,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.2.16"
+version = v"2026.2.17"
 
 # Collection of sources
 sources = [
@@ -168,6 +168,7 @@ cmake .. \
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=OFF \
+    -DZLIB=OFF \
     -DHIPO=ON \
     -DBUILD_EXAMPLES=OFF \
     -DBUILD_TESTING=OFF \
@@ -216,6 +217,7 @@ if [ $target = "x86_64-w64-mingw32" ] || [ $target = "i686-w64-mingw32" ]; then
         -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_SHARED_LIBS=ON \
+        -DZLIB=OFF \
         -DHIPO=ON \
         -DBUILD_EXAMPLES=OFF \
         -DBUILD_TESTING=OFF \
