@@ -42,7 +42,6 @@ namespace uno {
       [[nodiscard]] virtual bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
-      [[nodiscard]] virtual SolutionStatus check_termination(Iterate& trial_iterate, Evaluations& trial_evaluations) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
@@ -58,7 +57,7 @@ namespace uno {
       const size_t loose_tolerance_iteration_threshold;
       const double unbounded_objective_threshold;
 
-      void compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
+      void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;
       [[nodiscard]] double compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const;
 

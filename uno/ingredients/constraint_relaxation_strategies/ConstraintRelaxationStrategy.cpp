@@ -42,7 +42,7 @@ namespace uno {
    // - for KKT conditions: with standard multipliers and current objective multiplier
    // - for FJ conditions: with standard multipliers and 0 objective multiplier
    // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
-   void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate,
+   void ConstraintRelaxationStrategy::compute_residuals(const OptimizationProblem& problem, Iterate& iterate,
          Evaluations& evaluations) const {
       // compute the Lagrangian gradient
       problem.evaluate_lagrangian_gradient(iterate.residuals.lagrangian_gradient, iterate, evaluations);

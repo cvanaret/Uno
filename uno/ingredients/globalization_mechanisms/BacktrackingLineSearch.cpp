@@ -81,8 +81,6 @@ namespace uno {
          BacktrackingLineSearch::set_LS_statistics(statistics, number_iterations);
 
          if (is_acceptable) {
-            trial_iterate.status = this->constraint_relaxation_strategy->check_termination(trial_iterate,
-               evaluation_cache.trial_evaluations);
             GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
             termination = true;
             if (Logger::level == INFO) statistics.print_current_line();
@@ -95,7 +93,7 @@ namespace uno {
          else { // minimum_step_length reached
             DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
             // check if we can terminate at a first-order point
-            termination = BacktrackingLineSearch::terminate_with_small_step_length(statistics, trial_iterate, evaluation_cache);
+            termination = BacktrackingLineSearch::terminate_with_small_step_length(statistics, trial_iterate);
             if (!termination) {
                // test if we can switch to solving the feasibility problem
                if (this->constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
@@ -117,11 +115,8 @@ namespace uno {
       } // end while loop
    }
 
-   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, Iterate& trial_iterate,
-         EvaluationCache& evaluation_cache) const {
+   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, Iterate& trial_iterate) const {
       bool termination = false;
-      trial_iterate.status = this->constraint_relaxation_strategy->check_termination(trial_iterate,
-         evaluation_cache.trial_evaluations);
       if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
          statistics.set("Status", "accepted (small step length)");
          GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
