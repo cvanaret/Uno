@@ -38,7 +38,6 @@ cmake \
     -DCMAKE_PREFIX_PATH=${libdir} \
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
     -DCMAKE_BUILD_TYPE=Debug \
-    -DWITH_LAPACK=ON \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
     -DHIGHS=${libdir}/libhighs.${dlext} \
     -DBQPD=${prefix}/lib/libbqpd.a \

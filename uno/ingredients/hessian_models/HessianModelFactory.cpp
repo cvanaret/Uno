@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Charlie Vanaret
+// Copyright (c) 2018-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <stdexcept>
@@ -8,9 +8,7 @@
 #include "ExactHessian.hpp"
 #include "IdentityHessian.hpp"
 #include "ZeroHessian.hpp"
-#ifdef HAS_LAPACK
 #include "quasi_newton/LBFGSHessian.hpp"
-#endif
 #include "model/Model.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -35,11 +33,9 @@ namespace uno {
       else if (hessian_model == "zero") {
          return std::make_unique<ZeroHessian>(model.number_variables);
       }
-#ifdef HAS_LAPACK
       else if (hessian_model == "LBFGS") {
          return std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
       }
-#endif
       throw std::invalid_argument("Hessian model " + hessian_model + " does not exist");
    }
 } // namespace

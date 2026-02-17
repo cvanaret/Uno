@@ -13,7 +13,6 @@ namespace uno {
    class ExactHessian : public HessianModel {
    public:
       explicit ExactHessian(const Model& model);
-      ~ExactHessian() override = default;
 
       [[nodiscard]] bool has_hessian_operator() const override;
       [[nodiscard]] bool has_hessian_matrix() const override;

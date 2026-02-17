@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download dependency (BQPD)
+      - name: Download dependencies
         shell: bash
         run: bash dependencies/scripts/download_dependencies.sh
 
@@ -43,9 +43,9 @@ jobs:
         run: |
           cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                                                -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
-                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
                                                -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
-                                               -DBUILD_STATIC_LIBS=ON \
+                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
+                                               -DBUILD_STATIC_LIBS=OFF \
                                                -DBUILD_SHARED_LIBS=ON .
 
       - name: Build Uno
@@ -60,7 +60,11 @@ jobs:
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
         run: |
-          cmake -B ${{github.workspace}}/interfaces/C/example/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DUNO=/usr/local/lib/libuno.so .
+          cmake -B ${{github.workspace}}/interfaces/C/example/build \
+                -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                -DUNO=/usr/local/lib/libuno.so \
+                -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+                -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" .
 
       - name: Build example
         working-directory: ${{github.workspace}}/interfaces/C/example

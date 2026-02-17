@@ -1,9 +1,10 @@
-// Copyright (c) 2025 Charlie Vanaret
+// Copyright (c) 2025-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "LBFGSHessian.hpp"
 #include "model/Model.hpp"
 #include "options/Options.hpp"
+#include "linear_algebra/BLAS.hpp"
 #include "linear_algebra/LAPACK.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/EvaluationCache.hpp"
@@ -118,14 +119,14 @@ namespace uno {
          const auto current_U_column = this->U_matrix.column(column_index);
          const double U_coefficient = -dot(current_U_column, vector); // minus sign for U
          // result += coefficient * current_column
-         LAPACK_add_vector(&n, &U_coefficient, current_U_column.data(), &incx, result, &incy);
+         BLAS_add_vector(&n, &U_coefficient, current_U_column.data(), &incx, result, &incy);
       }
       // V V^T v
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_V_column = this->V_matrix.column(column_index);
          const double V_coefficient = dot(current_V_column, vector); // plus sign for V
          // result += coefficient * current_column
-         LAPACK_add_vector(&n, &V_coefficient, current_V_column.data(), &incx, result, &incy);
+         BLAS_add_vector(&n, &V_coefficient, current_V_column.data(), &incx, result, &incy);
       }
    }
 
@@ -213,7 +214,7 @@ namespace uno {
          double alpha = 1.;
          int lda = static_cast<int>(this->memory_size); // leading dimension of Ltilde
          int ldb = static_cast<int>(this->model.number_variables); // leading dimension of V
-         LAPACK_triangular_matrix_matrix_product(&side, &uplo, &transa, &diag, &m, &n, &alpha, Ltilde_matrix.data(), &lda,
+         BLAS_triangular_matrix_matrix_product(&side, &uplo, &transa, &diag, &m, &n, &alpha, Ltilde_matrix.data(), &lda,
             this->U_matrix.data(), &ldb);
       }
       // add delta S to U
@@ -234,7 +235,7 @@ namespace uno {
          double alpha = 1.;
          int lda = static_cast<int>(this->memory_size); // leading dimension of J
          int ldb = static_cast<int>(this->model.number_variables); // leading dimension of W
-         LAPACK_triangular_back_solve(&side, &uplo, &transa, &diag, &m, &n, &alpha, J_matrix.data(), &lda,
+         BLAS_triangular_back_solve(&side, &uplo, &transa, &diag, &m, &n, &alpha, J_matrix.data(), &lda,
             this->U_matrix.data(), &ldb);
       }
       DEBUG << "> U: " << this->U_matrix;
