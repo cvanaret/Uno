@@ -9,7 +9,6 @@
 #include "quasi_newton/LBFGSHessian.hpp"
 #include "IdentityHessian.hpp"
 #include "ZeroHessian.hpp"
-#include "quasi_newton/LBFGSHessian.hpp"
 #include "model/Model.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
