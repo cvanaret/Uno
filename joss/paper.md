@@ -63,8 +63,8 @@ In Uno, these strategies are organized into a coherent hierarchy, as illustrated
 
 The architecture of Uno follows an object-oriented design based on inheritance and composition. Abstract classes define interfaces that should be implemented by subclasses. For instance, `BacktrackingLineSearch` and `TrustRegionMethod` both inherit from the abstract class `GlobalizationMechanism` and implement its interface.
 
-Uno's simplified UML diagram is shown in \autoref{fig:uml_diagram}. Inheritance is represented as dotted lines with white arrows, while composition is represented as solid lines with black diamonds.
-![Uno's UML diagram.\label{fig:uml_diagram}](./uml_diagram.pdf){ width=90% } 
+Uno's simplified UML diagram is shown in \autoref{fig:umldiagram}. Inheritance is represented as dotted lines with white arrows, while composition is represented as solid lines with black diamonds.
+![Uno's UML diagram.\label{fig:umldiagram}](./uml_diagram.pdf){ width=90% } 
 
 # Interfaces
 
