@@ -83,9 +83,33 @@ For instance, `BacktrackingLineSearch` and `TrustRegionMethod` both inherit from
 
 # Interfaces
 
-Uno provides language bindings for Julia, Python, C, and Fortran, giving users direct access to the solver from their preferred scientific computing environment.
-A MATLAB interface is currently under development.
-...
+To make Uno accessible to a wide range of users, we provide multiple language interfaces.
+
+The first interface is based on AMPL [@fourer1990], a widely used modeling language for optimization problems.
+It is distributed as a binary that takes a compiled AMPL model (.nl file) as input, allowing users to solve problems without directly interacting with the C\texttt{++} core.
+
+The second interface is based on C and provides direct access to Uno's core functionality while maximizing interoperability with other programming languages and tools.
+It is centered around two main structures:
+* **Model**: represents an optimization problem and stores information about variables, bounds, constraints, the objective function, and derivative information. Users create a model and set its components (objective, constraints, derivatives, initial iterates).
+* **Solver**: represents the algorithm used to solve a given model. Users configure solver options, attach callbacks, and access results such as primal and dual solutions, residuals, iteration counts, and performance metrics.
+The optimization phase requires both the model and the solver as input.
+
+The third interface is based on Fortran and provides access to Uno through the C API using `iso_c_binding`.
+It is split into two files: `uno_c.f90` for low-level C bindings, and `uno_fortran.f90` for Fortran-friendly wrappers that handle string arguments.
+The interface can be included directly in a source file or wrapped in a module for cleaner `use` statements.
+It is provided as source rather than a precompiled module to maximize portability and interoperability across compilers and platforms.
+
+The fourth interface is based on Julia and is available as the registered Julia package `UnoSolver.jl`.
+It provides direct integration with the Julia optimization ecosystem through:
+* a thin wrapper around the full C API,
+* an interface to `NLPModels.jl` for solving problems following the NLPModels API, such as `ADNLPModels.jl` or `ExaModels.jl`,
+* an interface to `MathOptInterface.jl` for handling JuMP models.
+All precompiled artifacts are automatically downloaded, making the package plug-and-play without requiring compilation from users.
+
+The fifth interface is based on Python and is available on PyPI as `unopy`.
+It provides access to Uno through precompiled wheels on most platforms, allowing users to define models, configure solvers, and retrieve solutions directly from Python.
+
+A MATLAB interface is also under development, further expanding Uno's accessibility.
 
 # Research impact statement
 
