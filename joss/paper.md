@@ -25,35 +25,38 @@ affiliations:
    index: 1
  - name: Applied Optimization Department, Zuse-Institut Berlin, Germany
    index: 2
-date: 13 February 2026
+date: 17 February 2026
 bibliography: paper.bib
 ---
 
 # Summary
 
-Uno is a composable software framework for nonlinearly constrained optimization written in modern C\texttt{++}. It unifies the workflows of Lagrange-Newton methods, i.e., gradient-based algorithms that iteratively solve the KKT optimality conditions with Newton's method. As of February 2026, Uno supports sequential (convex and nonconvex) quadratic programming, interior-point (barrier) methods, and sequential linear programming.
+Uno is a composable software framework for nonlinearly constrained optimization written in modern C\texttt{++}.
+It unifies the workflows of Lagrange-Newton methods, i.e., gradient-based algorithms that iteratively solve the KKT optimality conditions with Newton's method.
+As of February 2026, Uno supports sequential (convex and nonconvex) quadratic programming, interior-point (barrier) methods, and sequential linear programming.
 
 Uno breaks down optimization algorithms into reusable modular components such as step computation, constraint reformulation, globalization techniques, and acceptance criteria.
 This allows classical and hybrid methods to be configured and compared within a single framework.
 
-The core C\texttt{++} implementation separates mathematical abstractions from implementation details through a clear software abstraction layer.
-Bindings for Julia, Python, C, and Fortran support the use of Uno across scientific computing environments.
-Precompiled artifacts are available on GitHub.
-The solver can be accessed directly via `UnoSolver.jl` in Julia or `unopy` in Python.
+The core C\texttt{++} code of Uno is organized into modular, object-oriented components that separate the mathematical logic of the algorithms from implementation details such as memory management, data structures, and computational routines.
+For full mathematical details of the algorithms implemented in Uno, see [@VanaretLeyffer2024].
+Uno also provides bindings for Julia, Python, C, and Fortran for use across scientific computing environments.
+Precompiled artifacts are available on GitHub, and the solver can be accessed directly via `UnoSolver.jl` in Julia or `unopy` in Python.
 
 # Statement of need
 
-Nonlinearly constrained optimization is central to engineering, optimal control, machine learning, and scientific modeling. It also plays a central role in mixed-integer nonlinear optimization (MINLP) in which a sequence of continuous relaxations is solved.
-Existing nonlinear programming solvers are typically monolithic, exposing only parameter tuning rather than structural composition.
+Nonlinearly constrained optimization is central to engineering, optimal control, machine learning, and scientific modeling [@nocedal2006].
+It also plays a central role in mixed-integer nonlinear optimization (MINLP) in which a sequence of continuous relaxations is solved [@lee2011].
+Popular nonlinear programming solvers such as Ipopt [@wachter2005], KNITRO [@byrd2006], and SNOPT [@gill2005] provide efficient optimization routines, but are typically monolithic, exposing only parameter tuning rather than modular components.
 
 This creates limitations for algorithmic research:
 
 * Implementing new methods requires modifying complex legacy code.
-* The comparison of algorithmic strategies is difficult to reproduce.
+* Comparisons of algorithmic strategies are difficult to reproduce.
 * Hybrid methods combining multiple paradigms are hard to prototype.
 * Teaching algorithmic components is challenging.
 
-Uno addresses these gaps by enabling users to assemble algorithms from fundamental building blocks that correspond to mathematical concepts such as step computation, constraint reformulation (penalty or barrier), and globalization techniques.
+Uno addresses these gaps by enabling users to assemble algorithms from modular, code-level building blocks that correspond to mathematical concepts such as step computation, constraint reformulation (penalty or barrier), and globalization techniques.
 Uno serves both as a practical solver and as a platform for research and education.
 
 # State of the field
@@ -71,15 +74,20 @@ Research codes sometimes implement specialized methods, but components are not i
 Uno differs in that algorithms emerge as possible combinations of strategies within a single composable framework, rather than independent implementations. This enables reproducible research, controlled comparisons, and systematic exploration of hybrid methods.
 An extended wheel of strategies, organized as layers and ingredients, is shown in \autoref{fig:wheel}. Note that all strategies are not available in Uno yet. (TODO: use 2 different colors: one for implemented, one for not yet).
 
-![Unification framework: wheel of strategies.\label{fig:wheel}](https://raw.githubusercontent.com/cvanaret/Uno/refs/heads/main/docs/figures/wheel.png){ width=60% }
+![Unification framework: wheel of strategies.\label{fig:wheel}](./wheel.png){ width=60% }
 
 # Software design
 
-The architecture of Uno follows a usual object-oriented design in which abstract classes define interfaces that should be implemented by subclasses. For instance, `BacktrackingLineSearch` and `TrustRegionMethod` both inherit from the abstract class `GlobalizationMechanism` and implement its interface. 
+The architecture of Uno follows a usual object-oriented design in which abstract classes define interfaces that should be implemented by subclasses.
+For instance, `BacktrackingLineSearch` and `TrustRegionMethod` both inherit from the abstract class `GlobalizationMechanism` and implement its interface.
+
+# Interfaces
+
+Uno provides language bindings for Julia, Python, C, and Fortran, giving users direct access to the solver from their preferred scientific computing environment.
+A MATLAB interface is currently under development.
+...
 
 # Research impact statement
-
-...
 
 Uno is also a production-quality solver.
 Its C\texttt{++} core is designed to be efficient, and language bindings for Julia, Python, C, and Fortran make it directly usable in scientific and engineering workflows.
