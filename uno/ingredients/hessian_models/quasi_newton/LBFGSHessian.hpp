@@ -58,7 +58,7 @@ namespace uno {
       DenseMatrix<double> V;
       Vector<double> current_lagrangian_gradient;
       Vector<double> trial_lagrangian_gradient;
-      double initial_identity_multiple{1.}; // referred to as delta in Numerical optimization
+      double delta{1.};
       bool hessian_recomputation_required{false};
 
       void update_S(const Iterate& current_iterate, const Iterate& trial_iterate);

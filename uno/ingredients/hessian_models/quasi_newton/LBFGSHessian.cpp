@@ -76,9 +76,13 @@ namespace uno {
       DEBUG << "> diag(D): "; print_vector(DEBUG, this->D);
 
       // check that the latest D entry s^T y is > 0
+      // TODO implement Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
       if (0. < this->D[this->current_memory_slot]) {
          DEBUG << "S, Y and D updated at slot " << this->current_memory_slot << '\n';
          this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
+         // notify_accepted_iterate is called at the end of a major iteration. At this point, we don't know yet whether
+         // the L-BFGS Hessian will be used. We therefore delay the update to the beginning of the next major iteration
+         // by setting the flag hessian_recomputation_required
          this->hessian_recomputation_required = true;
          DEBUG << "There are now " << this->number_entries_in_memory << " entries in memory (capacity " << this->memory_size << ")\n";
       }
@@ -94,7 +98,7 @@ namespace uno {
    }
 
    // Hessian-vector product where the Hessian approximation is Bk = B0 - U U^T + V V^T and B0 = delta I
-   // Bk v = (B0 - U U^T + V V^T) v = delta v - U U^T x + V V^T x
+   // Bk v = (B0 - U U^T + V V^T) v = delta v - U (U^T v) + V (V^T v)
    void LBFGSHessian::compute_hessian_vector_product(const double* /*x*/, const double* vector,
          double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, double* result) {
       if (objective_multiplier != this->fixed_objective_multiplier) {
@@ -107,29 +111,28 @@ namespace uno {
          this->hessian_recomputation_required = false;
       }
 
-      // diagonal contribution
+      // diagonal contribution delta*I
       for (size_t variable_index: Range(model.number_variables)) {
-         result[variable_index] = this->initial_identity_multiple * vector[variable_index];
+         result[variable_index] = this->delta * vector[variable_index];
       }
 
       // rank-2 contribution
       // (U, V) in R^{n x m}
       int n = static_cast<int>(this->model.number_variables);
-      int incx = 1;
-      int incy = 1;
+      int increment = 1;
       // U U^T v
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
          const double U_coefficient = -dot(current_U_column, vector); // minus sign for U
          // result += coefficient * current_column
-         BLAS_add_vector(&n, &U_coefficient, current_U_column.data(), &incx, result, &incy);
+         BLAS_add_vector(&n, &U_coefficient, current_U_column.data(), &increment, result, &increment);
       }
       // V V^T v
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_V_column = this->V.column(column_index);
          const double V_coefficient = dot(current_V_column, vector); // plus sign for V
          // result += coefficient * current_column
-         BLAS_add_vector(&n, &V_coefficient, current_V_column.data(), &incx, result, &incy);
+         BLAS_add_vector(&n, &V_coefficient, current_V_column.data(), &increment, result, &increment);
       }
    }
 
@@ -188,8 +191,8 @@ namespace uno {
       DEBUG << "> Ltilde: " << Ltilde;
 
       // update the initial Hessian approximation delta * I, where delta = 1/gamma and gamma = s^T y / y^T y at the last entry
-      this->initial_identity_multiple = this->compute_initial_identity_factor();
-      DEBUG << "Initial identity multiple: " << this->initial_identity_multiple << "\n";
+      this->delta = this->compute_initial_identity_factor();
+      DEBUG << "Initial identity multiple: " << this->delta << "\n";
 
       // form m x m matrix M = L D^{-1} L^T + S^T B0 S = Ltilde Ltilde^T + delta S^T S
       this->M.fill(0.);
@@ -198,7 +201,7 @@ namespace uno {
          this->number_entries_in_memory, this->memory_size, 1., 1.);
       // add M += S^T B0 S = delta S^T S
       LBFGSHessian::perform_high_rank_update_transpose(this->M, this->number_entries_in_memory, this->memory_size,
-         this->S, this->number_entries_in_memory, this->model.number_variables, this->initial_identity_multiple, 1.);
+         this->S, this->number_entries_in_memory, this->model.number_variables, this->delta, 1.);
       DEBUG << "> M: " << this->M;
       // compute the Cholesky factors J of M = J J^T (J overwrites M)
       LBFGSHessian::compute_cholesky_factors(this->M, this->number_entries_in_memory, this->memory_size);
@@ -222,7 +225,7 @@ namespace uno {
       }
       // add delta S to U
       for (size_t column_index: Range(this->number_entries_in_memory)) {
-         this->U.column(column_index) += this->initial_identity_multiple * this->S.column(column_index);
+         this->U.column(column_index) += this->delta * this->S.column(column_index);
       }
       DEBUG << "> W: " << this->U;
 
