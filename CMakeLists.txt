@@ -134,19 +134,6 @@ if(HSL OR MA27)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA27SolverTests.cpp)
 endif()
 
-# LAPACK
-if(WITH_LAPACK)
-   find_package(LAPACK)
-   if(NOT LAPACK_FOUND)
-      message(WARNING "Optional library LAPACK was not found.")
-   else()
-      link_to_uno(LAPACK ${LAPACK_LIBRARIES})
-      # enable the use of quasi-Newton methods
-      list(APPEND UNO_SOURCE_FILES uno/ingredients/hessian_models/quasi_newton/LBFGSHessian.cpp)
-      list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/LAPACKTests.cpp)
-   endif()
-endif()
-
 # METIS
 find_library(METIS metis)
 if(METIS)
