@@ -59,7 +59,7 @@ Typical nonlinear solvers implement strategies such as sequential quadratic prog
 In Uno, these strategies are organized into a wheel of layers and ingredients, illustrated in \autoref{fig:wheel}.
 (TODO: use 2 different colors: one for implemented, one for not yet).
 
-![Unification framework: wheel of strategies.\label{fig:wheel}](./wheel.png){ width=60% }
+![Unification framework: wheel of strategies.\label{fig:wheel}](./wheel.pdf){ width=60% }
 
 # Software design
 
