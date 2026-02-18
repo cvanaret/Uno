@@ -55,16 +55,18 @@ Uno addresses these gaps by providing a composable framework in which algorithms
 It enables rapid prototyping of new methods, serving both research and educational purposes.
 
 Typical nonlinear solvers implement strategies such as sequential quadratic programming, interior-point methods, and augmented Lagrangian methods.
-In Uno, these strategies are organized into a coherent hierarchy, as illustrated in the wheel of strategies (\autoref{fig:wheel}): the outer ring represents high-level layers, the middle ring represents ingredients that are algorithmically combined within Uno, and the inner ring lists possible strategies for each of the ingredients.
-
-(TODO: use 2 different colors: one for implemented, one for not yet).
+In Uno, these strategies are organized into a coherent hierarchy, as illustrated in the wheel of strategies (\autoref{fig:wheel}): the outer ring represents high-level layers, the middle ring represents ingredients that are algorithmically combined within Uno, and the inner ring lists possible strategies for each of the ingredients. The strategies currently implemented in Uno are written in green.
 
 ![Unification framework: wheel of strategies.\label{fig:wheel}](./wheel.pdf){ width=60% }
 
 # Software design
 
-The architecture of Uno follows an object-oriented design in which abstract classes define interfaces that should be implemented by subclasses.
-For instance, `BacktrackingLineSearch` and `TrustRegionMethod` both inherit from the abstract class `GlobalizationMechanism` and implement its interface.
+The architecture of Uno follows an object-oriented design based on inheritance and composition. Abstract classes define interfaces that should be implemented by subclasses. For instance, `BacktrackingLineSearch` and `TrustRegionMethod` both inherit from the abstract class `GlobalizationMechanism` and implement its interface.
+
+TODO
+
+Uno's simplified UML diagram is shown in \autoref{fig:uml_diagram}. Inheritance is represented as dotted lines with white arrows, while composition is represented as solid lines with black diamonds.
+![Uno's UML diagram.\label{fig:uml_diagram}](./uml_diagram.pdf){ width=90% } 
 
 # Interfaces
 
