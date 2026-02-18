@@ -40,7 +40,7 @@ This allows classical and hybrid methods to be configured and compared within a 
 
 The core C\texttt{++} code of Uno is organized into modular, object-oriented components that separate the mathematical logic of the algorithms from implementation details such as memory management, data structures, and computational routines.
 For full mathematical details of the algorithms implemented in Uno, see [@VanaretLeyffer2024].
-Uno provides bindings for Julia, Python, C, and Fortran for use across scientific computing environments.
+Uno provides interfaces to Julia, Python, C, and Fortran for use across scientific computing environments.
 Precompiled artifacts are available on GitHub, and the solver can be accessed directly via `UnoSolver.jl` in Julia or `unopy` in Python.
 
 # Statement of need
