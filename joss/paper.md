@@ -63,15 +63,17 @@ In Uno, these strategies are organized into a coherent hierarchy, as illustrated
 
 The architecture of Uno follows an object-oriented design based on inheritance and composition. Abstract classes define interfaces that should be implemented by subclasses. For instance, `BacktrackingLineSearch` and `TrustRegionMethod` both inherit from the abstract class `GlobalizationMechanism` and implement its interface.
 
-Uno's simplified UML diagram is shown in \autoref{fig:umldiagram}. Inheritance is represented as dotted lines with white arrows, while composition is represented as solid lines with black diamonds.
+Uno's simplified UML diagram is shown in \autoref{fig:umldiagram}. Inheritance is represented as dotted lines with white arrows, while composition is represented as solid lines with black diamonds. Abstract classes are written in italic, while subclasses are written in bold.
 
-![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=90% } 
+![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% } 
+
+Uno implements a generic Lagrange-Newton method in which the abstract classes interact with one another and exchange data, while being agnostic of the underlying strategies. Strategies are picked by the user at runtime via options. Particular combinations of strategies within Uno correspond to state-of-art solvers (e.g., IPOPT is a *line-search restoration filter interior-point method with exact Hessian and primal-dual regularization*). While in theory, all combinations may be generated, some are not supported yet (e.g., interior-point method with a trust-region constraint).
 
 # Interfaces
 
 To make Uno accessible to a wide range of users, we provide multiple language interfaces.
 
-The AMPL Solver Library [@gay1997hooking] interface gives access to the AMPL [@fourer1990] modeling language for optimization problems.
+The AMPL Solver Library [@gay1997hooking] interface gives access to the AMPL [@fourer1990] modeling language for optimization.
 It is distributed as a binary that takes a compiled AMPL model (.nl file) as input, allowing users to solve problems without directly interacting with the C\texttt{++} core.
 
 The C interface provides direct access to Uno's core functionality while maximizing interoperability with other programming languages and tools.
