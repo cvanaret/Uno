@@ -31,6 +31,7 @@ namespace uno {
       {"residual_norm", OptionType::STRING},
       {"residual_scaling_threshold", OptionType::DOUBLE},
       {"protect_actual_reduction_against_roundoff", OptionType::BOOL},
+      {"protected_actual_reduction_macheps_coefficient", OptionType::DOUBLE},
       {"print_subproblem", OptionType::BOOL},
       {"armijo_decrease_fraction", OptionType::DOUBLE},
       {"armijo_tolerance", OptionType::DOUBLE},
@@ -193,7 +194,7 @@ namespace uno {
          return this->integer_options.at(option_name);
       }
       catch(const std::out_of_range&) {
-         throw std::out_of_range("The option with name " + option_name + " was not found");
+         throw std::out_of_range("The int option with name " + option_name + " was not found");
       }
    }
 
@@ -203,7 +204,7 @@ namespace uno {
          return static_cast<size_t>(this->integer_options.at(option_name));
       }
       catch(const std::out_of_range&) {
-         throw std::out_of_range("The option with name " + option_name + " was not found");
+         throw std::out_of_range("The unsigned int option with name " + option_name + " was not found");
       }
    }
 
@@ -213,7 +214,7 @@ namespace uno {
          return this->double_options.at(option_name);
       }
       catch(const std::out_of_range&) {
-         throw std::out_of_range("The option with name " + option_name + " was not found");
+         throw std::out_of_range("The double option with name " + option_name + " was not found");
       }
    }
 
@@ -223,7 +224,7 @@ namespace uno {
          return this->bool_options.at(option_name);
       }
       catch(const std::out_of_range&) {
-         throw std::out_of_range("The option with name " + option_name + " was not found");
+         throw std::out_of_range("The bool option with name " + option_name + " was not found");
       }
    }
 

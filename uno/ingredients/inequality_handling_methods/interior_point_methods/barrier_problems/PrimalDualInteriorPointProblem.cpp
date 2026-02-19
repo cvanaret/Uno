@@ -60,9 +60,8 @@ namespace uno {
          }
       }
 
-      // compute least-square multipliers
+      // TODO compute least-square multipliers
       if (0 < this->number_constraints) {
-         // TODO
       }
    }
 

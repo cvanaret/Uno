@@ -76,7 +76,7 @@ namespace uno {
       double actual_reduction = current_merit_value - trial_merit_value;
       if (this->protect_actual_reduction_against_roundoff) {
          static double machine_epsilon = std::numeric_limits<double>::epsilon();
-         actual_reduction += 10. * machine_epsilon * std::abs(current_merit_value);
+         actual_reduction += this->protected_actual_reduction_macheps_coefficient * machine_epsilon * std::abs(current_merit_value);
       }
       return actual_reduction;
    }

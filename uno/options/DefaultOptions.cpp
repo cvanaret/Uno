@@ -43,6 +43,7 @@ namespace uno {
       options.set_string("residual_norm", "INF");
       options.set_double("residual_scaling_threshold", 100.);
       options.set_bool("protect_actual_reduction_against_roundoff", false);
+      options.set_double("protected_actual_reduction_macheps_coefficient", 10.);
       options.set_bool("print_subproblem", false);
 
       /** globalization strategy options **/
