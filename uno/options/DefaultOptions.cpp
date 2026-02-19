@@ -138,6 +138,7 @@ namespace uno {
       options.set_double("barrier_push_variable_to_interior_k1", 1e-2);
       options.set_double("barrier_push_variable_to_interior_k2", 1e-2);
       options.set_double("barrier_damping_factor", 1e-5);
+      options.set_double("barrier_small_infeasibility_factor", 1e-4);
       options.set_double("least_square_multiplier_max_norm", 1e3);
 
       /** BQPD options **/
