@@ -210,7 +210,6 @@ function MOI.is_valid(
     model::Optimizer,
     ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Parameter{Float64}},
 )
-    p = MOI.VariableIndex(ci.value)
     return haskey(model.parameters, MOI.VariableIndex(ci.value))
 end
 
