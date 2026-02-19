@@ -49,7 +49,10 @@ namespace uno {
             return;
          }
          else {
-            // if the line search failed, switch to solving the feasibility problem
+            // if the line search failed, switch to solving the feasibility problem (test first if we can)
+            if (this->constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
+               throw std::runtime_error("The line search failed");
+            }
             this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
                evaluation_cache.current_evaluations, false, warmstart_information);
          }
@@ -65,9 +68,11 @@ namespace uno {
       this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction,
          INF<double>, evaluation_cache.current_evaluations, warmstart_information);
       BacktrackingLineSearch::check_unboundedness(direction);
-      [[maybe_unused]] const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
+      const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
          trial_iterate, direction, evaluation_cache, warmstart_information, user_callbacks);
-      assert(backtracking_success);
+      if (!backtracking_success) {
+         throw std::runtime_error("The line search failed");
+      }
    }
 
    std::string BacktrackingLineSearch::get_name() const {
@@ -122,10 +127,6 @@ namespace uno {
             // check if we can terminate at a first-order point
             termination = BacktrackingLineSearch::terminate_with_small_step_length(statistics, trial_iterate);
             if (!termination) {
-               // test if we can switch to solving the feasibility problem
-               if (this->constraint_relaxation_strategy->solving_feasibility_problem() || !model.is_constrained()) {
-                  throw std::runtime_error("LS failed");
-               }
                // switch to solving the feasibility problem
                statistics.set("Status", "small step length");
                return false;
