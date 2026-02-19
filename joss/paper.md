@@ -57,7 +57,7 @@ It enables rapid prototyping of new methods, serving both research and education
 Typical nonlinear solvers implement strategies such as sequential quadratic programming, interior-point methods, and augmented Lagrangian methods.
 In Uno, these strategies are organized into a coherent hierarchy, as illustrated in the wheel of strategies (\autoref{fig:wheel}): the outer ring represents high-level layers, the middle ring represents ingredients that are algorithmically combined within Uno, and the inner ring lists possible strategies for each of the ingredients. The strategies currently implemented in Uno are written in green.
 
-![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=60% }
+![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
 
 # Software design
 
@@ -65,9 +65,9 @@ The architecture of Uno follows an object-oriented design based on inheritance a
 
 Uno's simplified UML diagram is shown in \autoref{fig:umldiagram}. Inheritance is represented as dotted lines with white arrows, while composition is represented as solid lines with black diamonds. Abstract classes are written in italic, while subclasses are written in bold.
 
-![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% } 
-
 Uno implements a generic Lagrange-Newton method in which the abstract classes interact with one another and exchange data, while being agnostic of the underlying strategies. Strategies are picked by the user at runtime via options. Particular combinations of strategies within Uno correspond to state-of-art solvers (e.g., IPOPT is a *line-search restoration filter interior-point method with exact Hessian and primal-dual regularization*). While in theory, all combinations may be generated, some are not supported yet (e.g., interior-point method with a trust-region constraint).
+
+![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% } 
 
 # Interfaces
 
