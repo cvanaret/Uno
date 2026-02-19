@@ -61,10 +61,6 @@ The strategies currently implemented in Uno are written in green.
 
 ![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
 
-# State of the field
-
-(required section)
-
 # Software design
 
 The architecture of Uno follows an object-oriented design in which the ingredients of \autoref{fig:wheel} are abstract classes that should be implemented by subclasses (the strategies).
@@ -126,6 +122,10 @@ Uno is currently used as a nonlinear optimization solver in:
 * `Vecchia.jl`, a package for Gaussian processes approximation,
 * FelooPy, a user-friendly tool for coding, modeling, and solving decision problems,
 * IMPL © /IMPL-DATA © by Industrial Algorithms Limited, a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation.
+
+# Acknowledgments
+
+This work was supported by the Applied Mathematics activity within U.S. Department of Energy, Office of Science, Advanced Scientific Computing Research, under Contract DE-AC02-06CH11357.
 
 # AI usage disclosure
 
