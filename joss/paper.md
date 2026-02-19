@@ -55,17 +55,22 @@ Uno addresses these gaps by providing a composable framework in which algorithms
 It enables rapid prototyping of new methods, serving both research and educational purposes.
 
 Typical nonlinear solvers implement strategies such as sequential quadratic programming, interior-point methods, and augmented Lagrangian methods.
-In Uno, these strategies are organized into a coherent hierarchy, as illustrated in the wheel of strategies (\autoref{fig:wheel}): the outer ring represents high-level layers, the middle ring represents ingredients that are algorithmically combined within Uno, and the inner ring lists possible strategies for each of the ingredients. The strategies currently implemented in Uno are written in green.
+In Uno's unification framework, these strategies are organized into a coherent hierarchy, as illustrated in the wheel of strategies (\autoref{fig:wheel}): the outer ring represents high-level layers, the middle ring represents ingredients that are algorithmically combined within Uno, and the inner ring lists possible strategies for each of the ingredients. The strategies currently implemented in Uno are written in green.
 
 ![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
 
+# State of the field
+
+(required section)
+
 # Software design
 
-The architecture of Uno follows an object-oriented design based on inheritance and composition. Abstract classes define interfaces that should be implemented by subclasses. For instance, `BacktrackingLineSearch` and `TrustRegionMethod` both inherit from the abstract class `GlobalizationMechanism` and implement its interface.
-
+The architecture of Uno follows an object-oriented design in which the ingredients of \autoref{fig:wheel} are abstract classes that should be implemented by subclasses (the strategies). For instance, `BacktrackingLineSearch` and `TrustRegionMethod` both inherit from the abstract class `GlobalizationMechanism` and implement its interface.
 Uno's simplified UML diagram is shown in \autoref{fig:umldiagram}. Inheritance is represented as dotted lines with white arrows, while composition is represented as solid lines with black diamonds. Abstract classes are written in italic, while subclasses are written in bold.
 
-Uno implements a generic Lagrange-Newton method in which the abstract classes interact with one another and exchange data, while being agnostic of the underlying strategies. Strategies are picked by the user at runtime via options. Particular combinations of strategies within Uno correspond to state-of-art solvers (e.g., IPOPT is a *line-search restoration filter interior-point method with exact Hessian and primal-dual regularization*). While in theory, all combinations may be generated, some are not supported yet (e.g., interior-point method with a trust-region constraint).
+Uno implements a generic Lagrange-Newton method in which the abstract classes interact with one another and exchange data, while being agnostic of the underlying strategies. Strategies are picked by the user at runtime via options. Particular combinations of strategies within Uno correspond to state-of-art solvers (e.g., IPOPT is a *line-search restoration filter interior-point method with exact Hessian and primal-dual inertia correction*). While, in theory, all combinations of strategies may be generated, some are not supported yet (e.g., interior-point method with a trust-region constraint).
+
+This modular architecture offers a clear separation between the mathematical logic of the optimization algorithm (the reformulation of the problem, the definition of the subproblem, and the globalization techniques) and the computational aspects (evaluating the model's functions, and solving the subproblems).
 
 ![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% } 
 
@@ -100,5 +105,21 @@ All precompiled artifacts are automatically downloaded, which makes the package 
 The Python interface is available on PyPI as `unopy`. It provides access to Uno through precompiled wheels on most platforms, allowing users to define models, configure solvers, and retrieve solutions directly from Python.
 
 A MATLAB interface is also under development, further expanding Uno's accessibility.
+
+# Research impact
+
+Uno's ongoing developments were presented at several international conferences over the years (ISMP 2018, SIAM OP 2021, ICCOPT 2022, ISMP 2024, and ICCOPT 2025), and were the subject of invited talks at Zuse-Institut Berlin (2020), Argonne National Laboratory (2022), and KU Leuven (2025). This resulted in scientific cooperations with the MECO team at KU Leuven and the HiGHS team in Edinburgh.
+
+Uno is currently used as a nonlinear optimization solver in:
+
+* `JuMP.jl`,
+* DNLP, an extension of CVXPY to general nonlinear programming,
+* `Vecchia.jl`, a package for Gaussian processes approximation,
+* FelooPy, a user-friendly tool for coding, modeling, and solving decision problems,
+* IMPL © /IMPL-DATA © by Industrial Algorithms Limited, a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation.
+
+# AI usage disclosure
+
+No generative AI was used in the software creation, documentation, or paper authoring.
 
 # References
