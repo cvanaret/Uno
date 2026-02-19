@@ -71,11 +71,11 @@ Abstract classes are written in italic, while subclasses are written in bold.
 
 Uno implements a generic Lagrange-Newton method in which the abstract classes interact with one another and exchange data, while being agnostic of the underlying strategies.
 Strategies are picked by the user at runtime via options.
+This modular architecture offers a clear separation between the mathematical logic of the optimization algorithm (the reformulation of the problem, the definition of the subproblem, and the globalization techniques) and the computational aspects (evaluating the model's functions, and solving the subproblems).
+
 Uno also implements presets, that is particular combinations of strategies (and sets of hyperparameters) that correspond to state-of-the-art solvers.
 Uno currently implements an \texttt{ipopt} preset that mimics the IPOPT solver [@wachter2006implementation] (a *line-search restoration filter interior-point method with exact Hessian and primal-dual inertia correction*), and a \texttt{filtersqp} preset that mimics the filterSQP solver [@fletcher1998user] (a *trust-region restoration filter SQP method with exact Hessian and no inertia correction*).
 While, in theory, all combinations of strategies may be generated, some are not supported yet (e.g., interior-point method with a trust-region constraint).
-
-This modular architecture offers a clear separation between the mathematical logic of the optimization algorithm (the reformulation of the problem, the definition of the subproblem, and the globalization techniques) and the computational aspects (evaluating the model's functions, and solving the subproblems).
 
 ![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% } 
 
