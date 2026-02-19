@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include "PrimalDualInertiaCorrection.hpp"
+#include "UnstableInertiaCorrection.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Collection.hpp"
@@ -155,7 +156,7 @@ namespace uno {
                }
             }
             else {
-               throw UnstableRegularization();
+               throw UnstableInertiaCorrection();
             }
          }
       }
