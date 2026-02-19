@@ -45,12 +45,12 @@ namespace uno {
    }
 
    void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction,
-         double trust_region_radius, EvaluationCache& evaluation_cache) {
+         bool uses_trust_region, EvaluationCache& evaluation_cache) {
       this->reference_optimality_primals.resize(this->original_problem.number_variables);
 
       // memory allocation
       this->inequality_handling_method->initialize(this->original_problem, initial_iterate,
-         *this->hessian_model, *this->inertia_correction_strategy, trust_region_radius);
+         *this->hessian_model, *this->inertia_correction_strategy, uses_trust_region);
       direction = Direction(
          std::max(this->original_problem.number_variables, this->feasibility_problem.number_variables),
          std::max(this->original_problem.number_constraints, this->feasibility_problem.number_constraints)

@@ -17,7 +17,7 @@ namespace uno {
       NoRelaxation(const Model& model, const Options& options);
       ~NoRelaxation() override = default;
 
-      void initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction, double trust_region_radius,
+      void initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction, bool uses_trust_region,
          EvaluationCache& evaluation_cache) override;
 
       // direction computation

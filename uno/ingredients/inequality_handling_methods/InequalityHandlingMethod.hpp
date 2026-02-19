@@ -34,7 +34,7 @@ namespace uno {
       virtual ~InequalityHandlingMethod() = default;
 
       virtual void initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, double trust_region_radius) = 0;
+         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, bool uses_trust_region) = 0;
       virtual void initialize_statistics(Statistics& statistics) = 0;
       virtual void generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) = 0;
       virtual void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,

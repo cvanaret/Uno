@@ -27,7 +27,7 @@ namespace uno {
 
    void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          EvaluationCache& evaluation_cache) {
-      this->constraint_relaxation_strategy->initialize(statistics, current_iterate, direction, INF<double>, evaluation_cache);
+      this->constraint_relaxation_strategy->initialize(statistics, current_iterate, direction, false, evaluation_cache);
       statistics.add_column("Minor", Statistics::int_width, 3, Statistics::column_order.at("Minor"));
       statistics.add_column("Steplength", Statistics::double_width + 1, 2, Statistics::column_order.at("Steplength"));
    }
@@ -66,19 +66,19 @@ namespace uno {
          bool is_acceptable = false;
          try {
             // take a step as a fraction of the direction
-            this->assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length,
+            BacktrackingLineSearch::assemble_trial_iterate(model, current_iterate, trial_iterate, direction, step_length,
                // scale or not the constraint dual direction with the LS step length
                this->scale_duals_with_step_length ? step_length : 1.);
             statistics.set("||Step||", step_length * direction.norm);
 
             is_acceptable = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
                trial_iterate, direction, step_length, evaluation_cache, warmstart_information, user_callbacks);
-            this->set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
+            BacktrackingLineSearch::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
          }
          catch (const EvaluationError&) {
             statistics.set("Status", "eval. error");
          }
-         this->set_LS_statistics(statistics, number_iterations);
+         statistics.set("Minor", number_iterations);
 
          if (is_acceptable) {
             GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
@@ -106,7 +106,7 @@ namespace uno {
                   warmstart_information);
                this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction,
                   INF<double>, evaluation_cache.current_evaluations, warmstart_information);
-               this->check_unboundedness(direction);
+               BacktrackingLineSearch::check_unboundedness(direction);
                // restart backtracking
                step_length = 1.;
                number_iterations = 0;
@@ -115,7 +115,7 @@ namespace uno {
       } // end while loop
    }
 
-   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, Iterate& trial_iterate) const {
+   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, Iterate& trial_iterate) {
       bool termination = false;
       if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
          statistics.set("Status", "accepted (small step length)");
@@ -137,9 +137,5 @@ namespace uno {
          throw std::runtime_error("The subproblem is unbounded, this should not happen. If the subproblem has curvature,"
             "use regularization. If not, use a trust-region method.\n");
       }
-   }
-
-   void BacktrackingLineSearch::set_LS_statistics(Statistics& statistics, size_t number_iterations) {
-      statistics.set("Minor", number_iterations);
    }
 } // namespace

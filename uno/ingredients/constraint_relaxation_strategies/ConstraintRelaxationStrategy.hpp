@@ -28,7 +28,7 @@ namespace uno {
       explicit ConstraintRelaxationStrategy(const Options& options);
       virtual ~ConstraintRelaxationStrategy();
 
-      virtual void initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction, double trust_region_radius,
+      virtual void initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction, bool uses_trust_region,
          EvaluationCache& evaluation_cache) = 0;
 
       // direction computation

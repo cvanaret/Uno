@@ -25,7 +25,7 @@ namespace uno {
       explicit InteriorPointMethod(const Options& options);
 
       void initialize(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
-         InertiaCorrectionStrategy& inertia_correction_strategy, double trust_region_radius) override;
+         InertiaCorrectionStrategy& inertia_correction_strategy, bool uses_trust_region) override;
       void initialize_statistics(Statistics& statistics) override;
       void generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) override;
       void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
@@ -89,9 +89,9 @@ namespace uno {
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, double trust_region_radius) {
-      if (trust_region_radius < INF<double>) {
-         throw std::runtime_error("A trust-region radius is not supported.");
+         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, bool uses_trust_region) {
+      if (uses_trust_region) {
+         throw std::runtime_error("A trust-region radius is not supported yet.");
       }
       if (!problem.get_inequality_constraints().empty()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
