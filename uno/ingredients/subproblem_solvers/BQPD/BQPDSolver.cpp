@@ -35,10 +35,7 @@ extern "C" {
 }
 
 namespace uno {
-   #define BIG 1e30
-
    // heuristics to select kmax (the maximum size of the nullspace)
-
    // approach implemented in filterSQP
    int pick_kmax_filtersqp(size_t number_variables, size_t /*number_constraints*/) {
       return std::min(static_cast<int>(number_variables), 500);
@@ -143,12 +140,6 @@ namespace uno {
          auto constraints_lower_bounds = view(this->lower_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
          auto constraints_upper_bounds = view(this->upper_bounds, subproblem.number_variables, subproblem.number_variables + subproblem.number_constraints);
          subproblem.set_constraints_bounds(constraints_lower_bounds, constraints_upper_bounds, this->workspace.constraints);
-      }
-
-      // replace INFs with large finite values (TODO: is that really useful?)
-      for (size_t variable_index: Range(subproblem.number_variables + subproblem.number_constraints)) {
-         this->lower_bounds[variable_index] = std::max(-BIG, this->lower_bounds[variable_index]);
-         this->upper_bounds[variable_index] = std::min(BIG, this->upper_bounds[variable_index]);
       }
 
       this->hide_pointers_in_workspace(statistics, subproblem);
