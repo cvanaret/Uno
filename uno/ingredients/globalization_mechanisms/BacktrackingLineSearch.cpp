@@ -4,6 +4,7 @@
 #include <cassert>
 #include "BacktrackingLineSearch.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
+#include "ingredients/inertia_correction_strategies/UnstableInertiaCorrection.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationErrors.hpp"
@@ -37,11 +38,36 @@ namespace uno {
          UserCallbacks& user_callbacks) {
       DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
-      this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction, INF<double>,
-         evaluation_cache.current_evaluations, warmstart_information);
+      // compute a feasible direction
+      try {
+         this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction,
+            INF<double>, evaluation_cache.current_evaluations, warmstart_information);
+         BacktrackingLineSearch::check_unboundedness(direction);
+         const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate,
+            direction, evaluation_cache, warmstart_information, user_callbacks);
+         if (backtracking_success) {
+            return;
+         }
+         else {
+            // if the line search failed, switch to solving the feasibility problem
+            this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
+               evaluation_cache.current_evaluations, false, warmstart_information);
+         }
+      }
+      // if the inertia correction failed, switch to solving the feasibility problem
+      catch (const UnstableInertiaCorrection&) {
+         this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
+            evaluation_cache.current_evaluations, false, warmstart_information);
+      }
+
+      // solve the feasibility problem
+      assert(this->constraint_relaxation_strategy->solving_feasibility_problem());
+      this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction,
+         INF<double>, evaluation_cache.current_evaluations, warmstart_information);
       BacktrackingLineSearch::check_unboundedness(direction);
-      this->backtrack_along_direction(statistics, model, current_iterate, trial_iterate, direction, evaluation_cache,
-         warmstart_information, user_callbacks);
+      [[maybe_unused]] const bool backtracking_success = this->backtrack_along_direction(statistics, model, current_iterate,
+         trial_iterate, direction, evaluation_cache, warmstart_information, user_callbacks);
+      assert(backtracking_success);
    }
 
    std::string BacktrackingLineSearch::get_name() const {
@@ -51,8 +77,9 @@ namespace uno {
    // protected member functions
 
    // go a fraction along the direction by finding an acceptable step length
-   void BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
+   // returns true upon success, false upon failure
+   bool BacktrackingLineSearch::backtrack_along_direction(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
          UserCallbacks& user_callbacks) const {
       double step_length = 1.;
       bool termination = false;
@@ -100,19 +127,12 @@ namespace uno {
                   throw std::runtime_error("LS failed");
                }
                // switch to solving the feasibility problem
-               evaluation_cache.trial_evaluations.reset();
                statistics.set("Status", "small step length");
-               this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
-                  evaluation_cache.current_evaluations, false, warmstart_information);
-               this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction,
-                  INF<double>, evaluation_cache.current_evaluations, warmstart_information);
-               BacktrackingLineSearch::check_unboundedness(direction);
-               // restart backtracking
-               step_length = 1.;
-               number_iterations = 0;
+               return false;
             }
          }
       } // end while loop
+      return true;
    }
 
    bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, Iterate& trial_iterate) {
