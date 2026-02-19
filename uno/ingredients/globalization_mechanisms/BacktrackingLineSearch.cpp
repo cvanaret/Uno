@@ -102,8 +102,8 @@ namespace uno {
                // switch to solving the feasibility problem
                evaluation_cache.trial_evaluations.reset();
                statistics.set("Status", "small step length");
-               this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate, INF<double>,
-                  warmstart_information);
+               this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
+                  evaluation_cache.current_evaluations, false, warmstart_information);
                this->constraint_relaxation_strategy->compute_feasible_direction(statistics, current_iterate, direction,
                   INF<double>, evaluation_cache.current_evaluations, warmstart_information);
                BacktrackingLineSearch::check_unboundedness(direction);

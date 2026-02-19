@@ -24,8 +24,8 @@ namespace uno {
       void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
-      void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, double trust_region_radius,
-         WarmstartInformation& warmstart_information) override;
+      void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Evaluations& current_evaluations,
+         bool uses_trust_region, WarmstartInformation& warmstart_information) override;
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,

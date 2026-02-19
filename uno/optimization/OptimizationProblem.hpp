@@ -33,12 +33,6 @@ namespace uno {
 
       [[nodiscard]] virtual double get_objective_multiplier() const;
 
-      // constraint evaluations
-      virtual void evaluate_constraints(Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const;
-
-      // dense objective gradient
-      virtual void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const;
-
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
       [[nodiscard]] virtual bool has_curvature(const HessianModel& hessian_model) const;
@@ -48,9 +42,11 @@ namespace uno {
       virtual void compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,
          uno_int* column_indices, uno_int solver_indexing) const;
 
-      // numerical evaluations of Jacobian and Hessian
+      // numerical evaluations of constraints, objective gradient, Jacobian and Hessian
+      virtual void evaluate_constraints(const Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const;
+      virtual void evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const;
       virtual void evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const;
-      virtual void evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient, Iterate& iterate,
+      virtual void evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient, const Iterate& iterate,
          Evaluations& evaluations) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
          const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const;
@@ -75,7 +71,7 @@ namespace uno {
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
 
-      [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
+      [[nodiscard]] virtual SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const;
 
       // progress measures

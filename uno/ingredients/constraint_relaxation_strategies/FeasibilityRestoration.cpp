@@ -85,7 +85,8 @@ namespace uno {
                // switch to the feasibility problem, starting from the current direction
                statistics.set("Status", std::string("infeasible"));
                DEBUG << "/!\\ The subproblem is infeasible\n";
-               this->switch_to_feasibility_problem(statistics, current_iterate, trust_region_radius, warmstart_information);
+               this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, trust_region_radius,
+                  warmstart_information);
                this->feasibility_inequality_handling_method->set_initial_point(direction.primals);
             }
             else {
@@ -94,7 +95,8 @@ namespace uno {
             }
          }
          catch (const UnstableRegularization&) {
-            this->switch_to_feasibility_problem(statistics, current_iterate, trust_region_radius, warmstart_information);
+            this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, trust_region_radius,
+               warmstart_information);
          }
       }
 
@@ -113,7 +115,7 @@ namespace uno {
 
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-         double trust_region_radius, WarmstartInformation& warmstart_information) {
+         Evaluations& current_evaluations, bool uses_trust_region, WarmstartInformation& warmstart_information) {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
@@ -132,14 +134,15 @@ namespace uno {
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
 
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
-      this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate);
+      this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
+         current_evaluations);
 
       DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
       // initialize the feasibility ingredients upon the first switch to feasibility restoration
       if (this->first_switch_to_feasibility) {
          this->feasibility_inequality_handling_method->initialize(this->feasibility_problem, current_iterate,
-            *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy, trust_region_radius);
+            *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy, uses_trust_region);
          this->first_switch_to_feasibility = false;
       }
 
