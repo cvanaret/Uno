@@ -53,6 +53,9 @@ namespace uno {
       options.set_double("switching_delta", 0.999);
       options.set_double("switching_infeasibility_exponent", 2);
 
+      /** merit function options **/
+      options.set_double("sufficient_infeasibility_decrease_ratio", 0.9);
+
       /** filter method options **/
       // filter type (standard|nonmonotone)
       options.set_string("filter_type", "standard");

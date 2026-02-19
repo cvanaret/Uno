@@ -3,11 +3,14 @@
 
 #include "MeritFunction.hpp"
 #include "ProgressMeasures.hpp"
+#include "options/Options.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   MeritFunction::MeritFunction(const Options& options): GlobalizationStrategy(options) {
+   MeritFunction::MeritFunction(const Options& options):
+         GlobalizationStrategy(options),
+         sufficient_infeasibility_decrease_ratio(options.get_double("sufficient_infeasibility_decrease_ratio")) {
    }
 
    void MeritFunction::initialize(Statistics& statistics, const Iterate& /*initial_iterate*/) {
@@ -46,9 +49,8 @@ namespace uno {
    }
 
    bool MeritFunction::is_infeasibility_sufficiently_reduced(const ProgressMeasures& /*current_progress*/, const ProgressMeasures& trial_progress) const {
-      // if the trial infeasibility improves upon the best known infeasibility
-      // TODO put constant in option file
-      return (trial_progress.infeasibility <= 0.9*this->smallest_known_infeasibility);
+      // if the trial infeasibility sufficiently decreases the best known infeasibility
+      return (trial_progress.infeasibility <= this->sufficient_infeasibility_decrease_ratio * this->smallest_known_infeasibility);
    }
 
    void MeritFunction::reset() {

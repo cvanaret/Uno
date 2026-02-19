@@ -36,6 +36,7 @@ namespace uno {
       {"armijo_tolerance", OptionType::DOUBLE},
       {"switching_delta", OptionType::DOUBLE},
       {"switching_infeasibility_exponent", OptionType::DOUBLE},
+      {"sufficient_infeasibility_decrease_ratio", OptionType::DOUBLE},
       {"filter_type", OptionType::STRING},
       {"filter_beta", OptionType::DOUBLE},
       {"filter_gamma", OptionType::DOUBLE},

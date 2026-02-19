@@ -69,6 +69,12 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `switching_delta`                  | double | 0.999   | Fraction of the constraint violation that should be achieved by the predicted reduction in the switching condition |
 | `switching_infeasibility_exponent` | double | 2       | Exponent of the constraint violation in the switching condition |
 
+## Merit function options
+
+| Option                                     | Type    | Default | Description |
+| :---                                       | :---    | :---    | :---        |
+| `sufficient_infeasibility_decrease_ratio`  | double  | 0.9     | Sufficient infeasibility decrease ratio |
+
 ## Filter method options
 
 ### String options
