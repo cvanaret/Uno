@@ -85,8 +85,8 @@ namespace uno {
                // switch to the feasibility problem, starting from the current direction
                statistics.set("Status", std::string("infeasible"));
                DEBUG << "/!\\ The subproblem is infeasible\n";
-               this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, trust_region_radius,
-                  warmstart_information);
+               this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations,
+                  (trust_region_radius < INF<double>), warmstart_information);
                this->feasibility_inequality_handling_method->set_initial_point(direction.primals);
             }
             else {
@@ -95,8 +95,8 @@ namespace uno {
             }
          }
          catch (const UnstableRegularization&) {
-            this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, trust_region_radius,
-               warmstart_information);
+            this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations,
+               (trust_region_radius < INF<double>), warmstart_information);
          }
       }
 
