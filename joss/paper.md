@@ -48,7 +48,7 @@ Precompiled artifacts are available on GitHub, and the solver can be accessed di
 Nonlinearly constrained optimization is central to engineering, optimal control, machine learning, and scientific modeling [@nocedal2006].
 It also plays a key role in mixed-integer nonlinear optimization [@lee2011].
 
-Popular solvers such as Ipopt [@wachter2005], KNITRO [@byrd2006], and SNOPT [@gill2005] are robust and efficient, but typically monolithic.
+Popular solvers such as IPOPT [@wachter2006implementation], KNITRO [@byrd2006], and SNOPT [@gill2005] are robust and efficient, but typically monolithic.
 They expose parameter tuning while keeping internal algorithmic components rigid and inaccessible.
 This limits algorithmic research, making it hard to prototype hybrid methods, to evaluate different approaches, or to teach the underlying techniques.
 
@@ -71,7 +71,8 @@ Abstract classes are written in italic, while subclasses are written in bold.
 
 Uno implements a generic Lagrange-Newton method in which the abstract classes interact with one another and exchange data, while being agnostic of the underlying strategies.
 Strategies are picked by the user at runtime via options.
-Particular combinations of strategies within Uno correspond to state-of-the-art solvers (e.g., IPOPT is a *line-search restoration filter interior-point method with exact Hessian and primal-dual inertia correction*).
+Uno also implements presets, that is particular combinations of strategies (and sets of hyperparameters) that correspond to state-of-the-art solvers.
+Uno currently implements an \texttt{ipopt} preset that mimics the IPOPT solver [@wachter2006implementation] (a *line-search restoration filter interior-point method with exact Hessian and primal-dual inertia correction*), and a \texttt{filtersqp} preset that mimics the filterSQP solver [@fletcher1998user] (a *trust-region restoration filter SQP method with exact Hessian and no inertia correction*).
 While, in theory, all combinations of strategies may be generated, some are not supported yet (e.g., interior-point method with a trust-region constraint).
 
 This modular architecture offers a clear separation between the mathematical logic of the optimization algorithm (the reformulation of the problem, the definition of the subproblem, and the globalization techniques) and the computational aspects (evaluating the model's functions, and solving the subproblems).
@@ -111,6 +112,8 @@ The Python interface is available on PyPI as `unopy`. It provides access to Uno 
 A MATLAB interface is also under development, further expanding Uno's accessibility.
 
 # Research impact
+
+Uno's \texttt{ipopt} and \texttt{filtersqp} presets currently perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances [@bongartz1995cute]. An up-to-date performance profile is maintained on Uno's GitHub `README` page.
 
 Uno's ongoing developments were presented at several international conferences over the years (ISMP 2018, SIAM OP 2021, ICCOPT 2022, ISMP 2024, and ICCOPT 2025), and were the subject of invited talks at Zuse-Institut Berlin (2020), Argonne National Laboratory (2022), and KU Leuven (2025).
 This resulted in scientific cooperations with the MECO team at KU Leuven and the HiGHS team in Edinburgh.
