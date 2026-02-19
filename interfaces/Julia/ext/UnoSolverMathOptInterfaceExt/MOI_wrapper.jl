@@ -211,7 +211,23 @@ function MOI.is_valid(
     ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Parameter{Float64}},
 )
     p = MOI.VariableIndex(ci.value)
-    return haskey(model.parameters, p)
+    return haskey(model.parameters, MOI.VariableIndex(ci.value))
+end
+
+function MOI.get(
+    model::Optimizer,
+    ::MOI.ListOfConstraintIndices{F,S},
+) where {F<:MOI.VariableIndex,S<:MOI.Parameter{Float64}}
+    ret = [MOI.ConstraintIndex{F,S}(p.value) for p in keys(model.parameters)]
+    sort!(ret; by = x -> x.value)
+    return ret
+end
+
+function MOI.get(
+    model::Optimizer,
+    ::MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Parameter{Float64}},
+)
+    return length(model.parameters)
 end
 
 function MOI.set(
@@ -286,6 +302,9 @@ function MOI.get(model::Optimizer, attr::MOI.ListOfConstraintTypesPresent)
     _add_scalar_nonlinear_constraints(ret, model.nlp_model)
     if !isempty(model.vector_nonlinear_oracle_constraints)
         push!(ret, (MOI.VectorOfVariables, MOI.VectorNonlinearOracle{Float64}))
+    end
+    if !isempty(model.parameters)
+        push!(ret, (MOI.VariableIndex, MOI.Parameter{Float64}))
     end
     return ret
 end
