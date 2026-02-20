@@ -130,7 +130,8 @@ Ongoing discussions and community interest indicate potential future integration
 
 # Acknowledgments
 
-This work was supported by the Applied Mathematics activity within U.S. Department of Energy, Office of Science, Advanced Scientific Computing Research, under Contract DE-AC02-06CH11357.
+This work was supported by the Applied Mathematics activity of the U.S. Department of Energy Office of Science, Advanced Scientific Computing Research, under Contract No. DE-AC02-06CH11357.
+This work was also supported in part by NSF CSSI Grant No. 2104068.
 
 # AI usage disclosure
 
