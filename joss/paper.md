@@ -117,7 +117,7 @@ Uno's \texttt{ipopt} and \texttt{filtersqp} presets currently perform on a par w
 An up-to-date performance profile is maintained on Uno's GitHub `README` page.
 
 Uno's ongoing developments were presented at several international conferences over the years (ISMP 2018, SIAM OP 2021, ICCOPT 2022, ISMP 2024, and ICCOPT 2025), and were the subject of invited talks at Zuse-Institut Berlin (2020), Argonne National Laboratory (2022), and KU Leuven (2025).
-This resulted in scientific cooperations with the MECO team at KU Leuven [@kiessling2024almost, @kiessling2025unified] and the HiGHS team in Edinburgh.
+This resulted in scientific cooperations with the MECO team at KU Leuven [@kiessling2024almost; @kiessling2025unified] and the HiGHS team in Edinburgh.
 
 Uno is currently used as a nonlinear optimization solver in:
 
