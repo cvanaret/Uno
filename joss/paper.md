@@ -127,6 +127,8 @@ Uno is currently used as a nonlinear optimization solver in:
 * FelooPy, a user-friendly tool for coding, modeling, and solving decision problems,
 * IMPL © /IMPL-DATA © by Industrial Algorithms Limited, a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation.
 
+Ongoing discussions and community interest indicate potential future integrations with CasADi, Pyomo, pyOptSparse, Minotaur, and the NEOS Server.
+
 # Acknowledgments
 
 This work was supported by the Applied Mathematics activity within U.S. Department of Energy, Office of Science, Advanced Scientific Computing Research, under Contract DE-AC02-06CH11357.
