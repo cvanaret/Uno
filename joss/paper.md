@@ -41,32 +41,31 @@ This allows classical and hybrid methods to be configured and compared within a 
 The core C\texttt{++} code of Uno is organized into modular, object-oriented components that separate the mathematical logic of the algorithms from implementation details such as memory management, data structures, and computational routines.
 For full mathematical details of the algorithms implemented in Uno, see [@VanaretLeyffer2024].
 Uno provides interfaces to Julia, Python, C, Fortran, and AMPL, enabling use across scientific computing environments.
-Precompiled artifacts are available on GitHub, and the solver can be accessed directly via `UnoSolver.jl` in Julia or `unopy` in Python.
+Precompiled artifacts are available on GitHub, and the solver is directly available via `UnoSolver.jl` in Julia or `unopy` in Python.
 
 # Statement of need
 
 Nonlinearly constrained optimization is central to engineering, optimal control, machine learning, and scientific modeling [@nocedal2006].
 It also plays a key role in mixed-integer nonlinear optimization [@lee2011].
 
-Popular solvers such as IPOPT [@wachter2006implementation], KNITRO [@byrd2006], and SNOPT [@gill2005] are robust and efficient, but typically monolithic.
-They expose parameter tuning while keeping internal algorithmic components rigid and inaccessible.
+Popular solvers such as IPOPT [@wachter2006implementation], KNITRO [@byrd2006], and SNOPT [@gill2005] have proven robust and efficient, but they are typically monolithic: they expose parameter tuning while keeping internal algorithmic components rigid and inaccessible.
 This limits algorithmic research, making it hard to prototype hybrid methods, to evaluate different approaches, or to teach the underlying techniques.
 
 Uno addresses these gaps by providing a composable framework in which algorithms emerge from modular code components corresponding to mathematical concepts such as step computation, constraint reformulation, and globalization techniques.
 It enables rapid prototyping of new methods and serves both research and educational purposes.
 
 Typical nonlinear solvers implement strategies such as sequential quadratic programming, interior-point methods, and augmented Lagrangian methods.
-In Uno's unification framework, these strategies are organized into a coherent hierarchy, as illustrated in the wheel of strategies (\autoref{fig:wheel}): the outer ring represents high-level layers, the middle ring represents ingredients that are algorithmically combined within Uno, and the inner ring lists possible strategies for each of the ingredients.
-The strategies currently implemented in Uno are written in green.
+In Uno's unification framework, these strategies are organized into a coherent hierarchy, as illustrated in the wheel of strategies (\autoref{fig:wheel}): the outer ring represents high-level layers, the middle ring represents algorithmic ingredients that are automatically combined within Uno, and the inner ring lists possible strategies for each of the ingredients.
+The strategies currently implemented in Uno are highlighted in green.
 
 ![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
 
 # Software design
 
-The architecture of Uno follows an object-oriented design in which the ingredients of \autoref{fig:wheel} are abstract classes that should be implemented by subclasses (the strategies).
+The architecture of Uno follows an object-oriented design in which the ingredients of \autoref{fig:wheel} are abstract classes whose interfaces should be implemented by subclasses (the strategies).
 For instance, `BacktrackingLineSearch` and `TrustRegionMethod` both inherit from the abstract class `GlobalizationMechanism` and implement its interface.
 Uno's simplified UML diagram is shown in \autoref{fig:umldiagram}.
-Inheritance is represented as dotted lines with white arrows, while composition is represented as solid lines with black diamonds.
+Inheritance is represented as dashed lines with white arrows, while composition is represented as solid lines with black diamonds.
 Abstract classes are written in italic, while subclasses are written in bold.
 
 Uno implements a generic Lagrange-Newton method in which the abstract classes interact with one another and exchange data, while being agnostic of the underlying strategies.
@@ -87,11 +86,11 @@ The AMPL Solver Library [@gay1997hooking] interface gives access to the AMPL [@f
 It is distributed as a binary that takes a compiled AMPL model (.nl file) as input, allowing users to solve problems without directly interacting with the C\texttt{++} core.
 
 The C interface provides direct access to Uno's core functionality while maximizing interoperability with other programming languages and tools.
-Optimization is expressed as the interaction between two independent opaque objects: a model describing the optimization problem and a solver holding the algorithmic configuration and execution state.
+The optimization process is expressed as the interaction between two independent opaque objects: a model describing the optimization problem and a solver holding the algorithmic configuration and execution state.
 The interface is therefore centered around two main structures:
 
-* **Model**: represents an optimization problem and stores information about variables, bounds, constraints, the objective function, and derivative information. Users create a model and set its components (objective, constraints, derivatives, initial iterates).
-* **Solver**: represents the algorithm used to solve a given model. Users configure solver options, attach callbacks, and access results such as primal and dual solutions, residuals, iteration counts, and performance metrics.
+* **Model**: represents an optimization problem and stores information about variables, bounds, constraints, the objective function, and derivative information. Users create a model and set its components (objective, constraints, derivatives, initial primal-dual point).
+* **Solver**: represents the algorithm used to solve a given model. Users set solver options, attach callbacks, and access results such as primal and dual solutions, residuals, iteration counts, and performance metrics.
 
 The Fortran interface provides access to Uno through the C API using `iso_c_binding`.
 It is split into two files: `uno_c.f90` for low-level C bindings, and `uno_fortran.f90` for Fortran-friendly wrappers that handle string arguments.
@@ -107,7 +106,7 @@ It integrates Uno into the Julia optimization ecosystem through:
 
 Precompiled artifacts are downloaded automatically, making the package plug-and-play without requiring user compilation.
 
-The Python interface is available on PyPI as `unopy`, providing Uno bindings via precompiled wheels on most platforms.
+The Python interface is registered on PyPI as `unopy`, providing Uno bindings via precompiled wheels on most platforms.
 
 A MATLAB interface is also under development, further expanding Uno's accessibility.
 
@@ -127,7 +126,7 @@ Uno is currently used as a nonlinear optimization solver in:
 * FelooPy, a user-friendly tool for coding, modeling, and solving decision problems,
 * IMPL © /IMPL-DATA © by Industrial Algorithms Limited, a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation.
 
-Ongoing discussions and community interest indicate potential future integrations with CasADi, Pyomo, pyOptSparse, Minotaur, and the NEOS Server.
+Ongoing discussions and community interest indicate potential future integrations in CasADi, Pyomo, pyOptSparse, Minotaur, and the NEOS Server.
 
 # Acknowledgments
 
