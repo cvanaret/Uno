@@ -48,22 +48,23 @@ Precompiled artifacts are available on GitHub, and the solver is directly availa
 Nonlinearly constrained optimization is central to engineering, optimal control, machine learning, and scientific modeling [@nocedal2006].
 It also plays a key role in mixed-integer nonlinear optimization [@lee2011].
 
-Popular solvers such as IPOPT [@wachter2006implementation], KNITRO [@byrd2006], and SNOPT [@gill2005] have proven robust and efficient, but they are typically monolithic: they expose parameter tuning while keeping internal algorithmic components rigid and inaccessible.
-This limits algorithmic research, making it hard to prototype hybrid methods, to evaluate different approaches, or to teach the underlying techniques.
-
-Uno addresses these gaps by providing a composable framework in which algorithms emerge from modular code components corresponding to mathematical concepts such as step computation, constraint reformulation, and globalization techniques.
-It enables rapid prototyping of new methods and serves both research and educational purposes.
-
 Typical nonlinear solvers implement strategies such as sequential quadratic programming, interior-point methods, and augmented Lagrangian methods.
 In Uno's unification framework, these strategies are organized into a coherent hierarchy, as illustrated in the wheel of strategies (\autoref{fig:wheel}): the outer ring represents high-level layers, the middle ring represents algorithmic ingredients that are automatically combined within Uno, and the inner ring lists possible strategies for each of the ingredients.
 The strategies currently implemented in Uno are highlighted in green.
 
 ![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
 
+# State of the field
+
+Popular solvers such as IPOPT [@wachter2006implementation], KNITRO [@byrd2006], and SNOPT [@gill2005] have proven robust and efficient, but they are typically monolithic: they expose parameter tuning while keeping internal algorithmic components rigid and inaccessible.
+This limits algorithmic research, making it hard to prototype hybrid methods, to evaluate different approaches, or to teach the underlying techniques.
+
+Uno addresses these gaps by providing a composable framework in which algorithms emerge from modular code components corresponding to mathematical concepts such as step computation, constraint reformulation, and globalization techniques.
+It enables rapid prototyping of new methods and serves both research and educational purposes.
+
 # Software design
 
 The architecture of Uno follows an object-oriented design in which the ingredients of \autoref{fig:wheel} are abstract classes whose interfaces should be implemented by subclasses (the strategies).
-For instance, `BacktrackingLineSearch` and `TrustRegionMethod` both inherit from the abstract class `GlobalizationMechanism` and implement its interface.
 Uno's simplified UML diagram is shown in \autoref{fig:umldiagram}.
 Inheritance is represented as dashed lines with white arrows, while composition is represented as solid lines with black diamonds.
 Abstract classes are written in italic, while subclasses are written in bold.
@@ -110,13 +111,13 @@ The Python interface is registered on PyPI as `unopy`, providing Uno bindings vi
 
 A MATLAB interface is also under development, further expanding Uno's accessibility.
 
-# Research impact
+# Research impact statement
 
 Uno's \texttt{ipopt} and \texttt{filtersqp} presets currently perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances [@bongartz1995cute].
 An up-to-date performance profile is maintained on Uno's GitHub `README` page.
 
 Uno's ongoing developments were presented at several international conferences over the years (ISMP 2018, SIAM OP 2021, ICCOPT 2022, ISMP 2024, and ICCOPT 2025), and were the subject of invited talks at Zuse-Institut Berlin (2020), Argonne National Laboratory (2022), and KU Leuven (2025).
-This resulted in scientific cooperations with the MECO team at KU Leuven and the HiGHS team in Edinburgh.
+This resulted in scientific cooperations with the MECO team at KU Leuven [@kiessling2024almost, @kiessling2025unified] and the HiGHS team in Edinburgh.
 
 Uno is currently used as a nonlinear optimization solver in:
 
