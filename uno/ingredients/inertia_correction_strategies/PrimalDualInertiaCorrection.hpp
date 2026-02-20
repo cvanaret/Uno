@@ -6,7 +6,6 @@
 
 #include <string>
 #include "InertiaCorrectionStrategy.hpp"
-#include "UnstableRegularization.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 

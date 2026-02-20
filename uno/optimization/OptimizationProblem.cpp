@@ -27,18 +27,6 @@ namespace uno {
       return 1.;
    }
 
-   void OptimizationProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const {
-      evaluations.evaluate_constraints(this->model, iterate.primals);
-      constraints = evaluations.constraints;
-   }
-
-   void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
-      evaluations.evaluate_objective_gradient(this->model, iterate.primals);
-      for (size_t index: Range(this->number_variables)) {
-         objective_gradient[index] = evaluations.objective_gradient[index];
-      }
-   }
-
    size_t OptimizationProblem::number_jacobian_nonzeros() const {
       return this->model.number_jacobian_nonzeros();
    }
@@ -61,6 +49,18 @@ namespace uno {
       hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
    }
 
+   void OptimizationProblem::evaluate_constraints(const Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
+      constraints = evaluations.constraints;
+   }
+
+   void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
+      evaluations.evaluate_objective_gradient(this->model, iterate.primals);
+      for (size_t index: Range(this->number_variables)) {
+         objective_gradient[index] = evaluations.objective_gradient[index];
+      }
+   }
+
    void OptimizationProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const {
       evaluations.evaluate_jacobian(this->model, primals);
       for (size_t nonzero_index: Range(this->model.number_jacobian_nonzeros())) {
@@ -71,7 +71,7 @@ namespace uno {
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
    // split in two parts: objective contribution and constraints' contribution
    void OptimizationProblem::evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient,
-         Iterate& iterate, Evaluations& evaluations) const {
+         const Iterate& iterate, Evaluations& evaluations) const {
       lagrangian_gradient.fill(0.);
 
       // ∇c(x_k) λ_k

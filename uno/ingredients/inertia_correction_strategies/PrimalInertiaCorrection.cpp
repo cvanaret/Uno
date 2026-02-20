@@ -3,7 +3,7 @@
 
 #include <cassert>
 #include "PrimalInertiaCorrection.hpp"
-#include "UnstableRegularization.hpp"
+#include "UnstableInertiaCorrection.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "options/Options.hpp"
@@ -70,7 +70,7 @@ namespace uno {
             this->regularization_factor = (this->regularization_factor == 0.) ? this->regularization_initial_factor :
                this->regularization_increase_factor * this->regularization_factor;
             if (this->regularization_factor > this->regularization_failure_threshold) {
-               throw UnstableRegularization();
+               throw UnstableInertiaCorrection();
             }
          }
       }

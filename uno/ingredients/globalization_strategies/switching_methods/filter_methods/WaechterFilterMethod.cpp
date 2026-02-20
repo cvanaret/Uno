@@ -12,7 +12,8 @@
 namespace uno {
    WaechterFilterMethod::WaechterFilterMethod(const Options& options):
          FilterMethod(options),
-         sufficient_infeasibility_decrease_factor(options.get_double("filter_sufficient_infeasibility_decrease_factor")) {
+         sufficient_infeasibility_decrease_factor(options.get_double("filter_sufficient_infeasibility_decrease_factor")),
+         small_infeasibility_factor(options.get_double("barrier_small_infeasibility_factor")) {
    }
 
    WaechterFilterMethod::~WaechterFilterMethod() { }
@@ -39,8 +40,7 @@ namespace uno {
          const double merit_actual_reduction = this->compute_actual_objective_reduction(current_merit, current_progress.infeasibility, trial_merit);
          DEBUG << "Unconstrained actual reduction = " << merit_actual_reduction << '\n';
 
-         // TODO put this coefficient in the option file
-         const bool small_infeasibility = current_progress.infeasibility <= 1e-4 * std::max(1., this->initial_infeasibility);
+         const bool small_infeasibility = current_progress.infeasibility <= this->small_infeasibility_factor * std::max(1., this->initial_infeasibility);
          const bool switching = (0. < merit_predicted_reduction) && this->switching_condition(merit_predicted_reduction, current_progress.infeasibility);
          const bool sufficient_decrease = this->armijo_sufficient_decrease(merit_predicted_reduction, merit_actual_reduction);
 

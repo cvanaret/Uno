@@ -43,6 +43,7 @@ namespace uno {
       options.set_string("residual_norm", "INF");
       options.set_double("residual_scaling_threshold", 100.);
       options.set_bool("protect_actual_reduction_against_roundoff", false);
+      options.set_double("protected_actual_reduction_macheps_coefficient", 10.);
       options.set_bool("print_subproblem", false);
 
       /** globalization strategy options **/
@@ -52,6 +53,9 @@ namespace uno {
       /** switching method options **/
       options.set_double("switching_delta", 0.999);
       options.set_double("switching_infeasibility_exponent", 2);
+
+      /** merit function options **/
+      options.set_double("sufficient_infeasibility_decrease_ratio", 0.9);
 
       /** filter method options **/
       // filter type (standard|nonmonotone)
@@ -134,6 +138,7 @@ namespace uno {
       options.set_double("barrier_push_variable_to_interior_k1", 1e-2);
       options.set_double("barrier_push_variable_to_interior_k2", 1e-2);
       options.set_double("barrier_damping_factor", 1e-5);
+      options.set_double("barrier_small_infeasibility_factor", 1e-4);
       options.set_double("least_square_multiplier_max_norm", 1e3);
 
       /** BQPD options **/

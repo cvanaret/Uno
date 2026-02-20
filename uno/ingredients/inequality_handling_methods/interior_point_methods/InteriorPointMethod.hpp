@@ -25,14 +25,14 @@ namespace uno {
       explicit InteriorPointMethod(const Options& options);
 
       void initialize(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
-         InertiaCorrectionStrategy& inertia_correction_strategy, double trust_region_radius) override;
+         InertiaCorrectionStrategy& inertia_correction_strategy, bool uses_trust_region) override;
       void initialize_statistics(Statistics& statistics) override;
       void generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) override;
       void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
-      void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& iterate) override;
+      void set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem, Iterate& iterate, Evaluations& evaluations) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
       // acceptance
@@ -89,9 +89,9 @@ namespace uno {
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, double trust_region_radius) {
-      if (trust_region_radius < INF<double>) {
-         throw std::runtime_error("A trust-region radius is not supported.");
+         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, bool uses_trust_region) {
+      if (uses_trust_region) {
+         throw std::runtime_error("A trust-region radius is not supported yet.");
       }
       if (!problem.get_inequality_constraints().empty()) {
          throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
@@ -184,12 +184,13 @@ namespace uno {
 
    template <typename BarrierProblem>
    // set the elastic variables of the current iterate
-   void InteriorPointMethod<BarrierProblem>::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& iterate) {
+   void InteriorPointMethod<BarrierProblem>::set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem,
+         Iterate& iterate, Evaluations& evaluations) {
       DEBUG << "IPM: setting the elastic variables and their duals\n";
 
-      for (size_t variable_index: Range(problem.number_variables)) {
-         const double lower_bound = problem.variable_lower_bound(variable_index);
-         const double upper_bound = problem.variable_upper_bound(variable_index);
+      for (size_t variable_index: Range(feasibility_problem.number_variables)) {
+         const double lower_bound = feasibility_problem.variable_lower_bound(variable_index);
+         const double upper_bound = feasibility_problem.variable_upper_bound(variable_index);
          if (is_finite(lower_bound)) {
             iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
          }
@@ -203,10 +204,11 @@ namespace uno {
       // (mu_over_rho - jacobian_coefficient*this->barrier_constraints[j] + std::sqrt(radical))/2.
       // where jacobian_coefficient = -1 for p, +1 for n
       // Note: IPOPT uses a '+' sign because they define the Lagrangian as f(x) + \lambda^T c(x)
+      evaluations.evaluate_constraints(feasibility_problem.model, iterate.primals);
       const double mu = this->barrier_parameter();
-      const auto elastic_setting_function = [&](Iterate& iterate, size_t /*constraint_index*/, size_t elastic_index, double jacobian_coefficient) {
+      const auto elastic_setting_function = [&](Iterate& iterate, size_t constraint_index, size_t elastic_index, double jacobian_coefficient) {
          // precomputations
-         const double constraint_j = 0.; // TODO the constraints are not stored here any more... this->constraints[constraint_index];
+         const double constraint_j = evaluations.constraints[constraint_index];
          const double rho = this->l1_constraint_violation_coefficient;
          const double mu_over_rho = mu / rho;
          const double radical = std::pow(constraint_j, 2) + std::pow(mu_over_rho, 2);
@@ -218,7 +220,7 @@ namespace uno {
          assert(0. < iterate.primals[elastic_index] && "The elastic variable is not strictly positive.");
          assert(0. < iterate.multipliers.lower_bounds[elastic_index] && "The elastic dual is not strictly positive.");
       };
-      problem.set_elastic_variable_values(iterate, elastic_setting_function);
+      feasibility_problem.set_elastic_variable_values(iterate, elastic_setting_function);
    }
 
    template <typename BarrierProblem>

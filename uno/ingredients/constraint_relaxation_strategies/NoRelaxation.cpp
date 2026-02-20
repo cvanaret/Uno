@@ -24,10 +24,10 @@ namespace uno {
    }
 
    void NoRelaxation::initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction,
-         double trust_region_radius, EvaluationCache& evaluation_cache) {
+         bool uses_trust_region, EvaluationCache& evaluation_cache) {
       // memory allocation
       this->inequality_handling_method->initialize(this->original_problem, initial_iterate, *this->hessian_model,
-         *this->inertia_correction_strategy, trust_region_radius);
+         *this->inertia_correction_strategy, uses_trust_region);
       direction = Direction(this->original_problem.number_variables, this->original_problem.number_constraints);
 
       // statistics
@@ -57,7 +57,7 @@ namespace uno {
    }
 
    void NoRelaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/,
-         double /*trust_region_radius*/, WarmstartInformation& /*warmstart_information*/) {
+         Evaluations& /*current_evaluations*/, bool /*uses_trust_region*/, WarmstartInformation& /*warmstart_information*/) {
       throw std::runtime_error("Switching to the feasibility problem should not happen");
    }
 

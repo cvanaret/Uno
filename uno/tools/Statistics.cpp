@@ -8,7 +8,6 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   // TODO move this to the option file
    size_t Statistics::int_width = 7;
    size_t Statistics::double_width = 10;
    size_t Statistics::string_width = 15;
