@@ -51,7 +51,9 @@ namespace uno {
       DenseMatrix<double> S;
       DenseMatrix<double> Y;
       DenseMatrix<double, MatrixShape::LOWER_TRIANGULAR> L;
+      DenseMatrix<double, MatrixShape::LOWER_TRIANGULAR> Ltilde;
       std::vector<double> D; // diagonal
+      std::vector<double> invsqrt_D; // diagonal
       DenseMatrix<double> M;
       // Hessian representation: Bk = B0 - U U^T + V V^T where B0 = delta I
       DenseMatrix<double> U;

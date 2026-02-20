@@ -26,7 +26,9 @@ namespace uno {
          S(this->model.number_variables, this->memory_size),
          Y(this->model.number_variables, this->memory_size),
          L(this->memory_size, this->memory_size),
+         Ltilde(this->memory_size, this->memory_size),
          D(this->memory_size),
+         invsqrt_D(this->memory_size),
          M(this->memory_size, this->memory_size),
          U(this->model.number_variables, this->memory_size),
          V(this->model.number_variables, this->memory_size),
@@ -165,8 +167,13 @@ namespace uno {
    void LBFGSHessian::recompute_hessian_representation() {
       // TODO figure out if we're extending or replacing in memory. But I think we don't have to with out floating slot index
       assert(0 < this->number_entries_in_memory);
+      assert(0 < this->D[this->current_memory_slot]);
 
       DEBUG << "\n*** Recomputing the Hessian representation with " << this->number_entries_in_memory << " entries\n";
+      // DEBUG << "this->current_memory_slot = " << this->current_memory_slot << '\n';
+
+      // update invsqrt_D = 1/sqrt_D
+      this->invsqrt_D[this->current_memory_slot] = 1./std::sqrt(this->D[this->current_memory_slot]);
 
       // TODO here, we work with the strict lower triangle. It is empty for this->number_entries_in_memory <= 1
       // fill the L matrix (lower triangular with a zero diagonal)
@@ -178,20 +185,19 @@ namespace uno {
       }
       DEBUG << "> L: " << this->L;
 
-      // form Ltilde = L D^{-1/2}
-      // form V = Y D^{-1/2}
-      // TODO preallocate
-      DenseMatrix<double, MatrixShape::LOWER_TRIANGULAR> Ltilde(this->L); // copy L into Ltilde
+      // Ltilde = L D^{-1/2}
+      // V = Y D^{-1/2}
+      // since D and invsqrt_D are diagonal, this is just column scaling. We copy the current columns of L and Y with
+      // index this->current_memory_slot in Ltilde and V, then scale with invsqrt_D[this->current_memory_slot]
       for (size_t column_index: Range(this->number_entries_in_memory)) {
-         const double scaling = 1./std::sqrt(this->D[column_index]);
          for (size_t row_index: Range(column_index+1, this->number_entries_in_memory)) {
-            Ltilde.entry(row_index, column_index) *= scaling;
+            this->Ltilde.entry(row_index, column_index) = this->invsqrt_D[column_index] * this->L.entry(row_index, column_index);
          }
          for (size_t row_index: Range(this->model.number_variables)) {
-            this->V.entry(row_index, column_index) = this->Y.entry(row_index, column_index) * scaling;
+            this->V.entry(row_index, column_index) = this->invsqrt_D[column_index] * this->Y.entry(row_index, column_index);
          }
       }
-      DEBUG << "> Ltilde: " << Ltilde;
+      DEBUG << "> Ltilde: " << this->Ltilde;
 
       // update the initial Hessian approximation delta * I, where delta = 1/gamma and gamma = s^T y / y^T y at the last entry
       this->delta = this->compute_initial_identity_factor();
@@ -223,7 +229,7 @@ namespace uno {
          double alpha = 1.;
          int lda = static_cast<int>(this->memory_size); // leading dimension of Ltilde
          int ldb = static_cast<int>(this->model.number_variables); // leading dimension of V
-         BLAS_triangular_matrix_matrix_product(&side, &uplo, &transa, &diag, &m, &n, &alpha, Ltilde.data(), &lda,
+         BLAS_triangular_matrix_matrix_product(&side, &uplo, &transa, &diag, &m, &n, &alpha, this->Ltilde.data(), &lda,
             this->U.data(), &ldb);
       }
       // add delta S to U
