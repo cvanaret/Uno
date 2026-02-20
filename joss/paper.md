@@ -14,18 +14,18 @@ tags:
   - Fortran
   - AMPL
 authors:
-  - name: Alexis Montoison
-    orcid: 0000-0002-3403-5450
-    affiliation: 1
   - name: Charlie Vanaret
     orcid: 0000-0002-1131-7631
+    affiliation: 1
+  - name: Alexis Montoison
+    orcid: 0000-0002-3403-5450
     affiliation: 2
 affiliations:
- - name: Mathematics and Computer Science Division, Argonne National Laboratory, USA
-   index: 1
  - name: Applied Optimization Department, Zuse-Institut Berlin, Germany
+   index: 1
+ - name: Mathematics and Computer Science Division, Argonne National Laboratory, USA
    index: 2
-date: 17 February 2026
+date: 20 February 2026
 bibliography: paper.bib
 ---
 
@@ -40,7 +40,7 @@ This allows classical and hybrid methods to be configured and compared within a 
 
 The core C\texttt{++} code of Uno is organized into modular, object-oriented components that separate the mathematical logic of the algorithms from implementation details such as memory management, data structures, and computational routines.
 For full mathematical details of the algorithms implemented in Uno, see [@VanaretLeyffer2024].
-Uno provides interfaces to Julia, Python, C, and Fortran for use across scientific computing environments.
+Uno provides interfaces to Julia, Python, C, Fortran, and AMPL, enabling use across scientific computing environments.
 Precompiled artifacts are available on GitHub, and the solver can be accessed directly via `UnoSolver.jl` in Julia or `unopy` in Python.
 
 # Statement of need
@@ -87,33 +87,34 @@ The AMPL Solver Library [@gay1997hooking] interface gives access to the AMPL [@f
 It is distributed as a binary that takes a compiled AMPL model (.nl file) as input, allowing users to solve problems without directly interacting with the C\texttt{++} core.
 
 The C interface provides direct access to Uno's core functionality while maximizing interoperability with other programming languages and tools.
-It is centered around two main structures:
+Optimization is expressed as the interaction between two independent opaque objects: a model describing the optimization problem and a solver holding the algorithmic configuration and execution state.
+The interface is therefore centered around two main structures:
 
 * **Model**: represents an optimization problem and stores information about variables, bounds, constraints, the objective function, and derivative information. Users create a model and set its components (objective, constraints, derivatives, initial iterates).
 * **Solver**: represents the algorithm used to solve a given model. Users configure solver options, attach callbacks, and access results such as primal and dual solutions, residuals, iteration counts, and performance metrics.
 
-The optimization phase requires both the model and the solver as input.
-
 The Fortran interface provides access to Uno through the C API using `iso_c_binding`.
 It is split into two files: `uno_c.f90` for low-level C bindings, and `uno_fortran.f90` for Fortran-friendly wrappers that handle string arguments.
 The interface can be included directly in a source file or wrapped in a module for cleaner `use` statements.
-It is provided as source rather than a precompiled module to maximize portability and interoperability across compilers and platforms.
+It is provided as source rather than a precompiled Fortran module (.mod) to maximize portability and interoperability across compilers and platforms.
 
-The Julia interface is available as the registered Julia package `UnoSolver.jl`. It provides direct integration with the Julia optimization ecosystem through:
+The Julia interface is distributed as the registered package `UnoSolver.jl`.
+It integrates Uno into the Julia optimization ecosystem through:
 
 * a thin wrapper around the full C API,
 * an interface to `NLPModels.jl` for solving problems following the NLPModels API, such as `ADNLPModels.jl` or `ExaModels.jl`,
 * an interface to `MathOptInterface.jl` for handling JuMP models.
 
-All precompiled artifacts are automatically downloaded, which makes the package plug-and-play without requiring compilation from users.
+Precompiled artifacts are downloaded automatically, making the package plug-and-play without requiring user compilation.
 
-The Python interface is available on PyPI as `unopy`. It provides access to Uno through precompiled wheels on most platforms, allowing users to define models, configure solvers, and retrieve solutions directly from Python.
+The Python interface is available on PyPI as `unopy`, providing Uno bindings via precompiled wheels on most platforms.
 
 A MATLAB interface is also under development, further expanding Uno's accessibility.
 
 # Research impact
 
-Uno's \texttt{ipopt} and \texttt{filtersqp} presets currently perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances [@bongartz1995cute]. An up-to-date performance profile is maintained on Uno's GitHub `README` page.
+Uno's \texttt{ipopt} and \texttt{filtersqp} presets currently perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances [@bongartz1995cute].
+An up-to-date performance profile is maintained on Uno's GitHub `README` page.
 
 Uno's ongoing developments were presented at several international conferences over the years (ISMP 2018, SIAM OP 2021, ICCOPT 2022, ISMP 2024, and ICCOPT 2025), and were the subject of invited talks at Zuse-Institut Berlin (2020), Argonne National Laboratory (2022), and KU Leuven (2025).
 This resulted in scientific cooperations with the MECO team at KU Leuven and the HiGHS team in Edinburgh.
