@@ -121,7 +121,7 @@ This resulted in scientific cooperations with the MECO team at KU Leuven [@kiess
 
 Uno is currently used as a nonlinear optimization solver in:
 
-* `JuMP.jl` ecosystem,
+* the `JuMP.jl` ecosystem,
 * DNLP, an extension of CVXPY to general nonlinear programming,
 * `Vecchia.jl`, a package for Gaussian processes approximation,
 * FelooPy, a user-friendly tool for coding, modeling, and solving decision problems,
