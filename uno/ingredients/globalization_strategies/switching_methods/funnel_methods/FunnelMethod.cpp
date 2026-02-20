@@ -135,7 +135,7 @@ namespace uno {
       double actual_reduction = current_objective_measure - trial_objective_measure;
       if (this->protect_actual_reduction_against_roundoff) {
          static double machine_epsilon = std::numeric_limits<double>::epsilon();
-         actual_reduction += 10. * machine_epsilon * std::abs(current_objective_measure);
+         actual_reduction += this->protected_actual_reduction_macheps_coefficient * machine_epsilon * std::abs(current_objective_measure);
       }
       return actual_reduction;
    }

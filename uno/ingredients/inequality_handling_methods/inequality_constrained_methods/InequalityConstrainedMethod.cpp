@@ -21,7 +21,7 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, double /*trust_region_radius*/) {
+         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, bool /*uses_trust_region*/) {
       this->problem = &problem; // store the problem as is (no reformulation)
       assert(this->problem != nullptr);
       this->initial_point.resize(this->problem->number_variables);
@@ -69,7 +69,10 @@ namespace uno {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
+   void InequalityConstrainedMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate,
+         Evaluations& /*evaluations*/) {
+      // c(x) - p + n = 0
+      // TODO set (one of) the elastic variables to +/- the value of the constraint if violated
       problem.set_elastic_variable_values(current_iterate, [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
          iterate.primals[elastic_index] = 0.;
          iterate.multipliers.lower_bounds[elastic_index] = 1.;

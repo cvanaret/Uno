@@ -11,8 +11,6 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
-#include "ingredients/inertia_correction_strategies/UnstableRegularization.hpp"
-#include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
@@ -45,12 +43,12 @@ namespace uno {
    }
 
    void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction,
-         double trust_region_radius, EvaluationCache& evaluation_cache) {
+         bool uses_trust_region, EvaluationCache& evaluation_cache) {
       this->reference_optimality_primals.resize(this->original_problem.number_variables);
 
       // memory allocation
       this->inequality_handling_method->initialize(this->original_problem, initial_iterate,
-         *this->hessian_model, *this->inertia_correction_strategy, trust_region_radius);
+         *this->hessian_model, *this->inertia_correction_strategy, uses_trust_region);
       direction = Direction(
          std::max(this->original_problem.number_variables, this->feasibility_problem.number_variables),
          std::max(this->original_problem.number_constraints, this->feasibility_problem.number_constraints)
@@ -74,27 +72,25 @@ namespace uno {
    void FeasibilityRestoration::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       direction.reset();
+      const bool use_trust_region = (trust_region_radius < INF<double>);
+
       // if we are in the optimality phase, solve the optimality problem
       if (this->current_phase == Phase::OPTIMALITY) {
+         DEBUG << "Solving the optimality subproblem\n";
          statistics.set("Phase", "OPT");
-         try {
-            DEBUG << "Solving the optimality subproblem\n";
-            this->solve_subproblem(statistics, *this->inequality_handling_method, this->original_problem,
-               current_iterate, direction, trust_region_radius, current_evaluations, warmstart_information);
-            if (direction.status == SubproblemStatus::INFEASIBLE) {
-               // switch to the feasibility problem, starting from the current direction
-               statistics.set("Status", std::string("infeasible"));
-               DEBUG << "/!\\ The subproblem is infeasible\n";
-               this->switch_to_feasibility_problem(statistics, current_iterate, trust_region_radius, warmstart_information);
-               this->feasibility_inequality_handling_method->set_initial_point(direction.primals);
-            }
-            else {
-               warmstart_information.no_changes();
-               return;
-            }
+         this->solve_subproblem(statistics, *this->inequality_handling_method, this->original_problem,
+            current_iterate, direction, trust_region_radius, current_evaluations, warmstart_information);
+         if (direction.status == SubproblemStatus::INFEASIBLE) {
+            // switch to the feasibility problem, starting from the current direction
+            statistics.set("Status", std::string("infeasible"));
+            DEBUG << "/!\\ The subproblem is infeasible\n";
+            this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, use_trust_region,
+               warmstart_information);
+            this->feasibility_inequality_handling_method->set_initial_point(direction.primals);
          }
-         catch (const UnstableRegularization&) {
-            this->switch_to_feasibility_problem(statistics, current_iterate, trust_region_radius, warmstart_information);
+         else {
+            warmstart_information.no_changes();
+            return;
          }
       }
 
@@ -113,7 +109,7 @@ namespace uno {
 
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-         double trust_region_radius, WarmstartInformation& warmstart_information) {
+         Evaluations& current_evaluations, bool uses_trust_region, WarmstartInformation& warmstart_information) {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
@@ -132,14 +128,15 @@ namespace uno {
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
 
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
-      this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate);
+      this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
+         current_evaluations);
 
       DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
       // initialize the feasibility ingredients upon the first switch to feasibility restoration
       if (this->first_switch_to_feasibility) {
          this->feasibility_inequality_handling_method->initialize(this->feasibility_problem, current_iterate,
-            *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy, trust_region_radius);
+            *this->feasibility_hessian_model, *this->feasibility_inertia_correction_strategy, uses_trust_region);
          this->first_switch_to_feasibility = false;
       }
 

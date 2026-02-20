@@ -53,6 +53,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 | :---               | :--- | :---    | :---        |
 | `residual_scaling_threshold` | double | 100.0 | Scaling factor in stationarity and complementarity residuals |
 | `protect_actual_reduction_against_roundoff` | bool | `false` | Whether the actual reduction is slightly modified to account for roundoff |
+| `protected_actual_reduction_macheps_coefficient` | double | 10 | Coefficient of the machine epsilon in the protected actual reduction |
 | `print_subproblem` | bool |  `false` | Whether the subproblem is printed in `DEBUG` mode |
 
 ## Globalization strategy options
@@ -68,6 +69,12 @@ If not provided, the solver is chosen automatically from the available solvers (
 | :---                               | :---   | :---    | :---        |
 | `switching_delta`                  | double | 0.999   | Fraction of the constraint violation that should be achieved by the predicted reduction in the switching condition |
 | `switching_infeasibility_exponent` | double | 2       | Exponent of the constraint violation in the switching condition |
+
+## Merit function options
+
+| Option                                     | Type    | Default | Description |
+| :---                                       | :---    | :---    | :---        |
+| `sufficient_infeasibility_decrease_ratio`  | double  | 0.9     | Sufficient infeasibility decrease ratio |
 
 ## Filter method options
 
@@ -167,6 +174,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `barrier_push_variable_to_interior_k1` | double | 1e-2    | Coefficient for the perturbation of the initial bounds |
 | `barrier_push_variable_to_interior_k2` | double | 1e-2    | Coefficient for the perturbation of the initial bounds |
 | `barrier_damping_factor`               | double | 1e-5    | Damping coefficient for single bounds |
+| `barrier_small_infeasibility_factor`   | double | 1e-4    | Factor in the small infeasibility test |
 | `least_square_multiplier_max_norm`     | double | 1e3     | Maximum accepted norm of the least-square multipliers |
 
 ## BQPD options

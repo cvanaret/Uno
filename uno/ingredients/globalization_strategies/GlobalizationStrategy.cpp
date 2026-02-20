@@ -9,7 +9,8 @@ namespace uno {
    GlobalizationStrategy::GlobalizationStrategy(const Options& options):
       armijo_decrease_fraction(options.get_double("armijo_decrease_fraction")),
       armijo_tolerance(options.get_double("armijo_tolerance")),
-      protect_actual_reduction_against_roundoff(options.get_bool("protect_actual_reduction_against_roundoff")) {
+      protect_actual_reduction_against_roundoff(options.get_bool("protect_actual_reduction_against_roundoff")),
+      protected_actual_reduction_macheps_coefficient(options.get_double("protected_actual_reduction_macheps_coefficient")) {
    }
 
    bool GlobalizationStrategy::armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const {

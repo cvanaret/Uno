@@ -126,7 +126,7 @@ namespace uno {
          }
          if (Logger::level == INFO) statistics.print_footer();
 
-         Uno::postprocess_solution(model, current_iterate);
+         Uno::postprocess_solution(model, current_iterate, evaluation_cache.current_evaluations);
       }
       catch (const std::exception& e) {
          DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
@@ -214,9 +214,9 @@ namespace uno {
       return false;
    }
 
-   void Uno::postprocess_solution(const Model& model, Iterate& iterate) {
+   void Uno::postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations) {
       // in case the objective was not yet evaluated, evaluate it
-      // TODO iterate.evaluate_objective(model);
+      evaluations.evaluate_objective(model, iterate.primals);
       model.postprocess_solution(iterate);
       DEBUG2 << "Final iterate:\n" << iterate;
    }
@@ -224,7 +224,6 @@ namespace uno {
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
          const Evaluations& evaluations, size_t major_iterations, const Timer& timer) const {
       const size_t number_subproblems_solved = this->globalization_mechanism->get_number_subproblems_solved();
-      //const size_t number_hessian_evaluations = this->constraint_relaxation_strategy->get_hessian_evaluation_count();
       return {model.number_variables, model.number_constraints, optimization_status, solution.status,
          evaluations.objective, solution.progress.infeasibility, solution.residuals.stationarity,
          solution.residuals.complementarity, solution.primals, solution.multipliers.constraints,

@@ -34,14 +34,14 @@ namespace uno {
       virtual ~InequalityHandlingMethod() = default;
 
       virtual void initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, double trust_region_radius) = 0;
+         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, bool uses_trust_region) = 0;
       virtual void initialize_statistics(Statistics& statistics) = 0;
       virtual void generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) = 0;
       virtual void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
          Evaluations& current_evaluations, WarmstartInformation& warmstart_information) = 0;
 
       virtual void initialize_feasibility_problem(Iterate& current_iterate) = 0;
-      virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
+      virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate, Evaluations& evaluations) = 0;
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 
       // progress measures

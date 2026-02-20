@@ -24,6 +24,7 @@ namespace uno {
    protected:
       double initial_infeasibility{INF<double>};
       const double sufficient_infeasibility_decrease_factor;
+      const double small_infeasibility_factor;
    };
 } // namespace
 
