@@ -32,6 +32,9 @@ namespace uno {
          V(this->model.number_variables, this->memory_size),
          current_lagrangian_gradient(this->model.number_variables),
          trial_lagrangian_gradient(this->model.number_variables) {
+      if (this->memory_size <= 0) {
+         throw std::runtime_error("The quasi-Newton memory size should be positive");
+      }
    }
 
    bool LBFGSHessian::has_hessian_operator() const {
