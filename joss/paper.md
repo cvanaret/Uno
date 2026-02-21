@@ -37,22 +37,22 @@ As of February 2026, Uno supports sequential (convex and nonconvex) quadratic pr
 
 Uno breaks down optimization algorithms into reusable modular components such as step computation, constraint reformulation, globalization techniques, and acceptance criteria.
 This allows classical and hybrid methods to be configured and compared within a single framework.
+For full mathematical details of the algorithms implemented in Uno, see [@VanaretLeyffer2024].
 
 The core C\texttt{++} code of Uno is organized into modular, object-oriented components that separate the mathematical logic of the algorithms from implementation details such as memory management, data structures, and computational routines.
-For full mathematical details of the algorithms implemented in Uno, see [@VanaretLeyffer2024].
 Uno provides interfaces to Julia, Python, C, Fortran, and AMPL, enabling use across scientific computing environments.
-Precompiled artifacts are available on GitHub, and the solver is directly available via `UnoSolver.jl` in Julia or `unopy` in Python.
+Precompiled artifacts are available on GitHub, and the solver can be accessed directly via `UnoSolver.jl` in Julia or `unopy` in Python.
 
 # Statement of need
 
 Nonlinearly constrained optimization is central to engineering, optimal control, machine learning, and scientific modeling [@nocedal2006].
 It also plays a key role in mixed-integer nonlinear optimization [@lee2011].
 
-Typical nonlinear solvers rely on recurring ingredients such as step computation, constraint handling, and globalization strategies.
-These ingredients appear across major paradigms including sequential quadratic programming, interior-point methods, and augmented Lagrangian methods, but they are usually developed as separate solver families.
-Algorithmic ideas are typically evaluated at the level of complete solvers, rather than individual components.
+Typical nonlinear solvers share common building blocks such as step computation, constraint handling, and globalization strategies.
+These components can be found across major paradigms such as sequential quadratic programming, interior-point methods, and augmented Lagrangian methods, but these are usually developed as separate solver families.
+Algorithmic ideas are typically tested at the level of complete solvers, rather than individual components.
 
-A framework that exposes algorithmic components explicitly within a consistent architecture is therefore needed.
+There is therefore a need for a framework that makes algorithmic components explicit within a unified and consistent architecture.
 
 # State of the field
 
@@ -60,31 +60,30 @@ Popular solvers such as IPOPT [@wachter2006implementation], KNITRO [@byrd2006], 
 These solvers act mainly as black-box engines.
 Testing new algorithmic variants usually requires intrusive modification or reimplementation.
 
-This motivates the development of a framework built from composable algorithmic building blocks.
+This motivates the development of a framework built upon composable, algorithmic building blocks.
 
 # Unification framework
 
-Uno addresses the lack of component-level experimentation by providing a composable optimization framework in which algorithms are constructed from modular components corresponding to mathematical concepts such as step computation, constraint reformulation, and globalization techniques.
+Uno enables experimentation at the component level by providing a composable optimization framework in which algorithms are constructed from modular components that reflect mathematical concepts such as step computation, constraint reformulation, and globalization techniques.
 
-Within this framework, strategies are organized into a coherent hierarchy, illustrated in the wheel of strategies (\autoref{fig:wheel}): the outer ring represents high-level layers, the middle ring represents algorithmic ingredients that are automatically combined, and the inner ring lists possible strategies for each ingredient.
+Within this framework, strategies are organized into a coherent hierarchy, illustrated in the wheel of strategies (\autoref{fig:wheel}): the outer ring represents high-level layers, the middle ring represents algorithmic ingredients that are combined automatically, and the inner ring lists possible strategies for each ingredient.
 The strategies currently implemented in Uno are highlighted in green.
 
 ![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
 
 # Software design
 
-The architecture of Uno follows an object-oriented design in which the ingredients of \autoref{fig:wheel} are abstract classes whose interfaces should be implemented by subclasses (the strategies).
+In Uno's object-oriented architecture, the ingredients of \autoref{fig:wheel} are abstract classes whose interfaces should be implemented by subclasses (the strategies).
 Uno's simplified UML diagram is shown in \autoref{fig:umldiagram}.
 Inheritance is represented as dashed lines with white arrows, while composition is represented as solid lines with black diamonds.
 Abstract classes are written in italic, while subclasses are written in bold.
+This modular architecture offers a clear separation between the mathematical logic of the optimization algorithm (the reformulation of the problem, the definition of the subproblem, and the globalization techniques) and the computational aspects (evaluating the model's functions, and solving the subproblems).
 
 Uno implements a generic Lagrange-Newton method in which the abstract classes interact with one another and exchange data, while being agnostic of the underlying strategies.
 Strategies are picked by the user at runtime via options.
-This modular architecture offers a clear separation between the mathematical logic of the optimization algorithm (the reformulation of the problem, the definition of the subproblem, and the globalization techniques) and the computational aspects (evaluating the model's functions, and solving the subproblems).
-
 Uno also implements presets, that is particular combinations of strategies (and sets of hyperparameters) that correspond to state-of-the-art solvers.
 Uno currently implements an \texttt{ipopt} preset that mimics the IPOPT solver [@wachter2006implementation] (a *line-search restoration filter interior-point method with exact Hessian and primal-dual inertia correction*), and a \texttt{filtersqp} preset that mimics the filterSQP solver [@fletcher1998user] (a *trust-region restoration filter SQP method with exact Hessian and no inertia correction*).
-While, in theory, all combinations of strategies may be generated, some are not supported yet (e.g., interior-point method with a trust-region constraint).
+While, in theory, all combinations of strategies can be generated, some are not supported yet (e.g., interior-point method with a trust-region constraint).
 
 ![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% } 
 
