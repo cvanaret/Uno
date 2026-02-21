@@ -48,19 +48,28 @@ Precompiled artifacts are available on GitHub, and the solver is directly availa
 Nonlinearly constrained optimization is central to engineering, optimal control, machine learning, and scientific modeling [@nocedal2006].
 It also plays a key role in mixed-integer nonlinear optimization [@lee2011].
 
-Typical nonlinear solvers implement strategies such as sequential quadratic programming, interior-point methods, and augmented Lagrangian methods.
-In Uno's unification framework, these strategies are organized into a coherent hierarchy, as illustrated in the wheel of strategies (\autoref{fig:wheel}): the outer ring represents high-level layers, the middle ring represents algorithmic ingredients that are automatically combined within Uno, and the inner ring lists possible strategies for each of the ingredients.
-The strategies currently implemented in Uno are highlighted in green.
+Typical nonlinear solvers rely on recurring ingredients such as step computation, constraint handling, and globalization strategies.
+These ingredients appear across major paradigms including sequential quadratic programming, interior-point methods, and augmented Lagrangian methods, but they are usually developed as separate solver families.
+Algorithmic ideas are typically evaluated at the level of complete solvers, rather than individual components.
 
-![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
+A framework that exposes algorithmic components explicitly within a consistent architecture is therefore needed.
 
 # State of the field
 
-Popular solvers such as IPOPT [@wachter2006implementation], KNITRO [@byrd2006], and SNOPT [@gill2005] have proven robust and efficient, but they are typically monolithic: they expose parameter tuning while keeping internal algorithmic components rigid and inaccessible.
-This limits algorithmic research, making it hard to prototype hybrid methods, to evaluate different approaches, or to teach the underlying techniques.
+Popular solvers such as IPOPT [@wachter2006implementation], KNITRO [@byrd2006], and SNOPT [@gill2005] are robust and efficient, but they are typically monolithic: parameter tuning is exposed while internal components remain rigid.
+These solvers act mainly as black-box engines.
+Testing new algorithmic variants usually requires intrusive modification or reimplementation.
 
-Uno addresses these gaps by providing a composable framework in which algorithms emerge from modular code components corresponding to mathematical concepts such as step computation, constraint reformulation, and globalization techniques.
-It enables rapid prototyping of new methods and serves both research and educational purposes.
+This motivates the development of a framework built from composable algorithmic building blocks.
+
+# Unification framework
+
+Uno addresses the lack of component-level experimentation by providing a composable optimization framework in which algorithms are constructed from modular components corresponding to mathematical concepts such as step computation, constraint reformulation, and globalization techniques.
+
+Within this framework, strategies are organized into a coherent hierarchy, illustrated in the wheel of strategies (\autoref{fig:wheel}): the outer ring represents high-level layers, the middle ring represents algorithmic ingredients that are automatically combined, and the inner ring lists possible strategies for each ingredient.
+The strategies currently implemented in Uno are highlighted in green.
+
+![Unification framework: wheel of strategies.\label{fig:wheel}](figures/wheel.pdf){ width=70% }
 
 # Software design
 
