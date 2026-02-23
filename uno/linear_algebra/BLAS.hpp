@@ -5,6 +5,7 @@
 #define UNO_BLAS_H
 
 #include "fortran_interface.h"
+#define BLAS_scale_vector FC_GLOBAL_(dscal, DSCAL)
 #define BLAS_add_vector FC_GLOBAL_(daxpy, DAXPY)
 #define BLAS_dot_product FC_GLOBAL_(ddot, DDOT)
 #define BLAS_triangular_back_solve FC_GLOBAL_(dtrsm, DTRSM)
@@ -12,6 +13,9 @@
 #define BLAS_triangular_matrix_matrix_product FC_GLOBAL_(dtrmm, DTRMM)
 
 extern "C" {
+   // x := alpha x
+   void BLAS_scale_vector(const int* n, const double* alpha, double* x, const int* increment);
+
    // y := alpha x + y
    void BLAS_add_vector(const int* n, const double* alpha, const double* x, const int* incx, const double* y, int* incy);
 

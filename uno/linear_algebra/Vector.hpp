@@ -56,15 +56,6 @@ namespace uno {
          return *this;
       }
 
-      // sum operator
-      template <typename Expression>
-      Vector<ElementType>& operator+=(const Expression& expression) {
-         for (size_t index: Range(this->size())) {
-            this->vector[index] += expression[index];
-         }
-         return *this;
-      }
-
       // random access
       ElementType& operator[](size_t index) { return this->vector[index]; }
       const ElementType& operator[](size_t index) const { return this->vector[index]; }
@@ -94,9 +85,9 @@ namespace uno {
       }
 
       void scale(ElementType factor) {
-         for (size_t index: Range(this->size())) {
-            this->vector[index] *= factor;
-         }
+         const int size = static_cast<int>(this->size());
+         constexpr int increment = 1;
+         BLAS_scale_vector(&size, &factor, this->vector.data(), &increment);
       }
 
       void operator*=(ElementType factor) {
