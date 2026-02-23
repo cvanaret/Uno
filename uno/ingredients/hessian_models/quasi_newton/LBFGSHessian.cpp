@@ -71,7 +71,7 @@ namespace uno {
 
    void LBFGSHessian::notify_accepted_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) {
-      DEBUG << "\n*** Updating the BFGS memory at slot " << this->current_memory_slot << '\n';
+      DEBUG << "\n*** Updating the BFGS memory at slot " << this->current_index << '\n';
       // update the matrices S, Y and D
       this->update_S(current_iterate, trial_iterate);
       this->update_Y(current_iterate, trial_iterate, evaluation_cache);
@@ -82,8 +82,8 @@ namespace uno {
 
       // check that the latest D entry s^T y is > 0
       // TODO implement Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
-      if (0. < this->D[this->current_memory_slot]) {
-         DEBUG << "S, Y and D updated at slot " << this->current_memory_slot << '\n';
+      if (0. < this->D[this->current_index]) {
+         DEBUG << "S, Y and D updated at slot " << this->current_index << '\n';
          this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
          // notify_accepted_iterate is called at the end of a major iteration. At this point, we don't know yet whether
          // the L-BFGS Hessian will be used. We therefore delay the update to the beginning of the next major iteration
@@ -145,7 +145,7 @@ namespace uno {
 
    void LBFGSHessian::update_S(const Iterate& current_iterate, const Iterate& trial_iterate) {
       // TODO check that the S entry isn't too small
-      this->S.column(this->current_memory_slot) = view(trial_iterate.primals, 0, this->model.number_variables) -
+      this->S.column(this->current_index) = view(trial_iterate.primals, 0, this->model.number_variables) -
          view(current_iterate.primals, 0, this->model.number_variables);
    }
    
@@ -156,63 +156,53 @@ namespace uno {
          evaluation_cache.current_evaluations, this->current_lagrangian_gradient);
       this->model.evaluate_lagrangian_gradient(trial_iterate.primals, trial_iterate.multipliers, this->fixed_objective_multiplier,
          evaluation_cache.trial_evaluations, this->trial_lagrangian_gradient);
-      this->Y.column(this->current_memory_slot) = this->trial_lagrangian_gradient - this->current_lagrangian_gradient;
+      this->Y.column(this->current_index) = this->trial_lagrangian_gradient - this->current_lagrangian_gradient;
    }
 
    void LBFGSHessian::update_D() {
-      this->D[this->current_memory_slot] = dot(this->S.column(this->current_memory_slot),
-         this->Y.column(this->current_memory_slot));
+      this->D[this->current_index] = dot(this->S.column(this->current_index), this->Y.column(this->current_index));
    }
 
    void LBFGSHessian::recompute_hessian_representation() {
-      // TODO figure out if we're extending or replacing in memory. But I think we don't have to with out floating slot index
       assert(0 < this->number_entries_in_memory);
-      assert(0 < this->D[this->current_memory_slot]);
+      assert(0 < this->D[this->current_index]);
 
       DEBUG << "\n*** Recomputing the Hessian representation with " << this->number_entries_in_memory << " entries\n";
-      // DEBUG << "this->current_memory_slot = " << this->current_memory_slot << '\n';
 
       // update invsqrt_D = 1/sqrt_D
-      this->invsqrt_D[this->current_memory_slot] = 1./std::sqrt(this->D[this->current_memory_slot]);
+      this->invsqrt_D[this->current_index] = 1./std::sqrt(this->D[this->current_index]);
 
-      // TODO here, we work with the strict lower triangle. It is empty for this->number_entries_in_memory <= 1
-      // fill the L matrix (lower triangular with a zero diagonal)
-      // simply update the entries that depend on this->current_memory_slot
-      for (size_t column_index: Range(this->number_entries_in_memory)) {
-         for (size_t row_index: Range(column_index+1, this->number_entries_in_memory)) {
-            this->L.entry(row_index, column_index) = dot(this->S.column(row_index), this->Y.column(column_index));
-         }
+      // update the entries of L and Ltilde = L D^{-1/2} that depend on this->current_index (row and column)
+      // row this->current_index
+      for (size_t column_index: Range(this->current_index)) {
+         this->L.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
+         this->Ltilde.entry(this->current_index, column_index) = this->invsqrt_D[column_index] * this->L.entry(this->current_index, column_index);
+      }
+      // column this->current_index
+      for (size_t row_index: Range(this->current_index+1, this->number_entries_in_memory)) {
+         this->L.entry(row_index, this->current_index) = dot(this->S.column(row_index), this->Y.column(this->current_index));
+         this->Ltilde.entry(row_index, this->current_index) = this->invsqrt_D[this->current_index] * this->L.entry(row_index, this->current_index);
       }
       DEBUG << "> L: " << this->L;
-
-      // Ltilde = L D^{-1/2}
-      // V = Y D^{-1/2}
-      // since D and invsqrt_D are diagonal, this is just column scaling. We copy the current columns of L and Y with
-      // index this->current_memory_slot in Ltilde and V, then scale with invsqrt_D[this->current_memory_slot]
-      for (size_t column_index: Range(this->number_entries_in_memory)) {
-         for (size_t row_index: Range(column_index+1, this->number_entries_in_memory)) {
-            this->Ltilde.entry(row_index, column_index) = this->invsqrt_D[column_index] * this->L.entry(row_index, column_index);
-         }
-         for (size_t row_index: Range(this->model.number_variables)) {
-            this->V.entry(row_index, column_index) = this->invsqrt_D[column_index] * this->Y.entry(row_index, column_index);
-         }
-      }
       DEBUG << "> Ltilde: " << this->Ltilde;
 
+      // update the current column of V = Y D^{-1/2}
+      for (size_t row_index: Range(this->model.number_variables)) {
+         this->V.entry(row_index, this->current_index) = this->invsqrt_D[this->current_index] * this->Y.entry(row_index, this->current_index);
+      }
+
       // update the initial Hessian approximation delta * I, where delta = 1/gamma and gamma = s^T y / y^T y at the last entry
-      this->delta = this->compute_initial_identity_factor();
+      this->delta = this->compute_delta();
       DEBUG << "Initial identity multiple: " << this->delta << "\n";
 
       // form m x m matrix M = L D^{-1} L^T + S^T B0 S = Ltilde Ltilde^T + delta S^T S
-      this->M.fill(0.);
-      // add M += Ltilde Ltilde^T
       LBFGSHessian::perform_high_rank_update(this->M, this->number_entries_in_memory, this->memory_size, Ltilde,
-         this->number_entries_in_memory, this->memory_size, 1., 1.);
-      // add M += S^T B0 S = delta S^T S
+         this->number_entries_in_memory, this->memory_size, 1., 0.);
       LBFGSHessian::perform_high_rank_update_transpose(this->M, this->number_entries_in_memory, this->memory_size,
          this->S, this->number_entries_in_memory, this->model.number_variables, this->delta, 1.);
       DEBUG << "> M: " << this->M;
-      // compute the Cholesky factors J of M = J J^T (J overwrites M)
+
+      // compute the Cholesky factor J of M = J J^T (overwrites M with J)
       LBFGSHessian::compute_cholesky_factors(this->M, this->number_entries_in_memory, this->memory_size);
       DenseMatrix<double>& J_matrix = this->M;
       DEBUG << "> J: " << J_matrix;
@@ -257,16 +247,16 @@ namespace uno {
       DEBUG << "> V: " << this->V << '\n';
 
       // increment the slot: if we exceed the size of the memory, we start over and replace the oldest point in memory
-      this->current_memory_slot = (this->current_memory_slot + 1) % this->memory_size;
+      this->current_index = (this->current_index + 1) % this->memory_size;
    }
 
    // precondition: 0 < this->number_entries_in_memory
-   double LBFGSHessian::compute_initial_identity_factor() const {
+   double LBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
-      const auto last_column_Y = this->Y.column(this->current_memory_slot);
+      const auto last_column_Y = this->Y.column(this->current_index);
       // return delta = 1/gamma where gamma is given by (7.20) in Numerical optimization (Nocedal & Wright)
       const double numerator = dot(last_column_Y, last_column_Y);
-      const double denominator = this->D[this->current_memory_slot]; // > 0 by the update rule
+      const double denominator = this->D[this->current_index]; // > 0 by the update rule
       return numerator/denominator;
    }
 
@@ -281,8 +271,8 @@ namespace uno {
       int k = static_cast<int>(correction_rank); // number of columns of high_rank_correction
       int lda = static_cast<int>(correction_leading_dimension); // number of rows of high_rank_correction
       int ldc = static_cast<int>(matrix_leading_dimension); // leading dimension of matrix
-      assert(lda >= std::max(1, n) && "LBFGSHessian::perform_high_rank_update assumption on lda is violated");
-      assert(ldc >= std::max(1, n) && "LBFGSHessian::perform_high_rank_update assumption on ldc is violated");
+      assert(lda >= std::max(1, n));
+      assert(ldc >= std::max(1, n));
       LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, high_rank_correction.data(), &lda, &beta,
          matrix.data(), &ldc);
    }
@@ -298,8 +288,8 @@ namespace uno {
       int k = static_cast<int>(correction_leading_dimension); // number of rows of high_rank_correction
       int lda = static_cast<int>(correction_leading_dimension); // number of rows of high_rank_correction
       int ldc = static_cast<int>(matrix_leading_dimension); // leading dimension of matrix
-      assert(lda >= std::max(1, k) && "LBFGSHessian::perform_high_rank_update_transpose assumption on lda is violated");
-      assert(ldc >= std::max(1, n) && "LBFGSHessian::perform_high_rank_update assumption on ldc is violated");
+      assert(lda >= std::max(1, k));
+      assert(ldc >= std::max(1, n));
       LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, high_rank_correction.data(), &lda, &beta,
          matrix.data(), &ldc);
    }

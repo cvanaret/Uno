@@ -45,8 +45,8 @@ namespace uno {
       const Model& model;
       const double fixed_objective_multiplier;
       const size_t memory_size; // user defined
-      size_t number_entries_in_memory{0}; // 0 <= used_memory_size <= memory_size
-      size_t current_memory_slot{0}; // 0 <= current_available_slot < memory_size
+      size_t number_entries_in_memory{0}; // 0 <= number_entries_in_memory <= memory_size
+      size_t current_index{0}; // 0 <= current_index < memory_size
       // limited memory
       DenseMatrix<double> S;
       DenseMatrix<double> Y;
@@ -67,7 +67,7 @@ namespace uno {
       void update_Y(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache);
       void update_D();
       void recompute_hessian_representation();
-      [[nodiscard]] double compute_initial_identity_factor() const;
+      [[nodiscard]] double compute_delta() const;
 
       static void perform_high_rank_update(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
          DenseMatrix<double, MatrixShape::LOWER_TRIANGULAR>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta);
