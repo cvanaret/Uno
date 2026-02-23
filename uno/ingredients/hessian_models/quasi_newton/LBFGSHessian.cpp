@@ -169,10 +169,14 @@ namespace uno {
 
       DEBUG << "\n*** Recomputing the Hessian representation with " << this->number_entries_in_memory << " entries\n";
 
+      // update the initial Hessian approximation delta * I, where delta = 1/gamma and gamma = s^T y / y^T y at the last entry
+      this->delta = this->compute_delta();
+      DEBUG << "Initial identity multiple: " << this->delta << "\n";
+
       // update invsqrt_D = 1/sqrt_D
       this->invsqrt_D[this->current_index] = 1./std::sqrt(this->D[this->current_index]);
 
-      // update the entries of L and Ltilde = L D^{-1/2} that depend on this->current_index (row and column)
+      // update the entries of L and Ltilde = L D^{-1/2} that depend on this->current_index (1 row and 1 column, possibly empty)
       // row this->current_index
       for (size_t column_index: Range(this->current_index)) {
          this->L.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
@@ -186,26 +190,22 @@ namespace uno {
       DEBUG << "> L: " << this->L;
       DEBUG << "> Ltilde: " << this->Ltilde;
 
-      // update the current column of V = Y D^{-1/2}
-      for (size_t row_index: Range(this->model.number_variables)) {
-         this->V.entry(row_index, this->current_index) = this->invsqrt_D[this->current_index] * this->Y.entry(row_index, this->current_index);
-      }
-
-      // update the initial Hessian approximation delta * I, where delta = 1/gamma and gamma = s^T y / y^T y at the last entry
-      this->delta = this->compute_delta();
-      DEBUG << "Initial identity multiple: " << this->delta << "\n";
-
       // form m x m matrix M = L D^{-1} L^T + S^T B0 S = Ltilde Ltilde^T + delta S^T S
-      LBFGSHessian::perform_high_rank_update(this->M, this->number_entries_in_memory, this->memory_size, Ltilde,
-         this->number_entries_in_memory, this->memory_size, 1., 0.);
+      LBFGSHessian::perform_high_rank_update(this->M, this->number_entries_in_memory, this->memory_size, this->Ltilde,
+         this->number_entries_in_memory, this->memory_size, 1., 0.); // Ltilde Ltilde^T
       LBFGSHessian::perform_high_rank_update_transpose(this->M, this->number_entries_in_memory, this->memory_size,
-         this->S, this->number_entries_in_memory, this->model.number_variables, this->delta, 1.);
+         this->S, this->number_entries_in_memory, this->model.number_variables, this->delta, 1.); // delta S^T S
       DEBUG << "> M: " << this->M;
 
       // compute the Cholesky factor J of M = J J^T (overwrites M with J)
       LBFGSHessian::compute_cholesky_factors(this->M, this->number_entries_in_memory, this->memory_size);
       DenseMatrix<double>& J_matrix = this->M;
       DEBUG << "> J: " << J_matrix;
+
+      // update the current column of V = Y D^{-1/2}
+      for (size_t row_index: Range(this->model.number_variables)) {
+         this->V.entry(row_index, this->current_index) = this->invsqrt_D[this->current_index] * this->Y.entry(row_index, this->current_index);
+      }
 
       // compute V * Ltilde^T in W matrix (B A^T with A = Ltilde, B = V, W stored in U)
       this->U = this->V;
@@ -250,11 +250,11 @@ namespace uno {
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
 
+   // compute delta = 1/gamma where gamma is given by (7.20) in Numerical optimization (Nocedal & Wright)
    // precondition: 0 < this->number_entries_in_memory
    double LBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
       const auto last_column_Y = this->Y.column(this->current_index);
-      // return delta = 1/gamma where gamma is given by (7.20) in Numerical optimization (Nocedal & Wright)
       const double numerator = dot(last_column_Y, last_column_Y);
       const double denominator = this->D[this->current_index]; // > 0 by the update rule
       return numerator/denominator;
