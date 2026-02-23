@@ -14,7 +14,7 @@ tags:
   - Fortran
   - AMPL
 authors:
-  - name: Charlie Vanaret
+  - name: Charlie Vanaret^[corresponding author]
     orcid: 0000-0002-1131-7631
     affiliation: 1
   - name: Alexis Montoison
@@ -25,8 +25,9 @@ affiliations:
    index: 1
  - name: Mathematics and Computer Science Division, Argonne National Laboratory, USA
    index: 2
-date: 20 February 2026
+date: 22 February 2026
 bibliography: paper.bib
+
 ---
 
 # Summary
