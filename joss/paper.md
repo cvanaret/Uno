@@ -52,15 +52,13 @@ Typical nonlinear solvers share common building blocks such as step computation,
 These components can be found across major paradigms such as sequential quadratic programming, interior-point methods, and augmented Lagrangian methods, but these are usually developed as separate solver families.
 Algorithmic ideas are typically tested at the level of complete solvers, rather than individual components.
 
-There is therefore a need for a framework that makes algorithmic components explicit within a unified and consistent architecture.
+These observations motivate the development of a unified and composable framework in which algorithmic components are made explicit.
 
 # State of the field
 
 Popular solvers such as IPOPT [@wachter2006implementation], KNITRO [@byrd2006], and SNOPT [@gill2005] are robust and efficient, but they are typically monolithic: parameter tuning is exposed while internal components remain rigid.
-These solvers act mainly as black-box engines.
+These solvers are primarily designed for end users rather than algorithmic experimentation.
 Testing new algorithmic variants usually requires intrusive modification or reimplementation.
-
-This motivates the development of a framework built upon composable, algorithmic building blocks.
 
 # Unification framework
 
