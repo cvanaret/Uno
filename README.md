@@ -103,11 +103,11 @@ We have submitted our paper to the Mathematical Programming Computation journal.
 Until it is published, you can use the following bibtex entry:
 
 ```
-@unpublished{VanaretLeyffer2024,
+@unpublished{VanaretLeyffer2026,
   author = {Vanaret, Charlie and Leyffer, Sven},
   title = {Implementing a unified solver for nonlinearly constrained optimization},
-  year = {2024},
-  note = {Submitted to Mathematical Programming Computation}
+  year = {2026},
+  note = {Accepted to Mathematical Programming Computation on Feb 22, 2026}
 }
 ```
 
