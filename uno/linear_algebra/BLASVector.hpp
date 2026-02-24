@@ -27,11 +27,12 @@ namespace uno {
 
    // non-constant contiguous array in memory on which BLAS can be called
    template <typename T>
-   class MutableBLASVector : public BLASVector<T> {
+   class MutableBLASVector: public BLASVector<T> {
    public:
       MutableBLASVector() = default;
 
-      MutableBLASVector& operator=(const BLASVector<T>& other) {
+      template <typename Vector>
+      MutableBLASVector& operator=(const Vector& other) {
          assert(other.size() <= this->size() && "The other vector is larger than the current vector");
          const int size = static_cast<int>(this->size());
          constexpr int increment = 1;
@@ -39,7 +40,18 @@ namespace uno {
          return *this;
       }
 
-      MutableBLASVector& operator-=(const BLASVector<T>& other) {
+      template <typename Vector>
+      MutableBLASVector& operator+=(const Vector& other) {
+         assert(other.size() <= this->size() && "The other vector is larger than the current vector");
+         const int size = static_cast<int>(this->size());
+         constexpr double factor = 1.;
+         constexpr int increment = 1;
+         BLAS_add_vectors(&size, &factor, other.data(), &increment, this->data(), &increment);
+         return *this;
+      }
+
+      template <typename Vector>
+      MutableBLASVector& operator-=(const Vector& other) {
          assert(other.size() <= this->size() && "The other vector is larger than the current vector");
          const int size = static_cast<int>(this->size());
          constexpr double factor = -1.;

@@ -5,6 +5,7 @@
 #define UNO_VECTORVIEW_H
 
 #include <cstddef>
+#include <stdexcept>
 #include "linear_algebra/BLASVector.hpp"
 
 namespace uno {
@@ -15,6 +16,7 @@ namespace uno {
       using value_type = typename std::remove_reference_t<Vector>::value_type;
 
       VectorView(const Vector& vector, size_t start, size_t end):
+            BLASVector<value_type>(),
             vector(vector),
             start(start),
             end(std::min(end, this->vector.size())) {
@@ -48,12 +50,20 @@ namespace uno {
       using value_type = typename std::remove_reference_t<Vector>::value_type;
 
       MutableVectorView(Vector& vector, size_t start, size_t end):
+            MutableBLASVector<value_type>(),
             vector(vector),
             start(start),
             end(std::min(end, this->vector.size())) {
          if (this->end < this->start) {
             throw std::runtime_error("The view ends before its starting point");
          }
+      }
+
+      template <typename OtherVector>
+      MutableVectorView& operator=(const OtherVector& other) {
+         // TODO for some reason, the operator= of MutableBLASVector is not found directly. Relaying here
+         MutableBLASVector<value_type>::operator=(other);
+         return *this;
       }
 
       [[nodiscard]] size_t size() const noexcept override {
@@ -84,13 +94,13 @@ namespace uno {
 
    // free functions
    template <typename Expression>
-   VectorView<Expression> view(const Expression& expression, size_t start, size_t end) {
-      return {expression, start, end};
+   auto view(const Expression& expression, size_t start, size_t end) {
+      return VectorView{expression, start, end};
    }
 
    template <typename Expression>
-   MutableVectorView<Expression> view(Expression& expression, size_t start, size_t end) {
-      return {expression, start, end};
+   auto view(Expression& expression, size_t start, size_t end) {
+      return MutableVectorView{expression, start, end};
    }
 
    template <typename Expression>
