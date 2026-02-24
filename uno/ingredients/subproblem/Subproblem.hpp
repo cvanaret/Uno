@@ -8,11 +8,11 @@
 #include "optimization/Iterate.hpp"
 #include "linear_algebra/Matrix.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/UnaryNegation.hpp"
-#include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -104,18 +104,21 @@ namespace uno {
       rhs.fill(0.);
 
       // objective gradient
-      view(rhs, 0, this->number_variables) = -objective_gradient;
+      view(rhs, 0, this->number_variables) = objective_gradient;
 
       // Jacobian
+      // TODO use evaluation_cache
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
          const auto [constraint_index, variable_index, derivative] = jacobian[nonzero_index];
-         rhs[static_cast<size_t>(variable_index)] +=
+         rhs[static_cast<size_t>(variable_index)] -=
             this->current_iterate.multipliers.constraints[static_cast<size_t>(constraint_index)] * derivative;
       }
+
       // constraints
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         rhs[this->number_variables + constraint_index] = -constraints[constraint_index];
-      }
+      view(rhs, this->number_variables, this->number_variables + this->number_constraints) = constraints;
+
+      // flip the sign
+      rhs.scale(-1.);
       DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints)); DEBUG << '\n';
    }
 

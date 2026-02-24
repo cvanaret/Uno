@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
-#include "symbolic/VectorView.hpp"
+#include "linear_algebra/VectorView.hpp"
 
 using namespace uno;
 
