@@ -11,6 +11,7 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
@@ -19,7 +20,6 @@
 #include "options/Options.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/Sum.hpp"
-#include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
