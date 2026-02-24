@@ -139,16 +139,6 @@ namespace uno {
       }
       return result;
    }
-
-   template <typename Vector, typename Vector2>
-   typename Vector::value_type dot(const Vector& x, const Vector2& y) {
-      // TODO write with BLAS_dot_product
-      typename Vector::value_type dot_product = 0;
-      for (size_t index: Range(x.size())) {
-         dot_product += x[index] * y[index];
-      }
-      return dot_product;
-   }
 } // namespace
 
 #endif // UNO_VECTOR_H

@@ -72,15 +72,6 @@ namespace uno {
       void operator*=(T factor) {
          this->scale(factor);
       }
-
-      BLASVector<T>& operator+=(const BLASVector<T>& other) {
-         const int size = static_cast<int>(this->size());
-         constexpr double factor = 1.;
-         constexpr int increment = 1;
-         // this = this + factor * other
-         BLAS_add_vectors(&size, &factor, other.data(), &increment, this->data(), &increment);
-         return *this;
-      }
    };
 
    inline double dot(const BLASVector<double>& x, const BLASVector<double>& y) {
