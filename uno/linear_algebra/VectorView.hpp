@@ -59,12 +59,10 @@ namespace uno {
          }
       }
 
-      template <typename OtherVector>
-      MutableVectorView& operator=(const OtherVector& other) {
-         // TODO for some reason, the operator= of MutableBLASVector is not found directly. Relaying here
-         MutableBLASVector<value_type>::operator=(other);
-         return *this;
-      }
+      // operators
+      using MutableBLASVector<value_type>::operator=;
+      using MutableBLASVector<value_type>::operator+=;
+      using MutableBLASVector<value_type>::operator-=;
 
       [[nodiscard]] size_t size() const noexcept override {
          return this->end - this->start;
