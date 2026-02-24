@@ -7,6 +7,8 @@
 #include <cstddef>
 #include <cassert>
 #include "BLAS.hpp"
+#include "symbolic/Range.hpp"
+#include "symbolic/ScalarMultiple.hpp"
 
 namespace uno {
    // constant contiguous array in memory on which BLAS can be called
@@ -50,6 +52,16 @@ namespace uno {
          for (size_t index: Range(expression.size())) {
             this->operator[](index) = expression[index];
          }
+         return *this;
+      }
+
+      template <typename Vector>
+      MutableBLASVector& operator+=(ScalarMultiple<Vector>&& other) {
+         assert(other.size() <= this->size() && "The other vector is larger than the current vector");
+         const int size = static_cast<int>(this->size());
+         const double factor = other.get_factor();
+         constexpr int increment = 1;
+         BLAS_add_vectors(&size, &factor, other.get_expression().data(), &increment, this->data(), &increment);
          return *this;
       }
 

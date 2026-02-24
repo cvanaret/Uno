@@ -18,6 +18,14 @@ namespace uno {
          return (this->factor == value_type(0)) ? value_type(0) : this->factor * this->expression[index];
       }
 
+      [[nodiscard]] value_type get_factor() const {
+         return this->factor;
+      }
+
+      [[nodiscard]] const Expression& get_expression() const {
+         return this->expression;
+      }
+
    protected:
       const value_type factor;
       const Expression expression;

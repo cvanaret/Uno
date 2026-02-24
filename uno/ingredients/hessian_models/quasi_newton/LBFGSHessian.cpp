@@ -130,14 +130,14 @@ namespace uno {
          const auto current_U_column = this->U.column(column_index);
          const double U_coefficient = -dot(current_U_column, vector); // minus sign for U
          // result += coefficient * current_column
-         BLAS_add_vector(&n, &U_coefficient, current_U_column.data(), &increment, result, &increment);
+         BLAS_add_vectors(&n, &U_coefficient, current_U_column.data(), &increment, result, &increment);
       }
       // V V^T v
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_V_column = this->V.column(column_index);
          const double V_coefficient = dot(current_V_column, vector); // plus sign for V
          // result += coefficient * current_column
-         BLAS_add_vector(&n, &V_coefficient, current_V_column.data(), &increment, result, &increment);
+         BLAS_add_vectors(&n, &V_coefficient, current_V_column.data(), &increment, result, &increment);
       }
    }
 
@@ -145,8 +145,8 @@ namespace uno {
 
    void LBFGSHessian::update_S(const Iterate& current_iterate, const Iterate& trial_iterate) {
       // TODO check that the S entry isn't too small
-      this->S.column(this->current_index) = view(trial_iterate.primals, 0, this->model.number_variables) -
-         view(current_iterate.primals, 0, this->model.number_variables);
+      this->S.column(this->current_index) = view(trial_iterate.primals, 0, this->model.number_variables);
+      this->S.column(this->current_index) -= view(current_iterate.primals, 0, this->model.number_variables);
    }
    
    // fill the Y matrix: y = \nabla L(x_k, y_k, z_k) - \nabla L(x_{k-1}, y_k, z_k)
@@ -156,7 +156,8 @@ namespace uno {
          evaluation_cache.current_evaluations, this->current_lagrangian_gradient);
       this->model.evaluate_lagrangian_gradient(trial_iterate.primals, trial_iterate.multipliers, this->fixed_objective_multiplier,
          evaluation_cache.trial_evaluations, this->trial_lagrangian_gradient);
-      this->Y.column(this->current_index) = this->trial_lagrangian_gradient - this->current_lagrangian_gradient;
+      this->Y.column(this->current_index) = this->trial_lagrangian_gradient;
+      this->Y.column(this->current_index) -= this->current_lagrangian_gradient;
    }
 
    void LBFGSHessian::update_D() {

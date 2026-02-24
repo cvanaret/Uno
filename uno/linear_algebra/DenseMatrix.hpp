@@ -7,6 +7,8 @@
 #include <cassert>
 #include <ostream>
 #include <vector>
+
+#include "VectorView.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
@@ -86,8 +88,8 @@ namespace uno {
       [[nodiscard]] ElementType& entry(size_t row_index, size_t column_index);
       [[nodiscard]] const ElementType& entry(size_t row_index, size_t column_index) const;
       // vector view
-      [[nodiscard]] DenseColumn<DenseMatrix<ElementType, Shape>> column(size_t column_index);
-      [[nodiscard]] DenseColumn<const DenseMatrix<ElementType, Shape>> column(size_t column_index) const;
+      [[nodiscard]] MutableVectorView<std::vector<double>> column(size_t column_index);
+      [[nodiscard]] VectorView<std::vector<double>> column(size_t column_index) const;
 
       [[nodiscard]] ElementType* data();
       void fill(ElementType value);
@@ -141,13 +143,13 @@ namespace uno {
    }
 
    template <typename ElementType, MatrixShape Shape>
-   DenseColumn<DenseMatrix<ElementType, Shape>> DenseMatrix<ElementType, Shape>::column(size_t column_index) {
-      return {*this, column_index};
+   MutableVectorView<std::vector<double>>  DenseMatrix<ElementType, Shape>::column(size_t column_index) {
+      return {this->matrix, column_index * this->number_rows, (column_index + 1) * this->number_rows};
    }
 
    template <typename ElementType, MatrixShape Shape>
-   DenseColumn<const DenseMatrix<ElementType, Shape>> DenseMatrix<ElementType, Shape>::column(size_t column_index) const {
-      return {*this, column_index};
+   VectorView<std::vector<double>>  DenseMatrix<ElementType, Shape>::column(size_t column_index) const {
+      return {this->matrix, column_index * this->number_rows, (column_index + 1) * this->number_rows};
    }
 
    template <typename ElementType, MatrixShape Shape>
