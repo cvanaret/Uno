@@ -4,7 +4,7 @@
 #include <iomanip>
 #include "Result.hpp"
 #include "SolutionStatus.hpp"
-#include "symbolic/VectorView.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {

@@ -4,11 +4,11 @@
 #include "PrimalDualInteriorPointProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/UnaryNegation.hpp"
-#include "symbolic/VectorView.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
@@ -271,9 +271,10 @@ namespace uno {
          Direction& direction) const {
       // form the primal-dual direction
       direction.primals = view(solution, 0, this->first_reformulation.number_variables);
-      // retrieve the duals with correct signs (note the minus sign)
-      direction.multipliers.constraints = view(-solution, this->first_reformulation.number_variables,
+      // retrieve the duals with correct signs (note the sign flip)
+      direction.multipliers.constraints = view(solution, this->first_reformulation.number_variables,
          this->first_reformulation.number_variables + this->first_reformulation.number_constraints);
+      direction.multipliers.constraints.scale(-1.);
       this->compute_bound_dual_direction(current_iterate, direction);
 
       // "fraction-to-boundary" rule for primal variables and constraints multipliers

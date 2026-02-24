@@ -8,11 +8,11 @@
 #include "optimization/Iterate.hpp"
 #include "linear_algebra/Matrix.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/UnaryNegation.hpp"
-#include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -104,7 +104,7 @@ namespace uno {
       rhs.fill(0.);
 
       // objective gradient
-      view(rhs, 0, this->number_variables) = -objective_gradient;
+      //view(rhs, 0, this->number_variables) = -objective_gradient;
 
       // Jacobian
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {

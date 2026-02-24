@@ -10,9 +10,9 @@
 #include "ingredients/subproblem_solvers/BoxLPSolver.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
-#include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {

@@ -2,8 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Direction.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "tools/Logger.hpp"
-#include "symbolic/VectorView.hpp"
 
 namespace uno {
    Direction::Direction(size_t number_variables, size_t number_constraints) :
