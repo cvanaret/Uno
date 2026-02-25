@@ -160,7 +160,7 @@ namespace uno {
       // ∇c(x_k) λ_k
       evaluations.evaluate_jacobian(this->model, iterate.primals);
       evaluations.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints, lagrangian_gradient);
-      lagrangian_gradient = -lagrangian_gradient;
+      lagrangian_gradient.scale(-1.);
 
       // z_k
       for (size_t variable_index: Range(this->model.number_variables)) {
