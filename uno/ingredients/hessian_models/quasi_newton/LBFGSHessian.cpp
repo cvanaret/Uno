@@ -145,8 +145,8 @@ namespace uno {
 
    void LBFGSHessian::update_S(const Iterate& current_iterate, const Iterate& trial_iterate) {
       // TODO check that the S entry isn't too small
-      this->S.column(this->current_index) = view(trial_iterate.primals, 0, this->model.number_variables);
-      this->S.column(this->current_index) -= view(current_iterate.primals, 0, this->model.number_variables);
+      this->S.column(this->current_index) = view(trial_iterate.primals, 0, this->model.number_variables) -
+         view(current_iterate.primals, 0, this->model.number_variables);
    }
    
    // fill the Y matrix: y = \nabla L(x_k, y_k, z_k) - \nabla L(x_{k-1}, y_k, z_k)
@@ -156,8 +156,7 @@ namespace uno {
          evaluation_cache.current_evaluations, this->current_lagrangian_gradient);
       this->model.evaluate_lagrangian_gradient(trial_iterate.primals, trial_iterate.multipliers, this->fixed_objective_multiplier,
          evaluation_cache.trial_evaluations, this->trial_lagrangian_gradient);
-      this->Y.column(this->current_index) = this->trial_lagrangian_gradient;
-      this->Y.column(this->current_index) -= this->current_lagrangian_gradient;
+      this->Y.column(this->current_index) = this->trial_lagrangian_gradient - this->current_lagrangian_gradient;
    }
 
    void LBFGSHessian::update_D() {
@@ -204,9 +203,7 @@ namespace uno {
       DEBUG << "> J: " << J_matrix;
 
       // update the current column of V = Y D^{-1/2}
-      for (size_t row_index: Range(this->model.number_variables)) {
-         this->V.entry(row_index, this->current_index) = this->invsqrt_D[this->current_index] * this->Y.entry(row_index, this->current_index);
-      }
+      this->V.column(this->current_index) = this->invsqrt_D[this->current_index] * this->Y.column(this->current_index);
 
       // compute V * Ltilde^T in W matrix (B A^T with A = Ltilde, B = V, W stored in U)
       this->U = this->V;

@@ -272,9 +272,8 @@ namespace uno {
       // form the primal-dual direction
       direction.primals = view(solution, 0, this->first_reformulation.number_variables);
       // retrieve the duals with correct signs (note the sign flip)
-      direction.multipliers.constraints = view(solution, this->first_reformulation.number_variables,
+      direction.multipliers.constraints = -view(solution, this->first_reformulation.number_variables,
          this->first_reformulation.number_variables + this->first_reformulation.number_constraints);
-      direction.multipliers.constraints.scale(-1.);
       this->compute_bound_dual_direction(current_iterate, direction);
 
       // "fraction-to-boundary" rule for primal variables and constraints multipliers

@@ -24,6 +24,14 @@ namespace uno {
          return this->expression1[index] - this->expression2[index];
       }
 
+      [[nodiscard]] const E1& get_expression1() const {
+         return this->expression1;
+      }
+
+      [[nodiscard]] const E2& get_expression2() const {
+         return this->expression2;
+      }
+
    protected:
       const E1 expression1;
       const E2 expression2;
