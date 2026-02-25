@@ -56,7 +56,7 @@ namespace uno {
       if (warmstart_information.new_iterate) {
          subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data(),
             current_evaluations);
-         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints, current_evaluations);
+         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints.data(), current_evaluations);
          this->evaluate_jacobian(subproblem.problem, subproblem.current_iterate.primals, current_evaluations);
          // evaluate the Hessian and regularize it
          subproblem.evaluate_lagrangian_hessian(statistics, this->hessian_values.data());

@@ -55,7 +55,7 @@ namespace uno {
       constexpr double shift_value = 0.;
       // TODO preallocate constraints
       Vector<double> constraints(problem.number_constraints);
-      problem.evaluate_constraints(iterate, constraints, evaluations);
+      problem.evaluate_constraints(iterate, constraints.data(), evaluations);
       iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, constraints,
          iterate.multipliers, shift_value, this->residual_norm);
 

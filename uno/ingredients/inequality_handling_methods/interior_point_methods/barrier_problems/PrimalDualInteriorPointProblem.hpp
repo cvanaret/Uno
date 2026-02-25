@@ -30,7 +30,7 @@ namespace uno {
          uno_int* column_indices, uno_int solver_indexing) const override;
 
       // numerical evaluations of constraints, objective gradient, Jacobian and Hessian
-      void evaluate_constraints(const Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const override;
+      void evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const override;
       void evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const override;
       void evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const override;
       void evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient, const Iterate& iterate, Evaluations& evaluations) const override;
