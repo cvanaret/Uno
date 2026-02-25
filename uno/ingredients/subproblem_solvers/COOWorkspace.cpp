@@ -17,9 +17,6 @@ namespace uno {
       }
       const size_t dimension = subproblem.number_variables;
 
-      // evaluations
-      this->objective_gradient.resize(subproblem.number_variables);
-
       // Hessian
       this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
       this->number_matrix_nonzeros = subproblem.number_regularized_hessian_nonzeros();
@@ -38,10 +35,6 @@ namespace uno {
          throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
       }
       const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
-
-      // evaluations
-      this->objective_gradient.resize(subproblem.number_variables);
-      this->constraints.resize(subproblem.number_constraints);
 
       // Jacobian
       this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
@@ -72,9 +65,6 @@ namespace uno {
          const WarmstartInformation& warmstart_information) {
       // evaluate the functions at the current iterate
       if (warmstart_information.new_iterate) {
-         subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data(),
-            evaluations);
-         subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints, evaluations);
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
             DEBUG << "Performing symbolic analysis of the indefinite system\n";
@@ -90,7 +80,7 @@ namespace uno {
          // assemble the RHS
          const COOMatrix jacobian{this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
             this->matrix_values.data() + this->number_hessian_nonzeros};
-         subproblem.assemble_augmented_rhs(this->objective_gradient, this->constraints, jacobian, this->rhs);
+         subproblem.assemble_augmented_rhs(evaluations, jacobian, this->rhs);
       }
    }
 } // namespace

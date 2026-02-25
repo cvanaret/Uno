@@ -72,7 +72,7 @@ namespace uno {
       // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
       if (warmstart_information.new_iterate) {
          problem.evaluate_objective_gradient(current_iterate, this->gradients.data(), current_evaluations);
-         problem.evaluate_constraints(current_iterate, this->constraints, current_evaluations);
+         problem.evaluate_constraints(current_iterate, this->constraints.data(), current_evaluations);
          this->evaluate_jacobian(problem, current_iterate.primals, current_evaluations);
          this->hessian_evaluation_required = true;
       }

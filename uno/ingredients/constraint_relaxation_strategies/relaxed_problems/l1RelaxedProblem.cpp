@@ -90,9 +90,11 @@ namespace uno {
       }
    }
 
-   void l1RelaxedProblem::evaluate_constraints(const Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const {
+   void l1RelaxedProblem::evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const {
       evaluations.evaluate_constraints(this->model, iterate.primals);
-      constraints = evaluations.constraints;
+      for (size_t index: Range(this->number_constraints)) {
+         constraints[index] = evaluations.constraints[index];
+      }
 
       // add the contribution of the elastic variables
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
