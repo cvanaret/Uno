@@ -11,7 +11,7 @@
 #define BLAS_dot_product FC_GLOBAL_(ddot, DDOT)
 #define BLAS_triangular_back_solve FC_GLOBAL_(dtrsm, DTRSM)
 #define BLAS_matrix_matrix_product FC_GLOBAL_(dgemm, DGEMM)
-//#define BLAS_triangular_matrix_matrix_product FC_GLOBAL_(dtrmm, DTRMM)
+#define BLAS_triangular_matrix_matrix_product FC_GLOBAL_(dtrmm, DTRMM)
 
 extern "C" {
    // y := x
@@ -43,10 +43,8 @@ extern "C" {
       const double* alpha, const double* a, const int* lda, const double* b, const int* ldb, const double* beta,
       double* c, const int* ldc);
 
-   /*
    void BLAS_triangular_matrix_matrix_product(char* side, char* uplo, char* transa, char* diag, int* m, int* n,
       double* alpha, double* a, int* lda, double* b, int* ldb);
-   */
 }
 
 #endif // UNO_BLAS_H
