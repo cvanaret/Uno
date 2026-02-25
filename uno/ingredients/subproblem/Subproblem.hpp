@@ -50,8 +50,7 @@ namespace uno {
       void regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
       template <typename IndexType>
-      void assemble_augmented_rhs(const Vector<double>& objective_gradient, const Vector<double>& constraints,
-         const Matrix<IndexType>& jacobian, Vector<double>& rhs) const;
+      void assemble_augmented_rhs(Evaluations& evaluations, const Matrix<IndexType>& jacobian, Vector<double>& rhs) const;
       void assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const;
 
       // variables bounds
@@ -99,12 +98,12 @@ namespace uno {
    };
 
    template <typename IndexType>
-   void Subproblem::assemble_augmented_rhs(const Vector<double>& objective_gradient, const Vector<double>& constraints,
-         const Matrix<IndexType>& jacobian, Vector<double>& rhs) const {
+   void Subproblem::assemble_augmented_rhs(Evaluations& evaluations, const Matrix<IndexType>& jacobian, Vector<double>& rhs) const {
       rhs.fill(0.);
 
       // objective gradient
-      view(rhs, 0, this->number_variables) = objective_gradient;
+      auto objective_gradient = view(rhs, 0, this->number_variables);
+      this->problem.evaluate_objective_gradient(this->current_iterate, objective_gradient.data(), evaluations);
 
       // Jacobian
       // TODO use evaluation_cache
@@ -115,7 +114,8 @@ namespace uno {
       }
 
       // constraints
-      view(rhs, this->number_variables, this->number_variables + this->number_constraints) = constraints;
+      auto constraints = view(rhs, this->number_variables, this->number_variables + this->number_constraints);
+      this->problem.evaluate_constraints(this->current_iterate, constraints.data(), evaluations);
 
       // flip the sign
       rhs.scale(-1.);

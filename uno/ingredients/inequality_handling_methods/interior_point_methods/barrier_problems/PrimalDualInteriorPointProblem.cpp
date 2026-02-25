@@ -120,7 +120,7 @@ namespace uno {
       }
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_constraints(const Iterate& iterate, Vector<double>& constraints, Evaluations& evaluations) const {
+   void PrimalDualInteriorPointProblem::evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const {
       this->first_reformulation.evaluate_constraints(iterate, constraints, evaluations);
    }
 
