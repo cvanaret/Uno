@@ -5,7 +5,6 @@
 #define UNO_BLASVECTOR_H
 
 #include <cstddef>
-#include <iostream>
 #include <cassert>
 #include "BLAS.hpp"
 
