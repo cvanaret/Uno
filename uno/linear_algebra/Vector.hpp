@@ -5,7 +5,6 @@
 #define UNO_VECTOR_H
 
 #include <iostream>
-#include <cassert>
 #include <string>
 #include <vector>
 #include <initializer_list>
@@ -45,16 +44,10 @@ namespace uno {
          return *this;
       }
 
-      // assignment operator from some expression
-      template <typename Expression>
-      Vector<ElementType>& operator=(const Expression& expression) {
-         static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
-         assert(expression.size() <= this->size() && "The expression is larger than the current vector");
-         for (size_t index: Range(expression.size())) {
-            this->vector[index] = expression[index];
-         }
-         return *this;
-      }
+      // operators
+      using MutableBLASVector<value_type>::operator=;
+      using MutableBLASVector<value_type>::operator+=;
+      using MutableBLASVector<value_type>::operator-=;
 
       [[nodiscard]] size_t size() const override {
          return this->vector.size();

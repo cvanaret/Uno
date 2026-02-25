@@ -5,6 +5,7 @@
 #define UNO_BLASVECTOR_H
 
 #include <cstddef>
+#include <cassert>
 #include "BLAS.hpp"
 
 namespace uno {
@@ -31,12 +32,24 @@ namespace uno {
    public:
       MutableBLASVector() = default;
 
-      template <typename Vector>
-      MutableBLASVector& operator=(const Vector& other) {
+      // specialized operator= when the other vector has the member function data()
+      template <typename Vector, decltype(Vector{}.data()) = true>
+      auto operator=(const Vector& other) {
          assert(other.size() <= this->size() && "The other vector is larger than the current vector");
          const int size = static_cast<int>(this->size());
          constexpr int increment = 1;
          BLAS_copy_vector(&size, other.data(), &increment, this->data(), &increment);
+         return *this;
+      }
+
+      // generic operator= for arbitrary expressions
+      template <typename Expression>
+      MutableBLASVector& operator=(const Expression& expression) {
+         static_assert(std::is_same_v<typename Expression::value_type, T>);
+         assert(expression.size() <= this->size() && "The expression is larger than the current vector");
+         for (size_t index: Range(expression.size())) {
+            this->operator[](index) = expression[index];
+         }
          return *this;
       }
 
