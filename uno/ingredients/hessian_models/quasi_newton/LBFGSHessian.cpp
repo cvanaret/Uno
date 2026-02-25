@@ -168,14 +168,14 @@ namespace uno {
 
       DEBUG << "\n*** Recomputing the Hessian representation with " << this->number_entries_in_memory << " entries\n";
 
-      // update the initial Hessian approximation delta * I, where delta = 1/gamma and gamma = s^T y / y^T y at the last entry
+      /* update the initial Hessian approximation delta * I */
       this->delta = this->compute_delta();
       DEBUG << "Initial identity multiple: " << this->delta << "\n";
 
+      /* update the entries of L and Ltilde = L D^{-1/2} */
       // update invsqrt_D = 1/sqrt_D
       this->invsqrt_D[this->current_index] = 1./std::sqrt(this->D[this->current_index]);
-
-      // update the entries of L and Ltilde = L D^{-1/2} that depend on this->current_index (1 row and 1 column, possibly empty)
+      // the entries of L and Ltilde = L D^{-1/2} depend on this->current_index (1 row and 1 column, possibly empty)
       // row this->current_index
       for (size_t column_index: Range(this->current_index)) {
          this->L.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
@@ -189,44 +189,37 @@ namespace uno {
       DEBUG << "> L: " << this->L;
       DEBUG << "> Ltilde: " << this->Ltilde;
 
-      // form m x m matrix M = L D^{-1} L^T + S^T B0 S = Ltilde Ltilde^T + delta S^T S
+      /* form M = L D^{-1} L^T + S^T B0 S = Ltilde Ltilde^T + delta S^T S */
       LBFGSHessian::perform_high_rank_update(this->M, this->number_entries_in_memory, this->memory_size, this->Ltilde,
          this->number_entries_in_memory, this->memory_size, 1., 0.); // Ltilde Ltilde^T
       LBFGSHessian::perform_high_rank_update_transpose(this->M, this->number_entries_in_memory, this->memory_size,
          this->S, this->number_entries_in_memory, this->model.number_variables, this->delta, 1.); // delta S^T S
       DEBUG << "> M: " << this->M;
 
-      // compute the Cholesky factor J of M = J J^T (overwrites M with J)
-      LBFGSHessian::compute_cholesky_factors(this->M, this->number_entries_in_memory, this->memory_size);
+      /*/ compute the Cholesky factor J of M = J J^T */
+      LBFGSHessian::compute_cholesky_factors(this->M, this->number_entries_in_memory, this->memory_size); // J overwrites M
       DenseMatrix<double>& J_matrix = this->M;
       DEBUG << "> J: " << J_matrix;
 
+      /* update V and U */
       // update the current column of V = Y D^{-1/2}
       this->V.column(this->current_index) = this->invsqrt_D[this->current_index] * this->Y.column(this->current_index);
-
-      // compute V * Ltilde^T in W matrix (B A^T with A = Ltilde, B = V, W stored in U)
-      this->U = this->V;
-      {
-         char side = 'R'; //  B := alpha B op(A)
-         char uplo = 'L'; // Ltilde is lower triangular
-         char transa = 'T'; // op(A) = A^T
-         char diag = 'N';
-         int m = static_cast<int>(this->model.number_variables); // number of rows of V
-         int n = static_cast<int>(this->number_entries_in_memory); // number of columns of V
-         double alpha = 1.;
-         int lda = static_cast<int>(this->memory_size); // leading dimension of Ltilde
-         int ldb = static_cast<int>(this->model.number_variables); // leading dimension of V
-         BLAS_triangular_matrix_matrix_product(&side, &uplo, &transa, &diag, &m, &n, &alpha, this->Ltilde.data(), &lda,
-            this->U.data(), &ldb);
-      }
-      // add delta S to U
-      for (size_t column_index: Range(this->number_entries_in_memory)) {
-         this->U.column(column_index) += this->delta * this->S.column(column_index);
-      }
+      // U = S
+      this->U = this->S;
+      // U = delta S + V * Ltilde^T
+      const char transa = 'N';
+      const char transb = 'T';
+      const int m = static_cast<int>(this->model.number_variables); // number of rows of V
+      const int n = static_cast<int>(this->number_entries_in_memory); // number of columns of Ltilde^T
+      const int k = static_cast<int>(this->number_entries_in_memory); // number of columns of V
+      constexpr double alpha = 1.;
+      const int lda = static_cast<int>(this->model.number_variables); // leading dimension of V
+      const int ldb = static_cast<int>(this->memory_size); // leading dimension of Ltilde
+      const int ldc = static_cast<int>(this->model.number_variables); // leading dimension of U
+      BLAS_matrix_matrix_product(&transa, &transb, &m, &n, &k, &alpha, this->V.data(), &lda, this->Ltilde.data(), &ldb,
+         &this->delta, this->U.data(), &ldc);
       DEBUG << "> W: " << this->U;
-
       // solve U J^T = W wrt U (X op(A) = alpha B with A = J, op(A) = A^T, alpha = 1, B = W)
-      // U overwrites W
       {
          char side = 'R'; // X op(A) = alpha B
          char uplo = 'L'; // J is lower triangular
@@ -247,8 +240,8 @@ namespace uno {
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
 
-   // compute delta = 1/gamma where gamma is given by (7.20) in Numerical optimization (Nocedal & Wright)
-   // precondition: 0 < this->number_entries_in_memory
+   // compute delta = 1/gamma where gamma = s^T y / y^T y at the last entry
+   // (7.20) in Numerical optimization (Nocedal & Wright)
    double LBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
       const auto last_column_Y = this->Y.column(this->current_index);
