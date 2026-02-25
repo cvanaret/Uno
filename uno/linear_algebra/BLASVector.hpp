@@ -5,6 +5,7 @@
 #define UNO_BLASVECTOR_H
 
 #include <cstddef>
+#include <cassert>
 #include "BLAS.hpp"
 
 namespace uno {
