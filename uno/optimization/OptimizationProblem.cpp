@@ -5,11 +5,9 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/ScalarMultiple.hpp"
-#include "symbolic/Sum.hpp"
-#include "symbolic/UnaryNegation.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -79,19 +77,15 @@ namespace uno {
       // ∇c(x_k) λ_k
       evaluations.evaluate_jacobian(this->model, iterate.primals);
       evaluations.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints, lagrangian_gradient);
-      lagrangian_gradient = -lagrangian_gradient;
+      lagrangian_gradient.scale(-1.);
 
       // ∇f(x_k)
       evaluations.evaluate_objective_gradient(this->model, iterate.primals);
-      for (size_t index: Range(this->number_variables)) {
-         lagrangian_gradient[index] += evaluations.objective_gradient[index];
-      }
+      view(lagrangian_gradient, 0, this->number_variables) += evaluations.objective_gradient;
 
       // z_k
-      for (size_t variable_index: Range(this->number_variables)) {
-         lagrangian_gradient[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
-            iterate.multipliers.upper_bounds[variable_index]);
-      }
+      view(lagrangian_gradient, 0, this->number_variables) -= view(iterate.multipliers.lower_bounds, 0, this->number_variables);
+      view(lagrangian_gradient, 0, this->number_variables) -= view(iterate.multipliers.upper_bounds, 0, this->number_variables);
    }
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,

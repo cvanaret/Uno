@@ -15,7 +15,6 @@ namespace uno {
       if (!subproblem.has_hessian_matrix()) {
          throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
       }
-      const size_t dimension = subproblem.number_variables;
 
       // Hessian
       this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
@@ -26,6 +25,7 @@ namespace uno {
       subproblem.compute_regularized_hessian_sparsity(this->matrix_row_indices.data(), this->matrix_column_indices.data(),
          Indexing::Fortran_indexing);
       this->matrix_values.resize(this->number_matrix_nonzeros);
+      const size_t dimension = subproblem.number_variables;
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
    }
@@ -34,7 +34,6 @@ namespace uno {
       if (!subproblem.has_hessian_matrix()) {
          throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
       }
-      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
 
       // Jacobian
       this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
@@ -52,6 +51,7 @@ namespace uno {
       subproblem.compute_regularized_augmented_matrix_sparsity(this->matrix_row_indices.data(), this->matrix_column_indices.data(),
          this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), Indexing::Fortran_indexing);
       this->matrix_values.resize(this->number_matrix_nonzeros);
+      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
       this->rhs.resize(dimension);
       this->solution.resize(dimension);
    }
@@ -63,7 +63,6 @@ namespace uno {
    void COOWorkspace::set_up_linear_system(Statistics& statistics, const Subproblem& subproblem,
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, Evaluations& evaluations,
          const WarmstartInformation& warmstart_information) {
-      // evaluate the functions at the current iterate
       if (warmstart_information.new_iterate) {
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
