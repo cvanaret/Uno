@@ -85,9 +85,8 @@ namespace uno {
       if (0. < this->D[this->current_index]) {
          DEBUG << "S, Y and D updated at slot " << this->current_index << '\n';
          this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
-         // notify_accepted_iterate is called at the end of a major iteration. At this point, we don't know yet whether
-         // the L-BFGS Hessian will be used. We therefore delay the update to the beginning of the next major iteration
-         // by setting the flag hessian_recomputation_required
+         // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the L-BFGS
+         // Hessian will be used, we delay the update to the beginning of the next major iteration
          this->hessian_recomputation_required = true;
          DEBUG << "There are now " << this->number_entries_in_memory << " entries in memory (capacity " << this->memory_size << ")\n";
       }
@@ -117,7 +116,7 @@ namespace uno {
       }
 
       // diagonal contribution delta*I
-      for (size_t variable_index: Range(model.number_variables)) {
+      for (size_t variable_index: Range(this->model.number_variables)) {
          result[variable_index] = this->delta * vector[variable_index];
       }
 
