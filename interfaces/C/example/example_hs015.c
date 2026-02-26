@@ -106,8 +106,6 @@ int main() {
       assert(uno_set_constraints(model, number_constraints, constraint_functions,
             constraints_lower_bounds, constraints_upper_bounds, number_jacobian_nonzeros,
             jacobian_row_indices, jacobian_column_indices, jacobian));
-      assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
-            hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention));
 /*
       assert(uno_set_jacobian_operator(model, jacobian_operator));
       assert(uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator));
@@ -117,21 +115,30 @@ int main() {
 
       // solver creation
       void* solver = uno_create_solver();
-      //uno_set_solver_preset(solver, "filtersqp");
+      uno_set_solver_preset(solver, "filtersqp");
       uno_set_solver_bool_option(solver, "print_solution", true);
 
-      // solve
+      // run 1: solve with no Hessian. Uno defaults to L-BFGS Hessian for NLPs
       uno_optimize(solver, model);
-
       // get the solution
       const uno_int optimization_status = uno_get_optimization_status(solver);
       assert(optimization_status == UNO_SUCCESS);
       const uno_int iterate_status = uno_get_solution_status(solver);
       assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
       const double solution_objective = uno_get_solution_objective(solver);
-      printf("\nReading the result from the C file:\n");
       printf("Solution objective = %g\n", solution_objective);
 
+      // run 2: solve with exact Hessian
+      assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
+            hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention));
+      uno_optimize(solver, model);
+      // get the solution
+      optimization_status = uno_get_optimization_status(solver);
+      assert(optimization_status == UNO_SUCCESS);
+      iterate_status = uno_get_solution_status(solver);
+      assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
+      solution_objective = uno_get_solution_objective(solver);
+      printf("Solution objective = %g\n", solution_objective);
       double primal_solution[number_variables];
       uno_get_primal_solution(solver, primal_solution);
       printf("Primal solution: "); print_vector(primal_solution, number_variables);
