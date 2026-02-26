@@ -32,6 +32,8 @@
     for j in 1:nlp.meta.ncon
         @test constraint_dual_solution[j] == UnoSolver.uno_get_constraint_dual_solution_component(solver, j-1)
     end
+
+    finalize(nlp)
 end
 
 @testset "uno_model -- uno_solver -- uno_optimize -- HS15 -- exact Hessian" begin
