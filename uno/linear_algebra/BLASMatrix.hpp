@@ -6,11 +6,13 @@
 
 #include <cassert>
 #include "linear_algebra/BLAS.hpp"
+#include "linear_algebra/LAPACK.hpp"
 #include "VectorView.hpp"
 #include "symbolic/Inverse.hpp"
 #include "symbolic/Multiplication.hpp"
 #include "symbolic/Sum.hpp"
 #include "symbolic/Transpose.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    template <typename T>
@@ -31,6 +33,8 @@ namespace uno {
       // specialized operator= for B := B A⁻ᵀ
       template <typename Matrix>
       BLASMatrix& operator*=(Transpose<Inverse<Matrix>>&& expression);
+
+      void compute_cholesky_factors();
 
       [[nodiscard]] virtual T* data() = 0;
       [[nodiscard]] virtual const T* data() const = 0;
@@ -103,6 +107,17 @@ namespace uno {
       int ldb = static_cast<int>(this->leading_dimension); // leading dimension of B/this
       BLAS_triangular_back_solve(&side, &uplo, &transa, &diag, &m, &n, &alpha, A.data(), &lda, this->data(), &ldb);
       return *this;
+   }
+
+   template <typename T>
+   void BLASMatrix<T>::compute_cholesky_factors() {
+      char uplo = 'L';
+      int info = 0;
+      int dimension = static_cast<int>(this->number_rows);
+      int leading_dimension = static_cast<int>(this->leading_dimension);
+      LAPACK_cholesky_factorization(&uplo, &dimension, this->data(), &leading_dimension, &info);
+      DEBUG << "Cholesky info: " << info << '\n';
+      assert(info == 0);
    }
 } // namespace
 

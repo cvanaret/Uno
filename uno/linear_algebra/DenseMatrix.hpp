@@ -17,11 +17,14 @@ namespace uno {
    public:
       using value_type = T;
 
+      // define a Submatrix class: a view of the current matrix with fewer rows and columns (starting from 0)
+      // this is for automatizing the calls to BLAS in which dimensions and leading dimension must be provided
       class Submatrix: public BLASMatrix<T> {
       public:
          using value_type = T;
 
          Submatrix(DenseMatrix<T>& matrix, size_t number_rows, size_t number_columns):
+               // the leading dimension is the number of rows of the original matrix
                BLASMatrix<T>(number_rows, number_columns, matrix.number_rows),
                matrix(matrix) {
          }

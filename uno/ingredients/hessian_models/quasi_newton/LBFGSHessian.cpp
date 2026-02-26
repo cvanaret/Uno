@@ -201,7 +201,8 @@ namespace uno {
       DEBUG << "> M: " << this->M;
 
       /*/ compute the Cholesky factor J of M = J J^T */
-      LBFGSHessian::compute_cholesky_factors(this->M, this->number_entries_in_memory, this->memory_size); // J overwrites M
+      auto Mk = this->M.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
+      Mk.compute_cholesky_factors(); // J overwrites M
       DEBUG << "> J: " << this->M;
 
       /* update V and U */
@@ -211,13 +212,12 @@ namespace uno {
       // note: some matrices were allocated with the maximum memory size. Work with submatrices (of size
       // this->number_entries_in_memory instead of this->memory_size)
       const auto Sk = this->S.submatrix(this->model.number_variables, this->number_entries_in_memory);
-      const auto L_invsqrt_D_k = this->L_invsqrt_D.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
+      const auto L_invsqrt_Dk = this->L_invsqrt_D.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
       const auto Jk = this->M.submatrix(this->number_entries_in_memory, this->number_entries_in_memory); // J overwrites M
       auto Uk = this->U.submatrix(this->model.number_variables, this->number_entries_in_memory);
-      auto Vk = this->V.submatrix(this->model.number_variables, this->number_entries_in_memory);
+      const auto Vk = this->V.submatrix(this->model.number_variables, this->number_entries_in_memory);
       Uk = Sk;
-      Uk = this->delta * Uk + Vk * transpose(L_invsqrt_D_k);
-      DEBUG << "> U: " << this->U;
+      Uk = this->delta * Uk + Vk * transpose(L_invsqrt_Dk);
       Uk *= transpose(inverse(Jk));
       DEBUG << "> U: " << this->U;
       DEBUG << "> V: " << this->V << '\n';
@@ -268,15 +268,5 @@ namespace uno {
       assert(ldc >= std::max(1, n));
       LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, high_rank_correction.data(), &lda, &beta,
          matrix.data(), &ldc);
-   }
-
-   void LBFGSHessian::compute_cholesky_factors(DenseMatrix<double>& matrix, size_t dimension, size_t leading_dimension) {
-      char uplo = 'L';
-      int info = 0;
-      int M_dimension = static_cast<int>(dimension);
-      int M_leading_dimension = static_cast<int>(leading_dimension);
-      LAPACK_cholesky_factorization(&uplo, &M_dimension, matrix.data(), &M_leading_dimension, &info);
-      DEBUG << "Cholesky info: " << info << '\n';
-      assert(info == 0);
    }
 } // namespace
