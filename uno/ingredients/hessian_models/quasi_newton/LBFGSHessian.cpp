@@ -5,7 +5,6 @@
 #include "model/Model.hpp"
 #include "options/Options.hpp"
 #include "linear_algebra/BLAS.hpp"
-#include "linear_algebra/LAPACK.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/VectorView.hpp"
 #include "optimization/EvaluationCache.hpp"
@@ -171,6 +170,11 @@ namespace uno {
       assert(0 < this->D[this->current_index]);
 
       DEBUG << "\n*** Recomputing the Hessian representation with " << this->number_entries_in_memory << " entries\n";
+      // note: some matrices were allocated with the maximum memory size. We will work with submatrices instead (of size
+      // this->number_entries_in_memory, not this->memory_size)
+      const auto Sk = this->S.submatrix(this->model.number_variables, this->number_entries_in_memory);
+      const auto L_invsqrt_Dk = this->L_invsqrt_D.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
+      auto Mk = this->M.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
 
       /* update the initial Hessian approximation delta * I */
       this->delta = this->compute_delta();
@@ -194,14 +198,11 @@ namespace uno {
       DEBUG << "> L_invsqrt_D: " << this->L_invsqrt_D;
 
       /* form M = L D^{-1} L^T + S^T B0 S = L_invsqrt_D L_invsqrt_D^T + delta S^T S */
-      LBFGSHessian::perform_high_rank_update(this->M, this->number_entries_in_memory, this->memory_size, this->L_invsqrt_D,
-         this->number_entries_in_memory, this->memory_size, 1., 0.); // L_invsqrt_D L_invsqrt_D^T
-      LBFGSHessian::perform_high_rank_update_transpose(this->M, this->number_entries_in_memory, this->memory_size,
-         this->S, this->number_entries_in_memory, this->model.number_variables, this->delta, 1.); // delta S^T S
+      Mk = L_invsqrt_Dk * transpose(L_invsqrt_Dk);
+      Mk += this->delta * (transpose(Sk) * Sk);
       DEBUG << "> M: " << this->M;
 
       /*/ compute the Cholesky factor J of M = J J^T */
-      auto Mk = this->M.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
       Mk.compute_cholesky_factors(); // J overwrites M
       DEBUG << "> J: " << this->M;
 
@@ -209,10 +210,6 @@ namespace uno {
       // update the current column of V = Y D^{-1/2}
       this->V.column(this->current_index) = this->invsqrt_D[this->current_index] * this->Y.column(this->current_index);
       // form U = (δ S + Y D⁻¹ Lᵀ) J⁻ᵀ
-      // note: some matrices were allocated with the maximum memory size. Work with submatrices (of size
-      // this->number_entries_in_memory instead of this->memory_size)
-      const auto Sk = this->S.submatrix(this->model.number_variables, this->number_entries_in_memory);
-      const auto L_invsqrt_Dk = this->L_invsqrt_D.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
       const auto Jk = this->M.submatrix(this->number_entries_in_memory, this->number_entries_in_memory); // J overwrites M
       auto Uk = this->U.submatrix(this->model.number_variables, this->number_entries_in_memory);
       const auto Vk = this->V.submatrix(this->model.number_variables, this->number_entries_in_memory);
@@ -234,39 +231,5 @@ namespace uno {
       const double numerator = dot(last_column_Y, last_column_Y);
       const double denominator = this->D[this->current_index]; // > 0 by the update rule
       return numerator/denominator;
-   }
-
-   // performs symmetric rank k update
-   // C = alpha A A^T + beta C
-   void LBFGSHessian::perform_high_rank_update(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
-         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta) {
-      DEBUG << "Performing rank " << correction_rank << " update\n";
-      char uplo = 'L'; // lower triangular
-      char trans = 'N';
-      int n = static_cast<int>(matrix_dimension); // dimension of matrix
-      int k = static_cast<int>(correction_rank); // number of columns of high_rank_correction
-      int lda = static_cast<int>(correction_leading_dimension); // number of rows of high_rank_correction
-      int ldc = static_cast<int>(matrix_leading_dimension); // leading dimension of matrix
-      assert(lda >= std::max(1, n));
-      assert(ldc >= std::max(1, n));
-      LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, high_rank_correction.data(), &lda, &beta,
-         matrix.data(), &ldc);
-   }
-
-   // performs symmetric rank k update
-   // C = alpha A^T A + beta C
-   void LBFGSHessian::perform_high_rank_update_transpose(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
-         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta) {
-      DEBUG << "Performing rank " << correction_rank << " update\n";
-      char uplo = 'L'; // lower triangular
-      char trans = 'T';
-      int n = static_cast<int>(matrix_dimension); // dimension of matrix
-      int k = static_cast<int>(correction_leading_dimension); // number of rows of high_rank_correction
-      int lda = static_cast<int>(correction_leading_dimension); // number of rows of high_rank_correction
-      int ldc = static_cast<int>(matrix_leading_dimension); // leading dimension of matrix
-      assert(lda >= std::max(1, k));
-      assert(ldc >= std::max(1, n));
-      LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, high_rank_correction.data(), &lda, &beta,
-         matrix.data(), &ldc);
    }
 } // namespace
