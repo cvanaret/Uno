@@ -153,9 +153,9 @@ namespace uno {
       this->first_reformulation.evaluate_jacobian(primals, jacobian_values, evaluations);
    }
 
-   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient,
-         const Iterate& iterate, Evaluations& evaluations) const {
-      this->first_reformulation.evaluate_lagrangian_gradient(lagrangian_gradient, iterate, evaluations);
+   void PrimalDualInteriorPointProblem::evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
+         Vector<double>& lagrangian_gradient) const {
+      this->first_reformulation.evaluate_lagrangian_gradient(iterate, evaluations, lagrangian_gradient);
 
       // barrier terms
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
@@ -272,9 +272,8 @@ namespace uno {
       // form the primal-dual direction
       direction.primals = view(solution, 0, this->first_reformulation.number_variables);
       // retrieve the duals with correct signs (note the sign flip)
-      direction.multipliers.constraints = view(solution, this->first_reformulation.number_variables,
+      direction.multipliers.constraints = -view(solution, this->first_reformulation.number_variables,
          this->first_reformulation.number_variables + this->first_reformulation.number_constraints);
-      direction.multipliers.constraints.scale(-1.);
       this->compute_bound_dual_direction(current_iterate, direction);
 
       // "fraction-to-boundary" rule for primal variables and constraints multipliers

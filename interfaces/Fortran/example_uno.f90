@@ -78,11 +78,9 @@ program example_uno
     success = uno_set_objective(model, optimization_sense, objective, gradient)
     success = uno_set_constraints(model, number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds, &
                                   number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, jacobian)
-    success = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices, &
-                                         hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
     success = uno_set_jacobian_operator(model, jacobian_operator)
     success = uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator)
-    success = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator, lagrangian_sign_convention)
+    ! success = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator, lagrangian_sign_convention)
     success = uno_set_initial_primal_iterate(model, x0)
     success = uno_set_initial_dual_iterate(model, y0)
 
@@ -97,8 +95,17 @@ program example_uno
     success = uno_set_solver_preset(solver, "filtersqp")
 
     !---------------------------------------------------
-    ! Solve
+    ! Run 1: solve with no Hessian. Uno defaults to L-BFGS Hessian for NLPs
     !---------------------------------------------------
+    call uno_optimize(solver, model)
+    solution_objective = uno_get_solution_objective(solver)
+    print *, 'Solution objective = ', solution_objective
+
+    !---------------------------------------------------
+    ! Run 2: solve with exact Hessian
+    !---------------------------------------------------
+    success = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices, &
+                                         hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
     call uno_optimize(solver, model)
 
     !---------------------------------------------------

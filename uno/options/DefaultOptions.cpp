@@ -34,7 +34,7 @@ namespace uno {
       /** main options **/
       // logging level (SILENT|DISCRETE|WARNING|INFO|DEBUG|DEBUG2|DEBUG3)
       options.set_string("logger", "INFO");
-      // Hessian model (exact|zero)
+      // Hessian model (exact|LBFGS|identity|zero)
       options.set_string("hessian_model", "exact");
       options.set_string("inertia_correction_strategy", "primal");
       // norm of the progress measures (L1|L2|INF)
@@ -86,6 +86,9 @@ namespace uno {
       options.set_double("LS_min_step_length", 1e-12);
       // use the primal-dual and dual step lengths to scale the dual directions when assembling the trial iterate
       options.set_bool("LS_scale_duals_with_step_length", true);
+
+      /* quasi-Newton options */
+      options.set_integer("quasi_newton_memory_size", 6);
 
       /** regularization options **/
       // regularization failure threshold

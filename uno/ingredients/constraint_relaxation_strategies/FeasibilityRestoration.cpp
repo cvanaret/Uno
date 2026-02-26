@@ -30,8 +30,8 @@ namespace uno {
          original_problem(model),
          // relax the linear constraints in the l1 relaxed problem only if we are using a trust-region constraint
          feasibility_problem(model, 0., this->constraint_violation_coefficient, use_trust_region),
-         hessian_model(HessianModelFactory::create(model, options)),
-         feasibility_hessian_model(HessianModelFactory::create(model, options)),
+         hessian_model(HessianModelFactory::create(model, 1., options)),
+         feasibility_hessian_model(HessianModelFactory::create(model, 0., options)),
          inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
          feasibility_inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
          inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
@@ -59,6 +59,8 @@ namespace uno {
       this->inequality_handling_method->initialize_statistics(statistics);
       this->feasibility_inertia_correction_strategy->initialize_statistics(statistics);
       this->feasibility_inequality_handling_method->initialize_statistics(statistics);
+      this->hessian_model->initialize_statistics(statistics);
+      this->feasibility_hessian_model->initialize_statistics(statistics);
       statistics.add_column("Phase", Statistics::int_width - 1, 3, Statistics::column_order.at("Phase"));
       statistics.set("Phase", "OPT");
 
@@ -192,11 +194,17 @@ namespace uno {
       if (this->current_phase == Phase::OPTIMALITY) {
          accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, *this->globalization_strategy,
             current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
+         if (accept_iterate) {
+            this->hessian_model->notify_accepted_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
+         }
       }
       else {
          accept_iterate = this->feasibility_inequality_handling_method->is_iterate_acceptable(statistics,
             this->feasibility_globalization_strategy, current_iterate, trial_iterate, direction, step_length,
             evaluation_cache, user_callbacks);
+         if (accept_iterate) {
+            this->feasibility_hessian_model->notify_accepted_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
+         }
       }
 
       // possibly go from restoration phase to optimality phase

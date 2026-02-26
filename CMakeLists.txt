@@ -61,6 +61,7 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/globalization_strategies/switching_methods/filter_methods/filters/*.cpp
    uno/ingredients/globalization_strategies/switching_methods/funnel_methods/*.cpp
    uno/ingredients/hessian_models/*.cpp
+   uno/ingredients/hessian_models/quasi_newton/*.cpp
    uno/ingredients/inequality_handling_methods/*.cpp
    uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
    uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
@@ -83,6 +84,7 @@ file(GLOB TESTS_UNO_SOURCE_FILES
    unotest/unit_tests/ConcatenationTests.cpp
    unotest/unit_tests/COOSparseStorageTests.cpp
    unotest/unit_tests/CSCSparseStorageTests.cpp
+   unotest/unit_tests/DenseMatrixTests.cpp
    unotest/unit_tests/RangeTests.cpp
    unotest/unit_tests/ScalarMultipleTests.cpp
    unotest/unit_tests/SparseVectorTests.cpp

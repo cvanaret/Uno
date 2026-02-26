@@ -7,6 +7,9 @@
 #include <cstddef>
 #include <cassert>
 #include "BLAS.hpp"
+#include "symbolic/Range.hpp"
+#include "symbolic/ScalarMultiple.hpp"
+#include "symbolic/Subtraction.hpp"
 
 namespace uno {
    // constant contiguous array in memory on which BLAS can be called
@@ -32,7 +35,7 @@ namespace uno {
    public:
       MutableBLASVector() = default;
 
-      // specialized operator= when the other vector has the member function data()
+      // specialized operation y = x, when the other vector has the member function data()
       template <typename Vector, decltype(Vector{}.data()) = true>
       auto operator=(const Vector& other) {
          assert(other.size() <= this->size() && "The other vector is larger than the current vector");
@@ -42,17 +45,49 @@ namespace uno {
          return *this;
       }
 
-      // generic operator= for arbitrary expressions
-      template <typename Expression>
-      MutableBLASVector& operator=(const Expression& expression) {
-         static_assert(std::is_same_v<typename Expression::value_type, T>);
-         assert(expression.size() <= this->size() && "The expression is larger than the current vector");
-         for (size_t index: Range(expression.size())) {
-            this->operator[](index) = expression[index];
+      // generic operation y = x
+      template <typename Vector>
+      MutableBLASVector& operator=(const Vector& other) {
+         static_assert(std::is_same_v<typename Vector::value_type, T>);
+         assert(other.size() <= this->size() && "The expression is larger than the current vector");
+         for (size_t index: Range(other.size())) {
+            this->operator[](index) = other[index];
          }
          return *this;
       }
 
+      // specialized operation y = a * x
+      // note: no BLAS operation available
+      template <typename Vector>
+      MutableBLASVector& operator=(ScalarMultiple<Vector>&& other) {
+         assert(other.get_expression().size() <= this->size() && "The other vector is larger than the current vector");
+         for (size_t index: Range(this->size())) {
+            this->operator[](index) = other.get_factor() * other.get_expression()[index];
+         }
+         return *this;
+      }
+
+      // specialized operation y = x - z
+      // note: no BLAS operation available
+      template <typename Vector>
+      MutableBLASVector& operator=(Subtraction<Vector, Vector>&& other) {
+         *this = other.get_expression1();
+         *this -= other.get_expression2();
+         return *this;
+      }
+
+      // specialized operation y += a * x
+      template <typename Vector>
+      MutableBLASVector& operator+=(ScalarMultiple<Vector>&& other) {
+         assert(other.size() <= this->size() && "The other vector is larger than the current vector");
+         const int size = static_cast<int>(this->size());
+         const double factor = other.get_factor();
+         constexpr int increment = 1;
+         BLAS_add_vectors(&size, &factor, other.get_expression().data(), &increment, this->data(), &increment);
+         return *this;
+      }
+
+      // generic operation y += x
       template <typename Vector>
       MutableBLASVector& operator+=(const Vector& other) {
          assert(other.size() <= this->size() && "The other vector is larger than the current vector");
@@ -91,6 +126,12 @@ namespace uno {
       const int size = static_cast<int>(std::min(x.size(), y.size()));
       constexpr int increment = 1;
       return BLAS_dot_product(&size, x.data(), &increment, y.data(), &increment);
+   }
+
+   inline double dot(const BLASVector<double>& x, const double* y) {
+      const int size = static_cast<int>(x.size());
+      constexpr int increment = 1;
+      return BLAS_dot_product(&size, x.data(), &increment, y, &increment);
    }
 } // namespace
 
