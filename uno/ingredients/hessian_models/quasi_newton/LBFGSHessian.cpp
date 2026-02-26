@@ -207,9 +207,8 @@ namespace uno {
       /* update V and U */
       // update the current column of V = Y D^{-1/2}
       this->V.column(this->current_index) = this->invsqrt_D[this->current_index] * this->Y.column(this->current_index);
-      // U = S
+      // form U = delta S + V * L_invsqrt_D^T
       this->U = this->S;
-      // U = delta S + V * L_invsqrt_D^T
       this->U = this->delta * this->U + this->V * transpose(this->L_invsqrt_D);
 
       DEBUG << "> W: " << this->U;

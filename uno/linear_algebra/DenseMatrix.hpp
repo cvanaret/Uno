@@ -24,6 +24,8 @@ namespace uno {
 
       DenseMatrix(size_t number_rows, size_t number_columns);
 
+      // TODO somehow, we cannot call BLAS_copy_vector and BLAS_matrix_matrix_product with const pointers to the matrices
+
       // copy an existing matrix into this object
       DenseMatrix& operator=(DenseMatrix& other) {
          assert(other.number_rows == this->number_rows && other.number_columns == this->number_columns);
@@ -58,14 +60,14 @@ namespace uno {
          const char transa = 'N'; // A
          const char transb = 'T'; // B^T
          const int m = static_cast<int>(A.number_rows); // number of rows of A
-         const int n = static_cast<int>(B.number_rows); // number of columns of B^T
+         const int n = static_cast<int>(B.number_rows); // number of columns of B^T/number of rows of B
          const int k = static_cast<int>(A.number_columns); // number of columns of A
          constexpr double alpha = 1.;
          const int lda = static_cast<int>(A.number_rows); // leading dimension of A
          const int ldb = static_cast<int>(B.number_rows); // leading dimension of B
          const int ldc = static_cast<int>(this->number_rows); // leading dimension of C/this
-         BLAS_matrix_matrix_product(&transa, &transb, &m, &n, &k, &alpha, A.data(), &lda, B.data(), &ldb,
-            &beta, this->data(), &ldc);
+         BLAS_matrix_matrix_product(&transa, &transb, &m, &n, &k, &alpha, A.data(), &lda, B.data(), &ldb, &beta,
+            this->data(), &ldc);
          return *this;
       }
 

@@ -4,7 +4,6 @@
 #ifndef UNO_TRANSPOSE_H
 #define UNO_TRANSPOSE_H
 
-#include <cstddef>
 #include <utility>
 
 namespace uno {
@@ -14,10 +13,6 @@ namespace uno {
       using value_type = typename std::remove_reference_t<Matrix>::value_type;
 
       explicit Transpose(Matrix&& matrix): matrix(std::forward<Matrix>(matrix)) { }
-
-      [[nodiscard]] constexpr size_t size() const {
-         return this->matrix.size();
-      }
 
       [[nodiscard]] const Matrix& get_matrix() const {
          return this->matrix;

@@ -7,38 +7,34 @@
 #include <utility>
 
 namespace uno {
-   // stores the expression (expression1 * expression2) symbolically
-   // limited to types that possess value_type
-   // https://stackoverflow.com/questions/11055923/stdenable-if-parameter-vs-template-parameter
-   template <typename E1, typename E2,
-      typename std::enable_if_t<std::is_same_v<typename std::remove_reference_t<E1>::value_type, typename std::remove_reference_t<E2>::value_type>, int> = 0>
+   // stores the expression (matrix1 * matrix2) symbolically
+   template <typename Matrix1, typename Matrix2,
+      typename std::enable_if_t<std::is_same_v<typename std::remove_reference_t<Matrix1>::value_type, typename std::remove_reference_t<Matrix2>::value_type>, int> = 0>
    class Multiplication {
    public:
-      using value_type = typename std::remove_reference_t<E1>::value_type;
+      using value_type = typename std::remove_reference_t<Matrix1>::value_type;
 
-      Multiplication(E1&& expression1, E2&& expression2): expression1(std::forward<E1>(expression1)), expression2(std::forward<E2>(expression2)) { }
-
-      [[nodiscard]] constexpr size_t size() const {
-         return this->expression1.size();
+      Multiplication(Matrix1&& expression1, Matrix2&& matrix2):
+            matrix1(std::forward<Matrix1>(expression1)), matrix2(std::forward<Matrix2>(matrix2)) {
       }
 
-      [[nodiscard]] const E1& get_left() const {
-         return this->expression1;
+      [[nodiscard]] const Matrix1& get_left() const {
+         return this->matrix1;
       }
 
-      [[nodiscard]] const E2& get_right() const {
-         return this->expression2;
+      [[nodiscard]] const Matrix2& get_right() const {
+         return this->matrix2;
       }
 
    protected:
-      const E1 expression1;
-      const E2 expression2;
+      const Matrix1 matrix1;
+      const Matrix2 matrix2;
    };
 
    // free function
-   template <typename E1, typename E2>
-   inline Multiplication<E1, E2> operator*(E1&& expression1, E2&& expression2) {
-      return {std::forward<E1>(expression1), std::forward<E2>(expression2)};
+   template <typename Matrix1, typename Matrix2>
+   inline Multiplication<Matrix1, Matrix2> operator*(Matrix1&& matrix1, Matrix2&& matrix2) {
+      return {std::forward<Matrix1>(matrix1), std::forward<Matrix2>(matrix2)};
    }
 } // namespace
 
