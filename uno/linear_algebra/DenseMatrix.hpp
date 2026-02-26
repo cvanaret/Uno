@@ -7,63 +7,10 @@
 #include <cassert>
 #include <ostream>
 #include <vector>
-
 #include "VectorView.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
-   // MatrixType can be const DenseMatrix (read-only) or DenseMatrix (writable)
-   template <typename MatrixType>
-   class DenseColumn {
-   public:
-      using value_type = typename std::remove_reference_t<MatrixType>::value_type;
-
-      DenseColumn(MatrixType& matrix, size_t column_index): matrix(matrix), column_index(column_index) {
-      }
-
-      template <typename Expression>
-      DenseColumn& operator=(Expression&& expression) {
-         static_assert(std::is_same_v<typename std::remove_reference_t<Expression>::value_type, value_type>);
-         for (size_t index: Range(this->size())) {
-            this->operator[](index) = expression[index];
-         }
-         return *this;
-      }
-
-      template <typename Expression>
-      DenseColumn& operator+=(Expression&& expression) {
-         static_assert(std::is_same_v<typename std::remove_reference_t<Expression>::value_type, value_type>);
-         for (size_t index: Range(this->size())) {
-            this->operator[](index) += expression[index];
-         }
-         return *this;
-      }
-
-      [[nodiscard]] size_t size() const {
-         return this->matrix.get_number_rows();
-      }
-
-      [[nodiscard]] value_type& operator[](size_t row_index) {
-         return this->matrix.entry(row_index, this->column_index);
-      }
-
-      [[nodiscard]] const value_type& operator[](size_t row_index) const {
-         return this->matrix.entry(row_index, this->column_index);
-      }
-
-      value_type* data() {
-         return this->matrix.data() + this->column_index * this->matrix.get_number_rows();
-      }
-
-      const value_type* data() const {
-         return this->matrix.data() + this->column_index * this->matrix.get_number_rows();
-      }
-
-   protected:
-      MatrixType& matrix;
-      const size_t column_index;
-   };
-
    enum class MatrixShape {
       GENERAL,
       LOWER_TRIANGULAR,
