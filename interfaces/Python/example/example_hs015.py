@@ -76,24 +76,26 @@ if __name__ == '__main__':
 	model.set_objective(optimization_sense, objective, objective_gradient)
 	model.set_constraints(number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds,
 	  number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, jacobian)
-	model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
-		hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
-	#model.set_lagrangian_hessian_operator(lagrangian_hessian_operator, lagrangian_sign_convention)
 	model.set_initial_primal_iterate(x0)
 	model.set_user_data(user_data)
-	
+
+	# solver creation
 	uno_solver = unopy.UnoSolver()
-	
-	# solve with the filtersqp preset
 	uno_solver.set_preset("filtersqp")
 	uno_solver.set_option("QP_solver", "BQPD")
-	result = uno_solver.optimize(model)
 
-	# optimization summary
-	print("\nReading optimization summary from Python:")
-	print("Number of iterations:", result.optimization_status)
-	print("Number of iterations:", result.solution_status)
+	# run 1: solve with the filtersqp preset with no exact Hessian. Uno defaults to L-BFGS Hessian for NLPs
+	result = uno_solver.optimize(model)
 	print("Objective at solution:", result.solution_objective)
+
+	# run 2: solve with the filtersqp preset with exact Hessian
+	model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
+	  hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
+	result = uno_solver.optimize(model)
+	print("Objective at solution:", result.solution_objective)
+	# optimization summary
+	print("Optimization status:", result.optimization_status)
+	print("Solution status:", result.solution_status)
 	print("Primal feasibility at solution:", result.solution_primal_feasibility)
 	print("Stationarity at solution:", result.solution_stationarity)
 	print("Complementarity at solution:", result.solution_complementarity)
@@ -111,13 +113,13 @@ if __name__ == '__main__':
 	print("Number of subproblems solved:", result.number_subproblems_solved)
 	assert abs(result.solution_objective - 306.5) <= 1e-4
 
-	# solve with the ipopt preset
+	# run 3: solve with the ipopt preset
 	uno_solver.set_preset("ipopt")
 	uno_solver.set_option("linear_solver", "MUMPS")
 	result = uno_solver.optimize(model)
 	assert abs(result.solution_objective - 306.5) <= 1e-4
 	
-	# solve with the filterslp preset
+	# run 4: solve with the filterslp preset
 	uno_solver.set_preset("filterslp")
 	uno_solver.set_option("LP_solver", "HiGHS")
 	result = uno_solver.optimize(model)
