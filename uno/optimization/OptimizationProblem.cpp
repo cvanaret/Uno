@@ -69,23 +69,9 @@ namespace uno {
    }
 
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
-   // split in two parts: objective contribution and constraints' contribution
-   void OptimizationProblem::evaluate_lagrangian_gradient(Vector<double>& lagrangian_gradient,
-         const Iterate& iterate, Evaluations& evaluations) const {
-      lagrangian_gradient.fill(0.);
-
-      // ∇c(x_k) λ_k
-      evaluations.evaluate_jacobian(this->model, iterate.primals);
-      evaluations.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints, lagrangian_gradient);
-      lagrangian_gradient.scale(-1.);
-
-      // ∇f(x_k)
-      evaluations.evaluate_objective_gradient(this->model, iterate.primals);
-      view(lagrangian_gradient, 0, this->number_variables) += evaluations.objective_gradient;
-
-      // z_k
-      view(lagrangian_gradient, 0, this->number_variables) -= view(iterate.multipliers.lower_bounds, 0, this->number_variables);
-      view(lagrangian_gradient, 0, this->number_variables) -= view(iterate.multipliers.upper_bounds, 0, this->number_variables);
+   void OptimizationProblem::evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
+         Vector<double>& lagrangian_gradient) const {
+      this->model.evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers, 1., evaluations, lagrangian_gradient);
    }
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,

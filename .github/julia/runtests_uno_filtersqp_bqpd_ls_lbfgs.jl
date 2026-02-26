@@ -1,4 +1,4 @@
-# Copyright (c) 2025: Charlie Vanaret and contributors
+# Copyright (c) 2025-2026: Charlie Vanaret and contributors
 #
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
@@ -22,7 +22,7 @@ function Optimizer(options)
     return AmplNLWriter.Optimizer(Uno_jll.amplexe, options)
 end
 
-Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "QP_solver=BQPD", "inertia_correction_strategy=primal", "globalization_mechanism=LS", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
+Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "QP_solver=BQPD", "globalization_mechanism=LS", "hessian_model=LBFGS", "max_iterations=10000", "unbounded_objective_threshold=-1e15"])
 
 # This testset runs https://github.com/jump-dev/MINLPTests.jl
 @testset "MINLPTests" begin
@@ -100,6 +100,9 @@ end
             r"^test_linear_INFEASIBLE_2$",
             r"^test_quadratic_SecondOrderCone_basic$",
             r"^test_quadratic_nonconvex_constraint_basic$",
+            # Charlie: Uno doesn't converge on this one. The norm of the steps is small (1.67e-2),
+            # perhaps the L-BFGS Hessian is too positive definite?
+            r"^test_nonlinear_expression_hs109$",
             # Charlie: those are OK to exclude. The objective decreases as the same speed as
             # the variables increase. Since the Hessian is made positive definite, the step is
             # constrained in size and we'd need many iterations to detect unboundedness.

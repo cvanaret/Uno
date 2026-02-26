@@ -18,7 +18,7 @@ namespace uno {
          ConstraintRelaxationStrategy(options),
          original_problem(model),
          inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
-         hessian_model(HessianModelFactory::create(model, options)),
+         hessian_model(HessianModelFactory::create(model, 1., options)),
          inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
          globalization_strategy(options) {
    }
@@ -33,6 +33,7 @@ namespace uno {
       // statistics
       this->inertia_correction_strategy->initialize_statistics(statistics);
       this->inequality_handling_method->initialize_statistics(statistics);
+      this->hessian_model->initialize_statistics(statistics);
 
       // initial iterate
       this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache);
@@ -68,6 +69,9 @@ namespace uno {
          current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
       this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
+      if (accept_iterate) {
+         this->hessian_model->notify_accepted_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
+      }
       warmstart_information.no_changes();
       return accept_iterate;
    }

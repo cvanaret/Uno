@@ -16,15 +16,15 @@ namespace uno {
    // forward declarations
    template <typename ElementType>
    class Collection;
+   class Evaluations;
+   class Iterate;
+   class Multipliers;
    template <typename ElementType>
    class SparseVector;
    template <typename ElementType>
    class Vector;
 
    enum FunctionType {LINEAR, NONLINEAR};
-
-   // forward declaration
-   class Iterate;
 
    class Model {
    public:
@@ -58,8 +58,12 @@ namespace uno {
          MatrixOrder matrix_order) const = 0;
       virtual void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const = 0;
 
-      // numerical evaluations of Jacobian and Hessian
+      // numerical evaluations of Jacobian
       virtual void evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const = 0;
+
+      // numerical evaluations of Lagrangian gradient and Hessian
+      void evaluate_lagrangian_gradient(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
+         Evaluations& evaluations, Vector<double>& lagrangian_gradient) const;
       virtual void evaluate_lagrangian_hessian(const Vector<double>& x, double objective_multiplier, const Vector<double>& multipliers,
          double* hessian_values) const = 0;
 

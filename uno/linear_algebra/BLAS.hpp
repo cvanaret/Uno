@@ -10,7 +10,7 @@
 #define BLAS_add_vectors FC_GLOBAL_(daxpy, DAXPY)
 #define BLAS_dot_product FC_GLOBAL_(ddot, DDOT)
 #define BLAS_triangular_back_solve FC_GLOBAL_(dtrsm, DTRSM)
-//#define BLAS_matrix_matrix_product FC_GLOBAL_(dgemm, DGEMM)
+#define BLAS_matrix_matrix_product FC_GLOBAL_(dgemm, DGEMM)
 #define BLAS_triangular_matrix_matrix_product FC_GLOBAL_(dtrmm, DTRMM)
 
 extern "C" {
@@ -32,13 +32,16 @@ extern "C" {
    // where
    // op(A) = A   or   op(A) = A^T
    // X is overwritten on B
-   void BLAS_triangular_back_solve(char* side, char* uplo, char* transa, char* diag, int* m, int* n, double* alpha,
-      double* a, int* lda, double* b, int* ldb);
+   void BLAS_triangular_back_solve(const char* side, const char* uplo, const char* transa, const char* diag, const int* m,
+      const int* n, const double* alpha, const double* a, const int* lda, double* b, const int* ldb);
 
-   /*
-   void BLAS_matrix_matrix_product(char* transa, char* transb, int* m, int* n, int* k, double* alpha, double* a,
-      int* lda, double* b, int* ldb, double* beta, double* c, int* ldc);
-   */
+   // performs one of the matrix-matrix operations
+   // C := alpha op(A) op(B) + beta C,
+   // where
+   // op(X) = X   or   op(X) = X^T
+   void BLAS_matrix_matrix_product(const char* transa, const char* transb, const int* m, const int* n, const int* k,
+      const double* alpha, const double* a, const int* lda, const double* b, const int* ldb, const double* beta,
+      double* c, const int* ldc);
 
    void BLAS_triangular_matrix_matrix_product(char* side, char* uplo, char* transa, char* diag, int* m, int* n,
       double* alpha, double* a, int* lda, double* b, int* ldb);

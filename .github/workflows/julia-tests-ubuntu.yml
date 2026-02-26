@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        UNO_PRESET: [uno_filtersqp_bqpd, uno_filtersqp_highs, uno_filtersqp_bqpd_identity, uno_filtersqp_bqpd_regularization_tr, uno_filtersqp_bqpd_regularization_ls, uno_ipopt_mumps, uno_ipopt_mumps_identity, uno_filterslp_bqpd, uno_filterslp_highs, uno_filtersqp_bqpd_charlies_instances]
+        UNO_PRESET: [uno_filtersqp_bqpd, uno_filtersqp_highs, uno_filtersqp_bqpd_identity, uno_filtersqp_bqpd_regularization_tr, uno_filtersqp_bqpd_regularization_ls, uno_filtersqp_bqpd_ls_lbfgs, uno_ipopt_mumps, uno_ipopt_mumps_identity, uno_filterslp_bqpd, uno_filterslp_highs, uno_filtersqp_bqpd_charlies_instances]
     name: Julia tests of ${{matrix.UNO_PRESET}} - ${{ github.event_name }}
     
     steps:
@@ -35,6 +35,7 @@ jobs:
           version: "1.7"
           arch: x64
       - uses: julia-actions/cache@v2
+
       # Set environment variables required by BinaryBuilder.
       - name: Set the environment variables
         run: |
@@ -47,16 +48,19 @@ jobs:
             echo "UNO_COMMIT=${{ github.sha }}" >> $GITHUB_ENV
             echo "UNO_URL=https://github.com/${{ github.repository }}.git" >> $GITHUB_ENV
           fi
+
       - name: Compile Uno_jll.jl
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
           julia --color=yes .github/julia/build_tarballs_yggdrasil.jl x86_64-linux-gnu-cxx11 --verbose --deploy="local"
+
       # Now install a newer version of Julia to actually test Uno_jll.jl.
       # We choose v1.10 because it is the current Long-Term Support (LTS).
       - uses: julia-actions/setup-julia@v2
         with:
           version: "1.10"
           arch: x64
+
       - name: Test ${{matrix.UNO_PRESET}} preset on .github/julia/runtests.jl
         shell: julia --color=yes --project=.github/julia {0}
         run: |

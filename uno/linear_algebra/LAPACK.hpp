@@ -12,13 +12,13 @@ extern "C" {
    // perform Cholesky factorization of A
    // A = U^T U    or
    // A = L L^T
-   void LAPACK_cholesky_factorization(char* uplo, int* n, double* a, int* lda, int* info);
+   void LAPACK_cholesky_factorization(const char* uplo, const int* n, double* a, const int* lda, int* info);
 
    // performs symmetric rank k update:
    // C = alpha A A^T + beta C    or
    // C = alpha A^T A + beta C
-   void LAPACK_symmetric_high_rank_update(char* uplo, char* trans, int* n, int* k, double* alpha, double* a, int* lda,
-      double* beta, double* c, int* ldc);
+   void LAPACK_symmetric_high_rank_update(const char* uplo, const char* trans, const int* n, const int* k, const double* alpha,
+      const double* a, const int* lda, const double* beta, double* c, const int* ldc);
 }
 
 #endif // UNO_LAPACK_H

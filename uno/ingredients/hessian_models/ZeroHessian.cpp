@@ -32,6 +32,13 @@ namespace uno {
       return false;
    }
 
+   void ZeroHessian::initialize_statistics(Statistics& /*statistics*/) const {
+   }
+
+   void ZeroHessian::notify_accepted_iterate(Statistics& /*statistics*/, const Iterate& /*current_iterate*/,
+         const Iterate& /*trial_iterate*/, EvaluationCache& /*evaluation_cache*/) {
+   }
+
    void ZeroHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
       // do nothing

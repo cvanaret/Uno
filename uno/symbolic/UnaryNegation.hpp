@@ -4,6 +4,8 @@
 #ifndef UNO_UNARYNEGATION_H
 #define UNO_UNARYNEGATION_H
 
+#include <cstddef>
+
 namespace uno {
    // stores the expression -expression symbolically
    // limited to types that possess value_type
@@ -15,8 +17,13 @@ namespace uno {
 
       explicit UnaryNegation(Expression&& expression): expression(std::forward<Expression>(expression)) { }
 
-      [[nodiscard]] constexpr size_t size() const { return this->expression.size(); }
-      [[nodiscard]] typename UnaryNegation::value_type operator[](size_t index) const { return -this->expression[index]; }
+      [[nodiscard]] constexpr size_t size() const {
+         return this->expression.size();
+      }
+
+      [[nodiscard]] typename UnaryNegation::value_type operator[](size_t index) const {
+         return -this->expression[index];
+      }
 
    protected:
       const Expression expression;
