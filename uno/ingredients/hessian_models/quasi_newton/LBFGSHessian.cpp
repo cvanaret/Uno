@@ -202,17 +202,23 @@ namespace uno {
 
       /*/ compute the Cholesky factor J of M = J J^T */
       LBFGSHessian::compute_cholesky_factors(this->M, this->number_entries_in_memory, this->memory_size); // J overwrites M
-      DenseMatrix<double>& J = this->M; // J overwrites M
-      DEBUG << "> J: " << J;
+      DEBUG << "> J: " << this->M;
 
       /* update V and U */
       // update the current column of V = Y D^{-1/2}
       this->V.column(this->current_index) = this->invsqrt_D[this->current_index] * this->Y.column(this->current_index);
       // form U = (δ S + Y D⁻¹ Lᵀ) J⁻ᵀ
-      this->U = this->S;
-      this->U = this->delta * this->U + this->V * transpose(this->L_invsqrt_D);
+      // note: some matrices were allocated with the maximum memory size. Work with submatrices (of size
+      // this->number_entries_in_memory instead of this->memory_size)
+      const auto Sk = this->S.submatrix(this->model.number_variables, this->number_entries_in_memory);
+      const auto L_invsqrt_D_k = this->L_invsqrt_D.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
+      const auto Jk = this->M.submatrix(this->number_entries_in_memory, this->number_entries_in_memory); // J overwrites M
+      auto Uk = this->U.submatrix(this->model.number_variables, this->number_entries_in_memory);
+      auto Vk = this->V.submatrix(this->model.number_variables, this->number_entries_in_memory);
+      Uk = Sk;
+      Uk = this->delta * Uk + Vk * transpose(L_invsqrt_D_k);
       DEBUG << "> U: " << this->U;
-      this->U *= transpose(inverse(J));
+      Uk *= transpose(inverse(Jk));
       DEBUG << "> U: " << this->U;
       DEBUG << "> V: " << this->V << '\n';
 
