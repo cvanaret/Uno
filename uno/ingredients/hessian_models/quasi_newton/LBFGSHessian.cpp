@@ -10,9 +10,12 @@
 #include "linear_algebra/VectorView.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/Multiplication.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/Subtraction.hpp"
+#include "symbolic/Sum.hpp"
+#include "symbolic/Transpose.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
@@ -26,9 +29,9 @@ namespace uno {
          S(this->model.number_variables, this->memory_size),
          Y(this->model.number_variables, this->memory_size),
          L(this->memory_size, this->memory_size),
-         Ltilde(this->memory_size, this->memory_size),
          D(this->memory_size),
          invsqrt_D(this->memory_size),
+         L_invsqrt_D(this->memory_size, this->memory_size),
          M(this->memory_size, this->memory_size),
          U(this->model.number_variables, this->memory_size),
          V(this->model.number_variables, this->memory_size),
@@ -172,26 +175,26 @@ namespace uno {
       this->delta = this->compute_delta();
       DEBUG << "Initial identity multiple: " << this->delta << "\n";
 
-      /* update the entries of L and Ltilde = L D^{-1/2} */
+      /* update the entries of L and L_invsqrt_D = L D^{-1/2} */
       // update invsqrt_D = 1/sqrt_D
       this->invsqrt_D[this->current_index] = 1./std::sqrt(this->D[this->current_index]);
-      // the entries of L and Ltilde = L D^{-1/2} depend on this->current_index (1 row and 1 column, possibly empty)
+      // the entries of L and L_invsqrt_D depend on this->current_index (1 row and 1 column, possibly empty)
       // row this->current_index
       for (size_t column_index: Range(this->current_index)) {
          this->L.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
-         this->Ltilde.entry(this->current_index, column_index) = this->invsqrt_D[column_index] * this->L.entry(this->current_index, column_index);
+         this->L_invsqrt_D.entry(this->current_index, column_index) = this->invsqrt_D[column_index] * this->L.entry(this->current_index, column_index);
       }
       // column this->current_index
       for (size_t row_index: Range(this->current_index+1, this->number_entries_in_memory)) {
          this->L.entry(row_index, this->current_index) = dot(this->S.column(row_index), this->Y.column(this->current_index));
-         this->Ltilde.entry(row_index, this->current_index) = this->invsqrt_D[this->current_index] * this->L.entry(row_index, this->current_index);
+         this->L_invsqrt_D.entry(row_index, this->current_index) = this->invsqrt_D[this->current_index] * this->L.entry(row_index, this->current_index);
       }
       DEBUG << "> L: " << this->L;
-      DEBUG << "> Ltilde: " << this->Ltilde;
+      DEBUG << "> L_invsqrt_D: " << this->L_invsqrt_D;
 
-      /* form M = L D^{-1} L^T + S^T B0 S = Ltilde Ltilde^T + delta S^T S */
-      LBFGSHessian::perform_high_rank_update(this->M, this->number_entries_in_memory, this->memory_size, this->Ltilde,
-         this->number_entries_in_memory, this->memory_size, 1., 0.); // Ltilde Ltilde^T
+      /* form M = L D^{-1} L^T + S^T B0 S = L_invsqrt_D L_invsqrt_D^T + delta S^T S */
+      LBFGSHessian::perform_high_rank_update(this->M, this->number_entries_in_memory, this->memory_size, this->L_invsqrt_D,
+         this->number_entries_in_memory, this->memory_size, 1., 0.); // L_invsqrt_D L_invsqrt_D^T
       LBFGSHessian::perform_high_rank_update_transpose(this->M, this->number_entries_in_memory, this->memory_size,
          this->S, this->number_entries_in_memory, this->model.number_variables, this->delta, 1.); // delta S^T S
       DEBUG << "> M: " << this->M;
@@ -206,18 +209,9 @@ namespace uno {
       this->V.column(this->current_index) = this->invsqrt_D[this->current_index] * this->Y.column(this->current_index);
       // U = S
       this->U = this->S;
-      // U = delta S + V * Ltilde^T
-      const char transa = 'N';
-      const char transb = 'T';
-      const int m = static_cast<int>(this->model.number_variables); // number of rows of V
-      const int n = static_cast<int>(this->number_entries_in_memory); // number of columns of Ltilde^T
-      const int k = static_cast<int>(this->number_entries_in_memory); // number of columns of V
-      constexpr double alpha = 1.;
-      const int lda = static_cast<int>(this->model.number_variables); // leading dimension of V
-      const int ldb = static_cast<int>(this->memory_size); // leading dimension of Ltilde
-      const int ldc = static_cast<int>(this->model.number_variables); // leading dimension of U
-      BLAS_matrix_matrix_product(&transa, &transb, &m, &n, &k, &alpha, this->V.data(), &lda, this->Ltilde.data(), &ldb,
-         &this->delta, this->U.data(), &ldc);
+      // U = delta S + V * L_invsqrt_D^T
+      this->U = this->delta * this->U + this->V * transpose(this->L_invsqrt_D);
+
       DEBUG << "> W: " << this->U;
       // solve U J^T = W wrt U (X op(A) = alpha B with A = J, op(A) = A^T, alpha = 1, B = W)
       {
@@ -253,7 +247,7 @@ namespace uno {
    // performs symmetric rank k update
    // C = alpha A A^T + beta C
    void LBFGSHessian::perform_high_rank_update(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
-         DenseMatrix<double, MatrixShape::LOWER_TRIANGULAR>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta) {
+         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta) {
       DEBUG << "Performing rank " << correction_rank << " update\n";
       char uplo = 'L'; // lower triangular
       char trans = 'N';

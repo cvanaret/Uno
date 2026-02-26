@@ -50,10 +50,10 @@ namespace uno {
       // limited memory
       DenseMatrix<double> S;
       DenseMatrix<double> Y;
-      DenseMatrix<double, MatrixShape::LOWER_TRIANGULAR> L;
-      DenseMatrix<double, MatrixShape::LOWER_TRIANGULAR> Ltilde;
+      DenseMatrix<double> L; // lower triangular
       std::vector<double> D; // diagonal
       std::vector<double> invsqrt_D; // diagonal
+      DenseMatrix<double> L_invsqrt_D; // lower triangular
       DenseMatrix<double> M;
       // Hessian representation: Bk = B0 - U U^T + V V^T where B0 = delta I
       DenseMatrix<double> U;
@@ -70,7 +70,7 @@ namespace uno {
       [[nodiscard]] double compute_delta() const;
 
       static void perform_high_rank_update(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
-         DenseMatrix<double, MatrixShape::LOWER_TRIANGULAR>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta);
+         DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta);
       static void perform_high_rank_update_transpose(DenseMatrix<double>& matrix, size_t matrix_dimension, size_t matrix_leading_dimension,
          DenseMatrix<double>& high_rank_correction, size_t correction_rank, size_t correction_leading_dimension, double alpha, double beta);
       static void compute_cholesky_factors(DenseMatrix<double>& matrix, size_t dimension, size_t leading_dimension);
