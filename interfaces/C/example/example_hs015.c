@@ -121,11 +121,11 @@ int main() {
       // run 1: solve with no Hessian. Uno defaults to L-BFGS Hessian for NLPs
       uno_optimize(solver, model);
       // get the solution
-      const uno_int optimization_status = uno_get_optimization_status(solver);
+      uno_int optimization_status = uno_get_optimization_status(solver);
       assert(optimization_status == UNO_SUCCESS);
-      const uno_int iterate_status = uno_get_solution_status(solver);
+      uno_int iterate_status = uno_get_solution_status(solver);
       assert(iterate_status == UNO_FEASIBLE_KKT_POINT);
-      const double solution_objective = uno_get_solution_objective(solver);
+      double solution_objective = uno_get_solution_objective(solver);
       printf("Solution objective = %g\n", solution_objective);
 
       // run 2: solve with exact Hessian
