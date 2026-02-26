@@ -10,6 +10,7 @@
 #include "linear_algebra/VectorView.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/Inverse.hpp"
 #include "symbolic/Multiplication.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/ScalarMultiple.hpp"
@@ -201,31 +202,17 @@ namespace uno {
 
       /*/ compute the Cholesky factor J of M = J J^T */
       LBFGSHessian::compute_cholesky_factors(this->M, this->number_entries_in_memory, this->memory_size); // J overwrites M
-      DenseMatrix<double>& J_matrix = this->M;
-      DEBUG << "> J: " << J_matrix;
+      DenseMatrix<double>& J = this->M; // J overwrites M
+      DEBUG << "> J: " << J;
 
       /* update V and U */
       // update the current column of V = Y D^{-1/2}
       this->V.column(this->current_index) = this->invsqrt_D[this->current_index] * this->Y.column(this->current_index);
-      // form U = delta S + V * L_invsqrt_D^T
+      // form U = (δ S + Y D⁻¹ Lᵀ) J⁻ᵀ
       this->U = this->S;
       this->U = this->delta * this->U + this->V * transpose(this->L_invsqrt_D);
-
-      DEBUG << "> W: " << this->U;
-      // solve U J^T = W wrt U (X op(A) = alpha B with A = J, op(A) = A^T, alpha = 1, B = W)
-      {
-         char side = 'R'; // X op(A) = alpha B
-         char uplo = 'L'; // J is lower triangular
-         char transa = 'T'; // op(A) = A^T
-         char diag = 'N';
-         int m = static_cast<int>(this->model.number_variables); // number of rows of W
-         int n = static_cast<int>(this->number_entries_in_memory); // number of columns of W
-         double alpha = 1.;
-         int lda = static_cast<int>(this->memory_size); // leading dimension of J
-         int ldb = static_cast<int>(this->model.number_variables); // leading dimension of W
-         BLAS_triangular_back_solve(&side, &uplo, &transa, &diag, &m, &n, &alpha, J_matrix.data(), &lda,
-            this->U.data(), &ldb);
-      }
+      DEBUG << "> U: " << this->U;
+      this->U *= transpose(inverse(J));
       DEBUG << "> U: " << this->U;
       DEBUG << "> V: " << this->V << '\n';
 
@@ -284,5 +271,6 @@ namespace uno {
       int M_leading_dimension = static_cast<int>(leading_dimension);
       LAPACK_cholesky_factorization(&uplo, &M_dimension, matrix.data(), &M_leading_dimension, &info);
       DEBUG << "Cholesky info: " << info << '\n';
+      assert(info == 0);
    }
 } // namespace

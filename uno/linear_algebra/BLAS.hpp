@@ -32,8 +32,8 @@ extern "C" {
    // where
    // op(A) = A   or   op(A) = A^T
    // X is overwritten on B
-   void BLAS_triangular_back_solve(char* side, char* uplo, char* transa, char* diag, int* m, int* n, double* alpha,
-      double* a, int* lda, double* b, int* ldb);
+   void BLAS_triangular_back_solve(const char* side, const char* uplo, const char* transa, const char* diag, const int* m,
+      const int* n, const double* alpha, const double* a, const int* lda, double* b, const int* ldb);
 
    // performs one of the matrix-matrix operations
    // C := alpha op(A) op(B) + beta C,

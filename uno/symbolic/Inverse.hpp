@@ -1,18 +1,18 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_TRANSPOSE_H
-#define UNO_TRANSPOSE_H
+#ifndef UNO_INVERSE_H
+#define UNO_INVERSE_H
 
 #include <utility>
 
 namespace uno {
    template <typename Matrix>
-   class Transpose {
+   class Inverse {
    public:
       using value_type = typename std::remove_reference_t<Matrix>::value_type;
 
-      explicit Transpose(Matrix&& matrix): matrix(std::forward<Matrix>(matrix)) { }
+      explicit Inverse(Matrix&& matrix): matrix(std::forward<Matrix>(matrix)) { }
 
       [[nodiscard]] const Matrix& get_matrix() const {
          return this->matrix;
@@ -24,9 +24,9 @@ namespace uno {
 
    // free function
    template <typename Matrix>
-   inline Transpose<Matrix> transpose(Matrix&& matrix) {
-      return Transpose<Matrix>(std::forward<Matrix>(matrix));
+   inline Inverse<Matrix> inverse(Matrix&& matrix) {
+      return Inverse<Matrix>(std::forward<Matrix>(matrix));
    }
 } // namespace
 
-#endif // UNO_TRANSPOSE_H
+#endif // UNO_INVERSE_H
