@@ -16,11 +16,19 @@ $$
 
 where $f: \mathbb{R}^n \rightarrow \mathbb{R}$ and $c: \mathbb{R}^n \rightarrow \mathbb{R}^m$ are (ideally twice) continuously differentiable.
 
-Uno unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods that iteratively solve the optimality (KKT) conditions with Newton's method. It breaks them down into a set of building blocks that interact with one another. Our unification framework can be visualized in the following hypergraph (not all are implemented in Uno yet):
+Uno unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods that iteratively solve the optimality (KKT) conditions with Newton's method. It breaks them down into a set of building blocks that interact with one another. Our unification framework can be visualized in the following hypergraph:
 
 <p align="center">
    <img src="docs/figures/wheel.png" alt="Uno hypergraph" width="40%" />
 </p>
+
+Uno currently implements the following strategies:
+* **constraint relaxation strategies**: feasibility restoration;
+* **inequality handling methods**: inequality constrained method, interior-point method;
+* **Hessian models**: exact, L-BFGS, identity, zero;
+* **inertia control strategies**: primal, primal-dual, none;
+* **globalization strategies**: filter method, funnel method, merit function;
+* **globalization mechanisms**: backtracking line search, trust-region method.
 
 You can combine these strategies in a ton of different ways via [options](docs/options.md). Uno also implements **presets**, that is strategy combinations that mimic existing solvers:
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);

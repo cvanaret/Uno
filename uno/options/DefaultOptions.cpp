@@ -34,7 +34,7 @@ namespace uno {
       /** main options **/
       // logging level (SILENT|DISCRETE|WARNING|INFO|DEBUG|DEBUG2|DEBUG3)
       options.set_string("logger", "INFO");
-      // Hessian model (exact|zero)
+      // Hessian model (exact|LBFGS|identity|zero)
       options.set_string("hessian_model", "exact");
       options.set_string("inertia_correction_strategy", "primal");
       // norm of the progress measures (L1|L2|INF)

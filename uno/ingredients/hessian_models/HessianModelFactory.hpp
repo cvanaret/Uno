@@ -17,7 +17,7 @@ namespace uno {
    public:
       static std::unique_ptr<HessianModel> create(const Model& model, double objective_multiplier, const Options& options);
 
-      constexpr static std::array available_strategies{"exact", "identity", "zero"};
+      constexpr static std::array available_strategies{"exact", "LFBGS", "identity", "zero"};
    };
 } // namespace
 
