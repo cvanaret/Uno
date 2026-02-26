@@ -23,11 +23,9 @@ namespace uno {
       using value_type = ElementType;
 
       DenseMatrix(size_t number_rows, size_t number_columns);
-
-      // TODO somehow, we cannot call BLAS_copy_vector and BLAS_matrix_matrix_product with const pointers to the matrices
-
+      
       // copy an existing matrix into this object
-      DenseMatrix& operator=(DenseMatrix& other) {
+      DenseMatrix& operator=(const DenseMatrix& other) {
          assert(other.number_rows == this->number_rows && other.number_columns == this->number_columns);
          const int size = static_cast<int>(this->number_rows * this->number_columns);
          constexpr int increment = 1;
@@ -42,9 +40,9 @@ namespace uno {
       template <typename Matrix1, typename Matrix2, typename Matrix3>
       DenseMatrix& operator=(Sum<ScalarMultiple<Matrix1>, Multiplication<Matrix2, Transpose<Matrix3>>>&& expression) {
          const double beta = expression.get_left().get_factor();
-         auto& C = expression.get_left().get_expression();
-         auto& A = expression.get_right().get_left();
-         auto& B = expression.get_right().get_right().get_matrix();
+         const auto& C = expression.get_left().get_expression();
+         const auto& A = expression.get_right().get_left();
+         const auto& B = expression.get_right().get_right().get_matrix();
          // check that "this" is indeed on the left side of the sum
          if (&C != this) {
             throw std::runtime_error("DenseMatrix::operator= is not defined when C != this");
@@ -78,6 +76,7 @@ namespace uno {
       [[nodiscard]] VectorView<std::vector<double>> column(size_t column_index) const;
 
       [[nodiscard]] ElementType* data();
+      [[nodiscard]] const ElementType* data() const;
       void fill(ElementType value);
       void print(std::ostream& stream) const;
 
@@ -117,6 +116,11 @@ namespace uno {
 
    template <typename ElementType>
    ElementType* DenseMatrix<ElementType>::data() {
+      return this->matrix.data();
+   }
+
+   template <typename ElementType>
+   const ElementType* DenseMatrix<ElementType>::data() const {
       return this->matrix.data();
    }
 
