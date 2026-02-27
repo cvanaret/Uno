@@ -7,7 +7,7 @@
 #include <memory>
 #include <string>
 #include "../BoundConstrainedSolver.hpp"
-#include "DoglegEvaluationSpace.hpp"
+#include "DoglegWorkspace.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
@@ -21,15 +21,16 @@ namespace uno {
 
       void initialize_memory(const Subproblem& subproblem) override;
 
-      void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
-         Direction& direction, const WarmstartInformation& warmstart_information) override;
+      void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
+         const Vector<double>& initial_point, Direction& direction, Evaluations& current_evaluations,
+         const WarmstartInformation& warmstart_information) override;
 
-      [[nodiscard]] EvaluationSpace& get_evaluation_space() override;
+      [[nodiscard]] SolverWorkspace& get_evaluation_space() override;
 
    protected:
       const std::string& linear_solver_name;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
-      DoglegEvaluationSpace evaluation_space{};
+      DoglegWorkspace evaluation_space{};
    };
 } // namespace
 
