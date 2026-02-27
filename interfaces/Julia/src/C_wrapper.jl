@@ -245,7 +245,11 @@ function uno_solver(; kwargs...)
   solver = Solver(c_solver)
 
   # pass options to Uno
+  if haskey(kwargs, :preset)
+    uno_set_solver_preset(solver, kwargs.preset)
+  end
   for (k, v) in kwargs
+    (k == :preset) && continue
     if v isa String
       @assert uno_set_solver_string_option(c_solver, string(k), v)
     elseif v isa Float64
