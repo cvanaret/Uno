@@ -246,7 +246,7 @@ function uno_solver(; kwargs...)
 
   # pass options to Uno
   if haskey(kwargs, :preset)
-    uno_set_solver_preset(solver, kwargs.preset)
+    uno_set_solver_preset(solver, kwargs[:preset])
   end
   for (k, v) in kwargs
     (k == :preset) && continue
