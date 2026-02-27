@@ -1390,7 +1390,7 @@ function MOI.optimize!(model::Optimizer)
 
     # If provided, set the preset before any other options.
     if haskey(model.options, "preset")
-        UnoSolver.uno_set_solver_preset(solver, model.options[preset])
+        UnoSolver.uno_set_solver_preset(solver, model.options["preset"])
     end
 
     # Other misc options that over-ride the ones set above.
