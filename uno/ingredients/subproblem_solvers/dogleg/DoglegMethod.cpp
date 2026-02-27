@@ -19,21 +19,21 @@ namespace uno {
    }
 
    void DoglegMethod::solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
-         const Vector<double>& /*initial_point*/, Direction& direction, const WarmstartInformation& warmstart_information) {
-      this->evaluation_space.evaluate_objective_gradient(subproblem, warmstart_information);
-
+         const Vector<double>& /*initial_point*/, Direction& direction, Evaluations& current_evaluations,
+         const WarmstartInformation& warmstart_information) {
       const double squared_trust_region_radius = std::pow(trust_region_radius, 2.);
       // first try the Newton step. This is the solution if within the trust region
-      this->evaluation_space.compute_newton_step(statistics, subproblem, *this->linear_solver, direction, warmstart_information);
+      this->evaluation_space.compute_newton_step(statistics, subproblem, direction, *this->linear_solver, current_evaluations,
+         warmstart_information);
       if (this->evaluation_space.newton_step_squared_norm <= squared_trust_region_radius) {
          return;
       }
       // if the trust region constraint is violated, compute the dogleg path: the broken path between the Cauchy step
       // and the Newton step
-      this->evaluation_space.compute_dogleg(subproblem, direction, warmstart_information);
+      this->evaluation_space.compute_dogleg(subproblem, direction, current_evaluations, warmstart_information);
    }
 
-   [[nodiscard]] EvaluationSpace& DoglegMethod::get_evaluation_space() {
+   [[nodiscard]] SolverWorkspace& DoglegMethod::get_evaluation_space() {
       return this->evaluation_space;
    }
 } // namespace
