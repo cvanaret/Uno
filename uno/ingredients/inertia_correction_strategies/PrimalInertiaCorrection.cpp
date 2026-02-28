@@ -56,7 +56,8 @@ namespace uno {
          DEBUG << '\n';
 
          // perform factorization to get an estimate of the inertia
-         linear_solver.do_numerical_factorization(hessian_values);
+         const bool is_matrix_positive_definite = subproblem.is_hessian_positive_definite();
+         linear_solver.do_numerical_factorization(hessian_values, is_matrix_positive_definite);
 
          // check inertia
          const Inertia estimated_inertia = linear_solver.get_inertia();

@@ -129,7 +129,7 @@ namespace uno {
             dual_regularization_parameter, expected_inertia, linear_solver, primal_regularization_values, dual_regularization_values);
       }
       else {
-         linear_solver.do_numerical_factorization(augmented_matrix_values);
+         linear_solver.do_numerical_factorization(augmented_matrix_values, false);
       }
    }
 

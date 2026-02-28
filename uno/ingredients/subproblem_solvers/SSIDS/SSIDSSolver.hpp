@@ -1,19 +1,27 @@
-// Copyright (c) 2024 Charlie Vanaret
+// Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_MUMPSSOLVER_H
-#define UNO_MUMPSSOLVER_H
+#ifndef UNO_SSIDSSOLVER_H
+#define UNO_SSIDSSOLVER_H
 
+#include <spral_ssids.h>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "dmumps_c.h"
 #include "../COOWorkspace.hpp"
-#include "linear_algebra/Vector.hpp"
 
 namespace uno {
-   class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<double> {
+   struct Workspace {
+      void* akeep{nullptr};
+      void* fkeep{nullptr};
+      spral_ssids_options options{};
+      spral_ssids_inform inform{};
+      int n;
+      int nnz;
+   };
+
+   class SSIDSSolver: public DirectSymmetricIndefiniteLinearSolver<double> {
    public:
-      MUMPSSolver();
-      ~MUMPSSolver() override;
+      SSIDSSolver();
+      ~SSIDSSolver() override = default;
 
       void initialize_hessian(const Subproblem& subproblem) override;
       void initialize_augmented_system(const Subproblem& subproblem) override;
@@ -26,28 +34,18 @@ namespace uno {
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
-      [[nodiscard]] size_t number_zero_eigenvalues() const;
-      // [[nodiscard]] bool matrix_is_positive_definite() const override;
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
 
-      [[nodiscard]] COOWorkspace& get_workspace() override;
+      [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    protected:
-      DMUMPS_STRUC_C workspace{};
+      Workspace workspace{};
       COOWorkspace coo_workspace{};
-
-      static const int JOB_INIT = -1;
-      static const int JOB_END = -2;
-      static const int JOB_ANALYSIS = 1;
-      static const int JOB_FACTORIZATION = 2;
-      static const int JOB_SOLVE = 3;
-
-      static const int GENERAL_SYMMETRIC = 2;
 
       bool analysis_performed{false};
       bool factorization_performed{false};
    };
 } // namespace
 
-#endif // UNO_MUMPSSOLVER_H
+#endif // UNO_SSIDSSOLVER_H
