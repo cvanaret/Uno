@@ -1388,8 +1388,14 @@ function MOI.optimize!(model::Optimizer)
     # The default logger is "INFO".
     UnoSolver.uno_set_solver_string_option(solver, "logger", model.silent ? "SILENT" : "INFO")
 
+    # If provided, set the preset before any other options.
+    if haskey(model.options, "preset")
+        UnoSolver.uno_set_solver_preset(solver, model.options["preset"])
+    end
+
     # Other misc options that over-ride the ones set above.
     for (name, value) in model.options
+        (name == "preset") && continue
         if value isa String
             @assert UnoSolver.uno_set_solver_string_option(solver, name, value)
         elseif value isa Float64
