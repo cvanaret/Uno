@@ -41,6 +41,7 @@ $$
 \min_x      & \frac{1}{2} (x - x^{(k)})^T H^{(k)} (x - x^{(k)}) + (\nabla f^{(k)})^T (x - x^{(k)}) \\
 \mbox{s.t.} & c^{(k)} + (\nabla c^{(k)})^T (x - x^{(k)}) = 0 \\
 				& x \ge 0,
+\end{array}
 $$
 
 where $H(x, y)$ is any approximation of $\nabla^2_{xx} \mathcal{L}_\pi(x, y)$, and the superscript $(k)$ denotes evaluation at the current iterate. For convex equality-constrained problems, an iteration can be interpreted as taking a Newton step on the first-order optimality conditions of the problem, hence the name *Lagrange-Newton methods*.
@@ -109,7 +110,7 @@ In order to ensure convergence, the progress measures and their local models mus
 
 The two main classes of globalization strategies are merit functions and filter methods (Figure 2). They typically enforce a sufficient decrease condition that forces some scalar combination of $\eta$, $\omega_\pi$, and $\xi$ to decrease by at least a fraction of the decrease predicted by the local model.
 
-![Example of a filter and a merit function.](figures/globalization_strategies.pdf)
+![Example of a filter and a merit function.](figures/globalization_strategies.png)
 
 **Figure 2.** Example of a filter and a merit function.
 

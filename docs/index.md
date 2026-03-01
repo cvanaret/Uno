@@ -24,6 +24,7 @@ $$
 \min_x      & f(x) \\
 \mbox{s.t.} & c(x) = 0 \\
 				& x \ge 0,
+\end{array}
 $$
 
 where $x \in \mathbb{R}^n$, $f : \mathbb{R}^n \to \mathbb{R}$, and $c: \mathbb{R}^n \to \mathbb{R}^m$.
