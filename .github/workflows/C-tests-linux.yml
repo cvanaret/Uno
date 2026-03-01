@@ -9,12 +9,16 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
+      - '*.ya?ml'
+      - 'docs/**'
   pull_request:
     branches: [ "main" ]
     paths-ignore:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
+      - '*.ya?ml'
+      - 'docs/**'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)

@@ -6,12 +6,16 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
+      - '*.ya?ml'
+      - 'docs/**'
   pull_request:
     branches: [main]
     paths-ignore:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
+      - '*.ya?ml'
+      - 'docs/**'
 
 # needed to allow julia-actions/cache to delete old caches that it has created
 permissions:
