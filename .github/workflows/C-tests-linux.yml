@@ -9,7 +9,8 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
-      - '*.ya?ml'
+      - '*.yml'
+      - '*.yaml'
       - 'docs/**'
   pull_request:
     branches: [ "main" ]
@@ -17,7 +18,8 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
-      - '*.ya?ml'
+      - '*.yml'
+      - '*.yaml'
       - 'docs/**'
 
 env:
