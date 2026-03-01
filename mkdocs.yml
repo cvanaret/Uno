@@ -1,3 +1,7 @@
 site_name: Uno
 theme:
   name: material
+nav:
+  - Introduction: 'index.md'
+  - Options: `options.md`
+  - 'Issue Tracker': 'https://github.com/cvanaret/Uno/issues'
