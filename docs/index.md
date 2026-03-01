@@ -5,6 +5,21 @@ We consider nonlinearly constrained optimization problems of the form
 
 $$\min_x \quad f(x) \quad \text{s.t.} \quad l \le \begin{pmatrix} c(x) \\ Ax \\ x \end{pmatrix} \le u,$$
 
+TEST:
+
+$$
+\begin{array}{ll} \displaystyle
+\min_x  & f(x) \\
+\st 	  & l \le
+\begin{Bmatrix}
+c(x) \\
+Ax \\
+x
+\end{Bmatrix}
+\le u,
+\end{array}
+$$
+
 where $x \in \mathbb{R}^n$, $f : \mathbb{R}^n \to \mathbb{R}$, $c: \mathbb{R}^n \to \mathbb{R}^{m_c}$, $A \in \mathbb{R}^{m_A \times n}$, and $l \in (\mathbb{R} \cup \{-\infty\})^{m_c + m_A + n}$ and $u \in (\mathbb{R} \cup \{+\infty\})^{m_c + m_A + n}$. $f$ and $c$ may be nonconvex, which results in a nonconvex optimization problem. This formulation allows for unbounded variables and equality constraints and explicitly separates general nonlinear, linear, and bound constraints, enabling solvers to readily exploit this structure. However, for the sake of simplicity of this presentation and without loss of generality, we consider the problem in the following form:
 
 $$\tag{NLP} \min_x \quad f(x) \quad \text{s.t.} \quad c(x) = 0, \quad x \ge 0,$$
