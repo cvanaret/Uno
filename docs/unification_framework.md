@@ -36,8 +36,12 @@ If $\pi^* > 0$, the optimality conditions are equivalent to the KKT conditions, 
 
 A local quadratic approximation of (NLP) at iteration $k$ about the current primal-dual point is given by:
 
-$$\min_{x} \quad \frac{1}{2} (x - x^{(k)})^T H^{(k)} (x - x^{(k)}) + (\nabla f^{(k)})^T (x - x^{(k)})$$
-$$\text{s.t.} \quad c^{(k)} + (\nabla c^{(k)})^T (x - x^{(k)}) = 0, \quad x \ge 0,$$
+$$
+\begin{array}{ll} \displaystyle
+\min_x      & \frac{1}{2} (x - x^{(k)})^T H^{(k)} (x - x^{(k)}) + (\nabla f^{(k)})^T (x - x^{(k)}) \\
+\mbox{s.t.} & c^{(k)} + (\nabla c^{(k)})^T (x - x^{(k)}) = 0 \\
+				& x \ge 0,
+$$
 
 where $H(x, y)$ is any approximation of $\nabla^2_{xx} \mathcal{L}_\pi(x, y)$, and the superscript $(k)$ denotes evaluation at the current iterate. For convex equality-constrained problems, an iteration can be interpreted as taking a Newton step on the first-order optimality conditions of the problem, hence the name *Lagrange-Newton methods*.
 
