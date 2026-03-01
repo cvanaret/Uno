@@ -4,6 +4,7 @@ theme:
 nav:
   - Introduction: 'index.md'
   - 'Unification framework': 'unification_framework.md'
+  - 'Uno solver': 'uno_solver.md'
   - 'Uno options': 'options.md'
   - 'Issue tracker': 'https://github.com/cvanaret/Uno/issues'
   - 'Checklists for developers': 'developers/checklists.md'
