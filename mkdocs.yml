@@ -12,6 +12,7 @@ nav:
 markdown_extensions:
   - pymdownx.arithmatex:
       generic: true
+  - footnotes
 
 extra_javascript:
   - javascript/mathjax.js
