@@ -93,6 +93,7 @@ In this section we describe a set of strategies that fall into each of the follo
 Constrained optimization methods must achieve two competing goals: minimizing the objective function and minimizing the constraint violation. Globalization strategies determine whether a trial iterate $\hat{x}^{(k+1)} \stackrel{\text{def}}{=} x^{(k)} + \alpha d_x^{(k)}$ (for a given step length $\alpha \in (0, 1]$) makes acceptable progress with respect to these goals. We consider strategies that ensure *global convergence*, that is, convergence to a local minimum, or (weaker) stationary point, from any starting point.
 
 Three (possibly primal-dual) *progress measures* are monitored throughout the optimization process:
+
 1. an **infeasibility measure** $\eta$ (typically $\|c(x)\|$ for some norm);
 2. an **objective measure** $\omega_\pi$ parameterized by the objective multiplier $\pi \ge 0$ (typically $\pi f(x)$); and
 3. an **auxiliary measure** $\xi$ (terms such as barrier and proximal terms).
@@ -196,6 +197,7 @@ $$\min_x \quad f(x) - \mu \sum_{i=1}^n \log(x_i) \quad \text{s.t.} \quad c(x) = 
 ### Hessian models
 
 The Hessian model is a high- or low-quality representation of the Lagrangian Hessian of the original model. It may be:
+
 - the exact Hessian $H^{(k)} = \nabla_{xx}^2 \mathcal{L}_\rho(x^{(k)}, y^{(k)})$ if it is provided by the modeler or the modeling framework;
 - a quasi-Newton approximation such as BFGS or SR1, or a limited-memory version thereof;
 - the identity matrix;
