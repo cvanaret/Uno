@@ -33,6 +33,10 @@ else
     OMP=gomp
 fi
 
+# env variables for SPRAL
+export OMP_PROC_BIND=true
+export OMP_CANCELLATION=true
+
 cmake \
     -DCMAKE_INSTALL_PREFIX=${prefix} \
     -DCMAKE_PREFIX_PATH=${libdir} \
