@@ -35,7 +35,14 @@ If the trial iterate $x^{(k)} + d_x$ makes sufficient progress with respect to t
 
 An infeasible interior-point method does not require feasibility with respect to the general constraints. A prerequisite is to turn inequality constraints into equality constraints using slack variables:
 
-$$\min_{x,s} \quad f(x) \quad \text{s.t.} \quad c(x) - s = 0, \quad l_x \le x \le u_x, \quad l_c \le s \le u_c.$$
+$$
+\begin{array}{ll} \displaystyle
+\min_{x,s}  & f(x) \\
+\mbox{s.t.} & c(x) - s = 0 \\
+				& l_x \le x \le u_x \\
+				& l_c \le s \le u_c.
+\end{array}
+$$
 
 Provided that the subproblem is convex, the primal-dual direction is the solution of the primal-dual system:
 
