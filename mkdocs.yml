@@ -1,3 +1,28 @@
 site_name: Uno
 theme:
   name: material
+  features:
+    - navigation.footer
+    - navigation.top
+nav:
+  - Introduction: 'index.md'
+  - 'Getting started':
+    - 'Uno presets': 'presets.md'
+    - 'Uno options': 'options.md'
+  - 'Unfiying nonlinear optimization':
+    - 'Unification framework': 'unification_framework.md'
+    - 'Uno solver': 'uno_solver.md'
+  - 'Issue tracker': 'https://github.com/cvanaret/Uno/issues'
+  - 'Checklists for developers': 'developers/checklists.md'
+  - Acknowledgments: 'acknowledgments.md'
+
+repo_url: https://github.com/cvanaret/Uno
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - footnotes
+
+extra_javascript:
+  - javascript/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
