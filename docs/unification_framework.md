@@ -81,7 +81,7 @@ The inner loop (**repeat**) generates and solves a feasible subproblem (possibly
 The "wheel of strategies" (Figure 1) organizes a wide range of strategies into a coherent hierarchy. The outer layer represents the optimization layers, the middle layer represents the ingredients, and the inner layer represents the strategies. Strategies that perform similar tasks within an optimization method are listed under the same ingredient (e.g., a line search and a trust-region method are both globalization mechanisms).
 
 <p align="center">
-   <img src="figures/wheel.png" alt="Unifying framework: the "wheel of strategies"." width="60%" /> \\
+   <img src="figures/wheel.png" alt="Unifying framework: the \"wheel of strategies\"." width="60%" /> \\
    **Figure 1.** Unifying framework: the "wheel of strategies".
 </p>
 
