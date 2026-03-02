@@ -78,11 +78,10 @@ The role of each ingredient is shown in the following abstract algorithm.
 
 The inner loop (**repeat**) generates and solves a feasible subproblem (possibly a sequence of feasible subproblems) until a trial iterate is accepted by the globalization strategy, and the outer loop (**while**) generates a sequence of acceptable iterates until termination.
 
-The "wheel of strategies" (Figure 1) organizes a wide range of strategies into a coherent hierarchy. The outer layer represents the optimization layers, the middle layer represents the ingredients, and the inner layer represents the strategies. Strategies that perform similar tasks within an optimization method are listed under the same ingredient (e.g., a line search and a trust-region method are both globalization mechanisms).
+The "wheel of strategies" below organizes a wide range of strategies into a coherent hierarchy. The outer layer represents the optimization layers, the middle layer represents the ingredients, and the inner layer represents the strategies. Strategies that perform similar tasks within an optimization method are listed under the same ingredient (e.g., a line search and a trust-region method are both globalization mechanisms).
 
 <p align="center">
-   <img src="figures/wheel.png" alt="Unifying framework: the \"wheel of strategies\"." width="60%" /> <br />
-   **Figure 1.** Unifying framework: the "wheel of strategies".
+   <img src="figures/wheel.png" alt="Unifying framework: the \"wheel of strategies\"." width="60%" />
 </p>
 
 ## Unified view of state-of-the-art techniques

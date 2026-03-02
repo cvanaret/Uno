@@ -29,11 +29,10 @@ $$
 
 where $x \in \mathbb{R}^n$, $f : \mathbb{R}^n \to \mathbb{R}$, and $c: \mathbb{R}^n \to \mathbb{R}^m$.
 
-Most derivative-based iterative methods for nonlinearly constrained nonconvex optimization share common algorithmic components. Building on this insight, we introduce an abstract framework structured around generic building blocks that describes these methods in a unified fashion. We then present **Uno** (Unifying Nonlinear Optimization)[^1], a modular open-source solver for nonlinearly constrained optimization that unifies numerous state-of-the-art methods and organizes existing strategies into a coherent hierarchy.
+Most derivative-based iterative methods for nonlinearly constrained nonconvex optimization share common algorithmic components. Building on this insight, we introduce an abstract framework structured around generic building blocks that describes these methods in a unified fashion. We then present **Uno** (Unifying Nonlinear Optimization)[^1], a modular open-source solver for nonlinearly constrained optimization that unifies numerous state-of-the-art methods and organizes existing strategies into a coherent hierarchy (see wheel of strategies below).
 
 <p align="center">
-   <img src="figures/wheel.png" alt="Unifying framework: the \"wheel of strategies\"." width="60%" /> <br />
-   **Figure 1.** Unifying framework: the "wheel of strategies".
+   <img src="figures/wheel.png" alt="Unifying framework: the \"wheel of strategies\"." width="60%" />
 </p>
 
 Uno allows the automatic generation of various strategy combinations on the fly with no programming effort from the user. While all combinations do not lead to convergent methods, some of them result in efficient solvers that may not exist as software implementations. We believe that Uno has the potential to serve as an experimental laboratory for practitioners and optimizers and to accelerate research in nonlinearly constrained optimization. Our ultimate goal is to promote the extension of state-of-the-art nonlinear optimization techniques to new classes of problems such as problems with equilibrium constraints and nonlinear robust optimization.
