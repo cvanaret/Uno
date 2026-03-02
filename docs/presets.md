@@ -1,8 +1,8 @@
-## Uno presets
+# Uno presets
 
 Uno implements presets, that is combinations of ingredients that correspond to existing solvers. At the moment, the available presets are `filtersqp` (after the trust-region restoration filter SQP solver filterSQP) and `ipopt` (after the line-search filter restoration infeasible interior-point solver IPOPT). We show below how the eight ingredients naturally arise in these two methods.
 
-### Trust-region restoration filter SQP
+## Trust-region restoration filter SQP
 
 Convergence of SQP filter methods has been proven under mild conditions in the context of trust-region methods and of line-search methods. The trust-region optimality QP subproblem about $(x^{(k)}, y^{(k)})$ is defined as:
 
@@ -31,7 +31,7 @@ $$
 
 If the trial iterate $x^{(k)} + d_x$ makes sufficient progress with respect to the filter method, it is accepted. If the trust region was active at the solution of the QP ($\|d_x^*\|_\infty = \Delta^{(l)}$), we enlarge the radius. If the trial iterate is rejected, we resolve the trust-region subproblem with a smaller trust-region radius.
 
-### Line-search filter restoration infeasible interior-point method
+## Line-search filter restoration infeasible interior-point method
 
 An infeasible interior-point method does not require feasibility with respect to the general constraints. A prerequisite is to turn inequality constraints into equality constraints using slack variables:
 
