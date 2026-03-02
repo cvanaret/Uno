@@ -3,9 +3,11 @@ theme:
   name: material
 nav:
   - Introduction: 'index.md'
-  - 'Unification framework': 'unification_framework.md'
-  - 'Uno solver': 'uno_solver.md'
-  - 'Uno options': 'options.md'
+  - 'Getting started':
+    - 'Uno options': 'options.md'
+  - 'Unfiying nonlinear optimization':
+    - 'Unification framework': 'unification_framework.md'
+    - 'Uno solver': 'uno_solver.md'
   - 'Issue tracker': 'https://github.com/cvanaret/Uno/issues'
   - 'Checklists for developers': 'developers/checklists.md'
   - Acknowledgments: 'acknowledgments.md'
