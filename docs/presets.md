@@ -62,7 +62,11 @@ $$
 
 where $X^{(k)} = \text{diag}(x^{(k)})$, $Z^{(k)} = \text{diag}(z^{(k)})$, $e$ is a vector of ones of appropriate size, and $\delta_w$ and $\delta_c$ are primal and dual inertia correction coefficients. The dual direction for the bound constraints is given by $d_z = (X^{(k)})^{-1} (\mu e - Z^{(k)} d_x) - z^{(k)}$. The fraction-to-boundary rule determines primal and dual step lengths that maintain positivity of $x$ and $z$:
 
-$$\alpha_x^{(k)} \stackrel{\text{def}}{=} \max\{\alpha \in (0, 1] \mid x^{(k)} + \alpha d_x \ge (1 - \tau) x^{(k)}\}$$
-$$\alpha_z^{(k)} \stackrel{\text{def}}{=} \max\{\alpha \in (0, 1] \mid z^{(k)} + \alpha d_z \ge (1 - \tau) z^{(k)}\},$$
+$$
+\begin{array}{ll}
+\alpha_x^{(k)} & \stackrel{\text{def}}{=} \max\{\alpha \in (0, 1] \mid x^{(k)} + \alpha d_x \ge (1 - \tau) x^{(k)}\} \\
+\alpha_z^{(k)} & \stackrel{\text{def}}{=} \max\{\alpha \in (0, 1] \mid z^{(k)} + \alpha d_z \ge (1 - \tau) z^{(k)}\},
+\end{array}
+$$
 
 where $\tau$ is a parameter close to 1. A filter line search assesses whether the trial iterate makes sufficient progress with respect to the filter method. If the step length ultimately falls below a given threshold (e.g., $10^{-7}$), we switch to feasibility restoration. Note that by construction the filter entries depend on the barrier parameter $\mu$ through the auxiliary measure $\xi$. Consequently, the filter must be flushed whenever $\mu$ is updated.
