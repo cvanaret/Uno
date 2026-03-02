@@ -32,7 +32,7 @@ where $x \in \mathbb{R}^n$, $f : \mathbb{R}^n \to \mathbb{R}$, and $c: \mathbb{R
 Most derivative-based iterative methods for nonlinearly constrained nonconvex optimization share common algorithmic components. Building on this insight, we introduce an abstract framework structured around generic building blocks that describes these methods in a unified fashion. We then present **Uno** (Unifying Nonlinear Optimization)[^1], a modular open-source solver for nonlinearly constrained optimization that unifies numerous state-of-the-art methods and organizes existing strategies into a coherent hierarchy.
 
 <p align="center">
-   <img src="figures/wheel.png" alt="Unifying framework: the \"wheel of strategies\"." width="60%" /> \\
+   <img src="figures/wheel.png" alt="Unifying framework: the \"wheel of strategies\"." width="60%" /> <br />
    **Figure 1.** Unifying framework: the "wheel of strategies".
 </p>
 
