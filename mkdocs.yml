@@ -12,6 +12,13 @@ nav:
   - 'Checklists for developers': 'developers/checklists.md'
   - Acknowledgments: 'acknowledgments.md'
 
+repo_url: https://github.com/cvanaret/Uno
+
+theme:
+  features:
+    - navigation.footer
+    - navigation.top
+
 markdown_extensions:
   - pymdownx.arithmatex:
       generic: true
