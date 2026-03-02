@@ -7,6 +7,7 @@ theme:
 nav:
   - Introduction: 'index.md'
   - 'Getting started':
+    - 'Uno presets': 'presets.md'
     - 'Uno options': 'options.md'
   - 'Unfiying nonlinear optimization':
     - 'Unification framework': 'unification_framework.md'
