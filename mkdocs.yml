@@ -1,6 +1,9 @@
 site_name: Uno
 theme:
   name: material
+  features:
+    - navigation.footer
+    - navigation.top
 nav:
   - Introduction: 'index.md'
   - 'Getting started':
@@ -13,11 +16,6 @@ nav:
   - Acknowledgments: 'acknowledgments.md'
 
 repo_url: https://github.com/cvanaret/Uno
-
-theme:
-  features:
-    - navigation.footer
-    - navigation.top
 
 markdown_extensions:
   - pymdownx.arithmatex:
