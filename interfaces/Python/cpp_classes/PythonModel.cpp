@@ -26,19 +26,19 @@ namespace uno {
    }
 
    bool PythonModel::has_jacobian_operator() const {
-      return (this->user_model.jacobian_operator != nullptr);
+      return this->user_model.jacobian_operator.has_value();
    }
 
    bool PythonModel::has_jacobian_transposed_operator() const {
-      return (this->user_model.jacobian_transposed_operator != nullptr);
+      return this->user_model.jacobian_transposed_operator.has_value();
    }
 
    bool PythonModel::has_hessian_operator() const {
-      return (this->user_model.lagrangian_hessian_operator != nullptr);
+      return this->user_model.lagrangian_hessian_operator.has_value();
    }
 
    bool PythonModel::has_hessian_matrix() const {
-      return (this->user_model.lagrangian_hessian != nullptr);
+      return this->user_model.lagrangian_hessian.has_value();
    }
 
    double PythonModel::evaluate_objective(const Vector<double>& x) const {
