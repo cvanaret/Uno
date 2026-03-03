@@ -44,7 +44,7 @@ jobs:
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: 'gcc'
-          version: '15'
+          version: '14'
           
       - name: Install libomp (macOS)
         if: startsWith(matrix.os, 'macos')
@@ -82,14 +82,14 @@ jobs:
             set(OpenMP_C_LIB_NAMES omp)
             set(OpenMP_CXX_LIB_NAMES omp)
             set(OpenMP_omp_LIBRARY $OPENMP_LIB)
+            set(CMAKE_EXE_LINKER_FLAGS "-L$LIBGFORTRAN_FOLDER -lgfortran -Wl,-rpath,$LIBGFORTRAN_FOLDER")
+            set(CMAKE_SHARED_LINKER_FLAGS "-L$LIBGFORTRAN_FOLDER -lgfortran -Wl,-rpath,$LIBGFORTRAN_FOLDER")
             EOF
           CIBW_ENVIRONMENT_MACOS: >
             CC=clang
             CXX=clang++
             FC=gfortran-15
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
-            CMAKE_EXE_LINKER_FLAGS=-L${{env.LIBGFORTRAN_FOLDER}}
-            CMAKE_SHARED_LINKER_FLAGS=-L${{env.LIBGFORTRAN_FOLDER}}
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
 
       - uses: actions/upload-artifact@v4
