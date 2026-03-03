@@ -45,6 +45,18 @@ jobs:
         with:
           compiler: 'gcc'
           version: '14'
+          
+      - name: Install libomp (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          brew install libomp
+          if [[ $(uname -m) == 'arm64' ]]; then
+            echo "OPENMP_LIB=/opt/homebrew/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
+            echo "LIBGFORTRAN_FOLDER=/opt/homebrew/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
+          else
+            echo "OPENMP_LIB=/usr/local/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
+            echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
+          fi
 
       - name: Build wheels (Linux)
         if: runner.os == 'Linux'
@@ -67,6 +79,13 @@ jobs:
             CMAKE_C_COMPILER=clang
             CMAKE_CXX_COMPILER=clang++
             CMAKE_Fortran_COMPILER=gfortran-15
+            CMAKE_EXE_LINKER_FLAGS="-L${{env.LIBGFORTRAN_FOLDER}}"
+            CMAKE_SHARED_LINKER_FLAGS="-L${{env.LIBGFORTRAN_FOLDER}}"
+            OpenMP_C_FLAGS="-Xpreprocessor -fopenmp"
+            OpenMP_C_LIB_NAMES="omp"
+            OpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp"
+            OpenMP_CXX_LIB_NAMES="omp"
+            OpenMP_omp_LIBRARY=${{ env.OPENMP_LIB }}
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
 
       - uses: actions/upload-artifact@v4
