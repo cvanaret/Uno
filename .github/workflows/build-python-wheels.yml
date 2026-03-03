@@ -40,21 +40,33 @@ jobs:
       - run: pip install cibuildwheel
 
       - name: Install Fortran compiler on macOS
+        if: startsWith(matrix.os, 'macos')
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: 'gcc'
-          version: '13'
-        if: startsWith(matrix.os, 'macos')
+          version: '14'
 
-      - name: Build wheels
+      - name: Build wheels (Linux)
+        if: runner.os == 'Linux'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
+          CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Build wheels (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
+        env:
+          # Override what setup-fortran set at the step level
+          CC: clang
+          CXX: clang++
           MACOSX_DEPLOYMENT_TARGET: 15.0
           CIBW_ENVIRONMENT_MACOS: >
+            CC=clang
+            CXX=clang++
+            FC=gfortran-15
             CMAKE_C_COMPILER=clang
             CMAKE_CXX_COMPILER=clang++
             CMAKE_Fortran_COMPILER=gfortran-15
-            
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
 
       - uses: actions/upload-artifact@v4
