@@ -47,20 +47,20 @@ namespace uno {
       DoubleVector variables_upper_bounds{};
 
       // objective
-      Objective objective_function{nullptr};
-      ObjectiveGradient objective_gradient{nullptr};
+      Objective objective_function{};
+      ObjectiveGradient objective_gradient{};
 
       // constraints
       uno_int number_constraints{0};
-      Constraints constraint_functions{nullptr};
+      Constraints constraint_functions{};
       DoubleVector constraints_lower_bounds{};
       DoubleVector constraints_upper_bounds{};
       uno_int number_jacobian_nonzeros{0};
       std::vector<uno_int> jacobian_row_indices{};
       std::vector<uno_int> jacobian_column_indices{};
-      Jacobian jacobian{nullptr};
-      JacobianOperator jacobian_operator{nullptr};
-      JacobianTransposedOperator jacobian_transposed_operator{nullptr};
+      Jacobian jacobian{};
+      JacobianOperator jacobian_operator{};
+      JacobianTransposedOperator jacobian_transposed_operator{};
 
       // Hessian
       std::optional<uno_int> number_hessian_nonzeros{};
@@ -68,8 +68,8 @@ namespace uno {
       char hessian_triangular_part{}; // default is empty
       std::vector<uno_int> hessian_row_indices{};
       std::vector<uno_int> hessian_column_indices{};
-      Hessian lagrangian_hessian{nullptr};
-      HessianOperator lagrangian_hessian_operator{nullptr};
+      Hessian lagrangian_hessian{};
+      HessianOperator lagrangian_hessian_operator{};
       double lagrangian_sign_convention{UNO_MULTIPLIER_NEGATIVE};
 
       // User data
