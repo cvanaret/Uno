@@ -1296,9 +1296,6 @@ function _setup_model(model::Optimizer)
         @assert (model.qp_data.objective_function_type == _kFunctionTypeVariableIndex) || (model.qp_data.objective_function_type == _kFunctionTypeScalarAffine)
         model.problem_type = "LP"
     end
-    if isempty(hessian_sparsity)
-        model.problem_type = "LP"
-    end
     model.needs_new_inner = true
     return
 end
