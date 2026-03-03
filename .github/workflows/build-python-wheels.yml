@@ -178,3 +178,30 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
+          
+  # test PyPI's unopy artifacts after upload to PyPI
+  test_pypi:
+    needs: upload_pypi
+    name: Test PyPI artifacts
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+    
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.architecture }}
+
+      - name: Install unopy from PyPI
+        run: pip install unopy
+
+      - name: Run example
+        working-directory: ${{github.workspace}}/interfaces/Python/example
+        run: python example_hs015.py
