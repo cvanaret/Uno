@@ -76,20 +76,17 @@ jobs:
             cat > /tmp/clang_toolchain.cmake << 'EOF'
             set(CMAKE_C_COMPILER clang)
             set(CMAKE_CXX_COMPILER clang++)
-            set(CMAKE_Fortran_COMPILER gfortran-14)
-            set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
-            set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
+            set(CMAKE_Fortran_COMPILER gfortran-15)
+            set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp")
+            set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
             set(OpenMP_C_LIB_NAMES omp)
             set(OpenMP_CXX_LIB_NAMES omp)
-            set(OpenMP_omp_LIBRARY /opt/homebrew/opt/libomp/lib/libomp.dylib)
+            set(OpenMP_omp_LIBRARY $OPENMP_LIB)
             EOF
           CIBW_ENVIRONMENT_MACOS: >
             CC=clang
             CXX=clang++
             FC=gfortran-15
-            CMAKE_C_COMPILER=clang
-            CMAKE_CXX_COMPILER=clang++
-            CMAKE_Fortran_COMPILER=gfortran-15
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_EXE_LINKER_FLAGS=-L${{env.LIBGFORTRAN_FOLDER}}
             CMAKE_SHARED_LINKER_FLAGS=-L${{env.LIBGFORTRAN_FOLDER}}
