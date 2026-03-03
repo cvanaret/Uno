@@ -1670,7 +1670,8 @@ end
 ### MOI.ConstraintDual
 
 function _dual_multiplier(model::Optimizer)
-    return xor(model.problem_type == "LP", model.sense == MOI.MAX_SENSE) ? 1.0 : -1.0
+    return 1.
+    #return xor(model.problem_type == "LP", model.sense == MOI.MAX_SENSE) ? 1.0 : -1.0
 end
 
 function MOI.get(
