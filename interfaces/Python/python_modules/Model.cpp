@@ -5,6 +5,7 @@
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
 #include "../unopy.hpp"
+#include "linear_algebra/Vector.hpp"
 #include "symbolic/Range.hpp"
 
 namespace py = pybind11;
