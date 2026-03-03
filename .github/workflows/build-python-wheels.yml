@@ -72,6 +72,17 @@ jobs:
           CC: clang
           CXX: clang++
           MACOSX_DEPLOYMENT_TARGET: 15.0
+          CIBW_BEFORE_ALL_MACOS: |
+            cat > /tmp/clang_toolchain.cmake << 'EOF'
+            set(CMAKE_C_COMPILER clang)
+            set(CMAKE_CXX_COMPILER clang++)
+            set(CMAKE_Fortran_COMPILER gfortran-14)
+            set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
+            set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
+            set(OpenMP_C_LIB_NAMES omp)
+            set(OpenMP_CXX_LIB_NAMES omp)
+            set(OpenMP_omp_LIBRARY /opt/homebrew/opt/libomp/lib/libomp.dylib)
+            EOF
           CIBW_ENVIRONMENT_MACOS: >
             CC=clang
             CXX=clang++
@@ -79,13 +90,9 @@ jobs:
             CMAKE_C_COMPILER=clang
             CMAKE_CXX_COMPILER=clang++
             CMAKE_Fortran_COMPILER=gfortran-15
+            CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_EXE_LINKER_FLAGS=-L${{env.LIBGFORTRAN_FOLDER}}
             CMAKE_SHARED_LINKER_FLAGS=-L${{env.LIBGFORTRAN_FOLDER}}
-            OpenMP_C_FLAGS=-Xpreprocessor\ -fopenmp
-            OpenMP_C_LIB_NAMES=omp
-            OpenMP_CXX_FLAGS=-Xpreprocessor\ -fopenmp
-            OpenMP_CXX_LIB_NAMES=omp
-            OpenMP_omp_LIBRARY=${{ env.OPENMP_LIB }}
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
 
       - uses: actions/upload-artifact@v4
