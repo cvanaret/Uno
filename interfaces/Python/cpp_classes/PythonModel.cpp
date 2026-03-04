@@ -5,6 +5,7 @@
 #include <pybind11/numpy.h>
 #include <functional>
 #include "PythonModel.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "optimization/EvaluationErrors.hpp"
 #include "symbolic/Concatenation.hpp"
 #include "Uno.hpp"
@@ -85,9 +86,7 @@ namespace uno {
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
-         for (size_t variable_index: Range(this->number_variables)) {
-            gradient[variable_index] *= this->optimization_sense;
-         }
+         view(gradient, 0, this->number_variables).scale(this->optimization_sense);
          ++this->number_model_evaluations.objective_gradient;
       }
    }

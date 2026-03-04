@@ -8,8 +8,6 @@
 
 namespace py = pybind11;
 
-//PYBIND11_MAKE_OPAQUE(uno::Vector<double>)
-
 namespace uno {
    void define_Model(py::module& module);
    void define_Result(py::module& module);
