@@ -91,6 +91,8 @@ jobs:
       - name: Build wheels (Linux)
         if: runner.os == 'Linux'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
+        env:
+          CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
 
       - name: Build wheels (macOS)
         if: startsWith(matrix.os, 'macos')
@@ -118,6 +120,7 @@ jobs:
             CXX=clang++
             FC=gfortran-15
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
+          CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
       
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
@@ -137,6 +140,7 @@ jobs:
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
+
         with:
           name: cibw-wheels-${{ matrix.sys.os }}-${{ strategy.job-index }}
           path: wheelhouse/*.whl
