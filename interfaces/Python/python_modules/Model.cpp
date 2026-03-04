@@ -13,9 +13,9 @@ namespace uno {
       py::class_<PythonUserModel>(module, "Model")
       // constructor
       // https://stackoverflow.com/a/62310838/16037994
-      .def(py::init<>([](const char* problem_type, uno_int number_variables, std::vector<double> variables_lower_bounds,
+      .def(py::init<>([](const std::string& problem_type, uno_int number_variables, std::vector<double> variables_lower_bounds,
             std::vector<double> variables_upper_bounds, uno_int base_indexing) {
-         PythonUserModel model(problem_type, number_variables, base_indexing);
+         PythonUserModel model(problem_type.data(), number_variables, base_indexing);
          model.variables_lower_bounds = std::move(variables_lower_bounds);
          model.variables_upper_bounds = std::move(variables_upper_bounds);
          return model;
@@ -25,7 +25,7 @@ namespace uno {
       .def("set_objective", [](PythonUserModel& user_model, uno_int optimization_sense, Objective objective_function,
             ObjectiveGradient objective_gradient) {
          if (optimization_sense != UNO_MINIMIZE && optimization_sense != UNO_MAXIMIZE) {
-            throw std::runtime_error("Please specify a valid objective sense.");
+            throw std::invalid_argument("Please specify a valid objective sense.");
          }
          user_model.optimization_sense = optimization_sense;
          user_model.objective_function = std::move(objective_function);
@@ -35,8 +35,20 @@ namespace uno {
       .def("set_constraints", [](PythonUserModel& user_model, uno_int number_constraints, Constraints constraint_functions,
             std::vector<double> constraints_lower_bounds, std::vector<double> constraints_upper_bounds, uno_int number_jacobian_nonzeros,
             std::vector<uno_int> jacobian_row_indices, std::vector<uno_int> jacobian_column_indices, Jacobian jacobian) {
-         if (number_constraints <= 0) {
-            throw std::runtime_error("Please specify a positive number of constraints.");
+         if (number_constraints < 0) {
+            throw std::invalid_argument("The number of constraints cannot be negative.");
+         }
+         if (constraints_lower_bounds.size() != static_cast<size_t>(number_constraints)) {
+            throw std::invalid_argument("Dimension mismatch in constraints_lower_bounds.");
+         }
+         if (constraints_upper_bounds.size() != static_cast<size_t>(number_constraints)) {
+            throw std::invalid_argument("Dimension mismatch in constraints_upper_bounds.");
+         }
+         if (jacobian_row_indices.size() != static_cast<size_t>(number_jacobian_nonzeros)) {
+            throw std::invalid_argument("Dimension mismatch in jacobian_row_indices.");
+         }
+         if (jacobian_column_indices.size() != static_cast<size_t>(number_jacobian_nonzeros)) {
+            throw std::invalid_argument("Dimension mismatch in jacobian_column_indices.");
          }
          user_model.number_constraints = number_constraints;
          user_model.constraint_functions = std::move(constraint_functions);
@@ -51,26 +63,29 @@ namespace uno {
       .def("set_lagrangian_hessian", [](PythonUserModel& user_model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
             std::vector<uno_int> hessian_row_indices, std::vector<uno_int> hessian_column_indices,
             Hessian lagrangian_hessian, double lagrangian_sign_convention) {
-         if (number_hessian_nonzeros <= 0) {
-            throw std::runtime_error("Please specify a positive number of Lagrangian Hessian nonzeros.");
+         if (number_hessian_nonzeros < 0) {
+            throw std::invalid_argument("The number of Lagrangian Hessian nonzeros cannot be negative.");
          }
          if (hessian_triangular_part != UNO_LOWER_TRIANGLE && hessian_triangular_part != UNO_UPPER_TRIANGLE) {
-            throw std::runtime_error("Please specify a correct Hessian triangle.");
+            throw std::invalid_argument("Please specify a correct Hessian triangle.");
          }
          if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
-            throw std::runtime_error("Please specify a correct Lagrangian sign convention.");
+            throw std::invalid_argument("Please specify a correct Lagrangian sign convention.");
          }
-         
+         if (hessian_row_indices.size() != static_cast<size_t>(number_hessian_nonzeros)) {
+            throw std::invalid_argument("Dimension mismatch in hessian_row_indices.");
+         }
+         if (hessian_column_indices.size() != static_cast<size_t>(number_hessian_nonzeros)) {
+            throw std::invalid_argument("Dimension mismatch in hessian_column_indices.");
+         }
          user_model.number_hessian_nonzeros = number_hessian_nonzeros;
          // we only maintain the lower triangle
-         if (hessian_triangular_part == UNO_LOWER_TRIANGLE) {
-            user_model.hessian_row_indices = std::move(hessian_row_indices);
-            user_model.hessian_column_indices = std::move(hessian_column_indices);
+         if (hessian_triangular_part == UNO_UPPER_TRIANGLE) {
+            // normalize to lower triangle by transposing
+            std::swap(hessian_row_indices, hessian_column_indices);
          }
-         else {
-            user_model.hessian_row_indices = std::move(hessian_column_indices);
-            user_model.hessian_column_indices = std::move(hessian_row_indices);
-         }
+         user_model.hessian_row_indices = std::move(hessian_row_indices);
+         user_model.hessian_column_indices = std::move(hessian_column_indices);
          user_model.hessian_triangular_part = UNO_LOWER_TRIANGLE;
          user_model.lagrangian_hessian = std::move(lagrangian_hessian);
          user_model.lagrangian_sign_convention = lagrangian_sign_convention;
@@ -87,17 +102,23 @@ namespace uno {
       .def("set_lagrangian_hessian_operator", [](PythonUserModel& user_model, HessianOperator lagrangian_hessian_operator,
             double lagrangian_sign_convention) {
          if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
-            throw std::runtime_error("Please specify a correct Lagrangian sign convention.");
+            throw std::invalid_argument("Please specify a correct Lagrangian sign convention.");
          }
          user_model.lagrangian_hessian_operator = std::move(lagrangian_hessian_operator);
          user_model.lagrangian_sign_convention = lagrangian_sign_convention;
       })
 
       .def("set_initial_primal_iterate", [](PythonUserModel& user_model, std::vector<double> initial_primal_iterate) {
+         if (initial_primal_iterate.size() != static_cast<size_t>(user_model.number_variables)) {
+            throw std::invalid_argument("Dimension mismatch in initial_primal_iterate.");
+         }
          user_model.initial_primal_iterate = std::move(initial_primal_iterate);
       })
 
       .def("set_initial_dual_iterate", [](PythonUserModel& user_model, std::vector<double> initial_dual_iterate) {
+         if (initial_dual_iterate.size() != static_cast<size_t>(user_model.number_constraints)) {
+            throw std::invalid_argument("Dimension mismatch in initial_dual_iterate.");
+         }
          user_model.initial_dual_iterate = std::move(initial_dual_iterate);
       });
    }
