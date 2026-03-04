@@ -58,7 +58,7 @@ jobs:
         with:
           compiler: 'gcc'
           version: '13'
-          
+
       - name: Install libomp (macOS)
         if: startsWith(matrix.sys.os, 'macos')
         run: |
@@ -108,7 +108,7 @@ jobs:
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
           # Skip some builds
           CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
-      
+
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
@@ -259,7 +259,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-    
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
