@@ -34,14 +34,13 @@ jobs:
           - { os: macos-latest, shell: bash }
           - { os: macos-15-intel, shell: bash }
           - { os: windows-latest, shell: 'msys2 {0}' }
-          - { os: windows-2022, shell: 'msys2 {0}' }
     defaults:
       run:
         shell: ${{ matrix.sys.shell }}
 
     steps:
       - uses: actions/checkout@v5
-      
+
       - name: Install Fortran compiler (macOS)
         if: startsWith(matrix.sys.os, 'macos')
         uses: fortran-lang/setup-fortran@main
@@ -60,27 +59,6 @@ jobs:
             echo "OPENMP_LIB=/usr/local/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
             echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
           fi
-
-      - name: Install MinGW (Windows)
-        if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: |
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-gcc-fortran
-            mingw-w64-x86_64-gcc-libs
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-make
-
-      - name: Set environment (Windows)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          echo "CC=gcc" >> $GITHUB_ENV
-          echo "CXX=g++" >> $GITHUB_ENV
-          echo "FC=gfortran" >> $GITHUB_ENV
 
       - name: Build wheels (Linux)
         if: runner.os == 'Linux'
