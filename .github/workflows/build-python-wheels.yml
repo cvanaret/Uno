@@ -46,7 +46,7 @@ jobs:
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: 'gcc'
-          version: '14'
+          version: '13'
           
       - name: Install libomp (macOS)
         if: startsWith(matrix.sys.os, 'macos')
@@ -63,18 +63,14 @@ jobs:
       - name: Build wheels (Linux)
         if: runner.os == 'Linux'
         uses: pypa/cibuildwheel@v2.22.0
-        with:
-          package-dir: .
-          output-dir: wheelhouse
         env:
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
+          # Skip some builds
+          CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
       - name: Build wheels (macOS)
         if: startsWith(matrix.sys.os, 'macos')
         uses: pypa/cibuildwheel@v2.22.0
-        with:
-          package-dir: .
-          output-dir: wheelhouse
         env:
           # Override what setup-fortran set at the step level
           CC: clang
@@ -99,13 +95,12 @@ jobs:
             FC=gfortran-15
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
+          # Skip some builds
+          CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
       
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
         uses: pypa/cibuildwheel@v2.22.0
-        with:
-          package-dir: .
-          output-dir: wheelhouse
         env:
           CIBW_BEFORE_BUILD: bash {package}/dependencies/scripts/download_dependencies.sh
           CIBW_BEFORE_BUILD_WINDOWS: >
