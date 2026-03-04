@@ -27,7 +27,7 @@ Issues = "https://github.com/cvanaret/Uno/issues"
 
 [tool.scikit-build]
 cmake.source-dir = "."
-build.verbose = true
+cmake.verbose = true
 wheel.cmake = true
 
 # support for passing paths to dependencies from environment to CMake
@@ -46,7 +46,3 @@ BLAS_LIBRARIES = "dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
 LAPACK_LIBRARIES = "dependencies/lib/liblapack.a"
 # HiGHS
 HIGHS = "dependencies/lib/libhighs.a"
-
-[[tool.cibuildwheel.overrides]]
-select = "*-win_amd64"
-environment = {PKG_CONFIG_PATH="c:/opt/64/lib/pkgconfig", METIS_LIBRARY="dependencies/bin/libmetis.dll", HIGHS="dependencies/bin/libhighs.dll"}
