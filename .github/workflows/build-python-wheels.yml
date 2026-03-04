@@ -112,6 +112,7 @@ jobs:
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
+        shell: pwsh
         env:
           CIBW_BEFORE_BUILD: bash {package}/dependencies/scripts/download_dependencies.sh
           CIBW_BEFORE_BUILD_WINDOWS: >
