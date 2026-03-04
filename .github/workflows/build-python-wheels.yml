@@ -41,6 +41,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install cibuildwheel
+
       - name: Install Fortran compiler (macOS)
         if: startsWith(matrix.sys.os, 'macos')
         uses: fortran-lang/setup-fortran@main
@@ -62,7 +68,7 @@ jobs:
 
       - name: Build wheels (Linux)
         if: runner.os == 'Linux'
-        uses: pypa/cibuildwheel@v2.22.0
+        run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
           # Skip some builds
@@ -70,7 +76,7 @@ jobs:
 
       - name: Build wheels (macOS)
         if: startsWith(matrix.sys.os, 'macos')
-        uses: pypa/cibuildwheel@v2.22.0
+        run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
           # Override what setup-fortran set at the step level
           CC: clang
@@ -100,7 +106,7 @@ jobs:
       
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
-        uses: pypa/cibuildwheel@v2.22.0
+        run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
           CIBW_BEFORE_BUILD: bash {package}/dependencies/scripts/download_dependencies.sh
           CIBW_BEFORE_BUILD_WINDOWS: >
@@ -119,7 +125,6 @@ jobs:
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
-
         with:
           name: cibw-wheels-${{ matrix.sys.os }}-${{ strategy.job-index }}
           path: wheelhouse/*.whl
@@ -205,7 +210,36 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
-          
+
+  # test TestPyPI's unopy artifacts after upload to PyPI
+  test_testpypi:
+    needs: upload_testpypi
+    name: Test TestPyPI artifacts
+    runs-on: ${{ matrix.sys.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [ "3.12" ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install unopy from TestPyPI
+        run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ unopy
+
+      - name: Run example
+        working-directory: ${{github.workspace}}/interfaces/Python/example
+        run: python example_hs015.py
+
   # test PyPI's unopy artifacts after upload to PyPI
   test_pypi:
     needs: upload_pypi
