@@ -47,11 +47,11 @@ namespace uno {
    double PythonModel::evaluate_objective(const Vector<double>& x) const {
       double objective_value = 0.;
       if (this->user_model.objective_function.has_value()) {
-         const auto x_pybind = to_const_array(x.data(), this->number_variables);
-         auto objective_pybind = to_array(&objective_value, 1);
+         const auto x_py = to_const_array(x.data(), this->number_variables);
+         auto objective_py = to_array(&objective_value, 1);
 
          // evaluate objective
-         const uno_int return_code = (*this->user_model.objective_function)(x_pybind, objective_pybind);
+         const uno_int return_code = (*this->user_model.objective_function)(x_py, objective_py);
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
@@ -63,11 +63,11 @@ namespace uno {
 
    void PythonModel::evaluate_constraints(const Vector<double>& x, Vector<double>& constraints) const {
       if (this->user_model.constraint_functions.has_value()) {
-         const auto x_pybind = to_const_array(x.data(), this->number_variables);
-         auto constraints_pybind = to_array(constraints.data(), this->number_constraints);
+         const auto x_py = to_const_array(x.data(), this->number_variables);
+         auto constraints_py = to_array(constraints.data(), this->number_constraints);
 
          // evaluate constraints
-         const uno_int return_code = (*this->user_model.constraint_functions)(x_pybind, constraints_pybind);
+         const uno_int return_code = (*this->user_model.constraint_functions)(x_py, constraints_py);
          if (0 < return_code) {
             throw FunctionEvaluationError();
          }
@@ -77,11 +77,11 @@ namespace uno {
 
    void PythonModel::evaluate_objective_gradient(const Vector<double>& x, Vector<double>& gradient) const {
       if (this->user_model.objective_gradient.has_value()) {
-         const auto x_pybind = to_const_array(x.data(), this->number_variables);
-         auto gradient_pybind = to_array(gradient.data(), this->number_variables);
+         const auto x_py = to_const_array(x.data(), this->number_variables);
+         auto gradient_py = to_array(gradient.data(), this->number_variables);
 
          // evaluate objective gradient
-         const uno_int return_code = (*this->user_model.objective_gradient)(x_pybind, gradient_pybind);
+         const uno_int return_code = (*this->user_model.objective_gradient)(x_py, gradient_py);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -127,11 +127,11 @@ namespace uno {
 
    void PythonModel::evaluate_jacobian(const Vector<double>& x, double* jacobian_values) const {
       if (this->user_model.jacobian.has_value()) {
-         const auto x_pybind = to_const_array(x.data(), this->number_variables);
-         auto jacobian_pybind = to_array(jacobian_values, this->number_jacobian_nonzeros());
+         const auto x_py = to_const_array(x.data(), this->number_variables);
+         auto jacobian_py = to_array(jacobian_values, this->number_jacobian_nonzeros());
 
          // evaluate Jacobian
-         const uno_int return_code = (*this->user_model.jacobian)(x_pybind, jacobian_pybind);
+         const uno_int return_code = (*this->user_model.jacobian)(x_py, jacobian_py);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -147,13 +147,13 @@ namespace uno {
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
-         const auto x_pybind = to_const_array(x.data(), this->number_variables);
-         const auto multipliers_pybind = to_const_array(multipliers.data(), this->number_constraints);
-         auto hessian_pybind = to_array(hessian_values, this->number_hessian_nonzeros());
+         const auto x_py = to_const_array(x.data(), this->number_variables);
+         const auto multipliers_py = to_const_array(multipliers.data(), this->number_constraints);
+         auto hessian_py = to_array(hessian_values, this->number_hessian_nonzeros());
 
          // evaluate Lagrangian Hessian
-         const uno_int return_code = (*this->user_model.lagrangian_hessian)(x_pybind, objective_multiplier, multipliers_pybind,
-            hessian_pybind);
+         const uno_int return_code = (*this->user_model.lagrangian_hessian)(x_py, objective_multiplier, multipliers_py,
+            hessian_py);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
@@ -170,12 +170,12 @@ namespace uno {
 
    void PythonModel::compute_jacobian_vector_product(const double* x, const double* vector, double* result) const {
       if (this->user_model.jacobian_operator.has_value()) {
-         const auto x_pybind = to_const_array(x, this->number_variables);
-         const auto vector_pybind = to_const_array(vector, this->number_variables);
-         auto result_pybind = to_array(result, this->number_constraints);
+         const auto x_py = to_const_array(x, this->number_variables);
+         const auto vector_py = to_const_array(vector, this->number_variables);
+         auto result_py = to_array(result, this->number_constraints);
 
          // evaluate Jacobian-vector product
-         const uno_int return_code = (*this->user_model.jacobian_operator)(x_pybind, true, vector_pybind, result_pybind);
+         const uno_int return_code = (*this->user_model.jacobian_operator)(x_py, true, vector_py, result_py);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -187,12 +187,12 @@ namespace uno {
 
    void PythonModel::compute_jacobian_transposed_vector_product(const double* x, const double* vector, double* result) const {
       if (this->user_model.jacobian_transposed_operator.has_value()) {
-         const auto x_pybind = to_const_array(x, this->number_variables);
-         const auto vector_pybind = to_const_array(vector, this->number_constraints);
-         auto result_pybind = to_array(result, this->number_variables);
+         const auto x_py = to_const_array(x, this->number_variables);
+         const auto vector_py = to_const_array(vector, this->number_constraints);
+         auto result_py = to_array(result, this->number_variables);
 
          // evaluate Jacobian^T-vector product
-         const uno_int return_code = (*this->user_model.jacobian_transposed_operator)(x_pybind, true, vector_pybind, result_pybind);
+         const uno_int return_code = (*this->user_model.jacobian_transposed_operator)(x_py, true, vector_py, result_py);
          if (0 < return_code) {
             throw GradientEvaluationError();
          }
@@ -210,14 +210,14 @@ namespace uno {
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
-         const auto x_pybind = to_const_array(x, this->number_variables);
-         const auto multipliers_pybind = to_const_array(multipliers.data(), this->number_constraints);
-         const auto vector_pybind = to_const_array(vector, this->number_variables);
-         auto result_pybind = to_array(result, this->number_variables);
+         const auto x_py = to_const_array(x, this->number_variables);
+         const auto multipliers_py = to_const_array(multipliers.data(), this->number_constraints);
+         const auto vector_py = to_const_array(vector, this->number_variables);
+         auto result_py = to_array(result, this->number_variables);
 
          // evaluate Hessian-vector product
-         const uno_int return_code = (*this->user_model.lagrangian_hessian_operator)(x_pybind, true, objective_multiplier,
-            multipliers_pybind, vector_pybind, result_pybind);
+         const uno_int return_code = (*this->user_model.lagrangian_hessian_operator)(x_py, true, objective_multiplier,
+            multipliers_py, vector_py, result_py);
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
