@@ -40,7 +40,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       
       - name: Install unopy from TestPyPI
-        run: pip install -i https://test.pypi.org/simple/ unopy
+        run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ unopy
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
