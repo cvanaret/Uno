@@ -7,15 +7,17 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "unopy"
-version = "0.2.3"
+version = "0.2.5"
 #requires-python = ">=3.8"
 description = "With Uno, finally take full control of your SQP/barrier solver for nonlinearly constrained optimization"
 readme = "interfaces/Python/README.md"
 authors = [
-    {name = "Charlie Vanaret", email = "vanaret@zib.de"}
+    {name = "Charlie Vanaret", email = "vanaret@zib.de"},
+    {name = "Alexis Montoison", email = "amontoison@anl.gov"}
 ]
 maintainers = [
-    {name = "Charlie Vanaret", email = "vanaret@zib.de"}
+    {name = "Charlie Vanaret", email = "vanaret@zib.de"},
+    {name = "Alexis Montoison", email = "amontoison@anl.gov"}
 ]
 license = "MIT"
 
@@ -30,6 +32,8 @@ wheel.cmake = true
 
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
+BLAS_LIBRARIES = "dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
+LAPACK_LIBRARIES = "dependencies/lib/liblapack.a"
 # BQPD (cmake -DBQPD=/path/.../libbqpd.a)
 BQPD = "dependencies/lib/libbqpd.a"
 # MUMPS
@@ -40,8 +44,5 @@ MUMPS_LIBRARY = "dependencies/lib/libdmumps.a"
 MUMPS_COMMON_LIBRARY = "dependencies/lib/libmumps_common.a"
 MUMPS_PORD_LIBRARY = "dependencies/lib/libpord.a"
 MUMPS_MPISEQ_LIBRARY = "dependencies/lib/libmpiseq.a"
-BLAS_LIBRARIES = "dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
-LAPACK_LIBRARIES = "dependencies/lib/liblapack.a"
 # HiGHS
-# HIGHS_DIR = "dependencies/lib/cmake/highs"
 HIGHS = "dependencies/lib/libhighs.a"
