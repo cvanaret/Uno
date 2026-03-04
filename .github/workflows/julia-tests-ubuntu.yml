@@ -42,8 +42,12 @@ jobs:
           arch: x64
       - uses: julia-actions/cache@v2
 
-      # Set environment variables required by BinaryBuilder.
-      - name: Set the environment variables
+      - name: Set the environment variables for OpenMP
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> $GITHUB_ENV
+          echo "OMP_PROC_BIND=TRUE" >> $GITHUB_ENV
+
+      - name: Set the environment variables for BinaryBuilder
         run: |
           git fetch --tags
           echo "UNO_RELEASE=$(git describe --tags $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_ENV
