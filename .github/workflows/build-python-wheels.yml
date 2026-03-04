@@ -46,6 +46,11 @@ jobs:
           python-version: "3.11"
 
       - run: pip install cibuildwheel
+        if: runner.os != 'Windows'
+
+      - run: pip install cibuildwheel
+        if: runner.os == 'Windows'
+        shell: pwsh
 
       - name: Install Fortran compiler (macOS)
         if: startsWith(matrix.sys.os, 'macos')
