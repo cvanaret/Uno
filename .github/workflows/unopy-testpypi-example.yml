@@ -40,6 +40,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Add MSBuild/MSVC to PATH (Windows)
+        if: runner.os == 'Windows'
+        uses: microsoft/setup-msbuild@v2
+
       - name: Upgrade pip, setuptools, wheel
         run: python -m pip install --upgrade pip setuptools wheel
       
