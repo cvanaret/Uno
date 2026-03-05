@@ -76,31 +76,36 @@ jobs:
         shell: pwsh
         continue-on-error: true
         run: |
-          python -c "
-          import pefile, os
-      
+          $script = @'
+          import pefile, os, sys
+    
           libs_dir = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy.libs'
           pyd = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy/unopy.cp312-win_amd64.pyd'
-      
-          # What DLLs does the .pyd import, and what symbols from each?
+    
+          # Verify libs_dir exists and is being added
+          print('libs_dir exists:', os.path.isdir(libs_dir))
+          print('libs_dir abspath:', os.path.abspath(libs_dir))
+          os.add_dll_directory(os.path.abspath(libs_dir))
+    
+          # Try loading with ctypes for a more specific error
+          import ctypes
+          try:
+            ctypes.CDLL(pyd)
+            print('ctypes load succeeded')
+          except OSError as e:
+            print('ctypes error:', e)
+    
+          # What does the .pyd import?
           pe = pefile.PE(pyd)
           for entry in pe.DIRECTORY_ENTRY_IMPORT:
-              dll_name = entry.dll.decode()
-              print(f'\nDLL: {dll_name}')
+            dll_name = entry.dll.decode()
+            print('DLL: ' + dll_name)
               for imp in entry.imports:
-                  print(f'  {imp.name.decode() if imp.name else \"ordinal:\"+str(imp.ordinal)}')
-      
-          # For each bundled DLL, list its exports
-          print('\n--- EXPORTS in bundled DLLs ---')
-          for dll in os.listdir(libs_dir):
-              path = os.path.join(libs_dir, dll)
-              try:
-                  pe2 = pefile.PE(path)
-                  exports = [e.name.decode() for e in pe2.DIRECTORY_ENTRY_EXPORT.symbols if e.name]
-                  print(f'\n{dll}: {len(exports)} exports')
-              except Exception as e:
-                  print(f'{dll}: error - {e}')
-          "
+                  name = imp.name.decode() if imp.name else 'ordinal:' + str(imp.ordinal)
+                          print('  ' + name)
+          '@
+          $script | Out-File -FilePath diagnose.py -Encoding utf8
+          python diagnose.py
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
