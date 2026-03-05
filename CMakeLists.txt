@@ -306,10 +306,8 @@ if(SKBUILD)
       add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=1)
 
       # link-time optimization
-      if (NOT WIN32)
-         add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-flto=auto>)
-         add_link_options(-flto=auto)
-      endif()
+      add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-flto=auto>)
+      add_link_options(-flto=auto)
    endif()
 
    file(GLOB PYTHON_MODULE_FILES
