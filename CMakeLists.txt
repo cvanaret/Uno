@@ -301,15 +301,15 @@ if(SKBUILD)
    # set(PYBIND11_FINDPYTHON ON)
    find_package(pybind11 CONFIG REQUIRED)
 
-   # link-time optimization
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-flto=auto>)
-        add_link_options(-flto=auto)
-   endif()
-
-   # C++ ABI
-   if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      # C++ ABI
       add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=1)
+
+      # link-time optimization
+      if (NOT WIN32)
+         add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-flto=auto>)
+         add_link_options(-flto=auto)
+      endif()
    endif()
 
    file(GLOB PYTHON_MODULE_FILES
