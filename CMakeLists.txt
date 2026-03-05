@@ -306,6 +306,11 @@ if(SKBUILD)
       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto=auto")
    endif()
 
+   # C++ ABI
+   if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=1)
+   endif()
+
    file(GLOB PYTHON_MODULE_FILES
       interfaces/Python/cpp_classes/*.cpp
       interfaces/Python/python_modules/*.cpp

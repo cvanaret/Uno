@@ -32,7 +32,6 @@ wheel.cmake = true
 
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
-_GLIBCXX_USE_CXX11_ABI = "1"
 BLAS_LIBRARIES = "dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
 LAPACK_LIBRARIES = "dependencies/lib/liblapack.a"
 # BQPD (cmake -DBQPD=/path/.../libbqpd.a)
