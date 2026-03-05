@@ -319,8 +319,8 @@ if(SKBUILD)
    target_include_directories(unopy SYSTEM PUBLIC ${DIRECTORIES})
 
    install(TARGETS unopy
-           LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}   # Linux/macOS .so
-           RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}   # Windows .pyd/.dll
+           LIBRARY DESTINATION unopy    # Linux/macOS: unopy/unopy.so
+           RUNTIME DESTINATION unopy    # Windows: unopy/unopy.pyd
    )
 else()
    message(STATUS "SKBUILD not detected, skipping Python extension.")

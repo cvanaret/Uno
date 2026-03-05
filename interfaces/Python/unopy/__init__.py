@@ -1,0 +1,1 @@
+from .unopy import *  # re-export the .pyd contents
