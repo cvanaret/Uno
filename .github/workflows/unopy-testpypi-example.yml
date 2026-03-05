@@ -100,9 +100,9 @@ jobs:
           for entry in pe.DIRECTORY_ENTRY_IMPORT:
             dll_name = entry.dll.decode()
             print('DLL: ' + dll_name)
-              for imp in entry.imports:
-                name = imp.name.decode() if imp.name else 'ordinal:' + str(imp.ordinal)
-                  print('  ' + name)
+            for imp in entry.imports:
+              name = imp.name.decode() if imp.name else 'ordinal:' + str(imp.ordinal)
+              print('  ' + name)
           '@
           $script | Out-File -FilePath diagnose.py -Encoding utf8
           python diagnose.py
