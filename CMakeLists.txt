@@ -318,7 +318,10 @@ if(SKBUILD)
    target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    target_include_directories(unopy SYSTEM PUBLIC ${DIRECTORIES})
 
-   install(TARGETS unopy LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX})
+   install(TARGETS unopy
+           LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}   # Linux/macOS .so
+           RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}   # Windows .pyd/.dll
+   )
 else()
    message(STATUS "SKBUILD not detected, skipping Python extension.")
 endif()
