@@ -75,7 +75,6 @@ jobs:
         if: runner.os == 'Linux'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
-          CIBW_ENVIRONMENT_LINUX: CMAKE_CXX_FLAGS="-D_GLIBCXX_USE_CXX11_ABI=1"
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
           # Skip some builds
           CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
@@ -119,7 +118,6 @@ jobs:
           CIBW_BEFORE_BUILD_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh"
           CIBW_ENVIRONMENT_WINDOWS: >
-            CMAKE_CXX_FLAGS="-D_GLIBCXX_USE_CXX11_ABI=1"
             CMAKE_GENERATOR="MinGW Makefiles"
             CMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
             CMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe
