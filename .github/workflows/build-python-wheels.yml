@@ -122,8 +122,6 @@ jobs:
           CIBW_BEFORE_BUILD: bash {package}/dependencies/scripts/download_dependencies.sh
           CIBW_BEFORE_BUILD_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh"
-          # standard environment variable for reproducible builds
-          SOURCE_DATE_EPOCH: "315532800"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             delvewheel repair --add-path dependencies/bin;dependencies/lib --no-mangle-all -w {dest_dir} {wheel}
           CIBW_ENVIRONMENT_WINDOWS: >
@@ -132,6 +130,7 @@ jobs:
             CMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe
             CMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
+            SOURCE_DATE_EPOCH=315532800
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
             cmake.define.HIGHS=dependencies/bin/libhighs.dll
