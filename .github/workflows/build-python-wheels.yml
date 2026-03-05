@@ -122,6 +122,7 @@ jobs:
           CIBW_BEFORE_BUILD: bash {package}/dependencies/scripts/download_dependencies.sh
           CIBW_BEFORE_BUILD_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh"
+          # standard environment variable for reproducible builds
           SOURCE_DATE_EPOCH: "315532800"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             delvewheel repair --add-path dependencies/bin;dependencies/lib --no-mangle-all -w {dest_dir} {wheel}
