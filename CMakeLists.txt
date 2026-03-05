@@ -303,7 +303,8 @@ if(SKBUILD)
 
    # link-time optimization
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto=auto")
+        add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-flto=auto>)
+        add_link_options(-flto=auto)
    endif()
 
    # C++ ABI
