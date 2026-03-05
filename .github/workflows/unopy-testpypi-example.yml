@@ -50,6 +50,40 @@ jobs:
       - name: Install unopy from TestPyPI
         run: python -m pip install -v --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ unopy
 
+      - name: Diagnose unopy import (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # 1. Is the module findable at all?
+          python -c "import importlib.util; spec = importlib.util.find_spec('unopy'); print('SPEC:', spec)"
+
+          # 2. Where did pip install it?
+          python -m pip show unopy
+
+          # 3. What files are in the package?
+          python -c "
+          import importlib.util, os
+          spec = importlib.util.find_spec('unopy')
+          if spec:
+              d = os.path.dirname(spec.origin)
+              for f in os.listdir(d):
+                  print(f)
+          else:
+              print('unopy not found by importlib')
+          "
+
+          # 4. What does the actual import error say in full?
+          python -c "
+          import traceback
+          try:
+              import unopy
+          except Exception as e:
+              traceback.print_exc()
+          "
+
+          # 5. What is on sys.path?
+          python -c "import sys; [print(p) for p in sys.path]"
+
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
         run: python example_hs015.py
