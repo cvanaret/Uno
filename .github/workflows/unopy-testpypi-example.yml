@@ -71,6 +71,25 @@ jobs:
               traceback.print_exc()
           "
 
+      - name: Find missing symbol (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Check which DLLs the .pyd imports and whether they're resolvable
+          python -c "
+          import os, sys
+          os.add_dll_directory(os.path.abspath('C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy.libs'))
+          import ctypes
+          pyd = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy/unopy.cp312-win_amd64.pyd'
+          try:
+              ctypes.CDLL(pyd)
+          except OSError as e:
+              print('ctypes error:', e)
+          "
+      
+          # List all DLLs imported by the .pyd using dumpbin (available with MSVC)
+          & 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.43.34808\bin\Hostx64\x64\dumpbin.exe' /dependents 'C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\unopy\unopy.cp312-win_amd64.pyd'
+
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
         run: python example_hs015.py
