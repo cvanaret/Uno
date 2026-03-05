@@ -119,9 +119,10 @@ jobs:
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         shell: pwsh
         env:
-          CIBW_BEFORE_BUILD: bash {package}/dependencies/scripts/download_dependencies.sh
           CIBW_BEFORE_BUILD_WINDOWS: >
-            C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh"
+            C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh" &&
+            pwsh -Command "Get-ChildItem -Path '{package}/dependencies' -Recurse |
+            ForEach-Object { $_.LastWriteTime = Get-Date }"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
             delvewheel repair --add-path 'dependencies/bin;dependencies/lib' --no-mangle-all -w {dest_dir} {wheel}"
