@@ -50,28 +50,26 @@ jobs:
       - name: Install unopy from TestPyPI
         run: python -m pip install -v --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ unopy
 
-      - name: Inspect unopy on disk (Windows)
+      - name: Diagnose DLL issue (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          # 1. List everything in site-packages related to unopy
-          Get-ChildItem "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages" | Where-Object { $_.Name -like "*unopy*" }
+          # 1. What got bundled into the wheel?
+          Get-ChildItem "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\unopy" -Recurse
+          Get-ChildItem "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\unopy.libs" -Recurse
 
-          # 2. List contents of the unopy folder/egg-info if it exists
-          $dir = "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\unopy"
-          if (Test-Path $dir) {
-              Get-ChildItem $dir -Recurse
-          } else {
-              Write-Host "No unopy directory found!"
-          }
+          # 2. What does delvewheel think is still missing?
+          pip install delvewheel
+          delvewheel show "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\unopy\unopy.cp312-win_amd64.pyd"
 
-          # 3. Check the .dist-info RECORD to see what files were supposed to be installed
-          $record = "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\unopy-0.2.5.dist-info\RECORD"
-          if (Test-Path $record) {
-              Get-Content $record
-          } else {
-              Write-Host "No RECORD file found!"
-          }
+          # 3. Full traceback of the import error
+          python -c "
+          import traceback
+          try:
+              import unopy
+          except Exception:
+              traceback.print_exc()
+          "
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
