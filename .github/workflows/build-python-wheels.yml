@@ -52,6 +52,11 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
 
+      - name: Install delvewheel (Windows)
+        if: runner.os == 'Windows'
+        run: pip install delvewheel
+        shell: pwsh
+
       - name: Install Fortran compiler (macOS)
         if: startsWith(matrix.sys.os, 'macos')
         uses: fortran-lang/setup-fortran@main
@@ -114,9 +119,13 @@ jobs:
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         shell: pwsh
         env:
-          CIBW_BEFORE_BUILD: bash {package}/dependencies/scripts/download_dependencies.sh
           CIBW_BEFORE_BUILD_WINDOWS: >
-            C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh"
+            C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh" &&
+            pwsh -Command "Get-ChildItem -Path '{package}/dependencies' -Recurse |
+            ForEach-Object { $_.LastWriteTime = Get-Date }"
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
+            pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
+            delvewheel repair --add-path 'dependencies/bin;dependencies/lib' --no-mangle-all -w {dest_dir} {wheel}"
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_GENERATOR="MinGW Makefiles"
             CMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe

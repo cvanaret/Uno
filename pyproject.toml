@@ -28,6 +28,7 @@ Issues = "https://github.com/cvanaret/Uno/issues"
 cmake.source-dir = "."
 cmake.verbose = true
 wheel.cmake = true
+wheel.packages = ["interfaces/Python/unopy"]  # point to a dir containing __init__.py
 
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
