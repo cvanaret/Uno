@@ -8,7 +8,6 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "unopy"
 version = "0.2.5"
-#requires-python = ">=3.8"
 description = "With Uno, finally take full control of your SQP/barrier solver for nonlinearly constrained optimization"
 readme = "interfaces/Python/README.md"
 authors = [
@@ -29,6 +28,7 @@ Issues = "https://github.com/cvanaret/Uno/issues"
 cmake.source-dir = "."
 cmake.verbose = true
 wheel.cmake = true
+wheel.install-dir = "." # installs .pyd directly into site-packages root
 
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
