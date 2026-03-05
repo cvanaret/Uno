@@ -50,39 +50,28 @@ jobs:
       - name: Install unopy from TestPyPI
         run: python -m pip install -v --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ unopy
 
-      - name: Diagnose unopy import (Windows)
+      - name: Inspect unopy on disk (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          # 1. Is the module findable at all?
-          python -c "import importlib.util; spec = importlib.util.find_spec('unopy'); print('SPEC:', spec)"
+          # 1. List everything in site-packages related to unopy
+          Get-ChildItem "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages" | Where-Object { $_.Name -like "*unopy*" }
 
-          # 2. Where did pip install it?
-          python -m pip show unopy
+          # 2. List contents of the unopy folder/egg-info if it exists
+          $dir = "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\unopy"
+          if (Test-Path $dir) {
+              Get-ChildItem $dir -Recurse
+          } else {
+              Write-Host "No unopy directory found!"
+          }
 
-          # 3. What files are in the package?
-          python -c "
-          import importlib.util, os
-          spec = importlib.util.find_spec('unopy')
-          if spec:
-              d = os.path.dirname(spec.origin)
-              for f in os.listdir(d):
-                  print(f)
-          else:
-              print('unopy not found by importlib')
-          "
-
-          # 4. What does the actual import error say in full?
-          python -c "
-          import traceback
-          try:
-              import unopy
-          except Exception as e:
-              traceback.print_exc()
-          "
-
-          # 5. What is on sys.path?
-          python -c "import sys; [print(p) for p in sys.path]"
+          # 3. Check the .dist-info RECORD to see what files were supposed to be installed
+          $record = "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\unopy-0.2.5.dist-info\RECORD"
+          if (Test-Path $record) {
+              Get-Content $record
+          } else {
+              Write-Host "No RECORD file found!"
+          }
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
