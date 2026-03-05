@@ -74,21 +74,33 @@ jobs:
       - name: Find missing symbol (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
+        continue-on-error: true
         run: |
-          # Check which DLLs the .pyd imports and whether they're resolvable
           python -c "
-          import os, sys
-          os.add_dll_directory(os.path.abspath('C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy.libs'))
-          import ctypes
-          pyd = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy/unopy.cp312-win_amd64.pyd'
-          try:
-              ctypes.CDLL(pyd)
-          except OSError as e:
-              print('ctypes error:', e)
-          "
+          import pefile, os
       
-          # List all DLLs imported by the .pyd using dumpbin (available with MSVC)
-          & 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.43.34808\bin\Hostx64\x64\dumpbin.exe' /dependents 'C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\unopy\unopy.cp312-win_amd64.pyd'
+          libs_dir = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy.libs'
+          pyd = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy/unopy.cp312-win_amd64.pyd'
+      
+          # What DLLs does the .pyd import, and what symbols from each?
+          pe = pefile.PE(pyd)
+          for entry in pe.DIRECTORY_ENTRY_IMPORT:
+              dll_name = entry.dll.decode()
+              print(f'\nDLL: {dll_name}')
+              for imp in entry.imports:
+                  print(f'  {imp.name.decode() if imp.name else \"ordinal:\"+str(imp.ordinal)}')
+      
+          # For each bundled DLL, list its exports
+          print('\n--- EXPORTS in bundled DLLs ---')
+          for dll in os.listdir(libs_dir):
+              path = os.path.join(libs_dir, dll)
+              try:
+                  pe2 = pefile.PE(path)
+                  exports = [e.name.decode() for e in pe2.DIRECTORY_ENTRY_EXPORT.symbols if e.name]
+                  print(f'\n{dll}: {len(exports)} exports')
+              except Exception as e:
+                  print(f'{dll}: error - {e}')
+          "
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
