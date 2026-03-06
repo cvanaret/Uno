@@ -272,6 +272,7 @@ jobs:
       - name: Diagnose libhighs.dll (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
+        continue-on-error: true
         run: |
           $script = @'
           import os, ctypes, pefile
