@@ -243,23 +243,28 @@ jobs:
         shell: pwsh
         run: |
           $script = @'
-          import os, sys, ctypes, importlib.util
+          import os, ctypes, importlib.util
           
           spec = importlib.util.find_spec('unopy')
-          print('unopy spec:', spec)
           unopy_dir = os.path.dirname(spec.origin)
           libs_dir = os.path.abspath(os.path.join(unopy_dir, '..', 'unopy.libs'))
-          print('libs_dir:', libs_dir)
-          
-          # Explicitly preload our libgcc_s_seh-1.dll first
-          gcc_dll = os.path.join(libs_dir, 'libgcc_s_seh-1.dll')
-          print('Loading:', gcc_dll)
-          handle = ctypes.CDLL(gcc_dll)
-          print('Loaded OK:', handle)
-          
           os.add_dll_directory(libs_dir)
-          import unopy
-          print('SUCCESS')
+        
+          # Load all bundled DLLs explicitly and report
+          for dll in sorted(os.listdir(libs_dir)):
+            path = os.path.join(libs_dir, dll)
+            try:
+              handle = ctypes.CDLL(path)
+              print('OK: ' + dll)
+            except OSError as e:
+              print('FAIL: ' + dll + ' -> ' + str(e))
+          
+          # Now try the import
+          try:
+            import unopy
+            print('SUCCESS: import unopy')
+          except ImportError as e:
+            print('FAIL: import unopy -> ' + str(e))
           '@
           $script | Out-File -FilePath preload_test.py -Encoding utf8
           python preload_test.py
