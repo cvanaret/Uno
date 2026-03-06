@@ -124,6 +124,7 @@ jobs:
           'C:/Windows/System32',
           'C:/Windows/SysWOW64',
           'C:/Windows',
+          'C:/Windows/System32/downlevel',   # <-- UCRT forwarder DLLs live here
           'C:/hostedtoolcache/windows/Python/3.12.10/x64',
           ]
 
