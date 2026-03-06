@@ -209,8 +209,7 @@ endif()
 # SPRAL SSIDS
 find_library(SPRAL NAMES spral)
 if(SPRAL)
-   list(APPEND UNO_SOURCE_FILES
-           uno/ingredients/subproblem_solvers/SSIDS/SSIDSSolver.cpp)
+   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/SSIDS/SSIDSSolver.cpp)
    link_to_uno(spral ${SPRAL})
 endif()
 
