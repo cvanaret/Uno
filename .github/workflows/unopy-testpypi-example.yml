@@ -142,24 +142,24 @@ jobs:
                 break
             if not dll_path:
               print('DLL NOT FOUND ON SYSTEM: ' + dll_name)
-                    continue
-                # Get its exports
-                try:
-                    sys_pe = pefile.PE(dll_path)
-                    sys_exports = {}
-                    if hasattr(sys_pe, 'DIRECTORY_ENTRY_EXPORT'):
-                      for sym in sys_pe.DIRECTORY_ENTRY_EXPORT.symbols:
-                        if sym.name:
-                          sys_exports[sym.name.decode()] = sym.ordinal
-            # Check each import
-            for imp in entry.imports:
-              if imp.name:
-                sym = imp.name.decode()
-                if sym not in sys_exports:
-                  print('MISSING from ' + dll_name + ': ' + sym)
-                else:
-                  if imp.ordinal not in sys_exports.values():
-                    print('MISSING ordinal ' + str(imp.ordinal) + ' from ' + dll_name)
+              continue
+            # Get its exports
+            try:
+                sys_pe = pefile.PE(dll_path)
+                sys_exports = {}
+                if hasattr(sys_pe, 'DIRECTORY_ENTRY_EXPORT'):
+                  for sym in sys_pe.DIRECTORY_ENTRY_EXPORT.symbols:
+                    if sym.name:
+                      sys_exports[sym.name.decode()] = sym.ordinal
+                # Check each import
+                for imp in entry.imports:
+                  if imp.name:
+                    sym = imp.name.decode()
+                    if sym not in sys_exports:
+                      print('MISSING from ' + dll_name + ': ' + sym)
+                  else:
+                    if imp.ordinal not in sys_exports.values():
+                      print('MISSING ordinal ' + str(imp.ordinal) + ' from ' + dll_name)
           except Exception as e:
             print('Error reading ' + dll_name + ': ' + str(e))
           '@
