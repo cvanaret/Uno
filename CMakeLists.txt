@@ -237,7 +237,7 @@ endif()
 ###############
 # Uno library #
 ###############
-# link with Fortran libraries (filtered for Apple architecture) even when static libraries are linked
+# link with Fortran libraries (filtered for Apple architectures) even when static libraries are linked
 set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
 if(APPLE)
    list(REMOVE_ITEM FORTRAN_LIBS gcc)
