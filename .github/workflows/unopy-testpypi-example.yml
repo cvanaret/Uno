@@ -238,35 +238,25 @@ jobs:
           $env:PATH = $clean -join ';'
           echo "PATH=$($clean -join ';')" >> $env:GITHUB_ENV
 
-      - name: Verify PATH and runtime DLL loading (Windows)
+      - name: Preload test (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          # 1. Confirm conflicting paths are gone
-          Write-Host "=== Current PATH entries ==="
-          ($env:PATH -split ';') | Where-Object { $_ -match 'mingw|strawberry|git' -or $_ -match 'unopy' } | ForEach-Object { Write-Host $_ }
-      
-          # 2. Try loading the DLL explicitly before Python import
           $script = @'
-          import os, sys, ctypes
+          import os, sys, ctypes, importlib.util
           
-          libs_dir = os.path.abspath(
-            os.path.join(
-              os.path.dirname(
-                __import__('importlib.util', fromlist=['util']).util.find_spec('unopy').origin
-              ),
-              '..', 'unopy.libs'
-            )
-          )
+          spec = importlib.util.find_spec('unopy')
+          print('unopy spec:', spec)
+          unopy_dir = os.path.dirname(spec.origin)
+          libs_dir = os.path.abspath(os.path.join(unopy_dir, '..', 'unopy.libs'))
           print('libs_dir:', libs_dir)
           
-          # Explicitly load our libgcc_s_seh-1.dll first
+          # Explicitly preload our libgcc_s_seh-1.dll first
           gcc_dll = os.path.join(libs_dir, 'libgcc_s_seh-1.dll')
           print('Loading:', gcc_dll)
           handle = ctypes.CDLL(gcc_dll)
-          print('Loaded libgcc_s_seh-1.dll handle:', handle)
+          print('Loaded OK:', handle)
           
-          # Now try the full import
           os.add_dll_directory(libs_dir)
           import unopy
           print('SUCCESS')
