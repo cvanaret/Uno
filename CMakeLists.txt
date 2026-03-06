@@ -239,6 +239,7 @@ endif()
 ###############
 # link with Fortran libraries (filtered for Apple architectures) even when static libraries are linked
 set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+message(STATUS "FORTRAN_LIBS before: ${FORTRAN_LIBS}")
 if(APPLE)
    list(REMOVE_ITEM FORTRAN_LIBS gcc)
    list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
@@ -246,6 +247,7 @@ if(APPLE)
 elseif(WIN32)
    list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
 endif()
+message(STATUS "FORTRAN_LIBS after: ${FORTRAN_LIBS}")
 
 # compile the Uno source files once, whatever the compilation type is (static or shared)
 add_library(compiled_uno_files OBJECT ${UNO_SOURCE_FILES})
