@@ -269,6 +269,30 @@ jobs:
           $script | Out-File -FilePath preload_test.py -Encoding utf8
           python preload_test.py
 
+      - name: Diagnose libhighs.dll (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $script = @'
+          import os, ctypes, pefile
+          
+          libs_dir = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy.libs'
+          os.add_dll_directory(libs_dir)
+          
+          highs = os.path.join(libs_dir, 'libhighs.dll')
+          pe = pefile.PE(highs)
+          
+          print('=== libhighs.dll imports ===')
+          for entry in pe.DIRECTORY_ENTRY_IMPORT:
+            dll_name = entry.dll.decode()
+            print('DLL: ' + dll_name)
+            for imp in entry.imports:
+              name = imp.name.decode() if imp.name else 'ordinal:' + str(imp.ordinal)
+              print('  ' + name)
+          '@
+          $script | Out-File -FilePath diaghighs.py -Encoding utf8
+          python diaghighs.py
+
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
         run: python example_hs015.py
