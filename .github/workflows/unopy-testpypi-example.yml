@@ -107,6 +107,44 @@ jobs:
           $script | Out-File -FilePath diagnose.py -Encoding utf8
           python diagnose.py
 
+      - name: Check DLL versions (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $script = @'
+          import pefile, os
+          
+          libs_dir = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy.libs'
+          pyd = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy/unopy.cp312-win_amd64.pyd'
+
+          def get_dll_info(path):
+            pe = pefile.PE(path)
+            if hasattr(pe, 'VS_FIXEDFILEINFO'):
+              v = pe.VS_FIXEDFILEINFO[0]
+              ms = v.FileVersionMS
+              ls = v.FileVersionLS
+              return '%d.%d.%d.%d' % (ms>>16, ms&0xffff, ls>>16, ls&0xffff)
+            return 'no version info'
+        
+          print('unopy.pyd:', get_dll_info(pyd))
+          for dll in sorted(os.listdir(libs_dir)):
+            path = os.path.join(libs_dir, dll)
+            print(dll + ': ' + get_dll_info(path))
+      
+          # Also check which GCC produced the .pyd
+          pe = pefile.PE(pyd)
+          if hasattr(pe, 'FileInfo'):
+            for fi in pe.FileInfo:
+              for entry in fi:
+                if hasattr(entry, 'StringTable'):
+                  for st in entry.StringTable:
+                    for k, v in st.entries.items():
+                      print(k.decode() + ': ' + v.decode())
+          '@
+          $script | Out-File -FilePath diagnose2.py -Encoding utf8
+          python diagnose2.py
+
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
         run: python example_hs015.py
