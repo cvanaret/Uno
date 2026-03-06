@@ -301,9 +301,13 @@ if(SKBUILD)
    # set(PYBIND11_FINDPYTHON ON)
    find_package(pybind11 CONFIG REQUIRED)
 
-   # link-time optimization
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto=auto")
+      # C++ ABI
+      add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=1)
+
+      # link-time optimization
+      add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-flto=auto>)
+      add_link_options(-flto=auto)
    endif()
 
    file(GLOB PYTHON_MODULE_FILES
@@ -318,7 +322,10 @@ if(SKBUILD)
    target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    target_include_directories(unopy SYSTEM PUBLIC ${DIRECTORIES})
 
-   install(TARGETS unopy LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX})
+   install(TARGETS unopy
+           LIBRARY DESTINATION unopy    # Linux/macOS: unopy/unopy.so
+           RUNTIME DESTINATION unopy    # Windows: unopy/unopy.pyd
+   )
 else()
    message(STATUS "SKBUILD not detected, skipping Python extension.")
 endif()

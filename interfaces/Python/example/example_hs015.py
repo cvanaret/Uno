@@ -121,6 +121,6 @@ if __name__ == '__main__':
 	
 	# run 4: solve with the filterslp preset
 	uno_solver.set_preset("filterslp")
-	uno_solver.set_option("LP_solver", "HiGHS")
+	uno_solver.set_option("LP_solver", "BQPD")
 	result = uno_solver.optimize(model)
 	assert abs(result.solution_objective - 306.5) <= 1e-4

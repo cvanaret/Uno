@@ -8,7 +8,8 @@ case "$OS_NAME" in
     Darwin*) OS="apple-darwin";;
     Windows*) OS="w64-mingw32";;
     MINGW64_NT*) OS="w64-mingw32";;
-    *) echo "Unsupported OS: $OS_NAME"; exit 1 ;;
+    MSYS_NT*) OS="w64-mingw32";;
+    *) echo "Unsupported OS: $OS_NAME"; exit 1;;
 esac
 # detect architecture
 ARCH_NAME="$(uname -m)"

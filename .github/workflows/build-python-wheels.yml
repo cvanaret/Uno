@@ -23,31 +23,49 @@ on:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.sys.os }}
+    runs-on: ${{ matrix.sys.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-22.04-arm, macos-latest, macos-15-intel]
+        sys:
+          - { os: ubuntu-latest, shell: bash }
+          - { os: ubuntu-22.04-arm, shell: bash }
+          - { os: macos-latest, shell: bash }
+          - { os: macos-15-intel, shell: bash }
+          - { os: windows-latest, shell: 'msys2 {0}' }
+    defaults:
+      run:
+        shell: ${{ matrix.sys.shell }}
 
     steps:
       - uses: actions/checkout@v5
-      
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - run: pip install cibuildwheel
+        if: runner.os != 'Windows'
 
-      - name: Install Fortran compiler on macOS
-        if: startsWith(matrix.os, 'macos')
+      - run: pip install cibuildwheel
+        if: runner.os == 'Windows'
+        shell: pwsh
+
+      - name: Install delvewheel (Windows)
+        if: runner.os == 'Windows'
+        run: pip install delvewheel
+        shell: pwsh
+
+      - name: Install Fortran compiler (macOS)
+        if: startsWith(matrix.sys.os, 'macos')
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: 'gcc'
-          version: '14'
-          
+          version: '13'
+
       - name: Install libomp (macOS)
-        if: startsWith(matrix.os, 'macos')
+        if: startsWith(matrix.sys.os, 'macos')
         run: |
           brew install libomp
           if [[ $(uname -m) == 'arm64' ]]; then
@@ -63,9 +81,11 @@ jobs:
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
+          # Skip some builds
+          CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
       - name: Build wheels (macOS)
-        if: startsWith(matrix.os, 'macos')
+        if: startsWith(matrix.sys.os, 'macos')
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
           # Override what setup-fortran set at the step level
@@ -91,11 +111,38 @@ jobs:
             FC=gfortran-15
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
+          # Skip some builds
+          CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
-      - uses: actions/upload-artifact@v4
+      - name: Build wheels (Windows)
+        if: runner.os == 'Windows'
+        run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
+        shell: pwsh
+        env:
+          CIBW_BEFORE_BUILD_WINDOWS: >
+            C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh" &&
+            pwsh -Command "Get-ChildItem -Path '{package}/dependencies' -Recurse |
+            ForEach-Object { $_.LastWriteTime = Get-Date }"
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
+            pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
+            delvewheel repair --add-path 'C:/msys64/mingw64/bin;dependencies/bin;dependencies/lib' --no-mangle-all -w {dest_dir} {wheel}"
+          CIBW_ENVIRONMENT_WINDOWS: >
+            CMAKE_GENERATOR="MinGW Makefiles"
+            CMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe
+            CMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe
+            CMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe
+            CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
+          CIBW_CONFIG_SETTINGS_WINDOWS: >
+            cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
+          #  cmake.define.HIGHS=dependencies/bin/libhighs.dll
+          # Skip some builds
+          CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
-          path: ${{github.workspace}}/wheelhouse/*.whl
+          name: cibw-wheels-${{ matrix.sys.os }}-${{ strategy.job-index }}
+          path: wheelhouse/*.whl
 
   build_sdist:
     name: Build source distribution
@@ -178,7 +225,33 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
-          
+
+  # test TestPyPI's unopy artifacts after upload to PyPI
+  test_testpypi:
+    needs: upload_testpypi
+    name: Test TestPyPI artifacts
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest]
+        python-version: [ "3.12" ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install unopy from TestPyPI
+        run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ unopy
+
+      - name: Run example
+        working-directory: ${{github.workspace}}/interfaces/Python/example
+        run: python example_hs015.py
+
   # test PyPI's unopy artifacts after upload to PyPI
   test_pypi:
     needs: upload_pypi
@@ -187,17 +260,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest]
         python-version: ["3.12"]
 
     steps:
       - uses: actions/checkout@v4
-    
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          architecture: ${{ matrix.architecture }}
 
       - name: Install unopy from PyPI
         run: pip install unopy
