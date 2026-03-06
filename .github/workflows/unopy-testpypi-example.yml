@@ -167,6 +167,29 @@ jobs:
           $script | Out-File -FilePath diagnose6.py -Encoding utf8
           python diagnose6.py
 
+      - name: Check libgcc_s_seh exports (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $script = @'
+          import pefile, os
+          
+          libs_dir = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy.libs'
+          dll_path = os.path.join(libs_dir, 'libgcc_s_seh-1.dll')
+          
+          pe = pefile.PE(dll_path)
+          print('Exports from libgcc_s_seh-1.dll:')
+          if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
+            for sym in pe.DIRECTORY_ENTRY_EXPORT.symbols:
+              name = sym.name.decode() if sym.name else 'ordinal:' + str(sym.ordinal)
+              print('  ' + name)
+          else:
+            print('  NO EXPORTS FOUND')
+          '@
+          $script | Out-File -FilePath diagnose8.py -Encoding utf8
+          python diagnose8.py
+
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
         run: python example_hs015.py
