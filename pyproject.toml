@@ -19,6 +19,9 @@ maintainers = [
     {name = "Alexis Montoison", email = "amontoison@anl.gov"}
 ]
 license = "MIT"
+dependencies = [
+    "numpy",
+]
 
 [project.urls]
 Repository = "https://github.com/cvanaret/Uno"
