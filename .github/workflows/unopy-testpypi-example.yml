@@ -107,41 +107,64 @@ jobs:
           $script | Out-File -FilePath diagnose.py -Encoding utf8
           python diagnose.py
 
-      - name: Find ordinal imports (Windows)
+      - name: Check system DLL imports (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         continue-on-error: true
         run: |
           $script = @'
-          import pefile, os
+          import pefile, os, glob
     
-          libs_dir = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy.libs'
           pyd = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy/unopy.cp312-win_amd64.pyd'
-    
-          # Build ordinal export table from all bundled DLLs
-          ordinal_exports = {}
-          for dll in os.listdir(libs_dir):
-            path = os.path.join(libs_dir, dll)
-            pe = pefile.PE(path)
-            if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
-              ordinal_exports[dll.lower()] = {}
-              for sym in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-                ordinal_exports[dll.lower()][sym.ordinal] = sym.name.decode() if sym.name else None
-    
-          # Find ordinal imports in the .pyd
-          pe = pefile.PE(pyd)
+          libs_dir = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy.libs'
           bundled = [d.lower() for d in os.listdir(libs_dir)]
+    
+          # System DLL search paths
+          system_dirs = [
+          'C:/Windows/System32',
+          'C:/Windows/SysWOW64',
+          'C:/Windows',
+          'C:/hostedtoolcache/windows/Python/3.12.10/x64',
+          ]
+
+          # Build export table from system DLLs that the .pyd imports
+          pe = pefile.PE(pyd)
           for entry in pe.DIRECTORY_ENTRY_IMPORT:
             dll_name = entry.dll.decode()
             if dll_name.lower() in bundled:
-              for imp in entry.imports:
-                if not imp.name:
-                  dll_exports = ordinal_exports.get(dll_name.lower(), {})
-                  resolved = dll_exports.get(imp.ordinal, 'NOT FOUND')
-                  print('Ordinal ' + str(imp.ordinal) + ' from ' + dll_name + ' -> ' + str(resolved))
+              continue
+            # Find the DLL on disk
+            dll_path = None
+            for d in system_dirs:
+              candidate = os.path.join(d, dll_name)
+              if os.path.exists(candidate):
+                dll_path = candidate
+                break
+            if not dll_path:
+              print('DLL NOT FOUND ON SYSTEM: ' + dll_name)
+                    continue
+                # Get its exports
+                try:
+                    sys_pe = pefile.PE(dll_path)
+                    sys_exports = {}
+                    if hasattr(sys_pe, 'DIRECTORY_ENTRY_EXPORT'):
+                      for sym in sys_pe.DIRECTORY_ENTRY_EXPORT.symbols:
+                        if sym.name:
+                          sys_exports[sym.name.decode()] = sym.ordinal
+            # Check each import
+            for imp in entry.imports:
+              if imp.name:
+                sym = imp.name.decode()
+                if sym not in sys_exports:
+                  print('MISSING from ' + dll_name + ': ' + sym)
+                else:
+                  if imp.ordinal not in sys_exports.values():
+                    print('MISSING ordinal ' + str(imp.ordinal) + ' from ' + dll_name)
+          except Exception as e:
+            print('Error reading ' + dll_name + ': ' + str(e))
           '@
-          $script | Out-File -FilePath diagnose5.py -Encoding utf8
-          python diagnose5.py
+          $script | Out-File -FilePath diagnose6.py -Encoding utf8
+          python diagnose6.py
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
