@@ -190,6 +190,42 @@ jobs:
           $script | Out-File -FilePath diagnose8.py -Encoding utf8
           python diagnose8.py
 
+      - name: Find all libgcc_s_seh on PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          # Find every libgcc_s_seh-1.dll on the system
+          $paths = $env:PATH -split ';'
+          foreach ($p in $paths) {
+            $f = Join-Path $p 'libgcc_s_seh-1.dll'
+            if (Test-Path $f) {
+              Write-Host "FOUND: $f"
+              # Get its size as a quick version indicator
+              $size = (Get-Item $f).Length
+              Write-Host "  Size: $size bytes"
+            }
+          }
+          
+          # Also check common MinGW locations
+          $extra = @(
+              'C:/msys64/mingw64/bin/libgcc_s_seh-1.dll',
+              'C:/msys64/usr/bin/libgcc_s_seh-1.dll',
+              'C:/mingw64/bin/libgcc_s_seh-1.dll',
+              'C:/ProgramData/chocolatey/bin/libgcc_s_seh-1.dll'
+          )
+          foreach ($f in $extra) {
+            if (Test-Path $f) {
+              $size = (Get-Item $f).Length
+              Write-Host "EXTRA FOUND: $f (Size: $size bytes)"
+            }
+          }
+          
+          # Size of the bundled one for comparison
+          $bundled = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy.libs/libgcc_s_seh-1.dll'
+          $size = (Get-Item $bundled).Length
+          Write-Host "BUNDLED: $bundled (Size: $size bytes)"
+
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
         run: python example_hs015.py
