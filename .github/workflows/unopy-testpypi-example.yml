@@ -226,6 +226,18 @@ jobs:
           $size = (Get-Item $bundled).Length
           Write-Host "BUNDLED: $bundled (Size: $size bytes)"
 
+      - name: Remove conflicting MinGW from PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $clean = ($env:PATH -split ';') | Where-Object {
+            $_ -notmatch 'Strawberry' -and
+            $_ -notmatch 'Git\\mingw64' -and
+            $_ -notmatch '^C:\\mingw64'
+          }
+          $env:PATH = $clean -join ';'
+          echo "PATH=$($clean -join ';')" >> $env:GITHUB_ENV
+
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
         run: python example_hs015.py
