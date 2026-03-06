@@ -237,14 +237,12 @@ endif()
 ###############
 # Uno library #
 ###############
-# link with Fortran libraries (filtered for Apple and Windows architectures) even when static libraries are linked
+# link with Fortran libraries (filtered for Apple architecture) even when static libraries are linked
 set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
 if(APPLE)
    list(REMOVE_ITEM FORTRAN_LIBS gcc)
    list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
    list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
-elseif(WIN32)
-   list(REMOVE_ITEM FORTRAN_LIBS gcc)
 endif()
 
 # compile the Uno source files once, whatever the compilation type is (static or shared)

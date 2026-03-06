@@ -124,7 +124,6 @@ jobs:
             pwsh -Command "Get-ChildItem -Path '{package}/dependencies' -Recurse |
             ForEach-Object { $_.LastWriteTime = Get-Date }"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
-            pwsh -Command "$env:SOURCE_DATE_EPOCH='315532800';
             delvewheel repair --add-path 'C:/msys64/mingw64/bin;dependencies/bin;dependencies/lib' --no-mangle-all -w {dest_dir} {wheel}"
           CIBW_ENVIRONMENT_WINDOWS: >
             CMAKE_GENERATOR="MinGW Makefiles"
@@ -230,7 +229,7 @@ jobs:
   test_testpypi:
     needs: upload_testpypi
     name: Test TestPyPI artifacts
-    runs-on: ${{ matrix.sys.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -259,7 +258,7 @@ jobs:
   test_pypi:
     needs: upload_pypi
     name: Test PyPI artifacts
-    runs-on: ${{ matrix.sys.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -273,7 +272,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          architecture: ${{ matrix.architecture }}
 
       - name: Install unopy from PyPI
         run: pip install unopy
