@@ -107,7 +107,7 @@ jobs:
           $script | Out-File -FilePath diagnose.py -Encoding utf8
           python diagnose.py
 
-      - name: Cross-reference imports vs exports (Windows)
+      - name: Find ordinal imports (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         continue-on-error: true
@@ -118,40 +118,30 @@ jobs:
           libs_dir = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy.libs'
           pyd = 'C:/hostedtoolcache/windows/Python/3.12.10/x64/Lib/site-packages/unopy/unopy.cp312-win_amd64.pyd'
     
-          # Build export table from all bundled DLLs
-          exports = {}
+          # Build ordinal export table from all bundled DLLs
+          ordinal_exports = {}
           for dll in os.listdir(libs_dir):
             path = os.path.join(libs_dir, dll)
             pe = pefile.PE(path)
             if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
+              ordinal_exports[dll.lower()] = {}
               for sym in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-                if sym.name:
-                  exports[sym.name.decode()] = dll
+                ordinal_exports[dll.lower()][sym.ordinal] = sym.name.decode() if sym.name else None
     
-          # Check every import the .pyd needs
+          # Find ordinal imports in the .pyd
           pe = pefile.PE(pyd)
-          print('=== MISSING SYMBOLS ===')
-          found_missing = False
+          bundled = [d.lower() for d in os.listdir(libs_dir)]
           for entry in pe.DIRECTORY_ENTRY_IMPORT:
             dll_name = entry.dll.decode()
-            # only check bundled DLLs, skip system ones
-            if dll_name.lower() in [d.lower() for d in os.listdir(libs_dir)]:
-              for imp in entry.imports:
-                if imp.name:
-                  sym = imp.name.decode()
-                  if sym not in exports:
-                    print('MISSING: ' + sym + ' (needed from ' + dll_name + ')')
-                    found_missing = True
-          if not found_missing:
-            print('No missing symbols found - mismatch may be ordinal-based')
-            # Print ordinal imports
-            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+            if dll_name.lower() in bundled:
               for imp in entry.imports:
                 if not imp.name:
-                  print('Ordinal import: ' + str(imp.ordinal) + ' from ' + entry.dll.decode())
+                  dll_exports = ordinal_exports.get(dll_name.lower(), {})
+                  resolved = dll_exports.get(imp.ordinal, 'NOT FOUND')
+                  print('Ordinal ' + str(imp.ordinal) + ' from ' + dll_name + ' -> ' + str(resolved))
           '@
-          $script | Out-File -FilePath diagnose4.py -Encoding utf8
-          python diagnose4.py
+          $script | Out-File -FilePath diagnose5.py -Encoding utf8
+          python diagnose5.py
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
