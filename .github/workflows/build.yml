@@ -161,31 +161,6 @@ jobs:
         nmake install
 
     # =========================================================
-    # MinGW: BUILD HiGHS
-    # =========================================================
-
-    # - name: Build HiGHS (MinGW)
-    #   if: matrix.toolchain == 'mingw'
-    #   shell: cmd
-    #   run: |
-    #     git clone --branch v1.12.0 --depth 1 https://github.com/ERGO-Code/HiGHS.git
-    #     cd HiGHS
-    #     cmake -G "MinGW Makefiles" ^
-    #       -B build ^
-    #       -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dependencies ^
-    #       -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
-    #       -DBUILD_SHARED_LIBS=OFF ^
-    #       -DZLIB=OFF ^
-    #       -DHIPO=ON ^
-    #       -DBUILD_EXAMPLES=OFF ^
-    #       -DBUILD_TESTING=OFF ^
-    #       -DBUILD_CXX_EXE=OFF ^
-    #       -DMETIS_ROOT=${{github.workspace}}/dependencies ^
-    #       -DBLAS_LIBRARIES="D:/a/Uno/Uno/dependencies/lib/libblas.a" ^
-    #       -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-    #     cmake --build build --config ${{env.BUILD_TYPE}} -j4
-
-    # =========================================================
     # CONFIGURE
     # =========================================================
 
