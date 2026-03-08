@@ -1296,9 +1296,6 @@ function _setup_model(model::Optimizer)
         @assert (model.qp_data.objective_function_type == _kFunctionTypeVariableIndex) || (model.qp_data.objective_function_type == _kFunctionTypeScalarAffine)
         model.problem_type = "LP"
     end
-    if isempty(hessian_sparsity)
-        model.problem_type = "LP"
-    end
     model.needs_new_inner = true
     return
 end
@@ -1672,8 +1669,16 @@ end
 
 ### MOI.ConstraintDual
 
+function _quasi_newton_approximation(model::Optimizer)::Bool
+    hessian_model = UnoSolver.uno_get_solver_string_option(model.solver, "hessian_model")
+    nlp_without_hessian = (model.problem_type != "LP") && (length(model.hrows) == 0)
+    return (hessian_model == "LBFGS") || nlp_without_hessian
+end
+
 function _dual_multiplier(model::Optimizer)
-    return xor(model.problem_type == "LP", model.sense == MOI.MAX_SENSE) ? 1.0 : -1.0
+    multiplier = xor(model.problem_type == "LP", model.sense == MOI.MAX_SENSE) ? 1.0 : -1.0
+    multiplier = _quasi_newton_approximation(model) ? -multiplier : multiplier
+    return multiplier
 end
 
 function MOI.get(
