@@ -150,9 +150,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Download dependencies
-        run: bash dependencies/scripts/download_dependencies.sh
-
       - name: Build sdist
         run: pipx run build --sdist
 
