@@ -31,9 +31,9 @@ sources = [
     # HiGHS v1.12.0
     GitSource("https://github.com/ERGO-Code/HiGHS.git",
               "755a8e027a99a8d4ecf153a8dde4b2a767cdf384"),
-    # HiGHS v1.13.0
+    # HiGHS v1.13.1
     # GitSource("https://github.com/ERGO-Code/HiGHS.git",
-    #           "1bce6d5c801398dab6d2e6f98ac8935f3d4eec9c"),
+    #           "1d267d97c16928bb5f86fcb2cba2d20f94c8720c"),
     #
     # Package compiler for Windows
     ArchiveSource("https://github.com/JuliaLang/PackageCompiler.jl/releases/download/v1.0.0/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.tar.gz",
@@ -188,6 +188,15 @@ else
 fi
 make install
 
+if [[ "${target}" == *-mingw* ]]; then
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ${prefix}/lib/libstdc++.a
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libgfortran.a ${prefix}/lib/libgfortran.a
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libquadmath.a ${prefix}/lib/libquadmath.a
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ${prefix}/lib/libgomp.a
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ${prefix}/lib/libgcc.a
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ${prefix}/lib/libgcc_eh.a
+fi
+
 # Clean
 rm -r ${prefix}/bin
 rm ${prefix}/lib/libsmumps.a
@@ -208,8 +217,6 @@ if [ $target = "x86_64-w64-mingw32" ] || [ $target = "i686-w64-mingw32" ]; then
     make install
 
     # HiGHS
-    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libgfortran.a ${prefix}/lib/libgfortran.a
-    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libquadmath.a ${prefix}/lib/libquadmath.a
     cd $WORKSPACE/srcdir/HiGHS
     mkdir build_shared
     cd build_shared
