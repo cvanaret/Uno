@@ -172,7 +172,7 @@ jobs:
         cd HiGHS
         cmake -G "MinGW Makefiles" ^
           -B build ^
-          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\dependencies ^
+          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dependencies ^
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
           -DBUILD_SHARED_LIBS=OFF ^
           -DZLIB=OFF ^
@@ -180,8 +180,8 @@ jobs:
           -DBUILD_EXAMPLES=OFF ^
           -DBUILD_TESTING=OFF ^
           -DBUILD_CXX_EXE=OFF ^
-          -DMETIS_ROOT=${{github.workspace}}\dependencies ^
-          -DBLAS_LIBRARIES=${{github.workspace}}\dependencies\lib\libblas.a ^
+          -DMETIS_ROOT=${{github.workspace}}/dependencies ^
+          -DBLAS_LIBRARIES=${{github.workspace}}/dependencies/lib/libblas.a ^
           -DCMAKE_POSITION_INDEPENDENT_CODE=ON ^
           -DCMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++"
         cmake --build build --config ${{env.BUILD_TYPE}} -j4
