@@ -134,7 +134,7 @@ jobs:
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
-          #  cmake.define.HIGHS=dependencies/bin/libhighs.dll
+            cmake.define.BLAS_LIBRARIES="dependencies/lib/libblas.a;dependencies/lib/libcblas.a;dependencies/lib/libstdc++.a"
           # Skip some builds
           CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
@@ -149,9 +149,6 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
-
-      - name: Download dependencies
-        run: bash dependencies/scripts/download_dependencies.sh
 
       - name: Build sdist
         run: pipx run build --sdist
