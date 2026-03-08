@@ -121,6 +121,7 @@ end
         @testset "linear solver = $linear_solver" begin
 
             @testset "uno_model -- uno_solver -- uno_optimize -- HS15 -- exact Hessian" begin
+                println("Solving with linear solver ", linear_solver)
                 nlp = CUTEstModel{Float64}("HS15")
                 model = uno_model(nlp)
                 solver = uno_solver(preset="ipopt", print_solution=true, linear_solver=linear_solver, hessian_model="exact")
