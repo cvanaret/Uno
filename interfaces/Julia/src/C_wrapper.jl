@@ -230,6 +230,11 @@ mutable struct Solver
   c_solver::Ptr{Cvoid}
 end
 
+function uno_get_solver_string_option(solver::Solver, option_name::String)
+  option_value = uno_get_solver_string_option(solver.c_solver, option_name)
+  return unsafe_string(option_value)
+end
+
 function uno_destroy_solver(solver::Solver)
   if solver.c_solver != C_NULL
     uno_destroy_solver(solver.c_solver)
