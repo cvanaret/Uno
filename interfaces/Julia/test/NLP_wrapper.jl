@@ -1,6 +1,6 @@
 for linear_solver in ("MUMPS", "SSIDS", "MA27", "MA57")
     (linear_solver == "SSIDS") && (!haskey(ENV, "OMP_CANCELLATION") || !haskey(ENV, "OMP_PROC_BIND")) && continue
-    (linear_solver == "MA27" || linear_solver == "MA57") && (!(@ccall HSL_jll.libhsl.LIBHSL_isfunctional()::Bool) && continue
+    (linear_solver == "MA27" || linear_solver == "MA57") && !(@ccall HSL_jll.libhsl.LIBHSL_isfunctional()::Bool) && continue
 
     @testset "linear solver = $linear_solver" begin
         @testset "uno_model -- uno_solver -- uno_optimize -- HS15 -- L-BFGS Hessian" begin
@@ -75,6 +75,8 @@ for linear_solver in ("MUMPS", "SSIDS", "MA27", "MA57")
             for j in 1:nlp.meta.ncon
                 @test constraint_dual_solution[j] == UnoSolver.uno_get_constraint_dual_solution_component(solver, j-1)
             end
+
+            finalize(nlp)
         end
 
         @testset "uno -- CUTEst" begin
@@ -110,6 +112,8 @@ for linear_solver in ("MUMPS", "SSIDS", "MA27", "MA57")
             for j in 1:nlp.meta.ncon
                 @test stats.constraint_dual_solution[j] == UnoSolver.uno_get_constraint_dual_solution_component(solver, j-1)
             end
+
+            finalize(nlp)
         end
     end
 end
