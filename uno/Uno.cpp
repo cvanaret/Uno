@@ -56,7 +56,11 @@ namespace uno {
          DISCRETE << "Reformulated model " << bound_relaxed_model.name << '\n' << bound_relaxed_model.number_variables << " variables, " <<
             bound_relaxed_model.number_constraints << " constraints (" << bound_relaxed_model.get_equality_constraints().size() <<
             " equality, " << bound_relaxed_model.get_inequality_constraints().size() << " inequality)\n";
-         return uno_solve(bound_relaxed_model, options, user_callbacks);
+         Result result = uno_solve(bound_relaxed_model, options, user_callbacks);
+         // fix the dimensions
+         result.number_variables = model.number_variables;
+         result.number_constraints = model.number_constraints;
+         return result;
       }
       else {
          return uno_solve(model, options, user_callbacks);

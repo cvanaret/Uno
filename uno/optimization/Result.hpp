@@ -12,8 +12,8 @@ namespace uno {
    public:
       Result() = delete;
 
-      const size_t number_variables;
-      const size_t number_constraints;
+      size_t number_variables;
+      size_t number_constraints;
       const OptimizationStatus optimization_status;
       const SolutionStatus solution_status;
       double solution_objective;
