@@ -20,9 +20,9 @@ mutable struct Model{M}
   ncon::Int
   # Callbacks
   eval_objective::Function
-  eval_constraints::Function
+  eval_constraints::Union{Function,Nothing}
   eval_gradient::Function
-  eval_jacobian::Function
+  eval_jacobian::Union{Function,Nothing}
   eval_hessian::Union{Function,Nothing}
   eval_Jv::Union{Function,Nothing}
   eval_Jtv::Union{Function,Nothing}
@@ -125,9 +125,9 @@ function uno_model(
   hcols::Vector{Cint},
   nnzh::Int,
   eval_objective::Function,
-  eval_constraints::Function,
+  eval_constraints::Union{Function,Nothing},
   eval_gradient::Function,
-  eval_jacobian::Function,
+  eval_jacobian::Union{Function,Nothing},
   eval_hessian::Union{Function,Nothing},
   eval_Jv::Union{Function,Nothing},
   eval_Jtv::Union{Function,Nothing},
@@ -140,6 +140,8 @@ function uno_model(
 )
   @assert nvar == length(lvar) == length(uvar)
   @assert ncon == length(lcon) == length(ucon)
+  @assert nnzj == length(jrows) == length(jcols)
+  @assert nnzh == length(hrows) == length(hcols)
   @assert isnothing(x0) || nvar == length(x0)
   @assert isnothing(y0) || ncon == length(y0)
 
@@ -177,6 +179,7 @@ function uno_model(
   end
 
   if ncon > 0
+    @assert !isnothing(eval_constraints) && !isnothing(eval_jacobian)
     eval_constraints_c = @cfunction(uno_constraints, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
     eval_jacobian_c = @cfunction(uno_jacobian, Cint, (Cint, Cint, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
     flag = uno_set_constraints(c_model, Cint(ncon), eval_constraints_c, lcon, ucon, Cint(nnzj), jrows, jcols, eval_jacobian_c)
@@ -193,18 +196,67 @@ function uno_model(
       flag = uno_set_jacobian_transposed_operator(c_model, eval_Jtv_c)
       flag || error("Failed to set transposed Jacobian operator via uno_set_jacobian_transposed_operator.")
     end
+
+    if !isnothing(y0)
+      uno_set_initial_dual_iterate(c_model, y0)
+    end
   end
 
   if !isnothing(x0)
     uno_set_initial_primal_iterate(c_model, x0)
   end
 
-  if !isnothing(y0)
-    uno_set_initial_dual_iterate(c_model, y0)
-  end
-
   finalizer(uno_destroy_model, model)
   return model
+end
+
+function uno_model(
+  problem_type::String,
+  minimize::Bool,
+  nvar::Int,
+  lvar::Vector{Float64},
+  uvar::Vector{Float64},
+  hrows::Vector{Cint},
+  hcols::Vector{Cint},
+  nnzh::Int,
+  eval_objective::Function,
+  eval_gradient::Function,
+  eval_hessian::Union{Function,Nothing},
+  eval_Hv::Union{Function,Nothing},
+  user_model=nothing,
+  hessian_triangle::Char='L',
+  lagrangian_sign::Float64=1.0,
+  x0::Union{Vector{Float64},Nothing}=nothing,
+)
+  return uno_model(
+    problem_type,
+    minimize,
+    nvar,
+    0,
+    lvar,
+    uvar,
+    Float64[],
+    Float64[],
+    Cint[],
+    Cint[],
+    0,
+    hrows,
+    hcols,
+    nnzh,
+    eval_objective,
+    nothing,
+    eval_gradient,
+    nothing,
+    eval_hessian,
+    nothing,
+    nothing,
+    eval_Hv,
+    user_model,
+    hessian_triangle,
+    lagrangian_sign,
+    x0,
+    nothing,
+  )
 end
 
 function uno_set_initial_primal_iterate(model::Model, initial_primal_iterate::Vector{Float64})
@@ -369,4 +421,55 @@ function uno(
   uno_optimize(solver, model)
   stats = uno_statistics(model, solver)
   return stats
+end
+
+function uno(
+  problem_type::String,
+  minimize::Bool,
+  nvar::Int,
+  lvar::Vector{Float64},
+  uvar::Vector{Float64},
+  hrows::Vector{Cint},
+  hcols::Vector{Cint},
+  nnzh::Int,
+  eval_objective::Function,
+  eval_gradient::Function,
+  eval_hessian::Union{Function,Nothing},
+  eval_Hv::Union{Function,Nothing},
+  user_model=nothing,
+  hessian_triangle::Char='L',
+  lagrangian_sign::Float64=1.0,
+  x0::Union{Vector{Float64},Nothing}=nothing;
+  kwargs...
+)
+  return uno(
+    problem_type,
+    minimize,
+    nvar,
+    0,
+    lvar,
+    uvar,
+    Float64[],
+    Float64[],
+    Cint[],
+    Cint[],
+    0,
+    hrows,
+    hcols,
+    nnzh,
+    eval_objective,
+    nothing,
+    eval_gradient,
+    nothing,
+    eval_hessian,
+    nothing,
+    nothing,
+    eval_Hv,
+    user_model,
+    hessian_triangle,
+    lagrangian_sign,
+    x0,
+    nothing;
+    kwargs...
+  )
 end
