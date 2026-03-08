@@ -123,7 +123,7 @@ end
             @testset "uno_model -- uno_solver -- uno_optimize -- HS15 -- exact Hessian" begin
                 nlp = CUTEstModel{Float64}("HS15")
                 model = uno_model(nlp)
-                solver = uno_solver(preset="filtersqp", print_solution=true, linear_solver=linear_solver, hessian_model="exact")
+                solver = uno_solver(preset="ipopt", print_solution=true, linear_solver=linear_solver, hessian_model="exact")
                 uno_optimize(solver, model)
 
                 optimization_status = UnoSolver.uno_get_optimization_status(solver)
@@ -160,7 +160,7 @@ end
 
             @testset "uno -- CUTEst" begin
                 nlp = CUTEstModel{Float64}("BYRDSPHR")
-                stats = uno(nlp, preset="filtersqp", linear_solver=linear_solver, print_solution=true)
+                stats = uno(nlp, preset="ipopt", linear_solver=linear_solver, print_solution=true)
                 model, solver = stats.model, stats.solver
 
                 optimization_status = UnoSolver.uno_get_optimization_status(solver)
