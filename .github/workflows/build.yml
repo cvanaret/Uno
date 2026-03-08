@@ -161,18 +161,6 @@ jobs:
         nmake install
 
     # =========================================================
-    # MinGW: Add C++ runtime
-    # =========================================================
-
-    - name: Download libstdc++.a
-      if: matrix.toolchain == 'mingw'
-      shell: C:/msys64/usr/bin/bash -lc
-      run: |
-        curl -L -o "${GITHUB_WORKSPACE}/tmp_libstdc++.tar.gz" "https://github.com/JuliaLang/PackageCompiler.jl/releases/download/v1.0.0/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.tar.gz"
-        tar -xzf "${GITHUB_WORKSPACE}/tmp_libstdc++.tar.gz" -C "${GITHUB_WORKSPACE}/tmp_libstdc++"
-        cp ./tmp_libstdc++/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ./dependencies/lib/libstdc++.a
-
-    # =========================================================
     # MinGW: BUILD HiGHS
     # =========================================================
 
