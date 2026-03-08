@@ -1677,11 +1677,8 @@ end
 
 function _dual_multiplier(model::Optimizer)
     multiplier = xor(model.problem_type == "LP", model.sense == MOI.MAX_SENSE) ? 1.0 : -1.0
-    if _quasi_newton_approximation(model)
-        return -multiplier
-    else
-        return multiplier
-    end
+    multiplier = _quasi_newton_approximation(model) ? -multiplier : multiplier
+    return multiplier
 end
 
 function MOI.get(
