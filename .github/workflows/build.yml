@@ -181,7 +181,7 @@ jobs:
           -DBUILD_TESTING=OFF ^
           -DBUILD_CXX_EXE=OFF ^
           -DMETIS_ROOT=${{github.workspace}}/dependencies ^
-          -DBLAS_LIBRARIES=${{github.workspace}}/dependencies/lib/libblas.a ^
+          -DBLAS_LIBRARIES="D:/a/Uno/Uno/dependencies/lib/libblas.a" ^
           -DCMAKE_POSITION_INDEPENDENT_CODE=ON ^
           -DCMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++"
         cmake --build build --config ${{env.BUILD_TYPE}} -j4
