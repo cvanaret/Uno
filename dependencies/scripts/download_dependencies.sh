@@ -45,3 +45,11 @@ pwd
 # delete unwanted directories
 # rm -rf lib/cmake/cblas* lib/cmake/lapack* lib/pkgconfig
 rm -rf lib/cmake lib/pkgconfig
+
+if [[ "$OS" == "w64-mingw32" ]]; then
+    cd ..
+    ASSET_URL="https://github.com/JuliaLang/PackageCompiler.jl/releases/download/v1.0.0/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.tar.gz"
+    curl -L -o libstdc++.tar.gz "$ASSET_URL"
+    tar -xzvf libstdc++.tar.gz
+    cp ./mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ./dependencies/lib/libstdc++.a
+fi
