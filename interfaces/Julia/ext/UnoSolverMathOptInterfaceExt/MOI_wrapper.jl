@@ -1669,8 +1669,19 @@ end
 
 ### MOI.ConstraintDual
 
+function _quasi_newton_approximation(model::Optimizer)::Bool
+    hessian_model = UnoSolver.uno_get_solver_string_option(model.solver, "hessian_model")
+    nlp_without_hessian = (model.problem_type != "LP") && (length(model.hrows) == 0)
+    return (hessian_model == "LBFGS") || nlp_without_hessian
+end
+
 function _dual_multiplier(model::Optimizer)
-    return model.sense == MOI.MAX_SENSE ? 1.0 : -1.0
+    multiplier = xor(model.problem_type == "LP", model.sense == MOI.MAX_SENSE) ? 1.0 : -1.0
+    if _quasi_newton_approximation(model)
+        return -multiplier
+    else
+        return multiplier
+    end
 end
 
 function MOI.get(
