@@ -1,4 +1,4 @@
-# julia +1.7 --color=yes build_tarballs_utils.jl x86_64-linux-gnu-libgfortran5,x86_64-apple-darwin-libgfortran5,x86_64-w64-mingw32-libgfortran5,aarch64-linux-gnu-libgfortran5,aarch64-apple-darwin-libgfortran5 --verbose --deploy="amontoison/UnoUtils_jll.jl"
+# julia +1.7 --color=yes build_tarballs_utils.jl x86_64-linux-gnu-libgfortran5-cxx11,x86_64-apple-darwin-libgfortran5-cxx11,x86_64-w64-mingw32-libgfortran5-cxx11,aarch64-linux-gnu-libgfortran5-cxx11,aarch64-apple-darwin-libgfortran5-cxx11 --verbose --deploy="amontoison/UnoUtils_jll.jl"
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
@@ -34,7 +34,7 @@ sources = [
     # HiGHS v1.13.0
     # GitSource("https://github.com/ERGO-Code/HiGHS.git",
     #           "1bce6d5c801398dab6d2e6f98ac8935f3d4eec9c"),
-
+    #
     # Package compiler for Windows
     ArchiveSource("https://github.com/JuliaLang/PackageCompiler.jl/releases/download/v1.0.0/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.tar.gz",
                   "fe3f401bc936fbe6af940b26c5e0f266f762a3416f979c706e599b24082dc5c7"),
@@ -174,7 +174,8 @@ cmake .. \
     -DBUILD_TESTING=OFF \
     -DBUILD_CXX_EXE=OFF \
     -DMETIS_ROOT=${prefix} \
-    -DBLAS_LIBRARIES=${prefix}/lib/libblas.a
+    -DBLAS_LIBRARIES=${prefix}/lib/libblas.a \
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
 if [[ "${target}" == *-linux-* ]]; then
         make -j ${nproc}
