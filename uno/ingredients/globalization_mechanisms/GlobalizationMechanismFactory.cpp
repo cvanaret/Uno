@@ -10,7 +10,7 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const Model& model, const Options& options) {
+   std::unique_ptr<GlobalizationMechanism> GlobalizationMechanismFactory::create(const Model& model, Options& options) {
       const std::string& mechanism_type = options.get_string("globalization_mechanism");
        if (mechanism_type == "TR") {
            return std::make_unique<TrustRegionStrategy>(model, options);

@@ -21,7 +21,7 @@ namespace uno {
 
    class FeasibilityRestoration : public ConstraintRelaxationStrategy {
    public:
-      FeasibilityRestoration(const Model& model, bool use_trust_region, const Options& options);
+      FeasibilityRestoration(const Model& model, bool use_trust_region, Options& options);
       ~FeasibilityRestoration() override = default;
 
       void initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction, bool uses_trust_region,

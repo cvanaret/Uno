@@ -21,7 +21,7 @@ void* operator new(size_t size) {
 */
 
 namespace uno {
-   void run_uno_ampl(const std::string& model_name, const Options& options) {
+   void run_uno_ampl(const std::string& model_name, Options& options) {
       try {
          const AMPLModel model(model_name);
          Uno uno{};

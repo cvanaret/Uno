@@ -14,7 +14,7 @@
 namespace uno {
    class NoRelaxation : public ConstraintRelaxationStrategy {
    public:
-      NoRelaxation(const Model& model, const Options& options);
+      NoRelaxation(const Model& model, Options& options);
       ~NoRelaxation() override = default;
 
       void initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction, bool uses_trust_region,

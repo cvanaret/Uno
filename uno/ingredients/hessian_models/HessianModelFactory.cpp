@@ -15,9 +15,11 @@
 
 namespace uno {
    std::unique_ptr<HessianModel> HessianModelFactory::create(const Model& model, [[maybe_unused]] double objective_multiplier,
-         const Options& options) {
+         Options& options) {
       // first look at the problem type. If it is an LP, pick zero Hessian model
       if (model.get_problem_type() == ProblemType::LINEAR) {
+         // override user defined option
+         options.set_string("hessian_model", "zero", true);
          return std::make_unique<ZeroHessian>(model.number_variables);
       }
 
@@ -31,6 +33,8 @@ namespace uno {
          // if no Hessian (matrix or operator) is available, pick an L-BFGS Hessian
          else {
             WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-BFGS Hessian instead\n";
+            // override user defined option
+            options.set_string("hessian_model", "LBFGS", true);
             return std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
          }
       }

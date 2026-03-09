@@ -14,7 +14,7 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   NoRelaxation::NoRelaxation(const Model& model, const Options& options):
+   NoRelaxation::NoRelaxation(const Model& model, Options& options):
          ConstraintRelaxationStrategy(options),
          original_problem(model),
          inequality_handling_method(InequalityHandlingMethodFactory::create(options)),

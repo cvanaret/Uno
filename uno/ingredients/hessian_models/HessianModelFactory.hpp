@@ -15,7 +15,7 @@ namespace uno {
 
    class HessianModelFactory {
    public:
-      static std::unique_ptr<HessianModel> create(const Model& model, double objective_multiplier, const Options& options);
+      static std::unique_ptr<HessianModel> create(const Model& model, double objective_multiplier, Options& options);
 
       constexpr static std::array available_strategies{"exact", "LFBGS", "identity", "zero"};
    };

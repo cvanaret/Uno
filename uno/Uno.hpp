@@ -24,8 +24,8 @@ namespace uno {
       Uno() = default;
 
       // solve with or without user callbacks
-      Result solve(const Model& model, const Options& options);
-      Result solve(const Model& model, const Options& options, UserCallbacks& user_callbacks);
+      Result solve(const Model& model, Options& options);
+      Result solve(const Model& model, Options& options, UserCallbacks& user_callbacks);
 
       static std::string current_version();
       static void print_available_strategies();
@@ -34,13 +34,13 @@ namespace uno {
       std::unique_ptr<GlobalizationMechanism> globalization_mechanism{};
       Direction direction{};
 
-      void pick_ingredients(const Model& model, const Options& options);
+      void pick_ingredients(const Model& model, Options& options);
       void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options,
          EvaluationCache& evaluation_cache);
       [[nodiscard]] static Statistics create_statistics(const Model& model);
       [[nodiscard]] static bool check_termination(SolutionStatus solution_status, size_t iteration, size_t max_iterations,
          double current_time, double time_limit, bool user_termination, OptimizationStatus& optimization_status);
-      [[nodiscard]] Result uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks);
+      [[nodiscard]] Result uno_solve(const Model& model, Options& options, UserCallbacks& user_callbacks);
       static void postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations);
       [[nodiscard]] Result create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
          const Evaluations& evaluations, size_t major_iterations, const Timer& timer) const;

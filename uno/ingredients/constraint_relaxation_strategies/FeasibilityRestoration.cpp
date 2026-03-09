@@ -24,7 +24,7 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   FeasibilityRestoration::FeasibilityRestoration(const Model& model, bool use_trust_region, const Options& options) :
+   FeasibilityRestoration::FeasibilityRestoration(const Model& model, bool use_trust_region, Options& options) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
          original_problem(model),

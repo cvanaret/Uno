@@ -16,7 +16,7 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   BacktrackingLineSearch::BacktrackingLineSearch(const Model& model, const Options& options):
+   BacktrackingLineSearch::BacktrackingLineSearch(const Model& model, Options& options):
          GlobalizationMechanism(model, false, options),
          backtracking_ratio(options.get_double("LS_backtracking_ratio")),
          minimum_step_length(options.get_double("LS_min_step_length")),

@@ -9,7 +9,7 @@
 namespace uno {
    class TrustRegionStrategy : public GlobalizationMechanism {
    public:
-      TrustRegionStrategy(const Model& model, const Options& options);
+      TrustRegionStrategy(const Model& model, Options& options);
       ~TrustRegionStrategy() override = default;
 
       void initialize(Statistics& statistics, Iterate& current_iterate, Direction& direction, EvaluationCache& evaluation_cache) override;
