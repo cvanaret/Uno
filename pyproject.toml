@@ -10,7 +10,7 @@ name = "unopy"
 # PyPI
 #version = "0.2.5"
 # TestPyPI
-version = "0.2.23"
+version = "0.2.24"
 description = "With Uno, finally take full control of your SQP/barrier solver for nonlinearly constrained optimization"
 readme = "interfaces/Python/README.md"
 authors = [
