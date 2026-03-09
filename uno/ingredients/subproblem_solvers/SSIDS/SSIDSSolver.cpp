@@ -1,10 +1,9 @@
-#include <iostream>
+// Copyright (c) 2026 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
 #include "SSIDSSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
-
-//export OMP_PROC_BIND=true
-//export OMP_CANCELLATION=true
 
 namespace uno {
    SSIDSSolver::SSIDSSolver(): DirectSymmetricIndefiniteLinearSolver<double>() {
@@ -15,19 +14,13 @@ namespace uno {
 
    void SSIDSSolver::initialize_hessian(const Subproblem& subproblem) {
       this->coo_workspace.initialize_hessian(subproblem);
-
-      // workspace
-      const size_t dimension = subproblem.number_variables;
-      this->workspace.n = static_cast<int>(dimension);
+      this->workspace.n = static_cast<int>(subproblem.number_variables);
       this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
    }
 
    void SSIDSSolver::initialize_augmented_system(const Subproblem& subproblem) {
       this->coo_workspace.initialize_augmented_system(subproblem);
-
-      // workspace
-      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
-      this->workspace.n = static_cast<int>(dimension);
+      this->workspace.n = static_cast<int>(subproblem.number_variables + subproblem.number_constraints);
       this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
    }
 
@@ -36,8 +29,8 @@ namespace uno {
          this->coo_workspace.matrix_column_indices.data(), nullptr, &this->workspace.akeep, &this->workspace.options,
          &this->workspace.inform);
       if (this->workspace.inform.flag < 0) {
-         std::cout << "ERROR in SSIDSSolver::do_symbolic_analysis\n";
          spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
+         throw std::runtime_error("SSIDS could not compute the symbolic analysis");
       }
    }
 
@@ -45,8 +38,8 @@ namespace uno {
       spral_ssids_factor(is_matrix_positive_definite, nullptr, nullptr, matrix_values, nullptr, this->workspace.akeep,
          &this->workspace.fkeep, &this->workspace.options, &this->workspace.inform);
       if(this->workspace.inform.flag < 0) {
-         std::cout << "ERROR in SSIDSSolver::do_numerical_factorization\n";
          spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
+         throw std::runtime_error("SSIDS could not compute the factorization");
       }
    }
 
@@ -55,8 +48,8 @@ namespace uno {
       spral_ssids_solve1(0, result.data(), this->workspace.akeep, this->workspace.fkeep, &this->workspace.options,
          &this->workspace.inform);
       if (this->workspace.inform.flag < 0) {
-         std::cout << "ERROR in SSIDSSolver::solve_indefinite_system\n";
          spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
+         throw std::runtime_error("SSIDS could not solve the linear system");
       }
    }
 
