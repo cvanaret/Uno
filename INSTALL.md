@@ -28,6 +28,8 @@ LIBS = $(LIBSEQ)
 LIBSEQNEEDED = libseqneeded
 ```
 
+* compile SSIDS without OpenMP with the Meson flag `-Dopenmp=false`
+
 * you may experience a short lag at startup (about 1/4s) when running Uno with SSIDS. This is due to `hwloc` (hardware locality), a tool that aims at discovering hardware resources in parallel architectures. To precompute the required topology, run the following commands before running Uno:
 ```
 lstopo --of xml ~/.config/hwloc-topology.xml
