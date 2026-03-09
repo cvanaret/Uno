@@ -30,7 +30,12 @@ Uno currently implements the following strategies:
 * **globalization strategies**: filter method, funnel method, merit function;
 * **globalization mechanisms**: backtracking line search, trust-region method.
 
-You can combine these strategies in a ton of different ways via [options](docs/options.md). Uno also implements **presets**, that is strategy combinations that mimic existing solvers:
+and the following subproblem solvers:
+* QP solvers: BQPD (for nonconvex QPs), HiGHS (for convex QPs);
+* LP solvers: BQPD, HiGHS
+* indefinite linear solvers: HSL, MA57, MA27, MUMPS, SSIDS
+
+You can combine these strategies in a ton of different ways via options (see [documentation](docs/options.md)). Uno also implements **presets**, that is strategy combinations that mimic existing solvers:
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual inertia correction).
 
