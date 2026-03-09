@@ -57,10 +57,10 @@ extern "C" {
    const uno_int UNO_INFEASIBLE_SMALL_STEP = 5;
    const uno_int UNO_UNBOUNDED = 6;
 
-   // current Uno version is 2.4.0
+   // current Uno version is 2.4.1
    const uno_int UNO_VERSION_MAJOR = 2;
    const uno_int UNO_VERSION_MINOR = 4;
-   const uno_int UNO_VERSION_PATCH = 0;
+   const uno_int UNO_VERSION_PATCH = 1;
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and
    // stores the objective value of "x" in "objective_value".
