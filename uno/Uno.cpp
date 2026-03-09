@@ -32,14 +32,14 @@ namespace uno {
    Level Logger::level = INFO;
 
    // solve without user callbacks
-   Result Uno::solve(const Model& model, const Options& options) {
+   Result Uno::solve(const Model& model, Options& options) {
       // pass user callbacks that do nothing
       NoUserCallbacks user_callbacks{};
       return this->solve(model, options, user_callbacks);
    }
 
    // solve with user callbacks
-   Result Uno::solve(const Model& model, const Options& options, UserCallbacks& user_callbacks) {
+   Result Uno::solve(const Model& model, Options& options, UserCallbacks& user_callbacks) {
       DISCRETE << "Original model " << model.name << '\n' << model.number_variables << " variables, " <<
          model.number_constraints << " constraints (" << model.get_equality_constraints().size() <<
          " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
@@ -68,7 +68,7 @@ namespace uno {
    }
 
    // protected solve function
-   Result Uno::uno_solve(const Model& model, const Options& options, UserCallbacks& user_callbacks) {
+   Result Uno::uno_solve(const Model& model, Options& options, UserCallbacks& user_callbacks) {
       const Timer timer{};
       model.reset_number_evaluations();
       // pick the ingredients based on the user-defined options
@@ -161,7 +161,7 @@ namespace uno {
       std::cout << "- Presets: filtersqp, ipopt\n";
    }
 
-   void Uno::pick_ingredients(const Model& model, const Options& options) {
+   void Uno::pick_ingredients(const Model& model, Options& options) {
       this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
    }
 

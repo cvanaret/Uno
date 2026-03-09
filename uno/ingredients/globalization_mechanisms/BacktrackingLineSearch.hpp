@@ -9,7 +9,7 @@
 namespace uno {
    class BacktrackingLineSearch : public GlobalizationMechanism {
    public:
-      BacktrackingLineSearch(const Model& model, const Options& options);
+      BacktrackingLineSearch(const Model& model, Options& options);
       ~BacktrackingLineSearch() override = default;
 
       void initialize(Statistics& statistics, Iterate& current_iterate, Direction& direction, EvaluationCache& evaluation_cache) override;

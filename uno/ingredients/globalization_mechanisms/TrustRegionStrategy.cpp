@@ -17,7 +17,7 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   TrustRegionStrategy::TrustRegionStrategy(const Model& model, const Options& options) :
+   TrustRegionStrategy::TrustRegionStrategy(const Model& model, Options& options) :
          GlobalizationMechanism(model, true, options),
          radius(options.get_double("TR_radius")),
          increase_factor(options.get_double("TR_increase_factor")),

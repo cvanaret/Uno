@@ -15,7 +15,7 @@ namespace uno {
 
    class GlobalizationStrategyFactory {
    public:
-      static std::unique_ptr<GlobalizationStrategy> create(const Model& model, const Options& options);
+      static std::unique_ptr<GlobalizationStrategy> create(const Model& model, Options& options);
 
       constexpr static std::array available_strategies{
          "merit_function", "fletcher_filter_method", "waechter_filter_method", "funnel_method"

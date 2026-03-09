@@ -22,7 +22,7 @@ namespace uno {
 
    class GlobalizationMechanism {
    public:
-      GlobalizationMechanism(const Model& model, bool use_trust_region, const Options& options);
+      GlobalizationMechanism(const Model& model, bool use_trust_region, Options& options);
       virtual ~GlobalizationMechanism() = default;
 
       virtual void initialize(Statistics& statistics, Iterate& current_iterate, Direction& direction,
