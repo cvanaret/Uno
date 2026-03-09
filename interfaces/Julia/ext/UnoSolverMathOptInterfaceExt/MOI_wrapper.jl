@@ -1671,8 +1671,7 @@ end
 
 function _quasi_newton_approximation(model::Optimizer)::Bool
     hessian_model = UnoSolver.uno_get_solver_string_option(model.solver, "hessian_model")
-    nlp_without_hessian = (model.problem_type != "LP") && (length(model.hrows) == 0)
-    return (hessian_model == "LBFGS") || nlp_without_hessian
+    return (hessian_model == "LBFGS")
 end
 
 function _dual_multiplier(model::Optimizer)
