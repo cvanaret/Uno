@@ -10,8 +10,8 @@ version = VersionNumber(ENV["UNO_RELEASE"])
 # Collection of sources required to complete build
 sources = [
     GitSource(ENV["UNO_URL"], ENV["UNO_COMMIT"]),
-    ArchiveSource("https://mumps-solver.org/MUMPS_5.8.0.tar.gz",
-                  "d762eb8b1d9843a0993b8cfc137d043d04c7c51877ad37c94560433a474340a0"),
+    ArchiveSource("https://mumps-solver.org/MUMPS_5.8.2.tar.gz",
+                  "eb515aa688e6dbab414bb6e889ff4c8b23f1691a843c68da5230a33ac4db7039"),
 ]
 
 # Bash recipe for building across all platforms
@@ -31,7 +31,7 @@ done
 cd ${prefix}
 cp -rL share/licenses deps/licenses
 mkdir deps/licenses/MUMPS
-cp $WORKSPACE/srcdir/MUMPS_5.8.0/LICENSE deps/licenses/MUMPS/LICENSE
+cp $WORKSPACE/srcdir/MUMPS_5.8.2/LICENSE deps/licenses/MUMPS/LICENSE
 chmod -R u=rwx deps
 tar -czvf deps.tar.gz deps
 rm -r deps
@@ -87,12 +87,6 @@ cd $WORKSPACE/srcdir/Uno
 mkdir -p build
 cd build
 
-if [[ "${target}" == *mingw* ]]; then
-    HIGHS_DIR=${prefix}/lib
-else
-    HIGHS_DIR=${libdir}
-fi
-
 if [[ "${target}" == *apple* ]] || [[ "${target}" == *freebsd* ]]; then
     OMP=omp
 else
@@ -105,7 +99,7 @@ cmake \
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
     -DCMAKE_BUILD_TYPE=Release \
     -DAMPLSOLVER=${libdir}/libasl.${dlext} \
-    -DHIGHS_DIR=${HIGHS_DIR} \
+    -DHIGHS=${libdir}/libhighs.${dlext} \
     -DBQPD=${prefix}/lib/libbqpd.a \
     -DHSL=${libdir}/libhsl.${dlext} \
     -DMUMPS_INCLUDE_DIR=${includedir} \

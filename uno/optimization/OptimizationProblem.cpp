@@ -5,9 +5,9 @@
 #include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
-#include "optimization/EvaluationSpace.hpp"
+#include "linear_algebra/VectorView.hpp"
+#include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
-#include "symbolic/Expression.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -25,18 +25,6 @@ namespace uno {
       return 1.;
    }
 
-   void OptimizationProblem::evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const {
-      iterate.evaluate_constraints(this->model);
-      constraints = iterate.evaluations.constraints;
-   }
-
-   void OptimizationProblem::evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const {
-      iterate.evaluate_objective_gradient(this->model);
-      for (size_t index: Range(this->number_variables)) {
-         objective_gradient[index] = iterate.evaluations.objective_gradient[index];
-      }
-   }
-
    size_t OptimizationProblem::number_jacobian_nonzeros() const {
       return this->model.number_jacobian_nonzeros();
    }
@@ -49,40 +37,41 @@ namespace uno {
       return hessian_model.number_nonzeros();
    }
 
-   void OptimizationProblem::compute_constraint_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
-                                                                  MatrixOrder matrix_order) const {
-      this->model.compute_constraint_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+   void OptimizationProblem::compute_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
+         MatrixOrder matrix_order) const {
+      this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
    }
 
    void OptimizationProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int *row_indices,
-                                                      uno_int *column_indices, uno_int solver_indexing) const {
+         uno_int *column_indices, uno_int solver_indexing) const {
       hessian_model.compute_sparsity(row_indices, column_indices, solver_indexing);
    }
 
-   void OptimizationProblem::evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const {
-      this->model.evaluate_constraint_jacobian(iterate.primals, jacobian_values);
+   void OptimizationProblem::evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
+      for (size_t index: Range(this->number_constraints)) {
+         constraints[index] = evaluations.constraints[index];
+      }
+   }
+
+   void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
+      evaluations.evaluate_objective_gradient(this->model, iterate.primals);
+      for (size_t index: Range(this->number_variables)) {
+         objective_gradient[index] = evaluations.objective_gradient[index];
+      }
+   }
+
+   void OptimizationProblem::evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const {
+      evaluations.evaluate_jacobian(this->model, primals);
+      for (size_t nonzero_index: Range(this->model.number_jacobian_nonzeros())) {
+         jacobian_values[nonzero_index] = evaluations.jacobian_values[nonzero_index];
+      }
    }
 
    // Lagrangian gradient ∇f(x_k) - ∇c(x_k) y_k - z_k
-   // split in two parts: objective contribution and constraints' contribution
-   void OptimizationProblem::evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const EvaluationSpace& evaluation_space, Iterate& iterate) const {
-      lagrangian_gradient.objective_contribution.fill(0.);
-      lagrangian_gradient.constraints_contribution.fill(0.);
-
-      // ∇f(x_k)
-      this->evaluate_objective_gradient(iterate, lagrangian_gradient.objective_contribution.data());
-
-      // ∇c(x_k) λ_k
-      evaluation_space.compute_constraint_jacobian_transposed_vector_product(iterate.multipliers.constraints,
-         lagrangian_gradient.constraints_contribution);
-      lagrangian_gradient.constraints_contribution = -lagrangian_gradient.constraints_contribution;
-
-      // z_k
-      for (size_t variable_index: Range(this->number_variables)) {
-         lagrangian_gradient.constraints_contribution[variable_index] -= (iterate.multipliers.lower_bounds[variable_index] +
-            iterate.multipliers.upper_bounds[variable_index]);
-      }
+   void OptimizationProblem::evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
+         Vector<double>& lagrangian_gradient) const {
+      this->model.evaluate_lagrangian_gradient(iterate.primals, iterate.multipliers, 1., evaluations, lagrangian_gradient);
    }
 
    void OptimizationProblem::evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
@@ -143,14 +132,7 @@ namespace uno {
    double OptimizationProblem::dual_regularization_factor() const {
       return 0.;
    }
-
-   double OptimizationProblem::stationarity_error(const LagrangianGradient<double>& lagrangian_gradient, double objective_multiplier,
-         Norm residual_norm) {
-      // norm of the scaled Lagrangian gradient
-      const auto scaled_lagrangian = objective_multiplier * lagrangian_gradient.objective_contribution + lagrangian_gradient.constraints_contribution;
-      return norm(residual_norm, scaled_lagrangian);
-   }
-
+   
    double OptimizationProblem::complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
@@ -207,15 +189,15 @@ namespace uno {
    }
 
    // infeasibility measure: constraint violation
-   void OptimizationProblem::set_infeasibility_measure(Iterate& iterate, Norm norm) const {
-      iterate.evaluate_constraints(this->model);
-      iterate.progress.infeasibility = this->model.constraint_violation(iterate.evaluations.constraints, norm);
+   void OptimizationProblem::set_infeasibility_measure(Iterate& iterate, Evaluations& evaluations, Norm norm) const {
+      evaluations.evaluate_constraints(this->model, iterate.primals);
+      iterate.progress.infeasibility = this->model.constraint_violation(evaluations.constraints, norm);
    }
 
    // objective measure: scaled objective
-   void OptimizationProblem::set_objective_measure(Iterate& iterate) const {
-      iterate.evaluate_objective(this->model);
-      const double objective = iterate.evaluations.objective;
+   void OptimizationProblem::set_objective_measure(Iterate& iterate, Evaluations& evaluations) const {
+      evaluations.evaluate_objective(this->model, iterate.primals);
+      const double objective = evaluations.objective;
       iterate.progress.objective = [=](double objective_multiplier) {
          return objective_multiplier * objective;
       };

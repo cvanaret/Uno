@@ -5,15 +5,15 @@
 #define UNO_VECTOR_H
 
 #include <iostream>
-#include <cassert>
 #include <string>
 #include <vector>
 #include <initializer_list>
+#include "BLASVector.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
    template <typename ElementType>
-   class Vector {
+   class Vector: public MutableBLASVector<ElementType> {
    public:
       using value_type = ElementType;
       // iterators
@@ -26,8 +26,7 @@ namespace uno {
       Vector(std::initializer_list<ElementType> initializer_list): vector(initializer_list) { }
       Vector(const Vector<ElementType>& other) noexcept : vector(other.vector) { }
       Vector(Vector<ElementType>&& other) noexcept : vector(std::move(other.vector)) { }
-      Vector(const_iterator begin, const_iterator end): vector(begin, end) { }
-      ~Vector() = default;
+      ~Vector() override = default;
 
       // copy assignment operator
       Vector<ElementType>& operator=(const Vector<ElementType>& other) {
@@ -45,37 +44,39 @@ namespace uno {
          return *this;
       }
 
-      // assignment operator from some expression
-      template <typename Expression>
-      Vector<ElementType>& operator=(const Expression& expression) {
-         static_assert(std::is_same_v<typename Expression::value_type, ElementType>);
-         assert(expression.size() <= this->size() && "The expression is larger than the current vector");
-         for (size_t index: Range(expression.size())) {
-            this->vector[index] = expression[index];
-         }
-         return *this;
+      // operators
+      using MutableBLASVector<value_type>::operator=;
+      using MutableBLASVector<value_type>::operator+=;
+      using MutableBLASVector<value_type>::operator-=;
+
+      [[nodiscard]] size_t size() const override {
+         return this->vector.size();
       }
 
-      // sum operator
-      template <typename Expression>
-      Vector<ElementType>& operator+=(const Expression& expression) {
-         for (size_t index: Range(this->size())) {
-            this->vector[index] += expression[index];
-         }
-         return *this;
+      ElementType* data() override {
+         return this->vector.data();
       }
 
-      // random access
-      ElementType& operator[](size_t index) { return this->vector[index]; }
-      const ElementType& operator[](size_t index) const { return this->vector[index]; }
+      const ElementType* data() const override {
+         return this->vector.data();
+      }
 
-      // size
-      [[nodiscard]] size_t size() const { return this->vector.size(); }
-      [[nodiscard]] bool empty() const { return (this->size() == 0); }
+      ElementType& operator[](size_t index) override {
+         return this->vector[index];
+      }
+
+      const ElementType& operator[](size_t index) const override {
+         return this->vector[index];
+      }
 
       // size and capacity
-      void reserve(size_t new_capacity) { this->vector.reserve(new_capacity); }
-      void resize(size_t new_size) { this->vector.resize(new_size); }
+      void reserve(size_t new_capacity) {
+         this->vector.reserve(new_capacity);
+      }
+
+      void resize(size_t new_size) {
+         this->vector.resize(new_size);
+      }
 
       // iterators
       iterator begin() noexcept { return this->vector.begin(); }
@@ -92,19 +93,6 @@ namespace uno {
             this->vector[index] = value;
          }
       }
-
-      void scale(ElementType factor) {
-         for (size_t index: Range(this->size())) {
-            this->vector[index] *= factor;
-         }
-      }
-
-      void operator*=(ElementType factor) {
-         this->scale(factor);
-      }
-
-      ElementType* data() { return this->vector.data(); }
-      const ElementType* data() const { return this->vector.data(); }
 
       void print(std::ostream& stream) const {
          for (const ElementType& element: *this) {
@@ -131,14 +119,6 @@ namespace uno {
       return stream;
    }
 
-   // subtract operator
-   template <typename ResultExpression, typename Expression>
-   void operator-=(ResultExpression&& result, const Expression& expression) {
-      for (size_t index: Range(result.size())) {
-         result[index] -= expression[index];
-      }
-   }
-
    template <typename Container>
    std::string join(const Container& vector, const std::string& separator) {
       std::string result{};
@@ -151,16 +131,6 @@ namespace uno {
          ++index;
       }
       return result;
-   }
-   
-   template <typename Vector>
-   typename Vector::value_type dot(const Vector& x, const Vector& y) {
-      typename Vector::value_type dot_product = 0;
-      const size_t size = std::min(x.size(), y.size());
-      for (size_t index: Range(size)) {
-         dot_product += x[index] * y[index];
-      }
-      return dot_product;
    }
 } // namespace
 

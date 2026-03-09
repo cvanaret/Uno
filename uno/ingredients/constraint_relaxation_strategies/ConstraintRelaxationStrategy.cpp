@@ -4,14 +4,13 @@
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
-#include "linear_algebra/SparseVector.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "options/Options.hpp"
-#include "symbolic/VectorView.hpp"
 
 namespace uno {
    ConstraintRelaxationStrategy::ConstraintRelaxationStrategy(const Options& options):
@@ -21,7 +20,7 @@ namespace uno {
          dual_tolerance(options.get_double("dual_tolerance")),
          loose_primal_tolerance(options.get_double("loose_primal_tolerance")),
          loose_dual_tolerance(options.get_double("loose_dual_tolerance")),
-         loose_tolerance_consecutive_iteration_threshold(options.get_unsigned_int("loose_tolerance_consecutive_iteration_threshold")),
+         loose_tolerance_iteration_threshold(options.get_unsigned_int("loose_tolerance_iteration_threshold")),
          unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")) {
    }
 
@@ -42,18 +41,21 @@ namespace uno {
    // - for KKT conditions: with standard multipliers and current objective multiplier
    // - for FJ conditions: with standard multipliers and 0 objective multiplier
    // - for feasibility problem: with feasibility multipliers and 0 objective multiplier
-   void ConstraintRelaxationStrategy::compute_primal_dual_residuals(const OptimizationProblem& problem, Iterate& iterate) const {
-      iterate.residuals.stationarity = OptimizationProblem::stationarity_error(iterate.residuals.lagrangian_gradient,
-         problem.get_objective_multiplier(), this->residual_norm);
+   void ConstraintRelaxationStrategy::compute_residuals(const OptimizationProblem& problem, Iterate& iterate,
+         Evaluations& evaluations) const {
+      // stationarity error (norm of the Lagrangian gradient)
+      problem.evaluate_lagrangian_gradient(iterate, evaluations, iterate.residuals.lagrangian_gradient);
+      iterate.residuals.stationarity = norm(this->residual_norm, iterate.residuals.lagrangian_gradient);
 
-      // constraint violation of the original problem
-      iterate.primal_feasibility = problem.model.constraint_violation(iterate.evaluations.constraints, this->residual_norm);
+      // primal feasibility/constraint violation of the model
+      evaluations.evaluate_constraints(problem.model, iterate.primals);
+      iterate.primal_feasibility = problem.model.constraint_violation(evaluations.constraints, this->residual_norm);
 
       // complementarity error
       constexpr double shift_value = 0.;
       // TODO preallocate constraints
       Vector<double> constraints(problem.number_constraints);
-      problem.evaluate_constraints(iterate, constraints);
+      problem.evaluate_constraints(iterate, constraints.data(), evaluations);
       iterate.residuals.complementarity = problem.complementarity_error(iterate.primals, constraints,
          iterate.multipliers, shift_value, this->residual_norm);
 

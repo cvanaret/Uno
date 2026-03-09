@@ -7,12 +7,18 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
   pull_request:
     branches: [ "main" ]
     paths-ignore:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Alexis Montoison and Charlie Vanaret
+// Copyright (c) 2026 Alexis Montoison and Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #ifndef UNO_C_API_H
@@ -57,13 +57,10 @@ extern "C" {
    const uno_int UNO_INFEASIBLE_SMALL_STEP = 5;
    const uno_int UNO_UNBOUNDED = 6;
 
-   // current Uno version is 2.3.1
+   // current Uno version is 2.4.0
    const uno_int UNO_VERSION_MAJOR = 2;
-   const uno_int UNO_VERSION_MINOR = 3;
-   const uno_int UNO_VERSION_PATCH = 1;
-
-   // get the current Uno version as v major.minor.patch
-   void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch);
+   const uno_int UNO_VERSION_MINOR = 4;
+   const uno_int UNO_VERSION_PATCH = 0;
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and
    // stores the objective value of "x" in "objective_value".
@@ -83,7 +80,7 @@ extern "C" {
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and stores the entries of the
    // sparse constraint Jacobian in the vector "jacobian" of size "number_jacobian_nonzeros". The values should be in
-   // the same order as the indices provided in "constraint_jacobian_sparsity".
+   // the same order as the indices provided in "jacobian_sparsity".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
    typedef uno_int (*Jacobian)(uno_int number_variables, uno_int number_jacobian_nonzeros, const double* x, double* jacobian,
       void* user_data);
@@ -91,7 +88,7 @@ extern "C" {
    // - takes as inputs a vector "x" of size "number_variables", an objective multiplier, a vector "multipliers" of
    // Lagrange multipliers of size "number_constraints", and an object "user_data", and stores the entries of the
    // sparse Lagrangian Hessian in the vector "hessian" of size "number_hessian_nonzeros". The values should be in
-   // the same order as the indices provided in "constraint_jacobian_sparsity".
+   // the same order as the indices provided in "jacobian_sparsity".
    // Only the lower triangular part of the symmetric Lagrangian Hessian should be provided.
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
    typedef uno_int (*Hessian)(uno_int number_variables, uno_int number_constraints, uno_int number_hessian_nonzeros,
@@ -145,6 +142,9 @@ extern "C" {
    // - takes as inputs a vector "buffer" of size "length".
    typedef uno_int (*LoggerStreamUserCallback)(const char* buffer, uno_int length, void* user_data);
 
+   // get the current Uno version as v major.minor.patch
+   void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch);
+
    // creates an optimization model that can be solved by Uno.
    // initially, the model contains "number_variables" variables, no objective function, and no constraints.
    // takes as inputs the type of problem (UNO_PROBLEM_LINEAR, UNO_PROBLEM_QUADRATIC, or UNO_PROBLEM_NONLINEAR), the
@@ -169,7 +169,7 @@ extern "C" {
    // returns true if it succeeded, false otherwise.
    bool uno_set_constraints(void* model, uno_int number_constraints, Constraints constraint_functions,
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, uno_int number_jacobian_nonzeros,
-      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, Jacobian constraint_jacobian);
+      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, Jacobian jacobian);
 
    // [optional]
    // sets the Jacobian operator (computes Jacobian-vector products) of a given model.

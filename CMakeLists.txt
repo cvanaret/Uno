@@ -1,17 +1,14 @@
 ﻿# Copyright (c) 2018-2025 Charlie Vanaret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-cmake_minimum_required(VERSION 3.7)
-if(${CMAKE_VERSION} VERSION_LESS 3.12)
-   cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
-endif()
+cmake_minimum_required(VERSION 3.12)
 
 ######################
 # project definition #
 ######################
 
 # define the project
-project(Uno VERSION 2.3.1
+project(Uno VERSION 2.4.0
         DESCRIPTION "Uno (Unifying Nonlinear Optimization)"
         LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
@@ -38,20 +35,15 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
    message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
 endif()
+option(ENABLE_TESTS "Build unit tests" OFF)
 
-# determine whether a Fortran compiler is required, based on the available optional dependencies
-find_library(HSL hsl)
-find_library(MA57 ma57)
-find_library(MA27 ma27)
-find_library(BQPD bqpd)
-if(HSL OR MA57 OR MA27 OR BQPD)
-   message(STATUS "Fortran compiler required")
-   enable_language(Fortran)
-   include(FortranCInterface)
-   FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
-           MACRO_NAMESPACE "FC_"
-           SYMBOL_NAMESPACE "FC_")
-endif()
+# use Fortran compiler for name mangling with Fortran
+message(STATUS "Fortran compiler required")
+enable_language(Fortran)
+include(FortranCInterface)
+FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
+        MACRO_NAMESPACE "FC_"
+        SYMBOL_NAMESPACE "FC_")
 
 # directories
 set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
@@ -69,6 +61,7 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/globalization_strategies/switching_methods/filter_methods/filters/*.cpp
    uno/ingredients/globalization_strategies/switching_methods/funnel_methods/*.cpp
    uno/ingredients/hessian_models/*.cpp
+   uno/ingredients/hessian_models/quasi_newton/*.cpp
    uno/ingredients/inequality_handling_methods/*.cpp
    uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
    uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
@@ -85,10 +78,13 @@ file(GLOB UNO_SOURCE_FILES
 # unit test source files
 file(GLOB TESTS_UNO_SOURCE_FILES
    unotest/unotest.cpp
+   unotest/functional_tests/BLASTests.cpp
+   unotest/functional_tests/LAPACKTests.cpp
    unotest/unit_tests/CollectionAdapterTests.cpp
    unotest/unit_tests/ConcatenationTests.cpp
    unotest/unit_tests/COOSparseStorageTests.cpp
    unotest/unit_tests/CSCSparseStorageTests.cpp
+   unotest/unit_tests/DenseMatrixTests.cpp
    unotest/unit_tests/RangeTests.cpp
    unotest/unit_tests/ScalarMultipleTests.cpp
    unotest/unit_tests/SparseVectorTests.cpp
@@ -132,16 +128,10 @@ endif()
 if(HSL OR MA57)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA57/MA57Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
-
-   find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 endif()
 if(HSL OR MA27)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA27/MA27Solver.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA27SolverTests.cpp)
-
-   find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 endif()
 
 # METIS
@@ -155,21 +145,26 @@ find_library(BQPD bqpd)
 if(BQPD)
    list(APPEND UNO_SOURCE_FILES
            uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
-           uno/ingredients/subproblem_solvers/BQPD/BQPDEvaluationSpace.cpp)
+           uno/ingredients/subproblem_solvers/BQPD/BQPDWorkspace.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/BQPDSolverTests.cpp)
    link_to_uno(bqpd ${BQPD})
 endif()
 
 # HiGHS
-find_package(HIGHS)
-if(HIGHS_FOUND)
+find_library(HIGHS highs)
+if(HIGHS)
    list(APPEND UNO_SOURCE_FILES
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
-           uno/ingredients/subproblem_solvers/HiGHS/HiGHSEvaluationSpace.cpp)
+           uno/ingredients/subproblem_solvers/HiGHS/HiGHSWorkspace.cpp)
    list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
-   list(APPEND LIBRARIES highs::highs)
+   # add the library
+   set(LIBRARIES ${LIBRARIES} ${HIGHS})
+   # add a preprocessor definition
    add_definitions("-D HAS_HIGHS")
-   message(STATUS "Found HiGHS")
+   # include the corresponding directory
+   get_filename_component(HIGHS_DIRECTORY ${HIGHS} DIRECTORY)
+   set(DIRECTORIES ${DIRECTORIES} ${HIGHS_DIRECTORY}/../include/highs)
+   message(STATUS "Found HIGHS")
 endif()
 
 # MUMPS
@@ -199,22 +194,44 @@ if(MUMPS_LIBRARY)
       # link dummy parallel library (provided by MUMPS distribution)
       link_to_uno(MUMPS_MPISEQ_LIBRARY ${MUMPS_MPISEQ_LIBRARY})
    endif()
-
+   
    find_package(METIS REQUIRED)
    list(APPEND LIBRARIES ${METIS_LIBRARY})
    list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
-
-   find_package(LAPACK REQUIRED)
-   list(APPEND LIBRARIES ${LAPACK_LIBRARIES})
-
-   find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES ${BLAS_LIBRARIES})
 
    find_package(OpenMP REQUIRED)
    list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
 
    add_definitions("-D HAS_MUMPS")
    message(STATUS "Found MUMPS")
+endif()
+
+# LAPACK
+# convert relative paths of LAPACK to absolute paths
+if(LAPACK_LIBRARIES)
+   set(ABSOLUTE_LAPACK_LIBRARIES)
+   foreach(relative_path IN LISTS LAPACK_LIBRARIES)
+      get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
+      list(APPEND ABSOLUTE_LAPACK_LIBRARIES "${absolute_path}")
+   endforeach()
+   list(APPEND LIBRARIES ${ABSOLUTE_LAPACK_LIBRARIES})
+else()
+   find_package(LAPACK REQUIRED)
+   list(APPEND LIBRARIES LAPACK::LAPACK)
+endif()
+
+# BLAS
+# convert relative paths of BLAS to absolute paths
+if(BLAS_LIBRARIES)
+   set(ABSOLUTE_BLAS_LIBRARIES)
+   foreach(relative_path IN LISTS BLAS_LIBRARIES)
+      get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
+      list(APPEND ABSOLUTE_BLAS_LIBRARIES "${absolute_path}")
+   endforeach()
+   list(APPEND LIBRARIES ${ABSOLUTE_BLAS_LIBRARIES})
+else()
+   find_package(BLAS REQUIRED)
+   list(APPEND LIBRARIES BLAS::BLAS)
 endif()
 
 ###############
@@ -231,23 +248,23 @@ endif()
 # compile the Uno source files once, whatever the compilation type is (static or shared)
 add_library(compiled_uno_files OBJECT ${UNO_SOURCE_FILES})
 set_property(TARGET compiled_uno_files PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_include_directories(compiled_uno_files PUBLIC ${DIRECTORIES})
+target_include_directories(compiled_uno_files SYSTEM PUBLIC ${DIRECTORIES})
 target_link_libraries(compiled_uno_files PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
 
 if(BUILD_STATIC_LIBS)
    add_library(uno_static STATIC $<TARGET_OBJECTS:compiled_uno_files>)
-   target_include_directories(uno_static PUBLIC ${DIRECTORIES})
+   target_include_directories(uno_static SYSTEM PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_static PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
-   set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno.f90")
+   set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90")
 endif()
 
 if(BUILD_SHARED_LIBS)
    add_library(uno_shared SHARED $<TARGET_OBJECTS:compiled_uno_files>)
-   target_include_directories(uno_shared PUBLIC ${DIRECTORIES})
+   target_include_directories(uno_shared SYSTEM PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_shared PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
-   set_target_properties(uno_shared PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno.f90")
+   set_target_properties(uno_shared PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90")
 endif()
 
 if(BUILD_STATIC_LIBS)
@@ -267,7 +284,7 @@ find_library(AMPLSOLVER amplsolver)
 if(AMPLSOLVER)
    message(STATUS "Found amplsolver")
    add_executable(uno_ampl EXCLUDE_FROM_ALL interfaces/AMPL/AMPLModel.cpp interfaces/AMPL/uno_ampl.cpp)
-   target_include_directories(uno_ampl PUBLIC ${DIRECTORIES})
+   target_include_directories(uno_ampl SYSTEM PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} ${LIBRARIES} ${CMAKE_DL_LIBS} ${FORTRAN_LIBS})
    add_definitions("-D HAS_AMPLSOLVER")
    # include the corresponding directory
@@ -284,9 +301,13 @@ if(SKBUILD)
    # set(PYBIND11_FINDPYTHON ON)
    find_package(pybind11 CONFIG REQUIRED)
 
-   # link-time optimization
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto=auto")
+      # C++ ABI
+      add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=1)
+
+      # link-time optimization
+      add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-flto=auto>)
+      add_link_options(-flto=auto)
    endif()
 
    file(GLOB PYTHON_MODULE_FILES
@@ -299,9 +320,12 @@ if(SKBUILD)
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
 
    target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
-   target_include_directories(unopy PUBLIC ${DIRECTORIES})
+   target_include_directories(unopy SYSTEM PUBLIC ${DIRECTORIES})
 
-   install(TARGETS unopy LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX})
+   install(TARGETS unopy
+           LIBRARY DESTINATION unopy    # Linux/macOS: unopy/unopy.so
+           RUNTIME DESTINATION unopy    # Windows: unopy/unopy.pyd
+   )
 else()
    message(STATUS "SKBUILD not detected, skipping Python extension.")
 endif()
@@ -361,11 +385,19 @@ endif()
 ##################################
 # optional GoogleTest unit tests #
 ##################################
-find_package(GTest CONFIG)
-if(GTest_DIR)
-   message(STATUS "Found GoogleTest")
+if(ENABLE_TESTS)
+   include(FetchContent)
+
+   FetchContent_Declare(
+      googletest
+      URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+   )
+   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+   FetchContent_MakeAvailable(googletest)
+   message(STATUS "Fetched GoogleTest")
+
    add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
-   target_include_directories(run_unotest PUBLIC ${DIRECTORIES} ${GTEST_INCLUDE_DIR})
+   target_include_directories(run_unotest SYSTEM PUBLIC ${DIRECTORIES} ${GTEST_INCLUDE_DIR})
    target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES})
    if (MSVC)
       set_target_properties(run_unotest PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

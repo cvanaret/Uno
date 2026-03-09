@@ -1,0 +1,52 @@
+// Copyright (c) 2025 Charlie Vanaret
+// Licensed under the MIT license. See LICENSE file in the project directory for details.
+
+#ifndef UNO_BQPDWORKSPACE_H
+#define UNO_BQPDWORKSPACE_H
+
+#include <cstddef>
+#include "linear_algebra/Vector.hpp"
+#include "../SolverWorkspace.hpp"
+#include "../interfaces/C/uno_int.h"
+
+namespace uno {
+   // forward declarations
+   class Evaluations;
+   class Iterate;
+   class OptimizationProblem;
+   class Subproblem;
+   class WarmstartInformation;
+
+   class BQPDWorkspace: public SolverWorkspace {
+   public:
+      BQPDWorkspace() = default;
+      ~BQPDWorkspace() override = default;
+
+      void initialize(const Subproblem& subproblem);
+
+      [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const override;
+
+      void evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, Evaluations& current_evaluations,
+         const WarmstartInformation& warmstart_information);
+
+      Vector<double> constraints{};
+      Vector<double> gradients{};
+      Vector<uno_int> gradients_sparsity{};
+      // COO constraint Jacobian
+      Vector<uno_int> jacobian_row_indices{};
+      Vector<uno_int> jacobian_column_indices{};
+      Vector<double> jacobian_values{};
+      Vector<size_t> permutation_vector{};
+      // COO Hessian
+      Vector<uno_int> hessian_row_indices{};
+      Vector<uno_int> hessian_column_indices{};
+      Vector<double> hessian_values{};
+      bool hessian_evaluation_required{false};
+
+   protected:
+      void compute_gradients_sparsity(const Subproblem& subproblem);
+      void evaluate_jacobian(const OptimizationProblem& problem, const Vector<double>& primals, Evaluations& evaluations);
+   };
+} // namespace
+
+#endif // UNO_BQPDWORKSPACE_H

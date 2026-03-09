@@ -9,7 +9,8 @@
 namespace uno {
    // forward declarations
    class Direction;
-   class EvaluationSpace;
+   class Evaluations;
+   class SolverWorkspace;
    class Statistics;
    class Subproblem;
    template <typename ElementType>
@@ -28,9 +29,9 @@ namespace uno {
       virtual void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<ElementType>& rhs,
          Vector<ElementType>& result) = 0;
       virtual void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const WarmstartInformation& warmstart_information) = 0;
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) = 0;
 
-      [[nodiscard]] virtual EvaluationSpace& get_evaluation_space() = 0;
+      [[nodiscard]] virtual SolverWorkspace& get_workspace() = 0;
    };
 } // namespace
 

@@ -7,7 +7,6 @@
 #include <ctime>
 
 namespace uno {
-   // timer starts upon creation
    class Timer {
    public:
       Timer();

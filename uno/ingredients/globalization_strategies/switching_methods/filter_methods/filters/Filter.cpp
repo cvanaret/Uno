@@ -44,7 +44,7 @@ namespace uno {
          return false;
       }
 
-      // TODO: use binary search
+      // TODO: use binary search (use some form of https://en.cppreference.com/w/cpp/algorithm/binary_search.html)
       size_t position = 0;
       while (position < this->number_entries && !this->infeasibility_sufficient_reduction(this->infeasibility[position], trial_infeasibility)) {
          ++position;

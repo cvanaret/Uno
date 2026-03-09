@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include "GlobalizationStrategy.hpp"
 #include "GlobalizationStrategyFactory.hpp"
-#include "l1MeritFunction.hpp"
+#include "MeritFunction.hpp"
 #include "model/Model.hpp"
 #include "options/Options.hpp"
 #include "switching_methods/filter_methods/FletcherFilterMethod.hpp"
@@ -18,11 +18,11 @@ namespace uno {
       // set unconstrained strategy automatically
       if (model.number_constraints == 0) {
          INFO << "The model is unconstrained, picking a merit function as globalization strategy\n";
-         return std::make_unique<l1MeritFunction>(options);
+         return std::make_unique<MeritFunction>(options);
       }
       const std::string& strategy_type = options.get_string("globalization_strategy");
-      if (strategy_type == "l1_merit") {
-         return std::make_unique<l1MeritFunction>(options);
+      if (strategy_type == "merit_function") {
+         return std::make_unique<MeritFunction>(options);
       }
       else if (strategy_type == "fletcher_filter_method") {
          return std::make_unique<FletcherFilterMethod>(options);

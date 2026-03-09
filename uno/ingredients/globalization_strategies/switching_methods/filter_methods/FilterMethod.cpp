@@ -40,9 +40,8 @@ namespace uno {
    double FilterMethod::compute_actual_objective_reduction(double current_objective_measure, double current_infeasibility, double trial_objective_measure) const {
       double actual_reduction = this->filter->compute_actual_objective_reduction(current_objective_measure, current_infeasibility, trial_objective_measure);
       if (this->protect_actual_reduction_against_roundoff) {
-         // TODO put constant in option file
          static double machine_epsilon = std::numeric_limits<double>::epsilon();
-         actual_reduction += 10. * machine_epsilon * std::abs(current_objective_measure);
+         actual_reduction += this->protected_actual_reduction_macheps_coefficient * machine_epsilon * std::abs(current_objective_measure);
       }
       return actual_reduction;
    }

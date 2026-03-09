@@ -44,7 +44,7 @@ namespace uno {
       .def("set_constraints", [](PythonUserModel& user_model, uno_int number_constraints, const Constraints& constraint_functions,
             std::vector<double>& constraints_lower_bounds, std::vector<double>& constraints_upper_bounds, uno_int number_jacobian_nonzeros,
             const std::vector<uno_int>& jacobian_row_indices, const std::vector<uno_int>& jacobian_column_indices,
-            const Jacobian& constraint_jacobian) {
+            const Jacobian& jacobian) {
          if (number_constraints <= 0) {
             throw std::runtime_error("Please specify a positive number of constraints.");
          }
@@ -60,7 +60,7 @@ namespace uno {
             user_model.jacobian_row_indices[index] = jacobian_row_indices[index];
             user_model.jacobian_column_indices[index] = jacobian_column_indices[index];
          }
-         user_model.constraint_jacobian = constraint_jacobian;
+         user_model.jacobian = jacobian;
       })
 
       .def("set_lagrangian_hessian", [](PythonUserModel& user_model, uno_int number_hessian_nonzeros, char hessian_triangular_part,

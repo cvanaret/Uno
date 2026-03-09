@@ -20,25 +20,21 @@ namespace uno {
       void set_proximal_coefficient(double proximal_coefficient);
       void set_proximal_center(double* proximal_center);
 
-      // constraint evaluations
-      void evaluate_constraints(Iterate& iterate, Vector<double>& constraints) const override;
-
-      // dense objective gradient
-      void evaluate_objective_gradient(Iterate& iterate, double* objective_gradient) const override;
-
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] size_t number_jacobian_nonzeros() const override;
       [[nodiscard]] bool has_curvature(const HessianModel& hessian_model) const override;
       [[nodiscard]] size_t number_hessian_nonzeros(const HessianModel& hessian_model) const override;
-      void compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
+      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const override;
       void compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices, uno_int* column_indices,
          uno_int solver_indexing) const override;
 
-      // numerical evaluations of Jacobian and Hessian
-      void evaluate_constraint_jacobian(Iterate& iterate, double* jacobian_values) const override;
-      void evaluate_lagrangian_gradient(LagrangianGradient<double>& lagrangian_gradient,
-         const EvaluationSpace& evaluation_space, Iterate& iterate) const override;
+      // numerical evaluations of constraints, objective gradient, Jacobian and Hessian
+      void evaluate_constraints(const Iterate& iterate, double* constraints, Evaluations& evaluations) const override;
+      void evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const override;
+      void evaluate_jacobian(const Vector<double>& primals, double* jacobian_values, Evaluations& evaluations) const override;
+      void evaluate_lagrangian_gradient(const Iterate& iterate, Evaluations& evaluations,
+         Vector<double>& lagrangian_gradient) const override;
       void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model, const Vector<double>& primal_variables,
          const Multipliers& multipliers, double* hessian_values) const override;
       void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
@@ -56,7 +52,7 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
 
       [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
-         double dual_tolerance) const;
+         double dual_tolerance) const override;
 
       void set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t, double)>& elastic_setting_function) const;
 

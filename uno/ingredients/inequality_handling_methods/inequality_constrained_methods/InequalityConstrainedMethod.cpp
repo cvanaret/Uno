@@ -10,9 +10,9 @@
 #include "ingredients/subproblem_solvers/BoxLPSolver.hpp"
 #include "ingredients/subproblem_solvers/LPSolverFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "optimization/Direction.hpp"
-#include "optimization/EvaluationSpace.hpp"
-#include "symbolic/VectorView.hpp"
+#include "optimization/EvaluationCache.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -21,7 +21,7 @@ namespace uno {
    }
 
    void InequalityConstrainedMethod::initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double /*trust_region_radius*/) {
+         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, bool /*uses_trust_region*/) {
       this->problem = &problem; // store the problem as is (no reformulation)
       assert(this->problem != nullptr);
       this->initial_point.resize(this->problem->number_variables);
@@ -50,14 +50,15 @@ namespace uno {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::generate_initial_iterate(Iterate& initial_iterate) {
-      this->evaluate_progress_measures(*this->problem, initial_iterate);
+   void InequalityConstrainedMethod::generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) {
+      this->evaluate_progress_measures(*this->problem, initial_iterate, evaluation_cache.current_evaluations);
    }
 
    void InequalityConstrainedMethod::solve(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-        double trust_region_radius, WarmstartInformation& warmstart_information) {
+        double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       // solve the subproblem
-      this->solver->solve(statistics, *this->subproblem, trust_region_radius, this->initial_point, direction, warmstart_information);
+      this->solver->solve(statistics, *this->subproblem, trust_region_radius, this->initial_point, direction, current_evaluations,
+         warmstart_information);
       InequalityConstrainedMethod::compute_dual_displacements(current_iterate.multipliers, direction.multipliers);
       ++this->number_subproblems_solved;
       // reset the initial point
@@ -68,7 +69,10 @@ namespace uno {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) {
+   void InequalityConstrainedMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate,
+         Evaluations& /*evaluations*/) {
+      // c(x) - p + n = 0
+      // TODO set (one of) the elastic variables to +/- the value of the constraint if violated
       problem.set_elastic_variable_values(current_iterate, [&](Iterate& iterate, size_t /*j*/, size_t elastic_index, double /*jacobian_coefficient*/) {
          iterate.primals[elastic_index] = 0.;
          iterate.multipliers.lower_bounds[elastic_index] = 1.;
@@ -78,15 +82,6 @@ namespace uno {
 
    double InequalityConstrainedMethod::proximal_coefficient() const {
       return 0.;
-   }
-
-   EvaluationSpace& InequalityConstrainedMethod::get_evaluation_space() const {
-      return this->solver->get_evaluation_space();
-   }
-
-   void InequalityConstrainedMethod::evaluate_constraint_jacobian(Iterate& iterate) {
-      auto& evaluation_space = this->solver->get_evaluation_space();
-      evaluation_space.evaluate_constraint_jacobian(*this->problem, iterate);
    }
 
    // compute dual *displacements*
@@ -100,9 +95,9 @@ namespace uno {
 
    bool InequalityConstrainedMethod::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) {
+         EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
-         this->get_evaluation_space(), current_iterate, trial_iterate, direction, step_length, user_callbacks);
+         this->solver->get_workspace(), current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
    }
 
    void InequalityConstrainedMethod::postprocess_iterate(Iterate& /*iterate*/) {

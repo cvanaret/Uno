@@ -16,11 +16,19 @@ $$
 
 where $f: \mathbb{R}^n \rightarrow \mathbb{R}$ and $c: \mathbb{R}^n \rightarrow \mathbb{R}^m$ are (ideally twice) continuously differentiable.
 
-Uno unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods that iteratively solve the optimality (KKT) conditions with Newton's method. It breaks them down into a set of building blocks that interact with one another. Our unification framework can be visualized in the following hypergraph (not all are implemented in Uno yet):
+Uno unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods that iteratively solve the optimality (KKT) conditions with Newton's method. It breaks them down into a set of building blocks that interact with one another. Our unification framework can be visualized in the following hypergraph:
 
 <p align="center">
    <img src="docs/figures/wheel.png" alt="Uno hypergraph" width="40%" />
 </p>
+
+Uno currently implements the following strategies:
+* **constraint relaxation strategies**: feasibility restoration;
+* **inequality handling methods**: inequality constrained method, interior-point method;
+* **Hessian models**: exact, L-BFGS, identity, zero;
+* **inertia control strategies**: primal, primal-dual, none;
+* **globalization strategies**: filter method, funnel method, merit function;
+* **globalization mechanisms**: backtracking line search, trust-region method.
 
 You can combine these strategies in a ton of different ways via [options](docs/options.md). Uno also implements **presets**, that is strategy combinations that mimic existing solvers:
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
@@ -29,6 +37,22 @@ You can combine these strategies in a ton of different ways via [options](docs/o
 Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches.
 
 For more details on our unification theory, check out the [UNIFICATION](UNIFICATION.md) page, our [preprint](https://www.researchgate.net/publication/397446552_Implementing_a_unified_solver_for_nonlinearly_constrained_optimization), or my [latest slides](https://www.researchgate.net/publication/390271091).
+
+## Who uses Uno?
+
+Uno is currently used as a nonlinear optimization solver in: 
+- [JuMP.jl](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers)
+- [DNLP](https://github.com/cvxgrp/DNLP/pull/119), an extension of [CVXPY](https://www.cvxpy.org/) to general nonlinear programming
+- [Vecchia.jl](https://github.com/cgeoga/Vecchia.jl), a package for Gaussian processes approximation
+- [FelooPy](https://www.linkedin.com/posts/k-tafakkori_optimization101-operationsresearch-decisionscience-activity-7397646574035697664-AzmK), a user-friendly tool for coding, modeling, and solving decision problems
+- [IMPL &copy; /IMPL-DATA &copy;](https://www.linkedin.com/posts/jeffrey-dean-kelly-a5420a6a_releases-cvanaretuno-activity-7388564004585160704-WSxz/) by [Industrial Algorithms Limited](https://www.industrialgorithms.ca/), a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation
+
+and more to come:
+- [CasADi](https://github.com/casadi/casadi/issues/3908)
+- [Pyomo](https://github.com/cvanaret/Uno/issues/319)
+- [pyOptSparse](https://github.com/cvanaret/Uno/issues/318)
+- [Minotaur](https://github.com/cvanaret/Uno/issues/107)
+- [NEOS Server](https://neos-server.org/neos/solvers/)
 
 ## Installation instructions
 
@@ -64,6 +88,11 @@ Uno can be used from Julia in two ways:
 Uno's C interface is compiled as part of the Uno library. For more details, see its [README.md](interfaces/C/README.md).
 It may be modified in future minor releases.
 
+### Fortran
+Uno provides a native Fortran interface built on top of its C API using `iso_c_binding`.
+It closely mirrors the C interface and is designed as a lightweight wrapper with minimal overhead, making it suitable for integration into existing Fortran codes while retaining full access to Uno's features.
+For more details, see its [README.md](interfaces/Fortran/README.md).
+
 ## Latest results (August 13, 2025)
 
 Uno presets have been tested against state-of-the-art solvers on 429 small problems of the [CUTEst benchmark](https://arnold-neumaier.at/glopt/coconut/Benchmark/Library2_new_v1.html).
@@ -82,19 +111,22 @@ We have submitted our paper to the Mathematical Programming Computation journal.
 Until it is published, you can use the following bibtex entry:
 
 ```
-@unpublished{VanaretLeyffer2024,
+@unpublished{VanaretLeyffer2026,
   author = {Vanaret, Charlie and Leyffer, Sven},
   title = {Implementing a unified solver for nonlinearly constrained optimization},
-  year = {2024},
-  note = {Submitted to Mathematical Programming Computation}
+  year = {2026},
+  note = {Accepted to Mathematical Programming Computation on Feb 22, 2026}
 }
 ```
 
 ## Credits
 
-The theoretical abstract framework for unifying nonlinearly constrained optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory). Uno was designed and implemented by Charlie Vanaret. It is released under the MIT license (see the [license file](LICENSE)).
+The theoretical abstract framework for unifying nonlinearly constrained optimization was developed by [Charlie Vanaret](https://github.com/cvanaret/) (Argonne National Laboratory & Zuse-Institut Berlin) and [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).
+The interfaces and continuous integration infrastructure for Uno were developed and are maintained by [Alexis Montoison](https://github.com/amontoison) (Argonne National Laboratory) and Charlie Vanaret.
+Uno itself was designed and implemented by Charlie Vanaret.
+It is released under the MIT license (see the [license file](LICENSE)).
 
 The contributors are (in alphabetical order):
-[Oscar Dowson](https://github.com/odow), [Marcel Jacobse](https://github.com/mjacobse), [Arnav Kapoor](https://github.com/arnavk23), [David Kiessling](https://github.com/david0oo), [Rujia Liu](https://github.com/rujialiu), [Stefano Lovato](https://github.com/stefphd), [Alexis Montoison](https://github.com/amontoison), [Manuel Schaich](https://github.com/worc4021), [Silvio Traversaro](https://github.com/traversaro).
+[Oscar Dowson](https://github.com/odow), [Marcel Jacobse](https://github.com/mjacobse), [Arnav Kapoor](https://github.com/arnavk23), [David Kiessling](https://github.com/david0oo), [Rujia Liu](https://github.com/rujialiu), [Stefano Lovato](https://github.com/stefphd), [Manuel Schaich](https://github.com/worc4021), [Silvio Traversaro](https://github.com/traversaro).
 
 The Uno logo was created by Charlie Vanaret based on a [saddle point icon by luimonts](https://thenounproject.com/icon/saddle-point-258207/) (CC BY 3.0).

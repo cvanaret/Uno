@@ -11,6 +11,8 @@
 namespace uno {
    // forward declarations
    class Direction;
+   class EvaluationCache;
+   class Evaluations;
    class Iterate;
    class Model;
    class Options;
@@ -23,12 +25,14 @@ namespace uno {
       GlobalizationMechanism(const Model& model, bool use_trust_region, const Options& options);
       virtual ~GlobalizationMechanism() = default;
 
-      virtual void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Direction& direction) = 0;
+      virtual void initialize(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+         EvaluationCache& evaluation_cache) = 0;
       virtual void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         Direction& direction, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
+         Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) = 0;
 
-      static void set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate);
+      static void set_primal_statistics(Statistics& statistics, const Model& model, const Iterate& iterate,
+         const Evaluations& evaluations);
       static void set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate);
 
       [[nodiscard]] virtual std::string get_name() const = 0;

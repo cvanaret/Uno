@@ -41,11 +41,6 @@ namespace uno {
    void CollectionAdapter<Array>::increment_iterator(size_t& index) const {
       ++index;
    }
-
-   template <typename Array>
-   CollectionAdapter<Array> adapt(const Array& array) {
-      return CollectionAdapter<Array>{array};
-   }
 } // namespace
 
 #endif // UNO_COLLECTIONADAPTER_H

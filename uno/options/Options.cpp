@@ -15,12 +15,11 @@ namespace uno {
       {"dual_tolerance", OptionType::DOUBLE},
       {"loose_primal_tolerance", OptionType::DOUBLE},
       {"loose_dual_tolerance", OptionType::DOUBLE},
-      {"loose_tolerance_consecutive_iteration_threshold", OptionType::INTEGER},
+      {"loose_tolerance_iteration_threshold", OptionType::INTEGER},
       {"max_iterations", OptionType::INTEGER},
       {"time_limit", OptionType::DOUBLE},
       {"print_solution", OptionType::BOOL},
       {"unbounded_objective_threshold", OptionType::DOUBLE},
-      {"enforce_linear_constraints", OptionType::BOOL},
       {"logger", OptionType::STRING},
       {"constraint_relaxation_strategy", OptionType::STRING},
       {"inequality_handling_method", OptionType::STRING},
@@ -28,19 +27,17 @@ namespace uno {
       {"globalization_strategy", OptionType::STRING},
       {"hessian_model", OptionType::STRING},
       {"inertia_correction_strategy", OptionType::STRING},
-      {"scale_functions", OptionType::BOOL},
-      {"function_scaling_threshold", OptionType::DOUBLE},
-      {"function_scaling_factor", OptionType::DOUBLE},
-      {"scale_residuals", OptionType::BOOL},
       {"progress_norm", OptionType::STRING},
       {"residual_norm", OptionType::STRING},
       {"residual_scaling_threshold", OptionType::DOUBLE},
       {"protect_actual_reduction_against_roundoff", OptionType::BOOL},
+      {"protected_actual_reduction_macheps_coefficient", OptionType::DOUBLE},
       {"print_subproblem", OptionType::BOOL},
       {"armijo_decrease_fraction", OptionType::DOUBLE},
       {"armijo_tolerance", OptionType::DOUBLE},
       {"switching_delta", OptionType::DOUBLE},
       {"switching_infeasibility_exponent", OptionType::DOUBLE},
+      {"sufficient_infeasibility_decrease_ratio", OptionType::DOUBLE},
       {"filter_type", OptionType::STRING},
       {"filter_beta", OptionType::DOUBLE},
       {"filter_gamma", OptionType::DOUBLE},
@@ -59,8 +56,8 @@ namespace uno {
       {"LS_backtracking_ratio", OptionType::DOUBLE},
       {"LS_min_step_length", OptionType::DOUBLE},
       {"LS_scale_duals_with_step_length", OptionType::BOOL},
+      {"quasi_newton_memory_size", OptionType::INTEGER},
       {"regularization_failure_threshold", OptionType::DOUBLE},
-      {"regularization_initial_value", OptionType::DOUBLE},
       {"regularization_increase_factor", OptionType::DOUBLE},
       {"primal_regularization_initial_factor", OptionType::DOUBLE},
       {"dual_regularization_fraction", OptionType::DOUBLE},
@@ -82,7 +79,6 @@ namespace uno {
       {"barrier_default_multiplier", OptionType::DOUBLE},
       {"barrier_tau_min", OptionType::DOUBLE},
       {"barrier_k_sigma", OptionType::DOUBLE},
-      {"barrier_smax", OptionType::DOUBLE},
       {"barrier_k_mu", OptionType::DOUBLE},
       {"barrier_theta_mu", OptionType::DOUBLE},
       {"barrier_k_epsilon", OptionType::DOUBLE},
@@ -92,6 +88,7 @@ namespace uno {
       {"barrier_push_variable_to_interior_k1", OptionType::DOUBLE},
       {"barrier_push_variable_to_interior_k2", OptionType::DOUBLE},
       {"barrier_damping_factor", OptionType::DOUBLE},
+      {"barrier_small_infeasibility_factor", OptionType::DOUBLE},
       {"least_square_multiplier_max_norm", OptionType::DOUBLE},
       {"BQPD_kmax_heuristic", OptionType::STRING},
       {"QP_solver", OptionType::STRING},
@@ -199,7 +196,7 @@ namespace uno {
          return this->integer_options.at(option_name);
       }
       catch(const std::out_of_range&) {
-         throw std::out_of_range("The option with name " + option_name + " was not found");
+         throw std::out_of_range("The int option with name " + option_name + " was not found");
       }
    }
 
@@ -209,7 +206,7 @@ namespace uno {
          return static_cast<size_t>(this->integer_options.at(option_name));
       }
       catch(const std::out_of_range&) {
-         throw std::out_of_range("The option with name " + option_name + " was not found");
+         throw std::out_of_range("The unsigned int option with name " + option_name + " was not found");
       }
    }
 
@@ -219,7 +216,7 @@ namespace uno {
          return this->double_options.at(option_name);
       }
       catch(const std::out_of_range&) {
-         throw std::out_of_range("The option with name " + option_name + " was not found");
+         throw std::out_of_range("The double option with name " + option_name + " was not found");
       }
    }
 
@@ -229,7 +226,7 @@ namespace uno {
          return this->bool_options.at(option_name);
       }
       catch(const std::out_of_range&) {
-         throw std::out_of_range("The option with name " + option_name + " was not found");
+         throw std::out_of_range("The bool option with name " + option_name + " was not found");
       }
    }
 

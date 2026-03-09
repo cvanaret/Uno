@@ -19,24 +19,20 @@ namespace uno {
       ~InequalityConstrainedMethod() override = default;
 
       void initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy<double>& inertia_correction_strategy, double trust_region_radius) override;
+         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, bool uses_trust_region) override;
       void initialize_statistics(Statistics& statistics) override;
-      void generate_initial_iterate(Iterate& initial_iterate) override;
+      void generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) override;
       void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         WarmstartInformation& warmstart_information) override;
+         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
-      void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
+      void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate, Evaluations& evaluations) override;
       [[nodiscard]] double proximal_coefficient() const override;
-
-      // matrix computations
-      [[nodiscard]] EvaluationSpace& get_evaluation_space() const override;
-      void evaluate_constraint_jacobian(Iterate& iterate) override;
 
       // acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         UserCallbacks& user_callbacks) override;
+         EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) override;
 
       void postprocess_iterate(Iterate& iterate) override;
 

@@ -8,20 +8,19 @@
 #include "optimization/Iterate.hpp"
 #include "linear_algebra/Matrix.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "optimization/Multipliers.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/UnaryNegation.hpp"
-#include "symbolic/VectorView.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
    // forward declarations
    template <typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
-   class EvaluationSpace;
+   class SolverWorkspace;
    class HessianModel;
-   template <typename ElementType>
    class InertiaCorrectionStrategy;
    class Statistics;
    template <typename ElementType>
@@ -32,10 +31,10 @@ namespace uno {
       const size_t number_variables, number_constraints;
 
       Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
-         InertiaCorrectionStrategy<double>& inertia_correction_strategy);
+         InertiaCorrectionStrategy& inertia_correction_strategy);
 
       // sparsity patterns
-      void compute_constraint_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
+      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
          MatrixOrder matrix_order) const;
       void compute_regularized_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
       void compute_regularized_augmented_matrix_sparsity(uno_int* row_indices, uno_int* column_indices,
@@ -47,12 +46,11 @@ namespace uno {
       void compute_hessian_vector_product(const double* x, const double* vector, double* result) const;
 
       // augmented system
-      void assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values) const;
+      void assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values, Evaluations& evaluations) const;
       void regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const;
       template <typename IndexType>
-      void assemble_augmented_rhs(const Vector<double>& objective_gradient, const Vector<double>& constraints,
-         const Matrix<IndexType>& constraint_jacobian, Vector<double>& rhs) const;
+      void assemble_augmented_rhs(Evaluations& evaluations, const Matrix<IndexType>& jacobian, Vector<double>& rhs) const;
       void assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const;
 
       // variables bounds
@@ -83,40 +81,44 @@ namespace uno {
       [[nodiscard]] double dual_regularization_factor() const;
 
       // local models of progress measures
-      [[nodiscard]] double compute_predicted_infeasibility_reduction(const EvaluationSpace& evaluation_space, const Model& model,
-         const Vector<double>& primal_direction, double step_length, Norm norm) const;
-      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const EvaluationSpace& evaluation_space,
-         const Vector<double>& primal_direction, double step_length) const;
-      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const EvaluationSpace& evaluation_space,
-         const Direction& direction, double step_length, Norm norm) const;
+      [[nodiscard]] double compute_predicted_infeasibility_reduction(const Model& model, const Vector<double>& primal_direction,
+         double step_length, Norm norm, Evaluations& current_evaluations) const;
+      [[nodiscard]] std::function<double(double)> compute_predicted_objective_reduction(const Vector<double>& primal_direction,
+         double step_length, const Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const;
+      [[nodiscard]] ProgressMeasures compute_predicted_reductions(const Direction& direction, double step_length, Norm norm,
+         Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const;
 
       const OptimizationProblem& problem;
       Iterate& current_iterate;
 
    protected:
       HessianModel& hessian_model;
-      InertiaCorrectionStrategy<double>& inertia_correction_strategy;
+      InertiaCorrectionStrategy& inertia_correction_strategy;
       const ForwardRange empty_set{0};
    };
 
    template <typename IndexType>
-   void Subproblem::assemble_augmented_rhs(const Vector<double>& objective_gradient, const Vector<double>& constraints,
-         const Matrix<IndexType>& constraint_jacobian, Vector<double>& rhs) const {
+   void Subproblem::assemble_augmented_rhs(Evaluations& evaluations, const Matrix<IndexType>& jacobian, Vector<double>& rhs) const {
       rhs.fill(0.);
 
       // objective gradient
-      view(rhs, 0, this->number_variables) = -objective_gradient;
+      auto objective_gradient = view(rhs, 0, this->number_variables);
+      this->problem.evaluate_objective_gradient(this->current_iterate, objective_gradient.data(), evaluations);
 
       // Jacobian
+      // TODO use evaluation_cache
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
-         const auto [constraint_index, variable_index, derivative] = constraint_jacobian[nonzero_index];
-         rhs[static_cast<size_t>(variable_index)] +=
+         const auto [constraint_index, variable_index, derivative] = jacobian[nonzero_index];
+         rhs[static_cast<size_t>(variable_index)] -=
             this->current_iterate.multipliers.constraints[static_cast<size_t>(constraint_index)] * derivative;
       }
+
       // constraints
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         rhs[this->number_variables + constraint_index] = -constraints[constraint_index];
-      }
+      auto constraints = view(rhs, this->number_variables, this->number_variables + this->number_constraints);
+      this->problem.evaluate_constraints(this->current_iterate, constraints.data(), evaluations);
+
+      // flip the sign
+      rhs.scale(-1.);
       DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints)); DEBUG << '\n';
    }
 

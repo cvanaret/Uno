@@ -7,7 +7,7 @@
 #include <array>
 #include <vector>
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "ingredients/subproblem_solvers/COOEvaluationSpace.hpp"
+#include "ingredients/subproblem_solvers/COOWorkspace.hpp"
 
 namespace uno {
    // forward declarations
@@ -53,7 +53,7 @@ namespace uno {
       void do_numerical_factorization(const double* matrix_values) override;
       void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) override;
       void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         const WarmstartInformation& warmstart_information) override;
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
@@ -61,11 +61,11 @@ namespace uno {
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
 
-      [[nodiscard]] EvaluationSpace& get_evaluation_space() override;
+      [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    private:
       MA57Workspace workspace{};
-      COOEvaluationSpace evaluation_space{};
+      COOWorkspace coo_workspace{};
 
       bool analysis_performed{false};
       bool factorization_performed{false};

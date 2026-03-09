@@ -28,7 +28,7 @@ uno_set_objective(model, optimization_sense, objective_function, objective_gradi
 ```c
 uno_set_constraints(model, number_constraints, constraint_functions,
    constraints_lower_bounds, constraints_upper_bounds, number_jacobian_nonzeros,
-   jacobian_row_indices, jacobian_column_indices, constraint_jacobian);
+   jacobian_row_indices, jacobian_column_indices, jacobian);
 ```
 - the Lagrangian Hessian;
 ```c

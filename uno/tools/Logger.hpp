@@ -17,7 +17,7 @@ namespace uno {
        static Level level;
        inline static std::ostream* stream = &std::cout;
        static void set_logger(const std::string& logger_level);
-       static void set_stream(std::ostream &output_stream);
+       static void set_stream(std::ostream& output_stream);
        static void flush();
    };
 

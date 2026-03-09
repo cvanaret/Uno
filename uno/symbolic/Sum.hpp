@@ -16,8 +16,21 @@ namespace uno {
 
       Sum(E1&& expression1, E2&& expression2): expression1(std::forward<E1>(expression1)), expression2(std::forward<E2>(expression2)) { }
 
-      [[nodiscard]] constexpr size_t size() const { return this->expression1.size(); }
-      [[nodiscard]] typename Sum::value_type operator[](size_t index) const { return this->expression1[index] + this->expression2[index]; }
+      [[nodiscard]] constexpr size_t size() const {
+         return this->expression1.size();
+      }
+
+      [[nodiscard]] typename Sum::value_type operator[](size_t index) const {
+         return this->expression1[index] + this->expression2[index];
+      }
+
+      [[nodiscard]] const E1& get_left() const {
+         return this->expression1;
+      }
+
+      [[nodiscard]] const E2& get_right() const {
+         return this->expression2;
+      }
 
    protected:
       const E1 expression1;

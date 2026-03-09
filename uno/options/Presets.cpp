@@ -58,12 +58,11 @@ namespace uno {
          preset_options.set_double("l1_constraint_violation_coefficient", 1000.);
          preset_options.set_string("progress_norm", "L1");
          preset_options.set_string("residual_norm", "INF");
-         preset_options.set_bool("scale_functions", true);
          preset_options.set_double("primal_tolerance", 1e-8);
          preset_options.set_double("dual_tolerance", 1e-8);
          preset_options.set_double("loose_primal_tolerance", 1e-6);
          preset_options.set_double("loose_dual_tolerance", 1e-6);
-         preset_options.set_integer("loose_tolerance_consecutive_iteration_threshold", 15);
+         preset_options.set_integer("loose_tolerance_iteration_threshold", 15);
          preset_options.set_bool("switch_to_optimality_requires_linearized_feasibility", false);
          preset_options.set_bool("LS_scale_duals_with_step_length", true);
          preset_options.set_bool("protect_actual_reduction_against_roundoff", true);
@@ -80,7 +79,6 @@ namespace uno {
          preset_options.set_string("residual_norm", "L2");
          preset_options.set_double("TR_radius", 10.);
          preset_options.set_double("l1_constraint_violation_coefficient", 1.);
-         preset_options.set_bool("enforce_linear_constraints", true);
          preset_options.set_double("primal_tolerance", 1e-6);
          preset_options.set_double("dual_tolerance", 1e-6);
          preset_options.set_double("TR_min_radius", 1e-8);
@@ -98,7 +96,6 @@ namespace uno {
          preset_options.set_string("residual_norm", "L2");
          preset_options.set_double("TR_radius", 10);
          preset_options.set_double("l1_constraint_violation_coefficient", 1.);
-         preset_options.set_bool("enforce_linear_constraints", true);
          preset_options.set_double("primal_tolerance", 1e-6);
          preset_options.set_double("dual_tolerance", 1e-6);
          preset_options.set_double("TR_min_radius", 1e-8);
@@ -126,7 +123,6 @@ namespace uno {
          preset_options.set_string("residual_norm", "L2");
          preset_options.set_double("TR_radius", 10);
          preset_options.set_double("l1_constraint_violation_coefficient", 1.);
-         preset_options.set_bool("enforce_linear_constraints", true);
          preset_options.set_double("primal_tolerance", 1e-6);
          preset_options.set_double("dual_tolerance", 1e-5);
          preset_options.set_double("TR_min_radius", 1e-8);

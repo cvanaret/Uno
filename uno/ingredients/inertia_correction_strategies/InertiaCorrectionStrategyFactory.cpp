@@ -10,16 +10,16 @@
 #include "options/Options.hpp"
 
 namespace uno {
-   std::unique_ptr<InertiaCorrectionStrategy<double>> InertiaCorrectionStrategyFactory::create(const Options& options) {
+   std::unique_ptr<InertiaCorrectionStrategy> InertiaCorrectionStrategyFactory::create(const Options& options) {
       const std::string& strategy_name = options.get_string("inertia_correction_strategy");
       if (strategy_name == "primal") {
-         return std::make_unique<PrimalInertiaCorrection<double>>(options);
+         return std::make_unique<PrimalInertiaCorrection>(options);
       }
       else if (strategy_name == "primal_dual") {
-         return std::make_unique<PrimalDualInertiaCorrection<double>>(options);
+         return std::make_unique<PrimalDualInertiaCorrection>(options);
       }
       else if (strategy_name == "none") {
-         return std::make_unique<NoInertiaCorrection<double>>();
+         return std::make_unique<NoInertiaCorrection>();
       }
       throw std::invalid_argument("Inertia correction strategy " + strategy_name + " does not exist");
    }

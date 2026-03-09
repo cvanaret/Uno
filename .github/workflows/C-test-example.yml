@@ -7,12 +7,18 @@ on:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
   pull_request:
     branches: [ "main" ]
     paths-ignore:
       - '*.md'
       - 'LICENSE'
       - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -32,14 +38,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download dependency (BQPD)
+      - name: Download dependencies
         shell: bash
-        run: |
-          VERSION_BQPD="1.0.0"
-          PLATFORM="x86_64-linux-gnu"
-          wget https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION_BQPD}%2B0/BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz
-          mkdir deps
-          tar -xzvf BQPD.v${VERSION_BQPD}.$PLATFORM-libgfortran5.tar.gz -C deps
+        run: bash dependencies/scripts/download_dependencies.sh
 
       - name: Configure Uno CMake
         shell: bash
@@ -47,8 +48,10 @@ jobs:
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
         run: |
           cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-                                               -DBQPD=${{github.workspace}}/deps/lib/libbqpd.a \
-                                               -DBUILD_STATIC_LIBS=ON \
+                                               -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+                                               -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
+                                               -DBUILD_STATIC_LIBS=OFF \
                                                -DBUILD_SHARED_LIBS=ON .
 
       - name: Build Uno
@@ -63,7 +66,11 @@ jobs:
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
         run: |
-          cmake -B ${{github.workspace}}/interfaces/C/example/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DUNO=/usr/local/lib/libuno.so .
+          cmake -B ${{github.workspace}}/interfaces/C/example/build \
+                -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                -DUNO=/usr/local/lib/libuno.so \
+                -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+                -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" .
 
       - name: Build example
         working-directory: ${{github.workspace}}/interfaces/C/example

@@ -14,7 +14,7 @@ namespace uno {
 
    class InertiaCorrectionStrategyFactory {
    public:
-      static std::unique_ptr<InertiaCorrectionStrategy<double>> create(const Options& options);
+      static std::unique_ptr<InertiaCorrectionStrategy> create(const Options& options);
 
       constexpr static std::array available_strategies{"primal", "primal_dual", "none"};
    };

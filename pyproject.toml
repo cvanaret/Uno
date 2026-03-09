@@ -7,18 +7,19 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "unopy"
-# PyPi
-version = "0.1.2"
-# TestPyPi
-#version = "0.1.12"
-#requires-python = ">=3.8"
-description = "Uno, a highly customizable SQP & barrier solver for nonlinearly constrained optimization"
+# PyPI
+version = "0.2.5"
+# TestPyPI
+#version = "0.2.22"
+description = "With Uno, finally take full control of your SQP/barrier solver for nonlinearly constrained optimization"
 readme = "interfaces/Python/README.md"
 authors = [
-    {name = "Charlie Vanaret", email = "vanaret@zib.de"}
+    {name = "Charlie Vanaret", email = "vanaret@zib.de"},
+    {name = "Alexis Montoison", email = "amontoison@anl.gov"}
 ]
 maintainers = [
-    {name = "Charlie Vanaret", email = "vanaret@zib.de"}
+    {name = "Charlie Vanaret", email = "vanaret@zib.de"},
+    {name = "Alexis Montoison", email = "amontoison@anl.gov"}
 ]
 license = "MIT"
 
@@ -30,20 +31,21 @@ Issues = "https://github.com/cvanaret/Uno/issues"
 cmake.source-dir = "."
 cmake.verbose = true
 wheel.cmake = true
+wheel.packages = ["interfaces/Python/unopy"]  # point to a dir containing __init__.py
 
 # support for passing paths to dependencies from environment to CMake
 [tool.scikit-build.cmake.define]
+BLAS_LIBRARIES = "dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
+LAPACK_LIBRARIES = "dependencies/lib/liblapack.a"
 # BQPD (cmake -DBQPD=/path/.../libbqpd.a)
-BQPD = "interfaces/Python/dependencies/bqpd/lib/libbqpd.a"
+BQPD = "dependencies/lib/libbqpd.a"
 # MUMPS
-#MUMPS_INCLUDE_DIR = "interfaces/Python/dependencies/mumps/include"
-#METIS_INCLUDE_DIR = "interfaces/Python/dependencies/mumps/include"
-#METIS_LIBRARY = "interfaces/Python/dependencies/mumps/lib/libmetis.a"
-#MUMPS_LIBRARY = "interfaces/Python/dependencies/mumps/lib/libdmumps.a"
-#MUMPS_COMMON_LIBRARY = "interfaces/Python/dependencies/mumps/lib/libmumps_common.a"
-#MUMPS_PORD_LIBRARY = "interfaces/Python/dependencies/mumps/lib/libpord.a"
-#MUMPS_MPISEQ_LIBRARY = "interfaces/Python/dependencies/mumps/lib/libmpiseq.a"
-#BLAS_LIBRARIES = "interfaces/Python/dependencies/mumps/lib/libblas.a"
-#LAPACK_LIBRARIES = "interfaces/Python/dependencies/mumps/lib/liblapack.a"
+MUMPS_INCLUDE_DIR = "dependencies/include"
+METIS_INCLUDE_DIR = "dependencies/include"
+METIS_LIBRARY = "dependencies/lib/libmetis.a"
+MUMPS_LIBRARY = "dependencies/lib/libdmumps.a"
+MUMPS_COMMON_LIBRARY = "dependencies/lib/libmumps_common.a"
+MUMPS_PORD_LIBRARY = "dependencies/lib/libpord.a"
+MUMPS_MPISEQ_LIBRARY = "dependencies/lib/libmpiseq.a"
 # HiGHS
-HIGHS_DIR = "interfaces/Python/dependencies/highs/lib/cmake/highs"
+HIGHS = "dependencies/lib/libhighs.a"
