@@ -10,6 +10,10 @@ version = VersionNumber(ENV["UNO_RELEASE"])
 # Collection of sources required to complete build
 sources = [
     GitSource(ENV["UNO_URL"], ENV["UNO_COMMIT"]),
+    # v2025.9.18
+    GitSource("https://github.com/ralna/spral.git",
+              "e68988612dbd920323cee44c9cb8c6134847a990"),
+    # v5.8.2
     ArchiveSource("https://mumps-solver.org/MUMPS_5.8.2.tar.gz",
                   "eb515aa688e6dbab414bb6e889ff4c8b23f1691a843c68da5230a33ac4db7039"),
 ]
@@ -28,13 +32,19 @@ for file in $(ls .); do
       fi
    fi
 done
+
 cd ${prefix}
 cp -rL share/licenses deps/licenses
 mkdir deps/licenses/MUMPS
 cp $WORKSPACE/srcdir/MUMPS_5.8.2/LICENSE deps/licenses/MUMPS/LICENSE
+mkdir deps/licenses/spral
+cp $WORKSPACE/srcdir/spral/LICENCE deps/licenses/spral/LICENCE
 chmod -R u=rwx deps
 tar -czvf deps.tar.gz deps
 rm -r deps
+
+# Update Ninja
+cp ${host_prefix}/bin/ninja /usr/bin/ninja
 
 # Compile MUMPS
 mkdir -p ${libdir}
@@ -82,6 +92,26 @@ cp include/*.h ${includedir}
 cp libseq/*.h ${includedir}/libseq
 cp lib/*.${dlext} ${libdir}
 
+# Compile SPRAL
+cd $WORKSPACE/srcdir/spral
+
+if [[ "${target}" == *mingw* ]]; then
+  HWLOC="hwloc-15"
+else
+  HWLOC="hwloc"
+fi
+
+meson setup builddir --cross-file="${MESON_TARGET_TOOLCHAIN}" \
+                     --prefix=$prefix \
+                     -Dlibhwloc=$HWLOC \
+                     -Dlibblas=openblas \
+                     -Dliblapack=openblas \
+                     -Dtests=false \
+                     -Dexamples=false
+
+meson compile -C builddir
+meson install -C builddir
+
 # Compile Uno
 cd $WORKSPACE/srcdir/Uno
 mkdir -p build
@@ -102,6 +132,7 @@ cmake \
     -DHIGHS=${libdir}/libhighs.${dlext} \
     -DBQPD=${prefix}/lib/libbqpd.a \
     -DHSL=${libdir}/libhsl.${dlext} \
+    -DSPRAL=${libdir}/libspral.${dlext} \
     -DMUMPS_INCLUDE_DIR=${includedir} \
     -DMETIS_INCLUDE_DIR=${includedir} \
     -DMUMPS_LIBRARY="${libdir}/libdmumps.${dlext}" \
@@ -128,6 +159,7 @@ platforms = expand_gfortran_versions(platforms)
 
 # The products that we will ensure are always built
 products = [
+   LibraryProduct("libspral", :libspral),
    LibraryProduct("libdmumps", :libdmumps),
    ExecutableProduct("uno_ampl", :amplexe),
    LibraryProduct("libuno", :libuno),
@@ -136,12 +168,14 @@ products = [
 
 # Dependencies that must be installed before this package can be built
 dependencies = [
+    HostBuildDependency(PackageSpec(name="Ninja_jll", uuid="76642167-d241-5cee-8c94-7a494e8cb7b7")),
     BuildDependency(PackageSpec(name="BQPD_jll", uuid="1325ac01-0a49-589f-8355-43321054aaab")),
     Dependency(PackageSpec(name="HiGHS_jll", uuid="8fd58aa0-07eb-5a78-9b36-339c94fd15ea"), compat="=1.12.0"),
     Dependency(PackageSpec(name="HSL_jll", uuid="017b0a0e-03f4-516a-9b91-836bbd1904dd")),
     Dependency(PackageSpec(name="METIS_jll", uuid="d00139f3-1899-568f-a2f0-47f597d42d70")),
     Dependency(PackageSpec(name="ASL_jll", uuid="ae81ac8f-d209-56e5-92de-9978fef736f9"), compat="0.1.3"),
     Dependency(PackageSpec(name="OpenBLAS32_jll", uuid="656ef2d0-ae68-5445-9ca0-591084a874a2")),
+    Dependency(PackageSpec(name="Hwloc_jll", uuid="e33a78d0-f292-5ffc-b300-72abe9b543c8")),
     # For OpenMP we use libomp from `LLVMOpenMP_jll` where we use LLVM as compiler (BSD systems),
     # and libgomp from `CompilerSupportLibraries_jll` everywhere else.
     Dependency(PackageSpec(name="CompilerSupportLibraries_jll", uuid="e66e0078-7015-5450-92f7-15fbd957f2ae"); platforms=filter(!Sys.isbsd, platforms)),

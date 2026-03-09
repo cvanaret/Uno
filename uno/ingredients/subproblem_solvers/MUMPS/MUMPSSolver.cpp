@@ -76,7 +76,7 @@ namespace uno {
       this->analysis_performed = true;
    }
 
-   void MUMPSSolver::do_numerical_factorization(const double* matrix_values) {
+   void MUMPSSolver::do_numerical_factorization(const double* matrix_values, bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
       this->workspace.job = MUMPSSolver::JOB_FACTORIZATION;

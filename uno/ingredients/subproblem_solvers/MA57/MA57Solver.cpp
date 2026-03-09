@@ -139,7 +139,7 @@ namespace uno {
       this->analysis_performed = true;
    }
 
-   void MA57Solver::do_numerical_factorization(const double* matrix_values) {
+   void MA57Solver::do_numerical_factorization(const double* matrix_values, bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
       bool factorization_done = false;

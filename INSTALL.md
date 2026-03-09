@@ -18,6 +18,7 @@ sudo apt install cmake cmake-curses-gui
     * MA57 (sparse indefinite symmetric linear solver): http://www.hsl.rl.ac.uk/catalogue/ma57.html
     * LIBHSL (collection of libraries for sparse linear systems): https://licences.stfc.ac.uk/products/Software/HSL/LibHSL
     * MUMPS (sparse indefinite symmetric linear solver): https://mumps-solver.org/index.php?page=dwnld
+    * SSIDS (sparse indefinite symmetric linear solver): https://github.com/ralna/spral
     * HiGHS (linear programming and convex quadratic programming solver): https://highs.dev
 
 * to compile MUMPS in sequential mode, remove the flag `-fopenmp` at the end of your `Makefile.inc` and set the following variables:
@@ -25,6 +26,14 @@ sudo apt install cmake cmake-curses-gui
 INCS = $(INCSEQ)
 LIBS = $(LIBSEQ)
 LIBSEQNEEDED = libseqneeded
+```
+
+* compile SSIDS without OpenMP with the Meson flag `-Dopenmp=false`
+
+* you may experience a short lag at startup (about 1/4s) when running Uno with SSIDS. This is due to `hwloc` (hardware locality), a tool that aims at discovering hardware resources in parallel architectures. To precompute the required topology, run the following commands before running Uno:
+```
+lstopo --of xml ~/.config/hwloc-topology.xml
+echo 'export HWLOC_XMLFILE=$HOME/.config/hwloc-topology.xml' >> ~/.bashrc
 ```
 
 ### Compilation
@@ -41,18 +50,19 @@ You can pass the following options:
 - build type: `-DCMAKE_BUILD_TYPE=[Release|Debug]`
 - build the Uno static library `uno_static`: `-DBUILD_STATIC_LIBS=[ON|OFF]`
 - build the Uno shared library `uno_shared`: `-DBUILD_SHARED_LIBS=[ON|OFF]`
-- path to the BQPD library: `-DBQPD=path_to_bqpd_lib`
-- path to the MA27 library: `-DMA57=path_to_MA27_lib`
-- path to the MA57 library: `-DMA57=path_to_MA57_lib`
-- path to ASL library: `-DAMPLSOLVER=path_to_amplsolver_lib`
-- path to HiGHS library: `-DHIGHS=path_to_highs_lib`
-- path to HSL library: `-DHSL=path_to_hsl_lib`
-- path to METIS library (`fakemetis` is built with MA57): `-DMETIS=path_to_metis_lib`
-- path to MUMPS library: `-DMUMPS_LIBRARY=path_to_mumps_lib`
-- path to MUMPS common library: `-DMUMPS_COMMON_LIBRARY=path_to_mumps_common_lib`
-- path to MUMPS PORD library: `-DMUMPS_PORD_LIBRARY=path_to_mumps_pord_lib`
+- path to the BQPD library: `-DBQPD=path_to_libbqpd`
+- path to the MA27 library: `-DMA57=path_to_libma27`
+- path to the MA57 library: `-DMA57=path_to_libma57`
+- path to ASL library: `-DAMPLSOLVER=path_to_libamplsolver`
+- path to HiGHS library: `-DHIGHS=path_to_libhighs`
+- path to HSL library: `-DHSL=path_to_libhsl`
+- path to METIS library (`fakemetis` is built with MA57): `-DMETIS=path_to_libmetis`
+- path to MUMPS library: `-DMUMPS_LIBRARY=path_to_libdmumps`
+- path to MUMPS common library: `-DMUMPS_COMMON_LIBRARY=path_to_libmumps_common`
+- path to MUMPS PORD library: `-DMUMPS_PORD_LIBRARY=path_to_mumps_libpord`
 - path to MUMPS MPISEQ library: `-DMUMPS_MPISEQ_LIBRARY=path_to_mumps_mpiseq_lib`
 - path to MUMPS include directory: `-DMUMPS_INCLUDE_DIR=path_to_mumps_include_dir`
+- path to SPRAL library: `-DSPRAL=path_to_libspral`
 
 3. **(or)** Use ccmake to provide the paths to the required and optional libraries:
 ```console

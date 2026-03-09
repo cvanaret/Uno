@@ -64,14 +64,16 @@ namespace uno {
          DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, Evaluations& evaluations,
          const WarmstartInformation& warmstart_information) {
       if (warmstart_information.new_iterate) {
+         // assemble the augmented matrix
+         subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data(), evaluations);
+
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
             DEBUG << "Performing symbolic analysis of the indefinite system\n";
             linear_solver.do_symbolic_analysis();
             this->analysis_performed = true;
          }
-         // assemble the augmented matrix
-         subproblem.assemble_augmented_matrix(statistics, this->matrix_values.data(), evaluations);
+
          // regularize the augmented matrix (this calls the analysis and the factorization)
          subproblem.regularize_augmented_matrix(statistics, this->matrix_values.data(),
             subproblem.dual_regularization_factor(), linear_solver);

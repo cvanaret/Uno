@@ -49,6 +49,7 @@ cmake \
     -DMUMPS_COMMON_LIBRARY="${libdir}/libmumps_common.${dlext}" \
     -DMUMPS_PORD_LIBRARY="${libdir}/libpord.${dlext}" \
     -DMUMPS_MPISEQ_LIBRARY="${libdir}/libmpiseq.${dlext}" \
+    -DSPRAL="${libdir}/libspral.${dlext}" \
     -DBLAS_LIBRARIES="${libdir}/lib${LBT}.${dlext}" \
     -DLAPACK_LIBRARIES="${libdir}/lib${LBT}.${dlext}" \
     -DBUILD_STATIC_LIBS=ON \
@@ -87,6 +88,7 @@ dependencies = [
     Dependency(PackageSpec(name="METIS_jll", uuid="d00139f3-1899-568f-a2f0-47f597d42d70")),
     Dependency(PackageSpec(name="ASL_jll", uuid="ae81ac8f-d209-56e5-92de-9978fef736f9"), compat="0.1.3"),
     Dependency(PackageSpec(name="MUMPS_seq_jll", uuid="d7ed1dd3-d0ae-5e8e-bfb4-87a502085b8d")),
+    Dependency(PackageSpec(name="SPRAL_jll", uuid="319450e9-13b8-58e8-aa9f-8fd1420848ab")),
     Dependency(PackageSpec(name="libblastrampoline_jll", uuid="8e850b90-86db-534c-a0d3-1478176c7d93"), compat="5.4.0"),
     # For OpenMP we use libomp from `LLVMOpenMP_jll` where we use LLVM as compiler (BSD systems),
     # and libgomp from `CompilerSupportLibraries_jll` everywhere else.

@@ -43,7 +43,7 @@ namespace uno {
       void initialize_augmented_system(const Subproblem& subproblem) override;
 
       void do_symbolic_analysis() override;
-      void do_numerical_factorization(const double* matrix_values) override;
+      void do_numerical_factorization(const double* matrix_values, bool is_matrix_positive_definite) override;
       void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) override;
       void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;

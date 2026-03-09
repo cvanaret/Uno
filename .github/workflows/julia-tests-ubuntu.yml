@@ -29,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        UNO_PRESET: [uno_filtersqp_bqpd, uno_filtersqp_highs, uno_filtersqp_bqpd_identity, uno_filtersqp_bqpd_regularization_tr, uno_filtersqp_bqpd_regularization_ls, uno_filtersqp_bqpd_ls_lbfgs, uno_ipopt_mumps, uno_ipopt_mumps_identity, uno_filterslp_bqpd, uno_filterslp_highs, uno_filtersqp_bqpd_charlies_instances]
+        UNO_PRESET: [uno_filtersqp_bqpd, uno_filtersqp_highs, uno_filtersqp_bqpd_identity, uno_filtersqp_bqpd_regularization_tr, uno_filtersqp_bqpd_regularization_ls, uno_filtersqp_bqpd_ls_lbfgs, uno_ipopt_mumps, uno_ipopt_mumps_identity, uno_ipopt_ssids, uno_filterslp_bqpd, uno_filterslp_highs, uno_filtersqp_bqpd_charlies_instances]
     name: Julia tests of ${{matrix.UNO_PRESET}} - ${{ github.event_name }}
     
     steps:
@@ -42,8 +42,12 @@ jobs:
           arch: x64
       - uses: julia-actions/cache@v2
 
-      # Set environment variables required by BinaryBuilder.
-      - name: Set the environment variables
+      - name: Set the environment variables for OpenMP
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> $GITHUB_ENV
+          echo "OMP_PROC_BIND=TRUE" >> $GITHUB_ENV
+
+      - name: Set the environment variables for BinaryBuilder
         run: |
           git fetch --tags
           echo "UNO_RELEASE=$(git describe --tags $(git rev-list --tags --max-count=1) | sed 's/^v//')" >> $GITHUB_ENV
