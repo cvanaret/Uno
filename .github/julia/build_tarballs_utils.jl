@@ -173,7 +173,11 @@ cp lib/*.a ${prefix}/lib
 
 ## ----- Compile Hwloc -----
 cd $WORKSPACE/srcdir/hwloc-*
-./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --enable-static --disable-shared
+if [[ "${target}" == *-apple-darwin* ]]; then
+    ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --disable-static --enable-shared
+else
+    ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --enable-static --disable-shared
+fi
 make -j${nproc}
 make install
 
@@ -210,7 +214,7 @@ cmake .. \
     -DBLAS_LIBRARIES=${prefix}/lib/libblas.a \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
-if [[ "${target}" == *-linux-* ]]; then
+if [[ "${target}" == *-linux* ]]; then
         make -j ${nproc}
 else
     if [[ "${target}" == *-mingw* ]]; then
