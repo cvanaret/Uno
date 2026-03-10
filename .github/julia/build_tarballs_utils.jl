@@ -273,7 +273,7 @@ products = [
     FileProduct("lib/libdmumps.a", :libdmumps_a),
     FileProduct("lib/libhighs.a", :libhighs_a),
     FileProduct("lib/libspral.a", :libspral_a),
-    FileProduct("lib/libhwloc.a", :libhwloc_a),
+    # FileProduct("lib/libhwloc.a", :libhwloc_a),
 ]
 
 # Dependencies that must be installed before this package can be built
