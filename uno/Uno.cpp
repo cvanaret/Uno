@@ -70,26 +70,25 @@ namespace uno {
    // protected solve function
    Result Uno::uno_solve(const Model& model, Options& options, UserCallbacks& user_callbacks) {
       const Timer timer{};
-      model.reset_number_evaluations();
-      // pick the ingredients based on the user-defined options
-      Uno::pick_ingredients(model, options);
-      Statistics statistics = Uno::create_statistics(model);
-      WarmstartInformation warmstart_information{};
-      warmstart_information.whole_problem_changed();
+      size_t major_iterations = 0;
 
       // initialize initial primal and dual points
       Iterate current_iterate(model.number_variables, model.number_constraints);
       model.initial_primal_point(current_iterate.primals);
       model.initial_dual_point(current_iterate.multipliers.constraints);
-
-      // evaluation cache
+      model.reset_number_evaluations();
+      OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
       EvaluationCache evaluation_cache{model};
 
-      size_t major_iterations = 0;
-      OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
+      Statistics statistics = Uno::create_statistics(model);
+      WarmstartInformation warmstart_information{};
+      warmstart_information.whole_problem_changed();
       const size_t max_iterations = options.get_unsigned_int("max_iterations"); // maximum number of iterations
       const double time_limit = options.get_double("time_limit"); // CPU time limit (can be inf)
-      try {
+
+      try { // catch errors at startup/initial iterate
+         // pick the ingredients based on the user-defined options
+         Uno::pick_ingredients(model, options);
          // use the initial primal-dual point to initialize the strategies and generate the initial iterate
          this->initialize(statistics, model, current_iterate, options, evaluation_cache);
          // allocate the trial iterate once and for all here
@@ -227,7 +226,8 @@ namespace uno {
 
    Result Uno::create_result(const Model& model, OptimizationStatus optimization_status, const Iterate& solution,
          const Evaluations& evaluations, size_t major_iterations, const Timer& timer) const {
-      const size_t number_subproblems_solved = this->globalization_mechanism->get_number_subproblems_solved();
+      const size_t number_subproblems_solved = (this->globalization_mechanism != nullptr) ?
+         this->globalization_mechanism->get_number_subproblems_solved() : 0;
       return {model.number_variables, model.number_constraints, optimization_status, solution.status,
          evaluations.objective, solution.progress.infeasibility, solution.residuals.stationarity,
          solution.residuals.complementarity, solution.primals, solution.multipliers.constraints,
@@ -254,7 +254,8 @@ namespace uno {
    }
 
    std::string Uno::get_strategy_combination() const {
-      return this->globalization_mechanism->get_name();
+      return (this->globalization_mechanism != nullptr) ? this->globalization_mechanism->get_name() :
+         "strategy combination not initialized";
    }
 
    void Uno::print_optimization_summary(const Result& result, bool print_solution) const {
