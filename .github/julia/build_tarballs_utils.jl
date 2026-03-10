@@ -1,8 +1,11 @@
 # julia +1.7 --color=yes build_tarballs_utils.jl x86_64-linux-gnu-libgfortran5-cxx11,x86_64-apple-darwin-libgfortran5-cxx11,x86_64-w64-mingw32-libgfortran5-cxx11,aarch64-linux-gnu-libgfortran5-cxx11,aarch64-apple-darwin-libgfortran5-cxx11 --verbose --deploy="amontoison/UnoUtils_jll.jl"
+#
+# Note: the following variables is needed for cross-compilation on Mac platforms in the .bashrc
+# export BINARYBUILDER_AUTOMATIC_APPLE="true"
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.2.17"
+version = v"2026.3.10"
 
 # Collection of sources
 sources = [
@@ -35,6 +38,12 @@ sources = [
     # GitSource("https://github.com/ERGO-Code/HiGHS.git",
     #           "1d267d97c16928bb5f86fcb2cba2d20f94c8720c"),
     #
+    # SPRAL v2025.9.18
+    GitSource("https://github.com/ralna/spral.git",
+              "e68988612dbd920323cee44c9cb8c6134847a990"),
+    # Hwloc v2.13.0
+    ArchiveSource("https://download.open-mpi.org/release/hwloc/v2.13/hwloc-2.13.0.tar.bz2",
+                  "52e936afb6ebd80f171f763fcf14f7b1f5ce98b125af5dd2f328b873b1fd0dab")
     # Package compiler for Windows
     ArchiveSource("https://github.com/JuliaLang/PackageCompiler.jl/releases/download/v1.0.0/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.tar.gz",
                   "fe3f401bc936fbe6af940b26c5e0f266f762a3416f979c706e599b24082dc5c7"),
@@ -44,6 +53,9 @@ sources = [
 script = raw"""
 # Remove system CMake to use the jll version
 apk del cmake
+
+# Update Ninja
+cp ${host_prefix}/bin/ninja /usr/bin/ninja
 
 ## ----- Compile METIS -----
 cd $WORKSPACE/srcdir/METIS
@@ -159,6 +171,33 @@ make -j${nproc} d "${make_args[@]}"
 cp include/*.h ${includedir}
 cp lib/*.a ${prefix}/lib
 
+## ----- Compile Hwloc -----
+cd $WORKSPACE/srcdir/hwloc-*
+./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --enable-static --disable-shared
+make -j${nproc}
+make install
+
+## ----- Compile SPRAL -----
+cd $WORKSPACE/srcdir/spral
+
+if [[ "${target}" == *mingw* ]]; then
+  HWLOC="hwloc-15"
+else
+  HWLOC="hwloc"
+fi
+
+meson setup builddir --cross-file="${MESON_TARGET_TOOLCHAIN}" \
+                     --prefix=$prefix \
+                     -Ddefault_library=static \
+                     -Dlibhwloc=$HWLOC \
+                     -Dlibblas=blas \
+                     -Dliblapack=lapack \
+                     -Dtests=false \
+                     -Dexamples=false
+
+meson compile -C builddir
+meson install -C builddir
+
 ## ----- Compile HiGHS -----
 cd $WORKSPACE/srcdir/HiGHS
 mkdir build
@@ -215,25 +254,6 @@ if [ $target = "x86_64-w64-mingw32" ] || [ $target = "i686-w64-mingw32" ]; then
         -DSHARED=1
     make -j${nproc}
     make install
-
-    # HiGHS
-    cd $WORKSPACE/srcdir/HiGHS
-    mkdir build_shared
-    cd build_shared
-    cmake .. \
-        -DCMAKE_INSTALL_PREFIX=${prefix} \
-        -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TARGET_TOOLCHAIN} \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_SHARED_LIBS=ON \
-        -DZLIB=OFF \
-        -DHIPO=ON \
-        -DBUILD_EXAMPLES=OFF \
-        -DBUILD_TESTING=OFF \
-        -DBUILD_CXX_EXE=OFF \
-        -DMETIS_ROOT=${prefix} \
-        -DBLAS_LIBRARIES="${prefix}/lib/libcblas.a;${prefix}/lib/libblas.a;${prefix}/lib/libgfortran.a;${prefix}/lib/libquadmath.a"
-    cmake --build . --config Release
-    make install
 fi
 """
 
@@ -254,10 +274,13 @@ products = [
     FileProduct("lib/libmumps_common.a", :libmumps_common_a),
     FileProduct("lib/libdmumps.a", :libdmumps_a),
     FileProduct("lib/libhighs.a", :libhighs_a),
+    FileProduct("lib/libspral.a", :libspral_a),
+    FileProduct("lib/libhwloc.a", :libhwloc_a),
 ]
 
 # Dependencies that must be installed before this package can be built
 dependencies = [
+    HostBuildDependency(PackageSpec(name="Ninja_jll", uuid="76642167-d241-5cee-8c94-7a494e8cb7b7")),
     HostBuildDependency(PackageSpec(name="CMake_jll", uuid="3f4e10e2-61f2-5801-8945-23b9d642d0e6")),
 ]
 
