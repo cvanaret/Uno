@@ -33,11 +33,12 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - x86_64-apple-darwin-cxx11
-          - aarch64-linux-gnu-cxx11
-          - aarch64-apple-darwin-cxx11
-          - x86_64-w64-mingw32-cxx11
-          - i686-w64-mingw32-cxx11
+          - x86_64-linux-gnu-libgfortran5-cxx11
+          - x86_64-apple-darwin-libgfortran5-cxx11
+          - aarch64-linux-gnu-libgfortran5-cxx11
+          - aarch64-apple-darwin-libgfortran5-cxx11
+          - x86_64-w64-mingw32-libgfortran5-cxx11
+          - i686-w64-mingw32-libgfortran5-cxx11
 
     steps:
       - uses: actions/checkout@v4
@@ -65,5 +66,6 @@ jobs:
       - name: Compile Uno_jll.jl for ${{ matrix.platform }}
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
+          # julia --color=yes .github/julia/build_tarballs_utils.jl ${{ matrix.platform }} --verbose --deploy=local
           julia --color=yes .github/julia/build_tarballs_yggdrasil.jl ${{ matrix.platform }} --verbose --deploy=local
           julia --color=yes .github/julia/build_tarballs_release.jl ${{ matrix.platform }} --verbose --deploy=local
