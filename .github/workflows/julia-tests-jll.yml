@@ -36,7 +36,7 @@ jobs:
           echo "OMP_CANCELLATION=TRUE" >> $GITHUB_ENV
           echo "OMP_PROC_BIND=TRUE" >> $GITHUB_ENV
 
-      - name: Install compilers
+      - name: Install compilers (macOS)
         if: matrix.os == 'macos-latest'
         uses: fortran-lang/setup-fortran@main
         with:
