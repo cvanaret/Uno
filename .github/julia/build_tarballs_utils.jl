@@ -180,16 +180,10 @@ make install
 ## ----- Compile SPRAL -----
 cd $WORKSPACE/srcdir/spral
 
-if [[ "${target}" == *mingw* ]]; then
-  HWLOC="hwloc-15"
-else
-  HWLOC="hwloc"
-fi
-
 meson setup builddir --cross-file="${MESON_TARGET_TOOLCHAIN}" \
                      --prefix=$prefix \
                      -Ddefault_library=static \
-                     -Dlibhwloc=$HWLOC \
+                     -Dlibhwloc=hwloc \
                      -Dlibblas=blas \
                      -Dliblapack=lapack \
                      -Dtests=false \
@@ -282,6 +276,7 @@ products = [
 dependencies = [
     HostBuildDependency(PackageSpec(name="Ninja_jll", uuid="76642167-d241-5cee-8c94-7a494e8cb7b7")),
     HostBuildDependency(PackageSpec(name="CMake_jll", uuid="3f4e10e2-61f2-5801-8945-23b9d642d0e6")),
+    Dependency(PackageSpec(name="LLVMOpenMP_jll", uuid="1d63c593-3942-5779-bab2-d838dc0a180e"); platforms=filter(Sys.isbsd, platforms)),
 ]
 
 build_tarballs(
