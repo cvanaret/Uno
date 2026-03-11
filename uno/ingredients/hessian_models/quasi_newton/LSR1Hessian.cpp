@@ -7,7 +7,6 @@
 namespace uno {
    LSR1Hessian::LSR1Hessian(const Model& model, double objective_multiplier, const Options& options):
             QuasiNewtonHessian("L-SR1", model, objective_multiplier, options) {
-
    }
 
    bool LSR1Hessian::is_positive_definite() const {
@@ -21,7 +20,7 @@ namespace uno {
 
    void LSR1Hessian::notify_accepted_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) {
-
+      statistics.set("|SR1|", this->number_entries_in_memory);
    }
 
    void LSR1Hessian::compute_hessian_vector_product(const double* x, const double* vector,
