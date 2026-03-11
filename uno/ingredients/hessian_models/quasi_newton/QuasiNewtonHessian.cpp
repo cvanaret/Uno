@@ -46,7 +46,7 @@ namespace uno {
 
    void QuasiNewtonHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
-      throw std::runtime_error("LBFGSHessian::evaluate_hessian should not be called");
+      throw std::runtime_error("QuasiNewtonHessian::evaluate_hessian should not be called");
    }
 
    // protected member functions
