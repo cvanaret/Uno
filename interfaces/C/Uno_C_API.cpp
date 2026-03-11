@@ -574,7 +574,7 @@ bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperato
 bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
       const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, Hessian lagrangian_hessian,
       double lagrangian_sign_convention) {
-   if (number_hessian_nonzeros <= 0) {
+   if (number_hessian_nonzeros < 0) {
       WARNING << "Please specify a positive number of Lagrangian Hessian nonzeros."  << std::endl;
       return false;
    }
