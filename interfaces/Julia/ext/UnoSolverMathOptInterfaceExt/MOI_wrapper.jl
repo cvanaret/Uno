@@ -1279,6 +1279,7 @@ function _setup_model(model::Optimizer)
     model.jcols = jcols
 
     hessian_sparsity = has_hessian ? MOI.hessian_lagrangian_structure(model) : Tuple{Int,Int}[]
+    println("MOI_wrapper: has_hessian = ", has_hessian)
     nnzh = length(hessian_sparsity)
     hrows = Vector{Cint}(undef, nnzh)
     hcols = Vector{Cint}(undef, nnzh)
