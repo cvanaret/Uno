@@ -43,6 +43,7 @@ namespace uno {
       DISCRETE << "Original model " << model.name << '\n' << model.number_variables << " variables, " <<
          model.number_constraints << " constraints (" << model.get_equality_constraints().size() <<
          " equality, " << model.get_inequality_constraints().size() << " inequality)\n";
+      INFO << "Problem type: " << to_string(model.get_problem_type()) << '\n';
 
       // reformulate the model if it is to be solved with an interior-point method with log barrier function
       if (options.get_string("inequality_handling_method") == "interior_point" && options.get_string("barrier_function") == "log") {
