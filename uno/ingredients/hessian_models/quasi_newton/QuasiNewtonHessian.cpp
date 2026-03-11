@@ -6,6 +6,7 @@
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Subtraction.hpp"
 
 namespace uno {
    QuasiNewtonHessian::QuasiNewtonHessian(const std::string_view name, const Model& model, double objective_multiplier,

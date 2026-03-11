@@ -6,7 +6,6 @@
 
 #include <vector>
 #include "QuasiNewtonHessian.hpp"
-#include "linear_algebra/DenseMatrix.hpp"
 
 namespace uno {
    // express the Hessian approximation at iteration k by a low-rank update:
