@@ -164,18 +164,16 @@ function uno_model(
   flag = uno_set_objective(c_model, optimization_sense, eval_objective_c, eval_gradient_c)
   flag || error("Failed to set objective and gradient via uno_set_objective.")
 
-  if nnzh > 0
-    if !isnothing(eval_hessian)
-      eval_hessian_c = @cfunction(uno_lagrangian_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-      flag = uno_set_lagrangian_hessian(c_model, Cint(nnzh), hessian_triangle, hrows, hcols, eval_hessian_c, lagrangian_sign)
-      flag || error("Failed to set Lagrangian Hessian via uno_set_lagrangian_hessian.")
-    end
+  if !isnothing(eval_hessian)
+    eval_hessian_c = @cfunction(uno_lagrangian_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+    flag = uno_set_lagrangian_hessian(c_model, Cint(nnzh), hessian_triangle, hrows, hcols, eval_hessian_c, lagrangian_sign)
+    flag || error("Failed to set Lagrangian Hessian via uno_set_lagrangian_hessian.")
+  end
 
-    if !isnothing(eval_Hv)
-      eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-      flag = uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c, lagrangian_sign)
-      flag || error("Failed to set Hessian operator via uno_set_lagrangian_hessian_operator.")
-    end
+  if !isnothing(eval_Hv)
+    eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
+    flag = uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c, lagrangian_sign)
+    flag || error("Failed to set Hessian operator via uno_set_lagrangian_hessian_operator.")
   end
 
   if ncon > 0
