@@ -34,18 +34,18 @@ namespace uno {
          // if no Hessian (matrix or operator) is available, pick a limited-memory quasi-Newton Hessian
          // (L-BFGS for line search, L-SR1 for trust-region method)
          else {
-            if (options.get_string("globalization_mechanism") == "LS") {
+            //if (options.get_string("globalization_mechanism") == "LS") {
                WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-BFGS Hessian instead\n";
                // override user defined option
                options.set_string("hessian_model", "LBFGS", true);
                return std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
-            }
-            else {
-               WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-SR1 Hessian instead\n";
-               // override user defined option
-               options.set_string("hessian_model", "LSR1", true);
-               return std::make_unique<LSR1Hessian>(model, objective_multiplier, options);
-            }
+            //}
+            //else {
+            //   WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-SR1 Hessian instead\n";
+            //   // override user defined option
+            //   options.set_string("hessian_model", "LSR1", true);
+            //   return std::make_unique<LSR1Hessian>(model, objective_multiplier, options);
+            //}
          }
       }
       else if (hessian_model == "LBFGS") {
