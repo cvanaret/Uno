@@ -21,46 +21,15 @@
 
 namespace uno {
    LBFGSHessian::LBFGSHessian(const Model& model, double objective_multiplier, const Options& options):
-         HessianModel("L-BFGS"),
-         model(model),
-         fixed_objective_multiplier(objective_multiplier),
-         memory_size(options.get_unsigned_int("quasi_newton_memory_size")),
+         QuasiNewtonHessian("L-BFGS", model, objective_multiplier, options),
          // matrices
-         S(this->model.number_variables, this->memory_size),
-         Y(this->model.number_variables, this->memory_size),
          L(this->memory_size, this->memory_size),
          D(this->memory_size),
          invsqrt_D(this->memory_size),
          L_invsqrt_D(this->memory_size, this->memory_size),
          M(this->memory_size, this->memory_size),
          U(this->model.number_variables, this->memory_size),
-         V(this->model.number_variables, this->memory_size),
-         current_lagrangian_gradient(this->model.number_variables),
-         trial_lagrangian_gradient(this->model.number_variables) {
-      if (this->memory_size <= 0) {
-         throw std::runtime_error("The quasi-Newton memory size should be positive");
-      }
-   }
-
-   bool LBFGSHessian::has_hessian_operator() const {
-      return true;
-   }
-
-   bool LBFGSHessian::has_hessian_matrix() const {
-      // never form the explicit, dense matrix
-      return false;
-   }
-
-   bool LBFGSHessian::has_curvature() const {
-      return true;
-   }
-
-   size_t LBFGSHessian::number_nonzeros() const {
-      throw std::runtime_error("LBFGSHessian::number_nonzeros should not be called");
-   }
-
-   void LBFGSHessian::compute_sparsity(int* /*row_indices*/, int* /*column_indices*/, int /*solver_indexing*/) const {
-      throw std::runtime_error("LBFGSHessian::compute_sparsity should not be called");
+         V(this->model.number_variables, this->memory_size) {
    }
 
    bool LBFGSHessian::is_positive_definite() const {
@@ -97,11 +66,6 @@ namespace uno {
          DEBUG << "Skipping the update\n";
       }
       statistics.set("|BFGS|", this->number_entries_in_memory);
-   }
-
-   void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
-      throw std::runtime_error("LBFGSHessian::evaluate_hessian should not be called");
    }
 
    // Hessian-vector product where the Hessian approximation is Bk = B0 - U U^T + V V^T and B0 = delta I
@@ -144,22 +108,6 @@ namespace uno {
    }
 
    // protected member functions
-
-   void LBFGSHessian::update_S(const Iterate& current_iterate, const Iterate& trial_iterate) {
-      // TODO check that the S entry isn't too small
-      this->S.column(this->current_index) = view(trial_iterate.primals, 0, this->model.number_variables) -
-         view(current_iterate.primals, 0, this->model.number_variables);
-   }
-   
-   // fill the Y matrix: y = \nabla L(x_k, y_k, z_k) - \nabla L(x_{k-1}, y_k, z_k)
-   void LBFGSHessian::update_Y(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache) {
-      // evaluate Lagrangian gradients at the current and trial iterates, both with the trial multipliers trial_iterate.multipliers
-      this->model.evaluate_lagrangian_gradient(current_iterate.primals, trial_iterate.multipliers, this->fixed_objective_multiplier,
-         evaluation_cache.current_evaluations, this->current_lagrangian_gradient);
-      this->model.evaluate_lagrangian_gradient(trial_iterate.primals, trial_iterate.multipliers, this->fixed_objective_multiplier,
-         evaluation_cache.trial_evaluations, this->trial_lagrangian_gradient);
-      this->Y.column(this->current_index) = this->trial_lagrangian_gradient - this->current_lagrangian_gradient;
-   }
 
    void LBFGSHessian::update_D() {
       this->D[this->current_index] = dot(this->S.column(this->current_index), this->Y.column(this->current_index));
