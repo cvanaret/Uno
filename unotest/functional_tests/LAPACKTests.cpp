@@ -42,7 +42,7 @@ TEST(LAPACK, SymmetricHighRank1Update) {
    int k = 1; // rank of the update
    double alpha = 1.;
    double beta = 1.;
-   LAPACK_symmetric_high_rank_update(&uplo, &trans, &dimension, &k, &alpha, vector.data(), &dimension, &beta,
+   LAPACK_symmetric_rank_k_update(&uplo, &trans, &dimension, &k, &alpha, vector.data(), &dimension, &beta,
       matrix.data(), &dimension);
    // output matrix should be
    //   5., 6., 8.,
@@ -75,7 +75,7 @@ TEST(LAPACK, SymmetricHighRank3Update) {
    int k = dimension; // rank of the update
    double alpha = 1.;
    double beta = 1.;
-   LAPACK_symmetric_high_rank_update(&uplo, &trans, &dimension, &k, &alpha, lower_triangular_matrix.data(), &dimension,
+   LAPACK_symmetric_rank_k_update(&uplo, &trans, &dimension, &k, &alpha, lower_triangular_matrix.data(), &dimension,
       &beta, matrix.data(), &dimension);
    const double tolerance = 1e-6;
    // output matrix should be
