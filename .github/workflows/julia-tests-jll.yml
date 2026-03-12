@@ -31,12 +31,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install compilers
+      - name: Set the environment variables for OpenMP
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> $GITHUB_ENV
+          echo "OMP_PROC_BIND=TRUE" >> $GITHUB_ENV
+
+      - name: Install compilers (macOS)
+        if: matrix.os == 'macos-latest'
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: 'gcc'
           version: '14'
-        if: matrix.os == 'macos-latest'
 
       - uses: julia-actions/setup-julia@v2
         with:
