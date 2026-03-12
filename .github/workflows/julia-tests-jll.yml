@@ -1,11 +1,10 @@
+
 name: UnoSolver.jl
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   test:
@@ -28,13 +27,15 @@ jobs:
             arch: 'arm64'
             version: '1'
             allow_failure: false
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Set the environment variables for OpenMP
+        shell: bash
         run: |
-          echo "OMP_CANCELLATION=TRUE" >> $GITHUB_ENV
-          echo "OMP_PROC_BIND=TRUE" >> $GITHUB_ENV
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
 
       - name: Install compilers (macOS)
         if: matrix.os == 'macos-latest'
@@ -49,7 +50,7 @@ jobs:
           arch: ${{ matrix.arch }}
 
       - name: Test UnoSolver.jl
-        if: >-
+        if: >
           (github.event_name == 'push' && contains(github.event.head_commit.message, '[UnoSolver.jl] Release')) ||
           (github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[UnoSolver.jl] Release'))
         shell: bash
