@@ -203,7 +203,7 @@ extern "C" {
    // if "lagrangian_sign_convention" == UNO_MULTIPLIER_NEGATIVE, the Lagrangian is rho*f(x) - y^T c(x)
    // if not set, Uno defaults to UNO_MULTIPLIER_NEGATIVE.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_lagrangian_convention(void* model, double lagrangian_sign_convention);
+   bool uno_set_lagrangian_sign_convention(void* model, double lagrangian_sign_convention);
 
    // [optional]
    // sets the user data of a given model.

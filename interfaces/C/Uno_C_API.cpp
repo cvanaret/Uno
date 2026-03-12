@@ -618,7 +618,7 @@ bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian
    return true;
 }
 
-bool uno_set_lagrangian_convention(void* model, double lagrangian_sign_convention) {
+bool uno_set_lagrangian_sign_convention(void* model, double lagrangian_sign_convention) {
    if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
       WARNING << "Please specify a Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
          UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;

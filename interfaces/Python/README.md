@@ -32,7 +32,7 @@ model.set_constraints(number_constraints, constraint_functions,
 - the Lagrangian Hessian;
 ```python
 model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, 
-   hessian_row_indices, hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
+   hessian_row_indices, hessian_column_indices, lagrangian_hessian)
 ```
 - a Jacobian operator (performs Jacobian-vector products);
 ```python
@@ -44,7 +44,11 @@ model.set_jacobian_transposed_operator(jacobian_transposed_operator)
 ```
 - a Hessian operator (performs Hessian-vector products);
 ```python
-model.set_lagrangian_hessian_operator(lagrangian_hessian_operator, lagrangian_sign_convention)
+model.set_lagrangian_hessian_operator(lagrangian_hessian_operator)
+```
+- a Lagrangian sign convention (default is `unopy.MULTIPLIER_NEGATIVE`);
+```python
+model.set_lagrangian_sign_convention(lagrangian_sign_convention)
 ```
 - user data of an arbitrary type;
 ```python

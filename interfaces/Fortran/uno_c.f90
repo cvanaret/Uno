@@ -183,16 +183,16 @@ interface
 end interface
 
 !---------------------------------------------
-! uno_set_lagrangian_convention
+! uno_set_lagrangian_sign_convention
 !---------------------------------------------
 interface
-   function uno_set_lagrangian_convention(model, lagrangian_sign_convention) result(success) &
-      bind(C, name="uno_set_lagrangian_convention")
+   function uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention) result(success) &
+      bind(C, name="uno_set_lagrangian_sign_convention")
       import :: c_ptr, c_double, c_bool
       type(c_ptr), value :: model
       real(c_double), value :: lagrangian_sign_convention
       logical(c_bool) :: success
-   end function uno_set_lagrangian_convention
+   end function uno_set_lagrangian_sign_convention
 end interface
 
 !---------------------------------------------

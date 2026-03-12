@@ -131,7 +131,7 @@ int main() {
       // run 2: solve with exact Hessian
       assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
             hessian_column_indices, lagrangian_hessian));
-      assert(uno_set_lagrangian_convention(model, lagrangian_sign_convention));
+      assert(uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention));
       uno_optimize(solver, model);
       // get the solution
       optimization_status = uno_get_optimization_status(solver);

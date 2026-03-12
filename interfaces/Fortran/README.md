@@ -119,11 +119,11 @@ logical(c_bool) :: success
 success = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator)
 ```
 
-* the Lagrangian sign convention:
+* the Lagrangian sign convention (default is `UNO_MULTIPLIER_NEGATIVE`):
 
 ```fortran
 logical(c_bool) :: success
-success = uno_set_lagrangian_convention(model, lagrangian_sign_convention)
+success = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
 ```
 
 * user-defined data:

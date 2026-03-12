@@ -176,8 +176,8 @@ function uno_model(
     flag || error("Failed to set Hessian operator via uno_set_lagrangian_hessian_operator.")
   end
 
-  flag = uno_set_lagrangian_convention(c_model, lagrangian_sign)
-  flag || error("Failed to set Lagrangian sign via uno_set_lagrangian_convention.")
+  flag = uno_set_lagrangian_sign_convention(c_model, lagrangian_sign)
+  flag || error("Failed to set Lagrangian sign convention via uno_set_lagrangian_sign_convention.")
 
   if ncon > 0
     @assert !isnothing(eval_constraints) && !isnothing(eval_jacobian)

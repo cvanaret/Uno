@@ -47,9 +47,9 @@ uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator);
 ```c
 uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator);
 ```
-- a Lagrangian sign convention;
+- a Lagrangian sign convention (default is `UNO_MULTIPLIER_NEGATIVE`);
 ```c
-uno_set_lagrangian_convention(model, lagrangian_sign_convention);
+uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention);
 ```
 - user data of an arbitrary type (`void*`);
 ```c
