@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "LSR1Hessian.hpp"
+#include "linear_algebra/LAPACK_extension.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {

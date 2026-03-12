@@ -120,7 +120,7 @@ namespace uno {
       const int ldc = static_cast<int>(this->leading_dimension); // leading dimension of matrix
       assert(lda >= std::max(1, n));
       assert(ldc >= std::max(1, n));
-      LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, A.data(), &lda, &beta, this->data(), &ldc);
+      LAPACK_symmetric_rank_k_update(&uplo, &trans, &n, &k, &alpha, A.data(), &lda, &beta, this->data(), &ldc);
       return *this;
    }
 
@@ -148,7 +148,7 @@ namespace uno {
       const int ldc = static_cast<int>(this->leading_dimension); // leading dimension of matrix
       assert(lda >= std::max(1, k));
       assert(ldc >= std::max(1, n));
-      LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, A.data(), &lda, &beta, this->data(), &ldc);
+      LAPACK_symmetric_rank_k_update(&uplo, &trans, &n, &k, &alpha, A.data(), &lda, &beta, this->data(), &ldc);
       return *this;
    }
 

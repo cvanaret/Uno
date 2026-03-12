@@ -6,7 +6,8 @@
 
 #include "fortran_interface.h"
 #define LAPACK_cholesky_factorization FC_GLOBAL_(dpotrf, DPOTRF)
-#define LAPACK_symmetric_high_rank_update FC_GLOBAL_(dsyrk, DSYRK)
+#define LAPACK_symmetric_rank_1_update FC_GLOBAL_(dsyr, DSYR)
+#define LAPACK_symmetric_rank_k_update FC_GLOBAL_(dsyrk, DSYRK)
 
 extern "C" {
    // perform Cholesky factorization of A
@@ -14,10 +15,15 @@ extern "C" {
    // A = L L^T
    void LAPACK_cholesky_factorization(const char* uplo, const int* n, double* a, const int* lda, int* info);
 
-   // performs symmetric rank k update:
-   // C = alpha A A^T + beta C    or
-   // C = alpha A^T A + beta C
-   void LAPACK_symmetric_high_rank_update(const char* uplo, const char* trans, const int* n, const int* k, const double* alpha,
+   // performs symmetric rank-1 update:
+   // A := alpha x x^T + A
+   void LAPACK_symmetric_rank_1_update(const char* uplo, const int* n, const double* alpha, const double* x, const int* incx,
+      double* a, const int* lda);
+
+   // performs symmetric rank-k update:
+   // C := alpha A A^T + beta C    or
+   // C := alpha A^T A + beta C
+   void LAPACK_symmetric_rank_k_update(const char* uplo, const char* trans, const int* n, const int* k, const double* alpha,
       const double* a, const int* lda, const double* beta, double* c, const int* ldc);
 }
 
