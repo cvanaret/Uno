@@ -1288,13 +1288,17 @@ function _setup_model(model::Optimizer)
     model.hrows = hrows
     model.hcols = hcols
 
-    if has_quadratic_constraints || has_nlp_constraints || has_nlp_objective
-        model.problem_type = "NLP"
-    elseif model.qp_data.objective_function_type == _kFunctionTypeScalarQuadratic
-        model.problem_type = "QP"
-    else
-        @assert (model.qp_data.objective_function_type == _kFunctionTypeVariableIndex) || (model.qp_data.objective_function_type == _kFunctionTypeScalarAffine)
+    if has_hessian && (nnzh == 0)
         model.problem_type = "LP"
+    else
+        if has_quadratic_constraints || has_nlp_constraints || has_nlp_objective
+            model.problem_type = "NLP"
+        elseif model.qp_data.objective_function_type == _kFunctionTypeScalarQuadratic
+            model.problem_type = "QP"
+        else
+            @assert (model.qp_data.objective_function_type == _kFunctionTypeVariableIndex) || (model.qp_data.objective_function_type == _kFunctionTypeScalarAffine)
+            model.problem_type = "LP"
+        end
     end
     model.needs_new_inner = true
     return
@@ -1675,8 +1679,7 @@ function _quasi_newton_approximation(model::Optimizer)::Bool
 end
 
 function _dual_multiplier(model::Optimizer)
-    multiplier = xor(model.problem_type == "LP", model.sense == MOI.MAX_SENSE) ? 1.0 : -1.0
-    multiplier = _quasi_newton_approximation(model) ? -multiplier : multiplier
+    multiplier = xor(_quasi_newton_approximation(model), model.sense == MOI.MAX_SENSE) ? 1.0 : -1.0
     return multiplier
 end
 

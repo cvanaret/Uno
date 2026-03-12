@@ -574,7 +574,7 @@ bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperato
 bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
       const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, Hessian lagrangian_hessian,
       double lagrangian_sign_convention) {
-   if (number_hessian_nonzeros <= 0) {
+   if (number_hessian_nonzeros < 0) {
       WARNING << "Please specify a positive number of Lagrangian Hessian nonzeros."  << std::endl;
       return false;
    }
@@ -599,18 +599,24 @@ bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, ch
       return false;
    }
    user_model->number_hessian_nonzeros = number_hessian_nonzeros;
-   // copy the Hessian sparsity to allow the calling code to dispose of its vectors
-   // from now on, we only maintain the lower triangle
-   user_model->hessian_row_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
-   user_model->hessian_column_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
-   const bool lower_triangle = (hessian_triangular_part == UNO_LOWER_TRIANGLE);
-   for (size_t index: Range(static_cast<size_t>(number_hessian_nonzeros))) {
-      user_model->hessian_row_indices[index] = lower_triangle ? hessian_row_indices[index] : hessian_column_indices[index];
-      user_model->hessian_column_indices[index] = lower_triangle ? hessian_column_indices[index] : hessian_row_indices[index];
+   // if the Hessian is empty, the problem is an LP
+   if (number_hessian_nonzeros == 0) {
+      user_model->problem_type = ProblemType::LINEAR;
    }
-   user_model->hessian_triangular_part = UNO_LOWER_TRIANGLE;
-   user_model->lagrangian_hessian = lagrangian_hessian;
-   user_model->lagrangian_sign_convention = lagrangian_sign_convention;
+   else {
+      // copy the Hessian sparsity to allow the calling code to dispose of its vectors
+      // from now on, we only maintain the lower triangle
+      user_model->hessian_row_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
+      user_model->hessian_column_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
+      const bool lower_triangle = (hessian_triangular_part == UNO_LOWER_TRIANGLE);
+      for (size_t index: Range(static_cast<size_t>(number_hessian_nonzeros))) {
+         user_model->hessian_row_indices[index] = lower_triangle ? hessian_row_indices[index] : hessian_column_indices[index];
+         user_model->hessian_column_indices[index] = lower_triangle ? hessian_column_indices[index] : hessian_row_indices[index];
+      }
+      user_model->hessian_triangular_part = UNO_LOWER_TRIANGLE;
+      user_model->lagrangian_hessian = lagrangian_hessian;
+      user_model->lagrangian_sign_convention = lagrangian_sign_convention;
+   }
    return true;
 }
 

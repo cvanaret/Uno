@@ -65,7 +65,8 @@ function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}})
   if nlp.meta.hess_available
     hrows, hcols = NLPModels.hess_structure(nlp)
   end
-  problem_type = nlp.meta.islp ? "LP" : "NLP"
+  islp = nlp.meta.islp || (nlp.meta.hess_available && nlp.meta.nnzh == 0)
+  problem_type = islp ? "LP" : "NLP"
   model = UnoSolver.uno_model(
     problem_type,
     nlp.meta.minimize,

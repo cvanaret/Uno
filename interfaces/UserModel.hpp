@@ -38,7 +38,7 @@ namespace uno {
 
       ~UserModel() = default;
 
-      const ProblemType problem_type;
+      ProblemType problem_type; // non-const, may be overridden based on the number of Hessian nonzeros
       const uno_int base_indexing; // 0 for C-style indexing, 1 for Fortran-style indexing
 
       // variables
