@@ -4,6 +4,7 @@
 #ifndef UNO_LAPACK_EXTENSION_H
 #define UNO_LAPACK_EXTENSION_H
 
+#include <cmath>
 #include "LAPACK.hpp"
 #include "VectorView.hpp"
 
