@@ -14,6 +14,7 @@
 #define dtrsm FC_GLOBAL_(dtrsm, DTRSM)
 #define dgemm FC_GLOBAL_(dgemm, DGEMM)
 #define dtrmm FC_GLOBAL_(dtrmm, DTRMM)
+#define dsyr FC_GLOBAL_(dsyr, DSYR)
 #define dsyrk FC_GLOBAL_(dsyrk, DSYRK)
 
 extern "C" {
@@ -57,6 +58,10 @@ extern "C" {
    // op(X) = X   or   op(X) = X^T
    void dtrmm(const char* side, const char* uplo, const char* transa, const char* diag, const int* m, const int* n,
       const double* alpha, const double* a, const int* lda, double* b, const int* ldb);
+
+   // performs symmetric rank-1 update:
+   // A := alpha x x^T + A
+   void dsyr(const char* uplo, const int* n, const double* alpha, const double* x, const int* incx, double* a, const int* lda);
 
    // performs symmetric rank k update:
    // C = alpha A A^T + beta C    or
@@ -177,6 +182,17 @@ namespace uno {
          dtrmm(&side, &uplo, &transa, &diag, &m, &n, &alpha, a, &lda, b, &ldb);
       }
       */
+
+      // performs symmetric rank-1 update:
+      // A := alpha x x^T + A
+      inline void symmetric_rank_1_update(char uplo, size_t dimension, double alpha, const double* x, double* a,
+            size_t leading_dimension_a) {
+         const int n = static_cast<int>(dimension);
+         constexpr int increment = 1;
+         const int lda = static_cast<int>(leading_dimension_a);
+         assert(lda >= std::max(1, n));
+         dsyr(&uplo, &n, &alpha, x, &increment, a, &lda);
+      }
 
       // performs symmetric rank k update:
       // C = alpha A A^T + beta C    or
