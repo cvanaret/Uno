@@ -80,7 +80,8 @@ program example_uno
                                   number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, jacobian)
     success = uno_set_jacobian_operator(model, jacobian_operator)
     success = uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator)
-    ! success = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator, lagrangian_sign_convention)
+    ! success = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator)
+    ! success = uno_set_lagrangian_convention(model, lagrangian_sign_convention)
     success = uno_set_initial_primal_iterate(model, x0)
     success = uno_set_initial_dual_iterate(model, y0)
 
@@ -105,7 +106,8 @@ program example_uno
     ! Run 2: solve with exact Hessian
     !---------------------------------------------------
     success = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices, &
-                                         hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
+                                         hessian_column_indices, lagrangian_hessian)
+    success = uno_set_lagrangian_convention(model, lagrangian_sign_convention)
     call uno_optimize(solver, model)
 
     !---------------------------------------------------
