@@ -35,7 +35,7 @@ namespace uno {
 
       // sparsity patterns of Jacobian and Hessian
       void compute_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
-                                                MatrixOrder matrix_format) const override;
+         MatrixOrder matrix_format) const override;
       void compute_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const override;
 
       // numerical evaluations of Jacobian and Hessian

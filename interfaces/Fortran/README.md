@@ -95,7 +95,7 @@ logical(c_bool) :: success
 success = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, &
                                      hessian_triangular_part, &
                                      hessian_row_indices, hessian_column_indices, &
-                                     lagrangian_hessian, lagrangian_sign_convention)
+                                     lagrangian_hessian)
 ```
 
 * a Jacobian operator:
@@ -116,9 +116,14 @@ success = uno_set_jacobian_transposed_operator(model, jacobian_transposed_operat
 
 ```fortran
 logical(c_bool) :: success
-success = uno_set_lagrangian_hessian_operator(model, &
-                                              lagrangian_hessian_operator, &
-                                              lagrangian_sign_convention)
+success = uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator)
+```
+
+* the Lagrangian sign convention:
+
+```fortran
+logical(c_bool) :: success
+success = uno_set_lagrangian_convention(model, lagrangian_sign_convention)
 ```
 
 * user-defined data:

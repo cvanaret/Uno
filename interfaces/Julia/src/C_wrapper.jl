@@ -166,15 +166,18 @@ function uno_model(
 
   if !isnothing(eval_hessian)
     eval_hessian_c = @cfunction(uno_lagrangian_hessian, Cint, (Cint, Cint, Cint, Ptr{Float64}, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-    flag = uno_set_lagrangian_hessian(c_model, Cint(nnzh), hessian_triangle, hrows, hcols, eval_hessian_c, lagrangian_sign)
+    flag = uno_set_lagrangian_hessian(c_model, Cint(nnzh), hessian_triangle, hrows, hcols, eval_hessian_c)
     flag || error("Failed to set Lagrangian Hessian via uno_set_lagrangian_hessian.")
   end
 
   if !isnothing(eval_Hv)
     eval_Hv_c = @cfunction(uno_lagrangian_hessian_operator, Cint, (Cint, Cint, Ptr{Float64}, Bool, Float64, Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{Cvoid}))
-    flag = uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c, lagrangian_sign)
+    flag = uno_set_lagrangian_hessian_operator(c_model, eval_Hv_c)
     flag || error("Failed to set Hessian operator via uno_set_lagrangian_hessian_operator.")
   end
+
+  flag = uno_set_lagrangian_convention(c_model, lagrangian_sign)
+  flag || error("Failed to set Lagrangian sign via uno_set_lagrangian_convention.")
 
   if ncon > 0
     @assert !isnothing(eval_constraints) && !isnothing(eval_jacobian)

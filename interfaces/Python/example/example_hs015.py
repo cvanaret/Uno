@@ -90,7 +90,8 @@ if __name__ == '__main__':
 
 	# run 2: solve with the filtersqp preset with exact Hessian
 	model.set_lagrangian_hessian(number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
-	  hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention)
+	  hessian_column_indices, lagrangian_hessian)
+	model.uno_set_lagrangian_convention(lagrangian_sign_convention)
 	result = uno_solver.optimize(model)
 	print("Objective at solution:", result.solution_objective)
 	# optimization summary

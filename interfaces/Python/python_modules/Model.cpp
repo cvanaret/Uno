@@ -65,30 +65,32 @@ namespace uno {
 
       .def("set_lagrangian_hessian", [](PythonUserModel& user_model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
             const std::vector<uno_int>& hessian_row_indices, const std::vector<uno_int>& hessian_column_indices,
-            const Hessian& lagrangian_hessian, double lagrangian_sign_convention) {
+            const Hessian& lagrangian_hessian) {
          if (number_hessian_nonzeros <= 0) {
             throw std::runtime_error("Please specify a positive number of Lagrangian Hessian nonzeros.");
          }
          if (hessian_triangular_part != UNO_LOWER_TRIANGLE && hessian_triangular_part != UNO_UPPER_TRIANGLE) {
             throw std::runtime_error("Please specify a correct Hessian triangle.");
          }
-         if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
-            throw std::runtime_error("Please specify a correct Lagrangian sign convention.");
-         }
          
          user_model.number_hessian_nonzeros = number_hessian_nonzeros;
-         // copy the Hessian sparsity to allow the calling code to dispose of its vectors
-         // from now on, we only maintain the lower triangle
-         user_model.hessian_row_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
-         user_model.hessian_column_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
-         const bool lower_triangle = (hessian_triangular_part == UNO_LOWER_TRIANGLE);
-         for (size_t index: Range(static_cast<size_t>(number_hessian_nonzeros))) {
-            user_model.hessian_row_indices[index] = lower_triangle ? hessian_row_indices[index] : hessian_column_indices[index];
-            user_model.hessian_column_indices[index] = lower_triangle ? hessian_column_indices[index] : hessian_row_indices[index];
+         // if the Hessian is empty, the problem is an LP
+         if (number_hessian_nonzeros == 0) {
+            user_model.problem_type = ProblemType::LINEAR;
          }
-         user_model.hessian_triangular_part = UNO_LOWER_TRIANGLE;
-         user_model.lagrangian_hessian = lagrangian_hessian;
-         user_model.lagrangian_sign_convention = lagrangian_sign_convention;
+         else {
+            // copy the Hessian sparsity to allow the calling code to dispose of its vectors
+            // from now on, we only maintain the lower triangle
+            user_model.hessian_row_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
+            user_model.hessian_column_indices.resize(static_cast<size_t>(number_hessian_nonzeros));
+            const bool lower_triangle = (hessian_triangular_part == UNO_LOWER_TRIANGLE);
+            for (size_t index: Range(static_cast<size_t>(number_hessian_nonzeros))) {
+               user_model.hessian_row_indices[index] = lower_triangle ? hessian_row_indices[index] : hessian_column_indices[index];
+               user_model.hessian_column_indices[index] = lower_triangle ? hessian_column_indices[index] : hessian_row_indices[index];
+            }
+            user_model.hessian_triangular_part = UNO_LOWER_TRIANGLE;
+            user_model.lagrangian_hessian = lagrangian_hessian;
+         }
       })
 
       .def("set_jacobian_operator", [](PythonUserModel& user_model, const JacobianOperator& jacobian_operator) {
@@ -99,12 +101,14 @@ namespace uno {
          user_model.jacobian_transposed_operator = jacobian_transposed_operator;
       })
 
-      .def("set_lagrangian_hessian_operator", [](PythonUserModel& user_model, const HessianOperator& lagrangian_hessian_operator,
-            double lagrangian_sign_convention) {
+      .def("set_lagrangian_hessian_operator", [](PythonUserModel& user_model, const HessianOperator& lagrangian_hessian_operator) {
+         user_model.lagrangian_hessian_operator = lagrangian_hessian_operator;
+      })
+
+      .def("uno_set_lagrangian_convention", [](PythonUserModel& user_model, double lagrangian_sign_convention) {
          if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
             throw std::runtime_error("Please specify a correct Lagrangian sign convention.");
          }
-         user_model.lagrangian_hessian_operator = lagrangian_hessian_operator;
          user_model.lagrangian_sign_convention = lagrangian_sign_convention;
       })
 
