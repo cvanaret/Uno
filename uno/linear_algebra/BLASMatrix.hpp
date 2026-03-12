@@ -30,11 +30,11 @@ namespace uno {
       template <typename Matrix1, typename Matrix2, typename Matrix3>
       BLASMatrix& operator=(Sum<ScalarMultiple<Matrix1>, Multiplication<Matrix2, Transpose<Matrix3>>>&& expression);
 
-      // specialized operator+= for low-rank update C := A A^T
+      // specialized operator+= for rank-k update C := A A^T
       template <typename Matrix>
       BLASMatrix& operator=(Multiplication<Matrix, Transpose<Matrix>>&& expression);
 
-      // specialized operator+= for low-rank update C += alpha A^T A
+      // specialized operator+= for rank-k update C += alpha A^T A
       template <typename Matrix>
       BLASMatrix& operator+=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression);
 
@@ -96,7 +96,7 @@ namespace uno {
       return *this;
    }
 
-   // specialized operator+= for low-rank update C := A A^T
+   // specialized operator+= for rank-k update C := A A^T
    template <typename T>
    template <typename Matrix>
    BLASMatrix<T>& BLASMatrix<T>::operator=(Multiplication<Matrix, Transpose<Matrix>>&& expression) {
@@ -108,7 +108,7 @@ namespace uno {
       DEBUG << "Performing rank " << correction_rank << " update\n";
       // check that A and B are the same object
       if (&A != &B) {
-         throw std::runtime_error("BLASMatrix::operator+=: low-rank update called on two different correction matrices");
+         throw std::runtime_error("BLASMatrix::operator+=: rank-k update called on two different correction matrices");
       }
       constexpr char uplo = 'L'; // lower triangular
       constexpr char trans = 'N'; // A A^T
@@ -124,7 +124,7 @@ namespace uno {
       return *this;
    }
 
-   // specialized operator+= for low-rank update C += alpha A^T A
+   // specialized operator+= for rank-k update C += alpha A^T A
    template <typename T>
    template <typename Matrix>
    BLASMatrix<T>& BLASMatrix<T>::operator+=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression) {
@@ -137,7 +137,7 @@ namespace uno {
       DEBUG << "Performing rank " << correction_rank << " update\n";
       // check that A and B are the same object
       if (&A != &B) {
-         throw std::runtime_error("BLASMatrix::operator+=: low-rank update called on two different correction matrices");
+         throw std::runtime_error("BLASMatrix::operator+=: rank-k update called on two different correction matrices");
       }
       constexpr char uplo = 'L'; // lower triangular
       constexpr char trans = 'T'; // A^T A
