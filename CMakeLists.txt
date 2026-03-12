@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.12)
 ######################
 
 # define the project
-project(Uno VERSION 2.4.1
+project(Uno VERSION 2.4.2
         DESCRIPTION "Uno (Unifying Nonlinear Optimization)"
         LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
