@@ -372,6 +372,7 @@ endif()
 if(TARGET uno_ampl)
    list(APPEND INSTALL_TARGETS uno_ampl)
 endif()
+include(GNUInstallDirs)  # ensures CMAKE_INSTALL_INCLUDEDIR is set to "include"
 install(TARGETS ${INSTALL_TARGETS}
    COMPONENT libuno
    EXPORT UnoTargets
