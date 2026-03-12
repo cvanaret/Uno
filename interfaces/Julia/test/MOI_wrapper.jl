@@ -28,7 +28,7 @@ function test_MOI_Test()
         with_cache_type = Float64,
         with_bridge_type = Float64,
     )
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     MOI.Test.runtests(
         model,
         MOI.Test.Config(
@@ -69,7 +69,7 @@ end
 
 function test_ConstraintDualStart()
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 2)
     c = MOI.add_constraint(
         model,
@@ -93,7 +93,7 @@ end
 
 function test_ConstraintDualStart_ScalarNonlinearFunction()
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 2)
     MOI.add_constraint.(model, x, MOI.Interval(0.0, 0.8))
     f = MOI.ScalarNonlinearFunction(:sin, Any[1.0*x[1]-1.0*x[2]])
@@ -115,7 +115,7 @@ end
 
 function test_solve_time()
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     MOI.add_variable(model)
     @test isnan(MOI.get(model, MOI.SolveTimeSec()))
     MOI.optimize!(model)
@@ -125,7 +125,7 @@ end
 
 function test_barrier_iterations()
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variable(model)
     f = (x - 1.0)^2 + 2.0 * x + 3.0
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -152,7 +152,7 @@ end
 
 function test_empty_optimize()
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     @test MOI.get(model, MOI.RawStatusString()) == "Optimize not called"
     MOI.optimize!(model)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.INVALID_MODEL
@@ -269,7 +269,7 @@ end
 
 function test_scalar_nonlinear_function_nlp_block()
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variable(model)
     f = MOI.ScalarNonlinearFunction(:^, Any[x, 4])
     MOI.add_constraint(model, f, MOI.LessThan(1.0))
@@ -282,7 +282,7 @@ end
 
 function test_parameter()
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(1.0))
     x = MOI.add_variable(model)
     fi = MOI.ScalarNonlinearFunction(:-, Any[x, p])
@@ -303,7 +303,7 @@ end
 
 function test_parameter_replace_parameters()
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(1.0))
     x = MOI.add_variable(model)
     t = MOI.add_variable(model)
@@ -331,7 +331,7 @@ end
 
 function test_parameter_reverse()
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variable(model)
     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(1.0))
     fi = MOI.ScalarNonlinearFunction(:-, Any[x, p])
@@ -352,7 +352,7 @@ end
 
 function test_parameter_scalar_affine_objective()
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variable(model)
     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
@@ -379,7 +379,7 @@ end
 # Uno is dead-lock in this test!
 # function test_parameter_variable_index_objective()
 #     model = UnoSolver.Optimizer()
-#     # MOI.set(model, MOI.Silent(), true)
+#     MOI.set(model, MOI.Silent(), true)
 #     x = MOI.add_variable(model)
 #     p, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
 #     t = MOI.add_variable(model)
@@ -416,7 +416,7 @@ end
 
 function test_ad_backend()
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variable(model)
     attr = MOI.AutomaticDifferentiationBackend()
     @test MOI.supports(model, attr)
@@ -521,7 +521,7 @@ end
 
 function test_NLPBlockDualStart()
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 4)
     MOI.set.(model, MOI.VariablePrimalStart(), x, 1.0)
     block = MOI.NLPBlockData(
@@ -617,7 +617,7 @@ function test_vector_nonlinear_oracle()
     @test MOI.copy(set) == set
     @test MOI.copy(set) !== set
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 3)
     MOI.add_constraints.(model, x, MOI.EqualTo.(1.0:3.0))
     y = MOI.add_variables(model, 2)
@@ -691,7 +691,7 @@ function test_vector_nonlinear_oracle_two()
         end,
     )
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 3)
     MOI.add_constraints.(model, x, MOI.EqualTo.(1.0:3.0))
     y = MOI.add_variables(model, 2)
@@ -748,7 +748,7 @@ function test_vector_nonlinear_oracle_optimization()
         end,
     )
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 4)
     t = MOI.add_variable(model)
     MOI.add_constraint(model, x[1], MOI.GreaterThan(0.1))
@@ -809,7 +809,7 @@ function test_vector_nonlinear_oracle_optimization_min_sense()
         end,
     )
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 4)
     t = MOI.add_variable(model)
     MOI.add_constraint(model, x[1], MOI.GreaterThan(0.1))
@@ -853,7 +853,7 @@ end
 
 function test_vector_nonlinear_oracle_scalar_nonlinear_equivalent()
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 4)
     t = MOI.add_variable(model)
     MOI.add_constraint(model, x[1], MOI.GreaterThan(0.1))
@@ -909,7 +909,7 @@ function test_vector_nonlinear_oracle_no_hessian()
         end,
     )
     model = UnoSolver.Optimizer()
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 3)
     MOI.add_constraints.(model, x, MOI.EqualTo.(1.0:3.0))
     y = MOI.add_variables(model, 2)
@@ -935,7 +935,7 @@ end
 
 function test_issue_491_model_example()
     model = MOI.instantiate(UnoSolver.Optimizer; with_cache_type = Float64)
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     x = MOI.add_variables(model, 2)
     MOI.add_constraint.(model, x, MOI.Interval(1.0, 4.0))
     g = [MOI.ScalarNonlinearFunction(:log, Any[x[i]]) for i in 1:2]
@@ -970,7 +970,7 @@ function test_comprehensive_duals_variable_bounds()
         with_cache_type = Float64,
         with_bridge_type = Float64,
     )
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     v = MOI.add_variables(model, 4)
     w = MOI.add_constraint(model, v[1], MOI.GreaterThan(0.0))
     x = MOI.add_constraint(model, v[2], MOI.LessThan(0.0))
@@ -1007,7 +1007,7 @@ function test_comprehensive_duals_scalar_affine()
         with_cache_type = Float64,
         with_bridge_type = Float64,
     )
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     v = MOI.add_variables(model, 4)
     w = MOI.add_constraint(model, 1.0 * v[1], MOI.GreaterThan(0.0))
     x = MOI.add_constraint(model, 1.0 * v[2], MOI.LessThan(0.0))
@@ -1043,7 +1043,7 @@ function test_comprehensive_duals_scalar_nonlinear()
         with_cache_type = Float64,
         with_bridge_type = Float64,
     )
-    # MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     v = MOI.add_variables(model, 4)
     f = [MOI.ScalarNonlinearFunction(:+, Any[vi, 1.0]) for vi in v]
     w = MOI.add_constraint(model, f[1], MOI.GreaterThan(0.0))
