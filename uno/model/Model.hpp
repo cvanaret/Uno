@@ -11,7 +11,6 @@
 #include "optimization/ProblemType.hpp"
 #include "symbolic/VectorExpression.hpp"
 #include "../interfaces/C/uno_int.h"
-#include "../interfaces/C/Uno_C_API.h"
 
 namespace uno {
    // forward declarations
