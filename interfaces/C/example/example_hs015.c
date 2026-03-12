@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <math.h>
-#include "Uno_C_API.h"
+#include "uno/Uno_C_API.h"
 
 uno_int objective_function(uno_int /*number_variables*/, const double* x, double* objective_value, void* /*user_data*/) {
       *objective_value = 100.*pow(x[1] - pow(x[0], 2.), 2.) + pow(1. - x[0], 2.);
