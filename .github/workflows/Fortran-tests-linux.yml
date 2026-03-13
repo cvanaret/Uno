@@ -58,7 +58,7 @@ jobs:
                                                -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
                                                -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
                                                -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
-                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
+                                               -DBLAS_LIBRARIES=${{github.workspace}}/dependencies/lib/libblas.a \
                                                -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
                                                -DBUILD_STATIC_LIBS=ON \
                                                -DBUILD_SHARED_LIBS=OFF .
@@ -68,7 +68,12 @@ jobs:
 
       - name: Compile Fortran tests
         working-directory: ${{github.workspace}}/interfaces/Fortran
-        run: gfortran example_uno.f90 -o example_uno -L../../build -luno -L${{github.workspace}}/dependencies/lib -lhighs -ldmumps -lmumps_common -lmpiseq -lpord -lmetis -lbqpd -lspral -lhwloc -llapack -lcblas -lblas -lgomp -lstdc++
+        run: gfortran example_uno.f90 -o example_uno \
+                                      -L../../build -luno \
+                                      -L${{github.workspace}}/dependencies/lib \
+                                      -Wl,-rpath,${{github.workspace}}/dependencies/lib \
+                                      -lhighs -ldmumps -lmumps_common -lmpiseq -lpord -lmetis \
+                                      -lbqpd -lspral -lhwloc -llapack -lcblas -lblas -lgomp -lstdc++
 
       - name: Run Fortran tests
         working-directory: ${{github.workspace}}/interfaces/Fortran
