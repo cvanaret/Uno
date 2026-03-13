@@ -80,7 +80,7 @@ jobs:
                 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                 -DUNO=/usr/local/lib/libuno.so \
                 -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
-                -DBLAS_LIBRARIES=${{github.workspace}}/dependencies/lib/libblas.a .
+                -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libhwloc.so" .
 
       - name: Build example
         working-directory: ${{github.workspace}}/.github/C
