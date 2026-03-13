@@ -25,7 +25,7 @@ cd dependencies
 # download BQPD
 VERSION="1.0.0"
 REPO="https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION}%2B0"
-ASSET_NAME="BQPD.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
+ASSET_NAME="BQPD.v${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 curl -L -o BQPD.tar.gz "$ASSET_URL"
@@ -35,7 +35,7 @@ pwd
 # download HWLOC (shared library)
 VERSION="2.12.0"
 REPO="https://github.com/JuliaBinaryWrappers/Hwloc_jll.jl/releases/download/Hwloc-v${VERSION}%2B0"
-ASSET_NAME="BQPD.${VERSION}.${ARCH}-${OS}.tar.gz"
+ASSET_NAME="Hwloc.v${VERSION}.${ARCH}-${OS}.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 curl -L -o Hwloc.tar.gz "$ASSET_URL"
