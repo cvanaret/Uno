@@ -23,13 +23,23 @@ esac
 cd dependencies
 
 # download BQPD
-VERSION="v1.0.0"
-REPO="https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-${VERSION}%2B0"
+VERSION="1.0.0"
+REPO="https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION}%2B0"
 ASSET_NAME="BQPD.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 curl -L -o BQPD.tar.gz "$ASSET_URL"
 tar -xzvf BQPD.tar.gz
+pwd
+
+# download HWLOC (shared library)
+VERSION="2.12.0"
+REPO="https://github.com/JuliaBinaryWrappers/Hwloc_jll.jl/releases/download/Hwloc-v${VERSION}%2B0"
+ASSET_NAME="BQPD.${VERSION}.${ARCH}-${OS}.tar.gz"
+ASSET_URL="${REPO}/${ASSET_NAME}"
+echo "Downloading: ${ASSET_URL}"
+curl -L -o Hwloc.tar.gz "$ASSET_URL"
+tar -xzvf Hwloc.tar.gz
 pwd
 
 # download UnoUtils: MUMPS (+ METIS, BLAS and LAPACK), HiGHS and SPRAL
