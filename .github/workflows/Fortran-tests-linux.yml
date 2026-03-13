@@ -68,12 +68,13 @@ jobs:
 
       - name: Compile Fortran tests
         working-directory: ${{github.workspace}}/interfaces/Fortran
-        run: gfortran example_uno.f90 -o example_uno \
-                                      -L../../build -luno \
-                                      -L${{github.workspace}}/dependencies/lib \
-                                      -Wl,-rpath,${{github.workspace}}/dependencies/lib \
-                                      -lhighs -ldmumps -lmumps_common -lmpiseq -lpord -lmetis \
-                                      -lbqpd -lspral -lhwloc -llapack -lcblas -lblas -lgomp -lstdc++
+        run: |
+          gfortran example_uno.f90 -o example_uno \
+                                   -L../../build -luno \
+                                   -L${{github.workspace}}/dependencies/lib \
+                                   -Wl,-rpath,${{github.workspace}}/dependencies/lib \
+                                   -lhighs -ldmumps -lmumps_common -lmpiseq -lpord -lmetis \
+                                   -lbqpd -lspral -lhwloc -llapack -lcblas -lblas -lgomp -lstdc++
 
       - name: Run Fortran tests
         working-directory: ${{github.workspace}}/interfaces/Fortran
