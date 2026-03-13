@@ -245,7 +245,14 @@ else()
 endif()
 
 # add the auxiliary libraries last
-list(APPEND LIBRARIES ${AUXILIARY_LIBRARIES})
+if(AUXILIARY_LIBRARIES)
+   set(ABSOLUTE_AUXILIARY_LIBRARIES)
+   foreach(relative_path IN LISTS AUXILIARY_LIBRARIES)
+      get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
+      list(APPEND ABSOLUTE_AUXILIARY_LIBRARIES "${absolute_path}")
+   endforeach()
+   list(APPEND LIBRARIES ${ABSOLUTE_AUXILIARY_LIBRARIES})
+endif()
 
 ###############
 # Uno library #
