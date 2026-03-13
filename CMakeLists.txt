@@ -96,7 +96,10 @@ file(GLOB TESTS_UNO_SOURCE_FILES
 #########################
 # external dependencies #
 #########################
+# list of all libraries
 set(LIBRARIES "")
+# additional libraries to link against
+set(AUXILIARY_LIBRARIES "" CACHE STRING "Additional libraries to link against")
 
 # function that links an existing library to Uno
 function(link_to_uno library_name library_path)
@@ -240,6 +243,9 @@ else()
    find_package(BLAS REQUIRED)
    list(APPEND LIBRARIES BLAS::BLAS)
 endif()
+
+# add the auxiliary libraries last
+list(APPEND LIBRARIES ${AUXILIARY_LIBRARIES})
 
 ###############
 # Uno library #
