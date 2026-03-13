@@ -9,12 +9,12 @@
 
 namespace uno {
    // express the Hessian approximation at iteration k by a low-rank update:
-   // Bk = B0 - U U^T + V V^T
+   // Bk = B0 - U Uᵀ + V Vᵀ
    // where
    // B0 = delta_k I
    // V = Yk Dk^(-1/2)
-   // M = Sk^T B0 Sk + Lk Dk^(-1) Lk^T = J J^T
-   // U = (B0 Sk + Yk Dk^(-1) Lk^T) J^(-T)
+   // M = Skᵀ B0 Sk + Lk Dk^(-1) Lkᵀ = J Jᵀ
+   // U = (B0 Sk + Yk Dk^(-1) Lkᵀ) J^(-T)
    class LBFGSHessian: public QuasiNewtonHessian {
    public:
       LBFGSHessian(const Model& model, double objective_multiplier, const Options& options);
@@ -42,11 +42,10 @@ namespace uno {
       std::vector<double> invsqrt_D; // diagonal
       DenseMatrix<double> L_invsqrt_D; // lower triangular
       DenseMatrix<double> M;
-      // Hessian representation: Bk = B0 - U U^T + V V^T where B0 = delta I
+      // Hessian representation: Bk = B0 - U Uᵀ + V Vᵀ where B0 = delta I
       DenseMatrix<double> U;
       DenseMatrix<double> V;
       double delta{1.};
-      bool hessian_recomputation_required{false};
 
       void update_D();
       void recompute_hessian_representation();
