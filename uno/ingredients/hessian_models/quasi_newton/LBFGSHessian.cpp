@@ -42,23 +42,15 @@ namespace uno {
    void LBFGSHessian::notify_accepted_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) {
       DEBUG << "\n*** Updating the BFGS memory at slot " << this->current_index << '\n';
-      // update the matrices S, Y and D
-      this->update_S(current_iterate, trial_iterate);
-      this->update_Y(current_iterate, trial_iterate, evaluation_cache);
-      this->update_D();
-      DEBUG << "> S: " << this->S;
-      DEBUG << "> Y: " << this->Y;
-      DEBUG << "> diag(D): "; print_vector(DEBUG, this->D);
+      // update the matrices S and Y
+      this->update_limited_memory(current_iterate, trial_iterate, evaluation_cache);
 
-      // check that the latest D entry s^T y is > 0
+      // check that the latest D entry sᵀ y is > 0
       // TODO implement Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
+      this->update_D();
+      DEBUG << "> diag(D): "; print_vector(DEBUG, this->D);
       if (0. < this->D[this->current_index]) {
-         DEBUG << "S, Y and D updated at slot " << this->current_index << '\n';
-         this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
-         // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the L-BFGS
-         // Hessian will be used, we delay the update to the beginning of the next major iteration
-         this->hessian_recomputation_required = true;
-         DEBUG << "There are now " << this->number_entries_in_memory << " entries in memory (capacity " << this->memory_size << ")\n";
+         this->validate_update();
       }
       else {
          DEBUG << "Skipping the update\n";
@@ -66,12 +58,12 @@ namespace uno {
       statistics.set("|BFGS|", this->number_entries_in_memory);
    }
 
-   // Hessian-vector product where the Hessian approximation is Bk = B0 - U U^T + V V^T and B0 = delta I
-   // Bk v = (B0 - U U^T + V V^T) v = delta v - U (U^T v) + V (V^T v)
+   // Hessian-vector product where the Hessian approximation is Bk = B0 - U Uᵀ + V Vᵀ and B0 = delta I
+   // Bk v = (B0 - U Uᵀ + V Vᵀ) v = delta v - U (Uᵀ v) + V (Vᵀ v)
    void LBFGSHessian::compute_hessian_vector_product(const double* /*x*/, const double* vector,
          double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, double* result) {
       if (objective_multiplier != this->fixed_objective_multiplier) {
-         throw std::runtime_error("The L-BFGS Hessian model was initialized with a different objective multiplier");
+         throw std::runtime_error("The quasi-Newton Hessian model was initialized with a different objective multiplier");
       }
 
       // update_limited_memory() has updated the limited memory. A recomputation of the Hessian representation may be required
@@ -87,20 +79,20 @@ namespace uno {
 
       // rank-2 contribution
       // (U, V) in R^{n x m}
-      int n = static_cast<int>(this->model.number_variables);
-      int increment = 1;
-      // U U^T v
+      const int n = static_cast<int>(this->model.number_variables);
+      constexpr int increment = 1;
+      // work on each column of U (Uᵀ v)
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
          const double U_coefficient = -dot(current_U_column, vector); // minus sign for U
          // result += coefficient * current_column
          BLAS_add_vectors(&n, &U_coefficient, current_U_column.data(), &increment, result, &increment);
       }
-      // V V^T v
+      // work on each column of V (Vᵀ v)
       for (size_t column_index: Range(this->number_entries_in_memory)) {
+         // result += coefficient * current_column
          const auto current_V_column = this->V.column(column_index);
          const double V_coefficient = dot(current_V_column, vector); // plus sign for V
-         // result += coefficient * current_column
          BLAS_add_vectors(&n, &V_coefficient, current_V_column.data(), &increment, result, &increment);
       }
    }
@@ -143,12 +135,12 @@ namespace uno {
       DEBUG << "> L: " << this->L;
       DEBUG << "> L_invsqrt_D: " << this->L_invsqrt_D;
 
-      /* form M = L D^{-1} L^T + S^T B0 S = L_invsqrt_D L_invsqrt_D^T + delta S^T S */
+      /* form M = L D⁻¹ Lᵀ + Sᵀ B0 S = L_invsqrt_D L_invsqrt_Dᵀ + delta Sᵀ S */
       Mk = L_invsqrt_Dk * transpose(L_invsqrt_Dk);
       Mk += this->delta * (transpose(Sk) * Sk);
       DEBUG << "> M: " << this->M;
 
-      /*/ compute the Cholesky factor J of M = J J^T */
+      /* compute the Cholesky factor J of M = J Jᵀ */
       Mk.compute_cholesky_factors(); // J overwrites M
       DEBUG << "> J: " << this->M;
 
@@ -169,7 +161,7 @@ namespace uno {
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
 
-   // compute delta = 1/gamma where gamma = s^T y / y^T y at the last entry
+   // compute delta = 1/gamma where gamma = sᵀ y / yᵀ y at the last entry
    // (7.20) in Numerical optimization (Nocedal & Wright)
    double LBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);

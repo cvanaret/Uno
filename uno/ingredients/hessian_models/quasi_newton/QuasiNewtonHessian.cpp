@@ -52,6 +52,23 @@ namespace uno {
 
    // protected member functions
 
+   void QuasiNewtonHessian::update_limited_memory(const Iterate& current_iterate, const Iterate& trial_iterate,
+         EvaluationCache& evaluation_cache) {
+      this->update_S(current_iterate, trial_iterate);
+      this->update_Y(current_iterate, trial_iterate, evaluation_cache);
+      DEBUG << "> S: " << this->S;
+      DEBUG << "> Y: " << this->Y;
+   }
+
+   void QuasiNewtonHessian::validate_update() {
+      DEBUG << "S and Y updated at slot " << this->current_index << '\n';
+      this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
+      // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
+      // Hessian approximation will be used, we delay the update to the beginning of the next major iteration
+      this->hessian_recomputation_required = true;
+      DEBUG << "There are now " << this->number_entries_in_memory << " entries in memory (capacity " << this->memory_size << ")\n";
+   }
+
    void QuasiNewtonHessian::update_S(const Iterate& current_iterate, const Iterate& trial_iterate) {
       // TODO check that the S entry isn't too small
       this->S.column(this->current_index) = view(trial_iterate.primals, 0, this->model.number_variables) -

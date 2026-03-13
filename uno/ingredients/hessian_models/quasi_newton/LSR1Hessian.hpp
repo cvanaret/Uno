@@ -9,7 +9,7 @@
 
 namespace uno {
    // express the Hessian approximation at iteration k by a low-rank update:
-   // Bk = B0 + U U^T
+   // Bk = B0 + U Uᵀ
    class LSR1Hessian: public QuasiNewtonHessian {
    public:
       LSR1Hessian(const Model& model, double objective_multiplier, const Options& options);
@@ -24,8 +24,13 @@ namespace uno {
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) override;
 
    protected:
+      DenseMatrix<double> N;
+      // Hessian representation: Bk = B0 + U P⁻¹ Uᵀ where B0 = delta I
+      DenseMatrix<double> U;
       double delta{1.};
       bool hessian_recomputation_required{false};
+
+      void recompute_hessian_representation();
    };
 } // namespace
 
