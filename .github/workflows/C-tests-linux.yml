@@ -44,6 +44,12 @@ jobs:
         shell: bash
         run: bash dependencies/scripts/download_dependencies.sh
 
+      - name: Set the environment variables for OpenMP
+        shell: bash
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
+
       - name: Configure Uno CMake
         shell: bash
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
@@ -51,8 +57,10 @@ jobs:
         run: |
           cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                                                -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+                                               -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+                                               -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
                                                -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
-                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
+                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libhwloc.a" \
                                                -DBUILD_STATIC_LIBS=OFF \
                                                -DBUILD_SHARED_LIBS=ON .
 
