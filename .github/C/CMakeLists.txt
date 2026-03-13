@@ -19,11 +19,14 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmaybe-uninitialized")
 endif()
 
-find_library(UNO REQUIRED)
-add_executable(tests_hs015 tests_hs015.c)
+# external dependencies
+set(LIBRARIES "")
+# additional libraries to link against
+set(AUXILIARY_LIBRARIES "" CACHE STRING "Additional libraries to link against")
 
-# link the math library and Uno
-target_link_libraries(tests_hs015 PUBLIC m ${UNO})
+# Uno
+find_library(UNO REQUIRED)
+list(APPEND LIBRARIES m ${UNO}) # math library and Uno
 
 # LAPACK
 # convert relative paths of LAPACK to absolute paths
@@ -33,10 +36,10 @@ if(LAPACK_LIBRARIES)
       get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
       list(APPEND ABSOLUTE_LAPACK_LIBRARIES "${absolute_path}")
    endforeach()
-   target_link_libraries(tests_hs015 PRIVATE ${ABSOLUTE_LAPACK_LIBRARIES})
+   list(APPEND LIBRARIES ${ABSOLUTE_LAPACK_LIBRARIES})
 else()
    find_package(LAPACK REQUIRED)
-   target_link_libraries(tests_hs015 PRIVATE LAPACK::LAPACK)
+   list(APPEND LIBRARIES LAPACK::LAPACK)
 endif()
 
 # BLAS
@@ -47,8 +50,22 @@ if(BLAS_LIBRARIES)
       get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
       list(APPEND ABSOLUTE_BLAS_LIBRARIES "${absolute_path}")
    endforeach()
-   target_link_libraries(tests_hs015 PRIVATE ${ABSOLUTE_BLAS_LIBRARIES})
+   list(APPEND LIBRARIES ${ABSOLUTE_BLAS_LIBRARIES})
 else()
    find_package(BLAS REQUIRED)
-   target_link_libraries(tests_hs015 PRIVATE BLAS::BLAS)
+   list(APPEND LIBRARIES BLAS::BLAS)
 endif()
+
+# add the auxiliary libraries last
+if(AUXILIARY_LIBRARIES)
+   set(ABSOLUTE_AUXILIARY_LIBRARIES)
+   foreach(relative_path IN LISTS AUXILIARY_LIBRARIES)
+      get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
+      list(APPEND ABSOLUTE_AUXILIARY_LIBRARIES "${absolute_path}")
+   endforeach()
+   list(APPEND LIBRARIES ${ABSOLUTE_AUXILIARY_LIBRARIES})
+endif()
+
+# tests
+add_executable(tests_hs015 tests_hs015.c)
+target_link_libraries(tests_hs015 PUBLIC ${LIBRARIES})
