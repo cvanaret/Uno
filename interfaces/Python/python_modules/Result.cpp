@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 #include "optimization/Result.hpp"
 
 namespace py = pybind11;
@@ -16,10 +17,42 @@ namespace uno {
       .def_readonly("solution_primal_feasibility", &Result::solution_primal_feasibility)
       .def_readonly("solution_stationarity", &Result::solution_stationarity)
       .def_readonly("solution_complementarity", &Result::solution_complementarity)
-      .def_readonly("primal_solution", &Result::primal_solution)
-      .def_readonly("constraint_dual_solution", &Result::constraint_dual_solution)
-      .def_readonly("lower_bound_dual_solution", &Result::lower_bound_dual_solution)
-      .def_readonly("upper_bound_dual_solution", &Result::upper_bound_dual_solution)
+      .def_property_readonly("primal_solution", [](py::object self) {
+         const auto& result = self.cast<const Result&>();
+         return py::array_t(
+            {static_cast<py::ssize_t>(result.primal_solution.size())},
+            {sizeof(double)},
+            result.primal_solution.data(),
+            self  // keeps Result alive as long as the array exists
+         );
+      })
+      .def_property_readonly("constraint_dual_solution", [](py::object self) {
+         const auto& result = self.cast<const Result&>();
+         return py::array_t(
+            {static_cast<py::ssize_t>(result.constraint_dual_solution.size())},
+            {sizeof(double)},
+            result.constraint_dual_solution.data(),
+            self  // keeps Result alive as long as the array exists
+         );
+      })
+      .def_property_readonly("lower_bound_dual_solution", [](py::object self) {
+         const auto& result = self.cast<const Result&>();
+         return py::array_t(
+            {static_cast<py::ssize_t>(result.lower_bound_dual_solution.size())},
+            {sizeof(double)},
+            result.lower_bound_dual_solution.data(),
+            self  // keeps Result alive as long as the array exists
+         );
+      })
+      .def_property_readonly("upper_bound_dual_solution", [](py::object self) {
+         const auto& result = self.cast<const Result&>();
+         return py::array_t(
+            {static_cast<py::ssize_t>(result.upper_bound_dual_solution.size())},
+            {sizeof(double)},
+            result.upper_bound_dual_solution.data(),
+            self  // keeps Result alive as long as the array exists
+         );
+      })
       .def_readonly("number_iterations", &Result::number_iterations)
       .def_readonly("cpu_time", &Result::cpu_time)
       .def_readonly("number_objective_evaluations", &Result::number_objective_evaluations)

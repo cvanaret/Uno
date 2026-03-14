@@ -52,6 +52,9 @@ jobs:
 
       - name: Compile and install unopy
         run: pip install . -v
+        
+      - name: Install numpy
+        run: pip install numpy
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
