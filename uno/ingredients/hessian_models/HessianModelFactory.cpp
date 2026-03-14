@@ -7,6 +7,7 @@
 #include "HessianModel.hpp"
 #include "ExactHessian.hpp"
 #include "quasi_newton/LBFGSHessian.hpp"
+#include "quasi_newton/LSR1Hessian.hpp"
 #include "IdentityHessian.hpp"
 #include "ZeroHessian.hpp"
 #include "model/Model.hpp"
@@ -30,16 +31,28 @@ namespace uno {
          if (model.has_hessian_matrix() || model.has_hessian_operator()) {
             return std::make_unique<ExactHessian>(model);
          }
-         // if no Hessian (matrix or operator) is available, pick an L-BFGS Hessian
+         // if no Hessian (matrix or operator) is available, pick a limited-memory quasi-Newton Hessian
+         // (L-BFGS for line search, L-SR1 for trust-region method)
          else {
-            WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-BFGS Hessian instead\n";
-            // override user defined option
-            options.set_string("hessian_model", "LBFGS", true);
-            return std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
+            //if (options.get_string("globalization_mechanism") == "LS") {
+               WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-BFGS Hessian instead\n";
+               // override user defined option
+               options.set_string("hessian_model", "LBFGS", true);
+               return std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
+            //}
+            //else {
+            //   WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-SR1 Hessian instead\n";
+            //   // override user defined option
+            //   options.set_string("hessian_model", "LSR1", true);
+            //   return std::make_unique<LSR1Hessian>(model, objective_multiplier, options);
+            //}
          }
       }
       else if (hessian_model == "LBFGS") {
          return std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
+      }
+      else if (hessian_model == "LSR1") {
+         return std::make_unique<LSR1Hessian>(model, objective_multiplier, options);
       }
       else if (hessian_model == "identity") {
          return std::make_unique<IdentityHessian>(model.number_variables);
