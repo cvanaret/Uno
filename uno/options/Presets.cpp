@@ -81,7 +81,6 @@ namespace uno {
          preset_options.set_double("l1_constraint_violation_coefficient", 1.);
          preset_options.set_double("primal_tolerance", 1e-6);
          preset_options.set_double("dual_tolerance", 1e-6);
-         preset_options.set_double("TR_min_radius", 1e-8);
          preset_options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
          preset_options.set_bool("protect_actual_reduction_against_roundoff", false);
       }
@@ -98,7 +97,6 @@ namespace uno {
          preset_options.set_double("l1_constraint_violation_coefficient", 1.);
          preset_options.set_double("primal_tolerance", 1e-6);
          preset_options.set_double("dual_tolerance", 1e-6);
-         preset_options.set_double("TR_min_radius", 1e-8);
          preset_options.set_bool("switch_to_optimality_requires_acceptance", false);
          preset_options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
 
@@ -125,7 +123,6 @@ namespace uno {
          preset_options.set_double("l1_constraint_violation_coefficient", 1.);
          preset_options.set_double("primal_tolerance", 1e-6);
          preset_options.set_double("dual_tolerance", 1e-5);
-         preset_options.set_double("TR_min_radius", 1e-8);
          preset_options.set_bool("switch_to_optimality_requires_linearized_feasibility", true);
          preset_options.set_bool("protect_actual_reduction_against_roundoff", false);
       }

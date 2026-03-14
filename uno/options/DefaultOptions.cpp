@@ -116,7 +116,7 @@ namespace uno {
       // tolerance in TR constraint activity
       options.set_double("TR_activity_tolerance", 1e-6);
       // minimum TR radius
-      options.set_double("TR_min_radius", 1e-7);
+      options.set_double("TR_min_radius", 1e-12);
       // threshold below which the TR radius is reset
       options.set_double("TR_radius_reset_threshold", 1e-4);
 

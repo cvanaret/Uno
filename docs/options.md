@@ -145,7 +145,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `TR_decrease_factor`            | double | 2       | Decrease factor of the radius for unsuccessful iterations |
 | `TR_aggressive_decrease_factor` | double | 4       | Decrease factor of the radius when errors occur |
 | `TR_activity_tolerance`         | double | 1e-6    | Tolerance with which the trust-region constraint is considered active |
-| `TR_min_radius`                 | double | 1e-7    | Minimum radius acceptable before failure is reported |
+| `TR_min_radius`                 | double | 1e-12   | Minimum radius acceptable before failure is reported |
 | `TR_radius_reset_threshold`     | double | 1e-4    | Smallest value to which the radius is reset at the beginning of an iteration |
 
 ## Feasibility restoration options
