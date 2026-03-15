@@ -226,6 +226,7 @@ function uno_model(
   eval_Hv::Union{Function,Nothing},
   user_model=nothing,
   hessian_triangle::Char='L',
+  lagrangian_sign::Float64=1.0,
   x0::Union{Vector{Float64},Nothing}=nothing,
 )
   return uno_model(
@@ -253,7 +254,7 @@ function uno_model(
     eval_Hv,
     user_model,
     hessian_triangle,
-    1.0,
+    lagrangian_sign,
     x0,
     nothing,
   )
@@ -438,6 +439,7 @@ function uno(
   eval_Hv::Union{Function,Nothing},
   user_model=nothing,
   hessian_triangle::Char='L',
+  lagrangian_sign::Float64=1.0,
   x0::Union{Vector{Float64},Nothing}=nothing;
   kwargs...
 )
@@ -466,7 +468,7 @@ function uno(
     eval_Hv,
     user_model,
     hessian_triangle,
-    1.0,
+    lagrangian_sign,
     x0,
     nothing;
     kwargs...
