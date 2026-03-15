@@ -43,9 +43,10 @@ jobs:
       - uses: julia-actions/cache@v2
 
       - name: Set the environment variables for OpenMP
+        shell: bash
         run: |
-          echo "OMP_CANCELLATION=TRUE" >> $GITHUB_ENV
-          echo "OMP_PROC_BIND=TRUE" >> $GITHUB_ENV
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
 
       - name: Set the environment variables for BinaryBuilder
         run: |
@@ -62,7 +63,7 @@ jobs:
       - name: Compile Uno_jll.jl
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
-          julia --color=yes .github/julia/build_tarballs_yggdrasil.jl x86_64-linux-gnu-cxx11 --verbose --deploy="local"
+          julia --color=yes .github/julia/build_tarballs_yggdrasil.jl x86_64-linux-gnu-libgfortran5-cxx11 --verbose --deploy="local"
 
       # Now install a newer version of Julia to actually test Uno_jll.jl.
       # We choose v1.10 because it is the current Long-Term Support (LTS).

@@ -213,7 +213,14 @@ endif()
 find_library(SPRAL NAMES spral)
 if(SPRAL)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/SSIDS/SSIDSSolver.cpp)
-   link_to_uno(spral ${SPRAL})
+   # add the library
+   set(LIBRARIES ${LIBRARIES} ${SPRAL})
+   # add a preprocessor definition
+   add_definitions("-D HAS_SPRAL")
+   # include the corresponding directory
+   get_filename_component(SPRAL_DIRECTORY ${SPRAL} DIRECTORY)
+   set(DIRECTORIES ${DIRECTORIES} ${SPRAL_DIRECTORY}/../include)
+   message(STATUS "Found SPRAL")
 endif()
 
 # LAPACK
