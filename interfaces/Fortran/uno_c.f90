@@ -157,8 +157,7 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, &
-                                       hessian_row_indices, hessian_column_indices, lagrangian_hessian, &
-                                       lagrangian_sign_convention) result(success) &
+                                       hessian_row_indices, hessian_column_indices, lagrangian_hessian) result(success) &
       bind(C, name="uno_set_lagrangian_hessian")
       import :: c_ptr, uno_int, c_double, c_bool, c_char, c_funptr
       type(c_ptr), value :: model
@@ -166,7 +165,6 @@ interface
       character(c_char), value :: hessian_triangular_part
       integer(uno_int), dimension(*) :: hessian_row_indices, hessian_column_indices
       type(c_funptr), value :: lagrangian_hessian
-      real(c_double), value :: lagrangian_sign_convention
       logical(c_bool) :: success
    end function uno_set_lagrangian_hessian
 end interface
@@ -175,15 +173,26 @@ end interface
 ! uno_set_lagrangian_hessian_operator
 !---------------------------------------------
 interface
-   function uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator, &
-                                                lagrangian_sign_convention) result(success) &
+   function uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator) result(success) &
       bind(C, name="uno_set_lagrangian_hessian_operator")
-      import :: c_ptr, uno_int, c_double, c_bool, c_funptr
+      import :: c_ptr, c_bool, c_funptr
       type(c_ptr), value :: model
       type(c_funptr), value :: lagrangian_hessian_operator
-      real(c_double), value :: lagrangian_sign_convention
       logical(c_bool) :: success
    end function uno_set_lagrangian_hessian_operator
+end interface
+
+!---------------------------------------------
+! uno_set_lagrangian_sign_convention
+!---------------------------------------------
+interface
+   function uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention) result(success) &
+      bind(C, name="uno_set_lagrangian_sign_convention")
+      import :: c_ptr, c_double, c_bool
+      type(c_ptr), value :: model
+      real(c_double), value :: lagrangian_sign_convention
+      logical(c_bool) :: success
+   end function uno_set_lagrangian_sign_convention
 end interface
 
 !---------------------------------------------

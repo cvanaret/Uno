@@ -458,6 +458,7 @@ end
       c_objective_hessian_operator_hs5,
       nothing,
       'U',
+      1.0,
     )
 
     UnoSolver.uno_set_initial_primal_iterate(model, x0)
@@ -511,6 +512,7 @@ end
       nothing,
       nothing,
       'U',
+      1.0,
     )
 
     UnoSolver.uno_set_initial_primal_iterate(model, x0)
@@ -565,6 +567,7 @@ end
       c_objective_hessian_operator_hs5,
       nothing,
       'U',
+      1.0,
       x0,
       preset="filtersqp",
       print_solution=true,

@@ -109,7 +109,7 @@ int main() {
 /*
       assert(uno_set_jacobian_operator(model, jacobian_operator));
       assert(uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator));
-      assert(uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator, lagrangian_sign_convention));
+      assert(uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator));
 */
       assert(uno_set_initial_primal_iterate(model, x0));
 
@@ -130,7 +130,8 @@ int main() {
 
       // run 2: solve with exact Hessian
       assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
-            hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention));
+            hessian_column_indices, lagrangian_hessian));
+      assert(uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention));
       uno_optimize(solver, model);
       // get the solution
       optimization_status = uno_get_optimization_status(solver);

@@ -70,7 +70,7 @@ namespace uno {
       std::vector<uno_int> hessian_column_indices{};
       Hessian lagrangian_hessian{};
       HessianOperator lagrangian_hessian_operator{};
-      double lagrangian_sign_convention{UNO_MULTIPLIER_NEGATIVE};
+      double lagrangian_sign_convention{UNO_MULTIPLIER_NEGATIVE}; // Uno's default
 
       // User data
       UserDataType user_data{};

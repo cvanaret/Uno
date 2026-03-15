@@ -572,8 +572,7 @@ bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperato
 }
 
 bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
-      const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, Hessian lagrangian_hessian,
-      double lagrangian_sign_convention) {
+      const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, Hessian lagrangian_hessian) {
    if (number_hessian_nonzeros < 0) {
       WARNING << "Please specify a positive number of Lagrangian Hessian nonzeros."  << std::endl;
       return false;
@@ -583,21 +582,11 @@ bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, ch
          UNO_UPPER_TRIANGLE << "'}."  << std::endl;
       return false;
    }
-   if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
-      WARNING << "Please specify a correct Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
-         UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;
-      return false;
-   }
    if (model == nullptr) {
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
-   // make sure that the sign convention is consistent with that of the Hessian operator
-   if (user_model->lagrangian_hessian_operator != nullptr && user_model->lagrangian_sign_convention != lagrangian_sign_convention) {
-      WARNING << "Please specify a Lagrangian sign convention consistent with that of the Hessian operator."  << std::endl;
-      return false;
-   }
    user_model->number_hessian_nonzeros = number_hessian_nonzeros;
    // if the Hessian is empty, the problem is an LP
    if (number_hessian_nonzeros == 0) {
@@ -615,28 +604,27 @@ bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, ch
       }
       user_model->hessian_triangular_part = UNO_LOWER_TRIANGLE;
       user_model->lagrangian_hessian = lagrangian_hessian;
-      user_model->lagrangian_sign_convention = lagrangian_sign_convention;
    }
    return true;
 }
 
-bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator, double lagrangian_sign_convention) {
-   if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
-      WARNING << "Please specify a Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
-         UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;
-      return false;
-   }
+bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator) {
    if (model == nullptr) {
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
-   // make sure that the sign convention is consistent with that of the Hessian function
-   if (user_model->lagrangian_hessian != nullptr && user_model->lagrangian_sign_convention != lagrangian_sign_convention) {
-      WARNING << "Please specify a Lagrangian sign convention consistent with that of the Hessian function."  << std::endl;
+   user_model->lagrangian_hessian_operator = lagrangian_hessian_operator;
+   return true;
+}
+
+bool uno_set_lagrangian_sign_convention(void* model, double lagrangian_sign_convention) {
+   if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
+      WARNING << "Please specify a Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
+         UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;
       return false;
    }
-   user_model->lagrangian_hessian_operator = lagrangian_hessian_operator;
+   CUserModel* user_model = static_cast<CUserModel*>(model);
    user_model->lagrangian_sign_convention = lagrangian_sign_convention;
    return true;
 }

@@ -186,24 +186,24 @@ extern "C" {
    // /!\ since the Lagrangian Hessian is symmetric, we ask for either the lower or the triangular part of the matrix.
    // takes as inputs the number of nonzero elements of the Lagrangian Hessian, a character that specifies whether the
    // lower ('L') or upper ('U') triangular part is provided, two arrays of row and column indices for the Hessian in
-   // COOrdinate format, a function pointer of the Hessian, and a scalar in {-1, +1} that determines the sign convention
-   // of the Lagrangian:
-   // if "lagrangian_sign_convention" == 1,  the Lagrangian is rho*f(x) + y^T c(x)
-   // if "lagrangian_sign_convention" == -1, the Lagrangian is rho*f(x) - y^T c(x)
+   // COOrdinate format, and a function pointer of the Hessian.
    // returns true if it succeeded, false otherwise.
    bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
-      const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, Hessian lagrangian_hessian,
-      double lagrangian_sign_convention);
+      const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, Hessian lagrangian_hessian);
 
    // [optional]
    // sets the Lagrangian Hessian operator (computes Hessian-vector products) of a given model.
-   // takes as inputs a function pointer of the Hessian operator, and a scalar in {-1, +1} that determines the sign
-   // convention of the Lagrangian:
-   // if "lagrangian_sign_convention" == 1,  the Lagrangian is rho*f(x) + y^T c(x)
-   // if "lagrangian_sign_convention" == -1, the Lagrangian is rho*f(x) - y^T c(x)
+   // takes as inputs a function pointer of the Hessian operator.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator,
-      double lagrangian_sign_convention);
+   bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator);
+
+   // [optional]
+   // sets the sign convention of the Lagrangian of a given model:
+   // if "lagrangian_sign_convention" == UNO_MULTIPLIER_POSITIVE,  the Lagrangian is rho*f(x) + y^T c(x)
+   // if "lagrangian_sign_convention" == UNO_MULTIPLIER_NEGATIVE, the Lagrangian is rho*f(x) - y^T c(x)
+   // if not set, Uno defaults to UNO_MULTIPLIER_NEGATIVE.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_lagrangian_sign_convention(void* model, double lagrangian_sign_convention);
 
    // [optional]
    // sets the user data of a given model.

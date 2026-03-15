@@ -33,7 +33,7 @@ uno_set_constraints(model, number_constraints, constraint_functions,
 - the Lagrangian Hessian;
 ```c
 uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, 
-   hessian_row_indices, hessian_column_indices, lagrangian_hessian, lagrangian_sign_convention);
+   hessian_row_indices, hessian_column_indices, lagrangian_hessian);
 ```
 - a Jacobian operator (performs Jacobian-vector products);
 ```c
@@ -45,7 +45,11 @@ uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator);
 ```
 - a Hessian operator (performs Hessian-vector products);
 ```c
-uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator, lagrangian_sign_convention);
+uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator);
+```
+- a Lagrangian sign convention (default is `UNO_MULTIPLIER_NEGATIVE`);
+```c
+uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention);
 ```
 - user data of an arbitrary type (`void*`);
 ```c

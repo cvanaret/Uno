@@ -84,21 +84,23 @@ end
 
 function uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part,
                                     hessian_row_indices, hessian_column_indices,
-                                    lagrangian_hessian, lagrangian_sign_convention)
+                                    lagrangian_hessian)
     @ccall libuno.uno_set_lagrangian_hessian(model::Ptr{Cvoid},
                                              number_hessian_nonzeros::Int32,
                                              hessian_triangular_part::Cchar,
                                              hessian_row_indices::Ptr{Int32},
                                              hessian_column_indices::Ptr{Int32},
-                                             lagrangian_hessian::Ptr{Cvoid},
-                                             lagrangian_sign_convention::Cdouble)::Bool
+                                             lagrangian_hessian::Ptr{Cvoid})::Bool
 end
 
-function uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator,
-                                             lagrangian_sign_convention)
+function uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator)
     @ccall libuno.uno_set_lagrangian_hessian_operator(model::Ptr{Cvoid},
-                                                      lagrangian_hessian_operator::Ptr{Cvoid},
-                                                      lagrangian_sign_convention::Cdouble)::Bool
+                                                      lagrangian_hessian_operator::Ptr{Cvoid})::Bool
+end
+
+function uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
+    @ccall libuno.uno_set_lagrangian_sign_convention(model::Ptr{Cvoid},
+                                                     lagrangian_sign_convention::Cdouble)::Bool
 end
 
 function uno_set_user_data(model, user_data)
