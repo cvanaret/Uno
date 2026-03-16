@@ -34,10 +34,14 @@ namespace uno {
       // specialized operator= for C += A^T*B
       template <typename Matrix1, typename Matrix2>
       BLASMatrix<T>& operator+=(Multiplication<Transpose<Matrix1>, Matrix2>&& expression);
-
-      // specialized operator+= for rank-k update C := A A^T
+      
+      // specialized operator= for rank-k initialization C := A A^T
       template <typename Matrix>
       BLASMatrix& operator=(Multiplication<Matrix, Transpose<Matrix>>&& expression);
+
+      // specialized operator= for rank-k initialization C := alpha A A^T
+      template <typename Matrix>
+      BLASMatrix& operator=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression);
 
       // specialized operator+= for rank-k update C += alpha A^T A
       template <typename Matrix>
@@ -108,7 +112,7 @@ namespace uno {
       return *this;
    }
 
-   // specialized operator+= for rank-k update C := A A^T
+   // specialized operator= for rank-k update C := A A^T
    template <typename T>
    template <typename Matrix>
    BLASMatrix<T>& BLASMatrix<T>::operator=(Multiplication<Matrix, Transpose<Matrix>>&& expression) {
@@ -120,9 +124,29 @@ namespace uno {
       DEBUG << "Performing rank " << correction_rank << " update\n";
       // check that A and B are the same object
       if (&A != &B) {
-         throw std::runtime_error("BLASMatrix::operator+=: rank-k update called on two different correction matrices");
+         throw std::runtime_error("BLASMatrix::operator=: rank-k update called on two different correction matrices");
       }
       blas3::symmetric_rank_k_update('L', 'N', this->number_rows, A.number_rows, A.number_columns, 1., A.data(),
+         A.leading_dimension, 0., this->data(), this->leading_dimension);
+      return *this;
+   }
+
+   // specialized operator= for rank-k initialization C := alpha A^T A
+   template <typename T>
+   template <typename Matrix>
+   BLASMatrix<T>& BLASMatrix<T>::operator=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression) {
+      assert(this->number_rows == this->number_columns);
+      // decode expression as alpha A^T B
+      const T alpha = expression.get_factor();
+      const auto& A = expression.get_expression().get_left().get_matrix();
+      const auto& B = expression.get_expression().get_right();
+      const size_t correction_rank = A.number_columns;
+      DEBUG << "Performing rank " << correction_rank << " update\n";
+      // check that A and B are the same object
+      if (&A != &B) {
+         throw std::runtime_error("BLASMatrix::operator=: rank-k update called on two different correction matrices");
+      }
+      blas3::symmetric_rank_k_update('L', 'T', this->number_rows, A.number_rows, A.number_columns, alpha, A.data(),
          A.leading_dimension, 0., this->data(), this->leading_dimension);
       return *this;
    }

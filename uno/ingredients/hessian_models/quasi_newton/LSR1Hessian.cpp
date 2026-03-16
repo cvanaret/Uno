@@ -9,6 +9,7 @@
 namespace uno {
    LSR1Hessian::LSR1Hessian(const Model& model, double objective_multiplier, const Options& options):
             QuasiNewtonHessian("L-SR1", model, objective_multiplier, options),
+         L(this->memory_size, this->memory_size),
          N(this->memory_size, this->memory_size),
          U(this->model.number_variables, this->memory_size) {
    }
@@ -28,22 +29,27 @@ namespace uno {
       // update the matrices S and Y
       this->update_memory_entries(current_iterate, trial_iterate, evaluation_cache);
 
-      /* build the N matrix */
+      /* update the entries of L and L_invsqrt_D = L D^{-1/2} */
       // the entries of L depend on this->current_index (1 row and 1 column, possibly empty)
       // row this->current_index
       for (size_t column_index: Range(this->current_index)) {
-         this->N.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
+         this->L.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
       }
-      // column this->current_index
-      for (size_t row_index: Range(this->current_index+1, this->number_entries_in_memory)) {
-         this->N.entry(row_index, this->current_index) = dot(this->S.column(row_index), this->Y.column(this->current_index));
+      // column this->current_index (including the diagonal)
+      for (size_t row_index: Range(this->current_index, this->number_entries_in_memory)) {
+         this->L.entry(row_index, this->current_index) = dot(this->S.column(row_index), this->Y.column(this->current_index));
       }
-      DEBUG << "> N: " << this->L;
-      // TODO
-      auto Nk = this->N.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
-      // compute an LDL' (signed Cholesky) factorization
+      DEBUG << "> L: " << this->L;
+
+      /* build the N matrix: N = D + L + Lᵀ - δ Sᵀ S */
+      const auto Sk = this->S.submatrix(this->model.number_variables, this->number_entries_in_memory);
+      this->N = this->delta * (transpose(Sk)*Sk);
+      // TODO this->N += this->L;
+
+      /* compute a LDL' (signed Cholesky) factorization without pivoting of N */
       // TODO because the factorization may fail, make a copy
       const double near_zero_pivot_tolerance = 0.; // TODO
+      auto Nk = this->N.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
       const bool ldlt_success = ldlt_nopiv_lvl2_rightlooking(Nk.data(), Nk.number_rows, Nk.leading_dimension, near_zero_pivot_tolerance);
       if (ldlt_success) {
          this->validate_update();
@@ -54,8 +60,8 @@ namespace uno {
       statistics.set("|SR1|", this->number_entries_in_memory);
    }
 
-   // Hessian-vector product where the Hessian approximation is Bk = B0 + U P⁻¹ Uᵀ and B0 = delta I
-   // Bk v = (B0 + U P⁻¹ Uᵀ) v = delta v + U (P⁻¹ (Uᵀ v))
+   // Hessian-vector product where the Hessian approximation is Bk = B0 + U P⁻¹ Uᵀ and B0 = δ I
+   // Bk v = (B0 + U P⁻¹ Uᵀ) v = δ v + U (P⁻¹ (Uᵀ v))
    void LSR1Hessian::compute_hessian_vector_product(const double* /*x*/, const double* vector,
          double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, double* result) {
       if (objective_multiplier != this->fixed_objective_multiplier) {
@@ -68,7 +74,7 @@ namespace uno {
          this->hessian_recomputation_required = false;
       }
 
-      // diagonal contribution delta*I
+      // diagonal contribution δ I
       for (size_t variable_index: Range(this->model.number_variables)) {
          result[variable_index] = this->delta * vector[variable_index];
       }

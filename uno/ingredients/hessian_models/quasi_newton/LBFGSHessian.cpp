@@ -77,8 +77,8 @@ namespace uno {
       }
    }
 
-   // Hessian-vector product where the Hessian approximation is Bk = B0 - U Uᵀ + V Vᵀ and B0 = delta I
-   // Bk v = (B0 - U Uᵀ + V Vᵀ) v = delta v - U (Uᵀ v) + V (Vᵀ v)
+   // Hessian-vector product where the Hessian approximation is Bk = B0 - U Uᵀ + V Vᵀ and B0 = δ I
+   // Bk v = (B0 - U Uᵀ + V Vᵀ) v = δ v - U (Uᵀ v) + V (Vᵀ v)
    void LBFGSHessian::compute_hessian_vector_product(const double* /*x*/, const double* vector,
          double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, double* result) {
       if (objective_multiplier != this->fixed_objective_multiplier) {
@@ -91,7 +91,7 @@ namespace uno {
          this->hessian_recomputation_required = false;
       }
 
-      // diagonal contribution delta*I
+      // diagonal contribution δ I
       for (size_t variable_index: Range(this->model.number_variables)) {
          result[variable_index] = this->delta * vector[variable_index];
       }
@@ -156,7 +156,7 @@ namespace uno {
       const auto L_invsqrt_Dk = this->L_invsqrt_D.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
       auto Mk = this->M.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
 
-      /* update the initial Hessian approximation delta * I */
+      /* update the initial Hessian approximation δ I */
       this->delta = this->compute_delta();
       DEBUG << "Initial identity multiple: " << this->delta << "\n";
 
@@ -169,7 +169,7 @@ namespace uno {
          this->L.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
          this->L_invsqrt_D.entry(this->current_index, column_index) = this->invsqrt_D[column_index] * this->L.entry(this->current_index, column_index);
       }
-      // column this->current_index
+      // column this->current_index (excluding the diagonal)
       for (size_t row_index: Range(this->current_index+1, this->number_entries_in_memory)) {
          this->L.entry(row_index, this->current_index) = dot(this->S.column(row_index), this->Y.column(this->current_index));
          this->L_invsqrt_D.entry(row_index, this->current_index) = this->invsqrt_D[this->current_index] * this->L.entry(row_index, this->current_index);
@@ -177,7 +177,7 @@ namespace uno {
       DEBUG << "> L: " << this->L;
       DEBUG << "> L_invsqrt_D: " << this->L_invsqrt_D;
 
-      /* form M = L D⁻¹ Lᵀ + Sᵀ B0 S = L_invsqrt_D L_invsqrt_Dᵀ + delta Sᵀ S */
+      /* form M = L D⁻¹ Lᵀ + Sᵀ B0 S = L_invsqrt_D L_invsqrt_Dᵀ + δ Sᵀ S */
       Mk = L_invsqrt_Dk * transpose(L_invsqrt_Dk);
       Mk += this->delta * (transpose(Sk) * Sk);
       DEBUG << "> M: " << this->M;

@@ -11,7 +11,7 @@ namespace uno {
    // express the Hessian approximation at iteration k by a low-rank update:
    // Bk = B0 - U Uᵀ + V Vᵀ
    // where
-   // B0 = delta_k I
+   // B0 = δ I
    // V = Yk Dk^(-1/2)
    // M = Skᵀ B0 Sk + Lk Dk^(-1) Lkᵀ = J Jᵀ
    // U = (B0 Sk + Yk Dk^(-1) Lkᵀ) J^(-T)
@@ -42,7 +42,7 @@ namespace uno {
       std::vector<double> invsqrt_D; // diagonal
       DenseMatrix<double> L_invsqrt_D; // lower triangular
       DenseMatrix<double> M;
-      // Hessian representation: Bk = B0 - U Uᵀ + V Vᵀ where B0 = delta I
+      // Hessian representation: Bk = B0 - U Uᵀ + V Vᵀ where B0 = δ I
       DenseMatrix<double> U;
       DenseMatrix<double> V;
       double delta{1.};
