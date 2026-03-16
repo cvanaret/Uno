@@ -96,7 +96,7 @@ int main() {
       const char hessian_triangular_part = UNO_LOWER_TRIANGLE;
       uno_int hessian_row_indices[] = {0, 1, 1};
       uno_int hessian_column_indices[] = {0, 0, 1};
-      const double lagrangian_sign_convention = UNO_MULTIPLIER_NEGATIVE;
+      const uno_int lagrangian_sign_convention = UNO_MULTIPLIER_NEGATIVE;
       // initial point
       double x0[] = {-2., 1.};
 

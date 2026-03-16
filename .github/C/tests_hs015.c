@@ -80,7 +80,7 @@ void print_vector(const double* vector, uno_int size) {
 	printf("\n");
 }
 
-void solve_instance(uno_int optimization_sense, double lagrangian_sign_convention, double reference_objective,
+void solve_instance(uno_int optimization_sense, uno_int lagrangian_sign_convention, double reference_objective,
 		const double reference_primal_solution[], const double reference_constraint_dual_solution[],
 		const double reference_lower_bound_dual_solution[], const double reference_upper_bound_dual_solution[]) {
 	// model creation

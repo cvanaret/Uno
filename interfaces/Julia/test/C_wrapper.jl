@@ -349,7 +349,7 @@ end
       c_lagrangian_hessian_operator_hs71,
       nothing,
       'L',
-      1.0,
+      1,
       x0,
       y0;
       preset="filtersqp",
@@ -458,7 +458,7 @@ end
       c_objective_hessian_operator_hs5,
       nothing,
       'U',
-      1.0,
+      1,
     )
 
     UnoSolver.uno_set_initial_primal_iterate(model, x0)
@@ -512,7 +512,7 @@ end
       nothing,
       nothing,
       'U',
-      1.0,
+      1,
     )
 
     UnoSolver.uno_set_initial_primal_iterate(model, x0)
@@ -567,7 +567,7 @@ end
       c_objective_hessian_operator_hs5,
       nothing,
       'U',
-      1.0,
+      1,
       x0,
       preset="filtersqp",
       print_solution=true,

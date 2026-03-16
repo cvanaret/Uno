@@ -4,8 +4,8 @@
 const UNO_MINIMIZE = Cint(1)
 const UNO_MAXIMIZE = Cint(-1)
 
-const UNO_MULTIPLIER_POSITIVE = Cdouble(1.0)
-const UNO_MULTIPLIER_NEGATIVE = Cdouble(-1.0)
+const UNO_MULTIPLIER_POSITIVE = Cint(1)
+const UNO_MULTIPLIER_NEGATIVE = Cint(-1)
 
 const UNO_PROBLEM_LINEAR = "LP"
 const UNO_PROBLEM_QUADRATIC = "QP"
@@ -100,7 +100,7 @@ end
 
 function uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
     @ccall libuno.uno_set_lagrangian_sign_convention(model::Ptr{Cvoid},
-                                                     lagrangian_sign_convention::Cdouble)::Bool
+                                                     lagrangian_sign_convention::Cint)::Bool
 end
 
 function uno_set_user_data(model, user_data)
