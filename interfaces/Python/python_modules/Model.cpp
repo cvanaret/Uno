@@ -68,13 +68,19 @@ namespace uno {
          if (hessian_triangular_part != UNO_LOWER_TRIANGLE && hessian_triangular_part != UNO_UPPER_TRIANGLE) {
             throw std::invalid_argument("Please specify a correct Hessian triangle.");
          }
-         
+
          user_model.number_hessian_nonzeros = number_hessian_nonzeros;
          // if the Hessian is empty, the problem is an LP
          if (number_hessian_nonzeros == 0) {
             user_model.problem_type = ProblemType::LINEAR;
          }
          else {
+            if (hessian_row_indices.size() != static_cast<size_t>(number_hessian_nonzeros)) {
+               throw std::invalid_argument("Dimension mismatch in hessian_row_indices.");
+            }
+            if (hessian_column_indices.size() != static_cast<size_t>(number_hessian_nonzeros)) {
+               throw std::invalid_argument("Dimension mismatch in hessian_column_indices.");
+            }
             // we only maintain the lower triangle
             if (hessian_triangular_part == UNO_LOWER_TRIANGLE) {
                user_model.hessian_row_indices = std::move(hessian_row_indices);
@@ -87,17 +93,6 @@ namespace uno {
             user_model.hessian_triangular_part = UNO_LOWER_TRIANGLE;
             user_model.lagrangian_hessian = std::move(lagrangian_hessian);
          }
-         if (hessian_row_indices.size() != static_cast<size_t>(number_hessian_nonzeros)) {
-            throw std::invalid_argument("Dimension mismatch in hessian_row_indices.");
-         }
-         if (hessian_column_indices.size() != static_cast<size_t>(number_hessian_nonzeros)) {
-            throw std::invalid_argument("Dimension mismatch in hessian_column_indices.");
-         }
-         user_model.number_hessian_nonzeros = number_hessian_nonzeros;
-         user_model.hessian_row_indices = std::move(hessian_row_indices);
-         user_model.hessian_column_indices = std::move(hessian_column_indices);
-         user_model.hessian_triangular_part = UNO_LOWER_TRIANGLE;
-         user_model.lagrangian_hessian = std::move(lagrangian_hessian);
       })
 
       .def("set_jacobian_operator", [](PythonUserModel& user_model, JacobianOperator jacobian_operator) {
