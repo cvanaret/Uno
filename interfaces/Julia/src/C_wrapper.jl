@@ -134,7 +134,7 @@ function uno_model(
   eval_Hv::Union{Function,Nothing},
   user_model=nothing,
   hessian_triangle::Char='L',
-  lagrangian_sign::Float64=1.0,
+  lagrangian_sign::Int=1,
   x0::Union{Vector{Float64},Nothing}=nothing,
   y0::Union{Vector{Float64},Nothing}=nothing,
 )
@@ -176,7 +176,7 @@ function uno_model(
     flag || error("Failed to set Hessian operator via uno_set_lagrangian_hessian_operator.")
   end
 
-  flag = uno_set_lagrangian_sign_convention(c_model, lagrangian_sign)
+  flag = uno_set_lagrangian_sign_convention(c_model, Cint(lagrangian_sign))
   flag || error("Failed to set Lagrangian sign convention via uno_set_lagrangian_sign_convention.")
 
   if ncon > 0
@@ -226,7 +226,7 @@ function uno_model(
   eval_Hv::Union{Function,Nothing},
   user_model=nothing,
   hessian_triangle::Char='L',
-  lagrangian_sign::Float64=1.0,
+  lagrangian_sign::Int=1,
   x0::Union{Vector{Float64},Nothing}=nothing,
 )
   return uno_model(
@@ -409,7 +409,7 @@ function uno(
   eval_Hv::Union{Function,Nothing},
   user_model=nothing,
   hessian_triangle::Char='L',
-  lagrangian_sign::Float64=1.0,
+  lagrangian_sign::Int=1,
   x0::Union{Vector{Float64},Nothing}=nothing,
   y0::Union{Vector{Float64},Nothing}=nothing;
   kwargs...
@@ -439,7 +439,7 @@ function uno(
   eval_Hv::Union{Function,Nothing},
   user_model=nothing,
   hessian_triangle::Char='L',
-  lagrangian_sign::Float64=1.0,
+  lagrangian_sign::Int=1,
   x0::Union{Vector{Float64},Nothing}=nothing;
   kwargs...
 )

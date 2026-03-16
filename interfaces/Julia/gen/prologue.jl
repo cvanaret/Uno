@@ -3,8 +3,8 @@ const UNO_MINIMIZE = Cint(1)
 const UNO_MAXIMIZE = Cint(-1)
 
 # Lagrange multiplier sign convention
-const UNO_MULTIPLIER_POSITIVE = Cdouble(1.0)
-const UNO_MULTIPLIER_NEGATIVE = Cdouble(-1.0)
+const UNO_MULTIPLIER_POSITIVE = Cint(1)
+const UNO_MULTIPLIER_NEGATIVE = Cint(-1)
 
 # Problem type: "LP" = linear problem, "QP" = quadratic problem, "NLP" = nonlinear problem
 const UNO_PROBLEM_LINEAR    = "LP"

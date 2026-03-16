@@ -1356,7 +1356,7 @@ function _setup_inner(model::Optimizer)::UnoSolver.Model
         model.hprod_available ? moi_lagrangian_hessian_operator : nothing,
         model,
         'L',
-        1.0,
+        1,
     )
     model.needs_new_inner = false
     return model.inner

@@ -22,7 +22,7 @@ program example_uno
     integer(uno_int), parameter :: base_indexing = UNO_ONE_BASED_INDEXING
     integer(uno_int), parameter :: optimization_sense = UNO_MINIMIZE
     character(len=1), parameter :: hessian_triangular_part = UNO_LOWER_TRIANGLE
-    real(c_double), parameter :: lagrangian_sign_convention = UNO_MULTIPLIER_NEGATIVE
+    integer(uno_int), parameter :: lagrangian_sign_convention = UNO_MULTIPLIER_NEGATIVE
     type(c_funptr) :: objective, gradient, constraints, jacobian, lagrangian_hessian
     type(c_funptr) :: jacobian_operator, jacobian_transposed_operator, lagrangian_hessian_operator
 

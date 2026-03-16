@@ -105,7 +105,7 @@ namespace uno {
          user_model.lagrangian_hessian_operator = lagrangian_hessian_operator;
       })
 
-      .def("uno_set_lagrangian_sign_convention", [](PythonUserModel& user_model, double lagrangian_sign_convention) {
+      .def("uno_set_lagrangian_sign_convention", [](PythonUserModel& user_model, uno_int lagrangian_sign_convention) {
          if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
             throw std::runtime_error("Please specify a correct Lagrangian sign convention.");
          }

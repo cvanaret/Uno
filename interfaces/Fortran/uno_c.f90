@@ -21,8 +21,8 @@ integer(uno_int), parameter :: UNO_MAXIMIZE = -1
 !---------------------------------------------
 ! Lagrange multiplier sign convention
 !---------------------------------------------
-real(c_double), parameter :: UNO_MULTIPLIER_POSITIVE =  1.0_c_double
-real(c_double), parameter :: UNO_MULTIPLIER_NEGATIVE = -1.0_c_double
+integer(uno_int), parameter :: UNO_MULTIPLIER_POSITIVE =  1
+integer(uno_int), parameter :: UNO_MULTIPLIER_NEGATIVE = -1
 
 !---------------------------------------------
 ! Problem type
@@ -188,9 +188,9 @@ end interface
 interface
    function uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention) result(success) &
       bind(C, name="uno_set_lagrangian_sign_convention")
-      import :: c_ptr, c_double, c_bool
+      import :: c_ptr, uno_int, c_bool
       type(c_ptr), value :: model
-      real(c_double), value :: lagrangian_sign_convention
+      integer(uno_int), value :: lagrangian_sign_convention
       logical(c_bool) :: success
    end function uno_set_lagrangian_sign_convention
 end interface

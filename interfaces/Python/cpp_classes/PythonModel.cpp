@@ -9,7 +9,7 @@
 namespace uno {
    PythonModel::PythonModel(const PythonUserModel& user_model):
       Model("Python model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
-         static_cast<double>(user_model.optimization_sense), user_model.lagrangian_sign_convention),
+         static_cast<double>(user_model.optimization_sense), static_cast<double>(user_model.lagrangian_sign_convention)),
          user_model(user_model),
          nonlinear_constraints(this->number_constraints),
          equality_constraints_collection(this->equality_constraints),

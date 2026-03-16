@@ -32,7 +32,7 @@ class UnoModel: public Model {
 public:
    explicit UnoModel(const CUserModel& user_model):
          Model("C model", static_cast<size_t>(user_model.number_variables), static_cast<size_t>(user_model.number_constraints),
-            static_cast<double>(user_model.optimization_sense), user_model.lagrangian_sign_convention),
+            static_cast<double>(user_model.optimization_sense), static_cast<double>(user_model.lagrangian_sign_convention)),
          user_model(user_model),
          nonlinear_constraints(this->number_constraints),
          equality_constraints_collection(this->equality_constraints),
@@ -618,7 +618,7 @@ bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian
    return true;
 }
 
-bool uno_set_lagrangian_sign_convention(void* model, double lagrangian_sign_convention) {
+bool uno_set_lagrangian_sign_convention(void* model, uno_int lagrangian_sign_convention) {
    if (lagrangian_sign_convention != UNO_MULTIPLIER_NEGATIVE && lagrangian_sign_convention != UNO_MULTIPLIER_POSITIVE) {
       WARNING << "Please specify a Lagrangian sign convention in {" << UNO_MULTIPLIER_NEGATIVE << ", " <<
          UNO_MULTIPLIER_POSITIVE << "}."  << std::endl;

@@ -29,7 +29,7 @@ namespace uno {
    class Model {
    public:
       Model(std::string name, size_t number_variables, size_t number_constraints, double optimization_sense,
-         double lagrangian_sign_convention);
+            double lagrangian_sign_convention);
       virtual ~Model() = default;
 
       const std::string name;

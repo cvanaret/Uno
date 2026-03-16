@@ -17,8 +17,8 @@ extern "C" {
    const uno_int UNO_MAXIMIZE = -1;
 
    // Lagrange multiplier sign convention
-   const double UNO_MULTIPLIER_POSITIVE =  1.0;
-   const double UNO_MULTIPLIER_NEGATIVE = -1.0;
+   const uno_int UNO_MULTIPLIER_POSITIVE =  1;
+   const uno_int UNO_MULTIPLIER_NEGATIVE = -1;
 
    // Problem type: "LP" = Linear Problem, "Q" = Quadratic Problem, "NLP" = Nonlinear Problem
    const char UNO_PROBLEM_LINEAR[]    = "LP";
@@ -199,11 +199,11 @@ extern "C" {
 
    // [optional]
    // sets the sign convention of the Lagrangian of a given model:
-   // if "lagrangian_sign_convention" == UNO_MULTIPLIER_POSITIVE,  the Lagrangian is rho*f(x) + y^T c(x)
+   // if "lagrangian_sign_convention" == UNO_MULTIPLIER_POSITIVE, the Lagrangian is rho*f(x) + y^T c(x)
    // if "lagrangian_sign_convention" == UNO_MULTIPLIER_NEGATIVE, the Lagrangian is rho*f(x) - y^T c(x)
    // if not set, Uno defaults to UNO_MULTIPLIER_NEGATIVE.
    // returns true if it succeeded, false otherwise.
-   bool uno_set_lagrangian_sign_convention(void* model, double lagrangian_sign_convention);
+   bool uno_set_lagrangian_sign_convention(void* model, uno_int lagrangian_sign_convention);
 
    // [optional]
    // sets the user data of a given model.
