@@ -12,34 +12,30 @@ def objective(x):
 	
 def constraints(x, constraint_values):
 	# the modeler should throw an exception if the function cannot be evaluated
-	constraint_values[0] = x[0]*x[1]
-	constraint_values[1] = x[0] + x[1]**2
+	constraint_values[:] = [x[0]*x[1], x[0] + x[1]**2]
 	
 def objective_gradient(x, gradient):
 	# the modeler should throw an exception if the function cannot be evaluated
-	gradient[0] = 400.*x[0]**3 - 400.*x[0]*x[1] + 2.*x[0] - 2.
-	gradient[1] = 200.*(x[1] - x[0]**2)
+	gradient[:] = [400.*x[0]**3 - 400.*x[0]*x[1] + 2.*x[0] - 2.,
+				   200.*(x[1] - x[0]**2)]
 
 def jacobian(x, jacobian_values):
 	# the modeler should throw an exception if the function cannot be evaluated
-	jacobian_values[0] = x[1]
-	jacobian_values[1] = 1.
-	jacobian_values[2] = x[0]
-	jacobian_values[3] = 2.*x[1]
+	jacobian_values[:] = [x[1], 1., x[0], 2.*x[1]]
 
 def lagrangian_hessian(x, objective_multiplier, multipliers, hessian_values):
 	# the modeler should throw an exception if the function cannot be evaluated
-	hessian_values[0] = objective_multiplier*(1200*x[0]**2 - 400.*x[1] + 2.)
-	hessian_values[1] = -400.*objective_multiplier*x[0] - multipliers[0]
-	hessian_values[2] = 200.*objective_multiplier - 2.*multipliers[1]
+	hessian_values[:] = [objective_multiplier*(1200*x[0]**2 - 400.*x[1] + 2.),
+						-400.*objective_multiplier*x[0] - multipliers[0],
+						200.*objective_multiplier - 2.*multipliers[1]]
 
 def lagrangian_hessian_operator(x, evaluate_at_x, objective_multiplier, multipliers, vector, result):
 	# the modeler should throw an exception if the function cannot be evaluated
 	hessian00 = objective_multiplier*(1200*x[0]**2. - 400.*x[1] + 2.)
 	hessian10 = -400.*objective_multiplier*x[0] - multipliers[0]
 	hessian11 = 200.*objective_multiplier - 2.*multipliers[1]
-	result[0] = hessian00*vector[0] + hessian10*vector[1]
-	result[1] = hessian10*vector[0] + hessian11*vector[1]
+	result[:] = [hessian00*vector[0] + hessian10*vector[1],
+				hessian10*vector[0] + hessian11*vector[1]]
 
 if __name__ == '__main__':
 	# model creation
