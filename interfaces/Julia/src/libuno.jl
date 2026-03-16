@@ -100,7 +100,7 @@ end
 
 function uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
     @ccall libuno.uno_set_lagrangian_sign_convention(model::Ptr{Cvoid},
-                                                     lagrangian_sign_convention::Cint)::Bool
+                                                     lagrangian_sign_convention::Int32)::Bool
 end
 
 function uno_set_user_data(model, user_data)
