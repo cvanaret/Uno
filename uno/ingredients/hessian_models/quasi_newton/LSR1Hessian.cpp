@@ -26,9 +26,19 @@ namespace uno {
          EvaluationCache& evaluation_cache) {
       DEBUG << "\n*** Updating the SR1 memory at slot " << this->current_index << '\n';
       // update the matrices S and Y
-      this->update_limited_memory(current_iterate, trial_iterate, evaluation_cache);
+      this->update_memory_entries(current_iterate, trial_iterate, evaluation_cache);
 
-      // build the N matrix
+      /* build the N matrix */
+      // the entries of L depend on this->current_index (1 row and 1 column, possibly empty)
+      // row this->current_index
+      for (size_t column_index: Range(this->current_index)) {
+         this->N.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
+      }
+      // column this->current_index
+      for (size_t row_index: Range(this->current_index+1, this->number_entries_in_memory)) {
+         this->N.entry(row_index, this->current_index) = dot(this->S.column(row_index), this->Y.column(this->current_index));
+      }
+      DEBUG << "> N: " << this->L;
       // TODO
       auto Nk = this->N.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
       // compute an LDL' (signed Cholesky) factorization

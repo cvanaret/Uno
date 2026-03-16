@@ -46,12 +46,11 @@ namespace uno {
          EvaluationCache& evaluation_cache) {
       DEBUG << "\n*** Updating the BFGS memory at slot " << this->current_index << '\n';
       // update the matrices S and Y
-      this->update_limited_memory(current_iterate, trial_iterate, evaluation_cache);
+      this->update_memory_entries(current_iterate, trial_iterate, evaluation_cache);
 
       // check that the latest D entry sᵀ y is > 0
       // TODO implement Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
       this->update_D();
-      DEBUG << "> diag(D): "; print_vector(DEBUG, this->D);
       if (0. < this->D[this->current_index]) {
          this->validate_update();
       }
@@ -143,6 +142,7 @@ namespace uno {
 
    void LBFGSHessian::update_D() {
       this->D[this->current_index] = dot(this->S.column(this->current_index), this->Y.column(this->current_index));
+      DEBUG << "> diag(D): "; print_vector(DEBUG, this->D);
    }
 
    void LBFGSHessian::recompute_hessian_representation() {

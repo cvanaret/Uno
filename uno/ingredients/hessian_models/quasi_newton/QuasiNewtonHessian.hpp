@@ -38,10 +38,10 @@ namespace uno {
       Vector<double> trial_lagrangian_gradient;
       bool hessian_recomputation_required{false};
 
-      void update_limited_memory(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache);
-      void validate_update();
+      void update_memory_entries(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache);
       void update_S(const Iterate& current_iterate, const Iterate& trial_iterate);
       void update_Y(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache);
+      void validate_update();
    };
 } // namespace
 
