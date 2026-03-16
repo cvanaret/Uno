@@ -7,10 +7,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "unopy"
-# PyPI
-version = "0.2.7"
-# TestPyPI
-#version = "0.2.25"
+version = "0.3.0"
 description = "With Uno, finally take full control of your SQP/barrier solver for nonlinearly constrained optimization"
 readme = "interfaces/Python/README.md"
 authors = [
