@@ -52,12 +52,14 @@ namespace uno {
          auto objective_py = to_array(&objective_value, 1);
 
          // evaluate objective
-         const uno_int return_code = (*this->user_model.objective_function)(x_py, objective_py);
-         if (0 < return_code) {
+         try {
+            objective_value = (*this->user_model.objective_function)(x_py);
+            objective_value *= this->optimization_sense;
+            ++this->number_model_evaluations.objective;
+         }
+         catch (const std::exception&) {
             throw FunctionEvaluationError();
          }
-         objective_value *= this->optimization_sense;
-         ++this->number_model_evaluations.objective;
       }
       return objective_value;
    }
@@ -68,11 +70,13 @@ namespace uno {
          auto constraints_py = to_array(constraints.data(), this->number_constraints);
 
          // evaluate constraints
-         const uno_int return_code = (*this->user_model.constraint_functions)(x_py, constraints_py);
-         if (0 < return_code) {
+         try {
+            (*this->user_model.constraint_functions)(x_py, constraints_py);
+            ++this->number_model_evaluations.constraints;
+         }
+         catch (const std::exception&) {
             throw FunctionEvaluationError();
          }
-         ++this->number_model_evaluations.constraints;
       }
    }
 
@@ -82,12 +86,14 @@ namespace uno {
          auto gradient_py = to_array(gradient.data(), this->number_variables);
 
          // evaluate objective gradient
-         const uno_int return_code = (*this->user_model.objective_gradient)(x_py, gradient_py);
-         if (0 < return_code) {
+         try {
+            (*this->user_model.objective_gradient)(x_py, gradient_py);
+            view(gradient, 0, this->number_variables).scale(this->optimization_sense);
+            ++this->number_model_evaluations.objective_gradient;
+         }
+         catch (const std::exception&) {
             throw GradientEvaluationError();
          }
-         view(gradient, 0, this->number_variables).scale(this->optimization_sense);
-         ++this->number_model_evaluations.objective_gradient;
       }
    }
 
@@ -130,11 +136,13 @@ namespace uno {
          auto jacobian_py = to_array(jacobian_values, this->number_jacobian_nonzeros());
 
          // evaluate Jacobian
-         const uno_int return_code = (*this->user_model.jacobian)(x_py, jacobian_py);
-         if (0 < return_code) {
+         try {
+            (*this->user_model.jacobian)(x_py, jacobian_py);
+            ++this->number_model_evaluations.jacobian;
+         }
+         catch (const std::exception&) {
             throw GradientEvaluationError();
          }
-         ++this->number_model_evaluations.jacobian;
       }
    }
 
@@ -151,16 +159,17 @@ namespace uno {
          auto hessian_py = to_array(hessian_values, this->number_hessian_nonzeros());
 
          // evaluate Lagrangian Hessian
-         const uno_int return_code = (*this->user_model.lagrangian_hessian)(x_py, objective_multiplier, multipliers_py,
-            hessian_py);
+         try {
+            (*this->user_model.lagrangian_hessian)(x_py, objective_multiplier, multipliers_py, hessian_py);
+            ++this->number_model_evaluations.hessian;
+         }
+         catch (const std::exception&) {
+            throw HessianEvaluationError();
+         }
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
          }
-         if (0 < return_code) {
-            throw HessianEvaluationError();
-         }
-         ++this->number_model_evaluations.hessian;
       }
       else {
          throw std::runtime_error("evaluate_lagrangian_hessian not implemented");
@@ -174,8 +183,10 @@ namespace uno {
          auto result_py = to_array(result, this->number_constraints);
 
          // evaluate Jacobian-vector product
-         const uno_int return_code = (*this->user_model.jacobian_operator)(x_py, true, vector_py, result_py);
-         if (0 < return_code) {
+         try {
+            (*this->user_model.jacobian_operator)(x_py, true, vector_py, result_py);
+         }
+         catch (const std::exception&) {
             throw GradientEvaluationError();
          }
       }
@@ -191,8 +202,10 @@ namespace uno {
          auto result_py = to_array(result, this->number_variables);
 
          // evaluate Jacobian^T-vector product
-         const uno_int return_code = (*this->user_model.jacobian_transposed_operator)(x_py, true, vector_py, result_py);
-         if (0 < return_code) {
+         try {
+            (*this->user_model.jacobian_transposed_operator)(x_py, true, vector_py, result_py);
+         }
+         catch (const std::exception&) {
             throw GradientEvaluationError();
          }
       }
@@ -215,14 +228,15 @@ namespace uno {
          auto result_py = to_array(result, this->number_variables);
 
          // evaluate Hessian-vector product
-         const uno_int return_code = (*this->user_model.lagrangian_hessian_operator)(x_py, true, objective_multiplier,
-            multipliers_py, vector_py, result_py);
+         try {
+            (*this->user_model.lagrangian_hessian_operator)(x_py, true, objective_multiplier, multipliers_py, vector_py, result_py);
+         }
+         catch (const std::exception&) {
+            throw HessianEvaluationError();
+         }
          // flip the signs of the multipliers back
          if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
             const_cast<Vector<double>&>(multipliers).scale(-1.);
-         }
-         if (0 < return_code) {
-            throw HessianEvaluationError();
          }
       }
       else {

@@ -43,21 +43,21 @@ namespace uno {
       return array;
    }
 
-   using Objective = std::function<int(const_array<double>, py::array_t<double>)>;
+   using Objective = std::function<double(const_array<double>)>;
 
-   using Constraints = std::function<int(const_array<double>, py::array_t<double>)>;
+   using Constraints = std::function<void(const_array<double>, py::array_t<double>)>;
 
-   using ObjectiveGradient = std::function<int(const_array<double>, py::array_t<double>)>;
+   using ObjectiveGradient = std::function<void(const_array<double>, py::array_t<double>)>;
 
-   using Jacobian = std::function<int(const_array<double>, py::array_t<double>)>;
+   using Jacobian = std::function<void(const_array<double>, py::array_t<double>)>;
 
-   using Hessian = std::function<int(const_array<double>, double, const_array<double>, py::array_t<double>)>;
+   using Hessian = std::function<void(const_array<double>, double, const_array<double>, py::array_t<double>)>;
 
-   using JacobianOperator = std::function<int(const_array<double>, bool, const_array<double>, py::array_t<double>)>;
+   using JacobianOperator = std::function<void(const_array<double>, bool, const_array<double>, py::array_t<double>)>;
 
-   using JacobianTransposedOperator = std::function<int(const_array<double>, bool, const_array<double>, py::array_t<double>)>;
+   using JacobianTransposedOperator = std::function<void(const_array<double>, bool, const_array<double>, py::array_t<double>)>;
 
-   using HessianOperator = std::function<int(const_array<double>, bool, double, const_array<double>,
+   using HessianOperator = std::function<void(const_array<double>, bool, double, const_array<double>,
       const_array<double>, py::array_t<double>)>;
 
    using PythonUserModel = UserModel<std::optional<Objective>, std::optional<ObjectiveGradient>, std::optional<Constraints>,
