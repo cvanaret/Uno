@@ -92,7 +92,7 @@ function UnoSolver.uno_model(nlp::AbstractNLPModel{Float64, Vector{Float64}})
     nlp.meta.hprod_available ? nlpmodels_lagrangian_hessian_operator : nothing,
     nlp,
     'L',
-    1.0,
+    1,
     nlp.meta.x0,
     nlp.meta.y0,
   )
