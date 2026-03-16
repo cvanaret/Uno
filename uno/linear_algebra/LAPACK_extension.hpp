@@ -42,11 +42,11 @@ namespace uno {
 
       // step 3: rank-1 update of the trailing sub-matrix (lower triangle):
       //   A22 <- A22 - d11 · l21 · l21ᵀ
-      auto A22 = view(A, 1 + lda, lda*n - 1);
-      blas3::symmetric_rank_1_update('L', n - 1, -d11, l21, A22.data(), lda);
+      double* A22 = A + lda + 1;
+      blas3::symmetric_rank_1_update('L', n - 1, -d11, l21, A22, lda);
 
       // step 4: recurse on the (n-1)x(n-1) trailing sub-matrix
-      return ldlt_nopiv_lvl2_rightlooking(A22.data(), n - 1, lda, zero_pivot_tolerance);
+      return ldlt_nopiv_lvl2_rightlooking(A22, n - 1, lda, zero_pivot_tolerance);
    }
 } // namespace
 
