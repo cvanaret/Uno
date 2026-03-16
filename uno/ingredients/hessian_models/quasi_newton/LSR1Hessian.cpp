@@ -9,7 +9,7 @@
 namespace uno {
    LSR1Hessian::LSR1Hessian(const Model& model, double objective_multiplier, const Options& options):
             QuasiNewtonHessian("L-SR1", model, objective_multiplier, options),
-         L(this->memory_size, this->memory_size),
+         LD(this->memory_size, this->memory_size),
          N(this->memory_size, this->memory_size),
          U(this->model.number_variables, this->memory_size) {
    }
@@ -28,28 +28,36 @@ namespace uno {
       DEBUG << "\n*** Updating the SR1 memory at slot " << this->current_index << '\n';
       // update the matrices S and Y
       this->update_memory_entries(current_iterate, trial_iterate, evaluation_cache);
+      // take the new point into account for the computations
+      const size_t size = std::min(this->number_entries_in_memory + 1, this->memory_size);
 
-      /* update the entries of L and L_invsqrt_D = L D^{-1/2} */
-      // the entries of L depend on this->current_index (1 row and 1 column, possibly empty)
+      /* update the entries of the lower triangular matrix LD := D + L + Lᵀ */
+      // the entries of LD depend on this->current_index (1 row and 1 column, possibly empty)
       // row this->current_index
       for (size_t column_index: Range(this->current_index)) {
-         this->L.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
+         this->LD.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
       }
       // column this->current_index (including the diagonal)
-      for (size_t row_index: Range(this->current_index, this->number_entries_in_memory)) {
-         this->L.entry(row_index, this->current_index) = dot(this->S.column(row_index), this->Y.column(this->current_index));
+      for (size_t row_index: Range(this->current_index, size)) {
+         this->LD.entry(row_index, this->current_index) = dot(this->S.column(row_index), this->Y.column(this->current_index));
       }
-      DEBUG << "> L: " << this->L;
+      DEBUG << "> LD: " << this->LD;
 
-      /* build the N matrix: N = D + L + Lᵀ - δ Sᵀ S */
-      const auto Sk = this->S.submatrix(this->model.number_variables, this->number_entries_in_memory);
-      this->N = this->delta * (transpose(Sk)*Sk);
-      // TODO this->N += this->L;
+      /* build the symmetric matrix N = D + L + Lᵀ - δ Sᵀ S */
+      const auto Sk = this->S.submatrix(this->model.number_variables, size);
+      auto Lk = this->LD.submatrix(size, size);
+      auto Nk = this->N.submatrix(size, size);
+      Nk = (-this->delta) * (transpose(Sk)*Sk);
+      for (size_t column_index: Range(size)) {
+         for (size_t row_index: Range(column_index, size)) {
+            this->N.entry(row_index, column_index) += this->LD.entry(row_index, column_index);
+         }
+      }
+      DEBUG << "> N: " << this->N;
 
       /* compute a LDL' (signed Cholesky) factorization without pivoting of N */
       // TODO because the factorization may fail, make a copy
       const double near_zero_pivot_tolerance = 0.; // TODO
-      auto Nk = this->N.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
       const bool ldlt_success = ldlt_nopiv_lvl2_rightlooking(Nk.data(), Nk.number_rows, Nk.leading_dimension, near_zero_pivot_tolerance);
       if (ldlt_success) {
          this->validate_update();
@@ -65,7 +73,7 @@ namespace uno {
    void LSR1Hessian::compute_hessian_vector_product(const double* /*x*/, const double* vector,
          double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, double* result) {
       if (objective_multiplier != this->fixed_objective_multiplier) {
-         throw std::runtime_error("The L-BFGS Hessian model was initialized with a different objective multiplier");
+         throw std::runtime_error("The L-SR1 Hessian model was initialized with a different objective multiplier");
       }
 
       // update_limited_memory() has updated the limited memory. A recomputation of the Hessian representation may be required
@@ -94,5 +102,8 @@ namespace uno {
 
    void LSR1Hessian::recompute_hessian_representation() {
       // TODO
+
+      // increment the slot: if we exceed the size of the memory, we start over and replace the oldest point in memory
+      this->current_index = (this->current_index + 1) % this->memory_size;
    }
 } // namespace

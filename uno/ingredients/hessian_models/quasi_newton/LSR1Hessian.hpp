@@ -23,12 +23,11 @@ namespace uno {
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) override;
 
    protected:
-      DenseMatrix<double> L; // lower triangular
+      DenseMatrix<double> LD; // lower triangular
       DenseMatrix<double> N;
       // Hessian representation: Bk = B0 + U P⁻¹ Uᵀ where B0 = delta I
       DenseMatrix<double> U;
       double delta{1.};
-      bool hessian_recomputation_required{false};
 
       void recompute_hessian_representation();
    };
