@@ -59,6 +59,7 @@ namespace uno {
          EvaluationCache& evaluation_cache) {
       this->update_S(current_iterate, trial_iterate);
       this->update_Y(current_iterate, trial_iterate, evaluation_cache);
+      DEBUG << "S and Y updated at slot " << this->current_index << '\n';
       DEBUG << "> S: " << this->S;
       DEBUG << "> Y: " << this->Y;
    }
@@ -80,11 +81,7 @@ namespace uno {
    }
 
    void QuasiNewtonHessian::validate_update() {
-      DEBUG << "S and Y successfully updated at slot " << this->current_index << '\n';
       this->number_entries_in_memory = std::min(this->number_entries_in_memory + 1, this->memory_size);
-      // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
-      // Hessian approximation will be used, we delay the update to the beginning of the next major iteration
-      this->hessian_recomputation_required = true;
       DEBUG << "There are now " << this->number_entries_in_memory << " entries in memory (capacity " << this->memory_size << ")\n";
    }
 } // namespace

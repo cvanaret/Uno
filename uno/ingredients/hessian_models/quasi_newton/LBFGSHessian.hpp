@@ -13,8 +13,8 @@ namespace uno {
    // where
    // B0 = δ I
    // V = Yk Dk^(-1/2)
-   // M = Skᵀ B0 Sk + Lk Dk^(-1) Lkᵀ = J Jᵀ
-   // U = (B0 Sk + Yk Dk^(-1) Lkᵀ) J^(-T)
+   // M = δ Skᵀ Sk + Lk Dk⁻¹ Lkᵀ = J Jᵀ
+   // U = (δ Sk + Yk Dk⁻¹ Lkᵀ) J⁻ᵀ
    class LBFGSHessian: public QuasiNewtonHessian {
    public:
       LBFGSHessian(const Model& model, double objective_multiplier, const Options& options);

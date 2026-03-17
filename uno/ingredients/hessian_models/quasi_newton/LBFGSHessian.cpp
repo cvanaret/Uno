@@ -44,20 +44,13 @@ namespace uno {
 
    void LBFGSHessian::notify_accepted_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) {
-      DEBUG << "\n*** Updating the BFGS memory at slot " << this->current_index << '\n';
+      statistics.set("|BFGS|", this->number_entries_in_memory);
+      DEBUG << "\n*** Adding entries to the BFGS memory at slot " << this->current_index << '\n';
       // update the matrices S and Y
       this->update_memory_entries(current_iterate, trial_iterate, evaluation_cache);
-
-      // check that the latest D entry sᵀ y is > 0
-      // TODO implement Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
-      this->update_D();
-      if (0. < this->D[this->current_index]) {
-         this->validate_update();
-      }
-      else {
-         DEBUG << "Skipping the update\n";
-      }
-      statistics.set("|BFGS|", this->number_entries_in_memory);
+      // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
+      // Hessian approximation will be used, we delay the update to the beginning of the next major iteration
+      this->hessian_recomputation_required = true;
    }
 
    // forms the diagonal part of the L-BFGS Hessian approximation
@@ -146,8 +139,16 @@ namespace uno {
    }
 
    void LBFGSHessian::recompute_hessian_representation() {
+      // check that the latest D entry sᵀ y is > 0
+      // TODO implement Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
+      this->update_D();
+      if (this->D[this->current_index] <= 0.) {
+         DEBUG << "Skipping the update\n";
+         return;
+      }
+
+      this->validate_update();
       assert(0 < this->number_entries_in_memory);
-      assert(0 < this->D[this->current_index]);
 
       DEBUG << "\n*** Recomputing the Hessian representation with " << this->number_entries_in_memory << " entries\n";
       // note: some matrices were allocated with the maximum memory size. We will work with submatrices instead (of size
@@ -187,7 +188,7 @@ namespace uno {
       DEBUG << "Cholesky success: " << success << '\n';
       DEBUG << "> J: " << this->M;
 
-      /* update V and U */
+      /* form V and U */
       // update the current column of V = Y D^{-1/2}
       this->V.column(this->current_index) = this->invsqrt_D[this->current_index] * this->Y.column(this->current_index);
       // form U = (δ S + Y D⁻¹ Lᵀ) J⁻ᵀ
@@ -204,7 +205,7 @@ namespace uno {
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
    
-   // compute delta = 1/gamma where gamma = sᵀy / yᵀy at the last entry
+   // compute δ = yᵀ y / sᵀ y at the last entry
    // (7.20) in Numerical optimization (Nocedal & Wright)
    double LBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);

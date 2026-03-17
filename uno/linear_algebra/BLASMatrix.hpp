@@ -39,9 +39,9 @@ namespace uno {
       template <typename Matrix>
       BLASMatrix& operator=(Multiplication<Matrix, Transpose<Matrix>>&& expression);
 
-      // specialized operator= for rank-k initialization C := alpha A Aᵀ
+      // specialized operator= for rank-k initialization C := alpha Aᵀ A
       template <typename Matrix>
-      BLASMatrix& operator=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression);
+      BLASMatrix<T>& operator=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression);
 
       // specialized operator+= for rank-k update C += alpha Aᵀ A
       template <typename Matrix>

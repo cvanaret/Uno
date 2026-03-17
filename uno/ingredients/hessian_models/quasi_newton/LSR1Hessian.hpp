@@ -30,6 +30,7 @@ namespace uno {
       double delta{1.};
 
       void recompute_hessian_representation();
+      double compute_delta() const;
    };
 } // namespace
 
