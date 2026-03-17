@@ -49,6 +49,7 @@ Uno is currently used as a nonlinear optimization solver in:
 - [JuMP.jl](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers)
 - [DNLP](https://github.com/cvxgrp/DNLP/pull/119), an extension of [CVXPY](https://www.cvxpy.org/) to general nonlinear programming
 - [Vecchia.jl](https://github.com/cgeoga/Vecchia.jl), a package for Gaussian processes approximation
+- [control-toolbox](https://github.com/control-toolbox), a collection of Julia packages for mathematical control and its applications
 - [FelooPy](https://www.linkedin.com/posts/k-tafakkori_optimization101-operationsresearch-decisionscience-activity-7397646574035697664-AzmK), a user-friendly tool for coding, modeling, and solving decision problems
 - [IMPL &copy; /IMPL-DATA &copy;](https://www.linkedin.com/posts/jeffrey-dean-kelly-a5420a6a_releases-cvanaretuno-activity-7388564004585160704-WSxz/) by [Industrial Algorithms Limited](https://www.industrialgorithms.ca/), a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation
 
