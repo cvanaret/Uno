@@ -30,16 +30,32 @@ namespace uno {
          if (model.has_hessian_matrix() || model.has_hessian_operator()) {
             return std::make_unique<ExactHessian>(model);
          }
-         // if no Hessian (matrix or operator) is available, pick an L-BFGS Hessian
-         else {
+         // no Hessian (matrix or operator) is available
+         // SQP methods: pick an L-BFGS Hessian
+         else if (options.get_string("inequality_handling_method") == "inequality_constrained") {
             WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-BFGS Hessian instead\n";
             // override user defined option
             options.set_string("hessian_model", "LBFGS", true);
             return std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
          }
+         else { // interior-point methods: pick an identity Hessian for now
+            WARNING << "An exact Hessian (matrix or operator) was not provided, setting an identity Hessian instead\n";
+            // override user defined option
+            options.set_string("hessian_model", "identity", true);
+            return std::make_unique<IdentityHessian>(model.number_variables);
+         }
       }
       else if (hessian_model == "LBFGS") {
-         return std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
+         // SQP methods: pick an L-BFGS Hessian
+         if (options.get_string("inequality_handling_method") == "inequality_constrained") {
+            return std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
+         }
+         else { // interior-point methods: pick an identity Hessian for now
+            WARNING << "An exact Hessian (matrix or operator) was not provided, setting an identity Hessian instead\n";
+            // override user defined option
+            options.set_string("hessian_model", "identity", true);
+            return std::make_unique<IdentityHessian>(model.number_variables);
+         }
       }
       else if (hessian_model == "identity") {
          return std::make_unique<IdentityHessian>(model.number_variables);
