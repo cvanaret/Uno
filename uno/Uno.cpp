@@ -96,7 +96,7 @@ namespace uno {
          Iterate trial_iterate(current_iterate);
 
          try {
-            bool termination = false;
+            bool termination = (max_iterations <= major_iterations);
             // check for termination
             while (!termination) {
                ++major_iterations;
