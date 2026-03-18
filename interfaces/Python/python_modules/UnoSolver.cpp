@@ -5,6 +5,7 @@
 #include <string>
 #include "../cpp_classes/PythonModel.hpp"
 #include "../cpp_classes/UnoSolverWrapper.hpp"
+#include "options/Options.hpp"
 #include "options/Presets.hpp"
 
 namespace py = pybind11;
@@ -16,20 +17,64 @@ namespace uno {
       .def(py::init<>(), "Constructor")
 
       // methods
+      .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, bool option_value) {
+         const auto type = Options::option_types.find(option_name);
+         if (type != Options::option_types.end()) { // key found
+            if (type->second == OptionType::BOOL) { // correct type
+               solver.options.set_bool(option_name, option_value);
+            }
+            else { // incorrect type
+               throw py::type_error(option_name + " is not of type bool");
+            }
+         }
+         else { // key not found
+            throw py::key_error(option_name + " does not exist");
+         }
+      }, py::arg("option_name"), py::arg("option_value"))
+
       .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, uno_int option_value) {
-         solver.options.set_integer(option_name, option_value);
+         const auto type = Options::option_types.find(option_name);
+         if (type != Options::option_types.end()) { // key found
+            if (type->second == OptionType::INTEGER) { // correct type
+               solver.options.set_integer(option_name, option_value);
+            }
+            else { // incorrect type
+               throw py::type_error(option_name + " is not of type int");
+            }
+         }
+         else { // key not found
+            throw py::key_error(option_name + " does not exist");
+         }
       }, py::arg("option_name"), py::arg("option_value"))
 
       .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, double option_value) {
-         solver.options.set_double(option_name, option_value);
-      }, py::arg("option_name"), py::arg("option_value"))
-
-      .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, bool option_value) {
-         solver.options.set_bool(option_name, option_value);
+         const auto type = Options::option_types.find(option_name);
+         if (type != Options::option_types.end()) { // key found
+            if (type->second == OptionType::DOUBLE) { // correct type
+               solver.options.set_double(option_name, option_value);
+            }
+            else { // incorrect type
+               throw py::type_error(option_name + " is not of type double");
+            }
+         }
+         else { // key not found
+            throw py::key_error(option_name + " does not exist");
+         }
       }, py::arg("option_name"), py::arg("option_value"))
 
       .def("set_option", [](UnoSolverWrapper& solver, const std::string& option_name, const std::string& option_value) {
-         solver.options.set_string(option_name, option_value);
+         const auto type = Options::option_types.find(option_name);
+         if (type != Options::option_types.end()) { // key found
+            if (type->second == OptionType::STRING) { // correct type
+               solver.options.set_string(option_name, option_value);
+            }
+            else { // incorrect type
+               throw py::type_error(option_name + " is not of type string");
+            }
+         }
+         else { // key not found
+            throw py::key_error(option_name + " does not exist");
+         }
       }, py::arg("option_name"), py::arg("option_value"))
 
       .def("set_preset", [](UnoSolverWrapper& solver, const std::string& preset_name) {

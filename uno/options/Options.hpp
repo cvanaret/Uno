@@ -41,6 +41,8 @@ namespace uno {
       void overwrite_with(const Options& overwriting_options);
       void print_non_default() const;
 
+      static const std::unordered_map<std::string, OptionType> option_types;
+
    private:
       std::map<std::string, uno_int> integer_options{};
       std::map<std::string, double> double_options{};
@@ -49,8 +51,6 @@ namespace uno {
 
       mutable std::map<std::string, bool> used{};
       mutable std::map<std::string, bool> overwritten_options{};
-
-      static const std::unordered_map<std::string, OptionType> option_types;
    };
 } // namespace
 
