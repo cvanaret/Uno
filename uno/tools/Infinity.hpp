@@ -15,6 +15,11 @@ namespace uno {
    inline bool is_finite(NumericalType value) {
       return std::abs(value) < INF<NumericalType>;
    }
+
+   template <typename NumericalType>
+   inline bool is_infinite(NumericalType value) {
+      return std::abs(value) == INF<NumericalType>;
+   }
 } // namespace
 
 #endif // UNO_INFINITY_H

@@ -134,14 +134,14 @@ namespace uno {
          if (is_finite(this->first_reformulation.variable_lower_bound(variable_index))) { // lower bounded
             barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - this->first_reformulation.variable_lower_bound(variable_index));
             // damping
-            if (!is_finite(this->first_reformulation.variable_upper_bound(variable_index))) {
+            if (is_infinite(this->first_reformulation.variable_upper_bound(variable_index))) {
                barrier_term += this->parameters.damping_factor * this->barrier_parameter;
             }
          }
          if (is_finite(this->first_reformulation.variable_upper_bound(variable_index))) { // upper bounded
             barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - this->first_reformulation.variable_upper_bound(variable_index));
             // damping
-            if (!is_finite(this->first_reformulation.variable_lower_bound(variable_index))) {
+            if (is_infinite(this->first_reformulation.variable_lower_bound(variable_index))) {
                barrier_term -= this->parameters.damping_factor * this->barrier_parameter;
             }
          }
@@ -163,14 +163,14 @@ namespace uno {
          if (is_finite(this->first_reformulation.variable_lower_bound(variable_index))) { // lower bounded
             barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - this->first_reformulation.variable_lower_bound(variable_index));
             // damping
-            if (!is_finite(this->first_reformulation.variable_upper_bound(variable_index))) {
+            if (is_infinite(this->first_reformulation.variable_upper_bound(variable_index))) {
                barrier_term += this->parameters.damping_factor * this->barrier_parameter;
             }
          }
          if (is_finite(this->first_reformulation.variable_upper_bound(variable_index))) { // upper bounded
             barrier_term += -this->barrier_parameter/(iterate.primals[variable_index] - this->first_reformulation.variable_upper_bound(variable_index));
             // damping
-            if (!is_finite(this->first_reformulation.variable_lower_bound(variable_index))) {
+            if (is_infinite(this->first_reformulation.variable_lower_bound(variable_index))) {
                barrier_term -= this->parameters.damping_factor * this->barrier_parameter;
             }
          }
@@ -387,7 +387,7 @@ namespace uno {
          if (is_finite(lower_bound)) {
             directional_derivative += -this->barrier_parameter / (current_iterate.primals[variable_index] -
                lower_bound) * primal_direction[variable_index];
-            if (!is_finite(upper_bound)) {
+            if (is_infinite(upper_bound)) {
                // damping
                directional_derivative += this->parameters.damping_factor * this->barrier_parameter * primal_direction[variable_index];
             }
@@ -395,7 +395,7 @@ namespace uno {
          if (is_finite(upper_bound)) {
             directional_derivative += -this->barrier_parameter / (current_iterate.primals[variable_index] -
                upper_bound) * primal_direction[variable_index];
-            if (!is_finite(lower_bound)) {
+            if (is_infinite(lower_bound)) {
                // damping
                directional_derivative -= this->parameters.damping_factor * this->barrier_parameter * primal_direction[variable_index];
             }
@@ -479,14 +479,14 @@ namespace uno {
          const double upper_bound = this->first_reformulation.variable_upper_bound(variable_index);
          if (is_finite(lower_bound)) {
             barrier_terms -= std::log(iterate.primals[variable_index] - lower_bound);
-            if (!is_finite(upper_bound)) {
+            if (is_infinite(upper_bound)) {
                // damping
                barrier_terms += this->parameters.damping_factor*(iterate.primals[variable_index] - lower_bound);
             }
          }
          if (is_finite(upper_bound)) {
             barrier_terms -= std::log(upper_bound - iterate.primals[variable_index]);
-            if (!is_finite(lower_bound)) {
+            if (is_infinite(lower_bound)) {
                barrier_terms += this->parameters.damping_factor*(upper_bound - iterate.primals[variable_index]);
             }
          }
