@@ -25,6 +25,14 @@ program example_uno
     integer(uno_int), parameter :: lagrangian_sign_convention = UNO_MULTIPLIER_NEGATIVE
     type(c_funptr) :: objective, gradient, constraints, jacobian, lagrangian_hessian
     type(c_funptr) :: jacobian_operator, jacobian_transposed_operator, lagrangian_hessian_operator
+    procedure(uno_Objective), pointer :: objective_callback => null()
+    procedure(uno_ObjectiveGradient), pointer :: gradient_callback => null()
+    procedure(uno_Constraints), pointer :: constraints_callback => null()
+    procedure(uno_Jacobian), pointer :: jacobian_callback => null()
+    procedure(uno_Hessian), pointer :: lagrangian_hessian_callback => null()
+    procedure(uno_JacobianOperator), pointer :: jacobian_operator_callback => null()
+    procedure(uno_JacobianTransposedOperator), pointer :: jacobian_transposed_operator_callback => null()
+    procedure(uno_HessianOperator), pointer :: lagrangian_hessian_operator_callback => null()
 
     !---------------------------------------------------
     ! Versions
@@ -61,14 +69,23 @@ program example_uno
     !---------------------------------------------------
     ! Callbacks for Uno
     !---------------------------------------------------
-    objective = c_funloc(objective_hs15)
-    gradient = c_funloc(gradient_hs15)
-    constraints = c_funloc(constraints_hs15)
-    jacobian = c_funloc(jacobian_hs15)
-    jacobian_operator = c_funloc(jacobian_operator_hs15)
-    jacobian_transposed_operator = c_funloc(jacobian_transposed_operator_hs15)
-    lagrangian_hessian = c_funloc(lagrangian_hessian_hs15)
-    lagrangian_hessian_operator = c_funloc(lagrangian_hessian_operator_hs15)
+    objective_callback => objective_hs15
+    gradient_callback => gradient_hs15
+    constraints_callback => constraints_hs15
+    jacobian_callback => jacobian_hs15
+    jacobian_operator_callback => jacobian_operator_hs15
+    jacobian_transposed_operator_callback => jacobian_transposed_operator_hs15
+    lagrangian_hessian_callback => lagrangian_hessian_hs15
+    lagrangian_hessian_operator_callback => lagrangian_hessian_operator_hs15
+
+    objective = c_funloc(objective_callback)
+    gradient = c_funloc(gradient_callback)
+    constraints = c_funloc(constraints_callback)
+    jacobian = c_funloc(jacobian_callback)
+    jacobian_operator = c_funloc(jacobian_operator_callback)
+    jacobian_transposed_operator = c_funloc(jacobian_transposed_operator_callback)
+    lagrangian_hessian = c_funloc(lagrangian_hessian_callback)
+    lagrangian_hessian_operator = c_funloc(lagrangian_hessian_operator_callback)
 
     !---------------------------------------------------
     ! Model creation
@@ -218,18 +235,18 @@ contains
     end function constraints_hs15
 
     ! Jacobian
-    function jacobian_hs15(number_variables, number_jacobian_nonzeros, x, jacobian_values, user_data) result(res) &
+    function jacobian_hs15(number_variables, number_jacobian_nonzeros, x, jacobian_nonzeros, user_data) result(res) &
         bind(C)
         integer(uno_int), value :: number_variables, number_jacobian_nonzeros
         real(c_double), intent(in) :: x(*)
-        real(c_double), intent(out) :: jacobian_values(*)
+        real(c_double), intent(out) :: jacobian_nonzeros(*)
         type(c_ptr), value :: user_data
         integer(uno_int) :: res
 
-        jacobian_values(1) = x(2)
-        jacobian_values(2) = 1.0d0
-        jacobian_values(3) = x(1)
-        jacobian_values(4) = 2.0d0 * x(2)
+        jacobian_nonzeros(1) = x(2)
+        jacobian_nonzeros(2) = 1.0d0
+        jacobian_nonzeros(3) = x(1)
+        jacobian_nonzeros(4) = 2.0d0 * x(2)
         res = 0
     end function jacobian_hs15
 
@@ -269,18 +286,18 @@ contains
 
     ! Lagrangian Hessian
     function lagrangian_hessian_hs15(number_variables, number_constraints, number_hessian_nonzeros, &
-                                     x, objective_multiplier, multipliers, hessian_values, user_data) result(res) &
+                                     x, objective_multiplier, multipliers, hessian_nonzeros, user_data) result(res) &
         bind(C)
         integer(uno_int), value :: number_variables, number_constraints, number_hessian_nonzeros
         real(c_double), intent(in) :: x(*), multipliers(*)
-        real(c_double), intent(out) :: hessian_values(*)
+        real(c_double), intent(out) :: hessian_nonzeros(*)
         real(c_double), value :: objective_multiplier
         type(c_ptr), value :: user_data
         integer(uno_int) :: res
 
-        hessian_values(1) = objective_multiplier * (1200.0d0 * x(1)**2 - 400.0d0 * x(2) + 2.0d0)
-        hessian_values(2) = -400.0d0 * objective_multiplier * x(1) - multipliers(1)
-        hessian_values(3) = 200.0d0 * objective_multiplier - 2.0d0 * multipliers(2)
+        hessian_nonzeros(1) = objective_multiplier * (1200.0d0 * x(1)**2 - 400.0d0 * x(2) + 2.0d0)
+        hessian_nonzeros(2) = -400.0d0 * objective_multiplier * x(1) - multipliers(1)
+        hessian_nonzeros(3) = 200.0d0 * objective_multiplier - 2.0d0 * multipliers(2)
         res = 0
     end function lagrangian_hessian_hs15
 
