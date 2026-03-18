@@ -33,43 +33,43 @@ uno_int objective_gradient_max(uno_int /*number_variables*/, const double* x, do
 }
 
 uno_int constraint_jacobian(uno_int /*number_variables*/, uno_int /*number_jacobian_nonzeros*/, const double* x,
-		double* jacobian_nonzeros, void* /*user_data*/) {
-	jacobian_nonzeros[0] = x[1];
-	jacobian_nonzeros[1] = 1.;
-	jacobian_nonzeros[2] = x[0];
-	jacobian_nonzeros[3] = 2.*x[1];
+		double* jacobian_values, void* /*user_data*/) {
+	jacobian_values[0] = x[1];
+	jacobian_values[1] = 1.;
+	jacobian_values[2] = x[0];
+	jacobian_values[3] = 2.*x[1];
 	return 0.;
 }
 
 uno_int lagrangian_hessian_negative_sign(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_hessian_nonzeros*/,
-      const double* x, double objective_multiplier, const double* multipliers, double* hessian_nonzeros, void* /*user_data*/) {
-	hessian_nonzeros[0] = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
-	hessian_nonzeros[1] = -400.*objective_multiplier*x[0] - multipliers[0];
-	hessian_nonzeros[2] = 200.*objective_multiplier - 2.*multipliers[1];
+      const double* x, double objective_multiplier, const double* multipliers, double* hessian_values, void* /*user_data*/) {
+	hessian_values[0] = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
+	hessian_values[1] = -400.*objective_multiplier*x[0] - multipliers[0];
+	hessian_values[2] = 200.*objective_multiplier - 2.*multipliers[1];
 	return 0;
 }
 
 uno_int lagrangian_hessian_positive_sign(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_hessian_nonzeros*/,
-      const double* x, double objective_multiplier, const double* multipliers, double* hessian_nonzeros, void* /*user_data*/) {
-	hessian_nonzeros[0] = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
-	hessian_nonzeros[1] = -400.*objective_multiplier*x[0] + multipliers[0];
-	hessian_nonzeros[2] = 200.*objective_multiplier + 2.*multipliers[1];
+      const double* x, double objective_multiplier, const double* multipliers, double* hessian_values, void* /*user_data*/) {
+	hessian_values[0] = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
+	hessian_values[1] = -400.*objective_multiplier*x[0] + multipliers[0];
+	hessian_values[2] = 200.*objective_multiplier + 2.*multipliers[1];
 	return 0;
 }
 
 uno_int lagrangian_hessian_max_negative_sign(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_hessian_nonzeros*/,
-		const double* x, double objective_multiplier, const double* multipliers, double* hessian_nonzeros, void* /*user_data*/) {
-	hessian_nonzeros[0] = -objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
-	hessian_nonzeros[1] = -400.*-objective_multiplier*x[0] - multipliers[0];
-	hessian_nonzeros[2] = 200.*-objective_multiplier - 2.*multipliers[1];
+		const double* x, double objective_multiplier, const double* multipliers, double* hessian_values, void* /*user_data*/) {
+	hessian_values[0] = -objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
+	hessian_values[1] = -400.*-objective_multiplier*x[0] - multipliers[0];
+	hessian_values[2] = 200.*-objective_multiplier - 2.*multipliers[1];
 	return 0;
 }
 
 uno_int lagrangian_hessian_max_positive_sign(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_hessian_nonzeros*/,
-		const double* x, double objective_multiplier, const double* multipliers, double* hessian_nonzeros, void* /*user_data*/) {
-	hessian_nonzeros[0] = -objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
-	hessian_nonzeros[1] = -400.*-objective_multiplier*x[0] + multipliers[0];
-	hessian_nonzeros[2] = 200.*-objective_multiplier + 2.*multipliers[1];
+		const double* x, double objective_multiplier, const double* multipliers, double* hessian_values, void* /*user_data*/) {
+	hessian_values[0] = -objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
+	hessian_values[1] = -400.*-objective_multiplier*x[0] + multipliers[0];
+	hessian_values[2] = 200.*-objective_multiplier + 2.*multipliers[1];
 	return 0;
 }
 
@@ -103,7 +103,7 @@ void solve_instance(uno_int optimization_sense, uno_int lagrangian_sign_conventi
 	uno_int hessian_column_indices[] = {0, 0, 1};
 	// initial point
 	double x0[] = {-2., 1.};
-	
+
 	void* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
       variables_upper_bounds, base_indexing);
 	if (optimization_sense == UNO_MINIMIZE) {

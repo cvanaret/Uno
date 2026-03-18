@@ -83,7 +83,7 @@ extern "C" {
    // the same order as the indices provided in "jacobian_sparsity".
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
    typedef uno_int (*Jacobian)(uno_int number_variables, uno_int number_jacobian_nonzeros, const double* x,
-      double* jacobian_nonzeros, void* user_data);
+      double* jacobian_values, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", an objective multiplier, a vector "multipliers" of
    // Lagrange multipliers of size "number_constraints", and an object "user_data", and stores the entries of the
@@ -92,7 +92,7 @@ extern "C" {
    // Only the lower triangular part of the symmetric Lagrangian Hessian should be provided.
    // - returns an integer that is 0 if the evaluation succeeded, and positive otherwise.
    typedef uno_int (*Hessian)(uno_int number_variables, uno_int number_constraints, uno_int number_hessian_nonzeros,
-      const double* x, double objective_multiplier, const double* multipliers, double* hessian_nonzeros, void* user_data);
+      const double* x, double objective_multiplier, const double* multipliers, double* hessian_values, void* user_data);
 
    // - takes as inputs a vector "x" of size "number_variables", a boolean "evaluate_at_x" that indicates whether
    // the Jacobian should be evaluated at "x" (otherwise, the current constraint Jacobian is used), a vector "vector"

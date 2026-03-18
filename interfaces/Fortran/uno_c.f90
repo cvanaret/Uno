@@ -126,11 +126,11 @@ end interface
 ! uno_Jacobian
 !---------------------------------------------
 abstract interface
-   function uno_Jacobian(number_variables, number_jacobian_nonzeros, x, jacobian_nonzeros, user_data) bind(C)
+   function uno_Jacobian(number_variables, number_jacobian_nonzeros, x, jacobian_values, user_data) bind(C)
       import :: uno_int, c_double, c_ptr
       integer(uno_int), value :: number_variables, number_jacobian_nonzeros
       real(c_double), intent(in) :: x(*)
-      real(c_double), intent(out) :: jacobian_nonzeros(*)
+      real(c_double), intent(out) :: jacobian_values(*)
       type(c_ptr), value :: user_data
       integer(uno_int) :: uno_Jacobian
    end function
@@ -141,11 +141,11 @@ end interface
 !---------------------------------------------
 abstract interface
    function uno_Hessian(number_variables, number_constraints, number_hessian_nonzeros, &
-                        x, objective_multiplier, multipliers, hessian_nonzeros, user_data) bind(C)
+                        x, objective_multiplier, multipliers, hessian_values, user_data) bind(C)
       import :: uno_int, c_double, c_ptr
       integer(uno_int), value :: number_variables, number_constraints, number_hessian_nonzeros
       real(c_double), intent(in) :: x(*), multipliers(*)
-      real(c_double), intent(out) :: hessian_nonzeros(*)
+      real(c_double), intent(out) :: hessian_values(*)
       real(c_double), value :: objective_multiplier
       type(c_ptr), value :: user_data
       integer(uno_int) :: uno_Hessian

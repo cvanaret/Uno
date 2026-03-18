@@ -235,18 +235,18 @@ contains
     end function constraints_hs15
 
     ! Jacobian
-    function jacobian_hs15(number_variables, number_jacobian_nonzeros, x, jacobian_nonzeros, user_data) result(res) &
+    function jacobian_hs15(number_variables, number_jacobian_nonzeros, x, jacobian_values, user_data) result(res) &
         bind(C)
         integer(uno_int), value :: number_variables, number_jacobian_nonzeros
         real(c_double), intent(in) :: x(*)
-        real(c_double), intent(out) :: jacobian_nonzeros(*)
+        real(c_double), intent(out) :: jacobian_values(*)
         type(c_ptr), value :: user_data
         integer(uno_int) :: res
 
-        jacobian_nonzeros(1) = x(2)
-        jacobian_nonzeros(2) = 1.0d0
-        jacobian_nonzeros(3) = x(1)
-        jacobian_nonzeros(4) = 2.0d0 * x(2)
+        jacobian_values(1) = x(2)
+        jacobian_values(2) = 1.0d0
+        jacobian_values(3) = x(1)
+        jacobian_values(4) = 2.0d0 * x(2)
         res = 0
     end function jacobian_hs15
 
@@ -286,18 +286,18 @@ contains
 
     ! Lagrangian Hessian
     function lagrangian_hessian_hs15(number_variables, number_constraints, number_hessian_nonzeros, &
-                                     x, objective_multiplier, multipliers, hessian_nonzeros, user_data) result(res) &
+                                     x, objective_multiplier, multipliers, hessian_values, user_data) result(res) &
         bind(C)
         integer(uno_int), value :: number_variables, number_constraints, number_hessian_nonzeros
         real(c_double), intent(in) :: x(*), multipliers(*)
-        real(c_double), intent(out) :: hessian_nonzeros(*)
+        real(c_double), intent(out) :: hessian_values(*)
         real(c_double), value :: objective_multiplier
         type(c_ptr), value :: user_data
         integer(uno_int) :: res
 
-        hessian_nonzeros(1) = objective_multiplier * (1200.0d0 * x(1)**2 - 400.0d0 * x(2) + 2.0d0)
-        hessian_nonzeros(2) = -400.0d0 * objective_multiplier * x(1) - multipliers(1)
-        hessian_nonzeros(3) = 200.0d0 * objective_multiplier - 2.0d0 * multipliers(2)
+        hessian_values(1) = objective_multiplier * (1200.0d0 * x(1)**2 - 400.0d0 * x(2) + 2.0d0)
+        hessian_values(2) = -400.0d0 * objective_multiplier * x(1) - multipliers(1)
+        hessian_values(3) = 200.0d0 * objective_multiplier - 2.0d0 * multipliers(2)
         res = 0
     end function lagrangian_hessian_hs15
 
