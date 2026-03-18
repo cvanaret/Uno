@@ -25,6 +25,14 @@ program example_uno
     integer(uno_int), parameter :: lagrangian_sign_convention = UNO_MULTIPLIER_NEGATIVE
     type(c_funptr) :: objective, gradient, constraints, jacobian, lagrangian_hessian
     type(c_funptr) :: jacobian_operator, jacobian_transposed_operator, lagrangian_hessian_operator
+    procedure(uno_Objective), pointer :: objective_callback => null()
+    procedure(uno_ObjectiveGradient), pointer :: gradient_callback => null()
+    procedure(uno_Constraints), pointer :: constraints_callback => null()
+    procedure(uno_Jacobian), pointer :: jacobian_callback => null()
+    procedure(uno_Hessian), pointer :: lagrangian_hessian_callback => null()
+    procedure(uno_JacobianOperator), pointer :: jacobian_operator_callback => null()
+    procedure(uno_JacobianTransposedOperator), pointer :: jacobian_transposed_operator_callback => null()
+    procedure(uno_HessianOperator), pointer :: lagrangian_hessian_operator_callback => null()
 
     !---------------------------------------------------
     ! Versions
@@ -61,14 +69,23 @@ program example_uno
     !---------------------------------------------------
     ! Callbacks for Uno
     !---------------------------------------------------
-    objective = c_funloc(objective_hs15)
-    gradient = c_funloc(gradient_hs15)
-    constraints = c_funloc(constraints_hs15)
-    jacobian = c_funloc(jacobian_hs15)
-    jacobian_operator = c_funloc(jacobian_operator_hs15)
-    jacobian_transposed_operator = c_funloc(jacobian_transposed_operator_hs15)
-    lagrangian_hessian = c_funloc(lagrangian_hessian_hs15)
-    lagrangian_hessian_operator = c_funloc(lagrangian_hessian_operator_hs15)
+    objective_callback => objective_hs15
+    gradient_callback => gradient_hs15
+    constraints_callback => constraints_hs15
+    jacobian_callback => jacobian_hs15
+    jacobian_operator_callback => jacobian_operator_hs15
+    jacobian_transposed_operator_callback => jacobian_transposed_operator_hs15
+    lagrangian_hessian_callback => lagrangian_hessian_hs15
+    lagrangian_hessian_operator_callback => lagrangian_hessian_operator_hs15
+
+    objective = c_funloc(objective_callback)
+    gradient = c_funloc(gradient_callback)
+    constraints = c_funloc(constraints_callback)
+    jacobian = c_funloc(jacobian_callback)
+    jacobian_operator = c_funloc(jacobian_operator_callback)
+    jacobian_transposed_operator = c_funloc(jacobian_transposed_operator_callback)
+    lagrangian_hessian = c_funloc(lagrangian_hessian_callback)
+    lagrangian_hessian_operator = c_funloc(lagrangian_hessian_operator_callback)
 
     !---------------------------------------------------
     ! Model creation

@@ -81,6 +81,190 @@ integer(uno_int), parameter :: UNO_VERSION_MINOR = 5
 integer(uno_int), parameter :: UNO_VERSION_PATCH = 1
 
 !---------------------------------------------
+! uno_Objective
+!---------------------------------------------
+abstract interface
+   function uno_Objective(number_variables, x, objective_value, user_data) bind(C)
+      import :: uno_int, c_double, c_ptr
+      integer(uno_int), value :: number_variables
+      real(c_double), intent(in) :: x(*)
+      real(c_double), intent(out) :: objective_value
+      type(c_ptr), value :: user_data
+      integer(uno_int) :: uno_Objective
+   end function
+end interface
+
+!---------------------------------------------
+! uno_Constraints
+!---------------------------------------------
+abstract interface
+   function uno_Constraints(number_variables, number_constraints, x, constraint_values, user_data) bind(C)
+      import :: uno_int, c_double, c_ptr
+      integer(uno_int), value :: number_variables, number_constraints
+      real(c_double), intent(in) :: x(*)
+      real(c_double), intent(out) :: constraint_values(*)
+      type(c_ptr), value :: user_data
+      integer(uno_int) :: uno_Constraints
+   end function
+end interface
+
+!---------------------------------------------
+! uno_ObjectiveGradient
+!---------------------------------------------
+abstract interface
+   function uno_ObjectiveGradient(number_variables, x, gradient, user_data) bind(C)
+      import :: uno_int, c_double, c_ptr
+      integer(uno_int), value :: number_variables
+      real(c_double), intent(in) :: x(*)
+      real(c_double), intent(out) :: gradient(*)
+      type(c_ptr), value :: user_data
+      integer(uno_int) :: uno_ObjectiveGradient
+   end function
+end interface
+
+!---------------------------------------------
+! uno_Jacobian
+!---------------------------------------------
+abstract interface
+   function uno_Jacobian(number_variables, number_jacobian_nonzeros, x, jacobian_values, user_data) bind(C)
+      import :: uno_int, c_double, c_ptr
+      integer(uno_int), value :: number_variables, number_jacobian_nonzeros
+      real(c_double), intent(in) :: x(*)
+      real(c_double), intent(out) :: jacobian_values(*)
+      type(c_ptr), value :: user_data
+      integer(uno_int) :: uno_Jacobian
+   end function
+end interface
+
+!---------------------------------------------
+! uno_Hessian
+!---------------------------------------------
+abstract interface
+   function uno_Hessian(number_variables, number_constraints, number_hessian_nonzeros, &
+                        x, objective_multiplier, multipliers, hessian_values, user_data) bind(C)
+      import :: uno_int, c_double, c_ptr
+      integer(uno_int), value :: number_variables, number_constraints, number_hessian_nonzeros
+      real(c_double), intent(in) :: x(*), multipliers(*)
+      real(c_double), intent(out) :: hessian_values(*)
+      real(c_double), value :: objective_multiplier
+      type(c_ptr), value :: user_data
+      integer(uno_int) :: uno_Hessian
+   end function
+end interface
+
+!---------------------------------------------
+! uno_JacobianOperator
+!---------------------------------------------
+abstract interface
+   function uno_JacobianOperator(number_variables, number_constraints, x, evaluate_at_x, &
+                                 vector, result, user_data) bind(C)
+      import :: uno_int, c_double, c_bool, c_ptr
+      integer(uno_int), value :: number_variables, number_constraints
+      real(c_double), intent(in) :: x(*)
+      logical(c_bool), value :: evaluate_at_x
+      real(c_double), intent(in) :: vector(*)
+      real(c_double), intent(out) :: result(*)
+      type(c_ptr), value :: user_data
+      integer(uno_int) :: uno_JacobianOperator
+   end function
+end interface
+
+!---------------------------------------------
+! uno_JacobianTransposedOperator
+!---------------------------------------------
+abstract interface
+   function uno_JacobianTransposedOperator(number_variables, number_constraints, x, evaluate_at_x, &
+                                           vector, result, user_data) bind(C)
+      import :: uno_int, c_double, c_bool, c_ptr
+      integer(uno_int), value :: number_variables, number_constraints
+      real(c_double), intent(in) :: x(*)
+      logical(c_bool), value :: evaluate_at_x
+      real(c_double), intent(in) :: vector(*)
+      real(c_double), intent(out) :: result(*)
+      type(c_ptr), value :: user_data
+      integer(uno_int) :: uno_JacobianTransposedOperator
+   end function
+end interface
+
+!---------------------------------------------
+! uno_HessianOperator
+!---------------------------------------------
+abstract interface
+   function uno_HessianOperator(number_variables, number_constraints, x, evaluate_at_x, &
+                                objective_multiplier, multipliers, vector, result, user_data) bind(C)
+      import :: uno_int, c_double, c_bool, c_ptr
+      integer(uno_int), value :: number_variables, number_constraints
+      real(c_double), intent(in) :: x(*)
+      logical(c_bool), value :: evaluate_at_x
+      real(c_double), value :: objective_multiplier
+      real(c_double), intent(in) :: multipliers(*), vector(*)
+      real(c_double), intent(out) :: result(*)
+      type(c_ptr), value :: user_data
+      integer(uno_int) :: uno_HessianOperator
+   end function
+end interface
+
+!---------------------------------------------
+! uno_NotifyAcceptableIterateUserCallback
+!---------------------------------------------
+abstract interface
+   subroutine uno_NotifyAcceptableIterateUserCallback(number_variables, number_constraints, primals, &
+                                                      lower_bound_multipliers, upper_bound_multipliers, &
+                                                      constraint_multipliers, objective_multiplier, &
+                                                      primal_feasibility_residual, stationarity_residual, &
+                                                      complementarity_residual, user_data) bind(C)
+      import :: uno_int, c_double, c_ptr
+      integer(uno_int), value :: number_variables, number_constraints
+      real(c_double), intent(in) :: primals(*)
+      real(c_double), intent(in) :: lower_bound_multipliers(*)
+      real(c_double), intent(in) :: upper_bound_multipliers(*)
+      real(c_double), intent(in) :: constraint_multipliers(*)
+      real(c_double), value :: objective_multiplier
+      real(c_double), value :: primal_feasibility_residual
+      real(c_double), value :: stationarity_residual
+      real(c_double), value :: complementarity_residual
+      type(c_ptr), value :: user_data
+   end subroutine
+end interface
+
+!---------------------------------------------
+! uno_TerminationUserCallback
+!---------------------------------------------
+abstract interface
+   function uno_TerminationUserCallback(number_variables, number_constraints, primals, &
+                                        lower_bound_multipliers, upper_bound_multipliers, &
+                                        constraint_multipliers, objective_multiplier, &
+                                        primal_feasibility_residual, stationarity_residual, &
+                                        complementarity_residual, user_data) bind(C)
+      import :: uno_int, c_double, c_bool, c_ptr
+      integer(uno_int), value :: number_variables, number_constraints
+      real(c_double), intent(in) :: primals(*)
+      real(c_double), intent(in) :: lower_bound_multipliers(*)
+      real(c_double), intent(in) :: upper_bound_multipliers(*)
+      real(c_double), intent(in) :: constraint_multipliers(*)
+      real(c_double), value :: objective_multiplier
+      real(c_double), value :: primal_feasibility_residual
+      real(c_double), value :: stationarity_residual
+      real(c_double), value :: complementarity_residual
+      type(c_ptr), value :: user_data
+      logical(c_bool) :: uno_TerminationUserCallback
+   end function
+end interface
+
+!---------------------------------------------
+! uno_LoggerStreamUserCallback
+!---------------------------------------------
+abstract interface
+   function uno_LoggerStreamUserCallback(buffer, length, user_data) bind(C)
+      import :: uno_int, c_char, c_ptr
+      character(kind=c_char), intent(in) :: buffer(*)
+      integer(uno_int), value :: length
+      type(c_ptr), value :: user_data
+      integer(uno_int) :: uno_LoggerStreamUserCallback
+   end function
+end interface
+
+!---------------------------------------------
 ! uno_get_version
 !---------------------------------------------
 interface
@@ -120,8 +304,8 @@ interface
       type(c_ptr), value :: model
       integer(uno_int), value :: number_constraints, number_jacobian_nonzeros
       type(c_funptr), value :: constraint_functions, jacobian
-      real(c_double), dimension(*) :: constraints_lower_bounds, constraints_upper_bounds
-      integer(uno_int), dimension(*) :: jacobian_row_indices, jacobian_column_indices
+      real(c_double) :: constraints_lower_bounds(*), constraints_upper_bounds(*)
+      integer(uno_int) :: jacobian_row_indices(*), jacobian_column_indices(*)
       logical(c_bool) :: success
    end function uno_set_constraints
 end interface
@@ -163,7 +347,7 @@ interface
       type(c_ptr), value :: model
       integer(uno_int), value :: number_hessian_nonzeros
       character(c_char), value :: hessian_triangular_part
-      integer(uno_int), dimension(*) :: hessian_row_indices, hessian_column_indices
+      integer(uno_int) :: hessian_row_indices(*), hessian_column_indices(*)
       type(c_funptr), value :: lagrangian_hessian
       logical(c_bool) :: success
    end function uno_set_lagrangian_hessian
@@ -243,7 +427,7 @@ interface
       bind(C, name="uno_set_initial_primal_iterate")
       import :: c_ptr, c_double, c_bool
       type(c_ptr), value :: model
-      real(c_double), dimension(*) :: initial_primal_iterate
+      real(c_double) :: initial_primal_iterate(*)
       logical(c_bool) :: success
    end function uno_set_initial_primal_iterate
 end interface
@@ -256,7 +440,7 @@ interface
       bind(C, name="uno_set_initial_dual_iterate")
       import :: c_ptr, c_double, c_bool
       type(c_ptr), value :: model
-      real(c_double), dimension(*) :: initial_dual_iterate
+      real(c_double) :: initial_dual_iterate(*)
       logical(c_bool) :: success
    end function uno_set_initial_dual_iterate
 end interface
@@ -419,7 +603,7 @@ interface
       bind(C, name="uno_get_primal_solution")
       import :: c_ptr, c_double
       type(c_ptr), value :: solver
-      real(c_double), dimension(*) :: primal_solution
+      real(c_double) :: primal_solution(*)
    end subroutine uno_get_primal_solution
 end interface
 
@@ -431,7 +615,7 @@ interface
       bind(C, name="uno_get_constraint_dual_solution")
       import :: c_ptr, c_double
       type(c_ptr), value :: solver
-      real(c_double), dimension(*) :: constraint_dual_solution
+      real(c_double) :: constraint_dual_solution(*)
    end subroutine uno_get_constraint_dual_solution
 end interface
 
@@ -443,7 +627,7 @@ interface
       bind(C, name="uno_get_lower_bound_dual_solution")
       import :: c_ptr, c_double
       type(c_ptr), value :: solver
-      real(c_double), dimension(*) :: lower_bound_dual_solution
+      real(c_double) :: lower_bound_dual_solution(*)
    end subroutine uno_get_lower_bound_dual_solution
 end interface
 
@@ -455,7 +639,7 @@ interface
       bind(C, name="uno_get_upper_bound_dual_solution")
       import :: c_ptr, c_double
       type(c_ptr), value :: solver
-      real(c_double), dimension(*) :: upper_bound_dual_solution
+      real(c_double) :: upper_bound_dual_solution(*)
    end subroutine uno_get_upper_bound_dual_solution
 end interface
 

@@ -12,7 +12,7 @@ function uno_create_model(problem_type, number_variables, variables_lower_bounds
                           variables_upper_bounds, base_indexing) result(model)
    character(len=*) :: problem_type
    integer(uno_int), value :: number_variables, base_indexing
-   real(c_double), dimension(*) :: variables_lower_bounds, variables_upper_bounds
+   real(c_double) :: variables_lower_bounds(*), variables_upper_bounds(*)
    type(c_ptr) :: model
    character(c_char), allocatable :: problem_type_c(:)
    integer :: i, n
@@ -22,9 +22,9 @@ function uno_create_model(problem_type, number_variables, variables_lower_bounds
                                   variables_upper_bounds, base_indexing) result(model) &
          bind(C, name="uno_create_model")
          import :: c_char, uno_int, c_double, c_ptr
-         character(c_char), dimension(*) :: problem_type
+         character(c_char) :: problem_type(*)
          integer(uno_int), value :: number_variables, base_indexing
-         real(c_double), dimension(*) :: variables_lower_bounds, variables_upper_bounds
+         real(c_double) :: variables_lower_bounds(*), variables_upper_bounds(*)
          type(c_ptr) :: model
       end function uno_create_model_c
    end interface
@@ -55,7 +55,7 @@ function uno_set_solver_integer_option(solver, option_name, option_value) result
          bind(C, name="uno_set_solver_integer_option")
          import :: c_ptr, c_char, uno_int, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          integer(uno_int), value :: option_value
          logical(c_bool) :: success
       end function uno_set_solver_integer_option_c
@@ -87,7 +87,7 @@ function uno_set_solver_double_option(solver, option_name, option_value) result(
          bind(C, name="uno_set_solver_double_option")
          import :: c_ptr, c_char, c_double, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          real(c_double), value :: option_value
          logical(c_bool) :: success
       end function uno_set_solver_double_option_c
@@ -119,7 +119,7 @@ function uno_set_solver_bool_option(solver, option_name, option_value) result(su
          bind(C, name="uno_set_solver_bool_option")
          import :: c_ptr, c_char, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          logical(c_bool), value :: option_value
          logical(c_bool) :: success
       end function uno_set_solver_bool_option_c
@@ -152,8 +152,8 @@ function uno_set_solver_string_option(solver, option_name, option_value) result(
          bind(C, name="uno_set_solver_string_option")
          import :: c_ptr, c_char, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
-         character(c_char), dimension(*) :: option_value
+         character(c_char) :: option_name(*)
+         character(c_char) :: option_value(*)
          logical(c_bool) :: success
       end function uno_set_solver_string_option_c
    end interface
@@ -190,7 +190,7 @@ function uno_get_solver_option_type(solver, option_name) result(option_type)
          bind(C, name="uno_get_solver_option_type")
          import :: c_ptr, c_char, uno_int
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          integer(uno_int) :: option_type
       end function uno_get_solver_option_type_c
    end interface
@@ -220,7 +220,7 @@ function uno_load_solver_option_file(solver, file_name) result(success)
          bind(C, name="uno_load_solver_option_file")
          import :: c_ptr, c_char, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: file_name
+         character(c_char) :: file_name(*)
          logical(c_bool) :: success
       end function uno_load_solver_option_file_c
    end interface
@@ -250,7 +250,7 @@ function uno_set_solver_preset(solver, preset_name) result(success)
          bind(C, name="uno_set_solver_preset")
          import :: c_ptr, c_char, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: preset_name
+         character(c_char) :: preset_name(*)
          logical(c_bool) :: success
       end function uno_set_solver_preset_c
    end interface
@@ -280,7 +280,7 @@ function uno_get_solver_integer_option(solver, option_name) result(solver_intege
          bind(C, name="uno_get_solver_integer_option")
          import :: c_ptr, c_char, uno_int
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          integer(uno_int) :: solver_integer_option
       end function uno_get_solver_integer_option_c
    end interface
@@ -309,7 +309,7 @@ function uno_get_solver_double_option(solver, option_name) result(solver_double_
          bind(C, name="uno_get_solver_double_option")
          import :: c_ptr, c_char, c_double
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          real(c_double) :: solver_double_option
       end function uno_get_solver_double_option_c
    end interface
@@ -338,7 +338,7 @@ function uno_get_solver_bool_option(solver, option_name) result(solver_bool_opti
          bind(C, name="uno_get_solver_bool_option")
          import :: c_ptr, c_char, c_bool
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          logical(c_bool) :: solver_bool_option
       end function uno_get_solver_bool_option_c
    end interface
@@ -369,7 +369,7 @@ function uno_get_solver_string_option(solver, option_name) result(solver_string_
          bind(C, name="uno_get_solver_string_option")
          import :: c_ptr, c_char
          type(c_ptr), value :: solver
-         character(c_char), dimension(*) :: option_name
+         character(c_char) :: option_name(*)
          type(c_ptr) :: solver_string_option
       end function uno_get_solver_string_option_c
    end interface

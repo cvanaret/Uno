@@ -23,11 +23,11 @@ uno_int objective_gradient(uno_int /*number_variables*/, const double* x, double
 }
 
 uno_int jacobian(uno_int /*number_variables*/, uno_int /*number_jacobian_nonzeros*/, const double* x,
-            double* jacobian, void* /*user_data*/) {
-      jacobian[0] = x[1];
-      jacobian[1] = 1.;
-      jacobian[2] = x[0];
-      jacobian[3] = 2.*x[1];
+            double* jacobian_values, void* /*user_data*/) {
+      jacobian_values[0] = x[1];
+      jacobian_values[1] = 1.;
+      jacobian_values[2] = x[0];
+      jacobian_values[3] = 2.*x[1];
       return 0;
 }
 
@@ -46,10 +46,10 @@ uno_int jacobian_transposed_operator(uno_int /*number_variables*/, uno_int /*num
 }
 
 uno_int lagrangian_hessian(uno_int /*number_variables*/, uno_int /*number_constraints*/, uno_int /*number_hessian_nonzeros*/,
-            const double* x, double objective_multiplier, const double* multipliers, double* hessian, void* /*user_data*/) {
-      hessian[0] = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
-      hessian[1] = -400.*objective_multiplier*x[0] - multipliers[0];
-      hessian[2] = 200.*objective_multiplier - 2.*multipliers[1];
+            const double* x, double objective_multiplier, const double* multipliers, double* hessian_values, void* /*user_data*/) {
+      hessian_values[0] = objective_multiplier*(1200*pow(x[0], 2.) - 400.*x[1] + 2.);
+      hessian_values[1] = -400.*objective_multiplier*x[0] - multipliers[0];
+      hessian_values[2] = 200.*objective_multiplier - 2.*multipliers[1];
       return 0;
 }
 

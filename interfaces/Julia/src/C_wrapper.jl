@@ -55,18 +55,18 @@ function uno_objective_gradient(number_variables::Cint, x::Ptr{Float64}, gradien
   return Cint(0)
 end
 
-function uno_jacobian(number_variables::Cint, number_jacobian_nonzeros::Cint, x::Ptr{Float64}, jacobian::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_jacobian(number_variables::Cint, number_jacobian_nonzeros::Cint, x::Ptr{Float64}, jacobian_nonzeros::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
-  _jvals = unsafe_wrap(Array, jacobian, number_jacobian_nonzeros)
+  _jvals = unsafe_wrap(Array, jacobian_nonzeros, number_jacobian_nonzeros)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
   _user_data.eval_jacobian(_user_data.user_model, _jvals, _x)
   return Cint(0)
 end
 
-function uno_lagrangian_hessian(number_variables::Cint, number_constraints::Cint, number_hessian_nonzeros::Cint, x::Ptr{Float64}, objective_multiplier::Float64, multipliers::Ptr{Float64}, hessian::Ptr{Float64}, user_data::Ptr{Cvoid})
+function uno_lagrangian_hessian(number_variables::Cint, number_constraints::Cint, number_hessian_nonzeros::Cint, x::Ptr{Float64}, objective_multiplier::Float64, multipliers::Ptr{Float64}, hessian_nonzeros::Ptr{Float64}, user_data::Ptr{Cvoid})
   _x = unsafe_wrap(Array, x, number_variables)
   _multipliers = unsafe_wrap(Array, multipliers, number_constraints)
-  _hvals = unsafe_wrap(Array, hessian, number_hessian_nonzeros)
+  _hvals = unsafe_wrap(Array, hessian_nonzeros, number_hessian_nonzeros)
   _user_data = unsafe_pointer_to_objref(user_data)::Model
   _user_data.eval_hessian(_user_data.user_model, _hvals, _x, _multipliers, objective_multiplier)
   return Cint(0)
