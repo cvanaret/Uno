@@ -80,7 +80,7 @@ namespace uno {
          if (lower_bound == upper_bound) {
             equality_constraints.emplace_back(constraint_index);
          }
-         else if (!is_finite(lower_bound) && !is_finite(upper_bound)) {
+         else if (is_infinite(lower_bound) && is_infinite(upper_bound)) {
             WARNING << "Constraint c" << constraint_index << " has no bounds\n";
             // count the constraint as inequality to avoid reindexing of the constraints
             inequality_constraints.emplace_back(constraint_index);

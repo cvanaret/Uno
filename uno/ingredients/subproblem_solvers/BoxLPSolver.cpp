@@ -32,14 +32,14 @@ namespace uno {
          if (0. < this->workspace.objective_gradient[variable_index]) {
             direction.primals[variable_index] = this->variable_lower_bounds[variable_index];
             direction.multipliers.lower_bounds[variable_index] = this->workspace.objective_gradient[variable_index];
-            if (!is_finite(this->variable_lower_bounds[variable_index])) {
+            if (is_infinite(this->variable_lower_bounds[variable_index])) {
                direction.status = SubproblemStatus::UNBOUNDED_PROBLEM;
             }
          }
          else if (this->workspace.objective_gradient[variable_index] < 0.) {
             direction.primals[variable_index] = this->variable_upper_bounds[variable_index];
             direction.multipliers.upper_bounds[variable_index] = this->workspace.objective_gradient[variable_index];
-            if (!is_finite(this->variable_upper_bounds[variable_index])) {
+            if (is_infinite(this->variable_upper_bounds[variable_index])) {
                direction.status = SubproblemStatus::UNBOUNDED_PROBLEM;
             }
          }
