@@ -15,11 +15,15 @@ namespace uno {
       jacobian_sparsity(jacobian_sparsity) {
    }
 
+   bool invalid_value(double value) {
+      return is_infinite(value) || std::isnan(value);
+   }
+
    void Evaluations::evaluate_objective(const Model& model, const Vector<double>& primals) {
       if (!this->is_objective_computed) {
          this->objective = model.evaluate_objective(primals);
          // check finiteness
-         if (!is_finite(this->objective)) {
+         if (invalid_value(this->objective)) {
             throw FunctionEvaluationError();
          }
          this->is_objective_computed = true;
@@ -31,9 +35,7 @@ namespace uno {
          if (model.is_constrained()) {
             model.evaluate_constraints(primals, this->constraints);
             // check finiteness
-            if (std::any_of(this->constraints.begin(), this->constraints.end(), [](double constraint_value) {
-               return !is_finite(constraint_value);
-            })) {
+            if (std::any_of(this->constraints.begin(), this->constraints.end(), invalid_value)) {
                throw FunctionEvaluationError();
             }
          }
@@ -46,9 +48,7 @@ namespace uno {
          this->objective_gradient.fill(0.);
          model.evaluate_objective_gradient(primals, this->objective_gradient);
          // check finiteness
-         if (std::any_of(this->objective_gradient.begin(), this->objective_gradient.end(), [](double derivative) {
-            return !is_finite(derivative);
-         })) {
+         if (std::any_of(this->objective_gradient.begin(), this->objective_gradient.end(), invalid_value)) {
             throw GradientEvaluationError();
          }
          this->is_objective_gradient_computed = true;
@@ -59,9 +59,7 @@ namespace uno {
       if (!this->is_jacobian_computed) {
          model.evaluate_jacobian(primals, this->jacobian_values.data());
          // check finiteness
-         if (std::any_of(this->jacobian_values.begin(), this->jacobian_values.end(), [](double derivative) {
-            return !is_finite(derivative);
-         })) {
+         if (std::any_of(this->jacobian_values.begin(), this->jacobian_values.end(), invalid_value)) {
             throw GradientEvaluationError();
          }
          this->is_jacobian_computed = true;

@@ -6,10 +6,10 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
-#include "../subproblem_solvers/SolverWorkspace.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "options/Options.hpp"
+#include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 #include "tools/UserCallbacks.hpp"
@@ -50,10 +50,16 @@ namespace uno {
          statistics.set("Status", "0 primal step");
       }
       else {
+         // determine acceptance wrt the globalization strategy
          const ProgressMeasures predicted_reductions = subproblem.compute_predicted_reductions(direction, step_length,
             this->progress_norm, evaluation_cache.current_evaluations, solver_workspace);
          accept_iterate = globalization_strategy.is_iterate_acceptable(statistics, current_iterate.progress, trial_iterate.progress,
             predicted_reductions, objective_multiplier);
+         // check that the derivatives exist at the accepted trial iterate (an exception is thrown upon evaluation failure)
+         if (accept_iterate) {
+            evaluation_cache.trial_evaluations.evaluate_objective_gradient(subproblem.problem.model, trial_iterate.primals);
+            evaluation_cache.trial_evaluations.evaluate_jacobian(subproblem.problem.model, trial_iterate.primals);
+         }
       }
       if (accept_iterate) {
          user_callbacks.notify_acceptable_iterate(trial_iterate.primals, trial_iterate.multipliers, objective_multiplier,
