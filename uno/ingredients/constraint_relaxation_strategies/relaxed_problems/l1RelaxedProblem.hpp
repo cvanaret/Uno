@@ -15,6 +15,7 @@ namespace uno {
       l1RelaxedProblem(const Model& model, double objective_multiplier, double constraint_violation_coefficient,
          bool relax_linear_constraints);
       ~l1RelaxedProblem() override = default;
+      std::unique_ptr<OptimizationProblem> clone() const override;
 
       [[nodiscard]] double get_objective_multiplier() const override;
       void set_proximal_coefficient(double proximal_coefficient);

@@ -4,6 +4,7 @@
 #ifndef UNO_OPTIMIZATIONPROBLEM_H
 #define UNO_OPTIMIZATIONPROBLEM_H
 
+#include <memory>
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "model/Model.hpp"
@@ -27,6 +28,7 @@ namespace uno {
       explicit OptimizationProblem(const Model& model);
       OptimizationProblem(const Model& model, size_t number_variables, size_t number_constraints);
       virtual ~OptimizationProblem() = default;
+      virtual std::unique_ptr<OptimizationProblem> clone() const;
 
       const Model& model;
       const size_t number_variables; /*!< Number of variables */

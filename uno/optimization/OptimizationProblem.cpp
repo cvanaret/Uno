@@ -21,6 +21,10 @@ namespace uno {
          primal_regularization_variables(model.number_variables), dual_regularization_constraints(model.number_constraints) {
    }
 
+   std::unique_ptr<OptimizationProblem> OptimizationProblem::clone() const {
+      return std::make_unique<OptimizationProblem>(*this);
+   }
+
    double OptimizationProblem::get_objective_multiplier() const {
       return 1.;
    }

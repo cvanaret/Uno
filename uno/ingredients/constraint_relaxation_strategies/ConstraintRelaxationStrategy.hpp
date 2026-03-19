@@ -63,7 +63,7 @@ namespace uno {
 
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Subproblem& subproblem,
-         const SolverWorkspace& solver_workspace, const Iterate& current_iterate, Iterate& trial_iterate,
+         const SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double step_length, EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) const;
       void compute_residuals(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       [[nodiscard]] double compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const;

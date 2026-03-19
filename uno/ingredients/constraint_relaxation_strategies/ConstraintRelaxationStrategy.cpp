@@ -51,21 +51,19 @@ namespace uno {
    }
 
    bool ConstraintRelaxationStrategy::is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, const SolverWorkspace& solver_workspace, const Iterate& current_iterate, Iterate& trial_iterate,
+         const Subproblem& subproblem, const SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double step_length, EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) const {
       subproblem.problem.postprocess_iterate(trial_iterate);
       const double objective_multiplier = subproblem.problem.get_objective_multiplier();
 
       // evaluate progress measures
       trial_iterate.objective_multiplier = objective_multiplier;
-      /*
-      if (this->subproblem_definition_changed) {
-         DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
-         globalization_strategy.reset();
+      //if (this->subproblem_definition_changed) {
+         //DEBUG << "The subproblem definition changed, the globalization strategy is reset and the auxiliary measure is recomputed\n";
+         //globalization_strategy.reset();
          subproblem.problem.set_auxiliary_measure(current_iterate);
-         this->subproblem_definition_changed = false;
-      }
-      */
+         //this->subproblem_definition_changed = false;
+      //}
       this->evaluate_progress_measures(subproblem.problem, trial_iterate, evaluation_cache.trial_evaluations);
 
       bool accept_iterate = false;

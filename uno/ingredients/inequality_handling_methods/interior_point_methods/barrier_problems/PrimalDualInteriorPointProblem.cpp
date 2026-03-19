@@ -23,6 +23,10 @@ namespace uno {
          equality_constraints(problem.number_constraints) {
    }
 
+   std::unique_ptr<OptimizationProblem> PrimalDualInteriorPointProblem::clone() const {
+      return std::make_unique<PrimalDualInteriorPointProblem>(*this);
+   }
+
    double PrimalDualInteriorPointProblem::get_objective_multiplier() const {
       return this->first_reformulation.get_objective_multiplier();
    }

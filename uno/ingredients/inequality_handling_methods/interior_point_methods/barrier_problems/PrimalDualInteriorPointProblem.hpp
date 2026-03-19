@@ -17,6 +17,7 @@ namespace uno {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters &parameters,
          const Parameterization& parameterization);
+      std::unique_ptr<OptimizationProblem> clone() const override;
 
       [[nodiscard]] double get_objective_multiplier() const override;
       void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;

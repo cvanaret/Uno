@@ -20,7 +20,7 @@ namespace uno {
 
    std::unique_ptr<OptimizationProblem> InequalityConstrainedMethod::reformulate(const OptimizationProblem& problem,
          Parameterization& /*parameterization*/) {
-      return std::make_unique<OptimizationProblem>(problem.model); // the problem is not reformulated
+      return problem.clone(); // the problem is not reformulated
    }
 
    void InequalityConstrainedMethod::update_parameterization(Statistics& /*statistics*/, const OptimizationProblem& /*problem*/,

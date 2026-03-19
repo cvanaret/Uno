@@ -61,8 +61,6 @@ namespace uno {
 
       std::unique_ptr<OptimizationProblem> reformulated_problem{};
       std::unique_ptr<OptimizationProblem> reformulated_feasibility_problem{};
-      // std::unique_ptr<Subproblem> subproblem{};
-      // std::unique_ptr<Subproblem> feasibility_subproblem{};
       std::unique_ptr<SubproblemSolver> subproblem_solver{};
       std::unique_ptr<SubproblemSolver> feasibility_subproblem_solver{};
       Parameterization parameterization;
