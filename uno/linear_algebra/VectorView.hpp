@@ -4,6 +4,7 @@
 #ifndef UNO_VECTORVIEW_H
 #define UNO_VECTORVIEW_H
 
+#include <algorithm>
 #include <cstddef>
 #include <stdexcept>
 #include "linear_algebra/BLASVector.hpp"
