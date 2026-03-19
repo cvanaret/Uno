@@ -96,8 +96,12 @@ namespace uno {
          Iterate trial_iterate(current_iterate);
 
          try {
-            bool termination = (max_iterations <= major_iterations);
-            // check for termination
+            bool termination = false;
+            if (max_iterations == 0) {
+               termination = true;
+               optimization_status = OptimizationStatus::ITERATION_LIMIT;
+            }
+            // outer loop: compute a sequence of accepted iterates
             while (!termination) {
                ++major_iterations;
                statistics.start_new_line();
