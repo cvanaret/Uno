@@ -44,7 +44,7 @@ namespace uno {
       const OptimizationProblem* problem{};
       std::unique_ptr<Subproblem> subproblem{};
       // pointer to allow polymorphism
-      std::unique_ptr<InequalityConstrainedSolver> solver{};
+      std::unique_ptr<SubproblemSolver> solver{};
       Vector<double> initial_point{};
       const Options& options; // copy of the options for delayed allocation of solver
 

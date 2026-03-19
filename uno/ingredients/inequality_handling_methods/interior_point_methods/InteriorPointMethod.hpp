@@ -10,7 +10,7 @@
 #include "InteriorPointParameters.hpp"
 #include "ingredients/constraint_relaxation_strategies/relaxed_problems/l1RelaxedProblem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "ingredients/subproblem_solvers/EQPSolver.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/OptimizationProblem.hpp"
@@ -50,7 +50,7 @@ namespace uno {
       const OptimizationProblem* problem{};
       std::unique_ptr<BarrierProblem> barrier_problem{}; // generic barrier problem
       std::unique_ptr<Subproblem> subproblem{};
-      const std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
+      std::unique_ptr<SubproblemSolver> EQP_solver{};
       BarrierParameterUpdateStrategy<BarrierProblem> barrier_parameter_update_strategy;
       double previous_barrier_parameter;
       const InteriorPointParameters parameters;
@@ -70,7 +70,7 @@ namespace uno {
    template <typename BarrierProblem>
    InteriorPointMethod<BarrierProblem>::InteriorPointMethod(const Options& options):
          InequalityHandlingMethod(options),
-         linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))),
+         EQP_solver(std::make_unique<EQPSolver>(options)),
          barrier_parameter_update_strategy(options),
          previous_barrier_parameter(options.get_double("barrier_initial_parameter")),
          parameters({
@@ -105,7 +105,7 @@ namespace uno {
       this->barrier_problem->set_barrier_parameter(this->barrier_parameter());
       this->subproblem = std::make_unique<Subproblem>(*this->barrier_problem, current_iterate, hessian_model,
          inertia_correction_strategy);
-      this->linear_solver->initialize_augmented_system(*this->subproblem);
+      this->EQP_solver->initialize_memory(*this->subproblem);
    }
 
    template <typename BarrierProblem>
@@ -139,12 +139,13 @@ namespace uno {
       statistics.set("Barrier", this->barrier_parameter());
 
       // compute the primal-dual solution
-      this->linear_solver->solve_indefinite_system(statistics, *this->subproblem, direction, current_evaluations, warmstart_information);
+      const Vector<double> initial_point(this->barrier_problem->number_variables, 0.); // TODO
+      this->EQP_solver->solve(statistics, *this->subproblem, trust_region_radius, initial_point, direction,
+         current_evaluations, warmstart_information);
       ++this->number_subproblems_solved;
 
-      // check whether the augmented matrix was singular, in which case the subproblem is infeasible
-      if (this->linear_solver->matrix_is_singular()) {
-         direction.status = SubproblemStatus::INFEASIBLE;
+      // terminate if the subproblem is infeasible
+      if (direction.status == SubproblemStatus::INFEASIBLE) {
          return;
       }
       direction.subproblem_objective = this->evaluate_subproblem_objective(direction);
@@ -233,7 +234,7 @@ namespace uno {
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
          EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) {
       return InequalityHandlingMethod::is_iterate_acceptable(statistics, globalization_strategy, *this->subproblem,
-         this->linear_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
+         this->EQP_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
    }
 
    template <typename BarrierProblem>
