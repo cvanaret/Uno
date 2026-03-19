@@ -17,8 +17,12 @@ namespace uno {
       constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(model, use_trust_region, options)) {
    }
 
-   void GlobalizationMechanism::assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-         double primal_step_length, double dual_step_length) {
+   size_t GlobalizationMechanism::get_number_subproblems_solved() const {
+      return this->constraint_relaxation_strategy->get_number_subproblems_solved();
+   }
+
+   void GlobalizationMechanism::assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
+         const Direction& direction, double primal_step_length, double dual_step_length) {
       trial_iterate.set_number_variables(current_iterate.primals.size());
       trial_iterate.multipliers.constraints.resize(current_iterate.multipliers.constraints.size());
       trial_iterate.multipliers.lower_bounds.resize(current_iterate.multipliers.lower_bounds.size());
@@ -49,9 +53,5 @@ namespace uno {
    void GlobalizationMechanism::set_dual_residuals_statistics(Statistics& statistics, const Iterate& iterate) {
       statistics.set("Statio", iterate.residuals.stationarity);
       statistics.set("Compl", iterate.residuals.complementarity);
-   }
-
-   size_t GlobalizationMechanism::get_number_subproblems_solved() const {
-      return this->constraint_relaxation_strategy->get_number_subproblems_solved();
    }
 } // namespace
