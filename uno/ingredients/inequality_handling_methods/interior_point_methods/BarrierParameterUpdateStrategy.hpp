@@ -25,7 +25,7 @@ namespace uno {
       explicit BarrierParameterUpdateStrategy(const Options& options);
       [[nodiscard]] double get_barrier_parameter() const;
       void set_barrier_parameter(double new_barrier_parameter);
-      [[nodiscard]] bool update_barrier_parameter(const BarrierProblem& barrier_problem, const Iterate& current_iterate,
+      [[nodiscard]] bool update_barrier_parameter(const OptimizationProblem& barrier_problem, const Iterate& current_iterate,
          const DualResiduals& residuals);
 
    protected:
@@ -60,7 +60,7 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   bool BarrierParameterUpdateStrategy<BarrierProblem>::update_barrier_parameter(const BarrierProblem& problem,
+   bool BarrierParameterUpdateStrategy<BarrierProblem>::update_barrier_parameter(const OptimizationProblem& problem,
          const Iterate& current_iterate, const DualResiduals& residuals) {
       // primal-dual errors
       const double scaled_stationarity = residuals.stationarity / residuals.stationarity_scaling;

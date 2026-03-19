@@ -55,7 +55,7 @@ namespace uno {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
       direction.set_dimensions(this->original_problem.number_variables, this->original_problem.number_constraints);
-      this->inequality_handling_method->update_parameterization(statistics, *this->reformulated_problem, current_iterate,
+      this->inequality_handling_method->update_parameterization(statistics, this->original_problem, current_iterate,
          this->parameterization);
       const Vector<double> initial_point(this->subproblem->number_variables, 0.); // TODO
       this->subproblem_solver->solve(statistics, *this->subproblem, trust_region_radius, initial_point, direction,

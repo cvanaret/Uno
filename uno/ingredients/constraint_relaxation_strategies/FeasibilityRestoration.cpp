@@ -96,8 +96,8 @@ namespace uno {
          DEBUG << "Solving the optimality subproblem\n";
          statistics.set("Phase", "OPT");
          const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model, *this->inertia_correction_strategy);
-         this->solve_subproblem(statistics, subproblem, *this->subproblem_solver, current_iterate, direction, trust_region_radius,
-            current_evaluations, warmstart_information);
+         this->solve_subproblem(statistics, subproblem, *this->subproblem_solver, this->original_problem, current_iterate,
+            direction, trust_region_radius, current_evaluations, warmstart_information);
          if (direction.status == SubproblemStatus::INFEASIBLE) {
             // switch to the feasibility problem, starting from the current direction
             statistics.set("Status", std::string("infeasible"));
@@ -117,7 +117,7 @@ namespace uno {
       this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
       const Subproblem feasibility_subproblem(*this->reformulated_feasibility_problem, current_iterate, *this->feasibility_hessian_model,
          *this->feasibility_inertia_correction_strategy);
-      this->solve_subproblem(statistics, feasibility_subproblem, *this->feasibility_subproblem_solver,
+      this->solve_subproblem(statistics, feasibility_subproblem, *this->feasibility_subproblem_solver, this->feasibility_problem,
          current_iterate, direction, trust_region_radius, current_evaluations, warmstart_information);
    }
 
@@ -156,11 +156,12 @@ namespace uno {
    }
 
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const Subproblem& subproblem,
-         SubproblemSolver& subproblem_solver, const Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
+         SubproblemSolver& subproblem_solver, const OptimizationProblem& problem, const Iterate& current_iterate,
+         Direction& direction, double trust_region_radius, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       direction.set_dimensions(subproblem.problem.number_variables, subproblem.problem.number_constraints);
       const Vector<double> initial_point(subproblem.number_variables, 0.); // TODO
-      this->inequality_handling_method->update_parameterization(statistics, *this->reformulated_problem, current_iterate, this->parameterization);
+      this->inequality_handling_method->update_parameterization(statistics, problem, current_iterate, this->parameterization);
+      // TODO !!! reset globalization strategy if parameterization changed
       subproblem_solver.solve(statistics, subproblem, trust_region_radius, initial_point, direction, current_evaluations,
          warmstart_information);
       // ++this->number_subproblems_solved; // TODO

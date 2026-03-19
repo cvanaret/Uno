@@ -76,8 +76,8 @@ namespace uno {
       Vector<double> reference_optimality_primals{};
 
       void solve_subproblem(Statistics& statistics, const Subproblem& subproblem, SubproblemSolver& subproblem_solver,
-         const Iterate& current_iterate, Direction& direction, double trust_region_radius, Evaluations& current_evaluations,
-         const WarmstartInformation& warmstart_information);
+         const OptimizationProblem& problem, const Iterate& current_iterate, Direction& direction, double trust_region_radius,
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
       void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 
       [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,

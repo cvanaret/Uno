@@ -178,10 +178,8 @@ namespace uno {
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate,
          const DualResiduals& residuals) {
-      const auto& barrier_problem = dynamic_cast<const BarrierProblem&>(problem);
-      const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(barrier_problem,
+      const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(problem,
          current_iterate, residuals);
-      //std::cout << "New barrier parameter: " << this->barrier_parameter() << '\n';
       // the barrier parameter may have been changed earlier when entering restoration
       this->subproblem_definition_changed = this->subproblem_definition_changed || barrier_parameter_updated;
    }
