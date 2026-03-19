@@ -221,12 +221,14 @@ namespace uno {
          }
       }
 
-      // project solution into bounds
+      // project primal solution into bounds
       for (size_t variable_index: Range(subproblem.number_variables)) {
          direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], this->lower_bounds[variable_index]),
             this->upper_bounds[variable_index]);
       }
+      // gather the multipliers
       this->set_multipliers(subproblem.number_variables, direction.multipliers);
+      LPSolver::compute_dual_displacements(subproblem.current_iterate.multipliers, direction.multipliers);
    }
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {

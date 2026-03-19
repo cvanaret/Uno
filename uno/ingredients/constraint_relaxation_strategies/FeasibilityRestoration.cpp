@@ -164,9 +164,6 @@ namespace uno {
       subproblem_solver.solve(statistics, subproblem, trust_region_radius, initial_point, direction, current_evaluations,
          warmstart_information);
       // ++this->number_subproblems_solved; // TODO
-      view(direction.multipliers.constraints, 0, current_iterate.multipliers.constraints.size()) -= current_iterate.multipliers.constraints;
-      view(direction.multipliers.lower_bounds, 0, current_iterate.multipliers.lower_bounds.size()) -= current_iterate.multipliers.lower_bounds;
-      view(direction.multipliers.upper_bounds, 0, current_iterate.multipliers.upper_bounds.size()) -= current_iterate.multipliers.upper_bounds;
       direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
    }
