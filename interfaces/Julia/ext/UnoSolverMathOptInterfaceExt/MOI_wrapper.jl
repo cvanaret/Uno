@@ -1471,6 +1471,8 @@ function _status_code_mapping(uno_termination_status::Cint, uno_solution_status:
         return (MOI.INVALID_MODEL, MOI.UNKNOWN_RESULT_STATUS)
     elseif uno_termination_status == UnoSolver.UNO_ALGORITHMIC_ERROR
         return (MOI.OTHER_ERROR, MOI.UNKNOWN_RESULT_STATUS)
+    elseif uno_termination_status == UnoSolver.UNO_USER_TERMINATION
+        return (MOI.INTERRUPTED, MOI.UNKNOWN_RESULT_STATUS) # here we could test feasibility
     else # UNO_SUCCESS
         if uno_solution_status == UnoSolver.UNO_FEASIBLE_KKT_POINT
             return (MOI.LOCALLY_SOLVED, MOI.FEASIBLE_POINT)
@@ -1482,8 +1484,10 @@ function _status_code_mapping(uno_termination_status::Cint, uno_solution_status:
             return (MOI.SLOW_PROGRESS, MOI.FEASIBLE_POINT)
         elseif uno_solution_status == UnoSolver.UNO_INFEASIBLE_SMALL_STEP
             return (MOI.SLOW_PROGRESS, MOI.INFEASIBLE_POINT)
-        else # UNO_UNBOUNDED
+        elseif uno_solution_status == UnoSolver.UNO_UNBOUNDED
             return (MOI.DUAL_INFEASIBLE, MOI.FEASIBLE_POINT)
+        else # UNO_NOT_OPTIMAL
+            return (MOI.SLOW_PROGRESS, MOI.UNKNOWN_RESULT_STATUS) # here we could test feasibility
         end
     end
 end
