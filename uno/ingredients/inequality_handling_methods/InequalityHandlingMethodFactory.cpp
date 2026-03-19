@@ -18,7 +18,7 @@ namespace uno {
       const std::string inequality_handling_method = options.get_string("inequality_handling_method");
       // inequality-constrained methods
       if (inequality_handling_method == "inequality_constrained") {
-         return std::make_unique<InequalityConstrainedMethod>(options);
+         return std::make_unique<InequalityConstrainedMethod>();
       }
       // interior-point method
       else if (inequality_handling_method == "interior_point") {

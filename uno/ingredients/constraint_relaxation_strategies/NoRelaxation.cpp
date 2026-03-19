@@ -1,10 +1,13 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <memory>
 #include "NoRelaxation.hpp"
 #include "ingredients/hessian_models/HessianModelFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/subproblem_solvers/SubproblemSolverFactory.hpp"
 #include "linear_algebra/VectorView.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
@@ -24,10 +27,9 @@ namespace uno {
    }
 
    void NoRelaxation::initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction,
-         bool uses_trust_region, EvaluationCache& evaluation_cache) {
+         bool uses_trust_region, EvaluationCache& evaluation_cache, const Options& options) {
       // memory allocation
-      this->inequality_handling_method->initialize(this->original_problem, initial_iterate, *this->hessian_model,
-         *this->inertia_correction_strategy, uses_trust_region);
+      this->inequality_handling_method->check_problem(this->original_problem, uses_trust_region);
       direction = Direction(this->original_problem.number_variables, this->original_problem.number_constraints);
 
       // statistics
@@ -36,9 +38,16 @@ namespace uno {
       this->hessian_model->initialize_statistics(statistics);
 
       // initial iterate
-      this->inequality_handling_method->generate_initial_iterate(initial_iterate, evaluation_cache);
+      this->reformulated_problem->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy.initialize(statistics, initial_iterate);
+
+      // reformulation
+      this->reformulated_problem = this->inequality_handling_method->reformulate(this->original_problem, this->parameterization);
+      this->subproblem = std::make_unique<Subproblem>(*this->reformulated_problem, initial_iterate, *this->hessian_model,
+         *this->inertia_correction_strategy);
+      this->subproblem_solver = SubproblemSolverFactory::create(*this->subproblem, options);
+      this->subproblem_solver->initialize_memory(*this->subproblem);
    }
 
    void NoRelaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
@@ -46,8 +55,11 @@ namespace uno {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
       direction.set_dimensions(this->original_problem.number_variables, this->original_problem.number_constraints);
-      this->inequality_handling_method->solve(statistics, current_iterate, direction, trust_region_radius, current_evaluations,
-         warmstart_information);
+      this->inequality_handling_method->update_parameterization(statistics, *this->reformulated_problem, current_iterate,
+         this->parameterization);
+      const Vector<double> initial_point(this->subproblem->number_variables, 0.); // TODO
+      this->subproblem_solver->solve(statistics, *this->subproblem, trust_region_radius, initial_point, direction,
+         current_evaluations, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, this->original_problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
       warmstart_information.no_changes();
@@ -58,15 +70,16 @@ namespace uno {
    }
 
    void NoRelaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/,
-         Evaluations& /*current_evaluations*/, bool /*uses_trust_region*/, WarmstartInformation& /*warmstart_information*/) {
+         Evaluations& /*current_evaluations*/, WarmstartInformation& /*warmstart_information*/) {
       throw std::runtime_error("Switching to the feasibility problem should not happen");
    }
 
    bool NoRelaxation::is_iterate_acceptable(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate,
          Iterate& trial_iterate, const Direction& direction, double step_length, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
-      const bool accept_iterate = this->inequality_handling_method->is_iterate_acceptable(statistics, this->globalization_strategy,
-         current_iterate, trial_iterate, direction, step_length, evaluation_cache, user_callbacks);
+      const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, this->globalization_strategy,
+         *this->subproblem, this->subproblem_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length,
+         evaluation_cache, user_callbacks);
       this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
       if (accept_iterate) {

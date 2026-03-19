@@ -170,7 +170,7 @@ namespace uno {
       statistics.set("Status", "initial point");
 
       model.project_onto_variable_bounds(current_iterate.primals);
-      this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction, evaluation_cache);
+      this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction, evaluation_cache, options);
 
       options.print_non_default();
       if (Logger::level == INFO) {

@@ -19,6 +19,7 @@ namespace uno {
    class HessianModel;
    class Iterate;
    class Multipliers;
+   class Parameterization;
    class Statistics;
 
    class OptimizationProblem {
@@ -32,6 +33,9 @@ namespace uno {
       const size_t number_constraints; /*!< Number of constraints */
 
       [[nodiscard]] virtual double get_objective_multiplier() const;
+
+      virtual void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const;
+      virtual void postprocess_iterate(Iterate& iterate) const;
 
       // sparsity patterns of Jacobian and Hessian
       [[nodiscard]] virtual size_t number_jacobian_nonzeros() const;
@@ -70,6 +74,8 @@ namespace uno {
 
       [[nodiscard]] virtual double complementarity_error(const Vector<double>& primals, const Vector<double>& constraints,
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const;
+      [[nodiscard]] virtual double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
+         double shift) const;
 
       [[nodiscard]] virtual SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const;

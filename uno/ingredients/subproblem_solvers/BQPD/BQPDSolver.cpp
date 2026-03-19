@@ -106,7 +106,7 @@ namespace uno {
       this->lws.resize(this->mxlws);
    }
 
-   void BQPDSolver::solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
+   void BQPDSolver::solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
          const Vector<double>& initial_point, Direction& direction, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       this->set_up_subproblem(statistics, subproblem, trust_region_radius, current_evaluations, warmstart_information);

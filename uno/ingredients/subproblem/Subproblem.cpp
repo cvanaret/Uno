@@ -180,6 +180,23 @@ namespace uno {
       }
    }
 
+   bool Subproblem::has_inequality_constraints() const {
+      // look at the general constraints
+      for (size_t constraint_index: Range(this->problem.number_constraints)) {
+         if (this->problem.constraint_lower_bound(constraint_index) < this->problem.constraint_upper_bound(constraint_index)) {
+            return true;
+         }
+      }
+      // look at the bound constraints
+      for (size_t variable_index: Range(this->problem.number_variables)) {
+         if (is_finite(this->problem.variable_lower_bound(variable_index)) ||
+               is_finite(this->problem.variable_upper_bound(variable_index))) {
+            return true;
+         }
+      }
+      return false;
+   }
+
    bool Subproblem::performs_primal_regularization() const {
       return this->inertia_correction_strategy.performs_primal_regularization();
    }

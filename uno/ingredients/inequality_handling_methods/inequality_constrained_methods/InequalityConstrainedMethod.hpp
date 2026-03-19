@@ -6,7 +6,6 @@
 
 #include <memory>
 #include "../InequalityHandlingMethod.hpp"
-#include "ingredients/subproblem_solvers/InequalityConstrainedSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
@@ -15,39 +14,22 @@ namespace uno {
 
    class InequalityConstrainedMethod : public InequalityHandlingMethod {
    public:
-      explicit InequalityConstrainedMethod(const Options& options);
+      InequalityConstrainedMethod() = default;
       ~InequalityConstrainedMethod() override = default;
 
-      void initialize(const OptimizationProblem& problem, Iterate& current_iterate,
-         HessianModel& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy, bool uses_trust_region) override;
+      void check_problem(const OptimizationProblem& problem, bool uses_trust_region) override;
       void initialize_statistics(Statistics& statistics) override;
-      void generate_initial_iterate(Iterate& initial_iterate, EvaluationCache& evaluation_cache) override;
-      void solve(Statistics& statistics, Iterate& current_iterate, Direction& direction, double trust_region_radius,
-         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
+      std::unique_ptr<OptimizationProblem> reformulate(const OptimizationProblem& problem, Parameterization& parameterization) override;
+      void update_parameterization(Statistics& statistics, const OptimizationProblem& problem, const Iterate& current_iterate,
+         Parameterization& parameterization) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate, Evaluations& evaluations) override;
       [[nodiscard]] double proximal_coefficient() const override;
 
-      // acceptance
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks) override;
-
-      void postprocess_iterate(Iterate& iterate) override;
-
-      void set_initial_point(const Vector<double>& point) override;
-
       [[nodiscard]] std::string get_name() const override;
 
    protected:
-      const OptimizationProblem* problem{};
-      std::unique_ptr<Subproblem> subproblem{};
-      // pointer to allow polymorphism
-      std::unique_ptr<SubproblemSolver> solver{};
-      Vector<double> initial_point{};
-      const Options& options; // copy of the options for delayed allocation of solver
-
       static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
    };
 } // namespace

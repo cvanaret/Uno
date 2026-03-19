@@ -22,7 +22,7 @@ namespace uno {
 
       virtual void initialize_memory(const Subproblem& subproblem) = 0;
 
-      virtual void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
+      virtual void solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
          const Vector<double>& initial_point, Direction& direction, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) = 0;
 

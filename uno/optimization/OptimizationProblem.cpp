@@ -25,6 +25,14 @@ namespace uno {
       return 1.;
    }
 
+   void OptimizationProblem::generate_initial_iterate(Iterate& /*initial_iterate*/, Evaluations& /*evaluations*/) const {
+      // do nothing
+   }
+
+   void OptimizationProblem::postprocess_iterate(Iterate& /*iterate*/) const {
+      // do nothing
+   }
+
    size_t OptimizationProblem::number_jacobian_nonzeros() const {
       return this->model.number_jacobian_nonzeros();
    }
@@ -167,6 +175,24 @@ namespace uno {
          return 0.;
       }};
       return norm(residual_norm, variable_complementarity, constraint_complementarity);
+   }
+
+   double OptimizationProblem::compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
+         double shift) const {
+      const Range variables_range = Range(this->number_variables);
+      const VectorExpression shifted_bound_complementarity{variables_range, [&](size_t variable_index) {
+         double result = 0.;
+         if (0. < multipliers.lower_bounds[variable_index]) { // lower bound
+            result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
+               (primals[variable_index] - this->variable_lower_bound(variable_index)) - shift));
+         }
+         if (multipliers.upper_bounds[variable_index] < 0.) { // upper bound
+            result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
+               (primals[variable_index] - this->variable_upper_bound(variable_index)) - shift));
+         }
+         return result;
+      }};
+      return norm_inf(shifted_bound_complementarity); // TODO use a generic norm
    }
 
    SolutionStatus OptimizationProblem::check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,

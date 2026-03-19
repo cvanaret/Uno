@@ -13,7 +13,7 @@ namespace uno {
       this->workspace.objective_gradient.resize(subproblem.number_variables);
    }
 
-   void BoxLPSolver::solve(Statistics& /*statistics*/, Subproblem& subproblem, double trust_region_radius,
+   void BoxLPSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, double trust_region_radius,
          const Vector<double>& /*initial_point*/, Direction& direction, Evaluations& current_evaluations,
          const WarmstartInformation& /*warmstart_information*/) {
       if (0 < subproblem.number_constraints) {

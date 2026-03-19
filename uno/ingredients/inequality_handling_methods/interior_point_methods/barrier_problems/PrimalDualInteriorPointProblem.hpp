@@ -4,20 +4,21 @@
 #ifndef UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 #define UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 
-#include "../BarrierProblem.hpp"
+#include "optimization/OptimizationProblem.hpp"
 #include "../InteriorPointParameters.hpp"
 #include "linear_algebra/Vector.hpp"
-#include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
-#include "tools/Infinity.hpp"
 
 namespace uno {
-   class PrimalDualInteriorPointProblem : public BarrierProblem {
+   // forward declaration
+   class Parameterization;
+
+   class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
-      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters &parameters);
+      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters &parameters,
+         const Parameterization& parameterization);
 
       [[nodiscard]] double get_objective_multiplier() const override;
-      void set_barrier_parameter(double barrier_parameter) override;
       void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
 
       // sparsity patterns of Jacobian and Hessian
@@ -58,8 +59,6 @@ namespace uno {
       [[nodiscard]] double compute_barrier_term_directional_derivative(const Iterate& current_iterate,
          const Vector<double>& primal_direction) const;
       void postprocess_iterate(Iterate& iterate) const override;
-      [[nodiscard]] double compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
-         double shift) const override;
 
       // progress measures
       void set_auxiliary_measure(Iterate& iterate) const override;
@@ -68,7 +67,7 @@ namespace uno {
 
    protected:
       const OptimizationProblem& first_reformulation;
-      double barrier_parameter{INF<double>};
+      const Parameterization& parameterization;
       const InteriorPointParameters& parameters;
       const Vector<size_t> fixed_variables{};
       const ForwardRange equality_constraints;
