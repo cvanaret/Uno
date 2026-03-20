@@ -70,13 +70,13 @@ namespace uno {
       // reformulation of the original problem
       this->reformulated_problem = this->inequality_handling_method->reformulate(this->original_problem, this->parameterization);
       const Subproblem subproblem(*this->reformulated_problem, initial_iterate, *this->hessian_model, *this->inertia_correction_strategy);
-      this->subproblem_solver = SubproblemSolverFactory::create(subproblem, options);
+      this->subproblem_solver = SubproblemSolverFactory::create(subproblem, uses_trust_region, options);
       this->subproblem_solver->initialize_memory(subproblem);
       // reformulation of the feasibility problem
       this->reformulated_feasibility_problem = this->feasibility_inequality_handling_method->reformulate(this->feasibility_problem, this->parameterization);
       const Subproblem feasibility_subproblem(*this->reformulated_feasibility_problem, initial_iterate, *this->feasibility_hessian_model,
          *this->feasibility_inertia_correction_strategy);
-      this->feasibility_subproblem_solver = SubproblemSolverFactory::create(feasibility_subproblem, options);
+      this->feasibility_subproblem_solver = SubproblemSolverFactory::create(feasibility_subproblem, uses_trust_region, options);
       this->feasibility_subproblem_solver->initialize_memory(feasibility_subproblem);
 
       // initial iterate

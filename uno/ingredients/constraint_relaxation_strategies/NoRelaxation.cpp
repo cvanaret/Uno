@@ -43,7 +43,7 @@ namespace uno {
       this->reformulated_problem = this->inequality_handling_method->reformulate(this->original_problem, this->parameterization);
       const Subproblem subproblem(*this->reformulated_problem, initial_iterate, *this->hessian_model,
          *this->inertia_correction_strategy);
-      this->subproblem_solver = SubproblemSolverFactory::create(subproblem, options);
+      this->subproblem_solver = SubproblemSolverFactory::create(subproblem, uses_trust_region, options);
       this->subproblem_solver->initialize_memory(subproblem);
 
       // initial iterate

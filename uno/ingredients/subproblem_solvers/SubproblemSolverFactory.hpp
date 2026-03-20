@@ -14,7 +14,7 @@ namespace uno {
 
    class SubproblemSolverFactory {
    public:
-      static std::unique_ptr<SubproblemSolver> create(const Subproblem& subproblem, const Options& options);
+      static std::unique_ptr<SubproblemSolver> create(const Subproblem& subproblem, bool uses_trust_region, const Options& options);
    };
 } // namespace
 

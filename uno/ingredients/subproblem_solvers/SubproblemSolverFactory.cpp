@@ -10,9 +10,10 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
-   std::unique_ptr<SubproblemSolver> SubproblemSolverFactory::create(const Subproblem& subproblem, const Options& options) {
-      // if no inequality constraint, allocate EQP solver
-      if (!subproblem.has_inequality_constraints()) {
+   std::unique_ptr<SubproblemSolver> SubproblemSolverFactory::create(const Subproblem& subproblem, bool uses_trust_region,
+         const Options& options) {
+      // if no inequality constraint and no trust region, allocate EQP solver
+      if (!subproblem.has_inequality_constraints() && !uses_trust_region) {
          DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver\n";
          return std::make_unique<EQPSolver>(options);
       }
