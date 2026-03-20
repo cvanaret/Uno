@@ -24,11 +24,11 @@ end
 
 function test_MOI_Test()
     model = MOI.instantiate(
-        () -> UnoSolver.Optimizer(logger="DEBUG2");
+        UnoSolver.Optimizer;
         with_cache_type = Float64,
         with_bridge_type = Float64,
     )
-    #MOI.set(model, MOI.Silent(), true)
+    MOI.set(model, MOI.Silent(), true)
     MOI.Test.runtests(
         model,
         MOI.Test.Config(
