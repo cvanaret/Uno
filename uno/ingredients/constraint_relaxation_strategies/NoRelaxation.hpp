@@ -45,7 +45,6 @@ namespace uno {
       std::unique_ptr<InertiaCorrectionStrategy> inertia_correction_strategy;
       MeritFunction globalization_strategy;
       std::unique_ptr<OptimizationProblem> reformulated_problem{};
-      std::unique_ptr<Subproblem> subproblem{};
       std::unique_ptr<SubproblemSolver> subproblem_solver{};
       Parameterization parameterization;
       Vector<double> initial_point;
