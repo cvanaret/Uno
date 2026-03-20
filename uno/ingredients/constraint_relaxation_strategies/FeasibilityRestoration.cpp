@@ -46,6 +46,7 @@ namespace uno {
 
    void FeasibilityRestoration::initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction,
          bool uses_trust_region, EvaluationCache& evaluation_cache, const Options& options) {
+      this->initial_point.resize(this->original_problem.number_variables);
       this->reference_optimality_primals.resize(this->original_problem.number_variables);
 
       this->inequality_handling_method->check_problem(this->original_problem, uses_trust_region);
@@ -96,12 +97,14 @@ namespace uno {
          DEBUG << "Solving the optimality subproblem\n";
          statistics.set("Phase", "OPT");
          const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model, *this->inertia_correction_strategy);
+         this->initial_point.fill(0.);
          this->solve_subproblem(statistics, subproblem, *this->subproblem_solver, this->original_problem, *this->globalization_strategy,
             current_iterate, direction, trust_region_radius, current_evaluations, warmstart_information);
          if (direction.status == SubproblemStatus::INFEASIBLE) {
             // switch to the feasibility problem, starting from the current direction
             statistics.set("Status", std::string("infeasible"));
             DEBUG << "/!\\ The subproblem is infeasible\n";
+            this->initial_point = view(direction.primals, 0, this->original_problem.number_variables);
             this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, warmstart_information);
          }
          else {
@@ -162,7 +165,6 @@ namespace uno {
          Iterate& current_iterate, Direction& direction, double trust_region_radius, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       direction.set_dimensions(subproblem.problem.number_variables, subproblem.problem.number_constraints);
-      const Vector<double> initial_point(subproblem.number_variables, 0.); // TODO
       // update the parameterization
       const bool parameterization_updated = this->inequality_handling_method->update_parameterization(statistics, problem,
          current_iterate, this->parameterization);
@@ -171,10 +173,11 @@ namespace uno {
          globalization_strategy.reset();
          subproblem.problem.set_auxiliary_measure(current_iterate);
       }
-      subproblem_solver.solve(statistics, subproblem, trust_region_radius, initial_point, direction, current_evaluations,
+      subproblem_solver.solve(statistics, subproblem, trust_region_radius, this->initial_point, direction, current_evaluations,
          warmstart_information);
       // ++this->number_subproblems_solved; // TODO
       direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
+      this->initial_point.fill(0.);
       DEBUG3 << direction << '\n';
    }
 

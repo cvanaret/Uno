@@ -48,6 +48,7 @@ namespace uno {
       std::unique_ptr<Subproblem> subproblem{};
       std::unique_ptr<SubproblemSolver> subproblem_solver{};
       Parameterization parameterization;
+      Vector<double> initial_point;
    };
 } // namespace
 

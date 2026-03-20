@@ -64,6 +64,7 @@ namespace uno {
       std::unique_ptr<SubproblemSolver> subproblem_solver{};
       std::unique_ptr<SubproblemSolver> feasibility_subproblem_solver{};
       Parameterization parameterization;
+      Vector<double> initial_point;
 
       // the class maintains multipliers for the other phase (feasibility multipliers if we are in the optimality phase,
       // and vice versa). These multipliers and those of the iterate are swapped whenever we switch phases.

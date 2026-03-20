@@ -28,7 +28,7 @@ namespace uno {
 
    void NoRelaxation::initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction,
          bool uses_trust_region, EvaluationCache& evaluation_cache, const Options& options) {
-      // memory allocation
+      this->initial_point.resize(this->original_problem.number_variables);
       this->inequality_handling_method->check_problem(this->original_problem, uses_trust_region);
       direction = Direction(this->original_problem.number_variables, this->original_problem.number_constraints);
 
@@ -62,8 +62,8 @@ namespace uno {
          this->globalization_strategy.reset();
          this->subproblem->problem.set_auxiliary_measure(current_iterate);
       }
-      const Vector<double> initial_point(this->subproblem->number_variables, 0.); // TODO
-      this->subproblem_solver->solve(statistics, *this->subproblem, trust_region_radius, initial_point, direction,
+      this->initial_point.fill(0.);
+      this->subproblem_solver->solve(statistics, *this->subproblem, trust_region_radius, this->initial_point, direction,
          current_evaluations, warmstart_information);
       direction.norm = norm_inf(view(direction.primals, 0, this->original_problem.get_number_original_variables()));
       DEBUG3 << direction << '\n';
