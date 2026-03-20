@@ -5,7 +5,6 @@
 #include "SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "optimization/Direction.hpp"
 #include "options/Options.hpp"
-#include "tools/Infinity.hpp"
 
 namespace uno {
    EQPSolver::EQPSolver(const Options& options):

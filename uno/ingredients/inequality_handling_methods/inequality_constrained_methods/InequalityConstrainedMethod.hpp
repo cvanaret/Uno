@@ -6,12 +6,8 @@
 
 #include <memory>
 #include "../InequalityHandlingMethod.hpp"
-#include "linear_algebra/Vector.hpp"
 
 namespace uno {
-   // forward declaration
-   class Multipliers;
-
    class InequalityConstrainedMethod : public InequalityHandlingMethod {
    public:
       InequalityConstrainedMethod() = default;
@@ -29,9 +25,6 @@ namespace uno {
       [[nodiscard]] double proximal_coefficient() const override;
 
       [[nodiscard]] std::string get_name() const override;
-
-   protected:
-      static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
    };
 } // namespace
 

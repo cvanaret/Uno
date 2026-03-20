@@ -6,28 +6,15 @@
 
 #include <memory>
 #include <string>
-#include "linear_algebra/Norm.hpp"
 
 namespace uno {
    // forward declarations
-   class Direction;
-   class EvaluationCache;
    class Evaluations;
-   class SolverWorkspace;
-   class GlobalizationStrategy;
-   class HessianModel;
-   class InertiaCorrectionStrategy;
    class Iterate;
    class l1RelaxedProblem;
    class OptimizationProblem;
-   class Options;
    class Parameterization;
    class Statistics;
-   class Subproblem;
-   class UserCallbacks;
-   template <typename ElementType>
-   class Vector;
-   class WarmstartInformation;
    
    class InequalityHandlingMethod {
    public:
@@ -44,10 +31,6 @@ namespace uno {
       virtual void initialize_feasibility_problem(Iterate& current_iterate) = 0;
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate, Evaluations& evaluations) = 0;
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
-
-      [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy,
-         const Subproblem& subproblem, const SolverWorkspace& solver_workspace, Iterate& current_iterate, Iterate& trial_iterate,
-         const Direction& direction, double step_length, EvaluationCache& evaluation_cache, UserCallbacks& user_callbacks);
 
       size_t number_subproblems_solved{0};
 

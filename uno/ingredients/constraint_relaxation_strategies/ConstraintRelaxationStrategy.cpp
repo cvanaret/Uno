@@ -3,7 +3,6 @@
 
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
-#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/VectorView.hpp"
 #include "model/Model.hpp"
