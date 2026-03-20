@@ -7,13 +7,15 @@
 #include "LPSolverFactory.hpp"
 #include "QPSolverFactory.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "options/Options.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
    std::unique_ptr<SubproblemSolver> SubproblemSolverFactory::create(const Subproblem& subproblem, bool uses_trust_region,
          const Options& options) {
       // if no inequality constraint and no trust region, allocate EQP solver
-      if (!subproblem.has_inequality_constraints() && !uses_trust_region) {
+      // temporary fix: this is set only in interior-point methods
+      if (!subproblem.has_inequality_constraints() && !uses_trust_region && options.get_string("inequality_handling_method") == "interior_point") {
          DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver\n";
          return std::make_unique<EQPSolver>(options);
       }
