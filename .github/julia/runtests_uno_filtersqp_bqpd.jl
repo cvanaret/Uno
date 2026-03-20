@@ -81,6 +81,7 @@ end
                 MOI.VariableBasisStatus,
                 MOI.ConstraintBasisStatus,
                 MOI.ObjectiveBound,
+                MOI.DualObjectiveValue,
             ],
         );
         exclude = [
