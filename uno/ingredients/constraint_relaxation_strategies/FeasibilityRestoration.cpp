@@ -96,8 +96,8 @@ namespace uno {
          DEBUG << "Solving the optimality subproblem\n";
          statistics.set("Phase", "OPT");
          const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model, *this->inertia_correction_strategy);
-         this->solve_subproblem(statistics, subproblem, *this->subproblem_solver, this->original_problem, current_iterate,
-            direction, trust_region_radius, current_evaluations, warmstart_information);
+         this->solve_subproblem(statistics, subproblem, *this->subproblem_solver, this->original_problem, *this->globalization_strategy,
+            current_iterate, direction, trust_region_radius, current_evaluations, warmstart_information);
          if (direction.status == SubproblemStatus::INFEASIBLE) {
             // switch to the feasibility problem, starting from the current direction
             statistics.set("Status", std::string("infeasible"));
@@ -118,7 +118,8 @@ namespace uno {
       const Subproblem feasibility_subproblem(*this->reformulated_feasibility_problem, current_iterate, *this->feasibility_hessian_model,
          *this->feasibility_inertia_correction_strategy);
       this->solve_subproblem(statistics, feasibility_subproblem, *this->feasibility_subproblem_solver, this->feasibility_problem,
-         current_iterate, direction, trust_region_radius, current_evaluations, warmstart_information);
+         this->feasibility_globalization_strategy, current_iterate, direction, trust_region_radius, current_evaluations,
+         warmstart_information);
    }
 
    bool FeasibilityRestoration::solving_feasibility_problem() const {
@@ -145,6 +146,7 @@ namespace uno {
       this->other_phase_multipliers.upper_bounds.resize(this->feasibility_problem.number_variables);
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
 
+      // TODO pass the parameterization
       this->feasibility_inequality_handling_method->initialize_feasibility_problem(current_iterate);
       this->feasibility_inequality_handling_method->set_elastic_variable_values(this->feasibility_problem, current_iterate,
          current_evaluations);
@@ -156,12 +158,19 @@ namespace uno {
    }
 
    void FeasibilityRestoration::solve_subproblem(Statistics& statistics, const Subproblem& subproblem,
-         SubproblemSolver& subproblem_solver, const OptimizationProblem& problem, const Iterate& current_iterate,
-         Direction& direction, double trust_region_radius, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
+         SubproblemSolver& subproblem_solver, const OptimizationProblem& problem, GlobalizationStrategy& globalization_strategy,
+         Iterate& current_iterate, Direction& direction, double trust_region_radius, Evaluations& current_evaluations,
+         const WarmstartInformation& warmstart_information) {
       direction.set_dimensions(subproblem.problem.number_variables, subproblem.problem.number_constraints);
       const Vector<double> initial_point(subproblem.number_variables, 0.); // TODO
-      this->inequality_handling_method->update_parameterization(statistics, problem, current_iterate, this->parameterization);
-      // TODO !!! reset globalization strategy if parameterization changed
+      // update the parameterization
+      const bool parameterization_updated = this->inequality_handling_method->update_parameterization(statistics, problem,
+         current_iterate, this->parameterization);
+      // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
+      if (parameterization_updated) {
+         globalization_strategy.reset();
+         subproblem.problem.set_auxiliary_measure(current_iterate);
+      }
       subproblem_solver.solve(statistics, subproblem, trust_region_radius, initial_point, direction, current_evaluations,
          warmstart_information);
       // ++this->number_subproblems_solved; // TODO

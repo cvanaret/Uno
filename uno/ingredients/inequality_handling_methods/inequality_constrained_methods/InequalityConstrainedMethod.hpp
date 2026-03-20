@@ -19,9 +19,10 @@ namespace uno {
 
       void check_problem(const OptimizationProblem& problem, bool uses_trust_region) override;
       void initialize_statistics(Statistics& statistics) override;
-      std::unique_ptr<OptimizationProblem> reformulate(const OptimizationProblem& problem, Parameterization& parameterization) override;
-      void update_parameterization(Statistics& statistics, const OptimizationProblem& problem, const Iterate& current_iterate,
+      [[nodiscard]] std::unique_ptr<OptimizationProblem> reformulate(const OptimizationProblem& problem,
          Parameterization& parameterization) override;
+      [[nodiscard]] bool update_parameterization(Statistics& statistics, const OptimizationProblem& problem,
+         const Iterate& current_iterate, Parameterization& parameterization) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate, Evaluations& evaluations) override;

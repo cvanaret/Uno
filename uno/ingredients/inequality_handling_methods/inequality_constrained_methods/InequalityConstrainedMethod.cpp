@@ -23,9 +23,9 @@ namespace uno {
       return problem.clone(); // the problem is not reformulated
    }
 
-   void InequalityConstrainedMethod::update_parameterization(Statistics& /*statistics*/, const OptimizationProblem& /*problem*/,
+   bool InequalityConstrainedMethod::update_parameterization(Statistics& /*statistics*/, const OptimizationProblem& /*problem*/,
          const Iterate& /*current_iterate*/, Parameterization& /*parameterization*/) {
-      // do nothing
+      return false;
    }
 
    void InequalityConstrainedMethod::initialize_feasibility_problem(Iterate& /*current_iterate*/) {

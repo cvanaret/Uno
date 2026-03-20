@@ -38,7 +38,7 @@ namespace uno {
       virtual void initialize_statistics(Statistics& statistics) = 0;
       [[nodiscard]] virtual std::unique_ptr<OptimizationProblem> reformulate(const OptimizationProblem& problem,
          Parameterization& parameterization) = 0;
-      virtual void update_parameterization(Statistics& statistics, const OptimizationProblem& problem,
+      [[nodiscard]] virtual bool update_parameterization(Statistics& statistics, const OptimizationProblem& problem,
          const Iterate& current_iterate, Parameterization& parameterization) = 0;
 
       virtual void initialize_feasibility_problem(Iterate& current_iterate) = 0;
@@ -52,10 +52,6 @@ namespace uno {
       size_t number_subproblems_solved{0};
 
       [[nodiscard]] virtual std::string get_name() const = 0;
-
-   protected:
-      // when the parameterization of the subproblem (e.g. penalty or barrier parameter) is updated, signal it
-      bool subproblem_definition_changed{false};
    };
 } // namespace
 

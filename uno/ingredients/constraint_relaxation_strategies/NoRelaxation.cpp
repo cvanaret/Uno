@@ -55,8 +55,13 @@ namespace uno {
       direction.reset();
       DEBUG << "Solving the subproblem\n";
       direction.set_dimensions(this->original_problem.number_variables, this->original_problem.number_constraints);
-      this->inequality_handling_method->update_parameterization(statistics, this->original_problem, current_iterate,
-         this->parameterization);
+      const bool parameterization_updated = this->inequality_handling_method->update_parameterization(statistics,
+         this->original_problem, current_iterate, this->parameterization);
+      // if the problem definition changed, reset the globalization strategy and recompute the current auxiliary measure
+      if (parameterization_updated) {
+         this->globalization_strategy.reset();
+         this->subproblem->problem.set_auxiliary_measure(current_iterate);
+      }
       const Vector<double> initial_point(this->subproblem->number_variables, 0.); // TODO
       this->subproblem_solver->solve(statistics, *this->subproblem, trust_region_radius, initial_point, direction,
          current_evaluations, warmstart_information);

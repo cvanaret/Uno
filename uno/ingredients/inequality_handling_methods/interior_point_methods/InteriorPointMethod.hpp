@@ -26,9 +26,10 @@ namespace uno {
 
       void check_problem(const OptimizationProblem& problem, bool uses_trust_region) override;
       void initialize_statistics(Statistics& statistics) override;
-      std::unique_ptr<OptimizationProblem> reformulate(const OptimizationProblem& problem, Parameterization& parameterization) override;
-      void update_parameterization(Statistics& statistics, const OptimizationProblem& problem, const Iterate& current_iterate,
+      [[nodiscard]] std::unique_ptr<OptimizationProblem> reformulate(const OptimizationProblem& problem,
          Parameterization& parameterization) override;
+      [[nodiscard]] bool update_parameterization(Statistics& statistics, const OptimizationProblem& problem,
+         const Iterate& current_iterate, Parameterization& parameterization) override;
 
       void initialize_feasibility_problem(Iterate& current_iterate) override;
       void set_elastic_variable_values(const l1RelaxedProblem& feasibility_problem, Iterate& iterate, Evaluations& evaluations) override;
@@ -46,7 +47,6 @@ namespace uno {
       bool first_feasibility_iteration{false};
 
       [[nodiscard]] double barrier_parameter() const;
-      void update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate, const DualResiduals& residuals);
       //[[nodiscard]] bool is_small_step(const Vector<double>& current_primals, const Vector<double>& direction_primals) const;
    };
 
@@ -97,23 +97,24 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::update_parameterization(Statistics& statistics, const OptimizationProblem& problem,
+   bool InteriorPointMethod<BarrierProblem>::update_parameterization(Statistics& statistics, const OptimizationProblem& problem,
          const Iterate& current_iterate, Parameterization& parameterization) {
+      bool update = false;
       // possibly update the barrier parameter
       if (!this->first_feasibility_iteration) {
-         this->update_barrier_parameter(problem, current_iterate, current_iterate.residuals);
+         update = this->barrier_parameter_update_strategy.update_barrier_parameter(problem, current_iterate, current_iterate.residuals);
       }
       else {
          this->first_feasibility_iteration = false;
       }
       parameterization.set("barrier_parameter", this->barrier_parameter());
       statistics.set("Barrier", this->barrier_parameter());
+      return update;
    }
 
    template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::initialize_feasibility_problem(Iterate& current_iterate) {
       this->first_feasibility_iteration = true;
-      this->subproblem_definition_changed = true;
 
       // temporarily update the objective multiplier
       this->previous_barrier_parameter = this->barrier_parameter();
@@ -173,15 +174,6 @@ namespace uno {
    template <typename BarrierProblem>
    double InteriorPointMethod<BarrierProblem>::barrier_parameter() const {
       return this->barrier_parameter_update_strategy.get_barrier_parameter();
-   }
-
-   template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::update_barrier_parameter(const OptimizationProblem& problem, const Iterate& current_iterate,
-         const DualResiduals& residuals) {
-      const bool barrier_parameter_updated = this->barrier_parameter_update_strategy.update_barrier_parameter(problem,
-         current_iterate, residuals);
-      // the barrier parameter may have been changed earlier when entering restoration
-      this->subproblem_definition_changed = this->subproblem_definition_changed || barrier_parameter_updated;
    }
 
    /*
