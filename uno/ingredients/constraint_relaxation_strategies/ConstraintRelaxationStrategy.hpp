@@ -47,7 +47,7 @@ namespace uno {
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
-      [[nodiscard]] virtual size_t get_number_subproblems_solved() const = 0;
+      [[nodiscard]] size_t get_number_subproblems_solved() const;
 
    protected:
       const Norm progress_norm;
@@ -60,6 +60,7 @@ namespace uno {
       size_t loose_tolerance_consecutive_iterations{0};
       const size_t loose_tolerance_iteration_threshold;
       const double unbounded_objective_threshold;
+      size_t number_subproblems_solved{0};
 
       void evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate, Evaluations& evaluations) const;
       bool is_iterate_acceptable(Statistics& statistics, GlobalizationStrategy& globalization_strategy, const Subproblem& subproblem,

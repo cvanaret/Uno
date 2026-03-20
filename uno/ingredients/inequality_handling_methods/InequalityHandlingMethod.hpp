@@ -32,8 +32,6 @@ namespace uno {
       virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate, Evaluations& evaluations) = 0;
       [[nodiscard]] virtual double proximal_coefficient() const = 0;
 
-      size_t number_subproblems_solved{0};
-
       [[nodiscard]] virtual std::string get_name() const = 0;
    };
 } // namespace

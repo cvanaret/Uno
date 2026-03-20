@@ -43,7 +43,6 @@ namespace uno {
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       [[nodiscard]] std::string get_name() const override;
-      [[nodiscard]] size_t get_number_subproblems_solved() const override;
 
    private:
       Phase current_phase{Phase::OPTIMALITY};

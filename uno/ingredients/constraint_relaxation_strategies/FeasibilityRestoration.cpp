@@ -69,6 +69,7 @@ namespace uno {
 
       // reformulation of the original problem
       this->reformulated_problem = this->inequality_handling_method->reformulate(this->original_problem, this->parameterization);
+      initial_iterate.set_number_variables(this->reformulated_problem->number_variables);
       const Subproblem subproblem(*this->reformulated_problem, initial_iterate, *this->hessian_model, *this->inertia_correction_strategy);
       this->subproblem_solver = SubproblemSolverFactory::create(subproblem, uses_trust_region, options);
       this->subproblem_solver->initialize_memory(subproblem);
@@ -82,7 +83,6 @@ namespace uno {
       this->feasibility_subproblem_solver->initialize_memory(feasibility_subproblem);
 
       // initial iterate
-      initial_iterate.set_number_variables(this->reformulated_problem->number_variables);
       this->reformulated_problem->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
       this->evaluate_progress_measures(*this->reformulated_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
@@ -177,7 +177,7 @@ namespace uno {
       }
       subproblem_solver.solve(statistics, subproblem, trust_region_radius, this->initial_point, direction, current_evaluations,
          warmstart_information);
-      // ++this->number_subproblems_solved; // TODO
+      ++this->number_subproblems_solved;
       direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
       this->initial_point.fill(0.);
       DEBUG3 << direction << '\n';
@@ -268,10 +268,5 @@ namespace uno {
       return this->globalization_strategy->get_name() + " restoration " + this->inequality_handling_method->get_name() +
          " with " + this->hessian_model->name + " Hessian and " + this->inertia_correction_strategy->get_name() +
          " regularization";
-   }
-
-   size_t FeasibilityRestoration::get_number_subproblems_solved() const {
-      return this->inequality_handling_method->number_subproblems_solved +
-         this->feasibility_inequality_handling_method->number_subproblems_solved;
    }
 } // namespace

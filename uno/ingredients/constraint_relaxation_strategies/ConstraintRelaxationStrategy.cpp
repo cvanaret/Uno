@@ -42,6 +42,12 @@ namespace uno {
    }
    */
 
+   size_t ConstraintRelaxationStrategy::get_number_subproblems_solved() const {
+      return this->number_subproblems_solved;
+   }
+
+   // protected member functions
+
    void ConstraintRelaxationStrategy::evaluate_progress_measures(const OptimizationProblem& problem, Iterate& iterate,
          Evaluations& evaluations) const {
       problem.set_infeasibility_measure(iterate, evaluations, this->progress_norm);
