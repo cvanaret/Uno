@@ -73,6 +73,8 @@ namespace uno {
       this->subproblem_solver = SubproblemSolverFactory::create(subproblem, uses_trust_region, options);
       this->subproblem_solver->initialize_memory(subproblem);
       // reformulation of the feasibility problem
+      this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
+      this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
       this->reformulated_feasibility_problem = this->feasibility_inequality_handling_method->reformulate(this->feasibility_problem, this->parameterization);
       const Subproblem feasibility_subproblem(*this->reformulated_feasibility_problem, initial_iterate, *this->feasibility_hessian_model,
          *this->feasibility_inertia_correction_strategy);
