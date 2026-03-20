@@ -14,8 +14,6 @@ typedef void*  UserDataPtr;
 struct IpoptProblemInfo;
 typedef struct IpoptProblemInfo* IpoptProblem;
 
-typedef bool Bool;
-
 // Callback types
 typedef bool (*Eval_F_CB)(ipindex n, const ipnumber* x, bool new_x, ipnumber* obj_value, UserDataPtr user_data);
 typedef bool (*Eval_Grad_F_CB)(ipindex n, const ipnumber* x, bool new_x, ipnumber* grad_f, UserDataPtr user_data);
@@ -80,6 +78,11 @@ bool GetIpoptCurrentViolations(IpoptProblem prob, bool scaled,
                                ipindex n, ipnumber* x_L_violation, ipnumber* x_U_violation,
                                ipnumber* compl_x_L, ipnumber* compl_x_U, ipnumber* grad_lag_x,
                                ipindex m, ipnumber* nlp_constraint_violation, ipnumber* compl_g);
+
+// Stub
+bool OpenIpoptOutputFile(IpoptProblem prob, const char* file_name, int print_level);
+bool SetIpoptProblemScaling(IpoptProblem prob, ipnumber obj_scaling,
+                            const ipnumber* x_scaling, const ipnumber* g_scaling);
 
 // Version
 void GetIpoptVersion(int* major, int* minor, int* release);
