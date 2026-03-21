@@ -35,11 +35,6 @@ namespace uno {
 
       direction = Direction(this->original_problem.number_variables, this->original_problem.number_constraints);
 
-      // statistics
-      this->inertia_correction_strategy->initialize_statistics(statistics);
-      this->inequality_handling_method->initialize_statistics(statistics);
-      this->hessian_model->initialize_statistics(statistics);
-
       // reformulation of the original problem
       this->reformulated_problem = this->inequality_handling_method->reformulate(this->original_problem, this->parameterization);
       initial_iterate.set_number_variables(this->reformulated_problem->number_variables);
@@ -53,6 +48,11 @@ namespace uno {
       this->evaluate_progress_measures(*this->reformulated_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->compute_residuals(this->original_problem, initial_iterate, evaluation_cache.current_evaluations);
       this->globalization_strategy.initialize(statistics, initial_iterate);
+
+      // statistics
+      this->inertia_correction_strategy->initialize_statistics(statistics);
+      this->inequality_handling_method->initialize_statistics(statistics);
+      this->hessian_model->initialize_statistics(statistics);
    }
 
    void NoRelaxation::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
