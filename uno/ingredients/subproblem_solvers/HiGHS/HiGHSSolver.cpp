@@ -19,7 +19,7 @@ namespace uno {
       this->workspace.initialize_memory(subproblem);
    }
 
-   void HiGHSSolver::solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
+   void HiGHSSolver::solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
          const Vector<double>& /*initial_point*/, Direction& direction, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       this->set_up_subproblem(statistics, subproblem, trust_region_radius, current_evaluations, warmstart_information);
@@ -105,10 +105,11 @@ namespace uno {
             direction.multipliers.upper_bounds[variable_index] = bound_multiplier;
          }
       }
-      // read the dual solution
+      // gather the multipliers
       for (size_t constraint_index = 0; constraint_index < subproblem.number_constraints; constraint_index++) {
          direction.multipliers.constraints[constraint_index] = solution.row_dual[constraint_index];
       }
+      LPSolver::compute_dual_displacements(subproblem.current_iterate.multipliers, direction.multipliers);
       const HighsInfo& info = this->highs_solver.getInfo();
       direction.subproblem_objective = info.objective_function_value;
    }

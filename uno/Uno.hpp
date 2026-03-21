@@ -34,7 +34,6 @@ namespace uno {
       std::unique_ptr<GlobalizationMechanism> globalization_mechanism{};
       Direction direction{};
 
-      void pick_ingredients(const Model& model, Options& options);
       void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options,
          EvaluationCache& evaluation_cache);
       [[nodiscard]] static Statistics create_statistics(const Model& model);

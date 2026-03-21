@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "Uno.hpp"
-#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
@@ -78,25 +77,24 @@ namespace uno {
       model.initial_primal_point(current_iterate.primals);
       model.initial_dual_point(current_iterate.multipliers.constraints);
       model.reset_number_evaluations();
-      OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
       EvaluationCache evaluation_cache{model};
-
       Statistics statistics = Uno::create_statistics(model);
       WarmstartInformation warmstart_information{};
       warmstart_information.whole_problem_changed();
-      const size_t max_iterations = options.get_unsigned_int("max_iterations"); // maximum number of iterations
-      const double time_limit = options.get_double("time_limit"); // CPU time limit (can be inf)
 
+      OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
       try { // catch errors at startup/initial iterate
-         // pick the ingredients based on the user-defined options
-         Uno::pick_ingredients(model, options);
+         // set the ingredients based on the user-defined options
+         this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
          // use the initial primal-dual point to initialize the strategies and generate the initial iterate
          this->initialize(statistics, model, current_iterate, options, evaluation_cache);
          // allocate the trial iterate once and for all here
          Iterate trial_iterate(current_iterate);
 
-         try {
+         try { // catch errors during the optimization process
             bool termination = false;
+            const size_t max_iterations = options.get_unsigned_int("max_iterations"); // maximum number of iterations
+            const double time_limit = options.get_double("time_limit"); // CPU time limit (can be inf)
             if (max_iterations == 0) {
                termination = true;
                optimization_status = OptimizationStatus::ITERATION_LIMIT;
@@ -112,7 +110,6 @@ namespace uno {
                warmstart_information.iterate_changed();
                this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate,
                   this->direction, evaluation_cache, warmstart_information, user_callbacks);
-               GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
                const bool user_termination = user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers,
                   trial_iterate.objective_multiplier, trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity,
                   trial_iterate.residuals.complementarity);
@@ -165,10 +162,6 @@ namespace uno {
       std::cout << "- Presets: filtersqp, ipopt\n";
    }
 
-   void Uno::pick_ingredients(const Model& model, Options& options) {
-      this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
-   }
-
    void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options,
          EvaluationCache& evaluation_cache) {
       statistics.start_new_line();
@@ -176,16 +169,13 @@ namespace uno {
       statistics.set("Status", "initial point");
 
       model.project_onto_variable_bounds(current_iterate.primals);
-      this->globalization_mechanism->initialize(statistics, current_iterate, this->direction, evaluation_cache);
-      GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
-      GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
+      this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction, evaluation_cache, options);
 
       options.print_non_default();
       if (Logger::level == INFO) {
          statistics.print_header();
          statistics.print_current_line();
       }
-      current_iterate.status = SolutionStatus::NOT_OPTIMAL;
    }
 
    Statistics Uno::create_statistics(const Model& model) {

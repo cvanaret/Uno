@@ -34,7 +34,7 @@ namespace uno {
       if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
          size_t current_index = this->number_hessian_nonzeros();
          for (size_t variable_index: this->get_primal_regularization_variables()) {
-            row_indices[current_index ] = static_cast<int>(variable_index) + solver_indexing;
+            row_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
             column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
             ++current_index;
          }
@@ -50,7 +50,6 @@ namespace uno {
       // copy Jacobian of general constraints into the (2, 1) block
       const size_t hessian_offset = this->number_hessian_nonzeros();
       for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
-         // to get the transpose, switch the order of the row/column vectors
          row_indices[hessian_offset + nonzero_index] = static_cast<int>(this->problem.number_variables) +
             jacobian_row_indices[nonzero_index] + solver_indexing;
          column_indices[hessian_offset + nonzero_index] = jacobian_column_indices[nonzero_index] + solver_indexing;
@@ -178,6 +177,23 @@ namespace uno {
          }
          return false;
       }
+   }
+
+   bool Subproblem::has_inequality_constraints() const {
+      // look at the general constraints
+      for (size_t constraint_index: Range(this->problem.number_constraints)) {
+         if (this->problem.constraint_lower_bound(constraint_index) < this->problem.constraint_upper_bound(constraint_index)) {
+            return true;
+         }
+      }
+      // look at the bound constraints
+      for (size_t variable_index: Range(this->problem.number_variables)) {
+         if (is_finite(this->problem.variable_lower_bound(variable_index)) ||
+               is_finite(this->problem.variable_upper_bound(variable_index))) {
+            return true;
+         }
+      }
+      return false;
    }
 
    bool Subproblem::performs_primal_regularization() const {

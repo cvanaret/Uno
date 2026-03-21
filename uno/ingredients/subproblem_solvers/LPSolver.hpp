@@ -7,6 +7,9 @@
 #include "InequalityConstrainedSolver.hpp"
 
 namespace uno {
+   // forward declaration
+   class Multipliers;
+
    class LPSolver: public InequalityConstrainedSolver {
    public:
       LPSolver() = default;
@@ -14,10 +17,13 @@ namespace uno {
 
       void initialize_memory(const Subproblem& subproblem) override = 0;
 
-      void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
+      void solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius, const Vector<double>& initial_point,
          Direction& direction, Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override = 0;
 
       [[nodiscard]] SolverWorkspace& get_workspace() override = 0;
+
+   protected:
+      static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
    };
 } // namespace
 

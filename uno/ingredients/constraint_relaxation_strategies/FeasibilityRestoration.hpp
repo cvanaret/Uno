@@ -11,11 +11,14 @@
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
+#include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "optimization/Parameterization.hpp"
 
 namespace uno {
    // forward declaration
    class InequalityHandlingMethod;
+   class Subproblem;
 
    enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
@@ -25,14 +28,14 @@ namespace uno {
       ~FeasibilityRestoration() override = default;
 
       void initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction, bool uses_trust_region,
-         EvaluationCache& evaluation_cache) override;
+         EvaluationCache& evaluation_cache, const Options& options) override;
 
       // direction computation
       void compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          double trust_region_radius, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) override;
       [[nodiscard]] bool solving_feasibility_problem() const override;
       void switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate, Evaluations& current_evaluations,
-         bool uses_trust_region, WarmstartInformation& warmstart_information) override;
+         WarmstartInformation& warmstart_information) override;
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
@@ -40,7 +43,6 @@ namespace uno {
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       [[nodiscard]] std::string get_name() const override;
-      [[nodiscard]] size_t get_number_subproblems_solved() const override;
 
    private:
       Phase current_phase{Phase::OPTIMALITY};
@@ -55,6 +57,14 @@ namespace uno {
       std::unique_ptr<InequalityHandlingMethod> feasibility_inequality_handling_method;
       std::unique_ptr<GlobalizationStrategy> globalization_strategy;
       MeritFunction feasibility_globalization_strategy;
+
+      std::unique_ptr<OptimizationProblem> reformulated_problem{};
+      std::unique_ptr<OptimizationProblem> reformulated_feasibility_problem{};
+      std::unique_ptr<SubproblemSolver> subproblem_solver{};
+      std::unique_ptr<SubproblemSolver> feasibility_subproblem_solver{};
+      Parameterization parameterization;
+      Vector<double> initial_point;
+
       // the class maintains multipliers for the other phase (feasibility multipliers if we are in the optimality phase,
       // and vice versa). These multipliers and those of the iterate are swapped whenever we switch phases.
       Multipliers other_phase_multipliers;
@@ -62,11 +72,11 @@ namespace uno {
       const bool switch_to_optimality_requires_linearized_feasibility;
       ProgressMeasures reference_optimality_progress{};
       Vector<double> reference_optimality_primals{};
-      bool first_switch_to_feasibility{true};
 
-      void solve_subproblem(Statistics& statistics, InequalityHandlingMethod& inequality_handling_method, const OptimizationProblem& problem,
-         Iterate& current_iterate, Direction& direction, double trust_region_radius, Evaluations& current_evaluations,
-         WarmstartInformation& warmstart_information);
+      void solve_subproblem(Statistics& statistics, const Subproblem& subproblem, SubproblemSolver& subproblem_solver,
+         const OptimizationProblem& problem, GlobalizationStrategy& globalization_strategy, Iterate& current_iterate,
+         Direction& direction, double trust_region_radius, Evaluations& current_evaluations,
+         const WarmstartInformation& warmstart_information);
       void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 
       [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,

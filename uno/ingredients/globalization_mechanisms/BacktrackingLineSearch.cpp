@@ -26,11 +26,13 @@ namespace uno {
       assert(0 < this->minimum_step_length && this->minimum_step_length < 1. && "The LS minimum step length should be in (0, 1)");
    }
 
-   void BacktrackingLineSearch::initialize(Statistics& statistics, Iterate& current_iterate, Direction& direction,
-         EvaluationCache& evaluation_cache) {
-      this->constraint_relaxation_strategy->initialize(statistics, current_iterate, direction, false, evaluation_cache);
+   void BacktrackingLineSearch::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
+         Direction& direction, EvaluationCache& evaluation_cache, const Options& options) {
+      this->constraint_relaxation_strategy->initialize(statistics, current_iterate, direction, false, evaluation_cache, options);
       statistics.add_column("Minor", Statistics::int_width, 3, Statistics::column_order.at("Minor"));
       statistics.add_column("Steplength", Statistics::double_width + 1, 2, Statistics::column_order.at("Steplength"));
+      GlobalizationMechanism::set_primal_statistics(statistics, model, current_iterate, evaluation_cache.current_evaluations);
+      GlobalizationMechanism::set_dual_residuals_statistics(statistics, current_iterate);
    }
 
    void BacktrackingLineSearch::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate,
@@ -54,13 +56,13 @@ namespace uno {
                throw std::runtime_error("The line search failed");
             }
             this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
-               evaluation_cache.current_evaluations, false, warmstart_information);
+               evaluation_cache.current_evaluations, warmstart_information);
          }
       }
       // if the inertia correction failed, switch to solving the feasibility problem
       catch (const UnstableInertiaCorrection&) {
          this->constraint_relaxation_strategy->switch_to_feasibility_problem(statistics, current_iterate,
-            evaluation_cache.current_evaluations, false, warmstart_information);
+            evaluation_cache.current_evaluations, warmstart_information);
       }
 
       // solve the feasibility problem
@@ -113,8 +115,8 @@ namespace uno {
          statistics.set("Minor", number_iterations);
 
          if (is_acceptable) {
-            GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
             termination = true;
+            GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
             if (Logger::level == INFO) statistics.print_current_line();
          }
          else if (step_length >= this->minimum_step_length) {
@@ -125,8 +127,11 @@ namespace uno {
          else { // minimum_step_length reached
             DEBUG << "The line search step length is smaller than " << this->minimum_step_length << '\n';
             // check if we can terminate at a first-order point
-            termination = BacktrackingLineSearch::terminate_with_small_step_length(statistics, trial_iterate);
-            if (!termination) {
+            if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
+               statistics.set("Status", "accepted (small step length)");
+               termination = true;
+            }
+            else {
                // switch to solving the feasibility problem
                statistics.set("Status", "small step length");
                return false;
@@ -134,16 +139,6 @@ namespace uno {
          }
       } // end while loop
       return true;
-   }
-
-   bool BacktrackingLineSearch::terminate_with_small_step_length(Statistics& statistics, Iterate& trial_iterate) {
-      bool termination = false;
-      if (trial_iterate.status != SolutionStatus::NOT_OPTIMAL) {
-         statistics.set("Status", "accepted (small step length)");
-         GlobalizationMechanism::set_dual_residuals_statistics(statistics, trial_iterate);
-         termination = true;
-      }
-      return termination;
    }
 
    // step length follows the following sequence: 1, ratio, ratio^2, ratio^3, ...
