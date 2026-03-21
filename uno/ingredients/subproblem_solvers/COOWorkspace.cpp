@@ -12,10 +12,6 @@
 
 namespace uno {
    void COOWorkspace::initialize_hessian(const Subproblem& subproblem) {
-      if (!subproblem.has_hessian_matrix()) {
-         throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
-      }
-
       // Hessian
       this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
       this->number_matrix_nonzeros = subproblem.number_regularized_hessian_nonzeros();
@@ -31,10 +27,6 @@ namespace uno {
    }
 
    void COOWorkspace::initialize_augmented_system(const Subproblem& subproblem) {
-      if (!subproblem.has_hessian_matrix()) {
-         throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
-      }
-
       // Jacobian
       this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
       this->jacobian_row_indices.resize(this->number_jacobian_nonzeros);

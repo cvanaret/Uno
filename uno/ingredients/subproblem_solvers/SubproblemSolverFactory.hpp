@@ -10,6 +10,7 @@
 #include "EQPSolver.hpp"
 #include "LPSolverFactory.hpp"
 #include "QPSolverFactory.hpp"
+#include "WoodburyEQPSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -39,7 +40,8 @@ namespace uno {
       if (!subproblem.has_inequality_constraints() && !uses_trust_region && options.get_string("inequality_handling_method") == "interior_point") {
          if constexpr (std::is_same_v<HessianType, LBFGSHessian>) {
             DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver with L-BFGS Hessian\n";
-            auto subproblem_solver = std::make_unique<EQPSolver>(options);
+            // the hessian_model we pass has type LBFGSHessian
+            auto subproblem_solver = std::make_unique<WoodburyEQPSolver>(hessian_model, options);
             subproblem_solver->initialize_memory(subproblem);
             return subproblem_solver;
          }
