@@ -3,7 +3,7 @@
 
 #include <memory>
 #include "NoRelaxation.hpp"
-#include "ingredients/hessian_models/HessianModelFactory.hpp"
+#include "ingredients/hessian_models/HessianSubproblemSolverJointFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
@@ -17,17 +17,18 @@
 #include "tools/Logger.hpp"
 
 namespace uno {
+   class ExactHessian;
+
    NoRelaxation::NoRelaxation(const Model& model, Options& options):
          ConstraintRelaxationStrategy(options),
          original_problem(model),
          inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
-         hessian_model(HessianModelFactory::create(model, 1., options)),
          inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
          globalization_strategy(options) {
    }
 
-   void NoRelaxation::initialize(Statistics& statistics, Iterate& initial_iterate, Direction& direction,
-         bool uses_trust_region, EvaluationCache& evaluation_cache, const Options& options) {
+   void NoRelaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
+         Direction& direction, bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) {
       this->initial_point.resize(this->original_problem.number_variables);
 
       this->inequality_handling_method->check_problem(this->original_problem, uses_trust_region);
@@ -42,10 +43,10 @@ namespace uno {
       // reformulation of the original problem
       this->reformulated_problem = this->inequality_handling_method->reformulate(this->original_problem, this->parameterization);
       initial_iterate.set_number_variables(this->reformulated_problem->number_variables);
-      const Subproblem subproblem(*this->reformulated_problem, initial_iterate, *this->hessian_model,
-         *this->inertia_correction_strategy);
-      this->subproblem_solver = SubproblemSolverFactory::create(subproblem, uses_trust_region, options);
-      this->subproblem_solver->initialize_memory(subproblem);
+
+      // creation of the Hessian model and the subproblem solver
+      std::tie(this->hessian_model, this->subproblem_solver) = HessianSubproblemSolverJointFactory::create(model, *this->reformulated_problem,
+         initial_iterate, *this->inertia_correction_strategy, uses_trust_region, 1., options);
 
       // initial iterate
       this->reformulated_problem->generate_initial_iterate(initial_iterate, evaluation_cache.current_evaluations);
