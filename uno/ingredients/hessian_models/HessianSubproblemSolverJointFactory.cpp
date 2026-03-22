@@ -69,12 +69,6 @@ namespace uno {
             inertia_correction_strategy, uses_trust_region, options);
          return {std::move(hessian_model), std::move(subproblem_solver)};
       }
-      else if (hessian_model_type == "L-BFGS") {
-         auto hessian_model = std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
-         auto subproblem_solver = SubproblemSolverFactory::create(problem, current_iterate, *hessian_model,
-            inertia_correction_strategy, uses_trust_region, options);
-         return {std::move(hessian_model), std::move(subproblem_solver)};
-      }
       throw std::invalid_argument("Hessian model " + hessian_model_type + " does not exist");
    }
 } // namespace
