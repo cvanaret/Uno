@@ -264,8 +264,9 @@ namespace uno {
    }
 
    std::string FeasibilityRestoration::get_name() const {
+      const std::string hessian_model_name = (this->hessian_model != nullptr) ? this->hessian_model->name : "unknown";
       return this->globalization_strategy->get_name() + " restoration " + this->inequality_handling_method->get_name() +
-         " with " + this->hessian_model->name + " Hessian and " + this->inertia_correction_strategy->get_name() +
+         " with " + hessian_model_name + " Hessian and " + this->inertia_correction_strategy->get_name() +
          " regularization";
    }
 } // namespace
