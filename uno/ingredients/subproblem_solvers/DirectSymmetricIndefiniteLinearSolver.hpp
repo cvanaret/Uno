@@ -4,6 +4,7 @@
 #ifndef UNO_DIRECTSYMMETRICINDEFINITELINEARSOLVER_H
 #define UNO_DIRECTSYMMETRICINDEFINITELINEARSOLVER_H
 
+#include <cstddef>
 #include "SymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/inertia_correction_strategies/Inertia.hpp"
 

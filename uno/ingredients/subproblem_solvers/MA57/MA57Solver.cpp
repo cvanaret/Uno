@@ -7,9 +7,6 @@
 #include <utility>
 #include <vector>
 #include "MA57Solver.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "optimization/Direction.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 
@@ -83,44 +80,24 @@ namespace uno {
       this->workspace.icntl[8] = 1;
    }
 
-   void MA57Solver::initialize_hessian(const Subproblem& subproblem) {
-      this->coo_workspace.initialize_hessian(subproblem);
-
-      // workspace
-      const size_t dimension = subproblem.number_variables;
-      this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
-      this->workspace.lkeep = static_cast<int>(5 * dimension + this->coo_workspace.number_matrix_nonzeros +
-         std::max(dimension, this->coo_workspace.number_matrix_nonzeros) + 42);
+   void MA57Solver::initialize_memory() {
+      this->workspace.n = static_cast<int>(this->sparse_representation.dimension);
+      this->workspace.nnz = static_cast<int>(this->sparse_representation.number_nonzeros);
+      this->workspace.lkeep = static_cast<int>(5 * this->sparse_representation.dimension + this->sparse_representation.number_nonzeros +
+         std::max(this->sparse_representation.dimension, this->sparse_representation.number_nonzeros) + 42);
       this->workspace.keep.resize(static_cast<size_t>(this->workspace.lkeep));
-      this->workspace.iwork.resize(5 * dimension);
-      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(dimension));
+      this->workspace.iwork.resize(5 * this->sparse_representation.dimension);
+      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(this->sparse_representation.dimension));
       this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
-      this->workspace.residuals.resize(dimension);
-   }
-
-   void MA57Solver::initialize_augmented_system(const Subproblem& subproblem) {
-      this->coo_workspace.initialize_augmented_system(subproblem);
-
-      // workspace
-      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
-      this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
-      this->workspace.lkeep = static_cast<int>(5 * dimension + this->coo_workspace.number_matrix_nonzeros +
-         std::max(dimension, this->coo_workspace.number_matrix_nonzeros) + 42);
-      this->workspace.keep.resize(static_cast<size_t>(this->workspace.lkeep));
-      this->workspace.iwork.resize(5 * dimension);
-      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(dimension));
-      this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
-      this->workspace.residuals.resize(dimension);
+      this->workspace.residuals.resize(this->sparse_representation.dimension);
    }
 
    void MA57Solver::do_symbolic_analysis() {
       assert(!this->analysis_performed);
 
       // symbolic analysis
-      MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->coo_workspace.matrix_row_indices.data(),
-         this->coo_workspace.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
+      MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->sparse_representation.matrix_row_indices.data(),
+         this->sparse_representation.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
          this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
       assert(0 <= this->workspace.info[0] && "MA57: the symbolic analysis failed");
@@ -187,7 +164,7 @@ namespace uno {
       // solve the linear system
       if (this->use_iterative_refinement) {
          MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz,
-            matrix_values, this->coo_workspace.matrix_row_indices.data(), this->coo_workspace.matrix_column_indices.data(),
+            matrix_values, this->sparse_representation.matrix_row_indices.data(), this->sparse_representation.matrix_column_indices.data(),
             this->workspace.fact.data(), &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact,
             rhs, result, this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(),
             this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
@@ -202,20 +179,6 @@ namespace uno {
             this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.nrhs, result, &lrhs,
             this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
             this->workspace.info.data());
-      }
-   }
-
-   void MA57Solver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
-      // set up the linear system by evaluating the functions at the current iterate
-      this->coo_workspace.set_up_linear_system(statistics, subproblem, *this, current_evaluations, warmstart_information);
-      // solve the linear system
-      this->solve_indefinite_system(this->coo_workspace.matrix_values.data(), this->coo_workspace.rhs.data(),
-         this->coo_workspace.solution.data());
-      // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(this->coo_workspace.solution, direction);
-      if (this->matrix_is_singular()) {
-         direction.status = SubproblemStatus::INFEASIBLE;
       }
    }
 
@@ -248,7 +211,7 @@ namespace uno {
       return static_cast<size_t>(this->workspace.info[24]);
    }
 
-   SolverWorkspace& MA57Solver::get_workspace() {
-      return this->coo_workspace;
+   LinearSolverSparseRepresentation& MA57Solver::get_workspace() {
+      return this->sparse_representation;
    }
 } // namespace

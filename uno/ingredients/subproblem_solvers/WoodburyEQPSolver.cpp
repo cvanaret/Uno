@@ -1,20 +1,30 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <cassert>
 #include "WoodburyEQPSolver.hpp"
+#include "LinearSolverSparseRepresentation.hpp"
 #include "SymmetricIndefiniteLinearSolverFactory.hpp"
+#include "ingredients/hessian_models/quasi_newton/LBFGSHessian.hpp"
+#include "ingredients/subproblem/Subproblem.hpp"
+#include "linear_algebra/COOMatrix.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
 
 namespace uno {
-   WoodburyEQPSolver::WoodburyEQPSolver(LBFGSHessian& hessian_model, const Options& options):
+   WoodburyEQPSolver::WoodburyEQPSolver(const LBFGSHessian& hessian_model, const Options& options):
          SubproblemSolver(),
          hessian_model(hessian_model),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))) {
+      assert(!this->hessian_model.has_hessian_matrix());
    }
 
    void WoodburyEQPSolver::initialize_memory(const Subproblem& subproblem) {
-      this->linear_solver->initialize_augmented_system(subproblem);
+      // access the sparse representation of the linear solver
+      auto& sparse_representation = this->linear_solver->get_workspace();
+      sparse_representation.initialize_augmented_system(subproblem);
+      this->linear_solver->initialize_memory();
    }
 
    void WoodburyEQPSolver::solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
@@ -24,14 +34,41 @@ namespace uno {
          throw std::runtime_error("The direct linear solver does not support a trust region");
       }
 
-      // solve the subproblem with only the diagonal part
-      // TODO build the subproblem from here
-      this->linear_solver->solve_indefinite_system(statistics, subproblem, direction, current_evaluations, warmstart_information);
-      if (this->linear_solver->matrix_is_singular()) {
-         direction.status = SubproblemStatus::INFEASIBLE;
+      // access the sparse representation of the linear solver
+      auto& sparse_representation = this->linear_solver->get_workspace();
+
+      // set up the linear system by evaluating the functions at the current iterate
+      if (warmstart_information.new_iterate) {
+         // assemble the augmented matrix
+         subproblem.assemble_augmented_matrix(statistics, sparse_representation.matrix_values.data(), current_evaluations);
+
+         // perform the symbolic analysis once and for all
+         if (!this->analysis_performed) {
+            DEBUG << "Performing symbolic analysis of the indefinite system\n";
+            this->linear_solver->do_symbolic_analysis();
+            this->analysis_performed = true;
+         }
+
+         // regularize the augmented matrix (this calls the analysis and the factorization)
+         subproblem.regularize_augmented_matrix(statistics, sparse_representation.matrix_values.data(),
+            subproblem.dual_regularization_factor(), *this->linear_solver);
+
+         // assemble the RHS
+         const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+         const COOMatrix jacobian{sparse_representation.jacobian_row_indices.data(), sparse_representation.jacobian_column_indices.data(),
+            sparse_representation.matrix_values.data() + number_hessian_nonzeros};
+         subproblem.assemble_augmented_rhs(current_evaluations, jacobian, sparse_representation.rhs);
       }
 
-      // compute the low-rank corrections
+      /* solve the linear system with only the diagonal part */
+      this->linear_solver->solve_indefinite_system(sparse_representation.matrix_values.data(), sparse_representation.rhs.data(),
+         sparse_representation.solution.data());
+      if (this->linear_solver->matrix_is_singular()) {
+         direction.status = SubproblemStatus::INFEASIBLE;
+         return;
+      }
+      // assemble the full primal-dual direction
+      subproblem.assemble_primal_dual_direction(sparse_representation.solution, direction);
    }
 
    SolverWorkspace& WoodburyEQPSolver::get_workspace() {

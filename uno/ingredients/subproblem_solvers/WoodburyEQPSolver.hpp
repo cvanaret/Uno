@@ -15,7 +15,7 @@ namespace uno {
 
    class WoodburyEQPSolver: public SubproblemSolver {
    public:
-      WoodburyEQPSolver(LBFGSHessian& hessian_model, const Options& options);
+      WoodburyEQPSolver(const LBFGSHessian& hessian_model, const Options& options);
       ~WoodburyEQPSolver() override = default;
 
       void initialize_memory(const Subproblem& subproblem) override;
@@ -26,8 +26,9 @@ namespace uno {
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    protected:
-      LBFGSHessian& hessian_model;
+      const LBFGSHessian& hessian_model;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
+      bool analysis_performed{false};
    };
 } // namespace
 

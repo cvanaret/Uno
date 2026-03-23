@@ -2,8 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "MUMPSSolver.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
-#include "optimization/Direction.hpp"
+#include <cassert>
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"
 #endif
@@ -46,22 +45,9 @@ namespace uno {
       dmumps_c(&this->workspace);
    }
 
-   void MUMPSSolver::initialize_hessian(const Subproblem& subproblem) {
-      this->coo_workspace.initialize_hessian(subproblem);
-
-      // workspace*
-      const size_t dimension = subproblem.number_variables;
-      this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
-   }
-
-   void MUMPSSolver::initialize_augmented_system(const Subproblem& subproblem) {
-      this->coo_workspace.initialize_augmented_system(subproblem);
-
-      // workspace
-      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
-      this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
+   void MUMPSSolver::initialize_memory() {
+      this->workspace.n = static_cast<int>(this->coo_workspace.dimension);
+      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_nonzeros);
    }
 
    void MUMPSSolver::do_symbolic_analysis() {
@@ -97,19 +83,6 @@ namespace uno {
       dmumps_c(&this->workspace);
    }
 
-   void MUMPSSolver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
-      // set up the linear system by evaluating the functions at the current iterate
-      this->coo_workspace.set_up_linear_system(statistics, subproblem, *this, current_evaluations, warmstart_information);
-      // solve the linear system
-      this->solve_indefinite_system(this->coo_workspace.matrix_values, this->coo_workspace.rhs, this->coo_workspace.solution);
-      // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(this->coo_workspace.solution, direction);
-      if (this->matrix_is_singular()) {
-         direction.status = SubproblemStatus::INFEASIBLE;
-      }
-   }
-
    Inertia MUMPSSolver::get_inertia() const {
       // rank = number_positive_eigenvalues + number_negative_eigenvalues
       // n = rank + number_zero_eigenvalues
@@ -137,7 +110,7 @@ namespace uno {
       return this->workspace.n - this->number_zero_eigenvalues();
    }
 
-   COOWorkspace& MUMPSSolver::get_workspace() {
+   LinearSolverSparseRepresentation& MUMPSSolver::get_workspace() {
       return this->coo_workspace;
    }
 } // namespace
