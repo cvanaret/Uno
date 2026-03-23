@@ -6,7 +6,7 @@
 
 #include <spral_ssids.h>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "../COOLinearSolverSparseRepresentation.hpp"
+#include "../COOLinearSystem.hpp"
 
 namespace uno {
    struct Workspace {
@@ -34,11 +34,11 @@ namespace uno {
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
 
-      [[nodiscard]] LinearSolverSparseRepresentation& get_workspace() override;
+      [[nodiscard]] LinearSystem& get_linear_system() override;
 
    protected:
       Workspace workspace{};
-      COOLinearSolverSparseRepresentation coo_workspace{};
+      COOLinearSystem linear_system{};
 
       bool analysis_performed{false};
       bool factorization_performed{false};

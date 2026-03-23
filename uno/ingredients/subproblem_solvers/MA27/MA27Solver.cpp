@@ -120,12 +120,12 @@ namespace uno {
    }
 
    void MA27Solver::initialize_memory() {
-      this->workspace.n = static_cast<int>(this->sparse_representation.dimension);
-      this->workspace.nnz = static_cast<int>(this->sparse_representation.number_nonzeros);
+      this->workspace.n = static_cast<int>(this->linear_system.dimension);
+      this->workspace.nnz = static_cast<int>(this->linear_system.number_nonzeros);
       // 20% more than 2*nnz + 3*n + 1
-      this->workspace.iw.resize((2 * this->sparse_representation.number_nonzeros + 3 * this->sparse_representation.dimension + 1) * 6 / 5);
-      this->workspace.ikeep.resize(3 * this->sparse_representation.dimension);
-      this->workspace.iw1.resize(2 * this->sparse_representation.dimension);
+      this->workspace.iw.resize((2 * this->linear_system.number_nonzeros + 3 * this->linear_system.dimension + 1) * 6 / 5);
+      this->workspace.ikeep.resize(3 * this->linear_system.dimension);
+      this->workspace.iw1.resize(2 * this->linear_system.dimension);
    }
 
    void MA27Solver::do_symbolic_analysis() {
@@ -133,7 +133,7 @@ namespace uno {
 
       int liw = static_cast<int>(this->workspace.iw.size());
       MA27_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, /* size info */
-         this->sparse_representation.matrix_row_indices.data(), this->sparse_representation.matrix_column_indices.data(),
+         this->linear_system.matrix_row_indices.data(), this->linear_system.matrix_column_indices.data(),
          this->workspace.iw.data(), &liw, this->workspace.ikeep.data(), this->workspace.iw1.data(),  /* solver workspace */
          &this->workspace.nsteps, &this->workspace.iflag, this->workspace.icntl.data(), this->workspace.cntl.data(),
          this->workspace.info.data(), &this->workspace.ops);
@@ -167,8 +167,8 @@ namespace uno {
 
          int la = static_cast<int>(this->workspace.factor.size());
          int liw = static_cast<int>(this->workspace.iw.size());
-         MA27_numerical_factorization(&this->workspace.n, &this->workspace.nnz, this->sparse_representation.matrix_row_indices.data(),
-            this->sparse_representation.matrix_column_indices.data(), this->workspace.factor.data(), &la, this->workspace.iw.data(), &liw,
+         MA27_numerical_factorization(&this->workspace.n, &this->workspace.nnz, this->linear_system.matrix_row_indices.data(),
+            this->linear_system.matrix_column_indices.data(), this->workspace.factor.data(), &la, this->workspace.iw.data(), &liw,
             this->workspace.ikeep.data(), &this->workspace.nsteps, &this->workspace.maxfrt, this->workspace.iw1.data(),
             this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data());
          factorization_done = true;
@@ -237,8 +237,8 @@ namespace uno {
          static_cast<size_t>(this->workspace.n);
    }
 
-   LinearSolverSparseRepresentation& MA27Solver::get_workspace() {
-      return this->sparse_representation;
+   LinearSystem& MA27Solver::get_linear_system() {
+      return this->linear_system;
    }
 
    void MA27Solver::check_factorization_status() {

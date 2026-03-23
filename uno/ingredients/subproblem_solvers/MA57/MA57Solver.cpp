@@ -81,23 +81,23 @@ namespace uno {
    }
 
    void MA57Solver::initialize_memory() {
-      this->workspace.n = static_cast<int>(this->sparse_representation.dimension);
-      this->workspace.nnz = static_cast<int>(this->sparse_representation.number_nonzeros);
-      this->workspace.lkeep = static_cast<int>(5 * this->sparse_representation.dimension + this->sparse_representation.number_nonzeros +
-         std::max(this->sparse_representation.dimension, this->sparse_representation.number_nonzeros) + 42);
+      this->workspace.n = static_cast<int>(this->linear_system.dimension);
+      this->workspace.nnz = static_cast<int>(this->linear_system.number_nonzeros);
+      this->workspace.lkeep = static_cast<int>(5 * this->linear_system.dimension + this->linear_system.number_nonzeros +
+         std::max(this->linear_system.dimension, this->linear_system.number_nonzeros) + 42);
       this->workspace.keep.resize(static_cast<size_t>(this->workspace.lkeep));
-      this->workspace.iwork.resize(5 * this->sparse_representation.dimension);
-      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(this->sparse_representation.dimension));
+      this->workspace.iwork.resize(5 * this->linear_system.dimension);
+      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(this->linear_system.dimension));
       this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
-      this->workspace.residuals.resize(this->sparse_representation.dimension);
+      this->workspace.residuals.resize(this->linear_system.dimension);
    }
 
    void MA57Solver::do_symbolic_analysis() {
       assert(!this->analysis_performed);
 
       // symbolic analysis
-      MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->sparse_representation.matrix_row_indices.data(),
-         this->sparse_representation.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
+      MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->linear_system.matrix_row_indices.data(),
+         this->linear_system.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
          this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
       assert(0 <= this->workspace.info[0] && "MA57: the symbolic analysis failed");
@@ -164,7 +164,7 @@ namespace uno {
       // solve the linear system
       if (this->use_iterative_refinement) {
          MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz,
-            matrix_values, this->sparse_representation.matrix_row_indices.data(), this->sparse_representation.matrix_column_indices.data(),
+            matrix_values, this->linear_system.matrix_row_indices.data(), this->linear_system.matrix_column_indices.data(),
             this->workspace.fact.data(), &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact,
             rhs, result, this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(),
             this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
@@ -211,7 +211,7 @@ namespace uno {
       return static_cast<size_t>(this->workspace.info[24]);
    }
 
-   LinearSolverSparseRepresentation& MA57Solver::get_workspace() {
-      return this->sparse_representation;
+   LinearSystem& MA57Solver::get_linear_system() {
+      return this->linear_system;
    }
 } // namespace

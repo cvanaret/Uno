@@ -5,7 +5,7 @@
 #include "PrimalDualInertiaCorrection.hpp"
 #include "UnstableInertiaCorrection.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "ingredients/subproblem_solvers/LinearSolverSparseRepresentation.hpp"
+#include "ingredients/subproblem_solvers/LinearSystem.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Collection.hpp"
 #include "tools/Logger.hpp"
@@ -34,7 +34,7 @@ namespace uno {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->get_workspace().initialize_augmented_system(subproblem);
+         this->optional_linear_solver->get_linear_system().initialize_augmented_system(subproblem);
          this->optional_linear_solver->initialize_memory();
          this->optional_linear_solver->do_symbolic_analysis();
       }
@@ -57,7 +57,7 @@ namespace uno {
          const Inertia& expected_inertia, double* primal_regularization_values, double* dual_regularization_values) {
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->get_workspace().initialize_augmented_system(subproblem);
+         this->optional_linear_solver->get_linear_system().initialize_augmented_system(subproblem);
          this->optional_linear_solver->initialize_memory();
          this->optional_linear_solver->do_symbolic_analysis();
       }

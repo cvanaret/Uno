@@ -1,27 +1,18 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_COOWORKSPACE_H
-#define UNO_COOWORKSPACE_H
+#ifndef UNO_COOLINEARSYSTEM_H
+#define UNO_COOLINEARSYSTEM_H
 
 #include <cstddef>
-#include <vector>
-#include "LinearSolverSparseRepresentation.hpp"
-#include "SolverWorkspace.hpp"
+#include "LinearSystem.hpp"
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
-   // forward declarations
-   template <typename ElementType>
-   class DirectSymmetricIndefiniteLinearSolver;
-   class Evaluations;
-   class Statistics;
-   class WarmstartInformation;
-
-   class COOLinearSolverSparseRepresentation: public LinearSolverSparseRepresentation {
+   class COOLinearSystem: public LinearSystem {
    public:
-      COOLinearSolverSparseRepresentation() = default;
-      ~COOLinearSolverSparseRepresentation() override = default;
+      COOLinearSystem() = default;
+      ~COOLinearSystem() override = default;
 
       void initialize_hessian(const Subproblem& subproblem) override;
       void initialize_augmented_system(const Subproblem& subproblem) override;
@@ -42,4 +33,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_COOWORKSPACE_H
+#endif // UNO_COOLINEARSYSTEM_H

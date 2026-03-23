@@ -13,15 +13,15 @@ namespace uno {
    }
 
    void SSIDSSolver::initialize_memory() {
-      this->workspace.n = static_cast<int>(this->coo_workspace.dimension);
-      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_nonzeros);
+      this->workspace.n = static_cast<int>(this->linear_system.dimension);
+      this->workspace.nnz = static_cast<int>(this->linear_system.number_nonzeros);
    }
 
    void SSIDSSolver::do_symbolic_analysis() {
       assert(!this->analysis_performed);
 
-      spral_ssids_analyse_coord(this->workspace.n, nullptr, this->workspace.nnz, this->coo_workspace.matrix_row_indices.data(),
-         this->coo_workspace.matrix_column_indices.data(), nullptr, &this->workspace.akeep, &this->workspace.options,
+      spral_ssids_analyse_coord(this->workspace.n, nullptr, this->workspace.nnz, this->linear_system.matrix_row_indices.data(),
+         this->linear_system.matrix_column_indices.data(), nullptr, &this->workspace.akeep, &this->workspace.options,
          &this->workspace.inform);
       if (this->workspace.inform.flag < 0) {
          spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
@@ -79,7 +79,7 @@ namespace uno {
       return static_cast<size_t>(this->workspace.inform.matrix_rank);
    }
 
-   LinearSolverSparseRepresentation& SSIDSSolver::get_workspace() {
-      return this->coo_workspace;
+   LinearSystem& SSIDSSolver::get_linear_system() {
+      return this->linear_system;
    }
 } // namespace

@@ -46,8 +46,8 @@ namespace uno {
    }
 
    void MUMPSSolver::initialize_memory() {
-      this->workspace.n = static_cast<int>(this->coo_workspace.dimension);
-      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_nonzeros);
+      this->workspace.n = static_cast<int>(this->linear_system.dimension);
+      this->workspace.nnz = static_cast<int>(this->linear_system.number_nonzeros);
    }
 
    void MUMPSSolver::do_symbolic_analysis() {
@@ -55,8 +55,8 @@ namespace uno {
 
       this->workspace.job = MUMPSSolver::JOB_ANALYSIS;
       // connect the local sparsity with the pointers in the workspace
-      this->workspace.irn = this->coo_workspace.matrix_row_indices.data();
-      this->workspace.jcn = this->coo_workspace.matrix_column_indices.data();
+      this->workspace.irn = this->linear_system.matrix_row_indices.data();
+      this->workspace.jcn = this->linear_system.matrix_column_indices.data();
       dmumps_c(&this->workspace);
       this->workspace.icntl[7] = 8; // ICNTL(8) = 8: recompute scaling before factorization
       this->analysis_performed = true;
@@ -110,7 +110,7 @@ namespace uno {
       return this->workspace.n - this->number_zero_eigenvalues();
    }
 
-   LinearSolverSparseRepresentation& MUMPSSolver::get_workspace() {
-      return this->coo_workspace;
+   LinearSystem& MUMPSSolver::get_linear_system() {
+      return this->linear_system;
    }
 } // namespace

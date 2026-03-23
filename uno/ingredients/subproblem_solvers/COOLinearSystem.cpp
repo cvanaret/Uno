@@ -1,12 +1,12 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "COOLinearSolverSparseRepresentation.hpp"
+#include "COOLinearSystem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
 
 namespace uno {
-   void COOLinearSolverSparseRepresentation::initialize_hessian(const Subproblem& subproblem) {
+   void COOLinearSystem::initialize_hessian(const Subproblem& subproblem) {
       // Hessian
       this->dimension = subproblem.number_variables;
       this->number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
@@ -22,7 +22,7 @@ namespace uno {
       this->solution.resize(dimension);
    }
 
-   void COOLinearSolverSparseRepresentation::initialize_augmented_system(const Subproblem& subproblem) {
+   void COOLinearSystem::initialize_augmented_system(const Subproblem& subproblem) {
       // Jacobian
       this->number_jacobian_nonzeros = subproblem.number_jacobian_nonzeros();
       this->jacobian_row_indices.resize(this->number_jacobian_nonzeros);
@@ -45,7 +45,7 @@ namespace uno {
       this->solution.resize(dimension);
    }
 
-   double COOLinearSolverSparseRepresentation::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/,
+   double COOLinearSystem::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/,
          const Vector<double>& /*vector*/) const {
       return 0.;
    }

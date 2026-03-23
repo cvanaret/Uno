@@ -6,7 +6,7 @@
 
 namespace uno {
    // forward declarations
-   class LinearSolverSparseRepresentation;
+   class LinearSystem;
 
    template <typename ElementType>
    class SymmetricIndefiniteLinearSolver {
@@ -16,7 +16,7 @@ namespace uno {
 
       virtual void initialize_memory() = 0;
       virtual void solve_indefinite_system(const ElementType* matrix_values, const ElementType* rhs, ElementType* result) = 0;
-      [[nodiscard]] virtual LinearSolverSparseRepresentation& get_workspace() = 0;
+      [[nodiscard]] virtual LinearSystem& get_linear_system() = 0;
    };
 } // namespace
 

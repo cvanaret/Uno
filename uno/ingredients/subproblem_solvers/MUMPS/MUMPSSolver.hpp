@@ -6,7 +6,7 @@
 
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "dmumps_c.h"
-#include "../COOLinearSolverSparseRepresentation.hpp"
+#include "../COOLinearSystem.hpp"
 
 namespace uno {
    class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<double> {
@@ -27,11 +27,11 @@ namespace uno {
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
 
-      [[nodiscard]] LinearSolverSparseRepresentation& get_workspace() override;
+      [[nodiscard]] LinearSystem& get_linear_system() override;
 
    protected:
       DMUMPS_STRUC_C workspace{};
-      COOLinearSolverSparseRepresentation coo_workspace{};
+      COOLinearSystem linear_system{};
 
       static const int JOB_INIT = -1;
       static const int JOB_END = -2;

@@ -1,18 +1,19 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_LINEARSOLVERSPARSEREPRESENTATION_H
-#define UNO_LINEARSOLVERSPARSEREPRESENTATION_H
+#ifndef UNO_LINEARSYSTEM_H
+#define UNO_LINEARSYSTEM_H
 
+#include <vector>
 #include "SolverWorkspace.hpp"
 #include "../interfaces/C/uno_int.h"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {
-   class LinearSolverSparseRepresentation: public SolverWorkspace {
+   class LinearSystem: public SolverWorkspace {
    public:
-      LinearSolverSparseRepresentation() = default;
-      ~LinearSolverSparseRepresentation() override = default;
+      LinearSystem() = default;
+      ~LinearSystem() override = default;
 
       // TODO: these shouldn't be here!
       std::vector<uno_int> jacobian_row_indices{};
@@ -29,4 +30,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_LINEARSOLVERSPARSEREPRESENTATION_H
+#endif // UNO_LINEARSYSTEM_H
