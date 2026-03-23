@@ -85,11 +85,14 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MUMPSSolver::solve_indefinite_system(const Vector<double>& /*matrix_values*/, const Vector<double>& rhs, Vector<double>& result) {
+   void MUMPSSolver::solve_indefinite_system(const double* /*matrix_values*/, const double* rhs, double* result) {
       assert(this->factorization_performed);
 
-      result = rhs;
-      this->workspace.rhs = result.data();
+      // copy rhs into result (overwritten by MUMPS)
+      for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
+         result[index] = rhs[index];
+      }
+      this->workspace.rhs = result;
       this->workspace.job = MUMPSSolver::JOB_SOLVE;
       dmumps_c(&this->workspace);
    }

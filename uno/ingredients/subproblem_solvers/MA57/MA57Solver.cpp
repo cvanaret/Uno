@@ -178,7 +178,7 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MA57Solver::solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) {
+   void MA57Solver::solve_indefinite_system(const double* matrix_values, const double* rhs, double* result) {
       assert(this->factorization_performed);
 
       // solve
@@ -187,17 +187,19 @@ namespace uno {
       // solve the linear system
       if (this->use_iterative_refinement) {
          MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz,
-            matrix_values.data(), this->coo_workspace.matrix_row_indices.data(), this->coo_workspace.matrix_column_indices.data(),
+            matrix_values, this->coo_workspace.matrix_row_indices.data(), this->coo_workspace.matrix_column_indices.data(),
             this->workspace.fact.data(), &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact,
-            rhs.data(), result.data(), this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(),
+            rhs, result, this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(),
             this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
       }
       else {
          // copy rhs into result (overwritten by MA57)
-         result = rhs;
+         for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
+            result[index] = rhs[index];
+         }
 
          MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
-            this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.nrhs, result.data(), &lrhs,
+            this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.nrhs, result, &lrhs,
             this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
             this->workspace.info.data());
       }
@@ -208,7 +210,8 @@ namespace uno {
       // set up the linear system by evaluating the functions at the current iterate
       this->coo_workspace.set_up_linear_system(statistics, subproblem, *this, current_evaluations, warmstart_information);
       // solve the linear system
-      this->solve_indefinite_system(this->coo_workspace.matrix_values, this->coo_workspace.rhs, this->coo_workspace.solution);
+      this->solve_indefinite_system(this->coo_workspace.matrix_values.data(), this->coo_workspace.rhs.data(),
+         this->coo_workspace.solution.data());
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(this->coo_workspace.solution, direction);
       if (this->matrix_is_singular()) {

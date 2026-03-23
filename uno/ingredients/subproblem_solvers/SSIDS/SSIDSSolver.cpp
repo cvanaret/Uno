@@ -43,9 +43,12 @@ namespace uno {
       }
    }
 
-   void SSIDSSolver::solve_indefinite_system(const Vector<double>& /*matrix_values*/, const Vector<double>& rhs, Vector<double>& result) {
-      result = rhs;
-      spral_ssids_solve1(0, result.data(), this->workspace.akeep, this->workspace.fkeep, &this->workspace.options,
+   void SSIDSSolver::solve_indefinite_system(const double* /*matrix_values*/, const double* rhs, double* result) {
+      // copy rhs into result (overwritten by SSIDS)
+      for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
+         result[index] = rhs[index];
+      }
+      spral_ssids_solve1(0, result, this->workspace.akeep, this->workspace.fkeep, &this->workspace.options,
          &this->workspace.inform);
       if (this->workspace.inform.flag < 0) {
          spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
@@ -58,7 +61,8 @@ namespace uno {
       // set up the linear system by evaluating the functions at the current iterate
       this->coo_workspace.set_up_linear_system(statistics, subproblem, *this, current_evaluations, warmstart_information);
       // solve the linear system
-      this->solve_indefinite_system(this->coo_workspace.matrix_values, this->coo_workspace.rhs, this->coo_workspace.solution);
+      this->solve_indefinite_system(this->coo_workspace.matrix_values.data(), this->coo_workspace.rhs.data(),
+         this->coo_workspace.solution.data());
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(this->coo_workspace.solution, direction);
       if (this->matrix_is_singular()) {

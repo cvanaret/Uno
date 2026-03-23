@@ -26,8 +26,7 @@ namespace uno {
       virtual void initialize_hessian(const Subproblem& subproblem) = 0;
       virtual void initialize_augmented_system(const Subproblem& subproblem) = 0;
 
-      virtual void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<ElementType>& rhs,
-         Vector<ElementType>& result) = 0;
+      virtual void solve_indefinite_system(const ElementType* matrix_values, const ElementType* rhs, ElementType* result) = 0;
       virtual void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) = 0;
 

@@ -211,17 +211,19 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MA27Solver::solve_indefinite_system(const Vector<double>& /*matrix_values*/, const Vector<double>& rhs,
-         Vector<double>& result) {
+   void MA27Solver::solve_indefinite_system(const double* /*matrix_values*/, const double* rhs, double* result) {
       assert(this->factorization_performed);
 
       int la = static_cast<int>(this->workspace.factor.size());
       int liw = static_cast<int>(this->workspace.iw.size());
 
-      result = rhs;
+      // copy rhs into result (overwritten by MA27)
+      for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
+         result[index] = rhs[index];
+      }
 
       MA27_linear_solve(&this->workspace.n, this->workspace.factor.data(), &la, this->workspace.iw.data(), &liw,
-         this->workspace.w.data(), &this->workspace.maxfrt, result.data(), this->workspace.iw1.data(), &this->workspace.nsteps,
+         this->workspace.w.data(), &this->workspace.maxfrt, result, this->workspace.iw1.data(), &this->workspace.nsteps,
          this->workspace.icntl.data(), this->workspace.info.data());
 
       assert(this->workspace.info[eINFO::IFLAG] == eIFLAG::SUCCESS && "MA27: the linear solve failed");
@@ -236,7 +238,8 @@ namespace uno {
       // set up the linear system by evaluating the functions at the current iterate
       this->coo_workspace.set_up_linear_system(statistics, subproblem, *this, current_evaluations, warmstart_information);
       // solve the linear system
-      this->solve_indefinite_system(this->coo_workspace.matrix_values, this->coo_workspace.rhs, this->coo_workspace.solution);
+      this->solve_indefinite_system(this->coo_workspace.matrix_values.data(), this->coo_workspace.rhs.data(),
+         this->coo_workspace.solution.data());
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(this->coo_workspace.solution, direction);
       if (this->matrix_is_singular()) {
