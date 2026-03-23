@@ -15,7 +15,7 @@ namespace uno {
       virtual ~SymmetricIndefiniteLinearSolver() = default;
 
       virtual void initialize_memory() = 0;
-      virtual void solve_indefinite_system(const ElementType* matrix_values, const ElementType* rhs, ElementType* result) = 0;
+      virtual void solve_indefinite_system(ElementType* result) = 0;
       [[nodiscard]] virtual LinearSystem& get_linear_system() = 0;
    };
 } // namespace

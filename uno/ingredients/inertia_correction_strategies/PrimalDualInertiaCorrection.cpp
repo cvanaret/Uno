@@ -89,7 +89,7 @@ namespace uno {
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";
 
       DEBUG << "Performing numerical factorization of the indefinite system\n";
-      linear_solver.do_numerical_factorization(augmented_matrix_values, false);
+      linear_solver.do_numerical_factorization(false);
       const Inertia estimated_inertia = linear_solver.get_inertia();
       DEBUG << "Expected inertia  " << expected_inertia << '\n';
       DEBUG << "Estimated inertia " << estimated_inertia << '\n';
@@ -127,7 +127,7 @@ namespace uno {
          DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
          DEBUG2 << augmented_matrix_values << '\n';
          DEBUG << "Performing numerical factorization of the indefinite system\n";
-         linear_solver.do_numerical_factorization(augmented_matrix_values, false);
+         linear_solver.do_numerical_factorization(false);
          ++number_attempts;
          DEBUG << "Number of attempts: " << number_attempts << "\n";
 

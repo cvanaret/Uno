@@ -60,8 +60,7 @@ namespace uno {
       }
 
       // solve the linear system
-      this->linear_solver->solve_indefinite_system(linear_system.matrix_values.data(), linear_system.rhs.data(),
-         linear_system.solution.data());
+      this->linear_solver->solve_indefinite_system(linear_system.solution.data());
       if (this->linear_solver->matrix_is_singular()) {
          direction.status = SubproblemStatus::INFEASIBLE;
          return;

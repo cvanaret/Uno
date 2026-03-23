@@ -49,8 +49,8 @@ namespace uno {
       void initialize_memory() override;
 
       void do_symbolic_analysis() override;
-      void do_numerical_factorization(const double* matrix_values, bool is_matrix_positive_definite) override;
-      void solve_indefinite_system(const double* matrix_values, const double* rhs, double* result) override;
+      void do_numerical_factorization(bool is_matrix_positive_definite) override;
+      void solve_indefinite_system(double* result) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;

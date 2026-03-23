@@ -3,6 +3,8 @@
 
 #include "MUMPSSolver.hpp"
 #include <cassert>
+#include "linear_algebra/Vector.hpp"
+#include "symbolic/Range.hpp"
 #if defined(HAS_MPI) && defined(MUMPS_PARALLEL)
 #include "mpi.h"
 #endif
@@ -62,21 +64,21 @@ namespace uno {
       this->analysis_performed = true;
    }
 
-   void MUMPSSolver::do_numerical_factorization(const double* matrix_values, bool /*is_matrix_positive_definite*/) {
+   void MUMPSSolver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
       this->workspace.job = MUMPSSolver::JOB_FACTORIZATION;
-      this->workspace.a = const_cast<double*>(matrix_values);
+      this->workspace.a = this->linear_system.matrix_values.data();
       dmumps_c(&this->workspace);
       this->factorization_performed = true;
    }
 
-   void MUMPSSolver::solve_indefinite_system(const double* /*matrix_values*/, const double* rhs, double* result) {
+   void MUMPSSolver::solve_indefinite_system(double* result) {
       assert(this->factorization_performed);
 
       // copy rhs into result (overwritten by MUMPS)
       for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
-         result[index] = rhs[index];
+         result[index] = this->linear_system.rhs[index];
       }
       this->workspace.rhs = result;
       this->workspace.job = MUMPSSolver::JOB_SOLVE;

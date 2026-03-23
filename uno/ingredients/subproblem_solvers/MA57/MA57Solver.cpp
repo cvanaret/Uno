@@ -116,16 +116,16 @@ namespace uno {
       this->analysis_performed = true;
    }
 
-   void MA57Solver::do_numerical_factorization(const double* matrix_values, bool /*is_matrix_positive_definite*/) {
+   void MA57Solver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
       bool factorization_done = false;
       while (!factorization_done) {
          // numerical factorization
-         MA57_numerical_factorization(&this->workspace.n, &this->workspace.nnz, matrix_values, this->workspace.fact.data(),
-            &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.lkeep,
-            this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.cntl.data(),
-            this->workspace.info.data(), this->workspace.rinfo.data());
+         MA57_numerical_factorization(&this->workspace.n, &this->workspace.nnz, this->linear_system.matrix_values.data(),
+            this->workspace.fact.data(), &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact,
+            &this->workspace.lkeep, this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
+            this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
          if (is_error_code_insufficient_real_workspace(this->workspace.info[0]) ||
              is_error_code_insufficient_integer_workspace(this->workspace.info[0])) {
@@ -155,7 +155,7 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MA57Solver::solve_indefinite_system(const double* matrix_values, const double* rhs, double* result) {
+   void MA57Solver::solve_indefinite_system(double* result) {
       assert(this->factorization_performed);
 
       // solve
@@ -164,15 +164,16 @@ namespace uno {
       // solve the linear system
       if (this->use_iterative_refinement) {
          MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz,
-            matrix_values, this->linear_system.matrix_row_indices.data(), this->linear_system.matrix_column_indices.data(),
-            this->workspace.fact.data(), &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact,
-            rhs, result, this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(),
+            this->linear_system.matrix_values.data(), this->linear_system.matrix_row_indices.data(),
+            this->linear_system.matrix_column_indices.data(), this->workspace.fact.data(), &this->workspace.lfact,
+            this->workspace.ifact.data(), &this->workspace.lifact, this->linear_system.rhs.data(), result,
+            this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(),
             this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
       }
       else {
          // copy rhs into result (overwritten by MA57)
          for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
-            result[index] = rhs[index];
+            result[index] = this->linear_system.rhs[index];
          }
 
          MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,

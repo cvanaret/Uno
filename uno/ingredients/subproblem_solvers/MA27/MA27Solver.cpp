@@ -149,11 +149,11 @@ namespace uno {
       this->analysis_performed = true;
    }
 
-   void MA27Solver::do_numerical_factorization(const double* matrix_values, bool /*is_matrix_positive_definite*/) {
+   void MA27Solver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
       // initialize factor with the entries of the matrix. It will be modified by MA27BD
-      std::copy_n(matrix_values, this->workspace.nnz, this->workspace.factor.begin());
+      std::copy_n(this->linear_system.matrix_values.data(), this->workspace.nnz, this->workspace.factor.begin());
 
       // numerical factorization
       // may fail because of insufficient space. In this case, more memory is allocated and the factorization tried again
@@ -191,7 +191,7 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MA27Solver::solve_indefinite_system(const double* /*matrix_values*/, const double* rhs, double* result) {
+   void MA27Solver::solve_indefinite_system(double* result) {
       assert(this->factorization_performed);
 
       int la = static_cast<int>(this->workspace.factor.size());
@@ -199,7 +199,7 @@ namespace uno {
 
       // copy rhs into result (overwritten by MA27)
       for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
-         result[index] = rhs[index];
+         result[index] = this->linear_system.rhs[index];
       }
 
       MA27_linear_solve(&this->workspace.n, this->workspace.factor.data(), &la, this->workspace.iw.data(), &liw,
