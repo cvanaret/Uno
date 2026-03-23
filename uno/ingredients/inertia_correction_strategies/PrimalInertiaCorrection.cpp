@@ -33,10 +33,14 @@ namespace uno {
          this->optional_linear_solver->initialize_memory();
          this->optional_linear_solver->do_symbolic_analysis();
       }
-      // figure out where to set the regularization terms in the linear system
+      // copy the Hessian into the linear system
+      double* matrix = this->optional_linear_solver->get_linear_system().matrix_values.data();
       const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
-      double* primal_regularization_values = this->optional_linear_solver->get_linear_system().matrix_values.data() +
-         number_hessian_nonzeros;
+      for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
+         matrix[nonzero_index] = hessian_values[nonzero_index];
+      }
+      // figure out where to set the regularization terms in the linear system
+      double* primal_regularization_values = matrix + number_hessian_nonzeros;
       // regularize the Hessian
       this->regularize_hessian(statistics, subproblem, expected_inertia, *this->optional_linear_solver, primal_regularization_values);
       // copy the regularization terms back into the Hessian
