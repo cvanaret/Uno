@@ -74,6 +74,10 @@ namespace uno {
       }
    }
 
+   void Subproblem::evaluate_jacobian(double* jacobian_values, Evaluations& evaluations) const {
+      this->problem.evaluate_jacobian(this->current_iterate.primals, jacobian_values, evaluations);
+   }
+
    void Subproblem::evaluate_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
       // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
       this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
@@ -85,10 +89,7 @@ namespace uno {
       if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
          const Inertia expected_inertia{this->problem.get_number_original_variables(), 0,
             this->problem.number_variables - this->problem.get_number_original_variables()};
-         const size_t offset = this->number_hessian_nonzeros();
-         double* primal_regularization_values = hessian_values + offset;
-         this->inertia_correction_strategy.regularize_hessian(statistics, *this, hessian_values, expected_inertia,
-            primal_regularization_values);
+         this->inertia_correction_strategy.regularize_hessian(statistics, *this, expected_inertia, hessian_values);
       }
    }
 
@@ -105,16 +106,6 @@ namespace uno {
       }
    }
 
-   void Subproblem::assemble_augmented_matrix(Statistics& statistics, double* augmented_matrix_values, Evaluations& evaluations) const {
-      // evaluate the Lagrangian Hessian of the problem at the current primal-dual point
-      this->problem.evaluate_lagrangian_hessian(statistics, this->hessian_model, this->current_iterate.primals,
-         this->current_iterate.multipliers, augmented_matrix_values);
-
-      // Jacobian of general constraints
-      this->problem.evaluate_jacobian(this->current_iterate.primals, augmented_matrix_values + this->number_hessian_nonzeros(),
-         evaluations);
-   }
-
    void Subproblem::regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const {
       if ((!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_dual_regularization()) ||
@@ -124,8 +115,8 @@ namespace uno {
          const size_t offset = this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
          double* primal_regularization_values = augmented_matrix_values + offset;
          double* dual_regularization_values = augmented_matrix_values + offset + this->get_primal_regularization_variables().size();
-         this->inertia_correction_strategy.regularize_augmented_matrix(statistics, *this, augmented_matrix_values,
-            dual_regularization_parameter, expected_inertia, linear_solver, primal_regularization_values, dual_regularization_values);
+         this->inertia_correction_strategy.regularize_augmented_matrix(statistics, *this, dual_regularization_parameter,
+            expected_inertia, linear_solver, primal_regularization_values, dual_regularization_values);
       }
       else {
          linear_solver.do_numerical_factorization(false);

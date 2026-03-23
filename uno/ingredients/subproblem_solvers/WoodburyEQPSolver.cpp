@@ -40,7 +40,9 @@ namespace uno {
       // set up the linear system by evaluating the functions at the current iterate
       if (warmstart_information.new_iterate) {
          // assemble the augmented matrix
-         subproblem.assemble_augmented_matrix(statistics, linear_system.matrix_values.data(), current_evaluations);
+         subproblem.evaluate_lagrangian_hessian(statistics, linear_system.matrix_values.data());
+         const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+         subproblem.evaluate_jacobian(linear_system.matrix_values.data() + number_hessian_nonzeros, current_evaluations);
 
          // perform the symbolic analysis once and for all
          if (!this->analysis_performed) {
@@ -54,7 +56,6 @@ namespace uno {
             subproblem.dual_regularization_factor(), *this->linear_solver);
 
          // assemble the RHS
-         const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
          const COOMatrix jacobian{linear_system.jacobian_row_indices.data(), linear_system.jacobian_column_indices.data(),
             linear_system.matrix_values.data() + number_hessian_nonzeros};
          subproblem.assemble_augmented_rhs(current_evaluations, jacobian, linear_system.rhs);
