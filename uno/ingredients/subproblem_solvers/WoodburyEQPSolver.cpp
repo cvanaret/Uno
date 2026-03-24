@@ -85,16 +85,15 @@ namespace uno {
    // protected members
 
    void WoodburyEQPSolver::compute_low_rank_correction(const Subproblem& subproblem, LinearSystem& linear_system, Vector<double>& b) const {
-      DEBUG2 << "b = " << b << '\n';
+      DEBUG << "b = " << b << '\n';
       const size_t correction_rank = this->hessian_model.get_correction_rank();
-      DEBUG2 << "Correction rank: " << correction_rank << '\n';
+      DEBUG << "Correction rank: " << correction_rank << '\n';
       if (0 < correction_rank) {
          // compute correction_rank backsolves with the correction columns as RHS
          DenseMatrix<double> E(subproblem.number_variables + subproblem.number_constraints, correction_rank);
          DenseMatrix<double> H(subproblem.number_variables + subproblem.number_constraints, correction_rank);
          for (size_t column_index: Range(correction_rank)) {
             const auto correction_column = this->hessian_model.get_correction_column(column_index);
-            DEBUG2 << "Column " << column_index << ": " << correction_column << '\n';
             // copy each correction column into E (note: E is higher than the correction matrix)
             for (size_t row_index: Range(subproblem.problem.model.number_variables)) {
                E.entry(row_index, column_index) = correction_column[row_index];
@@ -102,8 +101,9 @@ namespace uno {
             // solve a linear system A H_j = E_j
             linear_system.rhs = E.column(column_index);
             this->linear_solver->solve_indefinite_system(H.column(column_index).data());
-            DEBUG2 << "Solution H_j to A H_j = E_j: "; print_vector(DEBUG2, H.column(column_index));
          }
+         DEBUG2 << "E = " << E;
+         DEBUG2 << "H = " << H;
          // compute c = E^T b
          Vector<double> c(correction_rank);
          c = transpose(E)*b; // TODO move to constructor
@@ -127,7 +127,7 @@ namespace uno {
    }
 
    void WoodburyEQPSolver::solve_dense_indefinite_system(DenseMatrix<double>& T, const Vector<double>& c, Vector<double>& d) {
-      std::vector<int> ipiv = T.compute_bunch_kaufman_factorization();
+      const std::vector<int> ipiv = T.compute_bunch_kaufman_factorization();
       solve_bunch_kaufman(T, c, d, ipiv);
    }
 } // namespace
