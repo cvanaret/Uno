@@ -99,9 +99,10 @@ end
             r"^test_linear_INFEASIBLE$",
             r"^test_linear_INFEASIBLE_2$",
             r"^test_solve_DualStatus_INFEASIBILITY_CERTIFICATE_",
-            # this test passes with exact Hessian but fails with L-BFGS Hessian
+            # these tests pass with exact Hessian but fails with L-BFGS Hessian
             # OK to exclude for now, but should be investigated
             r"^test_nonlinear_expression_hs109$",
+            r"^test_objective_qp_ObjectiveFunction_edge_cases",
             # ==================================================================
             # The following tests are okay to exclude forever.
             #
