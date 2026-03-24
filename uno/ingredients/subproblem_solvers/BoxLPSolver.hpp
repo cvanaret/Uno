@@ -5,7 +5,7 @@
 #define UNO_BOXLPSOLVER_H
 
 #include <vector>
-#include "InequalityConstrainedSolver.hpp"
+#include "SubproblemSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "SolverWorkspace.hpp"
 
@@ -21,7 +21,7 @@ namespace uno {
       Vector<double> objective_gradient;
    };
 
-   class BoxLPSolver: public InequalityConstrainedSolver {
+   class BoxLPSolver: public SubproblemSolver {
    public:
       BoxLPSolver() = default;
       ~BoxLPSolver() override = default;

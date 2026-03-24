@@ -4,6 +4,7 @@
 #ifndef UNO_DIRECTSYMMETRICINDEFINITELINEARSOLVER_H
 #define UNO_DIRECTSYMMETRICINDEFINITELINEARSOLVER_H
 
+#include <cstddef>
 #include "SymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/inertia_correction_strategies/Inertia.hpp"
 
@@ -15,7 +16,7 @@ namespace uno {
       ~DirectSymmetricIndefiniteLinearSolver() override = default;
 
       virtual void do_symbolic_analysis() = 0;
-      virtual void do_numerical_factorization(const double* matrix_values, bool is_matrix_positive_definite) = 0;
+      virtual void do_numerical_factorization(bool is_matrix_positive_definite) = 0;
 
       [[nodiscard]] virtual Inertia get_inertia() const = 0;
       [[nodiscard]] virtual size_t number_negative_eigenvalues() const = 0;

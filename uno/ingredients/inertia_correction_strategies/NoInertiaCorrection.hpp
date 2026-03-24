@@ -13,19 +13,16 @@ namespace uno {
 
       void initialize_statistics(Statistics& /*statistics*/) override;
 
-      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, const double* /*hessian_values*/,
-            const Inertia& /*expected_inertia*/, double* /*primal_regularization_values*/) override;
-      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, const double* /*hessian_values*/,
-            const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
-            double* /*primal_regularization_values*/) override;
+      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, const Inertia& /*expected_inertia*/,
+         double* /*hessian_values*/) override;
+      void regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/, const Inertia& /*expected_inertia*/,
+         DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/, double* /*hessian_values*/) override;
       void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
-            const double* /*augmented_matrix_values*/, double /*dual_regularization_parameter*/,
-            const Inertia& /*expected_inertia*/, double* /*primal_regularization_values*/,
+         double /*dual_regularization_parameter*/, const Inertia& /*expected_inertia*/, double* /*primal_regularization_values*/,
             double* /*dual_regularization_values*/) override;
-      void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& subproblem,
-            const double* /*augmented_matrix_values*/, double /*dual_regularization_parameter*/,
-            const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
-            double* primal_regularization_values, double* dual_regularization_values) override;
+      void regularize_augmented_matrix(Statistics& /*statistics*/, const Subproblem& subproblem, double /*dual_regularization_parameter*/,
+         const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
+         double* primal_regularization_values, double* dual_regularization_values) override;
 
       [[nodiscard]] bool performs_primal_regularization() const override;
       [[nodiscard]] bool performs_dual_regularization() const override;

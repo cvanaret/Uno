@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <cassert>
 #include "SSIDSSolver.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
-#include "optimization/Direction.hpp"
+#include "symbolic/Range.hpp"
 
 namespace uno {
    SSIDSSolver::SSIDSSolver(): DirectSymmetricIndefiniteLinearSolver<double>() {
@@ -12,57 +12,48 @@ namespace uno {
       this->workspace.options.print_level = -1; // no printing
    }
 
-   void SSIDSSolver::initialize_hessian(const Subproblem& subproblem) {
-      this->coo_workspace.initialize_hessian(subproblem);
-      this->workspace.n = static_cast<int>(subproblem.number_variables);
-      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
-   }
-
-   void SSIDSSolver::initialize_augmented_system(const Subproblem& subproblem) {
-      this->coo_workspace.initialize_augmented_system(subproblem);
-      this->workspace.n = static_cast<int>(subproblem.number_variables + subproblem.number_constraints);
-      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
+   void SSIDSSolver::initialize_memory() {
+      this->workspace.n = static_cast<int>(this->linear_system.dimension);
+      this->workspace.nnz = static_cast<int>(this->linear_system.number_nonzeros);
    }
 
    void SSIDSSolver::do_symbolic_analysis() {
-      spral_ssids_analyse_coord(this->workspace.n, nullptr, this->workspace.nnz, this->coo_workspace.matrix_row_indices.data(),
-         this->coo_workspace.matrix_column_indices.data(), nullptr, &this->workspace.akeep, &this->workspace.options,
+      assert(!this->analysis_performed);
+
+      spral_ssids_analyse_coord(this->workspace.n, nullptr, this->workspace.nnz, this->linear_system.matrix_row_indices.data(),
+         this->linear_system.matrix_column_indices.data(), nullptr, &this->workspace.akeep, &this->workspace.options,
          &this->workspace.inform);
       if (this->workspace.inform.flag < 0) {
          spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
          throw std::runtime_error("SSIDS could not compute the symbolic analysis");
       }
+      this->analysis_performed = true;
    }
 
-   void SSIDSSolver::do_numerical_factorization(const double* matrix_values, bool is_matrix_positive_definite) {
-      spral_ssids_factor(is_matrix_positive_definite, nullptr, nullptr, matrix_values, nullptr, this->workspace.akeep,
-         &this->workspace.fkeep, &this->workspace.options, &this->workspace.inform);
+   void SSIDSSolver::do_numerical_factorization(bool is_matrix_positive_definite) {
+      assert(this->analysis_performed);
+
+      spral_ssids_factor(is_matrix_positive_definite, nullptr, nullptr, this->linear_system.matrix_values.data(), nullptr,
+         this->workspace.akeep, &this->workspace.fkeep, &this->workspace.options, &this->workspace.inform);
       if(this->workspace.inform.flag < 0) {
          spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
          throw std::runtime_error("SSIDS could not compute the factorization");
       }
+      this->factorization_performed = true;
    }
 
-   void SSIDSSolver::solve_indefinite_system(const Vector<double>& /*matrix_values*/, const Vector<double>& rhs, Vector<double>& result) {
-      result = rhs;
-      spral_ssids_solve1(0, result.data(), this->workspace.akeep, this->workspace.fkeep, &this->workspace.options,
+   void SSIDSSolver::solve_indefinite_system(double* result) {
+      assert(this->factorization_performed);
+
+      // copy rhs into result (overwritten by SSIDS)
+      for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
+         result[index] = this->linear_system.rhs[index];
+      }
+      spral_ssids_solve1(0, result, this->workspace.akeep, this->workspace.fkeep, &this->workspace.options,
          &this->workspace.inform);
       if (this->workspace.inform.flag < 0) {
          spral_ssids_free(&this->workspace.akeep, &this->workspace.fkeep);
          throw std::runtime_error("SSIDS could not solve the linear system");
-      }
-   }
-
-   void SSIDSSolver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
-      // set up the linear system by evaluating the functions at the current iterate
-      this->coo_workspace.set_up_linear_system(statistics, subproblem, *this, current_evaluations, warmstart_information);
-      // solve the linear system
-      this->solve_indefinite_system(this->coo_workspace.matrix_values, this->coo_workspace.rhs, this->coo_workspace.solution);
-      // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(this->coo_workspace.solution, direction);
-      if (this->matrix_is_singular()) {
-         direction.status = SubproblemStatus::INFEASIBLE;
       }
    }
 
@@ -88,7 +79,7 @@ namespace uno {
       return static_cast<size_t>(this->workspace.inform.matrix_rank);
    }
 
-   SolverWorkspace& SSIDSSolver::get_workspace() {
-      return this->coo_workspace;
+   LinearSystem& SSIDSSolver::get_linear_system() {
+      return this->linear_system;
    }
 } // namespace

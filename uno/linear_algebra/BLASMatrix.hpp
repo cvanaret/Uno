@@ -5,6 +5,8 @@
 #define UNO_BLASMATRIX_H
 
 #include <cassert>
+
+#include "Vector.hpp"
 #include "linear_algebra/BLAS.hpp"
 #include "linear_algebra/LAPACK.hpp"
 #include "VectorView.hpp"
@@ -30,6 +32,10 @@ namespace uno {
       template <typename Matrix1, typename Matrix2, typename Matrix3>
       BLASMatrix& operator=(Sum<ScalarMultiple<Matrix1>, Multiplication<Matrix2, Transpose<Matrix3>>>&& expression);
 
+      // specialized operator= for C += A^T*B
+      template <typename Matrix1, typename Matrix2>
+      BLASMatrix<T>& operator+=(Multiplication<Transpose<Matrix1>, Matrix2>&& expression);
+
       // specialized operator+= for low-rank update C := A A^T
       template <typename Matrix>
       BLASMatrix& operator=(Multiplication<Matrix, Transpose<Matrix>>&& expression);
@@ -42,7 +48,8 @@ namespace uno {
       template <typename Matrix>
       BLASMatrix& operator*=(Transpose<Inverse<Matrix>>&& expression);
 
-      void compute_cholesky_factors();
+      void compute_cholesky_factorization();
+      [[nodiscard]] std::vector<int> compute_bunch_kaufman_factorization();
 
       [[nodiscard]] virtual T* data() = 0;
       [[nodiscard]] virtual const T* data() const = 0;
@@ -90,6 +97,31 @@ namespace uno {
       constexpr double alpha = 1.;
       const int lda = static_cast<int>(A.leading_dimension); // leading dimension of A
       const int ldb = static_cast<int>(B.leading_dimension); // leading dimension of B
+      const int ldc = static_cast<int>(this->number_rows); // leading dimension of C/this
+      BLAS_matrix_matrix_product(&transa, &transb, &m, &n, &k, &alpha, A.data(), &lda, B.data(), &ldb, &beta,
+         this->data(), &ldc);
+      return *this;
+   }
+
+   // specialized operator= for C += A^T*B
+   // use different matrix types in case one of them has a different type (e.g., submatrix)
+   template <typename T>
+   template <typename Matrix1, typename Matrix2>
+   BLASMatrix<T>& BLASMatrix<T>::operator+=(Multiplication<Transpose<Matrix1>, Matrix2>&& expression) {
+      const auto& A = expression.get_left().get_matrix();
+      const auto& B = expression.get_right();
+      if (A.number_rows != B.number_rows) {
+         throw std::runtime_error("Dimension mismatch");
+      }
+      constexpr char transa = 'T'; // A^T
+      constexpr char transb = 'N'; // B
+      const int m = static_cast<int>(A.number_columns); // number of rows of A^T/number of columns of A
+      const int n = static_cast<int>(B.number_columns); // number of columns of B
+      const int k = static_cast<int>(A.number_rows); // number of columns of A^T/number of rows of A
+      constexpr double alpha = 1.;
+      const int lda = static_cast<int>(A.leading_dimension); // leading dimension of A
+      const int ldb = static_cast<int>(B.leading_dimension); // leading dimension of B
+      constexpr double beta = 1.;
       const int ldc = static_cast<int>(this->number_rows); // leading dimension of C/this
       BLAS_matrix_matrix_product(&transa, &transb, &m, &n, &k, &alpha, A.data(), &lda, B.data(), &ldb, &beta,
          this->data(), &ldc);
@@ -174,13 +206,48 @@ namespace uno {
    }
 
    template <typename T>
-   void BLASMatrix<T>::compute_cholesky_factors() {
+   void BLASMatrix<T>::compute_cholesky_factorization() {
       constexpr char uplo = 'L';
       int info = 0;
       const int dimension = static_cast<int>(this->number_rows);
       const int leading_dimension = static_cast<int>(this->leading_dimension);
       LAPACK_cholesky_factorization(&uplo, &dimension, this->data(), &leading_dimension, &info);
       DEBUG << "Cholesky info: " << info << '\n';
+      assert(info == 0);
+   }
+
+   template <typename T>
+   std::vector<int> BLASMatrix<T>::compute_bunch_kaufman_factorization() {
+      constexpr char uplo = 'L';
+      const int n = static_cast<int>(this->number_rows);
+      const int lda = static_cast<int>(this->leading_dimension);
+      std::vector<int> ipiv(this->number_rows);
+      // first call to get the optimal lwork
+      double work_size = 0.;
+      int lwork = -1;
+      int info = 0;
+      LAPACK_bunch_kaufman_factorization(&uplo, &n, this->data(), &lda, ipiv.data(), &work_size, &lwork, &info);
+      // second call to factorize
+      lwork = static_cast<int>(work_size);
+      std::vector<double> work(static_cast<size_t>(lwork));
+      LAPACK_bunch_kaufman_factorization(&uplo, &n, this->data(), &lda, ipiv.data(), work.data(), &lwork, &info);
+      assert(info == 0);
+      return ipiv;
+   }
+
+   template <typename T>
+   void solve_bunch_kaufman(const BLASMatrix<T>& matrix, const Vector<double>& rhs, Vector<double>& result,
+         const std::vector<int>& ipiv) {
+      constexpr char uplo = 'L';
+      const int n = static_cast<int>(matrix.number_rows);
+      constexpr int nrhs = 1; // number of RHS/number of columns of B
+      const int lda = static_cast<int>(matrix.leading_dimension);
+      const int ldb = static_cast<int>(rhs.size());
+      int info = 0;
+      // copy the RHS into the result
+      result = rhs;
+      // solve A X = B
+      LAPACK_bunch_kaufman_solve(&uplo, &n, &nrhs, matrix.data(), &lda, ipiv.data(), result.data(), &ldb, &info);
       assert(info == 0);
    }
 } // namespace

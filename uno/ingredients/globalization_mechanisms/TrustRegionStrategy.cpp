@@ -33,8 +33,8 @@ namespace uno {
    }
 
    void TrustRegionStrategy::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Direction& direction, EvaluationCache& evaluation_cache, const Options& options) {
-      this->constraint_relaxation_strategy->initialize(statistics, current_iterate, direction, true, evaluation_cache, options);
+         Direction& direction, EvaluationCache& evaluation_cache, Options& options) {
+      this->constraint_relaxation_strategy->initialize(statistics, model, current_iterate, direction, true, evaluation_cache, options);
       statistics.add_column("Minor", Statistics::int_width, 3, Statistics::column_order.at("Minor"));
       statistics.add_column("Radius", Statistics::double_width, 2, Statistics::column_order.at("Radius"));
       statistics.set("Radius", this->radius);

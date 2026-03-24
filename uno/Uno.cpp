@@ -5,7 +5,7 @@
 #include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategyFactory.hpp"
 #include "ingredients/globalization_mechanisms/GlobalizationMechanismFactory.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategyFactory.hpp"
-#include "ingredients/hessian_models/HessianModelFactory.hpp"
+#include "ingredients/hessian_models/HessianSubproblemSolverJointFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
 #include "ingredients/subproblem_solvers/QPSolverFactory.hpp"
@@ -154,7 +154,7 @@ namespace uno {
       std::cout << "- Globalization mechanisms: " << join(GlobalizationMechanismFactory::available_strategies, ", ") << '\n';
       std::cout << "- Globalization strategies: " << join(GlobalizationStrategyFactory::available_strategies, ", ") << '\n';
       std::cout << "- Inequality handling methods: " << join(InequalityHandlingMethodFactory::available_strategies(), ", ") << '\n';
-      std::cout << "- Hessian models: " << join(HessianModelFactory::available_strategies, ", ") << '\n';
+      std::cout << "- Hessian models: " << join(HessianSubproblemSolverJointFactory::available_strategies, ", ") << '\n';
       std::cout << "- Inertia correction strategies: " << join(InertiaCorrectionStrategyFactory::available_strategies, ", ") << '\n';
       std::cout << "- QP solvers: " << join(QPSolverFactory::available_solvers, ", ") << '\n';
       std::cout << "- LP solvers: " << join(LPSolverFactory::available_solvers, ", ") << '\n';
@@ -162,7 +162,7 @@ namespace uno {
       std::cout << "- Presets: filtersqp, ipopt\n";
    }
 
-   void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, const Options& options,
+   void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Options& options,
          EvaluationCache& evaluation_cache) {
       statistics.start_new_line();
       statistics.set("Major", 0);

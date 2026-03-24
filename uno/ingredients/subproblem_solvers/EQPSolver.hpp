@@ -26,6 +26,7 @@ namespace uno {
 
    protected:
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
+      bool analysis_performed{false};
    };
 } // namespace
 

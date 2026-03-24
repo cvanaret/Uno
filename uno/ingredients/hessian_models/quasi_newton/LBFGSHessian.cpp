@@ -46,6 +46,7 @@ namespace uno {
       return true;
    }
 
+   // this will NOT be called by WoodburyEQPSolver
    bool LBFGSHessian::has_hessian_matrix() const {
       // never form the explicit, dense matrix
       return false;
@@ -55,12 +56,19 @@ namespace uno {
       return true;
    }
 
+   // this can only be called by WoodburyEQPSolver
    size_t LBFGSHessian::number_nonzeros() const {
-      throw std::runtime_error("LBFGSHessian::number_nonzeros should not be called");
+      // count only the diagonal contribution
+      return this->model.number_variables;
    }
 
-   void LBFGSHessian::compute_sparsity(int* /*row_indices*/, int* /*column_indices*/, int /*solver_indexing*/) const {
-      throw std::runtime_error("LBFGSHessian::compute_sparsity should not be called");
+   // this can only be called by WoodburyEQPSolver
+   void LBFGSHessian::compute_sparsity(int* row_indices, int* column_indices, int solver_indexing) const {
+      // diagonal contribution
+      for (size_t variable_index: Range(this->model.number_variables)) {
+         row_indices[variable_index] = static_cast<int>(variable_index) + solver_indexing;
+         column_indices[variable_index] = static_cast<int>(variable_index) + solver_indexing;
+      }
    }
 
    bool LBFGSHessian::is_positive_definite() const {
@@ -99,9 +107,21 @@ namespace uno {
       statistics.set("|BFGS|", this->number_entries_in_memory);
    }
 
+   // forms the diagonal part of the L-BFGS Hessian approximation
+   // this can only be called by WoodburyEQPSolver
    void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
-      throw std::runtime_error("LBFGSHessian::evaluate_hessian should not be called");
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* hessian_values) {
+      // recompute the Hessian representation if the limited memory was updated
+      if (this->hessian_recomputation_required) {
+         this->recompute_hessian_representation();
+         this->hessian_recomputation_required = false;
+      }
+
+      // diagonal contribution
+      DEBUG << "Setting diagonal contribution of L-BFGS Hessian\n";
+      for (size_t variable_index: Range(this->model.number_variables)) {
+         hessian_values[variable_index] = this->delta;
+      }
    }
 
    // Hessian-vector product where the Hessian approximation is Bk = B0 - U U^T + V V^T and B0 = delta I
@@ -112,7 +132,7 @@ namespace uno {
          throw std::runtime_error("The L-BFGS Hessian model was initialized with a different objective multiplier");
       }
 
-      // update_limited_memory() has updated the limited memory. A recomputation of the Hessian representation may be required
+      // recompute the Hessian representation if the limited memory was updated
       if (this->hessian_recomputation_required) {
          this->recompute_hessian_representation();
          this->hessian_recomputation_required = false;
@@ -140,6 +160,30 @@ namespace uno {
          const double V_coefficient = dot(current_V_column, vector); // plus sign for V
          // result += coefficient * current_column
          BLAS_add_vectors(&n, &V_coefficient, current_V_column.data(), &increment, result, &increment);
+      }
+   }
+
+   size_t LBFGSHessian::get_correction_rank() const {
+      return 2 * this->number_entries_in_memory;
+   }
+
+   // get a column of (U V)
+   VectorView<std::vector<double>> LBFGSHessian::get_correction_column(size_t column_index) const {
+      if (column_index < this->number_entries_in_memory) {
+         return this->U.column(column_index);
+      }
+      else {
+         return this->V.column(column_index - this->number_entries_in_memory);
+      }
+   }
+
+   // get the scaling of a given column (-1 for U, +1 for V)
+   double LBFGSHessian::get_correction_column_scaling(size_t column_index) const {
+      if (column_index < this->number_entries_in_memory) {
+         return -1.;
+      }
+      else {
+         return 1.;
       }
    }
 
@@ -203,7 +247,7 @@ namespace uno {
       DEBUG << "> M: " << this->M;
 
       /*/ compute the Cholesky factor J of M = J J^T */
-      Mk.compute_cholesky_factors(); // J overwrites M
+      Mk.compute_cholesky_factorization(); // J overwrites M
       DEBUG << "> J: " << this->M;
 
       /* update V and U */

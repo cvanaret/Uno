@@ -4,13 +4,13 @@
 #ifndef UNO_LPSOLVER_H
 #define UNO_LPSOLVER_H
 
-#include "InequalityConstrainedSolver.hpp"
+#include "SubproblemSolver.hpp"
 
 namespace uno {
    // forward declaration
    class Multipliers;
 
-   class LPSolver: public InequalityConstrainedSolver {
+   class LPSolver: public SubproblemSolver {
    public:
       LPSolver() = default;
       ~LPSolver() override = default;

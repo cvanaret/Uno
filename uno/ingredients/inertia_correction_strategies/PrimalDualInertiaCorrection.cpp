@@ -5,6 +5,7 @@
 #include "PrimalDualInertiaCorrection.hpp"
 #include "UnstableInertiaCorrection.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/subproblem_solvers/LinearSystem.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Collection.hpp"
 #include "tools/Logger.hpp"
@@ -29,21 +30,20 @@ namespace uno {
    }
 
    void PrimalDualInertiaCorrection::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
-         const double* hessian_values, const Inertia& expected_inertia, double* primal_regularization_values) {
+         const Inertia& expected_inertia, double* hessian_values) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize_augmented_system(subproblem);
+         this->optional_linear_solver->get_linear_system().initialize_augmented_system(subproblem);
+         this->optional_linear_solver->initialize_memory();
          this->optional_linear_solver->do_symbolic_analysis();
       }
-      this->regularize_hessian(statistics, subproblem, hessian_values, expected_inertia, *this->optional_linear_solver,
-         primal_regularization_values);
+      this->regularize_hessian(statistics, subproblem, expected_inertia, *this->optional_linear_solver, hessian_values);
    }
 
    void PrimalDualInertiaCorrection::regularize_hessian(Statistics& /*statistics*/, const Subproblem& /*subproblem*/,
-         const double* /*hessian_values*/, const Inertia& /*expected_inertia*/,
-         DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
-         double* /*primal_regularization_values*/) {
+         const Inertia& /*expected_inertia*/, DirectSymmetricIndefiniteLinearSolver<double>& /*linear_solver*/,
+         double* /*hessian_values*/) {
       // to regularize the Hessian only, call the function for the augmented matrix with no dual part
       // TODO fix
       throw std::runtime_error("PrimalDualInertiaCorrection::regularize_hessian not implemented yet");
@@ -51,23 +51,21 @@ namespace uno {
 
    // the augmented matrix has been factorized prior to calling this function
    void PrimalDualInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         const double* augmented_matrix_values, double dual_regularization_parameter,
-         const Inertia& expected_inertia, double* primal_regularization_values, double* dual_regularization_values) {
+         double dual_regularization_parameter, const Inertia& expected_inertia, double* primal_regularization_values,
+         double* dual_regularization_values) {
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize_augmented_system(subproblem);
+         this->optional_linear_solver->get_linear_system().initialize_augmented_system(subproblem);
+         this->optional_linear_solver->initialize_memory();
          this->optional_linear_solver->do_symbolic_analysis();
       }
-      this->regularize_augmented_matrix(statistics, subproblem, augmented_matrix_values, dual_regularization_parameter,
-         expected_inertia, *this->optional_linear_solver, primal_regularization_values, dual_regularization_values);
+      this->regularize_augmented_matrix(statistics, subproblem, dual_regularization_parameter, expected_inertia,
+         *this->optional_linear_solver, primal_regularization_values, dual_regularization_values);
    }
 
    void PrimalDualInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         const double* augmented_matrix_values, double dual_regularization_parameter,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         double dual_regularization_parameter, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          double* primal_regularization_values, double* dual_regularization_values) {
-      assert(augmented_matrix_values != nullptr);
-
       this->primal_regularization = 0.;
       this->dual_regularization = 0.;
       for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
@@ -76,17 +74,13 @@ namespace uno {
       for (size_t index: Range(subproblem.get_dual_regularization_constraints().size())) {
          dual_regularization_values[index] = -this->dual_regularization;
       }
-      DEBUG2 << "Original matrix values:";
-      for (size_t nonzero_index: Range(subproblem.number_regularized_augmented_system_nonzeros())) {
-         DEBUG2 << " " << augmented_matrix_values[nonzero_index];
-      }
       DEBUG2 << '\n';
       DEBUG << "Testing factorization with regularization factors (0, 0)\n";
       size_t number_attempts = 1;
       DEBUG << "Number of attempts: " << number_attempts << "\n\n";
 
       DEBUG << "Performing numerical factorization of the indefinite system\n";
-      linear_solver.do_numerical_factorization(augmented_matrix_values, false);
+      linear_solver.do_numerical_factorization(false);
       const Inertia estimated_inertia = linear_solver.get_inertia();
       DEBUG << "Expected inertia  " << expected_inertia << '\n';
       DEBUG << "Estimated inertia " << estimated_inertia << '\n';
@@ -122,9 +116,8 @@ namespace uno {
       bool good_inertia = false;
       while (!good_inertia) {
          DEBUG << "Testing factorization with regularization factors (" << this->primal_regularization << ", " << this->dual_regularization << ")\n";
-         DEBUG2 << augmented_matrix_values << '\n';
          DEBUG << "Performing numerical factorization of the indefinite system\n";
-         linear_solver.do_numerical_factorization(augmented_matrix_values, false);
+         linear_solver.do_numerical_factorization(false);
          ++number_attempts;
          DEBUG << "Number of attempts: " << number_attempts << "\n";
 

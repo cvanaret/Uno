@@ -7,9 +7,6 @@
 #include <utility>
 #include <vector>
 #include "MA57Solver.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/Vector.hpp"
-#include "optimization/Direction.hpp"
 #include "tools/Logger.hpp"
 #include "fortran_interface.h"
 
@@ -83,44 +80,24 @@ namespace uno {
       this->workspace.icntl[8] = 1;
    }
 
-   void MA57Solver::initialize_hessian(const Subproblem& subproblem) {
-      this->coo_workspace.initialize_hessian(subproblem);
-
-      // workspace
-      const size_t dimension = subproblem.number_variables;
-      this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
-      this->workspace.lkeep = static_cast<int>(5 * dimension + this->coo_workspace.number_matrix_nonzeros +
-         std::max(dimension, this->coo_workspace.number_matrix_nonzeros) + 42);
+   void MA57Solver::initialize_memory() {
+      this->workspace.n = static_cast<int>(this->linear_system.dimension);
+      this->workspace.nnz = static_cast<int>(this->linear_system.number_nonzeros);
+      this->workspace.lkeep = static_cast<int>(5 * this->linear_system.dimension + this->linear_system.number_nonzeros +
+         std::max(this->linear_system.dimension, this->linear_system.number_nonzeros) + 42);
       this->workspace.keep.resize(static_cast<size_t>(this->workspace.lkeep));
-      this->workspace.iwork.resize(5 * dimension);
-      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(dimension));
+      this->workspace.iwork.resize(5 * this->linear_system.dimension);
+      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(this->linear_system.dimension));
       this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
-      this->workspace.residuals.resize(dimension);
-   }
-
-   void MA57Solver::initialize_augmented_system(const Subproblem& subproblem) {
-      this->coo_workspace.initialize_augmented_system(subproblem);
-
-      // workspace
-      const size_t dimension = subproblem.number_variables + subproblem.number_constraints;
-      this->workspace.n = static_cast<int>(dimension);
-      this->workspace.nnz = static_cast<int>(this->coo_workspace.number_matrix_nonzeros);
-      this->workspace.lkeep = static_cast<int>(5 * dimension + this->coo_workspace.number_matrix_nonzeros +
-         std::max(dimension, this->coo_workspace.number_matrix_nonzeros) + 42);
-      this->workspace.keep.resize(static_cast<size_t>(this->workspace.lkeep));
-      this->workspace.iwork.resize(5 * dimension);
-      this->workspace.lwork = static_cast<int>(1.2 * static_cast<double>(dimension));
-      this->workspace.work.resize(static_cast<size_t>(this->workspace.lwork));
-      this->workspace.residuals.resize(dimension);
+      this->workspace.residuals.resize(this->linear_system.dimension);
    }
 
    void MA57Solver::do_symbolic_analysis() {
       assert(!this->analysis_performed);
 
       // symbolic analysis
-      MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->coo_workspace.matrix_row_indices.data(),
-         this->coo_workspace.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
+      MA57_symbolic_analysis(&this->workspace.n, &this->workspace.nnz, this->linear_system.matrix_row_indices.data(),
+         this->linear_system.matrix_column_indices.data(), &this->workspace.lkeep, this->workspace.keep.data(),
          this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
       assert(0 <= this->workspace.info[0] && "MA57: the symbolic analysis failed");
@@ -139,16 +116,16 @@ namespace uno {
       this->analysis_performed = true;
    }
 
-   void MA57Solver::do_numerical_factorization(const double* matrix_values, bool /*is_matrix_positive_definite*/) {
+   void MA57Solver::do_numerical_factorization(bool /*is_matrix_positive_definite*/) {
       assert(this->analysis_performed);
 
       bool factorization_done = false;
       while (!factorization_done) {
          // numerical factorization
-         MA57_numerical_factorization(&this->workspace.n, &this->workspace.nnz, matrix_values, this->workspace.fact.data(),
-            &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.lkeep,
-            this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(), this->workspace.cntl.data(),
-            this->workspace.info.data(), this->workspace.rinfo.data());
+         MA57_numerical_factorization(&this->workspace.n, &this->workspace.nnz, this->linear_system.matrix_values.data(),
+            this->workspace.fact.data(), &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact,
+            &this->workspace.lkeep, this->workspace.keep.data(), this->workspace.iwork.data(), this->workspace.icntl.data(),
+            this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
 
          if (is_error_code_insufficient_real_workspace(this->workspace.info[0]) ||
              is_error_code_insufficient_integer_workspace(this->workspace.info[0])) {
@@ -178,7 +155,7 @@ namespace uno {
       this->factorization_performed = true;
    }
 
-   void MA57Solver::solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) {
+   void MA57Solver::solve_indefinite_system(double* result) {
       assert(this->factorization_performed);
 
       // solve
@@ -187,32 +164,22 @@ namespace uno {
       // solve the linear system
       if (this->use_iterative_refinement) {
          MA57_linear_solve_with_iterative_refinement(&this->workspace.job, &this->workspace.n, &this->workspace.nnz,
-            matrix_values.data(), this->coo_workspace.matrix_row_indices.data(), this->coo_workspace.matrix_column_indices.data(),
-            this->workspace.fact.data(), &this->workspace.lfact, this->workspace.ifact.data(), &this->workspace.lifact,
-            rhs.data(), result.data(), this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(),
+            this->linear_system.matrix_values.data(), this->linear_system.matrix_row_indices.data(),
+            this->linear_system.matrix_column_indices.data(), this->workspace.fact.data(), &this->workspace.lfact,
+            this->workspace.ifact.data(), &this->workspace.lifact, this->linear_system.rhs.data(), result,
+            this->workspace.residuals.data(), this->workspace.work.data(), this->workspace.iwork.data(),
             this->workspace.icntl.data(), this->workspace.cntl.data(), this->workspace.info.data(), this->workspace.rinfo.data());
       }
       else {
          // copy rhs into result (overwritten by MA57)
-         result = rhs;
+         for (size_t index: Range(static_cast<size_t>(this->workspace.n))) {
+            result[index] = this->linear_system.rhs[index];
+         }
 
          MA57_linear_solve(&this->workspace.job, &this->workspace.n, this->workspace.fact.data(), &this->workspace.lfact,
-            this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.nrhs, result.data(), &lrhs,
+            this->workspace.ifact.data(), &this->workspace.lifact, &this->workspace.nrhs, result, &lrhs,
             this->workspace.work.data(), &this->workspace.lwork, this->workspace.iwork.data(), this->workspace.icntl.data(),
             this->workspace.info.data());
-      }
-   }
-
-   void MA57Solver::solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
-      // set up the linear system by evaluating the functions at the current iterate
-      this->coo_workspace.set_up_linear_system(statistics, subproblem, *this, current_evaluations, warmstart_information);
-      // solve the linear system
-      this->solve_indefinite_system(this->coo_workspace.matrix_values, this->coo_workspace.rhs, this->coo_workspace.solution);
-      // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(this->coo_workspace.solution, direction);
-      if (this->matrix_is_singular()) {
-         direction.status = SubproblemStatus::INFEASIBLE;
       }
    }
 
@@ -245,7 +212,7 @@ namespace uno {
       return static_cast<size_t>(this->workspace.info[24]);
    }
 
-   SolverWorkspace& MA57Solver::get_workspace() {
-      return this->coo_workspace;
+   LinearSystem& MA57Solver::get_linear_system() {
+      return this->linear_system;
    }
 } // namespace

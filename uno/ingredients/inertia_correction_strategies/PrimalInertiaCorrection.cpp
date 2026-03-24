@@ -1,10 +1,10 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <cassert>
 #include "PrimalInertiaCorrection.hpp"
 #include "UnstableInertiaCorrection.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/subproblem_solvers/LinearSystem.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -25,23 +25,33 @@ namespace uno {
 
    // Nocedal and Wright, p51
    void PrimalInertiaCorrection::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
-         const double* hessian_values, const Inertia& expected_inertia, double* primal_regularization_values) {
+         const Inertia& expected_inertia, double* hessian_values) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize_hessian(subproblem);
+         this->optional_linear_solver->get_linear_system().initialize_hessian(subproblem);
+         this->optional_linear_solver->initialize_memory();
          this->optional_linear_solver->do_symbolic_analysis();
       }
-      this->regularize_hessian(statistics, subproblem, hessian_values, expected_inertia, *this->optional_linear_solver,
-         primal_regularization_values);
+      // copy the Hessian into the linear system
+      double* matrix = this->optional_linear_solver->get_linear_system().matrix_values.data();
+      const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
+      for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
+         matrix[nonzero_index] = hessian_values[nonzero_index];
+      }
+      // figure out where to set the regularization terms in the linear system
+      double* primal_regularization_values = matrix + number_hessian_nonzeros;
+      // regularize the Hessian
+      this->regularize_hessian(statistics, subproblem, expected_inertia, *this->optional_linear_solver, primal_regularization_values);
+      // copy the regularization terms back into the Hessian
+      for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
+         hessian_values[number_hessian_nonzeros + index] = primal_regularization_values[index];
+      }
    }
 
    void PrimalInertiaCorrection::regularize_hessian(Statistics& statistics, const Subproblem& subproblem,
-         const double* hessian_values, const Inertia& expected_inertia,
-         DirectSymmetricIndefiniteLinearSolver<double>& linear_solver, double* primal_regularization_values) {
-      assert(hessian_values != nullptr);
-      const size_t number_hessian_nonzeros = subproblem.number_regularized_hessian_nonzeros();
-
+         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         double* primal_regularization_values) {
       this->regularization_factor = 0.;
       bool good_inertia = false;
       while (!good_inertia) {
@@ -49,15 +59,11 @@ namespace uno {
          for (size_t index: Range(subproblem.get_primal_regularization_variables().size())) {
             primal_regularization_values[index] = this->regularization_factor;
          }
-         DEBUG << "Current Hessian:";
-         for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
-            DEBUG << ' ' << hessian_values[nonzero_index];
-         }
          DEBUG << '\n';
 
          // perform factorization to get an estimate of the inertia
          const bool is_matrix_positive_definite = subproblem.is_hessian_positive_definite();
-         linear_solver.do_numerical_factorization(hessian_values, is_matrix_positive_definite);
+         linear_solver.do_numerical_factorization(is_matrix_positive_definite);
 
          // check inertia
          const Inertia estimated_inertia = linear_solver.get_inertia();
@@ -79,25 +85,23 @@ namespace uno {
    }
 
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         const double* augmented_matrix_values, double dual_regularization_parameter,
-         const Inertia& expected_inertia, double* primal_regularization_values,
+         double dual_regularization_parameter, const Inertia& expected_inertia, double* primal_regularization_values,
          double* dual_regularization_values) {
       // pick the member linear solver
       if (this->optional_linear_solver == nullptr) {
          this->optional_linear_solver = SymmetricIndefiniteLinearSolverFactory::create(this->optional_linear_solver_name);
-         this->optional_linear_solver->initialize_hessian(subproblem);
+         this->optional_linear_solver->get_linear_system().initialize_hessian(subproblem);
+         this->optional_linear_solver->initialize_memory();
          this->optional_linear_solver->do_symbolic_analysis();
       }
-      this->regularize_augmented_matrix(statistics, subproblem, augmented_matrix_values, dual_regularization_parameter,
-         expected_inertia, *this->optional_linear_solver, primal_regularization_values, dual_regularization_values);
+      this->regularize_augmented_matrix(statistics, subproblem, dual_regularization_parameter, expected_inertia,
+         *this->optional_linear_solver, primal_regularization_values, dual_regularization_values);
    }
 
    void PrimalInertiaCorrection::regularize_augmented_matrix(Statistics& statistics, const Subproblem& subproblem,
-         const double* augmented_matrix_values, double /*dual_regularization_parameter*/,
-         const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+         double /*dual_regularization_parameter*/, const Inertia& expected_inertia, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          double* primal_regularization_values, double* /*dual_regularization_values*/) {
-      this->regularize_hessian(statistics, subproblem, augmented_matrix_values, expected_inertia, linear_solver,
-         primal_regularization_values);
+      this->regularize_hessian(statistics, subproblem, expected_inertia, linear_solver, primal_regularization_values);
    }
 
    bool PrimalInertiaCorrection::performs_primal_regularization() const {

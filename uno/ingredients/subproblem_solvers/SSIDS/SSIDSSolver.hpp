@@ -6,7 +6,7 @@
 
 #include <spral_ssids.h>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "../COOWorkspace.hpp"
+#include "../COOLinearSystem.hpp"
 
 namespace uno {
    struct Workspace {
@@ -23,25 +23,22 @@ namespace uno {
       SSIDSSolver();
       ~SSIDSSolver() override = default;
 
-      void initialize_hessian(const Subproblem& subproblem) override;
-      void initialize_augmented_system(const Subproblem& subproblem) override;
+      void initialize_memory() override;
 
       void do_symbolic_analysis() override;
-      void do_numerical_factorization(const double* matrix_values, bool is_matrix_positive_definite) override;
-      void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<double>& rhs, Vector<double>& result) override;
-      void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) override;
+      void do_numerical_factorization(bool is_matrix_positive_definite) override;
+      void solve_indefinite_system(double* result) override;
 
       [[nodiscard]] Inertia get_inertia() const override;
       [[nodiscard]] size_t number_negative_eigenvalues() const override;
       [[nodiscard]] bool matrix_is_singular() const override;
       [[nodiscard]] size_t rank() const override;
 
-      [[nodiscard]] SolverWorkspace& get_workspace() override;
+      [[nodiscard]] LinearSystem& get_linear_system() override;
 
    protected:
       Workspace workspace{};
-      COOWorkspace coo_workspace{};
+      COOLinearSystem linear_system{};
 
       bool analysis_performed{false};
       bool factorization_performed{false};

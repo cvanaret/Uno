@@ -4,18 +4,9 @@
 #ifndef UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 #define UNO_SYMMETRICINDEFINITELINEARSOLVER_H
 
-#include <cstddef>
-
 namespace uno {
    // forward declarations
-   class Direction;
-   class Evaluations;
-   class SolverWorkspace;
-   class Statistics;
-   class Subproblem;
-   template <typename ElementType>
-   class Vector;
-   class WarmstartInformation;
+   class LinearSystem;
 
    template <typename ElementType>
    class SymmetricIndefiniteLinearSolver {
@@ -23,15 +14,9 @@ namespace uno {
       SymmetricIndefiniteLinearSolver() = default;
       virtual ~SymmetricIndefiniteLinearSolver() = default;
 
-      virtual void initialize_hessian(const Subproblem& subproblem) = 0;
-      virtual void initialize_augmented_system(const Subproblem& subproblem) = 0;
-
-      virtual void solve_indefinite_system(const Vector<double>& matrix_values, const Vector<ElementType>& rhs,
-         Vector<ElementType>& result) = 0;
-      virtual void solve_indefinite_system(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
-         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) = 0;
-
-      [[nodiscard]] virtual SolverWorkspace& get_workspace() = 0;
+      virtual void initialize_memory() = 0;
+      virtual void solve_indefinite_system(ElementType* result) = 0;
+      [[nodiscard]] virtual LinearSystem& get_linear_system() = 0;
    };
 } // namespace
 
