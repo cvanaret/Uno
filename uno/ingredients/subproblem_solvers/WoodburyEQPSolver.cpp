@@ -41,7 +41,7 @@ namespace uno {
 
       // set up the linear system by evaluating the functions at the current iterate
       if (warmstart_information.new_iterate) {
-         // assemble the augmented matrix
+         // assemble the augmented matrix with only the diagonal part of the quasi-Newton Hessian
          subproblem.evaluate_lagrangian_hessian(statistics, linear_system.matrix_values.data());
          const size_t number_hessian_nonzeros = subproblem.number_hessian_nonzeros();
          subproblem.evaluate_jacobian(linear_system.matrix_values.data() + number_hessian_nonzeros, current_evaluations);
@@ -63,13 +63,13 @@ namespace uno {
          subproblem.assemble_augmented_rhs(current_evaluations, jacobian, linear_system.rhs);
       }
 
-      /* solve the linear system with only the diagonal part and store the result in b */
-      this->linear_solver->solve_indefinite_system(linear_system.solution.data());
+      // solve the linear system with only the diagonal part and store the result in solution_diagonal_part
+      Vector<double> solution_diagonal_part(subproblem.number_variables + subproblem.number_constraints);
+      this->linear_solver->solve_indefinite_system(solution_diagonal_part.data());
       if (this->linear_solver->matrix_is_singular()) {
          direction.status = SubproblemStatus::INFEASIBLE;
          return;
       }
-      Vector<double> solution_diagonal_part(linear_system.solution);
 
       // compute the low-rank correction
       this->compute_low_rank_correction(subproblem, linear_system, solution_diagonal_part);
@@ -104,13 +104,12 @@ namespace uno {
          }
          DEBUG2 << "E = " << E;
          DEBUG2 << "H = " << H;
-         // compute c = E^T b
+         // compute c = Eᵀ b
          Vector<double> c(correction_rank);
          c = transpose(E)*b; // TODO move to constructor
          DEBUG2 << "c = " << c << '\n';
-         // construct T = P + E^T H
+         // construct T = P + Eᵀ H: first set P into T, then add Eᵀ H
          DenseMatrix<double> T(correction_rank, correction_rank);
-         // set P into T
          for (size_t column_index: Range(correction_rank)) {
             T.entry(column_index, column_index) = this->hessian_model.get_correction_column_scaling(column_index);
          }

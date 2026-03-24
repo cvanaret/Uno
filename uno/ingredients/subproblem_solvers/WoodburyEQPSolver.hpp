@@ -15,6 +15,20 @@ namespace uno {
    class LBFGSHessian;
    class Options;
 
+   // The WoodburyEQPSolver is a special case of EQPSolver with a quasi-Newton Hessian model
+   // When the Hessian approximation is given by a low-rank correction to a diagonal part:
+   // H = δ I + E P Eᵀ,
+   // the linear system
+   // (δ I + E P Eᵀ     Jᵀ) (d_x)   = - (r_x)
+   // (J                0 ) (-d_y)      (r_y)
+   // must be decomposed as:
+   // (δ I + E P Eᵀ     Jᵀ) = (δ I   Jᵀ) + (E) P (Eᵀ  0)    (*)
+   // (J                0 )   (J     0 )   (0)
+   // solved the following way:
+   // 1. factorize the matrix with the diagonal part only:
+   // (δ I   Jᵀ)
+   // (J     0 )
+   // 2. use the Woodbury formula to invert (*) symbolically
    class WoodburyEQPSolver: public SubproblemSolver {
    public:
       WoodburyEQPSolver(const LBFGSHessian& hessian_model, const Options& options);
