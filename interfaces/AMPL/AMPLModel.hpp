@@ -94,11 +94,11 @@ namespace uno {
       // mutable: can be modified by const methods (internal state not seen by user)
       mutable ASL* asl; /*!< Instance of the AMPL Solver Library class */
       const size_t number_asl_hessian_nonzeros; /*!< Number of nonzero elements in the Hessian */
-      const ProblemType problem_type;
 
       // lists of variables and constraints + corresponding collection objects
       const ForwardRange linear_constraints;
       const ForwardRange nonlinear_constraints;
+      const ProblemType problem_type;
       std::vector<size_t> equality_constraints{};
       CollectionAdapter<std::vector<size_t>&> equality_constraints_collection;
       std::vector<size_t> inequality_constraints{};
