@@ -69,10 +69,23 @@ namespace uno {
          direction.status = SubproblemStatus::INFEASIBLE;
          return;
       }
-      Vector<double> b(linear_system.solution);
-      DEBUG2 << "b = " << b << '\n';
+      Vector<double> solution_diagonal_part(linear_system.solution);
 
-      /* compute the low-rank corrections */
+      // compute the low-rank correction
+      this->compute_low_rank_correction(subproblem, linear_system, solution_diagonal_part);
+
+      // assemble the full primal-dual direction
+      subproblem.assemble_primal_dual_direction(solution_diagonal_part, direction);
+   }
+
+   SolverWorkspace& WoodburyEQPSolver::get_workspace() {
+      return this->linear_solver->get_linear_system();
+   }
+
+   // protected members
+
+   void WoodburyEQPSolver::compute_low_rank_correction(const Subproblem& subproblem, LinearSystem& linear_system, Vector<double>& b) const {
+      DEBUG2 << "b = " << b << '\n';
       const size_t correction_rank = this->hessian_model.get_correction_rank();
       DEBUG2 << "Correction rank: " << correction_rank << '\n';
       if (0 < correction_rank) {
@@ -97,10 +110,9 @@ namespace uno {
          DEBUG2 << "c = " << c << '\n';
          // construct T = P + E^T H
          DenseMatrix<double> T(correction_rank, correction_rank);
-         // set P into T (TODO: do generically)
-         for (size_t index: Range(correction_rank/2)) {
-            T.entry(index, index) = -1.;
-            T.entry(correction_rank/2 + index, correction_rank/2 + index) = 1.;
+         // set P into T
+         for (size_t column_index: Range(correction_rank)) {
+            T.entry(column_index, column_index) = this->hessian_model.get_correction_column_scaling(column_index);
          }
          T += transpose(E)*H;
          DEBUG2 << "T = " << T;
@@ -112,16 +124,7 @@ namespace uno {
          b -= H * d;
          DEBUG2 << "b = " << b << '\n';
       }
-
-      // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(b, direction);
    }
-
-   SolverWorkspace& WoodburyEQPSolver::get_workspace() {
-      return this->linear_solver->get_linear_system();
-   }
-
-   // protected members
 
    void WoodburyEQPSolver::solve_dense_indefinite_system(DenseMatrix<double>& T, const Vector<double>& c, Vector<double>& d) {
       std::vector<int> ipiv = T.compute_bunch_kaufman_factorization();

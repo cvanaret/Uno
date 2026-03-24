@@ -176,6 +176,16 @@ namespace uno {
       }
    }
 
+   // get the scaling of a given column (-1 for U, +1 for V)
+   double LBFGSHessian::get_correction_column_scaling(size_t column_index) const {
+      if (column_index < this->number_entries_in_memory) {
+         return -1.;
+      }
+      else {
+         return 1.;
+      }
+   }
+
    // protected member functions
 
    void LBFGSHessian::update_S(const Iterate& current_iterate, const Iterate& trial_iterate) {
