@@ -145,21 +145,19 @@ namespace uno {
 
       // rank-2 contribution
       // (U, V) in R^{n x m}
-      int n = static_cast<int>(this->model.number_variables);
-      int increment = 1;
       // U U^T v
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
          const double U_coefficient = -dot(current_U_column, vector); // minus sign for U
          // result += coefficient * current_column
-         BLAS_add_vectors(&n, &U_coefficient, current_U_column.data(), &increment, result, &increment);
+         BLAS_add_vectors(this->model.number_variables, U_coefficient, current_U_column.data(), result);
       }
       // V V^T v
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_V_column = this->V.column(column_index);
          const double V_coefficient = dot(current_V_column, vector); // plus sign for V
          // result += coefficient * current_column
-         BLAS_add_vectors(&n, &V_coefficient, current_V_column.data(), &increment, result, &increment);
+         BLAS_add_vectors(this->model.number_variables, V_coefficient, current_V_column.data(), result);
       }
    }
 

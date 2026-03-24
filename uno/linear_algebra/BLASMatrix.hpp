@@ -66,9 +66,7 @@ namespace uno {
    template <typename T>
    BLASMatrix<T>& BLASMatrix<T>::operator=(const BLASMatrix& other) {
       assert(other.number_rows == this->number_rows && other.number_columns == this->number_columns);
-      const int size = static_cast<int>(this->number_rows * this->number_columns);
-      constexpr int increment = 1;
-      BLAS_copy_vector(&size, other.data(), &increment, this->data(), &increment);
+      BLAS_copy_vector(this->number_rows * this->number_columns, other.data(), this->data());
       return *this;
    }
 
