@@ -8,6 +8,7 @@
 #include "../HessianModel.hpp"
 #include "linear_algebra/DenseMatrix.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "linear_algebra/VectorView.hpp"
 
 namespace uno {
    // forward declarations
@@ -40,6 +41,10 @@ namespace uno {
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) override;
       void compute_hessian_vector_product(const double* x, const double* vector,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) override;
+
+      // functions that can be called by WoodburyEQPSolver
+      [[nodiscard]] size_t get_correction_rank() const;
+      [[nodiscard]] VectorView<std::vector<double>> get_correction_column(size_t column_index) const;
 
    protected:
       const Model& model;

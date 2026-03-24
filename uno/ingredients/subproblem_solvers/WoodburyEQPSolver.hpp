@@ -10,6 +10,8 @@
 
 namespace uno {
    // forward declarations
+   template <typename ElementType>
+   class DenseMatrix;
    class LBFGSHessian;
    class Options;
 
@@ -29,6 +31,8 @@ namespace uno {
       const LBFGSHessian& hessian_model;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       bool analysis_performed{false};
+
+      static void solve_dense_indefinite_system(DenseMatrix<double>& T, const Vector<double>& c, Vector<double>& d);
    };
 } // namespace
 

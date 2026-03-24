@@ -8,9 +8,11 @@
 #include <cstddef>
 #include <cassert>
 #include "BLAS.hpp"
+#include "symbolic/Multiplication.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/Subtraction.hpp"
+#include "symbolic/Transpose.hpp"
 
 namespace uno {
    // constant contiguous array in memory on which BLAS can be called
@@ -106,6 +108,40 @@ namespace uno {
          constexpr double factor = -1.;
          constexpr int increment = 1;
          BLAS_add_vectors(&size, &factor, other.data(), &increment, this->data(), &increment);
+         return *this;
+      }
+
+      // y := A^T x
+      template <typename Matrix, typename Vector>
+      MutableBLASVector& operator=(Multiplication<Transpose<Matrix>, Vector>&& expression) {
+         const auto& A = expression.get_left().get_matrix();
+         const auto& x = expression.get_right();
+         assert(A.number_rows == x.size());
+         constexpr char trans = 'T';
+         const int m = A.number_rows;
+         const int n = A.number_columns;
+         constexpr double alpha = 1.;
+         const int lda = A.leading_dimension;
+         constexpr int increment = 1;
+         constexpr double beta = 0.;
+         BLAS_matrix_vector_product(&trans, &m, &n, &alpha, A.data(), &lda, x.data(), &increment, &beta, this->data(), &increment);
+         return *this;
+      }
+
+      // y -= Ax (or y = -A x + y)
+      template <typename Matrix, typename Vector>
+      MutableBLASVector& operator-=(Multiplication<Matrix, Vector>&& expression) {
+         const auto& A = expression.get_left();
+         const auto& x = expression.get_right();
+         assert(A.number_columns == x.size());
+         constexpr char trans = 'N';
+         const int m = A.number_rows;
+         const int n = A.number_columns;
+         constexpr double alpha = -1.;
+         const int lda = A.leading_dimension;
+         constexpr int increment = 1;
+         constexpr double beta = 1.;
+         BLAS_matrix_vector_product(&trans, &m, &n, &alpha, A.data(), &lda, x.data(), &increment, &beta, this->data(), &increment);
          return *this;
       }
 

@@ -11,6 +11,8 @@
 #include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "symbolic/Multiplication.hpp"
+#include "symbolic/Transpose.hpp"
 
 namespace uno {
    WoodburyEQPSolver::WoodburyEQPSolver(const LBFGSHessian& hessian_model, const Options& options):
@@ -61,17 +63,68 @@ namespace uno {
          subproblem.assemble_augmented_rhs(current_evaluations, jacobian, linear_system.rhs);
       }
 
-      /* solve the linear system with only the diagonal part */
+      /* solve the linear system with only the diagonal part and store the result in b */
       this->linear_solver->solve_indefinite_system(linear_system.solution.data());
       if (this->linear_solver->matrix_is_singular()) {
          direction.status = SubproblemStatus::INFEASIBLE;
          return;
       }
+      Vector<double> b(linear_system.solution);
+      DEBUG2 << "b = " << b << '\n';
+
+      /* compute the low-rank corrections */
+      const size_t correction_rank = this->hessian_model.get_correction_rank();
+      DEBUG2 << "Correction rank: " << correction_rank << '\n';
+      if (0 < correction_rank) {
+         // compute correction_rank backsolves with the correction columns as RHS
+         DenseMatrix<double> E(subproblem.number_variables + subproblem.number_constraints, correction_rank);
+         DenseMatrix<double> H(subproblem.number_variables + subproblem.number_constraints, correction_rank);
+         for (size_t column_index: Range(correction_rank)) {
+            const auto correction_column = this->hessian_model.get_correction_column(column_index);
+            DEBUG2 << "Column " << column_index << ": " << correction_column << '\n';
+            // copy each correction column into E (note: E is higher than the correction matrix)
+            for (size_t row_index: Range(subproblem.problem.model.number_variables)) {
+               E.entry(row_index, column_index) = correction_column[row_index];
+            }
+            // solve a linear system A H_j = E_j
+            linear_system.rhs = E.column(column_index);
+            this->linear_solver->solve_indefinite_system(H.column(column_index).data());
+            DEBUG2 << "Solution H_j to A H_j = E_j: "; print_vector(DEBUG2, H.column(column_index));
+         }
+         // compute c = E^T b
+         Vector<double> c(correction_rank);
+         c = transpose(E)*b; // TODO move to constructor
+         DEBUG2 << "c = " << c << '\n';
+         // construct T = P + E^T H
+         DenseMatrix<double> T(correction_rank, correction_rank);
+         // set P into T (TODO: do generically)
+         for (size_t index: Range(correction_rank/2)) {
+            T.entry(index, index) = -1.;
+            T.entry(correction_rank/2 + index, correction_rank/2 + index) = 1.;
+         }
+         T += transpose(E)*H;
+         DEBUG2 << "T = " << T;
+         // solve T d = c by computing a Bunch-Kaufman factorization of T
+         Vector<double> d(correction_rank);
+         WoodburyEQPSolver::solve_dense_indefinite_system(T, c, d);
+         DEBUG2 << "d = " << d << '\n';
+         // add the correction to b: b := b - H d
+         b -= H * d;
+         DEBUG2 << "b = " << b << '\n';
+      }
+
       // assemble the full primal-dual direction
-      subproblem.assemble_primal_dual_direction(linear_system.solution, direction);
+      subproblem.assemble_primal_dual_direction(b, direction);
    }
 
    SolverWorkspace& WoodburyEQPSolver::get_workspace() {
       return this->linear_solver->get_linear_system();
+   }
+
+   // protected members
+
+   void WoodburyEQPSolver::solve_dense_indefinite_system(DenseMatrix<double>& T, const Vector<double>& c, Vector<double>& d) {
+      std::vector<int> ipiv = T.compute_bunch_kaufman_factorization();
+      solve_bunch_kaufman(T, c, d, ipiv);
    }
 } // namespace

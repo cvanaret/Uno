@@ -9,6 +9,7 @@
 #define BLAS_scale_vector FC_GLOBAL_(dscal, DSCAL)
 #define BLAS_add_vectors FC_GLOBAL_(daxpy, DAXPY)
 #define BLAS_dot_product FC_GLOBAL_(ddot, DDOT)
+#define BLAS_matrix_vector_product FC_GLOBAL_(dgemv, DGEMV)
 #define BLAS_triangular_back_solve FC_GLOBAL_(dtrsm, DTRSM)
 #define BLAS_matrix_matrix_product FC_GLOBAL_(dgemm, DGEMM)
 #define BLAS_triangular_matrix_matrix_product FC_GLOBAL_(dtrmm, DTRMM)
@@ -25,6 +26,11 @@ extern "C" {
 
    // x^T y
    double BLAS_dot_product(const int* n, const double* x, const int* incx, const double* y, const int* incy);
+
+   // performs the matrix-vector operations
+   // y := alpha A x + beta y,   or   y := alpha A^T x + beta y,
+   void BLAS_matrix_vector_product(const char* trans, const int* m, const int* n, const double* alpha, const double* a,
+      const int* lda, const double* x, const int* incx, const double* beta, double* y, const int* incy);
 
    // performs back-solve with lower-triangular A:
    // op(A) X = alpha B    or
