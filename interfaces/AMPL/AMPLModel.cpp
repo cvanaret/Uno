@@ -46,10 +46,10 @@ namespace uno {
          asl(asl),
          // compute sparsity pattern and number of nonzeros of Lagrangian Hessian
          number_asl_hessian_nonzeros(this->compute_lagrangian_hessian_sparsity()),
-         problem_type(this->determine_problem_type()),
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
          nonlinear_constraints(0, static_cast<size_t>(this->asl->i.nlc_)),
+         problem_type(this->determine_problem_type()),
          equality_constraints_collection(this->equality_constraints),
          inequality_constraints_collection(this->inequality_constraints) {
       // Jacobian storage: use goff fields of struct cgrad
