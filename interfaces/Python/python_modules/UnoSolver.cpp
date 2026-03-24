@@ -2,11 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <pybind11/pybind11.h>
+#include <iostream>
+#include <memory>
 #include <string>
 #include "../cpp_classes/PythonModel.hpp"
+#include "../cpp_classes/PythonStreamBuffer.hpp"
 #include "../cpp_classes/UnoSolverWrapper.hpp"
 #include "options/Options.hpp"
 #include "options/Presets.hpp"
+#include "tools/Logger.hpp"
 
 namespace py = pybind11;
 
@@ -76,6 +80,13 @@ namespace uno {
             throw py::key_error(option_name + " does not exist");
          }
       }, py::arg("option_name"), py::arg("option_value"))
+
+      // store the streambuf and ostream so they stay alive as long as needed
+       .def("set_logger_stream", [](UnoSolverWrapper& /*solver*/, py::object stream) {
+           static auto buffer = std::make_unique<PythonStreamBuffer>(stream.attr("write"));
+           static auto ostream = std::make_unique<std::ostream>(buffer.get());
+           Logger::set_stream(*ostream);
+       })
 
       .def("set_preset", [](UnoSolverWrapper& solver, const std::string& preset_name) {
          Presets::set(solver.options, preset_name);
