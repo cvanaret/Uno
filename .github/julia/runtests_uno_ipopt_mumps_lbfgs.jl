@@ -118,6 +118,8 @@ end
             r"^test_basic_VectorNonlinearFunction_",
             # MPEC instances
             "_complementarity",
+            # linear instances (doesn't make sense to use a quasi-Newton Hessian)
+            "_linear",
         ],
     )
 end

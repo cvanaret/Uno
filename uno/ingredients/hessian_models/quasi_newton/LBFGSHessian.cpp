@@ -107,6 +107,7 @@ namespace uno {
       statistics.set("|BFGS|", this->number_entries_in_memory);
    }
 
+   // forms the diagonal part of the L-BFGS Hessian approximation
    // this can only be called by WoodburyEQPSolver
    void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* hessian_values) {
