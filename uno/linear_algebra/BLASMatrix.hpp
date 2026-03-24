@@ -213,6 +213,9 @@ namespace uno {
       const int leading_dimension = static_cast<int>(this->leading_dimension);
       LAPACK_cholesky_factorization(&uplo, &dimension, this->data(), &leading_dimension, &info);
       DEBUG << "Cholesky info: " << info << '\n';
+      if (info != 0) {
+         WARNING << "Cholesky info: " << info << '\n';
+      }
       assert(info == 0);
    }
 
