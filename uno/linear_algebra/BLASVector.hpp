@@ -42,7 +42,7 @@ namespace uno {
       template <typename Vector, decltype(Vector{}.data()) = true>
       auto operator=(const Vector& other) {
          assert(other.size() <= this->size() && "The other vector is larger than the current vector");
-         BLAS_copy_vector(this->size(), other.data(), this->data());
+         blas1::copy(this->size(), other.data(), this->data());
          return *this;
       }
 
@@ -85,7 +85,7 @@ namespace uno {
          const auto& a = expression.get_factor();
          const auto& x = expression.get_expression();
          assert(x.size() <= this->size() && "The expression is larger than the current vector");
-         BLAS_add_vectors(this->size(), a, x.data(), this->data());
+         blas1::add(this->size(), a, x.data(), this->data());
          return *this;
       }
 
@@ -93,14 +93,14 @@ namespace uno {
       template <typename Vector>
       MutableBLASVector& operator+=(const Vector& other) {
          assert(other.size() <= this->size() && "The other vector is larger than the current vector");
-         BLAS_add_vectors(this->size(), 1., other.data(), this->data());
+         blas1::add(this->size(), 1., other.data(), this->data());
          return *this;
       }
 
       template <typename Vector>
       MutableBLASVector& operator-=(const Vector& other) {
          assert(other.size() <= this->size() && "The other vector is larger than the current vector");
-         BLAS_add_vectors(this->size(), -1., other.data(), this->data());
+         blas1::add(this->size(), -1., other.data(), this->data());
          return *this;
       }
 
@@ -110,7 +110,7 @@ namespace uno {
          const auto& A = expression.get_left().get_matrix();
          const auto& x = expression.get_right();
          assert(A.number_rows == x.size());
-         BLAS_matrix_vector_product('T', A.number_rows, A.number_columns, 1., A.data(), A.leading_dimension, x.data(),
+         blas2::BLAS_matrix_vector_product('T', A.number_rows, A.number_columns, 1., A.data(), A.leading_dimension, x.data(),
             0., this->data());
          return *this;
       }
@@ -121,7 +121,7 @@ namespace uno {
          const auto& A = expression.get_left();
          const auto& x = expression.get_right();
          assert(A.number_columns == x.size());
-         BLAS_matrix_vector_product('N', A.number_rows, A.number_columns, -1., A.data(), A.leading_dimension, x.data(),
+         blas2::BLAS_matrix_vector_product('N', A.number_rows, A.number_columns, -1., A.data(), A.leading_dimension, x.data(),
             1., this->data());
          return *this;
       }
@@ -130,7 +130,7 @@ namespace uno {
       [[nodiscard]] virtual T& operator[](size_t index) = 0;
 
       void scale(T factor) {
-         BLAS_scale_vector(this->size(), factor, this->data());
+         blas1::scale(this->size(), factor, this->data());
       }
 
       void operator*=(T factor) {
@@ -139,11 +139,11 @@ namespace uno {
    };
 
    inline double dot(const BLASVector<double>& x, const BLASVector<double>& y) {
-      return BLAS_dot_product(std::min(x.size(), y.size()), x.data(), y.data());
+      return blas1::dot(std::min(x.size(), y.size()), x.data(), y.data());
    }
 
    inline double dot(const BLASVector<double>& x, const double* y) {
-      return BLAS_dot_product(x.size(), x.data(), y);
+      return blas1::dot(x.size(), x.data(), y);
    }
 } // namespace
 

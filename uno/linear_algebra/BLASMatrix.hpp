@@ -65,7 +65,7 @@ namespace uno {
    template <typename T>
    BLASMatrix<T>& BLASMatrix<T>::operator=(const BLASMatrix& other) {
       assert(other.number_rows == this->number_rows && other.number_columns == this->number_columns);
-      BLAS_copy_vector(this->number_rows * this->number_columns, other.data(), this->data());
+      blas1::copy(this->number_rows * this->number_columns, other.data(), this->data());
       return *this;
    }
 
@@ -139,7 +139,7 @@ namespace uno {
       if (&A != &B) {
          throw std::runtime_error("BLASMatrix::operator+=: low-rank update called on two different correction matrices");
       }
-      BLAS_symmetric_high_rank_update('L', 'N', this->number_rows, A.number_rows, A.number_columns, 1., A.data(),
+      blas3::symmetric_high_rank_update('L', 'N', this->number_rows, A.number_rows, A.number_columns, 1., A.data(),
          A.leading_dimension, 0., this->data(), this->leading_dimension);
       return *this;
    }
@@ -159,7 +159,7 @@ namespace uno {
       if (&A != &B) {
          throw std::runtime_error("BLASMatrix::operator+=: low-rank update called on two different correction matrices");
       }
-      BLAS_symmetric_high_rank_update('L', 'T', this->number_rows, A.number_rows, A.number_columns, alpha, A.data(),
+      blas3::symmetric_high_rank_update('L', 'T', this->number_rows, A.number_rows, A.number_columns, alpha, A.data(),
          A.leading_dimension, 1., this->data(), this->leading_dimension);
       return *this;
    }

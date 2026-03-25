@@ -150,14 +150,14 @@ namespace uno {
          const auto current_U_column = this->U.column(column_index);
          const double U_coefficient = -dot(current_U_column, vector); // minus sign for U
          // result += coefficient * current_column
-         BLAS_add_vectors(this->model.number_variables, U_coefficient, current_U_column.data(), result);
+         blas1::add(this->model.number_variables, U_coefficient, current_U_column.data(), result);
       }
       // V V^T v
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_V_column = this->V.column(column_index);
          const double V_coefficient = dot(current_V_column, vector); // plus sign for V
          // result += coefficient * current_column
-         BLAS_add_vectors(this->model.number_variables, V_coefficient, current_V_column.data(), result);
+         blas1::add(this->model.number_variables, V_coefficient, current_V_column.data(), result);
       }
    }
 

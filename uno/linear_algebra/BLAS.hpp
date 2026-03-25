@@ -62,58 +62,64 @@ extern "C" {
 }
 
 namespace uno {
-   // y := x
-   inline void BLAS_copy_vector(size_t size, const double* x, double* y) {
-      const int n = static_cast<int>(size);
-      constexpr int increment = 1;
-      dcopy(&n, x, &increment, y, &increment);
+   namespace blas1 {
+      // y := x
+      inline void copy(size_t size, const double* x, double* y) {
+         const int n = static_cast<int>(size);
+         constexpr int increment = 1;
+         dcopy(&n, x, &increment, y, &increment);
+      }
+
+      // x := alpha x
+      inline void scale(size_t size, double alpha, double* x) {
+         const int n = static_cast<int>(size);
+         constexpr int increment = 1;
+         dscal(&n, &alpha, x, &increment);
+      }
+
+      // y := alpha x + y
+      inline void add(size_t size, double alpha, const double* x, double* y) {
+         const int n = static_cast<int>(size);
+         constexpr int increment = 1;
+         daxpy(&n, &alpha, x, &increment, y, &increment);
+      }
+
+      // x^T y
+      inline double dot(size_t size, const double* x, const double* y) {
+         const int n = static_cast<int>(size);
+         constexpr int increment = 1;
+         return ddot(&n, x, &increment, y, &increment);
+      }
    }
 
-   // x := alpha x
-   inline void BLAS_scale_vector(size_t size, double alpha, double* x) {
-      const int n = static_cast<int>(size);
-      constexpr int increment = 1;
-      dscal(&n, &alpha, x, &increment);
+   namespace blas2 {
+      // performs the matrix-vector operations
+      // y := alpha A x + beta y,   or   y := alpha A^T x + beta y,
+      inline void BLAS_matrix_vector_product(char trans, size_t number_rows, size_t number_colums, double alpha, const double* a,
+            size_t leading_dimension, const double* x, double beta, double* y) {
+         const int m = static_cast<int>(number_rows);
+         const int n = static_cast<int>(number_colums);
+         const int lda = static_cast<int>(leading_dimension);
+         assert(lda >= std::max(1, m));
+         constexpr int increment = 1;
+         dgemv(&trans, &m, &n, &alpha, a, &lda, x, &increment, &beta, y, &increment);
+      }
    }
 
-   // y := alpha x + y
-   inline void BLAS_add_vectors(size_t size, double alpha, const double* x, double* y) {
-      const int n = static_cast<int>(size);
-      constexpr int increment = 1;
-      daxpy(&n, &alpha, x, &increment, y, &increment);
-   }
-
-   // x^T y
-   inline double BLAS_dot_product(size_t size, const double* x, const double* y) {
-      const int n = static_cast<int>(size);
-      constexpr int increment = 1;
-      return ddot(&n, x, &increment, y, &increment);
-   }
-
-   // performs the matrix-vector operations
-   // y := alpha A x + beta y,   or   y := alpha A^T x + beta y,
-   inline void BLAS_matrix_vector_product(char trans, size_t number_rows, size_t number_colums, double alpha, const double* a,
-         size_t leading_dimension, const double* x, double beta, double* y) {
-      const int m = static_cast<int>(number_rows);
-      const int n = static_cast<int>(number_colums);
-      const int lda = static_cast<int>(leading_dimension);
-      assert(lda >= std::max(1, m));
-      constexpr int increment = 1;
-      dgemv(&trans, &m, &n, &alpha, a, &lda, x, &increment, &beta, y, &increment);
-   }
-
-   // performs symmetric rank k update:
-   // C = alpha A A^T + beta C    or
-   // C = alpha A^T A + beta C
-   inline void BLAS_symmetric_high_rank_update(char uplo, char trans, size_t dimension_c, size_t number_rows_a,
-         size_t number_columns_a, double alpha, const double* a, size_t leading_dimension_a, double beta, double* c,
-         size_t leading_dimension_c) {
-      const int n = static_cast<int>(dimension_c);
-      const int k = static_cast<int>(trans == 'N' ? number_columns_a : number_rows_a);
-      const int lda = static_cast<int>(leading_dimension_a);
-      assert(lda >= std::max(1, trans == 'N' ? n : k));
-      const int ldc = static_cast<int>(leading_dimension_c);
-      dsyrk(&uplo, &trans, &n, &k, &alpha, a, &lda, &beta, c, &ldc);
+   namespace blas3 {
+      // performs symmetric rank k update:
+      // C = alpha A A^T + beta C    or
+      // C = alpha A^T A + beta C
+      inline void symmetric_high_rank_update(char uplo, char trans, size_t dimension_c, size_t number_rows_a,
+            size_t number_columns_a, double alpha, const double* a, size_t leading_dimension_a, double beta, double* c,
+            size_t leading_dimension_c) {
+         const int n = static_cast<int>(dimension_c);
+         const int k = static_cast<int>(trans == 'N' ? number_columns_a : number_rows_a);
+         const int lda = static_cast<int>(leading_dimension_a);
+         assert(lda >= std::max(1, trans == 'N' ? n : k));
+         const int ldc = static_cast<int>(leading_dimension_c);
+         dsyrk(&uplo, &trans, &n, &k, &alpha, a, &lda, &beta, c, &ldc);
+      }
    }
 } // namespace
 
