@@ -24,8 +24,9 @@
 
 using namespace uno;
 
-using CUserModel = UserModel<Objective, ObjectiveGradient, Constraints, Jacobian, JacobianOperator, JacobianTransposedOperator,
-   Hessian, HessianOperator, std::vector<double>, void*>;
+using CUserModel = UserModel<uno_objective_callback, uno_objective_gradient_callback, uno_constraints_callback,
+   uno_constraints_jacobian_callback, uno_constraints_jacobian_operator_callback, uno_constraints_jacobian_transposed_operator_callback,
+   uno_lagrangian_hessian_callback, uno_lagrangian_hessian_operator_callback, std::vector<double>, void*>;
 
 // UnoModel contains an instance of UserModel and complies with the Model interface
 class UnoModel: public Model {
@@ -341,8 +342,8 @@ protected:
 
 class CUserCallbacks: public UserCallbacks {
 public:
-   CUserCallbacks(NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
-      TerminationUserCallback user_termination_callback, void* user_data): UserCallbacks(),
+   CUserCallbacks(uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
+      uno_termination_callback user_termination_callback, void* user_data): UserCallbacks(),
          notify_acceptable_iterate_callback(notify_acceptable_iterate_callback),
          user_termination_callback(user_termination_callback),
          user_data(user_data) { };
@@ -371,15 +372,15 @@ public:
    }
 
 private:
-   NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback;
-   TerminationUserCallback user_termination_callback;
+   uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback;
+   uno_termination_callback user_termination_callback;
    void* user_data;
 };
 
-// std::streambuf wrapper around LoggerStreamUserCallback
+// std::streambuf wrapper around uno_logger_stream_callback
 class CStreamBuffer : public std::streambuf {
 public:
-   explicit CStreamBuffer(LoggerStreamUserCallback logger_stream_callback, void* user_data, std::size_t buffer_size) :
+   explicit CStreamBuffer(uno_logger_stream_callback logger_stream_callback, void* user_data, std::size_t buffer_size) :
          logger_stream_callback(logger_stream_callback), user_data(user_data) {
       // allocate output buffer and set stream buffer pointer
       this->buffer = new char[buffer_size];
@@ -408,7 +409,7 @@ protected:
    }
 
 private:
-   LoggerStreamUserCallback logger_stream_callback;
+   uno_logger_stream_callback logger_stream_callback;
    void* user_data;
    char* buffer;
 
@@ -433,14 +434,14 @@ private:
    }
 };
 
-// std::ostream wrapper around LoggerStreamUserCallback
+// std::ostream wrapper around uno_logger_stream_callback
 class COStream : public std::ostream {
 public:
-   COStream(LoggerStreamUserCallback logger_stream_callback, void* user_data, std::size_t buffer_size = 1024) : // 1024 default buffer size
+   COStream(uno_logger_stream_callback logger_stream_callback, void* user_data, std::size_t buffer_size = 1024) : // 1024 default buffer size
       std::ostream(&this->buffer), buffer(logger_stream_callback, user_data, buffer_size) { }
 
 private:
-   // internal stream buffer that sends output to the LoggerStreamUserCallback
+   // internal stream buffer that sends output to the uno_logger_stream_callback
    CStreamBuffer buffer;
 };
 
@@ -493,8 +494,8 @@ void* uno_create_model(const char* problem_type, uno_int number_variables, const
    return user_model;
 }
 
-bool uno_set_objective(void* model, uno_int optimization_sense, Objective objective_function,
-      ObjectiveGradient objective_gradient) {
+bool uno_set_objective(void* model, uno_int optimization_sense, uno_objective_callback objective_function,
+      uno_objective_gradient_callback objective_gradient) {
    if (optimization_sense != UNO_MINIMIZE && optimization_sense != UNO_MAXIMIZE) {
       WARNING << "Please specify a valid objective sense."  << std::endl;
       return false;
@@ -510,9 +511,9 @@ bool uno_set_objective(void* model, uno_int optimization_sense, Objective object
    return true;
 }
 
-bool uno_set_constraints(void* model, uno_int number_constraints, Constraints constraint_functions,
+bool uno_set_constraints(void* model, uno_int number_constraints, uno_constraints_callback constraint_functions,
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, uno_int number_jacobian_nonzeros,
-      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, Jacobian jacobian) {
+      const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, uno_constraints_jacobian_callback jacobian) {
    if (number_constraints <= 0) {
       WARNING << "Please specify a positive number of constraints."  << std::endl;
       return false;
@@ -551,7 +552,7 @@ bool uno_set_constraints(void* model, uno_int number_constraints, Constraints co
    return true;
 }
 
-bool uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator) {
+bool uno_set_jacobian_operator(void* model, uno_constraints_jacobian_operator_callback jacobian_operator) {
    if (model == nullptr) {
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
@@ -561,7 +562,7 @@ bool uno_set_jacobian_operator(void* model, JacobianOperator jacobian_operator) 
    return true;
 }
 
-bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperator jacobian_transposed_operator) {
+bool uno_set_jacobian_transposed_operator(void* model, uno_constraints_jacobian_transposed_operator_callback jacobian_transposed_operator) {
    if (model == nullptr) {
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
@@ -572,7 +573,7 @@ bool uno_set_jacobian_transposed_operator(void* model, JacobianTransposedOperato
 }
 
 bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
-      const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, Hessian lagrangian_hessian) {
+      const uno_int* hessian_row_indices, const uno_int* hessian_column_indices, uno_lagrangian_hessian_callback lagrangian_hessian) {
    if (number_hessian_nonzeros < 0) {
       WARNING << "Please specify a nonnegative number of Lagrangian Hessian nonzeros."  << std::endl;
       return false;
@@ -608,7 +609,7 @@ bool uno_set_lagrangian_hessian(void* model, uno_int number_hessian_nonzeros, ch
    return true;
 }
 
-bool uno_set_lagrangian_hessian_operator(void* model, HessianOperator lagrangian_hessian_operator) {
+bool uno_set_lagrangian_hessian_operator(void* model, uno_lagrangian_hessian_operator_callback lagrangian_hessian_operator) {
    if (model == nullptr) {
       WARNING << "Please specify a valid model."  << std::endl;
       return false;
@@ -796,8 +797,8 @@ bool uno_set_solver_preset(void* solver, const char* preset_name) {
    return true;
 }
 
-bool uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback notify_acceptable_iterate_callback,
-      TerminationUserCallback user_termination_callback, void* user_data) {
+bool uno_set_solver_callbacks(void* solver, uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
+      uno_termination_callback user_termination_callback, void* user_data) {
    if (solver == nullptr) {
       WARNING << "Please specify a valid solver."  << std::endl;
       return false;
@@ -808,7 +809,7 @@ bool uno_set_solver_callbacks(void* solver, NotifyAcceptableIterateUserCallback 
    return true;
 }
 
-bool uno_set_logger_stream_callback(LoggerStreamUserCallback logger_stream_callback, void* user_data) {
+bool uno_set_logger_stream_callback(uno_logger_stream_callback logger_stream_callback, void* user_data) {
    delete c_ostream;
    c_ostream = new COStream(logger_stream_callback, user_data);
    Logger::set_stream(*c_ostream);
