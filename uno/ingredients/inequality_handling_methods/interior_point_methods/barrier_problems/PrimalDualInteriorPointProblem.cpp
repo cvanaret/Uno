@@ -277,7 +277,7 @@ namespace uno {
    void PrimalDualInteriorPointProblem::assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution,
          Direction& direction) const {
       // form the primal-dual direction
-      direction.primals = view(solution, 0, this->first_reformulation.number_variables);
+      view(direction.primals, 0, this->first_reformulation.number_variables) = view(solution, 0, this->first_reformulation.number_variables);
       // retrieve the duals with correct signs (note the sign flip)
       direction.multipliers.constraints = -view(solution, this->first_reformulation.number_variables,
          this->first_reformulation.number_variables + this->first_reformulation.number_constraints);
