@@ -5,7 +5,6 @@
 #define UNO_BLASMATRIX_H
 
 #include <cassert>
-
 #include "Vector.hpp"
 #include "linear_algebra/BLAS.hpp"
 #include "linear_algebra/LAPACK.hpp"
@@ -48,8 +47,8 @@ namespace uno {
       template <typename Matrix>
       BLASMatrix& operator*=(Transpose<Inverse<Matrix>>&& expression);
 
-      void compute_cholesky_factorization();
-      [[nodiscard]] std::vector<int> compute_bunch_kaufman_factorization();
+      [[nodiscard]] bool compute_cholesky_factorization();
+      [[nodiscard]] std::pair<bool, std::vector<int>> compute_bunch_kaufman_factorization();
 
       [[nodiscard]] virtual T* data() = 0;
       [[nodiscard]] virtual const T* data() const = 0;
@@ -66,9 +65,7 @@ namespace uno {
    template <typename T>
    BLASMatrix<T>& BLASMatrix<T>::operator=(const BLASMatrix& other) {
       assert(other.number_rows == this->number_rows && other.number_columns == this->number_columns);
-      const int size = static_cast<int>(this->number_rows * this->number_columns);
-      constexpr int increment = 1;
-      BLAS_copy_vector(&size, other.data(), &increment, this->data(), &increment);
+      blas1::copy(this->number_rows * this->number_columns, other.data(), this->data());
       return *this;
    }
 
@@ -89,17 +86,9 @@ namespace uno {
       if (this->number_rows != A.number_rows || this->number_columns != B.number_rows) {
          throw std::runtime_error("Dimension mismatch");
       }
-      constexpr char transa = 'N'; // A
-      constexpr char transb = 'T'; // B^T
-      const int m = static_cast<int>(A.number_rows); // number of rows of A
-      const int n = static_cast<int>(B.number_rows); // number of columns of B^T/number of rows of B
-      const int k = static_cast<int>(A.number_columns); // number of columns of A
-      constexpr double alpha = 1.;
-      const int lda = static_cast<int>(A.leading_dimension); // leading dimension of A
-      const int ldb = static_cast<int>(B.leading_dimension); // leading dimension of B
-      const int ldc = static_cast<int>(this->number_rows); // leading dimension of C/this
-      BLAS_matrix_matrix_product(&transa, &transb, &m, &n, &k, &alpha, A.data(), &lda, B.data(), &ldb, &beta,
-         this->data(), &ldc);
+      blas3::matrix_matrix_product('N', 'T', A.number_rows, A.number_columns, B.number_rows, B.number_columns,
+         this->number_rows, this->number_columns, 1., A.data(), A.leading_dimension, B.data(), B.leading_dimension, beta,
+         this->data(), this->leading_dimension);
       return *this;
    }
 
@@ -113,18 +102,9 @@ namespace uno {
       if (A.number_rows != B.number_rows) {
          throw std::runtime_error("Dimension mismatch");
       }
-      constexpr char transa = 'T'; // A^T
-      constexpr char transb = 'N'; // B
-      const int m = static_cast<int>(A.number_columns); // number of rows of A^T/number of columns of A
-      const int n = static_cast<int>(B.number_columns); // number of columns of B
-      const int k = static_cast<int>(A.number_rows); // number of columns of A^T/number of rows of A
-      constexpr double alpha = 1.;
-      const int lda = static_cast<int>(A.leading_dimension); // leading dimension of A
-      const int ldb = static_cast<int>(B.leading_dimension); // leading dimension of B
-      constexpr double beta = 1.;
-      const int ldc = static_cast<int>(this->number_rows); // leading dimension of C/this
-      BLAS_matrix_matrix_product(&transa, &transb, &m, &n, &k, &alpha, A.data(), &lda, B.data(), &ldb, &beta,
-         this->data(), &ldc);
+      blas3::matrix_matrix_product('T', 'N', A.number_rows, A.number_columns, B.number_rows, B.number_columns,
+         this->number_rows, this->number_columns, 1., A.data(), A.leading_dimension, B.data(), B.leading_dimension, 1.,
+         this->data(), this->leading_dimension);
       return *this;
    }
 
@@ -142,17 +122,8 @@ namespace uno {
       if (&A != &B) {
          throw std::runtime_error("BLASMatrix::operator+=: low-rank update called on two different correction matrices");
       }
-      constexpr char uplo = 'L'; // lower triangular
-      constexpr char trans = 'N'; // A A^T
-      const int n = static_cast<int>(this->number_rows); // dimension of matrix
-      const int k = static_cast<int>(correction_rank); // number of columns of A
-      constexpr double alpha = 1.;
-      const int lda = static_cast<int>(A.leading_dimension); // leading dimension of A
-      constexpr double beta = 0.;
-      const int ldc = static_cast<int>(this->leading_dimension); // leading dimension of matrix
-      assert(lda >= std::max(1, n));
-      assert(ldc >= std::max(1, n));
-      LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, A.data(), &lda, &beta, this->data(), &ldc);
+      blas3::symmetric_rank_k_update('L', 'N', this->number_rows, A.number_rows, A.number_columns, 1., A.data(),
+         A.leading_dimension, 0., this->data(), this->leading_dimension);
       return *this;
    }
 
@@ -171,16 +142,8 @@ namespace uno {
       if (&A != &B) {
          throw std::runtime_error("BLASMatrix::operator+=: low-rank update called on two different correction matrices");
       }
-      constexpr char uplo = 'L'; // lower triangular
-      constexpr char trans = 'T'; // A^T A
-      const int n = static_cast<int>(this->number_rows); // dimension of matrix
-      const int k = static_cast<int>(A.number_rows); // number of rows of A
-      const int lda = static_cast<int>(A.leading_dimension); // leading dimension of A
-      constexpr double beta = 1.;
-      const int ldc = static_cast<int>(this->leading_dimension); // leading dimension of matrix
-      assert(lda >= std::max(1, k));
-      assert(ldc >= std::max(1, n));
-      LAPACK_symmetric_high_rank_update(&uplo, &trans, &n, &k, &alpha, A.data(), &lda, &beta, this->data(), &ldc);
+      blas3::symmetric_rank_k_update('L', 'T', this->number_rows, A.number_rows, A.number_columns, alpha, A.data(),
+         A.leading_dimension, 1., this->data(), this->leading_dimension);
       return *this;
    }
 
@@ -192,63 +155,29 @@ namespace uno {
       if (this->number_columns != A.number_columns) {
          throw std::runtime_error("Dimension mismatch in BLASMatrix::operator*=");
       }
-      constexpr char transa = 'T'; // op(A) = A^T
-      constexpr char side = 'R'; // X A^T = alpha B
-      constexpr char uplo = 'L'; // A is lower triangular
-      constexpr char diag = 'N';
-      const int m = static_cast<int>(this->number_rows); // number of rows of B/this
-      const int n = static_cast<int>(this->number_columns); // number of columns of B/this
-      constexpr double alpha = 1.;
-      const int lda = static_cast<int>(A.leading_dimension); // leading dimension of A
-      const int ldb = static_cast<int>(this->leading_dimension); // leading dimension of B/this
-      BLAS_triangular_back_solve(&side, &uplo, &transa, &diag, &m, &n, &alpha, A.data(), &lda, this->data(), &ldb);
+      blas3::triangular_back_solve('R', 'L', 'T', 'N', this->number_rows, this->number_columns, 1., A.data(),
+         A.leading_dimension, this->data(), this->leading_dimension);
       return *this;
    }
 
    template <typename T>
-   void BLASMatrix<T>::compute_cholesky_factorization() {
-      constexpr char uplo = 'L';
-      int info = 0;
-      const int dimension = static_cast<int>(this->number_rows);
-      const int leading_dimension = static_cast<int>(this->leading_dimension);
-      LAPACK_cholesky_factorization(&uplo, &dimension, this->data(), &leading_dimension, &info);
-      DEBUG << "Cholesky info: " << info << '\n';
-      assert(info == 0);
+   bool BLASMatrix<T>::compute_cholesky_factorization() {
+      return lapack::cholesky_factorization('L', this->number_rows, this->data(), this->leading_dimension);
    }
 
    template <typename T>
-   std::vector<int> BLASMatrix<T>::compute_bunch_kaufman_factorization() {
-      constexpr char uplo = 'L';
-      const int n = static_cast<int>(this->number_rows);
-      const int lda = static_cast<int>(this->leading_dimension);
-      std::vector<int> ipiv(this->number_rows);
-      // first call to get the optimal lwork
-      double work_size = 0.;
-      int lwork = -1;
-      int info = 0;
-      LAPACK_bunch_kaufman_factorization(&uplo, &n, this->data(), &lda, ipiv.data(), &work_size, &lwork, &info);
-      // second call to factorize
-      lwork = static_cast<int>(work_size);
-      std::vector<double> work(static_cast<size_t>(lwork));
-      LAPACK_bunch_kaufman_factorization(&uplo, &n, this->data(), &lda, ipiv.data(), work.data(), &lwork, &info);
-      assert(info == 0);
-      return ipiv;
+   std::pair<bool, std::vector<int>> BLASMatrix<T>::compute_bunch_kaufman_factorization() {
+      return lapack::bunch_kaufman_factorization('L', this->number_rows, this->data(), this->leading_dimension);
    }
 
    template <typename T>
-   void solve_bunch_kaufman(const BLASMatrix<T>& matrix, const Vector<double>& rhs, Vector<double>& result,
+   bool solve_bunch_kaufman(const BLASMatrix<T>& matrix, const Vector<double>& rhs, Vector<double>& result,
          const std::vector<int>& ipiv) {
-      constexpr char uplo = 'L';
-      const int n = static_cast<int>(matrix.number_rows);
-      constexpr int nrhs = 1; // number of RHS/number of columns of B
-      const int lda = static_cast<int>(matrix.leading_dimension);
-      const int ldb = static_cast<int>(rhs.size());
-      int info = 0;
       // copy the RHS into the result
       result = rhs;
       // solve A X = B
-      LAPACK_bunch_kaufman_solve(&uplo, &n, &nrhs, matrix.data(), &lda, ipiv.data(), result.data(), &ldb, &info);
-      assert(info == 0);
+      return lapack::bunch_kaufman_solve('L', matrix.number_rows, matrix.data(), matrix.leading_dimension, ipiv.data(),
+         result.data());
    }
 } // namespace
 

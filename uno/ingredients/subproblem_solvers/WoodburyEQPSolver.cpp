@@ -117,7 +117,8 @@ namespace uno {
          DEBUG2 << "T = " << T;
          // solve T d = c by computing a Bunch-Kaufman factorization of T
          Vector<double> d(correction_rank);
-         WoodburyEQPSolver::solve_dense_indefinite_system(T, c, d);
+         const bool success = WoodburyEQPSolver::solve_dense_indefinite_system(T, c, d);
+         DEBUG2 << "Bunch-Kaufman success: " << success << '\n';
          DEBUG2 << "d = " << d << '\n';
          // add the correction to b: b := b - H d
          b -= H * d;
@@ -125,8 +126,11 @@ namespace uno {
       }
    }
 
-   void WoodburyEQPSolver::solve_dense_indefinite_system(DenseMatrix<double>& T, const Vector<double>& c, Vector<double>& d) {
-      const std::vector<int> ipiv = T.compute_bunch_kaufman_factorization();
-      solve_bunch_kaufman(T, c, d, ipiv);
+   bool WoodburyEQPSolver::solve_dense_indefinite_system(DenseMatrix<double>& T, const Vector<double>& c, Vector<double>& d) {
+      auto [success, ipiv] = T.compute_bunch_kaufman_factorization();
+      if (success) {
+         success = solve_bunch_kaufman(T, c, d, ipiv);
+      }
+      return success;
    }
 } // namespace

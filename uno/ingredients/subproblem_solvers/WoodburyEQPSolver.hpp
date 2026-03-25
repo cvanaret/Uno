@@ -47,7 +47,7 @@ namespace uno {
       bool analysis_performed{false};
 
       void compute_low_rank_correction(const Subproblem& subproblem, LinearSystem& linear_system, Vector<double>& b) const;
-      static void solve_dense_indefinite_system(DenseMatrix<double>& T, const Vector<double>& c, Vector<double>& d);
+      [[nodiscard]] static bool solve_dense_indefinite_system(DenseMatrix<double>& T, const Vector<double>& c, Vector<double>& d);
    };
 } // namespace
 
