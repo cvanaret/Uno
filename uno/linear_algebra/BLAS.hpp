@@ -4,6 +4,7 @@
 #ifndef UNO_BLAS_H
 #define UNO_BLAS_H
 
+#include <cassert>
 #include "fortran_interface.h"
 #define dcopy FC_GLOBAL_(dcopy, DCOPY)
 #define dscal FC_GLOBAL_(dscal, DSCAL)
@@ -89,9 +90,10 @@ namespace uno {
       const int m = static_cast<int>(number_rows);
       const int n = static_cast<int>(number_colums);
       const int lda = static_cast<int>(leading_dimension);
+      assert(lda >= std::max(1, m));
       constexpr int increment = 1;
       dgemv(&trans, &m, &n, &alpha, a, &lda, x, &increment, &beta, y, &increment);
    }
-}
+} // namespace
 
 #endif // UNO_BLAS_H

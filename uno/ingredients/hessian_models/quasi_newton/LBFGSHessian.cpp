@@ -245,7 +245,8 @@ namespace uno {
       DEBUG << "> M: " << this->M;
 
       /*/ compute the Cholesky factor J of M = J J^T */
-      Mk.compute_cholesky_factorization(); // J overwrites M
+      const bool success = Mk.compute_cholesky_factorization(); // J overwrites M
+      DEBUG << "Cholesky success: " << success << '\n';
       DEBUG << "> J: " << this->M;
 
       /* update V and U */
