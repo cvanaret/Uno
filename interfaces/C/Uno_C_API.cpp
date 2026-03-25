@@ -343,9 +343,9 @@ protected:
 class CUserCallbacks: public UserCallbacks {
 public:
    CUserCallbacks(uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
-      uno_termination_callback user_termination_callback, void* user_data): UserCallbacks(),
+      uno_termination_callback termination_callback, void* user_data): UserCallbacks(),
          notify_acceptable_iterate_callback(notify_acceptable_iterate_callback),
-         user_termination_callback(user_termination_callback),
+         termination_callback(termination_callback),
          user_data(user_data) { };
 
    void notify_acceptable_iterate(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
@@ -360,8 +360,8 @@ public:
 
    bool user_termination(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
          double primal_feasibility_residual, double stationarity_residual, double complementarity_residual) override {
-      if (this->user_termination_callback) {
-         return this->user_termination_callback(static_cast<uno_int>(primals.size()),
+      if (this->termination_callback) {
+         return this->termination_callback(static_cast<uno_int>(primals.size()),
             static_cast<uno_int>(multipliers.constraints.size()), primals.data(), multipliers.lower_bounds.data(),
             multipliers.upper_bounds.data(), multipliers.constraints.data(), objective_multiplier, primal_feasibility_residual,
             stationarity_residual, complementarity_residual, this->user_data);
@@ -373,7 +373,7 @@ public:
 
 private:
    uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback;
-   uno_termination_callback user_termination_callback;
+   uno_termination_callback termination_callback;
    void* user_data;
 };
 
@@ -798,14 +798,14 @@ bool uno_set_solver_preset(void* solver, const char* preset_name) {
 }
 
 bool uno_set_solver_callbacks(void* solver, uno_notify_acceptable_iterate_callback notify_acceptable_iterate_callback,
-      uno_termination_callback user_termination_callback, void* user_data) {
+      uno_termination_callback termination_callback, void* user_data) {
    if (solver == nullptr) {
       WARNING << "Please specify a valid solver."  << std::endl;
       return false;
    }
    Solver* uno_solver = static_cast<Solver*>(solver);
    delete uno_solver->user_callbacks; // delete the previous callbacks
-   uno_solver->user_callbacks = new CUserCallbacks(notify_acceptable_iterate_callback, user_termination_callback, user_data);
+   uno_solver->user_callbacks = new CUserCallbacks(notify_acceptable_iterate_callback, termination_callback, user_data);
    return true;
 }
 

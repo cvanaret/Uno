@@ -461,12 +461,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback, &
-                                     user_termination_callback, user_data) &
+                                     termination_callback, user_data) &
                                      result(success) &
       bind(C, name="uno_set_solver_callbacks")
       import :: c_ptr, c_funptr, c_bool
       type(c_ptr), value :: solver, user_data
-      type(c_funptr), value :: notify_acceptable_iterate_callback, user_termination_callback
+      type(c_funptr), value :: notify_acceptable_iterate_callback, termination_callback
       logical(c_bool) :: success
    end function uno_set_solver_callbacks
 end interface
