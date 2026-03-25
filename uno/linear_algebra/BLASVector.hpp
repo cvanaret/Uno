@@ -41,7 +41,7 @@ namespace uno {
       // specialized operation y = x, when the other vector has the member function data()
       template <typename Vector, decltype(Vector{}.data()) = true>
       auto operator=(const Vector& other) {
-         assert(other.size() <= this->size() && "The other vector is larger than the current vector");
+         assert(other.size() == this->size());
          blas1::copy(this->size(), other.data(), this->data());
          return *this;
       }
@@ -50,7 +50,7 @@ namespace uno {
       template <typename Expression>
       MutableBLASVector& operator=(const Expression& expression) {
          static_assert(std::is_same_v<typename Expression::value_type, T>);
-         assert(expression.size() <= this->size() && "The expression is larger than the current vector");
+         assert(expression.size() == this->size());
          for (size_t index: Range(expression.size())) {
             this->operator[](index) = expression[index];
          }
@@ -63,7 +63,7 @@ namespace uno {
       MutableBLASVector& operator=(ScalarMultiple<Vector>&& expression) {
          const auto& a = expression.get_factor();
          const auto& x = expression.get_expression();
-         assert(x.size() <= this->size() && "The expression is larger than the current vector");
+         assert(x.size() == this->size());
          for (size_t index: Range(this->size())) {
             this->operator[](index) = a * x[index];
          }
@@ -84,7 +84,7 @@ namespace uno {
       MutableBLASVector& operator+=(ScalarMultiple<Vector>&& expression) {
          const auto& a = expression.get_factor();
          const auto& x = expression.get_expression();
-         assert(x.size() <= this->size() && "The expression is larger than the current vector");
+         assert(x.size() == this->size());
          blas1::add(this->size(), a, x.data(), this->data());
          return *this;
       }
@@ -92,14 +92,14 @@ namespace uno {
       // generic operation y += x
       template <typename Vector>
       MutableBLASVector& operator+=(const Vector& other) {
-         assert(other.size() <= this->size() && "The other vector is larger than the current vector");
+         assert(other.size() == this->size());
          blas1::add(this->size(), 1., other.data(), this->data());
          return *this;
       }
 
       template <typename Vector>
       MutableBLASVector& operator-=(const Vector& other) {
-         assert(other.size() <= this->size() && "The other vector is larger than the current vector");
+         assert(other.size() == this->size());
          blas1::add(this->size(), -1., other.data(), this->data());
          return *this;
       }
