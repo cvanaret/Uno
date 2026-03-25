@@ -14,6 +14,7 @@
 #define BLAS_triangular_back_solve FC_GLOBAL_(dtrsm, DTRSM)
 #define BLAS_matrix_matrix_product FC_GLOBAL_(dgemm, DGEMM)
 #define BLAS_triangular_matrix_matrix_product FC_GLOBAL_(dtrmm, DTRMM)
+#define dsyrk FC_GLOBAL_(dsyrk, DSYRK)
 
 extern "C" {
    // y := x
@@ -52,6 +53,12 @@ extern "C" {
 
    void BLAS_triangular_matrix_matrix_product(char* side, char* uplo, char* transa, char* diag, int* m, int* n,
       double* alpha, double* a, int* lda, double* b, int* ldb);
+
+   // performs symmetric rank k update:
+   // C = alpha A A^T + beta C    or
+   // C = alpha A^T A + beta C
+   void dsyrk(const char* uplo, const char* trans, const int* n, const int* k, const double* alpha, const double* a,
+      const int* lda, const double* beta, double* c, const int* ldc);
 }
 
 namespace uno {
@@ -93,6 +100,20 @@ namespace uno {
       assert(lda >= std::max(1, m));
       constexpr int increment = 1;
       dgemv(&trans, &m, &n, &alpha, a, &lda, x, &increment, &beta, y, &increment);
+   }
+
+   // performs symmetric rank k update:
+   // C = alpha A A^T + beta C    or
+   // C = alpha A^T A + beta C
+   inline void BLAS_symmetric_high_rank_update(char uplo, char trans, size_t dimension_c, size_t number_rows_a,
+         size_t number_columns_a, double alpha, const double* a, size_t leading_dimension_a, double beta, double* c,
+         size_t leading_dimension_c) {
+      const int n = static_cast<int>(dimension_c);
+      const int k = static_cast<int>(trans == 'N' ? number_columns_a : number_rows_a);
+      const int lda = static_cast<int>(leading_dimension_a);
+      assert(lda >= std::max(1, trans == 'N' ? n : k));
+      const int ldc = static_cast<int>(leading_dimension_c);
+      dsyrk(&uplo, &trans, &n, &k, &alpha, a, &lda, &beta, c, &ldc);
    }
 } // namespace
 

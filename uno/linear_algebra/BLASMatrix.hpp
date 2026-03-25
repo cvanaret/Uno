@@ -5,7 +5,6 @@
 #define UNO_BLASMATRIX_H
 
 #include <cassert>
-
 #include "Vector.hpp"
 #include "linear_algebra/BLAS.hpp"
 #include "linear_algebra/LAPACK.hpp"
@@ -140,7 +139,7 @@ namespace uno {
       if (&A != &B) {
          throw std::runtime_error("BLASMatrix::operator+=: low-rank update called on two different correction matrices");
       }
-      LAPACK_symmetric_high_rank_update('L', 'N', this->number_rows, A.number_rows, A.number_columns, 1., A.data(),
+      BLAS_symmetric_high_rank_update('L', 'N', this->number_rows, A.number_rows, A.number_columns, 1., A.data(),
          A.leading_dimension, 0., this->data(), this->leading_dimension);
       return *this;
    }
@@ -160,7 +159,7 @@ namespace uno {
       if (&A != &B) {
          throw std::runtime_error("BLASMatrix::operator+=: low-rank update called on two different correction matrices");
       }
-      LAPACK_symmetric_high_rank_update('L', 'T', this->number_rows, A.number_rows, A.number_columns, alpha, A.data(),
+      BLAS_symmetric_high_rank_update('L', 'T', this->number_rows, A.number_rows, A.number_columns, alpha, A.data(),
          A.leading_dimension, 1., this->data(), this->leading_dimension);
       return *this;
    }
@@ -188,12 +187,12 @@ namespace uno {
 
    template <typename T>
    bool BLASMatrix<T>::compute_cholesky_factorization() {
-      return LAPACK_cholesky_factorization('L', this->number_rows, this->data(), this->leading_dimension);
+      return lapack::cholesky_factorization('L', this->number_rows, this->data(), this->leading_dimension);
    }
 
    template <typename T>
    std::pair<bool, std::vector<int>> BLASMatrix<T>::compute_bunch_kaufman_factorization() {
-      return LAPACK_bunch_kaufman_factorization('L', this->number_rows, this->data(), this->leading_dimension);
+      return lapack::bunch_kaufman_factorization('L', this->number_rows, this->data(), this->leading_dimension);
    }
 
    template <typename T>
@@ -202,7 +201,7 @@ namespace uno {
       // copy the RHS into the result
       result = rhs;
       // solve A X = B
-      return LAPACK_bunch_kaufman_solve('L', matrix.number_rows, matrix.data(), matrix.leading_dimension, ipiv.data(),
+      return lapack::bunch_kaufman_solve('L', matrix.number_rows, matrix.data(), matrix.leading_dimension, ipiv.data(),
          result.data());
    }
 } // namespace
