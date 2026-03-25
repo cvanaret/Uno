@@ -86,17 +86,9 @@ namespace uno {
       if (this->number_rows != A.number_rows || this->number_columns != B.number_rows) {
          throw std::runtime_error("Dimension mismatch");
       }
-      constexpr char transa = 'N'; // A
-      constexpr char transb = 'T'; // B^T
-      const int m = static_cast<int>(A.number_rows); // number of rows of A
-      const int n = static_cast<int>(B.number_rows); // number of columns of B^T/number of rows of B
-      const int k = static_cast<int>(A.number_columns); // number of columns of A
-      constexpr double alpha = 1.;
-      const int lda = static_cast<int>(A.leading_dimension); // leading dimension of A
-      const int ldb = static_cast<int>(B.leading_dimension); // leading dimension of B
-      const int ldc = static_cast<int>(this->number_rows); // leading dimension of C/this
-      BLAS_matrix_matrix_product(&transa, &transb, &m, &n, &k, &alpha, A.data(), &lda, B.data(), &ldb, &beta,
-         this->data(), &ldc);
+      blas3::matrix_matrix_product('N', 'T', A.number_rows, A.number_columns, B.number_rows, B.number_columns,
+         this->number_rows, this->number_columns, 1., A.data(), A.leading_dimension, B.data(), B.leading_dimension, beta,
+         this->data(), this->leading_dimension);
       return *this;
    }
 
@@ -110,18 +102,9 @@ namespace uno {
       if (A.number_rows != B.number_rows) {
          throw std::runtime_error("Dimension mismatch");
       }
-      constexpr char transa = 'T'; // A^T
-      constexpr char transb = 'N'; // B
-      const int m = static_cast<int>(A.number_columns); // number of rows of A^T/number of columns of A
-      const int n = static_cast<int>(B.number_columns); // number of columns of B
-      const int k = static_cast<int>(A.number_rows); // number of columns of A^T/number of rows of A
-      constexpr double alpha = 1.;
-      const int lda = static_cast<int>(A.leading_dimension); // leading dimension of A
-      const int ldb = static_cast<int>(B.leading_dimension); // leading dimension of B
-      constexpr double beta = 1.;
-      const int ldc = static_cast<int>(this->number_rows); // leading dimension of C/this
-      BLAS_matrix_matrix_product(&transa, &transb, &m, &n, &k, &alpha, A.data(), &lda, B.data(), &ldb, &beta,
-         this->data(), &ldc);
+      blas3::matrix_matrix_product('T', 'N', A.number_rows, A.number_columns, B.number_rows, B.number_columns,
+         this->number_rows, this->number_columns, 1., A.data(), A.leading_dimension, B.data(), B.leading_dimension, 1.,
+         this->data(), this->leading_dimension);
       return *this;
    }
 
@@ -139,7 +122,7 @@ namespace uno {
       if (&A != &B) {
          throw std::runtime_error("BLASMatrix::operator+=: low-rank update called on two different correction matrices");
       }
-      blas3::symmetric_high_rank_update('L', 'N', this->number_rows, A.number_rows, A.number_columns, 1., A.data(),
+      blas3::symmetric_rank_k_update('L', 'N', this->number_rows, A.number_rows, A.number_columns, 1., A.data(),
          A.leading_dimension, 0., this->data(), this->leading_dimension);
       return *this;
    }
@@ -159,7 +142,7 @@ namespace uno {
       if (&A != &B) {
          throw std::runtime_error("BLASMatrix::operator+=: low-rank update called on two different correction matrices");
       }
-      blas3::symmetric_high_rank_update('L', 'T', this->number_rows, A.number_rows, A.number_columns, alpha, A.data(),
+      blas3::symmetric_rank_k_update('L', 'T', this->number_rows, A.number_rows, A.number_columns, alpha, A.data(),
          A.leading_dimension, 1., this->data(), this->leading_dimension);
       return *this;
    }
@@ -172,16 +155,8 @@ namespace uno {
       if (this->number_columns != A.number_columns) {
          throw std::runtime_error("Dimension mismatch in BLASMatrix::operator*=");
       }
-      constexpr char transa = 'T'; // op(A) = A^T
-      constexpr char side = 'R'; // X A^T = alpha B
-      constexpr char uplo = 'L'; // A is lower triangular
-      constexpr char diag = 'N';
-      const int m = static_cast<int>(this->number_rows); // number of rows of B/this
-      const int n = static_cast<int>(this->number_columns); // number of columns of B/this
-      constexpr double alpha = 1.;
-      const int lda = static_cast<int>(A.leading_dimension); // leading dimension of A
-      const int ldb = static_cast<int>(this->leading_dimension); // leading dimension of B/this
-      BLAS_triangular_back_solve(&side, &uplo, &transa, &diag, &m, &n, &alpha, A.data(), &lda, this->data(), &ldb);
+      blas3::triangular_back_solve('R', 'L', 'T', 'N', this->number_rows, this->number_columns, 1., A.data(),
+         A.leading_dimension, this->data(), this->leading_dimension);
       return *this;
    }
 

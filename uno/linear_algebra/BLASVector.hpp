@@ -110,7 +110,7 @@ namespace uno {
          const auto& A = expression.get_left().get_matrix();
          const auto& x = expression.get_right();
          assert(A.number_rows == x.size());
-         blas2::BLAS_matrix_vector_product('T', A.number_rows, A.number_columns, 1., A.data(), A.leading_dimension, x.data(),
+         blas2::matrix_vector_product('T', A.number_rows, A.number_columns, 1., A.data(), A.leading_dimension, x.data(),
             0., this->data());
          return *this;
       }
@@ -121,7 +121,7 @@ namespace uno {
          const auto& A = expression.get_left();
          const auto& x = expression.get_right();
          assert(A.number_columns == x.size());
-         blas2::BLAS_matrix_vector_product('N', A.number_rows, A.number_columns, -1., A.data(), A.leading_dimension, x.data(),
+         blas2::matrix_vector_product('N', A.number_rows, A.number_columns, -1., A.data(), A.leading_dimension, x.data(),
             1., this->data());
          return *this;
       }

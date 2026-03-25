@@ -63,6 +63,7 @@ namespace uno {
          return {(info == 0), std::move(ipiv)};
       }
 
+      // solves a system of linear equations A X = B with a symmetric matrix A using the factorization computed by dsytrf
       inline bool bunch_kaufman_solve(char uplo, size_t dimension, const double* a, size_t leading_dimension,
             const int* ipiv, double* b) {
          const int n = static_cast<int>(dimension);
