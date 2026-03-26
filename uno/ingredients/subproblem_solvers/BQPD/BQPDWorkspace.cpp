@@ -44,7 +44,7 @@ namespace uno {
          subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), vector.data(),
             this->hessian_vector_product.data());
          // compute the dot product <v, Hv>
-         return dot(vector, this->hessian_vector_product);
+         return dot(view(vector, 0, subproblem.number_variables), this->hessian_vector_product);
       }
       else if (subproblem.has_hessian_matrix()) { // explicit matrix
          double quadratic_product = 0.;
