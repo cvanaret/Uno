@@ -45,7 +45,6 @@ namespace uno {
       {"filter_fact", OptionType::DOUBLE},
       {"filter_capacity", OptionType::INTEGER},
       {"filter_sufficient_infeasibility_decrease_factor", OptionType::DOUBLE},
-      {"nonmonotone_filter_number_dominated_entries", OptionType::INTEGER},
       {"funnel_kappa", OptionType::DOUBLE},
       {"funnel_beta", OptionType::DOUBLE},
       {"funnel_gamma", OptionType::DOUBLE},

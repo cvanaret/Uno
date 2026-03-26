@@ -58,7 +58,7 @@ namespace uno {
       options.set_double("sufficient_infeasibility_decrease_ratio", 0.9);
 
       /** filter method options **/
-      // filter type (standard|nonmonotone)
+      // filter type (standard)
       options.set_string("filter_type", "standard");
       options.set_double("filter_beta", 0.999);
       options.set_double("filter_gamma", 0.001);
@@ -67,8 +67,6 @@ namespace uno {
       options.set_integer("filter_capacity", 50);
       // used by Waechter filter method
       options.set_double("filter_sufficient_infeasibility_decrease_factor", 0.9);
-      // nonmonotone filter strategy
-      options.set_integer("nonmonotone_filter_number_dominated_entries", 3);
 
       /** funnel options **/
       options.set_double("funnel_kappa", 0.5);

@@ -58,7 +58,6 @@ loose_dual_tolerance	DOUBLE	1e-6
 loose_primal_tolerance	DOUBLE	1e-6
 loose_tolerance_iteration_threshold	INTEGER	15
 max_iterations	INTEGER	2000
-nonmonotone_filter_number_dominated_entries	INTEGER	3
 preset	STRING	<unset>
 primal_regularization_decrease_factor	DOUBLE	3.
 primal_regularization_fast_increase_factor	DOUBLE	100.
