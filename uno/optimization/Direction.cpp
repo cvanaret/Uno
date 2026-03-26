@@ -12,6 +12,10 @@ namespace uno {
    }
 
    void Direction::set_dimensions(size_t new_number_variables, size_t new_number_constraints) {
+      this->primals.resize(new_number_variables);
+      this->multipliers.constraints.resize(new_number_constraints);
+      this->multipliers.lower_bounds.resize(new_number_variables);
+      this->multipliers.upper_bounds.resize(new_number_variables);
       this->number_variables = new_number_variables;
       this->number_constraints = new_number_constraints;
    }
@@ -37,7 +41,7 @@ namespace uno {
    std::ostream& operator<<(std::ostream& stream, const Direction& direction) {
       stream << "Direction:\n";
       stream << "│ status: " << status_to_string(direction.status) << '\n';
-      stream << "│ primals = "; print_vector(stream, view(direction.primals, 0, direction.number_variables));
+      stream << "│ primals = "; print_vector(stream, direction.primals);
       stream << "│ constraint multipliers = "; print_vector(stream, direction.multipliers.constraints);
       stream << "│ lower bound multipliers = "; print_vector(stream, direction.multipliers.lower_bounds);
       stream << "│ upper bound multipliers = "; print_vector(stream, direction.multipliers.upper_bounds);

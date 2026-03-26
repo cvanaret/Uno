@@ -45,7 +45,6 @@ namespace uno {
       {"filter_fact", OptionType::DOUBLE},
       {"filter_capacity", OptionType::INTEGER},
       {"filter_sufficient_infeasibility_decrease_factor", OptionType::DOUBLE},
-      {"nonmonotone_filter_number_dominated_entries", OptionType::INTEGER},
       {"funnel_kappa", OptionType::DOUBLE},
       {"funnel_beta", OptionType::DOUBLE},
       {"funnel_gamma", OptionType::DOUBLE},
@@ -326,6 +325,24 @@ namespace uno {
    void Options::print_non_default() const {
       size_t number_used_options = 0;
       std::string option_list{};
+      for (const auto& [option_name, option_value]: this->integer_options) {
+         if (this->used[option_name] && this->overwritten_options[option_name]) {
+            ++number_used_options;
+            option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
+         }
+      }
+      for (const auto& [option_name, option_value]: this->double_options) {
+         if (this->used[option_name] && this->overwritten_options[option_name]) {
+            ++number_used_options;
+            option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
+         }
+      }
+      for (const auto& [option_name, option_value]: this->bool_options) {
+         if (this->used[option_name] && this->overwritten_options[option_name]) {
+            ++number_used_options;
+            option_list.append(option_name).append(" = ").append(std::to_string(option_value)).append("\n");
+         }
+      }
       for (const auto& [option_name, option_value]: this->string_options) {
          if (this->used[option_name] && this->overwritten_options[option_name]) {
             ++number_used_options;

@@ -17,7 +17,7 @@ namespace uno {
       void initialize_hessian(const Subproblem& subproblem) override;
       void initialize_augmented_system(const Subproblem& subproblem) override;
 
-      [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const override;
+      [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
       Vector<double> objective_gradient{}; /*!< Sparse Jacobian of the objective */
       Vector<double> constraints{}; /*!< Constraint values (size \f$m)\f$ */

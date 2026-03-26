@@ -25,7 +25,7 @@ namespace uno {
 
       void initialize_memory(const Subproblem& subproblem);
 
-      [[nodiscard]] double compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const override;
+      [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
       void evaluate_functions(Statistics& statistics, const Subproblem& subproblem, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information);

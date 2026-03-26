@@ -24,8 +24,8 @@ namespace uno {
       explicit Vector(size_t capacity = 0): vector(capacity) { }
       Vector(size_t capacity, ElementType value): vector(capacity, value) { }
       Vector(std::initializer_list<ElementType> initializer_list): vector(initializer_list) { }
-      Vector(const Vector<ElementType>& other) noexcept : vector(other.vector) { }
-      Vector(Vector<ElementType>&& other) noexcept : vector(std::move(other.vector)) { }
+      Vector(const Vector<ElementType>& other): vector(other.vector) { }
+      Vector(Vector<ElementType>&& other) noexcept: vector(std::move(other.vector)) { }
       ~Vector() override = default;
 
       // copy assignment operator
@@ -85,8 +85,14 @@ namespace uno {
       const_iterator end() const noexcept { return this->vector.cend(); }
 
       // insertion
-      void push_back(ElementType element) { this->vector.push_back(element); }
-      void emplace_back(ElementType element) { this->vector.emplace_back(element); }
+      void push_back(ElementType element) {
+         this->vector.push_back(element);
+      }
+
+      template <typename... Args>
+      void emplace_back(Args&&... args) {
+         this->vector.emplace_back(std::forward<Args>(args)...);
+      }
 
       void fill(ElementType value) {
          for (size_t index: Range(this->size())) {

@@ -82,7 +82,7 @@ If not provided, the solver is chosen automatically from the available solvers (
 
 | Option        | Possible values           | Default    | Description |
 | :---          | :---                      | :---       | :---        |
-| `filter_type` | `standard`, `nonmonotone` | `standard` | Type of the filter data structure |
+| `filter_type` | `standard`                | `standard` | Type of the filter data structure |
 
 ### Numerical options
 
@@ -94,7 +94,6 @@ If not provided, the solver is chosen automatically from the available solvers (
 | `filter_fact`                                     | double  | 1.25    | Multiple of the initial infeasibility for the initial upper bound on the infeasibility |
 | `filter_capacity`                                 | integer | 50      | Maximum number of filter entries |
 | `filter_sufficient_infeasibility_decrease_factor` | double  | 0.9     | Infeasibility decrease factor in the infeasibility sufficient decrease condition |
-| `nonmonotone_filter_number_dominated_entries`     | integer | 3       | Number of dominated filter entries (nonmonotone filter) |
 
 ## Funnel options
 

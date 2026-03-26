@@ -139,7 +139,8 @@ namespace uno {
    };
 
    inline double dot(const BLASVector<double>& x, const BLASVector<double>& y) {
-      return blas1::dot(std::min(x.size(), y.size()), x.data(), y.data());
+      assert(x.size() == y.size());
+      return blas1::dot(x.size(), x.data(), y.data());
    }
 
    inline double dot(const BLASVector<double>& x, const double* y) {

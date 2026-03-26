@@ -23,7 +23,7 @@ namespace uno {
       [[nodiscard]] SolverWorkspace& get_workspace() override = 0;
 
    protected:
-      static void compute_dual_displacements(const Multipliers& current_multipliers, Multipliers& direction_multipliers);
+      static void compute_dual_displacements(const Subproblem& subproblem, Multipliers& direction_multipliers);
    };
 } // namespace
 

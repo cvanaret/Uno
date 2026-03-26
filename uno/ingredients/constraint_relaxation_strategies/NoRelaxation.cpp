@@ -82,7 +82,7 @@ namespace uno {
    }
 
    void NoRelaxation::switch_to_feasibility_problem(Statistics& /*statistics*/, Iterate& /*current_iterate*/,
-         Evaluations& /*current_evaluations*/, WarmstartInformation& /*warmstart_information*/) {
+         Direction& /*direction*/, Evaluations& /*current_evaluations*/, WarmstartInformation& /*warmstart_information*/) {
       throw std::runtime_error("Switching to the feasibility problem should not happen");
    }
 

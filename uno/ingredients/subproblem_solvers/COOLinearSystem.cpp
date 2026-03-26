@@ -45,7 +45,7 @@ namespace uno {
       this->solution.resize(dimension);
    }
 
-   double COOLinearSystem::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/,
+   double COOLinearSystem::compute_hessian_quadratic_form(const Subproblem& /*subproblem*/,
          const Vector<double>& /*vector*/) const {
       return 0.;
    }

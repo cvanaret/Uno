@@ -7,7 +7,6 @@
 #include <functional>
 #include "ElasticVariables.hpp"
 #include "optimization/OptimizationProblem.hpp"
-#include "tools/Infinity.hpp"
 
 namespace uno {
    class l1RelaxedProblem: public OptimizationProblem {
@@ -67,7 +66,7 @@ namespace uno {
       const size_t number_elastic_variables;
       const double objective_multiplier;
       const double constraint_violation_coefficient;
-      double proximal_coefficient{INF<double>};
+      double proximal_coefficient{0.};
       double* proximal_center{};
       const ForwardRange dual_regularization_constraints{0};
 

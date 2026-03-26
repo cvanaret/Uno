@@ -69,7 +69,9 @@ namespace uno {
    void HiGHSSolver::solve_subproblem(const Subproblem& subproblem, Direction& direction) {
       // solve the subproblem
       HighsStatus return_status = this->highs_solver.passModel(this->workspace.model);
-      //assert(return_status == HighsStatus::kOk);
+      if (return_status == HighsStatus::kError) {
+         throw std::runtime_error("HiGHS could not read the model.");
+      }
 
       DEBUG2 << "Running HiGHS\n";
       return_status = this->highs_solver.run(); // solve
@@ -109,7 +111,7 @@ namespace uno {
       for (size_t constraint_index = 0; constraint_index < subproblem.number_constraints; constraint_index++) {
          direction.multipliers.constraints[constraint_index] = solution.row_dual[constraint_index];
       }
-      LPSolver::compute_dual_displacements(subproblem.current_iterate.multipliers, direction.multipliers);
+      LPSolver::compute_dual_displacements(subproblem, direction.multipliers);
       const HighsInfo& info = this->highs_solver.getInfo();
       direction.subproblem_objective = info.objective_function_value;
    }

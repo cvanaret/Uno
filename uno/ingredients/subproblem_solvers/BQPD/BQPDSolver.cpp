@@ -197,7 +197,7 @@ namespace uno {
 
    void BQPDSolver::solve_subproblem(const Subproblem& subproblem, const Vector<double>& initial_point, Direction& direction,
          const WarmstartInformation& warmstart_information) {
-      direction.primals = initial_point;
+      view(direction.primals, 0, subproblem.number_variables) = view(initial_point, 0, subproblem.number_variables);
       const int n = static_cast<int>(subproblem.number_variables);
       const int m = static_cast<int>(subproblem.number_constraints);
 
@@ -228,7 +228,7 @@ namespace uno {
       }
       // gather the multipliers
       this->set_multipliers(subproblem.number_variables, direction.multipliers);
-      LPSolver::compute_dual_displacements(subproblem.current_iterate.multipliers, direction.multipliers);
+      LPSolver::compute_dual_displacements(subproblem, direction.multipliers);
    }
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {
