@@ -33,18 +33,18 @@ namespace uno {
             this->hessian_column_indices.data(), Indexing::C_indexing);
       }
       else {
-         // TODO allocate some vector to contain the result of Hv (see compute_hessian_quadratic_product)
+         this->hessian_vector_product.resize(subproblem.number_variables);
       }
    }
 
-   double BQPDWorkspace::compute_hessian_quadratic_product(const Subproblem& subproblem, const Vector<double>& vector) const {
+   double BQPDWorkspace::compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const {
       if (subproblem.has_hessian_operator()) { // linear operator
-         // TODO preallocate
-         Vector<double> result(subproblem.number_variables);
+         // TODO compute the quadratic form directly without temporary result
          // compute Hv
-         subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), vector.data(), result.data());
+         subproblem.compute_hessian_vector_product(subproblem.current_iterate.primals.data(), vector.data(),
+            this->hessian_vector_product.data());
          // compute the dot product <v, Hv>
-         return dot(vector, result);
+         return dot(vector, this->hessian_vector_product);
       }
       else if (subproblem.has_hessian_matrix()) { // explicit matrix
          double quadratic_product = 0.;

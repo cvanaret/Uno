@@ -16,9 +16,9 @@ namespace uno {
       Multipliers(size_t number_variables, size_t number_constraints);
       Multipliers() = default;
       Multipliers(const Multipliers& other) = default;
-      Multipliers(Multipliers&& other) = default;
+      Multipliers(Multipliers&& other) noexcept = default;
       Multipliers& operator=(const Multipliers& other) = default;
-      Multipliers& operator=(Multipliers&& other) = default;
+      Multipliers& operator=(Multipliers&& other) noexcept = default;
 
       void reset();
       [[nodiscard]] bool not_all_zero(size_t number_variables, double tolerance) const;

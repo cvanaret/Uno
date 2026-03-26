@@ -30,7 +30,7 @@ namespace uno {
       Evaluations(const Evaluations& other) = default;
       Evaluations(Evaluations&& other) noexcept = default;
       Evaluations& operator=(const Evaluations& other) = default;
-      Evaluations& operator=(Evaluations&& other) = default;
+      Evaluations& operator=(Evaluations&& other) noexcept = default;
 
       void evaluate_objective(const Model& model, const Vector<double>& primals);
       void evaluate_constraints(const Model& model, const Vector<double>& primals);

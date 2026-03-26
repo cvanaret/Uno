@@ -21,8 +21,8 @@ namespace uno {
    l1RelaxedProblem::l1RelaxedProblem(const Model& model, ElasticVariables&& elastic_variables, double objective_multiplier,
             double constraint_violation_coefficient):
          OptimizationProblem(model, model.number_variables + elastic_variables.size(), model.number_constraints),
-         elastic_variables(elastic_variables),
-         number_elastic_variables(elastic_variables.size()),
+         elastic_variables(std::move(elastic_variables)),
+         number_elastic_variables(this->elastic_variables.size()),
          objective_multiplier(objective_multiplier),
          constraint_violation_coefficient(constraint_violation_coefficient) {
    }
