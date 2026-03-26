@@ -132,6 +132,8 @@ int main() {
       assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
             hessian_column_indices, lagrangian_hessian));
       assert(uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention));
+      // the Hessian model was overwritten. Set it again
+      uno_set_solver_string_option(solver, "hessian_model", "exact");
       uno_optimize(solver, model);
       // get the solution
       optimization_status = uno_get_optimization_status(solver);

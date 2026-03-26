@@ -125,7 +125,7 @@ program example_uno
     success = uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices, &
                                          hessian_column_indices, lagrangian_hessian)
     success = uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention)
-    ! The Hessian model was overwritten. Set it again
+    ! the Hessian model was overwritten. Set it again
     success = uno_set_solver_string_option(solver, "hessian_model", hessian_model)
     call uno_optimize(solver, model)
 
