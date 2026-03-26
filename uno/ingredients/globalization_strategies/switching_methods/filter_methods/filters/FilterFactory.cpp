@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include "FilterFactory.hpp"
+#include "Filter.hpp"
 #include "options/Options.hpp"
 
 namespace uno {

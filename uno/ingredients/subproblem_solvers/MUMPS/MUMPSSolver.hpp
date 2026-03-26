@@ -4,8 +4,8 @@
 #ifndef UNO_MUMPSSOLVER_H
 #define UNO_MUMPSSOLVER_H
 
-#include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "dmumps_c.h"
+#include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "../COOLinearSystem.hpp"
 
 namespace uno {

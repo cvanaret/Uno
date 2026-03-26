@@ -7,6 +7,8 @@
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/Indexing.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "linear_algebra/VectorView.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/WarmstartInformation.hpp"
 
 namespace uno {

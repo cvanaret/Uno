@@ -6,13 +6,17 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
+#include "linear_algebra/Matrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/VectorView.hpp"
+#include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
+#include "optimization/Multipliers.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/Sum.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    Subproblem::Subproblem(const OptimizationProblem& problem, Iterate& current_iterate, HessianModel& hessian_model,
@@ -122,6 +126,30 @@ namespace uno {
       else {
          linear_solver.do_numerical_factorization(false);
       }
+   }
+
+   void Subproblem::assemble_augmented_rhs(Evaluations& evaluations, const Matrix<uno_int>& jacobian, Vector<double>& rhs) const {
+      rhs.fill(0.);
+
+      // objective gradient
+      auto objective_gradient = view(rhs, 0, this->number_variables);
+      this->problem.evaluate_objective_gradient(this->current_iterate, objective_gradient.data(), evaluations);
+
+      // Jacobian
+      // TODO use evaluation_cache
+      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
+         const auto [constraint_index, variable_index, derivative] = jacobian[nonzero_index];
+         rhs[static_cast<size_t>(variable_index)] -=
+            this->current_iterate.multipliers.constraints[static_cast<size_t>(constraint_index)] * derivative;
+      }
+
+      // constraints
+      auto constraints = view(rhs, this->number_variables, this->number_variables + this->number_constraints);
+      this->problem.evaluate_constraints(this->current_iterate, constraints.data(), evaluations);
+
+      // flip the sign
+      rhs.scale(-1.);
+      DEBUG2 << "RHS: "; print_vector(DEBUG2, view(rhs, 0, this->number_variables + this->number_constraints)); DEBUG << '\n';
    }
 
    void Subproblem::assemble_primal_dual_direction(const Vector<double>& solution, Direction& direction) const {

@@ -4,6 +4,7 @@
 #include "LPSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/VectorView.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/Multipliers.hpp"
 
 namespace uno {

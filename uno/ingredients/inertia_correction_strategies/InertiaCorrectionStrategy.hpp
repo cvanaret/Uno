@@ -4,12 +4,13 @@
 #ifndef UNO_INERTIACORRECTIONSTRATEGY_H
 #define UNO_INERTIACORRECTIONSTRATEGY_H
 
-#include "Inertia.hpp"
+#include <string>
 
 namespace uno {
    // forward declarations
    template <typename ElementType>
    class DirectSymmetricIndefiniteLinearSolver;
+   class Inertia;
    class Options;
    class Statistics;
    class Subproblem;

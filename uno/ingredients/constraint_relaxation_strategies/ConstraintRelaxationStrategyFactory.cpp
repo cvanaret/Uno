@@ -5,6 +5,7 @@
 #include "ConstraintRelaxationStrategyFactory.hpp"
 #include "FeasibilityRestoration.hpp"
 #include "NoRelaxation.hpp"
+#include "model/Model.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
 

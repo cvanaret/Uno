@@ -7,18 +7,20 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
-#include "ingredients/hessian_models/HessianModel.hpp"
-#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
-#include "ingredients/subproblem/Subproblem.hpp"
-#include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/Parameterization.hpp"
 
 namespace uno {
+   // forward declarations
+   class HessianModel;
+   class InequalityHandlingMethod;
+   class InertiaCorrectionStrategy;
+   class SubproblemSolver;
+
    class NoRelaxation : public ConstraintRelaxationStrategy {
    public:
       NoRelaxation(const Model& model, Options& options);
-      ~NoRelaxation() override = default;
+      ~NoRelaxation() override;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
          bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) override;

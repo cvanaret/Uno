@@ -5,17 +5,17 @@
 #define UNO_PRIMALDUALINTERIORPOINTPROBLEM_H
 
 #include "optimization/OptimizationProblem.hpp"
-#include "../InteriorPointParameters.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "symbolic/Range.hpp"
 
 namespace uno {
-   // forward declaration
+   // forward declarations
+   struct InteriorPointParameters;
    class Parameterization;
 
    class PrimalDualInteriorPointProblem : public OptimizationProblem {
    public:
-      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters &parameters,
+      PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters& parameters,
          const Parameterization& parameterization);
       std::unique_ptr<OptimizationProblem> clone() const override;
 

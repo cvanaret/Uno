@@ -4,8 +4,8 @@
 #ifndef UNO_FILTER_H
 #define UNO_FILTER_H
 
-#include <vector>
 #include <memory>
+#include <vector>
 #include "tools/Infinity.hpp"
 
 namespace uno {

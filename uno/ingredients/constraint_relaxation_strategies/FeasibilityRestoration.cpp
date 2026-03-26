@@ -10,10 +10,12 @@
 #include "ingredients/hessian_models/HessianSubproblemSolverJointFactory.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
+#include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/SubproblemSolverFactory.hpp"
 #include "linear_algebra/VectorView.hpp"
+#include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/EvaluationCache.hpp"
 #include "optimization/Iterate.hpp"
@@ -26,8 +28,6 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   class ExactHessian;
-
    FeasibilityRestoration::FeasibilityRestoration(const Model& model, bool use_trust_region, Options& options) :
          ConstraintRelaxationStrategy(options),
          constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
@@ -43,6 +43,8 @@ namespace uno {
          linear_feasibility_tolerance(options.get_double("primal_tolerance")),
          switch_to_optimality_requires_linearized_feasibility(options.get_bool("switch_to_optimality_requires_linearized_feasibility")) {
    }
+
+   FeasibilityRestoration::~FeasibilityRestoration() = default;
 
    void FeasibilityRestoration::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
          Direction& direction, bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) {

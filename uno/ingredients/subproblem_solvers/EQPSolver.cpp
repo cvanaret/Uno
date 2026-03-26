@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "EQPSolver.hpp"
+#include "DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "LinearSystem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
@@ -9,6 +10,7 @@
 #include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"
+#include "tools/Logger.hpp"
 
 namespace uno {
    EQPSolver::EQPSolver(const Options& options):

@@ -4,12 +4,15 @@
 #ifndef UNO_PRIMALDUALINERTIACORRECTION_H
 #define UNO_PRIMALDUALINERTIACORRECTION_H
 
+#include <memory>
 #include <string>
 #include "InertiaCorrectionStrategy.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 
 namespace uno {
+   // forward declaration
+   template <typename ElementType>
+   class DirectSymmetricIndefiniteLinearSolver;
+
    class PrimalDualInertiaCorrection: public InertiaCorrectionStrategy {
    public:
       explicit PrimalDualInertiaCorrection(const Options& options);

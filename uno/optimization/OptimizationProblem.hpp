@@ -7,8 +7,8 @@
 #include <memory>
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
-#include "model/Model.hpp"
 #include "optimization/SolutionStatus.hpp"
+#include "../interfaces/C/uno_int.h"
 
 namespace uno {
    // forward declarations
@@ -19,9 +19,12 @@ namespace uno {
    class SolverWorkspace;
    class HessianModel;
    class Iterate;
+   class Model;
    class Multipliers;
    class Parameterization;
    class Statistics;
+   template <typename ElementType>
+   class Vector;
 
    class OptimizationProblem {
    public:
