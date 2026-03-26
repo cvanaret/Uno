@@ -172,6 +172,12 @@ namespace uno {
             iterate.multipliers.upper_bounds[variable_index]);
       }
 
+      // ρ f(x_k)
+      if (this->objective_multiplier != 0.) {
+         evaluations.evaluate_objective_gradient(this->model, iterate.primals);
+         lagrangian_gradient += this->objective_multiplier * evaluations.objective_gradient;
+      }
+
       // elastic variables
       for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
          lagrangian_gradient[elastic_index] += this->constraint_violation_coefficient +

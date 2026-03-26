@@ -144,11 +144,11 @@ namespace uno {
 
    double FixedBoundsConstraintsModel::constraint_lower_bound(size_t constraint_index) const {
       if (constraint_index < this->model.number_constraints) {
-// original constraint
+         // original constraint
          return this->model.constraint_lower_bound(constraint_index);
       }
       else {
-// fixed variable
+         // fixed variable
          const size_t variable_index = this->model.get_fixed_variables()[constraint_index - this->model.number_constraints];
          return this->model.variable_lower_bound(variable_index);
       }
@@ -162,7 +162,7 @@ namespace uno {
       else {
          // fixed variable
          const size_t variable_index = this->model.get_fixed_variables()[constraint_index - this->model.number_constraints];
-         return this->model.variable_lower_bound(variable_index);
+         return this->model.variable_upper_bound(variable_index);
       }
    }
 

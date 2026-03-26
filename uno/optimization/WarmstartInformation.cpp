@@ -25,6 +25,8 @@ namespace uno {
       this->new_iterate = true;
       this->constraint_bounds_changed = true;
       this->variable_bounds_changed = true;
+      this->hessian_sparsity_changed = false;
+      this->jacobian_sparsity_changed = false;
    }
 
    void WarmstartInformation::whole_problem_changed() {

@@ -10,7 +10,7 @@ namespace uno {
    class Multipliers {
    public:
       Vector<double> lower_bounds{}; /*!< Multipliers of the lower bound constraints */
-      Vector<double> upper_bounds{}; /*!< Multipliers of the lower bound constraints */
+      Vector<double> upper_bounds{}; /*!< Multipliers of the upper bound constraints */
       Vector<double> constraints{}; /*!< Multipliers of the general constraints */
 
       Multipliers(size_t number_variables, size_t number_constraints);

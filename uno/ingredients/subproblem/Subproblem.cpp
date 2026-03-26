@@ -7,6 +7,7 @@
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
@@ -256,7 +257,7 @@ namespace uno {
    std::function<double(double)> Subproblem::compute_predicted_objective_reduction(const Vector<double>& primal_direction,
          double step_length, const Evaluations& current_evaluations, const SolverWorkspace& solver_workspace) const {
       // predicted objective reduction: "-∇f(x)^T (αd) - α^2/2 d^T H d"
-      const double directional_derivative = dot(primal_direction, current_evaluations.objective_gradient);
+      const double directional_derivative = dot(view(primal_direction, 0, this->problem.model.number_variables), current_evaluations.objective_gradient);
       // if the regularized Hessian is positive definite (as it usually is in line-search methods), we can compute the
       // predicted reduction with only first-order information (the directional derivative)
       const bool is_regularized_hessian_positive_definite = this->hessian_model.is_positive_definite() && this->performs_primal_regularization();
