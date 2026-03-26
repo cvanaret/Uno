@@ -358,14 +358,14 @@ end
 
     @test stats.optimization_status == 0  # UNO_SUCCESS
     @test stats.solution_status == 1      # UNO_FEASIBLE_KKT_POINT
-    @test stats.primal_solution[1] ≈ 1.0000000000000000 atol = 1e-5
-    @test stats.primal_solution[2] ≈ 4.7429996418092970 atol = 1e-5
-    @test stats.primal_solution[3] ≈ 3.8211499817883077 atol = 1e-5
-    @test stats.primal_solution[4] ≈ 1.3794082897556983 atol = 1e-5
-    @test stats.solution_objective ≈ 17.014017145179164 atol = 1e-5
-    @test stats.solution_primal_feasibility ≈ 0.0 atol = 1e-5
-    @test stats.solution_stationarity ≈ 0.0 atol = 1e-5
-    @test stats.solution_complementarity ≈ 0.0 atol = 1e-5
+    @test stats.solution[1] ≈ 1.0000000000000000 atol = 1e-5
+    @test stats.solution[2] ≈ 4.7429996418092970 atol = 1e-5
+    @test stats.solution[3] ≈ 3.8211499817883077 atol = 1e-5
+    @test stats.solution[4] ≈ 1.3794082897556983 atol = 1e-5
+    @test stats.objective ≈ 17.014017145179164 atol = 1e-5
+    @test stats.primal_feas ≈ 0.0 atol = 1e-5
+    @test stats.dual_feas ≈ 0.0 atol = 1e-5
+    @test stats.complementarity_feas ≈ 0.0 atol = 1e-5
   end
 end
 
@@ -575,11 +575,11 @@ end
 
     @test stats.optimization_status == 0  # UNO_SUCCESS
     @test stats.solution_status == 1      # UNO_FEASIBLE_KKT_POINT
-    @test stats.primal_solution[1] ≈ -0.5471975484809134 atol = 1e-5
-    @test stats.primal_solution[2] ≈ -1.5471975484809133 atol = 1e-5
-    @test stats.solution_objective ≈ -1.9132229549810362 atol = 1e-5
-    @test stats.solution_primal_feasibility ≈ 0.0 atol = 1e-5
-    @test stats.solution_stationarity ≈ 0.0 atol = 1e-5
-    @test stats.solution_complementarity ≈ 0.0 atol = 1e-5
+    @test stats.solution[1] ≈ -0.5471975484809134 atol = 1e-5
+    @test stats.solution[2] ≈ -1.5471975484809133 atol = 1e-5
+    @test stats.objective ≈ -1.9132229549810362 atol = 1e-5
+    @test stats.primal_feas ≈ 0.0 atol = 1e-5
+    @test stats.dual_feas ≈ 0.0 atol = 1e-5
+    @test stats.complementarity_feas ≈ 0.0 atol = 1e-5
   end
 end
