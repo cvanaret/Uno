@@ -106,7 +106,7 @@ namespace uno {
             statistics.set("Status", std::string("infeasible"));
             DEBUG << "/!\\ The subproblem is infeasible\n";
             this->initial_point = view(direction.primals, 0, this->original_problem.number_variables);
-            this->switch_to_feasibility_problem(statistics, current_iterate, current_evaluations, warmstart_information);
+            this->switch_to_feasibility_problem(statistics, current_iterate, direction, current_evaluations, warmstart_information);
          }
          else {
             warmstart_information.no_changes();
@@ -132,7 +132,7 @@ namespace uno {
 
    // precondition: this->current_phase == Phase::OPTIMALITY
    void FeasibilityRestoration::switch_to_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-         Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
+         Direction& direction, Evaluations& current_evaluations, WarmstartInformation& warmstart_information) {
       DEBUG << "\nSwitching from optimality to restoration phase\n";
       this->current_phase = Phase::FEASIBILITY_RESTORATION;
       this->globalization_strategy->notify_switch_to_feasibility(current_iterate.progress);
@@ -144,6 +144,8 @@ namespace uno {
       this->feasibility_problem.set_proximal_center(this->reference_optimality_primals.data());
 
       current_iterate.set_number_variables(this->feasibility_problem.number_variables);
+      direction.set_dimensions(this->feasibility_problem.number_variables, this->feasibility_problem.number_constraints);
+      this->initial_point.resize(this->feasibility_problem.number_variables);
       // swap the iterate's multipliers and the feasibility multipliers maintained by the class
       this->other_phase_multipliers.constraints.resize(this->feasibility_problem.number_constraints);
       this->other_phase_multipliers.lower_bounds.resize(this->feasibility_problem.number_variables);
@@ -165,7 +167,6 @@ namespace uno {
          SubproblemSolver& subproblem_solver, const OptimizationProblem& problem, GlobalizationStrategy& globalization_strategy,
          Iterate& current_iterate, Direction& direction, double trust_region_radius, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
-      direction.set_dimensions(subproblem.problem.number_variables, subproblem.problem.number_constraints);
       // update the parameterization
       const bool parameterization_updated = this->inequality_handling_method->update_parameterization(statistics, problem,
          current_iterate, this->parameterization);
@@ -210,6 +211,7 @@ namespace uno {
       std::swap(current_iterate.multipliers, this->other_phase_multipliers);
       trial_iterate.set_number_variables(this->original_problem.number_variables);
       current_iterate.objective_multiplier = trial_iterate.objective_multiplier = 1.;
+      this->initial_point.resize(this->original_problem.number_variables);
    }
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, const Model& model,
