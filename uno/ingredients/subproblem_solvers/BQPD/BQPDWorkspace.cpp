@@ -32,7 +32,7 @@ namespace uno {
          subproblem.compute_regularized_hessian_sparsity(this->hessian_row_indices.data(),
             this->hessian_column_indices.data(), Indexing::C_indexing);
       }
-      else {
+      if (subproblem.has_hessian_operator()) {
          this->hessian_vector_product.resize(subproblem.number_variables);
       }
    }
