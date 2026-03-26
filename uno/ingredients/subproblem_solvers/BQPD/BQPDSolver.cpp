@@ -228,7 +228,7 @@ namespace uno {
       }
       // gather the multipliers
       this->set_multipliers(subproblem.number_variables, direction.multipliers);
-      LPSolver::compute_dual_displacements(subproblem.current_iterate.multipliers, direction.multipliers);
+      LPSolver::compute_dual_displacements(subproblem, direction.multipliers);
    }
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {

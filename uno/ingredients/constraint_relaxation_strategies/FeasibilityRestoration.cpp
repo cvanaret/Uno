@@ -166,10 +166,6 @@ namespace uno {
          Iterate& current_iterate, Direction& direction, double trust_region_radius, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       direction.set_dimensions(subproblem.problem.number_variables, subproblem.problem.number_constraints);
-      std::cout << "Direction has sizes (" << direction.primals.size() << ", " << direction.multipliers.constraints.size() << ")\n";
-      std::cout << "Subproblem has sizes (" << subproblem.problem.number_variables << ", " << subproblem.problem.number_constraints << ")\n";
-      assert(direction.primals.size() >= subproblem.problem.number_variables);
-      assert(direction.multipliers.constraints.size() >= subproblem.problem.number_constraints);
       // update the parameterization
       const bool parameterization_updated = this->inequality_handling_method->update_parameterization(statistics, problem,
          current_iterate, this->parameterization);
