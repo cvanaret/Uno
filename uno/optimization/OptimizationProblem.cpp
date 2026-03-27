@@ -93,6 +93,13 @@ namespace uno {
          multipliers.constraints, hessian_values);
    }
 
+   void OptimizationProblem::compute_jacobian_vector_product(Evaluations& evaluations, const double* vector, double* result) const {
+   }
+
+   void OptimizationProblem::compute_jacobian_transposed_vector_product(Evaluations& evaluations, const double* vector,
+         double* result) const {
+   }
+
    void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
          const Multipliers& multipliers, double* result) const {
       hessian_model.compute_hessian_vector_product(x, vector, this->get_objective_multiplier(), multipliers.constraints, result);

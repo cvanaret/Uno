@@ -186,7 +186,7 @@ namespace uno {
    }
 
    bool FeasibilityRestoration::can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,
-         const Direction& direction, double step_length, EvaluationCache& evaluation_cache) const {
+         const Direction& direction, double step_length, Evaluations& current_evaluations) const {
       if (this->globalization_strategy->is_infeasibility_sufficiently_reduced(this->reference_optimality_progress,
             trial_iterate.progress)) {
          if (!this->switch_to_optimality_requires_linearized_feasibility) {
@@ -195,8 +195,8 @@ namespace uno {
          // compute the linearized constraint violation
          // TODO preallocate
          Vector<double> result(model.number_constraints);
-         evaluation_cache.current_evaluations.compute_jacobian_vector_product(direction.primals, result);
-         const double trial_linearized_constraint_violation = model.constraint_violation(evaluation_cache.current_evaluations.constraints +
+         current_evaluations.compute_jacobian_vector_product(direction.primals, result);
+         const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
             step_length * result, this->residual_norm);
          return (trial_linearized_constraint_violation <= this->linear_feasibility_tolerance);
       }
@@ -244,7 +244,7 @@ namespace uno {
 
       // possibly go from restoration phase to optimality phase
       if (trial_iterate.status == SolutionStatus::NOT_OPTIMAL && this->current_phase == Phase::FEASIBILITY_RESTORATION &&
-            this->can_switch_to_optimality_phase(model, trial_iterate, direction, step_length, evaluation_cache)) {
+            this->can_switch_to_optimality_phase(model, trial_iterate, direction, step_length, evaluation_cache.current_evaluations)) {
          this->switch_back_to_optimality_phase(current_iterate, trial_iterate);
          // set a cold start in the subproblem solver
          warmstart_information.whole_problem_changed();

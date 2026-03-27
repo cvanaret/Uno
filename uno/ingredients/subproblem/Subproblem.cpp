@@ -6,7 +6,6 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
-#include "linear_algebra/Matrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/VectorView.hpp"
 #include "model/Model.hpp"
@@ -128,20 +127,16 @@ namespace uno {
       }
    }
 
-   void Subproblem::assemble_augmented_rhs(Evaluations& evaluations, const Matrix<uno_int>& jacobian, Vector<double>& rhs) const {
+   void Subproblem::assemble_augmented_rhs(Evaluations& evaluations, Vector<double>& rhs) const {
       rhs.fill(0.);
+
+      // Jacobian^T-multipliers product
+      this->problem.compute_jacobian_transposed_vector_product(evaluations, this->current_iterate.multipliers.constraints.data(),
+         rhs.data());
 
       // objective gradient
       auto objective_gradient = view(rhs, 0, this->number_variables);
       this->problem.evaluate_objective_gradient(this->current_iterate, objective_gradient.data(), evaluations);
-
-      // Jacobian
-      // TODO use evaluation_cache
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
-         const auto [constraint_index, variable_index, derivative] = jacobian[nonzero_index];
-         rhs[static_cast<size_t>(variable_index)] -=
-            this->current_iterate.multipliers.constraints[static_cast<size_t>(constraint_index)] * derivative;
-      }
 
       // constraints
       auto constraints = view(rhs, this->number_variables, this->number_variables + this->number_constraints);

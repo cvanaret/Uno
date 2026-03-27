@@ -7,7 +7,6 @@
 #include "SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "ingredients/hessian_models/quasi_newton/LBFGSHessian.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/COOMatrix.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
@@ -59,9 +58,7 @@ namespace uno {
             subproblem.dual_regularization_factor(), *this->linear_solver);
 
          // assemble the RHS
-         const COOMatrix jacobian{linear_system.jacobian_row_indices.data(), linear_system.jacobian_column_indices.data(),
-            linear_system.matrix_values.data() + number_hessian_nonzeros};
-         subproblem.assemble_augmented_rhs(current_evaluations, jacobian, linear_system.rhs);
+         subproblem.assemble_augmented_rhs(current_evaluations, linear_system.rhs);
       }
 
       // solve the linear system with only the diagonal part and store the result in solution_diagonal_part
