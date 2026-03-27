@@ -46,6 +46,10 @@ namespace uno {
          asl(asl),
          // compute sparsity pattern and number of nonzeros of Lagrangian Hessian
          number_asl_hessian_nonzeros(this->compute_lagrangian_hessian_sparsity()),
+         variables_lower_bounds(this->number_variables, -INF<double>),
+         variables_upper_bounds(this->number_variables, INF<double>),
+         constraints_lower_bounds(this->number_constraints, -INF<double>),
+         constraints_upper_bounds(this->number_constraints, INF<double>),
          // AMPL orders the constraints based on the function type: nonlinear first (nlc of them), then linear
          linear_constraints(static_cast<size_t>(this->asl->i.nlc_), this->number_constraints),
          nonlinear_constraints(0, static_cast<size_t>(this->asl->i.nlc_)),
@@ -54,6 +58,22 @@ namespace uno {
          inequality_constraints_collection(this->inequality_constraints) {
       // Jacobian storage: use goff fields of struct cgrad
       this->asl->i.congrd_mode = 2;
+
+      // variables bounds
+      if (this->asl->i.LUv_ != nullptr) {
+         for (size_t variable_index: Range(this->number_variables)) {
+            this->variables_lower_bounds[variable_index] = this->asl->i.LUv_[2*variable_index];
+            this->variables_upper_bounds[variable_index] = this->asl->i.LUv_[2*variable_index + 1];
+         }
+      }
+
+      // constraints bounds
+      if (this->asl->i.LUrhs_ != nullptr) {
+         for (size_t constraint_index: Range(this->number_constraints)) {
+            this->constraints_lower_bounds[constraint_index] = this->asl->i.LUrhs_[2*constraint_index];
+            this->constraints_upper_bounds[constraint_index] = this->asl->i.LUrhs_[2*constraint_index + 1];
+         }
+      }
 
       // detect fix variables
       Model::find_fixed_variables(this->fixed_variables);
@@ -212,12 +232,12 @@ namespace uno {
          const_cast<double*>(multipliers.data()));
    }
 
-   double AMPLModel::variable_lower_bound(size_t variable_index) const {
-      return (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index] : -INF<double>;
+   const std::vector<double>& AMPLModel::get_variables_lower_bounds() const {
+      return this->variables_lower_bounds;
    }
 
-   double AMPLModel::variable_upper_bound(size_t variable_index) const {
-      return (this->asl->i.LUv_ != nullptr) ? this->asl->i.LUv_[2*variable_index + 1] : INF<double>;
+   const std::vector<double>& AMPLModel::get_variables_upper_bounds() const {
+      return this->variables_upper_bounds;
    }
 
    const SparseVector<size_t>& AMPLModel::get_slacks() const {
@@ -228,12 +248,12 @@ namespace uno {
       return this->fixed_variables;
    }
 
-   double AMPLModel::constraint_lower_bound(size_t constraint_index) const {
-      return (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2*constraint_index] : -INF<double>;
+   const std::vector<double>& AMPLModel::get_constraints_lower_bounds() const {
+      return this->constraints_lower_bounds;
    }
 
-   double AMPLModel::constraint_upper_bound(size_t constraint_index) const {
-      return (this->asl->i.LUrhs_ != nullptr) ? this->asl->i.LUrhs_[2*constraint_index + 1] : INF<double>;
+   const std::vector<double>& AMPLModel::get_constraints_upper_bounds() const {
+      return this->constraints_upper_bounds;
    }
 
    const Collection<size_t>& AMPLModel::get_equality_constraints() const {

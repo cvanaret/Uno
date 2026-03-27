@@ -116,11 +116,13 @@ namespace uno {
    double ConstraintRelaxationStrategy::compute_stationarity_scaling(const Model& model, const Multipliers& multipliers) const {
       size_t number_lower_bounded_variables = 0;
       size_t number_upper_bounded_variables = 0;
+      const auto& variables_lower_bounds = model.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = model.get_variables_upper_bounds();
       for (size_t variable_index: Range(model.number_variables)) {
-         if (is_finite(model.variable_lower_bound(variable_index))) {
+         if (is_finite(variables_lower_bounds[variable_index])) {
             ++number_lower_bounded_variables;
          }
-         if (is_finite(model.variable_upper_bound(variable_index))) {
+         if (is_finite(variables_upper_bounds[variable_index])) {
             ++number_upper_bounded_variables;
          }
       }
@@ -142,11 +144,13 @@ namespace uno {
    double ConstraintRelaxationStrategy::compute_complementarity_scaling(const Model& model, const Multipliers& multipliers) const {
       size_t number_lower_bounded_variables = 0;
       size_t number_upper_bounded_variables = 0;
+      const auto& variables_lower_bounds = model.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = model.get_variables_upper_bounds();
       for (size_t variable_index: Range(model.number_variables)) {
-         if (is_finite(model.variable_lower_bound(variable_index))) {
+         if (is_finite(variables_lower_bounds[variable_index])) {
             ++number_lower_bounded_variables;
          }
-         if (is_finite(model.variable_upper_bound(variable_index))) {
+         if (is_finite(variables_upper_bounds[variable_index])) {
             ++number_upper_bounded_variables;
          }
       }

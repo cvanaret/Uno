@@ -228,12 +228,12 @@ public:
       }
    }
 
-   [[nodiscard]] double variable_lower_bound(size_t variable_index) const override {
-      return this->user_model.variables_lower_bounds[variable_index];
+   [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override {
+      return this->user_model.variables_lower_bounds;
    }
 
-   [[nodiscard]] double variable_upper_bound(size_t variable_index) const override {
-      return this->user_model.variables_upper_bounds[variable_index];
+   [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override {
+      return this->user_model.variables_upper_bounds;
    }
 
    [[nodiscard]] const SparseVector<size_t>& get_slacks() const override {
@@ -244,12 +244,12 @@ public:
       return this->fixed_variables;
    }
 
-   [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override {
-      return this->user_model.constraints_lower_bounds[constraint_index];
+   [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override {
+      return this->user_model.constraints_lower_bounds;
    }
 
-   [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override {
-      return this->user_model.constraints_upper_bounds[constraint_index];
+   [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override {
+      return this->user_model.constraints_upper_bounds;
    }
 
    [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override {

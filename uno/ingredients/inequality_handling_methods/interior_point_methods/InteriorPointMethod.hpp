@@ -127,13 +127,13 @@ namespace uno {
          Iterate& iterate, Evaluations& evaluations) {
       DEBUG << "IPM: setting the elastic variables and their duals\n";
 
+      const auto& variables_lower_bounds = feasibility_problem.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = feasibility_problem.get_variables_upper_bounds();
       for (size_t variable_index: Range(feasibility_problem.number_variables)) {
-         const double lower_bound = feasibility_problem.variable_lower_bound(variable_index);
-         const double upper_bound = feasibility_problem.variable_upper_bound(variable_index);
-         if (is_finite(lower_bound)) {
+         if (is_finite(variables_lower_bounds[variable_index])) {
             iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
          }
-         if (is_finite(upper_bound)) {
+         if (is_finite(variables_upper_bounds[variable_index])) {
             iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
          }
       }

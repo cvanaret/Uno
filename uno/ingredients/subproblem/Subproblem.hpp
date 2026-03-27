@@ -8,6 +8,7 @@
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Vector.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "symbolic/Range.hpp"
 
@@ -97,10 +98,14 @@ namespace uno {
    template <typename Array>
    void Subproblem::set_constraints_bounds(Array& constraints_lower_bounds, Array& constraints_upper_bounds,
          Vector<double>& constraints) const {
+      view(constraints_lower_bounds, 0, this->number_constraints) = this->problem.get_constraints_lower_bounds() - constraints;
+      view(constraints_upper_bounds, 0, this->number_constraints) = this->problem.get_constraints_upper_bounds() - constraints;
+      /*
       for (size_t constraint_index: Range(this->problem.number_constraints)) {
          constraints_lower_bounds[constraint_index] = this->problem.constraint_lower_bound(constraint_index) - constraints[constraint_index];
          constraints_upper_bounds[constraint_index] = this->problem.constraint_upper_bound(constraint_index) - constraints[constraint_index];
       }
+      */
    }
 } // namespace
 

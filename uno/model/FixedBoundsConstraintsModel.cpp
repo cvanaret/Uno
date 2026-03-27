@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "FixedBoundsConstraintsModel.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "optimization/Iterate.hpp"
 
 namespace uno {
@@ -12,7 +13,26 @@ namespace uno {
             original_model.optimization_sense, original_model.lagrangian_sign_convention),
          model(original_model),
          equality_constraints(concatenate(this->model.get_equality_constraints(), Range(this->model.number_constraints, this->number_constraints))),
-         linear_constraints(concatenate(this->model.get_linear_constraints(), Range(this->model.number_constraints, this->number_constraints))) {
+         linear_constraints(concatenate(this->model.get_linear_constraints(), Range(this->model.number_constraints, this->number_constraints))),
+         variables_lower_bounds(original_model.get_variables_lower_bounds()),
+         variables_upper_bounds(original_model.get_variables_upper_bounds()),
+         constraints_lower_bounds(this->number_constraints),
+         constraints_upper_bounds(this->number_constraints) {
+      // copy the original constraints bounds
+      view(constraints_lower_bounds, 0, original_model.number_constraints) = original_model.get_constraints_lower_bounds();
+      view(constraints_upper_bounds, 0, original_model.number_constraints) = original_model.get_constraints_upper_bounds();
+      // handle the fixed variables
+      size_t fixed_variable_constraint_index = original_model.number_constraints;
+      for (size_t fixed_variable_index: original_model.get_fixed_variables()) {
+         // relax the bounds of the fixed variables
+         this->variables_lower_bounds[fixed_variable_index] = -INF<double>;
+         this->variables_upper_bounds[fixed_variable_index] = INF<double>;
+         const double fixed_value = original_model.get_variables_lower_bounds()[fixed_variable_index];
+         // set the bounds of the corresponding new constraint
+         this->constraints_lower_bounds[fixed_variable_constraint_index] = fixed_value;
+         this->constraints_upper_bounds[fixed_variable_constraint_index] = fixed_value;
+         ++fixed_variable_constraint_index;
+      }
    }
 
    ProblemType FixedBoundsConstraintsModel::get_problem_type() const {
@@ -118,20 +138,12 @@ namespace uno {
       this->model.compute_hessian_vector_product(x, vector, objective_multiplier, multipliers, result);
    }
 
-   double FixedBoundsConstraintsModel::variable_lower_bound(size_t variable_index) const {
-      if (this->model.variable_lower_bound(variable_index) == this->model.variable_upper_bound(variable_index)) {
-      // remove bounds of fixed variables
-         return -INF<double>;
-      }
-      return this->model.variable_lower_bound(variable_index);
+   const std::vector<double>& FixedBoundsConstraintsModel::get_variables_lower_bounds() const {
+      return this->variables_lower_bounds;
    }
 
-   double FixedBoundsConstraintsModel::variable_upper_bound(size_t variable_index) const {
-      if (this->model.variable_lower_bound(variable_index) == this->model.variable_upper_bound(variable_index)) {
-      // remove bounds of fixed variables
-         return INF<double>;
-      }
-      return this->model.variable_upper_bound(variable_index);
+   const std::vector<double>& FixedBoundsConstraintsModel::get_variables_upper_bounds() const {
+      return this->variables_upper_bounds;
    }
 
    const SparseVector<size_t>& FixedBoundsConstraintsModel::get_slacks() const {
@@ -142,28 +154,12 @@ namespace uno {
       return this->fixed_variables;
    }
 
-   double FixedBoundsConstraintsModel::constraint_lower_bound(size_t constraint_index) const {
-      if (constraint_index < this->model.number_constraints) {
-         // original constraint
-         return this->model.constraint_lower_bound(constraint_index);
-      }
-      else {
-         // fixed variable
-         const size_t variable_index = this->model.get_fixed_variables()[constraint_index - this->model.number_constraints];
-         return this->model.variable_lower_bound(variable_index);
-      }
+   const std::vector<double>& FixedBoundsConstraintsModel::get_constraints_lower_bounds() const {
+      return this->constraints_lower_bounds;
    }
 
-   double FixedBoundsConstraintsModel::constraint_upper_bound(size_t constraint_index) const {
-      if (constraint_index < this->model.number_constraints) {
-         // original constraint
-         return this->model.constraint_upper_bound(constraint_index);
-      }
-      else {
-         // fixed variable
-         const size_t variable_index = this->model.get_fixed_variables()[constraint_index - this->model.number_constraints];
-         return this->model.variable_upper_bound(variable_index);
-      }
+   const std::vector<double>& FixedBoundsConstraintsModel::get_constraints_upper_bounds() const {
+      return this->constraints_upper_bounds;
    }
 
    const Collection<size_t>& FixedBoundsConstraintsModel::get_equality_constraints() const {
@@ -186,7 +182,7 @@ namespace uno {
       this->model.initial_primal_point(x);
       // set the fixed variables
       for (size_t variable_index: this->model.get_fixed_variables()) {
-         x[variable_index] = this->model.variable_lower_bound(variable_index);
+         x[variable_index] = this->model.get_variables_lower_bounds()[variable_index];
       }
    }
 

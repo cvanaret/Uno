@@ -150,19 +150,21 @@ namespace uno {
       this->problem.assemble_primal_dual_direction(this->current_iterate, solution, direction);
    }
 
-   void Subproblem::set_variables_bounds(std::vector<double>& variables_lower_bounds, std::vector<double>& variables_upper_bounds,
-         double trust_region_radius) const {
+   void Subproblem::set_variables_bounds(std::vector<double>& subproblem_variables_lower_bounds,
+         std::vector<double>& subproblem_variables_upper_bounds, double trust_region_radius) const {
+      const auto& variables_lower_bounds = this->problem.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->problem.get_variables_upper_bounds();
       // bounds of original variables intersected with trust region
       for (size_t variable_index: Range(this->problem.get_number_original_variables())) {
-         variables_lower_bounds[variable_index] = std::max(-trust_region_radius,
-            this->problem.variable_lower_bound(variable_index) - this->current_iterate.primals[variable_index]);
-         variables_upper_bounds[variable_index] = std::min(trust_region_radius,
-            this->problem.variable_upper_bound(variable_index) - this->current_iterate.primals[variable_index]);
+         subproblem_variables_lower_bounds[variable_index] = std::max(-trust_region_radius,
+            variables_lower_bounds[variable_index] - this->current_iterate.primals[variable_index]);
+         subproblem_variables_upper_bounds[variable_index] = std::min(trust_region_radius,
+            variables_upper_bounds[variable_index] - this->current_iterate.primals[variable_index]);
       }
       // bounds of additional variables (no trust region!)
       for (size_t variable_index: Range(this->problem.get_number_original_variables(), this->problem.number_variables)) {
-         variables_lower_bounds[variable_index] = this->problem.variable_lower_bound(variable_index) - this->current_iterate.primals[variable_index];
-         variables_upper_bounds[variable_index] = this->problem.variable_upper_bound(variable_index) - this->current_iterate.primals[variable_index];
+         subproblem_variables_lower_bounds[variable_index] = variables_lower_bounds[variable_index] - this->current_iterate.primals[variable_index];
+         subproblem_variables_upper_bounds[variable_index] = variables_upper_bounds[variable_index] - this->current_iterate.primals[variable_index];
       }
    }
 
@@ -195,17 +197,19 @@ namespace uno {
 
    bool Subproblem::has_inequality_constraints() const {
       // look at the general constraints
+      const auto& constraints_lower_bounds = this->problem.get_constraints_lower_bounds();
+      const auto& constraints_upper_bounds = this->problem.get_constraints_upper_bounds();
       for (size_t constraint_index: Range(this->problem.number_constraints)) {
-         if (this->problem.constraint_lower_bound(constraint_index) < this->problem.constraint_upper_bound(constraint_index)) {
+         if (constraints_lower_bounds[constraint_index] < constraints_upper_bounds[constraint_index]) {
             return true;
          }
       }
       // look at the bound constraints
-      for (size_t variable_index: Range(this->problem.number_variables)) {
-         if (is_finite(this->problem.variable_lower_bound(variable_index)) ||
-               is_finite(this->problem.variable_upper_bound(variable_index))) {
-            return true;
-         }
+      const auto& variables_lower_bounds = this->problem.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->problem.get_variables_upper_bounds();
+      if (std::any_of(variables_lower_bounds.begin(), variables_lower_bounds.end(), is_finite<double>) ||
+            std::any_of(variables_upper_bounds.begin(), variables_upper_bounds.end(), is_finite<double>)) {
+         return true;
       }
       return false;
    }
