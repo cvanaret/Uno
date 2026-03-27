@@ -68,11 +68,12 @@ namespace uno {
       }
    }
 
-   void BQPDWorkspace::evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate,
+   void BQPDWorkspace::evaluate_functions(const OptimizationProblem& problem, const Iterate& current_iterate,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       // gradients is a concatenation of the dense objective gradient and the sparse Jacobian
       if (warmstart_information.new_iterate) {
+         this->gradients.fill(0.);
          problem.evaluate_objective_gradient(current_iterate, this->gradients.data(), current_evaluations);
          problem.evaluate_constraints(current_iterate, this->constraints.data(), current_evaluations);
          this->evaluate_jacobian(problem, current_iterate.primals, current_evaluations);

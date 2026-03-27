@@ -214,6 +214,16 @@ namespace uno {
       }
    }
 
+   void PrimalDualInteriorPointProblem::compute_jacobian_vector_product(const double* vector, double* result,
+         const Evaluations& evaluations) const {
+      this->first_reformulation.compute_jacobian_vector_product(vector, result, evaluations);
+   }
+
+   void PrimalDualInteriorPointProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
+         const Evaluations& evaluations) const {
+      this->first_reformulation.compute_jacobian_transposed_vector_product(vector, result, evaluations);
+   }
+
    void PrimalDualInteriorPointProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x,
          const double* vector, const Multipliers& multipliers, double* result) const {
       // original Lagrangian Hessian

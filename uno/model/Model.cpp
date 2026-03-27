@@ -28,7 +28,7 @@ namespace uno {
       // - ∇c(x_k) λ_k
       // TODO test whether λ_k != 0
       evaluations.evaluate_jacobian(*this, primals);
-      evaluations.compute_jacobian_transposed_vector_product(multipliers.constraints, lagrangian_gradient);
+      evaluations.compute_jacobian_transposed_vector_product(*this, multipliers.constraints.data(), lagrangian_gradient.data());
       lagrangian_gradient.scale(-1.);
 
       // ∇f(x_k)

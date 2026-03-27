@@ -6,7 +6,6 @@
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "ingredients/subproblem_solvers/SolverWorkspace.hpp"
-#include "linear_algebra/Matrix.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/VectorView.hpp"
 #include "model/Model.hpp"
@@ -128,24 +127,19 @@ namespace uno {
       }
    }
 
-   void Subproblem::assemble_augmented_rhs(Evaluations& evaluations, const Matrix<uno_int>& jacobian, Vector<double>& rhs) const {
+   void Subproblem::assemble_augmented_rhs(Evaluations& evaluations, Vector<double>& rhs) const {
       rhs.fill(0.);
 
-      // objective gradient
-      auto objective_gradient = view(rhs, 0, this->number_variables);
-      this->problem.evaluate_objective_gradient(this->current_iterate, objective_gradient.data(), evaluations);
+      // -Jacobian^T-multipliers product
+      this->problem.compute_jacobian_transposed_vector_product(this->current_iterate.multipliers.constraints.data(),
+         rhs.data(), evaluations);
+      rhs.scale(-1.);
 
-      // Jacobian
-      // TODO use evaluation_cache
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
-         const auto [constraint_index, variable_index, derivative] = jacobian[nonzero_index];
-         rhs[static_cast<size_t>(variable_index)] -=
-            this->current_iterate.multipliers.constraints[static_cast<size_t>(constraint_index)] * derivative;
-      }
+      // objective gradient
+      this->problem.evaluate_objective_gradient(this->current_iterate, rhs.data(), evaluations);
 
       // constraints
-      auto constraints = view(rhs, this->number_variables, this->number_variables + this->number_constraints);
-      this->problem.evaluate_constraints(this->current_iterate, constraints.data(), evaluations);
+      this->problem.evaluate_constraints(this->current_iterate, rhs.data() + this->number_variables, evaluations);
 
       // flip the sign
       rhs.scale(-1.);
@@ -276,7 +270,7 @@ namespace uno {
       const double current_constraint_violation = model.constraint_violation(current_evaluations.constraints, norm);
       // TODO preallocate
       Vector<double> result(model.number_constraints);
-      current_evaluations.compute_jacobian_vector_product(primal_direction, result);
+      current_evaluations.compute_jacobian_vector_product(model, primal_direction.data(), result.data());
       const double trial_linearized_constraint_violation = model.constraint_violation(current_evaluations.constraints +
          step_length * result, norm);
       return current_constraint_violation - trial_linearized_constraint_violation;

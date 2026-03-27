@@ -15,10 +15,6 @@ namespace uno {
       LinearSystem() = default;
       ~LinearSystem() override = default;
 
-      // TODO: these shouldn't be here!
-      std::vector<uno_int> jacobian_row_indices{};
-      std::vector<uno_int> jacobian_column_indices{};
-
       size_t dimension{0};
       size_t number_nonzeros{0};
       Vector<double> matrix_values{};

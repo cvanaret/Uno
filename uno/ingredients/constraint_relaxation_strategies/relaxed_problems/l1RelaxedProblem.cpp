@@ -163,7 +163,8 @@ namespace uno {
 
       // ∇c(x_k) λ_k
       evaluations.evaluate_jacobian(this->model, iterate.primals);
-      evaluations.compute_jacobian_transposed_vector_product(iterate.multipliers.constraints, lagrangian_gradient);
+      evaluations.compute_jacobian_transposed_vector_product(this->model, iterate.multipliers.constraints.data(),
+         lagrangian_gradient.data());
       lagrangian_gradient.scale(-1.);
 
       // z_k
@@ -213,6 +214,31 @@ namespace uno {
             hessian_values[nonzero_index] = proximal_term;
             ++nonzero_index;
          }
+      }
+   }
+
+   void l1RelaxedProblem::compute_jacobian_vector_product(const double* vector, double* result, const Evaluations& evaluations) const {
+      evaluations.compute_jacobian_vector_product(this->model, vector, result);
+
+      // add the contribution of the elastic variables
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
+         result[constraint_index] -= vector[elastic_index];
+      }
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+         result[constraint_index] += vector[elastic_index];
+      }
+   }
+
+   void l1RelaxedProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
+         const Evaluations& evaluations) const {
+      evaluations.compute_jacobian_transposed_vector_product(this->model, vector, result);
+
+      // add the contribution of the elastic variables
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.positive) {
+         result[elastic_index] -= vector[constraint_index];
+      }
+      for (const auto [constraint_index, elastic_index]: this->elastic_variables.negative) {
+         result[elastic_index] += vector[constraint_index];
       }
    }
 

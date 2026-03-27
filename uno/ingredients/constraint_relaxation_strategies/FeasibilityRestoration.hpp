@@ -79,7 +79,7 @@ namespace uno {
       void switch_back_to_optimality_phase(Iterate& current_iterate, Iterate& trial_iterate);
 
       [[nodiscard]] bool can_switch_to_optimality_phase(const Model& model, const Iterate& trial_iterate,
-         const Direction& direction, double step_length, EvaluationCache& evaluation_cache) const;
+         const Direction& direction, double step_length, Evaluations& current_evaluations) const;
    };
 } // namespace
 

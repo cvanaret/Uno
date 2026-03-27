@@ -91,7 +91,7 @@ namespace uno {
       DEBUG << "> Y: " << this->Y;
       DEBUG << "> diag(D): "; print_vector(DEBUG, this->D);
 
-      // check that the latest D entry s^T y is > 0
+      // check that the latest D entry sᵀ y is > 0
       // TODO implement Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
       if (0. < this->D[this->current_index]) {
          DEBUG << "S, Y and D updated at slot " << this->current_index << '\n';
@@ -124,8 +124,8 @@ namespace uno {
       }
    }
 
-   // Hessian-vector product where the Hessian approximation is Bk = B0 - U U^T + V V^T and B0 = delta I
-   // Bk v = (B0 - U U^T + V V^T) v = delta v - U (U^T v) + V (V^T v)
+   // Hessian-vector product where the Hessian approximation is Bk = B0 - U Uᵀ + V Vᵀ and B0 = delta I
+   // Bk v = (B0 - U Uᵀ + V Vᵀ) v = delta v - U (Uᵀ v) + V (Vᵀ v)
    void LBFGSHessian::compute_hessian_vector_product(const double* /*x*/, const double* vector,
          double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, double* result) {
       if (objective_multiplier != this->fixed_objective_multiplier) {
@@ -145,14 +145,14 @@ namespace uno {
 
       // rank-2 contribution
       // (U, V) in R^{n x m}
-      // U U^T v
+      // U Uᵀ v
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
          const double U_coefficient = -dot(current_U_column, vector); // minus sign for U
          // result += coefficient * current_column
          blas1::add(this->model.number_variables, U_coefficient, current_U_column.data(), result);
       }
-      // V V^T v
+      // V Vᵀ v
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_V_column = this->V.column(column_index);
          const double V_coefficient = dot(current_V_column, vector); // plus sign for V
@@ -239,12 +239,12 @@ namespace uno {
       DEBUG << "> L: " << this->L;
       DEBUG << "> L_invsqrt_D: " << this->L_invsqrt_D;
 
-      /* form M = L D^{-1} L^T + S^T B0 S = L_invsqrt_D L_invsqrt_D^T + delta S^T S */
+      /* form M = L D^{-1} Lᵀ + Sᵀ B0 S = L_invsqrt_D L_invsqrt_Dᵀ + delta SᵀS */
       Mk = L_invsqrt_Dk * transpose(L_invsqrt_Dk);
       Mk += this->delta * (transpose(Sk) * Sk);
       DEBUG << "> M: " << this->M;
 
-      /*/ compute the Cholesky factor J of M = J J^T */
+      /*/ compute the Cholesky factor J of M = J Jᵀ */
       const bool success = Mk.compute_cholesky_factorization(); // J overwrites M
       DEBUG << "Cholesky success: " << success << '\n';
       DEBUG << "> J: " << this->M;
@@ -266,7 +266,7 @@ namespace uno {
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
 
-   // compute delta = 1/gamma where gamma = s^T y / y^T y at the last entry
+   // compute delta = 1/gamma where gamma = sᵀy / yᵀy at the last entry
    // (7.20) in Numerical optimization (Nocedal & Wright)
    double LBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);

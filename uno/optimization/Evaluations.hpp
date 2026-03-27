@@ -37,8 +37,8 @@ namespace uno {
       void evaluate_objective_gradient(const Model& model, const Vector<double>& primals);
       void evaluate_jacobian(const Model& model, const Vector<double>& primals);
 
-      void compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const;
-      void compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const;
+      void compute_jacobian_vector_product(const Model& model, const double* vector, double* result) const;
+      void compute_jacobian_transposed_vector_product(const Model& model, const double* vector, double* result) const;
 
       // reset the evaluation flags
       void reset();
