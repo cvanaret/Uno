@@ -75,13 +75,13 @@ namespace uno {
          const Vector<double>& multipliers, double* result) const = 0;
 
       // purely virtual functions
-      [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const = 0;
-      [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const = 0;
+      [[nodiscard]] virtual const std::vector<double>& get_variables_lower_bounds() const = 0;
+      [[nodiscard]] virtual const std::vector<double>& get_variables_upper_bounds() const = 0;
       [[nodiscard]] virtual const SparseVector<size_t>& get_slacks() const = 0;
       [[nodiscard]] virtual const Vector<size_t>& get_fixed_variables() const = 0;
 
-      [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const = 0;
-      [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const = 0;
+      [[nodiscard]] virtual const std::vector<double>& get_constraints_lower_bounds() const = 0;
+      [[nodiscard]] virtual const std::vector<double>& get_constraints_upper_bounds() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const = 0;
       [[nodiscard]] virtual const Collection<size_t>& get_linear_constraints() const = 0;

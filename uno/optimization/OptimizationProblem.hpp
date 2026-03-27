@@ -5,10 +5,12 @@
 #define UNO_OPTIMIZATIONPROBLEM_H
 
 #include <memory>
+#include <vector>
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "optimization/SolutionStatus.hpp"
 #include "../interfaces/C/uno_int.h"
+#include "model/Model.hpp"
 
 namespace uno {
    // forward declarations
@@ -68,13 +70,13 @@ namespace uno {
          const Multipliers& multipliers, double* result) const;
 
       [[nodiscard]] size_t get_number_original_variables() const;
-      [[nodiscard]] virtual double variable_lower_bound(size_t variable_index) const;
-      [[nodiscard]] virtual double variable_upper_bound(size_t variable_index) const;
+      [[nodiscard]] virtual const std::vector<double>& get_variables_lower_bounds() const;
+      [[nodiscard]] virtual const std::vector<double>& get_variables_upper_bounds() const;
       [[nodiscard]] virtual const Vector<size_t>& get_fixed_variables() const;
       [[nodiscard]] virtual const Collection<size_t>& get_primal_regularization_variables() const;
 
-      [[nodiscard]] virtual double constraint_lower_bound(size_t constraint_index) const;
-      [[nodiscard]] virtual double constraint_upper_bound(size_t constraint_index) const;
+      [[nodiscard]] virtual const std::vector<double>& get_constraints_lower_bounds() const;
+      [[nodiscard]] virtual const std::vector<double>& get_constraints_upper_bounds() const;
       [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const;
       [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const;
       [[nodiscard]] virtual const Collection<size_t>& get_dual_regularization_constraints() const;

@@ -244,18 +244,12 @@ namespace uno {
       }
    }
 
-   double PythonModel::variable_lower_bound(size_t variable_index) const {
-      if (this->user_model.variables_lower_bounds.has_value()) {
-         return (*this->user_model.variables_lower_bounds)[variable_index];
-      }
-      return -INF<double>;
+   const std::vector<double>& PythonModel::get_variables_lower_bounds() const {
+      return this->user_model.variables_lower_bounds;
    }
 
-   double PythonModel::variable_upper_bound(size_t variable_index) const {
-      if (this->user_model.variables_upper_bounds.has_value()) {
-         return (*this->user_model.variables_upper_bounds)[variable_index];
-      }
-      return INF<double>;
+   const std::vector<double>& PythonModel::get_variables_upper_bounds() const {
+      return this->user_model.variables_upper_bounds;
    }
 
    const SparseVector<size_t>& PythonModel::get_slacks() const {
@@ -266,18 +260,12 @@ namespace uno {
       return this->fixed_variables;
    }
 
-   double PythonModel::constraint_lower_bound(size_t constraint_index) const {
-      if (this->user_model.constraints_lower_bounds.has_value()) {
-         return (*this->user_model.constraints_lower_bounds)[constraint_index];
-      }
-      return -INF<double>;
+   const std::vector<double>& PythonModel::get_constraints_lower_bounds() const {
+      return this->user_model.constraints_lower_bounds;
    }
 
-   double PythonModel::constraint_upper_bound(size_t constraint_index) const {
-      if (this->user_model.constraints_upper_bounds.has_value()) {
-         return (*this->user_model.constraints_upper_bounds)[constraint_index];
-      }
-      return INF<double>;
+   const std::vector<double>& PythonModel::get_constraints_upper_bounds() const {
+      return this->user_model.constraints_upper_bounds;
    }
 
    const Collection<size_t>& PythonModel::get_equality_constraints() const {
@@ -297,23 +285,13 @@ namespace uno {
    }
 
    void PythonModel::initial_primal_point(Vector<double>& x) const {
-      if (this->user_model.initial_primal_iterate.has_value()) {
-         std::copy_n(this->user_model.initial_primal_iterate->begin(), this->user_model.number_variables, x.begin());
-      }
-      else {
-         x.fill(0.);
-      }
+      std::copy_n(this->user_model.initial_primal_iterate.begin(), this->user_model.number_variables, x.begin());
    }
 
    void PythonModel::initial_dual_point(Vector<double>& multipliers) const {
-      if (this->user_model.initial_dual_iterate.has_value()) {
-         std::copy_n(this->user_model.initial_dual_iterate->begin(), this->user_model.number_constraints, multipliers.begin());
-         if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
-            multipliers.scale(-1.);
-         }
-      }
-      else {
-         multipliers.fill(0.);
+      std::copy_n(this->user_model.initial_dual_iterate.begin(), this->user_model.number_constraints, multipliers.begin());
+      if (this->user_model.lagrangian_sign_convention == UNO_MULTIPLIER_POSITIVE) {
+         multipliers.scale(-1.);
       }
    }
 

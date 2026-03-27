@@ -50,13 +50,13 @@ namespace uno {
          const Vector<double>& multipliers, double* result) const override;
 
       // purely functions
-      [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
-      [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+      [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
-      [[nodiscard]] double constraint_lower_bound(size_t constraint_index) const override;
-      [[nodiscard]] double constraint_upper_bound(size_t constraint_index) const override;
+      [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;

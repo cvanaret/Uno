@@ -9,6 +9,7 @@
 #include <vector>
 #include "C/Uno_C_API.h"
 #include "optimization/ProblemType.hpp"
+#include "tools/Infinity.hpp"
 
 namespace uno {
    inline ProblemType problem_type_from_string(const char* problem_type) {

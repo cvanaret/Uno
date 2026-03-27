@@ -3,6 +3,7 @@
 
 #include "l1RelaxedProblem.hpp"
 #include "ingredients/hessian_models/HessianModel.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "model/Model.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
@@ -24,7 +25,12 @@ namespace uno {
          elastic_variables(std::move(elastic_variables)),
          number_elastic_variables(this->elastic_variables.size()),
          objective_multiplier(objective_multiplier),
-         constraint_violation_coefficient(constraint_violation_coefficient) {
+         constraint_violation_coefficient(constraint_violation_coefficient),
+         variables_lower_bounds(this->number_variables, 0.),
+         variables_upper_bounds(this->number_variables, INF<double>) {
+      // copy the original variables. The elastic variables have bounds [0, inf)
+      view(this->variables_lower_bounds, 0, model.number_variables) = model.get_variables_lower_bounds();
+      view(this->variables_upper_bounds, 0, model.number_variables) = model.get_variables_upper_bounds();
    }
 
    std::unique_ptr<OptimizationProblem> l1RelaxedProblem::clone() const {
@@ -278,34 +284,24 @@ namespace uno {
       return SolutionStatus::NOT_OPTIMAL;
    }
 
-   double l1RelaxedProblem::variable_lower_bound(size_t variable_index) const {
-      if (variable_index < this->model.number_variables) { // model variable
-         return this->model.variable_lower_bound(variable_index);
-      }
-      else { // elastic variable in [0, +inf[
-         return 0.;
-      }
+   const std::vector<double>& l1RelaxedProblem::get_variables_lower_bounds() const {
+      return this->variables_lower_bounds;
    }
 
-   double l1RelaxedProblem::variable_upper_bound(size_t variable_index) const {
-      if (variable_index < this->model.number_variables) { // model variable
-         return this->model.variable_upper_bound(variable_index);
-      }
-      else { // elastic variable in [0, +inf[
-         return INF<double>;
-      }
+   const std::vector<double>& l1RelaxedProblem::get_variables_upper_bounds() const {
+      return this->variables_upper_bounds;
    }
 
    const Vector<size_t>& l1RelaxedProblem::get_fixed_variables() const {
       return this->model.get_fixed_variables();
    }
 
-   double l1RelaxedProblem::constraint_lower_bound(size_t constraint_index) const {
-      return this->model.constraint_lower_bound(constraint_index);
+   const std::vector<double>& l1RelaxedProblem::get_constraints_lower_bounds() const {
+      return this->model.get_constraints_lower_bounds();
    }
 
-   double l1RelaxedProblem::constraint_upper_bound(size_t constraint_index) const {
-      return this->model.constraint_upper_bound(constraint_index);
+   const std::vector<double>& l1RelaxedProblem::get_constraints_upper_bounds() const {
+      return this->model.get_constraints_upper_bounds();
    }
 
    const Collection<size_t>& l1RelaxedProblem::get_equality_constraints() const {

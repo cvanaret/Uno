@@ -47,13 +47,13 @@ namespace uno {
       void compute_hessian_vector_product(const double* x, const double* vector, double objective_multiplier,
          const Vector<double>& multipliers, double* result) const override;
 
-      [[nodiscard]] double variable_lower_bound(size_t variable_index) const override;
-      [[nodiscard]] double variable_upper_bound(size_t variable_index) const override;
+      [[nodiscard]] const std::vector<double>& get_variables_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_variables_upper_bounds() const override;
       [[nodiscard]] const SparseVector<size_t>& get_slacks() const override;
       [[nodiscard]] const Vector<size_t>& get_fixed_variables() const override;
 
-      [[nodiscard]] double constraint_lower_bound(size_t /*constraint_index*/) const override;
-      [[nodiscard]] double constraint_upper_bound(size_t /*constraint_index*/) const override;
+      [[nodiscard]] const std::vector<double>& get_constraints_lower_bounds() const override;
+      [[nodiscard]] const std::vector<double>& get_constraints_upper_bounds() const override;
       [[nodiscard]] const Collection<size_t>& get_equality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_linear_constraints() const override;
@@ -75,12 +75,15 @@ namespace uno {
 
    protected:
       const Model& model;
-      std::vector<size_t> constraint_index_of_inequality_index;
-      std::vector<size_t> slack_index_of_constraint_index;
 
       ForwardRange equality_constraints;
       ForwardRange inequality_constraints;
       SparseVector<size_t> slacks;
+
+      std::vector<double> variables_lower_bounds;
+      std::vector<double> variables_upper_bounds;
+      std::vector<double> constraints_lower_bounds;
+      std::vector<double> constraints_upper_bounds;
    };
 } // namespace
 

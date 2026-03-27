@@ -43,8 +43,11 @@ namespace uno {
    }
 
    void Model::project_onto_variable_bounds(Vector<double>& x) const {
+      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
       for (size_t variable_index: Range(this->number_variables)) {
-         x[variable_index] = std::max(std::min(x[variable_index], this->variable_upper_bound(variable_index)), this->variable_lower_bound(variable_index));
+         x[variable_index] = std::max(std::min(x[variable_index], variables_upper_bounds[variable_index]),
+            variables_lower_bounds[variable_index]);
       }
    }
 
@@ -54,16 +57,18 @@ namespace uno {
 
    // individual constraint violation
    double Model::constraint_violation(double constraint_value, size_t constraint_index) const {
-      const double lower_bound_violation = std::max(0., this->constraint_lower_bound(constraint_index) - constraint_value);
-      const double upper_bound_violation = std::max(0., constraint_value - this->constraint_upper_bound(constraint_index));
+      const double lower_bound_violation = std::max(0., this->get_constraints_lower_bounds()[constraint_index] - constraint_value);
+      const double upper_bound_violation = std::max(0., constraint_value - this->get_constraints_upper_bounds()[constraint_index]);
       return std::max(lower_bound_violation, upper_bound_violation);
    }
 
    void Model::find_fixed_variables(Vector<size_t>& fixed_variables) const {
       fixed_variables.reserve(this->number_variables);
 
+      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
       for (size_t variable_index: Range(this->number_variables)) {
-         if (this->variable_lower_bound(variable_index) == this->variable_upper_bound(variable_index)) {
+         if (variables_lower_bounds[variable_index] == variables_upper_bounds[variable_index]) {
             WARNING << "Variable x" << variable_index << " has identical bounds\n";
             fixed_variables.emplace_back(variable_index);
          }
@@ -74,13 +79,13 @@ namespace uno {
       equality_constraints.reserve(this->number_constraints);
       inequality_constraints.reserve(this->number_constraints);
 
+      const auto& constraints_lower_bounds = this->get_constraints_lower_bounds();
+      const auto& constraints_upper_bounds = this->get_constraints_upper_bounds();
       for (size_t constraint_index: Range(this->number_constraints)) {
-         const double lower_bound = this->constraint_lower_bound(constraint_index);
-         const double upper_bound = this->constraint_upper_bound(constraint_index);
-         if (lower_bound == upper_bound) {
+         if (constraints_lower_bounds[constraint_index] == constraints_upper_bounds[constraint_index]) {
             equality_constraints.emplace_back(constraint_index);
          }
-         else if (is_infinite(lower_bound) && is_infinite(upper_bound)) {
+         else if (is_infinite(constraints_lower_bounds[constraint_index]) && is_infinite(constraints_upper_bounds[constraint_index])) {
             WARNING << "Constraint c" << constraint_index << " has no bounds\n";
             // count the constraint as inequality to avoid reindexing of the constraints
             inequality_constraints.emplace_back(constraint_index);

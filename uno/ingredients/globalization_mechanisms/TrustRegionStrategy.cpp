@@ -124,13 +124,15 @@ namespace uno {
    void TrustRegionStrategy::reset_active_trust_region_multipliers(const Model& model, const Direction& direction, Iterate& trial_iterate) const {
       assert(0 < this->radius && "The trust-region radius should be positive");
       // reset multipliers for bound constraints active at trust region (except if one of the original bounds is active)
+      const auto& variables_lower_bounds = model.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = model.get_variables_upper_bounds();
       for (size_t variable_index: Range(model.number_variables)) {
          if (std::abs(direction.primals[variable_index] + this->radius) <= this->activity_tolerance &&
-               this->activity_tolerance < std::abs(trial_iterate.primals[variable_index] - model.variable_lower_bound(variable_index))) {
+               this->activity_tolerance < std::abs(trial_iterate.primals[variable_index] - variables_lower_bounds[variable_index])) {
             trial_iterate.multipliers.lower_bounds[variable_index] = 0.;
          }
          if (std::abs(direction.primals[variable_index] - this->radius) <= this->activity_tolerance &&
-               this->activity_tolerance < std::abs(model.variable_upper_bound(variable_index) - trial_iterate.primals[variable_index])) {
+               this->activity_tolerance < std::abs(variables_upper_bounds[variable_index] - trial_iterate.primals[variable_index])) {
             trial_iterate.multipliers.upper_bounds[variable_index] = 0.;
          }
       }

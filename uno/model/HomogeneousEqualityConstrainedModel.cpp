@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "HomogeneousEqualityConstrainedModel.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "optimization/Iterate.hpp"
 #include "symbolic/Range.hpp"
 
@@ -14,19 +15,25 @@ namespace uno {
             original_model.get_inequality_constraints().size(), original_model.number_constraints,
             original_model.optimization_sense, original_model.lagrangian_sign_convention),
          model(original_model),
-         constraint_index_of_inequality_index(this->model.get_inequality_constraints().size()),
-         slack_index_of_constraint_index(this->model.number_constraints),
          // all constraints are equality constraints
          equality_constraints(Range(this->number_constraints)),
          inequality_constraints(Range(0)),
-         slacks(this->model.get_inequality_constraints().size()) {
+         slacks(this->model.get_inequality_constraints().size()),
+         variables_lower_bounds(this->number_variables),
+         variables_upper_bounds(this->number_variables),
+         constraints_lower_bounds(this->number_constraints, 0.),
+         constraints_upper_bounds(this->number_constraints, 0.) {
+      // copy the original variables bounds
+      view(this->variables_lower_bounds, 0, original_model.number_variables) = original_model.get_variables_lower_bounds();
+      view(this->variables_upper_bounds, 0, original_model.number_variables) = original_model.get_variables_upper_bounds();
       // register the inequality constraint of each slack
       size_t inequality_index = 0;
       for (const size_t constraint_index: this->model.get_inequality_constraints()) {
          const size_t slack_variable_index = this->model.number_variables + inequality_index;
-         this->constraint_index_of_inequality_index[inequality_index] = constraint_index;
-         this->slack_index_of_constraint_index[constraint_index] = slack_variable_index;
          this->slacks.insert(constraint_index, slack_variable_index);
+         // bounds of the slack
+         this->variables_lower_bounds[slack_variable_index] = this->model.get_constraints_lower_bounds()[constraint_index];
+         this->variables_upper_bounds[slack_variable_index] = this->model.get_constraints_upper_bounds()[constraint_index];
          ++inequality_index;
       }
    }
@@ -64,7 +71,8 @@ namespace uno {
 
       // equality constraints: make sure they are homogeneous (c(x) = 0)
       for (const size_t constraint_index: this->model.get_equality_constraints()) {
-         constraints[constraint_index] -= this->model.constraint_lower_bound(constraint_index);
+         const double fixed_bound = this->model.get_constraints_lower_bounds()[constraint_index];
+         constraints[constraint_index] -= fixed_bound;
       }
    }
 
@@ -131,26 +139,12 @@ namespace uno {
       this->model.compute_hessian_vector_product(x, vector, objective_multiplier, multipliers, result);
    }
 
-   double HomogeneousEqualityConstrainedModel::variable_lower_bound(size_t variable_index) const {
-      if (variable_index < this->model.number_variables) { // original variable
-         return this->model.variable_lower_bound(variable_index);
-      }
-      else { // slack variable
-         const size_t slack_index = variable_index - this->model.number_variables;
-         const size_t constraint_index = this->constraint_index_of_inequality_index[slack_index];
-         return this->model.constraint_lower_bound(constraint_index);
-      }
+   const std::vector<double>& HomogeneousEqualityConstrainedModel::get_variables_lower_bounds() const {
+      return this->variables_lower_bounds;
    }
-
-   double HomogeneousEqualityConstrainedModel::variable_upper_bound(size_t variable_index) const {
-      if (variable_index < this->model.number_variables) { // original variable
-         return this->model.variable_upper_bound(variable_index);
-      }
-      else { // slack variable
-         const size_t inequality_index = variable_index - this->model.number_variables;
-         const size_t constraint_index = this->constraint_index_of_inequality_index[inequality_index];
-         return this->model.constraint_upper_bound(constraint_index);
-      }
+   
+   const std::vector<double>& HomogeneousEqualityConstrainedModel::get_variables_upper_bounds() const {
+      return this->variables_upper_bounds;
    }
 
    const SparseVector<size_t>& HomogeneousEqualityConstrainedModel::get_slacks() const {
@@ -161,12 +155,12 @@ namespace uno {
       return this->model.get_fixed_variables();
    }
 
-   double HomogeneousEqualityConstrainedModel::constraint_lower_bound(size_t /*constraint_index*/) const {
-      return 0.; // c(x) = 0
+   const std::vector<double>& HomogeneousEqualityConstrainedModel::get_constraints_lower_bounds() const {
+      return this->constraints_lower_bounds;
    }
 
-   double HomogeneousEqualityConstrainedModel::constraint_upper_bound(size_t /*constraint_index*/) const {
-      return 0.;
+   const std::vector<double>& HomogeneousEqualityConstrainedModel::get_constraints_upper_bounds() const {
+      return this->constraints_upper_bounds;
    }
 
    const Collection<size_t>& HomogeneousEqualityConstrainedModel::get_equality_constraints() const {

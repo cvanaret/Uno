@@ -113,12 +113,12 @@ namespace uno {
       return this->model.number_variables;
    }
 
-   double OptimizationProblem::variable_lower_bound(size_t variable_index) const {
-      return this->model.variable_lower_bound(variable_index);
+   const std::vector<double>& OptimizationProblem::get_variables_lower_bounds() const {
+      return this->model.get_variables_lower_bounds();
    }
 
-   double OptimizationProblem::variable_upper_bound(size_t variable_index) const {
-      return this->model.variable_upper_bound(variable_index);
+   const std::vector<double>& OptimizationProblem::get_variables_upper_bounds() const {
+      return this->model.get_variables_upper_bounds();
    }
 
    const Vector<size_t>& OptimizationProblem::get_fixed_variables() const {
@@ -129,12 +129,12 @@ namespace uno {
       return this->primal_regularization_variables;
    }
 
-   double OptimizationProblem::constraint_lower_bound(size_t constraint_index) const {
-      return this->model.constraint_lower_bound(constraint_index);
+   const std::vector<double>& OptimizationProblem::get_constraints_lower_bounds() const {
+      return this->model.get_constraints_lower_bounds();
    }
 
-   double OptimizationProblem::constraint_upper_bound(size_t constraint_index) const {
-      return this->model.constraint_upper_bound(constraint_index);
+   const std::vector<double>& OptimizationProblem::get_constraints_upper_bounds() const {
+      return this->model.get_constraints_upper_bounds();
    }
 
    const Collection<size_t>& OptimizationProblem::get_equality_constraints() const {
@@ -161,31 +161,35 @@ namespace uno {
          const Multipliers& multipliers, double shift_value, Norm residual_norm) const {
       // bound constraints
       const Range variables_range = Range(this->number_variables);
+      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
       const VectorExpression variable_complementarity{variables_range, [&](size_t variable_index) {
          assert(variable_index < primals.size());
          assert(variable_index < multipliers.lower_bounds.size());
          assert(variable_index < multipliers.upper_bounds.size());
 
          if (0. < multipliers.lower_bounds[variable_index]) {
-            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - this->variable_lower_bound(variable_index)) - shift_value;
+            return multipliers.lower_bounds[variable_index] * (primals[variable_index] - variables_lower_bounds[variable_index]) - shift_value;
          }
          if (multipliers.upper_bounds[variable_index] < 0.) {
-            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - this->variable_upper_bound(variable_index)) - shift_value;
+            return multipliers.upper_bounds[variable_index] * (primals[variable_index] - variables_upper_bounds[variable_index]) - shift_value;
          }
          return 0.;
       }};
 
       // inequality constraints
+      const auto& constraints_lower_bounds = this->model.get_constraints_lower_bounds();
+      const auto& constraints_upper_bounds = this->model.get_constraints_upper_bounds();
       const VectorExpression constraint_complementarity{this->get_inequality_constraints(), [&](size_t constraint_index) {
          assert(constraint_index < constraints.size());
          assert(constraint_index < multipliers.constraints.size());
 
          if (0. < multipliers.constraints[constraint_index]) { // lower bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_lower_bound(constraint_index)) -
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_lower_bounds[constraint_index]) -
                shift_value;
          }
          if (multipliers.constraints[constraint_index] < 0.) { // upper bound
-            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - this->constraint_upper_bound(constraint_index)) -
+            return multipliers.constraints[constraint_index] * (constraints[constraint_index] - constraints_upper_bounds[constraint_index]) -
                shift_value;
          }
          return 0.;
@@ -196,15 +200,17 @@ namespace uno {
    double OptimizationProblem::compute_centrality_error(const Vector<double>& primals, const Multipliers& multipliers,
          double shift) const {
       const Range variables_range = Range(this->number_variables);
+      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
       const VectorExpression shifted_bound_complementarity{variables_range, [&](size_t variable_index) {
          double result = 0.;
          if (0. < multipliers.lower_bounds[variable_index]) { // lower bound
             result = std::max(result, std::abs(multipliers.lower_bounds[variable_index] *
-               (primals[variable_index] - this->variable_lower_bound(variable_index)) - shift));
+               (primals[variable_index] - variables_lower_bounds[variable_index]) - shift));
          }
          if (multipliers.upper_bounds[variable_index] < 0.) { // upper bound
             result = std::max(result, std::abs(multipliers.upper_bounds[variable_index] *
-               (primals[variable_index] - this->variable_upper_bound(variable_index)) - shift));
+               (primals[variable_index] - variables_upper_bounds[variable_index]) - shift));
          }
          return result;
       }};

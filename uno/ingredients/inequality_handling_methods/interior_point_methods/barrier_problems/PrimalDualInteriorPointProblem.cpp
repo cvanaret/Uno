@@ -22,7 +22,9 @@ namespace uno {
          first_reformulation(problem),
          parameterization(parameterization),
          parameters(parameters),
-         equality_constraints(problem.number_constraints) {
+         equality_constraints(problem.number_constraints),
+         barrier_variables_lower_bounds(this->number_variables, -INF<double>),
+         barrier_variables_upper_bounds(this->number_variables, INF<double>) {
    }
 
    std::unique_ptr<OptimizationProblem> PrimalDualInteriorPointProblem::clone() const {
@@ -34,10 +36,13 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
+      const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
+
       // make the initial point strictly feasible wrt the bounds
       for (size_t variable_index: Range(this->number_variables)) {
          initial_iterate.primals[variable_index] = this->push_variable_to_interior(initial_iterate.primals[variable_index],
-            this->first_reformulation.variable_lower_bound(variable_index), this->first_reformulation.variable_upper_bound(variable_index));
+            variables_lower_bounds[variable_index], variables_upper_bounds[variable_index]);
       }
 
       // set the slack variables (if any)
@@ -45,9 +50,8 @@ namespace uno {
          evaluations.evaluate_constraints(this->model, initial_iterate.primals);
          // set the slacks to the constraint values
          for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
-            initial_iterate.primals[slack_index] =
-               this->push_variable_to_interior(evaluations.constraints[constraint_index],
-               this->first_reformulation.variable_lower_bound(slack_index), this->first_reformulation.variable_upper_bound(slack_index));
+            initial_iterate.primals[slack_index] = this->push_variable_to_interior(evaluations.constraints[constraint_index],
+               variables_lower_bounds[slack_index], variables_upper_bounds[slack_index]);
          }
          // since the slacks have been set, the function evaluations should also be updated
          evaluations.are_constraints_computed = false;
@@ -57,12 +61,10 @@ namespace uno {
 
       // set the bound multipliers
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         const double lower_bound = this->first_reformulation.variable_lower_bound(variable_index);
-         const double upper_bound = this->first_reformulation.variable_upper_bound(variable_index);
-         if (is_finite(lower_bound)) {
+         if (is_finite(variables_lower_bounds[variable_index])) {
             initial_iterate.multipliers.lower_bounds[variable_index] = this->parameters.default_multiplier;
          }
-         if (is_finite(upper_bound)) {
+         if (is_finite(variables_upper_bounds[variable_index])) {
             initial_iterate.multipliers.upper_bounds[variable_index] = -this->parameters.default_multiplier;
          }
       }
@@ -82,8 +84,10 @@ namespace uno {
       }
       else {
          // barrier terms
+         const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+         const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
          for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-            if (is_finite(this->first_reformulation.variable_lower_bound(variable_index)) || is_finite(this->first_reformulation.variable_upper_bound(variable_index))) {
+            if (is_finite(variables_lower_bounds[variable_index]) || is_finite(variables_upper_bounds[variable_index])) {
                return true;
             }
          }
@@ -94,10 +98,10 @@ namespace uno {
    size_t PrimalDualInteriorPointProblem::number_hessian_nonzeros(const HessianModel& hessian_model) const {
       size_t number_nonzeros = this->first_reformulation.number_hessian_nonzeros(hessian_model);
       // barrier contribution: original variables
+      const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         const double lower_bound = this->first_reformulation.variable_lower_bound(variable_index);
-         const double upper_bound = this->first_reformulation.variable_upper_bound(variable_index);
-         if (is_finite(lower_bound) || is_finite(upper_bound)) {
+         if (is_finite(variables_lower_bounds[variable_index]) || is_finite(variables_upper_bounds[variable_index])) {
             ++number_nonzeros;
          }
       }
@@ -116,10 +120,10 @@ namespace uno {
 
       // diagonal barrier terms
       size_t current_index = this->first_reformulation.number_hessian_nonzeros(hessian_model);
+      const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         const bool finite_lower_bound = is_finite(this->first_reformulation.variable_lower_bound(variable_index));
-         const bool finite_upper_bound = is_finite(this->first_reformulation.variable_upper_bound(variable_index));
-         if (finite_lower_bound || finite_upper_bound) {
+         if (is_finite(variables_lower_bounds[variable_index]) || is_finite(variables_upper_bounds[variable_index])) {
             row_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
             column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
             ++current_index;
@@ -137,19 +141,21 @@ namespace uno {
 
       // barrier terms
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
+      const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
          double barrier_term = 0.;
-         if (is_finite(this->first_reformulation.variable_lower_bound(variable_index))) { // lower bounded
-            barrier_term += -barrier_parameter/(iterate.primals[variable_index] - this->first_reformulation.variable_lower_bound(variable_index));
+         if (is_finite(variables_lower_bounds[variable_index])) { // lower bounded
+            barrier_term += -barrier_parameter/(iterate.primals[variable_index] - variables_lower_bounds[variable_index]);
             // damping
-            if (is_infinite(this->first_reformulation.variable_upper_bound(variable_index))) {
+            if (is_infinite(variables_upper_bounds[variable_index])) {
                barrier_term += this->parameters.damping_factor * barrier_parameter;
             }
          }
-         if (is_finite(this->first_reformulation.variable_upper_bound(variable_index))) { // upper bounded
-            barrier_term += -barrier_parameter/(iterate.primals[variable_index] - this->first_reformulation.variable_upper_bound(variable_index));
+         if (is_finite(variables_upper_bounds[variable_index])) { // upper bounded
+            barrier_term += -barrier_parameter/(iterate.primals[variable_index] - variables_upper_bounds[variable_index]);
             // damping
-            if (is_infinite(this->first_reformulation.variable_lower_bound(variable_index))) {
+            if (is_infinite(variables_lower_bounds[variable_index])) {
                barrier_term -= this->parameters.damping_factor * barrier_parameter;
             }
          }
@@ -167,19 +173,21 @@ namespace uno {
 
       // barrier terms
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
+      const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
          double barrier_term = 0.;
-         if (is_finite(this->first_reformulation.variable_lower_bound(variable_index))) { // lower bounded
-            barrier_term += -barrier_parameter/(iterate.primals[variable_index] - this->first_reformulation.variable_lower_bound(variable_index));
+         if (is_finite(variables_lower_bounds[variable_index])) { // lower bounded
+            barrier_term += -barrier_parameter/(iterate.primals[variable_index] - variables_lower_bounds[variable_index]);
             // damping
-            if (is_infinite(this->first_reformulation.variable_upper_bound(variable_index))) {
+            if (is_infinite(variables_upper_bounds[variable_index])) {
                barrier_term += this->parameters.damping_factor * barrier_parameter;
             }
          }
-         if (is_finite(this->first_reformulation.variable_upper_bound(variable_index))) { // upper bounded
-            barrier_term += -barrier_parameter/(iterate.primals[variable_index] - this->first_reformulation.variable_upper_bound(variable_index));
+         if (is_finite(variables_upper_bounds[variable_index])) { // upper bounded
+            barrier_term += -barrier_parameter/(iterate.primals[variable_index] - variables_upper_bounds[variable_index]);
             // damping
-            if (is_infinite(this->first_reformulation.variable_lower_bound(variable_index))) {
+            if (is_infinite(variables_lower_bounds[variable_index])) {
                barrier_term -= this->parameters.damping_factor * barrier_parameter;
             }
          }
@@ -195,17 +203,19 @@ namespace uno {
 
       // barrier terms
       size_t nonzero_index = this->first_reformulation.number_hessian_nonzeros(hessian_model);
+      const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         const bool finite_lower_bound = is_finite(this->first_reformulation.variable_lower_bound(variable_index));
-         const bool finite_upper_bound = is_finite(this->first_reformulation.variable_upper_bound(variable_index));
+         const bool finite_lower_bound = is_finite(variables_lower_bounds[variable_index]);
+         const bool finite_upper_bound = is_finite(variables_upper_bounds[variable_index]);
          if (finite_lower_bound || finite_upper_bound) {
             double diagonal_barrier_term = 0.;
             if (finite_lower_bound) {
-               const double distance_to_bound = primal_variables[variable_index] - this->first_reformulation.variable_lower_bound(variable_index);
+               const double distance_to_bound = primal_variables[variable_index] - variables_lower_bounds[variable_index];
                diagonal_barrier_term += multipliers.lower_bounds[variable_index] / distance_to_bound;
             }
             if (finite_upper_bound) {
-               const double distance_to_bound = primal_variables[variable_index] - this->first_reformulation.variable_upper_bound(variable_index);
+               const double distance_to_bound = primal_variables[variable_index] - variables_upper_bounds[variable_index];
                diagonal_barrier_term += multipliers.upper_bounds[variable_index] / distance_to_bound;
             }
             hessian_values[nonzero_index] = diagonal_barrier_term;
@@ -230,17 +240,19 @@ namespace uno {
       this->first_reformulation.compute_hessian_vector_product(hessian_model, x, vector, multipliers, result);
 
       // barrier terms
+      const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         const bool finite_lower_bound = is_finite(this->first_reformulation.variable_lower_bound(variable_index));
-         const bool finite_upper_bound = is_finite(this->first_reformulation.variable_upper_bound(variable_index));
+         const bool finite_lower_bound = is_finite(variables_lower_bounds[variable_index]);
+         const bool finite_upper_bound = is_finite(variables_upper_bounds[variable_index]);
          if (finite_lower_bound || finite_upper_bound) {
             double diagonal_barrier_term = 0.;
             if (finite_lower_bound) { // lower bounded
-               const double distance_to_bound = vector[variable_index] - this->first_reformulation.variable_lower_bound(variable_index);
+               const double distance_to_bound = vector[variable_index] - variables_lower_bounds[variable_index];
                diagonal_barrier_term += multipliers.lower_bounds[variable_index] / distance_to_bound;
             }
             if (finite_upper_bound) { // upper bounded
-               const double distance_to_bound = vector[variable_index] - this->first_reformulation.variable_upper_bound(variable_index);
+               const double distance_to_bound = vector[variable_index] - variables_upper_bounds[variable_index];
                diagonal_barrier_term += multipliers.upper_bounds[variable_index] / distance_to_bound;
             }
             result[variable_index] += diagonal_barrier_term * vector[variable_index];
@@ -248,24 +260,24 @@ namespace uno {
       }
    }
 
-   double PrimalDualInteriorPointProblem::variable_lower_bound(size_t /*variable_index*/) const {
-      return -INF<double>;
+   const std::vector<double>& PrimalDualInteriorPointProblem::get_variables_lower_bounds() const {
+      return this->barrier_variables_lower_bounds;
    }
 
-   double PrimalDualInteriorPointProblem::variable_upper_bound(size_t /*variable_index*/) const {
-      return INF<double>;
+   const std::vector<double>& PrimalDualInteriorPointProblem::get_variables_upper_bounds() const {
+      return this->barrier_variables_lower_bounds;
    }
 
    const Vector<size_t>& PrimalDualInteriorPointProblem::get_fixed_variables() const {
       return this->fixed_variables;
    }
 
-   double PrimalDualInteriorPointProblem::constraint_lower_bound(size_t /*constraint_index*/) const {
-      return 0.;
+   const std::vector<double>& PrimalDualInteriorPointProblem::get_constraints_lower_bounds() const {
+      return this->first_reformulation.get_constraints_lower_bounds();
    }
 
-   double PrimalDualInteriorPointProblem::constraint_upper_bound(size_t /*constraint_index*/) const {
-      return 0.;
+   const std::vector<double>& PrimalDualInteriorPointProblem::get_constraints_upper_bounds() const {
+      return this->first_reformulation.get_constraints_upper_bounds();
    }
 
    const Collection<size_t>& PrimalDualInteriorPointProblem::get_equality_constraints() const {
@@ -335,17 +347,17 @@ namespace uno {
       direction.multipliers.lower_bounds.fill(0.);
       direction.multipliers.upper_bounds.fill(0.);
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
+      const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         const double lower_bound = this->first_reformulation.variable_lower_bound(variable_index);
-         const double upper_bound = this->first_reformulation.variable_upper_bound(variable_index);
-         if (is_finite(lower_bound)) {
-            const double distance_to_bound = current_iterate.primals[variable_index] - lower_bound;
+         if (is_finite(variables_lower_bounds[variable_index])) {
+            const double distance_to_bound = current_iterate.primals[variable_index] - variables_lower_bounds[variable_index];
             direction.multipliers.lower_bounds[variable_index] = (barrier_parameter - direction.primals[variable_index] *
                current_iterate.multipliers.lower_bounds[variable_index]) / distance_to_bound - current_iterate.multipliers.lower_bounds[variable_index];
             assert(is_finite(direction.multipliers.lower_bounds[variable_index]) && "The lower bound dual is infinite");
          }
-         if (is_finite(upper_bound)) {
-            const double distance_to_bound = current_iterate.primals[variable_index] - upper_bound;
+         if (is_finite(variables_upper_bounds[variable_index])) {
+            const double distance_to_bound = current_iterate.primals[variable_index] - variables_upper_bounds[variable_index];
             direction.multipliers.upper_bounds[variable_index] = (barrier_parameter - direction.primals[variable_index] *
                current_iterate.multipliers.upper_bounds[variable_index]) / distance_to_bound - current_iterate.multipliers.upper_bounds[variable_index];
             assert(is_finite(direction.multipliers.upper_bounds[variable_index]) && "The upper bound dual is infinite");
@@ -357,17 +369,19 @@ namespace uno {
    double PrimalDualInteriorPointProblem::primal_fraction_to_boundary(const Vector<double>& current_primals,
          const Vector<double>& primal_direction, double tau) const {
       double step_length = 1.;
+      const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         const double lower_bound = this->first_reformulation.variable_lower_bound(variable_index);
-         const double upper_bound = this->first_reformulation.variable_upper_bound(variable_index);
-         if (is_finite(lower_bound) && primal_direction[variable_index] < 0.) {
-            const double distance = -tau * (current_primals[variable_index] - lower_bound) / primal_direction[variable_index];
+         if (is_finite(variables_lower_bounds[variable_index]) && primal_direction[variable_index] < 0.) {
+            const double distance = -tau * (current_primals[variable_index] - variables_lower_bounds[variable_index]) /
+               primal_direction[variable_index];
             if (0. < distance) {
                step_length = std::min(step_length, distance);
             }
          }
-         if (is_finite(upper_bound) && 0. < primal_direction[variable_index]) {
-            const double distance = -tau * (current_primals[variable_index] - upper_bound) / primal_direction[variable_index];
+         if (is_finite(variables_upper_bounds[variable_index]) && 0. < primal_direction[variable_index]) {
+            const double distance = -tau * (current_primals[variable_index] - variables_upper_bounds[variable_index]) /
+               primal_direction[variable_index];
             if (0. < distance) {
                step_length = std::min(step_length, distance);
             }
@@ -380,16 +394,16 @@ namespace uno {
    double PrimalDualInteriorPointProblem::dual_fraction_to_boundary(const Multipliers& current_multipliers,
          const Multipliers& direction_multipliers, double tau) const {
       double step_length = 1.;
+      const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         const double lower_bound = this->first_reformulation.variable_lower_bound(variable_index);
-         const double upper_bound = this->first_reformulation.variable_upper_bound(variable_index);
-         if (is_finite(lower_bound) && direction_multipliers.lower_bounds[variable_index] < 0.) {
+         if (is_finite(variables_lower_bounds[variable_index]) && direction_multipliers.lower_bounds[variable_index] < 0.) {
             const double distance = -tau * current_multipliers.lower_bounds[variable_index] / direction_multipliers.lower_bounds[variable_index];
             if (0. < distance) {
                step_length = std::min(step_length, distance);
             }
          }
-         if (is_finite(upper_bound) && 0. < direction_multipliers.upper_bounds[variable_index]) {
+         if (is_finite(variables_upper_bounds[variable_index]) && 0. < direction_multipliers.upper_bounds[variable_index]) {
             const double distance = -tau * current_multipliers.upper_bounds[variable_index] / direction_multipliers.upper_bounds[variable_index];
             if (0. < distance) {
                step_length = std::min(step_length, distance);
@@ -404,21 +418,21 @@ namespace uno {
          const Vector<double>& primal_direction) const {
       double directional_derivative = 0.;
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
+      const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         const double lower_bound = this->first_reformulation.variable_lower_bound(variable_index);
-         const double upper_bound = this->first_reformulation.variable_upper_bound(variable_index);
-         if (is_finite(lower_bound)) {
+         if (is_finite(variables_lower_bounds[variable_index])) {
             directional_derivative += -barrier_parameter / (current_iterate.primals[variable_index] -
-               lower_bound) * primal_direction[variable_index];
-            if (is_infinite(upper_bound)) {
+               variables_lower_bounds[variable_index]) * primal_direction[variable_index];
+            if (is_infinite(variables_upper_bounds[variable_index])) {
                // damping
                directional_derivative += this->parameters.damping_factor * barrier_parameter * primal_direction[variable_index];
             }
          }
-         if (is_finite(upper_bound)) {
+         if (is_finite(variables_upper_bounds[variable_index])) {
             directional_derivative += -barrier_parameter / (current_iterate.primals[variable_index] -
-               upper_bound) * primal_direction[variable_index];
-            if (is_infinite(lower_bound)) {
+               variables_upper_bounds[variable_index]) * primal_direction[variable_index];
+            if (is_infinite(variables_lower_bounds[variable_index])) {
                // damping
                directional_derivative -= this->parameters.damping_factor * barrier_parameter * primal_direction[variable_index];
             }
@@ -430,11 +444,11 @@ namespace uno {
    void PrimalDualInteriorPointProblem::postprocess_iterate(Iterate& iterate) const {
       // rescale the bound multipliers (Eq. 16 in Ipopt paper)
       const double barrier_parameter = this->parameterization.get("barrier_parameter");
+      const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         const double lower_bound = this->first_reformulation.variable_lower_bound(variable_index);
-         const double upper_bound = this->first_reformulation.variable_upper_bound(variable_index);
-         if (is_finite(lower_bound)) {
-            const double coefficient = barrier_parameter / (iterate.primals[variable_index] - lower_bound);
+         if (is_finite(variables_lower_bounds[variable_index])) {
+            const double coefficient = barrier_parameter / (iterate.primals[variable_index] - variables_lower_bounds[variable_index]);
             if (is_finite(coefficient)) {
                const double lb = coefficient / this->parameters.k_sigma;
                const double ub = coefficient * this->parameters.k_sigma;
@@ -452,8 +466,8 @@ namespace uno {
                }
             }
          }
-         if (is_finite(upper_bound)) {
-            const double coefficient = barrier_parameter / (iterate.primals[variable_index] - upper_bound);
+         if (is_finite(variables_upper_bounds[variable_index])) {
+            const double coefficient = barrier_parameter / (iterate.primals[variable_index] - variables_upper_bounds[variable_index]);
             if (is_finite(coefficient)) {
                const double lb = coefficient * this->parameters.k_sigma;
                const double ub = coefficient / this->parameters.k_sigma;
@@ -483,20 +497,20 @@ namespace uno {
 
       // add the contribution of the barrier terms
       double barrier_terms = 0.;
+      const auto& variables_lower_bounds = this->first_reformulation.get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->first_reformulation.get_variables_upper_bounds();
       for (size_t variable_index: Range(this->first_reformulation.number_variables)) {
-         const double lower_bound = this->first_reformulation.variable_lower_bound(variable_index);
-         const double upper_bound = this->first_reformulation.variable_upper_bound(variable_index);
-         if (is_finite(lower_bound)) {
-            barrier_terms -= std::log(iterate.primals[variable_index] - lower_bound);
-            if (is_infinite(upper_bound)) {
+         if (is_finite(variables_lower_bounds[variable_index])) {
+            barrier_terms -= std::log(iterate.primals[variable_index] - variables_lower_bounds[variable_index]);
+            if (is_infinite(variables_upper_bounds[variable_index])) {
                // damping
-               barrier_terms += this->parameters.damping_factor*(iterate.primals[variable_index] - lower_bound);
+               barrier_terms += this->parameters.damping_factor*(iterate.primals[variable_index] - variables_lower_bounds[variable_index]);
             }
          }
-         if (is_finite(upper_bound)) {
-            barrier_terms -= std::log(upper_bound - iterate.primals[variable_index]);
-            if (is_infinite(lower_bound)) {
-               barrier_terms += this->parameters.damping_factor*(upper_bound - iterate.primals[variable_index]);
+         if (is_finite(variables_upper_bounds[variable_index])) {
+            barrier_terms -= std::log(variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
+            if (is_infinite(variables_lower_bounds[variable_index])) {
+               barrier_terms += this->parameters.damping_factor*(variables_upper_bounds[variable_index] - iterate.primals[variable_index]);
             }
          }
       }
