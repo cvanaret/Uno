@@ -50,8 +50,7 @@ namespace uno {
          evaluations.evaluate_constraints(this->model, initial_iterate.primals);
          // set the slacks to the constraint values
          for (const auto [constraint_index, slack_index]: this->model.get_slacks()) {
-            initial_iterate.primals[slack_index] =
-               this->push_variable_to_interior(evaluations.constraints[constraint_index],
+            initial_iterate.primals[slack_index] = this->push_variable_to_interior(evaluations.constraints[constraint_index],
                variables_lower_bounds[slack_index], variables_upper_bounds[slack_index]);
          }
          // since the slacks have been set, the function evaluations should also be updated
