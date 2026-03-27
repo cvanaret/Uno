@@ -7,7 +7,6 @@
 #include <memory>
 #include "ingredients/globalization_mechanisms/GlobalizationMechanism.hpp"
 #include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
-#include "optimization/Direction.hpp"
 #include "optimization/Result.hpp"
 #include "optimization/SolutionStatus.hpp"
 
@@ -32,9 +31,8 @@ namespace uno {
 
    private:
       std::unique_ptr<GlobalizationMechanism> globalization_mechanism{};
-      Direction direction{};
 
-      void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Options& options,
+      [[nodiscard]] bool initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Options& options,
          EvaluationCache& evaluation_cache);
       [[nodiscard]] static Statistics create_statistics(const Model& model);
       [[nodiscard]] static bool check_termination(SolutionStatus solution_status, size_t iteration, size_t max_iterations,
