@@ -55,6 +55,9 @@ namespace uno {
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information) {
       // evaluate the functions based on warmstart information
       if (warmstart_information.new_iterate) {
+         for (size_t index: Range(subproblem.number_variables)) {
+            this->model.lp_.col_cost_[index] = 0.;
+         }
          subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->model.lp_.col_cost_.data(),
             current_evaluations);
          subproblem.problem.evaluate_constraints(subproblem.current_iterate, this->constraints.data(), current_evaluations);

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "Evaluations.hpp"
 #include "linear_algebra/COOSparsity.hpp"
+#include "linear_algebra/VectorView.hpp"
 #include "model/Model.hpp"
 #include "optimization/EvaluationErrors.hpp"
 
@@ -66,29 +67,29 @@ namespace uno {
       }
    }
 
-   void Evaluations::compute_jacobian_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
+   // y = J v, where J has dimensions (m, n), v has dimensions (n, 1), and y has dimensions (m, 1)
+   void Evaluations::compute_jacobian_vector_product(const Model& model, const double* vector, double* result) const {
       const size_t number_jacobian_nonzeros = this->jacobian_sparsity->row_indices.size();
       for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t constraint_index = static_cast<size_t>(this->jacobian_sparsity->row_indices[nonzero_index]);
          const size_t variable_index = static_cast<size_t>(this->jacobian_sparsity->column_indices[nonzero_index]);
          const double derivative = this->jacobian_values[nonzero_index];
-         assert(variable_index < vector.size());
-         assert(constraint_index < result.size());
+         assert(variable_index < model.number_variables);
+         assert(constraint_index < model.number_constraints);
 
          result[constraint_index] += derivative * vector[variable_index];
       }
    }
 
-   void Evaluations::compute_jacobian_transposed_vector_product(const Vector<double>& vector, Vector<double>& result) const {
-      result.fill(0.);
+   // x = Jᵀv, where J has dimensions (m, n), v has dimensions (m, 1), and x has dimensions (n, 1)
+   void Evaluations::compute_jacobian_transposed_vector_product(const Model& model, const double* vector, double* result) const {
       const size_t number_jacobian_nonzeros = this->jacobian_sparsity->row_indices.size();
       for (size_t nonzero_index: Range(number_jacobian_nonzeros)) {
          const size_t constraint_index = static_cast<size_t>(this->jacobian_sparsity->row_indices[nonzero_index]);
          const size_t variable_index = static_cast<size_t>(this->jacobian_sparsity->column_indices[nonzero_index]);
          const double derivative = this->jacobian_values[nonzero_index];
-         assert(constraint_index < vector.size());
-         assert(variable_index < result.size());
+         assert(constraint_index < model.number_constraints);
+         assert(variable_index < model.number_variables);
 
          result[variable_index] += derivative * vector[constraint_index];
       }

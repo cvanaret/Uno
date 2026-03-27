@@ -26,7 +26,7 @@ namespace uno {
 
       [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
-      void evaluate_functions(const OptimizationProblem& problem, Iterate& current_iterate, Evaluations& current_evaluations,
+      void evaluate_functions(const OptimizationProblem& problem, const Iterate& current_iterate, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information);
 
       Vector<double> constraints{};

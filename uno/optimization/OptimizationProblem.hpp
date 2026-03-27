@@ -59,8 +59,11 @@ namespace uno {
          Vector<double>& lagrangian_gradient) const;
       virtual void evaluate_lagrangian_hessian(Statistics& statistics, HessianModel& hessian_model,
          const Vector<double>& primal_variables, const Multipliers& multipliers, double* hessian_values) const;
-      virtual void compute_jacobian_vector_product(Evaluations& evaluations, const double* vector, double* result) const;
-      virtual void compute_jacobian_transposed_vector_product(Evaluations& evaluations, const double* vector, double* result) const;
+
+      // linear operators
+      virtual void compute_jacobian_vector_product(const double* vector, double* result, const Evaluations& evaluations) const;
+      virtual void compute_jacobian_transposed_vector_product(const double* vector, double* result,
+         const Evaluations& evaluations) const;
       virtual void compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
          const Multipliers& multipliers, double* result) const;
 

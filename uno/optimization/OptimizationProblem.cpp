@@ -67,10 +67,11 @@ namespace uno {
       }
    }
 
+   // warning: adds to objective_gradient (objective_gradient must be reset prior, if necessary)
    void OptimizationProblem::evaluate_objective_gradient(const Iterate& iterate, double* objective_gradient, Evaluations& evaluations) const {
       evaluations.evaluate_objective_gradient(this->model, iterate.primals);
       for (size_t index: Range(this->number_variables)) {
-         objective_gradient[index] = evaluations.objective_gradient[index];
+         objective_gradient[index] += evaluations.objective_gradient[index];
       }
    }
 
@@ -93,11 +94,14 @@ namespace uno {
          multipliers.constraints, hessian_values);
    }
 
-   void OptimizationProblem::compute_jacobian_vector_product(Evaluations& evaluations, const double* vector, double* result) const {
+   void OptimizationProblem::compute_jacobian_vector_product(const double* vector, double* result,
+         const Evaluations& evaluations) const {
+      evaluations.compute_jacobian_vector_product(this->model, vector, result);
    }
 
-   void OptimizationProblem::compute_jacobian_transposed_vector_product(Evaluations& evaluations, const double* vector,
-         double* result) const {
+   void OptimizationProblem::compute_jacobian_transposed_vector_product(const double* vector, double* result,
+         const Evaluations& evaluations) const {
+      evaluations.compute_jacobian_transposed_vector_product(this->model, vector, result);
    }
 
    void OptimizationProblem::compute_hessian_vector_product(HessianModel& hessian_model, const double* x, const double* vector,
