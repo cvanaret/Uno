@@ -34,9 +34,7 @@ namespace uno {
       UserModel(const char* problem_type, uno_int number_variables, uno_int base_indexing):
             problem_type(problem_type_from_string(problem_type)),
             base_indexing(base_indexing),
-            number_variables(number_variables),
-            variables_lower_bounds(number_variables, -INF<double>),
-            variables_upper_bounds(number_variables, INF<double>) {
+            number_variables(number_variables) {
       }
 
       ~UserModel() = default;
