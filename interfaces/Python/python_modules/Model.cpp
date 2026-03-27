@@ -18,6 +18,7 @@ namespace uno {
          PythonUserModel model(problem_type.data(), number_variables, base_indexing);
          model.variables_lower_bounds = std::move(variables_lower_bounds);
          model.variables_upper_bounds = std::move(variables_upper_bounds);
+         model.initial_primal_iterate.resize(static_cast<size_t>(number_variables), 0.);
          return model;
       }), "Constructor")
 
@@ -58,6 +59,7 @@ namespace uno {
          user_model.jacobian_row_indices = std::move(jacobian_row_indices);
          user_model.jacobian_column_indices = std::move(jacobian_column_indices);
          user_model.jacobian = std::move(jacobian);
+         user_model.initial_dual_iterate.resize(static_cast<size_t>(number_constraints), 0.);
       })
 
       .def("set_lagrangian_hessian", [](PythonUserModel& user_model, uno_int number_hessian_nonzeros, char hessian_triangular_part,

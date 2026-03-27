@@ -62,7 +62,7 @@ namespace uno {
 
    using PythonUserModel = UserModel<std::optional<Objective>, std::optional<ObjectiveGradient>, std::optional<Constraints>,
       std::optional<Jacobian>, std::optional<JacobianOperator>, std::optional<JacobianTransposedOperator>,
-      std::optional<Hessian>, std::optional<HessianOperator>, std::optional<std::vector<double>>, std::optional<py::object>>;
+      std::optional<Hessian>, std::optional<HessianOperator>, std::vector<double>, std::optional<py::object>>;
 } // namespace
 
 #endif // UNO_UNOPY_H
