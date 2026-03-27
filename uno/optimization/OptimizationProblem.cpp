@@ -6,6 +6,7 @@
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/VectorView.hpp"
+#include "model/Model.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "tools/Logger.hpp"

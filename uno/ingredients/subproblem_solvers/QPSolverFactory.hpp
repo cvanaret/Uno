@@ -6,11 +6,11 @@
 
 #include <initializer_list>
 #include <memory>
-#include "QPSolver.hpp"
 
 namespace uno {
    // forward declaration
    class Options;
+   class QPSolver;
 
    class QPSolverFactory {
    public:

@@ -10,6 +10,10 @@
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
+   // forward declaration
+   template <typename ElementType>
+   class DirectSymmetricIndefiniteLinearSolver;
+
    class PrimalInertiaCorrection: public InertiaCorrectionStrategy {
    public:
       explicit PrimalInertiaCorrection(const Options& options);

@@ -5,11 +5,12 @@
 #define UNO_EQPSOLVER_H
 
 #include <memory>
-#include "DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "SubproblemSolver.hpp"
 
 namespace uno {
-   // forward declaration
+   // forward declarations
+   template <typename ElementType>
+   class DirectSymmetricIndefiniteLinearSolver;
    class Options;
 
    class EQPSolver: public SubproblemSolver {

@@ -7,25 +7,24 @@
 #include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "relaxed_problems/l1RelaxedProblem.hpp"
-#include "ingredients/globalization_strategies/GlobalizationStrategy.hpp"
 #include "ingredients/globalization_strategies/MeritFunction.hpp"
 #include "ingredients/globalization_strategies/ProgressMeasures.hpp"
-#include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
-#include "ingredients/subproblem_solvers/SubproblemSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "optimization/Parameterization.hpp"
 
 namespace uno {
    // forward declaration
+   class HessianModel;
    class InequalityHandlingMethod;
-   class Subproblem;
+   class InertiaCorrectionStrategy;
+   class SubproblemSolver;
 
    enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
    class FeasibilityRestoration : public ConstraintRelaxationStrategy {
    public:
       FeasibilityRestoration(const Model& model, bool use_trust_region, Options& options);
-      ~FeasibilityRestoration() override = default;
+      ~FeasibilityRestoration() override;
 
       void initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate, Direction& direction,
          bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) override;

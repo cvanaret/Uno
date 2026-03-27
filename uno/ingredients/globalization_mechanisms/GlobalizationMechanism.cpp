@@ -17,6 +17,8 @@ namespace uno {
       constraint_relaxation_strategy(ConstraintRelaxationStrategyFactory::create(model, use_trust_region, options)) {
    }
 
+   GlobalizationMechanism::~GlobalizationMechanism() = default;
+
    size_t GlobalizationMechanism::get_number_subproblems_solved() const {
       return this->constraint_relaxation_strategy->get_number_subproblems_solved();
    }

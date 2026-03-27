@@ -13,6 +13,8 @@ namespace uno {
       protected_actual_reduction_macheps_coefficient(options.get_double("protected_actual_reduction_macheps_coefficient")) {
    }
 
+   GlobalizationStrategy::~GlobalizationStrategy() = default;
+
    bool GlobalizationStrategy::armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const {
       return (actual_reduction >= this->armijo_decrease_fraction * std::max(0., predicted_reduction - this->armijo_tolerance));
    }

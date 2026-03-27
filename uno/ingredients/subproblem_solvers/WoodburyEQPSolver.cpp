@@ -8,6 +8,7 @@
 #include "ingredients/hessian_models/quasi_newton/LBFGSHessian.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "linear_algebra/COOMatrix.hpp"
+#include "model/Model.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/WarmstartInformation.hpp"
 #include "options/Options.hpp"

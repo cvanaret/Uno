@@ -1,11 +1,12 @@
 // Copyright (c) 2025 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <cassert>
 #include "PrimalDualInertiaCorrection.hpp"
 #include "UnstableInertiaCorrection.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/LinearSystem.hpp"
+#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolverFactory.hpp"
 #include "options/Options.hpp"
 #include "symbolic/Collection.hpp"
 #include "tools/Logger.hpp"

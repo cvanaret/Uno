@@ -6,10 +6,10 @@
 
 #include <array>
 #include <memory>
-#include "GlobalizationMechanism.hpp"
 
 namespace uno {
    // forward declarations
+   class GlobalizationMechanism;
    class Model;
    class Options;
 

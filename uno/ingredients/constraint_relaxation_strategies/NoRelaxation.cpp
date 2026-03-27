@@ -3,8 +3,11 @@
 
 #include <memory>
 #include "NoRelaxation.hpp"
+#include "ingredients/hessian_models/HessianModel.hpp"
 #include "ingredients/hessian_models/HessianSubproblemSolverJointFactory.hpp"
+#include "ingredients/inequality_handling_methods/InequalityHandlingMethod.hpp"
 #include "ingredients/inequality_handling_methods/InequalityHandlingMethodFactory.hpp"
+#include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategy.hpp"
 #include "ingredients/inertia_correction_strategies/InertiaCorrectionStrategyFactory.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "ingredients/subproblem_solvers/SubproblemSolverFactory.hpp"
@@ -26,6 +29,8 @@ namespace uno {
          inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
          globalization_strategy(options) {
    }
+
+   NoRelaxation::~NoRelaxation() = default;
 
    void NoRelaxation::initialize(Statistics& statistics, const Model& model, Iterate& initial_iterate,
          Direction& direction, bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) {

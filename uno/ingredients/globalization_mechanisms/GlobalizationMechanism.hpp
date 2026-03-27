@@ -6,10 +6,10 @@
 
 #include <memory>
 #include <string>
-#include "ingredients/constraint_relaxation_strategies/ConstraintRelaxationStrategy.hpp"
 
 namespace uno {
    // forward declarations
+   class ConstraintRelaxationStrategy;
    class Direction;
    class EvaluationCache;
    class Evaluations;
@@ -23,7 +23,7 @@ namespace uno {
    class GlobalizationMechanism {
    public:
       GlobalizationMechanism(const Model& model, bool use_trust_region, Options& options);
-      virtual ~GlobalizationMechanism() = default;
+      virtual ~GlobalizationMechanism();
 
       virtual void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Direction& direction,
          EvaluationCache& evaluation_cache, Options& options) = 0;

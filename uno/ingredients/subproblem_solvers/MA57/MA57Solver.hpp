@@ -6,8 +6,8 @@
 
 #include <array>
 #include <vector>
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
-#include "ingredients/subproblem_solvers/COOLinearSystem.hpp"
+#include "../DirectSymmetricIndefiniteLinearSolver.hpp"
+#include "../COOLinearSystem.hpp"
 
 namespace uno {
    // forward declarations
