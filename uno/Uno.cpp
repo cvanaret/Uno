@@ -221,8 +221,14 @@ namespace uno {
    }
 
    void Uno::postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations) {
-      // in case the objective was not yet evaluated, evaluate it
-      evaluations.evaluate_objective(model, iterate.primals);
+      try {
+         // in case the objective was not yet evaluated, evaluate it
+         evaluations.evaluate_objective(model, iterate.primals);
+      }
+      catch (const std::exception& e) {
+         DISCRETE  << "The objective could not be evaluated at the final iterate: " << e.what()  << '\n';
+         evaluations.objective = INF<double>;
+      }
       model.postprocess_solution(iterate);
       DEBUG2 << "Final iterate:\n" << iterate;
    }
