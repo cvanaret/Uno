@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include "optimization/Direction.hpp"
 
 namespace uno {
    // forward declarations
@@ -25,17 +26,17 @@ namespace uno {
       GlobalizationMechanism(const Model& model, bool use_trust_region, Options& options);
       virtual ~GlobalizationMechanism();
 
-      virtual void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Direction& direction,
+      virtual void initialize(Statistics& statistics, const Model& model, Iterate& current_iterate,
          EvaluationCache& evaluation_cache, Options& options) = 0;
       virtual void compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
-         Direction& direction, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
-         UserCallbacks& user_callbacks) = 0;
+         EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) = 0;
 
       [[nodiscard]] virtual std::string get_name() const = 0;
       [[nodiscard]] size_t get_number_subproblems_solved() const;
 
    protected:
       const std::unique_ptr<ConstraintRelaxationStrategy> constraint_relaxation_strategy{};
+      Direction direction{};
 
       static void assemble_trial_iterate(const Model& model, Iterate& current_iterate, Iterate& trial_iterate,
          const Direction& direction, double primal_step_length, double dual_step_length);

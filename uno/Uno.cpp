@@ -82,61 +82,58 @@ namespace uno {
       WarmstartInformation warmstart_information{};
       warmstart_information.whole_problem_changed();
 
+      bool termination = false;
       OptimizationStatus optimization_status = OptimizationStatus::SUCCESS;
-      try { // catch errors at startup/initial iterate
-         // set the ingredients based on the user-defined options
-         this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
-         // use the initial primal-dual point to initialize the strategies and generate the initial iterate
-         this->initialize(statistics, model, current_iterate, options, evaluation_cache);
-         // allocate the trial iterate once and for all here
-         Iterate trial_iterate(current_iterate);
 
-         try { // catch errors during the optimization process
-            bool termination = false;
-            const size_t max_iterations = options.get_unsigned_int("max_iterations"); // maximum number of iterations
-            const double time_limit = options.get_double("time_limit"); // CPU time limit (can be inf)
-            if (max_iterations == 0) {
-               termination = true;
-               optimization_status = OptimizationStatus::ITERATION_LIMIT;
-            }
-            // outer loop: compute a sequence of accepted iterates
-            while (!termination) {
-               ++major_iterations;
-               statistics.start_new_line();
-               statistics.set("Major", major_iterations);
-               DEBUG << "\n### Outer iteration " << major_iterations << '\n';
-
-               // compute an acceptable iterate by solving a subproblem at the current point
-               warmstart_information.iterate_changed();
-               this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate,
-                  this->direction, evaluation_cache, warmstart_information, user_callbacks);
-               const bool user_termination = user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers,
-                  trial_iterate.objective_multiplier, trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity,
-                  trial_iterate.residuals.complementarity);
-               termination = Uno::check_termination(trial_iterate.status, major_iterations, max_iterations,
-                  timer.get_duration(), time_limit, user_termination, optimization_status);
-               
-               // the trial iterate becomes the current iterate for the next iteration
-               std::swap(current_iterate, trial_iterate);
-               std::swap(evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations);
-               evaluation_cache.trial_evaluations.reset();
-            }
-         }
-         catch (std::exception& exception) {
-            statistics.start_new_line();
-            statistics.set("Status", exception.what());
-            if (Logger::level == INFO) statistics.print_current_line();
-            DEBUG << exception.what() << '\n';
-            optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
-         }
-         if (Logger::level == INFO) statistics.print_footer();
-
-         Uno::postprocess_solution(model, current_iterate, evaluation_cache.current_evaluations);
-      }
-      catch (const std::exception& e) {
-         DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
+      // initialize the strategies and generate the initial iterate
+      const bool initialization_success = this->initialize(statistics, model, current_iterate, options, evaluation_cache);
+      if (!initialization_success) {
+         termination = true;
          optimization_status = OptimizationStatus::EVALUATION_ERROR;
       }
+
+      try {
+         Iterate trial_iterate(current_iterate); // allocate the trial iterate once and for all here
+         const size_t max_iterations = options.get_unsigned_int("max_iterations"); // maximum number of iterations
+         const double time_limit = options.get_double("time_limit"); // CPU time limit (can be inf)
+         if (max_iterations == 0) {
+            termination = true;
+            optimization_status = OptimizationStatus::ITERATION_LIMIT;
+         }
+         // outer loop: compute a sequence of accepted iterates
+         while (!termination) {
+            ++major_iterations;
+            statistics.start_new_line();
+            statistics.set("Major", major_iterations);
+            DEBUG << "\n### Outer iteration " << major_iterations << '\n';
+
+            // compute an acceptable iterate by solving a subproblem at the current point
+            warmstart_information.iterate_changed();
+            this->globalization_mechanism->compute_next_iterate(statistics, model, current_iterate, trial_iterate,
+               evaluation_cache, warmstart_information, user_callbacks);
+            const bool user_termination = user_callbacks.user_termination(trial_iterate.primals, trial_iterate.multipliers,
+               trial_iterate.objective_multiplier, trial_iterate.progress.infeasibility, trial_iterate.residuals.stationarity,
+               trial_iterate.residuals.complementarity);
+            termination = Uno::check_termination(trial_iterate.status, major_iterations, max_iterations,
+               timer.get_duration(), time_limit, user_termination, optimization_status);
+
+            // the trial iterate becomes the current iterate for the next iteration
+            std::swap(current_iterate, trial_iterate);
+            std::swap(evaluation_cache.current_evaluations, evaluation_cache.trial_evaluations);
+            evaluation_cache.trial_evaluations.reset();
+         }
+      }
+      // catch errors during the optimization process
+      catch (std::exception& exception) {
+         statistics.start_new_line();
+         statistics.set("Status", exception.what());
+         if (Logger::level == INFO) statistics.print_current_line();
+         DEBUG << exception.what() << '\n';
+         optimization_status = OptimizationStatus::ALGORITHMIC_ERROR;
+      }
+      if (Logger::level == INFO) statistics.print_footer();
+
+      Uno::postprocess_solution(model, current_iterate, evaluation_cache.current_evaluations);
       Result result = this->create_result(model, optimization_status, current_iterate, evaluation_cache.current_evaluations,
          major_iterations, timer);
       Uno::postprocess_multipliers_signs(model, result);
@@ -162,19 +159,30 @@ namespace uno {
       std::cout << "- Presets: filtersqp, ipopt\n";
    }
 
-   void Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Options& options,
+   bool Uno::initialize(Statistics& statistics, const Model& model, Iterate& current_iterate, Options& options,
          EvaluationCache& evaluation_cache) {
-      statistics.start_new_line();
-      statistics.set("Major", 0);
-      statistics.set("Status", "initial point");
+      try {
+         statistics.start_new_line();
+         statistics.set("Major", 0);
+         statistics.set("Status", "initial point");
 
-      model.project_onto_variable_bounds(current_iterate.primals);
-      this->globalization_mechanism->initialize(statistics, model, current_iterate, this->direction, evaluation_cache, options);
+         model.project_onto_variable_bounds(current_iterate.primals);
 
-      options.print_non_default();
-      if (Logger::level == INFO) {
-         statistics.print_header();
-         statistics.print_current_line();
+         // set the ingredients based on the user-defined options
+         this->globalization_mechanism = GlobalizationMechanismFactory::create(model, options);
+         this->globalization_mechanism->initialize(statistics, model, current_iterate, evaluation_cache, options);
+
+         options.print_non_default();
+         if (Logger::level == INFO) {
+            statistics.print_header();
+            statistics.print_current_line();
+         }
+         return true;
+      }
+      // catch errors at startup/initial iterate
+      catch (const std::exception& e) {
+         DISCRETE  << "An error occurred at the initial iterate: " << e.what()  << '\n';
+         return false;
       }
    }
 
@@ -213,8 +221,14 @@ namespace uno {
    }
 
    void Uno::postprocess_solution(const Model& model, Iterate& iterate, Evaluations& evaluations) {
-      // in case the objective was not yet evaluated, evaluate it
-      evaluations.evaluate_objective(model, iterate.primals);
+      try {
+         // in case the objective was not yet evaluated, evaluate it
+         evaluations.evaluate_objective(model, iterate.primals);
+      }
+      catch (const std::exception& e) {
+         DISCRETE  << "The objective could not be evaluated at the final iterate: " << e.what()  << '\n';
+         evaluations.objective = INF<double>;
+      }
       model.postprocess_solution(iterate);
       DEBUG2 << "Final iterate:\n" << iterate;
    }

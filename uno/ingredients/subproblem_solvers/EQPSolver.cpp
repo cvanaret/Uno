@@ -21,9 +21,9 @@ namespace uno {
       if (!subproblem.has_hessian_matrix()) {
          throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
       }
-      // access the sparse representation of the linear solver
-      auto& sparse_representation = this->linear_solver->get_linear_system();
-      sparse_representation.initialize_augmented_system(subproblem);
+      // access the linear system of the linear solver
+      auto& linear_system = this->linear_solver->get_linear_system();
+      linear_system.initialize_augmented_system(subproblem);
       this->linear_solver->initialize_memory();
    }
 
