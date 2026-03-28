@@ -109,8 +109,9 @@ namespace uno {
    }
 
    void PrimalDualInteriorPointProblem::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices,
-         uno_int solver_indexing, MatrixOrder matrix_order) const {
-      this->first_reformulation.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+         uno_int row_offset, uno_int column_offset, uno_int solver_indexing, MatrixOrder matrix_order) const {
+      this->first_reformulation.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset,
+         solver_indexing, matrix_order);
    }
 
    void PrimalDualInteriorPointProblem::compute_hessian_sparsity(const HessianModel& hessian_model, uno_int* row_indices,

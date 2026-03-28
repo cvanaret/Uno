@@ -81,8 +81,8 @@ namespace uno {
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       this->jacobian_values.resize(number_jacobian_nonzeros);
-      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(),
-         this->jacobian_column_indices.data(), Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
+      subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(), 0, 0,
+         Indexing::C_indexing, MatrixOrder::COLUMN_MAJOR);
       // HiGHS matrix in CSC format (variable after variable)
       this->model.lp_.a_matrix_.index_.resize(number_jacobian_nonzeros); // constraint indices
       this->model.lp_.a_matrix_.start_.resize(subproblem.number_variables + 1);

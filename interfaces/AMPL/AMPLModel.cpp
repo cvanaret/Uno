@@ -150,8 +150,8 @@ namespace uno {
       ++this->number_model_evaluations.objective_gradient;
    }
 
-   void AMPLModel::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
-         MatrixOrder matrix_order) const {
+   void AMPLModel::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset,
+         uno_int column_offset, uno_int solver_indexing, MatrixOrder matrix_order) const {
       // by default, AMPLModel computes the Jacobian in a column-wise order (variable by variable).
       // if a row-wise evaluation is wished, modify the goff fields of the ASL "Cgrad" structures
       if (matrix_order == MatrixOrder::ROW_MAJOR) {
@@ -171,8 +171,8 @@ namespace uno {
          while (constraint_gradient != nullptr) {
             const int variable_index = constraint_gradient->varno;
             // at the moment, the Jacobian is stored column-wise (that is, ordered by variables)
-            row_indices[constraint_gradient->goff] = static_cast<int>(constraint_index) + solver_indexing;
-            column_indices[constraint_gradient->goff] = variable_index + solver_indexing;
+            row_indices[constraint_gradient->goff] = static_cast<int>(constraint_index) + row_offset + solver_indexing;
+            column_indices[constraint_gradient->goff] = variable_index + column_offset + solver_indexing;
             constraint_gradient = constraint_gradient->next;
          }
       }

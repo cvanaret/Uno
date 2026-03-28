@@ -25,9 +25,9 @@ namespace uno {
          inertia_correction_strategy(inertia_correction_strategy) {
    }
 
-   void Subproblem::compute_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing,
-         MatrixOrder matrix_order) const {
-      this->problem.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+   void Subproblem::compute_jacobian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int row_offset,
+         uno_int column_offset, uno_int solver_indexing, MatrixOrder matrix_order) const {
+      this->problem.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing, matrix_order);
    }
 
    void Subproblem::compute_regularized_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const {
@@ -47,33 +47,32 @@ namespace uno {
 
    // lower triangular part of the symmetric augmented matrix
    void Subproblem::compute_regularized_augmented_matrix_sparsity(uno_int *row_indices, uno_int *column_indices,
-         const uno_int *jacobian_row_indices, const uno_int *jacobian_column_indices, uno_int solver_indexing) const {
+         uno_int solver_indexing) const {
       // sparsity of original Lagrangian Hessian in the (1, 1) block
       this->problem.compute_hessian_sparsity(this->hessian_model, row_indices, column_indices, solver_indexing);
 
       // copy Jacobian of general constraints into the (2, 1) block
-      const size_t hessian_offset = this->number_hessian_nonzeros();
-      for (size_t nonzero_index: Range(this->number_jacobian_nonzeros())) {
-         row_indices[hessian_offset + nonzero_index] = static_cast<int>(this->problem.number_variables) +
-            jacobian_row_indices[nonzero_index] + solver_indexing;
-         column_indices[hessian_offset + nonzero_index] = jacobian_column_indices[nonzero_index] + solver_indexing;
-      }
+      size_t nonzero_index = this->number_hessian_nonzeros();
+      const uno_int row_offset = static_cast<uno_int>(this->problem.number_variables);
+      constexpr uno_int column_offset = 0;
+      this->problem.compute_jacobian_sparsity(row_indices + nonzero_index, column_indices + nonzero_index,
+         row_offset, column_offset, solver_indexing, MatrixOrder::COLUMN_MAJOR);
 
       // regularize the augmented matrix only if required (diagonal regularization)
-      size_t current_index = hessian_offset + this->problem.number_jacobian_nonzeros();
+      nonzero_index += this->problem.number_jacobian_nonzeros();
       if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
          for (size_t variable_index: this->get_primal_regularization_variables()) {
-            row_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
-            column_indices[current_index] = static_cast<int>(variable_index) + solver_indexing;
-            ++current_index;
+            row_indices[nonzero_index] = static_cast<int>(variable_index) + solver_indexing;
+            column_indices[nonzero_index] = static_cast<int>(variable_index) + solver_indexing;
+            ++nonzero_index;
          }
       }
       if (this->inertia_correction_strategy.performs_dual_regularization()) {
          for (size_t constraint_index: this->get_dual_regularization_constraints()) {
             const int shifted_constraint_index = static_cast<int>(this->number_variables + constraint_index);
-            row_indices[current_index] = shifted_constraint_index + solver_indexing;
-            column_indices[current_index] = shifted_constraint_index + solver_indexing;
-            ++current_index;
+            row_indices[nonzero_index] = shifted_constraint_index + solver_indexing;
+            column_indices[nonzero_index] = shifted_constraint_index + solver_indexing;
+            ++nonzero_index;
          }
       }
    }
