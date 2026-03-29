@@ -71,7 +71,7 @@ namespace uno {
          const Vector<double>& primal_direction, double step_length) const override;
 
    protected:
-      const OptimizationProblem& first_reformulation;
+      const OptimizationProblem& inner;
       const Parameterization& parameterization;
       const InteriorPointParameters& parameters;
       const Vector<size_t> fixed_variables{};

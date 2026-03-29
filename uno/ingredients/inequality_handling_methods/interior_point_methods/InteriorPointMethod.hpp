@@ -22,7 +22,6 @@ namespace uno {
    public:
       explicit InteriorPointMethod(const Options& options);
 
-      void check_problem(const OptimizationProblem& problem, bool uses_trust_region) override;
       void initialize_statistics(Statistics& statistics) override;
       [[nodiscard]] std::unique_ptr<OptimizationProblem> reformulate(const OptimizationProblem& problem,
          Parameterization& parameterization) override;
@@ -70,19 +69,6 @@ namespace uno {
    }
 
    template <typename BarrierProblem>
-   void InteriorPointMethod<BarrierProblem>::check_problem(const OptimizationProblem& problem, bool uses_trust_region) {
-      if (uses_trust_region) {
-         throw std::runtime_error("A trust-region radius is not supported yet.");
-      }
-      if (!problem.get_inequality_constraints().empty()) {
-         throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
-      }
-      if (!problem.get_fixed_variables().empty()) {
-         throw std::runtime_error("The problem has fixed variables. Move them to the set of general constraints.");
-      }
-   }
-
-   template <typename BarrierProblem>
    void InteriorPointMethod<BarrierProblem>::initialize_statistics(Statistics& statistics) {
       statistics.add_column("Barrier", Statistics::double_width, 2, Statistics::column_order.at("Barrier"));
    }
@@ -90,6 +76,12 @@ namespace uno {
    template <typename BarrierProblem>
    std::unique_ptr<OptimizationProblem> InteriorPointMethod<BarrierProblem>::reformulate(const OptimizationProblem& problem,
          Parameterization& parameterization) {
+      if (!problem.get_inequality_constraints().empty()) {
+         throw std::runtime_error("The problem has inequality constraints. Create an instance of HomogeneousEqualityConstrainedModel");
+      }
+      if (!problem.get_fixed_variables().empty()) {
+         throw std::runtime_error("The problem has fixed variables. Move them to the set of general constraints.");
+      }
       parameterization.set("barrier_parameter", this->barrier_parameter());
       return std::make_unique<BarrierProblem>(problem, this->parameters, parameterization);
    }

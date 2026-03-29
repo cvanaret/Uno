@@ -63,7 +63,6 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/hessian_models/*.cpp
    uno/ingredients/hessian_models/quasi_newton/*.cpp
    uno/ingredients/inequality_handling_methods/*.cpp
-   uno/ingredients/inequality_handling_methods/inequality_constrained_methods/*.cpp
    uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
    uno/ingredients/inequality_handling_methods/interior_point_methods/barrier_problems/*.cpp
    uno/ingredients/inertia_correction_strategies/*.cpp
