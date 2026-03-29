@@ -81,14 +81,14 @@ namespace uno {
    }
 
    void HomogeneousEqualityConstrainedModel::compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices,
-         uno_int solver_indexing, MatrixOrder matrix_order) const {
-      this->model.compute_jacobian_sparsity(row_indices, column_indices, solver_indexing, matrix_order);
+         uno_int row_offset, uno_int column_offset, uno_int solver_indexing, MatrixOrder matrix_order) const {
+      this->model.compute_jacobian_sparsity(row_indices, column_indices, row_offset, column_offset, solver_indexing, matrix_order);
 
       // add the slack contributions
       size_t nonzero_index = this->model.number_jacobian_nonzeros();
       for (const auto [constraint_index, slack_index]: this->get_slacks()) {
-         row_indices[nonzero_index] = static_cast<int>(constraint_index) + solver_indexing;
-         column_indices[nonzero_index] = static_cast<int>(slack_index) + solver_indexing;
+         row_indices[nonzero_index] = static_cast<int>(constraint_index) + row_offset + solver_indexing;
+         column_indices[nonzero_index] = static_cast<int>(slack_index) + column_offset + solver_indexing;
          ++nonzero_index;
       }
    }

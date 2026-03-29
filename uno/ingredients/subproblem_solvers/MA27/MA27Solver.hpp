@@ -8,6 +8,7 @@
 #include <vector>
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "../COOLinearSystem.hpp"
+#include "linear_algebra/Indexing.hpp"
 
 namespace uno {
    // forward declaration
@@ -55,7 +56,7 @@ namespace uno {
 
    private:
       MA27Workspace workspace{};
-      COOLinearSystem linear_system{};
+      COOLinearSystem linear_system{Indexing::Fortran_indexing};
 
       bool analysis_performed{false};
       bool factorization_performed{false};

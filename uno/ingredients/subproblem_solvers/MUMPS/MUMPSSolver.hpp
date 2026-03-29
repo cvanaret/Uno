@@ -7,6 +7,7 @@
 #include "dmumps_c.h"
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "../COOLinearSystem.hpp"
+#include "linear_algebra/Indexing.hpp"
 
 namespace uno {
    class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<double> {
@@ -31,7 +32,7 @@ namespace uno {
 
    protected:
       DMUMPS_STRUC_C workspace{};
-      COOLinearSystem linear_system{};
+      COOLinearSystem linear_system{Indexing::Fortran_indexing};
 
       static const int JOB_INIT = -1;
       static const int JOB_END = -2;

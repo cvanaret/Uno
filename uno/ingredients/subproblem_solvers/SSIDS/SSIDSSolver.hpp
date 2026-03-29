@@ -7,6 +7,7 @@
 #include "spral_ssids.h"
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "../COOLinearSystem.hpp"
+#include "linear_algebra/Indexing.hpp"
 
 namespace uno {
    struct Workspace {
@@ -38,7 +39,7 @@ namespace uno {
 
    protected:
       Workspace workspace{};
-      COOLinearSystem linear_system{};
+      COOLinearSystem linear_system{Indexing::Fortran_indexing};
 
       bool analysis_performed{false};
       bool factorization_performed{false};

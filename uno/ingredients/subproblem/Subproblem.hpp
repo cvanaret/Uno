@@ -31,11 +31,10 @@ namespace uno {
          InertiaCorrectionStrategy& inertia_correction_strategy);
 
       // sparsity patterns
-      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing,
-         MatrixOrder matrix_order) const;
+      void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
+         uno_int solver_indexing, MatrixOrder matrix_order) const;
       void compute_regularized_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
-      void compute_regularized_augmented_matrix_sparsity(uno_int* row_indices, uno_int* column_indices,
-         const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, uno_int solver_indexing) const;
+      void compute_regularized_augmented_matrix_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const;
 
       void evaluate_jacobian(double* jacobian_values, Evaluations& evaluations) const;
 

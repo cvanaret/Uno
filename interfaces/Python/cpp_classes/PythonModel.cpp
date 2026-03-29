@@ -97,11 +97,13 @@ namespace uno {
       }
    }
 
-   void PythonModel::compute_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
-         MatrixOrder /*matrix_format*/) const {
+   void PythonModel::compute_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int row_offset,
+         uno_int column_offset, uno_int solver_indexing, MatrixOrder /*matrix_format*/) const {
       // copy the indices of the user sparsity patterns to the Uno vectors
-      std::copy_n(this->user_model.jacobian_row_indices.data(), static_cast<size_t>(this->user_model.number_jacobian_nonzeros), row_indices);
-      std::copy_n(this->user_model.jacobian_column_indices.data(), static_cast<size_t>(this->user_model.number_jacobian_nonzeros), column_indices);
+      for (size_t index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
+         row_indices[index] = this->user_model.jacobian_row_indices[index] + row_offset;
+         column_indices[index] = this->user_model.jacobian_column_indices[index] + column_offset;
+      }
       // TODO matrix_format
 
       // handle the solver indexing

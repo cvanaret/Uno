@@ -4,9 +4,8 @@
 #ifndef UNO_LINEARSYSTEM_H
 #define UNO_LINEARSYSTEM_H
 
-#include <vector>
+#include <cstddef>
 #include "SolverWorkspace.hpp"
-#include "../interfaces/C/uno_int.h"
 #include "linear_algebra/Vector.hpp"
 
 namespace uno {

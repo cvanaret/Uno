@@ -4,14 +4,14 @@
 #ifndef UNO_COOLINEARSYSTEM_H
 #define UNO_COOLINEARSYSTEM_H
 
-#include <cstddef>
+#include <vector>
 #include "LinearSystem.hpp"
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
    class COOLinearSystem: public LinearSystem {
    public:
-      COOLinearSystem() = default;
+      explicit COOLinearSystem(int solver_indexing);
       ~COOLinearSystem() override = default;
 
       void initialize_hessian(const Subproblem& subproblem) override;
@@ -19,19 +19,12 @@ namespace uno {
 
       [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
-      Vector<double> objective_gradient{}; /*!< Sparse Jacobian of the objective */
-      Vector<double> constraints{}; /*!< Constraint values (size \f$m)\f$ */
-
-      // Jacobian
-      size_t number_jacobian_nonzeros{};
-      std::vector<uno_int> jacobian_row_indices{};
-      std::vector<uno_int> jacobian_column_indices{};
-
       // symmetric matrix (Hessian or augmented system)
-      size_t number_hessian_nonzeros{};
       std::vector<uno_int> matrix_row_indices{};
       std::vector<uno_int> matrix_column_indices{};
-      bool analysis_performed{false};
+
+   protected:
+      const int solver_indexing;
    };
 } // namespace
 

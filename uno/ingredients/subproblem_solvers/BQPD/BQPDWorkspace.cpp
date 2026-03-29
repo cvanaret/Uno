@@ -101,7 +101,7 @@ namespace uno {
       this->jacobian_row_indices.resize(number_jacobian_nonzeros);
       this->jacobian_column_indices.resize(number_jacobian_nonzeros);
       subproblem.compute_jacobian_sparsity(this->jacobian_row_indices.data(), this->jacobian_column_indices.data(),
-         Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
+         0, 0, Indexing::C_indexing, MatrixOrder::ROW_MAJOR);
 
       // BQPD (sparse) requires a (weak) CSR Jacobian: the entries should be in increasing constraint indices.
       // Since the COO format does not require this, we need to convert from COO to CSR by permutating the entries. To

@@ -10,6 +10,6 @@ namespace uno {
          current_evaluations(model, &this->jacobian_sparsity),
          trial_evaluations(model, &this->jacobian_sparsity) {
       model.compute_jacobian_sparsity(this->jacobian_sparsity.row_indices.data(), this->jacobian_sparsity.column_indices.data(),
-         Indexing::C_indexing, MatrixOrder::ROW_MAJOR); // TODO
+         0, 0, Indexing::C_indexing, MatrixOrder::ROW_MAJOR); // TODO
    }
 } // namespace

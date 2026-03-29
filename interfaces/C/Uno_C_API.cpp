@@ -104,12 +104,12 @@ public:
    }
 
    // sparsity patterns of Jacobian and Hessian
-   void compute_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int solver_indexing,
-         MatrixOrder /*matrix_order*/) const override {
+   void compute_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int row_offset, uno_int column_offset,
+         uno_int solver_indexing, MatrixOrder /*matrix_order*/) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
       for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
-         row_indices[nonzero_index] = this->user_model.jacobian_row_indices[nonzero_index];
-         column_indices[nonzero_index] = this->user_model.jacobian_column_indices[nonzero_index];
+         row_indices[nonzero_index] = this->user_model.jacobian_row_indices[nonzero_index] + row_offset;
+         column_indices[nonzero_index] = this->user_model.jacobian_column_indices[nonzero_index] + column_offset;
       }
       // TODO matrix_order
 
