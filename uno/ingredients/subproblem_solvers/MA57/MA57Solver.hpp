@@ -61,7 +61,7 @@ namespace uno {
 
    private:
       MA57Workspace workspace{};
-      COOLinearSystem linear_system{};
+      COOLinearSystem linear_system{Indexing::Fortran_indexing};
 
       bool analysis_performed{false};
       bool factorization_performed{false};

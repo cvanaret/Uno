@@ -6,12 +6,13 @@
 
 #include <vector>
 #include "LinearSystem.hpp"
+#include "linear_algebra/Indexing.hpp"
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
    class COOLinearSystem: public LinearSystem {
    public:
-      COOLinearSystem() = default;
+      explicit COOLinearSystem(int solver_indexing);
       ~COOLinearSystem() override = default;
 
       void initialize_hessian(const Subproblem& subproblem) override;
@@ -22,6 +23,9 @@ namespace uno {
       // symmetric matrix (Hessian or augmented system)
       std::vector<uno_int> matrix_row_indices{};
       std::vector<uno_int> matrix_column_indices{};
+
+   protected:
+      const int solver_indexing;
    };
 } // namespace
 
