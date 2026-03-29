@@ -12,13 +12,14 @@
 namespace uno {
    std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(const Model& model,
          bool use_trust_region, Options& options) {
-      // figure out whether we need to relax constraints altogether
+      // figure out whether there are constraints altogether
       if (model.number_constraints == 0) {
          INFO << "The model is unconstrained, picking no relaxation\n";
          // override user defined option
          options.set_string("constraint_relaxation_strategy", "no_relaxation", true);
          return std::make_unique<NoRelaxation>(model, options);
       }
+      // from now on, there are constraints
       const std::string constraint_relaxation_type = options.get_string("constraint_relaxation_strategy");
       if (constraint_relaxation_type == "feasibility_restoration") {
          return std::make_unique<FeasibilityRestoration>(model, use_trust_region, options);

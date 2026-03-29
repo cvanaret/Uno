@@ -21,7 +21,6 @@ namespace uno {
       InequalityHandlingMethod() = default;
       virtual ~InequalityHandlingMethod() = default;
 
-      virtual void check_problem(const OptimizationProblem& problem, bool uses_trust_region) = 0;
       virtual void initialize_statistics(Statistics& statistics) = 0;
       [[nodiscard]] virtual std::unique_ptr<OptimizationProblem> reformulate(const OptimizationProblem& problem,
          Parameterization& parameterization) = 0;

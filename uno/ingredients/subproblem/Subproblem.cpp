@@ -195,22 +195,7 @@ namespace uno {
    }
 
    bool Subproblem::has_inequality_constraints() const {
-      // look at the general constraints
-      const auto& constraints_lower_bounds = this->problem.get_constraints_lower_bounds();
-      const auto& constraints_upper_bounds = this->problem.get_constraints_upper_bounds();
-      for (size_t constraint_index: Range(this->problem.number_constraints)) {
-         if (constraints_lower_bounds[constraint_index] < constraints_upper_bounds[constraint_index]) {
-            return true;
-         }
-      }
-      // look at the bound constraints
-      const auto& variables_lower_bounds = this->problem.get_variables_lower_bounds();
-      const auto& variables_upper_bounds = this->problem.get_variables_upper_bounds();
-      if (std::any_of(variables_lower_bounds.begin(), variables_lower_bounds.end(), is_finite<double>) ||
-            std::any_of(variables_upper_bounds.begin(), variables_upper_bounds.end(), is_finite<double>)) {
-         return true;
-      }
-      return false;
+      return this->problem.has_inequality_constraints();
    }
 
    bool Subproblem::performs_primal_regularization() const {

@@ -1,34 +1,34 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "InequalityConstrainedMethod.hpp"
+#include "NoInequalityReformulation.hpp"
 #include "optimization/Iterate.hpp"
 #include "ingredients/constraint_relaxation_strategies/relaxed_problems/l1RelaxedProblem.hpp"
 
 namespace uno {
-   void InequalityConstrainedMethod::check_problem(const OptimizationProblem& /*problem*/, bool /*uses_trust_region*/) {
+   NoInequalityReformulation::NoInequalityReformulation(std::string name): name(std::move(name)) {
    }
 
-   void InequalityConstrainedMethod::initialize_statistics(Statistics& /*statistics*/) {
+   void NoInequalityReformulation::initialize_statistics(Statistics& /*statistics*/) {
       // do nothing
    }
 
-   std::unique_ptr<OptimizationProblem> InequalityConstrainedMethod::reformulate(const OptimizationProblem& problem,
+   std::unique_ptr<OptimizationProblem> NoInequalityReformulation::reformulate(const OptimizationProblem& problem,
          Parameterization& /*parameterization*/) {
       return problem.clone(); // the problem is not reformulated, simply make a copy
    }
 
-   bool InequalityConstrainedMethod::update_parameterization(Statistics& /*statistics*/, const OptimizationProblem& /*problem*/,
+   bool NoInequalityReformulation::update_parameterization(Statistics& /*statistics*/, const OptimizationProblem& /*problem*/,
          const Iterate& /*current_iterate*/, Parameterization& /*parameterization*/) {
       // the parameterization is not updated
       return false;
    }
 
-   void InequalityConstrainedMethod::initialize_feasibility_problem(Iterate& /*current_iterate*/) {
+   void NoInequalityReformulation::initialize_feasibility_problem(Iterate& /*current_iterate*/) {
       // do nothing
    }
 
-   void InequalityConstrainedMethod::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate,
+   void NoInequalityReformulation::set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate,
          Evaluations& /*evaluations*/) {
       // c(x) - p + n = 0
       // TODO set (one of) the elastic variables to +/- the value of the constraint if violated
@@ -39,11 +39,11 @@ namespace uno {
       });
    }
 
-   double InequalityConstrainedMethod::proximal_coefficient() const {
+   double NoInequalityReformulation::proximal_coefficient() const {
       return 0.;
    }
 
-   std::string InequalityConstrainedMethod::get_name() const {
-      return "inequality-constrained method";
+   std::string NoInequalityReformulation::get_name() const {
+      return this->name;
    }
 } // namespace

@@ -1,19 +1,19 @@
 // Copyright (c) 2018-2024 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_INEQUALITYCONSTRAINEDMETHOD_H
-#define UNO_INEQUALITYCONSTRAINEDMETHOD_H
+#ifndef UNO_NOINEQUALITYREFORMULATION_H
+#define UNO_NOINEQUALITYREFORMULATION_H
 
 #include <memory>
-#include "../InequalityHandlingMethod.hpp"
+#include <string>
+#include "InequalityHandlingMethod.hpp"
 
 namespace uno {
-   class InequalityConstrainedMethod : public InequalityHandlingMethod {
+   class NoInequalityReformulation : public InequalityHandlingMethod {
    public:
-      InequalityConstrainedMethod() = default;
-      ~InequalityConstrainedMethod() override = default;
+      explicit NoInequalityReformulation(std::string name);
+      ~NoInequalityReformulation() override = default;
 
-      void check_problem(const OptimizationProblem& problem, bool uses_trust_region) override;
       void initialize_statistics(Statistics& statistics) override;
       [[nodiscard]] std::unique_ptr<OptimizationProblem> reformulate(const OptimizationProblem& problem,
          Parameterization& parameterization) override;
@@ -25,7 +25,10 @@ namespace uno {
       [[nodiscard]] double proximal_coefficient() const override;
 
       [[nodiscard]] std::string get_name() const override;
+
+   protected:
+      const std::string name;
    };
 } // namespace
 
-#endif // UNO_INEQUALITYCONSTRAINEDMETHOD_H
+#endif // UNO_NOINEQUALITYREFORMULATION_H

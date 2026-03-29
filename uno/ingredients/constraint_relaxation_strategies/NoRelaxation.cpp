@@ -25,7 +25,6 @@ namespace uno {
    NoRelaxation::NoRelaxation(const Model& model, Options& options):
          ConstraintRelaxationStrategy(options),
          original_problem(model),
-         inequality_handling_method(InequalityHandlingMethodFactory::create(options)),
          inertia_correction_strategy(InertiaCorrectionStrategyFactory::create(options)),
          globalization_strategy(options) {
    }
@@ -36,11 +35,11 @@ namespace uno {
          Direction& direction, bool uses_trust_region, EvaluationCache& evaluation_cache, Options& options) {
       this->initial_point.resize(this->original_problem.number_variables);
 
-      this->inequality_handling_method->check_problem(this->original_problem, uses_trust_region);
-
       direction = Direction(this->original_problem.number_variables, this->original_problem.number_constraints);
 
       // reformulation of the original problem
+      this->inequality_handling_method = InequalityHandlingMethodFactory::create(this->original_problem, uses_trust_region,
+         options);
       this->reformulated_problem = this->inequality_handling_method->reformulate(this->original_problem, this->parameterization);
       initial_iterate.set_number_variables(this->reformulated_problem->number_variables);
 

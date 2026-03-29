@@ -7,8 +7,10 @@
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/VectorView.hpp"
 #include "model/Model.hpp"
+#include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/UnaryNegation.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -28,6 +30,25 @@ namespace uno {
 
    double OptimizationProblem::get_objective_multiplier() const {
       return 1.;
+   }
+
+   bool OptimizationProblem::has_inequality_constraints() const {
+      // look at the general constraints
+      const auto& constraints_lower_bounds = this->get_constraints_lower_bounds();
+      const auto& constraints_upper_bounds = this->get_constraints_upper_bounds();
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         if (constraints_lower_bounds[constraint_index] < constraints_upper_bounds[constraint_index]) {
+            return true;
+         }
+      }
+      // look at the bound constraints
+      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
+      if (std::any_of(variables_lower_bounds.begin(), variables_lower_bounds.end(), is_finite<double>) ||
+            std::any_of(variables_upper_bounds.begin(), variables_upper_bounds.end(), is_finite<double>)) {
+         return true;
+      }
+      return false;
    }
 
    void OptimizationProblem::generate_initial_iterate(Iterate& /*initial_iterate*/, Evaluations& /*evaluations*/) const {
@@ -149,8 +170,12 @@ namespace uno {
       return this->dual_regularization_constraints;
    }
 
-   void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& /*solution*/,
-         Direction& /*direction*/) const {
+   void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& solution,
+         Direction& direction) const {
+      // form the primal-dual direction
+      view(direction.primals, 0, this->number_variables) = view(solution, 0, this->number_variables);
+      // retrieve the duals with correct signs (note the sign flip)
+      direction.multipliers.constraints = -view(solution, this->number_variables, this->number_variables + this->number_constraints);
    }
 
    double OptimizationProblem::dual_regularization_factor() const {
