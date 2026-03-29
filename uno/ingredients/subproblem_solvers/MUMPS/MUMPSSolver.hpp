@@ -7,6 +7,7 @@
 #include "dmumps_c.h"
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "../COOLinearSystem.hpp"
+#include "linear_algebra/Indexing.hpp"
 
 namespace uno {
    class MUMPSSolver : public DirectSymmetricIndefiniteLinearSolver<double> {

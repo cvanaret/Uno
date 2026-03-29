@@ -7,6 +7,7 @@
 #include "spral_ssids.h"
 #include "../DirectSymmetricIndefiniteLinearSolver.hpp"
 #include "../COOLinearSystem.hpp"
+#include "linear_algebra/Indexing.hpp"
 
 namespace uno {
    struct Workspace {

@@ -6,7 +6,6 @@
 
 #include <vector>
 #include "LinearSystem.hpp"
-#include "linear_algebra/Indexing.hpp"
 #include "../interfaces/C/uno_int.h"
 
 namespace uno {
