@@ -3,7 +3,7 @@
 
 #include <stdexcept>
 #include "QPSolverFactory.hpp"
-#include "QPSolver.hpp"
+#include "SubproblemSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "options/Options.hpp"
 
@@ -15,7 +15,7 @@
 #endif
 
 namespace uno {
-   std::unique_ptr<QPSolver> QPSolverFactory::create([[maybe_unused]] const Options& options) {
+   std::unique_ptr<SubproblemSolver> QPSolverFactory::create([[maybe_unused]] const Options& options) {
       try {
          [[maybe_unused]] const std::string& QP_solver_name = options.get_string("QP_solver");
 #ifdef HAS_BQPD

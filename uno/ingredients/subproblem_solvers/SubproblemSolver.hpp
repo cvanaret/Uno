@@ -8,6 +8,7 @@ namespace uno {
    // forward declarations
    class Direction;
    class Evaluations;
+   class Multipliers;
    class Statistics;
    class SolverWorkspace;
    class Subproblem;
@@ -27,6 +28,9 @@ namespace uno {
          const WarmstartInformation& warmstart_information) = 0;
 
       [[nodiscard]] virtual SolverWorkspace& get_workspace() = 0;
+
+   protected:
+      static void compute_dual_displacements(const Subproblem& subproblem, Multipliers& direction_multipliers);
    };
 } // namespace
 

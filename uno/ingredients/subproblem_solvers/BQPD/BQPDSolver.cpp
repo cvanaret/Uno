@@ -62,7 +62,7 @@ namespace uno {
 
    // preallocate a bunch of stuff
    BQPDSolver::BQPDSolver(const Options& options):
-         QPSolver(),
+         SubproblemSolver(),
          // select a heuristic to pick kmax (the max size of the nullspace)
          pick_kmax(options.get_string("BQPD_kmax_heuristic") == "minotaur" ? pick_kmax_minotaur : pick_kmax_filtersqp),
          alp(static_cast<size_t>(this->mlp)),
@@ -228,7 +228,7 @@ namespace uno {
       }
       // gather the multipliers
       this->set_multipliers(subproblem.number_variables, direction.multipliers);
-      LPSolver::compute_dual_displacements(subproblem, direction.multipliers);
+      SubproblemSolver::compute_dual_displacements(subproblem, direction.multipliers);
    }
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {

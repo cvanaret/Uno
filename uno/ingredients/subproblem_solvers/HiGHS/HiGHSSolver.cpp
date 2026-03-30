@@ -11,7 +11,7 @@
 
 namespace uno {
    HiGHSSolver::HiGHSSolver(const Options& options):
-         QPSolver(), print_subproblem(options.get_bool("print_subproblem")) {
+         SubproblemSolver(), print_subproblem(options.get_bool("print_subproblem")) {
       this->highs_solver.setOptionValue("output_flag", "false");
    }
 
@@ -111,7 +111,7 @@ namespace uno {
       for (size_t constraint_index = 0; constraint_index < subproblem.number_constraints; constraint_index++) {
          direction.multipliers.constraints[constraint_index] = solution.row_dual[constraint_index];
       }
-      LPSolver::compute_dual_displacements(subproblem, direction.multipliers);
+      SubproblemSolver::compute_dual_displacements(subproblem, direction.multipliers);
       const HighsInfo& info = this->highs_solver.getInfo();
       direction.subproblem_objective = info.objective_function_value;
    }

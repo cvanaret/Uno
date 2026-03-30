@@ -10,12 +10,12 @@
 namespace uno {
    // forward declaration
    class Options;
-   class QPSolver;
+   class SubproblemSolver;
 
    class QPSolverFactory {
    public:
       // create a QP solver
-      static std::unique_ptr<QPSolver> create([[maybe_unused]] const Options& options);
+      static std::unique_ptr<SubproblemSolver> create([[maybe_unused]] const Options& options);
 
       // list of available QP solvers
       constexpr static std::initializer_list<const char*> available_solvers{
