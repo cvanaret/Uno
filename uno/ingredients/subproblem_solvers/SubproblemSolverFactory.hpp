@@ -12,6 +12,7 @@
 #include "QPSolver.hpp"
 #include "QPSolverFactory.hpp"
 #include "WoodburyEQPSolver.hpp"
+#include "dogleg/DoglegMethod.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "options/Options.hpp"
 #include "tools/Logger.hpp"
@@ -38,7 +39,15 @@ namespace uno {
       const Subproblem subproblem(problem, current_iterate, hessian_model, inertia_correction_strategy);
       // if no inequality constraint and no trust region, allocate EQP solver
       // temporary fix: this is set only in interior-point methods
-      if (!subproblem.has_inequality_constraints() && !uses_trust_region && options.get_string("inequality_handling_method") == "interior_point") {
+      if (!subproblem.has_inequality_constraints() && uses_trust_region && subproblem.is_hessian_positive_definite()) {
+         // use the dogleg method
+         DEBUG << "Trust-region and no inequality constraints in the subproblem, allocating a dogleg solver\n";
+         auto subproblem_solver = std::make_unique<DoglegMethod>(options);
+         subproblem_solver->initialize_memory(subproblem);
+         return subproblem_solver;
+      }
+      else if (!subproblem.has_inequality_constraints() && !uses_trust_region) {
+         // no trust region
          if constexpr (std::is_same_v<HessianType, LBFGSHessian>) {
             DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver with L-BFGS Hessian\n";
             // the hessian_model we pass has type LBFGSHessian
@@ -54,7 +63,7 @@ namespace uno {
          }
       }
       // otherwise, allocate LP/QP solver, depending on the presence of curvature in the subproblem
-      if (!subproblem.has_curvature()) {
+      else if (!subproblem.has_curvature()) {
          if (subproblem.number_constraints == 0) {
             DEBUG << "No curvature and only bound constraints in the subproblem, allocating a box LP solver\n";
             auto subproblem_solver = std::make_unique<BoxLPSolver>();
