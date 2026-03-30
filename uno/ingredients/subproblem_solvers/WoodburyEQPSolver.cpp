@@ -71,6 +71,7 @@ namespace uno {
 
       // compute the low-rank correction
       this->compute_low_rank_correction(subproblem, linear_system, solution_diagonal_part);
+      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
 
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(solution_diagonal_part, direction);

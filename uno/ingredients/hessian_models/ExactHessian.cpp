@@ -30,7 +30,7 @@ namespace uno {
    }
 
    bool ExactHessian::is_positive_definite() const {
-      return false;
+      return true;//false;
    }
 
    void ExactHessian::initialize_statistics(Statistics& /*statistics*/) const {

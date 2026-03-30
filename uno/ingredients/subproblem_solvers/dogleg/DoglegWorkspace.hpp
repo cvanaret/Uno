@@ -23,13 +23,13 @@ namespace uno {
       ~DoglegWorkspace() override = default;
 
       // Newton step
-      Vector<double> objective_gradient{};
+      Vector<double> g{};
       Vector<double> newton_step{};
       double newton_step_squared_norm{INF<double>};
       // Cauchy step
-      double objective_gradient_squared_norm{INF<double>};
-      Vector<double> hessian_gradient_product{};
-      double hessian_directional_derivative{INF<double>};
+      double g_squared_norm{INF<double>};
+      Vector<double> Hg{};
+      double gHg{INF<double>};
       Vector<double> cauchy_step{};
 
       void initialize_memory(const Subproblem& subproblem);
@@ -38,11 +38,12 @@ namespace uno {
 
       void compute_newton_step(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
-      void compute_dogleg(const Subproblem& subproblem, Direction& direction, Evaluations& current_evaluations,
-         const WarmstartInformation& warmstart_information);
+      void compute_dogleg(const Subproblem& subproblem, double trust_region_radius, Direction& direction,
+         Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
 
    private:
-      EQPSolver newton_solver;
+      mutable EQPSolver newton_solver;
+      Vector<double> initial_point;
 
       void compute_cauchy_step(const Subproblem& subproblem, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information);
