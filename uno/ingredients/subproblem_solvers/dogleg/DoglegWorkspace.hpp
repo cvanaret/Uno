@@ -14,7 +14,7 @@ namespace uno {
    class Evaluations;
    class Statistics;
    template <typename ElementType>
-   class SymmetricIndefiniteLinearSolver;
+   class DirectSymmetricIndefiniteLinearSolver;
    class WarmstartInformation;
 
    class DoglegWorkspace: public SolverWorkspace {
@@ -29,14 +29,14 @@ namespace uno {
       // Cauchy step
       double objective_gradient_squared_norm{INF<double>};
       Vector<double> hessian_gradient_product{};
-      double hessian_quadratic_product{INF<double>};
+      double hessian_directional_derivative{INF<double>};
       Vector<double> cauchy_step{};
 
       void initialize_memory(const Subproblem& subproblem);
 
       [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
-      void compute_newton_step(const Subproblem& subproblem, Direction& direction, SymmetricIndefiniteLinearSolver<double>& linear_solver,
+      void compute_newton_step(const Subproblem& subproblem, Direction& direction, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
       void compute_dogleg(const Subproblem& subproblem, Direction& direction, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information);

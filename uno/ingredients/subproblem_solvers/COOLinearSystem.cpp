@@ -3,7 +3,6 @@
 
 #include "COOLinearSystem.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
-#include "linear_algebra/Indexing.hpp"
 
 namespace uno {
    COOLinearSystem::COOLinearSystem(int solver_indexing): solver_indexing(solver_indexing) {

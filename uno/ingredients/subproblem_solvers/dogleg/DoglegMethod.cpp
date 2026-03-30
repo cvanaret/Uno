@@ -17,6 +17,7 @@ namespace uno {
       auto& linear_system = this->linear_solver->get_linear_system();
       linear_system.initialize_hessian(subproblem);
       this->linear_solver->initialize_memory();
+      this->linear_solver->do_symbolic_analysis();
 
       this->workspace.initialize_memory(subproblem);
    }
