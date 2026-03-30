@@ -44,7 +44,8 @@ namespace uno {
    private:
       EQPSolver newton_solver;
 
-      void compute_cauchy_step(const Subproblem& subproblem, const WarmstartInformation& warmstart_information);
+      void compute_cauchy_step(const Subproblem& subproblem, Evaluations& current_evaluations,
+         const WarmstartInformation& warmstart_information);
       [[nodiscard]] static double compute_positive_root_quadratic_equation(double a, double b, double c);
    };
 } // namespace
