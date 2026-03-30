@@ -67,9 +67,9 @@ namespace uno {
          direction.status = SubproblemStatus::INFEASIBLE;
          return;
       }
-      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(linear_system.solution, direction);
+      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
    }
 
    SolverWorkspace& EQPSolver::get_workspace() {
