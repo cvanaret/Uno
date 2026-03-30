@@ -242,8 +242,8 @@ namespace uno {
       }
 
       // possibly go from restoration phase to optimality phase
-      if (trial_iterate.status == SolutionStatus::NOT_OPTIMAL && this->current_phase == Phase::FEASIBILITY_RESTORATION &&
-            this->can_switch_to_optimality_phase(model, trial_iterate, direction, step_length, evaluation_cache.current_evaluations)) {
+      if (this->current_phase == Phase::FEASIBILITY_RESTORATION && this->can_switch_to_optimality_phase(model, trial_iterate,
+            direction, step_length, evaluation_cache.current_evaluations)) {
          this->switch_back_to_optimality_phase(current_iterate, trial_iterate);
          // set a cold start in the subproblem solver
          warmstart_information.whole_problem_changed();
