@@ -5,6 +5,7 @@
 #define UNO_DOGLEGWORKSPACE_H
 
 #include "../SolverWorkspace.hpp"
+#include "ingredients/subproblem_solvers/EQPSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "tools/Infinity.hpp"
 
@@ -12,14 +13,13 @@ namespace uno {
    // forward declaration
    class Direction;
    class Evaluations;
+   class Options;
    class Statistics;
-   template <typename ElementType>
-   class DirectSymmetricIndefiniteLinearSolver;
    class WarmstartInformation;
 
    class DoglegWorkspace: public SolverWorkspace {
    public:
-      DoglegWorkspace() = default;
+      explicit DoglegWorkspace(const Options& options);
       ~DoglegWorkspace() override = default;
 
       // Newton step
@@ -36,12 +36,14 @@ namespace uno {
 
       [[nodiscard]] double compute_hessian_quadratic_form(const Subproblem& subproblem, const Vector<double>& vector) const override;
 
-      void compute_newton_step(const Subproblem& subproblem, Direction& direction, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver,
+      void compute_newton_step(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
          Evaluations& current_evaluations, const WarmstartInformation& warmstart_information);
       void compute_dogleg(const Subproblem& subproblem, Direction& direction, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information);
 
    private:
+      EQPSolver newton_solver;
+
       void compute_cauchy_step(const Subproblem& subproblem, const WarmstartInformation& warmstart_information);
       [[nodiscard]] static double compute_positive_root_quadratic_equation(double a, double b, double c);
    };

@@ -4,11 +4,8 @@
 #ifndef UNO_DOGLEGMETHOD_H
 #define UNO_DOGLEGMETHOD_H
 
-#include <memory>
-#include <string>
 #include "../SubproblemSolver.hpp"
 #include "DoglegWorkspace.hpp"
-#include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
 namespace uno {
    // forward declaration
@@ -28,9 +25,7 @@ namespace uno {
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    protected:
-      const std::string& linear_solver_name;
-      std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
-      DoglegWorkspace workspace{};
+      DoglegWorkspace workspace;
    };
 } // namespace
 

@@ -16,7 +16,7 @@ namespace uno {
    class EQPSolver: public SubproblemSolver {
    public:
       explicit EQPSolver(const Options& options);
-      ~EQPSolver() override = default;
+      ~EQPSolver() override;
 
       void initialize_memory(const Subproblem& subproblem) override;
 

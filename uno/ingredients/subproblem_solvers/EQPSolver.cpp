@@ -17,6 +17,8 @@ namespace uno {
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))) {
    }
 
+   EQPSolver::~EQPSolver() = default;
+
    void EQPSolver::initialize_memory(const Subproblem& subproblem) {
       if (!subproblem.has_hessian_matrix()) {
          throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
