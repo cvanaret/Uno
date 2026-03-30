@@ -18,14 +18,15 @@ namespace uno {
       // figure out whether there are inequality constraints altogether
       if (!problem.has_inequality_constraints() && !uses_trust_region) {
          // no inequality reformulation
-         return std::make_unique<NoInequalityReformulation>("equality-constrained method");
+         INFO << "The problem has no inequalities, picking a pure SQP method\n";
+         return std::make_unique<NoInequalityReformulation>("pure SQP method");
       }
       // from now on, the problem has inequalities
       const std::string inequality_handling_method = options.get_string("inequality_handling_method");
       // inequality-constrained methods
       if (inequality_handling_method == "inequality_constrained") {
          // no inequality reformulation: let the subproblem solver handle them
-         return std::make_unique<NoInequalityReformulation>("inequality-constrained method");
+         return std::make_unique<NoInequalityReformulation>("inequality-constrained SQP method");
       }
       // interior-point method
       else if (inequality_handling_method == "interior_point") {
