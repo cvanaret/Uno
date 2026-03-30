@@ -39,14 +39,14 @@ namespace uno {
       const Subproblem subproblem(problem, current_iterate, hessian_model, inertia_correction_strategy);
       // if no inequality constraint and no trust region, allocate EQP solver
       // temporary fix: this is set only in interior-point methods
-      if (!subproblem.has_inequality_constraints() && uses_trust_region && subproblem.is_hessian_positive_definite()) {
+      /*if (!subproblem.has_inequality_constraints() && uses_trust_region && subproblem.is_hessian_positive_definite()) {
          // use the dogleg method
          DEBUG << "Trust-region and no inequality constraints in the subproblem, allocating a dogleg solver\n";
          auto subproblem_solver = std::make_unique<DoglegMethod>(options);
          subproblem_solver->initialize_memory(subproblem);
          return subproblem_solver;
       }
-      else if (!subproblem.has_inequality_constraints() && !uses_trust_region) {
+      else*/ if (!subproblem.has_inequality_constraints() && !uses_trust_region) {
          // no trust region
          if constexpr (std::is_same_v<HessianType, LBFGSHessian>) {
             DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver with L-BFGS Hessian\n";
