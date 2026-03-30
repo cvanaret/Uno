@@ -7,9 +7,7 @@
 #include <memory>
 #include "BoxLPSolver.hpp"
 #include "EQPSolver.hpp"
-#include "LPSolver.hpp"
 #include "LPSolverFactory.hpp"
-#include "QPSolver.hpp"
 #include "QPSolverFactory.hpp"
 #include "WoodburyEQPSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"

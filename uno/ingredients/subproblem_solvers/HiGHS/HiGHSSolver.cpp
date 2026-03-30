@@ -11,7 +11,7 @@
 
 namespace uno {
    HiGHSSolver::HiGHSSolver(const Options& options):
-         QPSolver(), print_subproblem(options.get_bool("print_subproblem")) {
+         SubproblemSolver(), print_subproblem(options.get_bool("print_subproblem")) {
       this->highs_solver.setOptionValue("output_flag", "false");
    }
 
@@ -38,7 +38,7 @@ namespace uno {
       this->workspace.evaluate_functions(statistics, subproblem, current_evaluations, warmstart_information);
 
       // variable bounds
-      if (warmstart_information.variable_bounds_changed) {
+      if (warmstart_information.trust_region_changed) {
          subproblem.set_variables_bounds(this->workspace.model.lp_.col_lower_, this->workspace.model.lp_.col_upper_,
             trust_region_radius);
       }
@@ -111,7 +111,7 @@ namespace uno {
       for (size_t constraint_index = 0; constraint_index < subproblem.number_constraints; constraint_index++) {
          direction.multipliers.constraints[constraint_index] = solution.row_dual[constraint_index];
       }
-      LPSolver::compute_dual_displacements(subproblem, direction.multipliers);
+      SubproblemSolver::compute_dual_displacements(subproblem, direction.multipliers);
       const HighsInfo& info = this->highs_solver.getInfo();
       direction.subproblem_objective = info.objective_function_value;
    }

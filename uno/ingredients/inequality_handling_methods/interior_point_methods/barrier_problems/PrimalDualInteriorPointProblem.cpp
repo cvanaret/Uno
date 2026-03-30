@@ -11,7 +11,6 @@
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
 #include "optimization/Parameterization.hpp"
-#include "symbolic/UnaryNegation.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 

@@ -4,7 +4,6 @@
 #ifndef UNO_BLASVECTOR_H
 #define UNO_BLASVECTOR_H
 
-#include <algorithm>
 #include <cstddef>
 #include <cassert>
 #include "BLAS.hpp"

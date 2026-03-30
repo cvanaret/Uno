@@ -62,7 +62,7 @@ namespace uno {
 
    // preallocate a bunch of stuff
    BQPDSolver::BQPDSolver(const Options& options):
-         QPSolver(),
+         SubproblemSolver(),
          // select a heuristic to pick kmax (the max size of the nullspace)
          pick_kmax(options.get_string("BQPD_kmax_heuristic") == "minotaur" ? pick_kmax_minotaur : pick_kmax_filtersqp),
          alp(static_cast<size_t>(this->mlp)),
@@ -134,7 +134,7 @@ namespace uno {
          warmstart_information);
 
       // variable bounds
-      if (warmstart_information.variable_bounds_changed) {
+      if (warmstart_information.trust_region_changed) {
          subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds, trust_region_radius);
       }
 
@@ -228,7 +228,7 @@ namespace uno {
       }
       // gather the multipliers
       this->set_multipliers(subproblem.number_variables, direction.multipliers);
-      LPSolver::compute_dual_displacements(subproblem, direction.multipliers);
+      SubproblemSolver::compute_dual_displacements(subproblem, direction.multipliers);
    }
 
    BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {
@@ -238,7 +238,7 @@ namespace uno {
          mode = BQPDMode::ACTIVE_SET_EQUALITIES;
       }
       // if only the variable bounds changed, reuse the active set estimate and the Jacobian information
-      else if (warmstart_information.variable_bounds_changed && !warmstart_information.new_iterate &&
+      else if (warmstart_information.trust_region_changed && !warmstart_information.new_iterate &&
             !warmstart_information.constraint_bounds_changed) {
          mode = BQPDMode::UNCHANGED_ACTIVE_SET_AND_JACOBIAN;
       }
