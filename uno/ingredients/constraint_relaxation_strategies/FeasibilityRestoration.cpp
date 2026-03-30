@@ -179,7 +179,6 @@ namespace uno {
       subproblem_solver.solve(statistics, subproblem, trust_region_radius, this->initial_point, direction, current_evaluations,
          warmstart_information);
       ++this->number_subproblems_solved;
-      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
       this->initial_point.fill(0.);
       DEBUG3 << direction << '\n';
    }

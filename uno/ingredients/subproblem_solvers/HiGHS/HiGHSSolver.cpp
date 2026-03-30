@@ -107,6 +107,7 @@ namespace uno {
             direction.multipliers.upper_bounds[variable_index] = bound_multiplier;
          }
       }
+      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
       // gather the multipliers
       for (size_t constraint_index = 0; constraint_index < subproblem.number_constraints; constraint_index++) {
          direction.multipliers.constraints[constraint_index] = solution.row_dual[constraint_index];

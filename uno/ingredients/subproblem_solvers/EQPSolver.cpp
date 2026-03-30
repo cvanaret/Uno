@@ -17,6 +17,8 @@ namespace uno {
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))) {
    }
 
+   EQPSolver::~EQPSolver() = default;
+
    void EQPSolver::initialize_memory(const Subproblem& subproblem) {
       if (!subproblem.has_hessian_matrix()) {
          throw std::runtime_error("The subproblem does not have an explicit Hessian matrix and cannot be solved with a direct linear solver");
@@ -67,6 +69,7 @@ namespace uno {
       }
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(linear_system.solution, direction);
+      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
    }
 
    SolverWorkspace& EQPSolver::get_workspace() {

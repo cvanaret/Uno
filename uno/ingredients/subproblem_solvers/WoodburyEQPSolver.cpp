@@ -74,6 +74,7 @@ namespace uno {
 
       // assemble the full primal-dual direction
       subproblem.assemble_primal_dual_direction(solution_diagonal_part, direction);
+      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
    }
 
    SolverWorkspace& WoodburyEQPSolver::get_workspace() {

@@ -226,6 +226,7 @@ namespace uno {
          direction.primals[variable_index] = std::min(std::max(direction.primals[variable_index], this->lower_bounds[variable_index]),
             this->upper_bounds[variable_index]);
       }
+      direction.norm = norm_inf(view(direction.primals, 0, subproblem.problem.get_number_original_variables()));
       // gather the multipliers
       this->set_multipliers(subproblem.number_variables, direction.multipliers);
       LPSolver::compute_dual_displacements(subproblem, direction.multipliers);
