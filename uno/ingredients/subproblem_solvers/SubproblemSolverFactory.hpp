@@ -46,7 +46,8 @@ namespace uno {
          subproblem_solver->initialize_memory(subproblem);
          return subproblem_solver;
       }
-      else*/ if (!subproblem.has_inequality_constraints() && !uses_trust_region) {
+      else*/
+      if (!subproblem.has_inequality_constraints() && !uses_trust_region && options.get_string("inequality_handling_method") == "interior_point") {
          // no trust region
          if constexpr (std::is_same_v<HessianType, LBFGSHessian>) {
             DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver with L-BFGS Hessian\n";
