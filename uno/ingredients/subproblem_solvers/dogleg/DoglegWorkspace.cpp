@@ -3,8 +3,10 @@
 
 #include "DoglegWorkspace.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
+#include "ingredients/subproblem_solvers/LinearSystem.hpp"
 #include "ingredients/subproblem_solvers/SymmetricIndefiniteLinearSolver.hpp"
 #include "optimization/Direction.hpp"
+#include "optimization/Iterate.hpp"
 #include "optimization/OptimizationProblem.hpp"
 #include "optimization/WarmstartInformation.hpp"
 
@@ -18,19 +20,22 @@ namespace uno {
       this->cauchy_step.resize(subproblem.number_variables);
    }
 
-   double DoglegWorkspace::compute_hessian_quadratic_product(const Subproblem& /*subproblem*/,
-         const Vector<double>& /*vector*/) const {
+   double DoglegWorkspace::compute_hessian_quadratic_form(const Subproblem& /*subproblem*/, const Vector<double>& /*vector*/) const {
       throw std::runtime_error("Not implemented yet");
    }
 
-   void DoglegWorkspace::compute_newton_step(Statistics& statistics, const Subproblem& subproblem, Direction& direction,
+   void DoglegWorkspace::compute_newton_step(const Subproblem& subproblem, Direction& direction,
          SymmetricIndefiniteLinearSolver<double>& linear_solver, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) {
       if (warmstart_information.new_iterate) {
          // g = ∇f(x_k)
          subproblem.problem.evaluate_objective_gradient(subproblem.current_iterate, this->objective_gradient.data(),
             current_evaluations);
-         linear_solver.solve_indefinite_system(statistics, subproblem, direction, current_evaluations, warmstart_information);
+         auto& linear_system = linear_solver.get_linear_system();
+         linear_system.initialize_hessian(subproblem);
+         linear_solver.initialize_memory();
+         linear_solver.solve_indefinite_system(linear_system.solution.data());
+         subproblem.assemble_primal_dual_direction(linear_system.solution, direction);
          this->newton_step = direction.primals;
          this->newton_step_squared_norm = dot(this->newton_step, this->newton_step);
       }

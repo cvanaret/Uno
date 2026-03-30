@@ -6,7 +6,7 @@
 
 #include <memory>
 #include <string>
-#include "../BoundConstrainedSolver.hpp"
+#include "../SubproblemSolver.hpp"
 #include "DoglegWorkspace.hpp"
 #include "ingredients/subproblem_solvers/DirectSymmetricIndefiniteLinearSolver.hpp"
 
@@ -14,23 +14,23 @@ namespace uno {
    // forward declaration
    class Options;
 
-   class DoglegMethod: public BoundConstrainedSolver {
+   class DoglegMethod: public SubproblemSolver {
    public:
       explicit DoglegMethod(const Options& options);
       ~DoglegMethod() override = default;
 
       void initialize_memory(const Subproblem& subproblem) override;
 
-      void solve(Statistics& statistics, Subproblem& subproblem, double trust_region_radius,
+      void solve(Statistics& statistics, const Subproblem& subproblem, double trust_region_radius,
          const Vector<double>& initial_point, Direction& direction, Evaluations& current_evaluations,
          const WarmstartInformation& warmstart_information) override;
 
-      [[nodiscard]] SolverWorkspace& get_evaluation_space() override;
+      [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    protected:
       const std::string& linear_solver_name;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
-      DoglegWorkspace evaluation_space{};
+      DoglegWorkspace workspace{};
    };
 } // namespace
 
