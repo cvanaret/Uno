@@ -38,7 +38,7 @@ namespace uno {
       this->workspace.evaluate_functions(statistics, subproblem, current_evaluations, warmstart_information);
 
       // variable bounds
-      if (warmstart_information.variable_bounds_changed) {
+      if (warmstart_information.trust_region_changed) {
          subproblem.set_variables_bounds(this->workspace.model.lp_.col_lower_, this->workspace.model.lp_.col_upper_,
             trust_region_radius);
       }

@@ -70,7 +70,7 @@ namespace uno {
                statistics.set("Status", "unbounded subproblem");
                if (Logger::level == INFO) statistics.print_current_line();
                this->decrease_radius_aggressively();
-               warmstart_information.variable_bounds_changed = true;
+               warmstart_information.trust_region_changed = true;
                evaluation_cache.trial_evaluations.reset();
             }
             else if (this->direction.status == SubproblemStatus::ERROR) {
@@ -95,7 +95,7 @@ namespace uno {
                }
                else {
                   this->decrease_radius(this->direction.norm);
-                  warmstart_information.variable_bounds_changed = true;
+                  warmstart_information.trust_region_changed = true;
                   evaluation_cache.trial_evaluations.reset();
                }
                if (Logger::level == INFO) statistics.print_current_line();
@@ -107,7 +107,7 @@ namespace uno {
             if (Logger::level == INFO) statistics.print_current_line();
             DEBUG << "A function could not be evaluated. The trust-region radius will be reduced\n";
             this->decrease_radius();
-            warmstart_information.variable_bounds_changed = true;
+            warmstart_information.trust_region_changed = true;
             evaluation_cache.trial_evaluations.reset();
          }
          if (!is_acceptable && this->radius < this->minimum_radius) {

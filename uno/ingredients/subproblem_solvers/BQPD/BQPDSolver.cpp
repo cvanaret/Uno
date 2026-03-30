@@ -134,7 +134,7 @@ namespace uno {
          warmstart_information);
 
       // variable bounds
-      if (warmstart_information.variable_bounds_changed) {
+      if (warmstart_information.trust_region_changed) {
          subproblem.set_variables_bounds(this->lower_bounds, this->upper_bounds, trust_region_radius);
       }
 
@@ -238,7 +238,7 @@ namespace uno {
          mode = BQPDMode::ACTIVE_SET_EQUALITIES;
       }
       // if only the variable bounds changed, reuse the active set estimate and the Jacobian information
-      else if (warmstart_information.variable_bounds_changed && !warmstart_information.new_iterate &&
+      else if (warmstart_information.trust_region_changed && !warmstart_information.new_iterate &&
             !warmstart_information.constraint_bounds_changed) {
          mode = BQPDMode::UNCHANGED_ACTIVE_SET_AND_JACOBIAN;
       }
