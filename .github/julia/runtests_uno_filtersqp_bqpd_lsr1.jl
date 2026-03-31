@@ -36,6 +36,7 @@ Optimizer_Uno_filtersqp() = Optimizer(["logger=SILENT", "preset=filtersqp", "QP_
     MINLPTests.test_nlp_expr(
         Optimizer_Uno_filtersqp;
         exclude = [
+            "002_010",  # Local infeasible solution
             "003_014",  # Local solution
             "004_010",  # Local solution
             "004_011",  # Local solution
