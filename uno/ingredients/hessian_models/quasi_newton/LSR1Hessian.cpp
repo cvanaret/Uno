@@ -102,6 +102,18 @@ namespace uno {
       }
    }
 
+   size_t LSR1Hessian::get_correction_rank() const {
+      return this->number_entries_in_memory;
+   }
+
+   VectorView<std::vector<double>> LSR1Hessian::get_correction_column(size_t column_index) const {
+      return this->U.column(column_index);
+   }
+
+   double LSR1Hessian::get_correction_column_scaling(size_t column_index) const {
+      return this->N.entry(column_index, column_index);
+   }
+
    // protected member functions
 
    void LSR1Hessian::recompute_hessian_representation() {
@@ -131,8 +143,8 @@ namespace uno {
       // N = J P Jᵀ with J lower triangular with unit diagonal, and P diagonal, indefinite with nonzero elements
       // J and P overwrite N
       constexpr double near_zero_pivot_tolerance = 0.; // TODO
-      const bool ldlt_success = ldlt_nopiv_lvl2_rightlooking(Nk.data(), static_cast<int>(Nk.number_rows),
-         static_cast<int>(Nk.leading_dimension), near_zero_pivot_tolerance);
+      const bool ldlt_success = ldlt_nopiv_lvl2_rightlooking(Nk.data(), Nk.number_rows, Nk.leading_dimension,
+         near_zero_pivot_tolerance);
       // if the factorization failed with near-0 pivot, skip the update
       if (!ldlt_success) {
          DEBUG << "Skipping the update\n";

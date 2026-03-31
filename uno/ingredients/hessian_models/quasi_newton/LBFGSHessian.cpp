@@ -53,23 +53,6 @@ namespace uno {
       this->hessian_recomputation_required = true;
    }
 
-   // forms the diagonal part of the L-BFGS Hessian approximation
-   // this can only be called by WoodburyEQPSolver
-   void LBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
-         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* hessian_values) {
-      // recompute the Hessian representation if the limited memory was updated
-      if (this->hessian_recomputation_required) {
-         this->recompute_hessian_representation();
-         this->hessian_recomputation_required = false;
-      }
-
-      // diagonal contribution
-      DEBUG << "Setting diagonal contribution of L-BFGS Hessian\n";
-      for (size_t variable_index: Range(this->model.number_variables)) {
-         hessian_values[variable_index] = this->delta;
-      }
-   }
-
    // Hessian-vector product where the Hessian approximation is Bk = B0 - U Uᵀ + V Vᵀ and B0 = δ I
    // Bk v = (B0 - U Uᵀ + V Vᵀ) v = δ v - U (Uᵀ v) + V (Vᵀ v)
    void LBFGSHessian::compute_hessian_vector_product(const double* /*x*/, const double* vector,
@@ -204,7 +187,7 @@ namespace uno {
       // increment the slot: if we exceed the size of the memory, we start over and replace the oldest point in memory
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
-   
+
    // compute δ = yᵀ y / sᵀ y at the last entry
    // (7.20) in Numerical optimization (Nocedal & Wright)
    double LBFGSHessian::compute_delta() const {

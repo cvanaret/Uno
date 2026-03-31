@@ -25,6 +25,14 @@ namespace uno {
       [[nodiscard]] size_t number_nonzeros() const override;
       void compute_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override;
 
+      void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
+         double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) override;
+
+      // functions that can be called by WoodburyEQPSolver
+      [[nodiscard]] virtual size_t get_correction_rank() const = 0;
+      [[nodiscard]] virtual VectorView<std::vector<double>> get_correction_column(size_t column_index) const = 0;
+      [[nodiscard]] virtual double get_correction_column_scaling(size_t column_index) const = 0;
+
    protected:
       const Model& model;
       const double fixed_objective_multiplier;
@@ -36,12 +44,14 @@ namespace uno {
       DenseMatrix<double> Y;
       Vector<double> current_lagrangian_gradient;
       Vector<double> trial_lagrangian_gradient;
+      double delta{1.};
       bool hessian_recomputation_required{false};
 
       void update_memory_entries(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache);
       void update_S(const Iterate& current_iterate, const Iterate& trial_iterate);
       void update_Y(const Iterate& current_iterate, const Iterate& trial_iterate, EvaluationCache& evaluation_cache);
       void validate_update();
+      virtual void recompute_hessian_representation() = 0;
    };
 } // namespace
 

@@ -26,15 +26,13 @@ namespace uno {
       void notify_accepted_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) override;
 
-      void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
-         double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) override;
       void compute_hessian_vector_product(const double* x, const double* vector,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* result) override;
 
       // functions that can be called by WoodburyEQPSolver
-      [[nodiscard]] size_t get_correction_rank() const;
-      [[nodiscard]] VectorView<std::vector<double>> get_correction_column(size_t column_index) const;
-      [[nodiscard]] double get_correction_column_scaling(size_t column_index) const;
+      [[nodiscard]] size_t get_correction_rank() const override;
+      [[nodiscard]] VectorView<std::vector<double>> get_correction_column(size_t column_index) const override;
+      [[nodiscard]] double get_correction_column_scaling(size_t column_index) const override;
 
    protected:
       DenseMatrix<double> L; // lower triangular
@@ -45,10 +43,9 @@ namespace uno {
       // Hessian representation: Bk = B0 - U Uᵀ + V Vᵀ where B0 = δ I
       DenseMatrix<double> U;
       DenseMatrix<double> V;
-      double delta{1.};
 
       void update_D();
-      void recompute_hessian_representation();
+      void recompute_hessian_representation() override;
       [[nodiscard]] double compute_delta() const;
    };
 } // namespace

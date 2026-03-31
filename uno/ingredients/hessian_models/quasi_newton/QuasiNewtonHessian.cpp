@@ -53,6 +53,23 @@ namespace uno {
       }
    }
 
+   // forms the diagonal part of the L-BFGS Hessian approximation
+   // this can only be called by WoodburyEQPSolver
+   void QuasiNewtonHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* hessian_values) {
+      // recompute the Hessian representation if the limited memory was updated
+      if (this->hessian_recomputation_required) {
+         this->recompute_hessian_representation();
+         this->hessian_recomputation_required = false;
+      }
+
+      // diagonal contribution
+      DEBUG << "Setting diagonal contribution of L-BFGS Hessian\n";
+      for (size_t variable_index: Range(this->model.number_variables)) {
+         hessian_values[variable_index] = this->delta;
+      }
+   }
+
    // protected member functions
 
    void QuasiNewtonHessian::update_memory_entries(const Iterate& current_iterate, const Iterate& trial_iterate,
