@@ -59,6 +59,7 @@ namespace uno {
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
          double U_coefficient = dot(current_U_column, vector) / this->get_correction_column_scaling(column_index);
+         assert(!std::isnan(U_coefficient));
          // result += coefficient * column(P⁻¹) * current_column
          blas1::add(this->model.number_variables, U_coefficient, current_U_column.data(), result);
       }
@@ -126,7 +127,9 @@ namespace uno {
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          this->U.column(column_index) = this->Y.column(column_index) - this->delta*this->S.column(column_index);
       }
+      DEBUG << "U1 = " << this->U << '\n';
       Uk *= transpose(inverse(unit_triangular(Nk)));
+      DEBUG << "U2 = " << this->U << '\n';
 
       // increment the slot: if we exceed the size of the memory, we start over and replace the oldest point in memory
       this->current_index = (this->current_index + 1) % this->memory_size;
@@ -135,11 +138,14 @@ namespace uno {
    // compute δ = yᵀ y / sᵀ y at the last entry
    // (7.20) in Numerical optimization (Nocedal & Wright)
    double LSR1Hessian::compute_delta() const {
+      /*
       assert(0 < this->number_entries_in_memory);
       const auto current_column_S = this->S.column(this->current_index);
       const auto current_column_Y = this->Y.column(this->current_index);
       const double numerator = dot(current_column_Y, current_column_Y);
       const double denominator = dot(current_column_S, current_column_Y); // TODO get term from this->LD
       return numerator/denominator;
+      */
+      return 1.;
    }
 } // namespace
