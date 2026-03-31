@@ -33,7 +33,6 @@ namespace uno {
       DenseMatrix<double> N;
       // Hessian representation: Bk = B0 + U P⁻¹ Uᵀ where B0 = delta I
       DenseMatrix<double> U;
-      double delta{1.};
 
       void recompute_hessian_representation() override;
       double compute_delta() const;
