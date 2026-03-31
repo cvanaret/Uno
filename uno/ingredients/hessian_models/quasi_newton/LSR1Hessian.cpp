@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <limits>
 #include "LSR1Hessian.hpp"
 #include "linear_algebra/LAPACK_extension.hpp"
 #include "model/Model.hpp"
@@ -32,9 +33,21 @@ namespace uno {
       DEBUG << "\n*** Adding entries to the SR1 memory at slot " << this->current_index << '\n';
       // update the matrices S and Y
       this->update_memory_entries(current_iterate, trial_iterate, evaluation_cache);
-      // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
-      // Hessian approximation will be used, we delay the update to the beginning of the next major iteration
-      this->hessian_recomputation_required = true;
+
+      // safeguard: if dot(sk, yk) is too small relative to sk and yk, skip the update
+      const auto sk = this->S.column(this->current_index);
+      const auto yk = this->Y.column(this->current_index);
+      const double norm_sk = dot(sk, sk);
+      const double norm_yk = dot(yk, yk);
+      // tolerance is √(machine epsilon)
+      if (dot(sk, yk) < std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
+         DEBUG << "dot(sk, yk) is too small, skipping the update\n";
+      }
+      else {
+         // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
+         // Hessian approximation will be used, we delay the update to the beginning of the next major iteration
+         this->hessian_recomputation_required = true;
+      }
    }
 
    // Hessian-vector product where the Hessian approximation is Bk = B0 + U P⁻¹ Uᵀ and B0 = δ I
@@ -86,16 +99,6 @@ namespace uno {
       // include the new entry into account in the computations
       const size_t provisional_number_entries = std::min(this->number_entries_in_memory + 1, this->memory_size);
 
-      // safeguard
-      const auto sk = this->S.column(this->current_index);
-      const auto yk = this->Y.column(this->current_index);
-      const double norm_sk = dot(sk, sk);
-      const double norm_yk = dot(yk, yk);
-      if (dot(sk, yk) < std::sqrt(1e-16) * norm_sk * norm_yk) {
-         DEBUG << "SKIP UPDATE\n";
-         return;
-      }
-
       /* update the entries of the symmetric matrix LD := D + L + Lᵀ (represented as lower triangular) */
       // the entries of LD depend on this->current_index (1 row and 1 column)
       // row this->current_index
@@ -115,14 +118,14 @@ namespace uno {
       Nk += (-this->delta) * (transpose(Sk)*Sk);
       DEBUG << "> N: " << this->N;
 
-      /* compute a LDL' (signed Cholesky) factorization without pivoting of N */
+      /* compute an LDL' (signed Cholesky) factorization without pivoting of N */
       // N = J P Jᵀ with J lower triangular with unit diagonal, and P diagonal, indefinite with nonzero elements
       // J and P overwrite N
       const bool ldlt_success = ldlt_nopiv_lvl2_rightlooking(Nk.data(), Nk.number_rows, Nk.leading_dimension,
          this->pivot_max_magnitude);
       // if the factorization failed with near-0 pivot, skip the update
       if (!ldlt_success) {
-         DEBUG << "Skipping the update\n";
+         DEBUG << "N is singular, skipping the update\n";
          return;
       }
 
@@ -145,17 +148,8 @@ namespace uno {
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
 
-   // compute δ = yᵀ y / sᵀ y at the last entry
-   // (7.20) in Numerical optimization (Nocedal & Wright)
    double LSR1Hessian::compute_delta() const {
-      /*
-      assert(0 < this->number_entries_in_memory);
-      const auto current_column_S = this->S.column(this->current_index);
-      const auto current_column_Y = this->Y.column(this->current_index);
-      const double numerator = dot(current_column_Y, current_column_Y);
-      const double denominator = dot(current_column_S, current_column_Y); // TODO get term from this->LD
-      return numerator/denominator;
-      */
+      // we cannot use the L-BFGS initialization because it kills U
       return 1.;
    }
 } // namespace
