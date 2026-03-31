@@ -29,6 +29,7 @@ namespace uno {
       [[nodiscard]] double get_correction_column_scaling(size_t column_index) const override;
 
    protected:
+      const double pivot_max_magnitude;
       DenseMatrix<double> LD; // lower triangular
       DenseMatrix<double> N;
       // Hessian representation: Bk = B0 + U P⁻¹ Uᵀ where B0 = delta I

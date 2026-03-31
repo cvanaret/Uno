@@ -4,12 +4,14 @@
 #include "LSR1Hessian.hpp"
 #include "linear_algebra/LAPACK_extension.hpp"
 #include "model/Model.hpp"
+#include "options/Options.hpp"
 #include "symbolic/UnitTriangular.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
    LSR1Hessian::LSR1Hessian(const Model& model, double objective_multiplier, const Options& options):
-            QuasiNewtonHessian("L-SR1", model, objective_multiplier, options),
+         QuasiNewtonHessian("L-SR1", model, objective_multiplier, options),
+         pivot_max_magnitude(options.get_double("LSR1_pivot_max_magnitude")),
          LD(this->memory_size, this->memory_size),
          N(this->memory_size, this->memory_size),
          U(this->model.number_variables, this->memory_size) {
@@ -105,9 +107,8 @@ namespace uno {
       /* compute a LDL' (signed Cholesky) factorization without pivoting of N */
       // N = J P Jᵀ with J lower triangular with unit diagonal, and P diagonal, indefinite with nonzero elements
       // J and P overwrite N
-      constexpr double near_zero_pivot_tolerance = 0.; // TODO
       const bool ldlt_success = ldlt_nopiv_lvl2_rightlooking(Nk.data(), Nk.number_rows, Nk.leading_dimension,
-         near_zero_pivot_tolerance);
+         this->pivot_max_magnitude);
       // if the factorization failed with near-0 pivot, skip the update
       if (!ldlt_success) {
          DEBUG << "Skipping the update\n";

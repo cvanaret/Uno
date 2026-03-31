@@ -56,6 +56,7 @@ namespace uno {
       {"LS_min_step_length", OptionType::DOUBLE},
       {"LS_scale_duals_with_step_length", OptionType::BOOL},
       {"quasi_newton_memory_size", OptionType::INTEGER},
+      {"LSR1_pivot_max_magnitude", OptionType::DOUBLE},
       {"regularization_failure_threshold", OptionType::DOUBLE},
       {"regularization_increase_factor", OptionType::DOUBLE},
       {"primal_regularization_initial_factor", OptionType::DOUBLE},
