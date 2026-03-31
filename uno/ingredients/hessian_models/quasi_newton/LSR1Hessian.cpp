@@ -58,6 +58,7 @@ namespace uno {
 
       // rank-1 contribution: U in R^{n x m}
       // work on each column of U (P⁻¹ (Uᵀ v))
+      DEBUG << "U = " << this->U << '\n';
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
          double U_coefficient = dot(current_U_column, vector) / this->get_correction_column_scaling(column_index);
@@ -84,6 +85,16 @@ namespace uno {
    void LSR1Hessian::recompute_hessian_representation() {
       // include the new entry into account in the computations
       const size_t provisional_number_entries = std::min(this->number_entries_in_memory + 1, this->memory_size);
+
+      // safeguard
+      const auto sk = this->S.column(this->current_index);
+      const auto yk = this->Y.column(this->current_index);
+      const double norm_sk = dot(sk, sk);
+      const double norm_yk = dot(yk, yk);
+      if (dot(sk, yk) < std::sqrt(1e-16) * norm_sk * norm_yk) {
+         DEBUG << "SKIP UPDATE\n";
+         return;
+      }
 
       /* update the entries of the symmetric matrix LD := D + L + Lᵀ (represented as lower triangular) */
       // the entries of LD depend on this->current_index (1 row and 1 column)
@@ -128,9 +139,7 @@ namespace uno {
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          this->U.column(column_index) = this->Y.column(column_index) - this->delta*this->S.column(column_index);
       }
-      DEBUG << "U1 = " << this->U << '\n';
       Uk *= transpose(inverse(unit_triangular(Nk)));
-      DEBUG << "U2 = " << this->U << '\n';
 
       // increment the slot: if we exceed the size of the memory, we start over and replace the oldest point in memory
       this->current_index = (this->current_index + 1) % this->memory_size;
