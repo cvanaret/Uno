@@ -13,6 +13,7 @@
 #include "symbolic/Multiplication.hpp"
 #include "symbolic/Sum.hpp"
 #include "symbolic/Transpose.hpp"
+#include "symbolic/UnitTriangular.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -27,23 +28,31 @@ namespace uno {
       // copy an existing matrix into this object
       BLASMatrix<T>& operator=(const BLASMatrix& other);
 
-      // specialized operator= for C := beta * C + A*B^T
+      // specialized operator= for C := beta * C + A*Bᵀ
       template <typename Matrix1, typename Matrix2, typename Matrix3>
       BLASMatrix& operator=(Sum<ScalarMultiple<Matrix1>, Multiplication<Matrix2, Transpose<Matrix3>>>&& expression);
 
-      // specialized operator= for C += A^T*B
+      // specialized operator= for C += Aᵀ*B
       template <typename Matrix1, typename Matrix2>
       BLASMatrix<T>& operator+=(Multiplication<Transpose<Matrix1>, Matrix2>&& expression);
 
-      // specialized operator+= for low-rank update C := A A^T
+      // specialized operator= for rank-k initialization C := A Aᵀ
       template <typename Matrix>
       BLASMatrix& operator=(Multiplication<Matrix, Transpose<Matrix>>&& expression);
 
-      // specialized operator+= for low-rank update C += alpha A^T A
+      // specialized operator= for rank-k initialization C := alpha Aᵀ A
+      template <typename Matrix>
+      BLASMatrix<T>& operator=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression);
+
+      // specialized operator+= for rank-k update C += alpha Aᵀ A
       template <typename Matrix>
       BLASMatrix& operator+=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression);
 
-      // specialized operator= for B := B A⁻ᵀ
+      // specialized operator= for B := B L⁻ᵀ with unit lower triangular L
+      template <typename Matrix>
+      BLASMatrix<T>& operator*=(Transpose<Inverse<UnitTriangular<Matrix>>>&& expression);
+
+      // specialized operator= for B := B L⁻ᵀ with lower triangular L
       template <typename Matrix>
       BLASMatrix& operator*=(Transpose<Inverse<Matrix>>&& expression);
 
@@ -69,7 +78,7 @@ namespace uno {
       return *this;
    }
 
-   // specialized operator= for C := beta * C + A*B^T
+   // specialized operator= for C := beta * C + A*Bᵀ
    // use different matrix types in case one of them has a different type (e.g., submatrix)
    template <typename T>
    template <typename Matrix1, typename Matrix2, typename Matrix3>
@@ -92,7 +101,7 @@ namespace uno {
       return *this;
    }
 
-   // specialized operator= for C += A^T*B
+   // specialized operator= for C += Aᵀ*B
    // use different matrix types in case one of them has a different type (e.g., submatrix)
    template <typename T>
    template <typename Matrix1, typename Matrix2>
@@ -108,31 +117,31 @@ namespace uno {
       return *this;
    }
 
-   // specialized operator+= for low-rank update C := A A^T
+   // specialized operator= for rank-k update C := A Aᵀ
    template <typename T>
    template <typename Matrix>
    BLASMatrix<T>& BLASMatrix<T>::operator=(Multiplication<Matrix, Transpose<Matrix>>&& expression) {
       assert(this->number_rows == this->number_columns);
-      // decode expression as alpha A B^T
+      // decode expression as alpha A Bᵀ
       const auto& A = expression.get_left();
       const auto& B = expression.get_right().get_matrix();
       const size_t correction_rank = A.number_columns;
       DEBUG << "Performing rank " << correction_rank << " update\n";
       // check that A and B are the same object
       if (&A != &B) {
-         throw std::runtime_error("BLASMatrix::operator+=: low-rank update called on two different correction matrices");
+         throw std::runtime_error("BLASMatrix::operator=: rank-k update called on two different correction matrices");
       }
       blas3::symmetric_rank_k_update('L', 'N', this->number_rows, A.number_rows, A.number_columns, 1., A.data(),
          A.leading_dimension, 0., this->data(), this->leading_dimension);
       return *this;
    }
 
-   // specialized operator+= for low-rank update C += alpha A^T A
+   // specialized operator= for rank-k initialization C := alpha Aᵀ A
    template <typename T>
    template <typename Matrix>
-   BLASMatrix<T>& BLASMatrix<T>::operator+=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression) {
+   BLASMatrix<T>& BLASMatrix<T>::operator=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression) {
       assert(this->number_rows == this->number_columns);
-      // decode expression as alpha A^T B
+      // decode expression as alpha Aᵀ B
       const T alpha = expression.get_factor();
       const auto& A = expression.get_expression().get_left().get_matrix();
       const auto& B = expression.get_expression().get_right();
@@ -140,23 +149,56 @@ namespace uno {
       DEBUG << "Performing rank " << correction_rank << " update\n";
       // check that A and B are the same object
       if (&A != &B) {
-         throw std::runtime_error("BLASMatrix::operator+=: low-rank update called on two different correction matrices");
+         throw std::runtime_error("BLASMatrix::operator=: rank-k update called on two different correction matrices");
+      }
+      blas3::symmetric_rank_k_update('L', 'T', this->number_rows, A.number_rows, A.number_columns, alpha, A.data(),
+         A.leading_dimension, 0., this->data(), this->leading_dimension);
+      return *this;
+   }
+
+   // specialized operator+= for rank-k update C += alpha Aᵀ A
+   template <typename T>
+   template <typename Matrix>
+   BLASMatrix<T>& BLASMatrix<T>::operator+=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression) {
+      assert(this->number_rows == this->number_columns);
+      // decode expression as alpha Aᵀ B
+      const T alpha = expression.get_factor();
+      const auto& A = expression.get_expression().get_left().get_matrix();
+      const auto& B = expression.get_expression().get_right();
+      const size_t correction_rank = A.number_columns;
+      DEBUG << "Performing rank " << correction_rank << " update\n";
+      // check that A and B are the same object
+      if (&A != &B) {
+         throw std::runtime_error("BLASMatrix::operator+=: rank-k update called on two different correction matrices");
       }
       blas3::symmetric_rank_k_update('L', 'T', this->number_rows, A.number_rows, A.number_columns, alpha, A.data(),
          A.leading_dimension, 1., this->data(), this->leading_dimension);
       return *this;
    }
 
-   // specialized operator= for B *= A⁻ᵀ (solve X Aᵀ := B and overwrite B with X)
+   // specialized operator= for B *= L⁻ᵀ with *unit* lower triangular  (solve X Lᵀ := B and overwrite B with X)
+   template <typename T>
+   template <typename Matrix>
+   BLASMatrix<T>& BLASMatrix<T>::operator*=(Transpose<Inverse<UnitTriangular<Matrix>>>&& expression) {
+      const auto& L = expression.get_matrix().get_matrix().get_matrix();
+      if (this->number_columns != L.number_columns) {
+         throw std::runtime_error("Dimension mismatch in BLASMatrix::operator*=");
+      }
+      blas3::triangular_back_solve('R', 'L', 'T', 'U' /* unit */, this->number_rows, this->number_columns, 1., L.data(),
+         L.leading_dimension, this->data(), this->leading_dimension);
+      return *this;
+   }
+
+   // specialized operator= for B *= L⁻ᵀ with L lower triangular (solve X Lᵀ := B and overwrite B with X)
    template <typename T>
    template <typename Matrix>
    BLASMatrix<T>& BLASMatrix<T>::operator*=(Transpose<Inverse<Matrix>>&& expression) {
-      const auto& A = expression.get_matrix().get_matrix();
-      if (this->number_columns != A.number_columns) {
+      const auto& L = expression.get_matrix().get_matrix();
+      if (this->number_columns != L.number_columns) {
          throw std::runtime_error("Dimension mismatch in BLASMatrix::operator*=");
       }
-      blas3::triangular_back_solve('R', 'L', 'T', 'N', this->number_rows, this->number_columns, 1., A.data(),
-         A.leading_dimension, this->data(), this->leading_dimension);
+      blas3::triangular_back_solve('R', 'L', 'T', 'N' /* non-unit */, this->number_rows, this->number_columns, 1., L.data(),
+         L.leading_dimension, this->data(), this->leading_dimension);
       return *this;
    }
 

@@ -17,7 +17,7 @@
 namespace uno {
    // forward declarations
    class InertiaCorrectionStrategy;
-   class LBFGSHessian;
+   class QuasiNewtonHessian;
    class Options;
    class Subproblem;
 
@@ -37,9 +37,9 @@ namespace uno {
       // if no inequality constraint and no trust region, allocate EQP solver
       // temporary fix: this is set only in interior-point methods
       if (!subproblem.has_inequality_constraints() && !uses_trust_region && options.get_string("inequality_handling_method") == "interior_point") {
-         if constexpr (std::is_same_v<HessianType, LBFGSHessian>) {
-            DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver with L-BFGS Hessian\n";
-            // the hessian_model we pass has type LBFGSHessian
+         if constexpr (std::is_base_of_v<QuasiNewtonHessian, HessianType>) {
+            DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver with quasi-Newton Hessian\n";
+            // the hessian_model we pass has type QuasiNewtonHessian
             auto subproblem_solver = std::make_unique<WoodburyEQPSolver>(hessian_model, options);
             subproblem_solver->initialize_memory(subproblem);
             return subproblem_solver;

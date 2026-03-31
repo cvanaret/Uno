@@ -5,7 +5,7 @@
 #include "WoodburyEQPSolver.hpp"
 #include "LinearSystem.hpp"
 #include "SymmetricIndefiniteLinearSolverFactory.hpp"
-#include "ingredients/hessian_models/quasi_newton/LBFGSHessian.hpp"
+#include "ingredients/hessian_models/quasi_newton/QuasiNewtonHessian.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
@@ -15,7 +15,7 @@
 #include "symbolic/Transpose.hpp"
 
 namespace uno {
-   WoodburyEQPSolver::WoodburyEQPSolver(const LBFGSHessian& hessian_model, const Options& options):
+   WoodburyEQPSolver::WoodburyEQPSolver(const QuasiNewtonHessian& hessian_model, const Options& options):
          SubproblemSolver(),
          hessian_model(hessian_model),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))) {
@@ -106,10 +106,10 @@ namespace uno {
          Vector<double> c(correction_rank);
          c = transpose(E)*b; // TODO move to constructor
          DEBUG2 << "c = " << c << '\n';
-         // construct T = P + Eᵀ H: first set P into T, then add Eᵀ H
+         // construct T = P⁻¹ + Eᵀ H: first set P⁻¹ into T, then add Eᵀ H
          DenseMatrix<double> T(correction_rank, correction_rank);
          for (size_t column_index: Range(correction_rank)) {
-            T.entry(column_index, column_index) = this->hessian_model.get_correction_column_scaling(column_index);
+            T.entry(column_index, column_index) = 1./this->hessian_model.get_correction_column_scaling(column_index);
          }
          T += transpose(E)*H;
          DEBUG2 << "T = " << T;

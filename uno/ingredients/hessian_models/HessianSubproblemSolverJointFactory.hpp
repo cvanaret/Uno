@@ -25,7 +25,7 @@ namespace uno {
          const OptimizationProblem& problem, Iterate& current_iterate, InertiaCorrectionStrategy& inertia_correction_strategy,
          bool uses_trust_region, double objective_multiplier, Options& options);
 
-      constexpr static std::array available_strategies{"exact", "LFBGS", "identity", "zero"};
+      constexpr static std::array available_strategies{"exact", "LFBGS", "LSR1", "identity", "zero"};
    };
 } // namespace
 

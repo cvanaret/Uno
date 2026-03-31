@@ -23,6 +23,7 @@ namespace uno {
       {"Regulariz", 21},
       {"Funnel", 25},
       {"|BFGS|", 26},
+      {"|SR1|", 26},
       {"||Step||", 31},
       {"Objective", 100},
       {"Infeas", 101},
