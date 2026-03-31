@@ -4,6 +4,7 @@
 #include "LSR1Hessian.hpp"
 #include "linear_algebra/LAPACK_extension.hpp"
 #include "model/Model.hpp"
+#include "symbolic/UnitTriangular.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
@@ -29,44 +30,6 @@ namespace uno {
       DEBUG << "\n*** Adding entries to the SR1 memory at slot " << this->current_index << '\n';
       // update the matrices S and Y
       this->update_memory_entries(current_iterate, trial_iterate, evaluation_cache);
-      // take the new point into account for the computations
-      const size_t size = std::min(this->number_entries_in_memory + 1, this->memory_size);
-
-      /* update the entries of the lower triangular matrix LD := D + L + Lᵀ */
-      // the entries of LD depend on this->current_index (1 row and 1 column, possibly empty)
-      // row this->current_index
-      for (size_t column_index: Range(this->current_index)) {
-         this->LD.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
-      }
-      // column this->current_index (including the diagonal)
-      for (size_t row_index: Range(this->current_index, size)) {
-         this->LD.entry(row_index, this->current_index) = dot(this->S.column(row_index), this->Y.column(this->current_index));
-      }
-      DEBUG << "> LD: " << this->LD;
-
-      /* build the symmetric matrix N = D + L + Lᵀ - δ Sᵀ S */
-      const auto Sk = this->S.submatrix(this->model.number_variables, size);
-      auto Lk = this->LD.submatrix(size, size);
-      auto Nk = this->N.submatrix(size, size);
-      Nk = (-this->delta) * (transpose(Sk)*Sk);
-      for (size_t column_index: Range(size)) {
-         for (size_t row_index: Range(column_index, size)) {
-            this->N.entry(row_index, column_index) += this->LD.entry(row_index, column_index);
-         }
-      }
-      DEBUG << "> N: " << this->N;
-
-      /* compute a LDL' (signed Cholesky) factorization without pivoting of N */
-      // TODO because the factorization may fail, make a copy
-      const double near_zero_pivot_tolerance = 0.; // TODO
-      const bool ldlt_success = ldlt_nopiv_lvl2_rightlooking(Nk.data(), Nk.number_rows, Nk.leading_dimension, near_zero_pivot_tolerance);
-      if (ldlt_success) {
-         this->validate_update();
-      }
-      else {
-         DEBUG << "Skipping the update\n";
-      }
-      statistics.set("|SR1|", this->number_entries_in_memory);
       // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
       // Hessian approximation will be used, we delay the update to the beginning of the next major iteration
       this->hessian_recomputation_required = true;
@@ -95,8 +58,7 @@ namespace uno {
       // work on each column of U (P⁻¹ (Uᵀ v))
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          const auto current_U_column = this->U.column(column_index);
-         double U_coefficient = dot(current_U_column, vector);
-         U_coefficient *= 1.; // TODO
+         double U_coefficient = dot(current_U_column, vector) / this->get_correction_column_scaling(column_index);
          // result += coefficient * column(P⁻¹) * current_column
          blas1::add(this->model.number_variables, U_coefficient, current_U_column.data(), result);
       }
@@ -153,7 +115,6 @@ namespace uno {
 
       this->validate_update();
       DEBUG << "The matrix N was successfully factorized\n";
-      const auto& Jk = Nk; // TODO signal unit diagonal
 
       /* update the initial Hessian approximation δ I */
       this->delta = this->compute_delta();
@@ -162,8 +123,10 @@ namespace uno {
       /* form U = (Y - δ S) J⁻ᵀ */
       const auto Yk = this->Y.submatrix(this->model.number_variables, this->number_entries_in_memory);
       auto Uk = this->U.submatrix(this->model.number_variables, this->number_entries_in_memory);
-      // Uk = Yk - this->delta * Sk;
-      // Uk *= transpose(inverse(Jk));
+      for (size_t column_index: Range(this->number_entries_in_memory)) {
+         this->U.column(column_index) = this->Y.column(column_index) - this->delta*this->S.column(column_index);
+      }
+      Uk *= transpose(inverse(unit_triangular(Nk)));
 
       // increment the slot: if we exceed the size of the memory, we start over and replace the oldest point in memory
       this->current_index = (this->current_index + 1) % this->memory_size;

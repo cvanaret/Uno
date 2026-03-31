@@ -13,6 +13,7 @@
 #include "symbolic/Multiplication.hpp"
 #include "symbolic/Sum.hpp"
 #include "symbolic/Transpose.hpp"
+#include "symbolic/UnitTriangular.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -47,7 +48,11 @@ namespace uno {
       template <typename Matrix>
       BLASMatrix& operator+=(ScalarMultiple<Multiplication<Transpose<Matrix>, Matrix>>&& expression);
 
-      // specialized operator= for B := B A⁻ᵀ
+      // specialized operator= for B := B L⁻ᵀ with unit lower triangular L
+      template <typename Matrix>
+      BLASMatrix<T>& operator*=(Transpose<Inverse<UnitTriangular<Matrix>>>&& expression);
+
+      // specialized operator= for B := B L⁻ᵀ with lower triangular L
       template <typename Matrix>
       BLASMatrix& operator*=(Transpose<Inverse<Matrix>>&& expression);
 
@@ -171,16 +176,29 @@ namespace uno {
       return *this;
    }
 
-   // specialized operator= for B *= A⁻ᵀ (solve X Aᵀ := B and overwrite B with X)
+   // specialized operator= for B *= L⁻ᵀ with *unit* lower triangular  (solve X Lᵀ := B and overwrite B with X)
+   template <typename T>
+   template <typename Matrix>
+   BLASMatrix<T>& BLASMatrix<T>::operator*=(Transpose<Inverse<UnitTriangular<Matrix>>>&& expression) {
+      const auto& L = expression.get_matrix().get_matrix().get_matrix();
+      if (this->number_columns != L.number_columns) {
+         throw std::runtime_error("Dimension mismatch in BLASMatrix::operator*=");
+      }
+      blas3::triangular_back_solve('R', 'L', 'T', 'U' /* unit */, this->number_rows, this->number_columns, 1., L.data(),
+         L.leading_dimension, this->data(), this->leading_dimension);
+      return *this;
+   }
+
+   // specialized operator= for B *= L⁻ᵀ with L lower triangular (solve X Lᵀ := B and overwrite B with X)
    template <typename T>
    template <typename Matrix>
    BLASMatrix<T>& BLASMatrix<T>::operator*=(Transpose<Inverse<Matrix>>&& expression) {
-      const auto& A = expression.get_matrix().get_matrix();
-      if (this->number_columns != A.number_columns) {
+      const auto& L = expression.get_matrix().get_matrix();
+      if (this->number_columns != L.number_columns) {
          throw std::runtime_error("Dimension mismatch in BLASMatrix::operator*=");
       }
-      blas3::triangular_back_solve('R', 'L', 'T', 'N', this->number_rows, this->number_columns, 1., A.data(),
-         A.leading_dimension, this->data(), this->leading_dimension);
+      blas3::triangular_back_solve('R', 'L', 'T', 'N' /* non-unit */, this->number_rows, this->number_columns, 1., L.data(),
+         L.leading_dimension, this->data(), this->leading_dimension);
       return *this;
    }
 
