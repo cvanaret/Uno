@@ -87,6 +87,7 @@ namespace uno {
 
       /* quasi-Newton options */
       options.set_integer("quasi_newton_memory_size", 6);
+      options.set_double("LBFGS_delta_upper_bound", 10.);
       options.set_double("LSR1_pivot_max_magnitude", 1e-7);
 
       /** regularization options **/
