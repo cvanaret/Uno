@@ -27,7 +27,8 @@ namespace uno {
          L_invsqrt_D(this->memory_size, this->memory_size),
          M(this->memory_size, this->memory_size),
          U(this->model.number_variables, this->memory_size),
-         V(this->model.number_variables, this->memory_size) {
+         V(this->model.number_variables, this->memory_size),
+         delta_upper_bound(options.get_double("LBFGS_delta_upper_bound")) {
       if (this->memory_size <= 0) {
          throw std::runtime_error("The quasi-Newton memory size should be positive");
       }
@@ -48,9 +49,21 @@ namespace uno {
       DEBUG << "\n*** Adding entries to the BFGS memory at slot " << this->current_index << '\n';
       // update the matrices S and Y
       this->update_memory_entries(current_iterate, trial_iterate, evaluation_cache);
-      // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
-      // Hessian approximation will be used, we delay the update to the beginning of the next major iteration
-      this->hessian_recomputation_required = true;
+
+      // safeguard: if dot(sk, yk) is too small relative to sk and yk, skip the update
+      const auto sk = this->S.column(this->current_index);
+      const auto yk = this->Y.column(this->current_index);
+      const double norm_sk = dot(sk, sk);
+      const double norm_yk = dot(yk, yk);
+      // tolerance is √(machine epsilon)
+      if (dot(sk, yk) < std::sqrt(std::numeric_limits<double>::epsilon()) * norm_sk * norm_yk) {
+         DEBUG << "dot(sk, yk) is too small, skipping the update\n";
+      }
+      else {
+         // notify_accepted_iterate is called at the end of a major iteration. Since we don't know yet whether the
+         // Hessian approximation will be used, we delay the update to the beginning of the next major iteration
+         this->hessian_recomputation_required = true;
+      }
    }
 
    // Hessian-vector product where the Hessian approximation is Bk = B0 - U Uᵀ + V Vᵀ and B0 = δ I
@@ -195,6 +208,6 @@ namespace uno {
       const auto last_column_Y = this->Y.column(this->current_index);
       const double numerator = dot(last_column_Y, last_column_Y);
       const double denominator = this->D[this->current_index]; // > 0 by the update rule
-      return numerator/denominator;
+      return std::min(this->delta_upper_bound, numerator/denominator);
    }
 } // namespace

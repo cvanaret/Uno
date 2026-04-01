@@ -132,8 +132,9 @@ If not provided, the solver is chosen automatically from the available solvers (
 ## Quasi-Newton options
 
 | Option                     | Type    | Default | Description                                  |
-| :---                       |:--------|:--------|:---------------------------------------------|
+|:---------------------------|:--------|:--------|:---------------------------------------------|
 | `quasi_newton_memory_size` | integer | 6       | Size of the quasi-Newton limited memory      |
+| `LBFGS_delta_upper_bound`  | double  | 100     | Upper bound on delta in L-BFGS               |
 | `LSR1_pivot_max_magnitude` | double  | 1e-7    | Maximum magnitude of allowed pivots in L-SR1 |
 
 ## Trust region options
