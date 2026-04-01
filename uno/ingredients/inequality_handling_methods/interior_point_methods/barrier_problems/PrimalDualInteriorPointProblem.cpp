@@ -299,7 +299,8 @@ namespace uno {
    }
 
    Inertia PrimalDualInteriorPointProblem::get_inertia() const {
-      return this->inner.get_inertia();
+      const Inertia inner_inertia = this->inner.get_inertia();
+      return {inner_inertia.positive + inner_inertia.zero, inner_inertia.negative, 0};
    }
 
    void PrimalDualInteriorPointProblem::assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution,

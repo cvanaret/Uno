@@ -90,7 +90,9 @@ namespace uno {
    void Subproblem::regularize_lagrangian_hessian(Statistics& statistics, double* hessian_values) const {
       // regularize the Hessian only if necessary
       if (!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) {
-         const Inertia expected_inertia = this->problem.get_inertia();
+         const Inertia problem_inertia = this->problem.get_inertia();
+         const Inertia expected_inertia = {problem_inertia.positive, 0, problem_inertia.zero};
+         assert(expected_inertia.positive + expected_inertia.zero == this->number_variables);
          this->inertia_correction_strategy.regularize_hessian(statistics, *this, expected_inertia, hessian_values);
       }
    }
@@ -113,7 +115,8 @@ namespace uno {
       if ((!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_dual_regularization()) ||
             this->inertia_correction_strategy.performs_dual_regularization()) {
          const Inertia expected_inertia = this->problem.get_inertia();
-         std::cout << "Expected inertia: " << expected_inertia << '\n';
+         assert(expected_inertia.positive + expected_inertia.negative + expected_inertia.zero ==
+            this->number_variables + this->number_constraints);
 
          const size_t offset = this->number_hessian_nonzeros() + this->problem.number_jacobian_nonzeros();
          double* primal_regularization_values = augmented_matrix_values + offset;
