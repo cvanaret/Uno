@@ -57,6 +57,8 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
 
+      [[nodiscard]] Inertia get_inertia() const override;
+
       void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const override;
 
       [[nodiscard]] double push_variable_to_interior(double variable_value, double lower_bound, double upper_bound) const;

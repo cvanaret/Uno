@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <vector>
+#include "ingredients/inertia_correction_strategies/Inertia.hpp"
 #include "linear_algebra/MatrixOrder.hpp"
 #include "linear_algebra/Norm.hpp"
 #include "optimization/SolutionStatus.hpp"
@@ -81,6 +82,8 @@ namespace uno {
       [[nodiscard]] virtual const Collection<size_t>& get_equality_constraints() const;
       [[nodiscard]] virtual const Collection<size_t>& get_inequality_constraints() const;
       [[nodiscard]] virtual const Collection<size_t>& get_dual_regularization_constraints() const;
+
+      [[nodiscard]] virtual Inertia get_inertia() const;
 
       virtual void assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution, Direction& direction) const;
       [[nodiscard]] virtual double dual_regularization_factor() const;

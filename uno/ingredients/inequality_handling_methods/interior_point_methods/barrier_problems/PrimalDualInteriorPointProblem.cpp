@@ -298,6 +298,11 @@ namespace uno {
       return this->inner.get_equality_constraints();
    }
 
+   Inertia PrimalDualInteriorPointProblem::get_inertia() const {
+      const Inertia inner_inertia = this->inner.get_inertia();
+      return {inner_inertia.positive + inner_inertia.zero, inner_inertia.negative, 0};
+   }
+
    void PrimalDualInteriorPointProblem::assemble_primal_dual_direction(const Iterate& current_iterate, const Vector<double>& solution,
          Direction& direction) const {
       // assemble the primal direction and the constraint dual solution

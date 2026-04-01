@@ -170,6 +170,10 @@ namespace uno {
       return this->dual_regularization_constraints;
    }
 
+   Inertia OptimizationProblem::get_inertia() const {
+      return {this->number_variables, this->number_constraints, 0};
+   }
+
    void OptimizationProblem::assemble_primal_dual_direction(const Iterate& /*current_iterate*/, const Vector<double>& solution,
          Direction& direction) const {
       // form the primal-dual direction

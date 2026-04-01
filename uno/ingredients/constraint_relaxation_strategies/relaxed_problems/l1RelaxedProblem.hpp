@@ -55,6 +55,8 @@ namespace uno {
       [[nodiscard]] const Collection<size_t>& get_inequality_constraints() const override;
       [[nodiscard]] const Collection<size_t>& get_dual_regularization_constraints() const override;
 
+      [[nodiscard]] Inertia get_inertia() const override;
+
       [[nodiscard]] SolutionStatus check_first_order_convergence(const Iterate& current_iterate, double primal_tolerance,
          double dual_tolerance) const override;
 
