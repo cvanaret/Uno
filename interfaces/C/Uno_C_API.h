@@ -59,7 +59,7 @@ extern "C" {
 
    // current Uno version
    const uno_int UNO_VERSION_MAJOR = 2;
-   const uno_int UNO_VERSION_MINOR = 6;
+   const uno_int UNO_VERSION_MINOR = 7;
    const uno_int UNO_VERSION_PATCH = 0;
 
    // - takes as inputs a vector "x" of size "number_variables" and an object "user_data", and
