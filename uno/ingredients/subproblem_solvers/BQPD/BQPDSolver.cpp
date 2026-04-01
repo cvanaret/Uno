@@ -98,8 +98,8 @@ namespace uno {
       this->mxws = static_cast<size_t>(this->kmax * (this->kmax + 9) / 2) + 2 * subproblem.number_variables +
          subproblem.number_constraints /* (required by bqpd.f) */ + 5 * subproblem.number_variables + this->nprof /* (required
          by sparseL.f) */;
-      // 6 pointers hidden in lws
-      constexpr size_t hidden_pointers_size = 6*sizeof(intptr_t);
+      // 3 pointers hidden in lws
+      constexpr size_t hidden_pointers_size = 3*sizeof(intptr_t);
       this->mxlws = hidden_pointers_size + static_cast<size_t>(this->kmax) /* (required by bqpd.f) */ +
          9 * subproblem.number_variables + subproblem.number_constraints /* (required by sparseL.f) */;
       this->ws.resize(this->mxws);
@@ -250,18 +250,12 @@ namespace uno {
       WSC.kk = 0; // length of ws that is used by gdotx
       WSC.ll = 0; // length of lws that is used by gdotx
 
-      // hide pointer to hessian_evaluation_required, statistics, subproblem and Hessian information
-      hide_pointer(0, this->lws.data(), this->workspace.hessian_evaluation_required);
+      // hide pointer to statistics, subproblem, and workspace
+      hide_pointer(0, this->lws.data(), statistics);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(1, this->lws.data(), statistics);
+      hide_pointer(1, this->lws.data(), subproblem);
       WSC.ll += sizeof(intptr_t);
-      hide_pointer(2, this->lws.data(), subproblem);
-      WSC.ll += sizeof(intptr_t);
-      hide_pointer(3, this->lws.data(), this->workspace.hessian_row_indices);
-      WSC.ll += sizeof(intptr_t);
-      hide_pointer(4, this->lws.data(), this->workspace.hessian_column_indices);
-      WSC.ll += sizeof(intptr_t);
-      hide_pointer(5, this->lws.data(), this->workspace.hessian_values);
+      hide_pointer(2, this->lws.data(), this->workspace);
       WSC.ll += sizeof(intptr_t);
    }
 
@@ -343,19 +337,13 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
       result[i] = 0.;
    }
 
-   // retrieve flag evaluate_hessian, statistics, subproblem and Hessian
-   bool* hessian_evaluation_required = uno::retrieve_pointer<bool>(0, lws);
-   uno::Statistics* statistics = uno::retrieve_pointer<uno::Statistics>(1, lws);
-   uno::Subproblem* subproblem = uno::retrieve_pointer<uno::Subproblem>(2, lws);
-   uno::Vector<int>* hessian_row_indices = uno::retrieve_pointer<uno::Vector<int>>(3, lws);
-   uno::Vector<int>* hessian_column_indices = uno::retrieve_pointer<uno::Vector<int>>(4, lws);
-   uno::Vector<double>* hessian_values = uno::retrieve_pointer<uno::Vector<double>>(5, lws);
-   assert(hessian_evaluation_required != nullptr);
+   // retrieve workspace, statistics, and subproblem
+   uno::Statistics* statistics = uno::retrieve_pointer<uno::Statistics>(0, lws);
+   uno::Subproblem* subproblem = uno::retrieve_pointer<uno::Subproblem>(1, lws);
+   uno::BQPDWorkspace* workspace = uno::retrieve_pointer<uno::BQPDWorkspace>(2, lws);
+   assert(workspace != nullptr);
    assert(statistics != nullptr);
    assert(subproblem != nullptr);
-   assert(hessian_row_indices != nullptr);
-   assert(hessian_column_indices != nullptr);
-   assert(hessian_values != nullptr);
 
    // if the Hessian must be regularized or if no implicit representation exists
    if ((!subproblem->is_hessian_positive_definite() && subproblem->performs_primal_regularization()) ||
@@ -363,16 +351,16 @@ void hessian_vector_product(int* dimension, const double vector[], const double 
       // compute the explicit matrix
       if (subproblem->has_hessian_matrix()) {
          // if the Hessian has not been evaluated at the current point, evaluate it
-         if (*hessian_evaluation_required) {
-            subproblem->evaluate_lagrangian_hessian(*statistics, hessian_values->data());
-            subproblem->regularize_lagrangian_hessian(*statistics, hessian_values->data());
-            *hessian_evaluation_required = false;
+         if (workspace->hessian_evaluation_required) {
+            subproblem->evaluate_lagrangian_hessian(*statistics, workspace->hessian_values.data());
+            subproblem->regularize_lagrangian_hessian(*statistics, workspace->hessian_values.data());
+            workspace->hessian_evaluation_required = false;
          }
          // Hessian-vector product
          for (size_t nonzero_index: uno::Range(subproblem->number_regularized_hessian_nonzeros())) {
-            const size_t row_index = static_cast<size_t>((*hessian_row_indices)[nonzero_index]);
-            const size_t column_index = static_cast<size_t>((*hessian_column_indices)[nonzero_index]);
-            const double entry = (*hessian_values)[nonzero_index];
+            const size_t row_index = static_cast<size_t>(workspace->hessian_row_indices[nonzero_index]);
+            const size_t column_index = static_cast<size_t>(workspace->hessian_column_indices[nonzero_index]);
+            const double entry = workspace->hessian_values[nonzero_index];
             result[row_index] += entry * vector[column_index];
             if (row_index != column_index) {
                result[column_index] += entry * vector[row_index];
