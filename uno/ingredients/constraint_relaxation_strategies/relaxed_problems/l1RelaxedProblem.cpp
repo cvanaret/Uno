@@ -316,6 +316,10 @@ namespace uno {
       return this->dual_regularization_constraints;
    }
 
+   Inertia l1RelaxedProblem::get_inertia() const {
+      return {this->model.number_variables, this->number_constraints, this->elastic_variables.size()};
+   }
+
    void l1RelaxedProblem::set_elastic_variable_values(Iterate& iterate, const std::function<void(Iterate&, size_t, size_t,
          double)>& elastic_setting_function) const {
       iterate.set_number_variables(this->number_variables);
