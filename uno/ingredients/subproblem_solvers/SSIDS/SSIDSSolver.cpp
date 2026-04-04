@@ -82,4 +82,8 @@ namespace uno {
    LinearSystem& SSIDSSolver::get_linear_system() {
       return this->linear_system;
    }
+
+   COOLinearSystem& SSIDSSolver::get_coo_linear_system() {
+      return this->linear_system;
+   }
 } // namespace
