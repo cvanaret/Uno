@@ -241,6 +241,10 @@ namespace uno {
       return this->linear_system;
    }
 
+   COOLinearSystem& MA27Solver::get_coo_linear_system() {
+      return this->linear_system;
+   }
+
    void MA27Solver::check_factorization_status() {
       switch (this->workspace.info[eINFO::IFLAG]) {
          case NSTEPS:

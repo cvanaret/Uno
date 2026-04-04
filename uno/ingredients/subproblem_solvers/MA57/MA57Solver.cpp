@@ -215,4 +215,8 @@ namespace uno {
    LinearSystem& MA57Solver::get_linear_system() {
       return this->linear_system;
    }
+
+   COOLinearSystem& MA57Solver::get_coo_linear_system() {
+      return this->linear_system;
+   }
 } // namespace
