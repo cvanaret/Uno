@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
+#include <array>
 #include "ingredients/subproblem_solvers/MUMPS/MUMPSSolver.hpp"
+#include "linear_algebra/Vector.hpp"
 
 using namespace uno;
 

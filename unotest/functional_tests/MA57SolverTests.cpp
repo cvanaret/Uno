@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
+#include <array>
 #include "ingredients/subproblem_solvers/MA57/MA57Solver.hpp"
+#include "linear_algebra/Vector.hpp"
 
 using namespace uno;
 
