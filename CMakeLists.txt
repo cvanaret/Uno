@@ -285,6 +285,7 @@ if(BUILD_SHARED_LIBS)
    target_link_libraries(uno_shared PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
    set_target_properties(uno_shared PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90")
+   set_target_properties(uno_shared PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
 if(BUILD_STATIC_LIBS)
