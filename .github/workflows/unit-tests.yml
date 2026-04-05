@@ -295,4 +295,10 @@ jobs:
       # ---------------- TEST ----------------
       - name: Run tests
         working-directory: build
-        run: ./run_unotest
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            ./run_unotest.exe
+          else
+            ./run_unotest
+          fi
