@@ -269,7 +269,7 @@ jobs:
         if: matrix.toolchain == 'msvc' && matrix.library == 'shared'
         shell: cmd
         run: |
-          cmake -G "NMake Makefiles" ^
+          cmake -G "Ninja" ^
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
             -DENABLE_TESTS=ON ^
             -DCMAKE_C_COMPILER=cl ^
