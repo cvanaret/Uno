@@ -295,10 +295,4 @@ jobs:
       # ---------------- TEST ----------------
       - name: Run tests
         working-directory: build
-        shell: bash
-        run: |
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            ./run_unotest.exe
-          else
-            ./run_unotest
-          fi
+        run: ctest --output-on-failure -C ${{env.BUILD_TYPE}}
