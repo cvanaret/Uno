@@ -293,6 +293,14 @@ jobs:
         run: nmake run_unotest
 
       # ---------------- TEST ----------------
-      - name: Run tests
+      - name: Run tests (not MinGW)
+        if: matrix.toolchain != 'mingw'
         working-directory: build
         run: ctest --output-on-failure -C ${{env.BUILD_TYPE}}
+
+      - name: Run tests (MinGW)
+        if: matrix.toolchain == 'mingw'
+        working-directory: build
+        run: |
+          set PATH=${{github.workspace}}\dependencies\bin;%PATH%
+          ctest --output-on-failure -C ${{env.BUILD_TYPE}}
