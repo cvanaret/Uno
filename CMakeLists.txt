@@ -370,7 +370,7 @@ if(ENABLE_TESTS)
    target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES} ${CMAKE_DL_LIBS} ${FORTRAN_LIBS})
 
    include(GoogleTest)
-   gtest_discover_tests(run_unotest)
+   gtest_discover_tests(run_unotest PROPERTIES ENVIRONMENT "PATH=$<SHELL_PATH:${CMAKE_BINARY_DIR}/bin>;$ENV{PATH}")
 endif()
 
 #########################################
