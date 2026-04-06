@@ -239,7 +239,7 @@ jobs:
             -DHIGHS=${{github.workspace}}\dependencies\lib\libhighs.a ^
             -DAUXILIARY_LIBRARIES=${{github.workspace}}\dependencies\lib\libstdc++.a ^
             -DBUILD_STATIC_LIBS=ON ^
-            -DBUILD_SHARED_LIBS=ON .
+            -DBUILD_SHARED_LIBS=ON
 
       # ----- MSVC -----
       - name: Configure (MSVC static)
@@ -247,6 +247,7 @@ jobs:
         shell: cmd
         run: |
           cmake -G "NMake Makefiles" ^
+            -B build ^
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
             -DENABLE_TESTS=ON ^
             -DCMAKE_C_COMPILER=cl ^
@@ -263,13 +264,14 @@ jobs:
             -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.lib;${{github.workspace}}\dependencies\lib\libblas.lib" ^
             -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
             -DBUILD_STATIC_LIBS=ON ^
-            -DBUILD_SHARED_LIBS=OFF .
+            -DBUILD_SHARED_LIBS=OFF
 
       - name: Configure (MSVC shared)
         if: matrix.toolchain == 'msvc' && matrix.library == 'shared'
         shell: cmd
         run: |
           cmake -G "Ninja" ^
+            -B build ^
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
             -DENABLE_TESTS=ON ^
             -DCMAKE_C_COMPILER=cl ^
@@ -278,7 +280,7 @@ jobs:
             -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.lib;${{github.workspace}}\dependencies\lib\libblas.lib" ^
             -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
             -DBUILD_STATIC_LIBS=OFF ^
-            -DBUILD_SHARED_LIBS=ON .
+            -DBUILD_SHARED_LIBS=ON
 
       # =========================================================
       # BUILD
