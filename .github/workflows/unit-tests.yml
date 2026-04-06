@@ -298,6 +298,12 @@ jobs:
         working-directory: build
         run: ctest --output-on-failure -C ${{env.BUILD_TYPE}}
 
+      - name: Debug missing DLLs (MinGW)
+        if: matrix.toolchain == 'mingw'
+        working-directory: build
+        run: |
+          cygcheck ./run_unotest.exe || true
+
       - name: Run tests (MinGW)
         if: matrix.toolchain == 'mingw'
         working-directory: build
