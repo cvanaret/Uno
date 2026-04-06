@@ -302,5 +302,5 @@ jobs:
         if: matrix.toolchain == 'mingw'
         working-directory: build
         run: |
-          export PATH="${{github.workspace}}/dependencies/bin:$PATH"
+          export PATH="$(cygpath '${{github.workspace}}')/dependencies/bin:$PATH"
           ctest --output-on-failure -C ${{env.BUILD_TYPE}}
