@@ -284,13 +284,8 @@ jobs:
       # BUILD
       # =========================================================
 
-      - name: Build (not MSVC)
-        if: matrix.toolchain != 'msvc'
-        run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}} -j4
-
-      - name: Build (MSVC)
-        if: matrix.toolchain == 'msvc'
-        run: nmake run_unotest
+      - name: Build
+        run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}}
 
       # ---------------- TEST ----------------
       - name: Run tests (not MinGW)
