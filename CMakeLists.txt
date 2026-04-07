@@ -375,9 +375,7 @@ if(ENABLE_TESTS)
    endif()
 
    include(GoogleTest)
-   gtest_discover_tests(run_unotest
-      DISCOVERY_MODE PRE_TEST
-      PROPERTIES ENVIRONMENT "PATH=$<SHELL_PATH:${CMAKE_BINARY_DIR}/bin>;$<SHELL_PATH:${CMAKE_SOURCE_DIR}/dependencies/bin>;$ENV{PATH}")
+   gtest_discover_tests(run_unotest)
 endif()
 
 #########################################
