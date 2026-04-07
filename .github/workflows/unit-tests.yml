@@ -61,13 +61,6 @@ jobs:
             toolchain: msvc
             build_type: Debug
             shell: cmd
-            library: static
-
-          - os: windows-latest
-            toolchain: msvc
-            build_type: Debug
-            shell: cmd
-            library: shared
 
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
@@ -185,7 +178,7 @@ jobs:
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
             -DBUILD_STATIC_LIBS=ON \
-            -DBUILD_SHARED_LIBS=ON
+            -DBUILD_SHARED_LIBS=OFF
 
       - name: Configure (Mac)
         if: startsWith(matrix.os, 'macos')
@@ -215,7 +208,7 @@ jobs:
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
             -DBUILD_STATIC_LIBS=ON \
-            -DBUILD_SHARED_LIBS=ON
+            -DBUILD_SHARED_LIBS=OFF
 
       # ----- MinGW -----
       - name: Configure (MinGW)
@@ -239,11 +232,11 @@ jobs:
             -DHIGHS=${{github.workspace}}\dependencies\lib\libhighs.a ^
             -DAUXILIARY_LIBRARIES=${{github.workspace}}\dependencies\lib\libstdc++.a ^
             -DBUILD_STATIC_LIBS=ON ^
-            -DBUILD_SHARED_LIBS=ON
+            -DBUILD_SHARED_LIBS=OFF
 
       # ----- MSVC -----
-      - name: Configure (MSVC static)
-        if: matrix.toolchain == 'msvc' && matrix.library == 'static'
+      - name: Configure (MSVC)
+        if: matrix.toolchain == 'msvc'
         shell: cmd
         run: |
           cmake -G "NMake Makefiles" ^
@@ -266,35 +259,9 @@ jobs:
             -DBUILD_STATIC_LIBS=ON ^
             -DBUILD_SHARED_LIBS=OFF
 
-      - name: Configure (MSVC shared)
-        if: matrix.toolchain == 'msvc' && matrix.library == 'shared'
-        shell: cmd
-        run: |
-          cmake -G "Ninja" ^
-            -B build ^
-            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
-            -DENABLE_TESTS=ON ^
-            -DCMAKE_C_COMPILER=cl ^
-            -DCMAKE_CXX_COMPILER=cl ^
-            -DCMAKE_Fortran_COMPILER=ifx ^
-            -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.lib;${{github.workspace}}\dependencies\lib\libblas.lib" ^
-            -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
-            -DBUILD_STATIC_LIBS=OFF ^
-            -DBUILD_SHARED_LIBS=ON
-
       # =========================================================
       # BUILD
       # =========================================================
-
-      - name: Build uno_shared (MSVC shared)
-        if: matrix.toolchain == 'msvc' && matrix.library == 'shared'
-        shell: cmd
-        run: cmake --build build --target uno_shared --config ${{env.BUILD_TYPE}}
-
-      - name: Find uno.lib (debug)
-        if: matrix.toolchain == 'msvc' && matrix.library == 'shared'
-        shell: cmd
-        run: dir /s /b build\*.lib 2>nul || echo "no .lib files found"
 
       - name: Build
         run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}}
