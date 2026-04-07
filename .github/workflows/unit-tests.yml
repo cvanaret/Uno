@@ -167,7 +167,6 @@ jobs:
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 
-      # ----- MinGW -----
       - name: Configure (MinGW)
         if: matrix.toolchain == 'mingw'
         shell: cmd
@@ -198,7 +197,10 @@ jobs:
       - name: Build
         run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}}
 
-      # ---------------- TEST ----------------
+      # =========================================================
+      # TEST
+      # =========================================================
+
       - name: Run tests (not MinGW)
         if: matrix.toolchain != 'mingw'
         working-directory: build
