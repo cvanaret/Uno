@@ -56,12 +56,6 @@ jobs:
             build_type: Debug
             shell: msys2 {0}
 
-          # -------- Windows MSVC --------
-          - os: windows-latest
-            toolchain: msvc
-            build_type: Debug
-            shell: cmd
-
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
 
@@ -96,18 +90,6 @@ jobs:
             echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
           fi
 
-      # ----- MSVC -----
-      - name: MSVC environment
-        if: matrix.toolchain == 'msvc'
-        uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Intel Fortran
-        if: matrix.toolchain == 'msvc'
-        uses: fortran-lang/setup-fortran@main
-        with:
-          compiler: intel
-          version: '2025.0'
-
       # ----- MinGW -----
       - name: Setup MSYS2
         if: matrix.toolchain == 'mingw'
@@ -127,31 +109,6 @@ jobs:
 
       - name: Download dependencies
         run: bash dependencies/scripts/download_dependencies.sh
-
-      # =========================================================
-      # MSVC: BUILD BLAS/LAPACK
-      # =========================================================
-
-      - name: Build LAPACK (MSVC)
-        if: matrix.toolchain == 'msvc'
-        shell: cmd
-        run: |
-          git clone https://github.com/Reference-LAPACK/lapack.git
-          cd lapack
-          mkdir build
-          cd build
-          cmake -G "NMake Makefiles" .. ^
-            -DCBLAS=ON ^
-            -DLAPACKE=OFF ^
-            -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\dependencies ^
-            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
-            -DCMAKE_C_COMPILER=cl ^
-            -DCMAKE_CXX_COMPILER=cl ^
-            -DCMAKE_Fortran_COMPILER=ifx ^
-            -DBUILD_SHARED_LIBS=OFF ^
-            -DTEST_FORTRAN_COMPILER=OFF
-          nmake
-          nmake install
 
       # =========================================================
       # CONFIGURE
@@ -231,31 +188,6 @@ jobs:
             -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.a ^
             -DHIGHS=${{github.workspace}}\dependencies\lib\libhighs.a ^
             -DAUXILIARY_LIBRARIES=${{github.workspace}}\dependencies\lib\libstdc++.a ^
-            -DBUILD_STATIC_LIBS=ON ^
-            -DBUILD_SHARED_LIBS=OFF
-
-      # ----- MSVC -----
-      - name: Configure (MSVC)
-        if: matrix.toolchain == 'msvc'
-        shell: cmd
-        run: |
-          cmake -G "NMake Makefiles" ^
-            -B build ^
-            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
-            -DENABLE_TESTS=ON ^
-            -DCMAKE_C_COMPILER=cl ^
-            -DCMAKE_CXX_COMPILER=cl ^
-            -DCMAKE_Fortran_COMPILER=ifx ^
-            -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
-            -DMETIS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
-            -DBQPD=${{github.workspace}}\dependencies\lib\libbqpd.a ^
-            -DMETIS_LIBRARY=${{github.workspace}}\dependencies\lib\libmetis.a ^
-            -DMUMPS_LIBRARY=${{github.workspace}}\dependencies\lib\libdmumps.a ^
-            -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\dependencies\lib\libmumps_common.a ^
-            -DMUMPS_PORD_LIBRARY=${{github.workspace}}\dependencies\lib\libpord.a ^
-            -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
-            -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.lib;${{github.workspace}}\dependencies\lib\libblas.lib" ^
-            -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
             -DBUILD_STATIC_LIBS=ON ^
             -DBUILD_SHARED_LIBS=OFF
 
