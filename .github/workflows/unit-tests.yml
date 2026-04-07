@@ -286,13 +286,18 @@ jobs:
       # BUILD
       # =========================================================
 
-      - name: Build
-        run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}}
+      - name: Build uno_shared (MSVC shared)
+        if: matrix.toolchain == 'msvc' && matrix.library == 'shared'
+        shell: cmd
+        run: cmake --build build --target uno_shared --config ${{env.BUILD_TYPE}}
 
       - name: Find uno.lib (debug)
         if: matrix.toolchain == 'msvc' && matrix.library == 'shared'
         shell: cmd
-        run: dir /s /b build\uno.lib 2>nul || echo "uno.lib not found"
+        run: dir /s /b build\*.lib 2>nul || echo "no .lib files found"
+
+      - name: Build
+        run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}}
 
       # ---------------- TEST ----------------
       - name: Run tests (not MinGW)
