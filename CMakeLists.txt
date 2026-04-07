@@ -25,6 +25,8 @@ endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmaybe-uninitialized")
 endif()
+cmake_policy(SET CMP0091 NEW)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders)
 
@@ -283,8 +285,11 @@ if(BUILD_SHARED_LIBS)
    target_include_directories(uno_shared SYSTEM PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_shared PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
-   set_target_properties(uno_shared PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90")
-   set_target_properties(uno_shared PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+   set_target_properties(uno_shared PROPERTIES
+      OUTPUT_NAME "uno"
+      PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90"
+      ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+   )
    if (MSVC)
       set_target_properties(uno_shared PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
    endif()
@@ -368,6 +373,7 @@ if(ENABLE_TESTS)
    add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
    target_include_directories(run_unotest SYSTEM PUBLIC ${DIRECTORIES} ${GTEST_INCLUDE_DIR})
    target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES} ${CMAKE_DL_LIBS} ${FORTRAN_LIBS})
+   target_link_directories(run_unotest PRIVATE ${CMAKE_BINARY_DIR}/lib)
    if (MSVC)
       set_target_properties(run_unotest PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
    endif()
