@@ -201,10 +201,11 @@ jobs:
       # TEST
       # =========================================================
 
-      - name: Run tests (not MinGW)
-        if: matrix.toolchain != 'mingw'
-        working-directory: build
-        run: ctest --output-on-failure -C ${{env.BUILD_TYPE}}
+      - name: Make DLLs visible (MinGW)
+        if: matrix.toolchain == 'mingw'
+        run: |
+          echo "$(cygpath '${{github.workspace}}')/dependencies/bin" >> $GITHUB_PATH
+          cp dependencies/bin/*.dll build/
 
       - name: Debug missing DLLs (MinGW)
         if: matrix.toolchain == 'mingw'
@@ -212,9 +213,6 @@ jobs:
         run: |
           cygcheck ./run_unotest.exe || true
 
-      - name: Run tests (MinGW)
-        if: matrix.toolchain == 'mingw'
+      - name: Run tests
         working-directory: build
-        run: |
-          export PATH="$(cygpath '${{github.workspace}}')/dependencies/bin:$PATH"
-          ctest --output-on-failure -C ${{env.BUILD_TYPE}}
+        run: ctest --output-on-failure -C ${{env.BUILD_TYPE}}
