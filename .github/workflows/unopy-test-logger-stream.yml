@@ -42,14 +42,14 @@ jobs:
         run: bash dependencies/scripts/download_dependencies.sh
 
       - name: Install Fortran compiler (macOS)
-        if: startsWith(matrix.sys.os, 'macos')
+        if: startsWith(matrix.os, 'macos')
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: 'gcc'
           version: '13'
 
       - name: Set toolchain (macOS)
-        if: startsWith(matrix.sys.os, 'macos')
+        if: startsWith(matrix.os, 'macos')
         run: |
           cat > /tmp/clang_toolchain.cmake << 'EOF'
           set(CMAKE_C_COMPILER clang)
@@ -65,7 +65,7 @@ jobs:
           EOF
 
       - name: Set compilers (macOS)
-        if: startsWith(matrix.sys.os, 'macos')
+        if: startsWith(matrix.os, 'macos')
         run: |
           export CC=clang
           export CXX=clang++
@@ -73,7 +73,7 @@ jobs:
           export CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
 
       - name: Install libomp (macOS)
-        if: startsWith(matrix.sys.os, 'macos')
+        if: startsWith(matrix.os, 'macos')
         run: |
           brew install libomp
           if [[ $(uname -m) == 'arm64' ]]; then
