@@ -67,10 +67,10 @@ jobs:
       - name: Set compilers (macOS)
         if: startsWith(matrix.os, 'macos')
         run: |
-          export CC=clang
-          export CXX=clang++
-          export FC=gfortran-15
-          export CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+          echo "FC=gfortran-15" >> $GITHUB_ENV
+          echo "CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake" >> $GITHUB_ENV
 
       - name: Install libomp (macOS)
         if: startsWith(matrix.os, 'macos')
