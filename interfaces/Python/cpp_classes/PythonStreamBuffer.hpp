@@ -10,14 +10,16 @@
 namespace uno {
    class PythonStreamBuffer : public std::streambuf {
    public:
-      explicit PythonStreamBuffer(pybind11::object output_function);
+      explicit PythonStreamBuffer(pybind11::object stream);
 
    protected:
       std::streamsize xsputn(const char* s, std::streamsize n) override;
       int overflow(int c) override;
+      int sync() override;
 
    private:
-      pybind11::object output_function;
+      pybind11::object write_function;
+      pybind11::object flush_function;
    };
 } // namespace
 
