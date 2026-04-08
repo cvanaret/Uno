@@ -38,8 +38,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install unopy from PyPI
-        run: pip install unopy
+      - name: Install unopy from sources
+        run: pip install . -v
 
       - name: Run example
         working-directory: ${{github.workspace}}/.github/Python/
