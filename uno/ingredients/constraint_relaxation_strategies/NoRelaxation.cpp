@@ -91,8 +91,8 @@ namespace uno {
    }
 
    bool NoRelaxation::is_iterate_acceptable(Statistics& statistics, const Model& /*model*/, Iterate& current_iterate,
-         Iterate& trial_iterate, const Direction& direction, double step_length, EvaluationCache& evaluation_cache,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region,
+         EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       const Subproblem subproblem(*this->reformulated_problem, current_iterate, *this->hessian_model,
          *this->inertia_correction_strategy);
       const bool accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, this->globalization_strategy,
@@ -100,8 +100,8 @@ namespace uno {
          evaluation_cache, user_callbacks);
       this->compute_residuals(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
       trial_iterate.status = this->check_termination(this->original_problem, trial_iterate, evaluation_cache.trial_evaluations);
-      if (accept_iterate) {
-         this->hessian_model->notify_accepted_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
+      if (uses_trust_region || accept_iterate) {
+         this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
       }
       warmstart_information.no_changes();
       return accept_iterate;

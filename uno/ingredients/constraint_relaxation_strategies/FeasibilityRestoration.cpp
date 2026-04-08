@@ -119,7 +119,6 @@ namespace uno {
       DEBUG << "Solving the feasibility subproblem\n";
       statistics.set("Phase", "FEAS");
       // note: failure of regularization should not happen here, since the feasibility Jacobian has full rank
-      this->feasibility_problem.set_proximal_coefficient(this->inequality_handling_method->proximal_coefficient());
       const Subproblem feasibility_subproblem(*this->reformulated_feasibility_problem, current_iterate, *this->feasibility_hessian_model,
          *this->feasibility_inertia_correction_strategy);
       this->solve_subproblem(statistics, feasibility_subproblem, *this->feasibility_subproblem_solver, this->feasibility_problem,
@@ -217,7 +216,8 @@ namespace uno {
 
    bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, const Model& model,
          Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length,
-         EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
+         bool uses_trust_region, EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information,
+         UserCallbacks& user_callbacks) {
       bool accept_iterate = false;
       // determine acceptability, depending on the current phase
       if (this->current_phase == Phase::OPTIMALITY) {
@@ -226,8 +226,8 @@ namespace uno {
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, *this->globalization_strategy,
             subproblem, this->subproblem_solver->get_workspace(), current_iterate, trial_iterate, direction, step_length,
             evaluation_cache, user_callbacks);
-         if (accept_iterate) {
-            this->hessian_model->notify_accepted_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
+         if (uses_trust_region || accept_iterate) {
+            this->hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
          }
       }
       else {
@@ -236,8 +236,8 @@ namespace uno {
          accept_iterate = ConstraintRelaxationStrategy::is_iterate_acceptable(statistics, this->feasibility_globalization_strategy,
             feasibility_subproblem, this->feasibility_subproblem_solver->get_workspace(), current_iterate, trial_iterate,
             direction, step_length, evaluation_cache, user_callbacks);
-         if (accept_iterate) {
-            this->feasibility_hessian_model->notify_accepted_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
+         if (uses_trust_region || accept_iterate) {
+            this->feasibility_hessian_model->notify_trial_iterate(statistics, current_iterate, trial_iterate, evaluation_cache);
          }
       }
 

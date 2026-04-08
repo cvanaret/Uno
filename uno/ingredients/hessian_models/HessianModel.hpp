@@ -33,7 +33,7 @@ namespace uno {
       [[nodiscard]] virtual bool is_positive_definite() const = 0;
 
       virtual void initialize_statistics(Statistics& statistics) const = 0;
-      virtual void notify_accepted_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
+      virtual void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) = 0;
       virtual void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables,
          double objective_multiplier, const Vector<double>& constraint_multipliers, double* hessian_values) = 0;

@@ -38,8 +38,8 @@ namespace uno {
 
       // trial iterate acceptance
       [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Model& model, Iterate& current_iterate,
-         Iterate& trial_iterate, const Direction& direction, double step_length, EvaluationCache& evaluation_cache,
-         WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
+         Iterate& trial_iterate, const Direction& direction, double step_length, bool uses_trust_region,
+         EvaluationCache& evaluation_cache, WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) override;
 
       [[nodiscard]] std::string get_name() const override;
 

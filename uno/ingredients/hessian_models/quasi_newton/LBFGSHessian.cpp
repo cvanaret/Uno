@@ -43,7 +43,7 @@ namespace uno {
       statistics.set("|BFGS|", this->number_entries_in_memory);
    }
 
-   void LBFGSHessian::notify_accepted_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
+   void LBFGSHessian::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) {
       statistics.set("|BFGS|", this->number_entries_in_memory);
       DEBUG << "\n*** Adding entries to the BFGS memory at slot " << this->current_index << '\n';

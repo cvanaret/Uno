@@ -144,7 +144,7 @@ namespace uno {
          Iterate& trial_iterate, const Direction& direction, EvaluationCache& evaluation_cache,
          WarmstartInformation& warmstart_information, UserCallbacks& user_callbacks) {
       bool accept_iterate = this->constraint_relaxation_strategy->is_iterate_acceptable(statistics, model, current_iterate,
-         trial_iterate, direction, 1., evaluation_cache, warmstart_information, user_callbacks);
+         trial_iterate, direction, 1., true, evaluation_cache, warmstart_information, user_callbacks);
       GlobalizationMechanism::set_primal_statistics(statistics, model, trial_iterate, evaluation_cache.trial_evaluations);
       if (accept_iterate) {
          // possibly increase the radius if trust region is active

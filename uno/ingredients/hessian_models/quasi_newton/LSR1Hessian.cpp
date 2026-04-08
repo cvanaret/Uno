@@ -27,7 +27,7 @@ namespace uno {
       statistics.set("|SR1|", this->number_entries_in_memory);
    }
 
-   void LSR1Hessian::notify_accepted_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
+   void LSR1Hessian::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) {
       statistics.set("|SR1|", this->number_entries_in_memory);
       DEBUG << "\n*** Adding entries to the SR1 memory at slot " << this->current_index << '\n';
