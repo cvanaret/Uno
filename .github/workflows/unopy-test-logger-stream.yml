@@ -22,7 +22,7 @@ on:
 
 jobs:
   test_set_logger_stream:
-    name: Test PyPI artifacts
+    name: Test unopy's set_logger_stream
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -37,6 +37,28 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
+
+      - name: Install Fortran compiler (macOS)
+        if: startsWith(matrix.sys.os, 'macos')
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '13'
+
+      - name: Install libomp (macOS)
+        if: startsWith(matrix.sys.os, 'macos')
+        run: |
+          brew install libomp
+          if [[ $(uname -m) == 'arm64' ]]; then
+            echo "OPENMP_LIB=/opt/homebrew/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
+            echo "LIBGFORTRAN_FOLDER=/opt/homebrew/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
+          else
+            echo "OPENMP_LIB=/usr/local/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
+            echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
+          fi
 
       - name: Install unopy from sources
         run: pip install . -v
