@@ -177,9 +177,9 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
             -DENABLE_TESTS=ON ^
             -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
-            -DMETIS_INCLUDE_DIR=\mingw64\include ^
+            -DMETIS_INCLUDE_DIR=C:/msys64/mingw64/include ^
             -DBQPD=${{github.workspace}}\dependencies\lib\libbqpd.a ^
-            -DMETIS_LIBRARY=\mingw64\lib\libmetis.a ^
+            -DMETIS_LIBRARY=C:/msys64/mingw64/lib/libmetis.a ^
             -DMUMPS_LIBRARY=${{github.workspace}}\dependencies\lib\libdmumps.a ^
             -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\dependencies\lib\libmumps_common.a ^
             -DMUMPS_PORD_LIBRARY=${{github.workspace}}\dependencies\lib\libpord.a ^
