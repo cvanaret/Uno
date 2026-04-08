@@ -20,7 +20,7 @@ namespace uno {
       [[nodiscard]] bool is_positive_definite() const override;
 
       void initialize_statistics(Statistics& statistics) const override;
-      void notify_accepted_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
+      void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) override;
       void evaluate_hessian(Statistics& statistics, const Vector<double>& primal_variables, double objective_multiplier,
          const Vector<double>& constraint_multipliers, double* hessian_values) override;

@@ -17,7 +17,7 @@ namespace uno {
       [[nodiscard]] bool is_positive_definite() const override;
 
       void initialize_statistics(Statistics& statistics) const override;
-      void notify_accepted_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
+      void notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) override;
 
       void compute_hessian_vector_product(const double* x, const double* vector,
