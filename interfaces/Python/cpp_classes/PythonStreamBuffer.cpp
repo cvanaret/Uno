@@ -4,18 +4,25 @@
 #include "PythonStreamBuffer.hpp"
 
 namespace uno {
-   PythonStreamBuffer::PythonStreamBuffer(pybind11::object output_function) : output_function(output_function) {
+   PythonStreamBuffer::PythonStreamBuffer(pybind11::object stream):
+         write_function(stream.attr("write")),
+         flush_function(stream.attr("flush")) {
    }
 
    std::streamsize PythonStreamBuffer::xsputn(const char* s, std::streamsize n) {
-      output_function(std::string(s, n));
+      this->write_function(std::string(s, n));
       return n;
    }
 
    int PythonStreamBuffer::overflow(int c) {
       if (c != EOF) {
-         output_function(std::string(1, static_cast<char>(c)));
+         this->write_function(std::string(1, static_cast<char>(c)));
       }
       return c;
+   }
+
+   int PythonStreamBuffer::sync() {
+      this->flush_function();
+      return 0;
    }
 } // namespace

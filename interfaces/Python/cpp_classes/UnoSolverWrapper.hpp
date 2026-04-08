@@ -7,6 +7,7 @@
 #include "Uno.hpp"
 #include "options/Options.hpp"
 #include "PythonModel.hpp"
+#include "PythonStreamBuffer.hpp"
 
 namespace uno {
    class UnoSolverWrapper {
@@ -16,7 +17,13 @@ namespace uno {
 
       UnoSolverWrapper();
 
+      void set_logger_stream(py::object py_stream);
       [[nodiscard]] Result optimize(const PythonUserModel& user_model);
+
+   private:
+      py::object stream;
+      std::unique_ptr<PythonStreamBuffer> stream_buffer;
+      std::unique_ptr<std::ostream> ostream;
    };
 } // namespace
 

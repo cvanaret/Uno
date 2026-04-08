@@ -80,12 +80,7 @@ namespace uno {
          }
       }, py::arg("option_name"), py::arg("option_value"))
 
-      // store the streambuf and ostream so they stay alive as long as needed
-       .def("set_logger_stream", [](UnoSolverWrapper& /*solver*/, py::object stream) {
-           static auto buffer = std::make_unique<PythonStreamBuffer>(stream.attr("write"));
-           static auto ostream = std::make_unique<std::ostream>(buffer.get());
-           Logger::set_stream(*ostream);
-       })
+      .def("set_logger_stream", &UnoSolverWrapper::set_logger_stream)
 
       .def("set_preset", [](UnoSolverWrapper& solver, const std::string& preset_name) {
          Presets::set(solver.options, preset_name);
