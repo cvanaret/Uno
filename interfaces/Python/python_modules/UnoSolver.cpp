@@ -15,7 +15,7 @@ namespace py = pybind11;
 
 namespace uno {
    void define_UnoSolver(py::module& module) {
-      py::class_<UnoSolverWrapper>(module, "UnoSolver", py::dynamic_attr())
+      py::class_<UnoSolverWrapper>(module, "UnoSolver")
       // constructor
       .def(py::init<>(), "Constructor")
 
@@ -80,15 +80,7 @@ namespace uno {
          }
       }, py::arg("option_name"), py::arg("option_value"))
 
-      // store the streambuf and ostream so they stay alive as long as needed
-      .def("set_logger_stream", [](UnoSolverWrapper& solver, py::object stream) {
-         // store on the Python object itself to keep it alive
-         py::setattr(py::cast(solver), "_log_stream", stream);
-
-         static auto buffer = std::make_unique<PythonStreamBuffer>(stream);
-         static auto ostream = std::make_unique<std::ostream>(buffer.get());
-         Logger::set_stream(*ostream);
-      })
+      .def("set_logger_stream", &UnoSolverWrapper::set_logger_stream)
 
       .def("set_preset", [](UnoSolverWrapper& solver, const std::string& preset_name) {
          Presets::set(solver.options, preset_name);
