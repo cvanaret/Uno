@@ -47,13 +47,30 @@ jobs:
         with:
           compiler: 'gcc'
           version: '13'
-          
+
+      - name: Set toolchain (macOS)
+        if: startsWith(matrix.sys.os, 'macos')
+        run: |
+          cat > /tmp/clang_toolchain.cmake << 'EOF'
+          set(CMAKE_C_COMPILER clang)
+          set(CMAKE_CXX_COMPILER clang++)
+          set(CMAKE_Fortran_COMPILER gfortran-15)
+          set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp")
+          set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
+          set(OpenMP_C_LIB_NAMES omp)
+          set(OpenMP_CXX_LIB_NAMES omp)
+          set(OpenMP_omp_LIBRARY $OPENMP_LIB)
+          set(CMAKE_EXE_LINKER_FLAGS "-L$LIBGFORTRAN_FOLDER -lgfortran -Wl,-rpath,$LIBGFORTRAN_FOLDER")
+          set(CMAKE_SHARED_LINKER_FLAGS "-L$LIBGFORTRAN_FOLDER -lgfortran -Wl,-rpath,$LIBGFORTRAN_FOLDER")
+          EOF
+
       - name: Set compilers (macOS)
         if: startsWith(matrix.sys.os, 'macos')
         run: |
           export CC=clang
           export CXX=clang++
           export FC=gfortran-15
+          export CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
 
       - name: Install libomp (macOS)
         if: startsWith(matrix.sys.os, 'macos')
