@@ -375,7 +375,7 @@ if(ENABLE_TESTS)
    endif()
 
    include(GoogleTest)
-   gtest_discover_tests(run_unotest)
+   gtest_discover_tests(run_unotest DISCOVERY_MODE PRE_TEST)
 endif()
 
 #########################################
