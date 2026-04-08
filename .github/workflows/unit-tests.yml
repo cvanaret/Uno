@@ -178,7 +178,7 @@ jobs:
             -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
             -DMETIS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
             -DBQPD=${{github.workspace}}\dependencies\lib\libbqpd.a ^
-            -DMETIS_LIBRARY=${{github.workspace}}\dependencies\lib\libmetis.dll.a ^
+            -DMETIS_LIBRARY=${{github.workspace}}\dependencies\lib\libmetis.a ^
             -DMUMPS_LIBRARY=${{github.workspace}}\dependencies\lib\libdmumps.a ^
             -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\dependencies\lib\libmumps_common.a ^
             -DMUMPS_PORD_LIBRARY=${{github.workspace}}\dependencies\lib\libpord.a ^
