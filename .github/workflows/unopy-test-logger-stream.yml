@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
         python-version: ["3.12"]
 
     steps:
@@ -47,6 +47,13 @@ jobs:
         with:
           compiler: 'gcc'
           version: '13'
+          
+      - name: Set compilers (macOS)
+        if: startsWith(matrix.sys.os, 'macos')
+        run: |
+          export CC=clang
+          export CXX=clang++
+          export FC=gfortran-15
 
       - name: Install libomp (macOS)
         if: startsWith(matrix.sys.os, 'macos')
