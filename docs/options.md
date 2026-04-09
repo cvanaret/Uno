@@ -10,7 +10,7 @@ Defaults are taken from `uno/options/DefaultOptions.cpp`.
 | :---       | :---                 |
 | `constraint_relaxation_strategy` | `feasibility_restoration` |
 | `inequality_handling_method` | `inequality_constrained`, `interior_point` |
-| `hessian_model` | `exact`, `LBFGS`, `identity`, `zero` |
+| `hessian_model` | `exact`, `LBFGS`, `LSR1`, `identity`, `zero` |
 | `inertia_correction_strategy` | `primal`, `primal_dual`, `none` |
 | `globalization_mechanism` | `TR`, `LS` |
 | `globalization_strategy` | `merit_function`, `fletcher_filter_method`, `waechter_filter_method`, `funnel_method` |
