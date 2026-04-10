@@ -144,10 +144,7 @@ jobs:
       id: cache-blas-lapack
       uses: actions/cache@v4
       with:
-        path: |
-          ${{github.workspace}}\dependencies\lib\libcblas.lib
-          ${{github.workspace}}\dependencies\lib\libblas.lib
-          ${{github.workspace}}\dependencies\lib\liblapack.lib
+        path: ${{github.workspace}}\dependencies\lib
         key: blas-lapack-msvc-v1
 
     - name: Build LAPACK (MSVC)
