@@ -165,10 +165,10 @@ function uno_set_solver_preset(solver, preset_name)
 end
 
 function uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback,
-                                  user_termination_callback, user_data)
+                                  termination_callback, user_data)
     @ccall libuno.uno_set_solver_callbacks(solver::Ptr{Cvoid},
                                            notify_acceptable_iterate_callback::Ptr{Cvoid},
-                                           user_termination_callback::Ptr{Cvoid},
+                                           termination_callback::Ptr{Cvoid},
                                            user_data::Ptr{Cvoid})::Bool
 end
 

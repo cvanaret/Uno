@@ -13,11 +13,18 @@ function main()
   options_path = joinpath(@__DIR__, "uno.toml")
   options = load_options(options_path)
 
-  callbacks = ["ObjectiveGradient", "Objective", "Constraints",
-               "JacobianOperator", "JacobianTransposedOperator", "HessianOperator",
-               "JacobianSparsity", "Jacobian", "HessianSparsity", "Hessian",
-               "NotifyAcceptableIterateUserCallback", "TerminationUserCallback",
-               "LoggerStreamUserCallback"]
+  callbacks = ["uno_objective_callback",
+               "uno_objective_gradient_callback",
+               "uno_constraints_callback",
+               "uno_constraints_jacobian_callback",
+               "uno_lagrangian_hessian_callback",
+               "uno_constraints_jacobian_operator_callback",
+               "uno_constraints_jacobian_transposed_operator_callback",
+               "uno_lagrangian_hessian_operator_callback",
+               "uno_notify_acceptable_iterate_callback",
+               "uno_termination_callback",
+               "uno_logger_stream_callback"]
+
   options["general"]["output_ignorelist"] = [callbacks; "uno_int"]
 
   args = get_default_args()

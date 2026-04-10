@@ -81,83 +81,83 @@ integer(uno_int), parameter :: UNO_VERSION_MINOR = 7
 integer(uno_int), parameter :: UNO_VERSION_PATCH = 0
 
 !---------------------------------------------
-! uno_Objective
+! uno_objective_callback
 !---------------------------------------------
 abstract interface
-   function uno_Objective(number_variables, x, objective_value, user_data) bind(C)
+   function uno_objective_callback(number_variables, x, objective_value, user_data) bind(C)
       import :: uno_int, c_double, c_ptr
       integer(uno_int), value :: number_variables
       real(c_double), intent(in) :: x(*)
       real(c_double), intent(out) :: objective_value
       type(c_ptr), value :: user_data
-      integer(uno_int) :: uno_Objective
+      integer(uno_int) :: uno_objective_callback
    end function
 end interface
 
 !---------------------------------------------
-! uno_Constraints
+! uno_constraints_callback
 !---------------------------------------------
 abstract interface
-   function uno_Constraints(number_variables, number_constraints, x, constraint_values, user_data) bind(C)
+   function uno_constraints_callback(number_variables, number_constraints, x, constraint_values, user_data) bind(C)
       import :: uno_int, c_double, c_ptr
       integer(uno_int), value :: number_variables, number_constraints
       real(c_double), intent(in) :: x(*)
       real(c_double), intent(out) :: constraint_values(*)
       type(c_ptr), value :: user_data
-      integer(uno_int) :: uno_Constraints
+      integer(uno_int) :: uno_constraints_callback
    end function
 end interface
 
 !---------------------------------------------
-! uno_ObjectiveGradient
+! uno_objective_gradient_callback
 !---------------------------------------------
 abstract interface
-   function uno_ObjectiveGradient(number_variables, x, gradient, user_data) bind(C)
+   function uno_objective_gradient_callback(number_variables, x, gradient, user_data) bind(C)
       import :: uno_int, c_double, c_ptr
       integer(uno_int), value :: number_variables
       real(c_double), intent(in) :: x(*)
       real(c_double), intent(out) :: gradient(*)
       type(c_ptr), value :: user_data
-      integer(uno_int) :: uno_ObjectiveGradient
+      integer(uno_int) :: uno_objective_gradient_callback
    end function
 end interface
 
 !---------------------------------------------
-! uno_Jacobian
+! uno_constraints_jacobian_callback
 !---------------------------------------------
 abstract interface
-   function uno_Jacobian(number_variables, number_jacobian_nonzeros, x, jacobian_values, user_data) bind(C)
+   function uno_constraints_jacobian_callback(number_variables, number_jacobian_nonzeros, x, jacobian_values, user_data) bind(C)
       import :: uno_int, c_double, c_ptr
       integer(uno_int), value :: number_variables, number_jacobian_nonzeros
       real(c_double), intent(in) :: x(*)
       real(c_double), intent(out) :: jacobian_values(*)
       type(c_ptr), value :: user_data
-      integer(uno_int) :: uno_Jacobian
+      integer(uno_int) :: uno_constraints_jacobian_callback
    end function
 end interface
 
 !---------------------------------------------
-! uno_Hessian
+! uno_lagrangian_hessian_callback
 !---------------------------------------------
 abstract interface
-   function uno_Hessian(number_variables, number_constraints, number_hessian_nonzeros, &
-                        x, objective_multiplier, multipliers, hessian_values, user_data) bind(C)
+   function uno_lagrangian_hessian_callback(number_variables, number_constraints, number_hessian_nonzeros, &
+                                            x, objective_multiplier, multipliers, hessian_values, user_data) bind(C)
       import :: uno_int, c_double, c_ptr
       integer(uno_int), value :: number_variables, number_constraints, number_hessian_nonzeros
       real(c_double), intent(in) :: x(*), multipliers(*)
       real(c_double), intent(out) :: hessian_values(*)
       real(c_double), value :: objective_multiplier
       type(c_ptr), value :: user_data
-      integer(uno_int) :: uno_Hessian
+      integer(uno_int) :: uno_lagrangian_hessian_callback
    end function
 end interface
 
 !---------------------------------------------
-! uno_JacobianOperator
+! uno_constraints_jacobian_operator_callback
 !---------------------------------------------
 abstract interface
-   function uno_JacobianOperator(number_variables, number_constraints, x, evaluate_at_x, &
-                                 vector, result, user_data) bind(C)
+   function uno_constraints_jacobian_operator_callback(number_variables, number_constraints, x, evaluate_at_x, &
+                                                       vector, result, user_data) bind(C)
       import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables, number_constraints
       real(c_double), intent(in) :: x(*)
@@ -165,16 +165,16 @@ abstract interface
       real(c_double), intent(in) :: vector(*)
       real(c_double), intent(out) :: result(*)
       type(c_ptr), value :: user_data
-      integer(uno_int) :: uno_JacobianOperator
+      integer(uno_int) :: uno_constraints_jacobian_operator_callback
    end function
 end interface
 
 !---------------------------------------------
-! uno_JacobianTransposedOperator
+! uno_constraints_jacobian_transposed_operator_callback
 !---------------------------------------------
 abstract interface
-   function uno_JacobianTransposedOperator(number_variables, number_constraints, x, evaluate_at_x, &
-                                           vector, result, user_data) bind(C)
+   function uno_constraints_jacobian_transposed_operator_callback(number_variables, number_constraints, x, &
+                                                                  evaluate_at_x, vector, result, user_data) bind(C)
       import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables, number_constraints
       real(c_double), intent(in) :: x(*)
@@ -182,16 +182,16 @@ abstract interface
       real(c_double), intent(in) :: vector(*)
       real(c_double), intent(out) :: result(*)
       type(c_ptr), value :: user_data
-      integer(uno_int) :: uno_JacobianTransposedOperator
+      integer(uno_int) :: uno_constraints_jacobian_transposed_operator_callback
    end function
 end interface
 
 !---------------------------------------------
-! uno_HessianOperator
+! uno_lagrangian_hessian_operator_callback
 !---------------------------------------------
 abstract interface
-   function uno_HessianOperator(number_variables, number_constraints, x, evaluate_at_x, &
-                                objective_multiplier, multipliers, vector, result, user_data) bind(C)
+   function uno_lagrangian_hessian_operator_callback(number_variables, number_constraints, x, evaluate_at_x, &
+                                                     objective_multiplier, multipliers, vector, result, user_data) bind(C)
       import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables, number_constraints
       real(c_double), intent(in) :: x(*)
@@ -200,19 +200,19 @@ abstract interface
       real(c_double), intent(in) :: multipliers(*), vector(*)
       real(c_double), intent(out) :: result(*)
       type(c_ptr), value :: user_data
-      integer(uno_int) :: uno_HessianOperator
+      integer(uno_int) :: uno_lagrangian_hessian_operator_callback
    end function
 end interface
 
 !---------------------------------------------
-! uno_NotifyAcceptableIterateUserCallback
+! uno_notify_acceptable_iterate_callback
 !---------------------------------------------
 abstract interface
-   subroutine uno_NotifyAcceptableIterateUserCallback(number_variables, number_constraints, primals, &
-                                                      lower_bound_multipliers, upper_bound_multipliers, &
-                                                      constraint_multipliers, objective_multiplier, &
-                                                      primal_feasibility_residual, stationarity_residual, &
-                                                      complementarity_residual, user_data) bind(C)
+   subroutine uno_notify_acceptable_iterate_callback(number_variables, number_constraints, primals, &
+                                                     lower_bound_multipliers, upper_bound_multipliers, &
+                                                     constraint_multipliers, objective_multiplier, &
+                                                     primal_feasibility_residual, stationarity_residual, &
+                                                     complementarity_residual, user_data) bind(C)
       import :: uno_int, c_double, c_ptr
       integer(uno_int), value :: number_variables, number_constraints
       real(c_double), intent(in) :: primals(*)
@@ -228,14 +228,14 @@ abstract interface
 end interface
 
 !---------------------------------------------
-! uno_TerminationUserCallback
+! uno_termination_callback
 !---------------------------------------------
 abstract interface
-   function uno_TerminationUserCallback(number_variables, number_constraints, primals, &
-                                        lower_bound_multipliers, upper_bound_multipliers, &
-                                        constraint_multipliers, objective_multiplier, &
-                                        primal_feasibility_residual, stationarity_residual, &
-                                        complementarity_residual, user_data) bind(C)
+   function uno_termination_callback(number_variables, number_constraints, primals, &
+                                     lower_bound_multipliers, upper_bound_multipliers, &
+                                     constraint_multipliers, objective_multiplier, &
+                                     primal_feasibility_residual, stationarity_residual, &
+                                     complementarity_residual, user_data) bind(C)
       import :: uno_int, c_double, c_bool, c_ptr
       integer(uno_int), value :: number_variables, number_constraints
       real(c_double), intent(in) :: primals(*)
@@ -247,20 +247,20 @@ abstract interface
       real(c_double), value :: stationarity_residual
       real(c_double), value :: complementarity_residual
       type(c_ptr), value :: user_data
-      logical(c_bool) :: uno_TerminationUserCallback
+      logical(c_bool) :: uno_termination_callback
    end function
 end interface
 
 !---------------------------------------------
-! uno_LoggerStreamUserCallback
+! uno_logger_stream_callback
 !---------------------------------------------
 abstract interface
-   function uno_LoggerStreamUserCallback(buffer, length, user_data) bind(C)
+   function uno_logger_stream_callback(buffer, length, user_data) bind(C)
       import :: uno_int, c_char, c_ptr
       character(kind=c_char), intent(in) :: buffer(*)
       integer(uno_int), value :: length
       type(c_ptr), value :: user_data
-      integer(uno_int) :: uno_LoggerStreamUserCallback
+      integer(uno_int) :: uno_logger_stream_callback
    end function
 end interface
 
@@ -461,12 +461,12 @@ end interface
 !---------------------------------------------
 interface
    function uno_set_solver_callbacks(solver, notify_acceptable_iterate_callback, &
-                                     user_termination_callback, user_data) &
+                                     termination_callback, user_data) &
                                      result(success) &
       bind(C, name="uno_set_solver_callbacks")
       import :: c_ptr, c_funptr, c_bool
       type(c_ptr), value :: solver, user_data
-      type(c_funptr), value :: notify_acceptable_iterate_callback, user_termination_callback
+      type(c_funptr), value :: notify_acceptable_iterate_callback, termination_callback
       logical(c_bool) :: success
    end function uno_set_solver_callbacks
 end interface
