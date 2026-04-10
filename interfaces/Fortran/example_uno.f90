@@ -31,7 +31,8 @@ program example_uno
     procedure(uno_constraints_jacobian_callback), pointer :: constraints_jacobian_callback => null()
     procedure(uno_lagrangian_hessian_callback), pointer :: lagrangian_hessian_callback => null()
     procedure(uno_constraints_jacobian_operator_callback), pointer :: constraints_jacobian_operator_callback => null()
-    procedure(uno_constraints_jacobian_transposed_operator_callback), pointer :: constraints_jacobian_transposed_operator_callback => null()
+    procedure(uno_constraints_jacobian_transposed_operator_callback), &
+        pointer :: constraints_jacobian_transposed_operator_callback => null()
     procedure(uno_lagrangian_hessian_operator_callback), pointer :: lagrangian_hessian_operator_callback => null()
 
     !---------------------------------------------------
