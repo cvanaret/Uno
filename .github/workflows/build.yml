@@ -139,7 +139,7 @@ jobs:
     # MSVC: BUILD BLAS/LAPACK
     # =========================================================
 
-    - name: Cache BLAS/LAPACK
+    - name: Cache BLAS/LAPACK (MSVC)
       if: matrix.toolchain == 'msvc'
       id: cache-blas-lapack
       uses: actions/cache@v4
