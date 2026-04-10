@@ -1,5 +1,5 @@
 @testset "preset = filtersqp" begin
-    @testset "uno_model -- uno_solver -- uno_optimize -- HS15 -- $(hessian_model) Hessian" for hessian_model in ("exact", "LBFGS")
+    @testset "uno_model -- uno_solver -- uno_optimize -- HS15 -- $(hessian_model) Hessian" for hessian_model in ("exact", "LBFGS", "LSR1")
         nlp = CUTEstModel{Float64}("HS15")
         model = uno_model(nlp)
         solver = uno_solver(preset="filtersqp", print_solution=true, hessian_model=hessian_model)
@@ -37,7 +37,7 @@
         finalize(nlp)
     end
 
-    @testset "uno -- CUTEst -- BYRDSPHR -- $(hessian_model) Hessian" for hessian_model in ("exact", "LBFGS")
+    @testset "uno -- CUTEst -- BYRDSPHR -- $(hessian_model) Hessian" for hessian_model in ("exact", "LBFGS", "LSR1")
         nlp = CUTEstModel{Float64}("BYRDSPHR")
         stats = uno(nlp, preset="filtersqp", print_solution=true, hessian_model=hessian_model)
         model, solver = stats.model, stats.solver
