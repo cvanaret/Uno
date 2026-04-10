@@ -5,7 +5,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.3.10"
+version = v"2026.4.10"
 
 # Collection of sources
 sources = [
@@ -31,13 +31,9 @@ sources = [
     # MUMPS v5.8.2
     ArchiveSource("https://mumps-solver.org/MUMPS_5.8.2.tar.gz",
                   "eb515aa688e6dbab414bb6e889ff4c8b23f1691a843c68da5230a33ac4db7039"),
-    # HiGHS v1.12.0
+    # HiGHS v1.14.0
     GitSource("https://github.com/ERGO-Code/HiGHS.git",
-              "755a8e027a99a8d4ecf153a8dde4b2a767cdf384"),
-    # HiGHS v1.13.1
-    # GitSource("https://github.com/ERGO-Code/HiGHS.git",
-    #           "1d267d97c16928bb5f86fcb2cba2d20f94c8720c"),
-    #
+              "7df0786de3088c832297e5ed821db236d8fab281"),
     # SPRAL v2025.9.18
     GitSource("https://github.com/ralna/spral.git",
               "e68988612dbd920323cee44c9cb8c6134847a990"),
