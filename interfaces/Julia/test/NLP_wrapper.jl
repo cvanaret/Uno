@@ -81,8 +81,6 @@ end
         (linear_solver == "MA27" || linear_solver == "MA57") && !(@ccall HSL_jll.libhsl.LIBHSL_isfunctional()::Bool) && continue
 
         @testset "linear solver = $linear_solver" begin
-            println("Solving with linear solver ", linear_solver, " and ", hessian_model, " Hessian")
-
             @testset "uno_model -- uno_solver -- uno_optimize -- HS15 -- $(hessian_model) Hessian" for hessian_model in ("exact", "LBFGS")
                 nlp = CUTEstModel{Float64}("HS15")
                 model = uno_model(nlp)
