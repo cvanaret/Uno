@@ -144,6 +144,7 @@ jobs:
       id: cache-blas-lapack
       uses: actions/cache@v4
       with:
+        # whole directory (already exists)
         path: ${{github.workspace}}\dependencies\lib
         key: blas-lapack-msvc-v1
 
