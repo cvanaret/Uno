@@ -33,7 +33,7 @@ tar -xzvf BQPD.tar.gz
 pwd
 
 # download UnoUtils: MUMPS (+ METIS, BLAS and LAPACK) and HiGHS
-VERSION="2026.2.17"
+VERSION="2026.4.10"
 REPO="https://github.com/amontoison/UnoUtils_jll.jl/releases/download/UnoUtils-v${VERSION}%2B0"
 ASSET_NAME="UnoUtils.v${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
