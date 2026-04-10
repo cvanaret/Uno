@@ -23,34 +23,38 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-
     strategy:
       fail-fast: false
       matrix:
         include:
 
-        # ---------- LINUX ----------
-        - os: ubuntu-latest
-          build_type: Debug
-          shell: bash
+          # ---------- LINUX ----------
+          - os: ubuntu-latest
+            toolchain: gcc
+            build_type: Debug
+            shell: bash
 
-        - os: ubuntu-24.04-arm
-          build_type: Debug
-          shell: bash
+          - os: ubuntu-24.04-arm
+            toolchain: gcc
+            build_type: Debug
+            shell: bash
 
-        # ---------- MACOS ----------
-        - os: macos-latest
-          build_type: Debug
-          shell: bash
+          # ---------- MACOS ----------
+          - os: macos-latest
+            toolchain: gcc
+            build_type: Debug
+            shell: bash
 
-        - os: macos-15-intel
-          build_type: Debug
-          shell: bash
+          - os: macos-15-intel
+            toolchain: gcc
+            build_type: Debug
+            shell: bash
 
-        # ---------- WINDOWS MINGW ----------
-        - os: windows-latest
-          build_type: Debug
-          shell: msys2 {0}
+          # ---------- WINDOWS MINGW ----------
+          - os: windows-latest
+            toolchain: mingw
+            build_type: Debug
+            shell: msys2 {0}
 
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
@@ -60,84 +64,146 @@ jobs:
         shell: ${{ matrix.shell }}
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    # ---------------- MACOS FORTRAN ----------------
-    - name: Install Fortran (macOS)
-      if: startsWith(matrix.os, 'macos')
-      uses: fortran-lang/setup-fortran@main
-      with:
-        compiler: 'gcc'
-        version: '14'
+      # =========================================================
+      # TOOLCHAIN SETUP
+      # =========================================================
 
-    # ---------------- WINDOWS MINGW ----------------
-    - name: Install MinGW
-      if: matrix.os == 'windows-latest'
-      uses: msys2/setup-msys2@v2
-      with:
-        path-type: inherit
-        msystem: MINGW64
-        update: true
-        install: |
-          mingw-w64-x86_64-gcc-fortran
-          mingw-w64-x86_64-cmake
-          mingw-w64-x86_64-make
+      # ----- macOS -----
+      - name: Install Fortran compiler (macOS)
+        if: startsWith(matrix.os, 'macos')
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '14'
 
-    # ---------------- DEPENDENCIES ----------------
-    - name: Download dependencies
-      run: bash dependencies/scripts/download_dependencies.sh
+      - name: Install libomp (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          brew install libomp
+          if [[ $(uname -m) == 'arm64' ]]; then
+            echo "OPENMP_LIB=/opt/homebrew/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
+            echo "LIBGFORTRAN_FOLDER=/opt/homebrew/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
+          else
+            echo "OPENMP_LIB=/usr/local/opt/libomp/lib/libomp.dylib" >> $GITHUB_ENV
+            echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
+          fi
 
-    # ---------------- CONFIGURE ----------------
-    - name: Configure CMake (Unix)
-      if: matrix.os != 'windows-latest'
-      run: |
-        cmake -B build \
-              -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-              -DENABLE_TESTS=ON \
-              -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
-              -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
-              -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
-              -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
-              -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
-              -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
-              -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
-              -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
-              -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
-              -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
-              -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
-              -DBUILD_STATIC_LIBS=ON \
-              -DBUILD_SHARED_LIBS=OFF .
+      # ----- MinGW -----
+      - name: Setup MSYS2
+        if: matrix.toolchain == 'mingw'
+        uses: msys2/setup-msys2@v2
+        with:
+          path-type: inherit
+          msystem: MINGW64
+          update: true
+          install: |
+            mingw-w64-x86_64-gcc-fortran
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-metis
 
-    - name: Configure CMake (Windows MinGW)
-      if: matrix.os == 'windows-latest'
-      shell: cmd
-      run: |
-        cmake -G "MinGW Makefiles" ^
-              -S . -B build ^
-              -DENABLE_TESTS=ON ^
-              -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc ^
-              -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ ^
-              -DCMAKE_Fortran_COMPILER=x86_64-w64-mingw32-gfortran ^
-              -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
-              -DMUMPS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
-              -DMETIS_INCLUDE_DIR=${{github.workspace}}\dependencies\include ^
-              -DBQPD=${{github.workspace}}\dependencies\lib\libbqpd.a ^
-              -DMETIS_LIBRARY=${{github.workspace}}\dependencies\lib\libmetis.a ^
-              -DMUMPS_LIBRARY=${{github.workspace}}\dependencies\lib\libdmumps.a ^
-              -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\dependencies\lib\libmumps_common.a ^
-              -DMUMPS_PORD_LIBRARY=${{github.workspace}}\dependencies\lib\libpord.a ^
-              -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
-              -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.a;${{github.workspace}}\dependencies\lib\libcblas.a" ^
-              -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.a ^
-              -DHIGHS=${{github.workspace}}\dependencies\lib\libhighs.a ^
-              -DBUILD_STATIC_LIBS=ON ^
-              -DBUILD_SHARED_LIBS=OFF .
+      # =========================================================
+      # DEPENDENCIES
+      # =========================================================
 
-    # ---------------- BUILD ----------------
-    - name: Build
-      run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}} -j4
+      - name: Download dependencies
+        run: bash dependencies/scripts/download_dependencies.sh
 
-    # ---------------- TEST ----------------
-    - name: Run tests
-      working-directory: build
-      run: ./run_unotest
+      # =========================================================
+      # CONFIGURE
+      # =========================================================
+
+      - name: Configure (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+            -DENABLE_TESTS=ON \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_FORTRAN_COMPILER=gfortran \
+            -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+            -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+            -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+            -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
+            -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
+            -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
+            -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
+            -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
+            -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
+            -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+            -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+            -DBUILD_STATIC_LIBS=ON \
+            -DBUILD_SHARED_LIBS=OFF
+
+      - name: Configure (Mac)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+            -DENABLE_TESTS=ON \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_Fortran_COMPILER=gfortran-15 \
+            -DCMAKE_EXE_LINKER_FLAGS="-L${{env.LIBGFORTRAN_FOLDER}}" \
+            -DCMAKE_SHARED_LINKER_FLAGS="-L${{env.LIBGFORTRAN_FOLDER}}" \
+            -DOpenMP_C_FLAGS="-Xpreprocessor -fopenmp" \
+            -DOpenMP_C_LIB_NAMES="omp" \
+            -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp" \
+            -DOpenMP_CXX_LIB_NAMES="omp" \
+            -DOpenMP_omp_LIBRARY=${{ env.OPENMP_LIB }} \
+            -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+            -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+            -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+            -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
+            -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
+            -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
+            -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
+            -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
+            -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
+            -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+            -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+            -DBUILD_STATIC_LIBS=ON \
+            -DBUILD_SHARED_LIBS=OFF
+
+      - name: Configure (MinGW)
+        if: matrix.toolchain == 'mingw'
+        shell: msys2 {0}
+        run: |
+          cmake -G "MinGW Makefiles" \
+            -B build \
+            -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+            -DENABLE_TESTS=ON \
+            -DCMAKE_C_COMPILER=gcc \
+            -DCMAKE_CXX_COMPILER=g++ \
+            -DCMAKE_Fortran_COMPILER=gfortran \
+            -DMUMPS_INCLUDE_DIR=${GITHUB_WORKSPACE}/dependencies/include \
+            -DMETIS_INCLUDE_DIR=/mingw64/include \
+            -DBQPD=${GITHUB_WORKSPACE}/dependencies/lib/libbqpd.a \
+            -DMETIS_LIBRARY=/mingw64/lib/libmetis.a \
+            -DMUMPS_LIBRARY=${GITHUB_WORKSPACE}/dependencies/lib/libdmumps.a \
+            -DMUMPS_COMMON_LIBRARY=${GITHUB_WORKSPACE}/dependencies/lib/libmumps_common.a \
+            -DMUMPS_PORD_LIBRARY=${GITHUB_WORKSPACE}/dependencies/lib/libpord.a \
+            -DMUMPS_MPISEQ_LIBRARY=${GITHUB_WORKSPACE}/dependencies/lib/libmpiseq.a \
+            -DBLAS_LIBRARIES="${GITHUB_WORKSPACE}/dependencies/lib/libcblas.a;${GITHUB_WORKSPACE}/dependencies/lib/libblas.a" \
+            -DLAPACK_LIBRARIES=${GITHUB_WORKSPACE}/dependencies/lib/liblapack.a \
+            -DHIGHS=${GITHUB_WORKSPACE}/dependencies/lib/libhighs.a \
+            -DBUILD_STATIC_LIBS=ON \
+            -DBUILD_SHARED_LIBS=OFF
+
+      # =========================================================
+      # BUILD
+      # =========================================================
+
+      - name: Build
+        run: cmake --build build --target run_unotest --config ${{env.BUILD_TYPE}}
+
+      # =========================================================
+      # TEST
+      # =========================================================
+
+      - name: Run tests
+        working-directory: build
+        run: ctest --output-on-failure -C ${{env.BUILD_TYPE}}

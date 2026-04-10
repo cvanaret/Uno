@@ -29,6 +29,7 @@ namespace uno {
       [[nodiscard]] size_t rank() const override;
 
       [[nodiscard]] LinearSystem& get_linear_system() override;
+      [[nodiscard]] COOLinearSystem& get_coo_linear_system();
 
    protected:
       DMUMPS_STRUC_C workspace{};

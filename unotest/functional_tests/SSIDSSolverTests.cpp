@@ -1,16 +1,16 @@
-// Copyright (c) 2018-2026 Charlie Vanaret
+// Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <gtest/gtest.h>
 #include <array>
-#include "ingredients/subproblem_solvers/MA27/MA27Solver.hpp"
+#include "ingredients/subproblem_solvers/SSIDS/SSIDSSolver.hpp"
 #include "linear_algebra/Vector.hpp"
 
 using namespace uno;
 
-TEST(MA27Solver, SystemSize5) {
-   MA27Solver solver;
-   COOLinearSystem& linear_system = solver.get_coo_linear_system();
+TEST(SSIDSSolver, SystemSize5) {
+   SSIDSSolver solver;
+   COOLinearSystem &linear_system = solver.get_coo_linear_system();
    constexpr size_t dimension = 5;
    linear_system.dimension = dimension;
    linear_system.number_nonzeros = 7;
@@ -33,9 +33,9 @@ TEST(MA27Solver, SystemSize5) {
    }
 }
 
-TEST(MA27Solver, Inertia) {
-   MA27Solver solver;
-   COOLinearSystem& linear_system = solver.get_coo_linear_system();
+TEST(SSIDSSolver, Inertia) {
+   SSIDSSolver solver;
+   COOLinearSystem &linear_system = solver.get_coo_linear_system();
    linear_system.dimension = 5;
    linear_system.number_nonzeros = 7;
    linear_system.matrix_row_indices = {1, 1, 2, 2, 3, 3, 5};
@@ -50,10 +50,10 @@ TEST(MA27Solver, Inertia) {
    ASSERT_EQ(number_zero, 0);
 }
 
-TEST(MA27Solver, SingularMatrix) {
+TEST(SSIDSSolver, SingularMatrix) {
    // comes from hs015 solved with byrd preset
-   MA27Solver solver;
-   COOLinearSystem& linear_system = solver.get_coo_linear_system();
+   SSIDSSolver solver;
+   COOLinearSystem &linear_system = solver.get_coo_linear_system();
    linear_system.dimension = 4;
    linear_system.number_nonzeros = 7;
    linear_system.matrix_row_indices = {1, 1, 1, 2, 2, 3, 4};

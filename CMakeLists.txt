@@ -18,7 +18,6 @@ if (MSVC)
    add_compile_options("$<$<COMPILE_LANGUAGE:C>:/utf-8>")
    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
    # https://github.com/google/googletest/tree/main/googletest#visual-studio-dynamic-vs-static-runtimes
-   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 else()
    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
@@ -212,6 +211,7 @@ endif()
 find_library(SPRAL NAMES spral)
 if(SPRAL)
    list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/SSIDS/SSIDSSolver.cpp)
+   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/SSIDSSolverTests.cpp)
    link_to_uno(spral ${SPRAL})
 endif()
 
@@ -283,15 +283,17 @@ if(BUILD_SHARED_LIBS)
    target_include_directories(uno_shared SYSTEM PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_shared PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
-   set_target_properties(uno_shared PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90")
+   set_target_properties(uno_shared PROPERTIES
+      PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90"
+   )
+   if (MSVC)
+      set_target_properties(uno_shared PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+   endif()
 endif()
 
 if(BUILD_STATIC_LIBS)
    # by default, the target to install is the static library
    set(DEFAULT_UNO_LIB uno_static)
-   if (MSVC)
-      add_compile_options(/MT)
-   endif()
 else()
    set(DEFAULT_UNO_LIB uno_shared)
 endif()
@@ -363,12 +365,17 @@ if(ENABLE_TESTS)
    FetchContent_MakeAvailable(googletest)
    message(STATUS "Fetched GoogleTest")
 
+   enable_testing()
+
    add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
    target_include_directories(run_unotest SYSTEM PUBLIC ${DIRECTORIES} ${GTEST_INCLUDE_DIR})
-   target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES})
+   target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES} ${CMAKE_DL_LIBS} ${FORTRAN_LIBS})
    if (MSVC)
       set_target_properties(run_unotest PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
    endif()
+
+   include(GoogleTest)
+   gtest_discover_tests(run_unotest DISCOVERY_MODE PRE_TEST)
 endif()
 
 #########################################

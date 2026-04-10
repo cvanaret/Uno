@@ -115,4 +115,8 @@ namespace uno {
    LinearSystem& MUMPSSolver::get_linear_system() {
       return this->linear_system;
    }
+
+   COOLinearSystem& MUMPSSolver::get_coo_linear_system() {
+      return this->linear_system;
+   }
 } // namespace
