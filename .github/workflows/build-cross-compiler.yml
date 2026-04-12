@@ -69,3 +69,6 @@ jobs:
           # julia --color=yes .github/julia/build_tarballs_utils.jl ${{ matrix.platform }} --verbose --deploy=local
           julia --color=yes .github/julia/build_tarballs_yggdrasil.jl ${{ matrix.platform }} --verbose --deploy=local
           julia --color=yes .github/julia/build_tarballs_release.jl ${{ matrix.platform }} --verbose --deploy=local
+
+      - name: Archive artifact
+        run: julia --color=yes .github/julia/generate_binaries.jl
