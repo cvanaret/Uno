@@ -5,18 +5,18 @@ version2 = ENV["UNO_RELEASE"]
 package = "Uno"
 
 platforms = [
-   ("aarch64-apple-darwin-cxx11"  , "lib", "dylib"),
-   ("aarch64-linux-gnu-cxx11"     , "lib", "so"   ),
-#  ("aarch64-linux-musl-cxx11"    , "lib", "so"   ),
-#  ("powerpc64le-linux-gnu-cxx11" , "lib", "so"   ),
-   ("x86_64-apple-darwin-cxx11"   , "lib", "dylib"),
-   ("x86_64-linux-gnu-cxx11"      , "lib", "so"   ),
-#  ("x86_64-linux-musl-cxx11"     , "lib", "so"   ),
-#  ("x86_64-unknown-freebsd-cxx11", "lib", "so"   ),
-   ("x86_64-w64-mingw32-cxx11"    , "bin", "dll"  ),
+   ("aarch64-apple-darwin-cxx11"  , "lib", "dylib", ""    ),
+   ("aarch64-linux-gnu-cxx11"     , "lib", "so"   , ""    ),
+#  ("aarch64-linux-musl-cxx11"    , "lib", "so"   , ""    ),
+#  ("powerpc64le-linux-gnu-cxx11" , "lib", "so"   , ""    ),
+   ("x86_64-apple-darwin-cxx11"   , "lib", "dylib", ""    ),
+   ("x86_64-linux-gnu-cxx11"      , "lib", "so"   , ""    ),
+#  ("x86_64-linux-musl-cxx11"     , "lib", "so"   , ""    ),
+#  ("x86_64-unknown-freebsd-cxx11", "lib", "so"   , ""    ),
+   ("x86_64-w64-mingw32-cxx11"    , "bin", "dll"  , ".exe"),
 ]
 
-for (platform, libdir, ext) in platforms
+for (platform, libdir, ext, exeext) in platforms
 
   tarball_name = "$package.v$version.$platform.tar.gz"
 
@@ -35,6 +35,52 @@ for (platform, libdir, ext) in platforms
        cp("products/$platform/deps/licenses/$folder", "products/$platform/share/licenses/$folder")
       end
       rm("products/$platform/deps/licenses", recursive=true)
+
+      # Remove the headers that are not related to Uno
+      rm("products/$platform/include/libseq", recursive=true)
+      for file in readdir("products/$platform/include")
+        if endswith(file, ".h")
+          rm("products/$platform/include/$file", recursive=true)
+        end
+      end
+
+      # Remove the binaries that are not related to Uno
+      for file in readdir("products/$platform/bin")
+        if endswith(file, exeext) && !startswith(file, "uno_ampl")
+          rm("products/$platform/bin/$file", recursive=true)
+        end
+        if platform == "x86_64-w64-mingw32-cxx11"
+          if !endswith(file, ".dll") && !startswith(file, "uno_ampl")
+            rm("products/$platform/bin/$file", recursive=true)
+          end
+        end
+      end
+
+      # Remove the libraries that are not dependencies of Uno
+      rm("products/$platform/$libdir/libhsl_subset.$ext", recursive=true)
+      rm("products/$platform/$libdir/libhsl_subset_64.$ext", recursive=true)
+      rm("products/$platform/$libdir/libbqpd_dense.a", recursive=true)
+      rm("products/$platform/$libdir/libcharset.a", recursive=true)
+      rm("products/$platform/$libdir/libz.a", recursive=true)
+      rm("products/$platform/$libdir/libiconv.a", recursive=true)
+      for file in readdir("products/$platform/$libdir")
+        if startswith(file, "libasan") || startswith(file, "libubsan") || startswith(file, "libtsan") || startswith(file, "libhwasan") || startswith(file, "liblsan")
+          rm("products/$platform/$libdir/$file", recursive=true)
+        end
+      end
+
+      # Create a folder with only the libraries of the dependencies
+      mkdir("products/$platform/deps")
+      for file in readdir("products/$platform/$libdir")
+        if !startswith(file, "libuno")
+          mv("products/$platform/$libdir/$file", "products/$platform/deps/$file")
+        end
+      end
+
+      # Remove the import library libspral.dll.a on Windows
+      if platform == "x86_64-w64-mingw32-cxx11"
+        rm("products/$platform/lib/libspral.dll.a", recursive=true)
+      end
 
       # Copy the shared library of each dependency
       for file in readdir("products/$platform/deps")
