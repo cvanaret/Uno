@@ -39,7 +39,7 @@ for (platform, libdir, ext, exeext) in platforms
       # Remove the headers that are not related to Uno
       rm("products/$platform/include/libseq", recursive=true)
       for file in readdir("products/$platform/include")
-        if endswith(file ".h")
+        if endswith(file, ".h")
           rm("products/$platform/include/$file", recursive=true)
         end
       end
