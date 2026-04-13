@@ -325,63 +325,99 @@ function uno_solver(; kwargs...)
   return solver
 end
 
-mutable struct Statistics{M}
+"""
+    UnoExecutionStats{M} <: AbstractExecutionStats
+
+Store the results and statistics returned by Uno once the solver has terminated.
+"""
+mutable struct UnoExecutionStats{M} <: SolverCore.AbstractExecutionStats
+  # Common fields
+  status::Symbol
+  solution::Vector{Float64}
+  objective::Float64
+  dual_feas::Float64
+  primal_feas::Float64
+  multipliers::Vector{Float64}
+  multipliers_L::Vector{Float64}
+  multipliers_U::Vector{Float64}
+  iter::Int
+  elapsed_time::Float64
+
+  # Uno-specific fields
   model::Model{M}
   solver::Solver
-
-  primal_solution::Vector{Float64}
-  constraint_dual_solution::Vector{Float64}
-  lower_bound_dual_solution::Vector{Float64}
-  upper_bound_dual_solution::Vector{Float64}
-
-  cpu_time::Float64
-  solution_objective::Float64
-  solution_primal_feasibility::Float64
-  solution_stationarity::Float64
-  solution_complementarity::Float64
-
+  complementarity_feas::Float64
   optimization_status::Cint
   solution_status::Cint
-  number_iterations::Cint
-  number_subproblem_solved_evaluations::Cint
-  number_objective_evaluations::Cint
-  number_constraint_evaluations::Cint
-  number_objective_gradient_evaluations::Cint
-  number_jacobian_evaluations::Cint
-  number_hessian_evaluations::Cint
+  number_subproblem_solved_evaluations::Int
+  number_objective_evaluations::Int
+  number_constraint_evaluations::Int
+  number_objective_gradient_evaluations::Int
+  number_jacobian_evaluations::Int
+  number_hessian_evaluations::Int
 end
 
 function uno_statistics(model::Model, solver::Solver)
-  primal_solution = Vector{Float64}(undef, model.nvar)
-  UnoSolver.uno_get_primal_solution(solver, primal_solution)
-  constraint_dual_solution = Vector{Float64}(undef, model.ncon)
-  UnoSolver.uno_get_constraint_dual_solution(solver, constraint_dual_solution)
-  lower_bound_dual_solution = Vector{Float64}(undef, model.nvar)
-  UnoSolver.uno_get_lower_bound_dual_solution(solver, lower_bound_dual_solution)
-  upper_bound_dual_solution = Vector{Float64}(undef, model.nvar)
-  UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
+  solution = Vector{Float64}(undef, model.nvar)
+  uno_get_primal_solution(solver, solution)
+  multipliers = Vector{Float64}(undef, model.ncon)
+  uno_get_constraint_dual_solution(solver, multipliers)
+  multipliers_L = Vector{Float64}(undef, model.nvar)
+  uno_get_lower_bound_dual_solution(solver, multipliers_L)
+  multipliers_U = Vector{Float64}(undef, model.nvar)
+  uno_get_upper_bound_dual_solution(solver, multipliers_U)
 
-  cpu_time = UnoSolver.uno_get_cpu_time(solver)
-  solution_objective = UnoSolver.uno_get_solution_objective(solver)
-  solution_primal_feasibility = UnoSolver.uno_get_solution_primal_feasibility(solver)
-  solution_stationarity = UnoSolver.uno_get_solution_stationarity(solver)
-  solution_complementarity = UnoSolver.uno_get_solution_complementarity(solver)
+  elapsed_time = uno_get_cpu_time(solver)
+  objective = uno_get_solution_objective(solver)
+  primal_feas = uno_get_solution_primal_feasibility(solver)
+  dual_feas = uno_get_solution_stationarity(solver)
+  complementarity_feas = uno_get_solution_complementarity(solver)
 
-  optimization_status = UnoSolver.uno_get_optimization_status(solver)
-  solution_status = UnoSolver.uno_get_solution_status(solver)
-  number_iterations = UnoSolver.uno_get_number_iterations(solver)
-  number_subproblem_solved_evaluations = UnoSolver.uno_get_number_subproblem_solved_evaluations(solver)
-  number_objective_evaluations = UnoSolver.uno_get_number_objective_evaluations(solver)
-  number_constraint_evaluations = UnoSolver.uno_get_number_constraint_evaluations(solver)
-  number_objective_gradient_evaluations = UnoSolver.uno_get_number_objective_gradient_evaluations(solver)
-  number_jacobian_evaluations = UnoSolver.uno_get_number_jacobian_evaluations(solver)
-  number_hessian_evaluations = UnoSolver.uno_get_number_hessian_evaluations(solver)
+  optimization_status = uno_get_optimization_status(solver)
+  solution_status = uno_get_solution_status(solver)
+  status = :unknown
+  if optimization_status == UNO_ITERATION_LIMIT
+    status = :max_iter
+  elseif optimization_status == UNO_TIME_LIMIT
+    status = :max_time
+  elseif optimization_status == UNO_EVALUATION_ERROR
+    status = :exception
+  elseif optimization_status == UNO_ALGORITHMIC_ERROR
+    status = :exception
+  elseif optimization_status == UNO_USER_TERMINATION
+    status = :user
+  else
+    @assert optimization_status == UNO_SUCCESS
+    if solution_status == UNO_FEASIBLE_KKT_POINT
+      status = :first_order
+    elseif solution_status == UNO_FEASIBLE_FJ_POINT
+      status = :first_order
+    elseif solution_status == UNO_INFEASIBLE_STATIONARY_POINT
+      status = :infeasible
+    elseif solution_status == UNO_FEASIBLE_SMALL_STEP
+      status = :small_step
+    elseif solution_status == UNO_INFEASIBLE_SMALL_STEP
+      status = :small_step
+    elseif solution_status == UNO_UNBOUNDED
+      status = :unbounded
+    else
+      @assert solution_status == UNO_NOT_OPTIMAL
+    end
+  end
 
-  stats = Statistics(model, solver, primal_solution, constraint_dual_solution, lower_bound_dual_solution, upper_bound_dual_solution,
-                     cpu_time, solution_objective, solution_primal_feasibility, solution_stationarity, solution_complementarity,
-                     optimization_status, solution_status, number_iterations, number_subproblem_solved_evaluations,
-                     number_objective_evaluations, number_constraint_evaluations, number_objective_gradient_evaluations,
-                     number_jacobian_evaluations, number_hessian_evaluations)
+  iter = uno_get_number_iterations(solver) |> Int
+  number_subproblem_solved_evaluations = uno_get_number_subproblem_solved_evaluations(solver) |> Int
+  number_objective_evaluations = uno_get_number_objective_evaluations(solver) |> Int
+  number_constraint_evaluations = uno_get_number_constraint_evaluations(solver) |> Int
+  number_objective_gradient_evaluations = uno_get_number_objective_gradient_evaluations(solver) |> Int
+  number_jacobian_evaluations = uno_get_number_jacobian_evaluations(solver) |> Int
+  number_hessian_evaluations = uno_get_number_hessian_evaluations(solver) |> Int
+
+  stats = UnoExecutionStats(status, solution, objective, dual_feas, primal_feas, multipliers, multipliers_L,
+                            multipliers_U, iter, elapsed_time, model, solver, complementarity_feas, optimization_status,
+                            solution_status, number_subproblem_solved_evaluations, number_objective_evaluations,
+                            number_constraint_evaluations, number_objective_gradient_evaluations,
+                            number_jacobian_evaluations, number_hessian_evaluations)
 end
 
 function uno(
