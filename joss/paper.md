@@ -25,7 +25,7 @@ affiliations:
    index: 1
  - name: Mathematics and Computer Science Division, Argonne National Laboratory, USA
    index: 2
-date: 22 February 2026
+date: 13 April 2026
 bibliography: paper.bib
 
 ---
@@ -34,11 +34,11 @@ bibliography: paper.bib
 
 Uno is a composable software framework for nonlinearly constrained optimization written in modern C\texttt{++}.
 It unifies the workflows of Lagrange-Newton methods, i.e., gradient-based algorithms that iteratively solve the KKT optimality conditions using Newton's method.
-As of February 2026, Uno supports sequential (convex and nonconvex) quadratic programming, interior-point (barrier) methods, and sequential linear programming.
+As of April 2026, Uno supports sequential (convex and nonconvex) quadratic programming, interior-point (barrier) methods, and sequential linear programming.
 
 Uno breaks down optimization algorithms into reusable modular components such as step computation, constraint reformulation, globalization techniques, and acceptance criteria.
 This allows classical and hybrid methods to be configured and compared within a single framework.
-For full mathematical details of the algorithms implemented in Uno, see [@VanaretLeyffer2024].
+For full mathematical details of the algorithms implemented in Uno, see [@VanaretLeyffer2026].
 
 The core C\texttt{++} code of Uno is organized into modular, object-oriented components that separate the mathematical logic of the algorithms from implementation details such as memory management, data structures, and computational routines.
 Uno provides interfaces to Julia, Python, C, Fortran, and AMPL, enabling use across scientific computing environments.
@@ -131,6 +131,7 @@ Uno is currently used as a nonlinear optimization solver in:
 * the `JuMP.jl` ecosystem,
 * DNLP, an extension of CVXPY to general nonlinear programming,
 * `Vecchia.jl`, a package for Gaussian processes approximation,
+* `control-toolbox`, a collection of Julia packages for mathematical control and its applications,
 * FelooPy, a user-friendly tool for coding, modeling, and solving decision problems,
 * IMPL © /IMPL-DATA © by Industrial Algorithms Limited, a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation.
 
