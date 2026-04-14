@@ -7,7 +7,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "unopy"
-version = "0.4.3"
+version = "0.4.4"
 description = "With Uno, finally take full control of your SQP/barrier solver for nonlinearly constrained optimization"
 readme = "interfaces/Python/README.md"
 authors = [
