@@ -9,6 +9,13 @@ It breaks them down into a set of common building blocks (e.g., strategies to co
 
 An implementation example of the Hock-Schittkowski model [hs015](https://vanderbei.princeton.edu/ampl/nlmodels/hs/hs015.mod) is available in the file [example_hs015.py](https://github.com/cvanaret/Uno/blob/main/interfaces/Python/example/example_hs015.py).
 
+### Querying the current Uno version
+
+Query the current Uno version with:
+```python
+unopy.current_uno_version()
+```
+
 ### Building an optimization model
 
 Building an optimization model is incremental and starts with the information about the variables:

@@ -21,6 +21,8 @@ namespace uno {
       description.append(", a solver for nonlinearly constrained optimization");
       module.doc() = description;
 
+      module.def("current_uno_version", &Uno::current_version);
+
       define_Model(module);
       define_Result(module);
       define_UnoSolver(module);
