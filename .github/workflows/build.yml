@@ -90,20 +90,12 @@ jobs:
 
     # ----- Ubuntu + Intel compilers -----
 
-    - name: Install Fortran compiler (Intel)
+    - name: Install compiler (Intel)
       if: matrix.toolchain == 'intel'
-      uses: fortran-lang/setup-fortran@v1
+      uses: fortran-lang/setup-fortran@main
       with:
         compiler: intel
-        version: '2024.2'
-
-    - name: Install C/C++ compilers (Intel)
-      if: matrix.toolchain == 'intel'
-      run: |
-        sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp
-        source /opt/intel/oneapi/setvars.sh
-        echo "PATH=$PATH" >> $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
+        version: '2025.0'
 
     # ----- macOS -----
     - name: Install Fortran compiler (macOS)
