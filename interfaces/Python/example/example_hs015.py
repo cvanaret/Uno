@@ -5,7 +5,6 @@ import unopy
 Inf = float("inf")
 
 # hs015.mod
-
 def objective(x):
 	# the modeler should throw an exception if the function cannot be evaluated
 	return 100.*(x[1] - x[0]**2)**2 + (1. - x[0])**2
@@ -73,6 +72,7 @@ if __name__ == '__main__':
 	uno_solver = unopy.UnoSolver()
 	uno_solver.set_preset("filtersqp")
 	uno_solver.set_option("QP_solver", "BQPD")
+	print("Solving with Uno", unopy.current_uno_version())
 
 	# run 1: solve with the filtersqp preset with no exact Hessian. Uno defaults to L-BFGS Hessian for NLPs
 	result = uno_solver.optimize(model)
