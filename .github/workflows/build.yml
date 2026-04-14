@@ -34,6 +34,11 @@ jobs:
           build_type: Debug
           shell: bash
 
+        - os: ubuntu-latest
+          toolchain: intel
+          build_type: Debug
+          shell: bash
+
         - os: ubuntu-24.04-arm
           toolchain: gcc
           build_type: Debug
@@ -82,6 +87,23 @@ jobs:
     # =========================================================
     # TOOLCHAIN SETUP
     # =========================================================
+
+    # ----- Ubuntu + Intel compilers -----
+
+    - name: Install Fortran compiler (Intel)
+      if: matrix.toolchain == 'intel'
+      uses: fortran-lang/setup-fortran@v1
+      with:
+        compiler: intel
+        version: '2024.2'
+
+    - name: Install C/C++ compilers (Intel)
+      if: matrix.toolchain == 'intel'
+      run: |
+        sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp
+        source /opt/intel/oneapi/setvars.sh
+        echo "PATH=$PATH" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
     # ----- macOS -----
     - name: Install Fortran compiler (macOS)
@@ -164,14 +186,36 @@ jobs:
     # CONFIGURE
     # =========================================================
 
-    - name: Configure (Linux)
-      if: startsWith(matrix.os, 'ubuntu')
+    - name: Configure (Linux + GCC)
+      if: startsWith(matrix.os, 'ubuntu') && matrix.toolchain == 'gcc'
       run: |
         cmake -B build \
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_C_COMPILER=gcc \
           -DCMAKE_CXX_COMPILER=g++ \
           -DCMAKE_FORTRAN_COMPILER=gfortran \
+          -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+          -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+          -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+          -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
+          -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
+          -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
+          -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
+          -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
+          -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
+          -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+          -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+          -DBUILD_STATIC_LIBS=ON \
+          -DBUILD_SHARED_LIBS=ON
+        
+    - name: Configure (Linux + Intel)
+      if: startsWith(matrix.os, 'ubuntu') && matrix.toolchain == 'intel'
+      run: |
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_C_COMPILER=icx \
+          -DCMAKE_CXX_COMPILER=icpx \
+          -DCMAKE_FORTRAN_COMPILER=ifx \
           -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
           -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
