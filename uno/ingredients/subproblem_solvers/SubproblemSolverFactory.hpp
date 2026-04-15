@@ -35,7 +35,9 @@ namespace uno {
          bool uses_trust_region, const Options& options) {
       const Subproblem subproblem(problem, current_iterate, hessian_model, inertia_correction_strategy);
       // if no inequality constraint and no trust region, allocate EQP solver
-      if (!subproblem.has_inequality_constraints() && !subproblem.has_bound_constraints() && !uses_trust_region) {
+      // temporary fix: this is set only in interior-point methods
+      if (!subproblem.has_inequality_constraints() && !subproblem.has_bound_constraints() && !uses_trust_region &&
+            options.get_string("inequality_handling_method") == "interior_point") {
          if constexpr (std::is_base_of_v<QuasiNewtonHessian, HessianType>) {
             DEBUG << "No inequality constraints in the subproblem, allocating an EQP solver with quasi-Newton Hessian\n";
             // the hessian_model we pass has type QuasiNewtonHessian
