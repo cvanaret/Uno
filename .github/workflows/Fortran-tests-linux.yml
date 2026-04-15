@@ -38,6 +38,12 @@ jobs:
         shell: bash
         run: bash dependencies/scripts/download_dependencies.sh
 
+      - name: Set the environment variables for OpenMP
+        shell: bash
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
+
       - name: Configure Uno CMake
         shell: bash
         run: |
@@ -50,8 +56,9 @@ jobs:
                                                -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
                                                -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
                                                -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+                                               -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
                                                -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
-                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
+                                               -DBLAS_LIBRARIES=${{github.workspace}}/dependencies/lib/libblas.a \
                                                -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
                                                -DBUILD_STATIC_LIBS=ON \
                                                -DBUILD_SHARED_LIBS=OFF .
@@ -61,7 +68,13 @@ jobs:
 
       - name: Compile Fortran tests
         working-directory: ${{github.workspace}}/interfaces/Fortran
-        run: gfortran example_uno.f90 -o example_uno -L../../build -luno -L${{github.workspace}}/dependencies/lib -lhighs -ldmumps -lmumps_common -lmpiseq -lpord -lmetis -lbqpd -llapack -lcblas -lblas -lstdc++
+        run: |
+          gfortran example_uno.f90 -o example_uno \
+                                   -L../../build -luno \
+                                   -L${{github.workspace}}/dependencies/lib \
+                                   -Wl,-rpath,${{github.workspace}}/dependencies/lib \
+                                   -lhighs -ldmumps -lmumps_common -lmpiseq -lpord -lmetis \
+                                   -lbqpd -lspral -lhwloc -llapack -lcblas -lblas -lgomp -lstdc++
 
       - name: Run Fortran tests
         working-directory: ${{github.workspace}}/interfaces/Fortran
