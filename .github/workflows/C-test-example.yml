@@ -51,8 +51,8 @@ jobs:
                                                -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
                                                -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
                                                -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
-                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" \
-                                               -DAUXILIARY_LIBRARIES="${{github.workspace}}/dependencies/lib/libhwloc.so" \
+                                               -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
+                                               -DAUXILIARY_LIBRARIES="${{github.workspace}}/dependencies/lib/libhwloc.a" \
                                                -DBUILD_STATIC_LIBS=OFF \
                                                -DBUILD_SHARED_LIBS=ON .
 
