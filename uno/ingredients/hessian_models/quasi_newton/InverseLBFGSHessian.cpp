@@ -1,7 +1,7 @@
-// Copyright (c) 2025-2026 Charlie Vanaret
+// Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include "LBFGSHessian.hpp"
+#include "InverseLBFGSHessian.hpp"
 #include "model/Model.hpp"
 #include "options/Options.hpp"
 #include "linear_algebra/BLAS.hpp"
@@ -18,8 +18,8 @@
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   LBFGSHessian::LBFGSHessian(const Model& model, double objective_multiplier, const Options& options):
-         DirectQuasiNewtonHessian("L-BFGS", model, objective_multiplier, options),
+   InverseLBFGSHessian::InverseLBFGSHessian(const Model& model, double objective_multiplier, const Options& options):
+         QuasiNewtonHessian("inverse L-BFGS", model, objective_multiplier, options),
          // matrices
          L(this->memory_size, this->memory_size),
          D(this->memory_size),
@@ -34,16 +34,28 @@ namespace uno {
       }
    }
 
-   bool LBFGSHessian::is_positive_definite() const {
+   bool InverseLBFGSHessian::has_hessian_matrix() const {
+      return false;
+   }
+
+   size_t InverseLBFGSHessian::number_nonzeros() const {
+      throw std::runtime_error("This member function should not be called.");
+   }
+
+   void InverseLBFGSHessian::compute_sparsity(uno_int* /*row_indices*/, uno_int* /*column_indices*/, uno_int /*solver_indexing*/) const {
+      throw std::runtime_error("This member function should not be called.");
+   }
+
+   bool InverseLBFGSHessian::is_positive_definite() const {
       return true;
    }
 
-   void LBFGSHessian::initialize_statistics(Statistics& statistics) const {
+   void InverseLBFGSHessian::initialize_statistics(Statistics& statistics) const {
       statistics.add_column("|BFGS|", Statistics::double_width - 2, 2, Statistics::column_order.at("|BFGS|"));
       statistics.set("|BFGS|", this->number_entries_in_memory);
    }
 
-   void LBFGSHessian::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
+   void InverseLBFGSHessian::notify_trial_iterate(Statistics& statistics, const Iterate& current_iterate, const Iterate& trial_iterate,
          EvaluationCache& evaluation_cache) {
       statistics.set("|BFGS|", this->number_entries_in_memory);
       DEBUG << "\n*** Adding entries to the BFGS memory at slot " << this->current_index << '\n';
@@ -66,9 +78,14 @@ namespace uno {
       }
    }
 
+   void InverseLBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
+      throw std::runtime_error("This member function should not be called.");
+   }
+
    // Hessian-vector product where the Hessian approximation is Bk = B0 - U Uᵀ + V Vᵀ and B0 = δ I
    // Bk v = (B0 - U Uᵀ + V Vᵀ) v = δ v - U (Uᵀ v) + V (Vᵀ v)
-   void LBFGSHessian::compute_hessian_vector_product(const double* /*x*/, const double* vector,
+   void InverseLBFGSHessian::compute_hessian_vector_product(const double* /*x*/, const double* vector,
          double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, double* result) {
       if (objective_multiplier != this->fixed_objective_multiplier) {
          throw std::runtime_error("The quasi-Newton Hessian model was initialized with a different objective multiplier");
@@ -103,38 +120,27 @@ namespace uno {
       }
    }
 
-   size_t LBFGSHessian::get_correction_rank() const {
-      return 2 * this->number_entries_in_memory;
-   }
+   void InverseLBFGSHessian::compute_inverse_hessian_vector_product(const double* /*x*/, const double* vector, double* result) {
+      // recompute the Hessian representation if the limited memory was updated
+      if (this->hessian_recomputation_required) {
+         this->recompute_hessian_representation();
+         hessian_recomputation_required = false;
+      }
 
-   // get a column of (U V)
-   VectorView<std::vector<double>> LBFGSHessian::get_correction_column(size_t column_index) const {
-      if (column_index < this->number_entries_in_memory) {
-         return this->U.column(column_index);
-      }
-      else {
-         return this->V.column(column_index - this->number_entries_in_memory);
-      }
-   }
-
-   // get the scaling of a given column (-1 for U, +1 for V)
-   double LBFGSHessian::get_correction_column_scaling(size_t column_index) const {
-      if (column_index < this->number_entries_in_memory) {
-         return -1.;
-      }
-      else {
-         return 1.;
+      std::cout << "INVERSE HESSIAN VECTOR PROD with delta = " << this->delta << '\n';
+      for (size_t variable_index: Range(this->model.number_variables)) {
+         result[variable_index] += this->delta * vector[variable_index];
       }
    }
 
    // protected member functions
 
-   void LBFGSHessian::update_D() {
+   void InverseLBFGSHessian::update_D() {
       this->D[this->current_index] = dot(this->S.column(this->current_index), this->Y.column(this->current_index));
       DEBUG << "> diag(D): "; print_vector(DEBUG, this->D);
    }
 
-   void LBFGSHessian::recompute_hessian_representation() {
+   void InverseLBFGSHessian::recompute_hessian_representation() {
       // check that the latest D entry sᵀ y is > 0
       // TODO implement Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
       this->update_D();
@@ -203,7 +209,7 @@ namespace uno {
 
    // compute δ = yᵀ y / sᵀ y at the last entry
    // (7.20) in Numerical optimization (Nocedal & Wright)
-   double LBFGSHessian::compute_delta() const {
+   double InverseLBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
       const auto last_column_Y = this->Y.column(this->current_index);
       const double numerator = dot(last_column_Y, last_column_Y);

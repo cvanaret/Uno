@@ -7,6 +7,7 @@
 #include "HessianSubproblemSolverJointFactory.hpp"
 #include "HessianModel.hpp"
 #include "ExactHessian.hpp"
+#include "quasi_newton/InverseLBFGSHessian.hpp"
 #include "quasi_newton/LBFGSHessian.hpp"
 #include "quasi_newton/LSR1Hessian.hpp"
 #include "IdentityHessian.hpp"
@@ -41,16 +42,27 @@ namespace uno {
                inertia_correction_strategy, uses_trust_region, options);
             return {std::move(hessian_model), std::move(subproblem_solver)};
          }
-         // no Hessian (matrix or operator) is available: pick an quasi-Newton Hessian (L-BFGS for line search, L-SR1
+         // no Hessian (matrix or operator) is available: pick a quasi-Newton Hessian (L-BFGS for line search, L-SR1
          // for trust-region methods)
          else if (options.get_string("globalization_mechanism") == "LS") {
             WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-BFGS Hessian instead\n";
-            // override user defined option
-            options.set_string("hessian_model", "LBFGS", true);
-            auto hessian_model = std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
-            auto subproblem_solver = SubproblemSolverFactory::create(problem, current_iterate, *hessian_model,
-               inertia_correction_strategy, uses_trust_region, options);
-            return {std::move(hessian_model), std::move(subproblem_solver)};
+            if (true || 0 < model.number_constraints || model.has_bound_constraints() || uses_trust_region) { // constrained
+               // override user defined option
+               options.set_string("hessian_model", "LBFGS", true);
+               std::cout << "ALLOCATING L-BFGS Hessian\n";
+               auto hessian_model = std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
+               auto subproblem_solver = SubproblemSolverFactory::create(problem, current_iterate, *hessian_model,
+                  inertia_correction_strategy, uses_trust_region, options);
+               return {std::move(hessian_model), std::move(subproblem_solver)};
+            }
+            else {
+               // override user defined option
+               options.set_string("hessian_model", "inverse LBFGS", true);
+               auto hessian_model = std::make_unique<InverseLBFGSHessian>(model, objective_multiplier, options);
+               auto subproblem_solver = SubproblemSolverFactory::create(problem, current_iterate, *hessian_model,
+                  inertia_correction_strategy, uses_trust_region, options);
+               return {std::move(hessian_model), std::move(subproblem_solver)};
+            }
          }
          else {
             WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-SR1 Hessian instead\n";
@@ -63,10 +75,20 @@ namespace uno {
          }
       }
       else if (hessian_model_type == "LBFGS") {
-         auto hessian_model = std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
-         auto subproblem_solver = SubproblemSolverFactory::create(problem, current_iterate, *hessian_model,
-            inertia_correction_strategy, uses_trust_region, options);
-         return {std::move(hessian_model), std::move(subproblem_solver)};
+         if (true || 0 < model.number_constraints || model.has_bound_constraints() || uses_trust_region) { // constrained
+            auto hessian_model = std::make_unique<LBFGSHessian>(model, objective_multiplier, options);
+            auto subproblem_solver = SubproblemSolverFactory::create(problem, current_iterate, *hessian_model,
+               inertia_correction_strategy, uses_trust_region, options);
+            return {std::move(hessian_model), std::move(subproblem_solver)};
+         }
+         else { // unconstrained
+            // override user defined option
+            options.set_string("hessian_model", "inverse LBFGS", true);
+            auto hessian_model = std::make_unique<InverseLBFGSHessian>(model, objective_multiplier, options);
+            auto subproblem_solver = SubproblemSolverFactory::create(problem, current_iterate, *hessian_model,
+               inertia_correction_strategy, uses_trust_region, options);
+            return {std::move(hessian_model), std::move(subproblem_solver)};
+         }
       }
       else if (hessian_model_type == "LSR1") {
          auto hessian_model = std::make_unique<LSR1Hessian>(model, objective_multiplier, options);

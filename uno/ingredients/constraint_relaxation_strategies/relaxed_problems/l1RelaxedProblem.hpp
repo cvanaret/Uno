@@ -17,6 +17,9 @@ namespace uno {
       std::unique_ptr<OptimizationProblem> clone() const override;
 
       [[nodiscard]] double get_objective_multiplier() const override;
+      [[nodiscard]] bool has_inequality_constraints() const override;
+      [[nodiscard]] bool has_bound_constraints() const override;
+
       void set_proximal_coefficient(double proximal_coefficient);
       void set_proximal_center(double* proximal_center);
 

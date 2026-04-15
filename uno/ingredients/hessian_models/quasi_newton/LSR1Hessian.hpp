@@ -4,12 +4,12 @@
 #ifndef UNO_LSR1HESSIAN_H
 #define UNO_LSR1HESSIAN_H
 
-#include "QuasiNewtonHessian.hpp"
+#include "DirectQuasiNewtonHessian.hpp"
 
 namespace uno {
    // express the Hessian approximation at iteration k by a low-rank update:
    // Bk = B0 + U Uᵀ
-   class LSR1Hessian: public QuasiNewtonHessian {
+   class LSR1Hessian: public DirectQuasiNewtonHessian {
    public:
       LSR1Hessian(const Model& model, double objective_multiplier, const Options& options);
       ~LSR1Hessian() override = default;

@@ -34,6 +34,14 @@ namespace uno {
       return this->inner.get_objective_multiplier();
    }
 
+   bool PrimalDualInteriorPointProblem::has_inequality_constraints() const {
+      return false;
+   }
+
+   bool PrimalDualInteriorPointProblem::has_bound_constraints() const {
+      return false;
+   }
+
    void PrimalDualInteriorPointProblem::generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const {
       const auto& variables_lower_bounds = this->inner.get_variables_lower_bounds();
       const auto& variables_upper_bounds = this->inner.get_variables_upper_bounds();
@@ -461,7 +469,7 @@ namespace uno {
                   const double current_value = iterate.multipliers.lower_bounds[variable_index];
                   iterate.multipliers.lower_bounds[variable_index] = std::max(std::min(iterate.multipliers.lower_bounds[variable_index], ub), lb);
                   if (iterate.multipliers.lower_bounds[variable_index] != current_value) {
-                     DEBUG << "Multiplier for lower bound " << variable_index << " rescaled from " << current_value << " to " <<
+                     DEBUG3 << "Multiplier for lower bound " << variable_index << " rescaled from " << current_value << " to " <<
                         iterate.multipliers.lower_bounds[variable_index] << '\n';
                   }
                }
@@ -480,7 +488,7 @@ namespace uno {
                   const double current_value = iterate.multipliers.upper_bounds[variable_index];
                   iterate.multipliers.upper_bounds[variable_index] = std::max(std::min(iterate.multipliers.upper_bounds[variable_index], ub), lb);
                   if (iterate.multipliers.upper_bounds[variable_index] != current_value) {
-                     DEBUG << "Multiplier for upper bound " << variable_index << " rescaled from " << current_value << " to " <<
+                     DEBUG3 << "Multiplier for upper bound " << variable_index << " rescaled from " << current_value << " to " <<
                         iterate.multipliers.upper_bounds[variable_index] << '\n';
                   }
                }
