@@ -8,7 +8,7 @@
 #include "BoxLPSolver.hpp"
 #include "EQPSolver.hpp"
 #include "LPSolverFactory.hpp"
-#include "LBFGSNewtonSolver.hpp"
+#include "InverseNewtonSolver.hpp"
 #include "QPSolverFactory.hpp"
 #include "WoodburyEQPSolver.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
@@ -43,7 +43,7 @@ namespace uno {
          if constexpr (std::is_same_v<HessianType, InverseLBFGSHessian>) { // unconstrained
             DEBUG << "No constraints in the subproblem, allocating a Newton solver with inverse quasi-Newton Hessian\n";
             // the hessian_model we pass has type QuasiNewtonHessian
-            auto subproblem_solver = std::make_unique<LBFGSNewtonSolver>(hessian_model);
+            auto subproblem_solver = std::make_unique<InverseNewtonSolver>(hessian_model);
             subproblem_solver->initialize_memory(subproblem);
             return subproblem_solver;
          }
