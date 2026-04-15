@@ -24,7 +24,7 @@ NLPModels = "0.21.10"
 OpenBLAS32_jll = "0.3.24"
 SolverCore = "0.3.10"
 Test = "1.10"
-Uno_jll = "=2.7.0"
+Uno_jll = "=2.7.0, =2.7.1"
 julia = "1.10"
 
 [extras]

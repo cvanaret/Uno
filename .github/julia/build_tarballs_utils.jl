@@ -36,7 +36,7 @@ sources = [
               "f65a6838e3daa4fa23f06ffffc7c895370dbd3dc"),
     # SPRAL v2025.9.18
     GitSource("https://github.com/ralna/spral.git",
-              "e68988612dbd920323cee44c9cb8c6134847a990"),
+              "80bc843ac3847d4a783a0e11213715a70175aee6"),
     # Hwloc v2.13.0
     ArchiveSource("https://download.open-mpi.org/release/hwloc/v2.13/hwloc-2.13.0.tar.bz2",
                   "52e936afb6ebd80f171f763fcf14f7b1f5ce98b125af5dd2f328b873b1fd0dab"),
@@ -186,6 +186,7 @@ meson setup builddir --cross-file="${MESON_TARGET_TOOLCHAIN}" \
                      -Dlibhwloc=hwloc \
                      -Dlibblas=blas \
                      -Dliblapack=lapack \
+                     -Dbinaries=false \
                      -Dtests=false \
                      -Dexamples=false
 
@@ -206,7 +207,6 @@ cmake .. \
     -DBUILD_EXAMPLES=OFF \
     -DBUILD_TESTING=OFF \
     -DBUILD_CXX_EXE=OFF \
-    -DMETIS_ROOT=${prefix} \
     -DBLAS_LIBRARIES=${prefix}/lib/libblas.a \
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
