@@ -33,7 +33,6 @@ namespace uno {
    }
 
    bool OptimizationProblem::has_inequality_constraints() const {
-      // look at the general constraints
       const auto& constraints_lower_bounds = this->get_constraints_lower_bounds();
       const auto& constraints_upper_bounds = this->get_constraints_upper_bounds();
       for (size_t constraint_index: Range(this->number_constraints)) {
@@ -41,7 +40,10 @@ namespace uno {
             return true;
          }
       }
-      // look at the bound constraints
+      return false;
+   }
+
+   bool OptimizationProblem::has_bound_constraints() const {
       const auto& variables_lower_bounds = this->get_variables_lower_bounds();
       const auto& variables_upper_bounds = this->get_variables_upper_bounds();
       if (std::any_of(variables_lower_bounds.begin(), variables_lower_bounds.end(), is_finite<double>) ||

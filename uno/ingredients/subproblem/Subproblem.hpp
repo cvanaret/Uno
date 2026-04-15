@@ -63,6 +63,7 @@ namespace uno {
       [[nodiscard]] bool has_hessian_matrix() const;
       [[nodiscard]] bool has_curvature() const;
       [[nodiscard]] bool has_inequality_constraints() const;
+      [[nodiscard]] bool has_bound_constraints() const;
 
       [[nodiscard]] bool performs_primal_regularization() const;
       [[nodiscard]] bool performs_dual_regularization() const;

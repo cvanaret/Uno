@@ -16,7 +16,7 @@ namespace uno {
    std::unique_ptr<InequalityHandlingMethod> InequalityHandlingMethodFactory::create(const OptimizationProblem& problem,
          bool uses_trust_region, const Options& options) {
       // figure out whether there are inequality constraints altogether
-      if (!problem.has_inequality_constraints() && !uses_trust_region) {
+      if (!problem.has_inequality_constraints() && !problem.has_bound_constraints() && !uses_trust_region) {
          // no inequality reformulation
          INFO << "The problem has no inequalities, picking a pure SQP method\n";
          return std::make_unique<NoInequalityReformulation>("pure SQP method");

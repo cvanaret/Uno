@@ -205,6 +205,10 @@ namespace uno {
       return this->problem.has_inequality_constraints();
    }
 
+   bool Subproblem::has_bound_constraints() const {
+      return this->problem.has_bound_constraints();
+   }
+
    bool Subproblem::performs_primal_regularization() const {
       return this->inertia_correction_strategy.performs_primal_regularization();
    }
