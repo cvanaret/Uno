@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cassert>
-#include "NewtonSolver.hpp"
+#include "LBFGSNewtonSolver.hpp"
 #include "ingredients/hessian_models/quasi_newton/InverseLBFGSHessian.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
@@ -12,14 +12,14 @@
 #include "tools/Infinity.hpp"
 
 namespace uno {
-   NewtonSolver::NewtonSolver(InverseLBFGSHessian& hessian_model): hessian_model(hessian_model) {
+   LBFGSNewtonSolver::LBFGSNewtonSolver(InverseLBFGSHessian& hessian_model): hessian_model(hessian_model) {
    }
 
-   void NewtonSolver::initialize_memory(const Subproblem& subproblem) {
+   void LBFGSNewtonSolver::initialize_memory(const Subproblem& subproblem) {
       this->rhs.resize(subproblem.number_variables);
    }
 
-   void NewtonSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, double trust_region_radius,
+   void LBFGSNewtonSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, double trust_region_radius,
          const Vector<double>& /*initial_point*/, Direction& direction, Evaluations& current_evaluations,
          const WarmstartInformation& /*warmstart_information*/) {
       assert(is_infinite(trust_region_radius));
@@ -33,7 +33,7 @@ namespace uno {
          this->rhs.data(), direction.primals.data());
    }
 
-   SolverWorkspace& NewtonSolver::get_workspace() {
+   SolverWorkspace& LBFGSNewtonSolver::get_workspace() {
       return this->workspace;
    }
 } // namespace

@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_NEWTONSOLVER_H
-#define UNO_NEWTONSOLVER_H
+#ifndef UNO_LBFGSNEWTONSOLVER_H
+#define UNO_LBFGSNEWTONSOLVER_H
 
 #include "SubproblemSolver.hpp"
 #include "SolverWorkspace.hpp"
@@ -23,10 +23,10 @@ namespace uno {
    // forward declaration
    class InverseLBFGSHessian;
 
-   class NewtonSolver: public SubproblemSolver {
+   class LBFGSNewtonSolver: public SubproblemSolver {
    public:
-      explicit NewtonSolver(InverseLBFGSHessian& hessian_model);
-      ~NewtonSolver() override = default;
+      explicit LBFGSNewtonSolver(InverseLBFGSHessian& hessian_model);
+      ~LBFGSNewtonSolver() override = default;
 
       void initialize_memory(const Subproblem& subproblem) override;
 
@@ -44,4 +44,4 @@ namespace uno {
    };
 } // namespace
 
-#endif // UNO_NEWTONSOLVER_H
+#endif // UNO_LBFGSNEWTONSOLVER_H
