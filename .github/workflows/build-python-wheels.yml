@@ -246,6 +246,12 @@ jobs:
       - name: Install unopy from TestPyPI
         run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ unopy
 
+      - name: Set the environment variables for OpenMP
+        shell: bash
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
+
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
         run: python example_hs015.py
@@ -271,6 +277,12 @@ jobs:
 
       - name: Install unopy from PyPI
         run: pip install unopy
+
+      - name: Set the environment variables for OpenMP
+        shell: bash
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example

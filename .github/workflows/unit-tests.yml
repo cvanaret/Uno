@@ -104,6 +104,13 @@ jobs:
             mingw-w64-x86_64-make
             mingw-w64-x86_64-metis
 
+      # ------------------- OpenMP -------------------
+      - name: Set the environment variables for OpenMP
+        shell: bash
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
+
       # =========================================================
       # DEPENDENCIES
       # =========================================================
@@ -132,9 +139,11 @@ jobs:
             -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
             -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
             -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
+            -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+            -DAUXILIARY_LIBRARIES="${{github.workspace}}\dependencies\lib\libhwloc.a" \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 
@@ -162,9 +171,11 @@ jobs:
             -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
             -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
             -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
+            -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+            -DAUXILIARY_LIBRARIES="${{github.workspace}}\dependencies\lib\libhwloc.dylib" \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 
@@ -187,9 +198,11 @@ jobs:
             -DMUMPS_COMMON_LIBRARY=${GITHUB_WORKSPACE}/dependencies/lib/libmumps_common.a \
             -DMUMPS_PORD_LIBRARY=${GITHUB_WORKSPACE}/dependencies/lib/libpord.a \
             -DMUMPS_MPISEQ_LIBRARY=${GITHUB_WORKSPACE}/dependencies/lib/libmpiseq.a \
+            -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
             -DBLAS_LIBRARIES="${GITHUB_WORKSPACE}/dependencies/lib/libcblas.a;${GITHUB_WORKSPACE}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${GITHUB_WORKSPACE}/dependencies/lib/liblapack.a \
             -DHIGHS=${GITHUB_WORKSPACE}/dependencies/lib/libhighs.a \
+            -DAUXILIARY_LIBRARIES="${{github.workspace}}/dependencies/lib/libhwloc.a" \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 

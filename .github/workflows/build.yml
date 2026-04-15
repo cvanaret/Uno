@@ -198,6 +198,8 @@ jobs:
           -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
           -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
           -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+          -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
+          -DAUXILIARY_LIBRARIES="${{github.workspace}}/dependencies/lib/libhwloc.a" \
           -DBUILD_STATIC_LIBS=ON \
           -DBUILD_SHARED_LIBS=ON
 
@@ -227,6 +229,8 @@ jobs:
           -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
           -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
           -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+          -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
+          -DAUXILIARY_LIBRARIES="${{github.workspace}}/dependencies/lib/libhwloc.dylib" \
           -DBUILD_STATIC_LIBS=ON \
           -DBUILD_SHARED_LIBS=ON
 
@@ -249,7 +253,8 @@ jobs:
           -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.a;${{github.workspace}}\dependencies\lib\libblas.a" ^
           -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.a ^
           -DHIGHS=${{github.workspace}}\dependencies\lib\libhighs.a ^
-          -DAUXILIARY_LIBRARIES=${{github.workspace}}\dependencies\lib\libstdc++.a ^
+          -DSPRAL=${{github.workspace}}\dependencies\lib\libspral.a ^
+          -DAUXILIARY_LIBRARIES="${{github.workspace}}\dependencies\lib\libhwloc.a;${{github.workspace}}\dependencies\lib\libstdc++.a" ^
           -DBUILD_STATIC_LIBS=ON ^
           -DBUILD_SHARED_LIBS=ON .
 
@@ -271,8 +276,9 @@ jobs:
           -DMUMPS_COMMON_LIBRARY=${{github.workspace}}\dependencies\lib\libmumps_common.a ^
           -DMUMPS_PORD_LIBRARY=${{github.workspace}}\dependencies\lib\libpord.a ^
           -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}\dependencies\lib\libmpiseq.a ^
-          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libcblas.lib;${{github.workspace}}\dependencies\lib\libblas.lib" ^
+          -DBLAS_LIBRARIES="${{github.workspace}}\dependencies\lib\libblas.lib" ^
           -DLAPACK_LIBRARIES=${{github.workspace}}\dependencies\lib\liblapack.lib ^
+          -DSPRAL=${{github.workspace}}\dependencies\lib\libspral.a ^
           -DBUILD_STATIC_LIBS=ON ^
           -DBUILD_SHARED_LIBS=OFF .
 

@@ -53,6 +53,12 @@ jobs:
       - name: Compile and install unopy
         run: pip install . -v
 
+      - name: Set the environment variables for OpenMP
+        shell: bash
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
+
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
         run: python example_hs015.py

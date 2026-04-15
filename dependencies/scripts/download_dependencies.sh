@@ -23,9 +23,9 @@ esac
 cd dependencies
 
 # download BQPD
-VERSION="v1.0.0"
-REPO="https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-${VERSION}%2B0"
-ASSET_NAME="BQPD.${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
+VERSION="1.0.0"
+REPO="https://github.com/leyffer/BQPD_jll.jl/releases/download/BQPD-v${VERSION}%2B0"
+ASSET_NAME="BQPD.v${VERSION}.${ARCH}-${OS}-libgfortran5.tar.gz"
 ASSET_URL="${REPO}/${ASSET_NAME}"
 echo "Downloading: ${ASSET_URL}"
 curl -L -o BQPD.tar.gz "$ASSET_URL"
@@ -45,11 +45,3 @@ pwd
 # delete unwanted directories
 # rm -rf lib/cmake/cblas* lib/cmake/lapack* lib/pkgconfig
 rm -rf lib/cmake lib/pkgconfig
-
-if [[ "$OS" == "w64-mingw32" ]]; then
-    cd ..
-    ASSET_URL="https://github.com/JuliaLang/PackageCompiler.jl/releases/download/v1.0.0/x86_64-8.1.0-release-posix-seh-rt_v6-rev0.tar.gz"
-    curl -L -o libstdc++.tar.gz "$ASSET_URL"
-    tar -xzvf libstdc++.tar.gz
-    cp ./mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ./dependencies/lib/libstdc++.a
-fi
