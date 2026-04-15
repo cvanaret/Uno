@@ -44,6 +44,12 @@ jobs:
           arch: x64
       - uses: julia-actions/cache@v2
 
+      - name: Set the environment variables for OpenMP
+        shell: bash
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
+
       - name: Set the environment variables for BinaryBuilder
         run: |
           git fetch --tags
@@ -59,7 +65,7 @@ jobs:
       - name: Compile Uno_jll.jl
         run: |
           julia --color=yes -e 'using Pkg; Pkg.add("BinaryBuilder")'
-          julia --color=yes .github/julia/build_tarballs_yggdrasil.jl x86_64-linux-gnu-cxx11 --verbose --deploy="local"
+          julia --color=yes .github/julia/build_tarballs_yggdrasil.jl x86_64-linux-gnu-libgfortran5-cxx11 --verbose --deploy="local"
 
       # The local deploy writes the JLL wrapper to ~/.julia/dev/Uno_jll and
       # installs the binary into ~/.julia/artifacts/<git-tree-sha1>. Both must
