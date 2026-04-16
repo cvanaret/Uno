@@ -30,11 +30,11 @@ namespace uno {
    }
 
    size_t InverseLBFGSHessian::number_nonzeros() const {
-      throw std::runtime_error("This member function should not be called.");
+      throw std::runtime_error("InverseLBFGSHessian::number_nonzeros should not be called.");
    }
 
    void InverseLBFGSHessian::compute_sparsity(uno_int* /*row_indices*/, uno_int* /*column_indices*/, uno_int /*solver_indexing*/) const {
-      throw std::runtime_error("This member function should not be called.");
+      throw std::runtime_error("InverseLBFGSHessian::compute_sparsity should not be called.");
    }
 
    bool InverseLBFGSHessian::is_positive_definite() const {
@@ -71,12 +71,12 @@ namespace uno {
 
    void InverseLBFGSHessian::evaluate_hessian(Statistics& /*statistics*/, const Vector<double>& /*primal_variables*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*hessian_values*/) {
-      throw std::runtime_error("This member function should not be called.");
+      throw std::runtime_error("InverseLBFGSHessian::evaluate_hessian should not be called.");
    }
 
    void InverseLBFGSHessian::compute_hessian_vector_product(const double* /*x*/, const double* /*vector*/,
          double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*result*/) {
-      throw std::runtime_error("This member function should not be called.");
+      throw std::runtime_error("InverseLBFGSHessian::compute_hessian_vector_product should not be called.");
    }
 
    void InverseLBFGSHessian::compute_inverse_hessian_vector_product(const double* /*x*/, const double* vector, double* result) {
