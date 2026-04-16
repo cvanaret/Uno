@@ -172,7 +172,7 @@ cd $WORKSPACE/srcdir/hwloc-*
 if [[ "${target}" == *-apple-darwin* ]]; then
     ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --disable-static --enable-shared
 else
-    ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --enable-static --disable-shared
+    CFLAGS="${CFLAGS} -fPIC" ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --enable-static --disable-shared
 fi
 make -j${nproc}
 make install
