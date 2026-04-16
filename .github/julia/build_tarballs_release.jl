@@ -181,6 +181,7 @@ cmake \
     -DSPRAL=${libdir}/libspral.${dlext} \
     -DMUMPS_INCLUDE_DIR=${includedir} \
     -DMETIS_INCLUDE_DIR=${includedir} \
+    -DSPRAL_INCLUDE_DIR=${includedir} \
     -DMUMPS_LIBRARY="${libdir}/libdmumps.${dlext}" \
     -DMUMPS_COMMON_LIBRARY="${libdir}/libmumps_common.${dlext}" \
     -DMUMPS_PORD_LIBRARY="${libdir}/libpord.${dlext}" \
