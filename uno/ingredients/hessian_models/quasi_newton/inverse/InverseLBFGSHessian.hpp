@@ -17,7 +17,7 @@ namespace uno {
    // U = (δ Sk + Yk Dk⁻¹ Lkᵀ) J⁻ᵀ
    class InverseLBFGSHessian: public QuasiNewtonHessian {
    public:
-      InverseLBFGSHessian(const Model& model, double objective_multiplier, const Options& options);
+      InverseLBFGSHessian(const Model& model, const Options& options);
       ~InverseLBFGSHessian() override = default;
 
       [[nodiscard]] bool has_hessian_matrix() const override;
@@ -38,17 +38,11 @@ namespace uno {
       void compute_inverse_hessian_vector_product(const double* x, const double* vector, double* result);
 
    protected:
-      DenseMatrix<double> L; // lower triangular
-      std::vector<double> D; // diagonal
-      std::vector<double> invsqrt_D; // diagonal
-      DenseMatrix<double> L_invsqrt_D; // lower triangular
-      DenseMatrix<double> M;
-      // Hessian representation: Bk = B0 - U Uᵀ + V Vᵀ where B0 = δ I
-      DenseMatrix<double> U;
-      DenseMatrix<double> V;
-      const double delta_upper_bound;
+      DenseMatrix<double> R; // upper triangular
+      // temporaries
+      Vector<double> STv; // Sᵀv
+      Vector<double> YTv; // Yᵀv
 
-      void update_D();
       void recompute_hessian_representation() override;
       [[nodiscard]] double compute_delta() const;
    };

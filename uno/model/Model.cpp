@@ -47,10 +47,12 @@ namespace uno {
       lagrangian_gradient.fill(0.);
 
       // - ∇c(x_k) λ_k
-      // TODO test whether λ_k != 0
-      evaluations.evaluate_jacobian(*this, primals);
-      evaluations.compute_jacobian_transposed_vector_product(*this, multipliers.constraints.data(), lagrangian_gradient.data());
-      lagrangian_gradient.scale(-1.);
+      if (0 < this->number_constraints) {
+         // TODO test whether λ_k != 0
+         evaluations.evaluate_jacobian(*this, primals);
+         evaluations.compute_jacobian_transposed_vector_product(*this, multipliers.constraints.data(), lagrangian_gradient.data());
+         lagrangian_gradient.scale(-1.);
+      }
 
       // ∇f(x_k)
       if (objective_multiplier != 0.) {

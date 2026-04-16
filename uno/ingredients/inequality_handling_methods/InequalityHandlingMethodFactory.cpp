@@ -17,9 +17,15 @@ namespace uno {
          bool uses_trust_region, const Options& options) {
       // figure out whether there are inequality constraints altogether
       if (!problem.has_inequality_constraints() && !problem.has_bound_constraints() && !uses_trust_region) {
-         // no inequality reformulation
-         INFO << "The problem has no inequalities, picking a pure SQP method\n";
-         return std::make_unique<NoInequalityReformulation>("pure SQP method");
+         // no reformulation
+         if (0 < problem.number_constraints) {
+            INFO << "The problem has no inequalities, picking a pure SQP method\n";
+            return std::make_unique<NoInequalityReformulation>("pure SQP method");
+         }
+         else {
+            INFO << "The problem has no constraints, picking a pure Newton method\n";
+            return std::make_unique<NoInequalityReformulation>("pure Newton method");
+         }
       }
       // from now on, the problem has inequalities
       const std::string inequality_handling_method = options.get_string("inequality_handling_method");

@@ -33,7 +33,9 @@ namespace uno {
 
    // free function
    template <typename Expression, typename ElementType = typename Expression::value_type,
-         typename std::enable_if<std::is_arithmetic_v<ElementType>, int>::type = 0>
+      // the first argument should be of arithmetic type, the second not
+      typename std::enable_if_t<std::is_arithmetic_v<ElementType>, int> = 0,
+      typename std::enable_if_t<!std::is_arithmetic_v<Expression>, int> = 0>
    inline ScalarMultiple<Expression> operator*(ElementType factor, Expression&& expression) {
       return ScalarMultiple<Expression>(factor, std::forward<Expression>(expression));
    }

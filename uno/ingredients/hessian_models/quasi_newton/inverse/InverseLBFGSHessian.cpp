@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#include <cassert>
 #include "InverseLBFGSHessian.hpp"
 #include "model/Model.hpp"
 #include "options/Options.hpp"
@@ -11,26 +12,17 @@
 #include "symbolic/Multiplication.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/ScalarMultiple.hpp"
-#include "symbolic/Sum.hpp"
 #include "symbolic/Transpose.hpp"
+#include "symbolic/UnaryNegation.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
-   InverseLBFGSHessian::InverseLBFGSHessian(const Model& model, double objective_multiplier, const Options& options):
-         QuasiNewtonHessian("inverse L-BFGS", model, objective_multiplier, options),
-         // matrices
-         L(this->memory_size, this->memory_size),
-         D(this->memory_size),
-         invsqrt_D(this->memory_size),
-         L_invsqrt_D(this->memory_size, this->memory_size),
-         M(this->memory_size, this->memory_size),
-         U(this->model.number_variables, this->memory_size),
-         V(this->model.number_variables, this->memory_size),
-         delta_upper_bound(options.get_double("LBFGS_delta_upper_bound")) {
-      if (this->memory_size <= 0) {
-         throw std::runtime_error("The quasi-Newton memory size should be positive");
-      }
+   InverseLBFGSHessian::InverseLBFGSHessian(const Model& model, const Options& options):
+         QuasiNewtonHessian("inverse L-BFGS", model, 1., options),
+         R(this->memory_size, this->memory_size),
+         STv(this->memory_size),
+         YTv(this->memory_size) {
    }
 
    bool InverseLBFGSHessian::has_hessian_matrix() const {
@@ -94,93 +86,102 @@ namespace uno {
          hessian_recomputation_required = false;
       }
 
-      std::cout << "INVERSE HESSIAN VECTOR PROD with delta = " << this->delta << '\n';
-      for (size_t variable_index: Range(this->model.number_variables)) {
-         result[variable_index] += this->delta * vector[variable_index];
+      const auto v = view(vector, 0, this->model.number_variables);
+
+      // contribution of low-rank corrections
+      if (0 < this->number_entries_in_memory) {
+         const auto Sk = this->S.submatrix(this->model.number_variables, this->number_entries_in_memory);
+         const auto Yk = this->Y.submatrix(this->model.number_variables, this->number_entries_in_memory);
+         auto SkTv = view(this->STv, 0, this->number_entries_in_memory);
+         auto YkTv = view(this->YTv, 0, this->number_entries_in_memory);
+         const auto Rk = this->R.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
+
+         // compute Sᵀv and Yᵀv
+         SkTv = transpose(Sk) * v;
+         YkTv = transpose(Yk) * v;
+         DEBUG2 << "STv = "; print_vector(DEBUG2, SkTv);
+         DEBUG2 << "YTv = "; print_vector(DEBUG2, YkTv);
+
+         // compute R⁻ᵀ(Yᵀv)
+         Vector<double> a(this->number_entries_in_memory);
+         a = transpose(inverse(upper_triangular(Rk))) * YkTv;
+         DEBUG2 << "R⁻ᵀ(Yᵀv) = " << a << "\n";
+         // compute R⁻¹(Sᵀv)
+         Vector<double> b(this->number_entries_in_memory);
+         b = inverse(upper_triangular(Rk)) * SkTv;
+         DEBUG2 << "R⁻¹(Sᵀv) = " << b << "\n";
+         // compute p
+         Vector<double> p(2 * this->number_entries_in_memory);
+         view(p, 0, this->number_entries_in_memory) = -this->delta * a;
+         view(p, this->number_entries_in_memory, 2*this->number_entries_in_memory) = -b;
+         //
+         Vector<double> c(this->model.number_variables);
+         c = Yk * b;
+         Vector<double> d(this->number_entries_in_memory);
+         d = transpose(Yk) * c;
+         d.scale(this->delta);
+         // scale b with diag(R)
+         for (size_t index: Range(this->number_entries_in_memory)) {
+            b[index] *= this->R.entry(index, index);
+         }
+         d += b;
+         Vector<double> e(this->number_entries_in_memory);
+         e = transpose(inverse(upper_triangular(Rk))) * d;
+         view(p, 0, this->number_entries_in_memory) += e;
+         DEBUG2 << "p = " << p << '\n';
+         // result = Hv = δv + S p(1, m) + δ Y p(m, 2m)
+         view(result, 0, this->model.number_variables) = Yk * view(p, this->number_entries_in_memory, 2*this->number_entries_in_memory);
+         view(result, 0, this->model.number_variables).scale(this->delta);
+         view(result, 0, this->model.number_variables) += Sk * view(p, 0, this->number_entries_in_memory);
       }
+
+      // diagonal contribution δ I
+      view(result, 0, this->model.number_variables) += this->delta * v;
    }
 
    // protected member functions
 
-   void InverseLBFGSHessian::update_D() {
-      this->D[this->current_index] = dot(this->S.column(this->current_index), this->Y.column(this->current_index));
-      DEBUG << "> diag(D): "; print_vector(DEBUG, this->D);
-   }
-
    void InverseLBFGSHessian::recompute_hessian_representation() {
-      // check that the latest D entry sᵀ y is > 0
+      // check that sᵀy is > 0
       // TODO implement Procedure 18.2 (Damped BFGS Updating) from Numerical Optimization
-      this->update_D();
-      if (this->D[this->current_index] <= 0.) {
+      const double sTy = dot(this->S.column(this->current_index), this->Y.column(this->current_index));
+      if (sTy <= 0.) {
          DEBUG << "Skipping the update\n";
          return;
       }
+      this->R.entry(this->current_index, this->current_index) = sTy;
 
       this->validate_update();
       assert(0 < this->number_entries_in_memory);
 
       DEBUG << "\n*** Recomputing the Hessian representation with " << this->number_entries_in_memory << " entries\n";
-      // note: some matrices were allocated with the maximum memory size. We will work with submatrices instead (of size
-      // this->number_entries_in_memory, not this->memory_size)
-      const auto Sk = this->S.submatrix(this->model.number_variables, this->number_entries_in_memory);
-      const auto L_invsqrt_Dk = this->L_invsqrt_D.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
-      auto Mk = this->M.submatrix(this->number_entries_in_memory, this->number_entries_in_memory);
 
       /* update the initial Hessian approximation δ I */
       this->delta = this->compute_delta();
       DEBUG << "Initial identity multiple: " << this->delta << "\n";
 
-      /* update the entries of L and L_invsqrt_D = L D^{-1/2} */
-      // update invsqrt_D = 1/sqrt_D
-      this->invsqrt_D[this->current_index] = 1./std::sqrt(this->D[this->current_index]);
-      // the entries of L and L_invsqrt_D depend on this->current_index (1 row and 1 column, possibly empty)
-      // row this->current_index
-      for (size_t column_index: Range(this->current_index)) {
-         this->L.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
-         this->L_invsqrt_D.entry(this->current_index, column_index) = this->invsqrt_D[column_index] * this->L.entry(this->current_index, column_index);
-      }
+      /* update the entries of R: they depend on this->current_index (1 row and 1 column) */
       // column this->current_index (excluding the diagonal)
-      for (size_t row_index: Range(this->current_index+1, this->number_entries_in_memory)) {
-         this->L.entry(row_index, this->current_index) = dot(this->S.column(row_index), this->Y.column(this->current_index));
-         this->L_invsqrt_D.entry(row_index, this->current_index) = this->invsqrt_D[this->current_index] * this->L.entry(row_index, this->current_index);
+      for (size_t row_index: Range(this->current_index)) {
+         this->R.entry(row_index, this->current_index) = dot(this->S.column(row_index), this->Y.column(this->current_index));
       }
-      DEBUG << "> L: " << this->L;
-      DEBUG << "> L_invsqrt_D: " << this->L_invsqrt_D;
-
-      /* form M = L D⁻¹ Lᵀ + Sᵀ B0 S = L_invsqrt_D L_invsqrt_Dᵀ + δ Sᵀ S */
-      Mk = L_invsqrt_Dk * transpose(L_invsqrt_Dk);
-      Mk += this->delta * (transpose(Sk) * Sk);
-      DEBUG << "> M: " << this->M;
-
-      /* compute the Cholesky factor J of M = J Jᵀ */
-      const bool success = Mk.compute_cholesky_factorization(); // J overwrites M
-      DEBUG << "Cholesky success: " << success << '\n';
-      DEBUG << "> J: " << this->M;
-
-      /* form V and U */
-      // update the current column of V = Y D^{-1/2}
-      this->V.column(this->current_index) = this->invsqrt_D[this->current_index] * this->Y.column(this->current_index);
-      // form U = (δ S + Y D⁻¹ Lᵀ) J⁻ᵀ
-      const auto Jk = this->M.submatrix(this->number_entries_in_memory, this->number_entries_in_memory); // J overwrites M
-      auto Uk = this->U.submatrix(this->model.number_variables, this->number_entries_in_memory);
-      const auto Vk = this->V.submatrix(this->model.number_variables, this->number_entries_in_memory);
-      Uk = Sk;
-      Uk = this->delta * Uk + Vk * transpose(L_invsqrt_Dk);
-      Uk *= transpose(inverse(Jk));
-      DEBUG << "> U: " << this->U;
-      DEBUG << "> V: " << this->V << '\n';
+      // row this->current_index
+      for (size_t column_index: Range(this->current_index+1, this->number_entries_in_memory)) {
+         this->R.entry(this->current_index, column_index) = dot(this->S.column(this->current_index), this->Y.column(column_index));
+      }
+      DEBUG << "> R: " << this->R;
 
       // increment the slot: if we exceed the size of the memory, we start over and replace the oldest point in memory
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
 
-   // compute δ = yᵀ y / sᵀ y at the last entry
-   // (7.20) in Numerical optimization (Nocedal & Wright)
+   // compute δ = sᵀ y / yᵀ y at the last entry
    double InverseLBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
-      const auto last_column_Y = this->Y.column(this->current_index);
-      const double numerator = dot(last_column_Y, last_column_Y);
-      const double denominator = this->D[this->current_index]; // > 0 by the update rule
-      return denominator/numerator;
+      const auto y = this->Y.column(this->current_index);
+      const double sTy = this->R.entry(this->current_index, this->current_index);
+      const double yTy = dot(y, y);
+      // TODO safeguard
+      return sTy/yTy;
    }
 } // namespace

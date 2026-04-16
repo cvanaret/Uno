@@ -6,7 +6,8 @@
 #include "linear_algebra/LAPACK_extension.hpp"
 #include "model/Model.hpp"
 #include "options/Options.hpp"
-#include "symbolic/UnitTriangular.hpp"
+#include "symbolic/ScalarMultiple.hpp"
+#include "symbolic/Triangular.hpp"
 #include "tools/Statistics.hpp"
 
 namespace uno {
@@ -142,7 +143,7 @@ namespace uno {
       for (size_t column_index: Range(this->number_entries_in_memory)) {
          this->U.column(column_index) = this->Y.column(column_index) - this->delta*this->S.column(column_index);
       }
-      Uk *= transpose(inverse(unit_triangular(Nk)));
+      Uk *= transpose(inverse(lower_unit_triangular(Nk)));
 
       // increment the slot: if we exceed the size of the memory, we start over and replace the oldest point in memory
       this->current_index = (this->current_index + 1) % this->memory_size;

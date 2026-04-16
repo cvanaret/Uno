@@ -29,9 +29,6 @@ namespace uno {
          U(this->model.number_variables, this->memory_size),
          V(this->model.number_variables, this->memory_size),
          delta_upper_bound(options.get_double("LBFGS_delta_upper_bound")) {
-      if (this->memory_size <= 0) {
-         throw std::runtime_error("The quasi-Newton memory size should be positive");
-      }
    }
 
    bool LBFGSHessian::is_positive_definite() const {
@@ -193,7 +190,7 @@ namespace uno {
       const auto Vk = this->V.submatrix(this->model.number_variables, this->number_entries_in_memory);
       Uk = Sk;
       Uk = this->delta * Uk + Vk * transpose(L_invsqrt_Dk);
-      Uk *= transpose(inverse(Jk));
+      Uk *= transpose(inverse(lower_triangular(Jk)));
       DEBUG << "> U: " << this->U;
       DEBUG << "> V: " << this->V << '\n';
 
@@ -201,13 +198,13 @@ namespace uno {
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
 
-   // compute δ = yᵀ y / sᵀ y at the last entry
-   // (7.20) in Numerical optimization (Nocedal & Wright)
+   // compute δ = yᵀy / sᵀy at the last entry
    double LBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
-      const auto last_column_Y = this->Y.column(this->current_index);
-      const double numerator = dot(last_column_Y, last_column_Y);
-      const double denominator = this->D[this->current_index]; // > 0 by the update rule
-      return std::min(this->delta_upper_bound, numerator/denominator);
+      const auto y = this->Y.column(this->current_index);
+      const double yTy = dot(y, y);
+      const double sTy = this->D[this->current_index]; // > 0 by the update rule
+      // TODO safeguard
+      return std::min(this->delta_upper_bound, yTy/sTy);
    }
 } // namespace

@@ -89,37 +89,35 @@ namespace uno {
    template <typename T>
    class MutableArrayView: public MutableBLASVector<T> {
    public:
-      using value_type = T;
-
       MutableArrayView(T* array, size_t start, size_t end):
-            MutableBLASVector<value_type>(), array(array), start(start), end(end) {
+            array(array), start(start), end(end) {
          if (this->end < this->start) {
             throw std::runtime_error("The view ends before its starting point");
          }
       }
 
       // operators
-      using MutableBLASVector<value_type>::operator=;
-      using MutableBLASVector<value_type>::operator+=;
-      using MutableBLASVector<value_type>::operator-=;
+      using MutableBLASVector<T>::operator=;
+      using MutableBLASVector<T>::operator+=;
+      using MutableBLASVector<T>::operator-=;
 
       [[nodiscard]] size_t size() const noexcept override {
          return this->end - this->start;
       }
 
-      [[nodiscard]] value_type* data() noexcept override {
+      [[nodiscard]] T* data() noexcept override {
          return this->array + this->start;
       }
 
-      [[nodiscard]] const value_type* data() const noexcept override {
+      [[nodiscard]] const T* data() const noexcept override {
          return this->array + this->start;
       }
 
-      [[nodiscard]] value_type& operator[](size_t index) noexcept override {
+      [[nodiscard]] T& operator[](size_t index) noexcept override {
          return this->array[this->start + index];
       }
 
-      [[nodiscard]] const value_type& operator[](size_t index) const noexcept override {
+      [[nodiscard]] const T& operator[](size_t index) const noexcept override {
          return this->array[this->start + index];
       }
 

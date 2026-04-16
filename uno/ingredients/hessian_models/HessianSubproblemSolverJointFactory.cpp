@@ -63,7 +63,7 @@ namespace uno {
             return {std::move(hessian_model), std::move(subproblem_solver)};
          }
          else { // unconstrained
-            auto hessian_model = std::make_unique<InverseLBFGSHessian>(model, objective_multiplier, options);
+            auto hessian_model = std::make_unique<InverseLBFGSHessian>(model, options);
             auto subproblem_solver = SubproblemSolverFactory::create(problem, current_iterate, *hessian_model,
                inertia_correction_strategy, uses_trust_region, options);
             return {std::move(hessian_model), std::move(subproblem_solver)};

@@ -7,6 +7,7 @@
 #include "model/Model.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/ScalarMultiple.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
