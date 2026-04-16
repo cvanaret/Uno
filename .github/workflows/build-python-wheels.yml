@@ -111,6 +111,8 @@ jobs:
             FC=gfortran-15
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
+          CIBW_CONFIG_SETTINGS_MACOS: >
+            cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libhwloc.dylib
           # Skip some builds
           CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
