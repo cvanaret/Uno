@@ -4,7 +4,7 @@
 #ifndef UNO_DIRECTQUASINEWTONHESSIAN_H
 #define UNO_DIRECTQUASINEWTONHESSIAN_H
 
-#include "QuasiNewtonHessian.hpp"
+#include "../QuasiNewtonHessian.hpp"
 #include "linear_algebra/DenseMatrix.hpp"
 
 namespace uno {

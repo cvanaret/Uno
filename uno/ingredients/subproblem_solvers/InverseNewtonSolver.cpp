@@ -3,7 +3,7 @@
 
 #include <cassert>
 #include "InverseNewtonSolver.hpp"
-#include "ingredients/hessian_models/quasi_newton/InverseLBFGSHessian.hpp"
+#include "ingredients/hessian_models/quasi_newton/inverse/InverseLBFGSHessian.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "optimization/Direction.hpp"
 #include "optimization/Evaluations.hpp"

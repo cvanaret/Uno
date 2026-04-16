@@ -5,7 +5,7 @@
 #include "WoodburyEQPSolver.hpp"
 #include "LinearSystem.hpp"
 #include "SymmetricIndefiniteLinearSolverFactory.hpp"
-#include "ingredients/hessian_models/quasi_newton/DirectQuasiNewtonHessian.hpp"
+#include "ingredients/hessian_models/quasi_newton/direct/DirectQuasiNewtonHessian.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"

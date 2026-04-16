@@ -5,7 +5,7 @@
 #define UNO_INVERSELBFGSHESSIAN_H
 
 #include <vector>
-#include "QuasiNewtonHessian.hpp"
+#include "../QuasiNewtonHessian.hpp"
 
 namespace uno {
    // express the Hessian approximation at iteration k by a low-rank update:

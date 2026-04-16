@@ -4,7 +4,6 @@
 #include "InverseLBFGSHessian.hpp"
 #include "model/Model.hpp"
 #include "options/Options.hpp"
-#include "linear_algebra/BLAS.hpp"
 #include "linear_algebra/Vector.hpp"
 #include "linear_algebra/VectorView.hpp"
 #include "optimization/Iterate.hpp"
