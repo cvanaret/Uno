@@ -56,7 +56,7 @@ jobs:
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
         run: |
           cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-															  -DSPRAL_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+                                               -DSPRAL_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
                                                -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
                                                -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
                                                -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
