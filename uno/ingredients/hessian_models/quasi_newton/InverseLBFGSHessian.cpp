@@ -83,41 +83,9 @@ namespace uno {
       throw std::runtime_error("This member function should not be called.");
    }
 
-   // Hessian-vector product where the Hessian approximation is Bk = B0 - U Uᵀ + V Vᵀ and B0 = δ I
-   // Bk v = (B0 - U Uᵀ + V Vᵀ) v = δ v - U (Uᵀ v) + V (Vᵀ v)
-   void InverseLBFGSHessian::compute_hessian_vector_product(const double* /*x*/, const double* vector,
-         double objective_multiplier, const Vector<double>& /*constraint_multipliers*/, double* result) {
-      if (objective_multiplier != this->fixed_objective_multiplier) {
-         throw std::runtime_error("The quasi-Newton Hessian model was initialized with a different objective multiplier");
-      }
-
-      // recompute the Hessian representation if the limited memory was updated
-      if (this->hessian_recomputation_required) {
-         this->recompute_hessian_representation();
-         this->hessian_recomputation_required = false;
-      }
-
-      // diagonal contribution δ I
-      for (size_t variable_index: Range(this->model.number_variables)) {
-         result[variable_index] = this->delta * vector[variable_index];
-      }
-
-      // rank-2 contribution
-      // (U, V) in R^{n x m}
-      // work on each column of U (Uᵀ v)
-      for (size_t column_index: Range(this->number_entries_in_memory)) {
-         const auto current_U_column = this->U.column(column_index);
-         const double U_coefficient = -dot(current_U_column, vector); // minus sign for U
-         // result += coefficient * current_column
-         blas1::add(this->model.number_variables, U_coefficient, current_U_column.data(), result);
-      }
-      // work on each column of V (Vᵀ v)
-      for (size_t column_index: Range(this->number_entries_in_memory)) {
-         const auto current_V_column = this->V.column(column_index);
-         const double V_coefficient = dot(current_V_column, vector); // plus sign for V
-         // result += coefficient * current_column
-         blas1::add(this->model.number_variables, V_coefficient, current_V_column.data(), result);
-      }
+   void InverseLBFGSHessian::compute_hessian_vector_product(const double* /*x*/, const double* /*vector*/,
+         double /*objective_multiplier*/, const Vector<double>& /*constraint_multipliers*/, double* /*result*/) {
+      throw std::runtime_error("This member function should not be called.");
    }
 
    void InverseLBFGSHessian::compute_inverse_hessian_vector_product(const double* /*x*/, const double* vector, double* result) {
@@ -214,6 +182,6 @@ namespace uno {
       const auto last_column_Y = this->Y.column(this->current_index);
       const double numerator = dot(last_column_Y, last_column_Y);
       const double denominator = this->D[this->current_index]; // > 0 by the update rule
-      return std::min(this->delta_upper_bound, numerator/denominator);
+      return denominator/numerator;
    }
 } // namespace
