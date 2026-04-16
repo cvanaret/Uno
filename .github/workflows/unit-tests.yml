@@ -144,7 +144,7 @@ jobs:
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
-            -DAUXILIARY_LIBRARIES="${{github.workspace}}\dependencies\lib\libhwloc.a" \
+            -DAUXILIARY_LIBRARIES="${{github.workspace}}/dependencies/lib/libhwloc.a" \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 
@@ -177,7 +177,7 @@ jobs:
             -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
             -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
-            -DAUXILIARY_LIBRARIES="${{github.workspace}}\dependencies\lib\libhwloc.dylib" \
+            -DAUXILIARY_LIBRARIES="${{github.workspace}}/dependencies/lib/libhwloc.dylib" \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 
@@ -201,11 +201,11 @@ jobs:
             -DMUMPS_COMMON_LIBRARY=${GITHUB_WORKSPACE}/dependencies/lib/libmumps_common.a \
             -DMUMPS_PORD_LIBRARY=${GITHUB_WORKSPACE}/dependencies/lib/libpord.a \
             -DMUMPS_MPISEQ_LIBRARY=${GITHUB_WORKSPACE}/dependencies/lib/libmpiseq.a \
-            -DSPRAL=${{github.workspace}}/dependencies/lib/libspral.a \
+            -DSPRAL=${GITHUB_WORKSPACE}/dependencies/lib/libspral.a \
             -DBLAS_LIBRARIES="${GITHUB_WORKSPACE}/dependencies/lib/libcblas.a;${GITHUB_WORKSPACE}/dependencies/lib/libblas.a" \
             -DLAPACK_LIBRARIES=${GITHUB_WORKSPACE}/dependencies/lib/liblapack.a \
             -DHIGHS=${GITHUB_WORKSPACE}/dependencies/lib/libhighs.a \
-            -DAUXILIARY_LIBRARIES="${{github.workspace}}/dependencies/lib/libhwloc.a" \
+            -DAUXILIARY_LIBRARIES="${GITHUB_WORKSPACE}/dependencies/lib/libhwloc.a" \
             -DBUILD_STATIC_LIBS=ON \
             -DBUILD_SHARED_LIBS=OFF
 
