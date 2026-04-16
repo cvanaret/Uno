@@ -252,7 +252,7 @@ if(SPRAL)
       find_package(OpenMP REQUIRED)
       target_link_libraries(uno_dependencies INTERFACE OpenMP::OpenMP_CXX)
    endif()
-   
+
    message(STATUS "Found SPRAL")
 endif()
 
