@@ -52,3 +52,4 @@ HIGHS = "dependencies/lib/libhighs.a"
 # SPRAL
 SPRAL_INCLUDE_DIR = "dependencies/include"
 SPRAL = "dependencies/lib/libspral.a"
+AUXILIARY_LIBRARIES = "dependencies/lib/libhwloc.a"
