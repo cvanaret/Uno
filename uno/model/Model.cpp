@@ -37,7 +37,7 @@ namespace uno {
       if (std::any_of(variables_lower_bounds.begin(), variables_lower_bounds.end(), is_finite<double>) ||
             std::any_of(variables_upper_bounds.begin(), variables_upper_bounds.end(), is_finite<double>)) {
          return true;
-            }
+      }
       return false;
    }
 

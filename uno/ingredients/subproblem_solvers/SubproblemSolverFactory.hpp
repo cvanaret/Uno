@@ -36,8 +36,24 @@ namespace uno {
          Iterate& current_iterate, HessianType& hessian_model, InertiaCorrectionStrategy& inertia_correction_strategy,
          bool uses_trust_region, const Options& options) {
       const Subproblem subproblem(problem, current_iterate, hessian_model, inertia_correction_strategy);
+
+      // if no curvature, allocate LP solver
+      if (!subproblem.has_curvature()) {
+         if (subproblem.number_constraints == 0) {
+            DEBUG << "No curvature and only bound constraints in the subproblem, allocating a box LP solver\n";
+            auto subproblem_solver = std::make_unique<BoxLPSolver>();
+            subproblem_solver->initialize_memory(subproblem);
+            return subproblem_solver;
+         }
+         else {
+            DEBUG << "No curvature in the subproblem, allocating an LP solver\n";
+            auto subproblem_solver = LPSolverFactory::create(options);
+            subproblem_solver->initialize_memory(subproblem);
+            return subproblem_solver;
+         }
+      }
       // if no inequality constraint and no trust region, allocate EQP solver
-      if (!subproblem.has_inequality_constraints() && !subproblem.has_bound_constraints() && !uses_trust_region) {
+      else if (!subproblem.has_inequality_constraints() && !subproblem.has_bound_constraints() && !uses_trust_region) {
          if constexpr (std::is_same_v<HessianType, InverseLBFGSHessian>) { // unconstrained
             DEBUG << "No constraints in the subproblem, allocating a Newton solver with inverse quasi-Newton Hessian\n";
             // the hessian_model we pass has type QuasiNewtonHessian
@@ -59,21 +75,7 @@ namespace uno {
             return subproblem_solver;
          }
       }
-      // otherwise, allocate LP/QP solver, depending on the presence of curvature in the subproblem
-      if (!subproblem.has_curvature()) {
-         if (subproblem.number_constraints == 0) {
-            DEBUG << "No curvature and only bound constraints in the subproblem, allocating a box LP solver\n";
-            auto subproblem_solver = std::make_unique<BoxLPSolver>();
-            subproblem_solver->initialize_memory(subproblem);
-            return subproblem_solver;
-         }
-         else {
-            DEBUG << "No curvature in the subproblem, allocating an LP solver\n";
-            auto subproblem_solver = LPSolverFactory::create(options);
-            subproblem_solver->initialize_memory(subproblem);
-            return subproblem_solver;
-         }
-      }
+      // otherwise, allocate QP solver
       else {
          DEBUG << "Curvature in the subproblem, allocating a QP solver\n";
          auto subproblem_solver = QPSolverFactory::create(options);
