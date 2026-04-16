@@ -114,6 +114,8 @@ jobs:
           # link shared libhwloc
           CIBW_CONFIG_SETTINGS_MACOS: >
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libhwloc.15.dylib
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
+            delocate-wheel --require-archs {delocate_archs} -L /Users/runner/work/Uno/Uno/dependencies/lib -w {dest_dir} -v {wheel}
           # Skip some builds
           CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
