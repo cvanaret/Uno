@@ -172,7 +172,7 @@ cd $WORKSPACE/srcdir/hwloc-*
 if [[ "${target}" == *-apple-darwin* ]]; then
     ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --disable-static --enable-shared
 else
-    ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --enable-static --disable-shared
+    CFLAGS="${CFLAGS} -fPIC" ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --enable-static --disable-shared
 fi
 make -j${nproc}
 make install
@@ -225,9 +225,9 @@ if [[ "${target}" == *-mingw* ]]; then
     cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ${prefix}/lib/libstdc++.a
     cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libgfortran.a ${prefix}/lib/libgfortran.a
     cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libquadmath.a ${prefix}/lib/libquadmath.a
-    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ${prefix}/lib/libgomp.a
-    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ${prefix}/lib/libgcc.a
-    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libstdc++.a ${prefix}/lib/libgcc_eh.a
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libgomp.a ${prefix}/lib/libgomp.a
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libgcc.a ${prefix}/lib/libgcc.a
+    cp $WORKSPACE/srcdir/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/libgcc_eh.a ${prefix}/lib/libgcc_eh.a
 fi
 
 # Clean
