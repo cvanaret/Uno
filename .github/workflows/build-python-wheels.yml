@@ -118,7 +118,7 @@ jobs:
             CXX=clang++
             FC=gfortran-15
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
-            CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
+          CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
           # link shared libhwloc
           CIBW_CONFIG_SETTINGS_MACOS: >
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libhwloc.15.dylib
