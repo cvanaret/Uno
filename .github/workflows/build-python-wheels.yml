@@ -119,7 +119,11 @@ jobs:
             FC=gfortran-15
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
-          CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
+          # link shared libhwloc
+          CIBW_CONFIG_SETTINGS_MACOS: >
+            cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libhwloc.15.dylib
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
+            delocate-wheel --require-archs {delocate_archs} -L /Users/runner/work/Uno/Uno/dependencies/lib -w {dest_dir} -v {wheel}
 
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
