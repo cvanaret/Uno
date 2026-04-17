@@ -112,7 +112,7 @@ namespace uno {
 
    void Subproblem::regularize_augmented_matrix(Statistics& statistics, double* augmented_matrix_values,
          double dual_regularization_parameter, DirectSymmetricIndefiniteLinearSolver<double>& linear_solver) const {
-      if ((!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_dual_regularization()) ||
+      if ((!this->hessian_model.is_positive_definite() && this->inertia_correction_strategy.performs_primal_regularization()) ||
             this->inertia_correction_strategy.performs_dual_regularization()) {
          const Inertia expected_inertia = this->problem.get_inertia();
          assert(expected_inertia.positive + expected_inertia.negative + expected_inertia.zero ==
@@ -142,6 +142,10 @@ namespace uno {
 
       // constraints
       this->problem.evaluate_constraints(this->current_iterate, rhs.data() + this->number_variables, evaluations);
+      // shift the bound (lb == ub)
+      for (size_t constraint_index: Range(this->problem.number_constraints)) {
+         rhs[this->number_variables + constraint_index] -= this->problem.get_constraints_lower_bounds()[constraint_index];
+      }
 
       // flip the sign
       rhs.scale(-1.);
