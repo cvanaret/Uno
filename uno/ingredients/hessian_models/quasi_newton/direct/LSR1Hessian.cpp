@@ -149,8 +149,13 @@ namespace uno {
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
 
+   // compute δ = yᵀy / sᵀy at the last entry
    double LSR1Hessian::compute_delta() const {
-      // we cannot use the L-BFGS initialization because it kills U
-      return 1.;
+      assert(0 < this->number_entries_in_memory);
+      const auto s = this->S.column(this->current_index);
+      const auto y = this->Y.column(this->current_index);
+      const double sTy = dot(s, y);
+      const double yTy = dot(y, y);
+      return sTy/yTy;
    }
 } // namespace
