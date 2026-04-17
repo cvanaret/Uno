@@ -142,6 +142,10 @@ namespace uno {
 
       // constraints
       this->problem.evaluate_constraints(this->current_iterate, rhs.data() + this->number_variables, evaluations);
+      // shift the bound (lb == ub)
+      for (size_t constraint_index: Range(this->problem.number_constraints)) {
+         rhs[this->number_variables + constraint_index] -= this->problem.get_constraints_lower_bounds()[constraint_index];
+      }
 
       // flip the sign
       rhs.scale(-1.);
