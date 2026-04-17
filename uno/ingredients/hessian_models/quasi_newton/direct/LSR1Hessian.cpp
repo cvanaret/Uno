@@ -154,8 +154,8 @@ namespace uno {
       assert(0 < this->number_entries_in_memory);
       const auto s = this->S.column(this->current_index);
       const auto y = this->Y.column(this->current_index);
-      const double sTy = dot(s, y);
-      const double yTy = dot(y, y);
-      return sTy/yTy;
+      const double sᵀy = dot(s, y);
+      const double yᵀy = dot(y, y);
+      return sᵀy/yᵀy;
    }
 } // namespace
