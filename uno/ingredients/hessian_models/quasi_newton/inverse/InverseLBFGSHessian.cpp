@@ -87,6 +87,7 @@ namespace uno {
       }
 
       const auto v = view(vector, 0, this->model.number_variables);
+      auto Hv = view(result, 0, this->model.number_variables);
 
       // contribution of low-rank corrections
       if (0 < this->number_entries_in_memory) {
@@ -99,8 +100,8 @@ namespace uno {
          // compute Sᵀv and Yᵀv
          SkTv = transpose(Sk) * v;
          YkTv = transpose(Yk) * v;
-         DEBUG2 << "STv = "; print_vector(DEBUG2, SkTv);
-         DEBUG2 << "YTv = "; print_vector(DEBUG2, YkTv);
+         DEBUG2 << "Sᵀv = "; print_vector(DEBUG2, SkTv);
+         DEBUG2 << "Yᵀv = "; print_vector(DEBUG2, YkTv);
 
          // compute R⁻ᵀ(Yᵀv)
          Vector<double> a(this->number_entries_in_memory);
@@ -110,11 +111,10 @@ namespace uno {
          Vector<double> b(this->number_entries_in_memory);
          b = inverse(upper_triangular(Rk)) * SkTv;
          DEBUG2 << "R⁻¹(Sᵀv) = " << b << "\n";
-         // compute p
-         Vector<double> p(2 * this->number_entries_in_memory);
-         view(p, 0, this->number_entries_in_memory) = -this->delta * a;
-         view(p, this->number_entries_in_memory, 2*this->number_entries_in_memory) = -b;
-         //
+         Vector<double> p1(this->number_entries_in_memory);
+         Vector<double> p2(this->number_entries_in_memory);
+         p1 = -this->delta * a;
+         p2 = -b;
          Vector<double> c(this->model.number_variables);
          c = Yk * b;
          Vector<double> d(this->number_entries_in_memory);
@@ -127,16 +127,15 @@ namespace uno {
          d += b;
          Vector<double> e(this->number_entries_in_memory);
          e = transpose(inverse(upper_triangular(Rk))) * d;
-         view(p, 0, this->number_entries_in_memory) += e;
-         DEBUG2 << "p = " << p << '\n';
-         // result = Hv = δv + S p(1, m) + δ Y p(m, 2m)
-         view(result, 0, this->model.number_variables) = Yk * view(p, this->number_entries_in_memory, 2*this->number_entries_in_memory);
-         view(result, 0, this->model.number_variables).scale(this->delta);
-         view(result, 0, this->model.number_variables) += Sk * view(p, 0, this->number_entries_in_memory);
+         p1 += e;
+         // Hv = δv + S p1 + δ Y p2
+         Hv = Yk * p2;
+         Hv.scale(this->delta);
+         Hv += Sk * p1;
       }
 
       // diagonal contribution δ I
-      view(result, 0, this->model.number_variables) += this->delta * v;
+      Hv += this->delta * v;
    }
 
    // protected member functions
@@ -175,7 +174,7 @@ namespace uno {
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
 
-   // compute δ = sᵀ y / yᵀ y at the last entry
+   // compute δ = sᵀy / yᵀy at the last entry
    double InverseLBFGSHessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
       const auto y = this->Y.column(this->current_index);
