@@ -39,6 +39,8 @@ namespace uno {
       double lagrangian_sign_convention;
 
       [[nodiscard]] virtual ProblemType get_problem_type() const = 0;
+      [[nodiscard]] bool has_inequality_constraints() const;
+      [[nodiscard]] bool has_bound_constraints() const;
 
       // availability of linear operators
       [[nodiscard]] virtual bool has_jacobian_operator() const = 0;

@@ -13,7 +13,7 @@ namespace uno {
    template <typename ElementType>
    class DenseMatrix;
    class Options;
-   class QuasiNewtonHessian;
+   class DirectQuasiNewtonHessian;
 
    // The WoodburyEQPSolver is a special case of EQPSolver with a quasi-Newton Hessian model
    // When the Hessian approximation is given by a low-rank correction to a diagonal part:
@@ -31,7 +31,7 @@ namespace uno {
    // 2. use the Woodbury formula to invert (*) symbolically
    class WoodburyEQPSolver: public SubproblemSolver {
    public:
-      WoodburyEQPSolver(const QuasiNewtonHessian& hessian_model, const Options& options);
+      WoodburyEQPSolver(const DirectQuasiNewtonHessian& hessian_model, const Options& options);
       ~WoodburyEQPSolver() override = default;
 
       void initialize_memory(const Subproblem& subproblem) override;
@@ -42,7 +42,7 @@ namespace uno {
       [[nodiscard]] SolverWorkspace& get_workspace() override;
 
    protected:
-      const QuasiNewtonHessian& hessian_model;
+      const DirectQuasiNewtonHessian& hessian_model;
       std::unique_ptr<DirectSymmetricIndefiniteLinearSolver<double>> linear_solver;
       bool analysis_performed{false};
 

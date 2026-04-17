@@ -61,6 +61,8 @@ file(GLOB UNO_SOURCE_FILES
    uno/ingredients/globalization_strategies/switching_methods/funnel_methods/*.cpp
    uno/ingredients/hessian_models/*.cpp
    uno/ingredients/hessian_models/quasi_newton/*.cpp
+   uno/ingredients/hessian_models/quasi_newton/direct/*.cpp
+   uno/ingredients/hessian_models/quasi_newton/inverse/*.cpp
    uno/ingredients/inequality_handling_methods/*.cpp
    uno/ingredients/inequality_handling_methods/interior_point_methods/*.cpp
    uno/ingredients/inequality_handling_methods/interior_point_methods/barrier_problems/*.cpp

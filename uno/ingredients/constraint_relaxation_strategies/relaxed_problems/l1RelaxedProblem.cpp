@@ -7,6 +7,7 @@
 #include "model/Model.hpp"
 #include "optimization/Evaluations.hpp"
 #include "optimization/Iterate.hpp"
+#include "symbolic/ScalarMultiple.hpp"
 #include "tools/Infinity.hpp"
 #include "tools/Logger.hpp"
 
@@ -39,6 +40,14 @@ namespace uno {
 
    double l1RelaxedProblem::get_objective_multiplier() const {
       return this->objective_multiplier;
+   }
+
+   bool l1RelaxedProblem::has_inequality_constraints() const {
+      return this->model.has_inequality_constraints();
+   }
+
+   bool l1RelaxedProblem::has_bound_constraints() const {
+      return true;
    }
 
    void l1RelaxedProblem::set_proximal_coefficient(double proximal_coefficient) {

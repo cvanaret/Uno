@@ -20,6 +20,9 @@ namespace uno {
       std::unique_ptr<OptimizationProblem> clone() const override;
 
       [[nodiscard]] double get_objective_multiplier() const override;
+      [[nodiscard]] virtual bool has_inequality_constraints() const;
+      [[nodiscard]] virtual bool has_bound_constraints() const;
+
       void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
 
       // sparsity patterns of Jacobian and Hessian

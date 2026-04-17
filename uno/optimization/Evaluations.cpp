@@ -57,7 +57,7 @@ namespace uno {
    }
 
    void Evaluations::evaluate_jacobian(const Model& model, const Vector<double>& primals) {
-      if (!this->is_jacobian_computed) {
+      if (!this->is_jacobian_computed && 0 < model.number_constraints) {
          model.evaluate_jacobian(primals, this->jacobian_values.data());
          // check finiteness
          if (std::any_of(this->jacobian_values.begin(), this->jacobian_values.end(), invalid_value)) {

@@ -35,7 +35,7 @@ extern "C" {
    void dgemv(const char* trans, const int* m, const int* n, const double* alpha, const double* a,
       const int* lda, const double* x, const int* incx, const double* beta, double* y, const int* incy);
 
-   // performs back-solve with lower-triangular A:
+   // performs back-solve with triangular A:
    // op(A) X = alpha B    or
    // X op(A) = alpha B
    // where
@@ -148,7 +148,7 @@ namespace uno {
          dgemm(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc);
       }
 
-      // performs back-solve with lower-triangular A:
+      // performs back-solve with triangular A:
       // op(A) X = alpha B    or
       // X op(A) = alpha B
       // where

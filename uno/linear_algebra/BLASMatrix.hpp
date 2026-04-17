@@ -13,7 +13,7 @@
 #include "symbolic/Multiplication.hpp"
 #include "symbolic/Sum.hpp"
 #include "symbolic/Transpose.hpp"
-#include "symbolic/UnitTriangular.hpp"
+#include "symbolic/Triangular.hpp"
 #include "tools/Logger.hpp"
 
 namespace uno {
@@ -50,11 +50,11 @@ namespace uno {
 
       // specialized operator= for B := B L⁻ᵀ with unit lower triangular L
       template <typename Matrix>
-      BLASMatrix<T>& operator*=(Transpose<Inverse<UnitTriangular<Matrix>>>&& expression);
+      BLASMatrix<T>& operator*=(Transpose<Inverse<LowerUnitTriangular<Matrix>>>&& expression);
 
       // specialized operator= for B := B L⁻ᵀ with lower triangular L
       template <typename Matrix>
-      BLASMatrix& operator*=(Transpose<Inverse<Matrix>>&& expression);
+      BLASMatrix& operator*=(Transpose<Inverse<LowerTriangular<Matrix>>>&& expression);
 
       [[nodiscard]] bool compute_cholesky_factorization();
       [[nodiscard]] std::pair<bool, std::vector<int>> compute_bunch_kaufman_factorization();
@@ -179,7 +179,7 @@ namespace uno {
    // specialized operator= for B *= L⁻ᵀ with *unit* lower triangular  (solve X Lᵀ := B and overwrite B with X)
    template <typename T>
    template <typename Matrix>
-   BLASMatrix<T>& BLASMatrix<T>::operator*=(Transpose<Inverse<UnitTriangular<Matrix>>>&& expression) {
+   BLASMatrix<T>& BLASMatrix<T>::operator*=(Transpose<Inverse<LowerUnitTriangular<Matrix>>>&& expression) {
       const auto& L = expression.get_matrix().get_matrix().get_matrix();
       if (this->number_columns != L.number_columns) {
          throw std::runtime_error("Dimension mismatch in BLASMatrix::operator*=");
@@ -189,11 +189,11 @@ namespace uno {
       return *this;
    }
 
-   // specialized operator= for B *= L⁻ᵀ with L lower triangular (solve X Lᵀ := B and overwrite B with X)
+   // specialized operator*= for B *= L⁻ᵀ with L lower triangular (solve X Lᵀ := B and overwrite B with X)
    template <typename T>
    template <typename Matrix>
-   BLASMatrix<T>& BLASMatrix<T>::operator*=(Transpose<Inverse<Matrix>>&& expression) {
-      const auto& L = expression.get_matrix().get_matrix();
+   BLASMatrix<T>& BLASMatrix<T>::operator*=(Transpose<Inverse<LowerTriangular<Matrix>>>&& expression) {
+      const auto& L = expression.get_matrix().get_matrix().get_matrix();
       if (this->number_columns != L.number_columns) {
          throw std::runtime_error("Dimension mismatch in BLASMatrix::operator*=");
       }

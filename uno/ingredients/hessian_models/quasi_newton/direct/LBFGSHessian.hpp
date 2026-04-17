@@ -1,18 +1,24 @@
-// Copyright (c) 2026 Charlie Vanaret
+// Copyright (c) 2025-2026 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#ifndef UNO_LSR1HESSIAN_H
-#define UNO_LSR1HESSIAN_H
+#ifndef UNO_LBFGSHESSIAN_H
+#define UNO_LBFGSHESSIAN_H
 
-#include "QuasiNewtonHessian.hpp"
+#include <vector>
+#include "DirectQuasiNewtonHessian.hpp"
 
 namespace uno {
    // express the Hessian approximation at iteration k by a low-rank update:
-   // Bk = B0 + U Uᵀ
-   class LSR1Hessian: public QuasiNewtonHessian {
+   // Bk = B0 - U Uᵀ + V Vᵀ
+   // where
+   // B0 = δ I
+   // V = Yk Dk^(-1/2)
+   // M = δ Skᵀ Sk + Lk Dk⁻¹ Lkᵀ = J Jᵀ
+   // U = (δ Sk + Yk Dk⁻¹ Lkᵀ) J⁻ᵀ
+   class LBFGSHessian: public DirectQuasiNewtonHessian {
    public:
-      LSR1Hessian(const Model& model, double objective_multiplier, const Options& options);
-      ~LSR1Hessian() override = default;
+      LBFGSHessian(const Model& model, double objective_multiplier, const Options& options);
+      ~LBFGSHessian() override = default;
 
       [[nodiscard]] bool is_positive_definite() const override;
 
@@ -29,15 +35,20 @@ namespace uno {
       [[nodiscard]] double get_correction_column_scaling(size_t column_index) const override;
 
    protected:
-      const double pivot_max_magnitude;
-      DenseMatrix<double> LD; // lower triangular
-      DenseMatrix<double> N;
-      // Hessian representation: Bk = B0 + U P⁻¹ Uᵀ where B0 = delta I
+      DenseMatrix<double> L; // lower triangular
+      std::vector<double> D; // diagonal
+      std::vector<double> invsqrt_D; // diagonal
+      DenseMatrix<double> L_invsqrt_D; // lower triangular
+      DenseMatrix<double> M;
+      // Hessian representation: Bk = B0 - U Uᵀ + V Vᵀ where B0 = δ I
       DenseMatrix<double> U;
+      DenseMatrix<double> V;
+      const double delta_upper_bound;
 
+      void update_D();
       void recompute_hessian_representation() override;
-      double compute_delta() const;
+      [[nodiscard]] double compute_delta() const;
    };
 } // namespace
 
-#endif // UNO_LSR1HESSIAN_H
+#endif // UNO_LBFGSHESSIAN_H

@@ -8,8 +8,7 @@
 
 namespace uno {
    // stores the expression (matrix1 * matrix2) symbolically
-   template <typename Matrix1, typename Matrix2,
-      typename std::enable_if_t<std::is_same_v<typename std::remove_reference_t<Matrix1>::value_type, typename std::remove_reference_t<Matrix2>::value_type>, int> = 0>
+   template <typename Matrix1, typename Matrix2>
    class Multiplication {
    public:
       using value_type = typename std::remove_reference_t<Matrix1>::value_type;
@@ -32,7 +31,12 @@ namespace uno {
    };
 
    // free function
-   template <typename Matrix1, typename Matrix2>
+   template <typename Matrix1, typename Matrix2,
+         std::enable_if_t<std::is_same_v<typename std::remove_reference_t<Matrix1>::value_type,
+                                         typename std::remove_reference_t<Matrix2>::value_type>, int> = 0,
+      // Matrix1 and Matrix2 are both not arithmetic types
+      std::enable_if_t<!std::is_arithmetic_v<Matrix1>, int> = 0,
+      std::enable_if_t<!std::is_arithmetic_v<Matrix2>, int> = 0>
    inline Multiplication<Matrix1, Matrix2> operator*(Matrix1&& matrix1, Matrix2&& matrix2) {
       return {std::forward<Matrix1>(matrix1), std::forward<Matrix2>(matrix2)};
    }

@@ -5,7 +5,7 @@
 #include "WoodburyEQPSolver.hpp"
 #include "LinearSystem.hpp"
 #include "SymmetricIndefiniteLinearSolverFactory.hpp"
-#include "ingredients/hessian_models/quasi_newton/QuasiNewtonHessian.hpp"
+#include "ingredients/hessian_models/quasi_newton/direct/DirectQuasiNewtonHessian.hpp"
 #include "ingredients/subproblem/Subproblem.hpp"
 #include "model/Model.hpp"
 #include "optimization/Direction.hpp"
@@ -15,7 +15,7 @@
 #include "symbolic/Transpose.hpp"
 
 namespace uno {
-   WoodburyEQPSolver::WoodburyEQPSolver(const QuasiNewtonHessian& hessian_model, const Options& options):
+   WoodburyEQPSolver::WoodburyEQPSolver(const DirectQuasiNewtonHessian& hessian_model, const Options& options):
          SubproblemSolver(),
          hessian_model(hessian_model),
          linear_solver(SymmetricIndefiniteLinearSolverFactory::create(options.get_string("linear_solver"))) {

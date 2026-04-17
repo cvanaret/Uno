@@ -41,7 +41,8 @@ namespace uno {
       const size_t number_constraints; /*!< Number of constraints */
 
       [[nodiscard]] virtual double get_objective_multiplier() const;
-      [[nodiscard]] bool has_inequality_constraints() const;
+      [[nodiscard]] virtual bool has_inequality_constraints() const;
+      [[nodiscard]] virtual bool has_bound_constraints() const;
 
       virtual void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const;
       virtual void postprocess_iterate(Iterate& iterate) const;

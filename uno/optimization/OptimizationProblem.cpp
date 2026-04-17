@@ -33,22 +33,11 @@ namespace uno {
    }
 
    bool OptimizationProblem::has_inequality_constraints() const {
-      // look at the general constraints
-      const auto& constraints_lower_bounds = this->get_constraints_lower_bounds();
-      const auto& constraints_upper_bounds = this->get_constraints_upper_bounds();
-      for (size_t constraint_index: Range(this->number_constraints)) {
-         if (constraints_lower_bounds[constraint_index] < constraints_upper_bounds[constraint_index]) {
-            return true;
-         }
-      }
-      // look at the bound constraints
-      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
-      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
-      if (std::any_of(variables_lower_bounds.begin(), variables_lower_bounds.end(), is_finite<double>) ||
-            std::any_of(variables_upper_bounds.begin(), variables_upper_bounds.end(), is_finite<double>)) {
-         return true;
-      }
-      return false;
+      return this->model.has_inequality_constraints();
+   }
+
+   bool OptimizationProblem::has_bound_constraints() const {
+      return this->model.has_bound_constraints();
    }
 
    void OptimizationProblem::generate_initial_iterate(Iterate& /*initial_iterate*/, Evaluations& /*evaluations*/) const {

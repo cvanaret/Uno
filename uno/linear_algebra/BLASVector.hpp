@@ -7,18 +7,20 @@
 #include <cstddef>
 #include <cassert>
 #include "BLAS.hpp"
+#include "symbolic/Inverse.hpp"
 #include "symbolic/Multiplication.hpp"
 #include "symbolic/Range.hpp"
 #include "symbolic/ScalarMultiple.hpp"
 #include "symbolic/Subtraction.hpp"
 #include "symbolic/Transpose.hpp"
+#include "symbolic/Triangular.hpp"
 
 namespace uno {
    // constant contiguous array in memory on which BLAS can be called
    template <typename T>
    class BLASVector {
    public:
-      using value_type = T;
+      using value_type = std::remove_const_t<T>;
 
       BLASVector() = default;
       virtual ~BLASVector() = default;
@@ -56,8 +58,7 @@ namespace uno {
          return *this;
       }
 
-      // specialized operation y = a * x
-      // note: no BLAS operation available
+      // specialized operation y = a * x (note: no BLAS operation available)
       template <typename Vector>
       MutableBLASVector& operator=(ScalarMultiple<Vector>&& expression) {
          const auto& a = expression.get_factor();
@@ -73,8 +74,24 @@ namespace uno {
       // note: no BLAS operation available
       template <typename Vector>
       MutableBLASVector& operator=(Subtraction<Vector, Vector>&& expression) {
-         *this = expression.get_expression1();
-         *this -= expression.get_expression2();
+         const auto& x = expression.get_expression1();
+         const auto& z = expression.get_expression2();
+         assert(x.size() == z.size());
+         assert(x.size() == this->size());
+         *this = x;
+         *this -= z;
+         return *this;
+      }
+
+      // y = Ax (or y = A x + 0 * y)
+      template <typename Matrix, typename Vector>
+      MutableBLASVector& operator=(Multiplication<Matrix, Vector>&& expression) {
+         const auto& A = expression.get_left();
+         const auto& x = expression.get_right();
+         assert(A.number_columns == x.size());
+         assert(A.number_rows == this->size());
+         blas2::matrix_vector_product('N', A.number_rows, A.number_columns, 1., A.data(), A.leading_dimension, x.data(),
+            0., this->data());
          return *this;
       }
 
@@ -103,14 +120,57 @@ namespace uno {
          return *this;
       }
 
+      // x := U⁻ᵀ y with U upper triangular (solve Uᵀ x := y)
+      template <typename Matrix, typename Vector>
+      MutableBLASVector<T>& operator=(Multiplication<Transpose<Inverse<UpperTriangular<Matrix>>>, Vector>&& expression) {
+         const auto& U = expression.get_left().get_matrix().get_matrix().get_matrix();
+         const auto& y = expression.get_right();
+         if (this->size() != U.number_columns) {
+            throw std::runtime_error("Dimension mismatch in MutableBLASVector::operator=");
+         }
+         // copy the RHS into this
+         blas1::copy(this->size(), y.data(), this->data());
+         blas3::triangular_back_solve('L', 'U', 'T' /* transpose */, 'N' /* non-unit */, y.size(), 1, 1., U.data(),
+            U.leading_dimension, this->data(), this->size());
+         return *this;
+      }
+
+      // x := U⁻¹ y with U upper triangular (solve U x := y)
+      template <typename Matrix, typename Vector>
+      MutableBLASVector<T>& operator=(Multiplication<Inverse<UpperTriangular<Matrix>>, Vector>&& expression) {
+         const auto& U = expression.get_left().get_matrix().get_matrix();
+         const auto& y = expression.get_right();
+         if (this->size() != U.number_columns) {
+            throw std::runtime_error("Dimension mismatch in MutableBLASVector::operator=");
+         }
+         // copy the RHS into this
+         blas1::copy(this->size(), y.data(), this->data());
+         blas3::triangular_back_solve('L', 'U', 'N' /* no transpose */, 'N' /* non-unit */, y.size(), 1, 1., U.data(),
+            U.leading_dimension, this->data(), this->size());
+         return *this;
+      }
+
       // y := A^T x
       template <typename Matrix, typename Vector>
       MutableBLASVector& operator=(Multiplication<Transpose<Matrix>, Vector>&& expression) {
          const auto& A = expression.get_left().get_matrix();
          const auto& x = expression.get_right();
          assert(A.number_rows == x.size());
+         assert(A.number_columns == this->size());
          blas2::matrix_vector_product('T', A.number_rows, A.number_columns, 1., A.data(), A.leading_dimension, x.data(),
             0., this->data());
+         return *this;
+      }
+
+      // y += Ax (or y = A x + y)
+      template <typename Matrix, typename Vector>
+      MutableBLASVector& operator+=(Multiplication<Matrix, Vector>&& expression) {
+         const auto& A = expression.get_left();
+         const auto& x = expression.get_right();
+         assert(A.number_columns == x.size());
+         assert(A.number_rows == this->size());
+         blas2::matrix_vector_product('N', A.number_rows, A.number_columns, 1., A.data(), A.leading_dimension, x.data(),
+            1., this->data());
          return *this;
       }
 
@@ -120,6 +180,7 @@ namespace uno {
          const auto& A = expression.get_left();
          const auto& x = expression.get_right();
          assert(A.number_columns == x.size());
+         assert(A.number_rows == this->size());
          blas2::matrix_vector_product('N', A.number_rows, A.number_columns, -1., A.data(), A.leading_dimension, x.data(),
             1., this->data());
          return *this;

@@ -20,16 +20,39 @@ namespace uno {
          optimization_sense(objective_sign), lagrangian_sign_convention(lagrangian_sign_convention) {
    }
 
+   bool Model::has_inequality_constraints() const {
+      const auto& constraints_lower_bounds = this->get_constraints_lower_bounds();
+      const auto& constraints_upper_bounds = this->get_constraints_upper_bounds();
+      for (size_t constraint_index: Range(this->number_constraints)) {
+         if (constraints_lower_bounds[constraint_index] < constraints_upper_bounds[constraint_index]) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   bool Model::has_bound_constraints() const {
+      const auto& variables_lower_bounds = this->get_variables_lower_bounds();
+      const auto& variables_upper_bounds = this->get_variables_upper_bounds();
+      if (std::any_of(variables_lower_bounds.begin(), variables_lower_bounds.end(), is_finite<double>) ||
+            std::any_of(variables_upper_bounds.begin(), variables_upper_bounds.end(), is_finite<double>)) {
+         return true;
+      }
+      return false;
+   }
+
    // Lagrangian gradient ρ ∇f(x_k) - ∇c(x_k) y_k - z_k
    void Model::evaluate_lagrangian_gradient(const Vector<double>& primals, const Multipliers& multipliers, double objective_multiplier,
          Evaluations& evaluations, Vector<double>& lagrangian_gradient) const {
       lagrangian_gradient.fill(0.);
 
       // - ∇c(x_k) λ_k
-      // TODO test whether λ_k != 0
-      evaluations.evaluate_jacobian(*this, primals);
-      evaluations.compute_jacobian_transposed_vector_product(*this, multipliers.constraints.data(), lagrangian_gradient.data());
-      lagrangian_gradient.scale(-1.);
+      if (0 < this->number_constraints) {
+         // TODO test whether λ_k != 0
+         evaluations.evaluate_jacobian(*this, primals);
+         evaluations.compute_jacobian_transposed_vector_product(*this, multipliers.constraints.data(), lagrangian_gradient.data());
+         lagrangian_gradient.scale(-1.);
+      }
 
       // ∇f(x_k)
       if (objective_multiplier != 0.) {
