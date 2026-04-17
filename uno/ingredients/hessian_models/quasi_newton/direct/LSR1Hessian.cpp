@@ -156,6 +156,7 @@ namespace uno {
       const auto y = this->Y.column(this->current_index);
       const double sᵀy = dot(s, y);
       const double yᵀy = dot(y, y);
+      // TODO safeguard
       return sᵀy/yᵀy;
    }
 } // namespace
