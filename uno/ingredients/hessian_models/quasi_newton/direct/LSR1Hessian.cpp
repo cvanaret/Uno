@@ -149,7 +149,7 @@ namespace uno {
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
 
-   // compute δ = yᵀy / sᵀy at the last entry
+   // compute δ = sᵀy / yᵀy at the last entry
    double LSR1Hessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
       const auto s = this->S.column(this->current_index);
