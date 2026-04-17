@@ -28,6 +28,11 @@ namespace uno {
          }
       }
       // from now on, the problem has inequalities
+      // bound-constrained problem: do not reformulate
+      if (!problem.has_inequality_constraints() && problem.has_bound_constraints()) {
+         return std::make_unique<NoInequalityReformulation>("bound-constrained method");
+      }
+
       const std::string inequality_handling_method = options.get_string("inequality_handling_method");
       // inequality-constrained methods
       if (inequality_handling_method == "inequality_constrained") {
