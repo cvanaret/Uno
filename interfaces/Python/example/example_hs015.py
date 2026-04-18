@@ -1,7 +1,6 @@
 # Copyright (c) 2025 Charlie Vanaret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-import casadi
 import unopy
 Inf = float("inf")
 
