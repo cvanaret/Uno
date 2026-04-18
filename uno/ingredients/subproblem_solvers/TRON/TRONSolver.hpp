@@ -6,7 +6,6 @@
 
 #include <cmath>
 #include <functional>
-#include <tuple>
 #include <vector>
 #include "../SubproblemSolver.hpp"
 #include "../SolverWorkspace.hpp"

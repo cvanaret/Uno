@@ -56,17 +56,17 @@ namespace uno {
 
       // Trust-region radius
       double radius = std::min(std::max(1.0, pi0 / 10.0), max_radius_);
-      double initial_radius = radius;
 
       // Cauchy step length (persistent across iterations)
       double alpha_c = 1.0;
       int num_success = 0;
 
-      bool optimal = (pi0 <= eps_tol);
-      bool unbounded = (fx < fmin);
+
 
       // ── Main loop ────────────────────────────────────────────────────
       while (stats.status == SolveStatus::Unknown) {
+         bool optimal = (pi0 <= eps_tol);
+         bool unbounded = (fx < fmin);
          if (optimal) {
             stats.status = SolveStatus::Optimal;
             break;
@@ -139,9 +139,6 @@ namespace uno {
          stats.iter++;
          stats.objective = fx;
          stats.dual_residual = pi0;
-
-         optimal = (pi0 <= eps_tol);
-         unbounded = (fx < fmin);
 
          if (verbose > 0 && stats.iter % verbose == 0) {
             std::printf("iter %4d  f=%-14.6e  π=%-10.3e  Δ=%-10.3e  %s\n", stats.iter, fx, pi0, radius, cg_info.c_str());
