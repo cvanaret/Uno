@@ -21,6 +21,7 @@ maintainers = [
 license = "MIT"
 dependencies = [
     "numpy",
+    "casadi",
 ]
 
 [project.urls]
