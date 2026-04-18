@@ -57,6 +57,16 @@ jobs:
         run: pip install delvewheel
         shell: pwsh
 
+      - name: Install METIS (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          path-type: inherit
+          msystem: MINGW64
+          update: true
+          install: |
+            mingw-w64-x86_64-metis
+
       - name: Install Fortran compiler (macOS)
         if: startsWith(matrix.sys.os, 'macos')
         uses: fortran-lang/setup-fortran@main
@@ -133,7 +143,8 @@ jobs:
             CMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
           CIBW_CONFIG_SETTINGS_WINDOWS: >
-            cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
+            cmake.define.METIS_INCLUDE_DIR=/mingw64/include
+            cmake.define.METIS_LIBRARY=/mingw64/lib/libmetis.a
             cmake.define.BLAS_LIBRARIES="dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
           # Skip some builds
