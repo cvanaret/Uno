@@ -132,41 +132,41 @@ jobs:
     # MSVC: Download BLAS/LAPACK
     # =========================================================
 
-#    - name: Download precompiled LAPACK (MSVC)
-#      if: matrix.toolchain == 'msvc'
-#      shell: cmd
-#      run: |
-#        curl -L -o lapack-msvc-Debug.zip https://gist.github.com/cvanaret/cfc71ec5a63294d44d51e82ba4291f8a/raw/e5b6a7602343760438327f7bd462edb2ee4b4a56/lapack-msvc-Debug.zip
-#        tar -xf lapack-msvc-Debug.zip -C ${{github.workspace}}\dependencies
-
-    - name: Build LAPACK (MSVC)
+    - name: Download precompiled LAPACK (MSVC)
       if: matrix.toolchain == 'msvc'
       shell: cmd
       run: |
-        git clone https://github.com/Reference-LAPACK/lapack.git
-        cd lapack
-        mkdir build
-        cd build
-        cmake -G "NMake Makefiles" .. ^
-          -DCBLAS=ON ^
-          -DLAPACKE=OFF ^
-          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\dependencies ^
-          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
-          -DCMAKE_C_COMPILER=cl ^
-          -DCMAKE_CXX_COMPILER=cl ^
-          -DCMAKE_Fortran_COMPILER=ifx ^
-          -DBUILD_SHARED_LIBS=OFF ^
-          -DTEST_FORTRAN_COMPILER=OFF
-        nmake
-        nmake install
+        curl -L -o lapack-msvc-Debug.zip https://gist.github.com/cvanaret/cfc71ec5a63294d44d51e82ba4291f8a/raw/e5b6a7602343760438327f7bd462edb2ee4b4a56/lapack-msvc-Debug.zip
+        tar -xf lapack-msvc-Debug.zip -C ${{github.workspace}}\dependencies
 
-    - name: Upload LAPACK artifact (MSVC)
-      if: matrix.toolchain == 'msvc' && matrix.library == 'static'
-      uses: actions/upload-artifact@v4
-      with:
-        name: lapack-msvc-${{env.BUILD_TYPE}}
-        path: ${{github.workspace}}\dependencies
-        retention-days: 30
+#    - name: Build LAPACK (MSVC)
+#      if: matrix.toolchain == 'msvc'
+#      shell: cmd
+#      run: |
+#        git clone https://github.com/Reference-LAPACK/lapack.git
+#        cd lapack
+#        mkdir build
+#        cd build
+#        cmake -G "NMake Makefiles" .. ^
+#          -DCBLAS=ON ^
+#          -DLAPACKE=OFF ^
+#          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}\dependencies ^
+#          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ^
+#          -DCMAKE_C_COMPILER=cl ^
+#          -DCMAKE_CXX_COMPILER=cl ^
+#          -DCMAKE_Fortran_COMPILER=ifx ^
+#          -DBUILD_SHARED_LIBS=OFF ^
+#          -DTEST_FORTRAN_COMPILER=OFF
+#        nmake
+#        nmake install
+#
+#    - name: Upload LAPACK artifact (MSVC)
+#      if: matrix.toolchain == 'msvc' && matrix.library == 'static'
+#      uses: actions/upload-artifact@v4
+#      with:
+#        name: lapack-msvc-${{env.BUILD_TYPE}}
+#        path: ${{github.workspace}}\dependencies
+#        retention-days: 30
 
     # =========================================================
     # DEPENDENCIES
