@@ -148,7 +148,7 @@ namespace uno {
       // increment the slot: if we exceed the size of the memory, we start over and replace the oldest point in memory
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
-   
+
    double LSR1Hessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
       // TODO safeguard
