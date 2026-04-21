@@ -129,6 +129,13 @@ jobs:
           mingw-w64-x86_64-make
 
     # =========================================================
+    # DEPENDENCIES
+    # =========================================================
+
+    - name: Download dependencies
+      run: bash dependencies/scripts/download_dependencies.sh
+
+    # =========================================================
     # MSVC: Download BLAS/LAPACK
     # =========================================================
 
@@ -167,13 +174,6 @@ jobs:
 #        name: lapack-msvc-${{env.BUILD_TYPE}}
 #        path: ${{github.workspace}}\dependencies
 #        retention-days: 30
-
-    # =========================================================
-    # DEPENDENCIES
-    # =========================================================
-
-    - name: Download dependencies
-      run: bash dependencies/scripts/download_dependencies.sh
 
     # =========================================================
     # CONFIGURE
