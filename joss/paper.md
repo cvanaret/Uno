@@ -34,14 +34,14 @@ bibliography: paper.bib
 
 Uno is a composable software framework for nonlinearly constrained optimization written in modern C\texttt{++}.
 It unifies the workflows of Lagrange-Newton methods, i.e., gradient-based algorithms that iteratively solve the KKT optimality conditions using Newton's method.
-As of April 2026, Uno supports sequential (convex and nonconvex) quadratic programming, interior-point (barrier) methods, and sequential linear programming.
+As of April 2026, Uno supports sequential (convex and nonconvex) quadratic programming, interior-point (barrier) methods, sequential linear programming, and unconstrained optimization.
 
 Uno breaks down optimization algorithms into reusable modular components such as step computation, constraint reformulation, globalization techniques, and acceptance criteria.
 This allows classical and hybrid methods to be configured and compared within a single framework.
 For full mathematical details of the algorithms implemented in Uno, see [@VanaretLeyffer2026].
 
 The core C\texttt{++} code of Uno is organized into modular, object-oriented components that separate the mathematical logic of the algorithms from implementation details such as memory management, data structures, and computational routines.
-Uno provides interfaces to Julia, Python, C, Fortran, and AMPL, enabling use across scientific computing environments.
+Uno provides interfaces to Julia, Python, C, Fortran, and AMPL, enabling interoperability across scientific computing environments and allowing seamless integration into existing workflows without requiring users to migrate to a new ecosystem.
 Precompiled artifacts are available on GitHub, and the solver can be accessed directly via `UnoSolver.jl` in Julia or `unopy` in Python.
 
 # Statement of need
@@ -53,11 +53,15 @@ Typical nonlinear solvers share common building blocks such as step computation,
 These components can be found across major paradigms such as sequential quadratic programming, interior-point methods, and augmented Lagrangian methods, but these are usually developed as separate solver families.
 Algorithmic ideas are typically tested at the level of complete solvers, rather than individual components.
 
-These observations motivate the development of a unified and composable framework in which algorithmic components are made explicit.
+Most established nonlinear optimization solvers are legacy codes, often written in Fortran or C, that are no longer actively developed and receive only minimal maintenance, if any.
+As a result, incorporating new algorithmic ideas or adapting existing components to novel problem structures is a significant endeavor.
+A notable exception is MadNLP.jl [@shin2024accelerating], a modern, modular solver written in Julia and actively developed, though it remains focused on interior-point methods.
+
+These observations motivate the development of a modern, composable framework in which algorithmic components are made explicit.
 
 # State of the field
 
-Popular solvers such as IPOPT [@wachter2006implementation], KNITRO [@byrd2006], and SNOPT [@gill2005] are robust and efficient, but they are typically monolithic: parameter tuning is exposed while internal components remain rigid.
+Popular solvers such as IPOPT [@wachter2006implementation], KNITRO [@byrd2006], SNOPT [@gill2005], and WORHP [@buskens2012esa] are robust and efficient, but they are typically monolithic: parameter tuning is exposed while internal components remain rigid.
 These solvers are primarily designed for end users rather than algorithmic experimentation.
 Testing new algorithmic variants usually requires intrusive modification or reimplementation.
 
@@ -85,6 +89,9 @@ Uno currently implements an \texttt{ipopt} preset that mimics the IPOPT solver [
 While, in theory, all combinations of strategies can be generated, some are not supported yet (e.g., interior-point method with a trust-region constraint).
 
 ![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% } 
+
+Subproblem solvers are treated as interchangeable components: they can be plugged in or swapped out without modifications of the algorithmic logic. This allows users and developers to select the most appropriate solver for their problem structure, licensing constraints, or performance requirements.
+Uno currently provides interfaces to several established LP, QP and linear solvers: BQPD [@fletcher2000stable], HiGHS [@huangfu2018parallelizing], MUMPS [@amestoy2000mumps], MA27 [@duffma27], and MA57 [@duff2004ma57].
 
 # Interfaces
 
@@ -118,6 +125,8 @@ The Python interface is registered on PyPI as `unopy`, providing Uno bindings vi
 
 A MATLAB interface is also under development, further expanding Uno's accessibility.
 
+We plan to integrate Uno as a continuous relaxation solver within MINLP frameworks (e.g., SCIP [@bolusani2024scip]). This setting introduces the additional challenge of reoptimization, in which consecutive solves share structural similarity and must be handled efficiently by recycling internal solver state (e.g., active sets and factorizations) across solves rather than restarting from scratch at each node.
+
 # Research impact statement
 
 Uno's \texttt{ipopt} and \texttt{filtersqp} presets currently perform on a par with the state-of-the-art solvers IPOPT (Uno is slightly less robust) and filterSQP (Uno is slightly more robust) in terms of function evaluations on a set of 429 small CUTE instances [@bongartz1995cute].
@@ -128,12 +137,14 @@ This resulted in scientific cooperations with the MECO team at KU Leuven [@kiess
 
 Uno is currently used as a nonlinear optimization solver in:
 
-* the `JuMP.jl` ecosystem,
-* DNLP, an extension of CVXPY to general nonlinear programming,
-* `Vecchia.jl`, a package for Gaussian processes approximation,
-* `control-toolbox`, a collection of Julia packages for mathematical control and its applications,
-* FelooPy, a user-friendly tool for coding, modeling, and solving decision problems,
-* IMPL © /IMPL-DATA © by Industrial Algorithms Limited, a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation.
+- Julia:
+	* the `JuMP.jl` ecosystem,
+	* `control-toolbox`, a collection of Julia packages for mathematical control and its applications,
+- Python:
+	* DNLP, an extension of CVXPY to general nonlinear programming,
+	* FelooPy, a user-friendly tool for coding, modeling, and solving decision problems,
+- Fortran:
+	* IMPL © /IMPL-DATA © by Industrial Algorithms Limited, a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation.
 
 Ongoing discussions and community interest indicate potential future integrations in CasADi, Pyomo, pyOptSparse, Minotaur, and the NEOS Server.
 
