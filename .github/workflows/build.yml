@@ -143,7 +143,7 @@ jobs:
       if: matrix.toolchain == 'msvc'
       shell: cmd
       run: |
-        curl -L -o lapack-msvc-Debug.zip https://gist.github.com/cvanaret/cfc71ec5a63294d44d51e82ba4291f8a/raw/e5b6a7602343760438327f7bd462edb2ee4b4a56/lapack-msvc-Debug.zip
+        curl -L -o lapack-msvc-Debug.zip https://gist.github.com/cvanaret/cfc71ec5a63294d44d51e82ba4291f8a/raw/116a2a9e098f4e44c7a767a38ff617becc64469b/lapack-msvc-Debug.zip
         tar -xf lapack-msvc-Debug.zip -C ${{github.workspace}}\dependencies
 
 #    - name: Build LAPACK (MSVC)
