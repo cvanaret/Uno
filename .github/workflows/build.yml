@@ -160,6 +160,14 @@ jobs:
         nmake
         nmake install
 
+    - name: Upload LAPACK artifact (MSVC)
+      if: matrix.toolchain == 'msvc' && matrix.library == 'static'
+      uses: actions/upload-artifact@v4
+      with:
+        name: lapack-msvc-${{env.BUILD_TYPE}}
+        path: ${{github.workspace}}\dependencies
+        retention-days: 30
+
     # =========================================================
     # CONFIGURE
     # =========================================================
