@@ -31,8 +31,8 @@
 }{ 
 	compute\_acceptable\_iterate()
 }
-\umlsimpleclass[mechanism, subclass, x=-5.4]{BacktrackingLineSearch}
-\umlsimpleclass[mechanism, subclass, x=5.35]{TrustRegionStrategy}
+\umlsimpleclass[mechanism, subclass, x=-5]{BacktrackingLineSearch}
+\umlsimpleclass[mechanism, subclass, x=4.8]{TrustRegionStrategy}
 
 % Constraint relaxation strategy
 \umlabstract[constraint_relaxation, x=0, y=-2.4]{ConstraintRelaxationStrategy}{
@@ -41,56 +41,60 @@
 	compute\_feasible\_direction() \\
 	is\_acceptable()
 }
-\umlsimpleclass[constraint_relaxation, subclass, x=-5.35, y=-2.4]{FeasibilityRestoration}
+\umlsimpleclass[constraint_relaxation, subclass, x=-4.9, y=-2.4]{FeasibilityRestoration}
 %\umlsimpleclass[constraint_relaxation, subclass, x=5.25, y=-2.4]{l1Relaxation}
 
 % Inequality handling method
-\umlabstract[inequality_handling, x=-4.5, y=-4.7]{InequalityHandlingMethod}{
+\umlabstract[inequality_handling,  x=-5, y=-4.9]{InequalityHandlingMethod}{
    subproblem
 }{
-   compute\_feasible\_direction()
+   reformulate\_problem()
 }
-\umlsimpleclass[inequality_handling, subclass, x=-9.5, y=-4.5]{InequalityConstrainedMethod}
-\umlsimpleclass[inequality_handling, subclass, x=-9.5, y=-5.3]{InteriorPointMethod}
+\umlsimpleclass[inequality_handling, subclass, x=-5.2, y=-6.5]{InequalityConstrainedMethod}
+\umlsimpleclass[inequality_handling, subclass, x=-5.9, y=-7.4]{InteriorPointMethod}
 
 % Subproblem
-\umlabstract[subproblem, x=-6.5, y=-7.1]{Subproblem}{
+\umlabstract[subproblem, x=0, y=-4.9]{Subproblem}{
     hessian\_model \\
     inertia\_correction\_strategy
 }{
 }
 
 % Subproblem solver
-\umlabstract[x=-2.2, y=-6.9]{SubproblemSolver}{
+\umlabstract[x=4.5, y=-2.8]{SubproblemSolver}{
 }{ 
    solve()
 }
 
 % Hessian model
-\umlabstract[subproblem, x=-8, y=-9]{HessianModel}{
+\umlabstract[subproblem, x=-2.5, y=-8.2]{HessianModel}{
 }{
+	evaluate \\
+	compute\_hv
 }
-\umlsimpleclass[subproblem, subclass, x=-11.5, y=-8.3]{ExactHessian}
-\umlsimpleclass[subproblem, subclass, x=-11.5, y=-9.1]{QuasiNewtonHessian}
-\umlsimpleclass[subproblem, subclass, x=-11.5, y=-9.9]{IdentityHessian}
-\umlsimpleclass[subproblem, subclass, x=-11.5, y=-10.7]{ZeroHessian}
+\umlsimpleclass[subproblem, subclass, x=-6, y=-9.8]{ExactHessian}
+\umlsimpleclass[subproblem, subclass, x=-5, y=-10.6]{QuasiNewtonHessian}
+\umlsimpleclass[subproblem, subclass, x=-6.5, y=-11.4]{IdentityHessian}
+\umlsimpleclass[subproblem, subclass, x=-5.5, y=-12.2]{ZeroHessian}
 
 % Inertia correction
-\umlabstract[subproblem, x=-4, y=-9]{InertiaCorrectionStrategy}{
+\umlabstract[subproblem, x=1.2, y=-8.2]{InertiaCorrectionStrategy}{
 }{
+	regularize\_hessian \\
+	regularize\_augmented\_matrix
 }
-\umlsimpleclass[subproblem, subclass, x=1, y=-8.5]{PrimalInertiaCorrection}
-\umlsimpleclass[subproblem, subclass, x=1, y=-9.3]{PrimalDualInertiaCorrection}
-\umlsimpleclass[subproblem, subclass, x=1, y=-10.1]{NoInertiaCorrection}
+\umlsimpleclass[subproblem, subclass, x=2, y=-9.8]{PrimalInertiaCorrection}
+\umlsimpleclass[subproblem, subclass, x=3, y=-10.6]{PrimalDualInertiaCorrection}
+\umlsimpleclass[subproblem, subclass, x=2, y=-11.4]{NoInertiaCorrection}
 
 % Globalization strategy
-\umlabstract[strategy, x=4, y=-4.7]{GlobalizationStrategy}{
+\umlabstract[strategy, x=4.5, y=-4.7]{GlobalizationStrategy}{
 }{ 
    check\_acceptance()
 }
-\umlsimpleclass[strategy, subclass, x=2, y=-6.3]{MeritFunction}
-\umlsimpleclass[strategy, subclass, x=6, y=-6.3]{FilterMethod}
-\umlsimpleclass[strategy, subclass, x=4, y=-7.2]{FunnelMethod}
+\umlsimpleclass[strategy, subclass, x=5.2, y=-6.3]{MeritFunction}
+\umlsimpleclass[strategy, subclass, x=5.5, y=-7.2]{FilterMethod}
+\umlsimpleclass[strategy, subclass, x=5, y=-8.1]{FunnelMethod}
 
 % links
 \umlcompo{GlobalizationMechanism}{Uno}
@@ -105,14 +109,14 @@
 \umlimpl[subclass]{InequalityConstrainedMethod}{InequalityHandlingMethod}
 \umlimpl[subclass]{InteriorPointMethod}{InequalityHandlingMethod}
 
-\umlcompo{SubproblemSolver}{InequalityHandlingMethod}
+\umlcompo{SubproblemSolver}{ConstraintRelaxationStrategy}
 
 \umlcompo{GlobalizationStrategy}{ConstraintRelaxationStrategy}
 \umlimpl[subclass]{MeritFunction}{GlobalizationStrategy}
 \umlimpl[subclass]{FilterMethod}{GlobalizationStrategy}
 \umlimpl[subclass]{FunnelMethod}{GlobalizationStrategy}
 
-\umlcompo{Subproblem}{InequalityHandlingMethod}
+\umlcompo{Subproblem}{ConstraintRelaxationStrategy}
 
 \umlcompo{HessianModel}{Subproblem}
 \umlimpl[subclass]{ExactHessian}{HessianModel}
