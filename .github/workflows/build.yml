@@ -139,12 +139,11 @@ jobs:
     # MSVC: Download BLAS/LAPACK
     # =========================================================
 
-    - name: Download LAPACK artifact (MSVC)
-      if: matrix.toolchain == 'msvc'
-      uses: actions/download-artifact@v4
-      with:
-        name: lapack-msvc-${{env.BUILD_TYPE}}
-        path: ${{github.workspace}}\dependencies
+    - name: Download precompiled LAPACK (MSVC)
+      shell: cmd
+      run: |
+        curl -L -o lapack-msvc-Debug.zip https://gist.github.com/cvanaret/cfc71ec5a63294d44d51e82ba4291f8a/raw/e5b6a7602343760438327f7bd462edb2ee4b4a56/lapack-msvc-Debug.zip
+        tar -xf lapack-msvc-Debug.zip -C ${{github.workspace}}\dependencies
 
 #    - name: Build LAPACK (MSVC)
 #      if: matrix.toolchain == 'msvc'
