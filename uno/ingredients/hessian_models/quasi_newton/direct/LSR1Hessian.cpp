@@ -148,15 +148,10 @@ namespace uno {
       // increment the slot: if we exceed the size of the memory, we start over and replace the oldest point in memory
       this->current_index = (this->current_index + 1) % this->memory_size;
    }
-
-   // compute δ = sᵀy / yᵀy at the last entry
+   
    double LSR1Hessian::compute_delta() const {
       assert(0 < this->number_entries_in_memory);
-      const auto s = this->S.column(this->current_index);
-      const auto y = this->Y.column(this->current_index);
-      const double sᵀy = dot(s, y);
-      const double yᵀy = dot(y, y);
       // TODO safeguard
-      return sᵀy/yᵀy;
+      return 1.;
    }
 } // namespace
