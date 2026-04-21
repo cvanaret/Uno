@@ -165,7 +165,10 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: lapack-msvc-${{env.BUILD_TYPE}}
-        path: ${{github.workspace}}\dependencies
+        path: |
+          ${{github.workspace}}\dependencies\lib\libcblas.lib
+          ${{github.workspace}}\dependencies\lib\libblas.lib
+          ${{github.workspace}}\dependencies\lib\liblapack.lib
         retention-days: 30
 
     # =========================================================
