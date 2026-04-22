@@ -111,6 +111,11 @@ jobs:
             FC=gfortran-15
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
+          # link shared libhwloc
+          CIBW_CONFIG_SETTINGS_MACOS: >
+            cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libhwloc.15.dylib
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
+            delocate-wheel --require-archs {delocate_archs} -L /Users/runner/work/Uno/Uno/dependencies/lib -w {dest_dir} -v {wheel}
           # Skip some builds
           CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
@@ -134,8 +139,7 @@ jobs:
             CMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe
           CIBW_CONFIG_SETTINGS_WINDOWS: >
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
-            cmake.define.BLAS_LIBRARIES="dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
-            cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
+            cmake.define.AUXILIARY_LIBRARIES="dependencies/lib/libhwloc.a;dependencies/lib/libstdc++.a"
           # Skip some builds
           CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
@@ -246,6 +250,12 @@ jobs:
       - name: Install unopy from TestPyPI
         run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ unopy
 
+      - name: Set the environment variables for OpenMP
+        shell: bash
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
+
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example
         run: python example_hs015.py
@@ -271,6 +281,12 @@ jobs:
 
       - name: Install unopy from PyPI
         run: pip install unopy
+
+      - name: Set the environment variables for OpenMP
+        shell: bash
+        run: |
+          echo "OMP_CANCELLATION=TRUE" >> "$GITHUB_ENV"
+          echo "OMP_PROC_BIND=TRUE"    >> "$GITHUB_ENV"
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example

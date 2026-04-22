@@ -5,7 +5,7 @@
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.4.13"
+version = v"2026.4.16"
 
 # Collection of sources
 sources = [
