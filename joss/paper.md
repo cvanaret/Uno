@@ -41,7 +41,7 @@ This allows classical and hybrid methods to be configured and compared within a 
 For full mathematical details of the algorithms implemented in Uno, see [@VanaretLeyffer2026].
 
 The core C\texttt{++} code of Uno is organized into modular, object-oriented components that separate the mathematical logic of the algorithms from implementation details such as memory management, data structures, and computational routines.
-Uno provides interfaces to Julia, Python, C, Fortran, and AMPL, enabling interoperability across scientific computing environments and allowing seamless integration into existing workflows without requiring users to migrate to a new ecosystem.
+Uno provides interfaces to Julia, Python, C, Fortran, and AMPL, enabling interoperability across scientific computing environments. <!-- and allowing seamless integration into existing workflows without requiring users to migrate to a new ecosystem. -->
 Precompiled artifacts are available on GitHub, and the solver can be accessed directly via `UnoSolver.jl` in Julia or `unopy` in Python.
 
 # Statement of need
@@ -53,9 +53,9 @@ Typical nonlinear solvers share common building blocks such as step computation,
 These components can be found across major paradigms such as sequential quadratic programming, interior-point methods, and augmented Lagrangian methods, but these are usually developed as separate solver families.
 Algorithmic ideas are typically tested at the level of complete solvers, rather than individual components.
 
-Most established nonlinear optimization solvers are legacy codes, often written in Fortran or C, that are no longer actively developed and receive only minimal maintenance, if any.
-As a result, incorporating new algorithmic ideas or adapting existing components to novel problem structures is a significant endeavor.
-A notable exception is MadNLP.jl [@shin2024accelerating], a modern, modular solver written in Julia and actively developed, though it remains focused on interior-point methods.
+Most established open-source nonlinear optimization solvers are legacy codes, often written in Fortran or C, and tend to evolve slowly.
+This can make incorporating new algorithmic ideas or adapting to novel problem structures challenging.
+A notable exception is MadNLP.jl [@shin2024accelerating], a solver written in Julia and actively developed, though it remains focused on interior-point methods.
 
 These observations motivate the development of a modern, composable framework in which algorithmic components are made explicit.
 
@@ -90,8 +90,9 @@ While, in theory, all combinations of strategies can be generated, some are not 
 
 ![Uno's UML diagram.\label{fig:umldiagram}](figures/uml_diagram.pdf){ width=95% } 
 
-Subproblem solvers are treated as interchangeable components: they can be plugged in or swapped out without modifications of the algorithmic logic. This allows users and developers to select the most appropriate solver for their problem structure, licensing constraints, or performance requirements.
-Uno currently provides interfaces to several established LP, QP and linear solvers: BQPD [@fletcher2000stable], HiGHS [@huangfu2018parallelizing], MUMPS [@amestoy2000mumps], MA27 [@duffma27], and MA57 [@duff2004ma57].
+Subproblem solvers are treated as interchangeable components: they can be plugged in or swapped out without modifications of the algorithmic logic.
+This allows users and developers to select the most appropriate solver for their problem structure, licensing constraints, or performance requirements.
+Uno currently provides interfaces to several established LP, QP and linear solvers: BQPD [@fletcher2000stable], HiGHS [@huangfu2018parallelizing], MUMPS [@amestoy2000mumps], MA27 [@duffma27], MA57 [@duff2004ma57], and SSIDS [@hogg2016sparse].
 
 # Interfaces
 
@@ -125,7 +126,8 @@ The Python interface is registered on PyPI as `unopy`, providing Uno bindings vi
 
 A MATLAB interface is also under development, further expanding Uno's accessibility.
 
-We plan to integrate Uno as a continuous relaxation solver within MINLP frameworks (e.g., SCIP [@bolusani2024scip]). This setting introduces the additional challenge of reoptimization, in which consecutive solves share structural similarity and must be handled efficiently by recycling internal solver state (e.g., active sets and factorizations) across solves rather than restarting from scratch at each node.
+We plan to integrate Uno as a continuous relaxation solver within MINLP frameworks (e.g., SCIP [@bolusani2024scip]).
+This setting introduces the additional challenge of reoptimization, where consecutive solves share structural similarity and must be handled efficiently by reusing internal solver state, such as active sets, factorizations, and preallocated workspace, rather than restarting from scratch at each node.
 
 # Research impact statement
 
