@@ -1,5 +1,51 @@
 ## Installation instructions
 
+### Precompiled libraries and executables
+
+We provide precompiled Uno libraries and executables in the [releases tab](https://github.com/cvanaret/Uno/releases/latest/) for Linux (x64 and aarch64), macOS (x64 and aarch64), and Windows (x64).
+
+> [!NOTE]
+> The shared library `libhsl.so` / `libhsl.dylib` / `libhsl.dll` provided in the precompiled archive is a dummy version that does not include the official HSL linear solvers such as `MA27` or `MA57`.
+> However, it can be safely replaced with the official precompiled [libHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) library without the need to recompile anything.
+> The routine symbols are identical, allowing seamless hot-swapping of the library.
+
+On some platforms, the dynamic linker needs to know where to look for libraries at runtime.
+You might need to set the following environment variables:
+
+- `LD_LIBRARY_PATH` on Linux
+- `DYLD_LIBRARY_PATH` or `DYLD_FALLBACK_LIBRARY_PATH` on macOS
+- `PATH` on Windows
+
+These variables should include the directory where you extracted the library files.
+For all platforms, the environment variable `PATH` is needed to locate the binary `uno_ampl` / `uno_ampl.exe`.
+
+**Example for Linux**:
+```console
+tar -xzf Uno.vX.Y.Z.linux.tar.gz
+export LD_LIBRARY_PATH=/path/to/extracted/Uno/lib:$LD_LIBRARY_PATH
+export PATH=/path/to/extracted/Uno/bin:$PATH
+```
+
+**Example for macOS**:
+```console
+tar -xzf Uno.vX.Y.Z.macos.tar.gz
+export DYLD_LIBRARY_PATH=/path/to/extracted/Uno/lib:$DYLD_LIBRARY_PATH
+export PATH=/path/to/extracted/Uno/bin:$PATH
+```
+*(Alternatively, you can use `DYLD_FALLBACK_LIBRARY_PATH` instead of `DYLD_LIBRARY_PATH`.)*
+
+**Example for Windows (PowerShell)**:
+```console
+tar -xzf Uno.vX.Y.Z.windows.zip
+$env:PATH="C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;$env:PATH"
+```
+
+**Example for Windows (Command Prompt)**:
+```console
+tar -xzf Uno.vX.Y.Z.windows.zip
+set PATH=C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;%PATH%
+```
+
 ### Packages and libraries
 
 * install BLAS and LAPACK:
@@ -96,28 +142,3 @@ make run_unotest -jn
 ```console
 ./run_unotest
 ```
-
-### Precompiled libraries and executables
-
-We provide precompiled Uno libraries and executables in the [releases tab](https://github.com/cvanaret/Uno/releases/latest/) for Linux (x64 and aarch64), macOS (x64 and aarch64), and Windows (x64).
-
-On some platforms, the dynamic linker needs to know where to look for libraries at runtime.
-You might need to set the following environment variables:
-
-- `LD_LIBRARY_PATH` on Linux
-- `DYLD_LIBRARY_PATH` or `DYLD_FALLBACK_LIBRARY_PATH` on macOS
-- `PATH` on Windows
-
-These variables should include the directory where you extracted the library files.
-For all platforms, the environment variable `PATH` is needed to locate the binary `uno_ampl` / `uno_ampl.exe`.
-
-**Example for Linux**:
-```console
-tar -xzf Uno.vX.Y.Z.linux.tar.gz
-export LD_LIBRARY_PATH=/path/to/extracted/Uno/lib:$LD_LIBRARY_PATH
-export PATH=/path/to/extracted/Uno/bin:$PATH
-```
-
-Note: The shared library `libhsl.so` / `libhsl.dylib` / `libhsl.dll` provided in the precompiled archive is a dummy version that does not include the official HSL linear solvers such as `MA27` or `MA57`.
-However, it can be safely replaced with the official precompiled [libHSL](https://licences.stfc.ac.uk/products/Software/HSL/LibHSL) library without the need to recompile anything.
-The routine symbols are identical, allowing seamless hot-swapping of the library.
