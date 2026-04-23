@@ -296,7 +296,7 @@ jobs:
 
     - name: Build (not MSVC)
       if: matrix.toolchain != 'msvc'
-      run: cmake --build build --config ${{env.BUILD_TYPE}} -j4
+      run: cmake --build build --config ${{env.BUILD_TYPE}} --parallel
 
     - name: Build (MSVC)
       if: matrix.toolchain == 'msvc'
