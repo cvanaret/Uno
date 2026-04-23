@@ -65,6 +65,9 @@ jobs:
     - name: Install Uno
       run: sudo cmake --install ${{github.workspace}}/build
 
+    - name: Update dynamic linker cache
+      run: sudo ldconfig
+
     - name: Build Rust example
       working-directory: ${{github.workspace}}/interfaces/Rust
       run: cargo build --bin hs015
