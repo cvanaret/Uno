@@ -72,10 +72,10 @@ jobs:
                 -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
                 -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" .
 
-      - name: Build example
+      - name: Build C example
         working-directory: ${{github.workspace}}/interfaces/C/example
         run: cmake --build ${{github.workspace}}/interfaces/C/example/build --config ${{env.BUILD_TYPE}}
 
-      - name: Run example
+      - name: Run C example
         working-directory: ${{github.workspace}}/interfaces/C/example/build
         run: ./example_hs015
