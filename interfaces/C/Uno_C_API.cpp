@@ -507,6 +507,34 @@ bool uno_set_variables_bounds(void* model, const double* variables_lower_bounds,
    return true;
 }
 
+bool uno_set_variable_lower_bound(void* model, uno_int variable_index, double lower_bound) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   if (variable_index < 0 || variable_index >= user_model->number_variables) {
+      WARNING << "Please specify a valid index."  << std::endl;
+      return false;
+   }
+   user_model->variables_lower_bounds[static_cast<size_t>(variable_index)] = lower_bound;
+   return true;
+}
+
+bool uno_set_variable_upper_bound(void* model, uno_int variable_index, double upper_bound) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   if (variable_index < 0 || variable_index >= user_model->number_variables) {
+      WARNING << "Please specify a valid index."  << std::endl;
+      return false;
+   }
+   user_model->variables_upper_bounds[static_cast<size_t>(variable_index)] = upper_bound;
+   return true;
+}
+
 bool uno_set_objective(void* model, uno_int optimization_sense, uno_objective_callback objective_function,
       uno_objective_gradient_callback objective_gradient) {
    if (optimization_sense != UNO_MINIMIZE && optimization_sense != UNO_MAXIMIZE) {

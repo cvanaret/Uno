@@ -63,6 +63,16 @@ function uno_set_variables_bounds(model, variables_lower_bounds, variables_upper
                                            variables_upper_bounds::Ptr{Cdouble})::Bool
 end
 
+function uno_set_variable_lower_bound(model, variable_index, lower_bound)
+    @ccall libuno.uno_set_variable_lower_bound(model::Ptr{Cvoid}, variable_index::Int32,
+                                               lower_bound::Cdouble)::Bool
+end
+
+function uno_set_variable_upper_bound(model, variable_index, upper_bound)
+    @ccall libuno.uno_set_variable_upper_bound(model::Ptr{Cvoid}, variable_index::Int32,
+                                               upper_bound::Cdouble)::Bool
+end
+
 function uno_set_objective(model, optimization_sense, objective_function,
                            objective_gradient)
     @ccall libuno.uno_set_objective(model::Ptr{Cvoid}, optimization_sense::Int32,

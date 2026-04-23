@@ -166,6 +166,16 @@ extern "C" {
    bool uno_set_variables_bounds(void* model, const double* variables_lower_bounds, const double* variables_upper_bounds);
 
    // [optional]
+   // sets the lower bound of a given variable.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_variable_lower_bound(void* model, uno_int variable_index, double lower_bound);
+
+   // [optional]
+   // sets the upper bound of a given variable.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_variable_upper_bound(void* model, uno_int variable_index, double upper_bound);
+
+   // [optional]
    // sets the objective and objective gradient of a given model.
    // takes as inputs the optimization sense (UNO_MINIMIZE or UNO_MAXIMIZE), a function pointer of the objective
    // function and a function pointer of its gradient function.
