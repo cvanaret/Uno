@@ -462,6 +462,12 @@ void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch) {
 
 void* uno_create_model(const char* problem_type, uno_int number_variables, const double* variables_lower_bounds,
       const double* variables_upper_bounds, uno_int base_indexing) {
+   void* model = uno_create_unconstrained_model(problem_type, number_variables, base_indexing);
+   uno_set_variables_bounds(model, variables_lower_bounds, variables_upper_bounds);
+   return model;
+}
+
+void* uno_create_unconstrained_model(const char* problem_type, uno_int number_variables, uno_int base_indexing) {
    if (number_variables <= 0) {
       WARNING << "Please specify a positive number of variables."  << std::endl;
       return nullptr;
@@ -476,22 +482,29 @@ void* uno_create_model(const char* problem_type, uno_int number_variables, const
       return nullptr;
    }
    CUserModel* user_model = new CUserModel(problem_type, number_variables, base_indexing);
-   // copy the bounds internally
+   // set (-inf, +inf) bounds
    const size_t unsigned_number_variables = static_cast<size_t>(number_variables);
-   user_model->variables_lower_bounds.resize(unsigned_number_variables);
-   user_model->variables_upper_bounds.resize(unsigned_number_variables);
-   for (size_t variable_index: Range(unsigned_number_variables)) {
-      user_model->variables_lower_bounds[variable_index] = (variables_lower_bounds != nullptr) ?
-         variables_lower_bounds[variable_index] : -INF<double>;
-      user_model->variables_upper_bounds[variable_index] = (variables_upper_bounds != nullptr) ?
-         variables_upper_bounds[variable_index] : INF<double>;
-   }
+   user_model->variables_lower_bounds.resize(unsigned_number_variables, -INF<double>);
+   user_model->variables_upper_bounds.resize(unsigned_number_variables, INF<double>);
    // create the initial primal point
    user_model->initial_primal_iterate.resize(unsigned_number_variables);
    for (size_t variable_index: Range(unsigned_number_variables)) {
       user_model->initial_primal_iterate[variable_index] = 0.;
    }
    return user_model;
+}
+
+bool uno_set_variables_bounds(void* model, const double* variables_lower_bounds, const double* variables_upper_bounds) {
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // copy the bounds internally
+   const size_t unsigned_number_variables = static_cast<size_t>(user_model->number_variables);
+   for (size_t variable_index: Range(unsigned_number_variables)) {
+      user_model->variables_lower_bounds[variable_index] = (variables_lower_bounds != nullptr) ?
+         variables_lower_bounds[variable_index] : -INF<double>;
+      user_model->variables_upper_bounds[variable_index] = (variables_upper_bounds != nullptr) ?
+         variables_upper_bounds[variable_index] : INF<double>;
+   }
+   return true;
 }
 
 bool uno_set_objective(void* model, uno_int optimization_sense, uno_objective_callback objective_function,

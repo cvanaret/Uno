@@ -153,6 +153,18 @@ extern "C" {
    void* uno_create_model(const char* problem_type, uno_int number_variables, const double* variables_lower_bounds,
       const double* variables_upper_bounds, uno_int base_indexing);
 
+   // creates an unconstrained optimization model that can be solved by Uno.
+   // initially, the model contains "number_variables" variables, no bounds, no objective function, and no constraints.
+   // takes as inputs the type of problem (UNO_PROBLEM_LINEAR, UNO_PROBLEM_QUADRATIC, or UNO_PROBLEM_NONLINEAR), the
+   // number of variables, and the vector indexing (0 for C-style indexing, 1 for Fortran-style indexing).
+   void* uno_create_unconstrained_model(const char* problem_type, uno_int number_variables, uno_int base_indexing);
+
+   // [optional]
+   // sets the variables bounds of a given model.
+   // takes as inputs two arrays of lower and upper bounds of size "number_variables".
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_variables_bounds(void* model, const double* variables_lower_bounds, const double* variables_upper_bounds);
+
    // [optional]
    // sets the objective and objective gradient of a given model.
    // takes as inputs the optimization sense (UNO_MINIMIZE or UNO_MAXIMIZE), a function pointer of the objective
