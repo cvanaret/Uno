@@ -48,6 +48,36 @@ function uno_create_model(problem_type, number_variables, variables_lower_bounds
 end function uno_create_model
 
 !---------------------------------------------
+! uno_create_unconstrained_model
+!---------------------------------------------
+function uno_create_model(problem_type, number_variables, base_indexing) result(model)
+   character(len=*) :: problem_type
+   integer(uno_int), value :: number_variables, base_indexing
+   type(c_ptr) :: model
+   character(c_char), allocatable :: problem_type_c(:)
+   integer :: i, n
+
+   interface
+      function uno_create_unconstrained_model_c(problem_type, number_variables, base_indexing) result(model) &
+         bind(C, name="uno_create_unconstrained_model")
+         import :: c_char, uno_int, c_ptr
+         character(c_char) :: problem_type(*)
+         integer(uno_int), value :: number_variables, base_indexing
+         type(c_ptr) :: model
+      end function uno_create_unconstrained_model_c
+   end interface
+
+   n = len_trim(problem_type)
+   allocate(problem_type_c(n+1))
+   do i = 1, n
+      problem_type_c(i) = problem_type(i:i)
+   end do
+   problem_type_c(n+1) = c_null_char
+   model = uno_create_unconstrained_model_c(problem_type_c, number_variables, base_indexing)
+   deallocate(problem_type_c)
+end function uno_create_unconstrained_model
+
+!---------------------------------------------
 ! uno_set_solver_integer_option
 !---------------------------------------------
 function uno_set_solver_integer_option(solver, option_name, option_value) result(success)

@@ -449,6 +449,47 @@ interface
 end interface
 
 !---------------------------------------------
+! uno_set_variables_bounds
+!---------------------------------------------
+interface
+   function uno_set_variables_bounds(model, variables_lower_bounds, variables_upper_bounds) result(success) &
+      bind(C, name="uno_set_variables_bounds")
+      import :: c_ptr, c_double, c_bool
+      type(c_ptr), value :: model
+      real(c_double) :: variables_lower_bounds(*), variables_upper_bounds(*)
+      logical(c_bool) :: success
+   end function uno_set_variables_bounds
+end interface
+
+!---------------------------------------------
+! uno_set_variable_lower_bound
+!---------------------------------------------
+interface
+   function uno_set_variable_lower_bound(model, variable_index, lower_bound) result(success) &
+      bind(C, name="uno_set_variable_lower_bound")
+      import :: c_ptr, uno_int, c_double, c_bool
+      type(c_ptr), value :: model
+      integer(uno_int), value :: variable_index
+      real(c_double) :: lower_bound
+      logical(c_bool) :: success
+   end function uno_set_variable_lower_bound
+end interface
+
+!---------------------------------------------
+! uno_set_variable_upper_bound
+!---------------------------------------------
+interface
+   function uno_set_variable_upper_bound(model, variable_index, upper_bound) result(success) &
+      bind(C, name="uno_set_variable_upper_bound")
+      import :: c_ptr, uno_int, c_double, c_bool
+      type(c_ptr), value :: model
+      integer(uno_int), value :: variable_index
+      real(c_double) :: upper_bound
+      logical(c_bool) :: success
+   end function uno_set_variable_upper_bound
+end interface
+
+!---------------------------------------------
 ! uno_set_initial_primal_iterate_component
 !---------------------------------------------
 interface
