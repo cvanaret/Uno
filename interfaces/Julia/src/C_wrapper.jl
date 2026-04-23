@@ -260,6 +260,15 @@ function uno_model(
   )
 end
 
+function uno_set_variables_bounds(model::Model, variables_lower_bounds::Vector{Float64}, variables_upper_bounds::Vector{Float64})
+  @assert model.nvar == length(variables_lower_bounds) == length(variables_upper_bounds)
+  GC.@preserve model begin
+    flag = uno_set_variables_bounds(model.c_model, variables_lower_bounds, variables_upper_bounds)
+  end
+  flag || error("Failed to set variables bounds via uno_set_variables_bounds.")
+  return
+end
+
 function uno_set_initial_primal_iterate(model::Model, initial_primal_iterate::Vector{Float64})
   @assert model.nvar == length(initial_primal_iterate)
   GC.@preserve model begin
