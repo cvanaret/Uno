@@ -51,7 +51,7 @@ jobs:
         run: bash dependencies/scripts/download_dependencies.sh
 
       - name: Compile and install unopy
-        run: pip install . -v
+        run: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc) pip install . -v
 
       - name: Run example
         working-directory: ${{github.workspace}}/interfaces/Python/example

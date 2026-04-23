@@ -339,15 +339,6 @@ if(SKBUILD)
    # set(PYBIND11_FINDPYTHON ON)
    find_package(pybind11 CONFIG REQUIRED)
 
-   if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      # C++ ABI
-      add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=1)
-
-      # link-time optimization
-      add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-flto=auto>)
-      add_link_options(-flto=auto)
-   endif()
-
    file(GLOB PYTHON_MODULE_FILES
       interfaces/Python/cpp_classes/*.cpp
       interfaces/Python/python_modules/*.cpp
@@ -359,6 +350,15 @@ if(SKBUILD)
 
    target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    target_include_directories(unopy SYSTEM PUBLIC ${DIRECTORIES})
+
+   if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      # C++ ABI
+      add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=1)
+
+      # link-time optimization
+      target_compile_options(unopy PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-flto=auto>)
+      target_link_options(unopy PRIVATE -flto=auto)
+   endif()
 
    install(TARGETS unopy
            LIBRARY DESTINATION unopy    # Linux/macOS: unopy/unopy.so
