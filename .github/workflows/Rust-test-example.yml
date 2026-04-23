@@ -1,0 +1,81 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Debug
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        architecture: [x64]
+
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download dependencies
+      run: bash dependencies/scripts/download_dependencies.sh
+
+    - name: Configure (Linux)
+      run: |
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_FORTRAN_COMPILER=gfortran \
+          -DMUMPS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+          -DMETIS_INCLUDE_DIR=${{github.workspace}}/dependencies/include \
+          -DBQPD=${{github.workspace}}/dependencies/lib/libbqpd.a \
+          -DMETIS_LIBRARY=${{github.workspace}}/dependencies/lib/libmetis.a \
+          -DMUMPS_LIBRARY=${{github.workspace}}/dependencies/lib/libdmumps.a \
+          -DMUMPS_COMMON_LIBRARY=${{github.workspace}}/dependencies/lib/libmumps_common.a \
+          -DMUMPS_PORD_LIBRARY=${{github.workspace}}/dependencies/lib/libpord.a \
+          -DMUMPS_MPISEQ_LIBRARY=${{github.workspace}}/dependencies/lib/libmpiseq.a \
+          -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libcblas.a;${{github.workspace}}/dependencies/lib/libblas.a" \
+          -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
+          -DHIGHS=${{github.workspace}}/dependencies/lib/libhighs.a \
+          -DBUILD_STATIC_LIBS=ON \
+          -DBUILD_SHARED_LIBS=ON
+
+    - name: Build
+      run: cmake --build build --config ${{env.BUILD_TYPE}} -j4
+
+    - name: Install Uno
+      run: sudo cmake --install ${{github.workspace}}/build
+
+    - name: Build Rust example
+      working-directory: ${{github.workspace}}/interfaces/Rust
+      run: cargo build --bin hs015
+
+    - name: Run Rust example
+      working-directory: ${{github.workspace}}/interfaces/Rust
+      run: cargo run --bin hs015
