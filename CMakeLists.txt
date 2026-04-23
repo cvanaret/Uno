@@ -19,7 +19,7 @@ if (MSVC)
    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
    # https://github.com/google/googletest/tree/main/googletest#visual-studio-dynamic-vs-static-runtimes
 else()
-   set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion")
+   add_compile_options(-Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion)
    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
 endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -48,7 +48,7 @@ FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
 set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
 
 # source files
-file(GLOB UNO_SOURCE_FILES
+file(GLOB UNO_SOURCE_FILES CONFIGURE_DEPENDS
    interfaces/C/Uno_C_API.cpp
    uno/Uno.cpp
    uno/ingredients/constraint_relaxation_strategies/*.cpp
@@ -76,7 +76,7 @@ file(GLOB UNO_SOURCE_FILES
 )
 
 # unit test source files
-file(GLOB TESTS_UNO_SOURCE_FILES
+file(GLOB TESTS_UNO_SOURCE_FILES CONFIGURE_DEPENDS
    unotest/unotest.cpp
    unotest/functional_tests/BLASTests.cpp
    unotest/functional_tests/LAPACKTests.cpp
@@ -107,7 +107,7 @@ function(link_to_uno library_name library_path)
    set(LIBRARIES ${LIBRARIES} ${library_path} PARENT_SCOPE)
    # add a preprocessor definition
    string(TOUPPER ${library_name} library_name_upper)
-   add_definitions("-D HAS_${library_name_upper}")
+   add_compile_definitions(HAS_${library_name_upper})
    # include the corresponding directory
    get_filename_component(directory ${library_path} DIRECTORY)
    set(DIRECTORIES ${DIRECTORIES} ${directory} PARENT_SCOPE)
@@ -163,7 +163,7 @@ if(HIGHS)
    # add the library
    set(LIBRARIES ${LIBRARIES} ${HIGHS})
    # add a preprocessor definition
-   add_definitions("-D HAS_HIGHS")
+   add_compile_definitions(HAS_HIGHS)
    # include the corresponding directory
    get_filename_component(HIGHS_DIRECTORY ${HIGHS} DIRECTORY)
    set(DIRECTORIES ${DIRECTORIES} ${HIGHS_DIRECTORY}/../include/highs)
@@ -181,10 +181,10 @@ if(MUMPS_LIBRARY)
 
    if(NOT MUMPS_MPISEQ_LIBRARY)
       # parallel
-      add_definitions("-D MUMPS_PARALLEL")
+      add_compile_definitions(MUMPS_PARALLEL)
       find_package(MPI REQUIRED)
       list(APPEND LIBRARIES MPI::MPI_CXX MPI::MPI_Fortran)
-      add_definitions("-D HAS_MPI")
+      add_compile_definitions(HAS_MPI)
 
       find_package(BLACS REQUIRED)
       list(APPEND LIBRARIES ${BLACS_LIBRARY})
@@ -205,7 +205,7 @@ if(MUMPS_LIBRARY)
    find_package(OpenMP REQUIRED)
    list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
 
-   add_definitions("-D HAS_MUMPS")
+   add_compile_definitions(HAS_MUMPS)
    message(STATUS "Found MUMPS")
 endif()
 
@@ -286,6 +286,10 @@ add_library(compiled_uno_files OBJECT ${UNO_SOURCE_FILES})
 set_property(TARGET compiled_uno_files PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(compiled_uno_files SYSTEM PUBLIC ${DIRECTORIES})
 target_link_libraries(compiled_uno_files PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+   # C++ ABI
+   target_compile_definitions(compiled_uno_files PUBLIC _GLIBCXX_USE_CXX11_ABI=1)
+endif()
 
 if(BUILD_STATIC_LIBS)
    add_library(uno_static STATIC $<TARGET_OBJECTS:compiled_uno_files>)
@@ -324,10 +328,10 @@ if(AMPLSOLVER)
    add_executable(uno_ampl EXCLUDE_FROM_ALL interfaces/AMPL/AMPLModel.cpp interfaces/AMPL/uno_ampl.cpp)
    target_include_directories(uno_ampl SYSTEM PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} ${LIBRARIES} ${CMAKE_DL_LIBS} ${FORTRAN_LIBS})
-   add_definitions("-D HAS_AMPLSOLVER")
+   add_compile_definitions(HAS_AMPLSOLVER)
    # include the corresponding directory
    get_filename_component(directory ${AMPLSOLVER} DIRECTORY)
-   include_directories(${directory})
+   target_include_directories(uno_ampl PRIVATE ${directory})
 endif()
 
 #############################
@@ -345,16 +349,13 @@ if(SKBUILD)
       interfaces/Python/unopy.cpp
    )
 
-   add_definitions("-D PYBIND11_DETAILED_ERROR_MESSAGES")
+   add_compile_definitions(PYBIND11_DETAILED_ERROR_MESSAGES)
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
 
    target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
    target_include_directories(unopy SYSTEM PUBLIC ${DIRECTORIES})
 
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      # C++ ABI
-      add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=1)
-
       # link-time optimization
       target_compile_options(unopy PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-flto=auto>)
       target_link_options(unopy PRIVATE -flto=auto)
