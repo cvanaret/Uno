@@ -48,13 +48,11 @@ set PATH=C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;%PATH%
 
 ### Packages and libraries
 
-* install BLAS and LAPACK:
+* install cmake, BLAS and LAPACK:
 ```console
+sudo apt update
+sudo apt install cmake
 sudo apt install libblas-dev liblapack-dev
-```
-* install cmake (and optionally ccmake, CMake curses interface):
-```console
-sudo apt install cmake cmake-curses-gui
 ```
 
 * **(optional)** download the AMPL solver library (ASL): http://www.netlib.org/ampl/solvers/
@@ -82,18 +80,16 @@ lstopo --of xml ~/.config/hwloc-topology.xml
 echo 'export HWLOC_XMLFILE=$HOME/.config/hwloc-topology.xml' >> ~/.bashrc
 ```
 
-### Compilation
+### Compiling and installing Uno
 
-1. Create a `build` directory in the main directory and move to it:
+The sequence of commands to configure and build is as follows (assuming the build directory is `build`):
 ```console
-mkdir build && cd build
-```
-2. Execute cmake:  
-```console
-cmake [options] ..
+cmake -S. -B build [options]
+cmake --build build --parallel
 ```
 You can pass the following options:
 - build type: `-DCMAKE_BUILD_TYPE=[Release|Debug]`
+- enable the unit tests: `-DENABLE_TESTS=[ON|OFF]`
 - build the Uno static library `uno_static`: `-DBUILD_STATIC_LIBS=[ON|OFF]`
 - build the Uno shared library `uno_shared`: `-DBUILD_SHARED_LIBS=[ON|OFF]`
 - path to the BQPD library: `-DBQPD=path_to_libbqpd`
@@ -110,35 +106,13 @@ You can pass the following options:
 - path to MUMPS include directory: `-DMUMPS_INCLUDE_DIR=path_to_mumps_include_dir`
 - path to SPRAL library: `-DSPRAL=path_to_libspral`
 
-3. **(or)** Use ccmake to provide the paths to the required and optional libraries:
+To install the built libraries and headers:
 ```console
-ccmake ..
-```
-4. Compile (in parallel: `n` being the number of threads, e.g. 6):
-```console
-make -jn
+cmake --install build
 ```
 
-To compile the code with different configurations, simply create a `build` directory for each configuration and perform instructions 1 to 4.
-
-### Install
-
-5. Install the built libraries and header (`uno_static`, `uno_shared` and `Uno_C_API.h`):
+To compile and run the test suite:
 ```console
-sudo make install
-```
-
-### Unit tests
-
-6. Install the GoogleTest suite:
-```console
-sudo apt install googletest
-```
-7. Compile the test suite:
-```console
-make run_unotest -jn
-```
-8. Run the test suite:
-```console
-./run_unotest
+cmake --build build --target run_unotest --parallel
+ctest --test-dir build
 ```
