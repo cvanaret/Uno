@@ -394,6 +394,8 @@ if(ENABLE_TESTS)
       googletest
       URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
    )
+   set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+   set(INSTALL_GMOCK OFF CACHE BOOL "" FORCE)
 
    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
    FetchContent_MakeAvailable(googletest)
