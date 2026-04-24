@@ -186,7 +186,10 @@ namespace uno {
          return *this;
       }
 
+      using BLASVector<T>::data; // const version
       [[nodiscard]] virtual T* data() = 0;
+
+      using BLASVector<T>::operator[]; // const version
       [[nodiscard]] virtual T& operator[](size_t index) = 0;
 
       void scale(T factor) {

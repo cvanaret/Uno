@@ -23,6 +23,7 @@ namespace uno {
       using value_type = T;
 
       BLASMatrix(size_t number_rows, size_t number_columns, size_t leading_dimension);
+      BLASMatrix(const BLASMatrix&) = default;
       virtual ~BLASMatrix() = default;
 
       // copy an existing matrix into this object
