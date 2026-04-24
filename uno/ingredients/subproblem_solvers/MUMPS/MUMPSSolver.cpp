@@ -109,7 +109,7 @@ namespace uno {
    }
 
    size_t MUMPSSolver::rank() const {
-      return this->workspace.n - this->number_zero_eigenvalues();
+      return static_cast<size_t>(this->workspace.n) - this->number_zero_eigenvalues();
    }
 
    LinearSystem& MUMPSSolver::get_linear_system() {
