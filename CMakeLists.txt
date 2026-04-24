@@ -95,20 +95,29 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/unotest.cpp
    unotest/functional_tests/BLASTests.cpp
    unotest/functional_tests/LAPACKTests.cpp
-   unotest/unit_tests/CollectionAdapterTests.cpp
-   unotest/unit_tests/ConcatenationTests.cpp
-   unotest/unit_tests/COOSparseStorageTests.cpp
-   unotest/unit_tests/CSCSparseStorageTests.cpp
-   unotest/unit_tests/DenseMatrixTests.cpp
-   unotest/unit_tests/RangeTests.cpp
-   unotest/unit_tests/ScalarMultipleTests.cpp
-   unotest/unit_tests/SparseVectorTests.cpp
-   unotest/unit_tests/SumTests.cpp
-   unotest/unit_tests/VectorTests.cpp
-   unotest/unit_tests/VectorViewTests.cpp
+   unotest/unit_tests/*.cpp
 )
 
 target_sources(compiled_uno_files PRIVATE ${UNO_SOURCE_FILES})
+
+# ======================
+# Helper function
+# ======================
+
+# function that links an existing library to Uno
+function(link_to_uno library_name library_path)
+   target_link_libraries(uno_dependencies INTERFACE ${library_path})
+
+   # add a preprocessor definition
+   string(TOUPPER ${library_name} library_name_upper)
+   target_compile_definitions(uno_dependencies INTERFACE HAS_${library_name_upper})
+
+   # include the corresponding directory
+   get_filename_component(directory ${library_path} DIRECTORY)
+   set(DIRECTORIES ${DIRECTORIES} ${directory} PARENT_SCOPE)
+
+   message(STATUS "Found ${library_name}")
+endfunction()
 
 # ======================
 # Dependencies
@@ -116,18 +125,6 @@ target_sources(compiled_uno_files PRIVATE ${UNO_SOURCE_FILES})
 
 # directories
 set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
-
-# function that links an existing library to Uno
-function(link_to_uno library_name library_path)
-   target_link_libraries(uno_dependencies INTERFACE ${library_path})
-   # add a preprocessor definition
-   string(TOUPPER ${library_name} library_name_upper)
-   add_compile_definitions(HAS_${library_name_upper})
-   # include the corresponding directory
-   get_filename_component(directory ${library_path} DIRECTORY)
-   set(DIRECTORIES ${DIRECTORIES} ${directory} PARENT_SCOPE)
-   message(STATUS "Found ${library_name}")
-endfunction()
 
 # HSL or MA57
 find_library(HSL hsl)
@@ -336,35 +333,33 @@ else()
    set(DEFAULT_UNO_LIB uno_shared)
 endif()
 
-######################
-# optional AMPL main #
-######################
+# ======================
+# AMPL executable
+# ======================
+
 find_library(AMPLSOLVER amplsolver)
 if(AMPLSOLVER)
    message(STATUS "Found amplsolver")
-   add_compile_definitions(HAS_AMPLSOLVER)
 
    add_executable(uno_ampl EXCLUDE_FROM_ALL interfaces/AMPL/AMPLModel.cpp interfaces/AMPL/uno_ampl.cpp)
-   target_include_directories(uno_ampl SYSTEM PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} uno_dependencies ${CMAKE_DL_LIBS})
+   target_include_directories(uno_ampl SYSTEM PUBLIC ${DIRECTORIES})
+   target_compile_definitions(uno_ampl PRIVATE HAS_AMPLSOLVER)
 
    # include the corresponding directory
    get_filename_component(directory ${AMPLSOLVER} DIRECTORY)
    target_include_directories(uno_ampl PRIVATE ${directory})
 endif()
 
-#############################
-# unopy (pybind11 bindings) #
-#############################
-if(SKBUILD)
-   message(STATUS "Building Python extension (SKBUILD detected).")
-   find_package(pybind11 CONFIG REQUIRED)
+# =========================
+# unopy (pybind11 bindings)
+# =========================
 
-   file(GLOB PYTHON_MODULE_FILES
-      interfaces/Python/cpp_classes/*.cpp
-      interfaces/Python/python_modules/*.cpp
-      interfaces/Python/unopy.cpp
-   )
+if(SKBUILD)
+   find_package(pybind11 CONFIG REQUIRED)
+   message(STATUS "Building Python extension (SKBUILD detected).")
+
+   file(GLOB PYTHON_MODULE_FILES interfaces/Python/**/*.cpp)
 
    add_compile_definitions(PYBIND11_DETAILED_ERROR_MESSAGES)
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
@@ -384,9 +379,10 @@ if(SKBUILD)
    )
 endif()
 
-##################################
-# optional GoogleTest unit tests #
-##################################
+# ======================
+# GoogleTest unit tests
+# ======================
+
 if(ENABLE_TESTS)
    include(FetchContent)
 
@@ -394,6 +390,7 @@ if(ENABLE_TESTS)
       googletest
       URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
    )
+   # do not install gtest in install()
    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
    set(INSTALL_GMOCK OFF CACHE BOOL "" FORCE)
 
@@ -404,8 +401,8 @@ if(ENABLE_TESTS)
    enable_testing()
 
    add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS})
-   target_include_directories(run_unotest SYSTEM PUBLIC ${DIRECTORIES} ${GTEST_INCLUDE_DIR})
    target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} uno_dependencies ${CMAKE_DL_LIBS})
+   target_include_directories(run_unotest SYSTEM PUBLIC ${DIRECTORIES} ${GTEST_INCLUDE_DIR})
    if (MSVC)
       set_target_properties(run_unotest PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
    endif()
