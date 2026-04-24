@@ -200,6 +200,28 @@ extern "C" {
       const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, uno_constraints_jacobian_callback jacobian);
 
    // [optional]
+   // sets the constraints lower bounds of a given model.
+   // takes as inputs an array of lower bounds of size "number_constraints".
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_constraints_lower_bounds(void* model, const double* constraints_lower_bounds);
+
+   // [optional]
+   // sets the constraints upper bounds of a given model.
+   // takes as inputs an array of upper bounds of size "number_constraints".
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_constraints_upper_bounds(void* model, const double* constraints_upper_bounds);
+
+   // [optional]
+   // sets the lower bound of a given constraint.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_constraint_lower_bound(void* model, uno_int constraint_index, double lower_bound);
+
+   // [optional]
+   // sets the upper bound of a given constraint.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_constraint_upper_bound(void* model, uno_int constraint_index, double upper_bound);
+
+   // [optional]
    // sets the Jacobian operator (computes Jacobian-vector products) of a given model.
    // returns true if it succeeded, false otherwise.
    bool uno_set_jacobian_operator(void* model, uno_constraints_jacobian_operator_callback jacobian_operator);

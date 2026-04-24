@@ -98,6 +98,26 @@ function uno_set_constraints(model, number_constraints, constraint_functions,
                                       jacobian::Ptr{Cvoid})::Bool
 end
 
+function uno_set_constraints_lower_bounds(model, constraints_lower_bounds)
+    @ccall libuno.uno_set_constraints_lower_bounds(model::Ptr{Cvoid},
+                                                   constraints_lower_bounds::Ptr{Cdouble})::Bool
+end
+
+function uno_set_constraints_upper_bounds(model, constraints_upper_bounds)
+    @ccall libuno.uno_set_constraints_upper_bounds(model::Ptr{Cvoid},
+                                                   constraints_upper_bounds::Ptr{Cdouble})::Bool
+end
+
+function uno_set_constraint_lower_bound(model, constraint_index, lower_bound)
+    @ccall libuno.uno_set_constraint_lower_bound(model::Ptr{Cvoid}, constraint_index::Int32,
+                                                 lower_bound::Cdouble)::Bool
+end
+
+function uno_set_constraint_upper_bound(model, constraint_index, upper_bound)
+    @ccall libuno.uno_set_constraint_upper_bound(model::Ptr{Cvoid}, constraint_index::Int32,
+                                                 upper_bound::Cdouble)::Bool
+end
+
 function uno_set_jacobian_operator(model, jacobian_operator)
     @ccall libuno.uno_set_jacobian_operator(model::Ptr{Cvoid},
                                             jacobian_operator::Ptr{Cvoid})::Bool
