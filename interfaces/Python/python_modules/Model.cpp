@@ -5,13 +5,14 @@
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
 #include "../unopy.hpp"
+#include "tools/Infinity.hpp"
 
 namespace py = pybind11;
 
 namespace uno {
    void define_Model(py::module& module) {
       py::class_<PythonUserModel>(module, "Model")
-      // constructor
+      // constructor with bounds
       // https://stackoverflow.com/a/62310838/16037994
       .def(py::init<>([](const std::string& problem_type, uno_int number_variables, std::vector<double> variables_lower_bounds,
             std::vector<double> variables_upper_bounds, uno_int base_indexing) {
@@ -22,7 +23,39 @@ namespace uno {
          return model;
       }), "Constructor")
 
+      // constructor without bounds
+      .def(py::init<>([](const std::string& problem_type, uno_int number_variables, uno_int base_indexing) {
+         PythonUserModel model(problem_type.data(), number_variables, base_indexing);
+         const size_t unsigned_number_variables = static_cast<size_t>(number_variables);
+         model.variables_lower_bounds.resize(unsigned_number_variables, -INF<double>);
+         model.variables_upper_bounds.resize(unsigned_number_variables, INF<double>);
+         model.initial_primal_iterate.resize(unsigned_number_variables, 0.);
+         return model;
+      }), "Constructor")
+
       // methods
+      .def("set_variables_lower_bounds", [](PythonUserModel& user_model, std::vector<double> variables_lower_bounds) {
+         user_model.variables_lower_bounds = std::move(variables_lower_bounds);
+      })
+
+      .def("set_variables_upper_bounds", [](PythonUserModel& user_model, std::vector<double> variables_upper_bounds) {
+         user_model.variables_upper_bounds = std::move(variables_upper_bounds);
+      })
+
+      .def("set_variable_lower_bound", [](PythonUserModel& user_model, uno_int variable_index, double lower_bound) {
+         if (variable_index < 0 || variable_index >= user_model.number_variables) {
+            throw std::invalid_argument("Please specify a valid index.");
+         }
+         user_model.variables_lower_bounds[static_cast<size_t>(variable_index)] = lower_bound;
+      })
+
+      .def("set_variable_upper_bound", [](PythonUserModel& user_model, uno_int variable_index, double upper_bound) {
+         if (variable_index < 0 || variable_index >= user_model.number_variables) {
+            throw std::invalid_argument("Please specify a valid index.");
+         }
+         user_model.variables_upper_bounds[static_cast<size_t>(variable_index)] = upper_bound;
+      })
+
       .def("set_objective", [](PythonUserModel& user_model, uno_int optimization_sense, Objective objective_function,
             ObjectiveGradient objective_gradient) {
          if (optimization_sense != UNO_MINIMIZE && optimization_sense != UNO_MAXIMIZE) {
@@ -60,6 +93,28 @@ namespace uno {
          user_model.jacobian_column_indices = std::move(jacobian_column_indices);
          user_model.jacobian = std::move(jacobian);
          user_model.initial_dual_iterate.resize(static_cast<size_t>(number_constraints), 0.);
+      })
+
+      .def("set_constraints_lower_bounds", [](PythonUserModel& user_model, std::vector<double> constraints_lower_bounds) {
+         user_model.constraints_lower_bounds = std::move(constraints_lower_bounds);
+      })
+
+      .def("set_constraints_upper_bounds", [](PythonUserModel& user_model, std::vector<double> constraints_upper_bounds) {
+         user_model.constraints_upper_bounds = std::move(constraints_upper_bounds);
+      })
+
+      .def("set_constraint_lower_bound", [](PythonUserModel& user_model, uno_int constraint_index, double lower_bound) {
+         if (constraint_index < 0 || constraint_index >= user_model.number_constraints) {
+            throw std::invalid_argument("Please specify a valid index.");
+         }
+         user_model.constraints_lower_bounds[static_cast<size_t>(constraint_index)] = lower_bound;
+      })
+
+      .def("set_constraint_upper_bound", [](PythonUserModel& user_model, uno_int constraint_index, double upper_bound) {
+         if (constraint_index < 0 || constraint_index >= user_model.number_variables) {
+            throw std::invalid_argument("Please specify a valid index.");
+         }
+         user_model.constraints_upper_bounds[static_cast<size_t>(constraint_index)] = upper_bound;
       })
 
       .def("set_lagrangian_hessian", [](PythonUserModel& user_model, uno_int number_hessian_nonzeros, char hessian_triangular_part,
