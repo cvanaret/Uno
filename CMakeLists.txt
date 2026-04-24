@@ -60,6 +60,10 @@ target_include_directories(uno_dependencies INTERFACE
    ${CMAKE_BINARY_DIR}/include
 )
 
+if(ENABLE_TESTS)
+   add_executable(run_unotest EXCLUDE_FROM_ALL)
+endif()
+
 # ======================
 # Sources
 # ======================
@@ -90,6 +94,7 @@ file(GLOB UNO_SOURCE_FILES CONFIGURE_DEPENDS
    uno/options/*.cpp
    uno/tools/*.cpp
 )
+target_sources(compiled_uno_files PRIVATE ${UNO_SOURCE_FILES})
 
 file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/unotest.cpp
@@ -97,8 +102,9 @@ file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/functional_tests/LAPACKTests.cpp
    unotest/unit_tests/*.cpp
 )
-
-target_sources(compiled_uno_files PRIVATE ${UNO_SOURCE_FILES})
+if(ENABLE_TESTS)
+   target_sources(run_unotest PRIVATE ${TESTS})
+endif()
 
 # ======================
 # Helper function
@@ -114,7 +120,7 @@ function(link_to_uno library_name library_path)
 
    # include the corresponding directory
    get_filename_component(directory ${library_path} DIRECTORY)
-   set(DIRECTORIES ${DIRECTORIES} ${directory} PARENT_SCOPE)
+   target_include_directories(uno_dependencies SYSTEM INTERFACE ${directory})
 
    message(STATUS "Found ${library_name}")
 endfunction()
@@ -122,9 +128,6 @@ endfunction()
 # ======================
 # Dependencies
 # ======================
-
-# directories
-set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
 
 # HSL or MA57
 find_library(HSL hsl)
@@ -142,11 +145,15 @@ else()
 endif()
 if(HSL OR MA57)
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/MA57/MA57Solver.cpp)
-   list(APPEND TESTS unotest/functional_tests/MA57SolverTests.cpp)
+   if(ENABLE_TESTS)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/MA57SolverTests.cpp)
+   endif()
 endif()
 if(HSL OR MA27)
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/MA27/MA27Solver.cpp)
-   list(APPEND TESTS unotest/functional_tests/MA27SolverTests.cpp)
+   if(ENABLE_TESTS)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/MA27SolverTests.cpp)
+   endif()
 endif()
 
 # METIS
@@ -162,7 +169,9 @@ if(BQPD)
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
            uno/ingredients/subproblem_solvers/BQPD/BQPDWorkspace.cpp)
-   list(APPEND TESTS unotest/functional_tests/BQPDSolverTests.cpp)
+   if(ENABLE_TESTS)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/BQPDSolverTests.cpp)
+   endif()
 endif()
 
 # HiGHS
@@ -172,12 +181,14 @@ if(HIGHS)
    target_compile_definitions(uno_dependencies INTERFACE HAS_HIGHS)
 
    get_filename_component(HIGHS_DIRECTORY ${HIGHS} DIRECTORY)
-   set(DIRECTORIES ${DIRECTORIES} ${HIGHS_DIRECTORY}/../include/highs)
+   target_include_directories(uno_dependencies SYSTEM INTERFACE ${HIGHS_DIRECTORY}/../include/highs)
 
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSWorkspace.cpp)
-   list(APPEND TESTS unotest/functional_tests/HiGHSSolverTests.cpp)
+   if(ENABLE_TESTS)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/HiGHSSolverTests.cpp)
+   endif()
 
    message(STATUS "Found HIGHS")
 endif()
@@ -189,8 +200,10 @@ if(MUMPS_LIBRARY)
    target_compile_definitions(uno_dependencies INTERFACE HAS_MUMPS)
 
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/MUMPS/MUMPSSolver.cpp)
-   list(APPEND TESTS unotest/functional_tests/MUMPSSolverTests.cpp)
-   list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
+   target_include_directories(uno_dependencies SYSTEM INTERFACE ${MUMPS_INCLUDE_DIR})
+   if(ENABLE_TESTS)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/MUMPSSolverTests.cpp)
+   endif()
 
    if(NOT MUMPS_MPISEQ_LIBRARY) # parallel
       find_package(MPI REQUIRED)
@@ -199,11 +212,11 @@ if(MUMPS_LIBRARY)
 
       find_package(BLACS REQUIRED)
       target_link_libraries(uno_dependencies INTERFACE ${BLACS_LIBRARY})
-      list(APPEND DIRECTORIES ${BLACS_INCLUDE_DIRS})
+      target_include_directories(uno_dependencies SYSTEM INTERFACE ${BLACS_INCLUDE_DIRS})
 
       find_package(ScaLAPACK REQUIRED)
       target_link_libraries(uno_dependencies INTERFACE ${ScaLAPACK_LIBRARY})
-      list(APPEND DIRECTORIES ${ScaLAPACK_INCLUDE_DIRS})
+      target_include_directories(uno_dependencies SYSTEM INTERFACE ${ScaLAPACK_INCLUDE_DIRS})
    else()
       # link dummy parallel library (provided by MUMPS distribution)
       link_to_uno(MUMPS_MPISEQ_LIBRARY ${MUMPS_MPISEQ_LIBRARY})
@@ -211,7 +224,7 @@ if(MUMPS_LIBRARY)
    
    find_package(METIS REQUIRED)
    target_link_libraries(uno_dependencies INTERFACE ${METIS_LIBRARY})
-   list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
+   target_include_directories(uno_dependencies SYSTEM INTERFACE ${METIS_INCLUDE_DIRS})
 
    find_package(OpenMP REQUIRED)
    target_link_libraries(uno_dependencies INTERFACE OpenMP::OpenMP_CXX)
@@ -223,23 +236,29 @@ endif()
 find_library(SPRAL NAMES spral)
 if(SPRAL)
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/SSIDS/SSIDSSolver.cpp)
-   list(APPEND TESTS unotest/functional_tests/SSIDSSolverTests.cpp)
+   if(ENABLE_TESTS)
+      target_sources(run_unotest PRIVATE unotest/functional_tests/SSIDSSolverTests.cpp)
+   endif()
    link_to_uno(spral ${SPRAL})
 endif()
 
-# LAPACK
-# convert relative paths of LAPACK to absolute paths
-if(LAPACK_LIBRARIES)
-   set(ABSOLUTE_LAPACK_LIBRARIES)
-   foreach(relative_path IN LISTS LAPACK_LIBRARIES)
-      if(relative_path MATCHES "^-l")
-         # pass raw linker flags through unchanged
-         list(APPEND ABSOLUTE_LAPACK_LIBRARIES "${relative_path}")
+# helper function: resolve a mixed list of -lflags and relative paths to absolute paths
+function(resolve_library_paths input_list output_list)
+   set(result)
+   foreach(entry IN LISTS ${input_list})
+      if(entry MATCHES "^-l")
+         list(APPEND result "${entry}")
       else()
-         get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
-         list(APPEND ABSOLUTE_LAPACK_LIBRARIES "${absolute_path}")
+         get_filename_component(absolute_entry "${entry}" ABSOLUTE)
+         list(APPEND result "${absolute_entry}")
       endif()
    endforeach()
+   set(${output_list} "${result}" PARENT_SCOPE)
+endfunction()
+
+# LAPACK
+if(LAPACK_LIBRARIES)
+   resolve_library_paths(LAPACK_LIBRARIES ABSOLUTE_LAPACK_LIBRARIES)
    target_link_libraries(uno_dependencies INTERFACE ${ABSOLUTE_LAPACK_LIBRARIES})
 else()
    find_package(LAPACK REQUIRED)
@@ -247,18 +266,8 @@ else()
 endif()
 
 # BLAS
-# convert relative paths of BLAS to absolute paths
 if(BLAS_LIBRARIES)
-   set(ABSOLUTE_BLAS_LIBRARIES)
-   foreach(relative_path IN LISTS BLAS_LIBRARIES)
-      if(relative_path MATCHES "^-l")
-         # pass raw linker flags through unchanged
-         list(APPEND ABSOLUTE_BLAS_LIBRARIES "${relative_path}")
-      else()
-         get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
-         list(APPEND ABSOLUTE_BLAS_LIBRARIES "${absolute_path}")
-      endif()
-   endforeach()
+   resolve_library_paths(BLAS_LIBRARIES ABSOLUTE_BLAS_LIBRARIES)
    target_link_libraries(uno_dependencies INTERFACE ${ABSOLUTE_BLAS_LIBRARIES})
 else()
    find_package(BLAS REQUIRED)
@@ -268,16 +277,7 @@ endif()
 # additional libraries to link against
 set(AUXILIARY_LIBRARIES "" CACHE STRING "Additional libraries to link against")
 if(AUXILIARY_LIBRARIES)
-   set(ABSOLUTE_AUXILIARY_LIBRARIES)
-   foreach(relative_path IN LISTS AUXILIARY_LIBRARIES)
-      if(relative_path MATCHES "^-l")
-         # pass raw linker flags through unchanged
-         list(APPEND ABSOLUTE_AUXILIARY_LIBRARIES "${relative_path}")
-      else()
-         get_filename_component(absolute_path "${relative_path}" ABSOLUTE)
-         list(APPEND ABSOLUTE_AUXILIARY_LIBRARIES "${absolute_path}")
-      endif()
-   endforeach()
+   resolve_library_paths(AUXILIARY_LIBRARIES ABSOLUTE_AUXILIARY_LIBRARIES)
    target_link_libraries(uno_dependencies INTERFACE ${ABSOLUTE_AUXILIARY_LIBRARIES})
 endif()
 
@@ -299,8 +299,6 @@ target_link_libraries(compiled_uno_files PUBLIC uno_dependencies)
 # ======================
 # Final libraries
 # ======================
-
-target_include_directories(compiled_uno_files SYSTEM PUBLIC ${DIRECTORIES})
 
 set(UNO_PUBLIC_HEADERS
    interfaces/C/Uno_C_API.h
@@ -342,7 +340,6 @@ if(AMPLSOLVER)
 
    add_executable(uno_ampl EXCLUDE_FROM_ALL interfaces/AMPL/AMPLModel.cpp interfaces/AMPL/uno_ampl.cpp)
    target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} uno_dependencies ${CMAKE_DL_LIBS})
-   target_include_directories(uno_ampl SYSTEM PUBLIC ${DIRECTORIES})
    target_compile_definitions(uno_ampl PRIVATE HAS_AMPLSOLVER)
 
    # include the corresponding directory
@@ -368,7 +365,6 @@ if(SKBUILD)
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
 
    target_link_libraries(unopy PUBLIC uno_dependencies)
-   target_include_directories(unopy SYSTEM PUBLIC ${DIRECTORIES})
 
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       # link-time optimization
@@ -403,9 +399,7 @@ if(ENABLE_TESTS)
 
    enable_testing()
 
-   add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS})
    target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} uno_dependencies ${CMAKE_DL_LIBS})
-   target_include_directories(run_unotest SYSTEM PUBLIC ${DIRECTORIES} ${GTEST_INCLUDE_DIR})
    if (MSVC)
       set_target_properties(run_unotest PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
    endif()
