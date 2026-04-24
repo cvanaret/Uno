@@ -269,6 +269,24 @@ function uno_set_variables_bounds(model::Model, variables_lower_bounds::Vector{F
   return
 end
 
+function uno_set_variable_lower_bound(model::Model, variable_index::Int, lower_bound::Float64)
+  @assert 1 <= variable_index <= model.nvar
+  GC.@preserve model begin
+    flag = uno_set_variable_lower_bound(model.c_model, variable_index, lower_bound)
+  end
+  flag || error("Failed to set lower bound via uno_set_variable_lower_bound.")
+  return
+end
+
+function uno_set_variable_upper_bound(model::Model, variable_index::Int, upper_bound::Float64)
+  @assert 1 <= variable_index <= model.nvar
+  GC.@preserve model begin
+    flag = uno_set_variable_upper_bound(model.c_model, variable_index, upper_bound)
+  end
+  flag || error("Failed to set upper bound via uno_set_variable_upper_bound.")
+  return
+end
+
 function uno_set_initial_primal_iterate(model::Model, initial_primal_iterate::Vector{Float64})
   @assert model.nvar == length(initial_primal_iterate)
   GC.@preserve model begin
