@@ -32,7 +32,7 @@ tar -xzf Uno.vX.Y.Z.macos.tar.gz
 export DYLD_LIBRARY_PATH=/path/to/extracted/Uno/lib:$DYLD_LIBRARY_PATH
 export PATH=/path/to/extracted/Uno/bin:$PATH
 ```
-*(Alternatively, you can use `DYLD_FALLBACK_LIBRARY_PATH` instead of `DYLD_LIBRARY_PATH`.)*
+Alternatively, you can use `DYLD_FALLBACK_LIBRARY_PATH` instead of `DYLD_LIBRARY_PATH`.
 
 **Example for Windows (PowerShell)**:
 ```console
@@ -59,8 +59,9 @@ sudo apt install libblas-dev liblapack-dev
 
 * **(optional)** download  solvers:
     * BQPD (null-space active set solver for nonconvex quadratic programming): get a precompiled binary for your architecture (https://github.com/leyffer/BQPD_jll.jl/releases) or get in touch with Sven Leyffer to apply for an academic license (https://www.mcs.anl.gov/~leyffer/solvers.html)
+    * MA27 (sparse indefinite symmetric linear solver): https://www.hsl.rl.ac.uk/download/MA27/1.0.0
     * MA57 (sparse indefinite symmetric linear solver): http://www.hsl.rl.ac.uk/catalogue/ma57.html
-    * LIBHSL (collection of libraries for sparse linear systems): https://licences.stfc.ac.uk/products/Software/HSL/LibHSL
+    * LIBHSL (collection of solvers for sparse linear systems): https://licences.stfc.ac.uk/products/Software/HSL/LibHSL
     * MUMPS (sparse indefinite symmetric linear solver): https://mumps-solver.org/index.php?page=dwnld
     * SSIDS (sparse indefinite symmetric linear solver): https://github.com/ralna/spral
     * HiGHS (linear programming and convex quadratic programming solver): https://highs.dev
@@ -93,12 +94,12 @@ You can pass the following options:
 - build the Uno static library `uno_static`: `-DBUILD_STATIC_LIBS=[ON|OFF]`
 - build the Uno shared library `uno_shared`: `-DBUILD_SHARED_LIBS=[ON|OFF]`
 - path to the BQPD library: `-DBQPD=path_to_libbqpd`
-- path to the MA27 library: `-DMA57=path_to_libma27`
+- path to the MA27 library: `-DMA27=path_to_libma27`
 - path to the MA57 library: `-DMA57=path_to_libma57`
 - path to ASL library: `-DAMPLSOLVER=path_to_libamplsolver`
 - path to HiGHS library: `-DHIGHS=path_to_libhighs`
 - path to HSL library: `-DHSL=path_to_libhsl`
-- path to METIS library (`fakemetis` is built with MA57): `-DMETIS=path_to_libmetis`
+- path to METIS library: `-DMETIS=path_to_libmetis`
 - path to MUMPS library: `-DMUMPS_LIBRARY=path_to_libdmumps`
 - path to MUMPS common library: `-DMUMPS_COMMON_LIBRARY=path_to_libmumps_common`
 - path to MUMPS PORD library: `-DMUMPS_PORD_LIBRARY=path_to_mumps_libpord`
