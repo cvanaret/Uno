@@ -19,7 +19,7 @@ namespace uno {
       this->rhs.resize(subproblem.number_variables);
    }
 
-   void InverseNewtonSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, double trust_region_radius,
+   void InverseNewtonSolver::solve(Statistics& /*statistics*/, const Subproblem& subproblem, [[maybe_unused]] double trust_region_radius,
          const Vector<double>& /*initial_point*/, Direction& direction, Evaluations& current_evaluations,
          const WarmstartInformation& /*warmstart_information*/) {
       assert(is_infinite(trust_region_radius));

@@ -121,9 +121,9 @@ namespace uno {
       // where
       // op(X) = X   or   op(X) = X^T
       inline void matrix_matrix_product(char transa, char transb, size_t number_rows_a, size_t number_columns_a,
-            size_t number_rows_b, size_t number_columns_b, size_t number_rows_c, size_t number_columns_c, double alpha,
-            const double* a, size_t leading_dimension_a, const double* b, size_t leading_dimension_b, double beta, double* c,
-            size_t leading_dimension_c) {
+            [[maybe_unused]] size_t number_rows_b, [[maybe_unused]] size_t number_columns_b, size_t number_rows_c,
+            size_t number_columns_c, double alpha, const double* a, size_t leading_dimension_a, const double* b,
+            size_t leading_dimension_b, double beta, double* c, size_t leading_dimension_c) {
          const int m = static_cast<int>(number_rows_c);
          const int n = static_cast<int>(number_columns_c);
          const int k = static_cast<int>(transa == 'N' ? number_columns_a : number_rows_a);

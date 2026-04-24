@@ -17,11 +17,11 @@ namespace uno {
    public:
       PrimalDualInteriorPointProblem(const OptimizationProblem& problem, const InteriorPointParameters& parameters,
          const Parameterization& parameterization);
-      std::unique_ptr<OptimizationProblem> clone() const override;
+      [[nodiscard]] std::unique_ptr<OptimizationProblem> clone() const override;
 
       [[nodiscard]] double get_objective_multiplier() const override;
-      [[nodiscard]] virtual bool has_inequality_constraints() const;
-      [[nodiscard]] virtual bool has_bound_constraints() const;
+      [[nodiscard]] bool has_inequality_constraints() const override;
+      [[nodiscard]] bool has_bound_constraints() const override;
 
       void generate_initial_iterate(Iterate& initial_iterate, Evaluations& evaluations) const override;
 
