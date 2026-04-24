@@ -16,7 +16,6 @@ set(CMAKE_CXX_STANDARD 17)
 option(BUILD_STATIC_LIBS "Build using static libraries" ON)
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(ENABLE_TESTS "Build unit tests" OFF)
-option(ENABLE_LTO "Enable link-time optimization" ON)
 
 if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
    message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
@@ -292,23 +291,30 @@ if(AUXILIARY_LIBRARIES)
    list(APPEND LIBRARIES ${ABSOLUTE_AUXILIARY_LIBRARIES})
 endif()
 
-###############
-# Uno library #
-###############
-# link with Fortran libraries (filtered for Apple architectures) even when static libraries are linked
+# ======================
+# Link core
+# ======================
+
+target_link_libraries(compiled_uno_files PUBLIC uno_dependencies)
+
+# Fortran runtime (filtered for Apple architectures) even when static libraries are linked
 set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
 if(APPLE)
    list(REMOVE_ITEM FORTRAN_LIBS gcc)
    list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
    list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
 endif()
+target_link_libraries(compiled_uno_files PUBLIC ${FORTRAN_LIBS})
+
+# ======================
+# Final libraries
+# ======================
 
 target_include_directories(compiled_uno_files SYSTEM PUBLIC ${DIRECTORIES})
-target_link_libraries(compiled_uno_files PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
+target_link_libraries(compiled_uno_files PUBLIC ${LIBRARIES})
 
 if(BUILD_STATIC_LIBS)
    add_library(uno_static STATIC $<TARGET_OBJECTS:compiled_uno_files>)
-   target_include_directories(uno_static SYSTEM PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_static PUBLIC uno_dependencies ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
    set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90")
@@ -316,7 +322,6 @@ endif()
 
 if(BUILD_SHARED_LIBS)
    add_library(uno_shared SHARED $<TARGET_OBJECTS:compiled_uno_files>)
-   target_include_directories(uno_shared SYSTEM PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_shared PUBLIC uno_dependencies ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
    set_target_properties(uno_shared PROPERTIES
@@ -339,10 +344,12 @@ endif()
 find_library(AMPLSOLVER amplsolver)
 if(AMPLSOLVER)
    message(STATUS "Found amplsolver")
+   add_compile_definitions(HAS_AMPLSOLVER)
+
    add_executable(uno_ampl EXCLUDE_FROM_ALL interfaces/AMPL/AMPLModel.cpp interfaces/AMPL/uno_ampl.cpp)
    target_include_directories(uno_ampl SYSTEM PUBLIC ${DIRECTORIES})
    target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} ${LIBRARIES} ${CMAKE_DL_LIBS} ${FORTRAN_LIBS})
-   add_compile_definitions(HAS_AMPLSOLVER)
+
    # include the corresponding directory
    get_filename_component(directory ${AMPLSOLVER} DIRECTORY)
    target_include_directories(uno_ampl PRIVATE ${directory})
@@ -353,8 +360,6 @@ endif()
 #############################
 if(SKBUILD)
    message(STATUS "Building Python extension (SKBUILD detected).")
-
-   # set(PYBIND11_FINDPYTHON ON)
    find_package(pybind11 CONFIG REQUIRED)
 
    file(GLOB PYTHON_MODULE_FILES
@@ -379,8 +384,6 @@ if(SKBUILD)
            LIBRARY DESTINATION unopy    # Linux/macOS: unopy/unopy.so
            RUNTIME DESTINATION unopy    # Windows: unopy/unopy.pyd
    )
-else()
-   message(STATUS "SKBUILD not detected, skipping Python extension.")
 endif()
 
 ##################################
