@@ -117,15 +117,12 @@ target_sources(compiled_uno_files PRIVATE ${UNO_SOURCE_FILES})
 # directories
 set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
 
-# list of all libraries
-set(LIBRARIES "")
 # additional libraries to link against
 set(AUXILIARY_LIBRARIES "" CACHE STRING "Additional libraries to link against")
 
 # function that links an existing library to Uno
 function(link_to_uno library_name library_path)
-   # add the library
-   set(LIBRARIES ${LIBRARIES} ${library_path} PARENT_SCOPE)
+   target_link_libraries(uno_dependencies INTERFACE ${library_path})
    # add a preprocessor definition
    string(TOUPPER ${library_name} library_name_upper)
    add_compile_definitions(HAS_${library_name_upper})
@@ -181,8 +178,7 @@ if(HIGHS)
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSWorkspace.cpp)
    list(APPEND TESTS unotest/functional_tests/HiGHSSolverTests.cpp)
-   # add the library
-   set(LIBRARIES ${LIBRARIES} ${HIGHS})
+   target_link_libraries(uno_dependencies INTERFACE ${HIGHS})
    # add a preprocessor definition
    add_compile_definitions(HAS_HIGHS)
    # include the corresponding directory
@@ -196,7 +192,7 @@ find_package(MUMPS)
 if(MUMPS_LIBRARY)
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/MUMPS/MUMPSSolver.cpp)
    list(APPEND TESTS unotest/functional_tests/MUMPSSolverTests.cpp)
-   list(APPEND LIBRARIES ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
+   target_link_libraries(uno_dependencies INTERFACE ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
 
    list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
 
@@ -204,15 +200,15 @@ if(MUMPS_LIBRARY)
       # parallel
       add_compile_definitions(MUMPS_PARALLEL)
       find_package(MPI REQUIRED)
-      list(APPEND LIBRARIES MPI::MPI_CXX MPI::MPI_Fortran)
+      target_link_libraries(uno_dependencies INTERFACE MPI::MPI_CXX MPI::MPI_Fortran)
       add_compile_definitions(HAS_MPI)
 
       find_package(BLACS REQUIRED)
-      list(APPEND LIBRARIES ${BLACS_LIBRARY})
+      target_link_libraries(uno_dependencies INTERFACE ${BLACS_LIBRARY})
       list(APPEND DIRECTORIES ${BLACS_INCLUDE_DIRS})
 
       find_package(ScaLAPACK REQUIRED)
-      list(APPEND LIBRARIES ${ScaLAPACK_LIBRARY})
+      target_link_libraries(uno_dependencies INTERFACE ${ScaLAPACK_LIBRARY})
       list(APPEND DIRECTORIES ${ScaLAPACK_INCLUDE_DIRS})
    else()
       # link dummy parallel library (provided by MUMPS distribution)
@@ -220,11 +216,11 @@ if(MUMPS_LIBRARY)
    endif()
    
    find_package(METIS REQUIRED)
-   list(APPEND LIBRARIES ${METIS_LIBRARY})
+   target_link_libraries(uno_dependencies INTERFACE ${METIS_LIBRARY})
    list(APPEND DIRECTORIES ${METIS_INCLUDE_DIRS})
 
    find_package(OpenMP REQUIRED)
-   list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
+   target_link_libraries(uno_dependencies INTERFACE OpenMP::OpenMP_CXX)
 
    add_compile_definitions(HAS_MUMPS)
    message(STATUS "Found MUMPS")
@@ -251,10 +247,10 @@ if(LAPACK_LIBRARIES)
          list(APPEND ABSOLUTE_LAPACK_LIBRARIES "${absolute_path}")
       endif()
    endforeach()
-   list(APPEND LIBRARIES ${ABSOLUTE_LAPACK_LIBRARIES})
+   target_link_libraries(uno_dependencies INTERFACE ${ABSOLUTE_LAPACK_LIBRARIES})
 else()
    find_package(LAPACK REQUIRED)
-   list(APPEND LIBRARIES LAPACK::LAPACK)
+   target_link_libraries(uno_dependencies INTERFACE LAPACK::LAPACK)
 endif()
 
 # BLAS
@@ -270,10 +266,10 @@ if(BLAS_LIBRARIES)
          list(APPEND ABSOLUTE_BLAS_LIBRARIES "${absolute_path}")
       endif()
    endforeach()
-   list(APPEND LIBRARIES ${ABSOLUTE_BLAS_LIBRARIES})
+   target_link_libraries(uno_dependencies INTERFACE ${ABSOLUTE_BLAS_LIBRARIES})
 else()
    find_package(BLAS REQUIRED)
-   list(APPEND LIBRARIES BLAS::BLAS)
+   target_link_libraries(uno_dependencies INTERFACE BLAS::BLAS)
 endif()
 
 # add the auxiliary libraries last
@@ -288,14 +284,12 @@ if(AUXILIARY_LIBRARIES)
          list(APPEND ABSOLUTE_AUXILIARY_LIBRARIES "${absolute_path}")
       endif()
    endforeach()
-   list(APPEND LIBRARIES ${ABSOLUTE_AUXILIARY_LIBRARIES})
+   target_link_libraries(uno_dependencies INTERFACE ${ABSOLUTE_AUXILIARY_LIBRARIES})
 endif()
 
 # ======================
 # Link core
 # ======================
-
-target_link_libraries(compiled_uno_files PUBLIC uno_dependencies)
 
 # Fortran runtime (filtered for Apple architectures) even when static libraries are linked
 set(FORTRAN_LIBS ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
@@ -304,25 +298,26 @@ if(APPLE)
    list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
    list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
 endif()
-target_link_libraries(compiled_uno_files PUBLIC ${FORTRAN_LIBS})
+target_link_libraries(uno_dependencies INTERFACE ${FORTRAN_LIBS})
+
+target_link_libraries(compiled_uno_files PUBLIC uno_dependencies)
 
 # ======================
 # Final libraries
 # ======================
 
 target_include_directories(compiled_uno_files SYSTEM PUBLIC ${DIRECTORIES})
-target_link_libraries(compiled_uno_files PUBLIC ${LIBRARIES})
 
 if(BUILD_STATIC_LIBS)
    add_library(uno_static STATIC $<TARGET_OBJECTS:compiled_uno_files>)
-   target_link_libraries(uno_static PUBLIC uno_dependencies ${LIBRARIES} ${FORTRAN_LIBS})
+   target_link_libraries(uno_static PUBLIC uno_dependencies)
    set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
    set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90")
 endif()
 
 if(BUILD_SHARED_LIBS)
    add_library(uno_shared SHARED $<TARGET_OBJECTS:compiled_uno_files>)
-   target_link_libraries(uno_shared PUBLIC uno_dependencies ${LIBRARIES} ${FORTRAN_LIBS})
+   target_link_libraries(uno_shared PUBLIC uno_dependencies)
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
    set_target_properties(uno_shared PROPERTIES
       PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90"
@@ -348,7 +343,7 @@ if(AMPLSOLVER)
 
    add_executable(uno_ampl EXCLUDE_FROM_ALL interfaces/AMPL/AMPLModel.cpp interfaces/AMPL/uno_ampl.cpp)
    target_include_directories(uno_ampl SYSTEM PUBLIC ${DIRECTORIES})
-   target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} ${LIBRARIES} ${CMAKE_DL_LIBS} ${FORTRAN_LIBS})
+   target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} uno_dependencies ${CMAKE_DL_LIBS})
 
    # include the corresponding directory
    get_filename_component(directory ${AMPLSOLVER} DIRECTORY)
@@ -371,7 +366,7 @@ if(SKBUILD)
    add_compile_definitions(PYBIND11_DETAILED_ERROR_MESSAGES)
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
 
-   target_link_libraries(unopy PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
+   target_link_libraries(unopy PUBLIC uno_dependencies)
    target_include_directories(unopy SYSTEM PUBLIC ${DIRECTORIES})
 
    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -404,7 +399,7 @@ if(ENABLE_TESTS)
 
    add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS})
    target_include_directories(run_unotest SYSTEM PUBLIC ${DIRECTORIES} ${GTEST_INCLUDE_DIR})
-   target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES} ${CMAKE_DL_LIBS} ${FORTRAN_LIBS})
+   target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} uno_dependencies ${CMAKE_DL_LIBS})
    if (MSVC)
       set_target_properties(run_unotest PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
    endif()
