@@ -463,7 +463,8 @@ void uno_get_version(uno_int* major, uno_int* minor, uno_int* patch) {
 void* uno_create_model(const char* problem_type, uno_int number_variables, const double* variables_lower_bounds,
       const double* variables_upper_bounds, uno_int base_indexing) {
    void* model = uno_create_unconstrained_model(problem_type, number_variables, base_indexing);
-   uno_set_variables_bounds(model, variables_lower_bounds, variables_upper_bounds);
+   uno_set_variables_lower_bounds(model, variables_lower_bounds);
+   uno_set_variables_upper_bounds(model, variables_upper_bounds);
    return model;
 }
 
@@ -494,16 +495,36 @@ void* uno_create_unconstrained_model(const char* problem_type, uno_int number_va
    return user_model;
 }
 
-bool uno_set_variables_bounds(void* model, const double* variables_lower_bounds, const double* variables_upper_bounds) {
+bool uno_set_variables_lower_bounds(void* model, const double* variables_lower_bounds) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
    CUserModel* user_model = static_cast<CUserModel*>(model);
    // copy the bounds internally
-   const size_t unsigned_number_variables = static_cast<size_t>(user_model->number_variables);
-   for (size_t variable_index: Range(unsigned_number_variables)) {
-      user_model->variables_lower_bounds[variable_index] = (variables_lower_bounds != nullptr) ?
-         variables_lower_bounds[variable_index] : -INF<double>;
-      user_model->variables_upper_bounds[variable_index] = (variables_upper_bounds != nullptr) ?
-         variables_upper_bounds[variable_index] : INF<double>;
+   if (variables_lower_bounds != nullptr) {
+      const size_t unsigned_number_variables = static_cast<size_t>(user_model->number_variables);
+      for (size_t variable_index: Range(unsigned_number_variables)) {
+         user_model->variables_lower_bounds[variable_index] = variables_lower_bounds[variable_index];
+      }
    }
+   return true;
+}
+
+bool uno_set_variables_upper_bounds(void* model, const double* variables_upper_bounds) {
+   if (model == nullptr) {
+      WARNING << "Please specify a valid model."  << std::endl;
+      return false;
+   }
+   CUserModel* user_model = static_cast<CUserModel*>(model);
+   // copy the bounds internally
+   if (variables_upper_bounds != nullptr) {
+      const size_t unsigned_number_variables = static_cast<size_t>(user_model->number_variables);
+      for (size_t variable_index: Range(unsigned_number_variables)) {
+         user_model->variables_upper_bounds[variable_index] = variables_upper_bounds[variable_index];
+      }
+   }
+
    return true;
 }
 

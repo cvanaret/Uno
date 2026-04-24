@@ -260,30 +260,21 @@ function uno_model(
   )
 end
 
-function uno_set_variables_bounds(model::Model, variables_lower_bounds::Vector{Float64}, variables_upper_bounds::Vector{Float64})
-  @assert model.nvar == length(variables_lower_bounds) == length(variables_upper_bounds)
+function uno_set_variables_lower_bounds(model::Model, variables_lower_bounds::Vector{Float64})
+  @assert model.nvar == length(variables_lower_bounds)
   GC.@preserve model begin
-    flag = uno_set_variables_bounds(model.c_model, variables_lower_bounds, variables_upper_bounds)
+    flag = uno_set_variables_lower_bounds(model.c_model, variables_lower_bounds)
   end
-  flag || error("Failed to set variables bounds via uno_set_variables_bounds.")
+  flag || error("Failed to set variables lower bounds via uno_set_variables_lower_bounds.")
   return
 end
 
-function uno_set_variable_lower_bound(model::Model, variable_index::Int, lower_bound::Float64)
-  @assert 1 <= variable_index <= model.nvar
+function uno_set_variables_upper_bounds(model::Model, variables_upper_bounds::Vector{Float64})
+  @assert model.nvar == length(variables_upper_bounds)
   GC.@preserve model begin
-    flag = uno_set_variable_lower_bound(model.c_model, variable_index, lower_bound)
+    flag = uno_set_variables_upper_bounds(model.c_model, variables_upper_bounds)
   end
-  flag || error("Failed to set lower bound via uno_set_variable_lower_bound.")
-  return
-end
-
-function uno_set_variable_upper_bound(model::Model, variable_index::Int, upper_bound::Float64)
-  @assert 1 <= variable_index <= model.nvar
-  GC.@preserve model begin
-    flag = uno_set_variable_upper_bound(model.c_model, variable_index, upper_bound)
-  end
-  flag || error("Failed to set upper bound via uno_set_variable_upper_bound.")
+  flag || error("Failed to set variables upper bounds via uno_set_variables_upper_bounds.")
   return
 end
 

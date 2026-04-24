@@ -57,10 +57,14 @@ function uno_create_unconstrained_model(problem_type, number_variables, base_ind
                                                  base_indexing::Int32)::Ptr{Cvoid}
 end
 
-function uno_set_variables_bounds(model, variables_lower_bounds, variables_upper_bounds)
-    @ccall libuno.uno_set_variables_bounds(model::Ptr{Cvoid},
-                                           variables_lower_bounds::Ptr{Cdouble},
-                                           variables_upper_bounds::Ptr{Cdouble})::Bool
+function uno_set_variables_lower_bounds(model, variables_lower_bounds)
+    @ccall libuno.uno_set_variables_lower_bounds(model::Ptr{Cvoid},
+                                                 variables_lower_bounds::Ptr{Cdouble})::Bool
+end
+
+function uno_set_variables_upper_bounds(model, variables_upper_bounds)
+    @ccall libuno.uno_set_variables_upper_bounds(model::Ptr{Cvoid},
+                                                 variables_upper_bounds::Ptr{Cdouble})::Bool
 end
 
 function uno_set_variable_lower_bound(model, variable_index, lower_bound)

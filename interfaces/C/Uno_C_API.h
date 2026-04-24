@@ -160,10 +160,16 @@ extern "C" {
    void* uno_create_unconstrained_model(const char* problem_type, uno_int number_variables, uno_int base_indexing);
 
    // [optional]
-   // sets the variables bounds of a given model.
-   // takes as inputs two arrays of lower and upper bounds of size "number_variables".
+   // sets the variables lower bounds of a given model.
+   // takes as inputs an array of lower bounds of size "number_variables".
    // returns true if it succeeded, false otherwise.
-   bool uno_set_variables_bounds(void* model, const double* variables_lower_bounds, const double* variables_upper_bounds);
+   bool uno_set_variables_lower_bounds(void* model, const double* variables_lower_bounds);
+
+   // [optional]
+   // sets the variables upper bounds of a given model.
+   // takes as inputs an array of upper bounds of size "number_variables".
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_variables_upper_bounds(void* model, const double* variables_upper_bounds);
 
    // [optional]
    // sets the lower bound of a given variable.
