@@ -158,44 +158,44 @@ endif()
 # BQPD
 find_library(BQPD bqpd)
 if(BQPD)
+   link_to_uno(bqpd ${BQPD})
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
            uno/ingredients/subproblem_solvers/BQPD/BQPDWorkspace.cpp)
    list(APPEND TESTS unotest/functional_tests/BQPDSolverTests.cpp)
-   link_to_uno(bqpd ${BQPD})
 endif()
 
 # HiGHS
 find_library(HIGHS highs)
 if(HIGHS)
+   target_link_libraries(uno_dependencies INTERFACE ${HIGHS})
+   target_compile_definitions(uno_dependencies INTERFACE HAS_HIGHS)
+
+   get_filename_component(HIGHS_DIRECTORY ${HIGHS} DIRECTORY)
+   set(DIRECTORIES ${DIRECTORIES} ${HIGHS_DIRECTORY}/../include/highs)
+
    target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSWorkspace.cpp)
    list(APPEND TESTS unotest/functional_tests/HiGHSSolverTests.cpp)
-   target_link_libraries(uno_dependencies INTERFACE ${HIGHS})
-   # add a preprocessor definition
-   add_compile_definitions(HAS_HIGHS)
-   # include the corresponding directory
-   get_filename_component(HIGHS_DIRECTORY ${HIGHS} DIRECTORY)
-   set(DIRECTORIES ${DIRECTORIES} ${HIGHS_DIRECTORY}/../include/highs)
+
    message(STATUS "Found HIGHS")
 endif()
 
 # MUMPS
 find_package(MUMPS)
 if(MUMPS_LIBRARY)
+   target_link_libraries(uno_dependencies INTERFACE ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
+   target_compile_definitions(uno_dependencies INTERFACE HAS_MUMPS)
+
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/MUMPS/MUMPSSolver.cpp)
    list(APPEND TESTS unotest/functional_tests/MUMPSSolverTests.cpp)
-   target_link_libraries(uno_dependencies INTERFACE ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
-
    list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
 
-   if(NOT MUMPS_MPISEQ_LIBRARY)
-      # parallel
-      add_compile_definitions(MUMPS_PARALLEL)
+   if(NOT MUMPS_MPISEQ_LIBRARY) # parallel
       find_package(MPI REQUIRED)
       target_link_libraries(uno_dependencies INTERFACE MPI::MPI_CXX MPI::MPI_Fortran)
-      add_compile_definitions(HAS_MPI)
+      target_compile_definitions(uno_dependencies INTERFACE HAS_MPI MUMPS_PARALLEL)
 
       find_package(BLACS REQUIRED)
       target_link_libraries(uno_dependencies INTERFACE ${BLACS_LIBRARY})
@@ -216,7 +216,6 @@ if(MUMPS_LIBRARY)
    find_package(OpenMP REQUIRED)
    target_link_libraries(uno_dependencies INTERFACE OpenMP::OpenMP_CXX)
 
-   add_compile_definitions(HAS_MUMPS)
    message(STATUS "Found MUMPS")
 endif()
 
