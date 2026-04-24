@@ -50,7 +50,7 @@ end function uno_create_model
 !---------------------------------------------
 ! uno_create_unconstrained_model
 !---------------------------------------------
-function uno_create_model(problem_type, number_variables, base_indexing) result(model)
+function uno_create_unconstrained_model(problem_type, number_variables, base_indexing) result(model)
    character(len=*) :: problem_type
    integer(uno_int), value :: number_variables, base_indexing
    type(c_ptr) :: model
