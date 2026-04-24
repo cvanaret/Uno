@@ -117,9 +117,6 @@ target_sources(compiled_uno_files PRIVATE ${UNO_SOURCE_FILES})
 # directories
 set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
 
-# additional libraries to link against
-set(AUXILIARY_LIBRARIES "" CACHE STRING "Additional libraries to link against")
-
 # function that links an existing library to Uno
 function(link_to_uno library_name library_path)
    target_link_libraries(uno_dependencies INTERFACE ${library_path})
@@ -272,7 +269,8 @@ else()
    target_link_libraries(uno_dependencies INTERFACE BLAS::BLAS)
 endif()
 
-# add the auxiliary libraries last
+# additional libraries to link against
+set(AUXILIARY_LIBRARIES "" CACHE STRING "Additional libraries to link against")
 if(AUXILIARY_LIBRARIES)
    set(ABSOLUTE_AUXILIARY_LIBRARIES)
    foreach(relative_path IN LISTS AUXILIARY_LIBRARIES)
@@ -308,20 +306,25 @@ target_link_libraries(compiled_uno_files PUBLIC uno_dependencies)
 
 target_include_directories(compiled_uno_files SYSTEM PUBLIC ${DIRECTORIES})
 
+set(UNO_PUBLIC_HEADERS
+   interfaces/C/Uno_C_API.h
+   interfaces/C/uno_int.h
+   interfaces/Fortran/uno_c.f90
+   interfaces/Fortran/uno_fortran.f90
+)
+
 if(BUILD_STATIC_LIBS)
    add_library(uno_static STATIC $<TARGET_OBJECTS:compiled_uno_files>)
    target_link_libraries(uno_static PUBLIC uno_dependencies)
    set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
-   set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90")
+   set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "${UNO_PUBLIC_HEADERS}")
 endif()
 
 if(BUILD_SHARED_LIBS)
    add_library(uno_shared SHARED $<TARGET_OBJECTS:compiled_uno_files>)
    target_link_libraries(uno_shared PUBLIC uno_dependencies)
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
-   set_target_properties(uno_shared PROPERTIES
-      PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90"
-   )
+   set_target_properties(uno_shared PROPERTIES PUBLIC_HEADER "${UNO_PUBLIC_HEADERS}")
    if (MSVC)
       set_target_properties(uno_shared PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
    endif()
@@ -391,6 +394,7 @@ if(ENABLE_TESTS)
       googletest
       URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
    )
+
    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
    FetchContent_MakeAvailable(googletest)
    message(STATUS "Fetched GoogleTest")
