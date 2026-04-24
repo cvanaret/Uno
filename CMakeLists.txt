@@ -358,7 +358,11 @@ if(SKBUILD)
    find_package(pybind11 CONFIG REQUIRED)
    message(STATUS "Building Python extension (SKBUILD detected).")
 
-   file(GLOB PYTHON_MODULE_FILES interfaces/Python/**/*.cpp)
+   file(GLOB PYTHON_MODULE_FILES
+      interfaces/Python/cpp_classes/*.cpp
+      interfaces/Python/python_modules/*.cpp
+      interfaces/Python/unopy.cpp
+   )
 
    add_compile_definitions(PYBIND11_DETAILED_ERROR_MESSAGES)
    pybind11_add_module(unopy SHARED $<TARGET_OBJECTS:compiled_uno_files> ${PYTHON_MODULE_FILES})
