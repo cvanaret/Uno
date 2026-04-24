@@ -1,17 +1,33 @@
-﻿# Copyright (c) 2018-2025 Charlie Vanaret
+﻿# Copyright (c) 2018-2026 Charlie Vanaret
 # Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 cmake_minimum_required(VERSION 3.12)
-
-######################
-# project definition #
-######################
 
 # define the project
 project(Uno VERSION 2.7.1
         DESCRIPTION "Uno (Unifying Nonlinear Optimization)"
         LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
+
+# ======================
+# Options
+# ======================
+
+option(BUILD_STATIC_LIBS "Build using static libraries" ON)
+option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
+option(ENABLE_TESTS "Build unit tests" OFF)
+option(ENABLE_LTO "Enable link-time optimization" ON)
+
+if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
+   message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
+endif()
+
+# use Fortran compiler for name mangling
+enable_language(Fortran)
+include(FortranCInterface)
+FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
+        MACRO_NAMESPACE "FC_"
+        SYMBOL_NAMESPACE "FC_")
 
 # compile options
 if (MSVC)
@@ -28,26 +44,27 @@ endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders)
 
-# options
-option(BUILD_STATIC_LIBS "Build using static libraries" ON)
-option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
-if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
-   message(FATAL_ERROR "At least one of BUILD_SHARED_LIBS or BUILD_STATIC_LIBS must be ON.")
+# ======================
+# Core targets
+# ======================
+
+# compile the Uno source files once, whatever the compilation type is (static or shared)
+add_library(compiled_uno_files OBJECT)
+set_property(TARGET compiled_uno_files PROPERTY POSITION_INDEPENDENT_CODE ON)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+   target_compile_definitions(compiled_uno_files PUBLIC _GLIBCXX_USE_CXX11_ABI=1) # C++ ABI
 endif()
-option(ENABLE_TESTS "Build unit tests" OFF)
 
-# use Fortran compiler for name mangling with Fortran
-message(STATUS "Fortran compiler required")
-enable_language(Fortran)
-include(FortranCInterface)
-FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
-        MACRO_NAMESPACE "FC_"
-        SYMBOL_NAMESPACE "FC_")
+add_library(uno_dependencies INTERFACE)
+target_include_directories(uno_dependencies INTERFACE
+   ${CMAKE_CURRENT_SOURCE_DIR}/uno
+   ${CMAKE_BINARY_DIR}/include
+)
 
-# directories
-set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
+# ======================
+# Sources
+# ======================
 
-# source files
 file(GLOB UNO_SOURCE_FILES CONFIGURE_DEPENDS
    interfaces/C/Uno_C_API.cpp
    uno/Uno.cpp
@@ -75,8 +92,7 @@ file(GLOB UNO_SOURCE_FILES CONFIGURE_DEPENDS
    uno/tools/*.cpp
 )
 
-# unit test source files
-file(GLOB TESTS_UNO_SOURCE_FILES CONFIGURE_DEPENDS
+file(GLOB TESTS CONFIGURE_DEPENDS
    unotest/unotest.cpp
    unotest/functional_tests/BLASTests.cpp
    unotest/functional_tests/LAPACKTests.cpp
@@ -93,9 +109,15 @@ file(GLOB TESTS_UNO_SOURCE_FILES CONFIGURE_DEPENDS
    unotest/unit_tests/VectorViewTests.cpp
 )
 
-#########################
-# external dependencies #
-#########################
+target_sources(compiled_uno_files PRIVATE ${UNO_SOURCE_FILES})
+
+# ======================
+# Dependencies
+# ======================
+
+# directories
+set(DIRECTORIES uno ${CMAKE_BINARY_DIR}/include)
+
 # list of all libraries
 set(LIBRARIES "")
 # additional libraries to link against
@@ -129,12 +151,12 @@ else()
    endif()
 endif()
 if(HSL OR MA57)
-   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA57/MA57Solver.cpp)
-   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA57SolverTests.cpp)
+   target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/MA57/MA57Solver.cpp)
+   list(APPEND TESTS unotest/functional_tests/MA57SolverTests.cpp)
 endif()
 if(HSL OR MA27)
-   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MA27/MA27Solver.cpp)
-   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MA27SolverTests.cpp)
+   target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/MA27/MA27Solver.cpp)
+   list(APPEND TESTS unotest/functional_tests/MA27SolverTests.cpp)
 endif()
 
 # METIS
@@ -146,20 +168,20 @@ endif()
 # BQPD
 find_library(BQPD bqpd)
 if(BQPD)
-   list(APPEND UNO_SOURCE_FILES
+   target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
            uno/ingredients/subproblem_solvers/BQPD/BQPDWorkspace.cpp)
-   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/BQPDSolverTests.cpp)
+   list(APPEND TESTS unotest/functional_tests/BQPDSolverTests.cpp)
    link_to_uno(bqpd ${BQPD})
 endif()
 
 # HiGHS
 find_library(HIGHS highs)
 if(HIGHS)
-   list(APPEND UNO_SOURCE_FILES
+   target_sources(compiled_uno_files PRIVATE
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
            uno/ingredients/subproblem_solvers/HiGHS/HiGHSWorkspace.cpp)
-   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/HiGHSSolverTests.cpp)
+   list(APPEND TESTS unotest/functional_tests/HiGHSSolverTests.cpp)
    # add the library
    set(LIBRARIES ${LIBRARIES} ${HIGHS})
    # add a preprocessor definition
@@ -173,8 +195,8 @@ endif()
 # MUMPS
 find_package(MUMPS)
 if(MUMPS_LIBRARY)
-   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/MUMPS/MUMPSSolver.cpp)
-   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/MUMPSSolverTests.cpp)
+   target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/MUMPS/MUMPSSolver.cpp)
+   list(APPEND TESTS unotest/functional_tests/MUMPSSolverTests.cpp)
    list(APPEND LIBRARIES ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
 
    list(APPEND DIRECTORIES ${MUMPS_INCLUDE_DIR})
@@ -212,8 +234,8 @@ endif()
 # SPRAL SSIDS
 find_library(SPRAL NAMES spral)
 if(SPRAL)
-   list(APPEND UNO_SOURCE_FILES uno/ingredients/subproblem_solvers/SSIDS/SSIDSSolver.cpp)
-   list(APPEND TESTS_UNO_SOURCE_FILES unotest/functional_tests/SSIDSSolverTests.cpp)
+   target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/SSIDS/SSIDSSolver.cpp)
+   list(APPEND TESTS unotest/functional_tests/SSIDSSolverTests.cpp)
    link_to_uno(spral ${SPRAL})
 endif()
 
@@ -281,20 +303,13 @@ if(APPLE)
    list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
 endif()
 
-# compile the Uno source files once, whatever the compilation type is (static or shared)
-add_library(compiled_uno_files OBJECT ${UNO_SOURCE_FILES})
-set_property(TARGET compiled_uno_files PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(compiled_uno_files SYSTEM PUBLIC ${DIRECTORIES})
 target_link_libraries(compiled_uno_files PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-   # C++ ABI
-   target_compile_definitions(compiled_uno_files PUBLIC _GLIBCXX_USE_CXX11_ABI=1)
-endif()
 
 if(BUILD_STATIC_LIBS)
    add_library(uno_static STATIC $<TARGET_OBJECTS:compiled_uno_files>)
    target_include_directories(uno_static SYSTEM PUBLIC ${DIRECTORIES})
-   target_link_libraries(uno_static PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
+   target_link_libraries(uno_static PUBLIC uno_dependencies ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_static PROPERTIES OUTPUT_NAME "uno" POSITION_INDEPENDENT_CODE ON)
    set_target_properties(uno_static PROPERTIES PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90")
 endif()
@@ -302,7 +317,7 @@ endif()
 if(BUILD_SHARED_LIBS)
    add_library(uno_shared SHARED $<TARGET_OBJECTS:compiled_uno_files>)
    target_include_directories(uno_shared SYSTEM PUBLIC ${DIRECTORIES})
-   target_link_libraries(uno_shared PUBLIC ${LIBRARIES} ${FORTRAN_LIBS})
+   target_link_libraries(uno_shared PUBLIC uno_dependencies ${LIBRARIES} ${FORTRAN_LIBS})
    set_target_properties(uno_shared PROPERTIES OUTPUT_NAME "uno")
    set_target_properties(uno_shared PROPERTIES
       PUBLIC_HEADER "interfaces/C/Uno_C_API.h;interfaces/C/uno_int.h;interfaces/Fortran/uno_c.f90;interfaces/Fortran/uno_fortran.f90"
@@ -313,7 +328,6 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 if(BUILD_STATIC_LIBS)
-   # by default, the target to install is the static library
    set(DEFAULT_UNO_LIB uno_static)
 else()
    set(DEFAULT_UNO_LIB uno_shared)
@@ -385,7 +399,7 @@ if(ENABLE_TESTS)
 
    enable_testing()
 
-   add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS_UNO_SOURCE_FILES})
+   add_executable(run_unotest EXCLUDE_FROM_ALL ${TESTS})
    target_include_directories(run_unotest SYSTEM PUBLIC ${DIRECTORIES} ${GTEST_INCLUDE_DIR})
    target_link_libraries(run_unotest PUBLIC GTest::gtest ${DEFAULT_UNO_LIB} ${LIBRARIES} ${CMAKE_DL_LIBS} ${FORTRAN_LIBS})
    if (MSVC)
