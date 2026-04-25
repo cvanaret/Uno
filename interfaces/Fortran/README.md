@@ -67,9 +67,13 @@ model = uno_create_model(problem_type, number_variables, &
                          variables_lower_bounds, variables_upper_bounds, &
                          base_indexing)
 ```
+or (for an unconstrained model):
+```fortran
+model = uno_create_unconstrained_model(problem_type, number_variables, &
+                                       base_indexing)
+```
 
-The following optional elements can be added to the model separately:
-
+The following optional elements can be added or set to the model separately:
 * the objective function and its gradient:
 
 ```fortran
