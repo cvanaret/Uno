@@ -214,8 +214,22 @@ end
       c_lagrangian_hessian_operator_hs71,
     )
 
-    UnoSolver.uno_set_initial_primal_iterate(model, x0)
-    UnoSolver.uno_set_initial_dual_iterate(model, y0)
+    uno_set_initial_primal_iterate(model, x0)
+    uno_set_initial_dual_iterate(model, y0)
+
+    # code coverage
+    uno_set_variables_lower_bounds(model, lvar)
+    uno_set_variables_upper_bounds(model, uvar)
+    for i = 1:nvar
+      UnoSolver.uno_set_variable_lower_bound(model, i-1, lvar[i])
+      UnoSolver.uno_set_variable_upper_bound(model, i-1, uvar[i])
+    end
+    uno_set_constraints_lower_bounds(model, lcon)
+    uno_set_constraints_upper_bounds(model, ucon)
+    for i = 1:ncon
+      UnoSolver.uno_set_constraint_lower_bound(model, i-1, lcon[i])
+      UnoSolver.uno_set_constraint_upper_bound(model, i-1, ucon[i])
+    end
 
     solver = uno_solver()
     uno_set_solver_preset(solver, "filtersqp")
@@ -281,8 +295,8 @@ end
       nothing,
     )
 
-    UnoSolver.uno_set_initial_primal_iterate(model, x0)
-    UnoSolver.uno_set_initial_dual_iterate(model, y0)
+    uno_set_initial_primal_iterate(model, x0)
+    uno_set_initial_dual_iterate(model, y0)
 
     solver = uno_solver()
     uno_set_solver_preset(solver, "filtersqp")
@@ -461,7 +475,15 @@ end
       1,
     )
 
-    UnoSolver.uno_set_initial_primal_iterate(model, x0)
+    uno_set_initial_primal_iterate(model, x0)
+
+    # code coverage
+    uno_set_variables_lower_bounds(model, lvar)
+    uno_set_variables_upper_bounds(model, uvar)
+    for i = 1:nvar
+      UnoSolver.uno_set_variable_lower_bound(model, i-1, lvar[i])
+      UnoSolver.uno_set_variable_upper_bound(model, i-1, uvar[i])
+    end
 
     solver = uno_solver()
     uno_set_solver_preset(solver, "filtersqp")
@@ -515,7 +537,7 @@ end
       1,
     )
 
-    UnoSolver.uno_set_initial_primal_iterate(model, x0)
+    uno_set_initial_primal_iterate(model, x0)
 
     solver = uno_solver()
     uno_set_solver_preset(solver, "filtersqp")
