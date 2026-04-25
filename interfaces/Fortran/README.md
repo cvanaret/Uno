@@ -74,6 +74,30 @@ model = uno_create_unconstrained_model(problem_type, number_variables, &
 ```
 
 The following optional elements can be added or set to the model separately:
+* lower bounds for the variables:
+```fortran
+logical(c_bool) :: success
+success = uno_set_variables_lower_bounds(variables_lower_bounds)
+```
+
+* upper bounds for the variables:
+```fortran
+logical(c_bool) :: success
+success = uno_set_variables_upper_bounds(variables_upper_bounds)
+```
+
+* a lower bound for a given variable:
+```fortran
+logical(c_bool) :: success
+success = uno_set_variable_lower_bound(variable_index, lower_bound)
+```
+
+* an upper bound for a given variable:
+```fortran
+logical(c_bool) :: success
+success = uno_set_variable_upper_bound(variable_index, upper_bound)
+```
+
 * the objective function and its gradient:
 
 ```fortran
@@ -90,6 +114,30 @@ success = uno_set_constraints(model, number_constraints, constraint_functions, &
                               constraints_lower_bounds, constraints_upper_bounds, &
                               number_jacobian_nonzeros, jacobian_row_indices, &
                               jacobian_column_indices, jacobian)
+```
+
+* lower bounds for the constraints:
+```fortran
+logical(c_bool) :: success
+success = uno_set_constraints_lower_bounds(constraints_lower_bounds)
+```
+
+* upper bounds for the constraints:
+```fortran
+logical(c_bool) :: success
+success = uno_set_constraints_upper_bounds(constraints_upper_bounds)
+```
+
+* a lower bound for a given constraint:
+```fortran
+logical(c_bool) :: success
+success = uno_set_constraint_lower_bound(constraint_index, lower_bound)
+```
+
+* an upper bound for a given constraint:
+```fortran
+logical(c_bool) :: success
+success = uno_set_constraint_upper_bound(constraint_index, upper_bound)
 ```
 
 * the Lagrangian Hessian:
