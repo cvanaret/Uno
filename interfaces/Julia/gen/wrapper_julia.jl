@@ -4,9 +4,7 @@ using Clang
 using Clang.Generators
 using JuliaFormatter
 
-function main()
-  # Use the header Uno_C_API.h provided by Uno_jll.jl
-  # include_dir = joinpath(Uno_jll.artifact_dir, "include", "uno")
+function main_julia()
   include_dir = joinpath(@__DIR__, "..", "..", "C")
   headers = [joinpath(include_dir, "Uno_C_API.h")]
 
@@ -46,7 +44,7 @@ function main()
   return nothing
 end
 
-# If we want to use the file as a script with `julia wrapper.jl`
+# If we want to use the file as a script with `julia wrapper_julia.jl`
 if abspath(PROGRAM_FILE) == @__FILE__
-  main()
+  main_julia()
 end
