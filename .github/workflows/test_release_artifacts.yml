@@ -103,22 +103,13 @@ jobs:
         shell: bash
         run: |
           mkdir -p "${{ env.UNO_DIR }}"
-          tar -xzf "${{ steps.download.outputs.artifact }}" \
-              -C   "${{ env.UNO_DIR }}" \
-              --strip-components=1
+          tar -xzf "${{ steps.download.outputs.artifact }}" -C "${{ env.UNO_DIR }}"
 
       - name: Extract artifact (zip)
         if: matrix.artifact-ext == 'zip'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path "${{ env.UNO_DIR }}" | Out-Null
-          # 'tar' on Windows 10+ handles zip; --strip-components is not
-          # supported by the built-in bsdtar for zip, so use Expand-Archive.
-          Expand-Archive -Path "${{ steps.download.outputs.artifact }}" `
-                         -DestinationPath "${{ runner.temp }}/Uno_raw"
-          # Move the single top-level directory's contents to UNO_DIR
-          $top = (Get-ChildItem "${{ runner.temp }}/Uno_raw" | Select-Object -First 1).FullName
-          Move-Item "$top\*" "${{ env.UNO_DIR }}"
+          Expand-Archive -Path "${{ steps.download.outputs.artifact }}" -DestinationPath "${{ env.UNO_DIR }}"
 
       - name: Set LD_LIBRARY_PATH (Linux)
         if: runner.os == 'Linux'
