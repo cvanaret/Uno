@@ -4,7 +4,13 @@ set -e
 # detect OS
 OS_NAME="$(uname -s)"
 case "$OS_NAME" in
-    Linux*)  OS="linux-gnu";;
+    Linux*)
+      if [[ "$CIBW_BUILD" == *musllinux* ]] || ldd --version 2>&1 | grep -qi musl; then
+        OS="linux-musl"
+      else
+        OS="linux-gnu"
+      fi
+      ;;
     Darwin*) OS="apple-darwin";;
     Windows*) OS="w64-mingw32";;
     MINGW64_NT*) OS="w64-mingw32";;
