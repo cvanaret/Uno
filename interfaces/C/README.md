@@ -26,19 +26,19 @@ void* model = uno_create_unconstrained_model(problem_type, number_variables, bas
 The following optional elements can be added or set to the model separately:
 - lower bounds for the variables:
 ```c
-uno_set_variables_lower_bounds(variables_lower_bounds)
+uno_set_variables_lower_bounds(model, variables_lower_bounds)
 ```
 - upper bounds for the variables:
 ```c
-uno_set_variables_upper_bounds(variables_upper_bounds)
+uno_set_variables_upper_bounds(model, variables_upper_bounds)
 ```
 - a lower bound for a given variable:
 ```c
-uno_set_variable_lower_bound(variable_index, lower_bound)
+uno_set_variable_lower_bound(model, variable_index, lower_bound)
 ```
 - an upper bound for a given variable:
 ```c
-uno_set_variable_upper_bound(variable_index, upper_bound)
+uno_set_variable_upper_bound(model, variable_index, upper_bound)
 ```
 - the objective function (and its gradient). It is 0 otherwise;
 ```c
@@ -52,19 +52,19 @@ uno_set_constraints(model, number_constraints, constraint_functions,
 ```
 - lower bounds for the constraints:
 ```c
-uno_set_constraints_lower_bounds(constraints_lower_bounds)
+uno_set_constraints_lower_bounds(model, constraints_lower_bounds)
 ```
 - upper bounds for the constraints:
 ```c
-uno_set_constraints_upper_bounds(constraints_upper_bounds)
+uno_set_constraints_upper_bounds(model, constraints_upper_bounds)
 ```
 - a lower bound for a given constraint:
 ```c
-uno_set_constraint_lower_bound(constraint_index, lower_bound)
+uno_set_constraint_lower_bound(model, constraint_index, lower_bound)
 ```
 - an upper bound for a given constraint:
 ```c
-uno_set_constraint_upper_bound(constraint_index, upper_bound)
+uno_set_constraint_upper_bound(model, constraint_index, upper_bound)
 ```
 - the Lagrangian Hessian;
 ```c
