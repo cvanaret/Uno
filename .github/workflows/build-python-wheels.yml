@@ -32,7 +32,7 @@ jobs:
       fail-fast: false
       matrix:
         sys:
-          # group manylinux and musllinux jobs together
+          # group manylinux and musllinux jobs together. Numpy is compiled for cp38+musl and cached for the other runs
           - { os: ubuntu-latest, shell: bash, build: "*manylinux*" }
           - { os: ubuntu-latest, shell: bash, build: "*musllinux*" }
           - { os: ubuntu-22.04-arm, shell: bash, build: "*manylinux*" }
@@ -82,7 +82,7 @@ jobs:
             echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
           fi
 
-      - name: Build wheels (Linux)
+      - name: Build wheels (Linux, ${{ matrix.sys.build }})
         if: runner.os == 'Linux'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
