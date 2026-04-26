@@ -137,7 +137,6 @@ jobs:
           "${{ env.UNO_DIR }}\bin"  | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           "${{ env.UNO_DIR }}\lib"  | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           "${{ env.UNO_DIR }}\deps" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          "C:\mingw64\bin"          | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Generate OpenBLAS import library (Windows)
         if: runner.os == 'Windows'
@@ -190,4 +189,8 @@ jobs:
         if: runner.os == 'Windows'
         working-directory: ${{github.workspace}}/interfaces/C/example/build
         shell: bash
-        run: ./example_hs015.exe
+        run: |
+          UNO_DIR_UNIX=$(cygpath -u "${{ env.UNO_DIR }}")
+          export PATH="$UNO_DIR_UNIX/bin:$UNO_DIR_UNIX/lib:$UNO_DIR_UNIX/deps:$PATH"
+          export PATH="/c/mingw64/bin:$PATH"
+          ./example_hs015.exe
