@@ -603,11 +603,13 @@ function main_fortran()
   open(out_c, "w") do io
     gen_uno_c(io, include_dir, funcs)
   end
+  println("Generated: $out_c")
 
   out_fortran = joinpath(fortran_dir, "uno_fortran.f90")
   open(out_fortran, "w") do io
     gen_uno_fortran(io, funcs)
   end
+  println("Generated: $out_fortran")
 end
 
 # If we want to use the file as a script with `julia wrapper_fortran.jl`

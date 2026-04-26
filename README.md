@@ -99,6 +99,11 @@ Uno provides a native Fortran interface built on top of its C API using `iso_c_b
 It closely mirrors the C interface and is designed as a lightweight wrapper with minimal overhead, making it suitable for integration into existing Fortran codes while retaining full access to Uno's features.
 For more details, see its [README.md](interfaces/Fortran/README.md).
 
+### Rust
+Uno provides a Rust interface (`uno_rs`) built on top of its C API using Rust's FFI.
+It exposes high-level wrappers over the raw bindings in `ffi.rs`.
+For more details, see its [README.md](interfaces/Rust/README.md).
+
 ## Latest results (August 13, 2025)
 
 Uno presets have been tested against state-of-the-art solvers on 429 small problems of the [CUTEst benchmark](https://arnold-neumaier.at/glopt/coconut/Benchmark/Library2_new_v1.html).
