@@ -21,6 +21,11 @@ on:
       - '*.yaml'
       - 'docs/**'
 
+env:
+  CIBW_TEST_COMMAND: python {project}/interfaces/Python/example/example_hs015.py
+  # Skip some builds
+  CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
+
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.sys.os }}
@@ -82,8 +87,6 @@ jobs:
         env:
           CIBW_ENVIRONMENT_LINUX: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
-          # Skip some builds
-          CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
       - name: Build wheels (macOS)
         if: startsWith(matrix.sys.os, 'macos')
@@ -113,8 +116,6 @@ jobs:
             CMAKE_TOOLCHAIN_FILE=/tmp/clang_toolchain.cmake
             CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
-          # Skip some builds
-          CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
       - name: Build wheels (Windows)
         if: runner.os == 'Windows'
@@ -139,8 +140,6 @@ jobs:
             cmake.define.METIS_LIBRARY=dependencies/bin/libmetis.dll
             cmake.define.BLAS_LIBRARIES="dependencies/lib/libblas.a;dependencies/lib/libcblas.a"
             cmake.define.AUXILIARY_LIBRARIES=dependencies/lib/libstdc++.a
-          # Skip some builds
-          CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
