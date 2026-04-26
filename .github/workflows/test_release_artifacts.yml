@@ -1,0 +1,168 @@
+name: Test release artifacts
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - 'LICENSE'
+      - '*.cff'
+      - '*.yml'
+      - '*.yaml'
+      - 'docs/**'
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  test-precompiled:
+    name: ${{ matrix.os }} (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+            artifact-os: linux
+            artifact-ext: tar.gz
+            libuno-directory: lib
+            extension: so
+
+          - os: ubuntu-22.04-arm
+            arch: aarch64
+            artifact-os: linux
+            artifact-ext: tar.gz
+            libuno-directory: lib
+            extension: so
+
+          - os: macos-latest
+            arch: aarch64
+            artifact-os: mac
+            artifact-ext: tar.gz
+            libuno-directory: lib
+            extension: dylib
+
+          - os: macos-15-intel
+            arch: x86_64
+            artifact-os: mac
+            artifact-ext: tar.gz
+            libuno-directory: lib
+            extension: dylib
+
+          - os: windows-latest
+            arch: x86_64
+            artifact-os: windows
+            artifact-ext: zip
+            libuno-directory: bin
+            extension: dll
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Find out latest Uno release tag
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=$(gh release view --repo cvanaret/Uno --json tagName -q .tagName)
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          # Strip leading 'v' to get a bare version string, e.g. "1.2.3"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Download precompiled artifact
+        id: download
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.release.outputs.tag }}"
+          ARCHIVE="Uno.${TAG}.${{ matrix.artifact-os }}.${{ matrix.arch }}.${{ matrix.artifact-ext }}"
+          echo "Downloading ${ARCHIVE} ..."
+          gh release download "${TAG}" \
+            --repo cvanaret/Uno \
+            --pattern "${ARCHIVE}" \
+            --dir "${{ runner.temp }}"
+          echo "artifact=${{ runner.temp }}/${ARCHIVE}" >> "$GITHUB_OUTPUT"
+          echo "UNO_DIR=${{ runner.temp }}/Uno" >> "$GITHUB_ENV"
+
+      - name: Extract artifact (tar.gz)
+        if: matrix.artifact-ext == 'tar.gz'
+        shell: bash
+        run: |
+          mkdir -p "${{ env.UNO_DIR }}"
+          tar -xzf "${{ steps.download.outputs.artifact }}" \
+              -C   "${{ env.UNO_DIR }}" \
+              --strip-components=1
+
+      - name: Extract artifact (zip)
+        if: matrix.artifact-ext == 'zip'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "${{ env.UNO_DIR }}" | Out-Null
+          # 'tar' on Windows 10+ handles zip; --strip-components is not
+          # supported by the built-in bsdtar for zip, so use Expand-Archive.
+          Expand-Archive -Path "${{ steps.download.outputs.artifact }}" `
+                         -DestinationPath "${{ runner.temp }}/Uno_raw"
+          # Move the single top-level directory's contents to UNO_DIR
+          $top = (Get-ChildItem "${{ runner.temp }}/Uno_raw" | Select-Object -First 1).FullName
+          Move-Item "$top\*" "${{ env.UNO_DIR }}"
+
+      - name: Set LD_LIBRARY_PATH (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "LD_LIBRARY_PATH=${{ env.UNO_DIR }}/lib:${{ env.UNO_DIR }}/deps${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+            >> "$GITHUB_ENV"
+          echo "${{ env.UNO_DIR }}/bin" >> "$GITHUB_PATH"
+
+      - name: Set DYLD_LIBRARY_PATH (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          echo "DYLD_LIBRARY_PATH=${{ env.UNO_DIR }}/lib:${{ env.UNO_DIR }}/deps${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" \
+            >> "$GITHUB_ENV"
+          echo "DYLD_FALLBACK_LIBRARY_PATH=${{ env.UNO_DIR }}/lib:${{ env.UNO_DIR }}/deps" \
+            >> "$GITHUB_ENV"
+          echo "${{ env.UNO_DIR }}/bin" >> "$GITHUB_PATH"
+
+      - name: Set PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # On Windows all three directories need to be on PATH so that the
+          # dynamic linker can find the DLLs at runtime.
+          "${{ env.UNO_DIR }}\bin"  | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "${{ env.UNO_DIR }}\lib"  | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "${{ env.UNO_DIR }}\deps" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Configure example CMake
+        working-directory: ${{github.workspace}}/interfaces/C/example
+        shell: bash
+        run: |
+          cmake -B "${{github.workspace}}/interfaces/C/example/build" \
+                -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                -DUNO="${{ env.UNO_DIR }}/${{ matrix.libuno-directory }}/libuno.${{matrix.extension}}" \
+                -DLAPACK_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.extension}}" \
+                -DBLAS_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.extension}}" \
+                .
+
+      - name: Build example
+        working-directory: ${{github.workspace}}/interfaces/C/example
+        shell: bash
+        run: cmake --build "${{github.workspace}}/interfaces/C/example/build" --config ${{env.BUILD_TYPE}}
+
+      - name: Run example
+        working-directory: ${{github.workspace}}/interfaces/C/example/build
+        shell: bash
+        run: ./example_hs015
