@@ -16,20 +16,20 @@ You might need to set the following environment variables:
 - `DYLD_LIBRARY_PATH` or `DYLD_FALLBACK_LIBRARY_PATH` on macOS
 - `PATH` on Windows
 
-These variables should include the directory where you extracted the library files.
+These variables should include the directories where you extracted the library files.
 For all platforms, the environment variable `PATH` is needed to locate the binary `uno_ampl` / `uno_ampl.exe`.
 
 **Example for Linux**:
 ```console
 tar -xzf Uno.vX.Y.Z.linux.tar.gz
-export LD_LIBRARY_PATH=/path/to/extracted/Uno/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/path/to/extracted/Uno/lib:/path/to/extracted/Uno/deps:$LD_LIBRARY_PATH
 export PATH=/path/to/extracted/Uno/bin:$PATH
 ```
 
 **Example for macOS**:
 ```console
 tar -xzf Uno.vX.Y.Z.macos.tar.gz
-export DYLD_LIBRARY_PATH=/path/to/extracted/Uno/lib:$DYLD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH=/path/to/extracted/Uno/lib:/path/to/extracted/Uno/deps:$DYLD_LIBRARY_PATH
 export PATH=/path/to/extracted/Uno/bin:$PATH
 ```
 Alternatively, you can use `DYLD_FALLBACK_LIBRARY_PATH` instead of `DYLD_LIBRARY_PATH`.
@@ -37,13 +37,13 @@ Alternatively, you can use `DYLD_FALLBACK_LIBRARY_PATH` instead of `DYLD_LIBRARY
 **Example for Windows (PowerShell)**:
 ```console
 tar -xzf Uno.vX.Y.Z.windows.zip
-$env:PATH="C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;$env:PATH"
+$env:PATH="C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;C:\path\to\extracted\Uno\deps;$env:PATH"
 ```
 
 **Example for Windows (Command Prompt)**:
 ```console
 tar -xzf Uno.vX.Y.Z.windows.zip
-set PATH=C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;%PATH%
+set PATH=C:\path\to\extracted\Uno\bin;C:\path\to\extracted\Uno\lib;C:\path\to\extracted\Uno\deps;%PATH%
 ```
 
 ### Packages and libraries
@@ -93,6 +93,8 @@ You can pass the following options:
 - enable the unit tests: `-DENABLE_TESTS=[ON|OFF]`
 - build the Uno static library `uno_static`: `-DBUILD_STATIC_LIBS=[ON|OFF]`
 - build the Uno shared library `uno_shared`: `-DBUILD_SHARED_LIBS=[ON|OFF]`
+- path(s) to the LAPACK library: `-DBLAS_LIBRARIES=paths`
+- path(s) to the BLAS library: `-DLAPACK_LIBRARIES=paths`
 - path to the BQPD library: `-DBQPD=path_to_libbqpd`
 - path to the MA27 library: `-DMA27=path_to_libma27`
 - path to the MA57 library: `-DMA57=path_to_libma57`
@@ -106,6 +108,7 @@ You can pass the following options:
 - path to MUMPS MPISEQ library: `-DMUMPS_MPISEQ_LIBRARY=path_to_mumps_mpiseq_lib`
 - path to MUMPS include directory: `-DMUMPS_INCLUDE_DIR=path_to_mumps_include_dir`
 - path to SPRAL library: `-DSPRAL=path_to_libspral`
+- path(s) to additional libraries to link against (e.g., `libstdc++.a`): `-DAUXILIARY_LIBRARIES=paths`
 
 To install the built libraries and headers:
 ```console
