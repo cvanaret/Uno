@@ -34,36 +34,36 @@ jobs:
             arch: x86_64
             artifact-os: linux-gnu
             artifact-ext: tar.gz
-            libuno-directory: lib
-            extension: so
+            dep-extension: so
+            libuno-extension: so
 
           - os: ubuntu-22.04-arm
             arch: aarch64
             artifact-os: linux-gnu
             artifact-ext: tar.gz
-            libuno-directory: lib
-            extension: so
+            dep-extension: so
+            libuno-extension: so
 
           - os: macos-latest
             arch: aarch64
             artifact-os: apple-darwin
             artifact-ext: tar.gz
-            libuno-directory: lib
-            extension: dylib
+            dep-extension: dylib
+            libuno-extension: dylib
 
           - os: macos-15-intel
             arch: x86_64
             artifact-os: apple-darwin
             artifact-ext: tar.gz
-            libuno-directory: lib
-            extension: dylib
+            dep-extension: dylib
+            libuno-extension: dylib
 
           - os: windows-latest
             arch: x86_64
             artifact-os: w64-mingw32
             artifact-ext: zip
-            libuno-directory: bin
-            extension: dll
+            dep-extension: dll
+            libuno-extension: dll.a
 
     runs-on: ${{ matrix.os }}
 
@@ -144,9 +144,9 @@ jobs:
         run: |
           cmake -B "${{github.workspace}}/interfaces/C/example/build" \
                 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-                -DUNO="${{ env.UNO_DIR }}/${{ matrix.libuno-directory }}/libuno.${{matrix.extension}}" \
-                -DLAPACK_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.extension}}" \
-                -DBLAS_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.extension}}" \
+                -DUNO="${{ env.UNO_DIR }}/lib/libuno.${{matrix.libuno-extension}}" \
+                -DLAPACK_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.dep-extension}}" \
+                -DBLAS_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.dep-extension}}" \
                 .
           
       - name: Configure example CMake (Windows)
@@ -157,9 +157,9 @@ jobs:
           cmake -G "MinGW Makefiles"
                 -B "${{github.workspace}}/interfaces/C/example/build" \
                 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-                -DUNO="${{ env.UNO_DIR }}/${{ matrix.libuno-directory }}/libuno.${{matrix.extension}}" \
-                -DLAPACK_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.extension}}" \
-                -DBLAS_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.extension}}" \
+                -DUNO:FILEPATH="${{ env.UNO_DIR }}/lib/libuno.${{matrix.libuno-extension}}" \
+                -DLAPACK_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.dep-extension}}" \
+                -DBLAS_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.dep-extension}}" \
                 -DCMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe \
                 -DCMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe \
                 -DCMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe \
