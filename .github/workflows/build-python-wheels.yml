@@ -26,17 +26,20 @@ env:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.sys.os }}
+    name: Build wheels on (${{ matrix.sys.os }}, ${{ matrix.sys.build }})
     runs-on: ${{ matrix.sys.os }}
     strategy:
       fail-fast: false
       matrix:
         sys:
-          - { os: ubuntu-latest, shell: bash }
-          - { os: ubuntu-22.04-arm, shell: bash }
-          - { os: macos-latest, shell: bash }
-          - { os: macos-15-intel, shell: bash }
-          - { os: windows-latest, shell: 'msys2 {0}' }
+          # group manylinux and musllinux jobs together. Numpy is compiled for cp38+musl and cached for the other runs
+          - { os: ubuntu-latest, shell: bash, build: "*manylinux*" }
+          - { os: ubuntu-latest, shell: bash, build: "*musllinux*" }
+          - { os: ubuntu-22.04-arm, shell: bash, build: "*manylinux*" }
+          - { os: ubuntu-22.04-arm, shell: bash, build: "*musllinux*" }
+          - { os: macos-latest, shell: bash, build: "*" }
+          - { os: macos-15-intel, shell: bash, build: "*" }
+          - { os: windows-latest, shell: 'msys2 {0}', build: "*" }
     defaults:
       run:
         shell: ${{ matrix.sys.shell }}
@@ -79,10 +82,11 @@ jobs:
             echo "LIBGFORTRAN_FOLDER=/usr/local/opt/gcc/lib/gcc/15" >> $GITHUB_ENV
           fi
 
-      - name: Build wheels (Linux)
+      - name: Build wheels (Linux, ${{ matrix.sys.build }})
         if: runner.os == 'Linux'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
+          CIBW_BUILD: ${{ matrix.sys.build }}
           CIBW_SKIP: cp*-*_i686 *-win32
           CIBW_ENVIRONMENT_LINUX: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
