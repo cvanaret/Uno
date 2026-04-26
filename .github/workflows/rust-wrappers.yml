@@ -1,4 +1,4 @@
-name: Fortran wrappers
+name: Rust wrappers
 on:
   push:
     branches:
@@ -19,20 +19,20 @@ jobs:
           version: 1
           arch: x64
 
-      - name: Regenerate the Fortran wrappers
+      - name: Regenerate the Rust wrappers
         shell: bash
         run: |
           cd interfaces/Julia/gen
           julia --color=no --project -e 'using Pkg; Pkg.instantiate()'
-          julia --color=no --project wrapper_fortran.jl
-          cd ../../Fortran
-          git diff --quiet uno_c.f90 uno_fortran.f90 || {
-          echo "❌ The Fortran wrappers in interfaces/Fortran/uno_c.f90 and interfaces/Fortran/uno_fortran.f90 are out of date. ❌";
-          echo "Please run wrapper_fortran.jl in interfaces/Julia/gen to regenerate them:";
+          julia --color=no --project wrapper_rust.jl
+          cd ../../Rust/src
+          git diff --quiet ffi.rs || {
+          echo "❌ The Rust wrappers in interfaces/Rust/src/ffi.rs are out of date. ❌";
+          echo "Please run wrapper_rust.jl in interfaces/Julia/gen to regenerate them:";
           echo "";
           echo "cd interfaces/Julia/gen";
           echo "julia --project -e 'using Pkg; Pkg.instantiate()'";
-          echo "julia --project wrapper_fortran.jl";
+          echo "julia --project wrapper_rust.jl";
           echo "";
           echo "You can also find the instructions at:";
           echo "https://github.com/cvanaret/Uno/blob/master/interfaces/Julia/README.md";

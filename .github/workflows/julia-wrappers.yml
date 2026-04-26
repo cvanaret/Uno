@@ -27,7 +27,7 @@ jobs:
           julia --color=no --project wrapper_julia.jl
           cd ../src
           git diff --quiet libuno.jl || {
-          echo "❌ The Julia wrappers in libuno.jl are out of date. ❌";
+          echo "❌ The Julia wrappers in interfaces/Julia/src/libuno.jl are out of date. ❌";
           echo "Please run wrapper_julia.jl in interfaces/Julia/gen to regenerate them:";
           echo "";
           echo "cd interfaces/Julia/gen";

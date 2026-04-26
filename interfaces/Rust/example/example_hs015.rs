@@ -5,8 +5,8 @@
 //             x0 <= 0.5
 // Solution: x = (0.5, 2.0)
 
-use uno_rs::wrapper::{
-    get_version, Model, Solver,
+use uno_rs::{
+    get_version, uno_int, Model, Solver,
     UNO_FEASIBLE_KKT_POINT, UNO_LOWER_TRIANGLE, UNO_MINIMIZE,
     UNO_MULTIPLIER_NEGATIVE, UNO_SUCCESS, UNO_ZERO_BASED_INDEXING,
 };
@@ -15,16 +15,16 @@ use std::os::raw::c_void;
 // ── Objective: f(x) = 100*(x1 - x0^2)^2 + (1 - x0)^2 ──────────────────────
 
 unsafe extern "C" fn objective_function(
-    _n: i32, x: *const f64, obj: *mut f64, _data: *mut c_void,
-) -> i32 {
+    _n: uno_int, x: *const f64, obj: *mut f64, _data: *mut c_void,
+) -> uno_int {
     let x = std::slice::from_raw_parts(x, 2);
     *obj = 100.0 * (x[1] - x[0] * x[0]).powi(2) + (1.0 - x[0]).powi(2);
     0
 }
 
 unsafe extern "C" fn objective_gradient(
-    _n: i32, x: *const f64, g: *mut f64, _data: *mut c_void,
-) -> i32 {
+    _n: uno_int, x: *const f64, g: *mut f64, _data: *mut c_void,
+) -> uno_int {
     let x = std::slice::from_raw_parts(x, 2);
     let g = std::slice::from_raw_parts_mut(g, 2);
     g[0] = 400.0 * x[0].powi(3) - 400.0 * x[0] * x[1] + 2.0 * x[0] - 2.0;
@@ -35,8 +35,8 @@ unsafe extern "C" fn objective_gradient(
 // ── Constraints: c0 = x0*x1,  c1 = x0 + x1^2 ───────────────────────────────
 
 unsafe extern "C" fn constraint_functions(
-    _n: i32, _nc: i32, x: *const f64, cv: *mut f64, _data: *mut c_void,
-) -> i32 {
+    _n: uno_int, _nc: uno_int, x: *const f64, cv: *mut f64, _data: *mut c_void,
+) -> uno_int {
     let x = std::slice::from_raw_parts(x, 2);
     let cv = std::slice::from_raw_parts_mut(cv, 2);
     cv[0] = x[0] * x[1];
@@ -49,8 +49,8 @@ unsafe extern "C" fn constraint_functions(
 // Row 1 (c1): ∂/∂x0 = 1   (col 0),  ∂/∂x1 = 2*x1 (col 1)
 
 unsafe extern "C" fn jacobian_values(
-    _n: i32, _nnz: i32, x: *const f64, jv: *mut f64, _data: *mut c_void,
-) -> i32 {
+    _n: uno_int, _nnz: uno_int, x: *const f64, jv: *mut f64, _data: *mut c_void,
+) -> uno_int {
     let x = std::slice::from_raw_parts(x, 2);
     let jv = std::slice::from_raw_parts_mut(jv, 4);
     jv[0] = x[1];        // (row 0, col 0)
@@ -67,10 +67,10 @@ unsafe extern "C" fn jacobian_values(
 // H11 = 200*rho - 2*y1
 
 unsafe extern "C" fn lagrangian_hessian(
-    _n: i32, _nc: i32, _nnz: i32,
+    _n: uno_int, _nc: uno_int, _nnz: uno_int,
     x: *const f64, rho: f64, y: *const f64, hv: *mut f64,
     _data: *mut c_void,
-) -> i32 {
+) -> uno_int {
     let x = std::slice::from_raw_parts(x, 2);
     let y = std::slice::from_raw_parts(y, 2);
     let hv = std::slice::from_raw_parts_mut(hv, 3);
@@ -102,8 +102,8 @@ fn main() {
     let con_lb = [1.0_f64, 0.0_f64];
     let con_ub = [f64::INFINITY, f64::INFINITY];
     // COO sparsity pattern: rows then cols, column-major ordering
-    let jac_rows: [i32; 4] = [0, 1, 0, 1];
-    let jac_cols: [i32; 4] = [0, 0, 1, 1];
+    let jac_rows: [uno_int; 4] = [0, 1, 0, 1];
+    let jac_cols: [uno_int; 4] = [0, 0, 1, 1];
     assert!(model.set_constraints(
         constraint_functions,
         &con_lb, &con_ub,
@@ -132,8 +132,8 @@ fn main() {
 
     // ── Run 2: Exact Hessian ───────────────────────────────────────────────────
     println!("\n=== Run 2: Exact Hessian ===");
-    let hess_rows: [i32; 3] = [0, 1, 1];
-    let hess_cols: [i32; 3] = [0, 0, 1];
+    let hess_rows: [uno_int; 3] = [0, 1, 1];
+    let hess_cols: [uno_int; 3] = [0, 0, 1];
     assert!(model.set_lagrangian_hessian(
         UNO_LOWER_TRIANGLE,
         &hess_rows, &hess_cols,
