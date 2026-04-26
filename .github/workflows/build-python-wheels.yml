@@ -23,8 +23,6 @@ on:
 
 env:
   CIBW_TEST_COMMAND: python {project}/interfaces/Python/example/example_hs015.py
-  # Skip some builds
-  CIBW_SKIP: cp36-* cp37-* cp*-*_i686 pp* *-win32
 
 jobs:
   build_wheels:
@@ -85,6 +83,7 @@ jobs:
         if: runner.os == 'Linux'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
+          CIBW_SKIP: cp38-* cp*-*_i686 *-win32
           CIBW_ENVIRONMENT_LINUX: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
 
@@ -96,6 +95,7 @@ jobs:
           CC: clang
           CXX: clang++
           MACOSX_DEPLOYMENT_TARGET: 15.0
+          CIBW_SKIP: cp*-*_i686 *-win32
           CIBW_BEFORE_ALL_MACOS: |
             cat > /tmp/clang_toolchain.cmake << 'EOF'
             set(CMAKE_C_COMPILER clang)
@@ -122,6 +122,7 @@ jobs:
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         shell: pwsh
         env:
+          CIBW_SKIP: cp314t-* cp*-*_i686 *-win32
           CIBW_BEFORE_BUILD_WINDOWS: >
             C:/msys64/usr/bin/bash -lc "cd \"$(cygpath -u '{package}')\" && ./dependencies/scripts/download_dependencies.sh" &&
             pwsh -Command "Get-ChildItem -Path '{package}/dependencies' -Recurse |
