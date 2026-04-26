@@ -137,6 +137,7 @@ jobs:
           "${{ env.UNO_DIR }}\bin"  | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           "${{ env.UNO_DIR }}\lib"  | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           "${{ env.UNO_DIR }}\deps" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "C:\mingw64\bin"          | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Generate OpenBLAS import library (Windows)
         if: runner.os == 'Windows'
