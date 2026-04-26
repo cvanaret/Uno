@@ -1,11 +1,11 @@
-# julia +1.7 --color=yes build_tarballs_utils.jl x86_64-linux-gnu-libgfortran5-cxx11,x86_64-apple-darwin-libgfortran5-cxx11,x86_64-w64-mingw32-libgfortran5-cxx11,aarch64-linux-gnu-libgfortran5-cxx11,aarch64-apple-darwin-libgfortran5-cxx11 --verbose --deploy="amontoison/UnoUtils_jll.jl"
+# julia +1.7 --color=yes build_tarballs_utils.jl x86_64-linux-gnu-libgfortran5-cxx11,x86_64-linux-musl-libgfortran5-cxx11,x86_64-apple-darwin-libgfortran5-cxx11,x86_64-w64-mingw32-libgfortran5-cxx11,aarch64-linux-gnu-libgfortran5-cxx11,aarch64-linux-musl-libgfortran5-cxx11,aarch64-apple-darwin-libgfortran5-cxx11 --verbose --deploy="amontoison/UnoUtils_jll.jl"
 #
 # Note: the following variables is needed for cross-compilation on Mac platforms in the .bashrc
 # export BINARYBUILDER_AUTOMATIC_APPLE="true"
 using BinaryBuilder, Pkg
 
 name = "UnoUtils"
-version = v"2026.4.13"
+version = v"2026.4.26"
 
 # Collection of sources
 sources = [

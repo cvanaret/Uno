@@ -83,7 +83,7 @@ jobs:
         if: runner.os == 'Linux'
         run: cibuildwheel --output-dir ${{github.workspace}}/wheelhouse
         env:
-          CIBW_SKIP: cp*-musl* cp*-*_i686 *-win32
+          CIBW_SKIP: cp*-*_i686 *-win32
           CIBW_ENVIRONMENT_LINUX: CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
           CIBW_BEFORE_BUILD: bash dependencies/scripts/download_dependencies.sh
 
