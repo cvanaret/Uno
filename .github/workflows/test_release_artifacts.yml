@@ -96,7 +96,8 @@ jobs:
             --pattern "${ARCHIVE}" \
             --dir "${{ runner.temp }}"
           echo "artifact=${{ runner.temp }}/${ARCHIVE}" >> "$GITHUB_OUTPUT"
-          echo "UNO_DIR=${{ runner.temp }}/Uno" >> "$GITHUB_ENV"
+          UNO_DIR="${{ runner.temp }}/Uno"
+          echo "UNO_DIR=${UNO_DIR//\\//}" >> "$GITHUB_ENV"
 
       - name: Extract artifact (tar.gz)
         if: matrix.artifact-ext == 'tar.gz'
