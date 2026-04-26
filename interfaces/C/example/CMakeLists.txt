@@ -19,7 +19,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wmaybe-uninitialized")
 endif()
 
-find_library(UNO REQUIRED)
+if(NOT UNO)
+   find_library(UNO NAMES uno REQUIRED)
+endif()
 add_executable(example_hs015 example_hs015.c)
 
 # link the math library and Uno
