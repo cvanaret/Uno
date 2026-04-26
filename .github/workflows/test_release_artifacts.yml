@@ -153,8 +153,6 @@ jobs:
           cmake -B "${{github.workspace}}/interfaces/C/example/build" \
                 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                 -DUNO="${{ env.UNO_DIR }}/lib/libuno.${{matrix.libuno-extension}}" \
-                -DLAPACK_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.dep-extension}}" \
-                -DBLAS_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.dep-extension}}" \
                 .
           
       - name: Configure example CMake (Windows)
@@ -166,8 +164,6 @@ jobs:
                 -B "${{github.workspace}}/interfaces/C/example/build" \
                 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                 -DUNO:FILEPATH="${{ env.UNO_DIR }}/lib/libuno.${{matrix.libuno-extension}}" \
-                -DBLAS_LIBRARIES="${{env.UNO_DIR}}/deps/libopenblas.dll" \
-                -DLAPACK_LIBRARIES="${{env.UNO_DIR}}/deps/libopenblas.dll" \
                 -DCMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe \
                 -DCMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe \
                 .
