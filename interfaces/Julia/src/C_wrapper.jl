@@ -260,6 +260,42 @@ function uno_model(
   )
 end
 
+function uno_set_variables_lower_bounds(model::Model, variables_lower_bounds::Vector{Float64})
+  @assert model.nvar == length(variables_lower_bounds)
+  GC.@preserve model begin
+    flag = uno_set_variables_lower_bounds(model.c_model, variables_lower_bounds)
+  end
+  flag || error("Failed to set variables lower bounds via uno_set_variables_lower_bounds.")
+  return
+end
+
+function uno_set_variables_upper_bounds(model::Model, variables_upper_bounds::Vector{Float64})
+  @assert model.nvar == length(variables_upper_bounds)
+  GC.@preserve model begin
+    flag = uno_set_variables_upper_bounds(model.c_model, variables_upper_bounds)
+  end
+  flag || error("Failed to set variables upper bounds via uno_set_variables_upper_bounds.")
+  return
+end
+
+function uno_set_constraints_lower_bounds(model::Model, constraints_lower_bounds::Vector{Float64})
+  @assert model.ncon == length(constraints_lower_bounds)
+  GC.@preserve model begin
+    flag = uno_set_constraints_lower_bounds(model.c_model, constraints_lower_bounds)
+  end
+  flag || error("Failed to set constraints lower bounds via uno_set_constraints_lower_bounds.")
+  return
+end
+
+function uno_set_constraints_upper_bounds(model::Model, constraints_upper_bounds::Vector{Float64})
+  @assert model.ncon == length(constraints_upper_bounds)
+  GC.@preserve model begin
+    flag = uno_set_constraints_upper_bounds(model.c_model, constraints_upper_bounds)
+  end
+  flag || error("Failed to set constraints upper bounds via uno_set_constraints_upper_bounds.")
+  return
+end
+
 function uno_set_initial_primal_iterate(model::Model, initial_primal_iterate::Vector{Float64})
   @assert model.nvar == length(initial_primal_iterate)
   GC.@preserve model begin

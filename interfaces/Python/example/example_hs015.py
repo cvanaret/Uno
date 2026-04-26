@@ -62,7 +62,9 @@ if __name__ == '__main__':
 	# initial point
 	x0 = [-2., 1.]
 
-	model = unopy.Model(problem_type, number_variables, variables_lower_bounds, variables_upper_bounds, base_indexing)
+	model = unopy.Model(problem_type, number_variables, base_indexing)
+	model.set_variables_lower_bounds(variables_lower_bounds)
+	model.set_variables_upper_bounds(variables_upper_bounds)
 	model.set_objective(optimization_sense, objective, objective_gradient)
 	model.set_constraints(number_constraints, constraints, constraints_lower_bounds, constraints_upper_bounds,
 	  number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, jacobian)

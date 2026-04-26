@@ -153,6 +153,34 @@ extern "C" {
    void* uno_create_model(const char* problem_type, uno_int number_variables, const double* variables_lower_bounds,
       const double* variables_upper_bounds, uno_int base_indexing);
 
+   // creates an unconstrained optimization model that can be solved by Uno.
+   // initially, the model contains "number_variables" variables, no bounds, no objective function, and no constraints.
+   // takes as inputs the type of problem (UNO_PROBLEM_LINEAR, UNO_PROBLEM_QUADRATIC, or UNO_PROBLEM_NONLINEAR), the
+   // number of variables, and the vector indexing (0 for C-style indexing, 1 for Fortran-style indexing).
+   void* uno_create_unconstrained_model(const char* problem_type, uno_int number_variables, uno_int base_indexing);
+
+   // [optional]
+   // sets the variables lower bounds of a given model.
+   // takes as inputs an array of lower bounds of size "number_variables".
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_variables_lower_bounds(void* model, const double* variables_lower_bounds);
+
+   // [optional]
+   // sets the variables upper bounds of a given model.
+   // takes as inputs an array of upper bounds of size "number_variables".
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_variables_upper_bounds(void* model, const double* variables_upper_bounds);
+
+   // [optional]
+   // sets the lower bound of a given variable.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_variable_lower_bound(void* model, uno_int variable_index, double lower_bound);
+
+   // [optional]
+   // sets the upper bound of a given variable.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_variable_upper_bound(void* model, uno_int variable_index, double upper_bound);
+
    // [optional]
    // sets the objective and objective gradient of a given model.
    // takes as inputs the optimization sense (UNO_MINIMIZE or UNO_MAXIMIZE), a function pointer of the objective
@@ -170,6 +198,28 @@ extern "C" {
    bool uno_set_constraints(void* model, uno_int number_constraints, uno_constraints_callback constraint_functions,
       const double* constraints_lower_bounds, const double* constraints_upper_bounds, uno_int number_jacobian_nonzeros,
       const uno_int* jacobian_row_indices, const uno_int* jacobian_column_indices, uno_constraints_jacobian_callback jacobian);
+
+   // [optional]
+   // sets the constraints lower bounds of a given model.
+   // takes as inputs an array of lower bounds of size "number_constraints".
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_constraints_lower_bounds(void* model, const double* constraints_lower_bounds);
+
+   // [optional]
+   // sets the constraints upper bounds of a given model.
+   // takes as inputs an array of upper bounds of size "number_constraints".
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_constraints_upper_bounds(void* model, const double* constraints_upper_bounds);
+
+   // [optional]
+   // sets the lower bound of a given constraint.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_constraint_lower_bound(void* model, uno_int constraint_index, double lower_bound);
+
+   // [optional]
+   // sets the upper bound of a given constraint.
+   // returns true if it succeeded, false otherwise.
+   bool uno_set_constraint_upper_bound(void* model, uno_int constraint_index, double upper_bound);
 
    // [optional]
    // sets the Jacobian operator (computes Jacobian-vector products) of a given model.

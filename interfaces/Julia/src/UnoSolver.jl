@@ -18,6 +18,9 @@ export uno, uno_model, uno_solver, uno_optimize, uno_version
 export uno_set_solver_integer_option, uno_set_solver_double_option
 export uno_set_solver_bool_option, uno_set_solver_string_option
 export uno_set_solver_preset, uno_statistics
+export uno_set_initial_primal_iterate, uno_set_initial_dual_iterate
+export uno_set_variables_lower_bounds, uno_set_variables_upper_bounds
+export uno_set_constraints_lower_bounds, uno_set_constraints_upper_bounds
 
 export UnoExecutionStats
 

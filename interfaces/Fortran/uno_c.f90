@@ -318,6 +318,64 @@ interface
 end interface
 
 !---------------------------------------------
+! uno_set_variables_lower_bounds
+!---------------------------------------------
+interface
+   function uno_set_variables_lower_bounds(model, variables_lower_bounds) &
+      result(success) &
+      bind(C, name="uno_set_variables_lower_bounds")
+      import :: c_ptr, c_double, c_bool
+      type(c_ptr), value :: model
+      real(c_double) :: variables_lower_bounds(*)
+      logical(c_bool) :: success
+   end function uno_set_variables_lower_bounds
+end interface
+
+!---------------------------------------------
+! uno_set_variables_upper_bounds
+!---------------------------------------------
+interface
+   function uno_set_variables_upper_bounds(model, variables_upper_bounds) &
+      result(success) &
+      bind(C, name="uno_set_variables_upper_bounds")
+      import :: c_ptr, c_double, c_bool
+      type(c_ptr), value :: model
+      real(c_double) :: variables_upper_bounds(*)
+      logical(c_bool) :: success
+   end function uno_set_variables_upper_bounds
+end interface
+
+!---------------------------------------------
+! uno_set_variable_lower_bound
+!---------------------------------------------
+interface
+   function uno_set_variable_lower_bound(model, variable_index, lower_bound) &
+      result(success) &
+      bind(C, name="uno_set_variable_lower_bound")
+      import :: c_ptr, uno_int, c_double, c_bool
+      type(c_ptr), value :: model
+      integer(uno_int), value :: variable_index
+      real(c_double), value :: lower_bound
+      logical(c_bool) :: success
+   end function uno_set_variable_lower_bound
+end interface
+
+!---------------------------------------------
+! uno_set_variable_upper_bound
+!---------------------------------------------
+interface
+   function uno_set_variable_upper_bound(model, variable_index, upper_bound) &
+      result(success) &
+      bind(C, name="uno_set_variable_upper_bound")
+      import :: c_ptr, uno_int, c_double, c_bool
+      type(c_ptr), value :: model
+      integer(uno_int), value :: variable_index
+      real(c_double), value :: upper_bound
+      logical(c_bool) :: success
+   end function uno_set_variable_upper_bound
+end interface
+
+!---------------------------------------------
 ! uno_set_objective
 !---------------------------------------------
 interface
@@ -356,6 +414,64 @@ interface
       type(c_funptr), value :: jacobian
       logical(c_bool) :: success
    end function uno_set_constraints
+end interface
+
+!---------------------------------------------
+! uno_set_constraints_lower_bounds
+!---------------------------------------------
+interface
+   function uno_set_constraints_lower_bounds(model, constraints_lower_bounds) &
+      result(success) &
+      bind(C, name="uno_set_constraints_lower_bounds")
+      import :: c_ptr, c_double, c_bool
+      type(c_ptr), value :: model
+      real(c_double) :: constraints_lower_bounds(*)
+      logical(c_bool) :: success
+   end function uno_set_constraints_lower_bounds
+end interface
+
+!---------------------------------------------
+! uno_set_constraints_upper_bounds
+!---------------------------------------------
+interface
+   function uno_set_constraints_upper_bounds(model, constraints_upper_bounds) &
+      result(success) &
+      bind(C, name="uno_set_constraints_upper_bounds")
+      import :: c_ptr, c_double, c_bool
+      type(c_ptr), value :: model
+      real(c_double) :: constraints_upper_bounds(*)
+      logical(c_bool) :: success
+   end function uno_set_constraints_upper_bounds
+end interface
+
+!---------------------------------------------
+! uno_set_constraint_lower_bound
+!---------------------------------------------
+interface
+   function uno_set_constraint_lower_bound(model, constraint_index, lower_bound) &
+      result(success) &
+      bind(C, name="uno_set_constraint_lower_bound")
+      import :: c_ptr, uno_int, c_double, c_bool
+      type(c_ptr), value :: model
+      integer(uno_int), value :: constraint_index
+      real(c_double), value :: lower_bound
+      logical(c_bool) :: success
+   end function uno_set_constraint_lower_bound
+end interface
+
+!---------------------------------------------
+! uno_set_constraint_upper_bound
+!---------------------------------------------
+interface
+   function uno_set_constraint_upper_bound(model, constraint_index, upper_bound) &
+      result(success) &
+      bind(C, name="uno_set_constraint_upper_bound")
+      import :: c_ptr, uno_int, c_double, c_bool
+      type(c_ptr), value :: model
+      integer(uno_int), value :: constraint_index
+      real(c_double), value :: upper_bound
+      logical(c_bool) :: success
+   end function uno_set_constraint_upper_bound
 end interface
 
 !---------------------------------------------
