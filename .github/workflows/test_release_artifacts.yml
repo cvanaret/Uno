@@ -32,35 +32,35 @@ jobs:
         include:
           - os: ubuntu-latest
             arch: x86_64
-            artifact-os: linux
+            artifact-os: linux-gnu
             artifact-ext: tar.gz
             libuno-directory: lib
             extension: so
 
           - os: ubuntu-22.04-arm
             arch: aarch64
-            artifact-os: linux
+            artifact-os: linux-gnu
             artifact-ext: tar.gz
             libuno-directory: lib
             extension: so
 
           - os: macos-latest
             arch: aarch64
-            artifact-os: mac
+            artifact-os: apple-darwin
             artifact-ext: tar.gz
             libuno-directory: lib
             extension: dylib
 
           - os: macos-15-intel
             arch: x86_64
-            artifact-os: mac
+            artifact-os: apple-darwin
             artifact-ext: tar.gz
             libuno-directory: lib
             extension: dylib
 
           - os: windows-latest
             arch: x86_64
-            artifact-os: windows
+            artifact-os: w64-mingw32
             artifact-ext: zip
             libuno-directory: bin
             extension: dll
@@ -89,7 +89,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ steps.release.outputs.tag }}"
-          ARCHIVE="Uno.${TAG}.${{ matrix.artifact-os }}.${{ matrix.arch }}.${{ matrix.artifact-ext }}"
+          ARCHIVE="Uno_binaries.${TAG}.${{ matrix.arch }}-${{ matrix.artifact-os }}-cxx11.${{ matrix.artifact-ext }}"
           echo "Downloading ${ARCHIVE} ..."
           gh release download "${TAG}" \
             --repo cvanaret/Uno \
