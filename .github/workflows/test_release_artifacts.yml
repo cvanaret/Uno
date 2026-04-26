@@ -165,8 +165,8 @@ jobs:
                 -B "${{github.workspace}}/interfaces/C/example/build" \
                 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                 -DUNO:FILEPATH="${{ env.UNO_DIR }}/lib/libuno.${{matrix.libuno-extension}}" \
-                -DBLA_VENDOR=OpenBLAS \
-                -DCMAKE_LIBRARY_PATH="${{env.UNO_DIR}}/deps" \
+                -DBLAS_LIBRARIES="${{env.UNO_DIR}}/deps/libopenblas.dll.a" \
+                -DLAPACK_LIBRARIES="${{env.UNO_DIR}}/deps/libopenblas.dll.a" \
                 -DCMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe \
                 -DCMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe \
                 -DCMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe \
