@@ -137,7 +137,8 @@ jobs:
           "${{ env.UNO_DIR }}\lib"  | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           "${{ env.UNO_DIR }}\deps" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Configure example CMake
+      - name: Configure example CMake (Linux and macOS)
+        if: runner.os != 'Windows'
         working-directory: ${{github.workspace}}/interfaces/C/example
         shell: bash
         run: |
@@ -146,6 +147,23 @@ jobs:
                 -DUNO="${{ env.UNO_DIR }}/${{ matrix.libuno-directory }}/libuno.${{matrix.extension}}" \
                 -DLAPACK_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.extension}}" \
                 -DBLAS_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.extension}}" \
+                .
+          
+      - name: Configure example CMake (Windows)
+        if: runner.os == 'Windows'
+        working-directory: ${{github.workspace}}/interfaces/C/example
+        shell: bash
+        run: |
+          cmake -G "MinGW Makefiles"
+                -B "${{github.workspace}}/interfaces/C/example/build" \
+                -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                -DUNO="${{ env.UNO_DIR }}/${{ matrix.libuno-directory }}/libuno.${{matrix.extension}}" \
+                -DLAPACK_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.extension}}" \
+                -DBLAS_LIBRARIES="${{ env.UNO_DIR }}/deps/libopenblas.${{matrix.extension}}" \
+                -DCMAKE_MAKE_PROGRAM=C:/mingw64/bin/mingw32-make.exe \
+                -DCMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe \
+                -DCMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe \
+                -DCMAKE_Fortran_COMPILER=C:/mingw64/bin/gfortran.exe \
                 .
 
       - name: Build example
