@@ -25,8 +25,7 @@ In preparation for an Uno release, use the following checklist. These steps can 
 - `Uno_jll.jl` and `UnoSolver.jl`
   - [ ] Update the [Yggdrasil tarballs](https://github.com/JuliaPackaging/Yggdrasil/blob/master/U/Uno/build_tarballs.jl)
   - [ ] Change the `Uno_jll` version number in `interfaces/Julia/Project.toml`
-  - [ ] Change the `Uno_jll` version number in `interfaces/Julia/gen/Project.toml`
-  - [ ] Change the patch version number in `interfaces/Julia/Project.toml`
+  - [ ] Change the `UnoSolver` version number in `interfaces/Julia/Project.toml`
 - [ ] Update the logo in [the Github settings](https://github.com/cvanaret/Uno/settings)
 ````
 

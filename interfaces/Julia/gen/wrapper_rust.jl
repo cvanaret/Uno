@@ -175,22 +175,22 @@ end
 # ----------------------------------------------------------------
 # Pre-computed structs
 # ----------------------------------------------------------------
-struct ArgInfo
+struct RustArgInfo
   name  :: String
   rtype :: String
 end
 
-struct FuncInfo
+struct RustFuncInfo
   name :: String
   ret  :: Union{String, Nothing}  # nothing = void
-  args :: Vector{ArgInfo}
+  args :: Vector{RustArgInfo}
 end
 
 # ----------------------------------------------------------------
 # Collect all uno_* function declarations in one pass
 # ----------------------------------------------------------------
 function collect_funcs(root)
-  funcs = FuncInfo[]
+  funcs = RustFuncInfo[]
   for child in Clang.children(root)
     k    = Clang.kind(child)
     name = Clang.spelling(child)
@@ -202,9 +202,9 @@ function collect_funcs(root)
         aname = Clang.spelling(a)
         at    = Clang.getCursorType(a)
         spell = Clang.spelling(at)
-        ArgInfo(aname, cltype_to_rust(at, spell))
+        RustArgInfo(aname, cltype_to_rust(at, spell))
       end
-      push!(funcs, FuncInfo(name, ret, collect(args)))
+      push!(funcs, RustFuncInfo(name, ret, collect(args)))
     end
   end
   return funcs
@@ -215,7 +215,7 @@ end
 # ----------------------------------------------------------------
 const RUST_MAX_COL = 100
 
-function gen_one_fn(io, f::FuncInfo, trailing_blank::Bool)
+function gen_one_fn(io, f::RustFuncInfo, trailing_blank::Bool)
   println(io, "    // $(f.name)")
   ret_str = f.ret === nothing ? "" : " -> $(f.ret)"
 
