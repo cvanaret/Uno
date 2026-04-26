@@ -162,7 +162,7 @@ jobs:
         working-directory: ${{github.workspace}}/interfaces/C/example
         shell: bash
         run: |
-          cmake -G "MinGW Makefiles"
+          cmake -G "MinGW Makefiles" \
                 -B "${{github.workspace}}/interfaces/C/example/build" \
                 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                 -DUNO:FILEPATH="${{ env.UNO_DIR }}/lib/libuno.${{matrix.libuno-extension}}" \
