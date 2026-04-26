@@ -128,16 +128,6 @@ jobs:
             >> "$GITHUB_ENV"
           echo "${{ env.UNO_DIR }}/bin" >> "$GITHUB_PATH"
 
-      - name: Set PATH (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          # On Windows all three directories need to be on PATH so that the
-          # dynamic linker can find the DLLs at runtime.
-          "${{ env.UNO_DIR }}\bin"  | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          "${{ env.UNO_DIR }}\lib"  | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          "${{ env.UNO_DIR }}\deps" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
       - name: Generate OpenBLAS import library (Windows)
         if: runner.os == 'Windows'
         shell: bash
