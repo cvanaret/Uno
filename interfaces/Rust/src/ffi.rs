@@ -7,7 +7,6 @@ use std::os::raw::{c_char, c_int, c_void};
 
 pub type uno_int = i32;
 
-
 // ─────────────────────────────────────────────
 // Optimization sense
 // ─────────────────────────────────────────────
