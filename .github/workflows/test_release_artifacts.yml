@@ -179,7 +179,14 @@ jobs:
         shell: bash
         run: cmake --build "${{github.workspace}}/interfaces/C/example/build" --config ${{env.BUILD_TYPE}}
 
-      - name: Run example
+      - name: Run example (Linux and macOS)
+        if: runner.os != 'Windows'
         working-directory: ${{github.workspace}}/interfaces/C/example/build
         shell: bash
         run: ./example_hs015
+
+      - name: Run example (Windows)
+        if: runner.os == 'Windows'
+        working-directory: ${{github.workspace}}/interfaces/C/example/build
+        shell: bash
+        run: ./example_hs015.exe
