@@ -15,7 +15,7 @@ nav:
     - 'CUTE benchmark': 'cute_benchmark.md'
   - 'Issue tracker': 'https://github.com/cvanaret/Uno/issues'
   - 'Checklists for developers': 'developers/checklists.md'
-  - Citing Uno: 'citing_uno.md'
+  - 'Citing Uno': 'citing_uno.md'
   - Acknowledgments: 'acknowledgments.md'
 
 repo_url: https://github.com/cvanaret/Uno
