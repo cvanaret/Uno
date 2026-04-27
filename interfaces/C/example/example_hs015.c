@@ -101,17 +101,17 @@ int main() {
       double x0[] = {-2., 1.};
 
       void* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
-      variables_upper_bounds, base_indexing);
-      assert(uno_set_objective(model, optimization_sense, objective_function, objective_gradient));
-      assert(uno_set_constraints(model, number_constraints, constraint_functions,
+            variables_upper_bounds, base_indexing);
+      uno_set_objective(model, optimization_sense, objective_function, objective_gradient);
+      uno_set_constraints(model, number_constraints, constraint_functions,
             constraints_lower_bounds, constraints_upper_bounds, number_jacobian_nonzeros,
-            jacobian_row_indices, jacobian_column_indices, jacobian));
+            jacobian_row_indices, jacobian_column_indices, jacobian);
 /*
-      assert(uno_set_jacobian_operator(model, jacobian_operator));
-      assert(uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator));
-      assert(uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator));
+      uno_set_jacobian_operator(model, jacobian_operator));
+      uno_set_jacobian_transposed_operator(model, jacobian_transposed_operator));
+      uno_set_lagrangian_hessian_operator(model, lagrangian_hessian_operator));
 */
-      assert(uno_set_initial_primal_iterate(model, x0));
+      uno_set_initial_primal_iterate(model, x0);
 
       // solver creation
       void* solver = uno_create_solver();
@@ -129,9 +129,9 @@ int main() {
       printf("Solution objective = %g\n", solution_objective);
 
       // run 2: solve with exact Hessian
-      assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
-            hessian_column_indices, lagrangian_hessian));
-      assert(uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention));
+      uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
+            hessian_column_indices, lagrangian_hessian);
+      uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention);
       // the Hessian model was overwritten. Set it again
       uno_set_solver_string_option(solver, "hessian_model", "exact");
       uno_optimize(solver, model);
