@@ -761,9 +761,10 @@ bool uno_set_initial_primal_iterate_component(void* model, uno_int index, double
       return false;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   index -= user_model->base_indexing;
    if (0 <= index && index < user_model->number_variables) {
-      const size_t unsigned_index = static_cast<size_t>(index);
-      user_model->initial_primal_iterate[unsigned_index] = initial_primal_component;
+      user_model->initial_primal_iterate[static_cast<size_t>(index)] = initial_primal_component;
       return true;
    }
    return false;
@@ -775,9 +776,10 @@ bool uno_set_initial_dual_iterate_component(void* model, uno_int index, double i
       return false;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   index -= user_model->base_indexing;
    if (0 <= index && index < user_model->number_constraints) {
-      const size_t unsigned_index = static_cast<size_t>(index);
-      user_model->initial_dual_iterate[unsigned_index] = initial_dual_component;
+      user_model->initial_dual_iterate[static_cast<size_t>(index)] = initial_dual_component;
       return true;
    }
    return false;
@@ -1025,6 +1027,8 @@ double uno_get_solution_objective(void* solver) {
 
 double uno_get_primal_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
+   // shift the index with the base indexing
+   index -= result->base_indexing;
    const size_t unsigned_index = static_cast<size_t>(index);
    if (index < 0 || result->number_variables <= unsigned_index) {
       throw std::runtime_error("The index is not valid.");
@@ -1034,6 +1038,8 @@ double uno_get_primal_solution_component(void* solver, uno_int index) {
 
 double uno_get_constraint_dual_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
+   // shift the index with the base indexing
+   index -= result->base_indexing;
    const size_t unsigned_index = static_cast<size_t>(index);
    if (index < 0 || result->number_constraints <= unsigned_index) {
       throw std::runtime_error("The index is not valid.");
@@ -1043,6 +1049,8 @@ double uno_get_constraint_dual_solution_component(void* solver, uno_int index) {
 
 double uno_get_lower_bound_dual_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
+   // shift the index with the base indexing
+   index -= result->base_indexing;
    const size_t unsigned_index = static_cast<size_t>(index);
    if (index < 0 || result->number_variables <= unsigned_index) {
       throw std::runtime_error("The index is not valid.");
@@ -1052,6 +1060,8 @@ double uno_get_lower_bound_dual_solution_component(void* solver, uno_int index) 
 
 double uno_get_upper_bound_dual_solution_component(void* solver, uno_int index) {
    const Result* result = uno_get_result(solver);
+   // shift the index with the base indexing
+   index -= result->base_indexing;
    const size_t unsigned_index = static_cast<size_t>(index);
    if (index < 0 || result->number_variables <= unsigned_index) {
       throw std::runtime_error("The index is not valid.");
