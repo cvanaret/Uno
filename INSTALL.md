@@ -1,4 +1,4 @@
-## Installation instructions
+## Installation guide
 
 ### Precompiled libraries and executables
 
