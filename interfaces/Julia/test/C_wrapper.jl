@@ -221,14 +221,14 @@ end
     uno_set_variables_lower_bounds(model, lvar)
     uno_set_variables_upper_bounds(model, uvar)
     for i = 1:nvar
-      UnoSolver.uno_set_variable_lower_bound(model, i-1, lvar[i])
-      UnoSolver.uno_set_variable_upper_bound(model, i-1, uvar[i])
+      UnoSolver.uno_set_variable_lower_bound(model, i, lvar[i])
+      UnoSolver.uno_set_variable_upper_bound(model, i, uvar[i])
     end
     uno_set_constraints_lower_bounds(model, lcon)
     uno_set_constraints_upper_bounds(model, ucon)
     for i = 1:ncon
-      UnoSolver.uno_set_constraint_lower_bound(model, i-1, lcon[i])
-      UnoSolver.uno_set_constraint_upper_bound(model, i-1, ucon[i])
+      UnoSolver.uno_set_constraint_lower_bound(model, i, lcon[i])
+      UnoSolver.uno_set_constraint_upper_bound(model, i, ucon[i])
     end
 
     solver = uno_solver()
@@ -481,8 +481,8 @@ end
     uno_set_variables_lower_bounds(model, lvar)
     uno_set_variables_upper_bounds(model, uvar)
     for i = 1:nvar
-      UnoSolver.uno_set_variable_lower_bound(model, i-1, lvar[i])
-      UnoSolver.uno_set_variable_upper_bound(model, i-1, uvar[i])
+      UnoSolver.uno_set_variable_lower_bound(model, i, lvar[i])
+      UnoSolver.uno_set_variable_upper_bound(model, i, uvar[i])
     end
 
     solver = uno_solver()

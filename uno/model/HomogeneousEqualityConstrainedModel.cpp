@@ -13,7 +13,7 @@ namespace uno {
    HomogeneousEqualityConstrainedModel::HomogeneousEqualityConstrainedModel(const Model& original_model):
          Model(original_model.name + " -> equality constrained", original_model.number_variables +
             original_model.get_inequality_constraints().size(), original_model.number_constraints,
-            original_model.optimization_sense, original_model.lagrangian_sign_convention),
+            original_model.optimization_sense, original_model.lagrangian_sign_convention, original_model.base_indexing),
          model(original_model),
          // all constraints are equality constraints
          equality_constraints(Range(this->number_constraints)),

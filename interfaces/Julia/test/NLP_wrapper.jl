@@ -25,13 +25,13 @@
         UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 
         for i in 1:nlp.meta.nvar
-            @test primal_solution[i] == UnoSolver.uno_get_primal_solution_component(solver, i-1)
-            @test lower_bound_dual_solution[i] == UnoSolver.uno_get_lower_bound_dual_solution_component(solver, i-1)
-            @test upper_bound_dual_solution[i] == UnoSolver.uno_get_upper_bound_dual_solution_component(solver, i-1)
+            @test primal_solution[i] == UnoSolver.uno_get_primal_solution_component(solver, i)
+            @test lower_bound_dual_solution[i] == UnoSolver.uno_get_lower_bound_dual_solution_component(solver, i)
+            @test upper_bound_dual_solution[i] == UnoSolver.uno_get_upper_bound_dual_solution_component(solver, i)
         end
 
         for j in 1:nlp.meta.ncon
-            @test constraint_dual_solution[j] == UnoSolver.uno_get_constraint_dual_solution_component(solver, j-1)
+            @test constraint_dual_solution[j] == UnoSolver.uno_get_constraint_dual_solution_component(solver, j)
         end
 
         finalize(nlp)
@@ -62,13 +62,13 @@
         UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 
         for i in 1:nlp.meta.nvar
-            @test stats.solution[i] == UnoSolver.uno_get_primal_solution_component(solver, i-1)
-            @test stats.multipliers_L[i] == UnoSolver.uno_get_lower_bound_dual_solution_component(solver, i-1)
-            @test stats.multipliers_U[i] == UnoSolver.uno_get_upper_bound_dual_solution_component(solver, i-1)
+            @test stats.solution[i] == UnoSolver.uno_get_primal_solution_component(solver, i)
+            @test stats.multipliers_L[i] == UnoSolver.uno_get_lower_bound_dual_solution_component(solver, i)
+            @test stats.multipliers_U[i] == UnoSolver.uno_get_upper_bound_dual_solution_component(solver, i)
         end
 
         for j in 1:nlp.meta.ncon
-            @test stats.multipliers[j] == UnoSolver.uno_get_constraint_dual_solution_component(solver, j-1)
+            @test stats.multipliers[j] == UnoSolver.uno_get_constraint_dual_solution_component(solver, j)
         end
 
         finalize(nlp)
@@ -107,13 +107,13 @@ end
                 UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 
                 for i in 1:nlp.meta.nvar
-                    @test primal_solution[i] == UnoSolver.uno_get_primal_solution_component(solver, i-1)
-                    @test lower_bound_dual_solution[i] == UnoSolver.uno_get_lower_bound_dual_solution_component(solver, i-1)
-                    @test upper_bound_dual_solution[i] == UnoSolver.uno_get_upper_bound_dual_solution_component(solver, i-1)
+                    @test primal_solution[i] == UnoSolver.uno_get_primal_solution_component(solver, i)
+                    @test lower_bound_dual_solution[i] == UnoSolver.uno_get_lower_bound_dual_solution_component(solver, i)
+                    @test upper_bound_dual_solution[i] == UnoSolver.uno_get_upper_bound_dual_solution_component(solver, i)
                 end
 
                 for j in 1:nlp.meta.ncon
-                    @test constraint_dual_solution[j] == UnoSolver.uno_get_constraint_dual_solution_component(solver, j-1)
+                    @test constraint_dual_solution[j] == UnoSolver.uno_get_constraint_dual_solution_component(solver, j)
                 end
 
                 finalize(nlp)
@@ -144,13 +144,13 @@ end
                 UnoSolver.uno_get_upper_bound_dual_solution(solver, upper_bound_dual_solution)
 
                 for i in 1:nlp.meta.nvar
-                    @test stats.solution[i] == UnoSolver.uno_get_primal_solution_component(solver, i-1)
-                    @test stats.multipliers_L[i] == UnoSolver.uno_get_lower_bound_dual_solution_component(solver, i-1)
-                    @test stats.multipliers_U[i] == UnoSolver.uno_get_upper_bound_dual_solution_component(solver, i-1)
+                    @test stats.solution[i] == UnoSolver.uno_get_primal_solution_component(solver, i)
+                    @test stats.multipliers_L[i] == UnoSolver.uno_get_lower_bound_dual_solution_component(solver, i)
+                    @test stats.multipliers_U[i] == UnoSolver.uno_get_upper_bound_dual_solution_component(solver, i)
                 end
 
                 for j in 1:nlp.meta.ncon
-                    @test stats.multipliers[j] == UnoSolver.uno_get_constraint_dual_solution_component(solver, j-1)
+                    @test stats.multipliers[j] == UnoSolver.uno_get_constraint_dual_solution_component(solver, j)
                 end
 
                 finalize(nlp)

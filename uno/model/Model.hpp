@@ -29,14 +29,15 @@ namespace uno {
    class Model {
    public:
       Model(std::string name, size_t number_variables, size_t number_constraints, double optimization_sense,
-            double lagrangian_sign_convention);
+         double lagrangian_sign_convention, uno_int base_indexing);
       virtual ~Model() = default;
 
       const std::string name;
       const size_t number_variables; /*!< Number of variables */
       const size_t number_constraints; /*!< Number of constraints */
       const double optimization_sense; /*!< 1: minimization, -1: maximization */
-      double lagrangian_sign_convention;
+      const double lagrangian_sign_convention;
+      const uno_int base_indexing; // 0 for C-style indexing, 1 for Fortran-style indexing
 
       [[nodiscard]] virtual ProblemType get_problem_type() const = 0;
       [[nodiscard]] bool has_inequality_constraints() const;

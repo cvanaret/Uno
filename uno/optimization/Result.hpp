@@ -6,6 +6,7 @@
 
 #include "Iterate.hpp"
 #include "OptimizationStatus.hpp"
+#include "../interfaces/C/uno_int.h"
 
 namespace uno {
    class Result {
@@ -14,6 +15,7 @@ namespace uno {
 
       size_t number_variables;
       size_t number_constraints;
+      uno_int base_indexing;
       const OptimizationStatus optimization_status;
       const SolutionStatus solution_status;
       double solution_objective;

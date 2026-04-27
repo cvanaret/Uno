@@ -788,7 +788,7 @@ function MOI.get(
     x = [MOI.get(model, MOI.VariablePrimal(), xi) for xi in f.variables]
     s.set.eval_jacobian(J, x)
     λ = Float64[
-        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r - 1)
+        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r)
         for r in row(model, ci)
     ]
     dual = zeros(MOI.dimension(s.set))
@@ -807,7 +807,7 @@ function MOI.get(
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     λ = Float64[
-        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r - 1)
+        UnoSolver.uno_get_constraint_dual_solution_component(model.solver, r)
         for r in row(model, ci)
     ]
     return _dual_multiplier(model) * λ
@@ -1420,35 +1420,35 @@ function MOI.optimize!(model::Optimizer)
             model.variable_primal_start[i],
             clamp(0.0, model.variables.lower[i], model.variables.upper[i]),
         )
-        UnoSolver.uno_set_initial_primal_iterate_component(inner, i-1, x0_i)
+        UnoSolver.uno_set_initial_primal_iterate_component(inner, i, x0_i)
     end
 
     for (i, start) in enumerate(model.qp_data.mult_g)
         y0_i = _dual_start(model, start, -1)
-        UnoSolver.uno_set_initial_dual_iterate_component(inner, i-1, y0_i)
+        UnoSolver.uno_set_initial_dual_iterate_component(inner, i, y0_i)
     end
     offset = length(model.qp_data.mult_g)
     if model.nlp_dual_start === nothing
         for i in offset+1:inner.ncon
-            UnoSolver.uno_set_initial_dual_iterate_component(inner, i-1, 0.0)
+            UnoSolver.uno_set_initial_dual_iterate_component(inner, i, 0.0)
         end
         # First there is VectorNonlinearOracle...
         for (_, cache) in model.vector_nonlinear_oracle_constraints
             if cache.start !== nothing
                 for i in 1:cache.set.output_dimension
-                    UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+i-1, _dual_start(model, cache.start[i], -1))
+                    UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+i, _dual_start(model, cache.start[i], -1))
                 end
             end
             offset += cache.set.output_dimension
         end
         # ...then come the ScalarNonlinearFunctions
         for (key, val) in model.mult_g_nlp
-            UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+key.value-1, _dual_start(model, val, -1))
+            UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+key.value, _dual_start(model, val, -1))
         end
     else
         for (i, start) in enumerate(model.nlp_dual_start::Vector{Float64})
             y0_i = _dual_start(model, start, -1)
-            UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+i-1, y0_i)
+            UnoSolver.uno_set_initial_dual_iterate_component(inner, offset+i, y0_i)
         end
     end
 
@@ -1615,7 +1615,7 @@ function MOI.get(
         p = model.parameters[vi]
         return model.nlp_model[p]
     end
-    return UnoSolver.uno_get_primal_solution_component(model.solver, column(vi)-1)
+    return UnoSolver.uno_get_primal_solution_component(model.solver, column(vi))
 end
 
 ### MOI.ConstraintPrimal
@@ -1687,7 +1687,7 @@ function MOI.get(
 )
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-    λ = UnoSolver.uno_get_constraint_dual_solution_component(model.solver, row(model, ci)-1)
+    λ = UnoSolver.uno_get_constraint_dual_solution_component(model.solver, row(model, ci))
     return _dual_multiplier(model) * λ
 end
 
@@ -1702,8 +1702,8 @@ function MOI.get(
 ) where {S<:_SETS}
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-    xL_i = UnoSolver.uno_get_lower_bound_dual_solution_component(model.solver, ci.value-1)
-    xU_i = UnoSolver.uno_get_upper_bound_dual_solution_component(model.solver, ci.value-1)
+    xL_i = UnoSolver.uno_get_lower_bound_dual_solution_component(model.solver, ci.value)
+    xU_i = UnoSolver.uno_get_upper_bound_dual_solution_component(model.solver, ci.value)
     return _reduced_cost_to_dual(S, _dual_multiplier(model) * (xL_i + xU_i))
 end
 
@@ -1714,6 +1714,6 @@ function MOI.get(model::Optimizer, attr::MOI.NLPBlockDual)
     s = _dual_multiplier(model)
     return Float64[
         s * UnoSolver.uno_get_constraint_dual_solution_component(model.solver, i)
-        for i in length(model.qp_data):(model.inner.ncon-1)
+        for i in (length(model.qp_data)+1):model.inner.ncon
     ]
 end
