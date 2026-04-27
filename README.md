@@ -1,10 +1,11 @@
-<p align="center">
-   <img src="docs/figures/logo.png" alt="Uno" width="100%" />
-</p>
+# Uno
 
-# Uno (Unifying Nonlinear Optimization)
+**Contents**
+- [Installation](#installation)
+- [How to cite Uno](#how-to-cite-uno)
+- [Credits](#credits)
 
-Uno is a C++ library for solving nonlinearly constrained optimization problems of the form:
+Uno (Unifying Nonlinear Optimization) is a C++ framework for solving nonlinearly constrained optimization problems of the form:
 
 $$
 \begin{align}
@@ -16,105 +17,24 @@ $$
 
 where $f: \mathbb{R}^n \rightarrow \mathbb{R}$ and $c: \mathbb{R}^n \rightarrow \mathbb{R}^m$ are (ideally twice) continuously differentiable.
 
-Uno unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods that iteratively solve the optimality (KKT) conditions with Newton's method. It breaks them down into a set of building blocks that interact with one another. Our unification framework can be visualized in the following hypergraph:
+Uno is available via its [AMPL/nl](interfaces/AMPL/README.md), [Julia](interfaces/Julia/README.md), [Python](interfaces/Python/README.md), [C](interfaces/C/README.md), and [Fortran](interfaces/Fortran/README.md) interfaces.
 
-<p align="center">
-   <img src="docs/figures/wheel.png" alt="Uno hypergraph" width="40%" />
-</p>
-
-Uno currently implements the following strategies:
-* **constraint relaxation strategies**: feasibility restoration;
-* **inequality handling methods**: inequality constrained method, interior-point method;
-* **Hessian models**: exact, L-BFGS, L-SR1, identity, zero;
-* **inertia control strategies**: primal, primal-dual, none;
-* **globalization strategies**: filter method, funnel method, merit function;
-* **globalization mechanisms**: backtracking line search, trust-region method.
-
-and the following subproblem solvers:
-* QP solvers: BQPD (for nonconvex QPs), HiGHS (for convex QPs);
-* LP solvers: BQPD, HiGHS
-* indefinite linear solvers: HSL, MA57, MA27, MUMPS, SSIDS
-
-You can combine these strategies in a ton of different ways via options (see [documentation](docs/options.md)). Uno also implements **presets**, that is strategy combinations that mimic existing solvers:
+Uno unifies Lagrange-Newton (essentially **SQP** and **interior-point**) methods that iteratively solve the optimality (KKT) conditions with Newton's method. It breaks them down into a set of building blocks that interact with one another. You can combine these strategies in a ton of different ways via options. Uno also implements **presets**, that is strategy combinations that mimic existing solvers:
 * `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
 * `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual inertia correction).
 
-Note that all combinations do not necessarily result in sensible algorithms, or even convergent approaches.
+## Installation
 
-For more details on our unification theory, check out the [UNIFICATION](UNIFICATION.md) page, our [preprint](https://www.researchgate.net/publication/397446552_Implementing_a_unified_solver_for_nonlinearly_constrained_optimization), or my [latest slides](https://www.researchgate.net/publication/390271091).
+See the [installation guide](INSTALL.md) file for instructions on how to compile Uno from source or use the precompiled libraries and executables.
 
-## Who uses Uno?
+## Getting started
 
-Uno is currently used as a nonlinear optimization solver in: 
-- [JuMP.jl](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers)
-- [DNLP](https://github.com/cvxgrp/DNLP/pull/119), an extension of [CVXPY](https://www.cvxpy.org/) to general nonlinear programming
-- [Vecchia.jl](https://github.com/cgeoga/Vecchia.jl), a package for Gaussian processes approximation
-- [control-toolbox](https://github.com/control-toolbox), a collection of Julia packages for mathematical control and its applications
-- [FelooPy](https://www.linkedin.com/posts/k-tafakkori_optimization101-operationsresearch-decisionscience-activity-7397646574035697664-AzmK), a user-friendly tool for coding, modeling, and solving decision problems
-- [IMPL &copy; /IMPL-DATA &copy;](https://www.linkedin.com/posts/jeffrey-dean-kelly-a5420a6a_releases-cvanaretuno-activity-7388564004585160704-WSxz/) by [Industrial Algorithms Limited](https://www.industrialgorithms.ca/), a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation
-
-and more to come:
-- [CasADi](https://github.com/casadi/casadi/issues/3908)
-- [Pyomo](https://github.com/cvanaret/Uno/issues/319)
-- [pyOptSparse](https://github.com/cvanaret/Uno/issues/318)
-- [Minotaur](https://github.com/cvanaret/Uno/issues/107)
-- [NEOS Server](https://neos-server.org/neos/solvers/)
-
-## Installation instructions
-
-See the [INSTALL](INSTALL.md) file for instructions on how to compile Uno from source or use the precompiled libraries and executables.
-
-## Interfaces
-
-### AMPL/nl files
-Uno's AMPL executable can be compiled via the command `make uno_ampl` and requires the [AMPL Solver Library (ASL)](https://www.netlib.org/ampl/solvers/). For more details, see the [README.md](interfaces/AMPL/README.md).
-
-### Julia
-Uno can be used from Julia in two ways:
-
-1. **Pure Julia interface**:
-   [UnoSolver.jl](https://github.com/cvanaret/Uno/tree/main/interfaces/Julia) is the native Julia interface to [Uno](https://github.com/cvanaret/Uno).
-   It provides direct integration with the Julia optimization ecosystem through:
-   - a thin wrapper around the full C API,
-   - an interface to [NLPModels.jl](https://github.com/JuliaSmoothOptimizers/NLPModels.jl) for solving problems following the NLPModels API, such as [CUTEst](https://github.com/JuliaSmoothOptimizers/CUTEst.jl), [ADNLPModels.jl](https://github.com/JuliaSmoothOptimizers/ADNLPModels.jl), or [ExaModels.jl](https://github.com/exanauts/ExaModels.jl),
-   - an interface to [MathOptInterface.jl](https://github.com/jump-dev/MathOptInterface.jl) for handling [JuMP](https://github.com/jump-dev/JuMP.jl) models.
-
-   Under the hood, `UnoSolver.jl` uses precompiled shared libraries from [Uno_jll.jl](https://github.com/JuliaBinaryWrappers/Uno_jll.jl) while exposing a high-level Julia API.
-   More details can be found in the [README](https://github.com/cvanaret/Uno/tree/main/interfaces/Julia) of `UnoSolver.jl`.
-   This is the recommended way of using Uno in Julia.
-
-2. **AMPL interface**:
-   Alternatively, the executable `uno_ampl` can be installed via [Uno_jll.jl](https://github.com/JuliaBinaryWrappers/Uno_jll.jl) and used through [AmplNLWriter.jl](https://juliahub.com/ui/Packages/General/AmplNLWriter.jl).
-   An example can be found [here](https://discourse.julialang.org/t/the-uno-unifying-nonconvex-optimization-solver/115883/21).
-
-### Python
-[unopy](https://pypi.org/project/unopy/) is Uno's registered Python package. For more details, see [README.md](interfaces/Python/README.md).
-
-### C
-Uno's C interface is compiled as part of the Uno library. For more details, see its [README.md](interfaces/C/README.md).
-It may be modified in future minor releases.
-
-### Fortran
-Uno provides a native Fortran interface built on top of its C API using `iso_c_binding`.
-It closely mirrors the C interface and is designed as a lightweight wrapper with minimal overhead, making it suitable for integration into existing Fortran codes while retaining full access to Uno's features.
-For more details, see its [README.md](interfaces/Fortran/README.md).
-
-## Latest results (August 13, 2025)
-
-Uno presets have been tested against state-of-the-art solvers on 429 small problems of the [CUTEst benchmark](https://arnold-neumaier.at/glopt/coconut/Benchmark/Library2_new_v1.html).
-The figure below is a performance profile of Uno and state-of-the-art solvers filterSQP, IPOPT, SNOPT, MINOS, LANCELOT, LOQO and CONOPT; it shows how many problems are solved for a given budget of function evaluations (1 time, 2 times, 4 times, ..., $2^x$ times the number of objective evaluations of the best solver for each instance).
-
-<p align="center">
-   <img src="docs/figures/uno_performance_profile.png" alt="Performance profile of Uno" width="75%" />
-</p>
-
-All log files can be found [here](https://github.com/cvanaret/nonconvex_solver_comparison).
+To get started with Uno, check out the [official documentation](https://unosolver.readthedocs.io).
 
 ## How to cite Uno
 
-We have submitted our paper to the Mathematical Programming Computation journal. The preprint is available on [ResearchGate](https://www.researchgate.net/publication/397446552_Implementing_a_unified_solver_for_nonlinearly_constrained_optimization).
-
-Until it is published, you can use the following bibtex entry:
+Our Uno paper was accepted in the Mathematical Programming Computation journal on Feb 22, 2026.
+Our preprint is available on [ResearchGate](https://www.researchgate.net/publication/397446552_Implementing_a_unified_solver_for_nonlinearly_constrained_optimization) and can be cited with the following BibTeX entry:
 
 ```
 @unpublished{VanaretLeyffer2026,
