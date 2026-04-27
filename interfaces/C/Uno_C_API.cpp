@@ -106,7 +106,7 @@ public:
    }
 
    // sparsity patterns of Jacobian and Hessian
-   void compute_jacobian_sparsity(uno_int * row_indices, uno_int * column_indices, uno_int row_offset, uno_int column_offset,
+   void compute_jacobian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int row_offset, uno_int column_offset,
          uno_int solver_indexing, MatrixOrder /*matrix_order*/) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
       for (size_t nonzero_index: Range(static_cast<size_t>(this->user_model.number_jacobian_nonzeros))) {
@@ -125,7 +125,7 @@ public:
       }
    }
 
-   void compute_hessian_sparsity(uno_int *row_indices, uno_int *column_indices, uno_int solver_indexing) const override {
+   void compute_hessian_sparsity(uno_int* row_indices, uno_int* column_indices, uno_int solver_indexing) const override {
       // copy the indices of the user sparsity patterns to the Uno vectors
       const size_t number_hessian_nonzeros = this->number_hessian_nonzeros();
       for (size_t nonzero_index: Range(number_hessian_nonzeros)) {
@@ -533,6 +533,8 @@ bool uno_set_variable_lower_bound(void* model, uno_int variable_index, double lo
       return false;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   variable_index -= user_model->base_indexing;
    if (variable_index < 0 || variable_index >= user_model->number_variables) {
       WARNING << "Please specify a valid index."  << std::endl;
       return false;
@@ -547,6 +549,8 @@ bool uno_set_variable_upper_bound(void* model, uno_int variable_index, double up
       return false;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   variable_index -= user_model->base_indexing;
    if (variable_index < 0 || variable_index >= user_model->number_variables) {
       WARNING << "Please specify a valid index."  << std::endl;
       return false;
@@ -645,6 +649,8 @@ bool uno_set_constraint_lower_bound(void* model, uno_int constraint_index, doubl
       return false;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   constraint_index -= user_model->base_indexing;
    if (constraint_index < 0 || constraint_index >= user_model->number_constraints) {
       WARNING << "Please specify a valid index."  << std::endl;
       return false;
@@ -659,6 +665,8 @@ bool uno_set_constraint_upper_bound(void* model, uno_int constraint_index, doubl
       return false;
    }
    CUserModel* user_model = static_cast<CUserModel*>(model);
+   // shift the index with the base indexing
+   constraint_index -= user_model->base_indexing;
    if (constraint_index < 0 || constraint_index >= user_model->number_constraints) {
       WARNING << "Please specify a valid index."  << std::endl;
       return false;
