@@ -134,7 +134,7 @@ extern "C" {
    // "number_constraints", an objective multiplier, the primal feasibility residual, the dual feasibility residual, and
    // the complementarity residual.
    // returns true for user termination.
-   typedef bool (*uno_termination_callback)(uno_int number_variables, uno_int number_constraints, const double* primals,
+   typedef uno_int (*uno_termination_callback)(uno_int number_variables, uno_int number_constraints, const double* primals,
       const double* lower_bound_multipliers, const double* upper_bound_multipliers, const double* constraint_multipliers,
       double objective_multiplier, double primal_feasibility_residual, double stationarity_residual,
       double complementarity_residual, void* user_data);

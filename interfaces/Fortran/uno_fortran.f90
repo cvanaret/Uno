@@ -322,7 +322,7 @@ end function uno_set_solver_preset
 function uno_get_solver_integer_option(solver, option_name) result(solver_integer_option)
    type(c_ptr), value :: solver
    character(len=*) :: option_name
-   integer(c_int) :: solver_integer_option
+   integer(uno_int) :: solver_integer_option
    character(c_char), allocatable :: option_name_c(:)
    integer :: i, n
 
@@ -330,10 +330,10 @@ function uno_get_solver_integer_option(solver, option_name) result(solver_intege
       function uno_get_solver_integer_option_c(solver, option_name) &
          result(solver_integer_option) &
          bind(C, name="uno_get_solver_integer_option")
-         import :: c_ptr, c_char, c_int
+         import :: c_ptr, c_char, uno_int
          type(c_ptr), value :: solver
          character(c_char) :: option_name(*)
-         integer(c_int) :: solver_integer_option
+         integer(uno_int) :: solver_integer_option
       end function uno_get_solver_integer_option_c
    end interface
 
