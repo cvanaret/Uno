@@ -70,9 +70,7 @@ jobs:
         run: |
           cmake -B ${{github.workspace}}/.github/C/build \
                 -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-                -DUNO=/usr/local/lib/libuno.so \
-                -DLAPACK_LIBRARIES=${{github.workspace}}/dependencies/lib/liblapack.a \
-                -DBLAS_LIBRARIES="${{github.workspace}}/dependencies/lib/libblas.a;${{github.workspace}}/dependencies/lib/libcblas.a" .
+                -DUNO=/usr/local/lib/libuno.so .
 
       - name: Build example
         working-directory: ${{github.workspace}}/.github/C
