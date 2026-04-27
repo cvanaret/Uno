@@ -44,7 +44,9 @@ Uno allows the automatic generation of various strategy combinations on the fly 
 - **globalization strategies**: filter method, funnel method, merit function;
 - **globalization mechanisms**: backtracking line search, trust-region method.
 
-We believe that Uno has the potential to serve as an experimental laboratory for practitioners and optimizers and to accelerate research in nonlinearly constrained optimization. Our ultimate goal is to promote the extension of state-of-the-art nonlinear optimization techniques to new classes of problems such as problems with equilibrium constraints and nonlinear robust optimization.
+Uno also implements **presets**, that is strategy combinations that mimic existing solvers:
+* `filtersqp` mimics filterSQP (trust-region feasibility restoration filter SQP method with exact Hessian);
+* `ipopt` mimics IPOPT (line-search feasibility restoration filter barrier method with exact Hessian and primal-dual inertia correction).
 
 ## Who uses Uno?
 
