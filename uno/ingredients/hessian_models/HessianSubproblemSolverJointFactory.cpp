@@ -34,7 +34,7 @@ namespace uno {
 
       // then look at the option hessian_model
       // from now onwards, the problem is nonlinear (QP or NLP)
-      bool default_to_quasi_newton = false;
+      bool default_to_lbfgs = false;
       const std::string& hessian_model_type = options.get_string("hessian_model");
       if (hessian_model_type == "exact") {
          if (model.has_hessian_matrix() || model.has_hessian_operator()) {
@@ -46,12 +46,12 @@ namespace uno {
          else {
             // no Hessian (matrix or operator) is available: pick a quasi-Newton Hessian (L-BFGS for line search, L-SR1
             // for trust-region methods)
-            default_to_quasi_newton = true;
+            default_to_lbfgs = true;
          }
       }
 
-      if (hessian_model_type == "LBFGS" || (default_to_quasi_newton && options.get_string("globalization_mechanism") == "LS")) {
-         if (default_to_quasi_newton) {
+      if (hessian_model_type == "LBFGS" || (default_to_lbfgs && options.get_string("globalization_mechanism") == "LS")) {
+         if (default_to_lbfgs) {
             WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-LBFGS Hessian instead\n";
             // override user defined option
             options.set_string("hessian_model", "LBFGS", true);
@@ -69,12 +69,7 @@ namespace uno {
             return {std::move(hessian_model), std::move(subproblem_solver)};
          }
       }
-      else if (hessian_model_type == "LSR1" || (default_to_quasi_newton && options.get_string("globalization_mechanism") == "TR")) {
-         if (default_to_quasi_newton) {
-            WARNING << "An exact Hessian (matrix or operator) was not provided, setting an L-SR1 Hessian instead\n";
-            // override user defined option
-            options.set_string("hessian_model", "LSR1", true);
-         }
+      else if (hessian_model_type == "LSR1") {
          auto hessian_model = std::make_unique<LSR1Hessian>(model, objective_multiplier, options);
          auto subproblem_solver = SubproblemSolverFactory::create(problem, current_iterate, *hessian_model,
             inertia_correction_strategy, uses_trust_region, options);
