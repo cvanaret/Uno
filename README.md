@@ -17,11 +17,14 @@ $$
 
 where $f: \mathbb{R}^n \rightarrow \mathbb{R}$ and $c: \mathbb{R}^n \rightarrow \mathbb{R}^m$ are (ideally twice) continuously differentiable.
 
-Uno unifies Lagrange-Newton methods that iteratively solve the optimality (KKT) conditions with Newton's method. It breaks them down into a set of building blocks that interact with one another. You can combine these strategies in a ton of different ways via options. The following methods are currently supported:
+Uno unifies Lagrange-Newton methods that iteratively solve the optimality (KKT) conditions with Newton's method. The following methods are currently supported:
+
 - Sequential (convex and nonconvex) Quadratic Programming (SQP) method
 - primal-dual Interior-Point Method (IPM)
 - Sequential Linear Programming (SLP)
 - unconstrained optimization
+
+Uno breaks down these methods into a set of common building blocks that interact with one another, such as constraint reformulation, step computation, and globalization. These strategies can be combined at runtime in various ways.
 
 Uno can be used via its [AMPL/nl](interfaces/AMPL/README.md), [Julia](interfaces/Julia/README.md), [Python](interfaces/Python/README.md), [C](interfaces/C/README.md), and [Fortran](interfaces/Fortran/README.md) interfaces.
 
