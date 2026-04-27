@@ -107,36 +107,35 @@ void solve_instance(uno_int optimization_sense, uno_int lagrangian_sign_conventi
 	void* model = uno_create_model(UNO_PROBLEM_NONLINEAR, number_variables, variables_lower_bounds,
       variables_upper_bounds, base_indexing);
 	if (optimization_sense == UNO_MINIMIZE) {
-		assert(uno_set_objective(model, optimization_sense, objective_function, objective_gradient));
+		uno_set_objective(model, optimization_sense, objective_function, objective_gradient);
 	}
 	else {
-		assert(uno_set_objective(model, optimization_sense, objective_function_max, objective_gradient_max));
+		uno_set_objective(model, optimization_sense, objective_function_max, objective_gradient_max);
 	}
-	assert(uno_set_constraints(model, number_constraints, constraint_functions,
-		constraints_lower_bounds, constraints_upper_bounds, number_jacobian_nonzeros,
-		jacobian_row_indices, jacobian_column_indices, constraint_jacobian));
-	assert(uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention));
+	uno_set_constraints(model, number_constraints, constraint_functions, constraints_lower_bounds, constraints_upper_bounds,
+		number_jacobian_nonzeros, jacobian_row_indices, jacobian_column_indices, constraint_jacobian);
+	uno_set_lagrangian_sign_convention(model, lagrangian_sign_convention);
 	if (lagrangian_sign_convention == UNO_MULTIPLIER_NEGATIVE) {
 		if (optimization_sense == UNO_MINIMIZE) {
-			assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part,
-				hessian_row_indices, hessian_column_indices, lagrangian_hessian_negative_sign));
+			uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
+				hessian_column_indices, lagrangian_hessian_negative_sign);
 		}
 		else {
-			assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part,
-				hessian_row_indices, hessian_column_indices, lagrangian_hessian_max_negative_sign));
+			uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
+				hessian_column_indices, lagrangian_hessian_max_negative_sign);
 		}
 	}
 	else {
 		if (optimization_sense == UNO_MINIMIZE) {
-			assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part,
-				hessian_row_indices, hessian_column_indices, lagrangian_hessian_positive_sign));
+			uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
+				hessian_column_indices, lagrangian_hessian_positive_sign);
 		}
 		else {
-			assert(uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part,
-				hessian_row_indices, hessian_column_indices, lagrangian_hessian_max_positive_sign));
+			uno_set_lagrangian_hessian(model, number_hessian_nonzeros, hessian_triangular_part, hessian_row_indices,
+				hessian_column_indices, lagrangian_hessian_max_positive_sign);
 		}
 	}
-	assert(uno_set_initial_primal_iterate(model, x0));
+	uno_set_initial_primal_iterate(model, x0);
 
 	// solver creation
 	void* solver = uno_create_solver();
