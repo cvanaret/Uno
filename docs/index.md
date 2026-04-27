@@ -49,6 +49,7 @@ We believe that Uno has the potential to serve as an experimental laboratory for
 ## Who uses Uno?
 
 Uno is currently used as a nonlinear optimization solver in:
+
 - [JuMP.jl](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers)
 - [DNLP](https://github.com/cvxgrp/DNLP/pull/119), an extension of [CVXPY](https://www.cvxpy.org/) to general nonlinear programming
 - [Vecchia.jl](https://github.com/cgeoga/Vecchia.jl), a package for Gaussian processes approximation
@@ -57,6 +58,7 @@ Uno is currently used as a nonlinear optimization solver in:
 - [IMPL &copy; /IMPL-DATA &copy;](https://www.linkedin.com/posts/jeffrey-dean-kelly-a5420a6a_releases-cvanaretuno-activity-7388564004585160704-WSxz/) by [Industrial Algorithms Limited](https://www.industrialgorithms.ca/), a modeling and solving platform used in the process industries especially suited for economic, efficiency and emissions optimization and estimation
 
 and more to come:
+
 - [CasADi](https://github.com/casadi/casadi/issues/3908)
 - [Pyomo](https://github.com/cvanaret/Uno/issues/319)
 - [pyOptSparse](https://github.com/cvanaret/Uno/issues/318)
