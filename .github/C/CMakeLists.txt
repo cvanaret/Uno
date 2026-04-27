@@ -23,6 +23,6 @@ find_library(UNO REQUIRED)
 add_executable(tests_hs015 tests_hs015.c)
 
 # link the math library and Uno
-target_link_libraries(tests_hs015 PUBLIC m ${UNO})4
+target_link_libraries(tests_hs015 PUBLIC m ${UNO})
 get_filename_component(UNO_DIRECTORY ${UNO} DIRECTORY)
 target_include_directories(tests_hs015 SYSTEM PUBLIC ${UNO_DIRECTORY}/../include)
