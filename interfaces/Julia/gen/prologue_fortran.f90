@@ -278,7 +278,7 @@ abstract interface
       real(c_double), value :: stationarity_residual
       real(c_double), value :: complementarity_residual
       type(c_ptr), value :: user_data
-      logical(c_bool) :: uno_termination_callback
+      logical(uno_int) :: uno_termination_callback
    end function
 end interface
 
